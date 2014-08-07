@@ -62,9 +62,9 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   private final XBreakpointManagerImpl myBreakpointManager;
   private Icon myIcon;
   private CustomizedBreakpointPresentation myCustomizedPresentation;
-  private boolean myConditionEnabled;
+  private boolean myConditionEnabled = true;
   private XExpression myCondition;
-  private boolean myLogExpressionEnabled;
+  private boolean myLogExpressionEnabled = true;
   private XExpression myLogExpression;
 
   public XBreakpointBase(final XBreakpointType<Self, P> type, XBreakpointManagerImpl breakpointManager, final @Nullable P properties, final S state) {

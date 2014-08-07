@@ -16,7 +16,6 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspImplicitVariable;
 import com.intellij.psi.jsp.JspSpiUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -62,8 +61,8 @@ public class MethodPropertyReference extends BasicAttributeValueReference {
           }
         } else if (psiElement instanceof PsiClass) {
           return (PsiClass)psiElement;
-        } else if (psiElement instanceof JspImplicitVariable) {
-          final PsiType type=((JspImplicitVariable)psiElement).getType();
+        } else if (psiElement instanceof PsiVariable) {
+          final PsiType type=((PsiVariable)psiElement).getType();
           if (type instanceof PsiClassType) {
             return ((PsiClassType)type).resolve();
           }

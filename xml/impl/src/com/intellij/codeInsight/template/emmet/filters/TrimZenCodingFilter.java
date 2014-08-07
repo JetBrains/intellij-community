@@ -18,6 +18,7 @@ package com.intellij.codeInsight.template.emmet.filters;
 import com.intellij.codeInsight.template.emmet.nodes.GenerationNode;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.xml.XmlDocument;
@@ -25,6 +26,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -57,18 +59,27 @@ public class TrimZenCodingFilter extends ZenCodingFilter {
     if (document != null) {
       XmlTag tag = document.getRootTag();
       if (tag != null && !tag.getText().isEmpty()) {
-        new XmlElementVisitor() {
+        tag.accept(new XmlElementVisitor() {
           @Override
-          public void visitXmlTag(XmlTag tag) {
-            if(!tag.isEmpty()) {
-              XmlTagValue tagValue = tag.getValue();
-              tagValue.setText(PATTERN.matcher(tagValue.getText()).replaceAll(""));
+          public void visitXmlTag(final XmlTag tag) {
+            if (!tag.isEmpty()) {
+              final XmlTagValue tagValue = tag.getValue();
+              final Matcher matcher = PATTERN.matcher(tagValue.getText());
+              if (matcher.matches()) {
+                ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                  @Override
+                  public void run() {
+                    tagValue.setText(matcher.replaceAll(""));
+                  }
+                });
+              }
             }
             tag.acceptChildren(this);
           }
-        }.visitXmlTag(tag);
+        });
         return tag.getText();
-      } else {
+      }
+      else {
         return PATTERN.matcher(document.getText()).replaceAll("");
       }
     }

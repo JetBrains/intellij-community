@@ -21,6 +21,7 @@ import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.junit.RefactoringListeners;
+import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
@@ -33,6 +34,7 @@ import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -285,10 +287,15 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     @NotNull
     @Override
     protected OSProcessHandler startProcess() throws ExecutionException {
-      final OSProcessHandler handler = super.startProcess();
+      OSProcessHandler handler = SystemInfo.isWindows ? super.startProcess() : KillableColoredProcessHandler.create(createCommandLine());
       RunnerSettings runnerSettings = getRunnerSettings();
       JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(myConfiguration, handler, runnerSettings);
       return handler;
+    }
+
+    @Override
+    protected boolean ansiColoringEnabled() {
+      return true;
     }
 
     protected ApplicationConfiguration getConfiguration() {

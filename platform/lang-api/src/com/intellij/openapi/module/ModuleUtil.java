@@ -108,33 +108,4 @@ public class ModuleUtil extends ModuleUtilCore {
     String type = module.getOptionValue(Module.ELEMENT_TYPE);
     return ModuleTypeManager.getInstance().findByID(type);
   }
-
-  public static void updateExcludedFoldersInWriteAction(final Module module,
-                                                        @NotNull final VirtualFile contentRoot,
-                                                        final Collection<String> urlsToUnExclude,
-                                                        final Collection<String> urlsToExclude) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        final ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
-        try {
-          for (final ContentEntry contentEntry : modifiableModel.getContentEntries()) {
-            if (contentRoot.equals(contentEntry.getFile())) {
-              for (String url : urlsToUnExclude) {
-                contentEntry.removeExcludeFolder(url);
-              }
-              for (String url : urlsToExclude) {
-                contentEntry.addExcludeFolder(url);
-              }
-              break;
-            }
-          }
-          modifiableModel.commit();
-        }
-        catch (Exception e) {
-          modifiableModel.dispose();
-          throw new RuntimeException(e.getMessage(), e);
-        }
-      }
-    });
-  }
 }

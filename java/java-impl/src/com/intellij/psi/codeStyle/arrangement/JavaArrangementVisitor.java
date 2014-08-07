@@ -280,6 +280,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
         if (ref instanceof PsiField && containingClassFields.contains(ref)) {
           referencedElements.add((PsiField)ref);
         }
+        super.visitReferenceExpression(expression);
       }
     });
 

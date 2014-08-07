@@ -16,7 +16,7 @@
 
 package com.intellij.openapi.ui;
 
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ArrayUtil;
@@ -45,15 +45,21 @@ public class DetailsComponent {
   private final NonOpaquePanel myBanner;
 
   private String[] myBannerText;
-  private boolean myDetailsEnabled = !Registry.is("ide.new.project.settings");
+  private boolean myDetailsEnabled;
   private String[] myPrefix;
   private String[] myText;
 
   private final Wrapper myContentGutter = new Wrapper();
 
-  private boolean myPaintBorder = !Registry.is("ide.new.project.settings");
+  private boolean myPaintBorder;
 
   public DetailsComponent() {
+    this(true, true);
+  }
+
+  public DetailsComponent(boolean detailsEnabled, boolean paintBorder) {
+    myDetailsEnabled = detailsEnabled;
+    myPaintBorder = paintBorder;
     myComponent = new JPanel(new BorderLayout()) {
       @Override
       protected void paintComponent(final Graphics g) {
@@ -110,7 +116,7 @@ public class DetailsComponent {
     myBanner = new NonOpaquePanel(new BorderLayout());
     myBannerLabel = new Banner();
 
-    if (!Registry.is("ide.new.project.settings")) {
+    if (myDetailsEnabled) {
       myBanner.add(myBannerLabel, BorderLayout.CENTER);
     }
 
@@ -170,14 +176,13 @@ public class DetailsComponent {
       myContent.setBorder(new EmptyBorder(UIUtil.PANEL_REGULAR_INSETS));
     }
     else {
-      if (Registry.is("ide.new.project.settings")) {
-        myContent.setBorder(new EmptyBorder(16, 10, 16, 10));
-      } else {
-        myContent.setBorder(null);
-      }
+      myContent.setBorder(null);
     }
   }
 
+  public void forProject(Project project) {
+    myBannerLabel.forProject(project);
+  }
 
   public void setPrefix(@Nullable String... prefix) {
     myPrefix = prefix;

@@ -30,7 +30,10 @@ import com.intellij.debugger.engine.evaluation.EvaluateRuntimeException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.sun.jdi.*;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.Method;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ReferenceType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -83,8 +86,8 @@ public class MethodEvaluator implements Evaluator {
       ReferenceType referenceType = null;
 
       if(object instanceof ObjectReference) {
-        final ReferenceType qualifierType = ((ObjectReference)object).referenceType();
-        referenceType = debugProcess.findClass(context, qualifierType.name(), qualifierType.classLoader());
+        // it seems that if we have an object of the class, the class must be ready, so no need to use findClass here
+        referenceType = ((ObjectReference)object).referenceType();
       }
       else if(object instanceof ClassType) {
         final ClassType qualifierType = (ClassType)object;
@@ -127,14 +130,16 @@ public class MethodEvaluator implements Evaluator {
         _refType = ((ClassType)referenceType).superclass();
       }
       Method jdiMethod = DebuggerUtils.findMethod(_refType, myMethodName, signature);
-      if (jdiMethod == null || jdiMethod.argumentTypes().size() != args.size()) {
+      if (signature == null) {
+        // we know nothing about expected method's signature, so trying to match my method name and parameter count
         // dummy matching, may be improved with types matching later
-        List<Method> methods = _refType.methodsByName(myMethodName);
-        for (Method method : methods) {
-          List<Type> types = method.argumentTypes();
-          if (types.size() == args.size()) {
-            jdiMethod = method;
-            break;
+        // IMPORTANT! using argumentTypeNames() instead of argumentTypes() to avoid type resolution inside JDI, which may be time-consuming
+        if (jdiMethod == null || jdiMethod.argumentTypeNames().size() != args.size()) {
+          for (Method method : _refType.methodsByName(myMethodName)) {
+            if (method.argumentTypeNames().size() == args.size()) {
+              jdiMethod = method;
+              break;
+            }
           }
         }
       }

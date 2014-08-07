@@ -33,13 +33,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.ObjectsConvertor;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -63,13 +58,13 @@ public class CvsChangeProvider implements ChangeProvider {
 
   private final CvsVcs2 myVcs;
   private final CvsEntriesManager myEntriesManager;
-  private final ProjectFileIndex myFileIndex;
+  private final ProjectLevelVcsManager myVcsManager;
   private final ChangeListManager myChangeListManager;
 
   public CvsChangeProvider(final CvsVcs2 vcs, CvsEntriesManager entriesManager) {
     myVcs = vcs;
     myEntriesManager = entriesManager;
-    myFileIndex = ProjectRootManager.getInstance(vcs.getProject()).getFileIndex();
+    myVcsManager = ProjectLevelVcsManager.getInstance(vcs.getProject());
     myChangeListManager = ChangeListManager.getInstance(vcs.getProject());
   }
 
@@ -169,7 +164,7 @@ public class CvsChangeProvider implements ChangeProvider {
         for (VirtualFile file : children) {
           progress.checkCanceled();
           if (file.isDirectory()) {
-            final boolean isIgnored = myFileIndex.isIgnored(file);
+            final boolean isIgnored = myVcsManager.isIgnored(file);
             if (!isIgnored) {
               processEntriesIn(file, scope, builder, true, progress);
             }
@@ -284,7 +279,7 @@ public class CvsChangeProvider implements ChangeProvider {
 
   private void checkSwitchedDir(final VirtualFile dir, final ChangelistBuilder builder, final VcsDirtyScope scope) {
     final VirtualFile parentDir = dir.getParent();
-    if (parentDir == null || !myFileIndex.isInContent(parentDir)) {
+    if (parentDir == null || !myVcsManager.isFileInContent(parentDir)) {
       return;
     }
     final CvsInfo info = myEntriesManager.getCvsInfoFor(dir);
@@ -317,7 +312,7 @@ public class CvsChangeProvider implements ChangeProvider {
 
   private void checkSwitchedFile(final FilePath filePath, final ChangelistBuilder builder, final VirtualFile dir, final Entry entry) {
     // if content root itself is switched, ignore
-    if (!myFileIndex.isInContent(dir)) {
+    if (!myVcsManager.isFileInContent(dir)) {
       return;
     }
     final String dirTag = myEntriesManager.getCvsInfoFor(dir).getStickyTag();

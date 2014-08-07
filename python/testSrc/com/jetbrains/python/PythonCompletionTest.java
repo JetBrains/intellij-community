@@ -161,7 +161,7 @@ public class PythonCompletionTest extends PyTestCase {
     final LookupElement[] elements = myFixture.completeBasic();
     assertNotNull(elements);
     assertEquals(1, elements.length);
-    assertEquals("children", elements [0].getLookupString());
+    assertEquals("children", elements[0].getLookupString());
   }
 
   public void testImportModule() {
@@ -613,6 +613,36 @@ public class PythonCompletionTest extends PyTestCase {
                  "    __meta<caret>\n");
     myFixture.checkResult("class C(object):\n" +
                           "    __metaclass__ = \n");
+  }
 
+  // PY-13140
+  public void testModulePrivateNamesCompletedInsideImport() {
+    myFixture.copyDirectoryToProject("completion/" + getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    myFixture.completeBasic();
+    List<String> suggested = myFixture.getLookupElementStrings();
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "normal_name", "_private_name", "__magic_name__");
+  }
+
+  // PY-4073
+  public void testSpecialFunctionAttributes() throws Exception {
+    setLanguageLevel(LanguageLevel.PYTHON27);
+    try {
+      List<String> suggested = doTestByText("def func(): pass; func.func_<caret>");
+      assertNotNull(suggested);
+      assertContainsElements(suggested,
+                             "func_defaults", "func_globals", "func_closure",
+                             "func_code", "func_name", "func_doc", "func_dict");
+
+      suggested = doTestByText("def func(): pass; func.__<caret>");
+      assertNotNull(suggested);
+      assertContainsElements(suggested, "__defaults__", "__globals__", "__closure__",
+                             "__code__", "__name__", "__doc__", "__dict__", "__module__");
+      assertDoesntContain(suggested, "__annotations__", "__kwdefaults__");
+    }
+    finally {
+      setLanguageLevel(null);
+    }
   }
 }

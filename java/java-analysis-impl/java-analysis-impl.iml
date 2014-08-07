@@ -17,6 +17,7 @@
     <orderEntry type="module" module-name="java-analysis-api" exported="" />
     <orderEntry type="module" module-name="resources-en" />
     <orderEntry type="module" module-name="xml-psi-impl" />
+    <orderEntry type="library" exported="" name="asm5" level="project" />
   </component>
 </module>
 

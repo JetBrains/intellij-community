@@ -38,14 +38,17 @@ class GitScenarios {
   /**
    * Create a branch with a commit and return back to master.
    */
-  static def branchWithCommit(GitRepository repository, String name, String file = "branch_file.txt", String content = "branch content") {
+  static def branchWithCommit(GitRepository repository, String name, String file = "branch_file.txt", String content = "branch content",
+                              boolean returnToMaster = true) {
     cd repository
     git("checkout -b $name")
     touch(file, content)
     git("add $file")
     git("commit -m branch_content")
 
-    git("checkout master")
+    if (returnToMaster) {
+      git("checkout master")
+    }
   }
 
   /**

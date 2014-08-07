@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.runtime.ServerConnection;
@@ -79,7 +80,7 @@ public class RemoteServerConfigurable extends NamedConfigurable<RemoteServer<?>>
         if (result) {
           myUncheckedApply = false;
 
-          setConnectionStatus("");
+          setConnectionStatus(false, false, "");
           myConnectionTester = null;
 
           if (modified) {
@@ -88,7 +89,7 @@ public class RemoteServerConfigurable extends NamedConfigurable<RemoteServer<?>>
               myInnerApplied = true;
             }
             catch (ConfigurationException e) {
-              setConnectionStatus(e.getMessage());
+              setConnectionStatus(true, false, e.getMessage());
             }
           }
         }
@@ -97,7 +98,7 @@ public class RemoteServerConfigurable extends NamedConfigurable<RemoteServer<?>>
 
       @Override
       protected void run() {
-        setConnectionStatus("Connecting...");
+        setConnectionStatus(false, false, "Connecting...");
 
         myConnectionTester = new ConnectionTester();
         myConnectionTester.testConnection();
@@ -105,17 +106,18 @@ public class RemoteServerConfigurable extends NamedConfigurable<RemoteServer<?>>
     };
   }
 
-  private void setConnectionStatus(String text) {
-    setConnectionStatus(false, text);
-  }
-
-  private void setConnectionStatus(boolean connected, String text) {
+  private void setConnectionStatus(boolean error, boolean connected, String text) {
     boolean changed = myConnected != connected;
     myConnected = connected;
-    myConnectionStatusLabel.setText(UIUtil.toHtml(text));
+    setConnectionStatusText(error, text);
     if (changed) {
       notifyDataLoader();
     }
+  }
+
+  protected void setConnectionStatusText(boolean error, String text) {
+    myConnectionStatusLabel.setText(UIUtil.toHtml(text));
+    myConnectionStatusLabel.setVisible(StringUtil.isNotEmpty(text));
   }
 
   public void setDataLoader(CloudDataLoader dataLoader) {
@@ -238,7 +240,7 @@ public class RemoteServerConfigurable extends NamedConfigurable<RemoteServer<?>>
             @Override
             public void run() {
               if (myConnectionTester == ConnectionTester.this) {
-                setConnectionStatus(connected, connected ? "Connection successful" : "Cannot connect: " + connection.getStatusText());
+                setConnectionStatus(!connected, connected, connected ? "Connection successful" : "Cannot connect: " + connection.getStatusText());
               }
             }
           });

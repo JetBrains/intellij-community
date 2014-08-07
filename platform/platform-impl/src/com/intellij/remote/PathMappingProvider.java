@@ -5,7 +5,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.util.PathMappingSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,8 +32,4 @@ public abstract class PathMappingProvider {
 
   @NotNull
   public abstract PathMappingSettings getPathMappingSettings(@NotNull Project project, @NotNull RemoteSdkAdditionalData data);
-
-  @Deprecated //Remove in IDEA 14 
-  @NotNull
-  public abstract PathMappingSettings getPathMapping(@NotNull Project project, @NotNull com.intellij.remotesdk.RemoteSdkAdditionalData data);
 }

@@ -30,9 +30,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.DepthCombo;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.revision.SvnSelectRevisionPanel;
 import org.jetbrains.idea.svn.update.SvnRevisionPanel;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -147,7 +147,7 @@ public class CheckoutOptionsDialog extends DialogWrapper {
     return (objects == null) || (objects.length != 1) ? null : (File) objects[0];
   }
 
-  public SVNDepth getDepth() {
+  public Depth getDepth() {
     return myDepthCombo.getDepth();
   }
 

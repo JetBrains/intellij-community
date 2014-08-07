@@ -10,6 +10,8 @@ import com.siyeh.ipp.IPPTestCase;
 public class FlipAssertLiteralIntentionTest extends IPPTestCase {
 
   public void testMessage() { doTest(); }
+  public void testExistingStaticImport() { doTest(); }
+  public void testStaticImportWithoutTestMethod() { doTest(); }
 
   @Override
   protected void setUp() throws Exception {
@@ -18,6 +20,10 @@ public class FlipAssertLiteralIntentionTest extends IPPTestCase {
                        "class Assert {" +
                        "  public static void assertTrue(java.lang.String message, boolean condition) {}" +
                        "}");
+    myFixture.addClass("package org.junit;" +
+                       "@Retention(RetentionPolicy.RUNTIME)" +
+                       "@Target({ElementType.METHOD})" +
+                       "public @interface Test {}");
   }
 
   @Override

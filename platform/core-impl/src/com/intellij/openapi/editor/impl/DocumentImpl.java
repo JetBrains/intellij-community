@@ -75,6 +75,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   private final List<EditReadOnlyListener> myReadOnlyListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
+  private volatile boolean myMightContainTabs = true; // optimisation flag: when document contains no tabs it is dramatically easier to calculate positions in editor
+  private int myTabTrackingRequestors = 0;
+
   private int myCheckGuardedBlocks = 0;
   private boolean myGuardsSuppressed = false;
   private boolean myEventsHandling = false;
@@ -171,14 +174,14 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   /**
    * @return true if stripping was completed successfully, false if the document prevented stripping by e.g. caret being in the way
    *
-   * @deprecated should be replaced with {@link #stripTrailingSpaces(com.intellij.openapi.project.Project, boolean, boolean, java.util.List)}
+   * @deprecated should be replaced with {@link #stripTrailingSpaces(com.intellij.openapi.project.Project, boolean, boolean, int[])}
    * once multicaret logic will become unconditional (not controlled by configuration flag)
    */
-  public boolean stripTrailingSpaces(@Nullable final Project project,
-                                     boolean inChangedLinesOnly,
-                                     boolean virtualSpaceEnabled,
-                                     int caretLine,
-                                     int caretOffset) {
+  boolean stripTrailingSpaces(@Nullable final Project project,
+                              boolean inChangedLinesOnly,
+                              boolean virtualSpaceEnabled,
+                              int caretLine,
+                              int caretOffset) {
     if (!isStripTrailingSpacesEnabled) {
       return true;
     }
@@ -230,24 +233,24 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   /**
    * @return true if stripping was completed successfully, false if the document prevented stripping by e.g. caret(s) being in the way
    */
-  public boolean stripTrailingSpaces(@Nullable final Project project,
-                                     boolean inChangedLinesOnly,
-                                     boolean virtualSpaceEnabled,
-                                     @NotNull List<Integer> caretOffsets) {
+  boolean stripTrailingSpaces(@Nullable final Project project,
+                              boolean inChangedLinesOnly,
+                              boolean virtualSpaceEnabled,
+                              @NotNull int[] caretOffsets) {
     if (!isStripTrailingSpacesEnabled) {
       return true;
     }
 
     boolean markAsNeedsStrippingLater = false;
     CharSequence text = myText;
-    TIntObjectHashMap<List<RangeMarker>> caretMarkers = new TIntObjectHashMap<List<RangeMarker>>(caretOffsets.size());
+    TIntObjectHashMap<List<RangeMarker>> caretMarkers = new TIntObjectHashMap<List<RangeMarker>>(caretOffsets.length);
     try {
       if (!virtualSpaceEnabled) {
-        for (Integer caretOffset : caretOffsets) {
-          if (caretOffset == null || caretOffset < 0 || caretOffset > getTextLength()) {
+        for (int caretOffset : caretOffsets) {
+          if (caretOffset < 0 || caretOffset > getTextLength()) {
             continue;
           }
-          Integer line = getLineNumber(caretOffset);
+          int line = getLineNumber(caretOffset);
           List<RangeMarker> markers = caretMarkers.get(line);
           if (markers == null) {
             markers = new ArrayList<RangeMarker>();
@@ -763,6 +766,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       if (LOG.isDebugEnabled()) LOG.debug(event.toString());
 
       getLineSet().changedUpdate(event);
+      if (myTabTrackingRequestors > 0) {
+        updateMightContainTabs(event.getNewFragment());
+      }
       setModificationStamp(newModificationStamp);
 
       if (!ShutDownTracker.isShutdownHookRunning()) {
@@ -1050,5 +1056,30 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   @Override
   public String toString() {
     return "DocumentImpl[" + FileDocumentManager.getInstance().getFile(this) + "]";
+  }
+
+  public void requestTabTracking() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (myTabTrackingRequestors++ == 0) {
+      myMightContainTabs = false;
+      updateMightContainTabs(myText);
+    }
+  }
+
+  public void giveUpTabTracking() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (--myTabTrackingRequestors == 0) {
+      myMightContainTabs = true;
+    }
+  }
+
+  public boolean mightContainTabs() {
+    return myMightContainTabs;
+  }
+
+  private void updateMightContainTabs(CharSequence text) {
+    if (!myMightContainTabs) {
+      myMightContainTabs = StringUtil.contains(text, 0, text.length(), '\t');
+    }
   }
 }

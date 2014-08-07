@@ -18,16 +18,28 @@ package org.jetbrains.plugins.groovy.compiler
 
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
+import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.execution.impl.DefaultJavaProgramRunner
+import com.intellij.execution.process.ProcessAdapter
+import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.ProcessHandler
+import com.intellij.execution.process.ProcessOutputTypes
+import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.compiler.CompilerMessage
 import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
+import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestLoggerFactory
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 
 /**
@@ -822,4 +834,35 @@ class AppTest {
     def messages = make()
     assert messages.find { it.message.contains("Cannot compile Groovy files: no Groovy library is defined for module 'dependent'") }
   }
+
+  public void testGroovyOutputIsInstrumented() {
+    myFixture.addFileToProject("Bar.groovy",
+       "import org.jetbrains.annotations.NotNull; " +
+       "public class Bar {" +
+         "void xxx(@NotNull String param) { println param }\n" +
+         "static void main(String[] args) { new Bar().xxx(null) }"+
+       "}"
+    );
+
+    File annotations = new File(PathManager.getJarPathForClass(NotNull.class));
+    PsiTestUtil.addLibrary(myModule, "annotations", annotations.getParent(), annotations.getName());
+
+    assertEmpty(make());
+
+    final Ref<Boolean> exceptionFound = Ref.create(Boolean.FALSE);
+    ProcessHandler process = runProcess("Bar", myModule, DefaultRunExecutor.class, new ProcessAdapter() {
+      @Override
+      public void onTextAvailable(ProcessEvent event, Key outputType) {
+        if (ProcessOutputTypes.SYSTEM != outputType) {
+          if (!exceptionFound.get()) {
+            exceptionFound.set(event.getText().contains("java.lang.IllegalArgumentException: Argument for @NotNull parameter 'param' of Bar.xxx must not be null"));
+          }
+        }
+      }
+    }, ProgramRunner.PROGRAM_RUNNER_EP.findExtension(DefaultJavaProgramRunner.class));
+    process.waitFor();
+
+    assertTrue(exceptionFound.get());
+  }
+
 }

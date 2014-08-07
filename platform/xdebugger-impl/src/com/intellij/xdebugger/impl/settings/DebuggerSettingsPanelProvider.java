@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,39 @@
 package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.openapi.options.Configurable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 
+@Deprecated
 /**
- * @author nik
+ * @deprecated Use {@link com.intellij.xdebugger.settings.DebuggerConfigurableProvider}
  */
 public abstract class DebuggerSettingsPanelProvider {
+  public int getPriority() {
+    return 0;
+  }
 
-  public abstract int getPriority();
+  @NotNull
+  public Collection<? extends Configurable> getConfigurables() {
+    return Collections.emptyList();
+  }
 
-  public abstract Collection<? extends Configurable> getConfigurables();
-
+  @Deprecated
+  /**
+   * @deprecated Please use {@link com.intellij.xdebugger.settings.DebuggerConfigurableProvider#generalApplied(com.intellij.xdebugger.settings.DebuggerSettingsCategory)}
+   */
   public void apply() {
   }
 
   @Nullable
+  @Deprecated
+  /**
+   * @deprecated Please use {@link com.intellij.xdebugger.settings.DebuggerConfigurableProvider#getConfigurables(com.intellij.xdebugger.settings.DebuggerSettingsCategory)} and
+   * check {@link com.intellij.xdebugger.settings.DebuggerSettingsCategory#GENERAL}
+   */
   public Configurable getRootConfigurable() {
     return null;
   }

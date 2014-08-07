@@ -901,6 +901,20 @@ public class PyUtil {
   }
 
   /**
+   * Returns first child psi element with specified element type or {@code null} if no such element exists.
+   * Semantically it's the same as {@code getChildByFilter(element, TokenSet.create(type), 0)}.
+   *
+   * @param element tree parent node
+   * @param type    element type expected
+   * @return child element described
+   */
+  @Nullable
+  public static PsiElement getFirstChildOfType(@NotNull final PsiElement element, @NotNull PyElementType type) {
+    final ASTNode child = element.getNode().findChildByType(type);
+    return child != null ? child.getPsi() : null;
+  }
+
+  /**
    * If argument is a PsiDirectory, turn it into a PsiFile that points to __init__.py in that directory.
    * If there's no __init__.py there, null is returned, there's no point to resolve to a dir which is not a package.
    * Alas, resolve() and multiResolve() can't return anything but a PyFile or PsiFileImpl.isPsiUpToDate() would fail.
@@ -1643,6 +1657,11 @@ public class PyUtil {
   @NotNull
   public static Collection<PyMemberInfo<PyElement>> filterOutObject(@NotNull final Collection<PyMemberInfo<PyElement>> pyMemberInfos) {
     return Collections2.filter(pyMemberInfos, new ObjectPredicate(false));
+  }
+
+  public static boolean isStarImportableFrom(@NotNull String name, @NotNull PyFile file) {
+    final List<String> dunderAll = file.getDunderAll();
+    return dunderAll != null ? dunderAll.contains(name) : !name.startsWith("_");
   }
 
   /**

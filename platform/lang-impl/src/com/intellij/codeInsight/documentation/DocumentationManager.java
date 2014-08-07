@@ -54,13 +54,17 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.BooleanFunction;
+import com.intellij.util.Consumer;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -257,10 +261,20 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   public void showJavaDocInfo(final Editor editor, @Nullable final PsiFile file, boolean requestFocus) {
-    showJavaDocInfo(editor, file, requestFocus, true);
+    showJavaDocInfo(editor, file, requestFocus, null);
   }
 
-  private void showJavaDocInfo(final Editor editor, @Nullable final PsiFile file, boolean requestFocus, final boolean autoupdate) {
+  public void showJavaDocInfo(final Editor editor,
+                              @Nullable final PsiFile file,
+                              boolean requestFocus,
+                              final Runnable closeCallback) {
+    showJavaDocInfo(editor, file, requestFocus, true, closeCallback);
+  }
+
+  private void showJavaDocInfo(final Editor editor,
+                               @Nullable final PsiFile file,
+                               boolean requestFocus,
+                               final boolean autoupdate, @Nullable final Runnable closeCallback) {
     myEditor = editor;
     final Project project = getProject(file);
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -310,7 +324,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           return;
         }
         if (lookupIteObject instanceof PsiElement) {
-          doShowJavaDocInfo((PsiElement)lookupIteObject, false, this, originalElement, autoupdate);
+          doShowJavaDocInfo((PsiElement)lookupIteObject, false, this, originalElement, autoupdate, closeCallback);
           return;
         }
 
@@ -333,12 +347,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           }
         }
         else {
-          doShowJavaDocInfo(element, false, this, originalElement, autoupdate);
+          doShowJavaDocInfo(element, false, this, originalElement, autoupdate, closeCallback);
         }
       }
     };
 
-    doShowJavaDocInfo(element, requestFocus, updateProcessor, originalElement, autoupdate);
+    doShowJavaDocInfo(element, requestFocus, updateProcessor, originalElement, autoupdate, closeCallback);
   }
 
   public PsiElement findTargetElement(Editor editor, PsiFile file) {
@@ -572,7 +586,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       final PsiReference ref = TargetElementUtilBase.findReference(editor, offset);
       if (ref != null) {
         element = assertSameProject(util.adjustReference(ref));
-        if (element == null && ref instanceof PsiPolyVariantReference) {
+        if (ref instanceof PsiPolyVariantReference) {
           element = assertSameProject(ref.getElement());
         }
       }
@@ -595,16 +609,17 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
         int offset = editor.getCaretModel().getOffset();
         if (offset > 0 && offset == editor.getDocument().getTextLength()) offset--;
-        final PsiElement contextElement = file == null? null : file.findElementAt(offset);
-        final PsiReference ref = TargetElementUtilBase.findReference(editor, offset);
+        PsiReference ref = TargetElementUtilBase.findReference(editor, offset);
+        PsiElement contextElement = file == null? null : file.findElementAt(offset);
+        PsiElement targetElement = ref != null ? ref.getElement() : contextElement;
+        if (targetElement != null) {
+          PsiUtilCore.ensureValid(targetElement);
+        }
 
-        final DocumentationProvider documentationProvider = getProviderFromElement(file);
+        DocumentationProvider documentationProvider = getProviderFromElement(file);
 
-        return documentationProvider.getDocumentationElementForLookupItem(
-          PsiManager.getInstance(myProject),
-          item.getObject(),
-          ref != null ? ref.getElement():contextElement
-        );
+        PsiManager psiManager = PsiManager.getInstance(myProject);
+        return documentationProvider.getDocumentationElementForLookupItem(psiManager, item.getObject(), targetElement);
       }
     }
     return null;
@@ -964,7 +979,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   
   @Override
   protected void doUpdateComponent(Editor editor, PsiFile psiFile) {
-    showJavaDocInfo(editor, psiFile, false, true);
+    showJavaDocInfo(editor, psiFile, false, true, null);
   }
 
   @Override

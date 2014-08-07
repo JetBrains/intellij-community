@@ -26,7 +26,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LeakHunter;
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.ui.UIUtil;
@@ -34,9 +34,9 @@ import com.intellij.util.ui.UIUtil;
 /**
  * User: cdr
  */
-public class UsageViewTest extends LightPlatformCodeInsightTestCase{
+public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
   public void testUsageViewDoesNotHoldPsiFilesOrDocuments() throws Exception {
-    PsiFile psiFile = createFile("X.java", "public class X{} //iuggjhfg");
+    PsiFile psiFile = myFixture.addFileToProject("X.java", "public class X{} //iuggjhfg");
     Usage[] usages = new Usage[100];
     for (int i = 0; i < usages.length; i++) {
       usages[i] = createUsage(psiFile,i);
@@ -55,7 +55,7 @@ public class UsageViewTest extends LightPlatformCodeInsightTestCase{
   }
 
   public void testUsageViewHandlesDocumentChange() throws Exception {
-    PsiFile psiFile = createFile("X.java", "public class X{ int xxx; } //comment");
+    PsiFile psiFile = myFixture.addFileToProject("X.java", "public class X{ int xxx; } //comment");
     Usage usage = createUsage(psiFile, psiFile.getText().indexOf("xxx"));
 
     UsageView usageView = UsageViewManager.getInstance(getProject()).createUsageView(UsageTarget.EMPTY_ARRAY, new Usage[]{usage}, new UsageViewPresentation(), null);
@@ -69,7 +69,7 @@ public class UsageViewTest extends LightPlatformCodeInsightTestCase{
     assertEquals(psiFile.getText().indexOf("xxx"), navigationOffset);
   }
   public void testTextUsageInfoHandlesDocumentChange() throws Exception {
-    PsiFile psiFile = createFile("X.java", "public class X{ int xxx; } //comment");
+    PsiFile psiFile = myFixture.addFileToProject("X.java", "public class X{ int xxx; } //comment");
     Usage usage = new UsageInfo2UsageAdapter(new UsageInfo(psiFile, psiFile.getText().indexOf("xxx"), StringUtil.indexOfSubstringEnd(psiFile.getText(),"xxx")));
 
     UsageView usageView = UsageViewManager.getInstance(getProject()).createUsageView(UsageTarget.EMPTY_ARRAY, new Usage[]{usage}, new UsageViewPresentation(), null);

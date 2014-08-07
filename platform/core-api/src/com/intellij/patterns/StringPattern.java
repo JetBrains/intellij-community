@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
     return with(new PatternCondition<String>("startsWith") {
       @Override
       public boolean accepts(@NotNull final String str, final ProcessingContext context) {
-        return str.startsWith(s);
+        return StringUtil.startsWith(str, s);
       }
     });
   }
@@ -66,7 +66,7 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
     return with(new PatternCondition<String>("endsWith") {
       @Override
       public boolean accepts(@NotNull final String str, final ProcessingContext context) {
-        return str.endsWith(s);
+        return StringUtil.endsWith(str, s);
       }
     });
   }
@@ -76,9 +76,8 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
     return with(new PatternCondition<String>("contains") {
       @Override
       public boolean accepts(@NotNull final String str, final ProcessingContext context) {
-        return str.contains(s);
+        return StringUtil.contains(str, s);
       }
-
     });
   }
 
@@ -87,10 +86,7 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
     return with(new PatternCondition<String>("containsChars") {
       @Override
       public boolean accepts(@NotNull final String str, final ProcessingContext context) {
-        for (int i=0, len=s.length(); i<len; i++) {
-          if (str.indexOf(s.charAt(i))>-1) return true;
-        }
-        return false;
+        return StringUtil.containsAnyChar(str, s);
       }
     });
   }
@@ -178,6 +174,7 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
       }
     });
   }
+
   public StringPattern shorterThan(final int maxLength) {
     return with(new PatternCondition<String>("shorterThan") {
       @Override
@@ -186,6 +183,7 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
       }
     });
   }
+
   public StringPattern withLength(final int length) {
     return with(new PatternCondition<String>("withLength") {
       @Override

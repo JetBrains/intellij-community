@@ -34,6 +34,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -264,11 +265,11 @@ public class EditorWindow {
   }
 
   public void closeFile(final VirtualFile file) {
-    closeFile (file, true);
+    closeFile(file, true);
   }
 
-  public void closeFile(final VirtualFile file, final boolean unsplit) {
-    closeFile(file, unsplit, true);
+  public void closeFile(final VirtualFile file, final boolean disposeIfNeeded) {
+    closeFile(file, disposeIfNeeded, true);
   }
 
   public boolean hasClosedTabs() {
@@ -286,7 +287,7 @@ public class EditorWindow {
     }
   }
 
-  public void closeFile(final VirtualFile file, final boolean unsplit, final boolean transferFocus) {
+  public void closeFile(final VirtualFile file, final boolean disposeIfNeeded, final boolean transferFocus) {
     final FileEditorManagerImpl editorManager = getManager();
     editorManager.runChange(new FileEditorManagerChange() {
       @Override
@@ -317,13 +318,25 @@ public class EditorWindow {
             }
           }
 
-          if (unsplit && getTabCount() == 0) {
-            unsplit (true);
+          if (disposeIfNeeded && getTabCount() == 0) {
+            removeFromSplitter();
+            if (UISettings.getInstance().EDITOR_TAB_PLACEMENT == UISettings.TABS_NONE) {
+              final EditorsSplitters owner = getOwner();
+              if (owner != null) {
+                final ThreeComponentsSplitter splitter = UIUtil.getParentOfType(ThreeComponentsSplitter.class, owner);
+                if (splitter != null) {
+                  splitter.revalidate();
+                  splitter.repaint();
+                }
+              }
+            }
           }
-          myPanel.revalidate ();
-          if (myTabbedPane == null) {
-            // in tabless mode
-            myPanel.repaint();
+          else {
+            myPanel.revalidate();
+            if (myTabbedPane == null) {
+              // in tabless mode
+              myPanel.repaint();
+            }
           }
         }
         finally {
@@ -345,6 +358,39 @@ public class EditorWindow {
         }
       }
     }, myOwner);
+  }
+
+  private void removeFromSplitter() {
+    if (!inSplitter()) return;
+
+    if (myOwner.getCurrentWindow() == this) {
+      EditorWindow[] siblings = findSiblings();
+      myOwner.setCurrentWindow(siblings[0], false);
+    }
+
+    Splitter splitter = (Splitter)myPanel.getParent();
+    JComponent otherComponent = splitter.getOtherComponent(myPanel);
+
+    Container parent = splitter.getParent().getParent();
+    if (parent instanceof Splitter) {
+      Splitter parentSplitter = (Splitter)parent;
+      if (parentSplitter.getFirstComponent() == splitter.getParent()) {
+        parentSplitter.setFirstComponent(otherComponent);
+      }
+      else {
+        parentSplitter.setSecondComponent(otherComponent);
+      }
+    }
+    else if (parent instanceof EditorsSplitters) {
+      parent.removeAll();
+      parent.add(otherComponent, BorderLayout.CENTER);
+      ((JComponent)parent).revalidate();
+    }
+    else {
+      throw new IllegalStateException("Unknown container: " + parent);
+    }
+
+    dispose();
   }
 
   private int calcIndexToSelect(VirtualFile fileBeingClosed, final int fileIndex) {
@@ -416,6 +462,10 @@ public class EditorWindow {
     if (myTabbedPane != null) {
       myTabbedPane.setTitleAt(index, text);
     }
+  }
+
+  private boolean isTitleShortenedAt(int index) {
+    return myTabbedPane != null && myTabbedPane.isTitleShortened(index);
   }
 
   private void setBackgroundColorAt(final int index, final Color color) {
@@ -862,7 +912,9 @@ public class EditorWindow {
     final int index = findEditorIndex(findFileComposite(file));
     if (index != -1) {
       setTitleAt(index, EditorTabbedContainer.calcTabTitle(getManager().getProject(), file));
-      setToolTipTextAt(index, UISettings.getInstance().SHOW_TABS_TOOLTIPS ? getManager().getFileTooltipText(file) : null);
+      setToolTipTextAt(index, UISettings.getInstance().SHOW_TABS_TOOLTIPS || isTitleShortenedAt(index)
+                              ? getManager().getFileTooltipText(file)
+                              : null);
     }
   }
 

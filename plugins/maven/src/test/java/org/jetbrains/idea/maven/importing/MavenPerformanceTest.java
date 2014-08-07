@@ -19,6 +19,7 @@ import com.intellij.idea.Bombed;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.util.Calendar;
@@ -34,7 +35,7 @@ public abstract class MavenPerformanceTest extends MavenImportingTestCase {
     super.setUp();
     VirtualFile file = LocalFileSystem.getInstance().findFileByPath("C:\\projects\\mvn\\_projects\\geronimo\\pom.xml");
     initProjectsManager(false);
-    myProjectsManager.resetManagedFilesAndProfilesInTests(Collections.singletonList(file), Collections.<String>emptyList());
+    myProjectsManager.resetManagedFilesAndProfilesInTests(Collections.singletonList(file), MavenExplicitProfiles.NONE);
   }
 
   public void testReading() throws Exception {

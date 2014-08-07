@@ -19,16 +19,15 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
-import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
-import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
+import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 
 import javax.swing.*;
 
 public class ConflictedSvnChange extends Change {
   private final ConflictState myConflictState;
   // also used if not move/rename
-  private SVNTreeConflictDescription myBeforeDescription;
-  private SVNTreeConflictDescription myAfterDescription;
+  private TreeConflictDescription myBeforeDescription;
+  private TreeConflictDescription myAfterDescription;
   // +-
   private final FilePath myTreeConflictMarkHolder;
   private boolean myIsPhantom;
@@ -66,19 +65,19 @@ public class ConflictedSvnChange extends Change {
     return myIsPhantom;
   }
 
-  public SVNTreeConflictDescription getBeforeDescription() {
+  public TreeConflictDescription getBeforeDescription() {
     return myBeforeDescription;
   }
 
-  public void setBeforeDescription(SVNTreeConflictDescription beforeDescription) {
+  public void setBeforeDescription(TreeConflictDescription beforeDescription) {
     myBeforeDescription = beforeDescription;
   }
 
-  public SVNTreeConflictDescription getAfterDescription() {
+  public TreeConflictDescription getAfterDescription() {
     return myAfterDescription;
   }
 
-  public void setAfterDescription(SVNTreeConflictDescription afterDescription) {
+  public void setAfterDescription(TreeConflictDescription afterDescription) {
     myAfterDescription = afterDescription;
   }
 
@@ -97,14 +96,14 @@ public class ConflictedSvnChange extends Change {
         if (myAfterDescription != null) {
           sb.append("before: ");
         }
-        sb.append(SVNTreeConflictUtil.getHumanReadableConflictDescription(myBeforeDescription));
+        sb.append(myBeforeDescription.toPresentableString());
       }
       if (myAfterDescription != null) {
         sb.append('\n');
         if (myBeforeDescription != null) {
           sb.append("after: ");
         }
-        sb.append(SVNTreeConflictUtil.getHumanReadableConflictDescription(myAfterDescription));
+        sb.append(myAfterDescription.toPresentableString());
       }
       return sb.toString();
     }

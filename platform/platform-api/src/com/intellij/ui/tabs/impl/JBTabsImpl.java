@@ -930,7 +930,7 @@ public class JBTabsImpl extends JComponent
 
 
     if (isShowing()) {
-      return myFocusManager.requestFocus(new FocusCommand.ByComponent(toFocus), true);
+      return myFocusManager.requestFocus(new FocusCommand.ByComponent(toFocus, new Exception()), true);
     }
     else {
       final ActionCallback result = new ActionCallback();
@@ -948,7 +948,7 @@ public class JBTabsImpl extends JComponent
         @Override
         public void run() {
           queued.set(true);
-          requestor.requestFocus(new FocusCommand.ByComponent(toFocus), true).notify(result);
+          requestor.requestFocus(new FocusCommand.ByComponent(toFocus, new Exception()), true).notify(result);
         }
       };
       return result;
@@ -1260,6 +1260,10 @@ public class JBTabsImpl extends JComponent
     }
 
     return null;
+  }
+
+  public boolean isAlphabeticalMode() {
+    return false;
   }
 
   @Nullable
@@ -1653,19 +1657,13 @@ public class JBTabsImpl extends JComponent
 
     config.setAntialiasing(false);
 
-    if (isSideComponentVertical()) {
-      Toolbar toolbarComp = myInfo2Toolbar.get(mySelectedInfo);
-      if (toolbarComp != null && !toolbarComp.isEmpty()) {
-        Rectangle toolBounds = toolbarComp.getBounds();
-        g2d.setColor(CaptionPanel.CNT_ACTIVE_BORDER_COLOR);
+    Toolbar toolbarComp = myInfo2Toolbar.get(mySelectedInfo);
+    if (toolbarComp != null && !toolbarComp.isEmpty()) {
+      Rectangle toolBounds = toolbarComp.getBounds();
+      g2d.setColor(CaptionPanel.CNT_ACTIVE_BORDER_COLOR);
+      if (isSideComponentVertical()) {
         g2d.drawLine((int)toolBounds.getMaxX(), toolBounds.y, (int)toolBounds.getMaxX(), (int)toolBounds.getMaxY() - 1);
-      }
-    }
-    else if (!isSideComponentOnTabs()) {
-      Toolbar toolbarComp = myInfo2Toolbar.get(mySelectedInfo);
-      if (toolbarComp != null && !toolbarComp.isEmpty()) {
-        Rectangle toolBounds = toolbarComp.getBounds();
-        g2d.setColor(CaptionPanel.CNT_ACTIVE_BORDER_COLOR);
+      } else if (!isSideComponentOnTabs()) {
         g2d.drawLine(toolBounds.x, (int)toolBounds.getMaxY(), (int)toolBounds.getMaxX() - 1, (int)toolBounds.getMaxY());
       }
     }

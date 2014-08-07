@@ -18,7 +18,6 @@ package org.jetbrains.idea.svn.dialogs;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
@@ -37,11 +36,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.dialogs.browserCache.Expander;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
-import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -78,10 +76,26 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
   }
 
   public void setRepositoryURLs(SVNURL[] urls, final boolean showFiles) {
+    setRepositoryURLs(urls, showFiles, null, false);
+  }
+
+  public void setRepositoryURLs(SVNURL[] urls,
+                                final boolean showFiles,
+                                @Nullable NotNullFunction<RepositoryBrowserComponent, Expander> defaultExpanderFactory,
+                                boolean expandFirst) {
     RepositoryTreeModel model = new RepositoryTreeModel(myVCS, showFiles, this);
+
+    if (defaultExpanderFactory != null) {
+      model.setDefaultExpanderFactory(defaultExpanderFactory);
+    }
+
     model.setRoots(urls);
     Disposer.register(this, model);
     myRepositoryTree.setModel(model);
+
+    if (expandFirst) {
+      myRepositoryTree.expandRow(0);
+    }
   }
 
   public void setRepositoryURL(SVNURL url, boolean showFiles, final NotNullFunction<RepositoryBrowserComponent, Expander> defaultExpanderFactory) {
@@ -152,7 +166,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
   }
 
   @Nullable
-  public SVNDirEntry getSelectedEntry() {
+  public DirectoryEntry getSelectedEntry() {
     TreePath selection = myRepositoryTree.getSelectionPath();
     if (selection == null) {
       return null;
@@ -241,8 +255,8 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
     final RepositoryTreeNode node = getSelectedNode();
     if (node == null) return null;
 
-    SVNDirEntry entry = node.getSVNDirEntry();
-    if (entry == null || entry.getKind() != SVNNodeKind.FILE) {
+    DirectoryEntry entry = node.getSVNDirEntry();
+    if (entry == null || !entry.isFile()) {
       return null;
     }
 

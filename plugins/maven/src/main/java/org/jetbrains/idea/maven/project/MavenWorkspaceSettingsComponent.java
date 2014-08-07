@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 
 @State(name = "MavenImportPreferences", storages = {@Storage( file = StoragePathMacros.WORKSPACE_FILE)})
 public class MavenWorkspaceSettingsComponent implements PersistentStateComponent<MavenWorkspaceSettings> {
@@ -35,7 +36,9 @@ public class MavenWorkspaceSettingsComponent implements PersistentStateComponent
 
   @NotNull
   public MavenWorkspaceSettings getState() {
-    mySettings.setEnabledProfiles(MavenProjectsManager.getInstance(myProject).getExplicitProfiles());
+    MavenExplicitProfiles profiles = MavenProjectsManager.getInstance(myProject).getExplicitProfiles();
+    mySettings.setEnabledProfiles(profiles.getEnabledProfiles());
+    mySettings.setDisabledProfiles(profiles.getDisabledProfiles());
     return mySettings;
   }
 

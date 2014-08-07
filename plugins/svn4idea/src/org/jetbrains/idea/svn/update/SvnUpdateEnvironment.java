@@ -24,9 +24,9 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
-import org.tmatesoft.svn.core.SVNException;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
@@ -70,7 +70,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
       progress.setText(SvnBundle.message("progress.text.updating", root.getAbsolutePath()));
     }
 
-    protected long doUpdate(final File root) throws SVNException {
+    protected long doUpdate(final File root) throws SvnBindException {
       final long rev;
 
       final SvnConfiguration configuration = SvnConfiguration.getInstance(myVcs.getProject());
@@ -113,7 +113,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
 
   @Nullable
   private static SVNURL getSourceUrl(final SvnVcs vcs, final File root) {
-    final SVNInfo svnInfo = vcs.getInfo(root);
+    final Info svnInfo = vcs.getInfo(root);
     return svnInfo != null ? svnInfo.getURL() : null;
   }
 
@@ -140,7 +140,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
         }
       }
     }
-    catch (SVNException e) {
+    catch (SvnBindException e) {
       Messages.showErrorDialog(myVcs.getProject(), e.getMessage(), SvnBundle.message("switch.target.problem.title"));
       return false;
     }*/
@@ -148,7 +148,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
     return true;
   }
 
-  private SVNRevision correctRevision(@NotNull UpdateRootInfo value) throws SVNException {
+  private SVNRevision correctRevision(@NotNull UpdateRootInfo value) throws SvnBindException {
     if (SVNRevision.HEAD.equals(value.getRevision())) {
       // find acual revision to update to (a bug if just say head in switch)
       value.setRevision(SvnUtil.getHeadRevision(myVcs, value.getUrl()));
@@ -157,9 +157,9 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
   }
 
   // false - do not do update
-  private boolean checkAncestry(final File sourceFile, final SVNURL targetUrl, final SVNRevision targetRevision) throws SVNException {
-    final SVNInfo sourceSvnInfo = myVcs.getInfo(sourceFile);
-    final SVNInfo targetSvnInfo = myVcs.getInfo(targetUrl, targetRevision);
+  private boolean checkAncestry(final File sourceFile, final SVNURL targetUrl, final SVNRevision targetRevision) throws SvnBindException {
+    final Info sourceSvnInfo = myVcs.getInfo(sourceFile);
+    final Info targetSvnInfo = myVcs.getInfo(targetUrl, targetRevision);
 
     if (sourceSvnInfo == null || targetSvnInfo == null) {
       // cannot check

@@ -194,7 +194,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     final SearchScope searchScope = new GlobalSearchScope(refManager.getProject()) {
       @Override
       public boolean contains(@NotNull VirtualFile file) {
-        return !scope.contains(file) || file.getFileType() != StdFileTypes.JAVA;
+        return scope != null && !scope.contains(file) || file.getFileType() != StdFileTypes.JAVA;
       }
 
       @Override
@@ -394,7 +394,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
       @Override
       public boolean execute(PsiReference reference) {
         AnalysisScope scope = context.getRefManager().getScope();
-        if (scope.contains(reference.getElement()) && reference.getElement().getLanguage() == StdLanguages.JAVA ||
+        if (scope != null && scope.contains(reference.getElement()) && reference.getElement().getLanguage() == StdLanguages.JAVA ||
             PsiTreeUtil.getParentOfType(reference.getElement(), PsiDocComment.class) != null) {
           return true;
         }

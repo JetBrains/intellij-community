@@ -1,0 +1,345 @@
+<root>
+  <item name="java.awt.Component boolean action(java.awt.Event, java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null,_-&gt;false;_,!null-&gt;false;_,null-&gt;false;null,_-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="java.awt.Component boolean contains(java.awt.Point) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Component boolean dispatchMouseWheelToAncestor(java.awt.event.MouseWheelEvent) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Component boolean dispatchMouseWheelToAncestor(java.awt.event.MouseWheelEvent)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null-&gt;true&quot;"/>
+    </annotation>
+  </item>
+  <item name="java.awt.Component boolean eventEnabled(java.awt.AWTEvent) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Component boolean gotFocus(java.awt.Event, java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null,_-&gt;false;_,!null-&gt;false;_,null-&gt;false;null,_-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="java.awt.Component boolean handleEvent(java.awt.Event) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Component boolean keyDown(java.awt.Event, int)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null,_-&gt;false;null,_-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="java.awt.Component boolean keyUp(java.awt.Event, int)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null,_-&gt;false;null,_-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="java.awt.Component boolean lostFocus(java.awt.Event, java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null,_-&gt;false;_,!null-&gt;false;_,null-&gt;false;null,_-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="java.awt.Component boolean mouseDown(java.awt.Event, int, int)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null,_,_-&gt;false;null,_,_-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="java.awt.Component boolean mouseDrag(java.awt.Event, int, int)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null,_,_-&gt;false;null,_,_-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="java.awt.Component boolean mouseEnter(java.awt.Event, int, int)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null,_,_-&gt;false;null,_,_-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="java.awt.Component boolean mouseExit(java.awt.Event, int, int)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null,_,_-&gt;false;null,_,_-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="java.awt.Component boolean mouseMove(java.awt.Event, int, int)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null,_,_-&gt;false;null,_,_-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="java.awt.Component boolean mouseUp(java.awt.Event, int, int)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null,_,_-&gt;false;null,_,_-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="java.awt.Component boolean postEvent(java.awt.Event) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Component java.awt.AWTEvent coalesceEvents(java.awt.AWTEvent, java.awt.AWTEvent) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Component java.awt.AWTEvent coalesceEvents(java.awt.AWTEvent, java.awt.AWTEvent)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;_,null-&gt;null&quot;"/>
+    </annotation>
+  </item>
+  <item name="java.awt.Component java.awt.Component findUnderMouseInWindow(java.awt.PointerInfo)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;null&quot;"/>
+    </annotation>
+  </item>
+  <item name="java.awt.Component java.awt.Component getComponentAt(java.awt.Point) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Component java.awt.Dimension getMaximumSize()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Component java.awt.Dimension getSize(java.awt.Dimension)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
+    </annotation>
+  </item>
+  <item name="java.awt.Component java.awt.Dimension minimumSize()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Component java.awt.Dimension preferredSize()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Component java.awt.Dimension size()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Component java.awt.Point getLocation(java.awt.Point)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
+    </annotation>
+  </item>
+  <item name="java.awt.Component java.awt.Point location()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Component java.awt.Point pointRelativeToComponent(java.awt.Point) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Component java.awt.Point pointRelativeToComponent(java.awt.Point)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Component java.awt.Rectangle bounds()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Component java.awt.Rectangle getBounds(java.awt.Rectangle)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
+    </annotation>
+  </item>
+  <item name="java.awt.Component java.awt.Window getContainingWindow(java.awt.Component)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;null&quot;"/>
+    </annotation>
+  </item>
+  <item name="java.awt.Component java.lang.String paramString()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Component java.lang.String toString()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Component javax.accessibility.AccessibleStateSet getAccessibleStateSet()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Component void add(java.awt.PopupMenu) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Component void applyComponentOrientation(java.awt.ComponentOrientation) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Component void createBufferStrategy(int, java.awt.BufferCapabilities) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Component void dispatchEventImpl(java.awt.AWTEvent) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Component void list(java.io.PrintStream, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Component void list(java.io.PrintWriter, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Component void readObject(java.io.ObjectInputStream) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Component void resize(java.awt.Dimension) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Component void setBounds(java.awt.Rectangle) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Component void setLocation(java.awt.Point) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Component void writeObject(java.io.ObjectOutputStream) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Component.FlipBufferStrategy FlipBufferStrategy(java.awt.Component, int, java.awt.BufferCapabilities) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Component.FlipBufferStrategy void createBuffers(int, java.awt.BufferCapabilities) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Container boolean eventEnabled(java.awt.AWTEvent) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Container boolean isAncestorOf(java.awt.Component)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="java.awt.Container boolean isRemoveNotifyNeeded(java.awt.Component, java.awt.Container, java.awt.Container)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;_,_,null-&gt;false;_,null,_-&gt;false;null,_,_-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="java.awt.Container java.awt.Component add(java.awt.Component)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
+    </annotation>
+  </item>
+  <item name="java.awt.Container java.awt.Component add(java.awt.Component, int)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null,_-&gt;!null;null,_-&gt;null&quot;"/>
+    </annotation>
+  </item>
+  <item name="java.awt.Container java.awt.Component add(java.lang.String, java.awt.Component)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;_,!null-&gt;!null;_,null-&gt;null&quot;"/>
+    </annotation>
+  </item>
+  <item name="java.awt.Container java.awt.Component findComponentAt(java.awt.Point) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Container java.awt.Component getComponentAt(java.awt.Point) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Container java.awt.Component[] getComponents()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Container java.awt.Component[] getComponents_NoClientCode()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Container java.lang.String paramString()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Container void addDelicately(java.awt.Component, java.awt.Container, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Container void addImpl(java.awt.Component, java.lang.Object, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Container void applyComponentOrientation(java.awt.ComponentOrientation) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Container void checkAdding(java.awt.Component, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Container void deliverEvent(java.awt.Event) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Container void dispatchEventImpl(java.awt.AWTEvent) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Container void dispatchEventToSelf(java.awt.AWTEvent) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Container void list(java.io.PrintStream, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Container void list(java.io.PrintWriter, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Container void readObject(java.io.ObjectInputStream) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Container void remove(java.awt.Component) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Container void removeDelicately(java.awt.Component, java.awt.Container, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Container void reparentTraverse(java.awt.peer.ContainerPeer, java.awt.Container) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Container void setComponentZOrder(java.awt.Component, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Container void writeObject(java.io.ObjectOutputStream) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Dimension Dimension(java.awt.Dimension) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Dimension boolean equals(java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="java.awt.Dimension java.awt.Dimension getSize()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Dimension java.lang.String toString()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Dimension void setSize(java.awt.Dimension) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Frame java.lang.String constructComponentName()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Frame void readObject(java.io.ObjectInputStream) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Frame void writeObject(java.io.ObjectOutputStream) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Window Window(java.awt.Frame) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Window Window(java.awt.Window) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Window Window(java.awt.Window, java.awt.GraphicsConfiguration) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Window boolean dispatchMouseWheelToAncestor(java.awt.event.MouseWheelEvent)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null-&gt;false;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="java.awt.Window boolean eventEnabled(java.awt.AWTEvent) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Window boolean postEvent(java.awt.Event)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="java.awt.Window java.lang.Object access$000(java.awt.Window) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Window java.lang.String constructComponentName()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Window void connectOwnedWindow(java.awt.Window) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Window void dispatchEventImpl(java.awt.AWTEvent) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Window void ownedInit(java.awt.Window) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Window void preProcessKeyEvent(java.awt.event.KeyEvent) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Window void readObject(java.io.ObjectInputStream) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Window void writeObject(java.io.ObjectOutputStream) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+</root>

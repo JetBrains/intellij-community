@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
@@ -92,9 +93,9 @@ public class TestVcsLogProvider implements VcsLogProvider {
     return ContainerUtil.map(myCommits.subList(0, requirements.getCommitCount()), myCommitToMetadataConvertor);
   }
 
-  @NotNull
   @Override
-  public List<TimedVcsCommit> readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<VcsUser> userRegistry) throws VcsException {
+  public void readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<VcsUser> userRegistry,
+                            @NotNull Consumer<TimedVcsCommit> commitConsumer) throws VcsException {
     try {
       myFullLogSemaphore.acquire();
     }
@@ -102,7 +103,9 @@ public class TestVcsLogProvider implements VcsLogProvider {
       throw new RuntimeException(e);
     }
     assertRoot(root);
-    return myCommits;
+    for (TimedVcsCommit commit : myCommits) {
+      commitConsumer.consume(commit);
+    }
   }
 
   private void assertRoot(@NotNull VirtualFile root) {
@@ -200,8 +203,13 @@ public class TestVcsLogProvider implements VcsLogProvider {
   private static class MockRefManager implements VcsLogRefManager {
     @NotNull
     @Override
-    public List<VcsRef> sort(Collection<VcsRef> refs) {
-      return ContainerUtil.newArrayList(refs);
+    public Comparator<VcsRef> getComparator() {
+      return new Comparator<VcsRef>() {
+        @Override
+        public int compare(VcsRef o1, VcsRef o2) {
+          return 0;
+        }
+      };
     }
 
     @NotNull

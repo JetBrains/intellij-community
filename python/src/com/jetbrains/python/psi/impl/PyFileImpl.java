@@ -477,8 +477,9 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     if (starImportSource != null) {
       starImportSource = PyUtil.turnDirIntoInit(starImportSource);
       if (starImportSource instanceof PyFile) {
-        final PsiElement result = ((PyFile)starImportSource).getElementNamed(name);
-        if (result != null) {
+        final PyFile file = (PyFile)starImportSource;
+        final PsiElement result = file.getElementNamed(name);
+        if (result != null && PyUtil.isStarImportableFrom(name, file)) {
           return result;
         }
       }

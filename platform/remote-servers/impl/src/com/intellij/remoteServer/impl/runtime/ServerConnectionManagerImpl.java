@@ -20,8 +20,6 @@ import java.util.Map;
  */
 public class ServerConnectionManagerImpl extends ServerConnectionManager {
 
-  private static final int POLL_DEPLOYMENTS_DELAY = 2000;
-
   private final Map<RemoteServer<?>, ServerConnection> myConnections = new HashMap<RemoteServer<?>, ServerConnection>();
   private final ServerConnectionEventDispatcher myEventDispatcher = new ServerConnectionEventDispatcher();
 
@@ -34,27 +32,8 @@ public class ServerConnectionManagerImpl extends ServerConnectionManager {
       connection = doCreateConnection(server, this);
       myConnections.put(server, connection);
       myEventDispatcher.fireConnectionCreated(connection);
-      pollDeployments(connection);
     }
     return connection;
-  }
-
-  private void pollDeployments(final ServerConnection connection) {
-    connection.computeDeployments(new Runnable() {
-
-      @Override
-      public void run() {
-        new Alarm().addRequest(new Runnable() {
-
-          @Override
-          public void run() {
-            if (connection == getConnection(connection.getServer())) {
-              pollDeployments(connection);
-            }
-          }
-        }, POLL_DEPLOYMENTS_DELAY, ModalityState.any());
-      }
-    });
   }
 
   @NotNull

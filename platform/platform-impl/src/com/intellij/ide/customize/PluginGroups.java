@@ -17,6 +17,7 @@ package com.intellij.ide.customize;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.RepositoryHelper;
 import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.application.PathManager;
@@ -58,14 +59,14 @@ class PluginGroups {
   }
 
   private PluginGroups() {
-    myAllPlugins = PluginManager.loadDescriptors(null);
+    myAllPlugins = PluginManagerCore.loadDescriptors(null);
     try {
       myPluginsFromRepository.addAll(RepositoryHelper.loadPluginsFromRepository(null));
     }
     catch (Exception e) {
       //OK, it's offline
     }
-    PluginManager.loadDisabledPlugins(new File(PathManager.getConfigPath()).getPath(), myDisabledPluginIds);
+    PluginManagerCore.loadDisabledPlugins(new File(PathManager.getConfigPath()).getPath(), myDisabledPluginIds);
 
 
     myTree.put(CORE, Pair.create((String)null, Arrays.asList(
@@ -74,7 +75,6 @@ class PluginGroups {
       "org.intellij.intelliLang",
       "com.intellij.properties",
       "Refactor-X",//?
-      "Structural Search",
       "Type Migration",
       "ZKM"
     )));

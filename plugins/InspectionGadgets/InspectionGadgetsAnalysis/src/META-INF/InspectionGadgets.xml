@@ -408,6 +408,10 @@
                      key="class.name.differs.from.file.name.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.classlayout.ClassNameDiffersFromFileNameInspection"/>
+    <localInspection language="JAVA" shortName="ClassWithOnlyPrivateConstructors" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="class.with.only.private.constructors.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.classlayout.ClassWithOnlyPrivateConstructorsInspection"/>
     <localInspection language="JAVA" shortName="ConstantDeclaredInAbstractClass" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="constant.declared.in.abstract.class.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING"
@@ -1205,6 +1209,10 @@
                      key="field.has.setter.but.no.getter.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.javabeans.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.javabeans.FieldHasSetterButNoGetterInspection"/>
+    <localInspection language="JAVA" shortName="PropertyValueSetToItself" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="property.value.set.to.itself.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.javabeans.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.javabeans.PropertyValueSetToItselfInspection"/>
 
     <!--group.names.javadoc.issues-->
     <localInspection language="JAVA" shortName="HtmlTagCanBeJavadocTag" bundle="com.siyeh.InspectionGadgetsBundle"

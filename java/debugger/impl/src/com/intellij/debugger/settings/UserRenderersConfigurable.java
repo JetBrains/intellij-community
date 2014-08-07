@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,17 +20,12 @@ import com.intellij.debugger.ui.tree.render.CompoundNodeRenderer;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.InternalIterator;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -40,56 +35,28 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Eugene Zhuravlev
- *         Date: Feb 19, 2005
- */
-public class UserRenderersConfigurable implements SearchableConfigurable, Configurable.NoScroll {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.settings.UserRenderersConfigurable");
+public final class UserRenderersConfigurable extends JPanel implements ConfigurableUi<NodeRendererSettings> {
   private static final Icon ADD_ICON = IconUtil.getAddIcon();
   private static final Icon REMOVE_ICON = IconUtil.getRemoveIcon();
   private static final Icon COPY_ICON = PlatformIcons.COPY_ICON;
   private static final Icon UP_ICON = IconUtil.getMoveUpIcon();
   private static final Icon DOWN_ICON = IconUtil.getMoveDownIcon();
 
-  private JPanel myNameFieldPanel;
-  private JTextField myNameField;
-  private ElementsChooser<NodeRenderer> myRendererChooser;
+  private final JPanel myNameFieldPanel;
+  private final JTextField myNameField;
+  private final ElementsChooser<NodeRenderer> myRendererChooser;
   private NodeRenderer myCurrentRenderer = null;
-  private final CompoundRendererConfigurable myRendererDataConfigurable;
+  private final CompoundRendererConfigurable myRendererDataConfigurable = new CompoundRendererConfigurable();
 
-  public UserRenderersConfigurable(@Nullable Project project) {
-    myRendererDataConfigurable = new CompoundRendererConfigurable(project);
-  }
+  public UserRenderersConfigurable() {
+    super(new BorderLayout(4, 0));
 
-  public String getDisplayName() {
-    return DebuggerBundle.message("user.renderers.configurable.display.name");
-  }
+    myRendererChooser = new ElementsChooser<NodeRenderer>(true);
+    setupRenderersList();
 
-  public String getHelpTopic() {
-    return "reference.idesettings.debugger.typerenderers"; 
-  }
-
-  @NotNull
-  public String getId() {
-    return getHelpTopic();
-  }
-
-  public Runnable enableSearch(String option) {
-    return null;
-  }
-
-  public JComponent createComponent() {
-    final JPanel panel = new JPanel(new BorderLayout(4, 0));
-
-    final JComponent renderersList = createRenderersList();
-    final JComponent toolbar = createToolbar();
-    final JComponent rendererDataPanel = myRendererDataConfigurable.createComponent();
-
-    final JPanel left = new JPanel(new BorderLayout());
-
-    left.add(toolbar, BorderLayout.NORTH);
-    left.add(renderersList, BorderLayout.CENTER);
+    JPanel left = new JPanel(new BorderLayout());
+    left.add(createToolbar(), BorderLayout.NORTH);
+    left.add(myRendererChooser, BorderLayout.CENTER);
 
     myNameField = new JTextField();
     myNameFieldPanel = new JPanel(new BorderLayout());
@@ -98,11 +65,11 @@ public class UserRenderersConfigurable implements SearchableConfigurable, Config
     myNameFieldPanel.setVisible(false);
 
     final JPanel center = new JPanel(new BorderLayout(0, 4));
-
     center.add(myNameFieldPanel, BorderLayout.NORTH);
-    center.add(rendererDataPanel, BorderLayout.CENTER);
+    center.add(myRendererDataConfigurable, BorderLayout.CENTER);
 
     myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       protected void textChanged(DocumentEvent e) {
         if (myCurrentRenderer != null) {
           myCurrentRenderer.setName(myNameField.getText());
@@ -111,34 +78,38 @@ public class UserRenderersConfigurable implements SearchableConfigurable, Config
       }
     });
 
-    panel.add(left, BorderLayout.WEST);
-    panel.add(center, BorderLayout.CENTER);
-
-    return panel;
+    add(left, BorderLayout.WEST);
+    add(center, BorderLayout.CENTER);
   }
 
-  private JComponent createRenderersList() {
-    myRendererChooser = new ElementsChooser<NodeRenderer>(true);
+  @Override
+  @NotNull
+  public JComponent getComponent() {
+    return this;
+  }
+
+  private void setupRenderersList() {
     myRendererChooser.getEmptyText().setText(DebuggerBundle.message("text.user.renderers.configurable.no.renderers"));
 
     myRendererChooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<NodeRenderer>() {
+      @Override
       public void elementMarkChanged(final NodeRenderer element, final boolean isMarked) {
         element.setEnabled(isMarked);
       }
     });
     myRendererChooser.addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
+      @Override
+      public void valueChanged(@NotNull ListSelectionEvent e) {
         if (!e.getValueIsAdjusting()) {
           updateCurrentRenderer(myRendererChooser.getSelectedElements());
         }
       }
     });
-    return myRendererChooser;
   }
 
   private void updateCurrentRenderer(List<NodeRenderer> selectedElements) {
     if (selectedElements.size() != 1) {
-      // multiselection
+      // multi selection
       setCurrentRenderer(null);
     }
     else {
@@ -150,13 +121,8 @@ public class UserRenderersConfigurable implements SearchableConfigurable, Config
     if (myCurrentRenderer == renderer) {
       return;
     }
-    try {
-      if (myRendererDataConfigurable.isModified()) {
-        myRendererDataConfigurable.apply();
-      }
-    }
-    catch (ConfigurationException e) {
-      LOG.error(e);
+    if (myRendererDataConfigurable.isModified()) {
+      myRendererDataConfigurable.apply();
     }
     myCurrentRenderer = renderer;
     if (renderer != null) {
@@ -170,6 +136,7 @@ public class UserRenderersConfigurable implements SearchableConfigurable, Config
     myRendererDataConfigurable.setRenderer(renderer);
   }
 
+  @NotNull
   private JComponent createToolbar() {
     final DefaultActionGroup group = new DefaultActionGroup();
     group.add(new AddAction());
@@ -177,15 +144,15 @@ public class UserRenderersConfigurable implements SearchableConfigurable, Config
     group.add(new CopyAction());
     group.add(new MoveAction(true));
     group.add(new MoveAction(false));
-    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
-    return toolbar.getComponent();
+    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
   }
 
-  public void apply() throws ConfigurationException {
+  @Override
+  public void apply(@NotNull NodeRendererSettings settings) {
     myRendererDataConfigurable.apply();
-    flushTo(NodeRendererSettings.getInstance().getCustomRenderers());
+    flushTo(settings.getCustomRenderers());
 
-    NodeRendererSettings.getInstance().fireRenderersChanged();
+    settings.fireRenderersChanged();
   }
 
   private void flushTo(final RendererConfiguration rendererConfiguration) {
@@ -197,11 +164,11 @@ public class UserRenderersConfigurable implements SearchableConfigurable, Config
     rendererConfiguration.setRenderers(renderers);
   }
 
-  public boolean isModified() {
+  @Override
+  public boolean isModified(@NotNull NodeRendererSettings settings) {
     if (myRendererDataConfigurable.isModified()) {
       return true;
     }
-    final NodeRendererSettings settings = NodeRendererSettings.getInstance();
     final RendererConfiguration rendererConfiguration = settings.getCustomRenderers();
     if (myRendererChooser.getElementCount() != rendererConfiguration.getRendererCount()) {
       return true;
@@ -211,11 +178,13 @@ public class UserRenderersConfigurable implements SearchableConfigurable, Config
     return !uiConfiguration.equals(rendererConfiguration);
   }
 
-  public void reset() {
+  @Override
+  public void reset(@NotNull NodeRendererSettings settings) {
     myRendererChooser.removeAllElements();
-    final RendererConfiguration rendererConfiguration = NodeRendererSettings.getInstance().getCustomRenderers();
+    final RendererConfiguration rendererConfiguration = settings.getCustomRenderers();
     final ArrayList<NodeRenderer> elementsToSelect = new ArrayList<NodeRenderer>(1);
     rendererConfiguration.iterateRenderers(new InternalIterator<NodeRenderer>() {
+      @Override
       public boolean visit(final NodeRenderer renderer) {
         final NodeRenderer clonedRenderer = (NodeRenderer)renderer.clone();
         myRendererChooser.addElement(clonedRenderer, clonedRenderer.isEnabled());
@@ -230,21 +199,18 @@ public class UserRenderersConfigurable implements SearchableConfigurable, Config
     myRendererDataConfigurable.reset();
   }
 
-  public void disposeUIResources() {
-    myRendererChooser.removeAllElements();
-    myRendererDataConfigurable.disposeUIResources();
-  }
-
   private class AddAction extends AnAction {
     public AddAction() {
       super(DebuggerBundle.message("button.add"), DebuggerBundle.message("user.renderers.configurable.button.description.add"), ADD_ICON);
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       final NodeRenderer renderer = (NodeRenderer)NodeRendererSettings.getInstance().createRenderer(CompoundNodeRenderer.UNIQUE_ID);
       renderer.setEnabled(true);
       myRendererChooser.addElement(renderer, renderer.isEnabled());
       SwingUtilities.invokeLater(new Runnable() {
+        @Override
         public void run() {
           myNameField.requestFocus();
         }
@@ -257,16 +223,18 @@ public class UserRenderersConfigurable implements SearchableConfigurable, Config
       super(DebuggerBundle.message("button.remove"), DebuggerBundle.message("user.renderers.configurable.button.description.remove"), REMOVE_ICON);
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       for (NodeRenderer selectedElement : myRendererChooser.getSelectedElements()) {
         myRendererChooser.removeElement(selectedElement);
       }
     }
 
+    @Override
     public void update(AnActionEvent e) {
       super.update(e);
-      final Presentation presentation = e.getPresentation();
-      presentation.setEnabled(myRendererChooser.getSelectedElement() != null);
+
+      e.getPresentation().setEnabled(myRendererChooser.getSelectedElement() != null);
     }
   }
 
@@ -275,18 +243,18 @@ public class UserRenderersConfigurable implements SearchableConfigurable, Config
       super(DebuggerBundle.message("button.copy"), DebuggerBundle.message("user.renderers.configurable.button.description.copy"), COPY_ICON);
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       final NodeRenderer selectedElement = myRendererChooser.getSelectedElement();
       if (selectedElement != null) {
-        final NodeRenderer cloned = (NodeRenderer)selectedElement.clone();
-        myRendererChooser.addElement(cloned, true);
+        myRendererChooser.addElement((NodeRenderer)selectedElement.clone(), true);
       }
     }
 
+    @Override
     public void update(AnActionEvent e) {
       super.update(e);
-      final Presentation presentation = e.getPresentation();
-      presentation.setEnabled(myRendererChooser.getSelectedElement() != null);
+      e.getPresentation().setEnabled(myRendererChooser.getSelectedElement() != null);
     }
   }
 
@@ -300,6 +268,7 @@ public class UserRenderersConfigurable implements SearchableConfigurable, Config
       myMoveUp = up;
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       final int selectedRow = myRendererChooser.getSelectedElementRow();
       if (selectedRow < 0) {
@@ -315,10 +284,10 @@ public class UserRenderersConfigurable implements SearchableConfigurable, Config
       myRendererChooser.moveElement(myRendererChooser.getElementAt(selectedRow), newRow);
     }
 
+    @Override
     public void update(AnActionEvent e) {
       super.update(e);
-      final Presentation presentation = e.getPresentation();
-      presentation.setEnabled(myRendererChooser.getSelectedElement() != null);
+      e.getPresentation().setEnabled(myRendererChooser.getSelectedElement() != null);
     }
   }
 }

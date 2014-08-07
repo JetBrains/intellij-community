@@ -28,7 +28,7 @@ import static com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode.createIn
 /**
  * @author nik
  */
-public class XVariablesView extends XVariablesViewBase implements XDebugView {
+public class XVariablesView extends XVariablesViewBase {
   @NotNull private final XDebugSession mySession;
 
   public XVariablesView(@NotNull XDebugSession session) {
@@ -50,20 +50,26 @@ public class XVariablesView extends XVariablesViewBase implements XDebugView {
 
     tree.markNodesObsolete();
     if (stackFrame != null) {
+      cancelClear();
       buildTreeAndRestoreState(stackFrame);
     }
     else {
-      tree.setSourcePosition(null);
-
-      XDebuggerTreeNode node;
-      if (!mySession.isStopped() && mySession.isPaused()) {
-        node = createInfoMessage(tree, "Frame is not available");
-      }
-      else {
-        XDebugProcess debugProcess = mySession.getDebugProcess();
-        node = createInfoMessage(tree, debugProcess.getCurrentStateMessage(), debugProcess.getCurrentStateHyperlinkListener());
-      }
-      tree.setRoot(node, true);
+      requestClear();
     }
+  }
+
+  protected void clear() {
+    XDebuggerTree tree = getTree();
+    tree.setSourcePosition(null);
+
+    XDebuggerTreeNode node;
+    if (!mySession.isStopped() && mySession.isPaused()) {
+      node = createInfoMessage(tree, "Frame is not available");
+    }
+    else {
+      XDebugProcess debugProcess = mySession.getDebugProcess();
+      node = createInfoMessage(tree, debugProcess.getCurrentStateMessage(), debugProcess.getCurrentStateHyperlinkListener());
+    }
+    tree.setRoot(node, true);
   }
 }

@@ -206,12 +206,6 @@ public class RunContentBuilder extends LogConsoleManagerBase {
     final RestartAction restartAction = new RestartAction(myExecutor, myRunner, contentDescriptor, getEnvironment());
     restartAction.registerShortcut(component);
     actionGroup.add(restartAction);
-    contentDescriptor.setRestarter(new Runnable() {
-      @Override
-      public void run() {
-        restartAction.restart();
-      }
-    });
 
     if (myExecutionResult instanceof DefaultExecutionResult) {
       final AnAction[] actions = ((DefaultExecutionResult)myExecutionResult).getRestartActions();

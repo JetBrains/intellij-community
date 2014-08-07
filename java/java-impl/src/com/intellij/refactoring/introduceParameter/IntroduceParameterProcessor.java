@@ -348,6 +348,15 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     return data;
   }
 
+  @Nullable
+  @Override
+  protected RefactoringEventData getAfterData(UsageInfo[] usages) {
+    final PsiParameter parameter = JavaIntroduceParameterMethodUsagesProcessor.getAnchorParameter(myMethodToReplaceIn);
+    final RefactoringEventData afterData = new RefactoringEventData();
+    afterData.addElement(parameter);
+    return afterData;
+  }
+
   protected void performRefactoring(UsageInfo[] usages) {
     try {
       PsiElementFactory factory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();

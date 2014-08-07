@@ -51,6 +51,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.model.MavenConstants;
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -247,13 +248,13 @@ public class MavenProjectsManagerWatcher {
     Disposer.dispose(myChangedDocumentsQueue);
   }
 
-  public synchronized void addManagedFilesWithProfiles(List<VirtualFile> files, List<String> explicitProfiles) {
+  public synchronized void addManagedFilesWithProfiles(List<VirtualFile> files, MavenExplicitProfiles explicitProfiles) {
     myProjectsTree.addManagedFilesWithProfiles(files, explicitProfiles);
     scheduleUpdateAll(false, true);
   }
 
   @TestOnly
-  public synchronized void resetManagedFilesAndProfilesInTests(List<VirtualFile> files, List<String> explicitProfiles) {
+  public synchronized void resetManagedFilesAndProfilesInTests(List<VirtualFile> files, MavenExplicitProfiles explicitProfiles) {
     myProjectsTree.resetManagedFilesAndProfiles(files, explicitProfiles);
     scheduleUpdateAll(false, true);
   }
@@ -263,7 +264,7 @@ public class MavenProjectsManagerWatcher {
     scheduleUpdateAll(false, true);
   }
 
-  public synchronized void setExplicitProfiles(Collection<String> profiles) {
+  public synchronized void setExplicitProfiles(MavenExplicitProfiles profiles) {
     myProjectsTree.setExplicitProfiles(profiles);
     scheduleUpdateAll(false, false);
   }

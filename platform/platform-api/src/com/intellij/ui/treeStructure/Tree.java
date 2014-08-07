@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -429,7 +429,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       }
       final Method method = ReflectionUtil.getDeclaredMethod(aClass, "isLocationInExpandControl", TreePath.class, int.class, int.class);
       if (method != null) {
-        method.setAccessible(true);
         return (Boolean)method.invoke(ui, path, x, y);
       }
     }
@@ -827,5 +826,36 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   public void setHorizontalAutoScrollingEnabled(boolean enabled) {
     myHorizontalAutoScrolling = enabled;
+  }
+
+  /**
+   * Returns the deepest visible component
+   * that will be rendered at the specified location.
+   *
+   * @param x horizontal location in the tree
+   * @param y vertical location in the tree
+   * @return the deepest visible component of the renderer
+   */
+  @Nullable
+  protected Component getDeepestRendererComponentAt(int x, int y) {
+    int row = getRowForLocation(x, y);
+    if (row >= 0) {
+      TreeCellRenderer renderer = getCellRenderer();
+      if (renderer != null) {
+        TreePath path = getPathForRow(row);
+        Object node = path.getLastPathComponent();
+        Component component = renderer.getTreeCellRendererComponent(this, node,
+                                                                    isRowSelected(row),
+                                                                    isExpanded(row),
+                                                                    getModel().isLeaf(node),
+                                                                    row, true);
+        Rectangle bounds = getPathBounds(path);
+        if (bounds != null) {
+          component.setBounds(bounds); // initialize size to layout complex renderer
+          return SwingUtilities.getDeepestComponentAt(component, x - bounds.x, y - bounds.y);
+        }
+      }
+    }
+    return null;
   }
 }

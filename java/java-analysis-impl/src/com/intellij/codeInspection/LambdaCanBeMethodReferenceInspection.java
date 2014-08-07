@@ -245,11 +245,14 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
       PsiParameter[] candidateParams = method.getParameterList().getParameters();
       if (candidateParams.length == 1) {
         if (TypeConversionUtil.areTypesConvertible(candidateParams[0].getType(), parameters[0].getType())) {
-          for (PsiMethod superMethod : psiMethod.findDeepestSuperMethods()) {
-            PsiMethod validSuperMethod = ensureNonAmbiguousMethod(parameters, superMethod);
-            if (validSuperMethod != null) return validSuperMethod;
+          final PsiMethod[] deepestSuperMethods = psiMethod.findDeepestSuperMethods();
+          if (deepestSuperMethods.length > 0) {
+            for (PsiMethod superMethod : deepestSuperMethods) {
+              PsiMethod validSuperMethod = ensureNonAmbiguousMethod(parameters, superMethod);
+              if (validSuperMethod != null) return validSuperMethod;
+            }
+            return null;
           }
-          return null;
         }
       }
     }

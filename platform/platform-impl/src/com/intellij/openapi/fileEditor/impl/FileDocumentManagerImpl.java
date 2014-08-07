@@ -37,6 +37,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
+import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
@@ -173,8 +174,12 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
         document.setModificationStamp(file.getModificationStamp());
         final FileType fileType = file.getFileType();
         document.setReadOnly(!file.isWritable() || fileType.isBinary());
-        myDocuments.put(file, document);
-        document.putUserData(FILE_KEY, file);
+        if (file instanceof LightVirtualFile) {
+          registerDocument(document, file);
+        } else {
+          myDocuments.put(file, document);
+          document.putUserData(FILE_KEY, file);
+        }
 
         if (!(file instanceof LightVirtualFile || file.getFileSystem() instanceof DummyFileSystem)) {
           document.addDocumentListener(

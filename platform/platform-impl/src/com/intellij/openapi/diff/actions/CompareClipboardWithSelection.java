@@ -73,8 +73,9 @@ public class CompareClipboardWithSelection extends BaseDiffAction {
       SelectionModel selectionModel = myEditor.getSelectionModel();
       if (selectionModel.hasSelection()) {
         TextRange range = new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+        boolean forceReadOnly = myEditor.isViewer();
         myContents[1] = new FragmentContent(DiffContent.fromDocument(getProject(), getDocument()),
-                                            range, getProject(), getDocumentFile(getDocument()));
+                                            range, getProject(), getDocumentFile(getDocument()), forceReadOnly);
       }
       else {
         myContents [1] = DiffContent.fromDocument(getProject(), getDocument());

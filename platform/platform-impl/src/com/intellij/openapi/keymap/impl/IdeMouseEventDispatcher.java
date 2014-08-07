@@ -30,6 +30,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +39,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -230,12 +230,7 @@ public final class IdeMouseEventDispatcher {
   }
 
   private static void resetPopupTrigger(final MouseEvent e) {
-    try {
-      final Field popupTrigger = e.getClass().getDeclaredField("popupTrigger");
-      popupTrigger.setAccessible(true);
-      popupTrigger.set(e, false);
-    }
-    catch (Exception ignored) { }
+    ReflectionUtil.setField(MouseEvent.class, e, boolean.class, "popupTrigger", false);
   }
 
   /**
@@ -247,14 +242,7 @@ public final class IdeMouseEventDispatcher {
    */
   public static boolean patchClickCount(final MouseEvent e) {
     if (e.getClickCount() != 1 && e.getButton() > 3) {
-      try {
-        final Field clickCount = e.getClass().getDeclaredField("clickCount");
-        clickCount.setAccessible(true);
-        clickCount.set(e, 1);
-        return true;
-      }
-      catch (Exception ignored) {
-      }
+      ReflectionUtil.setField(MouseEvent.class, e, int.class, "clickCount", 1);
     }
     return false;
   }

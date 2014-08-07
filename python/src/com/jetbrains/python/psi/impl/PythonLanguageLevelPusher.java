@@ -146,7 +146,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
 
   private static final FileAttribute PERSISTENCE = new FileAttribute("python_language_level_persistence", 2, true);
 
-  public void persistAttribute(@NotNull VirtualFile fileOrDir, @NotNull LanguageLevel level) throws IOException {
+  public void persistAttribute(@NotNull Project project, @NotNull VirtualFile fileOrDir, @NotNull LanguageLevel level) throws IOException {
     final DataInputStream iStream = PERSISTENCE.readAttribute(fileOrDir);
     if (iStream != null) {
       try {
@@ -164,7 +164,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
 
     for (VirtualFile child : fileOrDir.getChildren()) {
       if (!child.isDirectory() && PythonFileType.INSTANCE.equals(child.getFileType())) {
-        PushedFilePropertiesUpdater.filePropertiesChanged(child);
+        PushedFilePropertiesUpdater.getInstance(project).filePropertiesChanged(child);
       }
     }
   }
@@ -247,7 +247,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
           return false;
         }
         if (file.isDirectory()) {
-          PushedFilePropertiesUpdater.findAndUpdateValue(project, file, PythonLanguageLevelPusher.this, languageLevel);
+          PushedFilePropertiesUpdater.getInstance(project).findAndUpdateValue(file, PythonLanguageLevelPusher.this, languageLevel);
         }
         if (suppressSizeLimit) {
           SingleRootFileViewProvider.doNotCheckFileSizeLimit(file);

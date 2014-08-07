@@ -62,6 +62,6 @@ public class XBreakpointFileGroupingRule<B> extends XBreakpointGroupingRule<B, X
   @Nullable
   @Override
   public Icon getIcon() {
-    return AllIcons.FileTypes.Text;
+    return AllIcons.Actions.GroupByFile;
   }
 }

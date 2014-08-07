@@ -18,6 +18,7 @@ package com.intellij.psi.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
@@ -370,7 +371,12 @@ public class PsiSuperMethodImplUtil {
         if (result == null) {
           result = new HierarchicalMethodSignatureImpl((MethodSignatureBackedByPsiMethod)method.getSignature(PsiSubstitutor.EMPTY));
         }
-        return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+
+        Project project = aClass == null ? method.getProject() : aClass.getProject();
+        // cache Cls method hierarchy until root changed
+        Object dependency = method instanceof PsiCompiledElement ? ProjectRootModificationTracker.getInstance(project) :
+                            PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT;
+        return CachedValueProvider.Result.create(result, dependency);
       }
     };
 

@@ -24,9 +24,10 @@ import com.intellij.codeInsight.generation.actions.BaseGenerateAction;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable;
-import com.intellij.ide.util.EditSourceUtil;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -40,7 +41,6 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -100,7 +100,7 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
   private static PsiClass findTargetClass(@NotNull Editor editor, @NotNull PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
-    return element == null ? null : TestIntegrationUtils.findOuterClass(element);
+    return PsiTreeUtil.getParentOfType(element, PsiClass.class, false) == null ? null : TestIntegrationUtils.findOuterClass(element);
   }
 
   @Override

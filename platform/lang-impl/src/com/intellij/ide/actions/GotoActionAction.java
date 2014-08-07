@@ -20,9 +20,8 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
-import com.intellij.ide.util.gotoByName.DefaultChooseByNameItemProvider;
+import com.intellij.ide.util.gotoByName.GotoActionItemProvider;
 import com.intellij.ide.util.gotoByName.GotoActionModel;
-import com.intellij.ide.util.gotoByName.MatchResult;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,27 +32,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 
 public class GotoActionAction extends GotoActionBase implements DumbAware {
-  public static final Comparator<MatchResult> ELEMENTS_COMPARATOR = new Comparator<MatchResult>() {
-    @Override
-    public int compare(@NotNull MatchResult o1, @NotNull MatchResult o2) {
-      if (o1.elementName.equals(GotoActionModel.INTENTIONS_KEY)) return -1;
-      if (o2.elementName.equals(GotoActionModel.INTENTIONS_KEY)) return 1;
-
-      if (o1.elementName.equals(GotoActionModel.SETTINGS_KEY)) return 1;
-      if (o2.elementName.equals(GotoActionModel.SETTINGS_KEY)) return -1;
-
-      return o1.elementName.compareToIgnoreCase(o2.elementName);
-    }
-  };
 
   @Override
   public void gotoActionPerformed(final AnActionEvent e) {
@@ -68,7 +51,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
       @Override
       public void elementChosen(ChooseByNamePopup popup, final Object element) {
         final String enteredText = popup.getEnteredText();
-        openOptionOrPerformAction(element, enteredText, project, component, e);
+        openOptionOrPerformAction(((GotoActionModel.MatchedValue)element).value, enteredText, project, component, e);
       }
     };
 
@@ -79,12 +62,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
   private static ChooseByNamePopup createPopup(Project project, GotoActionModel model, String initialText, int initialIndex) {
     return ChooseByNamePopup.createPopup(project,
                                          model,
-                                         new DefaultChooseByNameItemProvider(null) {
-                                           @Override
-                                           protected void sortNamesList(@NotNull String namePattern, @NotNull List<MatchResult> namesList) {
-                                             Collections.sort(namesList, ELEMENTS_COMPARATOR);
-                                           }
-                                         },
+                                         new GotoActionItemProvider(model),
                                          initialText,
                                          false,
                                          initialIndex);

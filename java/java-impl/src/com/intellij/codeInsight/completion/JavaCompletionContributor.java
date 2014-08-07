@@ -426,7 +426,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     if (JavaCompletionData.isAfterPrimitiveOrArrayType(position)) {
       return false;
     }
-    
+
     return true;
   }
 
@@ -466,11 +466,11 @@ public class JavaCompletionContributor extends CompletionContributor {
 
       methods: for (PsiMethod method : annoClass.getMethods()) {
         if (!(method instanceof PsiAnnotationMethod)) continue;
-        
+
         final String attrName = method.getName();
         for (PsiNameValuePair existingAttr : existingPairs) {
           if (PsiTreeUtil.isAncestor(existingAttr, insertedElement, false)) break;
-          if (Comparing.equal(existingAttr.getName(), attrName) || 
+          if (Comparing.equal(existingAttr.getName(), attrName) ||
               PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(attrName) && existingAttr.getName() == null) continue methods;
         }
         LookupElementBuilder element = LookupElementBuilder.createWithIcon(method).withInsertHandler(new InsertHandler<LookupElement>() {
@@ -479,7 +479,7 @@ public class JavaCompletionContributor extends CompletionContributor {
             final Editor editor = context.getEditor();
             TailType.EQ.processTail(editor, editor.getCaretModel().getOffset());
             context.setAddCompletionChar(false);
-            
+
             context.commitDocument();
             PsiAnnotationParameterList paramList =
               PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiAnnotationParameterList.class, false);
@@ -644,7 +644,20 @@ public class JavaCompletionContributor extends CompletionContributor {
     if (file instanceof PsiJavaFile) {
       if (context.getInvocationCount() > 0) {
         autoImport(file, context.getStartOffset() - 1, context.getEditor());
-        PsiDocumentManager.getInstance(context.getProject()).commitDocument(context.getEditor().getDocument());
+
+        PsiElement leaf = file.findElementAt(context.getStartOffset() - 1);
+        if (leaf != null) leaf = PsiTreeUtil.prevVisibleLeaf(leaf);
+
+        PsiVariable variable = PsiTreeUtil.getParentOfType(leaf, PsiVariable.class);
+        if (variable != null) {
+          PsiTypeElement typeElement = variable.getTypeElement();
+          if (typeElement != null) {
+            PsiType type = typeElement.getType();
+            if (type instanceof PsiClassType && ((PsiClassType)type).resolve() == null) {
+              autoImportReference(file, context.getEditor(), typeElement.getInnermostComponentReferenceElement());
+            }
+          }
+        }
       }
 
       JavaCompletionUtil.initOffsets(file, context.getOffsetMap());
@@ -702,7 +715,13 @@ public class JavaCompletionContributor extends CompletionContributor {
       iterator.advance();
     }
 
-    if (!iterator.atEnd() && (iterator.getTokenType() == JavaTokenType.LPARENTH || iterator.getTokenType() == JavaTokenType.COLON)) {
+    if (!iterator.atEnd() && (iterator.getTokenType() == JavaTokenType.LPARENTH)) {
+      return true;
+    }
+
+    if (!iterator.atEnd()
+        && (iterator.getTokenType() == JavaTokenType.COLON)
+        && null == PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiConditionalExpression.class, false)) {
       return true;
     }
 
@@ -721,7 +740,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     return iterator.getTokenType() == JavaTokenType.EQ || iterator.getTokenType() == JavaTokenType.LPARENTH;
   }
 
-  private static void autoImport(final PsiFile file, int offset, final Editor editor) {
+  private static void autoImport(@NotNull final PsiFile file, int offset, @NotNull final Editor editor) {
     final CharSequence text = editor.getDocument().getCharsSequence();
     while (offset > 0 && Character.isJavaIdentifierPart(text.charAt(offset))) offset--;
     if (offset <= 0) return;
@@ -734,7 +753,10 @@ public class JavaCompletionContributor extends CompletionContributor {
     while (offset > 0 && Character.isWhitespace(text.charAt(offset))) offset--;
     if (offset <= 0) return;
 
-    PsiJavaCodeReferenceElement element = extractReference(PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiExpression.class, false));
+    autoImportReference(file, editor, extractReference(PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiExpression.class, false)));
+  }
+
+  private static void autoImportReference(@NotNull PsiFile file, @NotNull Editor editor, @Nullable PsiJavaCodeReferenceElement element) {
     if (element == null) return;
 
     while (true) {
@@ -745,6 +767,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
     if (!(element.getParent() instanceof PsiMethodCallExpression) && element.multiResolve(true).length == 0) {
       new ImportClassFix(element).doFix(editor, false, false);
+      PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
     }
   }
 

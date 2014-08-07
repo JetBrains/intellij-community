@@ -107,12 +107,16 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   private void addCustomSettings(CustomCodeStyleSettings settings) {
     if (settings != null) {
-      myCustomSettings.put(settings.getClass(), settings);
+      synchronized (myCustomSettings) {
+        myCustomSettings.put(settings.getClass(), settings);
+      }
     }
   }
 
   public <T extends CustomCodeStyleSettings> T getCustomSettings(Class<T> aClass) {
-    return (T)myCustomSettings.get(aClass);
+    synchronized (myCustomSettings) {
+      return (T)myCustomSettings.get(aClass);
+    }
   }
 
   @Override
@@ -124,7 +128,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   private void copyCustomSettingsFrom(@NotNull CodeStyleSettings from) {
     myCustomSettings.clear();
-    for (final CustomCodeStyleSettings settings : from.myCustomSettings.values()) {
+    for (final CustomCodeStyleSettings settings : from.getCustomSettingsValues()) {
       addCustomSettings((CustomCodeStyleSettings) settings.clone());
     }
 
@@ -431,6 +435,12 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   private CodeStyleSettings myParentSettings;
   private boolean myLoadedAdditionalIndentOptions;
 
+  private Collection<CustomCodeStyleSettings> getCustomSettingsValues() {
+    synchronized (myCustomSettings) {
+      return Collections.unmodifiableCollection(myCustomSettings.values());
+    }
+  }
+
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
@@ -452,7 +462,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
       }
     }
     boolean oldOptionsImported = importOldIndentOptions(element);
-    for (final CustomCodeStyleSettings settings : myCustomSettings.values()) {
+    for (final CustomCodeStyleSettings settings : getCustomSettingsValues()) {
       settings.readExternal(element);
       settings.importLegacySettings();
     }
@@ -564,7 +574,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   public void writeExternal(Element element) throws WriteExternalException {
     final CodeStyleSettings parentSettings = new CodeStyleSettings();
     DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<CodeStyleSettings>(this, parentSettings));
-    List<CustomCodeStyleSettings> customSettings = new ArrayList<CustomCodeStyleSettings>(myCustomSettings.values());
+    List<CustomCodeStyleSettings> customSettings = new ArrayList<CustomCodeStyleSettings>(getCustomSettingsValues());
     
     Collections.sort(customSettings, new Comparator<CustomCodeStyleSettings>(){
       @Override
@@ -875,4 +885,38 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     return myCommonSettingsManager.getCommonSettings(langName);
   }
 
+  /**
+   * Retrieves right margin for the given language. The language may overwrite default RIGHT_MARGIN value with its own RIGHT_MARGIN
+   * in language's CommonCodeStyleSettings instance.
+   *
+   * @param language The language to get right margin for or null if root (default) right margin is requested.
+   * @return The right margin for the language if it is defined (not null) and its settings contain non-negative margin. Root (default) 
+   *         margin otherwise (CodeStyleSettings.RIGHT_MARGIN).
+   */
+  public int getRightMargin(@Nullable Language language) {
+    if (language != null) {
+      CommonCodeStyleSettings langSettings = getCommonSettings(language);
+      if (langSettings != null) {
+        if (langSettings.RIGHT_MARGIN >= 0) return langSettings.RIGHT_MARGIN;
+      }
+    }
+    return RIGHT_MARGIN;
+  }
+
+  /**
+   * Assigns another right margin for the language or (if it is null) to root (default) margin.
+   * 
+   * @param language The language to assign the right margin to or null if root (default) right margin is to be changed.
+   * @param rightMargin New right margin.
+   */
+  public void setRightMargin(@Nullable Language language, int rightMargin) {
+    if (language != null) {
+      CommonCodeStyleSettings langSettings = getCommonSettings(language);
+      if (langSettings != null) {
+        langSettings.RIGHT_MARGIN = rightMargin;
+        return;
+      }
+    }
+    RIGHT_MARGIN = rightMargin;
+  }
 }

@@ -43,11 +43,9 @@ public abstract class BasePasswordSafeProvider extends PasswordSafeProvider {
    * @throws PasswordSafeException in case of problems with access to the password database.
    * @throws IllegalStateException if the method is called from the read action.
    */
+  @NotNull
   protected abstract byte[] key(@Nullable Project project, @NotNull Class requestor) throws PasswordSafeException;
 
-  /**
-   * {@inheritDoc}
-   */
   @Nullable
   public String getPassword(@Nullable Project project, @NotNull Class requestor, String key) throws PasswordSafeException {
     byte[] k = dbKey(project, requestor, key);
@@ -75,9 +73,6 @@ public abstract class BasePasswordSafeProvider extends PasswordSafeProvider {
     return EncryptionUtil.dbKey(key(project, requestor), requestor, key);
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public void removePassword(@Nullable Project project, @NotNull Class requester, String key) throws PasswordSafeException {
     byte[] k = dbKey(project, requester, key);
     removeEncryptedPassword(k);
@@ -90,9 +85,6 @@ public abstract class BasePasswordSafeProvider extends PasswordSafeProvider {
    */
   protected abstract void removeEncryptedPassword(byte[] key);
 
-  /**
-   * {@inheritDoc}
-   */
   public void storePassword(@Nullable Project project, @NotNull Class requestor, String key, String value) throws PasswordSafeException {
     byte[] k = dbKey(project, requestor, key);
     byte[] ct = EncryptionUtil.encryptText(key(project, requestor), value);

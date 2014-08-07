@@ -363,4 +363,14 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
   public void testFromPackageModuleImportStarElementNamedAsModule() {
     assertResolvesTo(PyFunction.class, "foo");
   }
+
+  // PY-13140
+  public void testModulePrivateName() {
+    assertNull(doResolve());
+  }
+
+  // PY-13140
+  public void testModulePrivateNameInDunderAll() {
+    assertResolvesTo(PyTargetExpression.class, "_private_name");
+  }
 }

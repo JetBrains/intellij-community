@@ -368,7 +368,8 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     myRefreshAndInfoPanel.revalidate();
     myRefreshAndInfoPanel.repaint();
 
-    if (UISettings.getInstance().PRESENTATION_MODE) {
+    UISettings uiSettings = UISettings.getInstance();
+    if (uiSettings.PRESENTATION_MODE || !uiSettings.SHOW_STATUS_BAR && Registry.is("ide.show.progress.without.status.bar")) {
       final JRootPane pane = myInfoPanel.getRootPane();
       final RelativePoint point = new RelativePoint(pane, new Point(pane.getWidth() - 250, 60));
       final PresentationModeProgressPanel panel = new PresentationModeProgressPanel(inline);

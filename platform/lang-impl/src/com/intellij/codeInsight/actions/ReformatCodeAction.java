@@ -79,9 +79,6 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
-    if (files == null) {
-      return;
-    }
 
     PsiFile file = null;
     final PsiDirectory dir;
@@ -174,7 +171,8 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     }
 
     final TextRange range;
-    if (!processWholeFile && editor != null && editor.getSelectionModel().hasSelection()){
+    final boolean processSelectedText = !processWholeFile && hasSelection;
+    if (processSelectedText) {
       range = TextRange.create(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
     }
     else{
@@ -185,7 +183,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       new OptimizeImportsProcessor(new ReformatCodeProcessor(project, file, null, processChangedTextOnly)).run();
     }
     else {
-      new ReformatCodeProcessor(project, file, range, processChangedTextOnly).run();
+      new ReformatCodeProcessor(project, file, range, !processSelectedText && processChangedTextOnly).run();
     }
 
     if (rearrangeEntries && file != null && editor != null) {

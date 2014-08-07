@@ -227,7 +227,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       fm.doWhenFocusSettlesDown(run);
     }
     else {
-      run.run();
+      UIUtil.invokeAndWaitIfNeeded(run);
     }
 
     return result;

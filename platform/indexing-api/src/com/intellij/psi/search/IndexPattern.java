@@ -16,6 +16,7 @@
 package com.intellij.psi.search;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -29,6 +30,7 @@ import java.util.regex.PatternSyntaxException;
  */
 public class IndexPattern {
   @NotNull private String myPatternString;
+  private Pattern myOptimizedIndexingPattern;
   private boolean myCaseSensitive;
   private Pattern myPattern;
 
@@ -49,8 +51,12 @@ public class IndexPattern {
     return myPatternString;
   }
 
-  public Pattern getPattern() {
+  public @Nullable Pattern getPattern() {
     return myPattern;
+  }
+
+  public @Nullable Pattern getOptimizedIndexingPattern() {
+    return myOptimizedIndexingPattern;
   }
 
   public boolean isCaseSensitive() {
@@ -68,16 +74,21 @@ public class IndexPattern {
   }
 
   private void compilePattern() {
-    try{
-      if (myCaseSensitive){
-        myPattern = Pattern.compile(myPatternString);
+    try {
+      int flags = 0;
+      if (!myCaseSensitive) {
+        flags = Pattern.CASE_INSENSITIVE;
       }
-      else{
-        myPattern = Pattern.compile(myPatternString, Pattern.CASE_INSENSITIVE);
+      myPattern = Pattern.compile(myPatternString, flags);
+      String optimizedPattern = myPatternString;
+      if (optimizedPattern.startsWith(".*")) {
+        optimizedPattern = optimizedPattern.substring(".*".length());
       }
+      myOptimizedIndexingPattern = Pattern.compile(optimizedPattern, flags);
     }
     catch(PatternSyntaxException e){
       myPattern = null;
+      myOptimizedIndexingPattern = null;
     }
   }
 

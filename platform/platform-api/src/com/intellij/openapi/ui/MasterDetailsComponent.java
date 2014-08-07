@@ -111,7 +111,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   protected MyNode myRoot = new MyRootNode();
   protected Tree myTree = new Tree();
 
-  private final DetailsComponent myDetails = new DetailsComponent();
+  private final DetailsComponent myDetails = new DetailsComponent(!Registry.is("ide.new.project.settings"), !Registry.is("ide.new.project.settings"));
   protected JPanel myWholePanel;
   public JPanel myNorthPanel = new JPanel(new BorderLayout());
 
@@ -122,7 +122,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   private boolean myHasDeletedItems;
   protected AutoScrollToSourceHandler myAutoScrollHandler;
 
-  private boolean myToReInitWholePanel = true;
+  protected boolean myToReInitWholePanel = true;
 
   protected MasterDetailsComponent() {
     this(new MasterDetailsState());
@@ -131,22 +131,15 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   protected MasterDetailsComponent(MasterDetailsState state) {
     myState = state;
 
-    mySplitter = new JBSplitter(false, .2f);
+    mySplitter = Registry.is("ide.new.project.settings") ? new OnePixelSplitter(false, .2f) : new JBSplitter(false, .2f);
     mySplitter.setSplitterProportionKey("ProjectStructure.SecondLevelElements");
     mySplitter.setHonorComponentsMinimumSize(true);
-    if (Registry.is("ide.new.project.settings")) {
-      mySplitter.setDividerWidth(1);
-      mySplitter.setShowDividerIcon(false);
-      mySplitter.getDivider().setBackground(Gray._153.withAlpha(128));
-      mySplitter.setShowDividerControls(false);
-      mySplitter.setOrientation(mySplitter.getOrientation());
-    }
 
     installAutoScroll();
     reInitWholePanelIfNeeded();
   }
 
-  private void reInitWholePanelIfNeeded() {
+  protected void reInitWholePanelIfNeeded() {
     if (!myToReInitWholePanel) return;
 
     myWholePanel = new JPanel(new BorderLayout()) {
@@ -185,6 +178,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       }
       //left.add(myNorthPanel, BorderLayout.NORTH);
       myMaster = decorator.setPanelBorder(new EmptyBorder(0, 0, 0, 0)).createPanel();
+      myNorthPanel.setVisible(false);
     } else {
       left.add(myNorthPanel, BorderLayout.NORTH);
       myMaster = ScrollPaneFactory.createScrollPane(myTree);
@@ -287,6 +281,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   private void initToolbar() {
+    if (Registry.is("ide.new.project.settings")) return;
     DefaultActionGroup group = createToolbarActionGroup();
     if (group != null) {
       final JComponent component = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
@@ -304,6 +299,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
   @NotNull 
   public JComponent createComponent() {
+    myTree.updateUI();
     reInitWholePanelIfNeeded();
 
     updateSelectionFromTree();
@@ -966,7 +962,11 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
                                                                 myPreselection != null ? myPreselection.getDefaultIndex() : 0, true);
       final ListPopup listPopup = popupFactory.createListPopup(step);
       listPopup.setHandleAutoSelectionBeforeShow(true);
-      listPopup.showUnderneathOf(myNorthPanel);
+      if (e instanceof AnActionButton.AnActionEventWrapper) {
+        ((AnActionButton.AnActionEventWrapper)e).showPopup(listPopup);
+      } else {
+        listPopup.showUnderneathOf(myNorthPanel);
+      }
     }
   }
 

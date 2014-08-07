@@ -27,11 +27,14 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyUISettings;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.FilePatternPackageSet;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
@@ -103,7 +106,10 @@ public class ProjectPatternProvider extends PatternDialectProvider {
           pattern += recursively ? "*/" : "*";
         }
       }
-      return new FilePatternPackageSet(getModulePattern(node), pattern);
+      final VirtualFile vDir = ((DirectoryNode)node).getDirectory();
+      final PsiElement psiElement = node.getPsiElement();
+      final Module module = psiElement != null ? ModuleUtilCore.findModuleForFile(vDir, psiElement.getProject()) : null;
+      return new FilePatternPackageSet(module != null ? module.getName() : null, pattern);
     }
     else if (node instanceof FileNode) {
       if (recursively) return null;

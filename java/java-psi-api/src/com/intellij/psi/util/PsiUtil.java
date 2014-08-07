@@ -775,7 +775,7 @@ public final class PsiUtil extends PsiUtilCore {
 
   @NotNull
   public static Iterable<PsiTypeParameter> typeParametersIterable(@NotNull final PsiTypeParameterListOwner owner) {
-    ArrayList<PsiTypeParameter> result = null;
+    List<PsiTypeParameter> result = null;
 
     PsiTypeParameterListOwner currentOwner = owner;
     while (currentOwner != null) {
@@ -1096,6 +1096,11 @@ public final class PsiUtil extends PsiUtilCore {
     }
     else if (parent instanceof PsiDoWhileStatement) {
       if (checkSameExpression(expr, ((PsiDoWhileStatement)parent).getCondition())) {
+        return true;
+      }
+    }
+    else if (parent instanceof PsiConditionalExpression) {
+      if (checkSameExpression(expr, ((PsiConditionalExpression)parent).getCondition())) {
         return true;
       }
     }

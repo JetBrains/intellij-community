@@ -80,7 +80,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   private final boolean myCanReEnumerate;
   private int myLargeIndexWatermarkId;  // starting with this id we store offset in adjacent file in long format
   private boolean myIntAddressForNewRecord;
-  private static final boolean doHardConsistencyChecks = true;
+  private static final boolean doHardConsistencyChecks = false;
   private volatile boolean myBusyReading;
 
   private static class AppendStream extends DataOutputStream {

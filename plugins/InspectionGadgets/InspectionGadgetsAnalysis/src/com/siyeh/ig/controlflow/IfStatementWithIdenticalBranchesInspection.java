@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,15 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.extractMethod.InputVariables;
+import com.intellij.refactoring.util.duplicates.ConditionalReturnStatementValue;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
 import com.intellij.refactoring.util.duplicates.Match;
+import com.intellij.refactoring.util.duplicates.ReturnValue;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -158,12 +161,10 @@ public class IfStatementWithIdenticalBranchesInspection
     return new IfStatementWithIdenticalBranchesVisitor();
   }
 
-  private static class IfStatementWithIdenticalBranchesVisitor
-    extends BaseInspectionVisitor {
+  private static class IfStatementWithIdenticalBranchesVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitIfStatement(
-      @NotNull PsiIfStatement ifStatement) {
+    public void visitIfStatement(@NotNull PsiIfStatement ifStatement) {
       super.visitIfStatement(ifStatement);
       final PsiStatement elseBranch = ifStatement.getElseBranch();
       final PsiStatement thenBranch = ifStatement.getThenBranch();
@@ -179,14 +180,18 @@ public class IfStatementWithIdenticalBranchesInspection
                              inputVariables, null,
                              Collections.<PsiVariable>emptyList());
       if (elseBranch instanceof PsiIfStatement) {
-        final PsiIfStatement statement =
-          (PsiIfStatement)elseBranch;
+        final PsiIfStatement statement = (PsiIfStatement)elseBranch;
         final PsiStatement branch = statement.getThenBranch();
         if (branch == null) {
           return;
         }
         final Match match = finder.isDuplicate(branch, true);
-        if (match != null && match.getReturnValue() == null) {
+        if (match != null) {
+          final ReturnValue matchReturnValue = match.getReturnValue();
+          if (matchReturnValue instanceof ConditionalReturnStatementValue &&
+              !matchReturnValue.isEquivalent(buildReturnValue(thenBranch))) {
+            return;
+          }
           registerStatementError(ifStatement, statement);
           return;
         }
@@ -197,9 +202,35 @@ public class IfStatementWithIdenticalBranchesInspection
       else {
         final Match match = finder.isDuplicate(elseBranch, true);
         if (match != null) {
+          final ReturnValue matchReturnValue = match.getReturnValue();
+          if (matchReturnValue instanceof ConditionalReturnStatementValue &&
+              !matchReturnValue.isEquivalent(buildReturnValue(thenBranch))) {
+            return;
+          }
           registerStatementError(ifStatement);
         }
       }
+    }
+
+    @Nullable
+    private ReturnValue buildReturnValue(PsiElement element) {
+      final Ref<PsiReturnStatement> result = Ref.create(null);
+      element.accept(new JavaRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitReturnStatement(PsiReturnStatement statement) {
+          super.visitReturnStatement(statement);
+          result.set(statement);
+        }
+      });
+      final PsiReturnStatement returnStatement = result.get();
+      if (returnStatement == null) {
+        return null;
+      }
+      final PsiExpression expression = returnStatement.getReturnValue();
+      if (expression == null) {
+        return null;
+      }
+      return new ConditionalReturnStatementValue(expression);
     }
 
     private void checkIfStatementWithoutElseBranch(

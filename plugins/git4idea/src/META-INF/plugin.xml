@@ -92,12 +92,13 @@
       <separator/>
     </group>
 
-    <action id="Git.CherryPick" class="git4idea.cherrypick.GitCherryPickAction" text="Cherry-Pick" icon="Git4ideaIcons.CherryPick"/>
+    <action id="Git.CherryPick" class="git4idea.cherrypick.GitCherryPickAction" icon="Git4ideaIcons.CherryPick"/>
     <action class="git4idea.actions.GitCheckoutRevisionAction" id="Git.CheckoutRevision" text="Checkout Revision"/>
-    <action class="git4idea.actions.GitCreateNewBranchAction" id="Git.CreateNewBranch" text="New Branch"
+    <action class="git4idea.actions.GitCreateNewBranchAction" id="Git.CreateNewBranch" text="New Branch..."
             description="Create new branch starting from the selected commit"/>
-    <action class="git4idea.actions.GitCreateTagAction" id="Git.CreateNewTag" text="New Tag"
+    <action class="git4idea.actions.GitCreateTagAction" id="Git.CreateNewTag" text="New Tag..."
             description="Create new tag pointing to this commit"/>
+    <action id="Git.Reset.In.Log" class="git4idea.reset.GitResetAction" text="Reset Current Branch to Here..." />
 
     <group id="Git.Log.ContextMenu">
       <separator/>
@@ -105,6 +106,8 @@
       <reference id="Git.CheckoutRevision"/>
       <reference id="Git.CreateNewBranch" />
       <reference id="Git.CreateNewTag" />
+      <separator/>
+      <reference id="Git.Reset.In.Log" />
       <add-to-group group-id="Vcs.Log.ContextMenu" />
     </group>
 
@@ -121,7 +124,9 @@
 
   <project-components>
     <component>
+      <interface-class>git4idea.repo.GitRepositoryManager</interface-class>
       <implementation-class>git4idea.repo.GitRepositoryManager</implementation-class>
+      <headless-implementation-class>git4idea.test.GitTestRepositoryManager</headless-implementation-class>
     </component>
   </project-components>
 

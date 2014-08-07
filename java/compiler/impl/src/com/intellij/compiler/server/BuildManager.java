@@ -28,6 +28,7 @@ import com.intellij.execution.process.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.PowerSaveMode;
+import com.intellij.ide.file.BatchFileChangeListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.Application;
@@ -127,8 +128,6 @@ public class BuildManager implements ApplicationComponent{
   private static final String COMPILER_PROCESS_JDK_PROPERTY = "compiler.process.jdk";
   public static final String SYSTEM_ROOT = "compile-server";
   public static final String TEMP_DIR_NAME = "_temp_";
-  private static final int MAKE_TRIGGER_DELAY = 300 /*300 ms*/;
-  private static final int DOCUMENT_SAVE_TRIGGER_DELAY = 1500 /*1.5 sec*/;
   private final boolean IS_UNIT_TEST_MODE;
   private static final String IWS_EXTENSION = ".iws";
   private static final String IPR_EXTENSION = ".ipr";
@@ -160,7 +159,7 @@ public class BuildManager implements ApplicationComponent{
   private final BuildManagerPeriodicTask myAutoMakeTask = new BuildManagerPeriodicTask() {
     @Override
     protected int getDelay() {
-      return Registry.intValue("compiler.automake.trigger.delay", MAKE_TRIGGER_DELAY);
+      return Registry.intValue("compiler.automake.trigger.delay");
     }
 
     @Override
@@ -172,7 +171,7 @@ public class BuildManager implements ApplicationComponent{
   private final BuildManagerPeriodicTask myDocumentSaveTask = new BuildManagerPeriodicTask() {
     @Override
     protected int getDelay() {
-      return Registry.intValue("compiler.document.save.trigger.delay", DOCUMENT_SAVE_TRIGGER_DELAY);
+      return Registry.intValue("compiler.document.save.trigger.delay");
     }
 
     private final Semaphore mySemaphore = new Semaphore();
@@ -246,7 +245,13 @@ public class BuildManager implements ApplicationComponent{
 
         for (VFileEvent event : events) {
           final VirtualFile eventFile = event.getFile();
-          if (eventFile == null || ProjectCoreUtil.isProjectOrWorkspaceFile(eventFile)) {
+          if (eventFile == null) {
+            continue;
+          }
+          if (!eventFile.isValid()) {
+            return true; // should be deleted
+          }
+          if (ProjectCoreUtil.isProjectOrWorkspaceFile(eventFile)) {
             continue;
           }
 
@@ -266,6 +271,12 @@ public class BuildManager implements ApplicationComponent{
         return false;
       }
 
+    });
+
+    conn.subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener.Adapter() {
+      public void batchChangeStarted(Project project) {
+        cancelAutoMakeTasks(project);
+      }
     });
 
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentAdapter() {
@@ -611,7 +622,7 @@ public class BuildManager implements ApplicationComponent{
               data = new ProjectData(new SequentialTaskExecutor(PooledThreadExecutor.INSTANCE));
               myProjectDataMap.put(projectPath, data);
             }
-            if (isRebuild || (isAutomake && Registry.is("compiler.automake.force.fs.rescan", false))) {
+            if (isRebuild || (isAutomake && Registry.is("compiler.automake.force.fs.rescan"))) {
               data.dropChanges();
             }
             if (IS_UNIT_TEST_MODE) {

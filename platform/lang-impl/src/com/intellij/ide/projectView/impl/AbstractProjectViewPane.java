@@ -29,6 +29,7 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.nodes.AbstractModuleNode;
 import com.intellij.ide.projectView.impl.nodes.AbstractProjectNode;
 import com.intellij.ide.projectView.impl.nodes.ModuleGroupNode;
+import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.Disposable;
@@ -54,6 +55,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -481,6 +483,27 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   public PsiDirectory[] getSelectedDirectories() {
+    List<PsiDirectory> directories = ContainerUtil.newArrayList();
+    for (PsiDirectoryNode node : getSelectedNodes(PsiDirectoryNode.class)) {
+      PsiDirectory directory = node.getValue();
+      if (directory != null) {
+        directories.add(directory);
+        Object parentValue = node.getParent().getValue();
+        if (parentValue instanceof PsiDirectory) {
+          while (true) {
+            directory = directory.getParentDirectory();
+            if (directory == null || directory.equals(parentValue)) {
+              break;
+            }
+            directories.add(directory);
+          }
+        }
+      }
+    }
+    if (!directories.isEmpty()) {
+      return directories.toArray(new PsiDirectory[directories.size()]);
+    }
+
     final PsiElement[] elements = getSelectedPSIElements();
     if (elements.length == 1) {
       final PsiElement element = elements[0];

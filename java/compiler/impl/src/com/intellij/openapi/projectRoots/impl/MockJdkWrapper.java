@@ -93,7 +93,7 @@ public final class MockJdkWrapper implements Sdk {
 
   @NotNull
   public SdkModificator getSdkModificator() {
-    return null;
+    return myDelegate.getSdkModificator();
   }
 
   public Sdk getDelegate() {

@@ -116,11 +116,24 @@ public class RemoteConnectionCredentialsWrapper {
     return new IllegalStateException("Unknown connection type"); //TODO
   }
 
-  public void copyTo(RemoteConnectionCredentialsWrapper copy) {
+  public void copyTo(final RemoteConnectionCredentialsWrapper copy) {
     copy.myCredentialsTypeHolder = new UserDataHolderBase();
-    copy.setPlainSshCredentials(getPlainSshCredentials());
-    copy.setVagrantConnectionType(getVagrantCredentials());
-    copy.setWebDeploymentCredentials(getWebDeploymentCredentials());
+    switchType(new RemoteSdkConnectionAcceptor() {
+      @Override
+      public void ssh(@NotNull RemoteCredentialsHolder cred) {
+        copy.setPlainSshCredentials(getPlainSshCredentials());
+      }
+
+      @Override
+      public void vagrant(@NotNull VagrantBasedCredentialsHolder cred) {
+        copy.setVagrantConnectionType(getVagrantCredentials());
+      }
+
+      @Override
+      public void deployment(@NotNull WebDeploymentCredentialsHolder cred) {
+        copy.setWebDeploymentCredentials(getWebDeploymentCredentials());
+      }
+    });
   }
 
   public String getId() {

@@ -33,7 +33,7 @@
 
     <projectConfigurable instance="com.jetbrains.python.configuration.PythonContentEntriesConfigurable"/>
     <projectConfigurable instance="com.jetbrains.python.buildout.BuildoutModulesConfigurable"/>
-    <projectConfigurable instance="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"/>
+    <projectConfigurable groupId="project" instance="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"/>
     <projectConfigurable instance="com.jetbrains.python.configuration.PyDependenciesConfigurable"/>
 
     <directoryProjectConfigurator implementation="com.jetbrains.python.PythonSdkConfigurator" id="sdk"

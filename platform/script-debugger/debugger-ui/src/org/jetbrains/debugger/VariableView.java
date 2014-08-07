@@ -164,7 +164,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
           if (!node.isObsolete()) {
             value = getViewSupport().transformErrorOnGetUsedReferenceValue(value, error);
             if (value == null) {
-              node.setPresentation(getIcon(), null, error, false);
+              node.setPresentation(AllIcons.Debugger.Db_primitive, null, error, false);
             }
             else {
               VariableView.this.value = value;

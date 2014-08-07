@@ -67,7 +67,7 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Confi
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, true) {
       @Override
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-        return super.isFileVisible(file, showHiddenFiles) && !index.isIgnored(file);
+        return super.isFileVisible(file, showHiddenFiles) && !index.isExcluded(file);
       }
     };
     descriptor.setRoots(ContainerUtil.concat(

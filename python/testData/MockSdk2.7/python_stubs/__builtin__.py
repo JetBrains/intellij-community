@@ -1,7 +1,7 @@
 # encoding: utf-8
 # module __builtin__
 # from (built-in)
-# by generator 1.124
+# by generator 1.135
 from __future__ import print_function
 """
 Built-in functions, exceptions, and other objects.
@@ -43,24 +43,23 @@ def abs(number): # real signature unknown; restored from __doc__
     """
     return 0
 
-
 def all(iterable): # real signature unknown; restored from __doc__
     """
     all(iterable) -> bool
     
     Return True if bool(x) is True for all values x in the iterable.
+    If the iterable is empty, return True.
     """
     return False
-
 
 def any(iterable): # real signature unknown; restored from __doc__
     """
     any(iterable) -> bool
     
     Return True if bool(x) is True for any x in the iterable.
+    If the iterable is empty, return False.
     """
     return False
-
 
 def apply(p_object, args=None, kwargs=None): # real signature unknown; restored from __doc__
     """
@@ -75,7 +74,6 @@ def apply(p_object, args=None, kwargs=None): # real signature unknown; restored 
     """
     pass
 
-
 def bin(number): # real signature unknown; restored from __doc__
     """
     bin(number) -> string
@@ -83,7 +81,6 @@ def bin(number): # real signature unknown; restored from __doc__
     Return the binary representation of an integer or long integer.
     """
     return ""
-
 
 def callable(p_object): # real signature unknown; restored from __doc__
     """
@@ -94,7 +91,6 @@ def callable(p_object): # real signature unknown; restored from __doc__
     """
     return False
 
-
 def chr(i): # real signature unknown; restored from __doc__
     """
     chr(i) -> character
@@ -103,7 +99,6 @@ def chr(i): # real signature unknown; restored from __doc__
     """
     return ""
 
-
 def cmp(x, y): # real signature unknown; restored from __doc__
     """
     cmp(x, y) -> integer
@@ -111,7 +106,6 @@ def cmp(x, y): # real signature unknown; restored from __doc__
     Return negative if x<y, zero if x==y, positive if x>y.
     """
     return 0
-
 
 def coerce(x, y): # real signature unknown; restored from __doc__
     """
@@ -122,7 +116,6 @@ def coerce(x, y): # real signature unknown; restored from __doc__
     If coercion is not possible, raise TypeError.
     """
     pass
-
 
 def compile(source, filename, mode, flags=None, dont_inherit=None): # real signature unknown; restored from __doc__
     """
@@ -142,7 +135,6 @@ def compile(source, filename, mode, flags=None, dont_inherit=None): # real signa
     """
     pass
 
-
 def copyright(*args, **kwargs): # real signature unknown
     """
     interactive prompt objects for printing the license text, a list of
@@ -150,14 +142,12 @@ def copyright(*args, **kwargs): # real signature unknown
     """
     pass
 
-
 def credits(*args, **kwargs): # real signature unknown
     """
     interactive prompt objects for printing the license text, a list of
         contributors and the copyright notice.
     """
     pass
-
 
 def delattr(p_object, name): # real signature unknown; restored from __doc__
     """
@@ -167,7 +157,6 @@ def delattr(p_object, name): # real signature unknown; restored from __doc__
     ``del x.y''.
     """
     pass
-
 
 def dir(p_object=None): # real signature unknown; restored from __doc__
     """
@@ -186,7 +175,6 @@ def dir(p_object=None): # real signature unknown; restored from __doc__
     """
     return []
 
-
 def divmod(x, y): # known case of __builtin__.divmod
     """
     divmod(x, y) -> (quotient, remainder)
@@ -194,7 +182,6 @@ def divmod(x, y): # known case of __builtin__.divmod
     Return the tuple ((x-x%y)/y, x%y).  Invariant: div*y + mod == x.
     """
     return (0, 0)
-
 
 def eval(source, globals=None, locals=None): # real signature unknown; restored from __doc__
     """
@@ -209,7 +196,6 @@ def eval(source, globals=None, locals=None): # real signature unknown; restored 
     """
     pass
 
-
 def execfile(filename, globals=None, locals=None): # real signature unknown; restored from __doc__
     """
     execfile(filename[, globals[, locals]])
@@ -220,10 +206,8 @@ def execfile(filename, globals=None, locals=None): # real signature unknown; res
     """
     pass
 
-
 def exit(*args, **kwargs): # real signature unknown
     pass
-
 
 def filter(function_or_none, sequence): # known special case of filter
     """
@@ -235,7 +219,6 @@ def filter(function_or_none, sequence): # known special case of filter
     """
     pass
 
-
 def format(value, format_spec=None): # real signature unknown; restored from __doc__
     """
     format(value[, format_spec]) -> string
@@ -244,7 +227,6 @@ def format(value, format_spec=None): # real signature unknown; restored from __d
     format_spec defaults to ""
     """
     return ""
-
 
 def getattr(object, name, default=None): # known special case of getattr
     """
@@ -256,7 +238,6 @@ def getattr(object, name, default=None): # known special case of getattr
     """
     pass
 
-
 def globals(): # real signature unknown; restored from __doc__
     """
     globals() -> dictionary
@@ -264,7 +245,6 @@ def globals(): # real signature unknown; restored from __doc__
     Return the dictionary containing the current scope's global variables.
     """
     return {}
-
 
 def hasattr(p_object, name): # real signature unknown; restored from __doc__
     """
@@ -275,7 +255,6 @@ def hasattr(p_object, name): # real signature unknown; restored from __doc__
     """
     return False
 
-
 def hash(p_object): # real signature unknown; restored from __doc__
     """
     hash(object) -> integer
@@ -285,14 +264,12 @@ def hash(p_object): # real signature unknown; restored from __doc__
     """
     return 0
 
-
 def help(with_a_twist): # real signature unknown; restored from __doc__
     """
     Define the builtin 'help'.
         This is a wrapper around pydoc.help (with a twist).
     """
     pass
-
 
 def hex(number): # real signature unknown; restored from __doc__
     """
@@ -301,7 +278,6 @@ def hex(number): # real signature unknown; restored from __doc__
     Return the hexadecimal representation of an integer or long integer.
     """
     return ""
-
 
 def id(p_object): # real signature unknown; restored from __doc__
     """
@@ -312,7 +288,6 @@ def id(p_object): # real signature unknown; restored from __doc__
     """
     return 0
 
-
 def input(prompt=None): # real signature unknown; restored from __doc__
     """
     input([prompt]) -> value
@@ -320,7 +295,6 @@ def input(prompt=None): # real signature unknown; restored from __doc__
     Equivalent to eval(raw_input(prompt)).
     """
     pass
-
 
 def intern(string): # real signature unknown; restored from __doc__
     """
@@ -333,7 +307,6 @@ def intern(string): # real signature unknown; restored from __doc__
     """
     return ""
 
-
 def isinstance(p_object, class_or_type_or_tuple): # real signature unknown; restored from __doc__
     """
     isinstance(object, class-or-type-or-tuple) -> bool
@@ -345,7 +318,6 @@ def isinstance(p_object, class_or_type_or_tuple): # real signature unknown; rest
     """
     return False
 
-
 def issubclass(C, B): # real signature unknown; restored from __doc__
     """
     issubclass(C, B) -> bool
@@ -355,7 +327,6 @@ def issubclass(C, B): # real signature unknown; restored from __doc__
     is a shortcut for issubclass(X, A) or issubclass(X, B) or ... (etc.).
     """
     return False
-
 
 def iter(source, sentinel=None): # known special case of iter
     """
@@ -368,7 +339,6 @@ def iter(source, sentinel=None): # known special case of iter
     """
     pass
 
-
 def len(p_object): # real signature unknown; restored from __doc__
     """
     len(object) -> integer
@@ -377,14 +347,12 @@ def len(p_object): # real signature unknown; restored from __doc__
     """
     return 0
 
-
 def license(*args, **kwargs): # real signature unknown
     """
     interactive prompt objects for printing the license text, a list of
         contributors and the copyright notice.
     """
     pass
-
 
 def locals(): # real signature unknown; restored from __doc__
     """
@@ -393,7 +361,6 @@ def locals(): # real signature unknown; restored from __doc__
     Update and return a dictionary containing the current scope's local variables.
     """
     return {}
-
 
 def map(function, sequence, *sequence_1): # real signature unknown; restored from __doc__
     """
@@ -408,7 +375,6 @@ def map(function, sequence, *sequence_1): # real signature unknown; restored fro
     """
     return []
 
-
 def max(*args, **kwargs): # known special case of max
     """
     max(iterable[, key=func]) -> value
@@ -418,7 +384,6 @@ def max(*args, **kwargs): # known special case of max
     With two or more arguments, return the largest argument.
     """
     pass
-
 
 def min(*args, **kwargs): # known special case of min
     """
@@ -430,7 +395,6 @@ def min(*args, **kwargs): # known special case of min
     """
     pass
 
-
 def next(iterator, default=None): # real signature unknown; restored from __doc__
     """
     next(iterator[, default])
@@ -440,7 +404,6 @@ def next(iterator, default=None): # real signature unknown; restored from __doc_
     """
     pass
 
-
 def oct(number): # real signature unknown; restored from __doc__
     """
     oct(number) -> string
@@ -448,7 +411,6 @@ def oct(number): # real signature unknown; restored from __doc__
     Return the octal representation of an integer or long integer.
     """
     return ""
-
 
 def open(name, mode=None, buffering=None): # real signature unknown; restored from __doc__
     """
@@ -459,7 +421,6 @@ def open(name, mode=None, buffering=None): # real signature unknown; restored fr
     """
     return file('/dev/null')
 
-
 def ord(c): # real signature unknown; restored from __doc__
     """
     ord(c) -> integer
@@ -467,7 +428,6 @@ def ord(c): # real signature unknown; restored from __doc__
     Return the integer ordinal of a one-character string.
     """
     return 0
-
 
 def pow(x, y, z=None): # real signature unknown; restored from __doc__
     """
@@ -477,7 +437,6 @@ def pow(x, y, z=None): # real signature unknown; restored from __doc__
     equivalent to (x**y) % z, but may be more efficient (e.g. for longs).
     """
     return 0
-
 
 def print(*args, **kwargs): # known special case of print
     """
@@ -491,14 +450,13 @@ def print(*args, **kwargs): # known special case of print
     """
     pass
 
-
 def quit(*args, **kwargs): # real signature unknown
     pass
 
-
 def range(start=None, stop=None, step=None): # known special case of range
     """
-    range([start,] stop[, step]) -> list of integers
+    range(stop) -> list of integers
+    range(start, stop[, step]) -> list of integers
     
     Return a list containing an arithmetic progression of integers.
     range(i, j) returns [i, i+1, i+2, ..., j-1]; start (!) defaults to 0.
@@ -507,7 +465,6 @@ def range(start=None, stop=None, step=None): # known special case of range
     These are exactly the valid indices for a list of 4 elements.
     """
     pass
-
 
 def raw_input(prompt=None): # real signature unknown; restored from __doc__
     """
@@ -519,7 +476,6 @@ def raw_input(prompt=None): # real signature unknown; restored from __doc__
     is printed without a trailing newline before reading.
     """
     return ""
-
 
 def reduce(function, sequence, initial=None): # real signature unknown; restored from __doc__
     """
@@ -534,7 +490,6 @@ def reduce(function, sequence, initial=None): # real signature unknown; restored
     """
     pass
 
-
 def reload(module): # real signature unknown; restored from __doc__
     """
     reload(module) -> module
@@ -542,7 +497,6 @@ def reload(module): # real signature unknown; restored from __doc__
     Reload the module.  The module must have been successfully imported before.
     """
     pass
-
 
 def repr(p_object): # real signature unknown; restored from __doc__
     """
@@ -553,7 +507,6 @@ def repr(p_object): # real signature unknown; restored from __doc__
     """
     return ""
 
-
 def round(number, ndigits=None): # real signature unknown; restored from __doc__
     """
     round(number[, ndigits]) -> floating point number
@@ -562,7 +515,6 @@ def round(number, ndigits=None): # real signature unknown; restored from __doc__
     This always returns a floating point number.  Precision may be negative.
     """
     return 0.0
-
 
 def setattr(p_object, name, value): # real signature unknown; restored from __doc__
     """
@@ -573,22 +525,19 @@ def setattr(p_object, name, value): # real signature unknown; restored from __do
     """
     pass
 
-
 def sorted(iterable, cmp=None, key=None, reverse=False): # real signature unknown; restored from __doc__
     """ sorted(iterable, cmp=None, key=None, reverse=False) --> new sorted list """
     pass
-
 
 def sum(sequence, start=None): # real signature unknown; restored from __doc__
     """
     sum(sequence[, start]) -> value
     
-    Returns the sum of a sequence of numbers (NOT strings) plus the value
+    Return the sum of a sequence of numbers (NOT strings) plus the value
     of parameter 'start' (which defaults to 0).  When the sequence is
-    empty, returns start.
+    empty, return start.
     """
     pass
-
 
 def unichr(i): # real signature unknown; restored from __doc__
     """
@@ -598,7 +547,6 @@ def unichr(i): # real signature unknown; restored from __doc__
     """
     return u""
 
-
 def vars(p_object=None): # real signature unknown; restored from __doc__
     """
     vars([object]) -> dictionary
@@ -607,7 +555,6 @@ def vars(p_object=None): # real signature unknown; restored from __doc__
     With an argument, equivalent to object.__dict__.
     """
     return {}
-
 
 def zip(seq1, seq2, *more_seqs): # known special case of zip
     """
@@ -619,13 +566,16 @@ def zip(seq1, seq2, *more_seqs): # known special case of zip
     """
     pass
 
-
 def __import__(name, globals={}, locals={}, fromlist=[], level=-1): # real signature unknown; restored from __doc__
     """
     __import__(name, globals={}, locals={}, fromlist=[], level=-1) -> module
     
-    Import a module.  The globals are only used to determine the context;
-    they are not modified.  The locals are currently unused.  The fromlist
+    Import a module. Because this function is meant for use by the Python
+    interpreter and not for general use it is better to use
+    importlib.import_module() to programmatically import a module.
+    
+    The globals argument is only used to determine the context;
+    they are not modified.  The locals argument is unused.  The fromlist
     should be a list of names to emulate ``from name import ...'', or an
     empty list to emulate ``import name''.
     When importing a module from a package, note that __import__('A.B', ...)
@@ -637,8 +587,99 @@ def __import__(name, globals={}, locals={}, fromlist=[], level=-1): # real signa
     """
     pass
 
-
 # classes
+
+class ___Classobj:
+    '''A mock class representing the old style class base.'''
+    __module__ = ''
+    __class__ = None
+
+    def __init__(self):
+        pass
+    __dict__ = {}
+    __doc__ = ''
+
+
+class __generator(object):
+    '''A mock class representing the generator function type.'''
+    def __init__(self):
+        self.gi_code = None
+        self.gi_frame = None
+        self.gi_running = 0
+
+    def __iter__(self):
+        '''Defined to support iteration over container.'''
+        pass
+
+    def next(self):
+        '''Return the next item from the container.'''
+        pass
+
+    def close(self):
+        '''Raises new GeneratorExit exception inside the generator to terminate the iteration.'''
+        pass
+
+    def send(self, value):
+        '''Resumes the generator and "sends" a value that becomes the result of the current yield-expression.'''
+        pass
+
+    def throw(self, type, value=None, traceback=None):
+        '''Used to raise an exception inside the generator.'''
+        pass
+
+
+class __function(object):
+    '''A mock class representing function type.'''
+
+    def __init__(self):
+        self.__name__ = ''
+        self.__doc__ = ''
+        self.__dict__ = ''
+        self.__module__ = ''
+
+        self.func_defaults = {}
+        self.func_globals = {}
+        self.func_closure = None
+        self.func_code = None
+        self.func_name = ''
+        self.func_doc = ''
+        self.func_dict = ''
+
+        self.__defaults__ = {}
+        self.__globals__ = {}
+        self.__closure__ = None
+        self.__code__ = None
+        self.__name__ = ''
+
+
+class __namedtuple(tuple):
+    '''A mock base class for named tuples.'''
+
+    __slots__ = ()
+    _fields = ()
+
+    def __new__(cls, *args, **kwargs):
+        'Create a new instance of the named tuple.'
+        return tuple.__new__(cls, *args)
+
+    @classmethod
+    def _make(cls, iterable, new=tuple.__new__, len=len):
+        'Make a new named tuple object from a sequence or iterable.'
+        return new(cls, iterable)
+
+    def __repr__(self):
+        return ''
+
+    def _asdict(self):
+        'Return a new dict which maps field types to their values.'
+        return {}
+
+    def _replace(self, **kwargs):
+        'Return a new named tuple object replacing specified fields with new values.'
+        return self
+
+    def __getnewargs__(self):
+        return tuple(self)
 
 class object:
     """ The most base type """
@@ -712,6 +753,8 @@ class object:
     __module__ = ''
 
 
+from object import object
+
 class basestring(object):
     """ Type basestring cannot be instantiated; it is the base for str and unicode. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -723,17 +766,24 @@ class basestring(object):
         pass
 
 
+from object import object
+
 class int(object):
     """
-    int(x[, base]) -> integer
+    int(x=0) -> int or long
+    int(x, base=10) -> int or long
     
-    Convert a string or number to an integer, if possible.  A floating point
-    argument will be truncated towards zero (this does not include a string
-    representation of a floating point number!)  When converting a string, use
-    the optional base.  It is an error to supply a base when converting a
-    non-string.  If base is zero, the proper base is guessed based on the
-    string content.  If the argument is outside the integer range a
-    long object will be returned instead.
+    Convert a number or string to an integer, or return 0 if no arguments
+    are given.  If x is floating point, the conversion truncates towards zero.
+    If x is outside the integer range, the function returns a long instead.
+    
+    If x is not a number or if base is given, then x must be a string or
+    Unicode object representing an integer literal in the given base.  The
+    literal can be preceded by '+' or '-' and be surrounded by whitespace.
+    The base defaults to 10.  Valid bases are 0 and 2-36.  Base 0 means to
+    interpret the base from the string as an integer literal.
+    >>> int('0b100', base=0)
+    4
     """
     def bit_length(self): # real signature unknown; restored from __doc__
         """
@@ -811,15 +861,20 @@ class int(object):
 
     def __init__(self, x, base=10): # known special case of int.__init__
         """
-        int(x[, base]) -> integer
+        int(x=0) -> int or long
+        int(x, base=10) -> int or long
         
-        Convert a string or number to an integer, if possible.  A floating point
-        argument will be truncated towards zero (this does not include a string
-        representation of a floating point number!)  When converting a string, use
-        the optional base.  It is an error to supply a base when converting a
-        non-string.  If base is zero, the proper base is guessed based on the
-        string content.  If the argument is outside the integer range a
-        long object will be returned instead.
+        Convert a number or string to an integer, or return 0 if no arguments
+        are given.  If x is floating point, the conversion truncates towards zero.
+        If x is outside the integer range, the function returns a long instead.
+        
+        If x is not a number or if base is given, then x must be a string or
+        Unicode object representing an integer literal in the given base.  The
+        literal can be preceded by '+' or '-' and be surrounded by whitespace.
+        The base defaults to 10.  Valid bases are 0 and 2-36.  Base 0 means to
+        interpret the base from the string as an integer literal.
+        >>> int('0b100', base=0)
+        4
         # (copied from class doc)
         """
         pass
@@ -961,11 +1016,21 @@ class int(object):
         """ x.__xor__(y) <==> x^y """
         pass
 
-    denominator = property(lambda self: object()) # default
-    imag = property(lambda self: object()) # default
-    numerator = property(lambda self: object()) # default
-    real = property(lambda self: object()) # default
+    denominator = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """the denominator of a rational number in lowest terms"""
 
+    imag = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """the imaginary part of a complex number"""
+
+    numerator = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """the numerator of a rational number in lowest terms"""
+
+    real = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """the real part of a complex number"""
+
+
+
+from int import int
 
 class bool(int):
     """
@@ -1015,6 +1080,8 @@ class bool(int):
         """ x.__xor__(y) <==> x^y """
         pass
 
+
+from object import object
 
 class buffer(object):
     """
@@ -1105,6 +1172,8 @@ class buffer(object):
         """ x.__str__() <==> str(x) """
         pass
 
+
+from object import object
 
 class bytearray(object):
     """
@@ -1456,9 +1525,9 @@ class bytearray(object):
         """
         return []
 
-    def splitlines(self, keepends=None): # real signature unknown; restored from __doc__
+    def splitlines(self, keepends=False): # real signature unknown; restored from __doc__
         """
-        B.splitlines([keepends]) -> list of lines
+        B.splitlines(keepends=False) -> list of lines
         
         Return a list of the lines in B, breaking at line boundaries.
         Line breaks are not included in the resulting list unless keepends
@@ -1658,9 +1727,11 @@ class bytearray(object):
         pass
 
 
+from basestring import basestring
+
 class str(basestring):
     """
-    str(object) -> string
+    str(object='') -> string
     
     Return a nice string representation of the object.
     If the argument is a string, the return value is the same object.
@@ -1962,9 +2033,9 @@ class str(basestring):
         """
         return []
 
-    def splitlines(self, keepends=None): # real signature unknown; restored from __doc__
+    def splitlines(self, keepends=False): # real signature unknown; restored from __doc__
         """
-        S.splitlines([keepends]) -> list of strings
+        S.splitlines(keepends=False) -> list of strings
         
         Return a list of the lines in S, breaking at line boundaries.
         Line breaks are not included in the resulting list unless keepends
@@ -2101,7 +2172,7 @@ class str(basestring):
 
     def __init__(self, string=''): # known special case of str.__init__
         """
-        str(object) -> string
+        str(object='') -> string
         
         Return a nice string representation of the object.
         If the argument is a string, the return value is the same object.
@@ -2162,6 +2233,8 @@ class str(basestring):
 bytes = str
 
 
+from object import object
+
 class classmethod(object):
     """
     classmethod(function) -> method
@@ -2200,8 +2273,11 @@ class classmethod(object):
         """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
         pass
 
-    __func__ = property(lambda self: object()) # default
+    __func__ = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
 
+
+
+from object import object
 
 class complex(object):
     """
@@ -2214,7 +2290,7 @@ class complex(object):
         """
         complex.conjugate() -> complex
         
-        Returns the complex conjugate of its argument. (3-4j).conjugate() == 3+4j.
+        Return the complex conjugate of its argument. (3-4j).conjugate() == 3+4j.
         """
         return complex
 
@@ -2254,7 +2330,7 @@ class complex(object):
         """
         complex.__format__() -> str
         
-        Converts to a string according to format_spec.
+        Convert to a string according to format_spec.
         """
         return ""
 
@@ -2382,8 +2458,20 @@ class complex(object):
         pass
 
     imag = property(lambda self: 0.0)
-    real = property(lambda self: 0.0)
+    """the imaginary part of a complex number
 
+    :type: float
+    """
+
+    real = property(lambda self: 0.0)
+    """the real part of a complex number
+
+    :type: float
+    """
+
+
+
+from object import object
 
 class dict(object):
     """
@@ -2461,9 +2549,9 @@ class dict(object):
 
     def update(self, E=None, **F): # known special case of dict.update
         """
-        D.update(E, **F) -> None.  Update D from dict/iterable E and F.
-        If E has a .keys() method, does:     for k in E: D[k] = E[k]
-        If E lacks .keys() method, does:     for (k, v) in E: D[k] = v
+        D.update([E, ]**F) -> None.  Update D from dict/iterable E and F.
+        If E present and has a .keys() method, does:     for k in E: D[k] = E[k]
+        If E present and lacks .keys() method, does:     for (k, v) in E: D[k] = v
         In either case, this is followed by: for k in F: D[k] = F[k]
         """
         pass
@@ -2571,6 +2659,8 @@ class dict(object):
     __hash__ = None
 
 
+from object import object
+
 class enumerate(object):
     """
     enumerate(iterable[, start]) -> iterator for index, value of iterable
@@ -2602,6 +2692,8 @@ class enumerate(object):
         """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
         pass
 
+
+from object import object
 
 class file(object):
     """
@@ -2779,13 +2871,47 @@ class file(object):
         pass
 
     closed = property(lambda self: True)
-    encoding = property(lambda self: '')
-    errors = property(lambda self: object()) # default
-    mode = property(lambda self: '')
-    name = property(lambda self: '')
-    newlines = property(lambda self: '')
-    softspace = property(lambda self: True)
+    """True if the file is closed
 
+    :type: bool
+    """
+
+    encoding = property(lambda self: '')
+    """file encoding
+
+    :type: string
+    """
+
+    errors = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """Unicode error handler"""
+
+    mode = property(lambda self: '')
+    """file mode ('r', 'U', 'w', 'a', possibly with 'b' or '+' added)
+
+    :type: string
+    """
+
+    name = property(lambda self: '')
+    """file name
+
+    :type: string
+    """
+
+    newlines = property(lambda self: '')
+    """end-of-line convention used in this file
+
+    :type: string
+    """
+
+    softspace = property(lambda self: True)
+    """flag indicating that a space needs to be printed; used by print
+
+    :type: bool
+    """
+
+
+
+from object import object
 
 class float(object):
     """
@@ -2797,9 +2923,9 @@ class float(object):
         """
         float.as_integer_ratio() -> (int, int)
         
-        Returns a pair of integers, whose ratio is exactly equal to the original
+        Return a pair of integers, whose ratio is exactly equal to the original
         float and with a positive denominator.
-        Raises OverflowError on infinities and a ValueError on NaNs.
+        Raise OverflowError on infinities and a ValueError on NaNs.
         
         >>> (10.0).as_integer_ratio()
         (10, 1)
@@ -2811,7 +2937,7 @@ class float(object):
         pass
 
     def conjugate(self, *args, **kwargs): # real signature unknown
-        """ Returns self, the complex conjugate of any float. """
+        """ Return self, the complex conjugate of any float. """
         pass
 
     def fromhex(self, string): # real signature unknown; restored from __doc__
@@ -2839,7 +2965,7 @@ class float(object):
         return ""
 
     def is_integer(self, *args, **kwargs): # real signature unknown
-        """ Returns True if the float is an integer. """
+        """ Return True if the float is an integer. """
         pass
 
     def __abs__(self): # real signature unknown; restored from __doc__
@@ -3017,7 +3143,7 @@ class float(object):
         'IEEE, big-endian' or 'IEEE, little-endian', and in addition can only be
         one of the latter two if it appears to match the underlying C reality.
         
-        Overrides the automatic determination of C-level floating point type.
+        Override the automatic determination of C-level floating point type.
         This affects how floats are converted to and from binary strings.
         """
         pass
@@ -3035,12 +3161,18 @@ class float(object):
         pass
 
     def __trunc__(self, *args, **kwargs): # real signature unknown
-        """ Returns the Integral closest to x between 0 and x. """
+        """ Return the Integral closest to x between 0 and x. """
         pass
 
-    imag = property(lambda self: object()) # default
-    real = property(lambda self: object()) # default
+    imag = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """the imaginary part of a complex number"""
 
+    real = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """the real part of a complex number"""
+
+
+
+from object import object
 
 class frozenset(object):
     """
@@ -3198,6 +3330,8 @@ class frozenset(object):
         """ x.__xor__(y) <==> x^y """
         pass
 
+
+from object import object
 
 class list(object):
     """
@@ -3376,15 +3510,23 @@ class list(object):
     __hash__ = None
 
 
+from object import object
+
 class long(object):
     """
-    long(x[, base]) -> integer
+    long(x=0) -> long
+    long(x, base=10) -> long
     
-    Convert a string or number to a long integer, if possible.  A floating
-    point argument will be truncated towards zero (this does not include a
-    string representation of a floating point number!)  When converting a
-    string, use the optional base.  It is an error to supply a base when
-    converting a non-string.
+    Convert a number or string to a long integer, or return 0L if no arguments
+    are given.  If x is floating point, the conversion truncates towards zero.
+    
+    If x is not a number or if base is given, then x must be a string or
+    Unicode object representing an integer literal in the given base.  The
+    literal can be preceded by '+' or '-' and be surrounded by whitespace.
+    The base defaults to 10.  Valid bases are 0 and 2-36.  Base 0 means to
+    interpret the base from the string as an integer literal.
+    >>> int('0b100', base=0)
+    4L
     """
     def bit_length(self): # real signature unknown; restored from __doc__
         """
@@ -3460,7 +3602,7 @@ class long(object):
         """ x[y:z] <==> x[y.__index__():z.__index__()] """
         pass
 
-    def __init__(self, x, base=None): # real signature unknown; restored from __doc__
+    def __init__(self, x=0): # real signature unknown; restored from __doc__
         pass
 
     def __int__(self): # real signature unknown; restored from __doc__
@@ -3604,11 +3746,21 @@ class long(object):
         """ x.__xor__(y) <==> x^y """
         pass
 
-    denominator = property(lambda self: object()) # default
-    imag = property(lambda self: object()) # default
-    numerator = property(lambda self: object()) # default
-    real = property(lambda self: object()) # default
+    denominator = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """the denominator of a rational number in lowest terms"""
 
+    imag = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """the imaginary part of a complex number"""
+
+    numerator = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """the numerator of a rational number in lowest terms"""
+
+    real = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """the real part of a complex number"""
+
+
+
+from object import object
 
 class memoryview(object):
     """
@@ -3678,14 +3830,23 @@ class memoryview(object):
         """ x.__setitem__(i, y) <==> x[i]=y """
         pass
 
-    format = property(lambda self: object()) # default
-    itemsize = property(lambda self: object()) # default
-    ndim = property(lambda self: object()) # default
-    readonly = property(lambda self: object()) # default
-    shape = property(lambda self: object()) # default
-    strides = property(lambda self: object()) # default
-    suboffsets = property(lambda self: object()) # default
+    format = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
 
+    itemsize = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+
+    ndim = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+
+    readonly = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+
+    shape = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+
+    strides = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+
+    suboffsets = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+
+
+
+from object import object
 
 class property(object):
     """
@@ -3694,6 +3855,7 @@ class property(object):
     fget is a function to be used for getting an attribute value, and likewise
     fset is a function for setting, and fdel a function for del'ing, an
     attribute.  Typical use is to define a managed attribute x:
+    
     class C(object):
         def getx(self): return self._x
         def setx(self, value): self._x = value
@@ -3701,13 +3863,18 @@ class property(object):
         x = property(getx, setx, delx, "I'm the 'x' property.")
     
     Decorators make defining new properties or modifying existing ones easy:
+    
     class C(object):
         @property
-        def x(self): return self._x
+        def x(self):
+            "I am the 'x' property."
+            return self._x
         @x.setter
-        def x(self, value): self._x = value
+        def x(self, value):
+            self._x = value
         @x.deleter
-        def x(self): del self._x
+        def x(self):
+            del self._x
     """
     def deleter(self, *args, **kwargs): # real signature unknown
         """ Descriptor to change the deleter on a property. """
@@ -3740,6 +3907,7 @@ class property(object):
         fget is a function to be used for getting an attribute value, and likewise
         fset is a function for setting, and fdel a function for del'ing, an
         attribute.  Typical use is to define a managed attribute x:
+        
         class C(object):
             def getx(self): return self._x
             def setx(self, value): self._x = value
@@ -3747,13 +3915,18 @@ class property(object):
             x = property(getx, setx, delx, "I'm the 'x' property.")
         
         Decorators make defining new properties or modifying existing ones easy:
+        
         class C(object):
             @property
-            def x(self): return self._x
+            def x(self):
+                "I am the 'x' property."
+                return self._x
             @x.setter
-            def x(self, value): self._x = value
+            def x(self, value):
+                self._x = value
             @x.deleter
-            def x(self): del self._x
+            def x(self):
+                del self._x
         
         # (copied from class doc)
         """
@@ -3768,10 +3941,15 @@ class property(object):
         """ descr.__set__(obj, value) """
         pass
 
-    fdel = property(lambda self: object()) # default
-    fget = property(lambda self: object()) # default
-    fset = property(lambda self: object()) # default
+    fdel = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
 
+    fget = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+
+    fset = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+
+
+
+from object import object
 
 class reversed(object):
     """
@@ -3803,6 +3981,8 @@ class reversed(object):
         """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
         pass
 
+
+from object import object
 
 class set(object):
     """
@@ -3939,7 +4119,7 @@ class set(object):
         pass
 
     def __iand__(self, y): # real signature unknown; restored from __doc__
-        """ x.__iand__(y) <==> x&y """
+        """ x.__iand__(y) <==> x&=y """
         pass
 
     def __init__(self, seq=()): # known special case of set.__init__
@@ -3953,11 +4133,11 @@ class set(object):
         pass
 
     def __ior__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ior__(y) <==> x|y """
+        """ x.__ior__(y) <==> x|=y """
         pass
 
     def __isub__(self, y): # real signature unknown; restored from __doc__
-        """ x.__isub__(y) <==> x-y """
+        """ x.__isub__(y) <==> x-=y """
         pass
 
     def __iter__(self): # real signature unknown; restored from __doc__
@@ -3965,7 +4145,7 @@ class set(object):
         pass
 
     def __ixor__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ixor__(y) <==> x^y """
+        """ x.__ixor__(y) <==> x^=y """
         pass
 
     def __len__(self): # real signature unknown; restored from __doc__
@@ -4032,9 +4212,12 @@ class set(object):
     __hash__ = None
 
 
+from object import object
+
 class slice(object):
     """
-    slice([start,] stop[, step])
+    slice(stop)
+    slice(start, stop[, step])
     
     Create a slice object.  This is used for extended slicing (e.g. a[0:10:2]).
     """
@@ -4061,7 +4244,7 @@ class slice(object):
         """ x.__hash__() <==> hash(x) """
         pass
 
-    def __init__(self, start=None, *args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__ 
+    def __init__(self, stop): # real signature unknown; restored from __doc__
         pass
 
     @staticmethod # known case of __new__
@@ -4078,9 +4261,17 @@ class slice(object):
         pass
 
     start = property(lambda self: 0)
-    step = property(lambda self: 0)
-    stop = property(lambda self: 0)
+    """:type: int"""
 
+    step = property(lambda self: 0)
+    """:type: int"""
+
+    stop = property(lambda self: 0)
+    """:type: int"""
+
+
+
+from object import object
 
 class staticmethod(object):
     """
@@ -4117,13 +4308,16 @@ class staticmethod(object):
         """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
         pass
 
-    __func__ = property(lambda self: object()) # default
+    __func__ = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
 
+
+
+from object import object
 
 class super(object):
     """
-    super(type) -> unbound super object
     super(type, obj) -> bound super object; requires isinstance(obj, type)
+    super(type) -> unbound super object
     super(type, type2) -> bound super object; requires issubclass(type2, type)
     Typical use to call a cooperative superclass method:
     class C(B):
@@ -4140,8 +4334,8 @@ class super(object):
 
     def __init__(self, type1, type2=None): # known special case of super.__init__
         """
-        super(type) -> unbound super object
         super(type, obj) -> bound super object; requires isinstance(obj, type)
+        super(type) -> unbound super object
         super(type, type2) -> bound super object; requires issubclass(type2, type)
         Typical use to call a cooperative superclass method:
         class C(B):
@@ -4161,9 +4355,26 @@ class super(object):
         pass
 
     __self_class__ = property(lambda self: type(object))
-    __self__ = property(lambda self: type(object))
-    __thisclass__ = property(lambda self: type(object))
+    """the type of the instance invoking super(); may be None
 
+    :type: type
+    """
+
+    __self__ = property(lambda self: type(object))
+    """the instance invoking super(); may be None
+
+    :type: type
+    """
+
+    __thisclass__ = property(lambda self: type(object))
+    """the class invoking super()
+
+    :type: type
+    """
+
+
+
+from object import object
 
 class tuple(object):
     """
@@ -4278,6 +4489,8 @@ class tuple(object):
         pass
 
 
+from object import object
+
 class type(object):
     """
     type(object) -> the object's type
@@ -4369,7 +4582,8 @@ class type(object):
         """ __subclasses__() -> list of immediate subclasses """
         return []
 
-    __abstractmethods__ = property(lambda self: object()) # default
+    __abstractmethods__ = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+
 
     __bases__ = (
         object,
@@ -4388,9 +4602,12 @@ class type(object):
     __weakrefoffset__ = 368
 
 
+from basestring import basestring
+
 class unicode(basestring):
     """
-    unicode(string [, encoding[, errors]]) -> object
+    unicode(object='') -> unicode object
+    unicode(string[, encoding[, errors]]) -> unicode object
     
     Create a new Unicode object from the given encoded string.
     encoding defaults to the current default string encoding.
@@ -4432,7 +4649,7 @@ class unicode(basestring):
         to the default encoding. errors may be given to set a different error
         handling scheme. Default is 'strict' meaning that encoding errors raise
         a UnicodeDecodeError. Other possible values are 'ignore' and 'replace'
-        as well as any other name registerd with codecs.register_error that is
+        as well as any other name registered with codecs.register_error that is
         able to handle UnicodeDecodeErrors.
         """
         return ""
@@ -4711,9 +4928,9 @@ class unicode(basestring):
         """
         return []
 
-    def splitlines(self, keepends=None): # real signature unknown; restored from __doc__
+    def splitlines(self, keepends=False): # real signature unknown; restored from __doc__
         """
-        S.splitlines([keepends]) -> list of strings
+        S.splitlines(keepends=False) -> list of strings
         
         Return a list of the lines in S, breaking at line boundaries.
         Line breaks are not included in the resulting list unless keepends
@@ -4849,7 +5066,8 @@ class unicode(basestring):
 
     def __init__(self, string=u'', encoding=None, errors='strict'): # known special case of unicode.__init__
         """
-        unicode(string [, encoding[, errors]]) -> object
+        unicode(object='') -> unicode object
+        unicode(string[, encoding[, errors]]) -> unicode object
         
         Create a new Unicode object from the given encoded string.
         encoding defaults to the current default string encoding.
@@ -4908,9 +5126,12 @@ class unicode(basestring):
         pass
 
 
+from object import object
+
 class xrange(object):
     """
-    xrange([start,] stop[, step]) -> xrange object
+    xrange(stop) -> xrange object
+    xrange(start, stop[, step]) -> xrange object
     
     Like range(), but instead of returning a list, returns an object that
     generates the numbers in the range on demand.  For looping, this is 
@@ -4924,7 +5145,7 @@ class xrange(object):
         """ x.__getitem__(y) <==> x[y] """
         pass
 
-    def __init__(self, start=None, *args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__ 
+    def __init__(self, stop): # real signature unknown; restored from __doc__
         pass
 
     def __iter__(self): # real signature unknown; restored from __doc__
@@ -4951,74 +5172,6 @@ class xrange(object):
         """ Returns a reverse iterator. """
         pass
 
-
-class ___Classobj:
-    '''A mock class representing the old style class base.'''
-    __module__ = ''
-    __class__ = None
-
-    def __init__(self):
-        pass
-    __dict__ = {}
-    __doc__ = ''
-
-
-class __generator(object):
-    '''A mock class representing the generator function type.'''
-    def __init__(self):
-        self.gi_code = None
-        self.gi_frame = None
-        self.gi_running = 0
-
-    def __iter__(self):
-        '''Defined to support iteration over container.'''
-        pass
-
-    def next(self):
-        '''Return the next item from the container.'''
-        pass
-
-    def close(self):
-        '''Raises new GeneratorExit exception inside the generator to terminate the iteration.'''
-        pass
-
-    def send(self, value):
-        '''Resumes the generator and "sends" a value that becomes the result of the current yield-expression.'''
-        pass
-
-    def throw(self, type, value=None, traceback=None):
-        '''Used to raise an exception inside the generator.'''
-        pass
-
-
-class __namedtuple(tuple):
-    '''A mock base class for named tuples.'''
-
-    __slots__ = ()
-    _fields = ()
-
-    def __new__(cls, *args, **kwargs):
-        'Create a new instance of the named tuple.'
-        return tuple.__new__(cls, *args)
-
-    @classmethod
-    def _make(cls, iterable, new=tuple.__new__, len=len):
-        'Make a new named tuple object from a sequence or iterable.'
-        return new(cls, iterable)
-
-    def __repr__(self):
-        return ''
-
-    def _asdict(self):
-        'Return a new dict which maps field types to their values.'
-        return {}
-
-    def _replace(self, **kwargs):
-        'Return a new named tuple object replacing specified fields with new values.'
-        return self
-
-    def __getnewargs__(self):
-        return tuple(self)
 
 # variables with complex values
 

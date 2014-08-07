@@ -92,6 +92,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
    * out of its container. (IDEA-61536)
    */
   private WeakReference<TabInfo> myPreviousSelection = new WeakReference<TabInfo>(null);
+  private boolean myTitleShortened;
 
   public TabInfo(final JComponent component) {
     myComponent = component;
@@ -390,6 +391,14 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
   @Nullable
   public TabInfo getPreviousSelection() {
     return myPreviousSelection.get();
+  }
+
+  public boolean isTitleShortened() {
+    return myTitleShortened;
+  }
+
+  public void setTitleIsShortened(boolean titleIsShortened) {
+    myTitleShortened = titleIsShortened;
   }
 
   public interface DragOutDelegate {

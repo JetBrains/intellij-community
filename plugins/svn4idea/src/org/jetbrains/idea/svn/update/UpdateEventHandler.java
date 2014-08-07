@@ -25,6 +25,10 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnFileUrlMapping;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.EventAction;
+import org.jetbrains.idea.svn.api.ProgressEvent;
+import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -38,7 +42,7 @@ import java.util.Map;
 /**
  * @author lesya
 */
-public class UpdateEventHandler implements ISVNEventHandler {
+public class UpdateEventHandler implements ProgressTracker {
   private ProgressIndicator myProgressIndicator;
   private UpdatedFiles myUpdatedFiles;
   private int myExternalsCount;
@@ -66,7 +70,7 @@ public class UpdateEventHandler implements ISVNEventHandler {
     myUpdatedFiles = updatedFiles;
   }
 
-  public void handleEvent(final SVNEvent event, double progress) {
+  public void consume(final ProgressEvent event) {
     if (event == null || event.getFile() == null) {
       return;
     }
@@ -81,7 +85,7 @@ public class UpdateEventHandler implements ISVNEventHandler {
       return;
     }
 
-    if (event.getAction() == SVNEventAction.TREE_CONFLICT) {
+    if (event.getAction() == EventAction.TREE_CONFLICT) {
       myText2 = SvnBundle.message("progress.text2.treeconflicted", displayPath);
       updateProgressIndicator();
       myUpdatedFiles.registerGroup(createFileGroup(VcsBundle.message("update.group.name.merged.with.tree.conflicts"),
@@ -89,10 +93,10 @@ public class UpdateEventHandler implements ISVNEventHandler {
       addFileToGroup(FileGroup.MERGED_WITH_TREE_CONFLICT, event);
     }
 
-    if (event.getAction() == SVNEventAction.UPDATE_ADD ||
-        event.getAction() == SVNEventAction.ADD) {
+    if (event.getAction() == EventAction.UPDATE_ADD ||
+        event.getAction() == EventAction.ADD) {
       myText2 = SvnBundle.message("progress.text2.added", displayPath);
-      if (event.getContentsStatus() == SVNStatusType.CONFLICTED || event.getPropertiesStatus() == SVNStatusType.CONFLICTED) {
+      if (event.getContentsStatus() == StatusType.CONFLICTED || event.getPropertiesStatus() == StatusType.CONFLICTED) {
         addFileToGroup(FileGroup.MERGED_WITH_CONFLICT_ID, event);
         myText2 = SvnBundle.message("progress.text2.conflicted", displayPath);
       } else if (myUpdatedFiles.getGroupById(FileGroup.REMOVED_FROM_REPOSITORY_ID).getFiles().contains(path)) {
@@ -106,38 +110,38 @@ public class UpdateEventHandler implements ISVNEventHandler {
         addFileToGroup(FileGroup.CREATED_ID, event);
       }
     }
-    else if (event.getAction() == SVNEventAction.UPDATE_NONE) {
+    else if (event.getAction() == EventAction.UPDATE_NONE) {
       // skip it
       return;
     }
-    else if (event.getAction() == SVNEventAction.UPDATE_DELETE) {
+    else if (event.getAction() == EventAction.UPDATE_DELETE) {
       myText2 = SvnBundle.message("progress.text2.deleted", displayPath);
       addFileToGroup(FileGroup.REMOVED_FROM_REPOSITORY_ID, event);
     }
-    else if (event.getAction() == SVNEventAction.UPDATE_UPDATE) {
+    else if (event.getAction() == EventAction.UPDATE_UPDATE) {
       possiblySwitched(event);
-      if (event.getContentsStatus() == SVNStatusType.CONFLICTED || event.getPropertiesStatus() == SVNStatusType.CONFLICTED) {
-        if (event.getContentsStatus() == SVNStatusType.CONFLICTED) {
+      if (event.getContentsStatus() == StatusType.CONFLICTED || event.getPropertiesStatus() == StatusType.CONFLICTED) {
+        if (event.getContentsStatus() == StatusType.CONFLICTED) {
           addFileToGroup(FileGroup.MERGED_WITH_CONFLICT_ID, event);
         }
-        if (event.getPropertiesStatus() == SVNStatusType.CONFLICTED) {
+        if (event.getPropertiesStatus() == StatusType.CONFLICTED) {
           addFileToGroup(FileGroup.MERGED_WITH_PROPERTY_CONFLICT_ID, event);
         }
         myText2 = SvnBundle.message("progress.text2.conflicted", displayPath);
       }
-      else if (event.getContentsStatus() == SVNStatusType.MERGED || event.getPropertiesStatus() == SVNStatusType.MERGED) {
+      else if (event.getContentsStatus() == StatusType.MERGED || event.getPropertiesStatus() == StatusType.MERGED) {
         myText2 = SvnBundle.message("progres.text2.merged", displayPath);
         addFileToGroup(FileGroup.MERGED_ID, event);
       }
-      else if (event.getContentsStatus() == SVNStatusType.CHANGED || event.getPropertiesStatus() == SVNStatusType.CHANGED) {
+      else if (event.getContentsStatus() == StatusType.CHANGED || event.getPropertiesStatus() == StatusType.CHANGED) {
         myText2 = SvnBundle.message("progres.text2.updated", displayPath);
         addFileToGroup(FileGroup.UPDATED_ID, event);
       }
-      else if (event.getContentsStatus() == SVNStatusType.UNCHANGED &&
-               (event.getPropertiesStatus() == SVNStatusType.UNCHANGED || event.getPropertiesStatus() == SVNStatusType.UNKNOWN)) {
+      else if (event.getContentsStatus() == StatusType.UNCHANGED &&
+               (event.getPropertiesStatus() == StatusType.UNCHANGED || event.getPropertiesStatus() == StatusType.UNKNOWN)) {
         myText2 = SvnBundle.message("progres.text2.updated", displayPath);
-      } else if (SVNStatusType.INAPPLICABLE.equals(event.getContentsStatus()) &&
-                 (event.getPropertiesStatus() == SVNStatusType.UNCHANGED || event.getPropertiesStatus() == SVNStatusType.UNKNOWN)) {
+      } else if (StatusType.INAPPLICABLE.equals(event.getContentsStatus()) &&
+                 (event.getPropertiesStatus() == StatusType.UNCHANGED || event.getPropertiesStatus() == StatusType.UNKNOWN)) {
         myText2 = SvnBundle.message("progres.text2.updated", displayPath);
       }
       else {
@@ -145,7 +149,7 @@ public class UpdateEventHandler implements ISVNEventHandler {
         addFileToGroup(FileGroup.UNKNOWN_ID, event);
       }
     }
-    else if (event.getAction() == SVNEventAction.UPDATE_EXTERNAL) {
+    else if (event.getAction() == EventAction.UPDATE_EXTERNAL) {
       if (mySequentialUpdatesContext != null) {
         mySequentialUpdatesContext.registerExternalRootBeingUpdated(event.getFile());
       }
@@ -158,11 +162,11 @@ public class UpdateEventHandler implements ISVNEventHandler {
       addFileToGroup(AbstractSvnUpdateIntegrateEnvironment.EXTERNAL_ID, event);
       myText = SvnBundle.message("progress.text.updating.external.location", event.getFile().getAbsolutePath());
     }
-    else if (event.getAction() == SVNEventAction.RESTORE) {
+    else if (event.getAction() == EventAction.RESTORE) {
       myText2 = SvnBundle.message("progress.text2.restored.file", displayPath);
       addFileToGroup(FileGroup.RESTORED_ID, event);
     }
-    else if (event.getAction() == SVNEventAction.UPDATE_COMPLETED && event.getRevision() >= 0) {
+    else if (event.getAction() == EventAction.UPDATE_COMPLETED && event.getRevision() >= 0) {
       possiblySwitched(event);
       myExternalsCount--;
       myText2 = SvnBundle.message("progres.text2.updated.to.revision", event.getRevision());
@@ -171,7 +175,7 @@ public class UpdateEventHandler implements ISVNEventHandler {
         StatusBar.Info.set(SvnBundle.message("status.text.updated.to.revision", event.getRevision()), myVCS.getProject());
       }
     }
-    else if (event.getAction() == SVNEventAction.SKIP) {
+    else if (event.getAction() == EventAction.SKIP) {
       myText2 = SvnBundle.message("progress.text2.skipped.file", displayPath);
       addFileToGroup(FileGroup.SKIPPED_ID, event);
     }
@@ -179,7 +183,7 @@ public class UpdateEventHandler implements ISVNEventHandler {
     updateProgressIndicator();
   }
 
-  private void possiblySwitched(SVNEvent event) {
+  private void possiblySwitched(ProgressEvent event) {
     final File file = event.getFile();
     if (file == null) return;
     final SVNURL wasUrl = myUrlToCheckForSwitch.get(file);
@@ -189,7 +193,7 @@ public class UpdateEventHandler implements ISVNEventHandler {
     }
   }
 
-  private boolean itemSwitched(final SVNEvent event) {
+  private boolean itemSwitched(final ProgressEvent event) {
     final File file = event.getFile();
     final SvnFileUrlMapping urlMapping = myVCS.getSvnFileUrlMapping();
     final SVNURL currentUrl = urlMapping.getUrlForFile(file);
@@ -207,11 +211,11 @@ public class UpdateEventHandler implements ISVNEventHandler {
     }
   }
 
-  protected boolean handleInDescendants(final SVNEvent event) {
+  protected boolean handleInDescendants(final ProgressEvent event) {
     return false;
   }
 
-  protected void addFileToGroup(final String id, final SVNEvent event) {
+  protected void addFileToGroup(final String id, final ProgressEvent event) {
     final FileGroup fileGroup = myUpdatedFiles.getGroupById(id);
     final String path = event.getFile().getAbsolutePath();
     fileGroup.add(path, SvnVcs.getKey(), new SvnRevisionNumber(SVNRevision.create(event.getRevision())));

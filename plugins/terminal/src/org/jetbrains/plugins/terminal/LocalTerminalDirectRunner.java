@@ -16,6 +16,7 @@ import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
 import com.pty4j.util.PtyUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -63,6 +64,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     return null;
   }
 
+  @NotNull
+  public static LocalTerminalDirectRunner createTerminalRunner(Project project) {
+    return new LocalTerminalDirectRunner(project);
+  }
+
   @Override
   protected PtyProcess createProcess(@Nullable String directory) throws ExecutionException {
     Map<String, String> envs = new HashMap<String, String>(System.getenv());
@@ -77,10 +83,14 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   private String currentProjectFolder() {
-    for (VirtualFile vf : ProjectRootManager.getInstance(myProject).getContentRoots()) {
-      return vf.getCanonicalPath();
+    final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
+
+    final VirtualFile[] roots = projectRootManager.getContentRoots();
+    if (roots.length == 1) {
+      roots[0].getCanonicalPath();
     }
-    return null;
+    final VirtualFile baseDir = myProject.getBaseDir();
+    return baseDir == null ? null : baseDir.getCanonicalPath();
   }
 
   @Override

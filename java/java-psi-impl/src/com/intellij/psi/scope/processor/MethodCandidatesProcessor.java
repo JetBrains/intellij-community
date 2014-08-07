@@ -83,7 +83,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
       public PsiType[] getArgumentTypes() {
         if (myExpressionTypes == null && argumentList != null) {
           final PsiType[] expressionTypes = getExpressionTypes(argumentList);
-          if (!MethodCandidateInfo.ourOverloadGuard.currentStack().isEmpty()) {
+          if (MethodCandidateInfo.isOverloadCheck()) {
             return expressionTypes;
           }
           myExpressionTypes = expressionTypes;

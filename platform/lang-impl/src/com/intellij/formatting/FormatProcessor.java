@@ -16,6 +16,7 @@
 
 package com.intellij.formatting;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -25,6 +26,8 @@ import com.intellij.openapi.editor.impl.BulkChangesMerger;
 import com.intellij.openapi.editor.impl.TextChangeImpl;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.ui.UIUtil;
@@ -145,6 +148,7 @@ class FormatProcessor {
   private WhiteSpace                      myLastWhiteSpace;
   private boolean                         myDisposed;
   private CommonCodeStyleSettings.IndentOptions myJavaIndentOptions;
+  private final int myRightMargin;
 
   @NotNull
   private State myCurrentState;
@@ -172,6 +176,23 @@ class FormatProcessor {
     mySettings = settings;
     myDocument = docModel.getDocument();
     myCurrentState = new WrapBlocksState(rootBlock, docModel, affectedRanges, interestingOffset);
+    myRightMargin = getRightMargin(rootBlock);
+  }
+
+  private int getRightMargin(Block rootBlock) {
+    if (rootBlock instanceof ASTBlock) {
+      ASTNode node = ((ASTBlock)rootBlock).getNode();
+      if (node != null) {
+        PsiElement psiElement = node.getPsi();
+        if (psiElement.isValid()) {
+          PsiFile psiFile = psiElement.getContainingFile();
+          if (psiFile != null) {
+            return mySettings.getRightMargin(psiFile.getViewProvider().getBaseLanguage());
+          }
+        }
+      }
+    }
+    return mySettings.RIGHT_MARGIN;
   }
 
   private LeafBlockWrapper getLastBlock() {
@@ -813,7 +834,7 @@ class FormatProcessor {
    */
   private boolean lineOver() {
     return !myCurrentBlock.containsLineFeeds() &&
-           CoreFormatterUtil.getStartColumn(myCurrentBlock) + myCurrentBlock.getLength() > mySettings.RIGHT_MARGIN;
+           CoreFormatterUtil.getStartColumn(myCurrentBlock) + myCurrentBlock.getLength() > myRightMargin;
   }
 
   private void defineAlignOffset(final LeafBlockWrapper block) {

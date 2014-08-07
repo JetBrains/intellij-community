@@ -199,7 +199,7 @@ public class IdeaLogger extends Logger {
       @Override
       public String getInfo() {
         final ApplicationInfoEx info = ApplicationInfoImpl.getShadowInstance();
-        return info.getFullApplicationName() + "  " + "Build #" + info.getBuild().asString();
+        return info.getFullApplicationName() + "  " + "Build #" + info.getBuild().asStringWithAllDetails();
       }
     };
   }

@@ -78,10 +78,12 @@ public class CodeFormatterFacade {
 
   private final CodeStyleSettings mySettings;
   private final FormatterTagHandler myTagHandler;
+  private final int myRightMargin;
 
-  public CodeFormatterFacade(CodeStyleSettings settings) {
+  public CodeFormatterFacade(CodeStyleSettings settings, @Nullable Language language) {
     mySettings = settings;
     myTagHandler = new FormatterTagHandler(settings);
+    myRightMargin = mySettings.getRightMargin(language);
   }
 
   public ASTNode processElement(ASTNode element) {
@@ -637,8 +639,8 @@ public class CodeFormatterFacade {
   }
 
   private int wrapPositionForTextWithoutTabs(int startLineOffset, int endLineOffset, int targetRangeEndOffset) {
-    if (Math.min(endLineOffset, targetRangeEndOffset) - startLineOffset > mySettings.RIGHT_MARGIN) {
-      return startLineOffset + mySettings.RIGHT_MARGIN - FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS;
+    if (Math.min(endLineOffset, targetRangeEndOffset) - startLineOffset > myRightMargin) {
+      return startLineOffset + myRightMargin - FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS;
     }
     return -1;
   }
@@ -659,13 +661,13 @@ public class CodeFormatterFacade {
         case '\t': symbolWidth = tabSize - (width % tabSize); break;
         default: symbolWidth = 1;
       }
-      if (width + symbolWidth + FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS >= mySettings.RIGHT_MARGIN
+      if (width + symbolWidth + FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS >= myRightMargin
           && (Math.min(endLineOffset, targetRangeEndOffset) - i) >= FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS)
       {
         // Remember preferred position.
         result = i - 1;
       }
-      if (width + symbolWidth >= mySettings.RIGHT_MARGIN) {
+      if (width + symbolWidth >= myRightMargin) {
         wrapLine = true;
         break;
       }
@@ -700,12 +702,12 @@ public class CodeFormatterFacade {
           break;
         default: newX = x + EditorUtil.charWidth(c, Font.PLAIN, editor); symbolWidth = 1;
       }
-      if (width + symbolWidth + FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS >= mySettings.RIGHT_MARGIN
+      if (width + symbolWidth + FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS >= myRightMargin
           && (Math.min(endLineOffset, targetRangeEndOffset) - i) >= FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS)
       {
         result = i - 1;
       }
-      if (width + symbolWidth >= mySettings.RIGHT_MARGIN) {
+      if (width + symbolWidth >= myRightMargin) {
         wrapLine = true;
         break;
       }

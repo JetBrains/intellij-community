@@ -29,7 +29,6 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +60,7 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
   }
 
   @Override
-  public PsiElement[] getPsiElements(final @NotNull Project project) {
+  public PsiElement[] getPsiElements() {
     return new PsiElement[] {getProperty().getPsiElement()};
   }
 

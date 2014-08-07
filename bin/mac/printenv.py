@@ -9,6 +9,9 @@ import sys
 if len(sys.argv) != 2:
     raise Error('Exactly one argument expected')
 
-with open(sys.argv[1], 'w') as f:
+f = open(sys.argv[1], 'w')
+try:
     for key, value in os.environ.items():
         f.writelines([key, '=', value, '\0'])
+finally:
+    f.close()

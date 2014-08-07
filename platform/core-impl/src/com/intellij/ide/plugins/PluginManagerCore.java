@@ -25,18 +25,12 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExtensionAreas;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
-import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.io.ZipFileCache;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.PlatformUtilsCore;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.execution.ParametersListUtil;
@@ -46,6 +40,7 @@ import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.xmlb.XmlSerializationException;
 import gnu.trove.THashMap;
+import gnu.trove.TIntProcedure;
 import org.jdom.Document;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -327,15 +322,8 @@ public class PluginManagerCore {
     Extensions.registerAreaClass(ExtensionAreas.IDEA_MODULE, ExtensionAreas.IDEA_PROJECT);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  static Method getAddUrlMethod(final ClassLoader loader) throws NoSuchMethodException {
-    if (loader instanceof URLClassLoader) {
-      final Method addUrlMethod = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
-      addUrlMethod.setAccessible(true);
-      return addUrlMethod;
-    }
-
-    return loader.getClass().getDeclaredMethod("addURL", URL.class);
+  private static Method getAddUrlMethod(final ClassLoader loader) {
+    return ReflectionUtil.getDeclaredMethod(loader instanceof URLClassLoader ? URLClassLoader.class : loader.getClass(), "addURL", URL.class);
   }
 
   @Nullable
@@ -355,9 +343,6 @@ public class PluginManagerCore {
         }
 
         return loader;
-      }
-      catch (NoSuchMethodException e) {
-        e.printStackTrace();
       }
       catch (IOException e) {
         e.printStackTrace();
@@ -479,8 +464,10 @@ public class PluginManagerCore {
   }
 
   static void prepareLoadingPluginsErrorMessage(final String errorMessage) {
-    if (errorMessage != null) {
-      if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!StringUtil.isEmptyOrSpaces(errorMessage)) {
+      if (ApplicationManager.getApplication() != null
+          && !ApplicationManager.getApplication().isHeadlessEnvironment()
+          && !ApplicationManager.getApplication().isUnitTestMode()) {
         if (myPluginError == null) {
           myPluginError = errorMessage;
         }
@@ -499,25 +486,38 @@ public class PluginManagerCore {
     }
   }
 
-  static Comparator<IdeaPluginDescriptor> getPluginDescriptorComparator(Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap) {
+  static Comparator<IdeaPluginDescriptor> getPluginDescriptorComparator(final Map<PluginId, ? extends IdeaPluginDescriptor> idToDescriptorMap) {
     final Graph<PluginId> graph = createPluginIdGraph(idToDescriptorMap);
     final DFSTBuilder<PluginId> builder = new DFSTBuilder<PluginId>(graph);
-    /*
     if (!builder.isAcyclic()) {
-      final Pair<String,String> circularDependency = builder.getCircularDependency();
-      throw new Exception("Cyclic dependencies between plugins are not allowed: \"" + circularDependency.getFirst() + "\" and \"" + circularDependency.getSecond() + "");
+      builder.getSCCs().forEach(new TIntProcedure() {
+        int myTNumber = 0;
+        public boolean execute(int size) {
+          if (size > 1) {
+            for (int j = 0; j < size; j++) {
+              idToDescriptorMap.get(builder.getNodeByTNumber(myTNumber + j)).setEnabled(false);
+            }
+          }
+          myTNumber += size;
+          return true;
+        }
+      });
     }
-    */
+
     final Comparator<PluginId> idComparator = builder.comparator();
     return new Comparator<IdeaPluginDescriptor>() {
       @Override
       public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
-        return idComparator.compare(o1.getPluginId(), o2.getPluginId());
+        final PluginId pluginId1 = o1.getPluginId();
+        final PluginId pluginId2 = o2.getPluginId();
+        if (pluginId1.getIdString().equals(CORE_PLUGIN_ID)) return -1;
+        if (pluginId2.getIdString().equals(CORE_PLUGIN_ID)) return 1;
+        return idComparator.compare(pluginId1, pluginId2);
       }
     };
   }
 
-  private static Graph<PluginId> createPluginIdGraph(final Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap) {
+  private static Graph<PluginId> createPluginIdGraph(final Map<PluginId, ? extends IdeaPluginDescriptor> idToDescriptorMap) {
     final List<PluginId> ids = new ArrayList<PluginId>(idToDescriptorMap.keySet());
     // this magic ensures that the dependent plugins always follow their dependencies in lexicographic order
     // needed to make sure that extensions are always in the same order
@@ -539,7 +539,7 @@ public class PluginManagerCore {
         ArrayList<PluginId> plugins = new ArrayList<PluginId>();
         for (PluginId dependentPluginId : descriptor.getDependentPluginIds()) {
           // check for missing optional dependency
-          IdeaPluginDescriptorImpl dep = idToDescriptorMap.get(dependentPluginId);
+          IdeaPluginDescriptor dep = idToDescriptorMap.get(dependentPluginId);
           if (dep != null) {
             plugins.add(dep.getPluginId());
           }
@@ -549,6 +549,7 @@ public class PluginManagerCore {
     }));
   }
 
+  @Deprecated
   static IdeaPluginDescriptorImpl[] findCorePlugin(IdeaPluginDescriptorImpl[] pluginDescriptors) {
     for (IdeaPluginDescriptorImpl descriptor : pluginDescriptors) {
       if (CORE_PLUGIN_ID.equals(descriptor.getPluginId().getIdString())) {
@@ -820,7 +821,7 @@ public class PluginManagerCore {
       message.insert(0, IdeBundle.message("error.problems.found.loading.plugins"));
       return message.toString();
     }
-    return null;
+    return "";
   }
 
   static void loadDescriptorsFromClassPath(@NotNull List<IdeaPluginDescriptorImpl> result, @Nullable StartupProgress progress) {
@@ -900,14 +901,12 @@ public class PluginManagerCore {
     loadDescriptorsFromClassPath(result, fromSources ? progress : null);
 
     IdeaPluginDescriptorImpl[] pluginDescriptors = result.toArray(new IdeaPluginDescriptorImpl[result.size()]);
-    try {
-      Arrays.sort(pluginDescriptors, new PluginDescriptorComparator(pluginDescriptors));
+    final Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap = new com.intellij.util.containers.HashMap<PluginId, IdeaPluginDescriptorImpl>();
+    for (final IdeaPluginDescriptorImpl descriptor : pluginDescriptors) {
+      idToDescriptorMap.put(descriptor.getPluginId(), descriptor);
     }
-    catch (Exception e) {
-      prepareLoadingPluginsErrorMessage(IdeBundle.message("error.plugins.were.not.loaded", e.getMessage()));
-      getLogger().info(e);
-      return findCorePlugin(pluginDescriptors);
-    }
+
+    Arrays.sort(pluginDescriptors, getPluginDescriptorComparator(idToDescriptorMap));
     return pluginDescriptors;
   }
 
@@ -1090,11 +1089,12 @@ public class PluginManagerCore {
     String errorMessage = filterBadPlugins(result, disabledPluginNames);
 
     if (!brokenPluginsList.isEmpty()) {
-      errorMessage = "Following plugins are incompatible with current IDE build: " + StringUtil.join(brokenPluginsList, ", ")
-                     + "<br>\n" + StringUtil.notNullize(errorMessage);
+      if (!StringUtil.isEmptyOrSpaces(errorMessage)) {
+        errorMessage += "<br>";
+      }
+      errorMessage += "Following plugins are incompatible with current IDE build: " + StringUtil.join(brokenPluginsList, ", ")
+                      + "<br>\n" + StringUtil.notNullize(errorMessage);
     }
-
-    prepareLoadingPluginsErrorMessage(errorMessage);
 
     final Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap = new HashMap<PluginId, IdeaPluginDescriptorImpl>();
     for (final IdeaPluginDescriptorImpl descriptor : result) {
@@ -1112,8 +1112,50 @@ public class PluginManagerCore {
     mergeOptionalConfigs(idToDescriptorMap);
     addModulesAsDependents(idToDescriptorMap);
 
+    final Graph<PluginId> graph = createPluginIdGraph(idToDescriptorMap);
+    final DFSTBuilder<PluginId> builder = new DFSTBuilder<PluginId>(graph);
+    if (!builder.isAcyclic()) {
+      if (!StringUtil.isEmptyOrSpaces(errorMessage)) {
+        errorMessage += "<br>";
+      }
+
+      final String cyclePresentation;
+      if (ApplicationManager.getApplication().isInternal()) {
+        final List<String> cycles = new ArrayList<String>();
+        builder.getSCCs().forEach(new TIntProcedure() {
+          int myTNumber = 0;
+          public boolean execute(int size) {
+            if (size > 1) {
+              String cycle = "";
+              for (int j = 0; j < size; j++) {
+                cycle += builder.getNodeByTNumber(myTNumber + j).getIdString() + " ";
+              }
+              cycles.add(cycle);
+            }
+            myTNumber += size;
+            return true;
+          }
+        });
+        cyclePresentation = ": " + StringUtil.join(cycles, ";");
+      } else {
+        final Couple<PluginId> circularDependency = builder.getCircularDependency();
+        final PluginId id = circularDependency.getFirst();
+        final PluginId parentId = circularDependency.getSecond();
+        cyclePresentation = id + "->" + parentId + "->...->" + id;
+      }
+      errorMessage += IdeBundle.message("error.plugins.should.not.have.cyclic.dependencies") + cyclePresentation;
+    }
+
+    prepareLoadingPluginsErrorMessage(errorMessage);
+
+    final Comparator<PluginId> idComparator = builder.comparator();
     // sort descriptors according to plugin dependencies
-    Collections.sort(result, getPluginDescriptorComparator(idToDescriptorMap));
+    Collections.sort(result, new Comparator<IdeaPluginDescriptor>() {
+      @Override
+      public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
+        return idComparator.compare(o1.getPluginId(), o2.getPluginId());
+      }
+    });
 
     for (int i = 0; i < result.size(); i++) {
       ourId2Index.put(result.get(i).getPluginId(), i);

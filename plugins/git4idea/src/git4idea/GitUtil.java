@@ -18,6 +18,8 @@ package git4idea;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Collections2;
+import com.intellij.ide.file.BatchFileChangeListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -35,7 +37,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
-import com.intellij.openapi.vcs.changes.FilePathsHelper;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -43,6 +44,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -775,6 +777,8 @@ public class GitUtil {
   /**
    * Returns absolute paths which have changed remotely comparing to the current branch, i.e. performs
    * <code>git diff --name-only master..origin/master</code>
+   * <p/>
+   * Paths are absolute, Git-formatted (i.e. with forward slashes).
    */
   @NotNull
   public static Collection<String> getPathsDiffBetweenRefs(@NotNull Git git, @NotNull GitRepository repository,
@@ -794,7 +798,7 @@ public class GitUtil {
         continue;
       }
       final String path = repository.getRoot().getPath() + "/" + unescapePath(relative);
-      remoteChanges.add(FilePathsHelper.convertPath(path));
+      remoteChanges.add(path);
     }
     return remoteChanges;
   }
@@ -1009,5 +1013,26 @@ public class GitUtil {
     builder.addOkAction();
     builder.setTitle(title);
     builder.show();
+  }
+
+  public static void workingTreeChangeStarted(@NotNull Project project) {
+    HeavyProcessLatch.INSTANCE.processStarted();
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(BatchFileChangeListener.TOPIC).batchChangeStarted(project);
+  }
+
+  public static void workingTreeChangeFinished(@NotNull Project project) {
+    HeavyProcessLatch.INSTANCE.processFinished();
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(BatchFileChangeListener.TOPIC).batchChangeCompleted(project);
+  }
+
+  @NotNull
+  public static String cleanupErrorPrefixes(@NotNull String msg) {
+    final String[] PREFIXES = { "fatal:", "error:" };
+    for (String prefix : PREFIXES) {
+      if (msg.startsWith(prefix)) {
+        return msg.substring(prefix.length()).trim();
+      }
+    }
+    return msg;
   }
 }

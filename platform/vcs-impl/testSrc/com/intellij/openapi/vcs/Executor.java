@@ -156,9 +156,10 @@ public class Executor {
     }
   }
 
-  protected static String run(@NotNull List<String> params, boolean ignoreNonZeroExitCode) throws ExecutionException {
+  protected static String run(@NotNull File workingDir, @NotNull List<String> params,
+                              boolean ignoreNonZeroExitCode) throws ExecutionException {
     final ProcessBuilder builder = new ProcessBuilder().command(params);
-    builder.directory(ourCurrentDir());
+    builder.directory(workingDir);
     builder.redirectErrorStream(true);
     Process clientProcess;
     try {
@@ -279,7 +280,8 @@ public class Executor {
     return new File(ourCurrentDir, fileName);
   }
 
-  private static File ourCurrentDir() {
+  @NotNull
+  protected static File ourCurrentDir() {
     assert ourCurrentDir != null : "Current dir hasn't been initialized yet. Call cd at least once before any other command.";
     return new File(ourCurrentDir);
   }

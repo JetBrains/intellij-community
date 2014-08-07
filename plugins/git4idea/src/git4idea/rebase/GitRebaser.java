@@ -63,10 +63,6 @@ public class GitRebaser {
     mySkippedCommits = new ArrayList<GitRebaseUtils.CommitInfo>();
   }
 
-  public void setProgressIndicator(@Nullable ProgressIndicator progressIndicator) {
-    myProgressIndicator = progressIndicator;
-  }
-
   public GitUpdateResult rebase(@NotNull VirtualFile root,
                                 @NotNull List<String> parameters,
                                 @Nullable final Runnable onCancel,
@@ -89,28 +85,34 @@ public class GitRebaser {
     rebaseTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
     final AtomicReference<GitUpdateResult> updateResult = new AtomicReference<GitUpdateResult>();
     final AtomicBoolean failure = new AtomicBoolean();
-    rebaseTask.executeInBackground(true, new GitTaskResultHandlerAdapter() {
-      @Override
-      protected void onSuccess() {
-        updateResult.set(GitUpdateResult.SUCCESS);
-      }
-
-      @Override
-      protected void onCancel() {
-        if (onCancel != null) {
-          onCancel.run();
+    try {
+      GitUtil.workingTreeChangeStarted(myProject);
+      rebaseTask.executeInBackground(true, new GitTaskResultHandlerAdapter() {
+        @Override
+        protected void onSuccess() {
+          updateResult.set(GitUpdateResult.SUCCESS);
         }
-        updateResult.set(GitUpdateResult.CANCEL);
-      }
 
-      @Override
-      protected void onFailure() {
-        failure.set(true);
-      }
-    });
+        @Override
+        protected void onCancel() {
+          if (onCancel != null) {
+            onCancel.run();
+          }
+          updateResult.set(GitUpdateResult.CANCEL);
+        }
 
-    if (failure.get()) {
-      updateResult.set(handleRebaseFailure(root, rebaseHandler, rebaseConflictDetector, untrackedFilesDetector));
+        @Override
+        protected void onFailure() {
+          failure.set(true);
+        }
+      });
+
+      if (failure.get()) {
+        updateResult.set(handleRebaseFailure(rebaseHandler, root, rebaseConflictDetector, untrackedFilesDetector));
+      }
+    }
+    finally {
+      GitUtil.workingTreeChangeFinished(myProject);
     }
     return updateResult.get();
   }
@@ -118,26 +120,6 @@ public class GitRebaser {
   protected GitLineHandler createHandler(VirtualFile root) {
     return new GitLineHandler(myProject, root, GitCommand.REBASE);
   }
-
-  public GitUpdateResult handleRebaseFailure(VirtualFile root, GitLineHandler pullHandler,
-                                             GitRebaseProblemDetector rebaseConflictDetector,
-                                             GitMessageWithFilesDetector untrackedWouldBeOverwrittenDetector) {
-    if (rebaseConflictDetector.isMergeConflict()) {
-      LOG.info("handleRebaseFailure merge conflict");
-      final boolean allMerged = new MyConflictResolver(myProject, myGit, root, this).merge();
-      return allMerged ? GitUpdateResult.SUCCESS_WITH_RESOLVED_CONFLICTS : GitUpdateResult.INCOMPLETE;
-    } else if (untrackedWouldBeOverwrittenDetector.wasMessageDetected()) {
-      LOG.info("handleRebaseFailure: untracked files would be overwritten by checkout");
-      UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, root,
-                                                               untrackedWouldBeOverwrittenDetector.getRelativeFilePaths(), "rebase", null);
-      return GitUpdateResult.ERROR;
-    } else {
-      LOG.info("handleRebaseFailure error " + pullHandler.errors());
-      GitUIUtil.notifyImportantError(myProject, "Rebase error", GitUIUtil.stringifyErrors(pullHandler.errors()));
-      return GitUpdateResult.ERROR;
-    }
-  }
-
 
   public void abortRebase(@NotNull VirtualFile root) {
     LOG.info("abortRebase " + root);
@@ -158,11 +140,17 @@ public class GitRebaser {
    * @return true if rebase successfully finished.
    */
   public boolean continueRebase(@NotNull Collection<VirtualFile> rebasingRoots) {
-    boolean success = true;
-    for (VirtualFile root : rebasingRoots) {
-      success &= continueRebase(root);
+    GitUtil.workingTreeChangeStarted(myProject);
+    try {
+      boolean success = true;
+      for (VirtualFile root : rebasingRoots) {
+        success &= continueRebase(root);
+      }
+      return success;
     }
-    return success;
+    finally {
+      GitUtil.workingTreeChangeFinished(myProject);
+    }
   }
 
   // start operation may be "--continue" or "--skip" depending on the situation.
@@ -328,34 +316,6 @@ public class GitRebaser {
       setMergeDescription("Merge conflicts detected. Resolve them before continuing rebase.").
       setErrorNotificationAdditionalDescription("Then you may <b>continue rebase</b>. <br/> " +
                                                 "You also may <b>abort rebase</b> to restore the original branch and stop rebasing.");
-  }
-
-  private static class MyConflictResolver extends GitConflictResolver {
-    private final GitRebaser myRebaser;
-    private final VirtualFile myRoot;
-
-    public MyConflictResolver(Project project, @NotNull Git git, VirtualFile root, GitRebaser rebaser) {
-      super(project, git, ServiceManager.getService(GitPlatformFacade.class), Collections.singleton(root), makeParams());
-      myRebaser = rebaser;
-      myRoot = root;
-    }
-
-    private static Params makeParams() {
-      Params params = new Params();
-      params.setReverse(true);
-      params.setMergeDescription("Merge conflicts detected. Resolve them before continuing rebase.");
-      params.setErrorNotificationTitle("Can't continue rebase");
-      params.setErrorNotificationAdditionalDescription("Then you may <b>continue rebase</b>. <br/> You also may <b>abort rebase</b> to restore the original branch and stop rebasing.");
-      return params;
-    }
-
-    @Override protected boolean proceedIfNothingToMerge() throws VcsException {
-      return myRebaser.continueRebase(myRoot);
-    }
-
-    @Override protected boolean proceedAfterAllMerged() throws VcsException {
-      return myRebaser.continueRebase(myRoot);
-    }
   }
 
   public static class TrivialEditor extends GitInteractiveRebaseEditorHandler{

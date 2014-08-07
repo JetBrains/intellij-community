@@ -289,7 +289,16 @@ public class FormatChangedTextUtil {
     }
 
     try {
-      List<Range> changedRanges = new RangesBuilder(document, documentFromVcs).getRanges();
+      List<Range> changedRanges;
+
+      LineStatusTracker tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(document);
+      if (tracker != null) {
+        changedRanges = tracker.getRanges();
+      }
+      else {
+        changedRanges = new RangesBuilder(document, documentFromVcs).getRanges();
+      }
+
       return getChangedTextRanges(document, changedRanges);
     }
     catch (FilesTooBigForDiffException e) {
@@ -303,8 +312,8 @@ public class FormatChangedTextUtil {
     List<TextRange> ranges = ContainerUtil.newArrayList();
     for (Range range : changedRanges) {
       if (range.getType() != Range.DELETED) {
-        int changeStartLine = range.getOffset1();
-        int changeEndLine = range.getOffset2();
+        int changeStartLine = range.getLine1();
+        int changeEndLine = range.getLine2();
 
         int lineStartOffset = document.getLineStartOffset(changeStartLine);
         int lineEndOffset = document.getLineEndOffset(changeEndLine - 1);

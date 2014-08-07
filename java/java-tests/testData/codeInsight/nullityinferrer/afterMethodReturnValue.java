@@ -15,6 +15,7 @@ class Test {
     return s;
   }
 
+  @NotNull
   String foo4(@NotNull String s) {
     return s.substring(0);
   }

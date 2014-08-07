@@ -27,17 +27,20 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
 public class SendFeedbackAction extends AnAction implements DumbAware {
+  @Override
   public void actionPerformed(AnActionEvent e) {
-    launchBrowser();
+    launchBrowser(e.getProject());
   }
 
-  public static void launchBrowser() {
+  public static void launchBrowser(@Nullable Project project) {
     final ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
     boolean eap = appInfo.isEAP();
     String urlTemplate = eap ? appInfo.getEAPFeedbackUrl() : appInfo.getReleaseFeedbackUrl();
@@ -46,7 +49,7 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
       .replace("$TIMEZONE", System.getProperty("user.timezone"))
       .replace("$EVAL", isEvaluationLicense() ? "true" : "false")
       .replace("$DESCR", getDescription());
-    BrowserUtil.browse(urlTemplate);
+    BrowserUtil.browse(urlTemplate, project);
   }
 
   private static String getDescription() {

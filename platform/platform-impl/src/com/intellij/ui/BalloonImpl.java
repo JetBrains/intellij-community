@@ -200,8 +200,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     if (cmp == myCloseRec) return true;
     if (UIUtil.isDescendingFrom(cmp, myComp)) return true;
     if (myComp == null || !myComp.isShowing()) return false;
-    Rectangle rectangleOnScreen = new Rectangle(myComp.getLocationOnScreen(), myComp.getSize());
-    return rectangleOnScreen.contains(target.getScreenPoint());
+    return myComp.contains(target.getScreenPoint().x, target.getScreenPoint().y);
   }
 
   public boolean isMovingForward(RelativePoint target) {

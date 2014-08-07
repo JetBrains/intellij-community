@@ -26,11 +26,11 @@ import com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager;
 public class UnmuteOnStopAction extends ToggleAction implements DumbAware {
   @Override
   public boolean isSelected(AnActionEvent e) {
-    return XDebuggerSettingsManager.getInstance().getGeneralSettings().isUnmuteOnStop();
+    return XDebuggerSettingsManager.getInstanceImpl().getGeneralSettings().isUnmuteOnStop();
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    XDebuggerSettingsManager.getInstance().getGeneralSettings().setUnmuteOnStop(state);
+    XDebuggerSettingsManager.getInstanceImpl().getGeneralSettings().setUnmuteOnStop(state);
   }
 }

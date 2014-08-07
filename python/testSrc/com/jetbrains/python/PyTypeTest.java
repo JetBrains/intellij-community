@@ -399,6 +399,16 @@ public class PyTypeTest extends PyTestCase {
                                   "expr = x.start\n");
     TypeEvalContext context = getTypeEvalContext(expr);
     PyType actual = context.getType(expr);
+    assertNotNull(actual);
+    assertInstanceOf(actual, PyClassType.class);
+    assertEquals("int", actual.getName());
+  }
+
+  public void testUndefinedPropertyOfUnionType() {
+    PyExpression expr = parseExpr("x = 42 if True else 'spam'\n" +
+                                  "expr = x.foo\n");
+    TypeEvalContext context = getTypeEvalContext(expr);
+    PyType actual = context.getType(expr);
     assertNull(actual);
   }
 

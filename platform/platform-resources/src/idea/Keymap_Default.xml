@@ -506,6 +506,9 @@
   <action id="EditorPasteFromX11">
     <mouse-shortcut keystroke="button2"/>
   </action>
+  <action id="Vcs.RollbackChangedLines">
+    <keyboard-shortcut first-keystroke="control alt Z"/>
+  </action>
 
   <action id="GotoNextError">
     <keyboard-shortcut first-keystroke="F2"/>

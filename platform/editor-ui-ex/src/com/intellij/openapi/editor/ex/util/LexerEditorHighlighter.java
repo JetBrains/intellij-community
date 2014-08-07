@@ -34,6 +34,7 @@ import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
@@ -77,8 +78,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
 
   public final synchronized boolean checkContentIsEqualTo(CharSequence sequence) {
     final Document document = getDocument();
-    if (document != null) return document.getText().equals(sequence.toString());
-    return false;
+    return document != null && Comparing.equal(document.getImmutableCharSequence(), sequence);
   }
 
   public EditorColorsScheme getScheme() {

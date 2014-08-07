@@ -4,8 +4,7 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.SvnClient;
-import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
-import org.tmatesoft.svn.core.wc.SVNDiffOptions;
+import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -19,6 +18,6 @@ public interface AnnotateClient extends SvnClient {
                 @NotNull SVNRevision endRevision,
                 @Nullable SVNRevision pegRevision,
                 boolean includeMergedRevisions,
-                @Nullable SVNDiffOptions diffOptions,
-                @Nullable ISVNAnnotateHandler handler) throws VcsException;
+                @Nullable DiffOptions diffOptions,
+                @Nullable AnnotationConsumer handler) throws VcsException;
 }

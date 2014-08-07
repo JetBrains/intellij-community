@@ -56,4 +56,6 @@ public interface DebuggerViewSupport {
 
   @Nullable
   Value transformErrorOnGetUsedReferenceValue(@Nullable Value value, @Nullable String error);
+
+  boolean isInLibraryContent(@NotNull SourceInfo sourceInfo, @Nullable Script script);
 }

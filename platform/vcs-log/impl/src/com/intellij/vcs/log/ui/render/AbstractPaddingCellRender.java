@@ -107,7 +107,7 @@ public abstract class AbstractPaddingCellRender extends ColoredTableCellRenderer
       return Collections.emptyMap();
     }
     VirtualFile root = refs.iterator().next().getRoot(); // all refs are from the same commit => they have the same root
-    refs = myDataHolder.getLogProvider(root).getReferenceManager().sort(refs);
+    refs = ContainerUtil.sorted(refs, myDataHolder.getLogProvider(root).getReferenceManager().getComparator());
     List<VcsRef> branches = getBranches(refs);
     Collection<VcsRef> tags = ContainerUtil.subtract(refs, branches);
     return getLabelsForRefs(branches, tags);

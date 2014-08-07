@@ -18,6 +18,8 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
@@ -47,6 +49,23 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     assertGeneratedSources("project", "target/generated-sources/xxx");
     
     assertNull(myProjectRoot.findChild("target"));
+  }
+
+  public void testIgnoreTargetFolder() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    new File(myProjectRoot.getPath(), "target/classes").mkdirs();
+    updateProjectFolders();
+
+    assertExcludes("project", "target");
+    myProjectRoot.refresh(false, true);
+    VirtualFile target = myProjectRoot.findChild("target");
+    assertNotNull(target);
+    if (!Registry.is("ide.hide.excluded.files")) {
+      assertTrue(ChangeListManager.getInstance(myProject).isIgnoredFile(target));
+    }
   }
 
   public void testUpdatingFoldersForAllTheProjects() throws Exception {

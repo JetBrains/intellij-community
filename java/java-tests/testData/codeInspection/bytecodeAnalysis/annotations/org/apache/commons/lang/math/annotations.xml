@@ -1,0 +1,309 @@
+<root>
+  <item name="org.apache.commons.lang.math.DoubleRange DoubleRange(java.lang.Number) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.DoubleRange DoubleRange(java.lang.Number, java.lang.Number) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.DoubleRange DoubleRange(java.lang.Number, java.lang.Number) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.DoubleRange boolean containsNumber(java.lang.Number)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.DoubleRange boolean containsRange(org.apache.commons.lang.math.Range)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.DoubleRange boolean overlapsRange(org.apache.commons.lang.math.Range)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.FloatRange FloatRange(java.lang.Number) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.FloatRange FloatRange(java.lang.Number, java.lang.Number) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.FloatRange FloatRange(java.lang.Number, java.lang.Number) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.FloatRange boolean containsNumber(java.lang.Number)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.FloatRange boolean containsRange(org.apache.commons.lang.math.Range)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.FloatRange boolean overlapsRange(org.apache.commons.lang.math.Range)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.Fraction org.apache.commons.lang.math.Fraction abs()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.Fraction org.apache.commons.lang.math.Fraction add(org.apache.commons.lang.math.Fraction) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.Fraction org.apache.commons.lang.math.Fraction add(org.apache.commons.lang.math.Fraction)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null-&gt;!null&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.Fraction org.apache.commons.lang.math.Fraction addSub(org.apache.commons.lang.math.Fraction, boolean) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.Fraction org.apache.commons.lang.math.Fraction addSub(org.apache.commons.lang.math.Fraction, boolean)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null,_-&gt;!null;_,false-&gt;!null&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.Fraction org.apache.commons.lang.math.Fraction divideBy(org.apache.commons.lang.math.Fraction) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.Fraction org.apache.commons.lang.math.Fraction getFraction(int, int)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.Fraction org.apache.commons.lang.math.Fraction getFraction(int, int, int)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.Fraction org.apache.commons.lang.math.Fraction getFraction(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.Fraction org.apache.commons.lang.math.Fraction invert()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.Fraction org.apache.commons.lang.math.Fraction multiplyBy(org.apache.commons.lang.math.Fraction) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.Fraction org.apache.commons.lang.math.Fraction negate()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.Fraction org.apache.commons.lang.math.Fraction subtract(org.apache.commons.lang.math.Fraction) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.Fraction org.apache.commons.lang.math.Fraction subtract(org.apache.commons.lang.math.Fraction)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null-&gt;!null&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.IEEE754rUtils double max(double[]) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.IEEE754rUtils double min(double[]) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.IEEE754rUtils float max(float[]) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.IEEE754rUtils float min(float[]) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.IntRange IntRange(java.lang.Number) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.IntRange IntRange(java.lang.Number, java.lang.Number) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.IntRange IntRange(java.lang.Number, java.lang.Number) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.IntRange boolean containsNumber(java.lang.Number)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.IntRange boolean containsRange(org.apache.commons.lang.math.Range)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.IntRange boolean overlapsRange(org.apache.commons.lang.math.Range)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.LongRange LongRange(java.lang.Number) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.LongRange LongRange(java.lang.Number, java.lang.Number) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.LongRange LongRange(java.lang.Number, java.lang.Number) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.LongRange boolean containsNumber(java.lang.Number)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.LongRange boolean containsRange(org.apache.commons.lang.math.Range)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.LongRange boolean overlapsRange(org.apache.commons.lang.math.Range)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.NumberRange NumberRange(java.lang.Number) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.NumberRange NumberRange(java.lang.Number, java.lang.Number) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.NumberRange NumberRange(java.lang.Number, java.lang.Number) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.NumberRange boolean containsNumber(java.lang.Number)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.NumberUtils boolean isAllZeros(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;true&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.NumberUtils boolean isDigits(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.NumberUtils boolean isNumber(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.NumberUtils byte max(byte[]) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.NumberUtils byte min(byte[]) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.NumberUtils double max(double[]) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.NumberUtils double min(double[]) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.NumberUtils float max(float[]) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.NumberUtils float min(float[]) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.NumberUtils int max(int[]) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.NumberUtils int min(int[]) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.NumberUtils java.lang.Double createDouble(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.NumberUtils java.lang.Float createFloat(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.NumberUtils java.lang.Integer createInteger(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.NumberUtils java.lang.Long createLong(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.NumberUtils java.lang.Number createNumber(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;null&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.NumberUtils java.math.BigDecimal createBigDecimal(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.NumberUtils java.math.BigInteger createBigInteger(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.NumberUtils long max(long[]) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.NumberUtils long min(long[]) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.NumberUtils short max(short[]) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.NumberUtils short min(short[]) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.RandomUtils boolean nextBoolean(java.util.Random) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.RandomUtils double nextDouble(java.util.Random) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.RandomUtils float nextFloat(java.util.Random) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.RandomUtils int nextInt(java.util.Random) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.RandomUtils int nextInt(java.util.Random, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.RandomUtils long nextLong(java.util.Random) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.math.Range boolean containsDouble(java.lang.Number)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.Range boolean containsFloat(java.lang.Number)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.Range boolean containsInteger(java.lang.Number)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.Range boolean containsLong(java.lang.Number)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.Range boolean containsRange(org.apache.commons.lang.math.Range)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.Range boolean overlapsRange(org.apache.commons.lang.math.Range)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.math.Range java.lang.String toString()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+</root>

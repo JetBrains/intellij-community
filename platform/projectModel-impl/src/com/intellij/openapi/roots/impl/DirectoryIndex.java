@@ -17,13 +17,16 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
+
+import java.util.List;
 
 public abstract class DirectoryIndex {
   public static DirectoryIndex getInstance(Project project) {
@@ -31,16 +34,19 @@ public abstract class DirectoryIndex {
     return ServiceManager.getService(project, DirectoryIndex.class);
   }
 
-  @TestOnly
-  public abstract void checkConsistency();
-
+  /**
+   * The same as {@link #getInfoForFile} but works only for directories or file roots and returns {@code null} for directories
+   * which aren't included in project content or libraries
+   * @deprecated use {@link #getInfoForFile(com.intellij.openapi.vfs.VirtualFile)} instead
+   */
+  @Deprecated
   public abstract DirectoryInfo getInfoForDirectory(@NotNull VirtualFile dir);
+
+  @NotNull
+  public abstract DirectoryInfo getInfoForFile(@NotNull VirtualFile file);
 
   @Nullable
   public abstract JpsModuleSourceRootType<?> getSourceRootType(@NotNull DirectoryInfo info);
-
-  public abstract boolean isProjectExcludeRoot(@NotNull VirtualFile dir);
-  public abstract boolean isModuleExcludeRoot(@NotNull VirtualFile dir);
 
   @NotNull
   public abstract
@@ -56,4 +62,13 @@ public abstract class DirectoryIndex {
   public boolean isInitialized() {
     return true;
   }
+
+  @NotNull
+  public abstract OrderEntry[] getOrderEntries(@NotNull DirectoryInfo info);
+
+  @Nullable
+  abstract OrderEntry findOrderEntryWithOwnerModule(@NotNull DirectoryInfo info, @NotNull Module ownerModule);
+
+  @NotNull
+  abstract List<OrderEntry> findAllOrderEntriesWithOwnerModule(@NotNull DirectoryInfo info, @NotNull Module ownerModule);
 }

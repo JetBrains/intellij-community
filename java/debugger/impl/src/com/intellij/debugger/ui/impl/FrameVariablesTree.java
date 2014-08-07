@@ -53,6 +53,7 @@ import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import com.sun.jdi.*;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectProcedure;
@@ -157,7 +158,7 @@ public class FrameVariablesTree extends DebuggerTree {
       }
 
       try {
-        if (!ViewsGeneralSettings.getInstance().ENABLE_AUTO_EXPRESSIONS && !myAutoWatchMode) {
+        if (!XDebuggerSettingsManager.getInstance().getDataViewSettings().isAutoExpressions() && !myAutoWatchMode) {
           // optimization
           super.buildVariables(stackDescriptor, evaluationContext);
         }
@@ -273,7 +274,7 @@ public class FrameVariablesTree extends DebuggerTree {
     }
     catch (UnsupportedOperationException ignored) {
     }
-    catch (InternalException e) {
+    catch (Exception e) {
       LOG.info(e);
     }
     return Collections.emptyList();
@@ -569,7 +570,7 @@ public class FrameVariablesTree extends DebuggerTree {
       myVars = vars;
       myPosition = position;
       myEvalContext = evalContext;
-      myCollectExpressions = ViewsGeneralSettings.getInstance().ENABLE_AUTO_EXPRESSIONS;
+      myCollectExpressions = XDebuggerSettingsManager.getInstance().getDataViewSettings().isAutoExpressions();
     }
 
     @Override 

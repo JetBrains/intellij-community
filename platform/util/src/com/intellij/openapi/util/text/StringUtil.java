@@ -923,6 +923,10 @@ public class StringUtil extends StringUtilRt {
     }
   }
 
+  public static String defaultIfEmpty(@Nullable String value, String defaultValue) {
+    return isEmpty(value) ? defaultValue : value;
+  }
+
   @Contract("null -> false")
   public static boolean isNotEmpty(@Nullable String s) {
     return s != null && !s.isEmpty();
@@ -2513,10 +2517,9 @@ public class StringUtil extends StringUtilRt {
   public static String shortenTextWithEllipsis(@NotNull final String text,
                                                final int maxLength,
                                                final int suffixLength,
-                                               boolean useEllipsisSymbol) {
+                                               @NotNull String symbol) {
     final int textLength = text.length();
     if (textLength > maxLength) {
-      String symbol = useEllipsisSymbol ? "\u2026" : "...";
       final int prefixLength = maxLength - suffixLength - symbol.length();
       assert prefixLength > 0;
       return text.substring(0, prefixLength) + symbol + text.substring(textLength - suffixLength);
@@ -2524,6 +2527,15 @@ public class StringUtil extends StringUtilRt {
     else {
       return text;
     }
+  }
+
+  @NotNull
+  public static String shortenTextWithEllipsis(@NotNull final String text,
+                                               final int maxLength,
+                                               final int suffixLength,
+                                               boolean useEllipsisSymbol) {
+    String symbol = useEllipsisSymbol ? "\u2026" : "...";
+    return shortenTextWithEllipsis(text, maxLength, suffixLength, symbol);
   }
 
   @NotNull
@@ -2648,6 +2660,63 @@ public class StringUtil extends StringUtilRt {
   public static boolean isBetween(@NotNull String string, @NotNull String smallPart, @NotNull String bigPart) {
     final String s = string.toLowerCase();
     return s.startsWith(smallPart.toLowerCase()) && bigPart.toLowerCase().startsWith(s);
+  }
+
+  public static String getShortened(String s, int maxWidth) {
+    int length = s.length();
+    if (isEmpty(s) || length <= maxWidth) return s;
+    ArrayList<String> words = new ArrayList<String>();
+
+    StringBuilder builder = new StringBuilder();
+    for (int i = 0; i < length; i++) {
+      char ch = s.charAt(i);
+
+      if (i == length - 1) {
+        builder.append(ch);
+        words.add(builder.toString());
+        builder.delete(0, builder.length());
+        continue;
+      }
+
+      if (i > 0 && (ch == '/' || ch == '\\' || ch == '.' || Character.isUpperCase(ch))) {
+        words.add(builder.toString());
+        builder.delete(0, builder.length());
+      }
+      builder.append(ch);
+    }
+    for (int i = 0; i < words.size(); i++) {
+      String word = words.get(i);
+      if (i < words.size() - 1 && word.length() == 1) {
+        words.remove(i);
+        words.set(i, word + words.get(i));
+      }
+    }
+
+    int removedLength = 0;
+
+    String toPaste = "...";
+    int index;
+    while (true) {
+      index = Math.max(0, (words.size() - 1) / 2);
+      String aWord = words.get(index);
+      words.remove(index);
+      int toCut = length - removedLength - maxWidth + 3;
+      if (words.size() < 2 || (toCut < aWord.length() - 2 && removedLength == 0)) {
+        int pos = (aWord.length() - toCut) / 2;
+        toPaste = aWord.substring(0, pos) + "..." + aWord.substring(pos+toCut);
+        break;
+      }
+      removedLength += aWord.length();
+      if (length - removedLength <= maxWidth - 3) {
+        break;
+      }
+    }
+    for (int i = 0; i < words.size(); i++) {
+      String word = words.get(i);
+      if (i == index || words.size() == 1) builder.append(toPaste);
+      builder.append(word);
+    }
+    return builder.toString().replaceAll("\\.{4,}", "...");
   }
 
   /**

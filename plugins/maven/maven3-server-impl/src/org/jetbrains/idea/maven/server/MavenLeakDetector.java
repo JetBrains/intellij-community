@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.server;
 import com.intellij.util.ReflectionUtil;
 
 import java.rmi.RemoteException;
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
@@ -54,14 +55,14 @@ public class MavenLeakDetector {
   }
 
   private Map<Thread, Thread> getShutdownHooks() {
-    Class clazz = null;
+    Class clazz;
     try {
       clazz = Class.forName("java.lang.ApplicationShutdownHooks");
     }
     catch (ClassNotFoundException e) {
       // we can ignore this one
+      return Collections.emptyMap();
     }
     return ReflectionUtil.getField(clazz, null, Map.class, "hooks");
   }
-
 }

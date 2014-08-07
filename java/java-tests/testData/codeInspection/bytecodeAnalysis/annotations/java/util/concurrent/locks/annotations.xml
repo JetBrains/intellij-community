@@ -1,0 +1,134 @@
+<root>
+  <item name="java.util.concurrent.locks.AbstractQueuedSynchronizer boolean acquireQueued(java.util.concurrent.locks.AbstractQueuedSynchronizer.Node, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.AbstractQueuedSynchronizer boolean hasWaiters(java.util.concurrent.locks.AbstractQueuedSynchronizer.ConditionObject) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.AbstractQueuedSynchronizer boolean isOnSyncQueue(java.util.concurrent.locks.AbstractQueuedSynchronizer.Node) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.AbstractQueuedSynchronizer boolean isQueued(java.lang.Thread) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.AbstractQueuedSynchronizer boolean owns(java.util.concurrent.locks.AbstractQueuedSynchronizer.ConditionObject) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.AbstractQueuedSynchronizer boolean shouldParkAfterFailedAcquire(java.util.concurrent.locks.AbstractQueuedSynchronizer.Node, java.util.concurrent.locks.AbstractQueuedSynchronizer.Node) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.AbstractQueuedSynchronizer boolean transferAfterCancelledWait(java.util.concurrent.locks.AbstractQueuedSynchronizer.Node) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.AbstractQueuedSynchronizer int getWaitQueueLength(java.util.concurrent.locks.AbstractQueuedSynchronizer.ConditionObject) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.AbstractQueuedSynchronizer java.lang.String toString()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.AbstractQueuedSynchronizer java.util.Collection&lt;java.lang.Thread&gt; getWaitingThreads(java.util.concurrent.locks.AbstractQueuedSynchronizer.ConditionObject) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.AbstractQueuedSynchronizer java.util.concurrent.locks.AbstractQueuedSynchronizer.Node addWaiter(java.util.concurrent.locks.AbstractQueuedSynchronizer.Node)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.AbstractQueuedSynchronizer java.util.concurrent.locks.AbstractQueuedSynchronizer.Node enq(java.util.concurrent.locks.AbstractQueuedSynchronizer.Node) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.AbstractQueuedSynchronizer void setHead(java.util.concurrent.locks.AbstractQueuedSynchronizer.Node) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.AbstractQueuedSynchronizer void setHeadAndPropagate(java.util.concurrent.locks.AbstractQueuedSynchronizer.Node, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.AbstractQueuedSynchronizer void unparkSuccessor(java.util.concurrent.locks.AbstractQueuedSynchronizer.Node) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.AbstractQueuedSynchronizer.ConditionObject boolean await(long, java.util.concurrent.TimeUnit) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.AbstractQueuedSynchronizer.ConditionObject boolean awaitUntil(java.util.Date) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.AbstractQueuedSynchronizer.ConditionObject java.util.concurrent.locks.AbstractQueuedSynchronizer.Node addConditionWaiter()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.AbstractQueuedSynchronizer.ConditionObject void doSignal(java.util.concurrent.locks.AbstractQueuedSynchronizer.Node) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.AbstractQueuedSynchronizer.ConditionObject void doSignalAll(java.util.concurrent.locks.AbstractQueuedSynchronizer.Node) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.ReentrantLock boolean hasWaiters(java.util.concurrent.locks.Condition) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.ReentrantLock boolean tryLock(long, java.util.concurrent.TimeUnit) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.ReentrantLock int getWaitQueueLength(java.util.concurrent.locks.Condition) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.ReentrantLock java.lang.String toString()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.ReentrantLock java.util.Collection&lt;java.lang.Thread&gt; getWaitingThreads(java.util.concurrent.locks.Condition) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.ReentrantLock java.util.concurrent.locks.Condition newCondition()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.ReentrantLock.Sync java.util.concurrent.locks.AbstractQueuedSynchronizer.ConditionObject newCondition()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.ReentrantLock.Sync void readObject(java.io.ObjectInputStream) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.ReentrantReadWriteLock boolean hasWaiters(java.util.concurrent.locks.Condition) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.ReentrantReadWriteLock int getWaitQueueLength(java.util.concurrent.locks.Condition) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.ReentrantReadWriteLock java.lang.String toString()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.ReentrantReadWriteLock java.util.Collection&lt;java.lang.Thread&gt; getWaitingThreads(java.util.concurrent.locks.Condition) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock ReadLock(java.util.concurrent.locks.ReentrantReadWriteLock) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock boolean tryLock(long, java.util.concurrent.TimeUnit) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock java.lang.String toString()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.ReentrantReadWriteLock.Sync java.lang.IllegalMonitorStateException unmatchedUnlockException()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.ReentrantReadWriteLock.Sync java.util.concurrent.locks.AbstractQueuedSynchronizer.ConditionObject newCondition()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.ReentrantReadWriteLock.Sync void readObject(java.io.ObjectInputStream) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.ReentrantReadWriteLock.Sync.ThreadLocalHoldCounter java.lang.Object initialValue()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.ReentrantReadWriteLock.Sync.ThreadLocalHoldCounter java.util.concurrent.locks.ReentrantReadWriteLock.Sync.HoldCounter initialValue()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock WriteLock(java.util.concurrent.locks.ReentrantReadWriteLock) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock boolean tryLock(long, java.util.concurrent.TimeUnit) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock java.lang.String toString()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock java.util.concurrent.locks.Condition newCondition()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+</root>

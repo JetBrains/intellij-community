@@ -18,6 +18,10 @@ package com.intellij.ide.browsers.impl;
 import com.intellij.ide.browsers.OpenInBrowserRequest;
 import com.intellij.ide.browsers.WebBrowserService;
 import com.intellij.ide.browsers.WebBrowserUrlProvider;
+import com.intellij.lang.Language;
+import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.lang.xhtml.XHTMLLanguage;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
@@ -34,6 +38,11 @@ import java.util.Collection;
 import java.util.Collections;
 
 public class WebBrowserServiceImpl extends WebBrowserService {
+  public static boolean isHtmlOrXmlFile(@NotNull PsiElement element) {
+    Language language = element.getLanguage();
+    return language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE || language == XMLLanguage.INSTANCE;
+  }
+
   @NotNull
   @Override
   public Collection<Url> getUrlsToOpen(@NotNull OpenInBrowserRequest request, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException {
@@ -42,7 +51,7 @@ public class WebBrowserServiceImpl extends WebBrowserService {
       return Collections.singleton(Urls.newFromVirtualFile(virtualFile));
     }
 
-    if (!preferLocalUrl || !HtmlUtil.isHtmlFile(request.getFile())) {
+    if (!preferLocalUrl || !isHtmlOrXmlFile(request.getFile())) {
       WebBrowserUrlProvider provider = getProvider(request);
       if (provider != null) {
         if (request.getResult() != null) {

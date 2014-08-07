@@ -69,10 +69,14 @@ public class AddMethodQualifierFix implements IntentionAction {
     if (element == null || !element.isValid()) {
       return false;
     }
+    return getOrFindCandidates().size() != 0;
+  }
+
+  private synchronized List<PsiVariable> getOrFindCandidates() {
     if (myCandidates == null) {
       findCandidates();
     }
-    return myCandidates.size() != 0;
+    return myCandidates;
   }
 
   private void findCandidates() {
@@ -84,6 +88,9 @@ public class AddMethodQualifierFix implements IntentionAction {
     }
 
     for (final PsiVariable var : CreateFromUsageUtils.guessMatchingVariables(methodCallElement)) {
+      if (var.getName() == null) {
+        continue;
+      }
       final PsiType type = var.getType();
       if (!(type instanceof PsiClassType)) {
         continue;
@@ -132,7 +139,7 @@ public class AddMethodQualifierFix implements IntentionAction {
         @NotNull
         @Override
         public String getTextFor(final PsiVariable value) {
-          return ObjectUtils.assertNotNull(value.getName());
+          return value.getName();
         }
 
         @Override

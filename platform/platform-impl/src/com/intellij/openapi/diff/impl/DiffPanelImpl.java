@@ -73,7 +73,6 @@ import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.CacheOneStepIterator;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.ui.PlatformColors;
-import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -160,8 +159,8 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     myOwnerWindow = owner;
     myIsSyncScroll = true;
     final boolean v = !horizontal;
-    myLeftSide =  new DiffSideView(this, new CustomLineBorder(UIUtil.getBorderColor(), 1, 0, v ? 0 : 1, v ? 0 : 1));
-    myRightSide = new DiffSideView(this, new CustomLineBorder(UIUtil.getBorderColor(), v ? 0 : 1, v ? 0 : 1, 1, 0));
+    myLeftSide =  new DiffSideView(this, new CustomLineBorder(1, 0, v ? 0 : 1, v ? 0 : 1));
+    myRightSide = new DiffSideView(this, new CustomLineBorder(v ? 0 : 1, v ? 0 : 1, 1, 0));
     myLeftSide.becomeMaster();
     myDiffUpdater = new Rediffers(this);
 
@@ -298,13 +297,11 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     myData.setContents(content1, content2);
     Project project = myData.getProject();
     FileType[] types = DiffUtil.chooseContentTypes(new DiffContent[]{content1, content2});
-    VirtualFile baseFile = content1.getFile();
-    if (baseFile == null && myDiffRequest != null) {
-      String path = myDiffRequest.getWindowTitle();
-      if (path != null) baseFile = LocalFileSystem.getInstance().findFileByPath(path);
-    }
-    myLeftSide.setHighlighterFactory(createHighlighter(types[0], baseFile, project));
-    myRightSide.setHighlighterFactory(createHighlighter(types[1], baseFile, project));
+    VirtualFile beforeFile = content1.getFile();
+    VirtualFile afterFile = content2.getFile();
+    String path = myDiffRequest == null ? null : myDiffRequest.getWindowTitle();
+    myLeftSide.setHighlighterFactory(createHighlighter(types[0], beforeFile, afterFile, path, project));
+    myRightSide.setHighlighterFactory(createHighlighter(types[1], afterFile, beforeFile, path, project));
     setSplitterProportion(content1, content2);
     rediff();
     if (myIsRequestFocus) {
@@ -344,8 +341,16 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     }
   }
   // todo pay attention here
-  private static DiffHighlighterFactory createHighlighter(FileType contentType, VirtualFile file, Project project) {
-    return new DiffHighlighterFactoryImpl(contentType, file, project);
+  private static DiffHighlighterFactory createHighlighter(FileType contentType,
+                                                          VirtualFile file,
+                                                          VirtualFile otherFile,
+                                                          String path,
+                                                          Project project) {
+    VirtualFile baseFile = file;
+    if (baseFile == null) baseFile = otherFile;
+    if (baseFile == null && path != null) baseFile = LocalFileSystem.getInstance().findFileByPath(path);
+
+    return new DiffHighlighterFactoryImpl(contentType, baseFile, project);
   }
 
   void rediff() {
@@ -607,7 +612,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     return myData.getProject();
   }
 
-  public void showSource(OpenFileDescriptor descriptor) {
+  public void showSource(@Nullable OpenFileDescriptor descriptor) {
     myOptions.showSource(descriptor);
   }
 
@@ -1004,10 +1009,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
     @Override
     public void navigate(boolean requestFocus) {
-      final OpenFileDescriptor descriptor = mySide.getCurrentOpenFileDescriptor();
-      if (descriptor != null) {
-        showSource(descriptor);
-      }
+      showSource(mySide.getCurrentOpenFileDescriptor());
     }
   }
 }

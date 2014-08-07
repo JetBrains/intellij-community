@@ -8,4 +8,8 @@ public class PyDetectedSdk extends ProjectJdkImpl {
     setHomePath(name);
   }
 
+  @Override
+  public String getVersionString() {
+    return "";
+  }
 }

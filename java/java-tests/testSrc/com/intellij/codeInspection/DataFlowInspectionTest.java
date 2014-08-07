@@ -18,6 +18,7 @@ package com.intellij.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -139,6 +140,12 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 
+  public void testReportConstantReferences_OverloadedCall() {
+    doTestReportConstantReferences();
+    myFixture.launchAction(myFixture.findSingleIntention("Replace with 'null'"));
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+
   public void testReportConstantReferencesAfterFinalFieldAccess() { doTestReportConstantReferences(); }
 
   private void doTestReportConstantReferences() {
@@ -147,28 +154,6 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
     myFixture.enableInspections(inspection);
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
-
-  public void _testReportConstantReferences_ReplaceWithString() {
-    doTestReportConstantReferences();
-    myFixture.launchAction(myFixture.findSingleIntention("Replace with 'CONST'"));
-    myFixture.checkResultByFile(getTestName(false) + "_after.java");
-  }
-  public void _testReportConstantReferences_ReplaceWithIntConstant() {
-    doTestReportConstantReferences();
-    myFixture.launchAction(myFixture.findSingleIntention("Replace with 'CONST'"));
-    myFixture.checkResultByFile(getTestName(false) + "_after.java");
-  }
-  public void _testReportConstantReferences_ReplaceWithEnum() {
-    myFixture.addClass("package foo; public enum MyEnum { FOO }");
-    doTestReportConstantReferences();
-    myFixture.launchAction(myFixture.findSingleIntention("Replace with 'FOO'"));
-    myFixture.checkResultByFile(getTestName(false) + "_after.java");
-  }
-  public void _testReportConstantReferences_NotInComplexAssignment() {
-    doTestReportConstantReferences();
-    assertEmpty(myFixture.filterAvailableIntentions("Replace with"));
-  }
-  public void _testReportConstantReferences_Switch() { doTestReportConstantReferences(); }
 
   public void testCheckFieldInitializers() {
     doTest();
@@ -190,6 +175,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
 
   public void testTransientFinalField() { doTest(); }
   public void testFinalFieldDuringInitialization() { doTest(); }
+  public void testFinalFieldDuringSuperInitialization() { doTest(); }
   public void _testSymmetricUncheckedCast() { doTest(); } // http://youtrack.jetbrains.com/issue/IDEABKL-6871
   public void testNullCheckDoesntAffectUncheckedCast() { doTest(); }
   public void testThrowNull() { doTest(); }
@@ -265,9 +251,18 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testSameComparisonTwice() { doTest(); }
   public void testRootThrowableCause() { doTest(); }
 
+  public void testUseInferredContracts() { doTest(); }
+  public void testContractWithNoArgs() { doTest(); }
+  public void testContractInferenceBewareOverriding() { doTest(); }
+
+  public void testNumberComparisonsWhenValueIsKnown() { doTest(); }
+  public void testFloatComparisons() { doTest(); }
+
+  public void testAccessingSameArrayElements() { doTest(); }
+
   public void testParametersAreNonnullByDefault() {
-    myFixture.addClass("package javax.annotation; public @interface ParametersAreNonnullByDefault {}");
-    myFixture.addClass("package javax.annotation; public @interface ParametersAreNullableByDefault {}");
+    addJavaxNullabilityAnnotations(myFixture);
+    addJavaxDefaultNullabilityAnnotations(myFixture);
     
     myFixture.addClass("package foo; public class AnotherPackageNotNull { public static void foo(String s) {}}");
     myFixture.addFileToProject("foo/package-info.java", "@javax.annotation.ParametersAreNonnullByDefault package foo;");
@@ -275,11 +270,65 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
     doTest(); 
   }
 
+  public static void addJavaxDefaultNullabilityAnnotations(final JavaCodeInsightTestFixture fixture) {
+    fixture.addClass("package javax.annotation;" +
+                     "@javax.annotation.meta.TypeQualifierDefault(java.lang.annotation.ElementType.PARAMETER) @javax.annotation.Nonnull " +
+                     "public @interface ParametersAreNonnullByDefault {}");
+    fixture.addClass("package javax.annotation;" +
+                     "@javax.annotation.meta.TypeQualifierDefault(java.lang.annotation.ElementType.PARAMETER) @javax.annotation.Nullable " +
+                     "public @interface ParametersAreNullableByDefault {}");
+  }
+
+  public static void addJavaxNullabilityAnnotations(final JavaCodeInsightTestFixture fixture) {
+    fixture.addClass("package javax.annotation;" +
+                     "public @interface Nonnull {}");
+    fixture.addClass("package javax.annotation;" +
+                     "public @interface Nullable {}");
+    fixture.addClass("package javax.annotation.meta;" +
+                     "public @interface TypeQualifierDefault { java.lang.annotation.ElementType[] value() default {};}");
+  }
+
+  public void testCustomTypeQualifierDefault() {
+    addJavaxNullabilityAnnotations(myFixture);
+    myFixture.addClass("package bar;" +
+                       "@javax.annotation.meta.TypeQualifierDefault(java.lang.annotation.ElementType.METHOD) @javax.annotation.Nonnull " +
+                       "public @interface MethodsAreNotNullByDefault {}");
+
+    myFixture.addClass("package foo; public class AnotherPackageNotNull { public static native Object foo(String s); }");
+    myFixture.addFileToProject("foo/package-info.java", "@bar.MethodsAreNotNullByDefault package foo;");
+
+    myFixture.enableInspections(new DataFlowInspection());
+    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
+  }
+
   public void testTrueOrEqualsSomething() {
     doTest();
     myFixture.launchAction(myFixture.findSingleIntention("Remove redundant assignment"));
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
-  
+
+  public void testAssertThat() {
+    myFixture.addClass("package org.hamcrest; public class CoreMatchers { " +
+                       "public static <T> Matcher<T> notNullValue() {}\n" +
+                       "public static <T> Matcher<T> not(Matcher<T> matcher) {}\n" +
+                       "public static <T> Matcher<T> equalTo(T operand) {}\n" +
+                       "}");
+    myFixture.addClass("package org.hamcrest; public interface Matcher<T> {}");
+    myFixture.addClass("package org.junit; public class Assert { " +
+                       "public static <T> void assertThat(T actual, org.hamcrest.Matcher<? super T> matcher) {}\n" +
+                       "public static <T> void assertThat(String msg, T actual, org.hamcrest.Matcher<? super T> matcher) {}\n" +
+                       "}");
+    myFixture.enableInspections(new DataFlowInspection());
+    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
+  }
+
+  public void testGuavaCheckNotNull() {
+    myFixture.addClass("package com.google.common.base; public class Preconditions { " +
+                       "public static <T> T checkNotNull(T reference) {}\n" +
+                       "}");
+    myFixture.enableInspections(new DataFlowInspection());
+    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
+  }
+
   public void _testNullCheckBeforeInstanceof() { doTest(); } // http://youtrack.jetbrains.com/issue/IDEA-113220
 }

@@ -59,7 +59,7 @@
         serviceInterface="org.intellij.lang.xpath.xslt.psi.XsltElementFactory"
         serviceImplementation="org.intellij.lang.xpath.xslt.psi.impl.XsltElementFactoryImpl" />
 
-    <projectConfigurable instance="org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsConfigurable" id="xslt.associations" displayName="XSLT File Associations" nonDefaultProject="true" />
+    <projectConfigurable groupId="language" instance="org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsConfigurable" id="xslt.associations" displayName="XSLT File Associations" nonDefaultProject="true" />
 
     <projectService
         serviceInterface="org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsConfigurable$UIState"
@@ -137,8 +137,8 @@
       <category>XSLT</category>
     </intentionAction>
 
-    <applicationConfigurable instance="org.intellij.plugins.xpathView.XPathConfigurable" id="xpath.settings" displayName="XPath Viewer" />
-    <applicationConfigurable instance="org.intellij.lang.xpath.xslt.impl.XsltConfigImpl$UIImpl" id="settings.xslt"
+    <applicationConfigurable groupId="tools" instance="org.intellij.plugins.xpathView.XPathConfigurable" id="xpath.settings" displayName="XPath Viewer" />
+    <applicationConfigurable groupId="language" instance="org.intellij.lang.xpath.xslt.impl.XsltConfigImpl$UIImpl" id="settings.xslt"
                              displayName="XSLT"/>
 
     <fileIconPatcher implementation="org.intellij.lang.xpath.xslt.impl.XsltIconProvider"/>

@@ -226,10 +226,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   @NotNull
   private static VcsException cleanupExceptionText(VcsException original) {
     String msg = original.getMessage();
-    final String FATAL_PREFIX = "fatal:";
-    if (msg.startsWith(FATAL_PREFIX)) {
-      msg = msg.substring(FATAL_PREFIX.length());
-    }
+    msg = GitUtil.cleanupErrorPrefixes(msg);
     final String DURING_EXECUTING_SUFFIX = GitSimpleHandler.DURING_EXECUTING_ERROR_MESSAGE;
     int suffix = msg.indexOf(DURING_EXECUTING_SUFFIX);
     if (suffix > 0) {
@@ -601,8 +598,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       c.gridy = 0;
       c.weightx = 1;
       c.fill = GridBagConstraints.HORIZONTAL;
-      final List<String> usersList = getUsersList(project);
-      final Set<String> authors = new HashSet<String>(usersList);
+
+      Set<String> authors = new HashSet<String>(getUsersList(project));
       ContainerUtil.addAll(authors, mySettings.getCommitAuthors());
       List<String> list = new ArrayList<String>(authors);
       Collections.sort(list);

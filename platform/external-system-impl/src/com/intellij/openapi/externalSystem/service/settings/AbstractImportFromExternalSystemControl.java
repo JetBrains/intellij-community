@@ -193,6 +193,11 @@ public abstract class AbstractImportFromExternalSystemControl<
     return myProjectSettingsControl;
   }
 
+  @Nullable
+  public ExternalSystemSettingsControl<SystemSettings> getSystemSettingsControl() {
+    return mySystemSettingsControl;
+  }
+
   public void setLinkedProjectPath(@NotNull String path) {
     myProjectSettings.setExternalProjectPath(path);
     myLinkedProjectPathField.setText(path);

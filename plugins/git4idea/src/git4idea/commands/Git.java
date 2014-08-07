@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitCommit;
 import git4idea.push.GitPushSpec;
 import git4idea.repo.GitRepository;
+import git4idea.reset.GitResetMode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,7 +94,8 @@ public interface Git {
   GitCommandResult branchCreate(@NotNull GitRepository repository, @NotNull String branchName);
 
   @NotNull
-  GitCommandResult resetHard(@NotNull GitRepository repository, @NotNull String revision);
+  GitCommandResult reset(@NotNull GitRepository repository, @NotNull GitResetMode mode, @NotNull String target,
+                         @NotNull GitLineHandlerListener... listeners);
 
   @NotNull
   GitCommandResult resetMerge(@NotNull GitRepository repository, @Nullable String revision);

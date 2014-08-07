@@ -113,7 +113,7 @@ class PortUnificationServerHandler extends Decoder {
             @Override
             public void write(ChannelHandlerContext context, Object message, ChannelPromise promise) throws Exception {
               if (message instanceof HttpResponse) {
-//                BuiltInServer.LOG.debug("OUT HTTP:\n" + message);
+                //BuiltInServer.LOG.debug("OUT HTTP:\n" + message);
                 HttpResponse response = (HttpResponse)message;
                 BuiltInServer.LOG.debug("OUT HTTP: " + response.status().code() + " " + response.headers().get(CONTENT_TYPE));
               }

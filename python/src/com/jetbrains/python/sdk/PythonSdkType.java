@@ -56,7 +56,9 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.reference.SoftReference;
-import com.intellij.remote.*;
+import com.intellij.remote.CredentialsType;
+import com.intellij.remote.RemoteSdkCredentialsHolder;
+import com.intellij.remote.VagrantNotStartedException;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.NullableConsumer;
@@ -993,9 +995,9 @@ public class PythonSdkType extends SdkType {
   }
 
   public static boolean isIncompleteRemote(Sdk sdk) {
-    if (sdk.getSdkAdditionalData() instanceof RemoteSdkCredentials) {
+    if (PySdkUtil.isRemote(sdk)) {
       //noinspection ConstantConditions
-      if (!((RemoteSdkCredentials)sdk.getSdkAdditionalData()).isInitialized()) {
+      if (!((PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData()).isInitialized()) {
         return true;
       }
     }

@@ -43,6 +43,7 @@ public class EventDispatcher<T extends EventListener> {
   }
 
   private EventDispatcher(@NotNull Class<T> listenerClass) {
+    LOG.assertTrue(listenerClass.isInterface(), "listenerClass must be an interface");
     InvocationHandler handler = new InvocationHandler() {
       @Override
       @NonNls
@@ -71,10 +72,7 @@ public class EventDispatcher<T extends EventListener> {
     };
 
     //noinspection unchecked
-    myMulticaster = (T)Proxy.newProxyInstance(listenerClass.getClassLoader(),
-                                              new Class[]{listenerClass},
-                                              handler
-    );
+    myMulticaster = (T)Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, handler);
   }
 
   @NotNull
@@ -82,7 +80,7 @@ public class EventDispatcher<T extends EventListener> {
     return myMulticaster;
   }
 
-  private void dispatch(final Method method, final Object[] args) {
+  private void dispatch(@NotNull Method method, Object[] args) {
     method.setAccessible(true);
 
     for (T listener : myListeners) {

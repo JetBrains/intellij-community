@@ -17,16 +17,15 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
+import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -126,11 +125,36 @@ public class DfaPsiUtil {
             shouldCheck = psiBlock == body;
           }
 
+          private boolean isCallExposingNonInitializedFields(Instruction instruction) {
+            if (!(instruction instanceof MethodCallInstruction) ||
+                ((MethodCallInstruction)instruction).getMethodType() != MethodCallInstruction.MethodType.REGULAR_METHOD_CALL) {
+              return false;
+            }
+
+            PsiCallExpression call = ((MethodCallInstruction)instruction).getCallExpression();
+            if (call == null) return false;
+
+            if (call instanceof PsiMethodCallExpression &&
+                DfaValueFactory.isEffectivelyUnqualified(((PsiMethodCallExpression)call).getMethodExpression())) {
+              return true;
+            }
+
+            PsiExpressionList argumentList = call.getArgumentList();
+            if (argumentList != null) {
+              for (PsiExpression expression : argumentList.getExpressions()) {
+                if (expression instanceof PsiThisExpression) return true;
+              }
+            }
+
+            return false;
+          }
+
           @Override
           protected DfaInstructionState[] acceptInstruction(InstructionVisitor visitor, DfaInstructionState instructionState) {
             if (shouldCheck) {
               Instruction instruction = instructionState.getInstruction();
-              if (instruction instanceof ReturnInstruction && !((ReturnInstruction)instruction).isViaException()) {
+              if (isCallExposingNonInitializedFields(instruction) ||
+                  instruction instanceof ReturnInstruction && !((ReturnInstruction)instruction).isViaException()) {
                 for (PsiField field : containingClass.getFields()) {
                   if (!instructionState.getMemoryState().isNotNull(getFactory().getVarFactory().createVariableValue(field, false))) {
                     map.put(field, false);
@@ -138,6 +162,7 @@ public class DfaPsiUtil {
                     map.put(field, true);
                   }
                 }
+                return DfaInstructionState.EMPTY_ARRAY;
               }
             }
             return super.acceptInstruction(visitor, instructionState);

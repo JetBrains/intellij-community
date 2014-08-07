@@ -194,6 +194,63 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
                 "another line");
   }
 
+  public void testSelectingAdjacentFragments() throws Exception {
+    init("fragment<selection>fragment<caret></selection>");
+    executeAction();
+    executeAction();
+    checkResult("<selection>fragment<caret></selection><selection>fragment<caret></selection>");
+  }
+
+  public void testSkippingOccurrence() throws Exception {
+    init("fr<caret>uit\n" +
+         "fruits\n" +
+         "fruit\n" +
+         "fruits\n" +
+         "fruit");
+    executeAction();
+    executeAction();
+    executeFindNext();
+    checkResult("<selection>fr<caret>uit</selection>\n" +
+                "fruits\n" +
+                "fruit\n" +
+                "fruits\n" +
+                "<selection>fr<caret>uit</selection>");
+  }
+
+  public void testMovingSelectionBackAndForth() throws Exception {
+    init("fr<caret>uit\n" +
+         "fruits\n" +
+         "fruit\n" +
+         "fruits\n" +
+         "fruit");
+    executeAction();
+    executeAction();
+    executeFindNext();
+    executeFindPrevious();
+    executeAction();
+    checkResult("<selection>fr<caret>uit</selection>\n" +
+                "fruits\n" +
+                "<selection>fr<caret>uit</selection>\n" +
+                "fruits\n" +
+                "<selection>fr<caret>uit</selection>");
+  }
+
+  public void testSkipDoesNotRemovePreviousSelections() throws Exception {
+    init("<caret>fruit\n" +
+         "fruit\n" +
+         "fruit");
+    executeAction();
+    executeAction();
+    executeFindNext();
+    executeFindNext();
+    assertEquals(1, hintCount);
+    executeFindNext();
+    assertEquals(1, hintCount);
+    checkResult("<selection><caret>fruit</selection>\n" +
+                "fruit\n" +
+                "<selection><caret>fruit</selection>");
+  }
+
   private void init(String text) {
     myFixture.configureByText(FileTypes.PLAIN_TEXT, text);
   }
@@ -204,6 +261,14 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
 
   private void executeAction() {
     myFixture.performEditorAction(IdeActions.ACTION_SELECT_NEXT_OCCURENCE);
+  }
+
+  private void executeFindNext() {
+    myFixture.performEditorAction(IdeActions.ACTION_FIND_NEXT);
+  }
+
+  private void executeFindPrevious() {
+    myFixture.performEditorAction(IdeActions.ACTION_FIND_PREVIOUS);
   }
 
   private void executeReverseAction() {

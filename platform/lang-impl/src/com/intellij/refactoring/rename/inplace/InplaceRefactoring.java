@@ -773,32 +773,31 @@ public abstract class InplaceRefactoring {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     final BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createDialogBalloonBuilder(component, null).setSmallVariant(true);
     myBalloon = balloonBuilder.createBalloon();
-    final Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
     Disposer.register(myProject, myBalloon);
     Disposer.register(myBalloon, new Disposable() {
       @Override
       public void dispose() {
         releaseIfNotRestart();
-        topLevelEditor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POSITION, null);
+        myEditor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POSITION, null);
       }
     });
-    topLevelEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
-    myBalloon.show(new PositionTracker<Balloon>(topLevelEditor.getContentComponent()) {
+    myBalloon.show(new PositionTracker<Balloon>(myEditor.getContentComponent()) {
       @Override
       public RelativePoint recalculateLocation(Balloon object) {
-        if (myTarget != null && !popupFactory.isBestPopupLocationVisible(topLevelEditor)) {
+        if (myTarget != null && !popupFactory.isBestPopupLocationVisible(myEditor)) {
           return myTarget;
         }
         if (myCaretRangeMarker != null && myCaretRangeMarker.isValid()) {
-          topLevelEditor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POSITION,
-                                     topLevelEditor.offsetToVisualPosition(myCaretRangeMarker.getStartOffset()));
+          myEditor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POSITION,
+                               myEditor.offsetToVisualPosition(myCaretRangeMarker.getStartOffset()));
         }
-        final RelativePoint target = popupFactory.guessBestPopupLocation(topLevelEditor);
+        final RelativePoint target = popupFactory.guessBestPopupLocation(myEditor);
         final Point screenPoint = target.getScreenPoint();
         int y = screenPoint.y;
-        if (target.getPoint().getY() > topLevelEditor.getLineHeight() + myBalloon.getPreferredSize().getHeight()) {
-          y -= topLevelEditor.getLineHeight();
+        if (target.getPoint().getY() > myEditor.getLineHeight() + myBalloon.getPreferredSize().getHeight()) {
+          y -= myEditor.getLineHeight();
         }
         myTarget = new RelativePoint(new Point(screenPoint.x, y));
         return myTarget;

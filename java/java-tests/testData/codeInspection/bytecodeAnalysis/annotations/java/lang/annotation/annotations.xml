@@ -1,0 +1,5 @@
+<root>
+  <item name="java.lang.annotation.IncompleteAnnotationException IncompleteAnnotationException(java.lang.Class&lt;? extends java.lang.annotation.Annotation&gt;, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+</root>

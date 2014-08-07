@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.config.GitVersion;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.BuiltInServerManagerImpl;
@@ -31,6 +32,7 @@ import java.io.File;
 import static com.intellij.openapi.vcs.Executor.*;
 import static git4idea.test.GitExecutor.git;
 import static junit.framework.Assert.assertNotNull;
+import static org.junit.Assume.assumeTrue;
 
 public class GitTestUtil {
 
@@ -107,5 +109,10 @@ public class GitTestUtil {
    */
   public static void setDefaultBuiltInServerPort() {
     System.setProperty(BuiltInServerManagerImpl.PROPERTY_RPC_PORT, "64463");
+  }
+
+  public static void assumeSupportedGitVersion(@NotNull GitVcs vcs) {
+    GitVersion version = vcs.getVersion();
+    assumeTrue("Unsupported Git version: " + version, version.isSupported());
   }
 }

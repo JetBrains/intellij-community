@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.CollectConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -84,9 +85,10 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     prepareSomeHistory();
     createTaggedBranch();
     List<VcsCommitMetadata> expectedLog = log();
-    @SuppressWarnings("unchecked")
-    List<TimedVcsCommit> actualLog = myLogProvider.readAllHashes(myProjectRoot, Consumer.EMPTY_CONSUMER);
-    assertOrderedEquals(expectedLog, actualLog);
+    List<TimedVcsCommit> collector = ContainerUtil.newArrayList();
+    //noinspection unchecked
+    myLogProvider.readAllHashes(myProjectRoot, Consumer.EMPTY_CONSUMER, new CollectConsumer<TimedVcsCommit>(collector));
+    assertOrderedEquals(expectedLog, collector);
   }
 
   public void test_get_current_user() throws Exception {

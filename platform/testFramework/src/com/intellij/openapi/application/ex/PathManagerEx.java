@@ -424,7 +424,7 @@ public class PathManagerEx {
    * @return    project type implied by its file system location
    */
   private static FileSystemLocation parseProjectLocation() {
-    return new File(PathManager.getHomePath(), "community").isDirectory() ? FileSystemLocation.ULTIMATE : FileSystemLocation.COMMUNITY;
+    return new File(PathManager.getHomePath(), "community/.idea").isDirectory() ? FileSystemLocation.ULTIMATE : FileSystemLocation.COMMUNITY;
   }
 
   /**

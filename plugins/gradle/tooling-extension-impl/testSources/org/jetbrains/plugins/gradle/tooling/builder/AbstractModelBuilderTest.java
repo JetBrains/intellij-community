@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.tooling.builder;
 
+import com.intellij.openapi.externalSystem.model.ExternalProject;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.UsefulTestCase;
@@ -127,7 +128,7 @@ public abstract class AbstractModelBuilderTest {
     BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = connection.action(projectImportAction);
     File initScript = GradleExecutionHelper.generateInitScript(false, getToolingExtensionClasses());
     assertNotNull(initScript);
-    buildActionExecutor.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.getAbsolutePath());
+    buildActionExecutor.withArguments("--recompile-scripts", GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.getAbsolutePath());
     allModels = buildActionExecutor.run();
     assertNotNull(allModels);
   }
@@ -135,6 +136,7 @@ public abstract class AbstractModelBuilderTest {
   @NotNull
   private Set<Class> getToolingExtensionClasses() {
     final Set<Class> classes = ContainerUtil.<Class>set(
+      ExternalProject.class,
       // gradle-tooling-extension-api jar
       ProjectImportAction.class,
       // gradle-tooling-extension-impl jar

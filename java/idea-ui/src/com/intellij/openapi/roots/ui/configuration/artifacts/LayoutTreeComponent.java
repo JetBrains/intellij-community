@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,6 @@ import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import com.intellij.ui.treeStructure.WeightBasedComparator;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -132,7 +131,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     emptyPanel.setPreferredSize(new Dimension(0, 0));
 
     myPropertiesPanelWrapper = new JPanel(new CardLayout());
-    myPropertiesPanel.setBorder(new CustomLineBorder(UIUtil.getBorderColor(), 1, 0, 0, 0));
+    myPropertiesPanel.setBorder(new CustomLineBorder(1, 0, 0, 0));
     myPropertiesPanelWrapper.add(EMPTY_CARD, emptyPanel);
     myPropertiesPanelWrapper.add(PROPERTIES_CARD, myPropertiesPanel);
   }

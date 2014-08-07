@@ -23,14 +23,15 @@ package com.intellij.codeInspection.unusedLibraries;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefGraphAnnotator;
+import com.intellij.codeInspection.reference.RefManager;
+import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -185,12 +186,12 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
 
   private static class UnusedLibraryGraphAnnotator extends RefGraphAnnotator {
     public static final Key<Set<VirtualFile>> USED_LIBRARY_ROOTS = Key.create("inspection.dependencies");
-    private final DirectoryIndex myDirectoryIndex;
+    private final ProjectFileIndex myFileIndex;
     private RefManager myManager;
 
     public UnusedLibraryGraphAnnotator(RefManager manager) {
       myManager = manager;
-      myDirectoryIndex = DirectoryIndex.getInstance(manager.getProject());
+      myFileIndex = ProjectRootManager.getInstance(manager.getProject()).getFileIndex();
     }
 
     @Override
@@ -199,8 +200,7 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
         final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(what);
         final VirtualFile containingDir = virtualFile != null ? virtualFile.getParent() : null;
         if (containingDir != null) {
-          final DirectoryInfo infoForDirectory = myDirectoryIndex.getInfoForDirectory(containingDir);
-          final VirtualFile libraryClassRoot = infoForDirectory != null ? infoForDirectory.getLibraryClassRoot() : null;
+          final VirtualFile libraryClassRoot = myFileIndex.getClassRootForFile(containingDir);
           if (libraryClassRoot != null) {
             final Module fromModule = ModuleUtilCore.findModuleForPsiElement(from);
             if (fromModule != null){

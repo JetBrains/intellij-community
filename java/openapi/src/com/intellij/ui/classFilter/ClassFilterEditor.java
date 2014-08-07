@@ -113,7 +113,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     myTable.setTableHeader(null);
     myTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
     myTable.setColumnSelectionAllowed(false);
-    myTable.setPreferredScrollableViewportSize(new Dimension(200, 100));
+    myTable.setPreferredScrollableViewportSize(new Dimension(200, myTable.getRowHeight() * JBTable.PREFERRED_SCROLLABLE_VIEWPORT_HEIGHT_IN_ROWS));
 
     TableColumnModel columnModel = myTable.getColumnModel();
     TableColumn column = columnModel.getColumn(FilterTableModel.CHECK_MARK);

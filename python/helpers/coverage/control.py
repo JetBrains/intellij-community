@@ -3,21 +3,31 @@
 import atexit, os, random, socket, sys
 
 from coverage.annotate import AnnotateReporter
-from coverage.backward import string_class
+from coverage.backward import string_class, iitems, sorted  # pylint: disable=W0622
 from coverage.codeunit import code_unit_factory, CodeUnit
 from coverage.collector import Collector
 from coverage.config import CoverageConfig
 from coverage.data import CoverageData
+from coverage.debug import DebugControl
 from coverage.files import FileLocator, TreeMatcher, FnmatchMatcher
-from coverage.files import find_python_files
+from coverage.files import PathAliases, find_python_files, prep_patterns
 from coverage.html import HtmlReporter
 from coverage.misc import CoverageException, bool_or_none, join_regex
+from coverage.misc import file_be_gone
 from coverage.results import Analysis, Numbers
 from coverage.summary import SummaryReporter
 from coverage.xmlreport import XmlReporter
 
+# Pypy has some unusual stuff in the "stdlib".  Consider those locations
+# when deciding where the stdlib is.
+try:
+    import _structseq       # pylint: disable=F0401
+except ImportError:
+    _structseq = None
+
+
 class coverage(object):
-    """Programmatic access to Coverage.
+    """Programmatic access to coverage.py.
 
     To use::
 
@@ -25,14 +35,15 @@ class coverage(object):
 
         cov = coverage()
         cov.start()
-        #.. blah blah (run your code) blah blah ..
+        #.. call your code ..
         cov.stop()
         cov.html_report(directory='covhtml')
 
     """
     def __init__(self, data_file=None, data_suffix=None, cover_pylib=None,
                 auto_data=False, timid=None, branch=None, config_file=True,
-                source=None, omit=None, include=None):
+                source=None, omit=None, include=None, debug=None,
+                debug_file=None):
         """
         `data_file` is the base name of the data file to use, defaulting to
         ".coverage".  `data_suffix` is appended (with a dot) to `data_file` to
@@ -67,6 +78,10 @@ class coverage(object):
         `include` will be measured, files that match `omit` will not.  Each
         will also accept a single string argument.
 
+        `debug` is a list of strings indicating what debugging information is
+        desired. `debug_file` is the file to write debug messages to,
+        defaulting to stderr.
+
         """
         from coverage import __version__
 
@@ -96,18 +111,16 @@ class coverage(object):
             self.config.data_file = env_data_file
 
         # 4: from constructor arguments:
-        if isinstance(omit, string_class):
-            omit = [omit]
-        if isinstance(include, string_class):
-            include = [include]
         self.config.from_args(
             data_file=data_file, cover_pylib=cover_pylib, timid=timid,
             branch=branch, parallel=bool_or_none(data_suffix),
-            source=source, omit=omit, include=include
+            source=source, omit=omit, include=include, debug=debug,
             )
 
+        # Create and configure the debugging controller.
+        self.debug = DebugControl(self.config.debug, debug_file or sys.stderr)
+
         self.auto_data = auto_data
-        self.atexit_registered = False
 
         # _exclude_re is a dict mapping exclusion list names to compiled
         # regexes.
@@ -125,8 +138,8 @@ class coverage(object):
             else:
                 self.source_pkgs.append(src)
 
-        self.omit = self._prep_patterns(self.config.omit)
-        self.include = self._prep_patterns(self.config.include)
+        self.omit = prep_patterns(self.config.omit)
+        self.include = prep_patterns(self.config.include)
 
         self.collector = Collector(
             self._should_trace, timid=self.config.timid,
@@ -151,7 +164,8 @@ class coverage(object):
         # started rather than wherever the process eventually chdir'd to.
         self.data = CoverageData(
             basename=self.config.data_file,
-            collector="coverage v%s" % __version__
+            collector="coverage v%s" % __version__,
+            debug=self.debug,
             )
 
         # The dirs for files considered "installed with the interpreter".
@@ -162,9 +176,9 @@ class coverage(object):
             # environments (virtualenv, for example), these modules may be
             # spread across a few locations. Look at all the candidate modules
             # we've imported, and take all the different ones.
-            for m in (atexit, os, random, socket):
-                if hasattr(m, "__file__"):
-                    m_dir = self._canonical_dir(m.__file__)
+            for m in (atexit, os, random, socket, _structseq):
+                if m is not None and hasattr(m, "__file__"):
+                    m_dir = self._canonical_dir(m)
                     if m_dir not in self.pylib_dirs:
                         self.pylib_dirs.append(m_dir)
 
@@ -172,63 +186,61 @@ class coverage(object):
         # where we are.
         self.cover_dir = self._canonical_dir(__file__)
 
-        # The matchers for _should_trace, created when tracing starts.
+        # The matchers for _should_trace.
         self.source_match = None
         self.pylib_match = self.cover_match = None
         self.include_match = self.omit_match = None
 
-        # Only _harvest_data once per measurement cycle.
-        self._harvested = False
-
         # Set the reporting precision.
         Numbers.set_precision(self.config.precision)
 
-        # When tearing down the coverage object, modules can become None.
-        # Saving the modules as object attributes avoids problems, but it is
-        # quite ad-hoc which modules need to be saved and which references
-        # need to use the object attributes.
-        self.socket = socket
-        self.os = os
-        self.random = random
+        # Is it ok for no data to be collected?
+        self._warn_no_data = True
+        self._warn_unimported_source = True
 
-    def _canonical_dir(self, f):
-        """Return the canonical directory of the file `f`."""
-        return os.path.split(self.file_locator.canonical_filename(f))[0]
+        # State machine variables:
+        # Have we started collecting and not stopped it?
+        self._started = False
+        # Have we measured some data and not harvested it?
+        self._measured = False
+
+        atexit.register(self._atexit)
+
+    def _canonical_dir(self, morf):
+        """Return the canonical directory of the module or file `morf`."""
+        return os.path.split(CodeUnit(morf, self.file_locator).filename)[0]
 
     def _source_for_file(self, filename):
         """Return the source file for `filename`."""
         if not filename.endswith(".py"):
             if filename[-4:-1] == ".py":
                 filename = filename[:-1]
+            elif filename.endswith("$py.class"): # jython
+                filename = filename[:-9] + ".py"
         return filename
 
-    def _should_trace(self, filename, frame):
-        """Decide whether to trace execution in `filename`
+    def _should_trace_with_reason(self, filename, frame):
+        """Decide whether to trace execution in `filename`, with a reason.
 
         This function is called from the trace function.  As each new file name
         is encountered, this function determines whether it is traced or not.
 
-        Returns a canonicalized filename if it should be traced, False if it
-        should not.
+        Returns a pair of values:  the first indicates whether the file should
+        be traced: it's a canonicalized filename if it should be traced, None
+        if it should not.  The second value is a string, the resason for the
+        decision.
 
         """
-        if os is None:
-            return False
+        if not filename:
+            # Empty string is pretty useless
+            return None, "empty string isn't a filename"
 
         if filename.startswith('<'):
             # Lots of non-file execution is represented with artificial
             # filenames like "<string>", "<doctest readme.txt[0]>", or
             # "<exec_function>".  Don't ever trace these executions, since we
             # can't do anything with the data later anyway.
-            return False
-
-        if filename.endswith(".html"):
-            # Jinja and maybe other templating systems compile templates into
-            # Python code, but use the template filename as the filename in
-            # the compiled code.  Of course, those filenames are useless later
-            # so don't bother collecting.  TODO: How should we really separate
-            # out good file extensions from bad?
-            return False
+            return None, "not a real filename"
 
         self._check_for_packages()
 
@@ -248,63 +260,52 @@ class coverage(object):
 
         canonical = self.file_locator.canonical_filename(filename)
 
-        # If the user specified source, then that's authoritative about what to
-        # measure.  If they didn't, then we have to exclude the stdlib and
-        # coverage.py directories.
+        # If the user specified source or include, then that's authoritative
+        # about the outer bound of what to measure and we don't have to apply
+        # any canned exclusions. If they didn't, then we have to exclude the
+        # stdlib and coverage.py directories.
         if self.source_match:
             if not self.source_match.match(canonical):
-                return False
+                return None, "falls outside the --source trees"
+        elif self.include_match:
+            if not self.include_match.match(canonical):
+                return None, "falls outside the --include trees"
         else:
             # If we aren't supposed to trace installed code, then check if this
             # is near the Python standard library and skip it if so.
             if self.pylib_match and self.pylib_match.match(canonical):
-                return False
+                return None, "is in the stdlib"
 
             # We exclude the coverage code itself, since a little of it will be
             # measured otherwise.
             if self.cover_match and self.cover_match.match(canonical):
-                return False
+                return None, "is part of coverage.py"
 
-        # Check the file against the include and omit patterns.
-        if self.include_match and not self.include_match.match(canonical):
-            return False
+        # Check the file against the omit pattern.
         if self.omit_match and self.omit_match.match(canonical):
-            return False
+            return None, "is inside an --omit pattern"
 
+        return canonical, "because we love you"
+
+    def _should_trace(self, filename, frame):
+        """Decide whether to trace execution in `filename`.
+
+        Calls `_should_trace_with_reason`, and returns just the decision.
+
+        """
+        canonical, reason = self._should_trace_with_reason(filename, frame)
+        if self.debug.should('trace'):
+            if not canonical:
+                msg = "Not tracing %r: %s" % (filename, reason)
+            else:
+                msg = "Tracing %r" % (filename,)
+            self.debug.write(msg)
         return canonical
-
-    # To log what should_trace returns, change this to "if 1:"
-    if 0:
-        _real_should_trace = _should_trace
-        def _should_trace(self, filename, frame):   # pylint: disable=E0102
-            """A logging decorator around the real _should_trace function."""
-            ret = self._real_should_trace(filename, frame)
-            print("should_trace: %r -> %r" % (filename, ret))
-            return ret
 
     def _warn(self, msg):
         """Use `msg` as a warning."""
         self._warnings.append(msg)
         sys.stderr.write("Coverage.py warning: %s\n" % msg)
-
-    def _prep_patterns(self, patterns):
-        """Prepare the file patterns for use in a `FnmatchMatcher`.
-
-        If a pattern starts with a wildcard, it is used as a pattern
-        as-is.  If it does not start with a wildcard, then it is made
-        absolute with the current directory.
-
-        If `patterns` is None, an empty list is returned.
-
-        """
-        patterns = patterns or []
-        prepped = []
-        for p in patterns or []:
-            if p.startswith("*") or p.startswith("?"):
-                prepped.append(p)
-            else:
-                prepped.append(self.file_locator.abs_file(p))
-        return prepped
 
     def _check_for_packages(self):
         """Update the source_match matcher with latest imported packages."""
@@ -325,17 +326,23 @@ class coverage(object):
                 try:
                     pkg_file = mod.__file__
                 except AttributeError:
-                    self._warn("Module %s has no Python source." % pkg)
+                    pkg_file = None
                 else:
                     d, f = os.path.split(pkg_file)
-                    if f.startswith('__init__.'):
+                    if f.startswith('__init__'):
                         # This is actually a package, return the directory.
                         pkg_file = d
                     else:
                         pkg_file = self._source_for_file(pkg_file)
                     pkg_file = self.file_locator.canonical_filename(pkg_file)
+                    if not os.path.exists(pkg_file):
+                        pkg_file = None
+
+                if pkg_file:
                     self.source.append(pkg_file)
                     self.source_match.add(pkg_file)
+                else:
+                    self._warn("Module %s has no Python source." % pkg)
 
             for pkg in found:
                 self.source_pkgs.remove(pkg)
@@ -354,17 +361,21 @@ class coverage(object):
         self.data.read()
 
     def start(self):
-        """Start measuring code coverage."""
+        """Start measuring code coverage.
+
+        Coverage measurement actually occurs in functions called after `start`
+        is invoked.  Statements in the same scope as `start` won't be measured.
+
+        Once you invoke `start`, you must also call `stop` eventually, or your
+        process might not shut down cleanly.
+
+        """
         if self.run_suffix:
             # Calling start() means we're running code, so use the run_suffix
             # as the data_suffix when we eventually save the data.
             self.data_suffix = self.run_suffix
         if self.auto_data:
             self.load()
-            # Save coverage data when Python exits.
-            if not self.atexit_registered:
-                atexit.register(self.save)
-                self.atexit_registered = True
 
         # Create the matchers we need for _should_trace
         if self.source or self.source_pkgs:
@@ -379,13 +390,31 @@ class coverage(object):
         if self.omit:
             self.omit_match = FnmatchMatcher(self.omit)
 
-        self._harvested = False
+        # The user may want to debug things, show info if desired.
+        if self.debug.should('config'):
+            self.debug.write("Configuration values:")
+            config_info = sorted(self.config.__dict__.items())
+            self.debug.write_formatted_info(config_info)
+
+        if self.debug.should('sys'):
+            self.debug.write("Debugging info:")
+            self.debug.write_formatted_info(self.sysinfo())
+
         self.collector.start()
+        self._started = True
+        self._measured = True
 
     def stop(self):
         """Stop measuring code coverage."""
+        self._started = False
         self.collector.stop()
-        self._harvest_data()
+
+    def _atexit(self):
+        """Clean up on process shutdown."""
+        if self._started:
+            self.stop()
+        if self.auto_data:
+            self.save()
 
     def erase(self):
         """Erase previously-collected coverage data.
@@ -449,9 +478,15 @@ class coverage(object):
             # plenty of distinguishing information.  We do this here in
             # `save()` at the last minute so that the pid will be correct even
             # if the process forks.
-            data_suffix = "%s.%s.%06d" % (
-                self.socket.gethostname(), self.os.getpid(),
-                self.random.randint(0, 99999)
+            extra = ""
+            if _TEST_NAME_FILE:
+                f = open(_TEST_NAME_FILE)
+                test_name = f.read()
+                f.close()
+                extra = "." + test_name
+            data_suffix = "%s%s.%s.%06d" % (
+                socket.gethostname(), extra, os.getpid(),
+                random.randint(0, 999999)
                 )
 
         self._harvest_data()
@@ -465,7 +500,14 @@ class coverage(object):
         current measurements.
 
         """
-        self.data.combine_parallel_data()
+        aliases = None
+        if self.config.paths:
+            aliases = PathAliases(self.file_locator)
+            for paths in self.config.paths.values():
+                result = paths[0]
+                for pattern in paths[1:]:
+                    aliases.add(pattern, result)
+        self.data.combine_parallel_data(aliases=aliases)
 
     def _harvest_data(self):
         """Get the collected data and reset the collector.
@@ -473,27 +515,37 @@ class coverage(object):
         Also warn about various problems collecting data.
 
         """
-        if not self._harvested:
-            self.data.add_line_data(self.collector.get_line_data())
-            self.data.add_arc_data(self.collector.get_arc_data())
-            self.collector.reset()
+        if not self._measured:
+            return
 
-            # If there are still entries in the source_pkgs list, then we never
-            # encountered those packages.
+        self.data.add_line_data(self.collector.get_line_data())
+        self.data.add_arc_data(self.collector.get_arc_data())
+        self.collector.reset()
+
+        # If there are still entries in the source_pkgs list, then we never
+        # encountered those packages.
+        if self._warn_unimported_source:
             for pkg in self.source_pkgs:
                 self._warn("Module %s was never imported." % pkg)
 
-            # Find out if we got any data.
-            summary = self.data.summary()
-            if not summary:
-                self._warn("No data was collected.")
+        # Find out if we got any data.
+        summary = self.data.summary()
+        if not summary and self._warn_no_data:
+            self._warn("No data was collected.")
 
-            # Find files that were never executed at all.
-            for src in self.source:
-                for py_file in find_python_files(src):
-                    self.data.touch_file(py_file)
+        # Find files that were never executed at all.
+        for src in self.source:
+            for py_file in find_python_files(src):
+                py_file = self.file_locator.canonical_filename(py_file)
 
-            self._harvested = True
+                if self.omit_match and self.omit_match.match(py_file):
+                    # Turns out this file was omitted, so don't pull it back
+                    # in as unexecuted.
+                    continue
+
+                self.data.touch_file(py_file)
+
+        self._measured = False
 
     # Backward compatibility with version 1.
     def analysis(self, morf):
@@ -520,8 +572,11 @@ class coverage(object):
         """
         analysis = self._analyze(morf)
         return (
-            analysis.filename, analysis.statements, analysis.excluded,
-            analysis.missing, analysis.missing_formatted()
+            analysis.filename,
+            sorted(analysis.statements),
+            sorted(analysis.excluded),
+            sorted(analysis.missing),
+            analysis.missing_formatted(),
             )
 
     def _analyze(self, it):
@@ -530,6 +585,7 @@ class coverage(object):
         Returns an `Analysis` object.
 
         """
+        self._harvest_data()
         if not isinstance(it, CodeUnit):
             it = code_unit_factory(it, self.file_locator)[0]
 
@@ -548,14 +604,16 @@ class coverage(object):
         match those patterns will be included in the report. Modules matching
         `omit` will not be included in the report.
 
+        Returns a float, the total percentage covered.
+
         """
+        self._harvest_data()
         self.config.from_args(
-            ignore_errors=ignore_errors, omit=omit, include=include
+            ignore_errors=ignore_errors, omit=omit, include=include,
+            show_missing=show_missing,
             )
-        reporter = SummaryReporter(
-            self, show_missing, self.config.ignore_errors
-            )
-        reporter.report(morfs, outfile=file, config=self.config)
+        reporter = SummaryReporter(self, self.config)
+        return reporter.report(morfs, outfile=file)
 
     def annotate(self, morfs=None, directory=None, ignore_errors=None,
                     omit=None, include=None):
@@ -569,25 +627,39 @@ class coverage(object):
         See `coverage.report()` for other arguments.
 
         """
+        self._harvest_data()
         self.config.from_args(
             ignore_errors=ignore_errors, omit=omit, include=include
             )
-        reporter = AnnotateReporter(self, self.config.ignore_errors)
-        reporter.report(morfs, config=self.config, directory=directory)
+        reporter = AnnotateReporter(self, self.config)
+        reporter.report(morfs, directory=directory)
 
     def html_report(self, morfs=None, directory=None, ignore_errors=None,
-                    omit=None, include=None):
+                    omit=None, include=None, extra_css=None, title=None):
         """Generate an HTML report.
+
+        The HTML is written to `directory`.  The file "index.html" is the
+        overview starting point, with links to more detailed pages for
+        individual modules.
+
+        `extra_css` is a path to a file of other CSS to apply on the page.
+        It will be copied into the HTML directory.
+
+        `title` is a text string (not HTML) to use as the title of the HTML
+        report.
 
         See `coverage.report()` for other arguments.
 
+        Returns a float, the total percentage covered.
+
         """
+        self._harvest_data()
         self.config.from_args(
             ignore_errors=ignore_errors, omit=omit, include=include,
-            html_dir=directory,
+            html_dir=directory, extra_css=extra_css, html_title=title,
             )
-        reporter = HtmlReporter(self, self.config.ignore_errors)
-        reporter.report(morfs, config=self.config)
+        reporter = HtmlReporter(self, self.config)
+        return reporter.report(morfs)
 
     def xml_report(self, morfs=None, outfile=None, ignore_errors=None,
                     omit=None, include=None):
@@ -600,12 +672,16 @@ class coverage(object):
 
         See `coverage.report()` for other arguments.
 
+        Returns a float, the total percentage covered.
+
         """
+        self._harvest_data()
         self.config.from_args(
             ignore_errors=ignore_errors, omit=omit, include=include,
             xml_output=outfile,
             )
         file_to_close = None
+        delete_file = False
         if self.config.xml_output:
             if self.config.xml_output == '-':
                 outfile = sys.stdout
@@ -613,11 +689,17 @@ class coverage(object):
                 outfile = open(self.config.xml_output, "w")
                 file_to_close = outfile
         try:
-            reporter = XmlReporter(self, self.config.ignore_errors)
-            reporter.report(morfs, outfile=outfile, config=self.config)
+            try:
+                reporter = XmlReporter(self, self.config)
+                return reporter.report(morfs, outfile=outfile)
+            except CoverageException:
+                delete_file = True
+                raise
         finally:
             if file_to_close:
                 file_to_close.close()
+                if delete_file:
+                    file_be_gone(self.config.xml_output)
 
     def sysinfo(self):
         """Return a list of (key, value) pairs showing internal information."""
@@ -625,22 +707,43 @@ class coverage(object):
         import coverage as covmod
         import platform, re
 
+        try:
+            implementation = platform.python_implementation()
+        except AttributeError:
+            implementation = "unknown"
+
         info = [
             ('version', covmod.__version__),
             ('coverage', covmod.__file__),
             ('cover_dir', self.cover_dir),
             ('pylib_dirs', self.pylib_dirs),
             ('tracer', self.collector.tracer_name()),
+            ('config_files', self.config.attempted_config_files),
+            ('configs_read', self.config.config_files),
             ('data_path', self.data.filename),
             ('python', sys.version.replace('\n', '')),
             ('platform', platform.platform()),
+            ('implementation', implementation),
+            ('executable', sys.executable),
             ('cwd', os.getcwd()),
             ('path', sys.path),
-            ('environment', [
-                ("%s = %s" % (k, v)) for k, v in os.environ.items()
-                    if re.search("^COV|^PY", k)
-                ]),
+            ('environment', sorted([
+                ("%s = %s" % (k, v)) for k, v in iitems(os.environ)
+                    if re.search(r"^COV|^PY", k)
+                ])),
+            ('command_line', " ".join(getattr(sys, 'argv', ['???']))),
             ]
+        if self.source_match:
+            info.append(('source_match', self.source_match.info()))
+        if self.include_match:
+            info.append(('include_match', self.include_match.info()))
+        if self.omit_match:
+            info.append(('omit_match', self.omit_match.info()))
+        if self.cover_match:
+            info.append(('cover_match', self.cover_match.info()))
+        if self.pylib_match:
+            info.append(('pylib_match', self.pylib_match.info()))
+
         return info
 
 
@@ -667,7 +770,10 @@ def process_startup():
     cps = os.environ.get("COVERAGE_PROCESS_START")
     if cps:
         cov = coverage(config_file=cps, auto_data=True)
-        if os.environ.get("COVERAGE_COVERAGE"):
-            # Measuring coverage within coverage.py takes yet more trickery.
-            cov.cover_dir = "Please measure coverage.py!"
         cov.start()
+        cov._warn_no_data = False
+        cov._warn_unimported_source = False
+
+
+# A hack for debugging testing in subprocesses.
+_TEST_NAME_FILE = "" #"/tmp/covtest.txt"

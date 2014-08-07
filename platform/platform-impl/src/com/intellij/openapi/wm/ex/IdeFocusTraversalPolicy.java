@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,17 +19,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
 import com.intellij.openapi.util.Computable;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.lang.reflect.Field;
 
 public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicyExt {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy");
-  @NonNls private static final String FOCUS_TRAVERSAL_POLICY_FIELD = "focusTraversalPolicy";
 
   protected Component getDefaultComponentImpl(Container focusCycleRoot) {
     if (!(focusCycleRoot instanceof JComponent)) {
@@ -103,15 +101,7 @@ public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicyExt {
   }
 
   private static FocusTraversalPolicy getFocusTraversalPolicyAwtImpl(final JComponent component) {
-    try {
-      final Field field = Container.class.getDeclaredField(FOCUS_TRAVERSAL_POLICY_FIELD);
-      field.setAccessible(true);
-      return (FocusTraversalPolicy)field.get(component);
-    }
-    catch (Exception e) {
-      LOG.error(e);
-      return null;
-    }
+    return ReflectionUtil.getField(Container.class, component, FocusTraversalPolicy.class, "focusTraversalPolicy");
   }
 
   protected final boolean accept(final Component aComponent) {

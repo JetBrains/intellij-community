@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class TypeParameterListElement extends CompositeElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.TypeParameterListElement");
+  private static final TokenSet TYPE_PARAMETER_SET = TokenSet.create(JavaElementType.TYPE_PARAMETER);
 
   public TypeParameterListElement() {
     super(JavaElementType.TYPE_PARAMETER_LIST);
@@ -82,25 +84,9 @@ public class TypeParameterListElement extends CompositeElement {
       }
     }
 
-    final TreeElement firstAdded = super.addInternal(first, last, anchor, before);
-
+    TreeElement firstAdded = super.addInternal(first, last, anchor, before);
     if (first == last && first.getElementType() == JavaElementType.TYPE_PARAMETER) {
-      for(ASTNode child = first.getTreeNext(); child != null; child = child.getTreeNext()){
-        if (child.getElementType() == JavaTokenType.COMMA) break;
-        if (child.getElementType() == JavaElementType.TYPE_PARAMETER){
-          final TreeElement comma = Factory.createSingleLeafElement(JavaTokenType.COMMA, ",", 0, 1, treeCharTab, getManager());
-          super.addInternal(comma, comma, first, Boolean.FALSE);
-          break;
-        }
-      }
-      for(ASTNode child = first.getTreePrev(); child != null; child = child.getTreePrev()){
-        if (child.getElementType() == JavaTokenType.COMMA) break;
-        if (child.getElementType() == JavaElementType.TYPE_PARAMETER){
-          final TreeElement comma = Factory.createSingleLeafElement(JavaTokenType.COMMA, ",", 0, 1, treeCharTab, getManager());
-          super.addInternal(comma, comma, child, Boolean.FALSE);
-          break;
-        }
-      }
+      JavaSourceUtil.addSeparatingComma(this, first, TYPE_PARAMETER_SET);
     }
     return firstAdded;
   }
@@ -108,18 +94,11 @@ public class TypeParameterListElement extends CompositeElement {
   @Override
   public void deleteChildInternal(@NotNull final ASTNode child) {
     if (child.getElementType() == JavaElementType.TYPE_PARAMETER){
-      final ASTNode next = PsiImplUtil.skipWhitespaceAndComments(child.getTreeNext());
-      if (next != null && next.getElementType() == JavaTokenType.COMMA){
-        deleteChildInternal(next);
-      }
-      else{
-        final ASTNode prev = PsiImplUtil.skipWhitespaceAndCommentsBack(child.getTreePrev());
-        if (prev != null && prev.getElementType() == JavaTokenType.COMMA){
-          deleteChildInternal(prev);
-        }
-      }
+      JavaSourceUtil.deleteSeparatingComma(this, child);
     }
+
     super.deleteChildInternal(child);
+
     if (child.getElementType() == JavaElementType.TYPE_PARAMETER) {
       final ASTNode lt = findChildByRole(ChildRole.LT_IN_TYPE_LIST);
       final ASTNode next = PsiImplUtil.skipWhitespaceAndComments(lt.getTreeNext());

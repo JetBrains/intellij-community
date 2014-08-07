@@ -38,7 +38,8 @@ public class InstructionParser {
         break;
       }
       int opcode = myCode[v] & 0xFF;
-      switch (Bytecodes.TYPE[opcode]) {
+      final byte opcodeType = opcode == Bytecodes.IMPDEP1 || opcode == Bytecodes.IMPDEP2? Bytecodes.NOARG_INSN : Bytecodes.TYPE[opcode];
+      switch (opcodeType) {
         case Bytecodes.NOARG_INSN:
           v += 1;
           break;

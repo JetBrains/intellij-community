@@ -25,6 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -40,8 +41,10 @@ public class ProjectDataManager {
 
   private static final Logger LOG = Logger.getInstance("#" + ProjectDataManager.class.getName());
 
-  @NotNull private final NotNullLazyValue<Map<Key<?>, List<ProjectDataService<?, ?>>>> myServices =
-    new NotNullLazyValue<Map<Key<?>, List<ProjectDataService<?, ?>>>>() {
+  @NotNull private final NotNullLazyValue<Map<Key<?>, List<ProjectDataService<?, ?>>>> myServices;
+
+  public ProjectDataManager() {
+    myServices = new NotNullLazyValue<Map<Key<?>, List<ProjectDataService<?, ?>>>>() {
       @NotNull
       @Override
       protected Map<Key<?>, List<ProjectDataService<?, ?>>> compute() {
@@ -57,10 +60,22 @@ public class ProjectDataManager {
         for (List<ProjectDataService<?, ?>> services : result.values()) {
           ExternalSystemApiUtil.orderAwareSort(services);
         }
-
         return result;
       }
     };
+  }
+
+  @Nullable
+  public List<ProjectDataService<?, ?>> getDataServices(Key<?> key) {
+    return myServices.getValue().get(key);
+  }
+
+  @Nullable
+  public ProjectDataService<?, ?> getDataService(Key<?> key) {
+    final List<ProjectDataService<?, ?>> dataServices = myServices.getValue().get(key);
+    assert dataServices == null || dataServices.isEmpty() || dataServices.size() == 1;
+    return ContainerUtil.getFirstItem(dataServices);
+  }
 
   @SuppressWarnings("unchecked")
   public <T> void importData(@NotNull Collection<DataNode<?>> nodes, @NotNull Project project, boolean synchronous) {

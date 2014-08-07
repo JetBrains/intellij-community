@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,27 +15,38 @@
  */
 package com.intellij.patterns;
 
-import com.intellij.util.SmartList;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author peter
  */
+@SuppressWarnings("ForLoopReplaceableByForEach")
 public class ElementPatternCondition<T> {
+
   private final InitialPatternCondition<T> myInitialCondition;
-  private final List<PatternCondition<? super T>> myConditions = new SmartList<PatternCondition<? super T>>();
+  private final List<PatternCondition<? super T>> myConditions;
 
   public ElementPatternCondition(final InitialPatternCondition<T> startCondition) {
     myInitialCondition = startCondition;
+    myConditions = Collections.emptyList();
+  }
+
+  protected ElementPatternCondition(final ElementPatternCondition<T> original,
+                                    final PatternCondition<? super T> condition) {
+    myInitialCondition = original.getInitialCondition();
+    myConditions = new SmartList<PatternCondition<? super T>>(original.getConditions());
+    myConditions.add(condition);
   }
 
   public boolean accepts(@Nullable Object o, final ProcessingContext context) {
     if (!myInitialCondition.accepts(o, context)) return false;
     final int listSize = myConditions.size();
-    for (int i=0; i<listSize; i++) {
+    for (int i = 0; i < listSize; i++) {
       if (!myConditions.get(i).accepts((T)o, context)) return false;
     }
     return true;
@@ -66,9 +77,6 @@ public class ElementPatternCondition<T> {
   }
 
   public ElementPatternCondition<T> append(PatternCondition<? super T> condition) {
-    final ElementPatternCondition<T> copy = new ElementPatternCondition<T>(myInitialCondition);
-    copy.myConditions.addAll(myConditions);
-    copy.myConditions.add(condition);
-    return copy;
+    return new ElementPatternCondition<T>(this, condition);
   }
 }

@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public class ProjectScopeImpl extends GlobalSearchScope {
   private final FileIndexFacade myFileIndex;
 
-  public ProjectScopeImpl(Project project, FileIndexFacade fileIndex) {
+  public ProjectScopeImpl(@NotNull Project project, @NotNull FileIndexFacade fileIndex) {
     super(project);
     myFileIndex = fileIndex;
   }
@@ -61,6 +61,7 @@ public class ProjectScopeImpl extends GlobalSearchScope {
     return PsiBundle.message("psi.search.scope.project");
   }
 
+  @Override
   public String toString() {
     return getDisplayName();
   }

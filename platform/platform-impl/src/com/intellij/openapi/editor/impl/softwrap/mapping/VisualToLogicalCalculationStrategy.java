@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,11 +32,10 @@ class VisualToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
   private final CacheEntry mySearchKey;
   private VisualPosition myTargetVisual;
 
-  VisualToLogicalCalculationStrategy(@NotNull Editor editor, @NotNull SoftWrapsStorage storage, @NotNull List<CacheEntry> cache, 
-                                     @NotNull EditorTextRepresentationHelper representationHelper) 
+  VisualToLogicalCalculationStrategy(@NotNull Editor editor, @NotNull SoftWrapsStorage storage, @NotNull List<CacheEntry> cache)
   {
-    super(editor, storage, cache, representationHelper);
-    mySearchKey = new CacheEntry(0, editor, representationHelper);
+    super(editor, storage, cache);
+    mySearchKey = new CacheEntry(0, editor);
   }
 
   public void init(@NotNull final VisualPosition targetVisual, @NotNull final List<CacheEntry> cache) {

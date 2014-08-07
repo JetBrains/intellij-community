@@ -136,7 +136,7 @@ public class TextComponentEditor extends UserDataHolderBase implements Editor {
   @NotNull
   public EditorSettings getSettings() {
     if (mySettings == null) {
-      mySettings = new SettingsImpl(null);
+      mySettings = new SettingsImpl();
     }
     return mySettings;
   }

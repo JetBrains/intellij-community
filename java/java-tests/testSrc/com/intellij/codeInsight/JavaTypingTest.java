@@ -16,6 +16,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
@@ -62,6 +63,14 @@ public class JavaTypingTest extends LightPlatformCodeInsightFixtureTestCase {
     myFixture.configureByFile(getTestName(true) + "_before.java");
     ((EditorEx)myFixture.getEditor()).setColumnMode(true);
     myFixture.type('(');
+    myFixture.checkResultByFile(getTestName(true) + "_after.java");
+  }
+
+  public void testInvalidInitialSyntax() {
+    myFixture.configureByFile(getTestName(true) + "_before.java");
+    myFixture.type('\\');
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); // emulates background commit after typing first character
+    myFixture.type('\\');
     myFixture.checkResultByFile(getTestName(true) + "_after.java");
   }
 

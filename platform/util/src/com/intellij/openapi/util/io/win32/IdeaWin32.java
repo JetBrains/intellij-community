@@ -35,7 +35,7 @@ public class IdeaWin32 {
 
   static {
     IdeaWin32 instance = null;
-    if (SystemInfo.isWin2kOrNewer) {
+    if (SystemInfo.isWin2kOrNewer && Boolean.parseBoolean(System.getProperty("idea.use.native.fs.for.win", "true"))) {
       try {
         UrlClassLoader.loadPlatformLibrary("IdeaWin32");
         instance = new IdeaWin32();

@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitPlatformFacade;
+import git4idea.GitUtil;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
@@ -53,7 +54,13 @@ public class GitStash extends GitRepositoryAction {
     VirtualFile root = d.getGitRoot();
     affectedRoots.add(root);
     final GitLineHandler h = d.handler();
-    GitHandlerUtil.doSynchronously(h, GitBundle.getString("stashing.title"), h.printableCommandLine());
+    GitUtil.workingTreeChangeStarted(project);
+    try {
+      GitHandlerUtil.doSynchronously(h, GitBundle.getString("stashing.title"), h.printableCommandLine());
+    }
+    finally {
+      GitUtil.workingTreeChangeFinished(project);
+    }
     ServiceManager.getService(project, GitPlatformFacade.class).hardRefresh(root);
   }
 

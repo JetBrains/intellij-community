@@ -201,7 +201,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
   private int getAdjustedRightMargin() {
     int result = getRightMargin();
-    return result > 0 ? result : CodeStyleFacade.getInstance(ProjectUtil.guessCurrentProject(getPanel())).getRightMargin();
+    return result > 0 ? result : CodeStyleFacade.getInstance(ProjectUtil.guessCurrentProject(getPanel())).getRightMargin(getDefaultLanguage());
   }
 
   protected abstract int getRightMargin();
@@ -226,7 +226,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
           catch (ConfigurationException ignore) {
           }
           CodeStyleSettings clone = mySettings.clone();
-          clone.RIGHT_MARGIN = getAdjustedRightMargin();
+          clone.setRightMargin(getDefaultLanguage(), getAdjustedRightMargin());
           CodeStyleSettingsManager.getInstance(project).setTemporarySettings(clone);
           PsiFile formatted;
           try {
@@ -267,7 +267,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
       Document document = documentManager.getDocument(psiFile);
       if (document != null) {
         CodeStyleSettings clone = mySettings.clone();
-        clone.RIGHT_MARGIN = getAdjustedRightMargin();
+        clone.setRightMargin(getDefaultLanguage(), getAdjustedRightMargin());
         CodeStyleSettingsManager.getInstance(project).setTemporarySettings(clone);
         try {
           CodeStyleManager.getInstance(project).reformat(psiFile);

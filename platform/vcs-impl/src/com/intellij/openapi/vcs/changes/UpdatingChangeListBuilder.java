@@ -15,16 +15,15 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +39,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   private VcsDirtyScope myScope;
   private FoldersCutDownWorker myFoldersCutDownWorker;
   private final IgnoredFilesComponent myIgnoredFilesComponent;
-  private final FileIndexFacade myIndex;
+  private final ProjectLevelVcsManager myVcsManager;
   private final ChangeListManagerGate myGate;
   private Factory<JComponent> myAdditionalInfo;
 
@@ -53,7 +52,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     myDisposedGetter = disposedGetter;
     myIgnoredFilesComponent = ignoredFilesComponent;
     myGate = gate;
-    myIndex = PeriodicalTasksCloser.getInstance().safeGetService(changeListWorker.getProject(), FileIndexFacade.class);
+    myVcsManager = ProjectLevelVcsManager.getInstance(changeListWorker.getProject());
   }
 
   private void checkIfDisposed() {
@@ -66,14 +65,14 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   }
 
   public void processChange(final Change change, VcsKey vcsKey) {
-    processChangeInList( change, (ChangeList) null, vcsKey);
+    processChangeInList(change, (ChangeList)null, vcsKey);
   }
 
   public void processChangeInList(final Change change, @Nullable final ChangeList changeList, final VcsKey vcsKey) {
     checkIfDisposed();
 
     LOG.debug("[processChangeInList-1] entering, cl name: " + ((changeList == null) ? null: changeList.getName()) +
-      " change: " + ChangesUtil.getFilePath(change).getPath());
+              " change: " + ChangesUtil.getFilePath(change).getPath());
     final String fileName = ChangesUtil.getFilePath(change).getName();
     if (FileTypeManager.getInstance().isFileIgnored(fileName)) {
       LOG.debug("[processChangeInList-1] file type ignored");
@@ -86,11 +85,13 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
           if (changeList != null) {
             LOG.debug("[processChangeInList-1] to add change to cl");
             myChangeListWorker.addChangeToList(changeList.getName(), change, vcsKey);
-          } else {
+          }
+          else {
             LOG.debug("[processChangeInList-1] to add to corresponding list");
             myChangeListWorker.addChangeToCorrespondingList(change, vcsKey);
           }
-        } else {
+        }
+        else {
           LOG.debug("[processChangeInList-1] not under scope");
         }
       }
@@ -115,12 +116,12 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     myChangeListWorker.removeRegisteredChangeFor(path);
   }
 
-  private boolean isExcluded(final VirtualFile file) {
+  private boolean isIgnoredByVcs(final VirtualFile file) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
         checkIfDisposed();
-        return myIndex.isExcludedFile(file);
+        return myVcsManager.isIgnored(file);
       }
     });
   }
@@ -131,7 +132,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     }
     if (file == null) return;
     checkIfDisposed();
-    if (isExcluded(file)) return;
+    if (isIgnoredByVcs(file)) return;
     if (myScope.belongsTo(new FilePathImpl(file))) {
       if (myIgnoredFilesComponent.isIgnoredFile(file)) {
         myComposite.getIgnoredFileHolder().addFile(file);
@@ -163,7 +164,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   public void processModifiedWithoutCheckout(final VirtualFile file) {
     if (file == null) return;
     checkIfDisposed();
-    if (isExcluded(file)) return;
+    if (isIgnoredByVcs(file)) return;
     if (myScope.belongsTo(new FilePathImpl(file))) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("processModifiedWithoutCheckout " + file);
@@ -175,7 +176,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   public void processIgnoredFile(final VirtualFile file) {
     if (file == null) return;
     checkIfDisposed();
-    if (isExcluded(file)) return;
+    if (isIgnoredByVcs(file)) return;
     if (myScope.belongsTo(new FilePathImpl(file))) {
       IgnoredFilesHolder ignoredFilesHolder = myComposite.getIgnoredFileHolder();
       if (ignoredFilesHolder instanceof IgnoredFilesCompositeHolder) {
@@ -203,14 +204,14 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     if (file == null) return;
     checkIfDisposed();
     if (myScope.belongsTo(new FilePathImpl(file))) {
-      ((LogicallyLockedHolder) myComposite.get(FileHolder.HolderType.LOGICALLY_LOCKED)).add(file, logicalLock);
+      ((LogicallyLockedHolder)myComposite.get(FileHolder.HolderType.LOGICALLY_LOCKED)).add(file, logicalLock);
     }
   }
 
   public void processSwitchedFile(final VirtualFile file, final String branch, final boolean recursive) {
     if (file == null) return;
     checkIfDisposed();
-    if (isExcluded(file)) return;
+    if (isIgnoredByVcs(file)) return;
     if (myScope.belongsTo(new FilePathImpl(file))) {
       myChangeListWorker.addSwitched(file, branch, recursive);
     }
@@ -220,7 +221,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     if (file == null) return;
     checkIfDisposed();
     if (myScope.belongsTo(new FilePathImpl(file))) {
-      ((SwitchedFileHolder) myComposite.get(FileHolder.HolderType.ROOT_SWITCH)).addFile(file, branch, false);
+      ((SwitchedFileHolder)myComposite.get(FileHolder.HolderType.ROOT_SWITCH)).addFile(file, branch, false);
     }
   }
 

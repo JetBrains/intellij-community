@@ -107,8 +107,8 @@ public final class TrelloRepository extends BaseRepositoryImpl {
   }
 
   @Override
-  public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
-    List<TrelloCard> cards = fetchCards();
+  public Task[] getIssues(@Nullable String query, int offset, int limit, boolean withClosed) throws Exception {
+    List<TrelloCard> cards = fetchCards(offset + limit, withClosed);
     return ContainerUtil.map2Array(cards, Task.class, new Function<TrelloCard, Task>() {
       @Override
       public Task fun(TrelloCard card) {
@@ -120,16 +120,23 @@ public final class TrelloRepository extends BaseRepositoryImpl {
   @Nullable
   @Override
   public Task findTask(@NotNull String id) throws Exception {
-    String url = TRELLO_API_BASE_URL + "/cards/" + id + "?actions=commentCard&fields=" + encodeUrl(TrelloCard.REQUIRED_FIELDS) ;
+    TrelloCard card = fetchCardById(id);
+    return card != null ? new TrelloTask(card, this) : null;
+  }
+
+  @Nullable
+  public TrelloCard fetchCardById(@NotNull String id) throws Exception {
+    String url = TRELLO_API_BASE_URL + "/cards/" + id + "?actions=commentCard&fields=" + encodeUrl(TrelloCard.REQUIRED_FIELDS);
     try {
-      return new TrelloTask(makeRequestAndDeserializeJsonResponse(url, TrelloCard.class), this);
+      return makeRequestAndDeserializeJsonResponse(url, TrelloCard.class);
     }
     // Trello returns string "The requested resource was not found." or "invalid id"
-    // if card can't be found
+    // if card can't be found, which not only cannot be deserialized, but also not valid JSON at all.
     catch (JsonParseException e) {
       return null;
     }
   }
+
 
   @Nullable
   public TrelloUser getCurrentUser() {
@@ -241,7 +248,7 @@ public final class TrelloRepository extends BaseRepositoryImpl {
   }
 
   @NotNull
-  private List<TrelloCard> fetchCards() throws Exception {
+  public List<TrelloCard> fetchCards(int limit, boolean withClosed) throws Exception {
     boolean fromList = false;
     // choose most appropriate card provider
     String baseUrl;
@@ -258,8 +265,10 @@ public final class TrelloRepository extends BaseRepositoryImpl {
     else {
       throw new IllegalStateException("Not configured");
     }
-    String allCardsUrl = baseUrl + "?filter=all&fields=" + encodeUrl(TrelloCard.REQUIRED_FIELDS);
-    List<TrelloCard> cards = makeRequestAndDeserializeJsonResponse(allCardsUrl, TrelloUtil.LIST_OF_CARDS_TYPE);
+    String fetchCardsUrl = baseUrl + "?fields=" + encodeUrl(TrelloCard.REQUIRED_FIELDS) + "&limit" + limit;
+    // 'visible' filter for some reason is not supported for lists
+    fetchCardsUrl += withClosed || fromList ? "&filter=all" : "&filter=visible";
+    List<TrelloCard> cards = makeRequestAndDeserializeJsonResponse(fetchCardsUrl, TrelloUtil.LIST_OF_CARDS_TYPE);
     LOG.debug("Total " + cards.size() + " cards downloaded");
     if (!myIncludeAllCards) {
       cards = ContainerUtil.filter(cards, new Condition<TrelloCard>() {
@@ -270,7 +279,10 @@ public final class TrelloRepository extends BaseRepositoryImpl {
       });
       LOG.debug("Total " + cards.size() + " cards after filtering");
     }
-    if (!fromList) {
+    if (!cards.isEmpty()) {
+      if (fromList) {
+        baseUrl = TRELLO_API_BASE_URL + "/boards/" + cards.get(0).getIdBoard() + "/cards";
+      }
       // fix for IDEA-111470 and IDEA-111475
       // Select IDs of visible cards, e.d. cards that either archived explicitly, belong to archived list or closed board.
       // This information can't be extracted from single card description, because its 'closed' field

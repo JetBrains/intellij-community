@@ -30,6 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.PopupHandler;
+import com.intellij.util.ui.JBImageIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -183,12 +184,22 @@ public final class StripeButton extends AnchoredButton implements ActionListener
       if (myDragPane == null) return;
       final BufferedImage image = UIUtil.createImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
       paint(image.getGraphics());
-      myDragButtonImage = new JLabel(new ImageIcon(image)) {
+      myDragButtonImage = new JLabel(new JBImageIcon(image)) {
 
         public String toString() {
           return "Image for: " + StripeButton.this.toString();
         }
       };
+
+      myDragButtonImage.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseReleased(MouseEvent e) {
+          finishDragging();
+          myPressedPoint = null;
+          myDragButtonImage = null;
+          super.mouseReleased(e);
+        }
+      });
       myDragPane.add(myDragButtonImage, JLayeredPane.POPUP_LAYER);
       myDragButtonImage.setSize(myDragButtonImage.getPreferredSize());
       setVisible(false);

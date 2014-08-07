@@ -16,7 +16,6 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ProjectTopics;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
@@ -30,6 +29,7 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyKey;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.NullableFunction;
@@ -114,9 +114,7 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
 
     if (deniedFiles.isEmpty()) return Collections.emptyList();
 
-    final int savedEventCount = IdeEventQueue.getInstance().getEventCount();
     UnlockOption unlockOption = askToUnlock(deniedFiles);
-    IdeEventQueue.getInstance().setEventCount(savedEventCount);
 
     if (unlockOption == null) return deniedFiles;
 
@@ -144,7 +142,9 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
   }
 
   private boolean isProjectFile(@NotNull VirtualFile file) {
-    if (ProjectFileIndex.SERVICE.getInstance(myProject).isInContent(file)) return true;
+    ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(myProject);
+    if (fileIndex.isInContent(file)) return true;
+    if (!Registry.is("ide.hide.excluded.files") && fileIndex.isExcluded(file) && !fileIndex.isUnderIgnored(file)) return true;
     
     if (myProject instanceof ProjectEx) {
       IProjectStore store = ((ProjectEx)myProject).getStateStore();

@@ -57,37 +57,37 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
   protected abstract EditorColorsScheme getColorScheme();
 
-  protected abstract String getText(JTable table, Object value, int row, int column);
+  protected abstract String getText(FontMetrics fontMetrics, JTable table, Object value, int row, int column);
 
   protected void customizeEditor(EditorEx editor, Object value, boolean selected, int row, int col) {
   }
 
   @Override
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-    String text = getText(table, value, row, column);
     MyPanel panel = getEditorPanel(table);
     EditorEx editor = panel.editor;
     int tableFontSize = table.getFont().getSize();
     if (editor.getColorsScheme().getEditorFontSize() != tableFontSize) {
       editor.getColorsScheme().setEditorFontSize(tableFontSize);
     }
-    setText(editor, text);
+    setText(editor, getText(((EditorImpl)editor).getFontMetrics(Font.PLAIN), table, value, row, column));
 
-    if (isSelected) {
-      ((EditorImpl)editor).setPaintSelection(true);
-      editor.getColorsScheme().setColor(EditorColors.SELECTION_BACKGROUND_COLOR, table.getSelectionBackground());
-      editor.getColorsScheme().setColor(EditorColors.SELECTION_FOREGROUND_COLOR, table.getSelectionForeground());
-      editor.getSelectionModel().setSelection(0, editor.getDocument().getTextLength());
-      editor.setBackgroundColor(table.getSelectionBackground());
-    }
-    else {
-      ((EditorImpl)editor).setPaintSelection(false);
-      editor.getSelectionModel().setSelection(0, 0);
-      boolean selectedRow = table.getSelectedRowCount() > 0 && table.getSelectedRows()[table.getSelectedRowCount() - 1] == row;
-      editor.setBackgroundColor(!selectedRow ? table.getBackground() : getColorScheme().getColor(EditorColors.CARET_ROW_COLOR));
-    }
+    ((EditorImpl)editor).setPaintSelection(isSelected);
+    editor.getSelectionModel().setSelection(0, isSelected ? editor.getDocument().getTextLength() : 0);
+    editor.getColorsScheme().setColor(EditorColors.SELECTION_BACKGROUND_COLOR, table.getSelectionBackground());
+    editor.getColorsScheme().setColor(EditorColors.SELECTION_FOREGROUND_COLOR, table.getSelectionForeground());
+    editor.setBackgroundColor(getCellBackgroundColor(getColorScheme(), table, isSelected, row));
+
+    panel.setBorder(null); // prevents double border painting when ExtendedItemRendererComponentWrapper is used
+
     customizeEditor(editor, value, isSelected, row, column);
     return panel;
+  }
+
+  public static Color getCellBackgroundColor(EditorColorsScheme colorsScheme, JTable table, boolean isSelected, int row) {
+    return isSelected ? table.getSelectionBackground() :
+           table.getSelectionModel().getLeadSelectionIndex() == row ? colorsScheme.getColor(EditorColors.CARET_ROW_COLOR) :
+           table.getBackground();
   }
 
   @NotNull
@@ -139,6 +139,16 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     public MyPanel(EditorEx editor) {
       add(editor.getContentComponent());
       this.editor = editor;
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+      if (getBorder() == null) return;
+      Color oldColor = g.getColor();
+      Rectangle clip = g.getClipBounds();
+      g.setColor(editor.getBackgroundColor());
+      g.fillRect(clip.x, clip.y, clip.width, clip.height);
+      g.setColor(oldColor);
     }
 
     @Override

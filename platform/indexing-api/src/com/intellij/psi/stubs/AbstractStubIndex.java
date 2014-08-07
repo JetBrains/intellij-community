@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
@@ -34,7 +35,7 @@ public abstract class AbstractStubIndex<Key, Psi extends PsiElement> implements 
     return StubIndex.getInstance().processAllKeys(getKey(), project, processor);
   }
 
-  public Collection<Psi> get(Key key, final Project project, final GlobalSearchScope scope) {
+  public Collection<Psi> get(@NotNull Key key, @NotNull final Project project, @NotNull final GlobalSearchScope scope) {
     return StubIndex.getInstance().get(getKey(), key, project, scope);
   }
 

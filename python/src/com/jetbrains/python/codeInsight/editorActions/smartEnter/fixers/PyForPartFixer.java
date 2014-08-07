@@ -18,12 +18,13 @@ package com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
 import com.jetbrains.python.psi.PyForPart;
 import com.jetbrains.python.psi.PyUtil;
+import org.jetbrains.annotations.NotNull;
+
+import static com.jetbrains.python.psi.PyUtil.sure;
 
 /**
  * Created by IntelliJ IDEA.
@@ -31,41 +32,42 @@ import com.jetbrains.python.psi.PyUtil;
  * Date:   16.04.2010
  * Time:   16:03:43
  */
-public class PyForPartFixer implements PyFixer {
-  public void apply(Editor editor, PySmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
-    if (psiElement instanceof PyForPart) {
-      final PyForPart forPart = (PyForPart)psiElement;
-      final PsiElement colon = PyUtil.getChildByFilter(psiElement, TokenSet.create(PyTokenTypes.COLON), 0);
-      final Document document = editor.getDocument();
-      final PsiElement forToken = PyUtil.getChildByFilter(forPart,
-                                                          TokenSet.create(PyTokenTypes.FOR_KEYWORD), 0);
-      if (colon == null) {
-        String textToInsert = ":";
-        PsiElement sourceOrTarget = forPart.getSource();
-        PsiElement positionToInsert = sourceOrTarget;
-        if (sourceOrTarget == null) {
-          sourceOrTarget = forPart.getTarget();
-          final PsiElement inToken = PyUtil.getChildByFilter(forPart, TokenSet.create(PyTokenTypes.IN_KEYWORD), 0);
-          if (inToken == null) {
-            if (sourceOrTarget == null) {
-              positionToInsert = forToken;
-              textToInsert = "  in :";
-              processor.registerUnresolvedError(positionToInsert.getTextRange().getEndOffset() + 1);
-            }
-            else {
-              positionToInsert = sourceOrTarget;
-              textToInsert = " in :";
-              processor.registerUnresolvedError(positionToInsert.getTextRange().getEndOffset() + 4);
-            }
-          }
-          else {
-            positionToInsert = inToken;
-            textToInsert = " :";
+public class PyForPartFixer extends PyFixer<PyForPart> {
+  public PyForPartFixer() {
+    super(PyForPart.class);
+  }
+
+  @Override
+  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyForPart forPart) {
+    final PsiElement colon = PyUtil.getFirstChildOfType(forPart, PyTokenTypes.COLON);
+    final Document document = editor.getDocument();
+    final PsiElement forToken = PyUtil.getFirstChildOfType(forPart, PyTokenTypes.FOR_KEYWORD);
+    if (colon == null) {
+      String textToInsert = ":";
+      PsiElement sourceOrTarget = forPart.getSource();
+      PsiElement positionToInsert = sourceOrTarget;
+      if (sourceOrTarget == null) {
+        sourceOrTarget = forPart.getTarget();
+        final PsiElement inToken = PyUtil.getFirstChildOfType(forPart, PyTokenTypes.IN_KEYWORD);
+        if (inToken == null) {
+          if (sourceOrTarget == null) {
+            positionToInsert = sure(forToken);
+            textToInsert = "  in :";
             processor.registerUnresolvedError(positionToInsert.getTextRange().getEndOffset() + 1);
           }
+          else {
+            positionToInsert = sourceOrTarget;
+            textToInsert = " in :";
+            processor.registerUnresolvedError(positionToInsert.getTextRange().getEndOffset() + 4);
+          }
         }
-        document.insertString(positionToInsert.getTextRange().getEndOffset(), textToInsert);
+        else {
+          positionToInsert = inToken;
+          textToInsert = " :";
+          processor.registerUnresolvedError(positionToInsert.getTextRange().getEndOffset() + 1);
+        }
       }
+      document.insertString(positionToInsert.getTextRange().getEndOffset(), textToInsert);
     }
   }
 }

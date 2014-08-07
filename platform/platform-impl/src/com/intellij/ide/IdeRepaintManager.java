@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,12 @@ package com.intellij.ide;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.reference.SoftReference;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.ReflectionUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.VolatileImage;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Field;
 import java.util.Map;
 
 /**
@@ -40,7 +39,6 @@ public class IdeRepaintManager extends RepaintManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.HackyRepaintManager");
 
   private Map<GraphicsConfiguration, VolatileImage> myImagesMap;
-  @NonNls private static final String FAULTY_FIELD_NAME = "volatileMap";
 
   WeakReference<JComponent> myLastComponent;
 
@@ -53,14 +51,7 @@ public class IdeRepaintManager extends RepaintManager {
   // sync here is to avoid data race when two(!) AWT threads on startup try to compete for the single myImagesMap
   private synchronized void clearLeakyImages(boolean force) {
     if (myImagesMap == null) {
-      try {
-        Field volMapField = RepaintManager.class.getDeclaredField(FAULTY_FIELD_NAME);
-        volMapField.setAccessible(true);
-        myImagesMap = (Map<GraphicsConfiguration, VolatileImage>)volMapField.get(this);
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
+      myImagesMap = ReflectionUtil.getField(RepaintManager.class, this, Map.class, "volatileMap");
     }
 
     if (force ||
@@ -90,12 +81,12 @@ public class IdeRepaintManager extends RepaintManager {
 
   // We must keep a strong reference to the DisplayChangedListener,
   //  since SunDisplayChanger keeps only a WeakReference to it.
-  private Object displayChangeHack;
+  private DisplayChangeHandler displayChangeHack;
   
   {
     try {
       GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
-      GraphicsDevice[] devices = env.getScreenDevices();    // init
+      env.getScreenDevices();    // init
       Class<?> aClass = Class.forName("sun.awt.DisplayChangedListener"); // might be absent
       displayChangeHack = new DisplayChangeHandler();
       
@@ -104,7 +95,8 @@ public class IdeRepaintManager extends RepaintManager {
           .getMethod("addDisplayChangedListener", new Class[]{aClass})
           .invoke(env, displayChangeHack);
       }
-    } catch (Throwable t) {
+    }
+    catch (Throwable t) {
       if (!(t instanceof HeadlessException)) LOG.error("Cannot setup display change listener", t);
     }
   }

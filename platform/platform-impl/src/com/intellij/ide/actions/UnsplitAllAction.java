@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,8 @@ public final class UnsplitAllAction extends SplitterActionBase {
   }
 
   @Override
-  protected boolean isActionEnabled(Project project) {
+  protected boolean isActionEnabled(Project project, boolean inContextMenu) {
     final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
-    return fileEditorManager.getWindowSplitCount() > 2;
+    return inContextMenu ? fileEditorManager.getWindowSplitCount() > 2 : fileEditorManager.isInSplitter();
   }
 }

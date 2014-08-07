@@ -48,8 +48,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public abstract class DefaultMessageHandler implements BuilderMessageHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.server.DefaultMessageHandler");
+  public static final long CONSTANT_SEARCH_TIME_LIMIT = 60 * 1000L; // one minute
   private final Project myProject;
   private final SequentialTaskExecutor myTaskExecutor = new SequentialTaskExecutor(PooledThreadExecutor.INSTANCE);
+  private volatile long myConstantSearchTime = 0L;
 
   protected DefaultMessageHandler(Project project) {
     myProject = project;
@@ -119,14 +121,25 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
     boolean canceled = false;
     final Ref<Boolean> isSuccess = Ref.create(Boolean.TRUE);
     final Set<String> affectedPaths = Collections.synchronizedSet(new HashSet<String>()); // PsiSearchHelper runs multiple threads
+    final long searchStart = System.currentTimeMillis();
     try {
-      if (isDumbMode()) {
+      if (myConstantSearchTime > CONSTANT_SEARCH_TIME_LIMIT) {
+        // skipping constant search and letting the build rebuild dependent modules
+        isSuccess.set(Boolean.FALSE);
+        LOG.debug("Total constant search time exceeded time limit for this build session");
+      }
+      else if(isDumbMode()) {
         // do not wait until dumb mode finishes
         isSuccess.set(Boolean.FALSE);
         LOG.debug("Constant search task: cannot search in dumb mode");
       }
       else {
         final String qualifiedName = ownerClassName.replace('$', '.');
+
+        handleCompileMessage(sessionId, CmdlineProtoUtil.createCompileProgressMessageResponse(
+          "Searching for usages of changed/removed constants for class " + qualifiedName
+        ).getCompileMessage());
+
         final PsiClass[] classes = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
           public PsiClass[] compute() {
             return JavaPsiFacade.getInstance(myProject).findClasses(qualifiedName, GlobalSearchScope.allScope(myProject));
@@ -202,6 +215,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
       throw e;
     }
     finally {
+      myConstantSearchTime += (System.currentTimeMillis() - searchStart);
       if (!canceled) {
         notifyConstantSearchFinished(channel, sessionId, ownerClassName, fieldName, isSuccess, affectedPaths);
       }

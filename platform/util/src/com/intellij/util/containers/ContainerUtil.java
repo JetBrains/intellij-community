@@ -828,6 +828,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   public static <T> List<T> findAll(@NotNull Collection<? extends T> collection, @NotNull Condition<? super T> condition) {
+    if (collection.isEmpty()) return emptyList();
     final List<T> result = new SmartList<T>();
     for (final T t : collection) {
       if (condition.value(t)) {
@@ -1415,6 +1416,13 @@ public class ContainerUtil extends ContainerUtilRt {
     else {
       Arrays.sort(a);
     }
+  }
+
+  @NotNull
+  public static <T> List<T> sorted(@NotNull Collection<T> list, @NotNull Comparator<T> comparator) {
+    List<T> sorted = newArrayList(list);
+    sort(sorted, comparator);
+    return sorted;
   }
 
   public static <T> void sort(@NotNull T[] a, @NotNull Comparator<T> comparator) {
@@ -2063,6 +2071,17 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract("null -> true")
   public static <T> boolean isEmpty(Collection<T> collection) {
     return collection == null || collection.isEmpty();
+  }
+
+  @NotNull
+  public static <T, C extends Collection<T>> C notNullize(@Nullable C collection) {
+    //noinspection unchecked
+    return collection == null ? (C)ContainerUtilRt.emptyList() : collection;
+  }
+
+  @Nullable
+  public static <T, C extends Collection<T>> C nullize(@Nullable C collection) {
+    return isEmpty(collection) ? null : collection;
   }
 
   private interface ConcurrentMapFactory {

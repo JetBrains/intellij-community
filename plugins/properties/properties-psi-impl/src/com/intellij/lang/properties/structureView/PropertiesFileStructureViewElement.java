@@ -22,7 +22,6 @@ import com.intellij.lang.properties.editor.ResourceBundleEditorViewElement;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,7 +51,7 @@ public class PropertiesFileStructureViewElement extends PsiTreeElementBase<Prope
   }
 
   @Override
-  public PsiElement[] getPsiElements(@NotNull Project project) {
+  public PsiElement[] getPsiElements() {
     return new PsiElement[] {getValue()};
   }
 

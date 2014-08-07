@@ -20,6 +20,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.ui.DoubleClickListener;
@@ -34,10 +35,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
-import com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -253,6 +251,12 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     if (XDEBUGGER_TREE_KEY.is(dataId)) {
       return this;
     }
+    if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) {
+      XValueNodeImpl[] selectedNodes = getSelectedNodes(XValueNodeImpl.class, null);
+      if (selectedNodes.length == 1 && selectedNodes[0].getFullValueEvaluator() == null) {
+        return selectedNodes[0].getRawValue();
+      }
+    }
     return null;
   }
 
@@ -330,5 +334,24 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
 
   public TransferToEDTQueue<Runnable> getLaterInvocator() {
     return myLaterInvocator;
+  }
+
+  public void expandNodesOnLoad(final Condition<TreeNode> nodeFilter) {
+    addTreeListener(new XDebuggerTreeListener() {
+      @Override
+      public void nodeLoaded(@NotNull RestorableStateNode node, String name) {
+        if (nodeFilter.value(node) && !node.isLeaf()) {
+          // cause children computing
+          node.getChildCount();
+        }
+      }
+
+      @Override
+      public void childrenLoaded(@NotNull XDebuggerTreeNode node, @NotNull List<XValueContainerNode<?>> children, boolean last) {
+        if (nodeFilter.value(node)) {
+          expandPath(node.getPath());
+        }
+      }
+    });
   }
 }

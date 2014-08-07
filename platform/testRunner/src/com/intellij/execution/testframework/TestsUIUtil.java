@@ -21,7 +21,6 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -234,7 +233,7 @@ public class TestsUIUtil {
         else if (notStartedCount > 0) {
           myTitle = !notStarted.isEmpty() ? ExecutionBundle.message("junit.runing.info.failed.to.start.error.message") : "Tests Ignored";
           myText = passedCount + " passed, " + notStartedCount + (!notStarted.isEmpty() ? " not started" : " ignored");
-          myType = MessageType.ERROR;
+          myType = notStarted.isEmpty() ? MessageType.WARNING : MessageType.ERROR;
         }
         else {
           myTitle = ExecutionBundle.message("junit.runing.info.tests.passed.label");

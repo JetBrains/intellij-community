@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ public class ObjectStubTree<T extends Stub> {
     return myRoot;
   }
 
+  @NotNull
   public List<T> getPlainList() {
     return myPlainList;
   }
@@ -65,7 +66,7 @@ public class ObjectStubTree<T extends Stub> {
     return sink.getResult();
   }
 
-  protected static void enumerateStubs(final Stub root, final List<Stub> result) {
+  protected static void enumerateStubs(@NotNull Stub root, @NotNull List<Stub> result) {
     ((ObjectStubBase)root).id = result.size();
     result.add(root);
     for (Stub child : root.getChildrenStubs()) {

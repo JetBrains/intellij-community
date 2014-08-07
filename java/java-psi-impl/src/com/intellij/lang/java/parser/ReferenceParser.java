@@ -277,8 +277,8 @@ public class ReferenceParser {
         error(builder, JavaErrorMessages.message("expected.identifier"));
       }
       else {
-        final IElementType tokenType = builder.getTokenType();
-        if (WILDCARD_KEYWORD_SET.contains(tokenType) && tokenType != null) {
+        IElementType tokenType = builder.getTokenType();
+        if (WILDCARD_KEYWORD_SET.contains(tokenType)) {
           parseReferenceList(builder, tokenType, null, JavaTokenType.AND);
         }
       }

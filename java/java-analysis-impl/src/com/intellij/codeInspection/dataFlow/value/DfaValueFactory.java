@@ -27,7 +27,6 @@ package com.intellij.codeInspection.dataFlow.value;
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -52,6 +51,7 @@ public class DfaValueFactory {
     myBoxedFactory = new DfaBoxedValue.Factory(this);
     myTypeFactory = new DfaTypeValue.Factory(this);
     myRelationFactory = new DfaRelationValue.Factory(this);
+    myExpressionFactory = new DfaExpressionFactory(this);
   }
 
   public boolean isHonorFieldInitializers() {
@@ -83,28 +83,7 @@ public class DfaValueFactory {
 
   @Nullable
   public DfaValue createValue(PsiExpression psiExpression) {
-    if (psiExpression instanceof PsiReferenceExpression) {
-      return createReferenceValue((PsiReferenceExpression)psiExpression);
-    }
-
-    if (psiExpression instanceof PsiLiteralExpression) {
-      return createLiteralValue((PsiLiteralExpression)psiExpression);
-    }
-
-    if (psiExpression instanceof PsiNewExpression) {
-      return createTypeValue(psiExpression.getType(), Nullness.NOT_NULL);
-    }
-
-    final Object value = JavaConstantExpressionEvaluator.computeConstantExpression(psiExpression, false);
-    PsiType type = psiExpression.getType();
-    if (value != null && type != null) {
-      if (value instanceof String) {
-        return createTypeValue(type, Nullness.NOT_NULL); // Non-null string literal.
-      }
-      return getConstFactory().createFromValue(value, type, null);
-    }
-
-    return null;
+    return myExpressionFactory.getExpressionDfaValue(psiExpression);
   }
 
   @Nullable
@@ -113,26 +92,6 @@ public class DfaValueFactory {
       return createTypeValue(literal.getType(), Nullness.NOT_NULL); // Non-null string literal.
     }
     return getConstFactory().create(literal);
-  }
-
-  @Nullable
-  public DfaValue createReferenceValue(PsiReferenceExpression referenceExpression) {
-    PsiElement psiSource = referenceExpression.resolve();
-    if (!(psiSource instanceof PsiVariable)) {
-      return null;
-    }
-
-    final PsiVariable variable = (PsiVariable)psiSource;
-    if (variable.hasModifierProperty(PsiModifier.FINAL) && !variable.hasModifierProperty(PsiModifier.TRANSIENT)) {
-      DfaValue constValue = getConstFactory().create(variable);
-      if (constValue != null) return constValue;
-    }
-
-    if (!variable.hasModifierProperty(PsiModifier.VOLATILE) && isEffectivelyUnqualified(referenceExpression)) {
-      return getVarFactory().createVariableValue(variable, referenceExpression.getType(), false, null);
-    }
-
-    return null;
   }
 
   @Nullable
@@ -168,6 +127,7 @@ public class DfaValueFactory {
   private final DfaBoxedValue.Factory myBoxedFactory;
   private final DfaTypeValue.Factory myTypeFactory;
   private final DfaRelationValue.Factory myRelationFactory;
+  private final DfaExpressionFactory myExpressionFactory;
 
   @NotNull
   public DfaVariableValue.Factory getVarFactory() {

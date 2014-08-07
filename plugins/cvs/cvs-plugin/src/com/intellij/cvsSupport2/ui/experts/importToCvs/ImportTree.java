@@ -30,9 +30,8 @@ import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -150,12 +149,11 @@ public class ImportTree extends NodeRenderer {
     if (myProject == null) {
       return;
     }
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    if (!fileIndex.isIgnored(selectedFile)) {
+    if (!isIgnoredByVcs(selectedFile)) {
       return;
     }
     final VirtualFile parent = selectedFile.getParent();
-    if (parent != null && fileIndex.isIgnored(parent)) {
+    if (parent != null && isIgnoredByVcs(parent)) {
       return;
     }
     for (final VirtualFile excludedFile : myExcludedFiles) {
@@ -182,12 +180,11 @@ public class ImportTree extends NodeRenderer {
       if (myProject == null) {
         continue;
       }
-      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-      if (!fileIndex.isIgnored(selectedFile)) {
+      if (!isIgnoredByVcs(selectedFile)) {
         continue;
       }
       final VirtualFile parent = selectedFile.getParent();
-      if (parent == null || fileIndex.isIgnored(parent) || myExcludedFiles.contains(parent)) {
+      if (parent == null || isIgnoredByVcs(parent) || myExcludedFiles.contains(parent)) {
         continue;
       }
       if (!myIncludedFiles.contains(selectedFile)) {
@@ -211,7 +208,7 @@ public class ImportTree extends NodeRenderer {
         return true;
       }
     }
-    if (myProject == null || !ProjectRootManager.getInstance(myProject).getFileIndex().isIgnored(file)) {
+    if (myProject == null || !isIgnoredByVcs(file)) {
       return false;
     }
     for (VirtualFile includedFile : myIncludedFiles) {
@@ -242,7 +239,7 @@ public class ImportTree extends NodeRenderer {
         if (FileTypeManager.getInstance().isFileIgnored(abstractFileObject.getName())) return true;
         if (myProject != null && !includedFiles.contains(file)) {
           final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
-          if (vFile != null && ProjectRootManager.getInstance(myProject).getFileIndex().isIgnored(vFile)) {
+          if (vFile != null && isIgnoredByVcs(vFile)) {
             return true;
           }
         }
@@ -256,5 +253,9 @@ public class ImportTree extends NodeRenderer {
         return myParentToIgnoresMap.get(parentFile).shouldBeIgnored(file.getName());
       }
     };
+  }
+
+  private boolean isIgnoredByVcs(VirtualFile vFile) {
+    return myProject != null && ProjectLevelVcsManager.getInstance(myProject).isIgnored(vFile);
   }
 }

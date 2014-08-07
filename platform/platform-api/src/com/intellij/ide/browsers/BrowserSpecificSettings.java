@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public abstract class BrowserSpecificSettings implements Cloneable {
   @NotNull
@@ -28,6 +29,11 @@ public abstract class BrowserSpecificSettings implements Cloneable {
   @NotNull
   public List<String> getAdditionalParameters() {
     return Collections.emptyList();
+  }
+
+  @NotNull
+  public Map<String, String> getEnvironmentVariables() {
+    return Collections.emptyMap();
   }
 
   @Override

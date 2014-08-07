@@ -29,11 +29,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.properties.PropertyClient;
-import org.tmatesoft.svn.core.SVNDepth;
+import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.ByteArrayOutputStream;
@@ -64,7 +65,7 @@ public class SvnMergeProvider implements MergeProvider {
         File workingFile = null;
         boolean mergeCase = false;
         SvnVcs vcs = SvnVcs.getInstance(myProject);
-        SVNInfo info = vcs.getInfo(file);
+        Info info = vcs.getInfo(file);
 
         if (info != null) {
           oldFile = info.getConflictOldFile();
@@ -142,7 +143,7 @@ public class SvnMergeProvider implements MergeProvider {
     File path = new File(file.getPath());
     try {
       // TODO: Probably false should be passed to "resolveTree", but previous logic used true implicitly
-      vcs.getFactory(path).createConflictClient().resolve(path, SVNDepth.EMPTY, false, true, true);
+      vcs.getFactory(path).createConflictClient().resolve(path, Depth.EMPTY, false, true, true);
     }
     catch (VcsException e) {
       LOG.warn(e);
@@ -161,8 +162,8 @@ public class SvnMergeProvider implements MergeProvider {
       File ioFile = new File(file.getPath());
       PropertyClient client = vcs.getFactory(ioFile).createPropertyClient();
 
-      SVNPropertyData svnPropertyData = client.getProperty(SvnTarget.fromFile(ioFile), SVNProperty.MIME_TYPE, false, SVNRevision.WORKING);
-      if (svnPropertyData != null && SVNProperty.isBinaryMimeType(SVNPropertyValue.getPropertyAsString(svnPropertyData.getValue()))) {
+      PropertyValue value = client.getProperty(SvnTarget.fromFile(ioFile), SVNProperty.MIME_TYPE, false, SVNRevision.WORKING);
+      if (value != null && SVNProperty.isBinaryMimeType(value.toString())) {
         return true;
       }
     }

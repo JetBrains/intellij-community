@@ -19,6 +19,7 @@ public abstract class VmBase implements Vm {
     return evaluateContext;
   }
 
+  @NotNull
   protected abstract EvaluateContext computeEvaluateContext();
 
   @NotNull

@@ -80,8 +80,11 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     "manifest",
     "platform-main",
     "remote-servers-java-impl",
+    "structuralsearch",
+    "structuralsearch-java",
     "testFramework",
     "tests_bootstrap",
+    "typeMigration",
     "ui-designer-core"
   ].flatten()
   implementationModules.removeAll(jpsCommonModules) //todo[nik] remove jps modules from platformImplementationModules instead and update layouts of minor IDEs accordingly
@@ -256,7 +259,7 @@ public def layoutCommunityPlugins(String home) {
   }
 
   dir("plugins") {
-    def simplePlugins = ["commander", "copyright", "java-i18n", "hg4idea", "github", "typeMigration"] //, "tasks-time-tracking"]
+    def simplePlugins = ["commander", "copyright", "java-i18n", "hg4idea", "github"] //, "tasks-time-tracking"]
 
     simplePlugins.each {
       layoutPlugin it
@@ -333,6 +336,10 @@ public def layoutCommunityPlugins(String home) {
     }
 
     layoutPlugin("gradle") {
+      jar("gradle-jps-plugin.jar") {
+        module("gradle-jps-plugin")
+      }
+
       jar("gradle-tooling-extension-api.jar") {
         module("gradle-tooling-extension-api")
       }
@@ -341,6 +348,13 @@ public def layoutCommunityPlugins(String home) {
         module("gradle-tooling-extension-impl")
       }
       fileset(dir: "$home/plugins/gradle/lib") { include(name: "*.jar") }
+      // add kryo lib
+      fileset(dir: "$home/lib/") {
+        include(name: "kryo-*.jar")
+        include(name: "reflectasm-*.jar")
+        include(name: "objenesis-*.jar")
+        include(name: "minlog-*.jar")
+      }
     }
 
     layoutPlugin("git4idea") {
@@ -531,15 +545,6 @@ public def layoutCommunityPlugins(String home) {
         }
 
         fileset(dir: "${home}/plugins/coverage/lib", excludes: "**/jacoco_src.zip")
-      }
-    }
-
-    pluginDir("structuralsearch") {
-      dir("lib") {
-        jar("structuralsearch.jar") {
-          module("structuralsearch")
-          module("structuralsearch-java")
-        }
       }
     }
 
@@ -759,6 +764,7 @@ def layoutJps(String home, String targetDir, String buildNumber, Closure additio
 
 
       jar("maven-jps-plugin.jar") { module("maven-jps-plugin") }
+      jar("gradle-jps-plugin.jar") { module("gradle-jps-plugin") }
       fileset(dir: "$home/plugins/maven/maven3-server-impl/lib/maven3/lib") {include(name: "plexus-utils-*.jar")}
 
       jar("eclipse-jps-plugin.jar") {
@@ -811,8 +817,9 @@ def layout_core(String home, String target) {
       module("annotations")
     }
 
-    jar("intellij-core-analysis-api.jar") {
+    jar("intellij-core-analysis.jar") {
       analysisApiModules.each { module it; }
+      analysisImplModules.each { module it; }
     }
 
     fileset(dir: "$home/lib") {

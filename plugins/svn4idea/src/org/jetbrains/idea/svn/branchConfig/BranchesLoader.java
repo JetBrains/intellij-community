@@ -20,6 +20,9 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.browse.DirectoryEntry;
+import org.jetbrains.idea.svn.browse.DirectoryEntryConsumer;
 import org.jetbrains.idea.svn.integrate.SvnBranchItem;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
@@ -42,13 +45,14 @@ public class BranchesLoader {
     SVNURL branchesUrl = SVNURL.parseURIEncoded(url);
     List<SvnBranchItem> result = new LinkedList<SvnBranchItem>();
     SvnTarget target = SvnTarget.fromURL(branchesUrl);
-    ISVNDirEntryHandler handler = createHandler(branchesUrl, result);
 
     if (!passive) {
       // TODO: Implement ability to specify interactive/non-interactive auth mode for clients
-      vcs.getFactory(target).createBrowseClient().list(target, SVNRevision.HEAD, SVNDepth.IMMEDIATES, handler);
+      DirectoryEntryConsumer handler = createConsumer(branchesUrl, result);
+      vcs.getFactory(target).createBrowseClient().list(target, SVNRevision.HEAD, Depth.IMMEDIATES, handler);
     }
     else {
+      ISVNDirEntryHandler handler = createHandler(branchesUrl, result);
       SVNLogClient client = vcs.getSvnKitManager().createLogClient(configuration.getPassiveAuthenticationManager(project));
       client
         .doList(target.getURL(), target.getPegRevision(), SVNRevision.HEAD, false, SVNDepth.IMMEDIATES, SVNDirEntry.DIRENT_ALL, handler);
@@ -65,6 +69,20 @@ public class BranchesLoader {
         // TODO: Remove equality check with branchesUrl when SVNLogClient will not be used directly, but rather through BrowseClient.
         if (!branchesUrl.equals(dirEntry.getURL()) && dirEntry.getDate() != null) {
           result.add(new SvnBranchItem(dirEntry.getURL().toDecodedString(), dirEntry.getDate(), dirEntry.getRevision()));
+        }
+      }
+    };
+  }
+
+  @NotNull
+  private static DirectoryEntryConsumer createConsumer(@NotNull final SVNURL branchesUrl, @NotNull final List<SvnBranchItem> result) {
+    return new DirectoryEntryConsumer() {
+
+      @Override
+      public void consume(final DirectoryEntry entry) throws SVNException {
+        // TODO: Remove equality check with branchesUrl when SVNLogClient will not be used directly, but rather through BrowseClient.
+        if (!branchesUrl.equals(entry.getUrl()) && entry.getDate() != null) {
+          result.add(new SvnBranchItem(entry.getUrl().toDecodedString(), entry.getDate(), entry.getRevision()));
         }
       }
     };

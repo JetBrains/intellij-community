@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.diff.impl.highlighting.DiffPanelState;
 import com.intellij.openapi.diff.impl.splitter.DiffDividerPaint;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
+import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.ui.Splitter;
 
 import javax.swing.*;
@@ -43,8 +44,8 @@ class DiffSplitter extends Splitter implements DiffSplitterI {
     setHonorComponentsMinimumSize(false);
   }
 
-  protected Splitter.Divider createDivider() {
-    return new Divider(){
+  protected Divider createDivider() {
+    return new DividerImpl(){
       public void paint(Graphics g) {
         super.paint(g);
         myPaint.paint(g, this);

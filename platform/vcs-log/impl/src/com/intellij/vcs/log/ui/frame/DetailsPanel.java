@@ -11,6 +11,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
@@ -146,7 +147,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   @NotNull
   private List<VcsRef> sortRefs(@NotNull Hash hash, @NotNull VirtualFile root) {
     Collection<VcsRef> refs = myDataPack.getRefsModel().refsToCommit(hash);
-    return myLogDataHolder.getLogProvider(root).getReferenceManager().sort(refs);
+    return ContainerUtil.sorted(refs, myLogDataHolder.getLogProvider(root).getReferenceManager().getComparator());
   }
 
   private static class DataPanel extends JEditorPane {

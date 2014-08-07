@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Nadya Zabrodina
  */
-public abstract class RepositoryImpl implements Repository, Disposable {
+public abstract class RepositoryImpl implements Repository {
 
   @NotNull private final Project myProject;
   @NotNull private final VirtualFile myRootDir;
@@ -81,7 +81,6 @@ public abstract class RepositoryImpl implements Repository, Disposable {
   @Override
   public void dispose() {
   }
-
 
   @Override
   public boolean equals(Object o) {

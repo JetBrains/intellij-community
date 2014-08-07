@@ -147,5 +147,13 @@ public class VariablesPanel extends DebuggerTreePanel implements DataProvider {
         buildTreeAndRestoreState(stackFrame);
       }
     }
+
+    @Override
+    protected void clear() {
+    }
+
+    @Override
+    public void processSessionEvent(@NotNull SessionEvent event) {
+    }
   }
 }

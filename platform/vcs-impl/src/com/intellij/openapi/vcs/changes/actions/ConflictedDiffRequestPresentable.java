@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.diff.MergeRequest;
 import com.intellij.openapi.diff.SimpleDiffRequest;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.FileUtil;
@@ -60,6 +61,7 @@ public class ConflictedDiffRequestPresentable implements DiffRequestPresentable 
   public MyResult step(DiffChainContext context) {
     if (myChange.getAfterRevision() == null) return createErrorResult();
     final Getter<MergeTexts> mergeProvider = myChange.getMergeProvider();
+    FileType type = myChange.getVirtualFile() != null ? myChange.getVirtualFile().getFileType() : null;
     if (mergeProvider != null) {
       // guaranteed text
       final MergeTexts texts = mergeProvider.get();
@@ -67,7 +69,7 @@ public class ConflictedDiffRequestPresentable implements DiffRequestPresentable 
         return createErrorResult();
       }
       final MergeRequest request = DiffRequestFactory.getInstance()
-        .create3WayDiffRequest(texts.getLeft(), texts.getRight(), texts.getBase(), myProject, null, null);
+        .create3WayDiffRequest(texts.getLeft(), texts.getRight(), texts.getBase(), type, myProject, null, null);
       request.setWindowTitle(FileUtil.toSystemDependentName(myFile.getPresentableUrl()));
       // todo titles?
       request.setVersionTitles(new String[] {myChange.getAfterRevision().getRevisionNumber().asString(),
@@ -95,7 +97,8 @@ public class ConflictedDiffRequestPresentable implements DiffRequestPresentable 
         final MergeRequest request = DiffRequestFactory.getInstance()
           .create3WayDiffRequest(CharsetToolkit.bytesToString(mergeData.CURRENT, charset),
                                  CharsetToolkit.bytesToString(mergeData.LAST, charset),
-                                 CharsetToolkit.bytesToString(mergeData.ORIGINAL, charset), myProject, null, null);
+                                 CharsetToolkit.bytesToString(mergeData.ORIGINAL, charset),
+                                 type, myProject, null, null);
         request.setWindowTitle(FileUtil.toSystemDependentName(myFile.getPresentableUrl()));
         // todo titles?
         VcsRevisionNumber lastRevisionNumber = mergeData.LAST_REVISION_NUMBER;

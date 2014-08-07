@@ -1,6 +1,10 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestCase;
@@ -29,5 +33,16 @@ public class CodeFragmentsTest extends PsiTestCase{
 
     PlatformTestUtil.tryGcSoftlyReachableObjects();
     assertEquals("ab", PsiDocumentManager.getInstance(myProject).getDocument(fragment).getText());
+  }
+
+  public void testDontRecreateFragmentPsi() {
+    PsiExpressionCodeFragment fragment = JavaCodeFragmentFactory.getInstance(myProject).createExpressionCodeFragment("a", null, null, true);
+    VirtualFile file = fragment.getViewProvider().getVirtualFile();
+    assertInstanceOf(file, LightVirtualFile.class);
+
+    ProjectRootManagerEx.getInstanceEx(getProject()).makeRootsChange(EmptyRunnable.getInstance(), false, true);
+
+    assertSame(fragment, PsiManager.getInstance(myProject).findFile(file));
+    assertTrue(fragment.isValid());
   }
 }

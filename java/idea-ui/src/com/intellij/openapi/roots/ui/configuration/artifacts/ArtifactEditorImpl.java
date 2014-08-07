@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,12 +34,12 @@ import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.Library
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.ModuleOutputSourceItem;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.SourceItemsTree;
 import com.intellij.openapi.ui.FixedSizeButton;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
@@ -83,6 +83,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   private JPanel myErrorPanelPlace;
   private ThreeStateCheckBox myShowContentCheckBox;
   private FixedSizeButton myShowSpecificContentOptionsButton;
+  private JPanel myTopPanel;
   private final ActionGroup myShowSpecificContentOptionsGroup;
   private final Project myProject;
   private final ComplexElementSubstitutionParameters mySubstitutionParameters = new ComplexElementSubstitutionParameters();
@@ -106,6 +107,9 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     myPropertiesEditors = new ArtifactPropertiesEditors(myContext, myOriginalArtifact, myOriginalArtifact);
     Disposer.register(this, mySourceItemsTree);
     Disposer.register(this, myLayoutTreeComponent);
+    if (Registry.is("ide.new.project.settings")) {
+      myTopPanel.setBorder(new EmptyBorder(0, 10, 0, 10));
+    }
     myBuildOnMakeCheckBox.setSelected(artifact.isBuildOnMake());
     final String outputPath = artifact.getOutputPath();
     myOutputDirectoryField.addBrowseFolderListener(CompilerBundle.message("dialog.title.output.directory.for.artifact"),
@@ -202,7 +206,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
     myErrorPanelPlace.add(myValidationManager.getMainErrorPanel(), BorderLayout.CENTER);
 
-    Splitter splitter = new Splitter(false);
+    final JBSplitter splitter = Registry.is("ide.new.project.settings") ? new OnePixelSplitter(false) : new JBSplitter(false);
     final JPanel leftPanel = new JPanel(new BorderLayout());
     JPanel treePanel = myLayoutTreeComponent.getTreePanel();
     if (UIUtil.isUnderDarcula()) {
@@ -213,7 +217,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     leftPanel.add(treePanel, BorderLayout.CENTER);
     if (UIUtil.isUnderDarcula()) {
       CompoundBorder border =
-        new CompoundBorder(new CustomLineBorder(UIUtil.getBorderColor(), 0, 0, 0, 1), BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        new CompoundBorder(new CustomLineBorder(0, 0, 0, 1), BorderFactory.createEmptyBorder(0, 0, 0, 0));
       leftPanel.setBorder(border);
     } else {
       leftPanel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 0));
@@ -241,7 +245,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     labelPanel.add(link);
     rightTopPanel.add(labelPanel, BorderLayout.CENTER);
     rightPanel.add(rightTopPanel, BorderLayout.NORTH);
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(mySourceItemsTree, UIUtil.isUnderDarcula());
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(mySourceItemsTree, UIUtil.isUnderDarcula() || Registry.is("ide.new.project.settings"));
     JPanel scrollPaneWrap = new JPanel(new BorderLayout());
     scrollPaneWrap.add(scrollPane, BorderLayout.CENTER);
     if (UIUtil.isUnderDarcula()) {
@@ -257,6 +261,13 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
       rightPanel.setBorder(BorderFactory.createEmptyBorder(3, 0, 3, 3));
     }
     splitter.setSecondComponent(rightPanel);
+    if (Registry.is("ide.new.project.settings")) {
+      splitter.getDivider().setBackground(UIUtil.getPanelBackground());
+      treePanel.setBorder(new EmptyBorder(0, 0, 0, 0));
+      rightPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
+      scrollPaneWrap.setBorder(new EmptyBorder(0,0,0,0));
+      leftPanel.setBorder(new EmptyBorder(0,0,0,0));
+    }
 
 
     myShowContentCheckBox.addActionListener(new ActionListener() {

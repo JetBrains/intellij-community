@@ -15,10 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -49,7 +46,9 @@ public class FromStringHintProcessor extends SignatureHintProcessor {
             @Override
             public PsiType fun(String param) {
               try {
-                PsiType original = JavaPsiFacade.getElementFactory(method.getProject()).createTypeFromText(param, method);
+                PsiTypeParameterList typeParameterList = method.getTypeParameterList();
+                PsiElement context = typeParameterList != null ? typeParameterList : method;
+                PsiType original = JavaPsiFacade.getElementFactory(method.getProject()).createTypeFromText(param, context);
                 return substitutor.substitute(original);
               }
               catch (IncorrectOperationException e) {

@@ -61,6 +61,7 @@ import com.intellij.unscramble.ThreadDumpPanel;
 import com.intellij.unscramble.ThreadState;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager;
 import com.intellij.xdebugger.impl.ui.DebuggerSessionTabBase;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import org.jetbrains.annotations.NotNull;
@@ -105,7 +106,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
             case DebuggerSession.EVENT_DETACHED:
               myUi.updateActionsNow();
 
-              if (debuggerSettings.HIDE_DEBUGGER_ON_PROCESS_TERMINATION) {
+              if (XDebuggerSettingsManager.getInstanceImpl().getGeneralSettings().isHideDebuggerOnProcessTermination()) {
                 try {
                   ExecutionManager.getInstance(getProject()).getContentManager().hideRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), myRunContentDescriptor);
                 }

@@ -20,6 +20,7 @@ import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.diff.MergeRequest;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -27,11 +28,11 @@ import org.jetbrains.annotations.Nullable;
 
 public class DiffRequestFactoryImpl extends DiffRequestFactory {
 
-  public MergeRequest createMergeRequest(String leftText,
-                                         String rightText,
-                                         String originalContent,
+  public MergeRequest createMergeRequest(@NotNull String leftText,
+                                         @NotNull String rightText,
+                                         @NotNull String originalContent,
                                          @NotNull VirtualFile file,
-                                         Project project,
+                                         @Nullable Project project,
                                          @Nullable final ActionButtonPresentation okButtonPresentation,
                                          @Nullable final ActionButtonPresentation cancelButtonPresentation) {
     final Document document = FileDocumentManager.getInstance().getDocument(file);
@@ -41,16 +42,26 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
                                   cancelButtonPresentation);
     }
     else {
-      return create3WayDiffRequest(leftText, rightText, originalContent, project, okButtonPresentation, cancelButtonPresentation);
+      return create3WayDiffRequest(leftText, rightText, originalContent, file.getFileType(), project, okButtonPresentation, cancelButtonPresentation);
     }
   }
 
-  public MergeRequest create3WayDiffRequest(final String leftText,
-                                            final String rightText,
-                                            final String originalContent,
-                                            final Project project,
+  public MergeRequest create3WayDiffRequest(@NotNull String leftText,
+                                            @NotNull String rightText,
+                                            @NotNull String originalContent,
+                                            @Nullable FileType type,
+                                            @Nullable Project project,
                                             @Nullable final ActionButtonPresentation okButtonPresentation,
                                             @Nullable final ActionButtonPresentation cancelButtonPresentation) {
-    return new MergeRequestImpl(leftText, originalContent, rightText, project, okButtonPresentation, cancelButtonPresentation);
+    return new MergeRequestImpl(leftText, originalContent, rightText, type, project, okButtonPresentation, cancelButtonPresentation);
+  }
+
+  public MergeRequest create3WayDiffRequest(@NotNull String leftText,
+                                            @NotNull String rightText,
+                                            @NotNull String originalContent,
+                                            @Nullable Project project,
+                                            @Nullable final ActionButtonPresentation okButtonPresentation,
+                                            @Nullable final ActionButtonPresentation cancelButtonPresentation) {
+    return create3WayDiffRequest(leftText, rightText, originalContent, null, project, okButtonPresentation, cancelButtonPresentation);
   }
 }

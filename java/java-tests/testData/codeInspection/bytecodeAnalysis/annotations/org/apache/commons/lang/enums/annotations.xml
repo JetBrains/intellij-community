@@ -1,0 +1,50 @@
+<root>
+  <item name="org.apache.commons.lang.enums.Enum Enum(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.enums.Enum java.lang.String getNameInOtherClassLoader(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.enums.Enum java.util.Iterator iterator(java.lang.Class) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.enums.Enum java.util.List getEnumList(java.lang.Class) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.enums.Enum java.util.Map getEnumMap(java.lang.Class) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.enums.Enum org.apache.commons.lang.enums.Enum getEnum(java.lang.Class, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.enums.Enum org.apache.commons.lang.enums.Enum.Entry createEntry(java.lang.Class) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.enums.Enum org.apache.commons.lang.enums.Enum.Entry getEntry(java.lang.Class) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.enums.EnumUtils java.util.Iterator iterator(java.lang.Class) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.enums.EnumUtils java.util.List getEnumList(java.lang.Class) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.enums.EnumUtils java.util.Map getEnumMap(java.lang.Class) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.enums.EnumUtils org.apache.commons.lang.enums.Enum getEnum(java.lang.Class, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.enums.EnumUtils org.apache.commons.lang.enums.ValuedEnum getEnum(java.lang.Class, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.enums.ValuedEnum ValuedEnum(java.lang.String, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.enums.ValuedEnum int getValueInOtherClassLoader(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.enums.ValuedEnum org.apache.commons.lang.enums.Enum getEnum(java.lang.Class, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+</root>

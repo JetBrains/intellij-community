@@ -15,7 +15,9 @@
  */
 package com.intellij.refactoring.changeSignature;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.InferredAnnotationsManager;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
 import com.intellij.lang.StdLanguages;
@@ -943,7 +945,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     }
 
     private static void checkContract(MultiMap<PsiElement, String> conflictDescriptions, PsiMethod method) {
-      if (ControlFlowAnalyzer.findContractAnnotation(method) != null) {
+      PsiAnnotation contract = ControlFlowAnalyzer.findContractAnnotation(method);
+      if (contract != null && !AnnotationUtil.isInferredAnnotation(contract)) {
         conflictDescriptions.putValue(method, "@Contract annotation will have to be changed manually");
       }
     }

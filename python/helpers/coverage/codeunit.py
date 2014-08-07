@@ -52,8 +52,10 @@ class CodeUnit(object):
         else:
             f = morf
         # .pyc files should always refer to a .py instead.
-        if f.endswith('.pyc'):
+        if f.endswith('.pyc') or f.endswith('.pyo'):
             f = f[:-1]
+        elif f.endswith('$py.class'): # Jython
+            f = f[:-9] + ".py"
         self.filename = self.file_locator.canonical_filename(f)
 
         if hasattr(morf, '__name__'):
@@ -77,12 +79,18 @@ class CodeUnit(object):
     # Annoying comparison operators. Py3k wants __lt__ etc, and Py2k needs all
     # of them defined.
 
-    def __lt__(self, other): return self.name <  other.name
-    def __le__(self, other): return self.name <= other.name
-    def __eq__(self, other): return self.name == other.name
-    def __ne__(self, other): return self.name != other.name
-    def __gt__(self, other): return self.name >  other.name
-    def __ge__(self, other): return self.name >= other.name
+    def __lt__(self, other):
+        return self.name < other.name
+    def __le__(self, other):
+        return self.name <= other.name
+    def __eq__(self, other):
+        return self.name == other.name
+    def __ne__(self, other):
+        return self.name != other.name
+    def __gt__(self, other):
+        return self.name > other.name
+    def __ge__(self, other):
+        return self.name >= other.name
 
     def flat_rootname(self):
         """A base for a flat filename to correspond to this code unit.
@@ -113,5 +121,25 @@ class CodeUnit(object):
 
         # Couldn't find source.
         raise CoverageException(
-            "No source for code %r." % self.filename
+            "No source for code '%s'." % self.filename
             )
+
+    def should_be_python(self):
+        """Does it seem like this file should contain Python?
+
+        This is used to decide if a file reported as part of the exection of
+        a program was really likely to have contained Python in the first
+        place.
+
+        """
+        # Get the file extension.
+        _, ext = os.path.splitext(self.filename)
+
+        # Anything named *.py* should be Python.
+        if ext.startswith('.py'):
+            return True
+        # A file with no extension should be Python.
+        if not ext:
+            return True
+        # Everything else is probably not Python.
+        return False

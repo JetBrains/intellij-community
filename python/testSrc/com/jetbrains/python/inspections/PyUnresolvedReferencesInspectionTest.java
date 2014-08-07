@@ -366,6 +366,21 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doMultiFileTest();
   }
 
+  // PY-13140
+  public void testPrivateModuleNames() {
+    doMultiFileTest();
+  }
+
+  // PY-11472
+  public void testUnusedImportBeforeStarImport() {
+    doMultiFileTest();
+  }
+
+  // PY-13585
+  public void testUnusedImportBeforeStarDunderAll() {
+    doMultiFileTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

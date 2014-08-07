@@ -16,7 +16,6 @@
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.dnd.DnDManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
@@ -35,7 +34,7 @@ import javax.swing.*;
 /**
  * @author nik
  */
-public abstract class XVariablesViewBase implements Disposable {
+public abstract class XVariablesViewBase extends XDebugView {
   protected final XDebuggerTreePanel myDebuggerTreePanel;
   private XDebuggerTreeState myTreeState;
   private Object myFrameEqualityObject;

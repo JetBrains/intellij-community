@@ -28,7 +28,7 @@ public class KeyboardComboSwitcher {
         if (toggleStrategy) {
           final int size = comboBox.getModel().getSize();
           int next = comboBox.getSelectedIndex() + 1;
-          if (next < 0 || next >= size) {
+          if (size > 0 && (next < 0 || next >= size)) {
             if (!UISettings.getInstance().CYCLE_SCROLLING) {
               return;
             }

@@ -40,6 +40,7 @@ public abstract class WolfTheProblemSolver {
   public abstract boolean isProblemFile(VirtualFile virtualFile);
 
   public abstract void weHaveGotProblems(@NotNull VirtualFile virtualFile, @NotNull List<Problem> problems);
+  public abstract void weHaveGotNonIgnorableProblems(@NotNull VirtualFile virtualFile, @NotNull List<Problem> problems);
   public abstract void clearProblems(@NotNull VirtualFile virtualFile);
 
   public abstract boolean hasProblemFilesBeneath(@NotNull Condition<VirtualFile> condition);

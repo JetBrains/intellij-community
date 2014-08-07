@@ -138,7 +138,9 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
         }
       }, ClassReader.SKIP_CODE);
     }
-    catch (IOException ignore) { }
+    catch (Exception e) {
+      throw new RuntimeException("corrupted file: " + file.getUrl(), e);
+    }
     if (isGroovy.get()) {
       LOG.info("skipped Groovy class: " + file.getUrl());
       return false;

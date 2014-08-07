@@ -579,7 +579,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     FindModel findModel = FindManagerTestUtils.configureFindModel("done");
     String text = "/** done done done */";
 
-    findModel.setInCommentsOnly(true);
+    findModel.setSearchContext(FindModel.SearchContext.IN_COMMENTS);
     FindManagerTestUtils.runFindForwardAndBackward(myFindManager, findModel, text);
 
     findModel.setRegularExpressions(true);
@@ -592,7 +592,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     String prefix = "/*";
     String text = prefix + "done*/";
 
-    findModel.setInCommentsOnly(true);
+    findModel.setSearchContext(FindModel.SearchContext.IN_COMMENTS);
     LightVirtualFile file = new LightVirtualFile("A.java", text);
 
     FindResult findResult = myFindManager.findString(text, prefix.length(), findModel, file);
@@ -615,8 +615,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     FindModel findModel = FindManagerTestUtils.configureFindModel("^done$");
 
     findModel.setRegularExpressions(true);
-    findModel.setInStringLiteralsOnly(true);
-    findModel.setInCommentsOnly(false);
+    findModel.setSearchContext(FindModel.SearchContext.IN_STRING_LITERALS);
     String text = "\"done\"; 'done'; 'done' \"done2\"";
     FindManagerTestUtils.runFindForwardAndBackward(myFindManager, findModel, text, "java");
 
@@ -633,7 +632,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
     String text = "/** do ne do ne do ne */";
 
-    findModel.setInCommentsOnly(true);
+    findModel.setSearchContext(FindModel.SearchContext.IN_COMMENTS);
     FindManagerTestUtils.runFindForwardAndBackward(myFindManager, findModel, text, "java");
   }
 
@@ -650,5 +649,43 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
     findModel.setWholeWordsOnly(true);
     assertSize(1, findUsages(findModel));
+  }
+
+  public void testFindExceptComments() {
+    FindModel findModel = FindManagerTestUtils.configureFindModel("done");
+
+    String prefix = "/*";
+    String text = prefix + "done*/done";
+
+    findModel.setSearchContext(FindModel.SearchContext.EXCEPT_COMMENTS);
+    LightVirtualFile file = new LightVirtualFile("A.java", text);
+
+    FindResult findResult = myFindManager.findString(text, prefix.length(), findModel, file);
+    assertTrue(findResult.isStringFound());
+    assertTrue(findResult.getStartOffset() > prefix.length());
+
+    findModel.setRegularExpressions(true);
+    findResult = myFindManager.findString(text, prefix.length(), findModel, file);
+    assertTrue(findResult.isStringFound());
+    assertTrue(findResult.getStartOffset() > prefix.length());
+  }
+
+  public void testFindExceptLiterals() {
+    FindModel findModel = FindManagerTestUtils.configureFindModel("done");
+
+    String prefix = "\"";
+    String text = prefix + "done\"done";
+
+    findModel.setSearchContext(FindModel.SearchContext.EXCEPT_STRING_LITERALS);
+    LightVirtualFile file = new LightVirtualFile("A.java", text);
+
+    FindResult findResult = myFindManager.findString(text, prefix.length(), findModel, file);
+    assertTrue(findResult.isStringFound());
+    assertTrue(findResult.getStartOffset() > prefix.length());
+
+    findModel.setRegularExpressions(true);
+    findResult = myFindManager.findString(text, prefix.length(), findModel, file);
+    assertTrue(findResult.isStringFound());
+    assertTrue(findResult.getStartOffset() > prefix.length());
   }
 }

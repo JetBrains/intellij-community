@@ -30,6 +30,7 @@ public abstract class OpenInBrowserBaseGroupAction extends ComputableActionGroup
 
   protected OpenInBrowserBaseGroupAction(boolean popup) {
     super(popup);
+
     Presentation p = getTemplatePresentation();
     p.setText("Open in _Browser");
     p.setDescription("Open selected file in browser");
@@ -76,9 +77,10 @@ public abstract class OpenInBrowserBaseGroupAction extends ComputableActionGroup
     public OpenInBrowserEditorContextBarGroupAction() {
       super(false);
     }
-  }
 
-  public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setVisible(!ActionGroupUtil.isGroupEmpty(this, e));
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setVisible(!WebBrowserManager.getInstance().getBrowsers().isEmpty());
+    }
   }
 }

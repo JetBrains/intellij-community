@@ -1,0 +1,37 @@
+<root>
+  <item name="org.apache.velocity.context.AbstractContext boolean containsKey(java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.context.AbstractContext java.lang.Object get(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;null&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.context.AbstractContext java.lang.Object put(java.lang.String, java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null,_-&gt;null&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.context.AbstractContext java.lang.Object remove(java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;null&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.context.EvaluateContext EvaluateContext(org.apache.velocity.context.InternalContextAdapter, org.apache.velocity.runtime.RuntimeServices) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.context.EvaluateContext void initContext(org.apache.velocity.runtime.RuntimeServices) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.context.InternalContextAdapterImpl org.apache.velocity.context.InternalContextAdapter getBaseContext()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.context.ProxyVMContext boolean isConstant(org.apache.velocity.runtime.parser.node.Node) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.context.ProxyVMContext void addVMProxyArg(org.apache.velocity.context.InternalContextAdapter, java.lang.String, java.lang.String, org.apache.velocity.runtime.parser.node.Node) 3">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+</root>

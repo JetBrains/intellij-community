@@ -26,6 +26,7 @@ import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.projectView.impl.ProjectViewImpl;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -38,6 +39,7 @@ import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -183,9 +185,14 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
       return false;
     }
 
-    final Project project = value.getProject();
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    return !fileIndex.isIgnored(file);
+    if (Registry.is("ide.hide.excluded.files")) {
+      final Project project = value.getProject();
+      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+      return !fileIndex.isExcluded(file);
+    }
+    else {
+      return !FileTypeRegistry.getInstance().isFileIgnored(file);
+    }
   }
 
   @Override

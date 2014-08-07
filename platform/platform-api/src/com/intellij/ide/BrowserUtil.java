@@ -20,6 +20,7 @@ import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.browsers.BrowserLauncher;
 import com.intellij.ide.browsers.BrowserLauncherAppless;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -106,6 +107,10 @@ public class BrowserUtil {
     getBrowserLauncher().browse(uri);
   }
 
+  public static void browse(@NotNull String url, @Nullable Project project) {
+    getBrowserLauncher().browse(url, null, project);
+  }
+
   @SuppressWarnings("UnusedDeclaration")
   @NotNull
   @Deprecated
@@ -144,6 +149,9 @@ public class BrowserUtil {
     }
     else if (SystemInfo.isMac) {
       return "open";
+    }
+    else if (SystemInfo.isUnix) {
+      return "/usr/bin/firefox";
     }
     else {
       return "";

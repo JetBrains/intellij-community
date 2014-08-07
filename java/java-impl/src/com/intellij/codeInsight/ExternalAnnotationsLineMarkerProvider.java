@@ -48,41 +48,53 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
   @Nullable
   @Override
   public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
-    if (element instanceof PsiParameter) return null;
+    if (!(element instanceof PsiModifierListOwner)) return null;
+    if (element instanceof PsiParameter || element instanceof PsiLocalVariable) return null;
 
-    PsiModifierListOwner owner = null;
-    if (element instanceof PsiModifierListOwner) {
-      final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)element;
-      final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(modifierListOwner.getProject());
-      PsiAnnotation[] externalAnnotations = annotationsManager.findExternalAnnotations(modifierListOwner);
-      if (externalAnnotations != null && externalAnnotations.length > 0) {
-        owner = (PsiModifierListOwner)element;
-      } else if (element instanceof PsiMethod) {
-        final PsiParameter[] parameters = ((PsiMethod)element).getParameterList().getParameters();
-        for (PsiParameter parameter : parameters) {
-          externalAnnotations = annotationsManager.findExternalAnnotations(parameter);
-          if (externalAnnotations != null && externalAnnotations.length > 0) {
-            owner = (PsiMethod)element;
-            break;
-          }
-        }
-      }
-    }
-
-    if (owner == null) {
+    if (!shouldShowSignature(preferCompiledElement((PsiModifierListOwner)element))) {
       return null;
     }
 
     final Function<PsiModifierListOwner, String> annotationsCollector = new Function<PsiModifierListOwner, String>() {
       @Override
       public String fun(PsiModifierListOwner owner) {
-        return XmlStringUtil.wrapInHtml(JavaDocInfoGenerator.generateSignature(owner));
+        return XmlStringUtil.wrapInHtml(JavaDocInfoGenerator.generateSignature(preferCompiledElement(owner)));
       }
     };
-    return new LineMarkerInfo<PsiModifierListOwner>(owner, owner.getTextOffset(), AllIcons.Gutter.ExtAnnotation,
+    return new LineMarkerInfo<PsiModifierListOwner>((PsiModifierListOwner)element, element.getTextOffset(), AllIcons.Gutter.ExtAnnotation,
                                                     Pass.UPDATE_ALL,
                                                     annotationsCollector, new MyIconGutterHandler(),
                                                     GutterIconRenderer.Alignment.LEFT);
+  }
+
+  private static PsiModifierListOwner preferCompiledElement(PsiModifierListOwner element) {
+    PsiElement original = element.getOriginalElement();
+    return original instanceof PsiModifierListOwner ? (PsiModifierListOwner)original : element;
+  }
+
+  private static boolean shouldShowSignature(PsiModifierListOwner owner) {
+    if (hasNonCodeAnnotations(owner)) {
+      return true;
+    }
+
+    if (owner instanceof PsiMethod) {
+      for (PsiParameter parameter : ((PsiMethod)owner).getParameterList().getParameters()) {
+        if (hasNonCodeAnnotations(parameter)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  private static boolean hasNonCodeAnnotations(@NotNull PsiModifierListOwner element) {
+    Project project = element.getProject();
+    PsiAnnotation[] externalAnnotations = ExternalAnnotationsManager.getInstance(project).findExternalAnnotations(element);
+    if (externalAnnotations != null && externalAnnotations.length > 0) {
+      return true;
+    }
+    return InferredAnnotationsManager.getInstance(project).findInferredAnnotations(element).length > 0;
   }
 
   @Override

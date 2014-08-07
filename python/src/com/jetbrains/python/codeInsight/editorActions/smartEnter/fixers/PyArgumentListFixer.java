@@ -25,26 +25,30 @@ import com.jetbrains.python.psi.PyArgumentList;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.PyUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Alexey.Ivanov
  */
-public class PyArgumentListFixer implements PyFixer {
-  public void apply(Editor editor, PySmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
-    if (psiElement instanceof PyArgumentList) {
-      final PsiElement rBrace = PyUtil.getChildByFilter(psiElement, PyTokenTypes.CLOSE_BRACES, 0);
-      if (psiElement.getParent() instanceof PyClass || psiElement.getParent() instanceof PyDecorator) {
-        final PsiElement lBrace = PyUtil.getChildByFilter(psiElement, PyTokenTypes.OPEN_BRACES, 0);
-        if (lBrace != null && rBrace == null) {
-          final Document document = editor.getDocument();
-          document.insertString(psiElement.getTextRange().getEndOffset(), ")");
-        }
+public class PyArgumentListFixer extends PyFixer<PyArgumentList> {
+  public PyArgumentListFixer() {
+    super(PyArgumentList.class);
+  }
+
+  @Override
+  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyArgumentList arguments) throws IncorrectOperationException {
+    final PsiElement rBrace = PyUtil.getChildByFilter(arguments, PyTokenTypes.CLOSE_BRACES, 0);
+    if (arguments.getParent() instanceof PyClass || arguments.getParent() instanceof PyDecorator) {
+      final PsiElement lBrace = PyUtil.getChildByFilter(arguments, PyTokenTypes.OPEN_BRACES, 0);
+      if (lBrace != null && rBrace == null) {
+        final Document document = editor.getDocument();
+        document.insertString(arguments.getTextRange().getEndOffset(), ")");
       }
-      else {
-        if (rBrace == null) {
-          final Document document = editor.getDocument();
-          document.insertString(psiElement.getTextRange().getEndOffset(), ")");
-        }
+    }
+    else {
+      if (rBrace == null) {
+        final Document document = editor.getDocument();
+        document.insertString(arguments.getTextRange().getEndOffset(), ")");
       }
     }
   }

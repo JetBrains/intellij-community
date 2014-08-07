@@ -495,6 +495,22 @@ public class XmlSerializerTest extends TestCase {
       "</BeanWithFieldWithTagAnnotation>", bean);
   }
 
+  public void testEscapeCharsInTagText() {
+    BeanWithFieldWithTagAnnotation bean = new BeanWithFieldWithTagAnnotation();
+    bean.STRING_V = "a\nb\"<";
+
+    doSerializerTest(
+      "<BeanWithFieldWithTagAnnotation>\n" +
+      "  <name>a\nb&quot;&lt;</name>\n" +
+      "</BeanWithFieldWithTagAnnotation>", bean);
+  }
+
+  public void testEscapeCharsInAttributeValue() {
+    final BeanWithPropertiesBoundToAttribute bean = new BeanWithPropertiesBoundToAttribute();
+    bean.name = "a\nb\"<";
+    doSerializerTest("<BeanWithPropertiesBoundToAttribute count=\"3\" name=\"a&#10;b&quot;&lt;\" />", bean);
+  }
+
   public void testShuffledDeserialize() {
     BeanWithPublicFields bean = new BeanWithPublicFields();
     bean.INT_V = 987;

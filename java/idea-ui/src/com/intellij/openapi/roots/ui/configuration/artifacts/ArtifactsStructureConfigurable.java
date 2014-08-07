@@ -286,25 +286,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   }
 
   private void addArtifact(@NotNull ArtifactType type, @NotNull ArtifactTemplate artifactTemplate) {
-    final ArtifactTemplate.NewArtifactConfiguration configuration = artifactTemplate.createArtifact();
-    if (configuration == null) {
-      return;
-    }
-
-    final String baseName = configuration.getArtifactName();
-    String name = baseName;
-    int i = 2;
-    while (myPackagingEditorContext.getArtifactModel().findArtifact(name) != null) {
-      name = baseName + i;
-      i++;
-    }
-
-    ArtifactType actualType = configuration.getArtifactType();
-    if (actualType == null) {
-      actualType = type;
-    }
-    final ModifiableArtifact artifact = myPackagingEditorContext.getOrCreateModifiableArtifactModel().addArtifact(name, actualType, configuration.getRootElement());
-    artifactTemplate.setUpArtifact(artifact, configuration);
+    Artifact artifact = ArtifactUtil.addArtifact(myPackagingEditorContext.getOrCreateModifiableArtifactModel(), type, artifactTemplate);
     selectNodeInTree(findNodeByObject(myRoot, artifact));
   }
 

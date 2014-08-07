@@ -104,19 +104,19 @@ public class OrderedSet<T> extends ArrayList<T> implements Set<T>, RandomAccess 
   }
 
   @Override
-  public boolean addAll(final int index, final Collection<? extends T> c) {
+  public boolean addAll(final int index, @NotNull final Collection<? extends T> c) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public T set(final int index, final T element) {
+  public T set(final int index, @NotNull final T element) {
     final T removed = remove(index);
     add(index, element);
     return removed;
   }
 
   @Override
-  public void add(final int index, final T element) {
+  public void add(final int index, @NotNull final T element) {
     if (myHashSet.add(element)){
       super.add(index, element);
     }

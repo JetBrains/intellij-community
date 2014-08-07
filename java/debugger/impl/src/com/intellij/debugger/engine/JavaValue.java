@@ -58,7 +58,10 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider {
   private final EvaluationContextImpl myEvaluationContext;
   private final NodeManagerImpl myNodeManager;
 
-  private JavaValue(JavaValue parent, @NotNull ValueDescriptorImpl valueDescriptor, EvaluationContextImpl evaluationContext, NodeManagerImpl nodeManager) {
+  private JavaValue(JavaValue parent,
+                    @NotNull ValueDescriptorImpl valueDescriptor,
+                    @NotNull EvaluationContextImpl evaluationContext,
+                    NodeManagerImpl nodeManager) {
     super(valueDescriptor.getName());
     myParent = parent;
     myValueDescriptor = valueDescriptor;
@@ -266,23 +269,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider {
                 children.add(create(JavaValue.this, (ValueDescriptorImpl)descriptor, myEvaluationContext, myNodeManager, false));
               }
               else if (descriptor instanceof MessageDescriptor) {
-                children.add("", new XValue() {
-                  @Override
-                  public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
-                    node.setPresentation(null, new XValuePresentation() {
-                      @NotNull
-                      @Override
-                      public String getSeparator() {
-                        return "";
-                      }
-
-                      @Override
-                      public void renderValue(@NotNull XValueTextRenderer renderer) {
-                        renderer.renderValue(descriptor.getLabel());
-                      }
-                    }, false);
-                  }
-                });
+                children.add(new JavaStackFrame.DummyMessageValueNode(descriptor.getLabel(), null));
               }
             }
           }

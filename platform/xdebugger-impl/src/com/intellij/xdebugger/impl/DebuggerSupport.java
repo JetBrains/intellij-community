@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,10 @@ import org.jetbrains.annotations.Nullable;
 public abstract class DebuggerSupport {
   private static final ExtensionPointName<DebuggerSupport> EXTENSION_POINT = ExtensionPointName.create("com.intellij.xdebugger.debuggerSupport");
 
+  @SuppressWarnings("deprecation")
+  private static final DebuggerSettingsPanelProvider EMPTY_SETTINGS_PANEL_PROVIDER = new DebuggerSettingsPanelProvider() {
+  };
+
   protected static final class DisabledActionHandler extends DebuggerActionHandler {
     public static final DisabledActionHandler INSTANCE = new DisabledActionHandler();
 
@@ -57,8 +61,15 @@ public abstract class DebuggerSupport {
   @NotNull
   public abstract BreakpointPanelProvider<?> getBreakpointPanelProvider();
 
+  /**
+   * @deprecated Use {@link com.intellij.xdebugger.settings.DebuggerConfigurableProvider}
+   */
+  @Deprecated
+  @SuppressWarnings("deprecation")
   @NotNull
-  public abstract DebuggerSettingsPanelProvider getSettingsPanelProvider();
+  public DebuggerSettingsPanelProvider getSettingsPanelProvider() {
+    return EMPTY_SETTINGS_PANEL_PROVIDER;
+  }
 
   @NotNull
   public abstract DebuggerActionHandler getStepOverHandler();

@@ -20,6 +20,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -31,7 +32,7 @@ public class MethodContract {
   public final ValueConstraint[] arguments;
   public final ValueConstraint returnValue;
 
-  public MethodContract(ValueConstraint[] arguments, ValueConstraint returnValue) {
+  public MethodContract(@NotNull ValueConstraint[] arguments, @NotNull ValueConstraint returnValue) {
     this.arguments = arguments;
     this.returnValue = returnValue;
   }
@@ -88,10 +89,16 @@ public class MethodContract {
         throw new ParseException("A contract clause must be in form arg1, ..., argN -> return-value");
       }
 
-      String[] argStrings = clause.substring(0, arrowIndex).split(",");
-      ValueConstraint[] args = new ValueConstraint[argStrings.length];
-      for (int i = 0; i < args.length; i++) {
-        args[i] = parseConstraint(argStrings[i]);
+      String beforeArrow = clause.substring(0, arrowIndex);
+      ValueConstraint[] args;
+      if (StringUtil.isNotEmpty(beforeArrow)) {
+        String[] argStrings = beforeArrow.split(",");
+        args = new ValueConstraint[argStrings.length];
+        for (int i = 0; i < args.length; i++) {
+          args[i] = parseConstraint(argStrings[i]);
+        }
+      } else {
+        args = new ValueConstraint[0];
       }
       result.add(new MethodContract(args, parseConstraint(clause.substring(arrowIndex + arrow.length()))));
     }

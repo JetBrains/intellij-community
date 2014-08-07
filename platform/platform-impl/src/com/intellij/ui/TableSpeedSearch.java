@@ -55,7 +55,9 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
 
   @Override
   protected boolean isSpeedSearchEnabled() {
-    return !getComponent().isEditing() && super.isSpeedSearchEnabled();
+    JTable table = getComponent();
+    boolean tableIsNotEmpty = table.getRowCount() != 0 && table.getColumnCount() != 0;
+    return tableIsNotEmpty && !table.isEditing() && super.isSpeedSearchEnabled();
   }
 
   @Override

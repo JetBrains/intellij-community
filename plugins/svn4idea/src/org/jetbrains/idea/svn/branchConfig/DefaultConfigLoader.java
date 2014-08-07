@@ -24,10 +24,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.browse.DirectoryEntry;
+import org.jetbrains.idea.svn.browse.DirectoryEntryConsumer;
+import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.integrate.SvnBranchItem;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -52,7 +55,7 @@ public class DefaultConfigLoader {
       final SvnVcs vcs = SvnVcs.getInstance(project);
 
       File rootFile = new File(vcsRoot.getPath());
-      final SVNInfo info = vcs.getInfo(rootFile);
+      final Info info = vcs.getInfo(rootFile);
       if (info == null || info.getURL() == null) {
         LOG.info("Directory is not a working copy: " + vcsRoot.getPresentableUrl());
         return null;
@@ -67,7 +70,7 @@ public class DefaultConfigLoader {
           SVNURL rootPath = baseUrl.removePathTail();
           SvnTarget target = SvnTarget.fromURL(rootPath);
 
-          vcs.getFactory(target).createBrowseClient().list(target, SVNRevision.HEAD, SVNDepth.IMMEDIATES, createHandler(result, rootPath));
+          vcs.getFactory(target).createBrowseClient().list(target, SVNRevision.HEAD, Depth.IMMEDIATES, createHandler(result, rootPath));
           break;
         }
         if (SVNPathUtil.removeTail(baseUrl.getPath()).length() == 0) {
@@ -88,13 +91,15 @@ public class DefaultConfigLoader {
   }
 
   @NotNull
-  private static ISVNDirEntryHandler createHandler(final SvnBranchConfigurationNew result, final SVNURL rootPath) {
-    return new ISVNDirEntryHandler() {
-      public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
-        if (SVNNodeKind.DIR.equals(dirEntry.getKind())) {
-          SVNURL childUrl = rootPath.appendPath(dirEntry.getName(), false);
+  private static DirectoryEntryConsumer createHandler(final SvnBranchConfigurationNew result, final SVNURL rootPath) {
+    return new DirectoryEntryConsumer() {
 
-          if (StringUtil.endsWithIgnoreCase(dirEntry.getName(), DEFAULT_TRUNK_NAME)) {
+      @Override
+      public void consume(final DirectoryEntry entry) throws SVNException {
+        if (entry.isDirectory()) {
+          SVNURL childUrl = rootPath.appendPath(entry.getName(), false);
+
+          if (StringUtil.endsWithIgnoreCase(entry.getName(), DEFAULT_TRUNK_NAME)) {
             result.setTrunkUrl(childUrl.toString());
           }
           else {

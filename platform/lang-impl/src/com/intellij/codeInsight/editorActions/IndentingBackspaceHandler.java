@@ -17,15 +17,22 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.formatting.*;
+import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -36,40 +43,75 @@ import org.jetbrains.annotations.NotNull;
 public class IndentingBackspaceHandler extends BackspaceHandlerDelegate {
   private static final Logger LOG = Logger.getInstance(IndentingBackspaceHandler.class);
 
+  private boolean isApplicable;
   private boolean caretWasAtLineStart;
+  private String precalculatedSpacing;
 
   @Override
   public void beforeCharDeleted(char c, PsiFile file, Editor editor) {
-    caretWasAtLineStart = editor.getCaretModel().getLogicalPosition().column == 0;
+    if (CodeInsightSettings.getInstance().SMART_BACKSPACE != CodeInsightSettings.AUTOINDENT || !StringUtil.isWhiteSpace(c)) {
+      isApplicable = false;
+      return;
+    }
+    LanguageCodeStyleSettingsProvider codeStyleSettingsProvider = LanguageCodeStyleSettingsProvider.forLanguage(file.getLanguage());
+    if (codeStyleSettingsProvider != null && codeStyleSettingsProvider.isIndentBasedLanguageSemantics()) {
+      isApplicable = false;
+      return;
+    }
+    Document document = editor.getDocument();
+    CharSequence charSequence = document.getCharsSequence();
+    CaretModel caretModel = editor.getCaretModel();
+    int caretOffset = caretModel.getOffset();
+    LogicalPosition pos = caretModel.getLogicalPosition();
+    isApplicable = true;
+    caretWasAtLineStart = pos.column == 0;
+    precalculatedSpacing = null;
+    if (caretWasAtLineStart && pos.line > 0 && caretOffset < charSequence.length() && !StringUtil.isWhiteSpace(charSequence.charAt(caretOffset))) {
+      int prevLineEnd = document.getLineEndOffset(pos.line - 1);
+      if (prevLineEnd > 0 && !StringUtil.isWhiteSpace(charSequence.charAt(prevLineEnd - 1))) {
+        PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
+        precalculatedSpacing = getSpacing(file, caretOffset);
+      }
+    }
   }
 
   @Override
   public boolean charDeleted(char c, PsiFile file, Editor editor) {
-    if (CodeInsightSettings.getInstance().SMART_BACKSPACE != CodeInsightSettings.AUTOINDENT || !StringUtil.isWhiteSpace(c)) {
-      return false;
-    }
-    LanguageCodeStyleSettingsProvider codeStyleSettingsProvider = LanguageCodeStyleSettingsProvider.forLanguage(file.getLanguage());
-    if (codeStyleSettingsProvider != null && codeStyleSettingsProvider.isIndentBasedLanguageSemantics()) {
+    if (!isApplicable) {
       return false;
     }
 
+    Project project = file.getProject();
     Document document = editor.getDocument();
+    CaretModel caretModel = editor.getCaretModel();
 
-    int caretOffset = editor.getCaretModel().getOffset();
+    int caretOffset = caretModel.getOffset();
     int offset = CharArrayUtil.shiftForward(document.getCharsSequence(), caretOffset, " \t");
     int beforeWhitespaceOffset = CharArrayUtil.shiftBackward(document.getCharsSequence(), offset - 1, " \t") + 1;
-    LogicalPosition logicalPosition = caretOffset < offset ? editor.offsetToLogicalPosition(offset) : editor.getCaretModel().getLogicalPosition();
+    LogicalPosition logicalPosition = caretOffset < offset ? editor.offsetToLogicalPosition(offset) : caretModel.getLogicalPosition();
     int lineStartOffset = document.getLineStartOffset(logicalPosition.line);
     if (lineStartOffset < beforeWhitespaceOffset) {
-      if (caretWasAtLineStart && beforeWhitespaceOffset < offset) {
-        document.deleteString(beforeWhitespaceOffset, offset);
-        return true;
+      if (caretWasAtLineStart && beforeWhitespaceOffset <= offset) {
+        String spacing;
+        if (precalculatedSpacing == null) {
+          PsiDocumentManager.getInstance(project).commitDocument(document);
+          spacing = getSpacing(file, offset);
+        }
+        else {
+          spacing = precalculatedSpacing;
+        }
+        if (beforeWhitespaceOffset < offset || !spacing.isEmpty()) {
+          document.replaceString(beforeWhitespaceOffset, offset, spacing);
+          caretModel.moveToOffset(beforeWhitespaceOffset + spacing.length());
+          return true;
+        }
       }
       return false;
     }
 
-    CodeStyleFacade codeStyleFacade = CodeStyleFacade.getInstance(editor.getProject());
-    String indent = codeStyleFacade.getLineIndent(document, lineStartOffset);
+    PsiDocumentManager.getInstance(project).commitDocument(document);
+    CodeStyleFacade codeStyleFacade = CodeStyleFacade.getInstance(project);
+    String indent = codeStyleFacade.getLineIndent(document, offset);
     if (indent == null) {
       return false;
     }
@@ -79,7 +121,7 @@ public class IndentingBackspaceHandler extends BackspaceHandlerDelegate {
 
     if (logicalPosition.column == targetColumn) {
       if (caretOffset < offset) {
-        editor.getCaretModel().moveToLogicalPosition(logicalPosition);
+        caretModel.moveToLogicalPosition(logicalPosition);
         return true;
       }
       return false;
@@ -87,7 +129,7 @@ public class IndentingBackspaceHandler extends BackspaceHandlerDelegate {
 
     if (caretWasAtLineStart || logicalPosition.column > targetColumn) {
       document.replaceString(lineStartOffset, offset, indent);
-      editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(logicalPosition.line, targetColumn));
+      caretModel.moveToLogicalPosition(new LogicalPosition(logicalPosition.line, targetColumn));
       return true;
     }
 
@@ -100,12 +142,13 @@ public class IndentingBackspaceHandler extends BackspaceHandlerDelegate {
     int targetOffset = CharArrayUtil.shiftBackward(document.getCharsSequence(), prevLineEndOffset - 1, " \t") + 1;
 
     if (prevLineStartOffset < targetOffset) {
-      document.deleteString(targetOffset, offset);
-      editor.getCaretModel().moveToOffset(targetOffset);
+      String spacing = getSpacing(file, offset);
+      document.replaceString(targetOffset, offset, spacing);
+      caretModel.moveToOffset(targetOffset + spacing.length());
     }
     else {
       document.replaceString(prevLineStartOffset, offset, indent);
-      editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(logicalPosition.line - 1, targetColumn));
+      caretModel.moveToLogicalPosition(new LogicalPosition(logicalPosition.line - 1, targetColumn));
     }
     return true;
   }
@@ -131,5 +174,16 @@ public class IndentingBackspaceHandler extends BackspaceHandlerDelegate {
       }
     }
     return width;
+  }
+
+  private static String getSpacing(PsiFile file, int offset) {
+    FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
+    if (builder == null) {
+      return "";
+    }
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(file.getProject());
+    FormattingModel model = builder.createModel(file, settings);
+    int spacing = FormatterEx.getInstance().getSpacingForBlockAtOffset(model, offset);
+    return StringUtil.repeatSymbol(' ', spacing);
   }
 }

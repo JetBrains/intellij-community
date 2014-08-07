@@ -18,6 +18,7 @@ package com.intellij.codeInsight.javadoc;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
+import com.intellij.codeInsight.InferredAnnotationsManager;
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LangBundle;
@@ -217,6 +218,7 @@ public class JavaDocInfoGenerator {
       LOG.debug(text);
     }
 
+    text = StringUtil.replaceIgnoreCase(text, "<p/>", "<p></p>");
     return StringUtil.replace(text, "/>", ">");
   }
 
@@ -321,7 +323,7 @@ public class JavaDocInfoGenerator {
   }
 
   private static boolean generateClassSignature(StringBuilder buffer, PsiClass aClass, boolean generateLink) {
-    generateAnnotations(buffer, aClass, generateLink);
+    generateAnnotations(buffer, aClass, generateLink, true);
     String modifiers = PsiFormatUtil.formatModifiers(aClass, PsiFormatUtilBase.JAVADOC_MODIFIERS_ONLY);
     if (!modifiers.isEmpty()) {
       buffer.append(modifiers);
@@ -487,7 +489,7 @@ public class JavaDocInfoGenerator {
   }
 
   private static void generateFieldSignature(StringBuilder buffer, PsiField field, boolean generateLink) {
-    generateAnnotations(buffer, field, generateLink);
+    generateAnnotations(buffer, field, generateLink, true);
     String modifiers = PsiFormatUtil.formatModifiers(field, PsiFormatUtilBase.JAVADOC_MODIFIERS_ONLY);
     if (!modifiers.isEmpty()) {
       buffer.append(modifiers);
@@ -695,30 +697,38 @@ public class JavaDocInfoGenerator {
     }
   }
 
-  private static void generateAnnotations(@NonNls @NotNull StringBuilder buffer, @NotNull PsiModifierListOwner owner, boolean generateLink) {
+  private static void generateAnnotations(@NonNls @NotNull StringBuilder buffer,
+                                          @NotNull PsiModifierListOwner owner,
+                                          boolean generateLink,
+                                          boolean splitAnnotations) {
     final PsiModifierList ownerModifierList = owner.getModifierList();
     if (ownerModifierList == null) return;
-    generateAnnotations(buffer, owner, ownerModifierList.getAnnotations(), false, generateLink);
-    final PsiAnnotation[] externalAnnotations = ExternalAnnotationsManager.getInstance(owner.getProject()).findExternalAnnotations(owner);
-    if (externalAnnotations != null) {
-      generateAnnotations(buffer, owner, externalAnnotations, true, generateLink);
+    generateAnnotations(buffer, owner, ownerModifierList.getAnnotations(), false, generateLink, splitAnnotations);
+    PsiAnnotation[] externalAnnotations = ExternalAnnotationsManager.getInstance(owner.getProject()).findExternalAnnotations(owner);
+    if (externalAnnotations == null) {
+      externalAnnotations = new PsiAnnotation[]{};
     }
+    PsiAnnotation[] inferredAnnotations = InferredAnnotationsManager.getInstance(owner.getProject()).findInferredAnnotations(owner);
+    externalAnnotations = ArrayUtil.mergeArrays(externalAnnotations, inferredAnnotations, PsiAnnotation.ARRAY_FACTORY);
+    generateAnnotations(buffer, owner, externalAnnotations, true, generateLink, splitAnnotations);
   }
 
   private static void generateAnnotations(StringBuilder buffer,
                                           PsiModifierListOwner owner,
                                           PsiAnnotation[] annotations,
                                           boolean external,
-                                          boolean generateLink) {
+                                          boolean generateLink, boolean splitAnnotations) {
     PsiManager manager = owner.getManager();
 
     for (PsiAnnotation annotation : annotations) {
       final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
       if (nameReferenceElement == null) continue;
       final PsiElement resolved = nameReferenceElement.resolve();
+      boolean inferred = AnnotationUtil.isInferredAnnotation(annotation);
       if (resolved instanceof PsiClass) {
         final PsiClass annotationType = (PsiClass)resolved;
         if (AnnotationUtil.isAnnotated(annotationType, "java.lang.annotation.Documented", false)) {
+          if (inferred) buffer.append("<i>");
           final PsiClassType type = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(annotationType, PsiSubstitutor.EMPTY);
           buffer.append("@");
           generateType(buffer, type, owner, generateLink);
@@ -736,24 +746,27 @@ public class JavaDocInfoGenerator {
               }
               final PsiAnnotationMemberValue value = pair.getValue();
               if (value != null) {
-                buffer.append(value.getText());
+                buffer.append(XmlStringUtil.escapeString(value.getText()));
               }
             }
             buffer.append(")");
           }
+          if (inferred) buffer.append("</i>");
           buffer.append("&nbsp;");
         }
       } else if (external) {
-        buffer.append(annotation.getText());
+        if (inferred) buffer.append("<i>");
+        buffer.append(XmlStringUtil.escapeString(annotation.getText()));
         buffer.append("&nbsp;");
+        if (inferred) buffer.append("</i>");
       }
       else {
         buffer.append("<font color=red>");
-        buffer.append(annotation.getText());
+        buffer.append(XmlStringUtil.escapeString(annotation.getText()));
         buffer.append("</font>");
         buffer.append("&nbsp;");
       }
-      buffer.append("\n");
+      if (splitAnnotations) buffer.append("\n");
     }
   }
 
@@ -767,7 +780,7 @@ public class JavaDocInfoGenerator {
       buffer.append(modifiers);
       buffer.append(" ");
     }
-    generateAnnotations(buffer, parameter, true);
+    generateAnnotations(buffer, parameter, true, true);
     generateType(buffer, parameter.getType(), parameter);
     buffer.append(" ");
     buffer.append("<b>");
@@ -843,7 +856,7 @@ public class JavaDocInfoGenerator {
   }
 
   private static void generateMethodSignature(StringBuilder buffer, PsiMethod method, boolean generateLink) {
-    generateAnnotations(buffer, method, generateLink);
+    generateAnnotations(buffer, method, generateLink, true);
     String modifiers = PsiFormatUtil.formatModifiers(method, PsiFormatUtilBase.JAVADOC_MODIFIERS_ONLY);
     int indent = 0;
     if (!modifiers.isEmpty()) {
@@ -876,7 +889,7 @@ public class JavaDocInfoGenerator {
     PsiParameter[] parms = method.getParameterList().getParameters();
     for (int i = 0; i < parms.length; i++) {
       PsiParameter parm = parms[i];
-      generateAnnotations(buffer, parm, generateLink);
+      generateAnnotations(buffer, parm, generateLink, false);
       generateType(buffer, parm.getType(), method, generateLink);
       buffer.append("&nbsp;");
       if (parm.getName() != null) {

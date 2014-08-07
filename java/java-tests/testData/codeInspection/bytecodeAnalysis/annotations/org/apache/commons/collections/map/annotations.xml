@@ -1,0 +1,161 @@
+<root>
+  <item name="org.apache.commons.collections.map.AbstractHashedMap AbstractHashedMap(java.util.Map) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractHashedMap boolean isEqualKey(java.lang.Object, java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null,_-&gt;true&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractHashedMap boolean isEqualValue(java.lang.Object, java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null,_-&gt;true&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractHashedMap int entryHashCode(org.apache.commons.collections.map.AbstractHashedMap.HashEntry) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractHashedMap int hash(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractHashedMap java.lang.Object convertKey(java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null-&gt;!null&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractHashedMap java.lang.Object entryKey(org.apache.commons.collections.map.AbstractHashedMap.HashEntry) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractHashedMap java.lang.Object entryValue(org.apache.commons.collections.map.AbstractHashedMap.HashEntry) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractHashedMap java.lang.String toString()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractHashedMap org.apache.commons.collections.map.AbstractHashedMap.HashEntry createEntry(org.apache.commons.collections.map.AbstractHashedMap.HashEntry, int, java.lang.Object, java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractHashedMap org.apache.commons.collections.map.AbstractHashedMap.HashEntry entryNext(org.apache.commons.collections.map.AbstractHashedMap.HashEntry) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractHashedMap void destroyEntry(org.apache.commons.collections.map.AbstractHashedMap.HashEntry) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractHashedMap void doReadObject(java.io.ObjectInputStream) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractHashedMap void doWriteObject(java.io.ObjectOutputStream) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractHashedMap void putAll(java.util.Map) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractHashedMap void removeEntry(org.apache.commons.collections.map.AbstractHashedMap.HashEntry, int, org.apache.commons.collections.map.AbstractHashedMap.HashEntry) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractHashedMap void reuseEntry(org.apache.commons.collections.map.AbstractHashedMap.HashEntry, int, int, java.lang.Object, java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractHashedMap void updateEntry(org.apache.commons.collections.map.AbstractHashedMap.HashEntry, java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractHashedMap.EntrySet boolean contains(java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractHashedMap.EntrySet boolean remove(java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractHashedMap.EntrySetIterator EntrySetIterator(org.apache.commons.collections.map.AbstractHashedMap) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractHashedMap.HashEntry java.lang.String toString()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractHashedMap.HashIterator HashIterator(org.apache.commons.collections.map.AbstractHashedMap) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractHashedMap.HashIterator java.lang.String toString()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractHashedMap.HashMapIterator HashMapIterator(org.apache.commons.collections.map.AbstractHashedMap) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractHashedMap.KeySetIterator KeySetIterator(org.apache.commons.collections.map.AbstractHashedMap) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractHashedMap.ValuesIterator ValuesIterator(org.apache.commons.collections.map.AbstractHashedMap) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractLinkedMap AbstractLinkedMap(java.util.Map) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractLinkedMap org.apache.commons.collections.map.AbstractHashedMap.HashEntry createEntry(org.apache.commons.collections.map.AbstractHashedMap.HashEntry, int, java.lang.Object, java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractLinkedMap org.apache.commons.collections.map.AbstractLinkedMap.LinkEntry entryAfter(org.apache.commons.collections.map.AbstractLinkedMap.LinkEntry) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractLinkedMap org.apache.commons.collections.map.AbstractLinkedMap.LinkEntry entryBefore(org.apache.commons.collections.map.AbstractLinkedMap.LinkEntry) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractLinkedMap void addEntry(org.apache.commons.collections.map.AbstractHashedMap.HashEntry, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractLinkedMap void removeEntry(org.apache.commons.collections.map.AbstractHashedMap.HashEntry, int, org.apache.commons.collections.map.AbstractHashedMap.HashEntry) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractLinkedMap.EntrySetIterator EntrySetIterator(org.apache.commons.collections.map.AbstractLinkedMap) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractLinkedMap.KeySetIterator KeySetIterator(org.apache.commons.collections.map.AbstractLinkedMap) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractLinkedMap.LinkIterator LinkIterator(org.apache.commons.collections.map.AbstractLinkedMap) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractLinkedMap.LinkIterator java.lang.String toString()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractLinkedMap.LinkMapIterator LinkMapIterator(org.apache.commons.collections.map.AbstractLinkedMap) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractLinkedMap.ValuesIterator ValuesIterator(org.apache.commons.collections.map.AbstractLinkedMap) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.LRUMap LRUMap(java.util.Map) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.LRUMap LRUMap(java.util.Map, boolean) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.LRUMap boolean removeLRU(org.apache.commons.collections.map.AbstractLinkedMap.LinkEntry)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null-&gt;true;null-&gt;true&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.collections.map.LRUMap void doReadObject(java.io.ObjectInputStream) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.LRUMap void doWriteObject(java.io.ObjectOutputStream) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.LRUMap void moveToMRU(org.apache.commons.collections.map.AbstractLinkedMap.LinkEntry) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.LRUMap void readObject(java.io.ObjectInputStream) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.LRUMap void reuseMapping(org.apache.commons.collections.map.AbstractLinkedMap.LinkEntry, int, int, java.lang.Object, java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.LRUMap void updateEntry(org.apache.commons.collections.map.AbstractHashedMap.HashEntry, java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.map.LRUMap void writeObject(java.io.ObjectOutputStream) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+</root>

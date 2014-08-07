@@ -38,7 +38,6 @@ import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.ui.TreeSpeedSearch;
@@ -302,7 +301,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     result.addAll(copyActions);
     result.add(Separator.getInstance());
 
-    if (fromPopup || !(SystemInfo.isMac && Registry.is("ide.new.project.settings"))) {
+    if (fromPopup || !Registry.is("ide.new.project.settings")) {
       result.add(new MyFindUsagesAction(myTree));
     }
 

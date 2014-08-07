@@ -22,7 +22,7 @@ import java.io.InputStream;
 import java.util.Enumeration;
 import java.util.zip.ZipFile;
 
-/** @deprecated causes ZipFile leaks, do not use (to be removed in IDEA 15) */
+/** @deprecated causes ZipFile leaks, do not use (to be removed in IDEA 15) + can lead to crashes (IDEA-126550) */
 public interface JarFile {
   interface JarEntry {
     String getName();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,15 @@ import org.jetbrains.annotations.Nullable;
 
 public class ClassElement extends CompositeElement implements Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.ClassElement");
+
+  private static final TokenSet MODIFIERS_TO_REMOVE_IN_INTERFACE_BIT_SET = TokenSet.create(
+    PUBLIC_KEYWORD, ABSTRACT_KEYWORD, STATIC_KEYWORD, FINAL_KEYWORD, NATIVE_KEYWORD);
+  private static final TokenSet MODIFIERS_TO_REMOVE_IN_INTERFACE_BIT_SET_18_METHOD = TokenSet.create(
+    PUBLIC_KEYWORD, ABSTRACT_KEYWORD, FINAL_KEYWORD, NATIVE_KEYWORD);
+  private static final TokenSet MODIFIERS_TO_REMOVE_IN_ENUM_BIT_SET = TokenSet.create(
+    PUBLIC_KEYWORD, FINAL_KEYWORD);
+  private static final TokenSet ENUM_CONSTANT_LIST_ELEMENTS_BIT_SET = TokenSet.create(
+    ENUM_CONSTANT, COMMA, SEMICOLON);
 
   public ClassElement(IElementType type) {
     super(type);
@@ -181,19 +190,8 @@ public class ClassElement extends CompositeElement implements Constants {
 
   @Override
   public void deleteChildInternal(@NotNull ASTNode child) {
-    if (isEnum()) {
-      if (child.getElementType() == ENUM_CONSTANT) {
-        ASTNode next = PsiImplUtil.skipWhitespaceAndComments(child.getTreeNext());
-        if (next != null && next.getElementType() == COMMA) {
-          deleteChildInternal(next);
-        }
-        else {
-          ASTNode prev = PsiImplUtil.skipWhitespaceAndCommentsBack(child.getTreePrev());
-          if (prev != null && prev.getElementType() == COMMA) {
-            deleteChildInternal(prev);
-          }
-        }
-      }
+    if (isEnum() && child.getElementType() == ENUM_CONSTANT) {
+      JavaSourceUtil.deleteSeparatingComma(this, child);
     }
 
     if (child.getElementType() == FIELD) {
@@ -233,27 +231,6 @@ public class ClassElement extends CompositeElement implements Constants {
     return findChildByRole(ChildRole.AT) != null;
   }
 
-  private static final TokenSet MODIFIERS_TO_REMOVE_IN_INTERFACE_BIT_SET = TokenSet.create(
-    PUBLIC_KEYWORD, ABSTRACT_KEYWORD,
-    STATIC_KEYWORD, FINAL_KEYWORD,
-    NATIVE_KEYWORD
-  );
-
-  private static final TokenSet MODIFIERS_TO_REMOVE_IN_INTERFACE_BIT_SET_18_METHOD = TokenSet.create(
-    PUBLIC_KEYWORD, ABSTRACT_KEYWORD,
-    FINAL_KEYWORD,
-    NATIVE_KEYWORD
-  );
-
-  private static final TokenSet MODIFIERS_TO_REMOVE_IN_ENUM_BIT_SET = TokenSet.create(
-    PUBLIC_KEYWORD, FINAL_KEYWORD
-  );
-
-  private static final TokenSet ENUM_CONSTANT_LIST_ELEMENTS_BIT_SET = TokenSet.create(
-    ENUM_CONSTANT, COMMA, SEMICOLON
-  );
-
-
   @Override
   public ASTNode findChildByRole(int role) {
     assert ChildRole.isUnique(role);
@@ -266,10 +243,7 @@ public class ClassElement extends CompositeElement implements Constants {
         return PsiImplUtil.findDocComment(this);
 
       case ChildRole.ENUM_CONSTANT_LIST_DELIMITER:
-        if (!isEnum()) {
-          return null;
-        }
-        return findEnumConstantListDelimiter();
+        return isEnum() ? findEnumConstantListDelimiter() : null;
 
       case ChildRole.MODIFIER_LIST:
         return findChildByType(MODIFIER_LIST);

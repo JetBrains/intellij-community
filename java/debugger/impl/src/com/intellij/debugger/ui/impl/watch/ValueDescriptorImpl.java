@@ -484,7 +484,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   public boolean canSetValue() {
-    return !myIsSynthetic && isLvalue();
+    return myValueReady && !myIsSynthetic && isLvalue();
   }
 
   public String getValueLabel() {
@@ -534,4 +534,10 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     }
   }
 
+  public boolean canMark() {
+    if (!myValueReady) {
+      return false;
+    }
+    return getValue() instanceof ObjectReference;
+  }
 }

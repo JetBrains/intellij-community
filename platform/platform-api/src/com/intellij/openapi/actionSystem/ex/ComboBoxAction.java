@@ -47,6 +47,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
   private static final Icon DISABLED_ARROW_ICON = IconLoader.getDisabledIcon(ARROW_ICON);
 
   private boolean mySmallVariant = true;
+  private String myPopupTitle;
   private DataContext myDataContext;
 
   protected ComboBoxAction() {
@@ -77,6 +78,10 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     mySmallVariant = smallVariant;
   }
 
+  public void setPopupTitle(String popupTitle) {
+    myPopupTitle = popupTitle;
+  }
+
   @Override
   public void update(AnActionEvent e) {
     super.update(e);
@@ -105,10 +110,10 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     private boolean myMouseInside = false;
     private JBPopup myPopup;
     private boolean myForceTransparent = false;
-    private Boolean myForceEnabled = null;
 
     public ComboBoxButton(Presentation presentation) {
       myPresentation = presentation;
+      setEnabled(myPresentation.isEnabled());
       setModel(new MyButtonModel());
       setHorizontalAlignment(LEFT);
       setFocusable(false);
@@ -202,12 +207,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       }
     }
 
-    @Override
-    public void setEnabled(final boolean enabled) {
-      super.setEnabled(enabled);
-      myForceEnabled = enabled;
-    }
-
     public void setForceTransparent(boolean transparent) {
       myForceTransparent = transparent;
     }
@@ -247,7 +246,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       DataContext context = getDataContext();
       myDataContext = null;
       final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
-        null, group, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false, onDispose, getMaxRows());
+        myPopupTitle, group, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false, onDispose, getMaxRows());
       popup.setMinimumSize(new Dimension(getMinWidth(), getMinHeight()));
       return popup;
     }
@@ -277,7 +276,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
     private void initButton() {
       setIcon(myPresentation.getIcon());
-      setEnabled(myPresentation.isEnabled());
       setText(myPresentation.getText());
       updateTooltipText(myPresentation.getDescription());
       updateButtonSize();
@@ -378,7 +376,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       final Dimension size = getSize();
       final boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());
 
-      final Color textColor = (myForceEnabled == null ? myPresentation.isEnabled() : myForceEnabled)
+      final Color textColor = isEnabled()
                       ? UIManager.getColor("Panel.foreground")
                       : UIUtil.getInactiveTextColor();
       if (myForceTransparent) {

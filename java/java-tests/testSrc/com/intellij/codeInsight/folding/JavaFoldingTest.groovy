@@ -568,14 +568,20 @@ class Test {
 
   public void "test fold one-line methods"() {
     configure """class Foo {
+ @Override
  int someMethod() {
+   return 0;
+ }
+
+ int someOtherMethod(
+   int param) {
    return 0;
  }
 
 }"""
     PsiClass fooClass = JavaPsiFacade.getInstance(project).findClass('Foo', GlobalSearchScope.allScope(project))
     def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
-    assert regions.size() == 2
+    assert regions.size() == 3
     checkAccessorFolding(regions[0], regions[1], fooClass.methods[0])
   }
 
@@ -608,7 +614,7 @@ class Test {
   configure(testNow, shouldIgnoreRoots(), fourteen, pi, title, c, file);
  }
 
- pubic void configure(boolean testNow, boolean shouldIgnoreRoots, int times, float pi, String title, char terminate, File file) {
+ pubic void configure(boolean testNow, boolean shouldIgnoreRoots, int times, float pii, String title, char terminate, File file) {
   System.out.println();
   System.out.println();
  }
@@ -672,7 +678,7 @@ public class VarArgTest {
     assert regions[1].placeholderText == "test: 13"
   }
 
-  public void "test inline if argument length is one (EA-57555)"() {
+  public void "test do not inline if parameter length is one or two"() {
     def text = """
 public class CharSymbol {
 
@@ -681,7 +687,7 @@ public class CharSymbol {
     count(1, false);
   }
 
-  public void count(int test, boolean fast) {
+  public void count(int t, boolean fa) {
     int temp = test;
     boolean isFast = fast;
   }
@@ -689,13 +695,78 @@ public class CharSymbol {
 """
     configure text
     def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
+    assert regions.size() == 2
+  }
+
+  public void "test do not inline known subsequent parameter names"() {
+    def text = """
+public class Test {
+  public void main() {
+    test1(1, 2);
+    test2(1, 2);
+    test3(1, 2);
+    doTest("first", "second");
+  }
+
+  public void test1(int first, int second) {
+    int start = first;
+    int end = second;
+  }
+
+  public void test2(int key, int value) {
+    int start = key;
+    int end = value;
+  }
+
+  public void test3(int key, int value) {
+    int start = key;
+    int end = value;
+  }
+}
+"""
+    configure text
+    def regions = myFixture.editor.foldingModel.allFoldRegions
     assert regions.size() == 4
+  }
 
-    checkRangeOffsetByPositionInText(regions[1], text, "1")
-    assert regions[1].placeholderText == "test: 1"
+  public void "test do not inline paired ranged names"() {
+    def text = """
+public class CharSymbol {
 
-    checkRangeOffsetByPositionInText(regions[2], text, "false")
-    assert regions[2].placeholderText == "fast: false"
+  public void main() {
+    String s = "AAA";
+    int last = 3;
+
+    substring1(1, last);
+    substring2(1, last);
+    substring3(1, last);
+    substring4(1, last);
+  }
+
+  public void substring1(int beginIndex, int endIndex) {
+    int start = beginIndex;
+    int end = endIndex;
+  }
+
+  public void substring2(int startIndex, int endIndex) {
+    int start = startIndex;
+    int end = endIndex;
+  }
+
+  public void substring3(int from, int to) {
+    int start = from;
+    int end = to;
+  }
+
+  public void substring4(int first, int last) {
+    int start = first;
+    int end = last;
+  }
+}
+"""
+    configure text
+    def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
+    assert regions.size() == 5
   }
 
   public void "test inline names if literal expression can be assigned to method parameter"() {
@@ -727,13 +798,14 @@ public class CharSymbol {
     assert regions[3].placeholderText == 'seq: "Hi!"'
   }
 
-  public void "test inline negative numbers (IDEA-126753)"() {
+  public void "test inline negative and positive numbers"() {
     def text = """
 public class CharSymbol {
 
   public void main() {
     Object obj = new Object();
     count(-1, obj);
+    count(+1, obj);
   }
 
   public void count(int test, Object obj) {
@@ -744,10 +816,13 @@ public class CharSymbol {
 """
     configure text
     def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
-    assert regions.size() == 3
+    assert regions.size() == 4
 
     checkRangeOffsetByPositionInText(regions[1], text, "-1")
     assert regions[1].placeholderText == "test: -1"
+
+    checkRangeOffsetByPositionInText(regions[2], text, "+1")
+    assert regions[2].placeholderText == "test: +1"
   }
 
   public void "test inline constructor literal arguments names"() {
@@ -764,7 +839,7 @@ public class Test {
   }
 
   abstract class Checker {
-    Checker(boolean applyToFirst, boolean applyToSecond) {}
+    Checker(boolean isActive, boolean requestFocus) {}
     abstract void test();
   }
 }
@@ -773,8 +848,8 @@ public class Test {
     def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
     assert regions.length == 6
 
-    assert regions[1].placeholderText == "applyToFirst: true"
-    assert regions[2].placeholderText == "applyToSecond: false"
+    assert regions[1].placeholderText == "isActive: true"
+    assert regions[2].placeholderText == "requestFocus: false"
 
     checkRangeOffsetByPositionInText(regions[1], text, "true")
     checkRangeOffsetByPositionInText(regions[2], text, "false")

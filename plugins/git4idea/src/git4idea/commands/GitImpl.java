@@ -32,6 +32,7 @@ import git4idea.history.GitHistoryUtils;
 import git4idea.push.GitPushSpec;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
+import git4idea.reset.GitResetMode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -138,7 +139,7 @@ public class GitImpl implements Git {
     return run(new Computable<GitLineHandler>() {
       @Override
       public GitLineHandler compute() {
-        GitLineHandlerPasswordRequestAware handler = new GitLineHandlerPasswordRequestAware(project, parentDirectory, GitCommand.CLONE);
+        GitLineHandler handler = new GitLineHandler(project, parentDirectory, GitCommand.CLONE);
         handler.setStdoutSuppressed(false);
         handler.setUrl(url);
         handler.addParameters("--progress");
@@ -338,20 +339,26 @@ public class GitImpl implements Git {
 
   @Override
   @NotNull
-  public GitCommandResult resetHard(@NotNull GitRepository repository, @NotNull String revision) {
-    final GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.RESET);
-    handler.addParameters("--hard", revision);
-    return run(handler);
+  public GitCommandResult reset(@NotNull GitRepository repository, @NotNull GitResetMode mode, @NotNull String target,
+                                @NotNull GitLineHandlerListener... listeners) {
+    return reset(repository, mode.getArgument(), target, listeners);
   }
 
   @Override
   @NotNull
   public GitCommandResult resetMerge(@NotNull GitRepository repository, @Nullable String revision) {
+    return reset(repository, "--merge", revision);
+  }
+
+  @NotNull
+  private static GitCommandResult reset(@NotNull GitRepository repository, @NotNull String argument, @Nullable String target,
+                                        @NotNull GitLineHandlerListener... listeners) {
     final GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.RESET);
-    handler.addParameters("--merge");
-    if (revision != null) {
-      handler.addParameters(revision);
+    handler.addParameters(argument);
+    if (target != null) {
+      handler.addParameters(target);
     }
+    addListeners(handler, listeners);
     return run(handler);
   }
 
@@ -376,8 +383,7 @@ public class GitImpl implements Git {
     return runCommand(new Computable<GitLineHandler>() {
       @Override
       public GitLineHandler compute() {
-        final GitLineHandlerPasswordRequestAware h = new GitLineHandlerPasswordRequestAware(repository.getProject(), repository.getRoot(),
-                                                                                            GitCommand.PUSH);
+        final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.PUSH);
         h.setUrl(url);
         h.setSilent(false);
         h.setStdoutSuppressed(false);
@@ -454,8 +460,7 @@ public class GitImpl implements Git {
     return runCommand(new Computable<GitLineHandler>() {
       @Override
       public GitLineHandler compute() {
-        final GitLineHandlerPasswordRequestAware h = new GitLineHandlerPasswordRequestAware(repository.getProject(), repository.getRoot(),
-                                                                                            GitCommand.FETCH);
+        final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.FETCH);
         h.setUrl(url);
         h.addParameters(remote);
         h.addParameters(params);
@@ -520,13 +525,7 @@ public class GitImpl implements Git {
       });
 
       handler.runInCurrentThread(null);
-
       authFailed = handler.hasHttpAuthFailed();
-
-      if (handler instanceof GitLineHandlerPasswordRequestAware && ((GitLineHandlerPasswordRequestAware)handler).hadAuthRequest()) {
-        errorOutput.add("Authentication failed");
-      }
-
       success = !startFailed.get() && errorOutput.isEmpty() && (handler.isIgnoredErrorCode(exitCode.get()) || exitCode.get() == 0);
     }
     while (authFailed && authAttempt++ < 2);

@@ -45,7 +45,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.SafeFileOutputStream;
 import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import com.thoughtworks.xstream.io.xml.XppReader;
@@ -56,7 +58,6 @@ import org.xmlpull.v1.XmlSerializer;
 
 import java.awt.event.KeyEvent;
 import java.io.*;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 
@@ -64,6 +65,8 @@ import java.util.ListIterator;
  * @author gregsh
  */
 public class ConsoleHistoryController {
+
+  private static final int VERSION = 1;
 
   private static final Logger LOG = Logger.getInstance("com.intellij.execution.console.ConsoleHistoryController");
 
@@ -394,7 +397,15 @@ public class ConsoleHistoryController {
         }
       }
       catch (Exception ex) {
-        LOG.error(ex);
+        //noinspection ThrowableResultOfMethodCallIgnored
+        Throwable cause = ExceptionUtil.getRootCause(ex);
+        if (cause instanceof EOFException) {
+          LOG.warn("Failed to load " + myType + " console history from: " + file.getPath(), ex);
+          return false;
+        }
+        else {
+          LOG.error(ex);
+        }
       }
       finally {
         if (xmlReader != null) {
@@ -423,6 +434,7 @@ public class ConsoleHistoryController {
         }
         serializer.setOutput(os = new SafeFileOutputStream(file), CharsetToolkit.UTF8);
         saveHistory(serializer);
+        serializer.flush();
       }
       catch (Exception ex) {
         LOG.error(ex);
@@ -439,47 +451,58 @@ public class ConsoleHistoryController {
     }
 
     @Nullable
-    private String loadHistory(final HierarchicalStreamReader in, final String expectedId) {
+    private String loadHistory(HierarchicalStreamReader in, String expectedId) {
       if (!in.getNodeName().equals("console-history")) return null;
-      final String id = in.getAttribute("id");
+      int version = StringUtil.parseInt(in.getAttribute("version"), 0);
+      String id = in.getAttribute("id");
       if (!expectedId.equals(id)) return null;
-      final ArrayList<String> entries = new ArrayList<String>();
+      List<String> entries = ContainerUtil.newArrayList();
       String consoleContent = null;
       while (in.hasMoreChildren()) {
         in.moveDown();
         if ("history-entry".equals(in.getNodeName())) {
-          entries.add(in.getValue());
+          entries.add(StringUtil.notNullize(in.getValue()));
         }
         else if ("console-content".equals(in.getNodeName())) {
-          consoleContent = in.getValue();
+          consoleContent = StringUtil.notNullize(in.getValue());
         }
         in.moveUp();
       }
       for (ListIterator<String> iterator = entries.listIterator(entries.size()); iterator.hasPrevious(); ) {
-        final String entry = iterator.previous();
+        String entry = iterator.previous();
         getModel().addToHistory(entry);
       }
       return consoleContent;
     }
 
-    private void saveHistory(final XmlSerializer out) throws IOException {
+    private void saveHistory(XmlSerializer out) throws IOException {
       out.startDocument(CharsetToolkit.UTF8, null);
       out.startTag(null, "console-history");
+      out.attribute(null, "version", String.valueOf(VERSION));
       out.attribute(null, "id", myId);
-      for (String s : getModel().getHistory()) {
-        out.startTag(null, "history-entry");
-        out.text(s);
-        out.endTag(null, "history-entry");
+      try {
+        for (String s : getModel().getHistory()) {
+          textTag(out, "history-entry", s);
+        }
+        String current = myContent;
+        if (StringUtil.isNotEmpty(current)) {
+          textTag(out, "console-content", current);
+        }
       }
-      String current = myContent;
-      if (StringUtil.isNotEmpty(current)) {
-        out.startTag(null, "console-content");
-        out.text(current);
-        out.endTag(null, "console-content");
+      finally {
+        out.endTag(null, "console-history");
+        out.endDocument();
       }
-      out.endTag(null, "console-history");
-      out.endDocument();
     }
   }
 
+  private static void textTag(@NotNull XmlSerializer out, @NotNull String tag, @NotNull String text) throws IOException {
+    out.startTag(null, tag);
+    try {
+      out.cdsect(text);
+    }
+    finally {
+      out.endTag(null, tag);
+    }
+  }
 }

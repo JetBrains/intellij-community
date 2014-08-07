@@ -1,9 +1,9 @@
 """Execute files of Python code."""
 
-import imp, os, sys
+import imp, marshal, os, sys
 
 from coverage.backward import exec_code_object, open_source
-from coverage.misc import NoSource, ExceptionDuringRun
+from coverage.misc import ExceptionDuringRun, NoCode, NoSource
 
 
 try:
@@ -65,6 +65,8 @@ def run_python_module(modulename, args):
             openfile.close()
 
     # Finally, hand the file off to run_python_file for execution.
+    pathname = os.path.abspath(pathname)
+    args[0] = pathname
     run_python_file(pathname, args, package=packagename)
 
 
@@ -82,34 +84,22 @@ def run_python_file(filename, args, package=None):
     main_mod = imp.new_module('__main__')
     sys.modules['__main__'] = main_mod
     main_mod.__file__ = filename
-    main_mod.__package__ = package
+    if package:
+        main_mod.__package__ = package
     main_mod.__builtins__ = BUILTINS
 
-    # Set sys.argv and the first path element properly.
+    # Set sys.argv properly.
     old_argv = sys.argv
-    old_path0 = sys.path[0]
     sys.argv = args
-    sys.path[0] = os.path.abspath(os.path.dirname(filename))
 
     try:
-        # Open the source file.
-        try:
-            source_file = open_source(filename)
-        except IOError:
-            raise NoSource("No file to run: %r" % filename)
+        # Make a code object somehow.
+        if filename.endswith(".pyc") or filename.endswith(".pyo"):
+            code = make_code_from_pyc(filename)
+        else:
+            code = make_code_from_py(filename)
 
-        try:
-            source = source_file.read()
-        finally:
-            source_file.close()
-
-        # We have the source.  `compile` still needs the last line to be clean,
-        # so make sure it is, then compile a code object from it.
-        if source[-1] != '\n':
-            source += '\n'
-        code = compile(source, filename, "exec")
-
-        # Execute the source file.
+        # Execute the code object.
         try:
             exec_code_object(code, main_mod.__dict__)
         except SystemExit:
@@ -130,4 +120,52 @@ def run_python_file(filename, args, package=None):
 
         # Restore the old argv and path
         sys.argv = old_argv
-        sys.path[0] = old_path0
+
+def make_code_from_py(filename):
+    """Get source from `filename` and make a code object of it."""
+    # Open the source file.
+    try:
+        source_file = open_source(filename)
+    except IOError:
+        raise NoSource("No file to run: %r" % filename)
+
+    try:
+        source = source_file.read()
+    finally:
+        source_file.close()
+
+    # We have the source.  `compile` still needs the last line to be clean,
+    # so make sure it is, then compile a code object from it.
+    if not source or source[-1] != '\n':
+        source += '\n'
+    code = compile(source, filename, "exec")
+
+    return code
+
+
+def make_code_from_pyc(filename):
+    """Get a code object from a .pyc file."""
+    try:
+        fpyc = open(filename, "rb")
+    except IOError:
+        raise NoCode("No file to run: %r" % filename)
+
+    try:
+        # First four bytes are a version-specific magic number.  It has to
+        # match or we won't run the file.
+        magic = fpyc.read(4)
+        if magic != imp.get_magic():
+            raise NoCode("Bad magic number in .pyc file")
+
+        # Skip the junk in the header that we don't need.
+        fpyc.read(4)            # Skip the moddate.
+        if sys.version_info >= (3, 3):
+            # 3.3 added another long to the header (size), skip it.
+            fpyc.read(4)
+
+        # The rest of the file is the code object we want.
+        code = marshal.load(fpyc)
+    finally:
+        fpyc.close()
+
+    return code

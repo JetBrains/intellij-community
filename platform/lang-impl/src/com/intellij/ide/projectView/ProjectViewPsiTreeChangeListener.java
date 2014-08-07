@@ -125,8 +125,10 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
         updater.addSubtreeToUpdate(rootNode);
         return;
       }
-
-      updater.addSubtreeToUpdateByElement(element);
+      final PsiElement parent = element.getParent();
+      if (parent == null || !updater.addSubtreeToUpdateByElement(parent)) {
+        updater.addSubtreeToUpdateByElement(element);
+      }
     }
     else if (propertyName.equals(PsiTreeChangeEvent.PROP_FILE_TYPES)){
       updater.addSubtreeToUpdate(rootNode);

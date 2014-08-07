@@ -55,6 +55,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import com.sun.jdi.*;
 import com.sun.jdi.event.Event;
 import com.sun.jdi.event.ExceptionEvent;
@@ -485,7 +486,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
 
         try {
           buildVariables(stackDescriptor, evaluationContext);
-          if (classRenderer.SORT_ASCENDING) {
+          if (XDebuggerSettingsManager.getInstance().getDataViewSettings().isSortValues()) {
             Collections.sort(myChildren, NodeManagerImpl.getNodeComparator());
           }
         }

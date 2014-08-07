@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 package git4idea.branch
-import com.intellij.dvcs.test.MockVirtualFile
+
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.FilePathImpl
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.CurrentContentRevision
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Function
 import com.intellij.util.LineSeparator
@@ -35,12 +33,11 @@ import git4idea.config.GitVersionSpecialty
 import git4idea.repo.GitRepository
 import git4idea.test.GitPlatformTest
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 
 import java.util.regex.Matcher
 
-import static com.intellij.openapi.vcs.Executor.*
-import static git4idea.test.GitExecutor.cd
-import static git4idea.test.GitExecutor.git
+import static git4idea.test.GitExecutor.*
 import static git4idea.test.GitScenarios.*
 
 class GitBranchWorkerTest extends GitPlatformTest {
@@ -248,7 +245,7 @@ class GitBranchWorkerTest extends GitPlatformTest {
 
     List<Change> changes = null;
     checkoutOrMerge(operation, "feature", [
-      showSmartOperationDialog: { Project p, List<Change> cs, Collection<String> paths, String op, boolean force ->
+      showSmartOperationDialog: { Project p, List<Change> cs, Collection<String> paths, String op, String force ->
               changes = cs
               DialogWrapper.CANCEL_EXIT_CODE
             }
@@ -268,17 +265,6 @@ class GitBranchWorkerTest extends GitPlatformTest {
 
   static boolean newGitVersion() {
     return !GitVersionSpecialty.OLD_STYLE_OF_UNTRACKED_AND_LOCAL_CHANGES_WOULD_BE_OVERWRITTEN.existsIn(GitVersion.parse(git("version")));
-  }
-
-  Change[] changesFromFiles(Collection<String> paths) {
-    paths.collect {
-      toChange(it)
-    }
-  }
-
-  Change toChange(String relPath) {
-    // we don't care about the before revision
-    new Change(null, CurrentContentRevision.create(new FilePathImpl(new MockVirtualFile(myProjectRoot + "/" + relPath))))
   }
 
   public void "test agree to smart checkout should smart checkout"() {
@@ -345,7 +331,7 @@ class GitBranchWorkerTest extends GitPlatformTest {
     prepareLocalChangesOverwrittenBy(myUltimate)
 
     checkoutOrMerge(operation, "feature", [
-      showSmartOperationDialog: { Project p, List<Change> cs, Collection<String> paths, String op, boolean f
+      showSmartOperationDialog: { Project p, List<Change> cs, Collection<String> paths, String op, String force
         -> GitSmartOperationDialog.CANCEL_EXIT_CODE
       },
     ] as GitBranchUiHandler )
@@ -371,7 +357,7 @@ class GitBranchWorkerTest extends GitPlatformTest {
     def rollbackMsg = null
     checkoutOrMerge(operation, "feature", [
       showSmartOperationDialog       : {
-        Project p, List<Change> cs, Collection<String> paths, String op, boolean f -> GitSmartOperationDialog.CANCEL_EXIT_CODE
+        Project p, List<Change> cs, Collection<String> paths, String op, String f -> GitSmartOperationDialog.CANCEL_EXIT_CODE
       },
       notifyErrorWithRollbackProposal: { String t, String m, String rp -> rollbackMsg = m; false }
     ] as GitBranchUiHandler )
@@ -384,7 +370,7 @@ class GitBranchWorkerTest extends GitPlatformTest {
     prepareLocalChangesOverwrittenBy(myUltimate)
 
     def uiHandler = [
-      showSmartOperationDialog: { Project p, List<Change> cs, Collection<String> paths, String op, boolean force ->
+      showSmartOperationDialog: { Project p, List<Change> cs, Collection<String> paths, String op, String force ->
         GitSmartOperationDialog.FORCE_EXIT_CODE;
       },
     ] as GitBranchUiHandler
@@ -611,6 +597,39 @@ class GitBranchWorkerTest extends GitPlatformTest {
     assertEquals "Merge in ultimate should have been reset", ultimateTipAfterMerge, tip(myUltimate)
   }
 
+  public void test_checkout_in_detached_head() {
+    cd(myCommunity);
+    touch("file.txt", "some content");
+    add("file.txt");
+    commit("msg");
+    git(myCommunity, "checkout HEAD^");
+
+    checkoutBranch("master", []);
+    assertCurrentBranch("master");
+  }
+
+  // inspired by IDEA-127472
+  public void test_checkout_to_common_branch_when_branches_have_diverged() {
+    branchWithCommit(myUltimate, "feature", "feature-file.txt", "feature_content", false);
+    branchWithCommit(myCommunity, "newbranch", "newbranch-file.txt", "newbranch_content", false);
+    checkoutBranch("master", [])
+    assertCurrentBranch("master");
+  }
+
+  public void test_rollback_checkout_from_diverged_branches_should_return_to_proper_branches() {
+    branchWithCommit(myUltimate, "feature", "feature-file.txt", "feature_content", false);
+    branchWithCommit(myCommunity, "newbranch", "newbranch-file.txt", "newbranch_content", false);
+    unmergedFiles(myContrib)
+
+    checkoutBranch "master", [
+            showUnmergedFilesMessageWithRollback: { String s1, String s2 -> true },
+    ]
+
+    assertCurrentBranch(myUltimate, "feature");
+    assertCurrentBranch(myCommunity, "newbranch");
+    assertCurrentBranch(myContrib, "master");
+  }
+
   static def assertCurrentBranch(GitRepository repository, String name) {
     def curBranch = git(repository, "branch").split("\n").find { it -> it.contains("*") }.replace('*', ' ').trim()
     assertEquals("Current branch is incorrect in ${repository}", name, curBranch)
@@ -716,7 +735,7 @@ class GitBranchWorkerTest extends GitPlatformTest {
       @NotNull List<Change> changes,
       @NotNull Collection<String> paths,
       @NotNull String operation,
-      boolean isForcePossible) {
+      @Nullable String forceButton) {
       GitSmartOperationDialog.SMART_EXIT_CODE
     }
 

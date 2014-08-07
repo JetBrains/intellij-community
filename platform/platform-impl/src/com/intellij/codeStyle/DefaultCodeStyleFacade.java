@@ -19,6 +19,7 @@
  */
 package com.intellij.codeStyle;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.options.Configurable;
@@ -39,7 +40,7 @@ public class DefaultCodeStyleFacade extends CodeStyleFacade {
     return "\n";
   }
 
-  public int getRightMargin() {
+  public int getRightMargin(Language language) {
     return 80;
   }
 

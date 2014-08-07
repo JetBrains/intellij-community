@@ -18,14 +18,12 @@ package org.jetbrains.idea.svn.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -38,18 +36,21 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.ClientFactory;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.ProgressEvent;
+import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.dialogs.SelectCreateExternalTargetDialog;
+import org.jetbrains.idea.svn.properties.ExternalsDefinitionParser;
+import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.jetbrains.idea.svn.update.UpdateClient;
 import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.internal.wc.SVNExternal;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -100,9 +101,9 @@ public class CreateExternalAction extends DumbAwareAction {
       if (checkout) {
         // +-
         final UpdateClient client = vcs.getFactory(ioFile).createUpdateClient();
-        client.setEventHandler(new ISVNEventHandler() {
+        client.setEventHandler(new ProgressTracker() {
           @Override
-          public void handleEvent(SVNEvent event, double progress) throws SVNException {
+          public void consume(ProgressEvent event) throws SVNException {
           }
 
           @Override
@@ -111,7 +112,7 @@ public class CreateExternalAction extends DumbAwareAction {
             if (pi != null && pi.isCanceled()) throw new SVNCancelException();
           }
         });
-        client.doUpdate(ioFile, SVNRevision.HEAD, SVNDepth.UNKNOWN, false, false);
+        client.doUpdate(ioFile, SVNRevision.HEAD, Depth.UNKNOWN, false, false);
         vf.refresh(true, true, new Runnable() {
           @Override
           public void run() {
@@ -131,25 +132,24 @@ public class CreateExternalAction extends DumbAwareAction {
   public static boolean addToExternalProperty(@NotNull SvnVcs vcs, @NotNull File ioFile, String target, String url)
     throws SVNException, VcsException {
     ClientFactory factory = vcs.getFactory(ioFile);
-    SVNPropertyData propertyData = factory.createPropertyClient().getProperty(SvnTarget.fromFile(ioFile), SvnPropertyKeys.SVN_EXTERNALS,
+    PropertyValue propertyValue = factory.createPropertyClient().getProperty(SvnTarget.fromFile(ioFile), SvnPropertyKeys.SVN_EXTERNALS,
                                                                               false, SVNRevision.UNDEFINED);
     String newValue;
-    if (propertyData != null && propertyData.getValue() != null && ! StringUtil.isEmptyOrSpaces(propertyData.getValue().getString())) {
-      final SVNExternal[] externals = SVNExternal.parseExternals("Create External", propertyData.getValue().getString());
-      for (SVNExternal external : externals) {
-        if (Comparing.equal(external.getPath(), target)) {
-          AbstractVcsHelper
-            .getInstance(vcs.getProject()).showError(new VcsException("Selected destination conflicts with existing: " + external.toString()), "Create External");
-          return true;
-        }
+    if (propertyValue != null && !StringUtil.isEmptyOrSpaces(propertyValue.toString())) {
+      Map<String, String> externalsMap = ExternalsDefinitionParser.parseExternalsProperty(propertyValue.toString());
+      String externalsForTarget = externalsMap.get(target);
+
+      if (externalsForTarget != null) {
+        AbstractVcsHelper.getInstance(vcs.getProject()).showError(
+          new VcsException("Selected destination conflicts with existing: " + externalsForTarget), "Create External");
+        return true;
       }
       final String string = createExternalDefinitionString(url, target);
-      newValue = propertyData.getValue().getString().trim() + "\n" + string;
+      newValue = propertyValue.toString().trim() + "\n" + string;
     } else {
       newValue = createExternalDefinitionString(url, target);
     }
-    factory.createPropertyClient().setProperty(ioFile, SvnPropertyKeys.SVN_EXTERNALS, SVNPropertyValue.create(newValue), SVNDepth.EMPTY,
-                                               false);
+    factory.createPropertyClient().setProperty(ioFile, SvnPropertyKeys.SVN_EXTERNALS, PropertyValue.create(newValue), Depth.EMPTY, false);
     return false;
   }
 

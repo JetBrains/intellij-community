@@ -16,76 +16,21 @@
 
 package org.zmlx.hg4idea.action;
 
-import com.intellij.dvcs.DvcsUtil;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.dvcs.ui.VcsLogSingleCommitAction;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLog;
-import com.intellij.vcs.log.VcsLogDataKeys;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.HgVcs;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
 
-import java.util.List;
+public abstract class HgLogSingleCommitAction extends VcsLogSingleCommitAction<HgRepository> {
 
-/**
- * @author Nadya Zabrodina
- */
-public abstract class HgLogSingleCommitAction extends DumbAwareAction {
-
-  private static final Logger LOG = Logger.getInstance(HgLogSingleCommitAction.class);
-
-  protected abstract void actionPerformed(@NotNull HgRepository repository, @NotNull VcsFullCommitDetails commit);
-
+  @Nullable
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    Data data = Data.collect(e);
-    if (!data.isValid()) {
-      return;
-    }
-
-    List<VcsFullCommitDetails> details = data.log.getSelectedDetails();
-    if (details.size() != 1) {
-      return;
-    }
-    VcsFullCommitDetails commit = details.get(0);
-
-    HgRepositoryManager repositoryManager = ServiceManager.getService(data.project, HgRepositoryManager.class);
-    final HgRepository repository = repositoryManager.getRepositoryForRoot(commit.getRoot());
-    if (repository == null) {
-      DvcsUtil.noVcsRepositoryForRoot(LOG, commit.getRoot(), data.project, repositoryManager, HgVcs.getInstance(data.project));
-      return;
-    }
-
-    actionPerformed(repository, commit);
+  protected HgRepository getRepositoryForRoot(@NotNull Project project, @NotNull VirtualFile root) {
+    return ServiceManager.getService(project, HgRepositoryManager.class).getRepositoryForRoot(root);
   }
 
-  @Override
-  public void update(AnActionEvent e) {
-    Data data = Data.collect(e);
-    boolean enabled = data.isValid() && data.log.getSelectedCommits().size() == 1;
-    e.getPresentation().setVisible(data.isValid());
-    e.getPresentation().setEnabled(enabled);
-  }
-
-  private static class Data {
-    Project project;
-    VcsLog log;
-
-    static Data collect(AnActionEvent e) {
-      Data data = new Data();
-      data.project = e.getData(CommonDataKeys.PROJECT);
-      data.log = e.getData(VcsLogDataKeys.VSC_LOG);
-      return data;
-    }
-
-    boolean isValid() {
-      return project != null && log != null && DvcsUtil.logHasRootForVcs(log, HgVcs.getKey());
-    }
-  }
 }

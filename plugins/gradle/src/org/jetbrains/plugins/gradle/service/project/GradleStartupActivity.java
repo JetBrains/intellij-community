@@ -21,6 +21,11 @@ import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileTask;
+import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
@@ -30,6 +35,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.project.MavenResourceCompilerConfigurationGenerator;
+import org.jetbrains.plugins.gradle.config.GradleResourceCompilerConfigurationGenerator;
 import org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager;
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportBuilder;
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportProvider;
@@ -52,9 +59,22 @@ public class GradleStartupActivity implements StartupActivity {
   private static final String DO_NOT_SHOW_EVENT_DESCRIPTION = "do.not.show";
 
   @Override
-  public void runActivity(@NotNull Project project) {
+  public void runActivity(@NotNull final Project project) {
     configureBuildClasspath(project);
     showNotificationForUnlinkedGradleProject(project);
+    CompilerManager.getInstance(project).addBeforeTask(new CompileTask() {
+      @Override
+      public boolean execute(CompileContext context) {
+        AccessToken token = ReadAction.start();
+        try {
+          new GradleResourceCompilerConfigurationGenerator(project, context).generateBuildConfiguration();
+        }
+        finally {
+          token.finish();
+        }
+        return true;
+      }
+    });
   }
 
   private static void configureBuildClasspath(@NotNull final Project project) {

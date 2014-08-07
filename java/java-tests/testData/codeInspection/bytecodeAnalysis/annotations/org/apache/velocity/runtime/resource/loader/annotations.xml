@@ -1,0 +1,102 @@
+<root>
+  <item name="org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader boolean isSourceModified(org.apache.velocity.runtime.resource.Resource)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null-&gt;false;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader java.io.InputStream getResourceStream(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.resource.loader.DataSourceResourceLoader boolean isSourceModified(org.apache.velocity.runtime.resource.Resource) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.resource.loader.DataSourceResourceLoader java.io.InputStream getResourceStream(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.resource.loader.DataSourceResourceLoader java.sql.PreparedStatement getStatement(java.sql.Connection, java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.resource.loader.DataSourceResourceLoader long getLastModified(org.apache.velocity.runtime.resource.Resource) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.resource.loader.DataSourceResourceLoader long readLastModified(org.apache.velocity.runtime.resource.Resource, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.resource.loader.DataSourceResourceLoader void init(org.apache.commons.collections.ExtendedProperties) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.resource.loader.FileResourceLoader boolean isSourceModified(org.apache.velocity.runtime.resource.Resource) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.resource.loader.FileResourceLoader boolean resourceExists(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.runtime.resource.loader.FileResourceLoader java.io.File getFile(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.resource.loader.FileResourceLoader java.io.File getFile(java.lang.String, java.lang.String)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.resource.loader.FileResourceLoader java.io.InputStream getResourceStream(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.resource.loader.FileResourceLoader long getLastModified(org.apache.velocity.runtime.resource.Resource) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.resource.loader.FileResourceLoader void init(org.apache.commons.collections.ExtendedProperties) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.resource.loader.JarHolder JarHolder(org.apache.velocity.runtime.RuntimeServices, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.resource.loader.JarResourceLoader boolean isSourceModified(org.apache.velocity.runtime.resource.Resource)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null-&gt;true;null-&gt;true&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.runtime.resource.loader.JarResourceLoader java.io.InputStream getResourceStream(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.resource.loader.JarResourceLoader void init(org.apache.commons.collections.ExtendedProperties) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.resource.loader.JarResourceLoader void loadJar(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.resource.loader.ResourceLoader void commonInit(org.apache.velocity.runtime.RuntimeServices, org.apache.commons.collections.ExtendedProperties) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.resource.loader.ResourceLoaderFactory org.apache.velocity.runtime.resource.loader.ResourceLoader getLoader(org.apache.velocity.runtime.RuntimeServices, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.resource.loader.StringResourceLoader boolean isSourceModified(org.apache.velocity.runtime.resource.Resource) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.resource.loader.StringResourceLoader boolean resourceExists(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.runtime.resource.loader.StringResourceLoader java.io.InputStream getResourceStream(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.resource.loader.StringResourceLoader long getLastModified(org.apache.velocity.runtime.resource.Resource) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.resource.loader.StringResourceLoader void init(org.apache.commons.collections.ExtendedProperties) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.resource.loader.URLResourceLoader boolean isSourceModified(org.apache.velocity.runtime.resource.Resource)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;true&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.runtime.resource.loader.URLResourceLoader long getLastModified(org.apache.velocity.runtime.resource.Resource) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.resource.loader.URLResourceLoader void init(org.apache.commons.collections.ExtendedProperties) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+</root>

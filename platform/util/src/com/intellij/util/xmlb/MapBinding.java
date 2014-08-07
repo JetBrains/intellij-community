@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -35,22 +34,22 @@ import java.util.Set;
 import static com.intellij.util.xmlb.Constants.*;
 
 class MapBinding implements Binding {
-  private final Binding myKeyBinding;
-  private final Binding myValueBinding;
-  private final MapAnnotation myMapAnnotation;
   private static final Comparator<Object> KEY_COMPARATOR = new Comparator<Object>() {
+    @SuppressWarnings("unchecked")
     @Override
-    public int compare(final Object o1, final Object o2) {
+    public int compare(Object o1, Object o2) {
       if (o1 instanceof Comparable && o2 instanceof Comparable) {
         Comparable c1 = (Comparable)o1;
         Comparable c2 = (Comparable)o2;
         return c1.compareTo(c2);
       }
-
       return 0;
     }
   };
 
+  private final Binding myKeyBinding;
+  private final Binding myValueBinding;
+  private final MapAnnotation myMapAnnotation;
 
   public MapBinding(ParameterizedType type, Accessor accessor) {
     Type[] arguments = type.getActualTypeArguments();
@@ -69,7 +68,7 @@ class MapBinding implements Binding {
     Element m;
 
     if (myMapAnnotation == null || myMapAnnotation.surroundWithTag()) {
-      m = new Element(Constants.MAP);
+      m = new Element(MAP);
     }
     else {
       m = (Element)context;
@@ -92,14 +91,14 @@ class MapBinding implements Binding {
 
       if (kNode instanceof Text) {
         Text text = (Text)kNode;
-        entry.setAttribute(getKeyAttributeValue(), text.getText());
+        entry.setAttribute(getKeyAttributeName(), text.getText());
       }
       else {
         if (myMapAnnotation != null && !myMapAnnotation.surroundKeyWithTag()) {
           entry.addContent((Content)kNode);
         }
         else {
-          Element key = new Element(getKeyAttributeValue());
+          Element key = new Element(getKeyAttributeName());
           entry.addContent(key);
           key.addContent((Content)kNode);
         }
@@ -129,12 +128,12 @@ class MapBinding implements Binding {
     return myMapAnnotation == null ? ENTRY : myMapAnnotation.entryTagName();
   }
 
-  private String getValueAttributeName() {
-    return myMapAnnotation == null ? VALUE : myMapAnnotation.valueAttributeName();
+  private String getKeyAttributeName() {
+    return myMapAnnotation == null ? KEY : myMapAnnotation.keyAttributeName();
   }
 
-  private String getKeyAttributeValue() {
-    return myMapAnnotation == null ? KEY : myMapAnnotation.keyAttributeName();
+  private String getValueAttributeName() {
+    return myMapAnnotation == null ? VALUE : myMapAnnotation.valueAttributeName();
   }
 
   @Override
@@ -164,7 +163,7 @@ class MapBinding implements Binding {
 
       assert entry.getName().equals(getEntryAttributeName());
 
-      Attribute keyAttr = entry.getAttribute(getKeyAttributeValue());
+      Attribute keyAttr = entry.getAttribute(getKeyAttributeName());
       if (keyAttr != null) {
         k = myKeyBinding.deserialize(o, keyAttr);
       }
@@ -181,7 +180,7 @@ class MapBinding implements Binding {
           assert k != null : "no key found";
         }
         else {
-          final Object keyNode = entry.getChildren(getKeyAttributeValue()).get(0);
+          final Object keyNode = entry.getChildren(getKeyAttributeName()).get(0);
           k = myKeyBinding.deserialize(o, JDOMUtil.getContent((Element)keyNode));
         }
       }
@@ -223,7 +222,7 @@ class MapBinding implements Binding {
       return myMapAnnotation.entryTagName().equals(((Element)node).getName());
     }
 
-    return ((Element)node).getName().equals(Constants.MAP);
+    return ((Element)node).getName().equals(MAP);
   }
 
   @Override

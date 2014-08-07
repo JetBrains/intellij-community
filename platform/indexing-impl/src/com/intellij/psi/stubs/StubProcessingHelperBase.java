@@ -32,11 +32,19 @@ public abstract class StubProcessingHelperBase {
     return stub.getStubType();
   }
 
-  public <Psi extends PsiElement> boolean processStubsInFile(final Project project, final VirtualFile file, StubIdList value, final Processor<? super Psi> processor, Class<Psi> requiredClass) {
+  public <Psi extends PsiElement> boolean processStubsInFile(@NotNull final Project project,
+                                                             @NotNull final VirtualFile file,
+                                                             @NotNull StubIdList value,
+                                                             @NotNull final Processor<? super Psi> processor,
+                                                             @NotNull Class<Psi> requiredClass) {
     return processStubsInFile(project, file, value, processor, requiredClass, false);
   }
 
-  public <Psi extends PsiElement> boolean processStubsInFile(final Project project, final VirtualFile file, StubIdList value, final Processor<? super Psi> processor, Class<Psi> requiredClass, final boolean skipOnErrors) {
+  public <Psi extends PsiElement> boolean processStubsInFile(@NotNull final Project project,
+                                                             @NotNull final VirtualFile file,
+                                                             @NotNull StubIdList value,
+                                                             @NotNull final Processor<? super Psi> processor,
+                                                             @NotNull Class<Psi> requiredClass, final boolean skipOnErrors) {
     StubTree stubTree = null;
 
     PsiFile candidatePsiFile = PsiManager.getInstance(project).findFile(file);

@@ -113,7 +113,11 @@ public class AppEngineEnhancerBuilder extends ModuleLevelBuilder {
     List<String> classpath = new ArrayList<String>();
     classpath.add(extension.getToolsApiJarPath());
     classpath.add(PathManager.getJarPathForClass(EnhancerRunner.class));
+    boolean removeOrmJars = Boolean.parseBoolean(System.getProperty("jps.appengine.enhancer.remove.orm.jars", "true"));
     for (File file : JpsJavaExtensionService.dependencies(module).recursively().compileOnly().productionOnly().classes().getRoots()) {
+      if (removeOrmJars && FileUtil.isAncestor(new File(extension.getOrmLibPath()), file, true)) {
+        continue;
+      }
       classpath.add(file.getAbsolutePath());
     }
 

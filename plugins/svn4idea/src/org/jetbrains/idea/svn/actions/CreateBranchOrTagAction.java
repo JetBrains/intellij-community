@@ -37,6 +37,7 @@ import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.checkin.CommitEventHandler;
 import org.jetbrains.idea.svn.checkin.IdeaCommitHandler;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.CreateBranchOrTagDialog;
 import org.jetbrains.idea.svn.update.AutoSvnUpdater;
 import org.jetbrains.idea.svn.update.SingleRootSwitcher;
@@ -86,17 +87,17 @@ public class CreateBranchOrTagAction extends BasicAction {
         srcUrl = SVNURL.parseURIEncoded(dialog.getCopyFromUrl());
         dstSvnUrl = SVNURL.parseURIEncoded(dstURL);
         parentUrl = dstSvnUrl.removePathTail();
-
-        if (!dirExists(activeVcs, parentUrl)) {
-          int rc = Messages.showYesNoDialog(project, "The repository path '" + parentUrl + "' does not exist. Would you like to create it?",
-                                            "Branch or Tag", Messages.getQuestionIcon());
-          if (rc == Messages.NO) {
-            return;
-          }
-        }
       }
       catch (SVNException e) {
-        throw new VcsException(e);
+        throw new SvnBindException(e);
+      }
+
+      if (!dirExists(activeVcs, parentUrl)) {
+        int rc = Messages.showYesNoDialog(project, "The repository path '" + parentUrl + "' does not exist. Would you like to create it?",
+                                          "Branch or Tag", Messages.getQuestionIcon());
+        if (rc == Messages.NO) {
+          return;
+        }
       }
 
       Runnable copyCommand = new Runnable() {
@@ -145,8 +146,8 @@ public class CreateBranchOrTagAction extends BasicAction {
     }
   }
 
-  private static boolean dirExists(@NotNull final SvnVcs vcs, @NotNull final SVNURL url) throws SVNException {
-    final Ref<SVNException> excRef = new Ref<SVNException>();
+  private static boolean dirExists(@NotNull final SvnVcs vcs, @NotNull final SVNURL url) throws SvnBindException {
+    final Ref<SvnBindException> excRef = new Ref<SvnBindException>();
     final Ref<Boolean> resultRef = new Ref<Boolean>(Boolean.TRUE);
 
     final Runnable taskImpl = new Runnable() {
@@ -154,8 +155,8 @@ public class CreateBranchOrTagAction extends BasicAction {
         try {
           vcs.getInfo(url, SVNRevision.HEAD);
         }
-        catch (SVNException e) {
-          if (e.getErrorMessage().getErrorCode().equals(SVNErrorCode.RA_ILLEGAL_URL)) {
+        catch (SvnBindException e) {
+          if (e.contains(SVNErrorCode.RA_ILLEGAL_URL)) {
             resultRef.set(Boolean.FALSE);
           }
           else {

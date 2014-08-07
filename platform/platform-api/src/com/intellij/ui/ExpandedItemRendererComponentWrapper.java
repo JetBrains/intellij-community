@@ -19,6 +19,7 @@ import com.intellij.util.ui.AbstractLayoutManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 
 public class ExpandedItemRendererComponentWrapper extends JComponent {
@@ -39,5 +40,17 @@ public class ExpandedItemRendererComponentWrapper extends JComponent {
         rendererComponent.setBounds(i.left, i.top, Math.max(pref.width, size.width - i.left - i.right), size.height - i.top - i.bottom);
       }
     });
+  }
+
+  @Override
+  public void setBorder(Border border) {
+    if (getComponentCount() == 1) {
+      Component component = getComponent(0);
+      if (component instanceof JComponent) {
+        ((JComponent)component).setBorder(border);
+        return;
+      }
+    }
+    super.setBorder(border);
   }
 }

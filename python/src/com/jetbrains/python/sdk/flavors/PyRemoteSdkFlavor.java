@@ -57,6 +57,6 @@ public class PyRemoteSdkFlavor extends CPythonSdkFlavor {
 
   @Nullable
   private static String getExecutableName(String path) {
-    return RemoteFile.detectSystemByPath(path).createRemoteFile(path).getName();
+    return RemoteFile.createRemoteFile(path).getName();
   }
 }

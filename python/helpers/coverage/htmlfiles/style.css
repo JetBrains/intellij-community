@@ -24,8 +24,8 @@ html>body {
 
 /* Set base font size to 12/16 */
 p {
-    font-size: .75em;        /* 12/16 */
-    line-height: 1.3333em;   /* 16/12 */
+    font-size: .75em;           /* 12/16 */
+    line-height: 1.33333333em;  /* 16/12 */
     }
 
 table {
@@ -100,6 +100,31 @@ h2.stats {
 }
 .stats span.par.hide_run {
     border-color: #999 #ccc #ccc #999;
+}
+
+.stats span.run {
+    background: #ddffdd;
+}
+.stats span.exc {
+    background: #eeeeee;
+}
+.stats span.mis {
+    background: #ffdddd;
+}
+.stats span.hide_run {
+    background: #eeffee;
+}
+.stats span.hide_exc {
+    background: #f5f5f5;
+}
+.stats span.hide_mis {
+    background: #ffeeee;
+}
+.stats span.par {
+    background: #ffffaa;
+}
+.stats span.hide_par {
+    background: #ffffcc;
 }
 
 /* Help panel */

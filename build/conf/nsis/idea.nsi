@@ -342,7 +342,7 @@ FunctionEnd
 
 !insertmacro MUI_PAGE_WELCOME
 
-Page custom uninstallOldVersionDialog leaveUninstallOldVersionDialog
+Page custom uninstallOldVersionDialog
 
 Var control_fields
 Var max_fields
@@ -367,7 +367,7 @@ Page custom ConfirmDesktopShortcut
 !insertmacro MUI_PAGE_FINISH
 
 !define MUI_UNINSTALLER
-!insertmacro MUI_UNPAGE_CONFIRM
+;!insertmacro MUI_UNPAGE_CONFIRM
 UninstPage custom un.ConfirmDeleteSettings
 !insertmacro MUI_UNPAGE_INSTFILES
 
@@ -473,10 +473,10 @@ remove_previous_installation:
   CopyFiles "$3\bin\${PRODUCT_EXE_FILE}_copy" "$3\bin\${PRODUCT_EXE_FILE}"
   Delete "$3\bin\${PRODUCT_EXE_FILE}_copy"
   IfErrors 0 +3
-  MessageBox MB_YESNOCANCEL|MB_ICONQUESTION|MB_TOPMOST "$(application_running)" IDYES remove_previous_installation IDNO complete
+  MessageBox MB_OKCANCEL|MB_ICONQUESTION|MB_TOPMOST "$(application_running)" IDOK remove_previous_installation IDCANCEL complete
   goto complete
   ; uninstallation mode
-  !insertmacro INSTALLOPTIONS_READ $9 "UninstallOldVersions.ini" "Field 3" "State"
+  !insertmacro INSTALLOPTIONS_READ $9 "UninstallOldVersions.ini" "Field 2" "State"
   ${If} $9 == "1"
     ExecWait '"$3\bin\Uninstall.exe" /S'
   ${else}
@@ -518,8 +518,8 @@ FunctionEnd
 
 
 Function uninstallOldVersionDialog
-  StrCpy $control_fields 3
-  StrCpy $max_fields 10
+  StrCpy $control_fields 2
+  StrCpy $max_fields 13
   StrCpy $0 "HKLM"
   StrCpy $4 0
   ReserveFile "UninstallOldVersions.ini"
@@ -562,10 +562,11 @@ ${If} $8 > $control_fields
     StrCpy $2 ""
   !insertmacro MUI_HEADER_TEXT "$(uninstall_previous_installations_title)" "$(uninstall_previous_installations)"
   !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field 1" "Text" "$(uninstall_previous_installations_prompt)"
+  !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field 3" "Flags" "FOCUS"
   !insertmacro INSTALLOPTIONS_DISPLAY "UninstallOldVersions.ini"
   ;uninstall chosen installation(s)
 
-  StrCmp $2 "OK" loop finish
+  ;no disabled controls. StrCmp $2 "OK" loop finish
 loop:
   !insertmacro INSTALLOPTIONS_READ $0 "UninstallOldVersions.ini" "Field $8" "State"
   !insertmacro INSTALLOPTIONS_READ $3 "UninstallOldVersions.ini" "Field $8" "Text"
@@ -578,65 +579,6 @@ loop:
 finish:
 FunctionEnd
 
-
-Function leaveUninstallOldVersionDialog
-  Push $1
-  Push $4
-  !insertmacro INSTALLOPTIONS_READ $2 "UninstallOldVersions.ini" "Settings" "State"
-  StrCmp $2 2 enable_disable
-  Goto done
-
-enable_disable:
-  !insertmacro INSTALLOPTIONS_READ $0 "UninstallOldVersions.ini" "Field 2" "State"
-  StrCmp $0 1 enable disable
-enable:
-  StrCpy $1 ""
-  Goto setFlag
-disable:
-  Call setState
-  StrCpy $1 "DISABLED"
-
-setFlag:
-  Push $1
-  Call setFlags
-done:
-  Pop $4
-  Pop $1
-  StrCmp $2 0 skip_abort
-  Pop $2
-  Abort
-skip_abort:
-  StrCpy $2 "OK"
-FunctionEnd
-
-Function setFlags
-  Pop $1
-  !insertmacro INSTALLOPTIONS_READ $max_fields "UninstallOldVersions.ini" "Settings" "NumFields"
-  StrCpy $4 3
-  ; change flags of fields in according of master checkbox
-loop:
-  !insertmacro INSTALLOPTIONS_READ $1 "UninstallOldVersions.ini" "Field $4" "HWND"
-  EnableWindow $1 $0
-  !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field $4" "Flags" "$1"
-  IntOp $4 $4 + 1
-  ${If} $4 <= $max_fields
-    Goto loop
-  ${EndIf}
-FunctionEnd
-
-Function setState
-  !insertmacro INSTALLOPTIONS_READ $max_fields "UninstallOldVersions.ini" "Settings" "NumFields"
-  StrCpy $4 3
-  ; change state of fields in according of master checkbox
-loop:
-  !insertmacro INSTALLOPTIONS_READ $1 "UninstallOldVersions.ini" "Field $4" "HWND"
-  SendMessage $1 ${BM_SETCHECK} 0 "0"
-  !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field $4" "State" 0
-  IntOp $4 $4 + 1
-  ${If} $4 <= $max_fields
-    Goto loop
-  ${EndIf}
-FunctionEnd
 
 Function getInstallationPath
   Push $1
@@ -1054,8 +996,10 @@ FunctionEnd
 Function un.ConfirmDeleteSettings
   !insertmacro MUI_HEADER_TEXT "$(uninstall_options)" "$(uninstall_options_prompt)"
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 1" "Text" "$(prompt_delete_settings)"
-  !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 2" "Text" "$(confirm_delete_caches)"
-  !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 3" "Text" "$(confirm_delete_settings)"
+  !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 2" "Text" $INSTDIR
+  !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 3" "Text" "$(text_delete_settings)"
+  !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 4" "Text" "$(confirm_delete_caches)"
+  !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 5" "Text" "$(confirm_delete_settings)"
   !insertmacro INSTALLOPTIONS_DISPLAY "DeleteSettings.ini"
 FunctionEnd
 
@@ -1133,7 +1077,7 @@ Section "Uninstall"
   ; Uninstaller is in the \bin directory, we need upper level dir
   StrCpy $INSTDIR $INSTDIR\..
 
-  !insertmacro INSTALLOPTIONS_READ $R2 "DeleteSettings.ini" "Field 2" "State"
+  !insertmacro INSTALLOPTIONS_READ $R2 "DeleteSettings.ini" "Field 4" "State"
   DetailPrint "Data: $DOCUMENTS\..\${PRODUCT_SETTINGS_DIR}\"
   StrCmp $R2 1 "" skip_delete_caches
    ;find the path to caches (system) folder
@@ -1147,7 +1091,7 @@ Section "Uninstall"
 ;   RmDir /r $DOCUMENTS\..\${PRODUCT_SETTINGS_DIR}\system
 skip_delete_caches:
 
-  !insertmacro INSTALLOPTIONS_READ $R3 "DeleteSettings.ini" "Field 3" "State"
+  !insertmacro INSTALLOPTIONS_READ $R3 "DeleteSettings.ini" "Field 5" "State"
   StrCmp $R3 1 "" skip_delete_settings
     ;find the path to settings (config) folder
     StrCpy $0 "config"

@@ -37,15 +37,17 @@ public abstract class PyElementGenerator {
   public abstract PyStringLiteralExpression createStringLiteralAlreadyEscaped(String str);
 
 
-
-
   /**
    * Creates a string literal, adding appropriate quotes, properly escaping characters inside.
+   *
    * @param destination where the literal is destined to; used to determine the encoding.
    * @param unescaped   the string
-   * @return            a newly created literal
+   * @param preferUTF8 try to use UTF8 (would use ascii if false)
+   * @return a newly created literal
    */
-  public abstract PyStringLiteralExpression createStringLiteralFromString(@Nullable PsiFile destination, String unescaped);
+  public abstract PyStringLiteralExpression createStringLiteralFromString(@Nullable PsiFile destination, String unescaped,
+                                                                          boolean preferUTF8);
+
   public abstract PyStringLiteralExpression createStringLiteralFromString(@NotNull String unescaped);
 
   public abstract PyStringLiteralExpression createStringLiteral(@NotNull PyStringLiteralExpression oldElement, @NotNull String unescaped);
@@ -59,11 +61,11 @@ public abstract class PyElementGenerator {
   public abstract PyBinaryExpression createBinaryExpression(String s, PyExpression expr, PyExpression listLiteral);
 
   /**
-   * @deprecated  use the overload with language level specified
    * @param text the text to create an expression from
    * @return the expression
+   * @deprecated use the overload with language level specified
    */
-  public abstract  PyExpression createExpressionFromText(String text);
+  public abstract PyExpression createExpressionFromText(String text);
 
   public abstract PyExpression createExpressionFromText(final LanguageLevel languageLevel, String text);
 
@@ -71,9 +73,9 @@ public abstract class PyElementGenerator {
    * Adds elements to list inserting required commas.
    * Method is like {@link #insertItemIntoList(PyElement, PyExpression, PyExpression)} but does not add unneeded commas.
    *
-   * @param list where to add
+   * @param list      where to add
    * @param afterThis after which element it should be added (null for add to the head)
-   * @param toInsert what to insert
+   * @param toInsert  what to insert
    * @return newly inserted element
    */
   @NotNull
@@ -92,7 +94,10 @@ public abstract class PyElementGenerator {
 
   public abstract PyImportElement createImportElement(final LanguageLevel languageLevel, String name);
 
-  public abstract PyFunction createProperty(final LanguageLevel languageLevel, String propertyName, String fieldName, AccessDirection accessDirection);
+  public abstract PyFunction createProperty(final LanguageLevel languageLevel,
+                                            String propertyName,
+                                            String fieldName,
+                                            AccessDirection accessDirection);
 
   @NotNull
   public abstract <T> T createFromText(LanguageLevel langLevel, Class<T> aClass, final String text);
@@ -103,6 +108,7 @@ public abstract class PyElementGenerator {
   /**
    * Creates an arbitrary PSI element from text, by creating a bigger construction and then cutting the proper subelement.
    * Will produce all kinds of exceptions if the path or class would not match the PSI tree.
+   *
    * @param langLevel the language level to use for parsing the text
    * @param aClass    class of the PSI element; may be an interface not descending from PsiElement, as long as target node can be cast to it
    * @param text      text to parse
@@ -122,8 +128,15 @@ public abstract class PyElementGenerator {
   public abstract PsiFile createDummyFile(LanguageLevel langLevel, String contents);
 
   public abstract PyExpressionStatement createDocstring(String content);
+
   public abstract PyPassStatement createPassStatement();
 
   @NotNull
   public abstract PyDecoratorList createDecoratorList(@NotNull final String... decoratorTexts);
+
+  /**
+   * Creates new line whitespace
+   */
+  @NotNull
+  public abstract PsiElement createNewLine();
 }

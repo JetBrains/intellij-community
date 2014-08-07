@@ -36,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.List;
 
 /**
  * @author maxim
@@ -79,7 +80,7 @@ public class UserColorLookup extends LookupElementDecorator<LookupElement> {
 
     context.getDocument().deleteString(context.getStartOffset(), context.getTailOffset());
 
-    ColorPickerListener[] listeners = ColorPickerListenerFactory.createListenersFor(element);
+    List<ColorPickerListener> listeners = ColorPickerListenerFactory.createListenersFor(element);
     Color color = ColorChooser.chooseColor(WindowManager.getInstance().suggestParentWindow(context.getProject()),
                                            XmlBundle.message("choose.color.dialog.title"), myColorAtCaret, true, listeners, true);
 

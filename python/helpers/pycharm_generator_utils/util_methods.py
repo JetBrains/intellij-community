@@ -75,6 +75,47 @@ class __generator(object):
 """
     return txt
 
+def create_function():
+    txt = """
+class __function(object):
+    '''A mock class representing function type.'''
+
+    def __init__(self):
+        self.__name__ = ''
+        self.__doc__ = ''
+        self.__dict__ = ''
+        self.__module__ = ''
+"""
+    if version[0] == 2:
+        txt += """
+        self.func_defaults = {}
+        self.func_globals = {}
+        self.func_closure = None
+        self.func_code = None
+        self.func_name = ''
+        self.func_doc = ''
+        self.func_dict = ''
+"""
+    if version[0] >= 3 or (version[0] == 2 and version[1] >= 6):
+        txt += """
+        self.__defaults__ = {}
+        self.__globals__ = {}
+        self.__closure__ = None
+        self.__code__ = None
+        self.__name__ = ''
+"""
+    if version[0] >= 3:
+        txt += """
+        self.__annotations__ = {}
+        self.__kwdefaults__ = {}
+"""
+    if version[0] >= 3 and version[1] >= 3:
+        txt += """
+        self.__qualname__ = ''
+"""
+    return txt
+
+
 def _searchbases(cls, accum):
     # logic copied from inspect.py
     if cls not in accum:

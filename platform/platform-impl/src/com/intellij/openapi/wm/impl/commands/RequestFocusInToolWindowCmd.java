@@ -184,7 +184,7 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
             }).notify(result);
           }
           else {
-            myManager.getFocusManager().requestFocus(new FocusCommand.ByComponent(c, myToolWindow.getComponent()), myForced)
+            myManager.getFocusManager().requestFocus(new FocusCommand.ByComponent(c, myToolWindow.getComponent(), new Exception()), myForced)
               .doWhenProcessed(new Runnable() {
                 @Override
                 public void run() {

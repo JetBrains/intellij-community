@@ -165,7 +165,7 @@ public class ArrangementMatchingRulesControl extends JBTable {
     }
 
     final List<ArrangementSectionRule> result = ContainerUtil.newArrayList();
-    final List<StdArrangementMatchRule> currentRules = ContainerUtil.newArrayList();
+    final List<StdArrangementMatchRule> buffer = ContainerUtil.newArrayList();
     String currentSectionStart = null;
     for (int i = 0; i < getModel().getSize(); i++) {
       Object element = getModel().getElementAt(i);
@@ -174,15 +174,12 @@ public class ArrangementMatchingRulesControl extends JBTable {
           mySectionRuleManager == null ? null : mySectionRuleManager.getSectionRuleData((StdArrangementMatchRule)element);
         if (sectionRule != null) {
           if (sectionRule.isSectionStart()) {
-            if (currentSectionStart != null) {
-              result.add(ArrangementSectionRule.create(currentSectionStart, null, currentRules));
-              currentRules.clear();
-            }
+            appendBufferedSectionRules(result, buffer, currentSectionStart);
             currentSectionStart = sectionRule.getText();
           }
           else {
-            result.add(ArrangementSectionRule.create(StringUtil.notNullize(currentSectionStart), sectionRule.getText(), currentRules));
-            currentRules.clear();
+            result.add(ArrangementSectionRule.create(StringUtil.notNullize(currentSectionStart), sectionRule.getText(), buffer));
+            buffer.clear();
             currentSectionStart = null;
           }
         }
@@ -190,15 +187,32 @@ public class ArrangementMatchingRulesControl extends JBTable {
           result.add(ArrangementSectionRule.create((StdArrangementMatchRule)element));
         }
         else {
-          currentRules.add((StdArrangementMatchRule)element);
+          buffer.add((StdArrangementMatchRule)element);
         }
       }
     }
 
-    if (currentSectionStart != null) {
-      result.add(ArrangementSectionRule.create(currentSectionStart, null, currentRules));
-    }
+    appendBufferedSectionRules(result, buffer, currentSectionStart);
     return result;
+  }
+
+  private static void appendBufferedSectionRules(@NotNull List<ArrangementSectionRule> result,
+                                                 @NotNull List<StdArrangementMatchRule> buffer,
+                                                 @Nullable String currentSectionStart) {
+    if (currentSectionStart == null) {
+      return;
+    }
+
+    if (buffer.isEmpty()) {
+      result.add(ArrangementSectionRule.create(currentSectionStart, null));
+    }
+    else {
+      result.add(ArrangementSectionRule.create(currentSectionStart, null, buffer.get(0)));
+      for (int j = 1; j < buffer.size(); j++) {
+        result.add(ArrangementSectionRule.create(buffer.get(j)));
+      }
+      buffer.clear();
+    }
   }
 
   @Override

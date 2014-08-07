@@ -275,10 +275,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           final PsiIfStatement ifStmt = extractIfStatement(body);
 
           String foreEachText = wrapInBlock(body);
-          String iterated = iteratedValue instanceof PsiCallExpression || 
-                            iteratedValue instanceof PsiReferenceExpression ||
-                            iteratedValue instanceof PsiQualifiedExpression ||
-                            iteratedValue instanceof PsiParenthesizedExpression ? iteratedValue.getText() : "(" + iteratedValue.getText() + ")";
+          String iterated = getIteratedValueText(iteratedValue);
           if (ifStmt != null) {
             final PsiExpression condition = ifStmt.getCondition();
             if (condition != null) {
@@ -359,7 +356,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
           final PsiIfStatement ifStatement = extractIfStatement(body);
           final PsiMethodCallExpression methodCallExpression = extractAddCall(body);
-          String iteration = iteratedValue.getText() + ".stream()";
+          String iteration = getIteratedValueText(iteratedValue) + ".stream()";
           if (ifStatement != null) {
             final PsiExpression condition = ifStatement.getCondition();
             if (condition != null) {
@@ -441,6 +438,13 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     private static boolean isIdentityMapping(PsiParameter parameter, PsiExpression mapperCall) {
       return mapperCall instanceof PsiReferenceExpression && ((PsiReferenceExpression)mapperCall).resolve() == parameter;
     }
+  }
+
+  private static String getIteratedValueText(PsiExpression iteratedValue) {
+    return iteratedValue instanceof PsiCallExpression ||
+           iteratedValue instanceof PsiReferenceExpression ||
+           iteratedValue instanceof PsiQualifiedExpression ||
+           iteratedValue instanceof PsiParenthesizedExpression ? iteratedValue.getText() : "(" + iteratedValue.getText() + ")";
   }
 
   public static PsiIfStatement extractIfStatement(PsiStatement body) {

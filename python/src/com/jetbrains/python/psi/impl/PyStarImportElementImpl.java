@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.psi.impl;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
@@ -50,12 +52,24 @@ public class PyStarImportElementImpl extends PyElementImpl implements PyStarImpo
       for (PsiElement importedFile : new HashSet<PsiElement>(importedFiles)) { // resolver gives lots of duplicates
         final PsiElement source = PyUtil.turnDirIntoInit(importedFile);
         if (source instanceof PyFile) {
-          chain.add(((PyFile) source).iterateNames());
+          final PyFile sourceFile = (PyFile)source;
+          chain.add(filterStarImportableNames(sourceFile.iterateNames(), sourceFile));
         }
       }
       return chain;
     }
     return Collections.emptyList();
+  }
+
+  @NotNull
+  private static Iterable<PyElement> filterStarImportableNames(@NotNull Iterable<PyElement> declaredNames, @NotNull final PyFile file) {
+    return Iterables.filter(declaredNames, new Predicate<PyElement>() {
+      @Override
+      public boolean apply(@Nullable PyElement input) {
+        final String name = input != null ? input.getName() : null;
+        return name != null && PyUtil.isStarImportableFrom(name, file);
+      }
+    });
   }
 
   @Nullable
@@ -74,11 +88,7 @@ public class PyStarImportElementImpl extends PyElementImpl implements PyStarImpo
           final List<? extends RatedResolveResult> results = moduleType.resolveMember(name, null, AccessDirection.READ,
                                                                                       PyResolveContext.defaultContext());
           final PsiElement result = results != null && !results.isEmpty() ? results.get(0).getElement() : null;
-          if (result != null) {
-            final List<String> all = sourceFile.getDunderAll();
-            if (all != null && !all.contains(name)) {
-              continue;
-            }
+          if (result != null && PyUtil.isStarImportableFrom(name, sourceFile) ) {
             return result;
           }
         }

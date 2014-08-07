@@ -24,10 +24,16 @@ public class MavenWorkspaceSettings {
   public MavenImportingSettings importingSettings = new MavenImportingSettings();
 
   public List<String> enabledProfiles = new ArrayList<String>();
+  public List<String> disabledProfiles = new ArrayList<String>();
 
   public void setEnabledProfiles(Collection<String> profiles) {
     enabledProfiles.clear();
     enabledProfiles.addAll(profiles);
+  }
+
+  public void setDisabledProfiles(Collection<String> profiles) {
+    disabledProfiles.clear();
+    disabledProfiles.addAll(profiles);
   }
 
 }

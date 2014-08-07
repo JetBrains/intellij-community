@@ -39,8 +39,7 @@ import java.util.List;
  * User: cdr
  */
 public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
-  public DiffLog() {
-  }
+  public DiffLog() { }
 
   private abstract static class LogEntry {
     protected LogEntry() {
@@ -58,7 +57,6 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
       entry.doActualPsiChange(file, astDiffBuilder);
     }
     file.subtreeChanged();
-
     return astDiffBuilder.getEvent();
   }
 
@@ -83,7 +81,6 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
   @Override
   public void nodeDeleted(@NotNull ASTNode oldParent, @NotNull ASTNode oldNode) {
     myEntries.add(new DeleteEntry(oldParent, oldNode));
-
   }
 
   @Override
@@ -126,14 +123,12 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
 
       astDiffBuilder.nodeReplaced(oldNode, newNode);
 
-      /////////////////
       ((TreeElement)newNode).clearCaches();
       if (!(newNode instanceof FileElement)) {
         ((CompositeElement)newNode.getTreeParent()).subtreeChanged();
       }
 
       DebugUtil.checkTreeStructure(parent);
-
     }
   }
 
@@ -168,7 +163,6 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
       ((CompositeElement)parent).subtreeChanged();
 
       DebugUtil.checkTreeStructure(parent);
-
     }
   }
 
@@ -222,7 +216,6 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
 
       DebugUtil.checkTreeStructure(myOldParent);
     }
-
   }
 
   private static PsiElement getPsi(ASTNode node, PsiFile file) {

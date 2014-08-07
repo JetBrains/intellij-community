@@ -74,6 +74,7 @@ public class AllIcons {
     public static final Icon Forward = IconLoader.getIcon("/actions/forward.png"); // 16x16
     public static final Icon GC = IconLoader.getIcon("/actions/gc.png"); // 16x16
     public static final Icon Get = IconLoader.getIcon("/actions/get.png"); // 16x16
+    public static final Icon GroupByFile = IconLoader.getIcon("/actions/GroupByFile.png"); // 16x16
     public static final Icon GroupByMethod = IconLoader.getIcon("/actions/groupByMethod.png"); // 16x16
     public static final Icon GroupByModule = IconLoader.getIcon("/actions/GroupByModule.png"); // 16x16
     public static final Icon GroupByModuleGroup = IconLoader.getIcon("/actions/GroupByModuleGroup.png"); // 16x16
@@ -458,6 +459,9 @@ public class AllIcons {
     public static final Icon Pin_tab = IconLoader.getIcon("/general/pin_tab.png"); // 16x16
     public static final Icon PluginManager = IconLoader.getIcon("/general/pluginManager.png"); // 32x32
     public static final Icon Progress = IconLoader.getIcon("/general/progress.png"); // 8x10
+    public static final Icon ProjectConfigurable = IconLoader.getIcon("/general/projectConfigurable.png"); // 9x9
+    public static final Icon ProjectConfigurableBanner = IconLoader.getIcon("/general/projectConfigurableBanner.png"); // 9x9
+    public static final Icon ProjectConfigurableSelected = IconLoader.getIcon("/general/projectConfigurableSelected.png"); // 9x9
     public static final Icon ProjectSettings = IconLoader.getIcon("/general/projectSettings.png"); // 16x16
     public static final Icon ProjectStructure = IconLoader.getIcon("/general/projectStructure.png"); // 16x16
     public static final Icon ProjectTab = IconLoader.getIcon("/general/projectTab.png"); // 16x16

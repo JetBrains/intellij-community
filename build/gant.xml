@@ -15,6 +15,12 @@
     <fileset dir="${project.home}/build/kotlinc/jps" erroronmissingdir="false">
       <include name="*.jar"/>
     </fileset>
+    <fileset dir="${project.home}/build/kotlinc/lib" erroronmissingdir="false">
+      <include name="kotlin-runtime.jar"/>
+    </fileset>
+    <fileset dir="${project.home}/build/kotlinc/plugin" erroronmissingdir="false">
+      <include name="kotlin-plugin.jar"/>
+    </fileset>
     <fileset dir="${idea.lib}">
        <include name="jdom.jar"/>
        <include name="log4j.jar"/>

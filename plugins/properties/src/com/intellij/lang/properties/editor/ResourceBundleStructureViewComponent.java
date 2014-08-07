@@ -29,14 +29,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.ui.PopupHandler;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.StringSelection;
@@ -79,13 +76,7 @@ class ResourceBundleStructureViewComponent extends PropertiesGroupingStructureVi
     } else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       final ResourceBundleEditorViewElement selectedElement = ((ResourceBundleEditor)getFileEditor()).getSelectedElement();
       if (selectedElement != null) {
-        final Project project = CommonDataKeys.PROJECT.getData(this);
-        if (project != null) {
-          final PsiElement[] psiElements = selectedElement.getPsiElements(project);
-          if (psiElements != null) {
-            return psiElements;
-          }
-        }
+        return selectedElement.getPsiElements();
       }
     } else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       final PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(this);

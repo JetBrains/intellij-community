@@ -290,7 +290,10 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
       }
     }
     else target.append("(").append(paramText).append(")"); // tuple is ok as is
-    element.replace(elementGenerator.createExpressionFromText(LanguageLevel.forElement(element), target.toString()));
+    // Correctly handle multiline implicitly concatenated string literals (PY-9176)
+    target.insert(0, '(').append(')');
+    final PyExpression parenthesized = elementGenerator.createExpressionFromText(LanguageLevel.forElement(element), target.toString());
+    element.replace(sure(((PyParenthesizedExpression)parenthesized).getContainedExpression()));
   }
 
   private static String getSeparator(PyStringLiteralExpression leftExpression) {

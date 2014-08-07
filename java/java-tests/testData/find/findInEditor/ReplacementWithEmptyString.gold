@@ -3,8 +3,7 @@ myStringToFind =
 myStringToReplace =
 isReplaceState =false
 isWholeWordsOnly =false
-isInStringLiterals =false
-isInComments =false
+searchContext =ANY
 isFromCursor =true
 isForward =true
 isGlobal =true
@@ -22,6 +21,7 @@ isWithSubdirectories =true
 fileFilter =null
 moduleName =null
 customScopeName =null
+searchInProjectFiles =false
 
 --
 
@@ -33,8 +33,7 @@ myStringToFind =a
 myStringToReplace =
 isReplaceState =false
 isWholeWordsOnly =false
-isInStringLiterals =false
-isInComments =false
+searchContext =ANY
 isFromCursor =true
 isForward =true
 isGlobal =true
@@ -52,6 +51,7 @@ isWithSubdirectories =true
 fileFilter =null
 moduleName =null
 customScopeName =null
+searchInProjectFiles =false
 
 --
 
@@ -65,8 +65,7 @@ myStringToFind =a
 myStringToReplace =
 isReplaceState =true
 isWholeWordsOnly =false
-isInStringLiterals =false
-isInComments =false
+searchContext =ANY
 isFromCursor =true
 isForward =true
 isGlobal =true
@@ -84,6 +83,7 @@ isWithSubdirectories =true
 fileFilter =null
 moduleName =null
 customScopeName =null
+searchInProjectFiles =false
 
 --
 Replacement Preview: <Empty string>
@@ -99,8 +99,7 @@ myStringToFind =a
 myStringToReplace =
 isReplaceState =true
 isWholeWordsOnly =false
-isInStringLiterals =false
-isInComments =false
+searchContext =ANY
 isFromCursor =true
 isForward =true
 isGlobal =true
@@ -118,6 +117,7 @@ isWithSubdirectories =true
 fileFilter =null
 moduleName =null
 customScopeName =null
+searchInProjectFiles =false
 
 --
 

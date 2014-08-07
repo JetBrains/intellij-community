@@ -21,12 +21,14 @@ import com.intellij.openapi.vcs.AreaMap;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.PairProcessor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.dialogs.MergeContext;
+import org.jetbrains.idea.svn.properties.PropertyConsumer;
+import org.jetbrains.idea.svn.properties.PropertyData;
+import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
-import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -61,20 +63,20 @@ public class OneRecursiveShotMergeInfoWorker implements MergeInfoWorker {
   }
   
   public void prepare() throws VcsException {
-    final SVNDepth depth = myMergeContext.getVcs().getSvnConfiguration().isCheckNestedForQuickMerge() ? SVNDepth.INFINITY : SVNDepth.EMPTY;
-    ISVNPropertyHandler handler = new ISVNPropertyHandler() {
-      public void handleProperty(File path, SVNPropertyData property) throws SVNException {
+    final Depth depth = Depth.allOrEmpty(myMergeContext.getVcs().getSvnConfiguration().isCheckNestedForQuickMerge());
+    PropertyConsumer handler = new PropertyConsumer() {
+      public void handleProperty(File path, PropertyData property) throws SVNException {
         final String key = keyFromFile(path);
         synchronized (myLock) {
           myDataMap.put(key, SVNMergeInfoUtil
-            .parseMergeInfo(new StringBuffer(replaceSeparators(SVNPropertyValue.getPropertyAsString(property.getValue()))), null));
+            .parseMergeInfo(new StringBuffer(replaceSeparators(PropertyValue.toString(property.getValue()))), null));
         }
       }
 
-      public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException {
+      public void handleProperty(SVNURL url, PropertyData property) throws SVNException {
       }
 
-      public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
+      public void handleProperty(long revision, PropertyData property) throws SVNException {
       }
     };
 

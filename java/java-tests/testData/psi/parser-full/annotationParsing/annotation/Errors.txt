@@ -69,5 +69,96 @@ PsiJavaFile:Errors.java
       <empty list>
     PsiWhiteSpace(' ')
     PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace('\n\n  ')
+    PsiModifierList:
+      <empty list>
+    PsiErrorElement:Identifier or type expected
+      PsiTypeParameterList
+        PsiJavaToken:LT('<')
+        PsiTypeParameter:error
+          PsiIdentifier:error('error')
+          PsiElement(EXTENDS_BOUND_LIST)
+            <empty list>
+        PsiJavaToken:GT('>')
+    PsiModifierList:@EJB
+      PsiAnnotation
+        PsiJavaToken:AT('@')
+        PsiJavaCodeReferenceElement:EJB
+          PsiIdentifier:EJB('EJB')
+          PsiReferenceParameterList
+            <empty list>
+        PsiAnnotationParameterList
+          <empty list>
+    PsiErrorElement:Identifier or type expected
+      PsiTypeParameterList
+        PsiJavaToken:LT('<')
+        PsiErrorElement:Type parameter expected
+          <empty list>
+        PsiErrorElement:'>' expected.
+          <empty list>
+    PsiErrorElement:Unexpected token
+      PsiJavaToken:DIV('/')
+    PsiModifierList:
+      <empty list>
+    PsiTypeElement:error
+      PsiJavaCodeReferenceElement:error
+        PsiIdentifier:error('error')
+        PsiReferenceParameterList
+          <empty list>
+    PsiErrorElement:Identifier expected
+      <empty list>
+    PsiErrorElement:Unexpected token
+      PsiJavaToken:GT('>')
+    PsiWhiteSpace('\n  ')
+    PsiField:myMissingEjbRef
+      PsiModifierList:
+        <empty list>
+      PsiTypeElement:Runnable
+        PsiJavaCodeReferenceElement:Runnable
+          PsiIdentifier:Runnable('Runnable')
+          PsiReferenceParameterList
+            <empty list>
+      PsiWhiteSpace(' ')
+      PsiIdentifier:myMissingEjbRef('myMissingEjbRef')
+      PsiJavaToken:SEMICOLON(';')
+    PsiWhiteSpace('\n\n  ')
+    PsiModifierList:public
+      PsiKeyword:public('public')
+    PsiWhiteSpace(' ')
+    PsiErrorElement:Identifier or type expected
+      PsiTypeParameterList
+        PsiJavaToken:LT('<')
+        PsiTypeParameter:T
+          PsiIdentifier:T('T')
+          PsiElement(EXTENDS_BOUND_LIST)
+            <empty list>
+        PsiJavaToken:GT('>')
+    PsiWhiteSpace(' ')
+    PsiMethod:m
+      PsiModifierList:@SafeVarargs
+  static
+        PsiAnnotation
+          PsiJavaToken:AT('@')
+          PsiJavaCodeReferenceElement:SafeVarargs
+            PsiIdentifier:SafeVarargs('SafeVarargs')
+            PsiReferenceParameterList
+              <empty list>
+          PsiAnnotationParameterList
+            <empty list>
+        PsiWhiteSpace('\n  ')
+        PsiKeyword:static('static')
+      PsiTypeParameterList
+        <empty list>
+      PsiWhiteSpace(' ')
+      PsiTypeElement:void
+        PsiKeyword:void('void')
+      PsiWhiteSpace(' ')
+      PsiIdentifier:m('m')
+      PsiParameterList:()
+        PsiJavaToken:LPARENTH('(')
+        PsiJavaToken:RPARENTH(')')
+      PsiReferenceList
+        <empty list>
+      PsiJavaToken:SEMICOLON(';')
     PsiWhiteSpace('\n')
     PsiJavaToken:RBRACE('}')

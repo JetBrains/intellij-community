@@ -1,100 +1,37 @@
-// Microsoft Visual C++ generated resource script.
-//
-#include "resource.h"
+#include <windows.h>
 
-#define APSTUDIO_READONLY_SYMBOLS
-/////////////////////////////////////////////////////////////////////////////
-//
-// Generated from the TEXTINCLUDE 2 resource.
-//
-#include "afxres.h"
+#define FILE_VERSION      14,0,0,1
+#define FILE_VERSION_STR  "14.0.0.1"
+#define APP_VERSION       14,0,0,0
+#define APP_VERSION_STR   "14"
 
-/////////////////////////////////////////////////////////////////////////////
-#undef APSTUDIO_READONLY_SYMBOLS
-
-/////////////////////////////////////////////////////////////////////////////
-// Russian (Russia) resources
-
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_RUS)
-LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
-#pragma code_page(1251)
-
-#ifdef APSTUDIO_INVOKED
-/////////////////////////////////////////////////////////////////////////////
-//
-// TEXTINCLUDE
-//
-
-1 TEXTINCLUDE 
-BEGIN
-    "resource.h\0"
-END
-
-2 TEXTINCLUDE 
-BEGIN
-    "#include ""afxres.h""\r\n"
-    "\0"
-END
-
-3 TEXTINCLUDE 
-BEGIN
-    "\r\n"
-    "\0"
-END
-
-#endif    // APSTUDIO_INVOKED
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Version
-//
+#pragma code_page(65001)
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,1
- PRODUCTVERSION 1,0,0,1
- FILEFLAGSMASK 0x17L
-#ifdef _DEBUG
- FILEFLAGS 0x1L
-#else
- FILEFLAGS 0x0L
-#endif
- FILEOS 0x4L
- FILETYPE 0x1L
- FILESUBTYPE 0x0L
+FILEVERSION FILE_VERSION
+PRODUCTVERSION APP_VERSION
+FILEFLAGSMASK 0
+FILEFLAGS 0
+FILEOS VOS__WINDOWS32
+FILETYPE VFT_APP
+FILESUBTYPE 0
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
-        BLOCK "041904b0"
+        BLOCK "0000fde9"
         BEGIN
             VALUE "CompanyName", "JetBrains s.r.o."
-            VALUE "FileDescription", "File System Notification Processor"
-            VALUE "FileVersion", "1, 0, 0, 1"
+            VALUE "FileDescription", "Filesystem events processor"
+            VALUE "FileVersion", FILE_VERSION_STR
             VALUE "InternalName", "fsnotifier"
-            VALUE "LegalCopyright", "Copyright (C) 2008-13 JetBrains s.r.o."
+            VALUE "LegalCopyright", "Copyright (C) 2008-2014 JetBrains s.r.o."
             VALUE "OriginalFilename", "fsnotifier.exe"
-            VALUE "ProductName", "IntelliJ IDEA"
-            VALUE "ProductVersion", "1, 0, 0, 1"
+            VALUE "ProductName", "IntelliJ Platform"
+            VALUE "ProductVersion", APP_VERSION_STR
         END
     END
     BLOCK "VarFileInfo"
     BEGIN
-        VALUE "Translation", 0x419, 1200
+        VALUE "Translation", 0, 0xfde9
     END
 END
-
-#endif    // Russian (Russia) resources
-/////////////////////////////////////////////////////////////////////////////
-
-
-
-#ifndef APSTUDIO_INVOKED
-/////////////////////////////////////////////////////////////////////////////
-//
-// Generated from the TEXTINCLUDE 3 resource.
-//
-
-
-/////////////////////////////////////////////////////////////////////////////
-#endif    // not APSTUDIO_INVOKED
-

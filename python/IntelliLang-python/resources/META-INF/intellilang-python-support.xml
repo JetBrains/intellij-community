@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<idea-plugin version="2">
+  <extensions defaultExtensionNs="org.intellij.intelliLang">
+    <languageSupport implementation="com.jetbrains.python.intelliLang.PyLanguageInjectionSupport"/>
+    <injectionConfig config="resources/pyInjections.xml"/>
+  </extensions>
+  <extensions defaultExtensionNs="com.intellij">
+    <patterns.patternClass className="com.jetbrains.python.patterns.PythonPatterns" alias="py"/>
+    <multiHostInjector implementation="com.jetbrains.python.intelliLang.PyConfigurationInjector"/>
+    <multiHostInjector implementation="com.jetbrains.python.intelliLang.PyTemporaryInjector"/>
+  </extensions>
+</idea-plugin>

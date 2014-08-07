@@ -89,7 +89,8 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                 BLANK_LINES);
     }
     else if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
-      consumer.showStandardOptions("KEEP_LINE_BREAKS",
+      consumer.showStandardOptions("RIGHT_MARGIN",
+                                   "KEEP_LINE_BREAKS",
                                    "WRAP_LONG_LINES",
                                    "ALIGN_MULTILINE_PARAMETERS",
                                    "ALIGN_MULTILINE_PARAMETERS_IN_CALLS");

@@ -10,7 +10,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.BaseOutputReader;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
@@ -25,6 +27,7 @@ import java.nio.charset.Charset;
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 
 
 public class RemoteDebugger implements ProcessDebugger {
@@ -87,8 +90,7 @@ public class RemoteDebugger implements ProcessDebugger {
 
     if (myConnected) {
       try {
-        myDebuggerReader = new DebuggerReader();
-        ApplicationManager.getApplication().executeOnPooledThread(myDebuggerReader);
+        myDebuggerReader = createReader(mySocket);
       }
       catch (Exception e) {
         synchronized (mySocketObject) {
@@ -405,35 +407,42 @@ public class RemoteDebugger implements ProcessDebugger {
     execute(command);
   }
 
-  private class DebuggerReader implements Runnable {
-    private final InputStream myInputStream;
-    private boolean myClosing = false;
+  public DebuggerReader createReader(@NotNull Socket socket) throws IOException {
+    synchronized (mySocketObject) {
+      final InputStream myInputStream = socket.getInputStream();
+      //noinspection IOResourceOpenedButNotSafelyClosed
+      final Reader reader = new InputStreamReader(myInputStream, Charset.forName("UTF-8")); //TODO: correct econding?
+      return new DebuggerReader(reader);
+    }
+  }
 
-    private DebuggerReader() throws IOException {
-      synchronized (mySocketObject) {
-        this.myInputStream = mySocket.getInputStream();
-      }
+  private class DebuggerReader extends BaseOutputReader {
+    private boolean myClosing = false;
+    private Reader myReader;
+
+    private DebuggerReader(final Reader reader) throws IOException {
+      super(reader);
+      myReader = reader;
+      start();
     }
 
-    public void run() {
-      final BufferedReader reader = new BufferedReader(new InputStreamReader(myInputStream, Charset.forName("UTF-8")));
+    protected void doRun() {
       try {
-        String line;
-        while ((line = reader.readLine()) != null) {
-          processResponse(line);
+        while (true) {
+          boolean read = readAvailable();
+
           if (myClosing) {
             break;
           }
+
+          TimeoutUtil.sleep(mySleepingPolicy.getTimeToSleep(read));
         }
       }
-      catch (SocketException ignore) {
+      catch (Exception e) {
         fireCommunicationError();
       }
-      catch (Exception e) {
-        LOG.error(e);
-      }
       finally {
-        closeReader(reader);
+        closeReader(myReader);
         fireExitEvent();
       }
     }
@@ -518,7 +527,7 @@ public class RemoteDebugger implements ProcessDebugger {
       return ProtocolParser.parseThread(frame.getPayload(), myDebugProcess.getPositionConverter());
     }
 
-    private void closeReader(BufferedReader reader) {
+    private void closeReader(Reader reader) {
       try {
         reader.close();
       }
@@ -526,8 +535,18 @@ public class RemoteDebugger implements ProcessDebugger {
       }
     }
 
+    @Override
+    protected Future<?> executeOnPooledThread(Runnable runnable) {
+      return ApplicationManager.getApplication().executeOnPooledThread(runnable);
+    }
+
     public void close() {
       myClosing = true;
+    }
+
+    @Override
+    protected void onTextAvailable(@NotNull String text) {
+      processResponse(text);
     }
   }
 

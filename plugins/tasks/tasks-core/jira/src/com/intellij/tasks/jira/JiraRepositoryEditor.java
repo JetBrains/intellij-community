@@ -16,7 +16,7 @@
 package com.intellij.tasks.jira;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.tasks.TaskBundle;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.config.BaseRepositoryEditor;
 import com.intellij.tasks.jira.jql.JqlLanguage;
 import com.intellij.ui.EditorTextField;
@@ -35,6 +35,7 @@ import javax.swing.*;
 public class JiraRepositoryEditor extends BaseRepositoryEditor<JiraRepository> {
   private EditorTextField mySearchQueryField;
   private JBLabel mySearchLabel;
+  private JBLabel myNoteLabel;
 
   public JiraRepositoryEditor(Project project, JiraRepository repository, Consumer<JiraRepository> changeListener) {
     super(project, repository, changeListener);
@@ -53,6 +54,7 @@ public class JiraRepositoryEditor extends BaseRepositoryEditor<JiraRepository> {
     if (connectionSuccessful) {
       enableJqlSearchIfSupported();
     }
+    updateNote();
   }
 
   @Nullable
@@ -62,12 +64,18 @@ public class JiraRepositoryEditor extends BaseRepositoryEditor<JiraRepository> {
     enableJqlSearchIfSupported();
     installListener(mySearchQueryField);
     mySearchLabel = new JBLabel("Search:", SwingConstants.RIGHT);
-    JBLabel note = new JBLabel(TaskBundle.message("jira.failure.no.JQL"));
-    note.setComponentStyle(UIUtil.ComponentStyle.SMALL);
+    myNoteLabel = new JBLabel();
+    myNoteLabel.setComponentStyle(UIUtil.ComponentStyle.SMALL);
+    updateNote();
     return FormBuilder.createFormBuilder()
       .addLabeledComponent(mySearchLabel, mySearchQueryField)
-      .addComponentToRightColumn(note)
+      .addComponentToRightColumn(myNoteLabel)
       .getPanel();
+  }
+
+  private void updateNote() {
+    myNoteLabel.setText("JQL search cannot be used in JIRA versions prior 4.2. " +
+                        String.format("Your version: %s.", StringUtil.notNullize(myRepository.getJiraVersion(), "unknown")));
   }
 
   @Override

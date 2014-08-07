@@ -195,7 +195,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   @Override
   @NotNull
   public ActionCallback requestFocus(@NotNull final Component c, final boolean forced) {
-    return requestFocus(new FocusCommand.ByComponent(c), forced);
+    return requestFocus(new FocusCommand.ByComponent(c, new Exception()), forced);
   }
 
   @Override
@@ -203,9 +203,6 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   public ActionCallback requestFocus(@NotNull final FocusCommand command, final boolean forced) {
     assertDispatchThread();
 
-    if (!forced && !command.canFocusChangeFrom(getFocusOwner())) {
-      return ActionCallback.REJECTED;
-    }
     if (isInternalMode) {
       recordCommand(command, new Throwable(), forced);
     }
@@ -1148,7 +1145,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     } 
     
     if (toFocus != null) {
-      return requestFocus(new FocusCommand.ByComponent(toFocus).setToInvalidateRequestors(false), forced);      
+      return requestFocus(new FocusCommand.ByComponent(toFocus, new Exception()).setToInvalidateRequestors(false), forced);
     }
     
     

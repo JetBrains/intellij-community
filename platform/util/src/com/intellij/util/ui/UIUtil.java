@@ -48,7 +48,9 @@ import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.DefaultEditorKit;
+import javax.swing.text.DefaultFormatterFactory;
 import javax.swing.text.JTextComponent;
+import javax.swing.text.NumberFormatter;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import javax.swing.undo.UndoManager;
@@ -70,6 +72,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -1583,7 +1586,7 @@ public class UIUtil {
                                           @NotNull Graphics g,
                                           boolean useRetinaCondition,
                                           Consumer<Graphics2D> paintRoutine) {
-    if (!useRetinaCondition || !isRetina() || Registry.is("ide.mac.retina.disableDrawingFix", false)) {
+    if (!useRetinaCondition || !isRetina() || Registry.is("ide.mac.retina.disableDrawingFix")) {
       paintRoutine.consume((Graphics2D)g);
     }
     else {
@@ -1901,6 +1904,10 @@ public class UIUtil {
     return INACTIVE_HEADER_COLOR;
   }
 
+  /**
+   * @deprecated
+   * @use JBColor.border()
+   */
   public static Color getBorderColor() {
     return isUnderDarcula() ? Gray._50 : BORDER_COLOR;
   }
@@ -2766,7 +2773,7 @@ public class UIUtil {
 
   @NotNull
   public static Paint getGradientPaint(float x1, float y1, @NotNull Color c1, float x2, float y2, @NotNull Color c2) {
-    return (Registry.is("ui.no.bangs.and.whistles", false)) ? ColorUtil.mix(c1, c2, .5) : new GradientPaint(x1, y1, c1, x2, y2, c2);
+    return (Registry.is("ui.no.bangs.and.whistles")) ? ColorUtil.mix(c1, c2, .5) : new GradientPaint(x1, y1, c1, x2, y2, c2);
   }
 
   @Nullable
@@ -2981,5 +2988,24 @@ public class UIUtil {
       }
     }
     return new EmptyBorder(0, leftGap, 0, 0);
+  }
+
+  public static Color getSidePanelColor() {
+    return new JBColor(new Color(0xD2D6DD), new Color(60, 68, 71));
+  }
+
+  /**
+   * It is your responsibility to set correct horizontal align (left in case of UI Designer)
+   */
+  public static void configureNumericFormattedTextField(@NotNull JFormattedTextField textField) {
+    NumberFormat format = NumberFormat.getIntegerInstance();
+    format.setParseIntegerOnly(true);
+    format.setGroupingUsed(false);
+    NumberFormatter numberFormatter = new NumberFormatter(format);
+    numberFormatter.setMinimum(0);
+    textField.setFormatterFactory(new DefaultFormatterFactory(numberFormatter));
+    textField.setHorizontalAlignment(SwingConstants.TRAILING);
+
+    textField.setColumns(4);
   }
 }

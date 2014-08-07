@@ -153,6 +153,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
             return IdeBundle.message(canRestart ? "update.restart.plugins.update.action" : "update.shutdown.plugins.update.action");
           }
         }.show();
+        super.close(OK_EXIT_CODE);
       }
       restart();
     }

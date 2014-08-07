@@ -32,6 +32,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
@@ -42,6 +43,7 @@ import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -77,11 +79,11 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
 
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
-    runPythonConsole(project, e.getData(LangDataKeys.MODULE));
+    runPythonConsole(project, e.getData(LangDataKeys.MODULE), null);
   }
 
   @NotNull
-  public static PydevConsoleRunner runPythonConsole(Project project, Module contextModule) {
+  public static PydevConsoleRunner runPythonConsole(Project project, Module contextModule, @Nullable ToolWindow toolWindow) {
     assert project != null : "Project is null";
 
     Pair<Sdk, Module> sdkAndModule = findPythonSdkAndModule(project, contextModule);
@@ -152,7 +154,7 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
     envs.put(PythonEnvUtil.IPYTHONENABLE, ipythonEnabled);
 
     return PydevConsoleRunner
-      .createAndRun(project, sdk, PyConsoleType.PYTHON, workingDir, envs, setupFragment);
+      .createAndRun(project, sdk, PyConsoleType.PYTHON, workingDir, envs, toolWindow, setupFragment);
   }
 
   public static PathMappingSettings getMappings(Project project, Sdk sdk) {

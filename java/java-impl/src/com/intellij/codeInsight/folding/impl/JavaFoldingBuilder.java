@@ -17,6 +17,7 @@ package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -27,7 +28,7 @@ public class JavaFoldingBuilder extends JavaFoldingBuilderBase {
   @Override
   protected boolean isBelowRightMargin(Project project, int lineLength) {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
-    return lineLength <= settings.RIGHT_MARGIN;
+    return lineLength <= settings.getRightMargin(JavaLanguage.INSTANCE);
   }
 
   @Override

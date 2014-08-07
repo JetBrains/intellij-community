@@ -20,6 +20,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.debugger.ui.tree.render.ToStringRenderer;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -45,7 +46,6 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
   private JCheckBox myCbAutoscroll;
   private JCheckBox myCbShowSyntheticFields;
   private StateRestoringCheckBox myCbShowValFieldsAsLocalVariables;
-  private JCheckBox myCbSort;
   private JCheckBox myCbHideNullArrayElements;
   private JCheckBox myCbShowStatic;
   private JCheckBox myCbShowDeclaredType;
@@ -54,15 +54,13 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
 
   private StateRestoringCheckBox myCbShowStaticFinalFields;
   private final ArrayRendererConfigurable myArrayRendererConfigurable;
-  private JCheckBox myCbEnableAutoExpressions;
   private JCheckBox myCbEnableAlternateViews;
 
   private JCheckBox myCbEnableToString;
   private JRadioButton myRbAllThatOverride;
   private JRadioButton myRbFromList;
   private ClassFilterEditor myToStringFilterEditor;
-  private JTextField myValueTooltipDelayField;
-  
+
   private Project myProject;
   private RegistryCheckBox myAutoTooltip;
 
@@ -71,16 +69,19 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     myArrayRendererConfigurable = new ArrayRendererConfigurable(NodeRendererSettings.getInstance().getArrayRenderer());
   }
 
+  @Override
   public void disposeUIResources() {
     myArrayRendererConfigurable.disposeUIResources();
     myToStringFilterEditor = null;
     myProject = null;
   }
 
+  @Override
   public String getDisplayName() {
-    return DebuggerBundle.message("base.renderer.configurable.display.name");
+    return OptionsBundle.message("options.java.display.name");
   }
 
+  @Override
   public JComponent createComponent() {
     if (myProject == null) {
       myProject = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
@@ -90,13 +91,12 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     myCbAutoscroll = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.autoscroll"));
     myCbShowSyntheticFields = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.synthetic.fields"));
     myCbShowValFieldsAsLocalVariables = new StateRestoringCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.val.fields.as.locals"));
-    myCbSort = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.sort.alphabetically"));
     myCbHideNullArrayElements = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.hide.null.array.elements"));
     myCbShowStatic = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.static.fields"));
     myCbShowStaticFinalFields = new StateRestoringCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.static.final.fields"));
     myCbEnableAlternateViews = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.alternate.view"));
-    myCbEnableAutoExpressions = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.auto.expressions"));
     myCbShowStatic.addChangeListener(new ChangeListener(){
+      @Override
       public void stateChanged(ChangeEvent e) {
         if(myCbShowStatic.isSelected()) {
           myCbShowStaticFinalFields.makeSelectable();
@@ -121,14 +121,15 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     myCbShowFQNames = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.fq.names"));
     myCbShowObjectId = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.object.id"));
 
-    myCbEnableToString = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.enable.tostring"));
-    myRbAllThatOverride = new JRadioButton(DebuggerBundle.message("label.base.renderer.configurable.all.overridding"));
+    myCbEnableToString = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.enable.toString"));
+    myRbAllThatOverride = new JRadioButton(DebuggerBundle.message("label.base.renderer.configurable.all.overriding"));
     myRbFromList = new JRadioButton(DebuggerBundle.message("label.base.renderer.configurable.classes.from.list"));
     ButtonGroup group = new ButtonGroup();
     group.add(myRbAllThatOverride);
     group.add(myRbFromList);
     myToStringFilterEditor = new ClassFilterEditor(myProject, null, "reference.viewBreakpoints.classFilters.newPattern");
     myCbEnableToString.addItemListener(new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
         final boolean enabled = myCbEnableToString.isSelected();
         myRbAllThatOverride.setEnabled(enabled);
@@ -137,12 +138,12 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
       }
     });
     myRbFromList.addItemListener(new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
         myToStringFilterEditor.setEnabled(myCbEnableToString.isSelected() && myRbFromList.isSelected());
       }
     });
 
-    panel.add(myCbSort, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     panel.add(myCbAutoscroll, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
 
 
@@ -151,14 +152,6 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
                                          DebuggerBundle.message("label.base.renderer.configurable.autoTooltip.description",
                                                                 Registry.stringValue("ide.forcedShowTooltip")));
     panel.add(myAutoTooltip, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
-
-    final JLabel tooltipLabel = new JLabel(DebuggerBundle.message("label.debugger.general.configurable.tooltips.delay"));
-    panel.add(tooltipLabel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
-    myValueTooltipDelayField = new JTextField(10);
-    myValueTooltipDelayField.setMinimumSize(new Dimension(50, myValueTooltipDelayField.getPreferredSize().height));
-    panel.add(myValueTooltipDelayField, new GridBagConstraints(2, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
-    tooltipLabel.setLabelFor(myValueTooltipDelayField);
-
     final JPanel showPanel = new JPanel(new GridBagLayout());
     showPanel.setBorder(IdeBorderFactory.createTitledBorder("Show", true));
 
@@ -174,12 +167,12 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
 
     final JPanel arraysPanel = new JPanel(new BorderLayout(0, UIUtil.DEFAULT_VGAP));
     final JComponent arraysComponent = myArrayRendererConfigurable.createComponent();
+    assert arraysComponent != null;
     arraysPanel.add(arraysComponent, BorderLayout.CENTER);
     arraysPanel.add(myCbHideNullArrayElements, BorderLayout.SOUTH);
     arraysPanel.setBorder(IdeBorderFactory.createTitledBorder("Arrays", true));
     panel.add(arraysPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
 
-    panel.add(myCbEnableAutoExpressions, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
     panel.add(myCbEnableAlternateViews, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 10), 0, 0));
     // starting 4-th row
     panel.add(myCbEnableToString, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
@@ -191,22 +184,16 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     return panel;
   }
 
+  @Override
   public void apply() {
     final ViewsGeneralSettings generalSettings = ViewsGeneralSettings.getInstance();
     final NodeRendererSettings rendererSettings = NodeRendererSettings.getInstance();
 
-    try {
-      DebuggerSettings.getInstance().VALUE_LOOKUP_DELAY = Integer.parseInt(myValueTooltipDelayField.getText().trim());
-    }
-    catch (NumberFormatException ignored) {
-    }
     generalSettings.AUTOSCROLL_TO_NEW_LOCALS  = myCbAutoscroll.isSelected();
     rendererSettings.setAlternateCollectionViewsEnabled(myCbEnableAlternateViews.isSelected());
     generalSettings.HIDE_NULL_ARRAY_ELEMENTS  = myCbHideNullArrayElements.isSelected();
-    generalSettings.ENABLE_AUTO_EXPRESSIONS  = myCbEnableAutoExpressions.isSelected();
 
     final ClassRenderer classRenderer = rendererSettings.getClassRenderer();
-    classRenderer.SORT_ASCENDING = myCbSort.isSelected();
     classRenderer.SHOW_STATIC = myCbShowStatic.isSelected();
     classRenderer.SHOW_STATIC_FINAL = myCbShowStaticFinalFields.isSelectedWhenSelectable();
     classRenderer.SHOW_SYNTHETICS = myCbShowSyntheticFields.isSelected();
@@ -227,15 +214,14 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     rendererSettings.fireRenderersChanged();
   }
 
+  @Override
   public void reset() {
     final ViewsGeneralSettings generalSettings = ViewsGeneralSettings.getInstance();
     final NodeRendererSettings rendererSettings = NodeRendererSettings.getInstance();
 
-    myValueTooltipDelayField.setText(Integer.toString(DebuggerSettings.getInstance().VALUE_LOOKUP_DELAY));
     myCbAutoscroll.setSelected(generalSettings.AUTOSCROLL_TO_NEW_LOCALS);
     myCbHideNullArrayElements.setSelected(generalSettings.HIDE_NULL_ARRAY_ELEMENTS);
     myCbEnableAlternateViews.setSelected(rendererSettings.areAlternateCollectionViewsEnabled());
-    myCbEnableAutoExpressions.setSelected(generalSettings.ENABLE_AUTO_EXPRESSIONS);
 
     ClassRenderer classRenderer = rendererSettings.getClassRenderer();
 
@@ -244,7 +230,6 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     if (!classRenderer.SHOW_SYNTHETICS) {
       myCbShowValFieldsAsLocalVariables.makeUnselectable(false);
     }
-    myCbSort.setSelected(classRenderer.SORT_ASCENDING);
     myCbShowStatic.setSelected(classRenderer.SHOW_STATIC);
     myCbShowStaticFinalFields.setSelected(classRenderer.SHOW_STATIC_FINAL);
     if(!classRenderer.SHOW_STATIC) {
@@ -268,36 +253,27 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     myArrayRendererConfigurable.reset();
   }
 
+  @Override
   public boolean isModified() {
-    return areGeneralSettingsModified() || areDefaultRenderersModified() || areDebuggerSettingsModified();
-  }
-
-  private boolean areDebuggerSettingsModified() {
-    try {
-      return DebuggerSettings.getInstance().VALUE_LOOKUP_DELAY != Integer.parseInt(myValueTooltipDelayField.getText().trim());
-    }
-    catch (NumberFormatException ignored) {
-    }
-    return false;
+    return areGeneralSettingsModified() || areDefaultRenderersModified();
   }
 
   private boolean areGeneralSettingsModified() {
     ViewsGeneralSettings generalSettings = ViewsGeneralSettings.getInstance();
-    return
-    (generalSettings.AUTOSCROLL_TO_NEW_LOCALS  != myCbAutoscroll.isSelected()) ||
-    (generalSettings.ENABLE_AUTO_EXPRESSIONS  != myCbEnableAutoExpressions.isSelected()) ||
-    (generalSettings.HIDE_NULL_ARRAY_ELEMENTS  != myCbHideNullArrayElements.isSelected()) || myAutoTooltip.isChanged();
+    return generalSettings.AUTOSCROLL_TO_NEW_LOCALS != myCbAutoscroll.isSelected() ||
+           generalSettings.HIDE_NULL_ARRAY_ELEMENTS != myCbHideNullArrayElements.isSelected() ||
+           myAutoTooltip.isChanged();
   }
 
   private boolean areDefaultRenderersModified() {
     if (myArrayRendererConfigurable.isModified()) {
       return true;
     }
+
     final NodeRendererSettings rendererSettings = NodeRendererSettings.getInstance();
 
     final ClassRenderer classRenderer = rendererSettings.getClassRenderer();
     final boolean isClassRendererModified=
-    (classRenderer.SORT_ASCENDING != myCbSort.isSelected()) ||
     (classRenderer.SHOW_STATIC != myCbShowStatic.isSelected()) ||
     (classRenderer.SHOW_STATIC_FINAL != myCbShowStaticFinalFields.isSelectedWhenSelectable()) ||
     (classRenderer.SHOW_SYNTHETICS != myCbShowSyntheticFields.isSelected()) ||
@@ -325,16 +301,20 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     return false;
   }
 
+  @SuppressWarnings("SpellCheckingInspection")
+  @Override
   @NotNull
   public String getHelpTopic() {
     return "reference.idesettings.debugger.dataviews";
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();
   }
 
+  @Override
   public Runnable enableSearch(String option) {
     return null;
   }

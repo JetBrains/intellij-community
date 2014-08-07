@@ -66,7 +66,12 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
 
   @Override
   public boolean isExcludedFile(@NotNull final VirtualFile file) {
-    return myFileIndex.isIgnored(file);
+    return myFileIndex.isExcluded(file);
+  }
+
+  @Override
+  public boolean isUnderIgnored(@NotNull VirtualFile file) {
+    return myFileIndex.isUnderIgnored(file);
   }
 
   @Nullable
@@ -83,7 +88,7 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
     while (true) {
       if (childDir == null) return false;
       if (childDir.equals(baseDir)) return true;
-      if (myDirectoryIndex.getInfoForDirectory(childDir) == null) return false;
+      if (!myDirectoryIndex.getInfoForFile(childDir).isInProject()) return false;
       childDir = childDir.getParent();
     }
   }

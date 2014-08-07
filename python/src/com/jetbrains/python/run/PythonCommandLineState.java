@@ -47,6 +47,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.remote.RemoteProcessHandlerBase;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PythonHelpersLocator;
@@ -80,7 +81,9 @@ public abstract class PythonCommandLineState extends CommandLineState {
   public static final String GROUP_DEBUGGER = "Debugger";
   public static final String GROUP_SCRIPT = "Script";
   private final AbstractPythonRunConfiguration myConfig;
-  private final List<Filter> myFilters;
+
+  private final List<Filter> myFilters = Lists.<Filter>newArrayList(new UrlFilter());
+
   private Boolean myMultiprocessDebug = null;
 
   public boolean isDebug() {
@@ -99,15 +102,9 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return serverSocket;
   }
 
-  public PythonCommandLineState(AbstractPythonRunConfiguration runConfiguration, ExecutionEnvironment env, List<Filter> filters) {
+  public PythonCommandLineState(AbstractPythonRunConfiguration runConfiguration, ExecutionEnvironment env) {
     super(env);
     myConfig = runConfiguration;
-    myFilters = Lists.newArrayList(filters);
-    addDefaultFilters();
-  }
-
-  protected void addDefaultFilters() {
-    myFilters.add(new UrlFilter());
   }
 
   @Nullable
@@ -134,8 +131,21 @@ public abstract class PythonCommandLineState extends CommandLineState {
   protected ConsoleView createAndAttachConsole(Project project, ProcessHandler processHandler, Executor executor)
     throws ExecutionException {
     final ConsoleView consoleView = createConsoleBuilder(project).filters(myFilters).getConsole();
+
+    addTracebackFilter(project, consoleView, processHandler);
+
     consoleView.attachToProcess(processHandler);
     return consoleView;
+  }
+
+  protected void addTracebackFilter(Project project, ConsoleView consoleView, ProcessHandler processHandler) {
+    if (PySdkUtil.isRemote(myConfig.getSdk())) {
+      assert processHandler instanceof RemoteProcessHandlerBase;
+      consoleView.addMessageFilter(new PyRemoteTracebackFilter(project, myConfig.getWorkingDirectory(), (RemoteProcessHandlerBase) processHandler));
+    }
+    else {
+      consoleView.addMessageFilter(new PythonTracebackFilter(project, myConfig.getWorkingDirectory()));
+    }
   }
 
   private TextConsoleBuilder createConsoleBuilder(Project project) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -191,8 +191,13 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
     holder.registerProblem(location, description, highlightType, fixes);
   }
 
-  protected final void registerErrorAtOffset(@NotNull PsiElement location,
-                                             int offset, int length, Object... infos) {
+  protected final void registerErrorAtOffset(@NotNull PsiElement location, int offset, int length, Object... infos) {
+    registerErrorAtOffset(location, offset, length, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, infos);
+  }
+
+  protected final void registerErrorAtOffset(@NotNull PsiElement location, int offset, int length,
+                                             ProblemHighlightType highlightType,
+                                             Object... infos) {
     if (location.getTextLength() == 0 || length == 0) {
       return;
     }
@@ -202,7 +207,7 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
     }
     final String description = inspection.buildErrorString(infos);
     final TextRange range = new TextRange(offset, offset + length);
-    holder.registerProblem(location, range, description, fixes);
+    holder.registerProblem(location, description, highlightType, range, fixes);
   }
 
   @NotNull

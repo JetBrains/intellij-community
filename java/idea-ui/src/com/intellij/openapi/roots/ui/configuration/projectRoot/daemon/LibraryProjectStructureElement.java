@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibraryConfigurab
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -95,7 +96,14 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
 
   private static String createInvalidRootsDescription(List<String> invalidClasses, String rootName, String libraryName) {
     StringBuilder buffer = new StringBuilder();
-    buffer.append("Library '").append(StringUtil.escapeXml(libraryName)).append("' has broken " + rootName + " " + StringUtil.pluralize("path", invalidClasses.size()) + ":");
+    final String name = StringUtil.escapeXml(libraryName);
+    buffer.append("Library ");
+    if (Registry.is("ide.new.project.settings")) {
+      buffer.append("<a href='http://library/").append(name).append("'>").append(name).append("</a>");
+    } else {
+      buffer.append("'").append(name).append("'");
+    }
+    buffer.append(" has broken " + rootName + " " + StringUtil.pluralize("path", invalidClasses.size()) + ":");
     for (String url : invalidClasses) {
       buffer.append("<br>&nbsp;&nbsp;");
       buffer.append(PathUtil.toPresentableUrl(url));
@@ -150,7 +158,10 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
   @Override
   public ProjectStructureProblemDescription createUnusedElementWarning() {
     final List<ConfigurationErrorQuickFix> fixes = Arrays.asList(new AddLibraryToDependenciesFix(), new RemoveLibraryFix(), new RemoveAllUnusedLibrariesFix());
-    return new ProjectStructureProblemDescription("Library '" + StringUtil.escapeXml(myLibrary.getName()) + "'" + " is not used", null, createPlace(),
+    final String name = StringUtil.escapeXml(myLibrary.getName());
+    String libraryName = Registry.is("ide.new.project.settings") ? "<a href='http://library/" + name + "'>" + name + "</a>"
+                         : "'" + name + "'";
+    return new ProjectStructureProblemDescription("Library " + libraryName + " is not used", null, createPlace(),
                                                   ProjectStructureProblemType.unused("unused-library"), ProjectStructureProblemDescription.ProblemLevel.PROJECT,
                                                   fixes, false);
   }

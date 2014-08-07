@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 
 import java.io.IOException;
@@ -33,7 +34,7 @@ public abstract class MavenProjectsTreeTestCase extends MavenImportingTestCase {
   }
 
   protected void updateAll(List<String> profiles, VirtualFile... files) throws MavenProcessCanceledException {
-    myTree.resetManagedFilesAndProfiles(asList(files), profiles);
+    myTree.resetManagedFilesAndProfiles(asList(files), new MavenExplicitProfiles(profiles));
     myTree.updateAll(false, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
   }
 

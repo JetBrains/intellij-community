@@ -43,4 +43,7 @@ public class CastPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testChainCall() {
     doTest();
   }
+  public void testTernary() {
+    doTest();
+  }
 }

@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
@@ -216,7 +217,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (!initContext.getOffsetMap().wasModified(CompletionInitializationContext.IDENTIFIER_END_OFFSET)) {
       try {
         final int selectionEndOffset = initContext.getSelectionEndOffset();
-        final PsiReference reference = initContext.getFile().findReferenceAt(selectionEndOffset);
+        final PsiReference reference = TargetElementUtilBase.findReference(myEditor, selectionEndOffset);
         if (reference != null) {
           initContext.setReplacementOffset(findReplacementOffset(selectionEndOffset, reference));
         }
@@ -252,7 +253,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
     }
 
-    return reference.getElement().getTextRange().getStartOffset() + reference.getRangeInElement().getEndOffset();
+    return selectionEndOffset;
   }
 
 

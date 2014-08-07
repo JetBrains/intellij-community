@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import org.jetbrains.annotations.NotNull;
 
@@ -149,4 +150,6 @@ public interface SoftWrapModelEx extends SoftWrapModel {
    * Allows to instruct current model to always return <code>'true'</code> from {@link #isRespectAdditionalColumns()}.
    */
   void forceAdditionalColumnsUsage();
+
+  EditorTextRepresentationHelper getEditorTextRepresentationHelper();
 }

@@ -32,7 +32,6 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.List;
 
 public class EditorModificationUtil {
@@ -99,7 +98,7 @@ public class EditorModificationUtil {
     zeroWidthBlockSelectionAtCaretColumn(editor, startLine, endLine);
   }
 
-  private static void zeroWidthBlockSelectionAtCaretColumn(final Editor editor, final int startLine, final int endLine) {
+  public static void zeroWidthBlockSelectionAtCaretColumn(final Editor editor, final int startLine, final int endLine) {
     int caretColumn = editor.getCaretModel().getLogicalPosition().column;
     editor.getSelectionModel().setBlockSelection(new LogicalPosition(startLine, caretColumn), new LogicalPosition(endLine, caretColumn));
   }
@@ -181,43 +180,29 @@ public class EditorModificationUtil {
     return offset;
   }
 
+  /**
+   * @deprecated Use {@link com.intellij.openapi.editor.EditorCopyPasteHelper} methods instead.
+   * (to remove in IDEA 15)
+   */
   @Nullable
   public static TextRange pasteTransferable(final Editor editor, @Nullable Producer<Transferable> producer) {
-    String text = getStringContent(producer);
-    if (text == null) return null;
-
-    if (editor.getCaretModel().supportsMultipleCarets()) {
-      int caretCount = editor.getCaretModel().getCaretCount();
-      if (caretCount == 1 && editor.isColumnMode()) {
-        int pastedLineCount = LineTokenizer.calcLineCount(text, true);
-        deleteSelectedText(editor);
-        Caret caret = editor.getCaretModel().getPrimaryCaret();
-        for (int i = 0; i < pastedLineCount - 1; i++) {
-          caret = caret.clone(false);
-          if (caret == null) {
-            break;
-          }
-        }
-        caretCount = editor.getCaretModel().getCaretCount();
-      }
-      final Iterator<String> segments = new ClipboardTextPerCaretSplitter().split(text, caretCount).iterator();
-      editor.getCaretModel().runForEachCaret(new CaretAction() {
-        @Override
-        public void perform(Caret caret) {
-          insertStringAtCaret(editor, segments.next(), false, true);
-        }
-      });
+    EditorCopyPasteHelper helper = EditorCopyPasteHelper.getInstance();
+    if (producer == null) {
+      TextRange[] ranges = helper.pasteFromClipboard(editor);
+      return ranges != null && ranges.length == 1 ? ranges[0] : null;
+    }
+    Transferable transferable = producer.produce();
+    if (transferable == null) {
       return null;
     }
-    else {
-      int caretOffset = editor.getCaretModel().getOffset();
-      insertStringAtCaret(editor, text, false, true);
-      return new TextRange(caretOffset, caretOffset + text.length());
-    }
+    TextRange[] ranges = helper.pasteTransferable(editor, transferable);
+    return ranges != null && ranges.length == 1 ? ranges[0] : null;
   }
 
   public static void pasteTransferableAsBlock(Editor editor, @Nullable Producer<Transferable> producer) {
-    String text = getStringContent(producer);
+    Transferable content = getTransferable(producer);
+    if (content == null) return;
+    String text = getStringContent(content);
     if (text == null) return;
 
     int caretLine = editor.getCaretModel().getLogicalPosition().line;
@@ -264,19 +249,7 @@ public class EditorModificationUtil {
   }
 
   @Nullable
-  private static String getStringContent(@Nullable Producer<Transferable> producer) {
-    Transferable content = null;
-    if (producer != null) {
-      content = producer.produce();
-    }
-    else {
-      CopyPasteManager manager = CopyPasteManager.getInstance();
-      if (manager.areDataFlavorsAvailable(DataFlavor.stringFlavor)) {
-        content = manager.getContents();
-      }
-    }
-    if (content == null) return null;
-
+  private static String getStringContent(@NotNull Transferable content) {
     RawText raw = RawText.fromTransferable(content);
     if (raw != null) return raw.rawText;
 
@@ -289,6 +262,19 @@ public class EditorModificationUtil {
     return null;
   }
 
+  private static Transferable getTransferable(Producer<Transferable> producer) {
+    Transferable content = null;
+    if (producer != null) {
+      content = producer.produce();
+    }
+    else {
+      CopyPasteManager manager = CopyPasteManager.getInstance();
+      if (manager.areDataFlavorsAvailable(DataFlavor.stringFlavor)) {
+        content = manager.getContents();
+      }
+    }
+    return content;
+  }
   /**
    * Calculates difference in columns between current editor caret position and end of the logical line fragment displayed
    * on a current visual line.
@@ -493,41 +479,5 @@ public class EditorModificationUtil {
   public static void moveCaretRelatively(@NotNull Editor editor, final int caretShift) {
     CaretModel caretModel = editor.getCaretModel();
     caretModel.moveToOffset(caretModel.getOffset() + caretShift);
-  }
-
-  /** @deprecated use {@link #pasteTransferable(Editor, Producer)} (to remove in IDEA 14) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static TextRange pasteFromClipboard(Editor editor) {
-    return pasteTransferable(editor, null);
-  }
-
-  /** @deprecated use {@link #pasteTransferable(Editor, Producer)} (to remove in IDEA 14) */
-  @SuppressWarnings("SpellCheckingInspection,UnusedDeclaration")
-  public static TextRange pasteFromTransferrable(final Transferable content, Editor editor) {
-    return pasteTransferable(editor, new Producer<Transferable>() {
-      @Nullable
-      @Override
-      public Transferable produce() {
-        return content;
-      }
-    });
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  /** @deprecated use {@link #pasteTransferableAsBlock(Editor, Producer)} (to remove in IDEA 14) */
-  public static void pasteFromClipboardAsBlock(Editor editor) {
-    pasteTransferableAsBlock(editor, (Producer<Transferable>)null);
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  /** @deprecated use {@link #pasteTransferableAsBlock(Editor, Producer)} (to remove in IDEA 14) */
-  public static void pasteTransferableAsBlock(Editor editor, @Nullable final Transferable content) {
-    pasteTransferableAsBlock(editor, new Producer<Transferable>() {
-      @Nullable
-      @Override
-      public Transferable produce() {
-        return content;
-      }
-    });
   }
 }

@@ -450,6 +450,40 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     return builder.toString();
   }
 
+  @Nullable
+  public static String getRawExternalName(PsiModifierListOwner owner) {
+    final StringBuilder builder = new StringBuilder();
+    final PsiClass psiClass = PsiTreeUtil.getParentOfType(owner, PsiClass.class, false);
+    if (psiClass == null) return null;
+    ClassUtil.formatClassName(psiClass, builder);
+    if (owner instanceof PsiMethod) {
+      builder.append(" ");
+      formatMethod((PsiMethod)owner, PsiSubstitutor.EMPTY,
+                   SHOW_NAME | SHOW_FQ_NAME | SHOW_TYPE | SHOW_RAW_TYPE | SHOW_PARAMETERS | SHOW_FQ_CLASS_NAMES,
+                   SHOW_TYPE | SHOW_RAW_TYPE | SHOW_FQ_CLASS_NAMES,
+                   Integer.MAX_VALUE, builder);
+    }
+    else if (owner instanceof PsiParameter) {
+      final PsiElement declarationScope = ((PsiParameter)owner).getDeclarationScope();
+      if (!(declarationScope instanceof PsiMethod)) {
+        return null;
+      }
+      final PsiMethod psiMethod = (PsiMethod)declarationScope;
+
+      builder.append(" ");
+      formatMethod(psiMethod, PsiSubstitutor.EMPTY,
+                   SHOW_NAME | SHOW_FQ_NAME | SHOW_TYPE | SHOW_RAW_TYPE | SHOW_PARAMETERS | SHOW_FQ_CLASS_NAMES,
+                   SHOW_TYPE | SHOW_RAW_TYPE | SHOW_FQ_CLASS_NAMES,
+                   Integer.MAX_VALUE, builder);
+      builder.append(" ");
+      builder.append(psiMethod.getParameterList().getParameterIndex((PsiParameter)owner));
+    }
+    else {
+      return null;
+    }
+    return builder.toString();
+  }
+
   public static String getPackageDisplayName(@NotNull final PsiClass psiClass) {
     if (psiClass instanceof PsiTypeParameter) {
       PsiTypeParameterListOwner owner = ((PsiTypeParameter)psiClass).getOwner();

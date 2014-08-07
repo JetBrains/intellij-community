@@ -27,11 +27,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -63,7 +63,7 @@ public class ShortenToStaticImportProcessor implements TemplateOptionalProcessor
     for (
       PsiElement element = PsiUtilCore.getElementAtOffset(file, templateRange.getStartOffset());
       element != null && element.getTextRange().getStartOffset() < templateRange.getEndOffset();
-      element = getNext(element))
+      element = PsiTreeUtil.nextLeaf(element))
     {
       for (StaticImporter importer : IMPORTERS) {
         if (importer.canPerform(element)) {
@@ -81,15 +81,6 @@ public class ShortenToStaticImportProcessor implements TemplateOptionalProcessor
     }
   }
 
-  @Nullable
-  private static PsiElement getNext(@NotNull PsiElement element) {
-    PsiElement result = element.getNextSibling();
-    for (PsiElement current = element; current != null && result == null; current = current.getParent()) {
-      result = current.getNextSibling();
-    }
-    return result;
-  }
-  
   @Nls
   @Override
   public String getOptionName() {

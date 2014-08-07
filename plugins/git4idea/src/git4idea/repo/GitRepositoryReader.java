@@ -416,7 +416,7 @@ class GitRepositoryReader {
       LOG.info(".git/HEAD has not standard format: [" + headContent + "]. We've parsed branch [" + matcher.group(1) + "]");
       return new Head(true, matcher.group(1));
     }
-    throw new RepoStateException("Invalid format of the .git/HEAD file: \n" + headContent);
+    throw new RepoStateException("Invalid format of the .git/HEAD file: [" + headContent + "]");
   }
 
   /**

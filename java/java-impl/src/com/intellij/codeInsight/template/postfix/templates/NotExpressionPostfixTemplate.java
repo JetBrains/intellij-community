@@ -15,26 +15,16 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
-import com.intellij.openapi.util.Condition;
-import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.NotNull;
-
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_BOOLEAN;
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
 
 public class NotExpressionPostfixTemplate extends NotPostfixTemplate {
 
   public NotExpressionPostfixTemplate() {
-    super(JAVA_PSI_INFO);
+    super(JAVA_PSI_INFO, IS_BOOLEAN);
   }
 
   public NotExpressionPostfixTemplate(String alias) {
-    super(alias, alias, "!expr", JAVA_PSI_INFO);
-  }
-
-  @NotNull
-  @Override
-  protected Condition<PsiElement> getTypeCondition() {
-    return JavaPostfixTemplatesUtils.IS_BOOLEAN;
+    super(alias, alias, "!expr", JAVA_PSI_INFO, IS_BOOLEAN);
   }
 }

@@ -25,7 +25,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.IconUtil;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,12 +54,12 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
       myLafNames.put(DARCULA, IconLoader.getIcon("/lafs/OSXDarcula.png"));
     }
     else if (SystemInfo.isWindows) {
-      if (PlatformUtils.isIdeaCommunity()) {
+      //if (PlatformUtils.isIdeaCommunity()) {
         myLafNames.put(INTELLIJ, IconLoader.getIcon("/lafs/WindowsIntelliJ.png"));
-      }
-      else {
-        myLafNames.put(ALLOY, IconLoader.getIcon("/lafs/WindowsAlloy.png"));
-      }
+      //}
+      //else {
+      //  myLafNames.put(ALLOY, IconLoader.getIcon("/lafs/WindowsAlloy.png"));
+      //}
       myLafNames.put(DARCULA, IconLoader.getIcon("/lafs/WindowsDarcula.png"));
     }
     else {

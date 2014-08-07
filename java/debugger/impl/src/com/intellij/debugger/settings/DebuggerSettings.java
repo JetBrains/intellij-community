@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,25 +16,31 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.openapi.components.NamedComponent;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.util.containers.hash.LinkedHashMap;
+import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
+import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-public class DebuggerSettings implements JDOMExternalizable, NamedComponent, Cloneable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.settings.DebuggerSettings");
+@State(
+  name = "DebuggerSettings",
+  storages = {
+    @Storage(
+      file = StoragePathMacros.APP_CONFIG + "/other.xml"
+    )}
+)
+public class DebuggerSettings implements Cloneable, PersistentStateComponent<Element> {
+  private static final Logger LOG = Logger.getInstance(DebuggerSettings.class);
   public static final int SOCKET_TRANSPORT = 0;
   public static final int SHMEM_TRANSPORT = 1;
 
@@ -50,11 +56,9 @@ public class DebuggerSettings implements JDOMExternalizable, NamedComponent, Clo
   @NonNls public static final String RUN_HOTSWAP_ASK = "RunHotswapAsk";
 
   public boolean TRACING_FILTERS_ENABLED;
-  public int VALUE_LOOKUP_DELAY; // ms
   public int DEBUGGER_TRANSPORT;
   public boolean FORCE_CLASSIC_VM;
   public boolean DISABLE_JIT;
-  public boolean HIDE_DEBUGGER_ON_PROCESS_TERMINATION;
   public boolean HOTSWAP_IN_BACKGROUND = true;
   public boolean SKIP_SYNTHETIC_METHODS;
   public boolean SKIP_CONSTRUCTORS;
@@ -72,8 +76,10 @@ public class DebuggerSettings implements JDOMExternalizable, NamedComponent, Clo
 
   private ClassFilter[] mySteppingFilters = ClassFilter.EMPTY_ARRAY;
 
-  private Map<String, ContentState> myContentStates = new HashMap<String, ContentState>();
+  private Map<String, ContentState> myContentStates = new LinkedHashMap<String, ContentState>();
 
+  // transient - custom serialization
+  @Transient
   public ClassFilter[] getSteppingFilters() {
     final ClassFilter[] rv = new ClassFilter[mySteppingFilters.length];
     for (int idx = 0; idx < rv.length; idx++) {
@@ -82,50 +88,51 @@ public class DebuggerSettings implements JDOMExternalizable, NamedComponent, Clo
     return rv;
   }
 
+  public static DebuggerSettings getInstance() {
+    return ServiceManager.getService(DebuggerSettings.class);
+  }
+
   public void setSteppingFilters(ClassFilter[] steppingFilters) {
     mySteppingFilters = steppingFilters != null ? steppingFilters : ClassFilter.EMPTY_ARRAY;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public void readExternal(Element parentNode) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, parentNode);
-    List<ClassFilter> filtersList = new ArrayList<ClassFilter>();
-
-    for (final Object o : parentNode.getChildren("filter")) {
-      Element filter = (Element)o;
-      filtersList.add(DebuggerUtilsEx.create(filter));
+  @Nullable
+  @Override
+  public Element getState() {
+    Element state = XmlSerializer.serialize(this, new SkipDefaultValuesSerializationFilters());
+    try {
+      DebuggerUtilsEx.writeFilters(state, "filter", mySteppingFilters);
     }
-    setSteppingFilters(filtersList.toArray(new ClassFilter[filtersList.size()]));
-
-    filtersList.clear();
-
-    final List contents = parentNode.getChildren("content");
-    myContentStates.clear();
-    for (Object content : contents) {
-      final ContentState state = new ContentState((Element)content);
-      myContentStates.put(state.getType(), state);
-    }
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public void writeExternal(Element parentNode) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, parentNode);
-    for (ClassFilter mySteppingFilter : mySteppingFilters) {
-      Element element = new Element("filter");
-      parentNode.addContent(element);
-      mySteppingFilter.writeExternal(element);
+    catch (WriteExternalException e) {
+      LOG.error(e);
+      return null;
     }
 
     for (ContentState eachState : myContentStates.values()) {
       final Element content = new Element("content");
       if (eachState.write(content)) {
-        parentNode.addContent(content);
+        state.addContent(content);
       }
     }
+    return state;
   }
 
-  public static DebuggerSettings getInstance() {
-    return ServiceManager.getService(DebuggerSettings.class);
+  @Override
+  public void loadState(Element state) {
+    XmlSerializer.deserializeInto(this, state);
+
+    try {
+      setSteppingFilters(DebuggerUtilsEx.readFilters(state.getChildren("filter")));
+    }
+    catch (InvalidDataException e) {
+      LOG.error(e);
+    }
+
+    myContentStates.clear();
+    for (Element content : state.getChildren("content")) {
+      ContentState contentState = new ContentState(content);
+      myContentStates.put(contentState.getType(), contentState);
+    }
   }
 
   public boolean equals(Object obj) {
@@ -134,11 +141,9 @@ public class DebuggerSettings implements JDOMExternalizable, NamedComponent, Clo
 
     return
       TRACING_FILTERS_ENABLED == secondSettings.TRACING_FILTERS_ENABLED &&
-      VALUE_LOOKUP_DELAY == secondSettings.VALUE_LOOKUP_DELAY &&
       DEBUGGER_TRANSPORT == secondSettings.DEBUGGER_TRANSPORT &&
       FORCE_CLASSIC_VM == secondSettings.FORCE_CLASSIC_VM &&
       DISABLE_JIT == secondSettings.DISABLE_JIT &&
-      HIDE_DEBUGGER_ON_PROCESS_TERMINATION == secondSettings.HIDE_DEBUGGER_ON_PROCESS_TERMINATION &&
       HOTSWAP_IN_BACKGROUND == secondSettings.HOTSWAP_IN_BACKGROUND &&
       SKIP_SYNTHETIC_METHODS == secondSettings.SKIP_SYNTHETIC_METHODS &&
       SKIP_CLASSLOADERS == secondSettings.SKIP_CLASSLOADERS &&
@@ -150,6 +155,7 @@ public class DebuggerSettings implements JDOMExternalizable, NamedComponent, Clo
       DebuggerUtilsEx.filterEquals(mySteppingFilters, secondSettings.mySteppingFilters);
   }
 
+  @Override
   public DebuggerSettings clone() {
     try {
       final DebuggerSettings cloned = (DebuggerSettings)super.clone();
@@ -169,13 +175,7 @@ public class DebuggerSettings implements JDOMExternalizable, NamedComponent, Clo
     return null;
   }
 
-  @NotNull
-  public String getComponentName() {
-    return "DebuggerSettings";
-  }
-
   public static class ContentState implements Cloneable {
-
     private final String myType;
     private boolean myMinimized;
     private String mySelectedTab;
@@ -208,7 +208,7 @@ public class DebuggerSettings implements JDOMExternalizable, NamedComponent, Clo
       if (mySelectedTab != null) {
         element.setAttribute("selected", mySelectedTab);
       }
-      element.setAttribute("split", new Double(mySplitProportion).toString());
+      element.setAttribute("split", Double.toString(mySplitProportion));
       element.setAttribute("detached", Boolean.valueOf(myDetached).toString());
       element.setAttribute("horizontal", Boolean.valueOf(myHorizontalToolbar).toString());
       return true;
@@ -266,6 +266,7 @@ public class DebuggerSettings implements JDOMExternalizable, NamedComponent, Clo
       myHorizontalToolbar = horizontalToolbar;
     }
 
+    @Override
     public ContentState clone() throws CloneNotSupportedException {
       return (ContentState)super.clone();
     }

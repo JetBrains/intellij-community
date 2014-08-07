@@ -1,14 +1,13 @@
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.OpenTHashSet;
@@ -147,12 +146,11 @@ public class LocalChangeListImpl extends LocalChangeList {
     createReadChangesCache();
     final Collection<Change> result = new ArrayList<Change>();
     myChangesBeforeUpdate = new OpenTHashSet<Change>(myChanges);
-    final FileIndexFacade fileIndex = PeriodicalTasksCloser.getInstance().safeGetService(project, FileIndexFacade.class);
     for (Change oldBoy : myChangesBeforeUpdate) {
       final ContentRevision before = oldBoy.getBeforeRevision();
       final ContentRevision after = oldBoy.getAfterRevision();
       if (scope == null || before != null && scope.belongsTo(before.getFile()) || after != null && scope.belongsTo(after.getFile())
-        || isIgnoredChange(oldBoy, fileIndex)) {
+        || isIgnoredChange(oldBoy, project)) {
         result.add(oldBoy);
         myChanges.remove(oldBoy);
         myReadChangesCache = null;
@@ -161,18 +159,21 @@ public class LocalChangeListImpl extends LocalChangeList {
     return result;
   }
 
-  private static boolean isIgnoredChange(final Change change, final FileIndexFacade fileIndex) {
-    boolean beforeRevIgnored = change.getBeforeRevision() == null || isIgnoredRevision(change.getBeforeRevision(), fileIndex);
-    boolean afterRevIgnored = change.getAfterRevision() == null || isIgnoredRevision(change.getAfterRevision(), fileIndex);
+  private static boolean isIgnoredChange(@NotNull Change change, @NotNull Project project) {
+    boolean beforeRevIgnored = change.getBeforeRevision() == null || isIgnoredRevision(change.getBeforeRevision(), project);
+    boolean afterRevIgnored = change.getAfterRevision() == null || isIgnoredRevision(change.getAfterRevision(), project);
     return beforeRevIgnored && afterRevIgnored;
   }
 
-  private static boolean isIgnoredRevision(final ContentRevision revision, final FileIndexFacade fileIndex) {
+  private static boolean isIgnoredRevision(final @NotNull ContentRevision revision, final @NotNull Project project) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
+        if (project.isDisposed()) {
+          return false;
+        }
         VirtualFile vFile = revision.getFile().getVirtualFile();
-        return vFile != null && fileIndex.isExcludedFile(vFile);
+        return vFile != null && ProjectLevelVcsManager.getInstance(project).isIgnored(vFile);
       }
     });
   }

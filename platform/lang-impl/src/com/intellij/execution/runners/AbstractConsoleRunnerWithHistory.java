@@ -15,6 +15,9 @@
  */
 package com.intellij.execution.runners;
 
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.collect.FluentIterable;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionHelper;
 import com.intellij.execution.ExecutionManager;
@@ -129,37 +132,29 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     registerActionShortcuts(actions, getLanguageConsole().getConsoleEditor().getComponent());
     registerActionShortcuts(actions, panel);
     panel.updateUI();
+
     showConsole(defaultExecutor, contentDescriptor);
 
     // Run
     myProcessHandler.startNotify();
   }
 
-  private String constructConsoleTitle(final @NotNull String consoleTitle) {
+  protected String constructConsoleTitle(final @NotNull String consoleTitle) {
     if (shouldAddNumberToTitle()) {
-      List<RunContentDescriptor> consoles = ExecutionHelper.collectConsolesByDisplayName(myProject, new NotNullFunction<String, Boolean>() {
-        @NotNull
-        @Override
-        public Boolean fun(String dom) {
-          return dom.contains(consoleTitle);
-        }
-      });
+      List<String> activeConsoleNames = getActiveConsoleNames(consoleTitle);
       int max = 0;
-      for (RunContentDescriptor dsc : consoles) {
-        ProcessHandler handler = dsc.getProcessHandler();
-        if (handler != null && !handler.isProcessTerminated()) {
-          if (max == 0) {
-            max = 1;
+      for (String name : activeConsoleNames) {
+        if (max == 0) {
+          max = 1;
+        }
+        try {
+          int num = Integer.parseInt(name.substring(consoleTitle.length() + 1, name.length() - 1));
+          if (num > max) {
+            max = num;
           }
-          try {
-            int num = Integer.parseInt(dsc.getDisplayName().substring(consoleTitle.length() + 1, dsc.getDisplayName().length() - 1));
-            if (num > max) {
-              max = num;
-            }
-          }
-          catch (Exception ignored) {
-            //skip
-          }
+        }
+        catch (Exception ignored) {
+          //skip
         }
       }
       if (max >= 1) {
@@ -178,9 +173,9 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     return false;
   }
 
-  protected void showConsole(Executor defaultExecutor, RunContentDescriptor myDescriptor) {
+  protected void showConsole(Executor defaultExecutor, RunContentDescriptor contentDescriptor) {
     // Show in run toolwindow
-    ExecutionManager.getInstance(myProject).getContentManager().showRunContent(defaultExecutor, myDescriptor);
+    ExecutionManager.getInstance(myProject).getContentManager().showRunContent(defaultExecutor, contentDescriptor);
   }
 
   protected void finishConsole() {
@@ -245,11 +240,13 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
   public static AnAction createConsoleExecAction(@NotNull LanguageConsoleView console,
                                                  @NotNull ProcessHandler processHandler,
                                                  @NotNull ProcessBackedConsoleExecuteActionHandler consoleExecuteActionHandler) {
-    return new ConsoleExecuteAction(console, consoleExecuteActionHandler, consoleExecuteActionHandler.getEmptyExecuteAction(), consoleExecuteActionHandler);
+    return new ConsoleExecuteAction(console, consoleExecuteActionHandler, consoleExecuteActionHandler.getEmptyExecuteAction(),
+                                    consoleExecuteActionHandler);
   }
 
   protected AnAction createConsoleExecAction(@NotNull ProcessBackedConsoleExecuteActionHandler consoleExecuteActionHandler) {
-    return new ConsoleExecuteAction(myConsoleView, consoleExecuteActionHandler, consoleExecuteActionHandler.getEmptyExecuteAction(), consoleExecuteActionHandler);
+    return new ConsoleExecuteAction(myConsoleView, consoleExecuteActionHandler, consoleExecuteActionHandler.getEmptyExecuteAction(),
+                                    consoleExecuteActionHandler);
   }
 
   @SuppressWarnings("UnusedDeclaration")
@@ -300,5 +297,32 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
 
   public ProcessBackedConsoleExecuteActionHandler getConsoleExecuteActionHandler() {
     return myConsoleExecuteActionHandler;
+  }
+
+  protected List<String> getActiveConsoleNames(final String consoleTitle) {
+    return getActiveConsolesFromRunToolWindow(consoleTitle);
+  }
+
+  protected List<String> getActiveConsolesFromRunToolWindow(final String consoleTitle) {
+    List<RunContentDescriptor> consoles = ExecutionHelper.collectConsolesByDisplayName(myProject, new NotNullFunction<String, Boolean>() {
+      @NotNull
+      @Override
+      public Boolean fun(String dom) {
+        return dom.contains(consoleTitle);
+      }
+    });
+
+    return FluentIterable.from(consoles).filter(new Predicate<RunContentDescriptor>() {
+      @Override
+      public boolean apply(RunContentDescriptor input) {
+        ProcessHandler handler = input.getProcessHandler();
+        return handler != null && !handler.isProcessTerminated();
+      }
+    }).transform(new Function<RunContentDescriptor, String>() {
+      @Override
+      public String apply(RunContentDescriptor input) {
+        return input.getDisplayName();
+      }
+    }).toList();
   }
 }

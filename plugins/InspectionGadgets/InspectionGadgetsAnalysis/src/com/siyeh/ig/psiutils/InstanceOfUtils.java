@@ -117,6 +117,9 @@ public class InstanceOfUtils {
             inElse = true;
           }
           checkExpression(operand);
+          if (agreeingInstanceof) {
+            return;
+          }
         }
         if (inElse && conflictingInstanceof != null) {
           agreeingInstanceof = false;
@@ -215,6 +218,7 @@ public class InstanceOfUtils {
         (PsiInstanceOfExpression)expression;
       if (isAgreeing(instanceOfExpression)) {
         agreeingInstanceof = true;
+        conflictingInstanceof = null;
       }
       else if (isConflicting(instanceOfExpression)) {
         conflictingInstanceof = instanceOfExpression;

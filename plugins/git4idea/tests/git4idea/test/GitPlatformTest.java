@@ -19,6 +19,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -29,6 +30,7 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.vcs.AbstractVcsTestCase;
+import com.intellij.util.ObjectUtils;
 import git4idea.DialogManager;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
@@ -50,18 +52,19 @@ public abstract class GitPlatformTest extends UsefulTestCase {
 
   private static final Logger LOG = Logger.getInstance(GitPlatformTest.class);
 
-  @NotNull protected Project myProject;
-  @NotNull protected VirtualFile myProjectRoot;
-  @NotNull protected String myProjectPath;
-  @NotNull protected GitRepositoryManager myGitRepositoryManager;
-  @NotNull protected GitVcsSettings myGitSettings;
-  @NotNull protected GitPlatformFacade myPlatformFacade;
-  @NotNull protected Git myGit;
+  protected Project myProject;
+  protected VirtualFile myProjectRoot;
+  protected String myProjectPath;
+  protected GitRepositoryManager myGitRepositoryManager;
+  protected GitVcsSettings myGitSettings;
+  protected GitPlatformFacade myPlatformFacade;
+  protected Git myGit;
+  protected GitVcs myVcs;
 
-  @NotNull protected TestDialogManager myDialogManager;
-  @NotNull protected TestVcsNotifier myVcsNotifier;
+  protected TestDialogManager myDialogManager;
+  protected TestVcsNotifier myVcsNotifier;
 
-  @NotNull private IdeaProjectTestFixture myProjectFixture;
+  private IdeaProjectTestFixture myProjectFixture;
   private String myTestStartedIndicator;
 
   @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors", "UnusedDeclaration"})
@@ -84,32 +87,41 @@ public abstract class GitPlatformTest extends UsefulTestCase {
       throw e;
     }
 
-    myProject = myProjectFixture.getProject();
-    myProjectRoot = myProject.getBaseDir();
-    myProjectPath = myProjectRoot.getPath();
+    try {
+      myProject = myProjectFixture.getProject();
+      myProjectRoot = myProject.getBaseDir();
+      myProjectPath = myProjectRoot.getPath();
 
-    myGitSettings = GitVcsSettings.getInstance(myProject);
-    myGitSettings.getAppSettings().setPathToGit(GitExecutor.PathHolder.GIT_EXECUTABLE);
+      myGitSettings = GitVcsSettings.getInstance(myProject);
+      myGitSettings.getAppSettings().setPathToGit(GitExecutor.PathHolder.GIT_EXECUTABLE);
 
-    myDialogManager = (TestDialogManager)ServiceManager.getService(DialogManager.class);
-    myVcsNotifier = (TestVcsNotifier)ServiceManager.getService(myProject, VcsNotifier.class);
+      myDialogManager = (TestDialogManager)ServiceManager.getService(DialogManager.class);
+      myVcsNotifier = (TestVcsNotifier)ServiceManager.getService(myProject, VcsNotifier.class);
 
-    myGitRepositoryManager = GitUtil.getRepositoryManager(myProject);
-    myPlatformFacade = ServiceManager.getService(myProject, GitPlatformFacade.class);
-    myGit = ServiceManager.getService(myProject, Git.class);
+      myGitRepositoryManager = GitUtil.getRepositoryManager(myProject);
+      myPlatformFacade = ServiceManager.getService(myProject, GitPlatformFacade.class);
+      myGit = ServiceManager.getService(myProject, Git.class);
+      myVcs = ObjectUtils.assertNotNull(GitVcs.getInstance(myProject));
+      myVcs.doActivate();
 
-    initChangeListManager();
-    addSilently();
-    removeSilently();
+      GitTestUtil.assumeSupportedGitVersion(myVcs);
+      initChangeListManager();
+      addSilently();
+      removeSilently();
+    }
+    catch (Exception e) {
+      tearDown();
+      throw e;
+    }
   }
 
   @Override
   @NotNull
   public String getTestName(boolean lowercaseFirstLetter) {
     String name = super.getTestName(lowercaseFirstLetter);
-    name = name.trim().replace(' ', '_');
-    if (name.length() > 50) {
-      name = name.substring(0, 50);
+    name = StringUtil.shortenTextWithEllipsis(name.trim().replace(" ", "_"), 12, 6, "_");
+    if (name.startsWith("_")) {
+      name = name.substring(1);
     }
     return name;
   }
@@ -122,16 +134,25 @@ public abstract class GitPlatformTest extends UsefulTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      myDialogManager.cleanup();
-      myVcsNotifier.cleanup();
-      myProjectFixture.tearDown();
-
-      String tempTestIndicator = myTestStartedIndicator;
-      clearFields(this);
-      myTestStartedIndicator = tempTestIndicator;
+      if (myDialogManager != null) {
+        myDialogManager.cleanup();
+      }
+      if (myVcsNotifier != null) {
+        myVcsNotifier.cleanup();
+      }
+      if (myProjectFixture != null) {
+        myProjectFixture.tearDown();
+      }
     }
     finally {
-      super.tearDown();
+      try {
+        String tempTestIndicator = myTestStartedIndicator;
+        clearFields(this);
+        myTestStartedIndicator = tempTestIndicator;
+      }
+      finally {
+        super.tearDown();
+      }
     }
   }
 

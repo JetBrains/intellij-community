@@ -93,5 +93,17 @@
   <item name='java.text.SimpleDateFormat void setDateFormatSymbols(java.text.DateFormatSymbols) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.text.StringCharacterIterator StringCharacterIterator(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.text.StringCharacterIterator StringCharacterIterator(java.lang.String, int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.text.StringCharacterIterator StringCharacterIterator(java.lang.String, int, int, int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.text.StringCharacterIterator void setText(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
 </root>
 

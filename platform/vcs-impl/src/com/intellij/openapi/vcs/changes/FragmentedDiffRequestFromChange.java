@@ -81,10 +81,7 @@ public class FragmentedDiffRequestFromChange {
     }
     List<BeforeAfter<TextRange>> ranges = calculator.getRanges();
     if (ranges == null || ranges.isEmpty()) return null;
-    FragmentedContent fragmentedContent = new FragmentedContent(calculator.getOldDocument(), calculator.getDocument(), ranges);
-    final FileStatus fs = change.getFileStatus();
-    fragmentedContent.setIsAddition(FileStatus.ADDED.equals(fs));
-    fragmentedContent.setOneSide(FileStatus.ADDED.equals(fs) || FileStatus.DELETED.equals(fs));
+    FragmentedContent fragmentedContent = new FragmentedContent(calculator.getOldDocument(), calculator.getDocument(), ranges, change);
     VirtualFile file = filePath.getVirtualFile();
     if (file == null) {
       filePath.hardRefresh();
@@ -221,8 +218,8 @@ public class FragmentedDiffRequestFromChange {
       final List<BeforeAfter<TextRange>> result = new ArrayList<BeforeAfter<TextRange>>();
       if (myRanges == null || myRanges.isEmpty()) return Collections.emptyList();
       for (Range range : myRanges) {
-        final TextRange before = new TextRange(range.getUOffset1(), range.getUOffset2());
-        final TextRange after = new TextRange(range.getOffset1(), range.getOffset2());
+        final TextRange before = new TextRange(range.getVcsLine1(), range.getVcsLine2());
+        final TextRange after = new TextRange(range.getLine1(), range.getLine2());
         result.add(new BeforeAfter<TextRange>(before, after));
       }
       return result;

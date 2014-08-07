@@ -3,6 +3,7 @@ package com.intellij.vcs.log;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -16,11 +17,16 @@ import java.util.List;
 public interface VcsLogRefManager {
 
   /**
-   * Sorts the given references.
-   * TODO better provide compareTo
+   * Return the comparator which compares two given references in terms of their "importance",
+   * which is later is used in the log to order branches and branch labels.
+   * <p><ul>
+   * <li>Negative value is returned if first reference is <b>more</b> important than the second (i.e. it will be at the left in the log).
+   * <li>Positive value is returned if first reference is <b>less</b> important than the second (i.e. it will be at the right in the log).
+   * <li>Zero is returned if referenced are considered equally important.
+   * </ul>
    */
   @NotNull
-  List<VcsRef> sort(Collection<VcsRef> refs);
+  Comparator<VcsRef> getComparator();
 
   /**
    * <p>Groups VCS references to show them on the branches panel.</p>

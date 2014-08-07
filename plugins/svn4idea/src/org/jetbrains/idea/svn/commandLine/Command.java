@@ -5,7 +5,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.ISVNCanceller;
+import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -31,7 +31,7 @@ public class Command {
   @Nullable private volatile SVNURL myRepositoryUrl;
   @NotNull private SvnTarget myTarget;
 
-  @Nullable private ISVNCanceller myCanceller;
+  @Nullable private ProgressTracker myCanceller;
 
   public Command(@NotNull SvnCommandName name) {
     myName = name;
@@ -52,11 +52,11 @@ public class Command {
   }
 
   @Nullable
-  public ISVNCanceller getCanceller() {
+  public ProgressTracker getCanceller() {
     return myCanceller;
   }
 
-  public void setCanceller(@Nullable ISVNCanceller canceller) {
+  public void setCanceller(@Nullable ProgressTracker canceller) {
     myCanceller = canceller;
   }
 

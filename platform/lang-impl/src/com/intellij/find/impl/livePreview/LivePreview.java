@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,7 +121,7 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
     }
 
     highlightUsages();
-    updateCursorHighlighting(false);
+    updateCursorHighlighting();
     if (myInSmartUpdate) {
       clearUnusedHightlighters();
       myInSmartUpdate = false;
@@ -218,9 +218,9 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
   }
 
   @Override
-  public void cursorMoved(boolean toChangeSelection) {
+  public void cursorMoved() {
     updateInSelectionHighlighters();
-    updateCursorHighlighting(toChangeSelection);
+    updateCursorHighlighting();
   }
 
   @Override
@@ -228,14 +228,7 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
     dumpState();
   }
 
-  @Override
-  public void editorChanged(SearchResults sr, Editor oldEditor) {
-    removeFromEditor();
-    oldEditor.getDocument().removeDocumentListener(this);
-    mySearchResults.getEditor().getDocument().addDocumentListener(this);
-  }
-
-  private void updateCursorHighlighting(boolean scroll) {
+  private void updateCursorHighlighting() {
     hideBalloon();
 
     if (myCursorHighlighter != null) {
@@ -245,7 +238,6 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
 
     final FindResult cursor = mySearchResults.getCursor();
     Editor editor = mySearchResults.getEditor();
-    SelectionModel selection = editor.getSelectionModel();
     if (cursor != null) {
       Set<RangeHighlighter> dummy = new HashSet<RangeHighlighter>();
       highlightRange(cursor, new TextAttributes(null, null, Color.BLACK, EffectType.ROUNDED_BOX, 0), dummy);
@@ -253,33 +245,6 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
         myCursorHighlighter = dummy.iterator().next();
       }
 
-      if (scroll) {
-        if (mySearchResults.getFindModel().isGlobal()) {
-          FoldingModel foldingModel = editor.getFoldingModel();
-          final FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
-
-          foldingModel.runBatchFoldingOperation(new Runnable() {
-            @Override
-            public void run() {
-              for (FoldRegion region : allRegions) {
-                if (!region.isValid()) continue;
-                if (cursor.intersects(TextRange.create(region))) {
-                  region.setExpanded(true);
-                }
-              }
-            }
-          });
-          selection.setSelection(cursor.getStartOffset(), cursor.getEndOffset());
-
-          editor.getCaretModel().moveToOffset(cursor.getEndOffset());
-          editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
-        } else {
-          if (!SearchResults.insideVisibleArea(editor, cursor)) {
-            LogicalPosition pos = editor.offsetToLogicalPosition(cursor.getStartOffset());
-            editor.getScrollingModel().scrollTo(pos, ScrollType.CENTER);
-          }
-        }
-      }
       editor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
         @Override
         public void run() {
@@ -496,6 +461,8 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
       new Processor<RangeHighlighterEx>() {
         @Override
         public boolean process(RangeHighlighterEx highlighter) {
+          if (!highlighter.getEditorFilter().avaliableIn(mySearchResults.getEditor())) return true;
+
           TextAttributes textAttributes =
             highlighter.getTextAttributes();
           if (highlighter.getUserData(SEARCH_MARKER) != null &&

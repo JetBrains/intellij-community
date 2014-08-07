@@ -4,11 +4,11 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.checkin.CommitEventHandler;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNCopyClient;
 import org.tmatesoft.svn.core.wc.SVNCopySource;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -50,7 +50,7 @@ public class SvnKitCopyMoveClient extends BaseSvnClient implements CopyMoveClien
 
     final SVNCopySource copySource = createCopySource(source, revision);
     SVNCopyClient client = myVcs.getSvnKitManager().createCopyClient();
-    client.setEventHandler(handler);
+    client.setEventHandler(toEventHandler(handler));
 
     SVNCommitInfo info;
     try {
@@ -69,9 +69,9 @@ public class SvnKitCopyMoveClient extends BaseSvnClient implements CopyMoveClien
                    @NotNull File destination,
                    @Nullable SVNRevision revision,
                    boolean makeParents,
-                   @Nullable ISVNEventHandler handler) throws VcsException {
+                   @Nullable ProgressTracker handler) throws VcsException {
     SVNCopyClient client = myVcs.getSvnKitManager().createCopyClient();
-    client.setEventHandler(handler);
+    client.setEventHandler(toEventHandler(handler));
 
     try {
       client.doCopy(new SVNCopySource[]{createCopySource(source, revision)}, destination, false, makeParents, true);

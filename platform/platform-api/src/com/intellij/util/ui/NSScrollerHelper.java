@@ -75,6 +75,8 @@ class NSScrollerHelper {
 
     ID delegateClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), "NSScrollerChangesObserver");
     if (!ID.NIL.equals(delegateClass)) {
+      // This static initializer might be called more than once (with different class loaders). In that case NSScrollerChangesObserver
+      // already exists.
       if (!Foundation.addMethod(delegateClass, Foundation.createSelector("handleScrollerStyleChanged:"), APPEARANCE_CALLBACK, "v@")) {
         throw new RuntimeException("Cannot add observer method");
       }

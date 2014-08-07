@@ -54,7 +54,7 @@ public class ParagraphFillHandler {
         document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(),
                                replacementText);
         final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(
-                                        CodeStyleSettingsManager.getSettings(element.getProject()));
+                                        CodeStyleSettingsManager.getSettings(element.getProject()), element.getLanguage());
         codeFormatter.doWrapLongLinesIfNecessary(editor, element.getProject(), document,
                                                  textRange.getStartOffset(),
                                                  textRange.getStartOffset() + replacementText.length() + 1);

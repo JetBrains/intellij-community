@@ -38,21 +38,14 @@ public class DocumentWrapper {
 
   @NotNull
   public List<String> getLines() {
-    return getLines(0, myDocument.getLineCount() - 1);
+    return getLines(0, getLineCount(myDocument) - 1);
   }
 
   @NotNull
   public List<String> getLines(int from, int to) {
     ArrayList<String> result = new ArrayList<String>();
     for (int i = from; i <= to; i++) {
-      if (i >= myDocument.getLineCount()) break;
-      final String line = getLine(i);
-      /*
-      if (line.length() > 0 || i < to) {
-        result.add(line);
-      }
-      */
-      result.add(line);
+      result.add(getLine(i));
     }
     return result;
   }
@@ -64,6 +57,10 @@ public class DocumentWrapper {
       assert false : myDocument;
     }
     return myDocument.getText(range);
+  }
+
+  private static int getLineCount(@NotNull Document document) {
+    return Math.max(document.getLineCount(), 1);
   }
 }
 
