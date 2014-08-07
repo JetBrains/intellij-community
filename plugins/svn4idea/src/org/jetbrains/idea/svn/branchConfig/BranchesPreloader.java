@@ -34,7 +34,6 @@ public class BranchesPreloader implements PairConsumer<SvnBranchConfigurationNew
   private final VirtualFile myRoot;
   private final ProgressManagerQueue myQueue;
   private final NewRootBunch myBunch;
-  private boolean myAll;
 
   public BranchesPreloader(Project project, @NotNull final NewRootBunch bunch, VirtualFile root, final ProgressManagerQueue queue) {
     myBunch = bunch;
@@ -59,13 +58,9 @@ public class BranchesPreloader implements PairConsumer<SvnBranchConfigurationNew
     for (String newBranchUrl : next.getBranchUrls()) {
       // check if cancel had been put
       if (! vcs.isVcsBackgroundOperationsAllowed(myRoot)) return;
-      if (myAll || (! oldUrls.contains(newBranchUrl))) {
+      if (!oldUrls.contains(newBranchUrl)) {
         new BranchesLoader(myProject, myBunch, newBranchUrl, InfoReliability.defaultValues, myRoot, true).run();
       }
     }
-  }
-
-  public void setAll(boolean all) {
-    myAll = all;
   }
 }

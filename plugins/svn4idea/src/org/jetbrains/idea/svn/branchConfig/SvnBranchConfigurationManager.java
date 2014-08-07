@@ -203,9 +203,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
           public void run() {
             try {
               for (Pair<VirtualFile, SvnBranchConfigurationNew> pair : branchPoints) {
-                final BranchesPreloader branchesPreloader = new BranchesPreloader(myProject, myBunch, pair.getFirst(), myBranchesLoader);
-                branchesPreloader.setAll(true);
-                branchesPreloader.loadImpl(null, pair.getSecond());
+                new BranchesPreloader(myProject, myBunch, pair.getFirst(), myBranchesLoader).loadImpl(null, pair.getSecond());
               }
             }
             catch (ProcessCanceledException e) {
