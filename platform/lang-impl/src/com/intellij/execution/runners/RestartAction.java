@@ -42,16 +42,15 @@ import java.util.List;
  * @author dyoma
  */
 public class RestartAction extends FakeRerunAction implements DumbAware, AnAction.TransparentUpdate, Disposable {
-
   private final ProgramRunner myRunner;
   @NotNull private final RunContentDescriptor myDescriptor;
   @NotNull private final Executor myExecutor;
   private final ExecutionEnvironment myEnvironment;
 
-  public RestartAction(@NotNull final Executor executor,
-                       final ProgramRunner runner,
-                       @NotNull final RunContentDescriptor descriptor,
-                       @NotNull final ExecutionEnvironment env) {
+  public RestartAction(@NotNull Executor executor,
+                       @NotNull ProgramRunner runner,
+                       @NotNull RunContentDescriptor descriptor,
+                       @NotNull ExecutionEnvironment env) {
     Disposer.register(descriptor, this);
     registry.add(this);
 
@@ -79,12 +78,14 @@ public class RestartAction extends FakeRerunAction implements DumbAware, AnActio
 
   @Nullable
   static RestartAction findActualAction() {
-    if (registry.isEmpty())
+    if (registry.isEmpty()) {
       return null;
+    }
+
     List<RestartAction> candidates = new ArrayList<RestartAction>(registry);
     Collections.sort(candidates, new Comparator<RestartAction>() {
       @Override
-      public int compare(RestartAction action1, RestartAction action2) {
+      public int compare(@NotNull RestartAction action1, @NotNull RestartAction action2) {
         boolean isActive1 = action1.isEnabled();
         boolean isActive2 = action2.isEnabled();
         if (isActive1 != isActive2)
@@ -114,8 +115,9 @@ public class RestartAction extends FakeRerunAction implements DumbAware, AnActio
 
   public void restart() {
     Project project = myEnvironment.getProject();
-    if (!ExecutorRegistry.getInstance().isStarting(project, myExecutor.getId(), myRunner.getRunnerId()))
+    if (!ExecutorRegistry.getInstance().isStarting(project, myExecutor.getId(), myRunner.getRunnerId())) {
       ExecutionManager.getInstance(project).restartRunProfile(myRunner, myEnvironment, myDescriptor);
+    }
   }
 
   @Override
@@ -132,12 +134,11 @@ public class RestartAction extends FakeRerunAction implements DumbAware, AnActio
 
   boolean isEnabled() {
     ProcessHandler processHandler = myDescriptor.getProcessHandler();
-    boolean isTerminating = processHandler != null && processHandler.isProcessTerminating();
-    boolean isStarting = ExecutorRegistry.getInstance().isStarting(myEnvironment.getProject(), myExecutor.getId(), myRunner.getRunnerId());
-    return !isStarting && !isTerminating;
+    return !ExecutorRegistry.getInstance().isStarting(myEnvironment.getProject(), myExecutor.getId(), myRunner.getRunnerId()) &&
+           !(processHandler != null && processHandler.isProcessTerminating());
   }
 
-  public void registerShortcut(final JComponent component) {
+  public void registerShortcut(JComponent component) {
     registerCustomShortcutSet(new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_RERUN)),
                               component);
   }
