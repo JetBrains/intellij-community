@@ -65,6 +65,10 @@ final class cfg {
     return sort == Type.OBJECT || sort == Type.ARRAY;
   }
 
+  static boolean isBooleanType(Type tp) {
+    return Type.BOOLEAN_TYPE.equals(tp);
+  }
+
 
   static boolean[] leakingParameters(String className, MethodNode methodNode) throws AnalyzerException {
     Frame<ParamsValue>[] frames = new Analyzer<ParamsValue>(new ParametersUsage(methodNode)).analyze(className, methodNode);
@@ -179,10 +183,10 @@ final class cfg {
           if (INVOKEINTERFACE == opCode) {
             return new SourceValue(retType.getSize());
           }
-          if (isReference && ((retType.getSort() == Type.OBJECT) || (retType.getSort() == Type.ARRAY))) {
+          if (isReference && isReferenceType(retType)) {
             return new SourceValue(1, insn);
           }
-          if (!isReference && Type.BOOLEAN_TYPE.equals(retType)) {
+          if (!isReference && isBooleanType(retType)) {
             return new SourceValue(1, insn);
           }
           return new SourceValue(retType.getSize());
@@ -537,7 +541,7 @@ class ParametersUsage extends Interpreter<ParamsValue> {
     if (type == null) return val1;
     called++;
     if (type == Type.VOID_TYPE) return null;
-    if (called < rangeEnd && rangeStart <= called) {
+    if (called < rangeEnd && rangeStart <= called && (cfg.isReferenceType(type) || cfg.isBooleanType(type))) {
       boolean[] params = new boolean[arity];
       params[called - shift] = true;
       return type.getSize() == 1 ? new ParamsValue(params, 1) : new ParamsValue(params, 2);
