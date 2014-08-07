@@ -1067,8 +1067,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private static Thread getEventQueueThread() {
     EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
     try {
-      Method method = EventQueue.class.getDeclaredMethod("getDispatchThread");
-      method.setAccessible(true);
+      Method method = ReflectionUtil.getDeclaredMethod(EventQueue.class, "getDispatchThread");
       return (Thread)method.invoke(eventQueue);
     }
     catch (Exception e) {
