@@ -536,12 +536,12 @@ public class XDebugSessionImpl implements XDebugSession {
   private void doResume() {
     if (!myPaused.getAndSet(false)) return;
 
-    final XSourcePosition oldPosition = myCurrentPosition;
     myDispatcher.getMulticaster().beforeSessionResume();
     myDebuggerManager.setActiveSession(this, null, false, null);
     mySuspendContext = null;
     myCurrentExecutionStack = null;
     myCurrentStackFrame = null;
+    adjustMouseTrackingCounter(myCurrentPosition, -1);
     myCurrentPosition = null;
     myActiveNonLineBreakpoint = null;
     UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -549,9 +549,6 @@ public class XDebugSessionImpl implements XDebugSession {
       public void run() {
         if (mySessionTab != null) {
           mySessionTab.getUi().clearAttractionBy(XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION);
-        }
-        if (oldPosition != null) {
-          adjustMouseTrackingCounter(oldPosition, -1);
         }
       }
     });
@@ -794,6 +791,7 @@ public class XDebugSessionImpl implements XDebugSession {
     if (myCurrentPosition != null) {
       myDebuggerManager.setActiveSession(this, myCurrentPosition, false, getPositionIconRenderer(true));
     }
+    adjustMouseTrackingCounter(myCurrentPosition, 1);
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -802,24 +800,27 @@ public class XDebugSessionImpl implements XDebugSession {
           initSessionTab(null);
           showSessionTab();
         }
-        if (myCurrentPosition != null) {
-          adjustMouseTrackingCounter(myCurrentPosition, 1);
-        }
       }
     });
     myDispatcher.getMulticaster().sessionPaused();
   }
 
-  private void adjustMouseTrackingCounter(@NotNull XSourcePosition position, int increment) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+  private void adjustMouseTrackingCounter(final XSourcePosition position, final int increment) {
+    if (position == null || ApplicationManager.getApplication().isUnitTestMode()) return;
 
-    Editor editor = XDebuggerUtilImpl.createEditor(new OpenFileDescriptor(myProject, position.getFile()));
-    if (editor != null) {
-      JComponent component = editor.getComponent();
-      Object o = component.getClientProperty(EditorImpl.IGNORE_MOUSE_TRACKING);
-      Integer value = ((o instanceof Integer) ? (Integer)o : 0) + increment;
-      component.putClientProperty(EditorImpl.IGNORE_MOUSE_TRACKING, value > 0 ? value : null);
-    }
+    // need to always invoke later to maintain order of increment/decrement
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        Editor editor = XDebuggerUtilImpl.createEditor(new OpenFileDescriptor(myProject, position.getFile()));
+        if (editor != null) {
+          JComponent component = editor.getComponent();
+          Object o = component.getClientProperty(EditorImpl.IGNORE_MOUSE_TRACKING);
+          Integer value = ((o instanceof Integer) ? (Integer)o : 0) + increment;
+          component.putClientProperty(EditorImpl.IGNORE_MOUSE_TRACKING, value > 0 ? value : null);
+        }
+      }
+    });
   }
 
   @Override
@@ -851,6 +852,8 @@ public class XDebugSessionImpl implements XDebugSession {
     if (!myProject.isDisposed()) {
       myProject.getMessageBus().syncPublisher(XDebuggerManager.TOPIC).processStopped(myDebugProcess);
     }
+
+    adjustMouseTrackingCounter(myCurrentPosition, -1);
     myCurrentPosition = null;
     myCurrentExecutionStack = null;
     myCurrentStackFrame = null;
