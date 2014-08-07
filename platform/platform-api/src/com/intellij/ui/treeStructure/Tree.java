@@ -429,7 +429,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       }
       final Method method = ReflectionUtil.getDeclaredMethod(aClass, "isLocationInExpandControl", TreePath.class, int.class, int.class);
       if (method != null) {
-        method.setAccessible(true);
         return (Boolean)method.invoke(ui, path, x, y);
       }
     }

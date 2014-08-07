@@ -30,7 +30,7 @@ public class RollbackLineStatusRangeAction extends RollbackLineStatusAction {
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(true);
+    e.getPresentation().setEnabledAndVisible(true);
   }
 
   public void actionPerformed(final AnActionEvent e) {

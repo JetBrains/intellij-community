@@ -745,16 +745,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
         @Override
         public void windowOpened(WindowEvent e) {
-          if (!isModal()) {
-            DialogWrapper wrapper = getDialogWrapper();
-            if (wrapper != null) {
-              JComponent component = wrapper.getPreferredFocusedComponent();
-              if (component != null) {
-                // request focus for non-modal dialog (i.e. TipDialog)
-                IdeFocusManager.findInstance().requestFocus(component, true);
-              }
-            }
-          }
           if (!SystemInfo.isMacOSLion) return;
           Window window = e.getWindow();
           if (window instanceof Dialog) {
@@ -774,14 +764,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
           queue.getKeyEventDispatcher().resetState();
         }
 
-       // if (myProject != null) {
-       //   Project project = myProject.get();
-          //if (project != null && !project.isDisposed() && project.isInitialized()) {
-          // // IdeFocusManager.findInstanceByComponent(this).requestFocus(new MyFocusCommand(dialogWrapper), true);
-          //}
-       // }
       }
 
+      // Workaround for switching workspaces on dialog show
       if (SystemInfo.isMac && myProject != null && Registry.is("ide.mac.fix.dialog.showing") && !dialogWrapper.isModalProgress()) {
         final IdeFrame frame = WindowManager.getInstance().getIdeFrame(myProject.get());
         AppIcon.getInstance().requestFocus(frame);

@@ -75,7 +75,6 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
   private boolean myRebuildNeeded;
 
   public XWatchesViewImpl(@NotNull final XDebugSessionImpl session) {
-    super(session.getProject());
     mySession = session;
     myTreePanel = new XDebuggerTreePanel(session.getProject(), session.getDebugProcess().getEditorsProvider(), this, null,
                                          XDebuggerActions.WATCHES_TREE_POPUP_GROUP, ((XDebugSessionImpl)session).getValueMarkers());

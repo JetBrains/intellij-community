@@ -208,13 +208,13 @@ public class LineStatusTrackerDrawing {
     component.add(toolbarPanel, BorderLayout.NORTH);
 
     if (range.getType() != Range.INSERTED) {
-      final DocumentEx doc = (DocumentEx) tracker.getUpToDateDocument();
+      final DocumentEx doc = (DocumentEx) tracker.getVcsDocument();
       final EditorEx uEditor = (EditorEx)EditorFactory.getInstance().createViewer(doc, tracker.getProject());
       final EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(tracker.getProject(), getFileName(tracker.getDocument()));
       uEditor.setHighlighter(highlighter);
 
       final EditorFragmentComponent editorFragmentComponent =
-        EditorFragmentComponent.createEditorFragmentComponent(uEditor, range.getUOffset1(), range.getUOffset2(), false, false);
+        EditorFragmentComponent.createEditorFragmentComponent(uEditor, range.getVcsLine1(), range.getVcsLine2(), false, false);
 
       component.add(editorFragmentComponent, BorderLayout.CENTER);
 
@@ -252,7 +252,7 @@ public class LineStatusTrackerDrawing {
 
   public static void moveToRange(final Range range, final Editor editor, final LineStatusTracker tracker) {
     final Document document = tracker.getDocument();
-    final int lastOffset = document.getLineStartOffset(Math.min(range.getOffset2(), document.getLineCount() - 1));
+    final int lastOffset = document.getLineStartOffset(Math.min(range.getLine2(), document.getLineCount() - 1));
     editor.getCaretModel().moveToOffset(lastOffset);
     editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
 

@@ -53,7 +53,7 @@ public class PopupPositionManager {
                                                  @Nullable final Editor editor,
                                                  @Nullable DataContext dataContext) {
     final LookupEx lookup = LookupManager.getActiveLookup(editor);
-    if (lookup != null && lookup.getCurrentItem() != null) {
+    if (lookup != null && lookup.getCurrentItem() != null && lookup.getComponent().isShowing()) {
       new PositionAdjuster(lookup.getComponent()).adjust(hint);
       lookup.addLookupListener(new LookupAdapter() {
         @Override

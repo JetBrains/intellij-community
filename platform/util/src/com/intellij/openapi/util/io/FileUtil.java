@@ -1264,10 +1264,10 @@ public class FileUtil extends FileUtilRt {
     if (path == null) return null;
 
     if (SystemInfo.isUnix || !unixOnly) {
-      final File projectDir = new File(path);
-      final File userHomeDir = new File(SystemProperties.getUserHome());
+      File projectDir = new File(path);
+      File userHomeDir = new File(SystemProperties.getUserHome());
       if (isAncestor(userHomeDir, projectDir, true)) {
-        return "~/" + getRelativePath(userHomeDir, projectDir);
+        return '~' + File.separator + getRelativePath(userHomeDir, projectDir);
       }
     }
 

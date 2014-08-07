@@ -139,8 +139,7 @@ public final class SwingCleanuper implements ApplicationComponent{
                       focusManager.setGlobalCurrentFocusCycleRoot(null); //Remove focus leaks
 
                       try {
-                        final Method m = KeyboardFocusManager.class.getDeclaredMethod("setGlobalFocusOwner", Component.class);
-                        m.setAccessible(true);
+                        final Method m = ReflectionUtil.getDeclaredMethod(KeyboardFocusManager.class,"setGlobalFocusOwner", Component.class);
                         m.invoke(focusManager, new Object[]{null});
                       }
                       catch (Exception e) {
@@ -169,7 +168,6 @@ public final class SwingCleanuper implements ApplicationComponent{
         if (SystemInfo.isMac) {
           try {
             field = ReflectionUtil.findField(AccessibleContext.class, Object.class, "nativeAXResource");
-            field.setAccessible(true);
           }
           catch (NoSuchFieldException ignored) {
           }
@@ -228,7 +226,6 @@ public final class SwingCleanuper implements ApplicationComponent{
                 Object resource = myNativeAXResourceField.get(ac);
                 if (resource != null && resource.getClass().getName().equals("apple.awt.CAccessible")) {
                   Field accessible = ReflectionUtil.findField(resource.getClass(), Accessible.class, "accessible");
-                  accessible.setAccessible(true);
                   accessible.set(resource, null);
                 }
               }

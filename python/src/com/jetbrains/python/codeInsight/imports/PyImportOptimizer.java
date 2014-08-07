@@ -92,7 +92,7 @@ public class PyImportOptimizer implements ImportOptimizer {
           for (PyImportElement importElement : importStatement.getImportElements()) {
             myMissorted = true;
             PsiElement toImport = importElement.resolve();
-            final PyImportStatement splitImport = myGenerator.createImportStatementFromText(langLevel, "import " + importElement.getText());
+            final PyImportStatement splitImport = myGenerator.createImportStatement(langLevel, importElement.getText(), null);
             prioritize(splitImport, toImport);
           }
         }

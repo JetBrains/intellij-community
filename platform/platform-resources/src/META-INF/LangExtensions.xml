@@ -825,7 +825,7 @@
     <defaultHighlightingSettingProvider implementation="com.intellij.codeInsight.daemon.impl.analysis.GeneratedSourcesHighlightingSettingProvider"/>
     <editorNotificationProvider implementation="com.intellij.ide.GeneratedFileEditingNotificationProvider"/>
 
-    <editorTabTitleProvider implementation="com.intellij.openapi.fileEditor.impl.UniqueNameEditorTabTitleProvider"/>
+    <editorTabTitleProvider implementation="com.intellij.openapi.fileEditor.impl.UniqueNameEditorTabTitleProvider" order="last"/>
 
     <projectService serviceInterface="com.intellij.psi.util.PsiModificationTracker"
                     serviceImplementation="com.intellij.psi.impl.PsiModificationTrackerImpl"/>

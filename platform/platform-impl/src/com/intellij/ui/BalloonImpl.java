@@ -331,7 +331,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     Integer result = JLayeredPane.DEFAULT_LAYER;
     switch (myLayer) {
       case normal:
-        result = JLayeredPane.DEFAULT_LAYER;
+        result = JLayeredPane.POPUP_LAYER;
         break;
       case top:
         result = JLayeredPane.DRAG_LAYER;
