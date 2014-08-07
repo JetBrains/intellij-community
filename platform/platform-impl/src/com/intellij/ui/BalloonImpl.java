@@ -613,7 +613,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     myComp.setBorder(new EmptyBorder(borderSize, borderSize, borderSize, borderSize));
 
     myLayeredPane.add(myComp);
-    myLayeredPane.setLayer(myComp, getLayer(), 0); // the second balloon must be over the first one
+    myLayeredPane.setLayer(myComp, getLayer());
     myPosition.updateBounds(this);
     if (myBlockClicks) {
       myComp.addMouseListener(new MouseAdapter() {
