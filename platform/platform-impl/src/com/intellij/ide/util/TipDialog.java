@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2014 JetBrains s.r.o.
  *
@@ -58,9 +57,6 @@ public class TipDialog extends DialogWrapper{
       setHorizontalStretch(1.33f);
       setVerticalStretch(1.25f);
       init();
-      if (getPeer() instanceof DialogWrapperPeerImpl) {
-        ((DialogWrapperPeerImpl)getPeer()).setAutoRequestFocus(false);
-      }
     }
 
   @NotNull
