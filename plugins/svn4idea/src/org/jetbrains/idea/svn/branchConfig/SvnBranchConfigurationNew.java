@@ -97,7 +97,7 @@ public class SvnBranchConfigurationNew {
       LOG.info("Branches list not updated for : '" + branchParentName + "; since config has changed.");
       return;
     }
-    current.accept(items, null);
+    current.accept(items);
   }
 
   public Map<String, InfoStorage<List<SvnBranchItem>>> getBranchMap() {

@@ -49,14 +49,21 @@ public class NewRootBunch {
   public void updateForRoot(@NotNull final VirtualFile root, @NotNull final InfoStorage<SvnBranchConfigurationNew> config,
                             @Nullable final PairConsumer<SvnBranchConfigurationNew, SvnBranchConfigurationNew> callbackOnUpdate) {
     synchronized (myLock) {
+      SvnBranchConfigurationNew previous;
+      boolean override;
       final InfoStorage<SvnBranchConfigurationNew> existing = myMap.get(root);
+
       if (existing == null) {
+        previous = null;
+        override = true;
         myMap.put(root, config);
-        if (callbackOnUpdate != null) {
-          callbackOnUpdate.consume(null, config.getValue());
-        }
       } else {
-        existing.accept(config, callbackOnUpdate);
+        previous = existing.getValue();
+        override = existing.accept(config);
+      }
+
+      if (callbackOnUpdate != null && override) {
+        callbackOnUpdate.consume(previous, config.getValue());
       }
     }
   }
