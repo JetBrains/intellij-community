@@ -77,7 +77,7 @@ public class StudyNewProjectPanel{
     myBrowseButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        FileChooser.chooseFile(fileChooser, myProject, myProject.getBaseDir(),
+        FileChooser.chooseFile(fileChooser, null, null,
                                new Consumer<VirtualFile>() {
                                  @Override
                                  public void consume(VirtualFile file) {

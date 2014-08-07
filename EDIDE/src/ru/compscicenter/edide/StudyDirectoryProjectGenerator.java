@@ -11,20 +11,21 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.platform.templates.github.GeneratorException;
 import com.intellij.platform.templates.github.ZipUtil;
+import com.jetbrains.python.newProject.PythonProjectGenerator;
+import icons.StudyIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.compscicenter.edide.course.Course;
 import ru.compscicenter.edide.course.CourseInfo;
-import ru.compscicenter.edide.ui.StudyNewProjectDialog;
+import ru.compscicenter.edide.ui.StudyNewProjectPanel;
 
+import javax.swing.*;
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -34,7 +35,7 @@ import java.util.regex.Pattern;
 /**
  * User: lia
  */
-public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
+public class StudyDirectoryProjectGenerator extends PythonProjectGenerator implements DirectoryProjectGenerator {
   private static final Logger LOG = Logger.getInstance(StudyDirectoryProjectGenerator.class.getName());
   private static final String REPO_URL = "https://github.com/medvector/initial-python-course/archive/master.zip";
   private static final String USER_NAME = "medvector";
@@ -133,26 +134,20 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
     return null;
   }
 
+  @Nullable
+  @Override
+  public Icon getLogo() {
+    return StudyIcons.Playground;
+  }
+
 
   @Override
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
                               @Nullable Object settings, @NotNull Module module) {
 
     myProject = project;
-    mySelectedCourseFile = null;
-    StudyNewProjectDialog dlg = new StudyNewProjectDialog(project, this);
-    dlg.show();
-    if (dlg.getExitCode() == DialogWrapper.CANCEL_EXIT_CODE) {
-      LOG.info("User canceled creation study project");
-      Messages.showErrorDialog("Empty project will be created.", "Study Project Creation Was Canceled");
-      return;
-    }
     Reader reader = null;
     try {
-      if (mySelectedCourseFile == null) {
-        LOG.error("user didn't choose any course files");
-        return;
-      }
       reader = new InputStreamReader(new FileInputStream(mySelectedCourseFile));
       Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
       Course course = gson.fromJson(reader, Course.class);
@@ -357,5 +352,11 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
       e.printStackTrace();
     }
     return coursesFromCash;
+  }
+
+  @Nullable
+  @Override
+  public JComponent getSettingsPanel(File baseDir) throws ProcessCanceledException {
+    return new StudyNewProjectPanel(myProject, this, null).getContentPanel();
   }
 }
