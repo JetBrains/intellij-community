@@ -1604,7 +1604,7 @@ public class JBTabsImpl extends JComponent
     return 3;
   }
 
-  public static int getGhostTabLength() {
+  public int getGhostTabLength() {
     return 15;
   }
 
@@ -3351,7 +3351,7 @@ public class JBTabsImpl extends JComponent
     return myVisibleInfos.isEmpty();
   }
 
-  public static int getInterTabSpaceLength() {
+  public int getInterTabSpaceLength() {
     return 1;
   }
 
