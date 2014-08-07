@@ -28,7 +28,7 @@ public abstract class XDebugView implements Disposable {
   private final SingleAlarm myClearAlarm;
   private static final int VIEW_CLEAR_DELAY = 100; //ms
 
-  public XDebugView(Disposable disposable) {
+  public XDebugView(@NotNull Disposable disposable) {
     myClearAlarm = new SingleAlarm(new Runnable() {
       @Override
       public void run() {
