@@ -176,6 +176,9 @@ final class cfg {
         case INVOKEINTERFACE:
           MethodInsnNode mNode = (MethodInsnNode)insn;
           Type retType = Type.getReturnType(mNode.desc);
+          if (INVOKEINTERFACE == opCode) {
+            return new SourceValue(retType.getSize());
+          }
           if (isReference && ((retType.getSort() == Type.OBJECT) || (retType.getSort() == Type.ARRAY))) {
             return new SourceValue(1, insn);
           }
