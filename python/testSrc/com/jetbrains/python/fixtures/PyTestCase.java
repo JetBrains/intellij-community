@@ -18,6 +18,8 @@ package com.jetbrains.python.fixtures;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
+import com.intellij.find.findUsages.CustomUsageSearcher;
+import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -33,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.TestDataPath;
@@ -42,6 +45,10 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.usages.Usage;
+import com.intellij.usages.rules.PsiElementUsage;
+import com.intellij.util.CommonProcessors.CollectProcessor;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.PythonMockSdk;
 import com.jetbrains.python.PythonModuleTypeBase;
@@ -55,6 +62,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author yole
@@ -182,6 +192,36 @@ public abstract class PyTestCase extends UsefulTestCase {
     final PsiElement element = myFixture.findElementByText(testToFind, PsiElement.class);
     assert element != null : "No element found by text: " + testToFind;
     myFixture.getEditor().getCaretModel().moveToOffset(element.getTextOffset());
+  }
+
+  /**
+   * Finds all usages of element. Works much like method in {@link com.intellij.testFramework.fixtures.CodeInsightTestFixture#findUsages(com.intellij.psi.PsiElement)},
+   * but supports {@link com.intellij.find.findUsages.CustomUsageSearcher} and {@link com.intellij.psi.search.searches.ReferencesSearch} as well
+   *
+   * @param element what to find
+   * @return usages
+   */
+  @NotNull
+  protected Collection<PsiElement> findUsage(@NotNull final PsiElement element) {
+    final Collection<PsiElement> result = new ArrayList<PsiElement>();
+    final CollectProcessor<Usage> usageCollector = new CollectProcessor<Usage>();
+    for (final CustomUsageSearcher searcher : CustomUsageSearcher.EP_NAME.getExtensions()) {
+      searcher.processElementUsages(element, usageCollector, new FindUsagesOptions(myFixture.getProject()));
+    }
+    for (final Usage usage : usageCollector.getResults()) {
+      if (usage instanceof PsiElementUsage) {
+        result.add(((PsiElementUsage)usage).getElement());
+      }
+    }
+    for (final PsiReference reference : ReferencesSearch.search(element).findAll()) {
+      result.add(reference.getElement());
+    }
+
+    for (final UsageInfo info : myFixture.findUsages(element)) {
+      result.add(info.getElement());
+    }
+
+    return result;
   }
 
   protected static class PyLightProjectDescriptor implements LightProjectDescriptor {
