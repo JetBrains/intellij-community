@@ -14,15 +14,10 @@
  * limitations under the License.
  */
 import org.jetbrains.jps.LayoutInfo
-
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
-String uri = requireProperty("gant.file")
-new File(new URI(uri).getSchemeSpecificPart()).getParentFile().getParentFile().getParent()
-
-setProperty("home", getHome())
-
 includeTargets << new File("${guessHome(this as Script)}/build/scripts/utils.gant")
+setProperty("home", getHome())
 includeTargets << new File("$home/build/scripts/ultimate_utils.gant")
 includeTargets << new File("$home/build/scripts/libLicenses.gant")
 
