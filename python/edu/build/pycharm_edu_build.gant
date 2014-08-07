@@ -98,9 +98,6 @@ target('default': "Build artifacts") {
                         "$ch/platform/icons/src",
                         "$pythonEduHome/resources"]
 
-  buildWinLauncher("$ch", "$ch/bin/WinLauncher/WinLauncher.exe", "${paths.distWin}/bin/pycharm.exe",
-                   appInfoFile(), "$pythonEduHome/build/pycharm_edu_launcher.properties", system_selector, resourcePaths)
-
   projectBuilder.stage("Cleaning up sandbox folder")
 
   projectBuilder.targetFolder = "${paths.sandbox}/classes"
@@ -160,7 +157,7 @@ public layoutEducational(String classesPath, Set usedJars) {
     usedJars = collectUsedJars(modules(), approvedJars(), ["/ant/"], null)
   }
 
-  def appInfo = appInfoFile(classesPath)
+  def appInfo = appInfoFile()
   def paths = new Paths(home)
   buildSearchableOptions("${projectBuilder.moduleOutput(findModule("platform-resources"))}/search", [], {
     projectBuilder.moduleRuntimeClasspath(findModule("main_pycharm_edu"), false).each {
@@ -191,7 +188,7 @@ public layoutEducational(String classesPath, Set usedJars) {
     "$ch/platform/icons/src",
     "$pythonEduHome/resources"]
   buildWinLauncher("$ch", "$ch/bin/WinLauncher/WinLauncher.exe", launcher,
-                   appInfoFile(), "$pythonEduHome/build/pycharm_edu_launcher.properties", system_selector, resourcePaths)
+                   appInfo, "$pythonEduHome/build/pycharm_edu_launcher.properties", system_selector, resourcePaths)
 
   buildWinZip("${paths.artifacts}/pycharmPE-${buildNumber}.zip", [paths.distAll, paths.distWin])
 
@@ -211,9 +208,8 @@ private layoutPlugins(layouts) {
   layouts.layoutCommunityPlugins(ch)
 }
 
-private String appInfoFile(String classesPath) {
+private String appInfoFile() {
   return "$pythonCommunityHome/resources/idea/PyCharmEduApplicationInfo.xml"
-  //C:\src\my_branch\idea\community\python\edu/resources/idea PyCharmEduApplicationInfo.xml
 }
 
 private layoutFull(Map args, String target, Set usedJars) {
