@@ -67,8 +67,8 @@ public class ExecutionEnvironment extends UserDataHolderBase {
   }
 
   public ExecutionEnvironment(@NotNull Executor executor,
-                              @NotNull final ProgramRunner runner,
-                              @NotNull final RunnerAndConfigurationSettings configuration,
+                              @NotNull ProgramRunner runner,
+                              @NotNull RunnerAndConfigurationSettings configuration,
                               @NotNull Project project) {
     this(configuration.getConfiguration(),
          executor,

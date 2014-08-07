@@ -24,7 +24,6 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
  * User: Vassiliy.Kudryashov
  */
 public final class ExecutionEnvironmentBuilder {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.runners.ExecutionEnvironmentBuilder");
   @NotNull private RunProfile myRunProfile;
   @NotNull private ExecutionTarget myTarget = DefaultExecutionTarget.INSTANCE;
 

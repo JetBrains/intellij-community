@@ -97,13 +97,12 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     return result;
   }
 
-  private Content createWatchesContent(final XDebugSessionImpl session, final XDebugSessionData sessionData) {
+  private Content createWatchesContent(final XDebugSessionImpl session) {
     myWatchesView = new XWatchesViewImpl(session);
     myViews.add(myWatchesView);
     Content watchesContent = myUi.createContent(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView.getMainPanel(),
                                          XDebuggerBundle.message("debugger.session.tab.watches.title"), AllIcons.Debugger.Watches, null);
     watchesContent.setCloseable(false);
-
     return watchesContent;
   }
 
@@ -136,12 +135,14 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     return myWatchesView;
   }
 
-  private void attachToSession(final @NotNull XDebugSessionImpl session, final @Nullable ProgramRunner runner,
-                               final @Nullable ExecutionEnvironment environment, final @NotNull XDebugSessionData sessionData,
-                               final @NotNull XDebugProcess debugProcess) {
+  private void attachToSession(final @NotNull XDebugSessionImpl session,
+                               @Nullable ProgramRunner runner,
+                               @Nullable ExecutionEnvironment environment,
+                               final @NotNull XDebugSessionData sessionData,
+                               @NotNull XDebugProcess debugProcess) {
     myUi.addContent(createFramesContent(session), 0, PlaceInGrid.left, false);
     myUi.addContent(createVariablesContent(session), 0, PlaceInGrid.center, false);
-    myUi.addContent(createWatchesContent(session, sessionData), 0, PlaceInGrid.right, false);
+    myUi.addContent(createWatchesContent(session), 0, PlaceInGrid.right, false);
     for (XDebugView view : myViews) {
       Disposer.register(this, view);
       session.addSessionListener(new XDebugViewSessionListener(view, getProject()), this);
