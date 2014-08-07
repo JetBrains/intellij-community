@@ -387,7 +387,6 @@ class NonNullInInterpreter extends BasicInterpreter {
       case INVOKESTATIC:
       case INVOKESPECIAL:
       case INVOKEVIRTUAL:
-      case INVOKEINTERFACE:
         boolean stable = opcode == INVOKESTATIC || opcode == INVOKESPECIAL;
         MethodInsnNode methodNode = (MethodInsnNode) insn;
         for (int i = shift; i < values.size(); i++) {
