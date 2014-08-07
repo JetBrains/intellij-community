@@ -208,6 +208,13 @@ class MakeResult<Res> implements PendingAction<Res> {
 }
 
 abstract class Analysis<Res> {
+  private static final ThreadLocal<PendingAction[]> ourPending = new ThreadLocal<PendingAction[]>() {
+    @Override
+    protected PendingAction[] initialValue() {
+      return new PendingAction[Analysis.STEPS_LIMIT];
+    }
+  };
+
   public static final int STEPS_LIMIT = 30000;
   public static final int EQUATION_SIZE_LIMIT = 30;
   public static final int MERGE_LIMIT = 100000;
@@ -219,7 +226,7 @@ abstract class Analysis<Res> {
   final DFSTree dfsTree;
   final Res myIdentity;
 
-  final Deque<PendingAction<Res>> pending = new LinkedList<PendingAction<Res>>();
+  final private PendingAction<Res>[] pending = ourPending.get();
   final protected List<State>[] computed;
   final protected Res[] results;
   final Key aKey;
@@ -275,14 +282,14 @@ abstract class Analysis<Res> {
 
   @NotNull
   final Equation<Key, Value> analyze() throws AnalyzerException {
-    pending.push(new ProceedState<Res>(createStartState()));
+    pendingPush(new ProceedState<Res>(createStartState()));
     int steps = 0;
-    while (!pending.isEmpty() && earlyResult == null) {
+    while (pendingTop > 0 && earlyResult == null) {
       steps ++;
       if (steps >= STEPS_LIMIT) {
         throw new AnalyzerException(null, "limit is reached, steps: " + steps + " in method " + method);
       }
-      PendingAction<Res> action = pending.pop();
+      PendingAction<Res> action = pendingPop();
       if (action instanceof MakeResult) {
         MakeResult<Res> makeResult = (MakeResult<Res>) action;
         ArrayList<Res> subResults = new ArrayList<Res>();
@@ -378,6 +385,18 @@ abstract class Analysis<Res> {
     }
     return frame;
   }
+
+  private int pendingTop = 0;
+
+  protected final void pendingPush(PendingAction<Res> action) {
+    pending[pendingTop++] = action;
+  }
+
+  protected final PendingAction<Res> pendingPop() {
+    return pending[--pendingTop];
+  }
+
+
 
   static BasicValue popValue(Frame<BasicValue> frame) {
     return frame.getStack(frame.getStackSize() - 1);

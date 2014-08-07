@@ -237,32 +237,32 @@ class NonNullInAnalysis extends Analysis<PResult> {
     if (opcode == IFNONNULL && popValue(frame) instanceof ParamValue) {
       int nextInsnIndex = insnIndex + 1;
       State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, hasCompanions || notEmptySubResult);
-      pending.push(new MakeResult<PResult>(state, subResult, new int[]{nextState.index}));
-      pending.push(new ProceedState<PResult>(nextState));
+      pendingPush(new MakeResult<PResult>(state, subResult, new int[]{nextState.index}));
+      pendingPush(new ProceedState<PResult>(nextState));
       return;
     }
 
     if (opcode == IFNULL && popValue(frame) instanceof ParamValue) {
       int nextInsnIndex = methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
       State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, hasCompanions || notEmptySubResult);
-      pending.push(new MakeResult<PResult>(state, subResult, new int[]{nextState.index}));
-      pending.push(new ProceedState<PResult>(nextState));
+      pendingPush(new MakeResult<PResult>(state, subResult, new int[]{nextState.index}));
+      pendingPush(new ProceedState<PResult>(nextState));
       return;
     }
 
     if (opcode == IFEQ && popValue(frame) == InstanceOfCheckValue) {
       int nextInsnIndex = methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
       State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, hasCompanions || notEmptySubResult);
-      pending.push(new MakeResult<PResult>(state, subResult, new int[]{nextState.index}));
-      pending.push(new ProceedState<PResult>(nextState));
+      pendingPush(new MakeResult<PResult>(state, subResult, new int[]{nextState.index}));
+      pendingPush(new ProceedState<PResult>(nextState));
       return;
     }
 
     if (opcode == IFNE && popValue(frame) == InstanceOfCheckValue) {
       int nextInsnIndex = insnIndex + 1;
       State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, hasCompanions || notEmptySubResult);
-      pending.push(new MakeResult<PResult>(state, subResult, new int[]{nextState.index}));
-      pending.push(new ProceedState<PResult>(nextState));
+      pendingPush(new MakeResult<PResult>(state, subResult, new int[]{nextState.index}));
+      pendingPush(new ProceedState<PResult>(nextState));
       return;
     }
 
@@ -283,9 +283,9 @@ class NonNullInAnalysis extends Analysis<PResult> {
       subIndices[i] = (id);
     }
 
-    pending.push(new MakeResult<PResult>(state, subResult, subIndices));
+    pendingPush(new MakeResult<PResult>(state, subResult, subIndices));
     for (State nextState : nextStates) {
-      pending.push(new ProceedState<PResult>(nextState));
+      pendingPush(new ProceedState<PResult>(nextState));
     }
 
   }

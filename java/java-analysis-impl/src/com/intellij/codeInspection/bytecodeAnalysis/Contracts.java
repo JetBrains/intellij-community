@@ -151,48 +151,48 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
     if (opcode == IFNONNULL && popValue(frame) instanceof ParamValue) {
       int nextInsnIndex = inValue == Value.Null ? insnIndex + 1 : methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
       State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false);
-      pending.push(new MakeResult<Result<Key, Value>>(state, myIdentity, new int[]{nextState.index}));
-      pending.push(new ProceedState<Result<Key, Value>>(nextState));
+      pendingPush(new MakeResult<Result<Key, Value>>(state, myIdentity, new int[]{nextState.index}));
+      pendingPush(new ProceedState<Result<Key, Value>>(nextState));
       return;
     }
 
     if (opcode == IFNULL && popValue(frame) instanceof ParamValue) {
       int nextInsnIndex = inValue == Value.NotNull ? insnIndex + 1 : methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
       State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false);
-      pending.push(new MakeResult<Result<Key, Value>>(state, myIdentity, new int[]{nextState.index}));
-      pending.push(new ProceedState<Result<Key, Value>>(nextState));
+      pendingPush(new MakeResult<Result<Key, Value>>(state, myIdentity, new int[]{nextState.index}));
+      pendingPush(new ProceedState<Result<Key, Value>>(nextState));
       return;
     }
 
     if (opcode == IFEQ && popValue(frame) == InstanceOfCheckValue && inValue == Value.Null) {
       int nextInsnIndex = methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
       State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false);
-      pending.push(new MakeResult<Result<Key, Value>>(state, myIdentity, new int[]{nextState.index}));
-      pending.push(new ProceedState<Result<Key, Value>>(nextState));
+      pendingPush(new MakeResult<Result<Key, Value>>(state, myIdentity, new int[]{nextState.index}));
+      pendingPush(new ProceedState<Result<Key, Value>>(nextState));
       return;
     }
 
     if (opcode == IFNE && popValue(frame) == InstanceOfCheckValue && inValue == Value.Null) {
       int nextInsnIndex = insnIndex + 1;
       State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false);
-      pending.push(new MakeResult<Result<Key, Value>>(state, myIdentity, new int[]{nextState.index}));
-      pending.push(new ProceedState<Result<Key, Value>>(nextState));
+      pendingPush(new MakeResult<Result<Key, Value>>(state, myIdentity, new int[]{nextState.index}));
+      pendingPush(new ProceedState<Result<Key, Value>>(nextState));
       return;
     }
 
     if (opcode == IFEQ && popValue(frame) instanceof ParamValue) {
       int nextInsnIndex = inValue == Value.True ? insnIndex + 1 : methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
       State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false);
-      pending.push(new MakeResult<Result<Key, Value>>(state, myIdentity, new int[]{nextState.index}));
-      pending.push(new ProceedState<Result<Key, Value>>(nextState));
+      pendingPush(new MakeResult<Result<Key, Value>>(state, myIdentity, new int[]{nextState.index}));
+      pendingPush(new ProceedState<Result<Key, Value>>(nextState));
       return;
     }
 
     if (opcode == IFNE && popValue(frame) instanceof ParamValue) {
       int nextInsnIndex = inValue == Value.False ? insnIndex + 1 : methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
       State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false);
-      pending.push(new MakeResult<Result<Key, Value>>(state, myIdentity, new int[]{nextState.index}));
-      pending.push(new ProceedState<Result<Key, Value>>(nextState));
+      pendingPush(new MakeResult<Result<Key, Value>>(state, myIdentity, new int[]{nextState.index}));
+      pendingPush(new ProceedState<Result<Key, Value>>(nextState));
       return;
     }
 
@@ -213,9 +213,9 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
       subIndices[i] = id;
     }
 
-    pending.push(new MakeResult<Result<Key, Value>>(state, myIdentity, subIndices));
+    pendingPush(new MakeResult<Result<Key, Value>>(state, myIdentity, subIndices));
     for (State nextState : nextStates) {
-      pending.push(new ProceedState<Result<Key, Value>>(nextState));
+      pendingPush(new ProceedState<Result<Key, Value>>(nextState));
     }
   }
 
