@@ -56,7 +56,6 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   public CodeStyleSettings(boolean loadExtensions) {
     super(null);
-    RIGHT_MARGIN = DEFAULT_RIGHT_MARGIN;
     initTypeToName();
     initImportsByDefault();
 
@@ -108,12 +107,16 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   private void addCustomSettings(CustomCodeStyleSettings settings) {
     if (settings != null) {
-      myCustomSettings.put(settings.getClass(), settings);
+      synchronized (myCustomSettings) {
+        myCustomSettings.put(settings.getClass(), settings);
+      }
     }
   }
 
   public <T extends CustomCodeStyleSettings> T getCustomSettings(Class<T> aClass) {
-    return (T)myCustomSettings.get(aClass);
+    synchronized (myCustomSettings) {
+      return (T)myCustomSettings.get(aClass);
+    }
   }
 
   @Override
@@ -125,7 +128,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   private void copyCustomSettingsFrom(@NotNull CodeStyleSettings from) {
     myCustomSettings.clear();
-    for (final CustomCodeStyleSettings settings : from.myCustomSettings.values()) {
+    for (final CustomCodeStyleSettings settings : from.getCustomSettingsValues()) {
       addCustomSettings((CustomCodeStyleSettings) settings.clone());
     }
 
@@ -244,6 +247,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   public int INNER_CLASSES_ORDER_WEIGHT = 7;
 
 //----------------- WRAPPING ---------------------------
+  public int RIGHT_MARGIN = 120;
   public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = false;
 
 
@@ -431,6 +435,12 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   private CodeStyleSettings myParentSettings;
   private boolean myLoadedAdditionalIndentOptions;
 
+  private Collection<CustomCodeStyleSettings> getCustomSettingsValues() {
+    synchronized (myCustomSettings) {
+      return Collections.unmodifiableCollection(myCustomSettings.values());
+    }
+  }
+
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
@@ -452,7 +462,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
       }
     }
     boolean oldOptionsImported = importOldIndentOptions(element);
-    for (final CustomCodeStyleSettings settings : myCustomSettings.values()) {
+    for (final CustomCodeStyleSettings settings : getCustomSettingsValues()) {
       settings.readExternal(element);
       settings.importLegacySettings();
     }
@@ -564,7 +574,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   public void writeExternal(Element element) throws WriteExternalException {
     final CodeStyleSettings parentSettings = new CodeStyleSettings();
     DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<CodeStyleSettings>(this, parentSettings));
-    List<CustomCodeStyleSettings> customSettings = new ArrayList<CustomCodeStyleSettings>(myCustomSettings.values());
+    List<CustomCodeStyleSettings> customSettings = new ArrayList<CustomCodeStyleSettings>(getCustomSettingsValues());
     
     Collections.sort(customSettings, new Comparator<CustomCodeStyleSettings>(){
       @Override

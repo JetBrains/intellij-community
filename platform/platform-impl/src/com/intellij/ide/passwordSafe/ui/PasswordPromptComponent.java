@@ -18,6 +18,7 @@ package com.intellij.ide.passwordSafe.ui;
 import com.intellij.ide.passwordSafe.config.PasswordSafeSettings;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -49,7 +50,10 @@ public class PasswordPromptComponent {
     setTargetProviderType(type);
     setUserInputVisible(showUserName);
     if (passwordPrompt != null) myPasswordLabel.setText(passwordPrompt);
-    if (rememberPrompt != null) myRememberCheckBox.setText(rememberPrompt);
+    if (rememberPrompt != null) {
+      myRememberCheckBox.setText(rememberPrompt);
+      DialogUtil.registerMnemonic(myRememberCheckBox);
+    }
   }
 
   public JComponent getComponent() {

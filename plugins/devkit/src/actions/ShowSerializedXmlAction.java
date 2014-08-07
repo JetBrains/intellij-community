@@ -41,6 +41,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.xmlb.Accessor;
+import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jdom.Element;
@@ -121,7 +122,16 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
       return;
     }
 
-    final Element element = XmlSerializer.serialize(o);
+    final Element element;
+    try {
+      element = XmlSerializer.serialize(o);
+    }
+    catch (XmlSerializationException e) {
+      LOG.info(e);
+      Throwable cause = e.getCause();
+      Messages.showErrorDialog(project, e.getMessage() + (cause != null ? ": " + cause.getMessage() : ""), CommonBundle.getErrorTitle());
+      return;
+    }
     final String text = JDOMUtil.writeElement(element, "\n");
     Messages.showIdeaMessageDialog(project, text, "Serialized XML for '" + className + "'",
                                    new String[]{CommonBundle.getOkButtonText()}, 0, Messages.getInformationIcon(), null);

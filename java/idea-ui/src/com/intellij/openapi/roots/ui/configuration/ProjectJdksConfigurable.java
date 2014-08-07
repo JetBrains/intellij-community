@@ -64,6 +64,8 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
     myProject = project;
     myProjectJdksModel = sdksModel;
     initTree();
+    myToReInitWholePanel = true;
+    reInitWholePanelIfNeeded();
   }
 
   @Override

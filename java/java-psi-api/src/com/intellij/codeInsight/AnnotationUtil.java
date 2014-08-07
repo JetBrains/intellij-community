@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ public class AnnotationUtil {
   }
 
   @Nullable
-  public static PsiAnnotation findAnnotation(@Nullable PsiModifierListOwner listOwner, Collection<String> annotationNames) {
+  public static PsiAnnotation findAnnotation(@Nullable PsiModifierListOwner listOwner, @NotNull Collection<String> annotationNames) {
     return findAnnotation(listOwner, annotationNames, false);
   }
 
@@ -133,7 +133,7 @@ public class AnnotationUtil {
   }
 
   @NotNull
-  public static PsiAnnotation[] findAnnotations(final PsiModifierListOwner modifierListOwner, @NotNull Collection<String> annotationNames) {
+  public static PsiAnnotation[] findAnnotations(@Nullable PsiModifierListOwner modifierListOwner, @NotNull Collection<String> annotationNames) {
     if (modifierListOwner == null) return PsiAnnotation.EMPTY_ARRAY;
     final PsiModifierList modifierList = modifierListOwner.getModifierList();
     if (modifierList == null) return PsiAnnotation.EMPTY_ARRAY;
@@ -171,8 +171,8 @@ public class AnnotationUtil {
   }
 
   @Nullable
-  private static PsiAnnotation doFindAnnotationInHierarchy(PsiParameter parameter,
-                                                           Set<String> annotationNames,
+  private static PsiAnnotation doFindAnnotationInHierarchy(@NotNull PsiParameter parameter,
+                                                           @NotNull Set<String> annotationNames,
                                                            @Nullable Set<PsiModifierListOwner> visited) {
     PsiAnnotation annotation = findAnnotation(parameter, annotationNames);
     if (annotation != null) return annotation;
@@ -206,7 +206,7 @@ public class AnnotationUtil {
   }
 
   @Nullable
-  private static PsiAnnotation findAnnotationInHierarchy(@NotNull final PsiClass psiClass, final Set<String> annotationNames, @Nullable Set<PsiClass> processed) {
+  private static PsiAnnotation findAnnotationInHierarchy(@NotNull final PsiClass psiClass, @NotNull Set<String> annotationNames, @Nullable Set<PsiClass> processed) {
     final PsiClass[] superClasses = psiClass.getSupers();
     for (final PsiClass superClass : superClasses) {
       if (processed == null) processed = new THashSet<PsiClass>();
@@ -240,18 +240,18 @@ public class AnnotationUtil {
     return null;
   }
 
-  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, Collection<String> annotations) {
+  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull Collection<String> annotations) {
     return isAnnotated(listOwner, annotations, false);
   }
 
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
-                                    Collection<String> annotations,
+                                    @NotNull Collection<String> annotations,
                                     final boolean checkHierarchy) {
     return isAnnotated(listOwner, annotations, checkHierarchy, true);
   }
 
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
-                                    Collection<String> annotations,
+                                    @NotNull Collection<String> annotations,
                                     final boolean checkHierarchy,
                                     boolean skipExternal) {
     for (String annotation : annotations) {
@@ -260,17 +260,17 @@ public class AnnotationUtil {
     return false;
   }
 
-  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NonNls String annotationFQN, boolean checkHierarchy) {
+  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NonNls @NotNull String annotationFQN, boolean checkHierarchy) {
     return isAnnotated(listOwner, annotationFQN, checkHierarchy, true, null);
   }
 
-  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NonNls String annotationFQN, boolean checkHierarchy,
+  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NonNls @NotNull String annotationFQN, boolean checkHierarchy,
                                     boolean skipExternal) {
     return isAnnotated(listOwner, annotationFQN, checkHierarchy, skipExternal, null);
   }
 
   private static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
-                                     @NonNls String annotationFQN,
+                                     @NonNls @NotNull String annotationFQN,
                                      boolean checkHierarchy, final boolean skipExternal, @Nullable Set<PsiMember> processed) {
     if (!listOwner.isValid()) return false;
     final PsiModifierList modifierList = listOwner.getModifierList();
@@ -310,13 +310,13 @@ public class AnnotationUtil {
     return isAnnotatingApplicable(elt, NullableNotNullManager.getInstance(elt.getProject()).getDefaultNullable());
   }
 
-  public static boolean isAnnotatingApplicable(@NotNull PsiElement elt, final String annotationFQN) {
+  public static boolean isAnnotatingApplicable(@NotNull PsiElement elt, @NotNull String annotationFQN) {
     final Project project = elt.getProject();
     return PsiUtil.isLanguageLevel5OrHigher(elt) &&
            JavaPsiFacade.getInstance(project).findClass(annotationFQN, elt.getResolveScope()) != null;
   }
 
-  public static boolean isJetbrainsAnnotation(@NonNls final String simpleName) {
+  public static boolean isJetbrainsAnnotation(@NonNls @NotNull String simpleName) {
     return ArrayUtil.find(SIMPLE_NAMES, simpleName) != -1;
   }
 
@@ -328,7 +328,7 @@ public class AnnotationUtil {
    * @param annotations annotations qualified names or patterns. Patterns can have '*' at the end
    * @return <code>true</code> if annotated of at least one annotation from the annotations list
    */
-  public static boolean checkAnnotatedUsingPatterns(PsiModifierListOwner owner, Collection<String> annotations) {
+  public static boolean checkAnnotatedUsingPatterns(@Nullable PsiModifierListOwner owner, @NotNull Collection<String> annotations) {
     final PsiModifierList modList;
     if (owner == null || (modList = owner.getModifierList()) == null) return false;
 
@@ -361,7 +361,7 @@ public class AnnotationUtil {
   }
 
   @Nullable
-  public static PsiMethod getAnnotationMethod(PsiNameValuePair pair) {
+  public static PsiMethod getAnnotationMethod(@NotNull PsiNameValuePair pair) {
     final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(pair.getParent(), PsiAnnotation.class);
     assert annotation != null;
 

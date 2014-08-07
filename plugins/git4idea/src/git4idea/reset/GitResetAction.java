@@ -15,7 +15,7 @@
  */
 package git4idea.reset;
 
-import com.intellij.dvcs.ui.VcsLogAction;
+import com.intellij.dvcs.ui.VcsLogOneCommitPerRepoAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -31,18 +31,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-public class GitResetAction extends VcsLogAction<GitRepository> {
+public class GitResetAction extends VcsLogOneCommitPerRepoAction<GitRepository> {
 
   @Nullable
   @Override
   protected GitRepository getRepositoryForRoot(@NotNull Project project, @NotNull VirtualFile root) {
     return getRepoManager(project).getRepositoryForRoot(root);
-  }
-
-  @NotNull
-  @Override
-  protected Mode getMode() {
-    return Mode.SINGLE_PER_REPO;
   }
 
   @Override

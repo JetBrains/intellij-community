@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,9 +108,9 @@ public class DuplicatesFinder {
   }
 
   @Nullable
-  public Match isDuplicate(PsiElement element, boolean ignoreParameterTypes) {
+  public Match isDuplicate(PsiElement element, boolean ignoreParameterTypesAndPostVariableUsages) {
     annotatePattern();
-    Match match = isDuplicateFragment(element, ignoreParameterTypes);
+    Match match = isDuplicateFragment(element, ignoreParameterTypesAndPostVariableUsages);
     deannotatePattern();
     return match;
   }
@@ -163,7 +163,7 @@ public class DuplicatesFinder {
 
 
   @Nullable
-  private Match isDuplicateFragment(PsiElement candidate, boolean ignoreParameterTypes) {
+  private Match isDuplicateFragment(PsiElement candidate, boolean ignoreParameterTypesAndPostVariableUsages) {
     for (PsiElement pattern : myPattern) {
       if (PsiTreeUtil.isAncestor(pattern, candidate, false)) return null;
     }
@@ -196,12 +196,12 @@ public class DuplicatesFinder {
       }
 
     }
-    final Match match = new Match(candidates.get(0), candidates.get(candidates.size() - 1), ignoreParameterTypes);
+    final Match match = new Match(candidates.get(0), candidates.get(candidates.size() - 1), ignoreParameterTypesAndPostVariableUsages);
     for (int i = 0; i < myPattern.length; i++) {
       if (!matchPattern(myPattern[i], candidates.get(i), candidates, match)) return null;
     }
 
-    if (checkPostVariableUsages(candidates, match)) return null;
+    if (!ignoreParameterTypesAndPostVariableUsages && checkPostVariableUsages(candidates, match)) return null;
 
     return match;
   }

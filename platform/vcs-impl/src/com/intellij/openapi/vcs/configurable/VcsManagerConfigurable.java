@@ -137,7 +137,7 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
     List<Configurable> result = new ArrayList<Configurable>();
 
     result.add(myGeneralPanel);
-    result.add(new VcsBackgroundOperationsConfigurationPanel(myProject));
+    result.add(new VcsBackgroundOperationsConfigurable(myProject));
 
     if (!myProject.isDefault()) {
       result.add(new IgnoredSettingsPanel(myProject));

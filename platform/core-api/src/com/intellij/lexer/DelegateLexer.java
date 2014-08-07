@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 public class DelegateLexer extends LexerBase {
   protected final Lexer myDelegate;
 
-  public DelegateLexer(Lexer delegate) {
+  public DelegateLexer(@NotNull Lexer delegate) {
     myDelegate = delegate;
   }
 

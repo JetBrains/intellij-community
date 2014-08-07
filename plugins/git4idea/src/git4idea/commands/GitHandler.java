@@ -18,7 +18,6 @@ package git4idea.commands;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -103,7 +102,6 @@ public abstract class GitHandler {
 
   private long myStartTime; // git execution start timestamp
   private static final long LONG_TIME = 10 * 1000;
-  @Nullable private ModalityState myState;
   @Nullable private String myUrl;
   private boolean myHttpAuthFailed;
 
@@ -431,7 +429,7 @@ public abstract class GitHandler {
       if (remoteProtocol == GitRemoteProtocol.SSH && myProjectSettings.isIdeaSsh()) {
         GitXmlRpcSshService ssh = ServiceManager.getService(GitXmlRpcSshService.class);
         myEnv.put(GitSSHHandler.GIT_SSH_ENV, ssh.getScriptPath().getPath());
-        myHandlerNo = ssh.registerHandler(new GitSSHGUIHandler(myProject, myState));
+        myHandlerNo = ssh.registerHandler(new GitSSHGUIHandler(myProject));
         myEnvironmentCleanedUp = false;
         myEnv.put(GitSSHHandler.SSH_HANDLER_ENV, Integer.toString(myHandlerNo));
         int port = ssh.getXmlRcpPort();
@@ -458,7 +456,7 @@ public abstract class GitHandler {
         GitHttpAuthService service = ServiceManager.getService(GitHttpAuthService.class);
         myEnv.put(GitAskPassXmlRpcHandler.GIT_ASK_PASS_ENV, service.getScriptPath().getPath());
         assert myUrl != null : "myUrl can't be null here";
-        GitHttpAuthenticator httpAuthenticator = service.createAuthenticator(myProject, myState, myCommand, myUrl);
+        GitHttpAuthenticator httpAuthenticator = service.createAuthenticator(myProject, myCommand, myUrl);
         myHandlerNo = service.registerHandler(httpAuthenticator);
         myEnvironmentCleanedUp = false;
         myEnv.put(GitAskPassXmlRpcHandler.GIT_ASK_PASS_HANDLER_ENV, Integer.toString(myHandlerNo));
@@ -715,10 +713,6 @@ public abstract class GitHandler {
   public synchronized void resumeWriteLock() {
     assert mySuspendAction != null;
     myResumeAction.run();
-  }
-
-  public void setModalityState(@Nullable ModalityState state) {
-    myState = state;
   }
 
   /**

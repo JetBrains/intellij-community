@@ -81,7 +81,13 @@ public abstract class GitPlatformTest extends UsefulTestCase {
     try {
       myProjectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getTestName(true)).getFixture();
       myProjectFixture.setUp();
+    }
+    catch (Exception e) {
+      super.tearDown();
+      throw e;
+    }
 
+    try {
       myProject = myProjectFixture.getProject();
       myProjectRoot = myProject.getBaseDir();
       myProjectPath = myProjectRoot.getPath();

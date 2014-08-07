@@ -1586,7 +1586,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                                                String... profiles) {
     MavenProjectReaderResult result = new MavenProjectReader().readProject(getMavenGeneralSettings(),
                                                                            file,
-                                                                           Arrays.asList(profiles),
+                                                                           new MavenExplicitProfiles(Arrays.asList(profiles)),
                                                                            locator);
     return result;
   }
@@ -1629,7 +1629,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
   private void assertActiveProfiles(List<String> explicitProfiles, String... expected) {
     MavenProjectReaderResult result =
       readProject(myProjectPom, new NullProjectLocator(), ArrayUtil.toStringArray(explicitProfiles));
-    assertUnorderedElementsAreEqual(result.activatedProfiles, expected);
+    assertUnorderedElementsAreEqual(result.activatedProfiles.getEnabledProfiles(), expected);
   }
 
   private static class NullProjectLocator implements MavenProjectReaderProjectLocator {

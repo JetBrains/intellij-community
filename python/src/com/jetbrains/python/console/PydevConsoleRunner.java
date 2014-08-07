@@ -141,6 +141,8 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   private PyRemoteSdkCredentials myRemoteCredentials;
   private ToolWindow myToolWindow;
 
+  private String myConsoleTitle = null;
+
   protected PydevConsoleRunner(@NotNull final Project project,
                                @NotNull Sdk sdk, @NotNull final PyConsoleType consoleType,
                                @Nullable final String workingDir,
@@ -489,6 +491,14 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       myProcessHandler.destroyProcess();
       finishConsole();
     }
+  }
+
+  @Override
+  protected String constructConsoleTitle(@NotNull String consoleTitle) {
+    if (myConsoleTitle == null) {
+      myConsoleTitle = super.constructConsoleTitle(consoleTitle);
+    }
+    return myConsoleTitle;
   }
 
   @Override

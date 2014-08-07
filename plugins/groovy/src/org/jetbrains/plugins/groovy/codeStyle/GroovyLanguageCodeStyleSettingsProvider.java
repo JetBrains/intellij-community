@@ -49,6 +49,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
                                 @NotNull SettingsType settingsType) {
     if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
       consumer.showStandardOptions(
+        "RIGHT_MARGIN",
         "KEEP_LINE_BREAKS",
         "KEEP_FIRST_COLUMN_COMMENT",
         "KEEP_CONTROL_STATEMENT_IN_ONE_LINE",

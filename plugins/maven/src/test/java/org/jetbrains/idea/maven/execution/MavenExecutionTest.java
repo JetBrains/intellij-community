@@ -30,6 +30,7 @@ import org.jetbrains.idea.maven.MavenImportingTestCase;
 import javax.swing.*;
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collections;
 
 @SuppressWarnings({"ConstantConditions"})
 public class MavenExecutionTest extends MavenImportingTestCase {
@@ -59,7 +60,7 @@ public class MavenExecutionTest extends MavenImportingTestCase {
 
     assertFalse(new File(getProjectPath(), "target").exists());
 
-    execute(new MavenRunnerParameters(true, getProjectPath(), Arrays.asList("compile"), null));
+    execute(new MavenRunnerParameters(true, getProjectPath(), Arrays.asList("compile"), Collections.<String>emptyList()));
 
     assertTrue(new File(getProjectPath(), "target").exists());
   }
@@ -84,7 +85,7 @@ public class MavenExecutionTest extends MavenImportingTestCase {
     assertModules("project");
     assertExcludes("project", "target");
 
-    MavenRunnerParameters params = new MavenRunnerParameters(true, getProjectPath(), Arrays.asList("compile"), null);
+    MavenRunnerParameters params = new MavenRunnerParameters(true, getProjectPath(), Arrays.asList("compile"), Collections.<String>emptyList());
     execute(params);
 
     SwingUtilities.invokeAndWait(new Runnable() {

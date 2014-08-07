@@ -58,6 +58,9 @@ public interface PopupComponent {
 
     class AwtHeavyweight implements Factory {
       public PopupComponent getPopup(Component owner, Component content, int x, int y, JBPopup jbPopup) {
+        if (OurHeavyWeightPopup.isEnabled()) {
+          return new AwtPopupWrapper(new OurHeavyWeightPopup(owner, content, x, y), jbPopup);
+        }
         final PopupFactory factory = PopupFactory.getSharedInstance();
 
         final int oldType = PopupUtil.getPopupType(factory);

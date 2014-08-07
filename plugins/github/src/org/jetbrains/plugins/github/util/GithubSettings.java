@@ -19,7 +19,6 @@ import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.ide.passwordSafe.PasswordSafeException;
 import com.intellij.ide.passwordSafe.config.PasswordSafeSettings;
 import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
@@ -152,10 +151,10 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
   }
 
   @NotNull
-  private String getPassword(@Nullable ModalityState state) {
+  private String getPassword() {
     String password;
     try {
-      password = PasswordSafe.getInstance().getPassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, state);
+      password = PasswordSafe.getInstance().getPassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY);
     }
     catch (PasswordSafeException e) {
       LOG.info("Couldn't get password for key [" + GITHUB_SETTINGS_PASSWORD_KEY + "]", e);
@@ -165,10 +164,10 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     return StringUtil.notNullize(password);
   }
 
-  private void setPassword(@NotNull String password, boolean rememberPassword, @Nullable ModalityState state) {
+  private void setPassword(@NotNull String password, boolean rememberPassword) {
     try {
       if (rememberPassword) {
-        PasswordSafe.getInstance().storePassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, password, state);
+        PasswordSafe.getInstance().storePassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, password);
       }
       else {
         final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
@@ -197,13 +196,13 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
   }
 
   @NotNull
-  public GithubAuthData getAuthData(@Nullable ModalityState state) {
+  public GithubAuthData getAuthData() {
     switch (getAuthType()) {
       case BASIC:
         //noinspection ConstantConditions
-        return GithubAuthData.createBasicAuth(getHost(), getLogin(), getPassword(state));
+        return GithubAuthData.createBasicAuth(getHost(), getLogin(), getPassword());
       case TOKEN:
-        return GithubAuthData.createTokenAuth(getHost(), getPassword(state));
+        return GithubAuthData.createTokenAuth(getHost(), getPassword());
       case ANONYMOUS:
         return GithubAuthData.createAnonymous();
       default:
@@ -211,7 +210,7 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     }
   }
 
-  public void setAuthData(@NotNull GithubAuthData auth, boolean rememberPassword, @Nullable ModalityState state) {
+  public void setAuthData(@NotNull GithubAuthData auth, boolean rememberPassword) {
     setValidGitAuth(isValidGitAuth(auth));
 
     setAuthType(auth.getAuthType());
@@ -221,16 +220,16 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
       case BASIC:
         assert auth.getBasicAuth() != null;
         setLogin(auth.getBasicAuth().getLogin());
-        setPassword(auth.getBasicAuth().getPassword(), rememberPassword, state);
+        setPassword(auth.getBasicAuth().getPassword(), rememberPassword);
         break;
       case TOKEN:
         assert auth.getTokenAuth() != null;
         setLogin(null);
-        setPassword(auth.getTokenAuth().getToken(), rememberPassword, state);
+        setPassword(auth.getTokenAuth().getToken(), rememberPassword);
         break;
       case ANONYMOUS:
         setLogin(null);
-        setPassword("", rememberPassword, state);
+        setPassword("", rememberPassword);
         break;
       default:
         throw new IllegalStateException("GithubSettings: setAuthData - wrong AuthType: " + auth.getAuthType());

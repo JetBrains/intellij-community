@@ -21,6 +21,7 @@ import com.intellij.appengine.util.AppEngineUtil;
 import com.intellij.facet.ProjectFacetManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.packaging.artifacts.Artifact;
@@ -67,8 +68,12 @@ public class UploadApplicationAction extends AnAction {
         }
 
         @Override
-        public void errorOccurred(@NotNull String errorMessage) {
-          Messages.showErrorDialog(project, errorMessage, CommonBundle.getErrorTitle());
+        public void errorOccurred(@NotNull final String errorMessage) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              Messages.showErrorDialog(project, errorMessage, CommonBundle.getErrorTitle());
+            }
+          });
         }
       }, null);
       if (uploader != null) {

@@ -218,8 +218,8 @@ public class FragmentedDiffRequestFromChange {
       final List<BeforeAfter<TextRange>> result = new ArrayList<BeforeAfter<TextRange>>();
       if (myRanges == null || myRanges.isEmpty()) return Collections.emptyList();
       for (Range range : myRanges) {
-        final TextRange before = new TextRange(range.getUOffset1(), range.getUOffset2());
-        final TextRange after = new TextRange(range.getOffset1(), range.getOffset2());
+        final TextRange before = new TextRange(range.getVcsLine1(), range.getVcsLine2());
+        final TextRange after = new TextRange(range.getLine1(), range.getLine2());
         result.add(new BeforeAfter<TextRange>(before, after));
       }
       return result;

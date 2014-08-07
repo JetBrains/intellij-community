@@ -192,7 +192,7 @@ public abstract class FocusCommand extends ActiveRunnable implements Expirable {
           LOG.info("We could not request focus in window on " + myToFocus.getClass().getName());
           LOG.info(myAllocation);
         }
-        if (!SystemInfo.isMac || isForced() ) {
+        if (isForced()) {
           myToFocus.requestFocus();
           if (shouldLogFocuses) {
             LOG.info("Force request focus on " + myToFocus.getClass().getName());
@@ -215,10 +215,6 @@ public abstract class FocusCommand extends ActiveRunnable implements Expirable {
     @Override
     public boolean isExpired() {
       if (myToFocus == null) {
-        return true;
-      }
-      if (SwingUtilities.getWindowAncestor(myToFocus) == null) {
-        clear();
         return true;
       }
       return false;

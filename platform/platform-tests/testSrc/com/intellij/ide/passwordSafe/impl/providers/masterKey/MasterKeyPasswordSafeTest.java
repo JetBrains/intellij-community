@@ -28,13 +28,13 @@ public class MasterKeyPasswordSafeTest {
   @Test
   public void testMasterKey() throws PasswordSafeException {
     PasswordDatabase db = new PasswordDatabase();
-    MasterKeyPasswordSafe s1 = testProvider(db);
+    MasterKeyPasswordSafe s1 = new MasterKeyPasswordSafe(db);
     s1.resetMasterPassword("pass1", false);
     s1.storePassword(null, MasterKeyPasswordSafeTest.class, "TEST", "test");
     assertEquals("test", s1.getPassword(null, MasterKeyPasswordSafeTest.class, "TEST"));
     assertTrue(s1.changeMasterPassword("pass1", "pass2", false));
     assertEquals("test", s1.getPassword(null, MasterKeyPasswordSafeTest.class, "TEST"));
-    MasterKeyPasswordSafe s2 = testProvider(db);
+    MasterKeyPasswordSafe s2 = new MasterKeyPasswordSafe(db);
     assertFalse(s2.setMasterPassword("pass1"));
     assertTrue(s2.setMasterPassword("pass2"));
     assertEquals("test", s2.getPassword(null, MasterKeyPasswordSafeTest.class, "TEST"));
@@ -45,19 +45,4 @@ public class MasterKeyPasswordSafeTest {
     s2.resetMasterPassword("fail", false);
     assertNull(s2.getPassword(null, MasterKeyPasswordSafeTest.class, "TEST"));
   }
-
-  /**
-   * Get test instance of the provider
-   * @param db the database to use
-   * @return a instance of the provider
-   */
-  private static MasterKeyPasswordSafe testProvider(final PasswordDatabase db) {
-    return new MasterKeyPasswordSafe(db) {
-      @Override
-      protected boolean isTestMode() {
-        return true;
-      }
-    };
-  }
-
 }

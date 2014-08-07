@@ -20,9 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLog;
@@ -30,27 +28,18 @@ import com.intellij.vcs.log.VcsLogDataKeys;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAction {
-
-  protected enum Mode {
-    SINGLE_COMMIT,
-    SINGLE_PER_REPO
-  }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     VcsLog log = e.getRequiredData(VcsLogDataKeys.VSC_LOG);
     List<VcsFullCommitDetails> details = log.getSelectedDetails();
-    MultiMap<Repo, VcsFullCommitDetails> grouped = groupByRoot(project, details);
+    MultiMap<Repo, VcsFullCommitDetails> grouped = groupByRootWithCheck(project, details);
     assert grouped != null;
-    Map<Repo, VcsFullCommitDetails> singleElementMap = convertToSingleElementMap(grouped);
-    assert singleElementMap != null;
-    actionPerformed(project, singleElementMap);
+    actionPerformed(project, grouped);
   }
 
   @Override
@@ -63,40 +52,25 @@ public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAct
     }
 
     List<VcsFullCommitDetails> details = log.getSelectedDetails();
-    MultiMap<Repo, VcsFullCommitDetails> grouped = groupByRoot(project, details);
+    MultiMap<Repo, VcsFullCommitDetails> grouped = groupByRootWithCheck(project, details);
     if (grouped == null) {
       e.getPresentation().setEnabledAndVisible(false);
     }
     else {
       e.getPresentation().setVisible(true);
-      e.getPresentation().setEnabled(isEnabled(grouped));
+      e.getPresentation().setEnabled(!grouped.isEmpty() && isEnabled(grouped));
     }
   }
 
-  private boolean isEnabled(@NotNull MultiMap<Repo, VcsFullCommitDetails> grouped) {
-    if (grouped.isEmpty()) {
-      return false;
-    }
-    switch (getMode()) {
-      case SINGLE_COMMIT:
-        return grouped.size() == 1;
-      case SINGLE_PER_REPO:
-        return allValuesAreSingletons(grouped);
-      default:
-        return false;
-    }
-  }
+  protected abstract void actionPerformed(@NotNull Project project, @NotNull MultiMap<Repo, VcsFullCommitDetails> grouped);
+
+  protected abstract boolean isEnabled(@NotNull MultiMap<Repo, VcsFullCommitDetails> grouped);
 
   @Nullable
   protected abstract Repo getRepositoryForRoot(@NotNull Project project, @NotNull VirtualFile root);
 
-  protected abstract void actionPerformed(@NotNull Project project, @NotNull Map<Repo, VcsFullCommitDetails> commits);
-
-  @NotNull
-  protected abstract Mode getMode();
-
   @Nullable
-  private MultiMap<Repo, VcsFullCommitDetails> groupByRoot(@NotNull Project project, @NotNull List<VcsFullCommitDetails> commits) {
+  private MultiMap<Repo, VcsFullCommitDetails> groupByRootWithCheck(@NotNull Project project, @NotNull List<VcsFullCommitDetails> commits) {
     MultiMap<Repo, VcsFullCommitDetails> map = MultiMap.create();
     for (VcsFullCommitDetails commit : commits) {
       Repo root = getRepositoryForRoot(project, commit.getRoot());
@@ -104,28 +78,6 @@ public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAct
         return null;
       }
       map.putValue(root, commit);
-    }
-    return map;
-  }
-
-  private boolean allValuesAreSingletons(@NotNull MultiMap<Repo, VcsFullCommitDetails> grouped) {
-    return !ContainerUtil.exists(grouped.entrySet(), new Condition<Map.Entry<Repo, Collection<VcsFullCommitDetails>>>() {
-      @Override
-      public boolean value(Map.Entry<Repo, Collection<VcsFullCommitDetails>> entry) {
-        return entry.getValue().size() != 1;
-      }
-    });
-  }
-
-  @Nullable
-  private Map<Repo, VcsFullCommitDetails> convertToSingleElementMap(@NotNull MultiMap<Repo, VcsFullCommitDetails> groupedCommits) {
-    Map<Repo, VcsFullCommitDetails> map = ContainerUtil.newHashMap();
-    for (Map.Entry<Repo, Collection<VcsFullCommitDetails>> entry : groupedCommits.entrySet()) {
-      Collection<VcsFullCommitDetails> commits = entry.getValue();
-      if (commits.size() != 1) {
-        return null;
-      }
-      map.put(entry.getKey(), commits.iterator().next());
     }
     return map;
   }

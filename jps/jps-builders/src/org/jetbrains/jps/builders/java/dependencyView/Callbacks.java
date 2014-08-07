@@ -29,6 +29,7 @@ public class Callbacks {
 
   public interface Backend {
     void associate(String classFileName, String sourceFileName, ClassReader cr);
+    void associate(String classFileName, Collection<String> sources, ClassReader cr);
     void registerImports(String className, Collection<String> imports, Collection<String> staticImports);
   }
 

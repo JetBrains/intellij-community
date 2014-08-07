@@ -19,22 +19,29 @@ package com.intellij.ide.passwordSafe;
  * The exception that is thrown when password safe is not available (unable to ask for master password)
  */
 public class PasswordSafeException extends Exception {
-  /**
-   * The constructor
-   *
-   * @param message the message
-   * @param cause   the cause
-   */
+
+  private static final long MIN_INTERVAL = 1000L;
+
+  private long myTimeMillis = System.currentTimeMillis();
+
   public PasswordSafeException(String message, Throwable cause) {
     super(message, cause);
   }
 
-  /**
-   * The constructor
-   *
-   * @param message the message
-   */
   public PasswordSafeException(String message) {
     super(message);
+  }
+
+  public long getTimeMillis() {
+    return myTimeMillis;
+  }
+
+  public boolean justHappened() {
+    long timeMillis = System.currentTimeMillis();
+    if (timeMillis - myTimeMillis < MIN_INTERVAL) {
+      myTimeMillis = timeMillis;
+      return true;
+    }
+    return false;
   }
 }

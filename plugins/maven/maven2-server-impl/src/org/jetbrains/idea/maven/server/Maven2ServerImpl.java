@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.server;
 
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.server.embedder.Maven2ServerEmbedderImpl;
 import org.jetbrains.idea.maven.server.embedder.Maven2ServerIndexerImpl;
@@ -76,7 +77,7 @@ public class Maven2ServerImpl extends MavenRemoteObject implements MavenServer {
 
   public ProfileApplicationResult applyProfiles(MavenModel model,
                                                 File basedir,
-                                                Collection<String> explicitProfiles,
+                                                MavenExplicitProfiles explicitProfiles,
                                                 Collection<String> alwaysOnProfiles) {
     try {
       return Maven2ServerEmbedderImpl.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);

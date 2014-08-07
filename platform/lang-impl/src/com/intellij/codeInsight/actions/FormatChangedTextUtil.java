@@ -312,8 +312,8 @@ public class FormatChangedTextUtil {
     List<TextRange> ranges = ContainerUtil.newArrayList();
     for (Range range : changedRanges) {
       if (range.getType() != Range.DELETED) {
-        int changeStartLine = range.getOffset1();
-        int changeEndLine = range.getOffset2();
+        int changeStartLine = range.getLine1();
+        int changeEndLine = range.getLine2();
 
         int lineStartOffset = document.getLineStartOffset(changeStartLine);
         int lineEndOffset = document.getLineEndOffset(changeEndLine - 1);

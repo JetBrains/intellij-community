@@ -194,7 +194,9 @@ public class MavenModuleBuilderHelper {
     }
 
     MavenRunnerParameters params = new MavenRunnerParameters(
-      false, workingDir.getPath(), Collections.singletonList("org.apache.maven.plugins:maven-archetype-plugin:RELEASE:generate"), null);
+      false, workingDir.getPath(),
+      Collections.singletonList("org.apache.maven.plugins:maven-archetype-plugin:RELEASE:generate"),
+      Collections.<String>emptyList());
 
     MavenRunner runner = MavenRunner.getInstance(project);
     MavenRunnerSettings settings = runner.getState().clone();
