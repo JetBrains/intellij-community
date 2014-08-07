@@ -162,4 +162,15 @@ class NotADup {
   private static String placeOrder(int i, Object o) {
     return null;
   }
+
+  void m() {
+    int j;
+    <warning descr="'if' statement with identical branches">if</warning> (true) {
+      j = 2;
+    }
+    else {
+      j = 2;
+    }
+    System.out.println("j = " + j);
+  }
 }
