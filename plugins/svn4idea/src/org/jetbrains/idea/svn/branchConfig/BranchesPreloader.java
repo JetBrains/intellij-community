@@ -60,7 +60,7 @@ public class BranchesPreloader implements PairConsumer<SvnBranchConfigurationNew
       // check if cancel had been put
       if (! vcs.isVcsBackgroundOperationsAllowed(myRoot)) return;
       if (myAll || (! oldUrls.contains(newBranchUrl))) {
-        new BranchesLoadRunnable(myProject, myBunch, newBranchUrl, InfoReliability.defaultValues, myRoot, null, true).run();
+        new BranchesLoader(myProject, myBunch, newBranchUrl, InfoReliability.defaultValues, myRoot, null, true).run();
       }
     }
   }

@@ -65,8 +65,8 @@ public class DefaultBranchConfigInitializer implements Runnable {
 
     if (configuration != null) {
       for (String url : configuration.getBranchUrls()) {
-        ApplicationManager.getApplication()
-          .executeOnPooledThread(new BranchesLoadRunnable(myProject, myBunch, url, InfoReliability.defaultValues, myRoot, null, true));
+        ApplicationManager.getApplication().executeOnPooledThread(
+          new BranchesLoader(myProject, myBunch, url, InfoReliability.defaultValues, myRoot, null, true));
       }
 
       myBunch.updateForRoot(myRoot, new InfoStorage<SvnBranchConfigurationNew>(configuration, InfoReliability.defaultValues), null);

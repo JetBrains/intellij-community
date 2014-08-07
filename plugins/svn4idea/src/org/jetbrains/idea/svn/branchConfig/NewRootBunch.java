@@ -92,8 +92,8 @@ public class NewRootBunch {
 
   public void reloadBranches(@NotNull final VirtualFile root, @NotNull final String branchParentUrl,
                              final Consumer<List<SvnBranchItem>> callback) {
-    ApplicationManager.getApplication().executeOnPooledThread(new BranchesLoadRunnable(myProject, this, branchParentUrl,
-                                                                                       InfoReliability.setByUser, root, callback, true));
+    ApplicationManager.getApplication()
+      .executeOnPooledThread(new BranchesLoader(myProject, this, branchParentUrl, InfoReliability.setByUser, root, callback, true));
   }
 
   @Nullable
@@ -118,7 +118,7 @@ public class NewRootBunch {
       if (group == null) {
         runnable.run();
       } else {
-        new BranchesLoadRunnable(myProject, this, group, InfoReliability.setByUser, root,
+        new BranchesLoader(myProject, this, group, InfoReliability.setByUser, root,
                                  new Consumer<List<SvnBranchItem>>() {
                                    public void consume(List<SvnBranchItem> svnBranchItems) {
                                      runnable.run();

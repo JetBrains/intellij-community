@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,13 @@
 package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
@@ -32,33 +37,86 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-public class BranchesLoader {
+/**
+ * @author Konstantin Kolosovsky.
+ */
+public class BranchesLoader implements Runnable {
+  private final Project myProject;
+  private final NewRootBunch myBunch;
+  private final VirtualFile myRoot;
+  @Nullable private final Consumer<List<SvnBranchItem>> myCallback;
+  private final String myUrl;
+  private final InfoReliability myInfoReliability;
+  private boolean myPassive;
 
-  private BranchesLoader() {
+  public BranchesLoader(final Project project,
+                        final NewRootBunch bunch,
+                        final String url,
+                        final InfoReliability infoReliability,
+                        final VirtualFile root,
+                        @Nullable final Consumer<List<SvnBranchItem>> callback,
+                        boolean passive) {
+    myProject = project;
+    myBunch = bunch;
+    myUrl = url;
+    myInfoReliability = infoReliability;
+    myRoot = root;
+    myCallback = callback;
+    myPassive = passive;
   }
 
-  public static List<SvnBranchItem> loadBranches(final Project project, final String url, boolean passive) throws SVNException,
-                                                                                                                  VcsException {
-    final SvnConfiguration configuration = SvnConfiguration.getInstance(project);
-    final SvnVcs vcs = SvnVcs.getInstance(project);
-    SVNURL branchesUrl = SVNURL.parseURIEncoded(url);
+  public void run() {
+    boolean callbackCalled = false;
+    try {
+      final List<SvnBranchItem> items = loadBranches();
+      myBunch.updateBranches(myRoot, myUrl, new InfoStorage<List<SvnBranchItem>>(items, myInfoReliability));
+      if (myCallback != null) {
+        myCallback.consume(items);
+        callbackCalled = true;
+      }
+    }
+    catch (VcsException e) {
+      showError(e);
+    }
+    catch (SVNException e) {
+      showError(e);
+    }
+    finally {
+      // callback must be called by contract
+      if (myCallback != null && (!callbackCalled)) {
+        myCallback.consume(null);
+      }
+    }
+  }
+
+  public List<SvnBranchItem> loadBranches() throws SVNException, VcsException {
+    final SvnConfiguration configuration = SvnConfiguration.getInstance(myProject);
+    final SvnVcs vcs = SvnVcs.getInstance(myProject);
+    SVNURL branchesUrl = SVNURL.parseURIEncoded(myUrl);
     List<SvnBranchItem> result = new LinkedList<SvnBranchItem>();
     SvnTarget target = SvnTarget.fromURL(branchesUrl);
 
-    if (!passive) {
+    if (!myPassive) {
       // TODO: Implement ability to specify interactive/non-interactive auth mode for clients
       DirectoryEntryConsumer handler = createConsumer(branchesUrl, result);
       vcs.getFactory(target).createBrowseClient().list(target, SVNRevision.HEAD, Depth.IMMEDIATES, handler);
     }
     else {
       ISVNDirEntryHandler handler = createHandler(branchesUrl, result);
-      SVNLogClient client = vcs.getSvnKitManager().createLogClient(configuration.getPassiveAuthenticationManager(project));
+      SVNLogClient client = vcs.getSvnKitManager().createLogClient(configuration.getPassiveAuthenticationManager(myProject));
       client
         .doList(target.getURL(), target.getPegRevision(), SVNRevision.HEAD, false, SVNDepth.IMMEDIATES, SVNDirEntry.DIRENT_ALL, handler);
     }
 
     Collections.sort(result);
     return result;
+  }
+
+  private void showError(Exception e) {
+    // already logged inside
+    if (InfoReliability.setByUser.equals(myInfoReliability)) {
+      VcsBalloonProblemNotifier.showOverChangesView(myProject, "Branches load error: " + e.getMessage(), MessageType.ERROR);
+    }
   }
 
   @NotNull
