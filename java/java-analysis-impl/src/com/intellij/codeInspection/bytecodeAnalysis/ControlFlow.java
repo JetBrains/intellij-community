@@ -16,7 +16,6 @@
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import gnu.trove.TIntArrayList;
-import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.Type;
@@ -33,10 +32,10 @@ final class cfg {
     return new ControlFlowBuilder(className, methodNode).buildCFG();
   }
 
-  static TIntHashSet resultOrigins(String className, MethodNode methodNode) throws AnalyzerException {
+  static boolean[] resultOrigins(String className, MethodNode methodNode) throws AnalyzerException {
     Frame<SourceValue>[] frames = new Analyzer<SourceValue>(new MinimalOriginInterpreter()).analyze(className, methodNode);
     InsnList insns = methodNode.instructions;
-    TIntHashSet result = new TIntHashSet();
+    boolean[] result = new boolean[insns.size()];
     for (int i = 0; i < frames.length; i++) {
       AbstractInsnNode insnNode = insns.get(i);
       Frame<SourceValue> frame = frames[i];
@@ -48,7 +47,7 @@ final class cfg {
           case FRETURN:
           case DRETURN:
             for (AbstractInsnNode sourceInsn : frame.pop().insns) {
-              result.add(insns.indexOf(sourceInsn));
+              result[insns.indexOf(sourceInsn)] = true;
             }
             break;
 

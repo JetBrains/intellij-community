@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
-import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.Handle;
 import org.jetbrains.org.objectweb.asm.Type;
@@ -38,7 +37,7 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
   private final InOutInterpreter interpreter;
   private final Value inValue;
 
-  protected InOutAnalysis(RichControlFlow richControlFlow, Direction direction, TIntHashSet resultOrigins, boolean stable) {
+  protected InOutAnalysis(RichControlFlow richControlFlow, Direction direction, boolean[] resultOrigins, boolean stable) {
     super(richControlFlow, direction, stable);
     interpreter = new InOutInterpreter(direction, richControlFlow.controlFlow.methodNode.instructions, resultOrigins);
     inValue = direction instanceof InOut ? ((InOut)direction).inValue : null;
@@ -260,12 +259,12 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
 class InOutInterpreter extends BasicInterpreter {
   final Direction direction;
   final InsnList insns;
-  final TIntHashSet resultOrigins;
+  final boolean[] resultOrigins;
   final boolean nullAnalysis;
 
   boolean deReferenced = false;
 
-  InOutInterpreter(Direction direction, InsnList insns, TIntHashSet resultOrigins) {
+  InOutInterpreter(Direction direction, InsnList insns, boolean[] resultOrigins) {
     this.direction = direction;
     this.insns = insns;
     this.resultOrigins = resultOrigins;
@@ -274,7 +273,7 @@ class InOutInterpreter extends BasicInterpreter {
 
   @Override
   public BasicValue newOperation(AbstractInsnNode insn) throws AnalyzerException {
-    boolean propagate = resultOrigins.contains(insns.indexOf(insn));
+    boolean propagate = resultOrigins[insns.indexOf(insn)];
     if (propagate) {
       switch (insn.getOpcode()) {
         case ICONST_0:
@@ -311,7 +310,7 @@ class InOutInterpreter extends BasicInterpreter {
 
   @Override
   public BasicValue unaryOperation(AbstractInsnNode insn, BasicValue value) throws AnalyzerException {
-    boolean propagate = resultOrigins.contains(insns.indexOf(insn));
+    boolean propagate = resultOrigins[insns.indexOf(insn)];
     switch (insn.getOpcode()) {
       case GETFIELD:
       case ARRAYLENGTH:
@@ -383,7 +382,7 @@ class InOutInterpreter extends BasicInterpreter {
 
   @Override
   public BasicValue naryOperation(AbstractInsnNode insn, List<? extends BasicValue> values) throws AnalyzerException {
-    boolean propagate = resultOrigins.contains(insns.indexOf(insn));
+    boolean propagate = resultOrigins[insns.indexOf(insn)];
     int opCode = insn.getOpcode();
     int shift = opCode == INVOKESTATIC ? 0 : 1;
 

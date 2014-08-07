@@ -21,7 +21,6 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileContent;
-import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.tree.MethodNode;
@@ -144,9 +143,9 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
             boolean reducible = dfs.back.isEmpty() || cfg.reducible(graph, dfs);
             if (reducible) {
 
-              final NullableLazyValue<TIntHashSet> resultOrigins = new NullableLazyValue<TIntHashSet>() {
+              final NullableLazyValue<boolean[]> resultOrigins = new NullableLazyValue<boolean[]>() {
                 @Override
-                protected TIntHashSet compute() {
+                protected boolean[] compute() {
                   try {
                     return cfg.resultOrigins(className, methodNode);
                   }
@@ -163,7 +162,7 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
                 @NotNull
                 @Override
                 protected Equation<Key, Value> compute() {
-                  TIntHashSet origins = resultOrigins.getValue();
+                  boolean[] origins = resultOrigins.getValue();
                   if (origins != null) {
                     try {
                       return new InOutAnalysis(new RichControlFlow(graph, dfs), new Out(), origins, stable).analyze();
