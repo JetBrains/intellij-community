@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.codeInspection.bugs.AddClassToExtendsFix;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.AddMethodFix;
 import org.jetbrains.plugins.groovy.codeInspection.confusing.ReplaceWithImportFix;
 import org.jetbrains.plugins.groovy.codeInspection.local.RemoveUnusedGrParameterFix;
+import org.jetbrains.plugins.groovy.codeInspection.naming.RenameFix;
 import org.jetbrains.plugins.groovy.dsl.InvestigateFix;
 import org.jetbrains.plugins.groovy.lang.GrCreateClassKind;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -101,7 +102,7 @@ public class GroovyQuickFixFactoryImpl extends GroovyQuickFixFactory {
 
   @Override
   public GroovyFix createRenameFix() {
-    return GroovyQuickFixFactory.getInstance().createRenameFix();
+    return new RenameFix();
   }
 
   @Override
