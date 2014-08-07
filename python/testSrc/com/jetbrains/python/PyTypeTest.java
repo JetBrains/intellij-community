@@ -873,6 +873,13 @@ public class PyTypeTest extends PyTestCase {
                     "expr = np.ones(10) * 2\n");
   }
 
+  // PY-9439
+  public void testNumpyArrayType() {
+    doMultiFileTest("ndarray",
+                    "import numpy as np\n" +
+                    "expr = np.array([1,2,3])\n");
+  }
+
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {
     return TypeEvalContext.userInitiated(element.getContainingFile()).withTracing();
   }
