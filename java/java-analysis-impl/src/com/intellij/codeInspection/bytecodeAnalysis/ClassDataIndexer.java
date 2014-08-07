@@ -185,9 +185,12 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
                 int argSort = argType.getSort();
                 boolean isReferenceArg = argSort == Type.OBJECT || argSort == Type.ARRAY;
                 boolean isBooleanArg = Type.BOOLEAN_TYPE.equals(argType);
+                boolean notNullParam = false;
                 if (isReferenceArg) {
                   if (leakingParameters[i]) {
-                    parameterEquations.add(new NonNullInAnalysis(new RichControlFlow(graph, dfs), new In(i), stable).analyze());
+                    Equation<Key, Value> notNullParamEquation = new NonNullInAnalysis(new RichControlFlow(graph, dfs), new In(i), stable).analyze();
+                    notNullParam = notNullParamEquation.rhs.equals(new Final<Key, Value>(Value.NotNull));
+                    parameterEquations.add(notNullParamEquation);
                   }
                   else {
                     // parameter is not leaking, so it is definitely NOT @NotNull
@@ -198,7 +201,13 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
                   if (leakingParameters[i]) {
                     if (resultOrigins.getValue() != null) {
                       // result origins analysis was ok
-                      contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.Null), resultOrigins.getValue(), stable).analyze());
+                      if (!notNullParam) {
+                        // may be null on some branch
+                        contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.Null), resultOrigins.getValue(), stable).analyze());
+                      } else {
+                        // definitely NPE -> bottom
+                        contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), new Final<Key, Value>(Value.Bot)));
+                      }
                       contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.NotNull), resultOrigins.getValue(), stable).analyze());
                     }
                     else {
