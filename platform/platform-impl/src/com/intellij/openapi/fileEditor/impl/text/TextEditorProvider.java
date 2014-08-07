@@ -278,19 +278,22 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
   }
 
   protected void setStateImpl(final Project project, final Editor editor, final TextEditorState state){
-    if (editor.getCaretModel().supportsMultipleCarets()) {
-      CaretModel caretModel = editor.getCaretModel();
-      List<CaretState> states = new ArrayList<CaretState>(state.CARETS.length);
-      for (TextEditorState.CaretState caretState : state.CARETS) {
-        states.add(new CaretState(new LogicalPosition(caretState.LINE, caretState.COLUMN),
-                                  new LogicalPosition(caretState.SELECTION_START_LINE, caretState.SELECTION_START_COLUMN),
-                                  new LogicalPosition(caretState.SELECTION_END_LINE, caretState.SELECTION_END_COLUMN)));
+    if (state.CARETS != null) {
+      if (editor.getCaretModel().supportsMultipleCarets()) {
+        CaretModel caretModel = editor.getCaretModel();
+        List<CaretState> states = new ArrayList<CaretState>(state.CARETS.length);
+        for (TextEditorState.CaretState caretState : state.CARETS) {
+          states.add(new CaretState(new LogicalPosition(caretState.LINE, caretState.COLUMN),
+                                    new LogicalPosition(caretState.SELECTION_START_LINE, caretState.SELECTION_START_COLUMN),
+                                    new LogicalPosition(caretState.SELECTION_END_LINE, caretState.SELECTION_END_COLUMN)));
+        }
+        caretModel.setCaretsAndSelections(states);
       }
-      caretModel.setCaretsAndSelections(states);
-    } else {
-      LogicalPosition pos = new LogicalPosition(state.CARETS[0].LINE, state.CARETS[0].COLUMN);
-      editor.getCaretModel().moveToLogicalPosition(pos);
-      editor.getSelectionModel().removeSelection();
+      else {
+        LogicalPosition pos = new LogicalPosition(state.CARETS[0].LINE, state.CARETS[0].COLUMN);
+        editor.getCaretModel().moveToLogicalPosition(pos);
+        editor.getSelectionModel().removeSelection();
+      }
     }
     EditorEx editorEx = editor instanceof EditorEx ? (EditorEx)editor : null;
     boolean preciselyScrollVertically =

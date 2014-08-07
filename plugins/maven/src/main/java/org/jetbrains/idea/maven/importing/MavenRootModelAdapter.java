@@ -19,12 +19,15 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ModuleOrderEntryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -45,6 +48,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Set;
 
 public class MavenRootModelAdapter {
@@ -176,10 +180,7 @@ public class MavenRootModelAdapter {
 
   public boolean isAlreadyExcluded(File f) {
     String url = toUrl(f.getPath()).getUrl();
-    for (String excludedUrl : myRootModel.getExcludeRootUrls()) {
-      if (VfsUtilCore.isEqualOrAncestor(excludedUrl, url)) return true;
-    }
-    return false;
+    return VfsUtilCore.isUnder(url, Arrays.asList(myRootModel.getExcludeRootUrls()));
   }
 
   private boolean exists(String path) {
@@ -193,6 +194,10 @@ public class MavenRootModelAdapter {
     if (e == null) return;
     if (e.getUrl().equals(url.getUrl())) return;
     e.addExcludeFolder(url.getUrl());
+    if (!Registry.is("ide.hide.excluded.files")) {
+      Project project = myRootModel.getProject();
+      ChangeListManager.getInstance(project).addDirectoryToIgnoreImplicitly(toPath(path).getPath());
+    }
   }
 
   public void unregisterAll(String path, boolean under, boolean unregisterSources) {

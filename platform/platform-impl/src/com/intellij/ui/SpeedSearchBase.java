@@ -288,6 +288,10 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     return null;
   }
 
+  public void showPopup() {
+    manageSearchPopup(new SearchPopup(""));
+  }
+
   public void hidePopup() {
     manageSearchPopup(null);
   }

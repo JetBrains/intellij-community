@@ -269,23 +269,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider {
                 children.add(create(JavaValue.this, (ValueDescriptorImpl)descriptor, myEvaluationContext, myNodeManager, false));
               }
               else if (descriptor instanceof MessageDescriptor) {
-                children.add("", new XValue() {
-                  @Override
-                  public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
-                    node.setPresentation(null, new XValuePresentation() {
-                      @NotNull
-                      @Override
-                      public String getSeparator() {
-                        return "";
-                      }
-
-                      @Override
-                      public void renderValue(@NotNull XValueTextRenderer renderer) {
-                        renderer.renderValue(descriptor.getLabel());
-                      }
-                    }, false);
-                  }
-                });
+                children.add(new JavaStackFrame.DummyMessageValueNode(descriptor.getLabel(), null));
               }
             }
           }

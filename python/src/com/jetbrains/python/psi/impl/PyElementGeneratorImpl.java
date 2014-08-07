@@ -87,8 +87,9 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
   }
 
 
+  @Override
   public PyStringLiteralExpression createStringLiteralFromString(@NotNull String unescaped) {
-    return createStringLiteralFromString(null, unescaped);
+    return createStringLiteralFromString(null, unescaped, true);
   }
 
   public PyStringLiteralExpression createStringLiteral(@NotNull PyStringLiteralExpression oldElement, @NotNull String unescaped) {
@@ -101,7 +102,11 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
     }
   }
 
-  public PyStringLiteralExpression createStringLiteralFromString(@Nullable PsiFile destination, @NotNull String unescaped) {
+
+  @Override
+  public PyStringLiteralExpression createStringLiteralFromString(@Nullable PsiFile destination,
+                                                                 @NotNull String unescaped,
+                                                                 final boolean preferUTF8) {
     boolean useDouble = !unescaped.contains("\"");
     boolean useMulti = unescaped.matches(".*(\r|\n).*");
     String quotes;
@@ -116,7 +121,7 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
     VirtualFile vfile = destination == null ? null : destination.getVirtualFile();
     Charset charset;
     if (vfile == null) {
-      charset = Charset.forName("US-ASCII");
+      charset = (preferUTF8 ? Charset.forName("UTF-8") : Charset.forName("US-ASCII"));
     }
     else {
       charset = vfile.getCharset();

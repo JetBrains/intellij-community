@@ -151,19 +151,21 @@ public abstract class DebuggerSessionTabBase extends LogConsoleManagerBase imple
     return environment != null ? environment.getRunProfile() : null;
   }
 
-  public void toFront() {
+  public void toFront(boolean focus) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       ExecutionManager.getInstance(getProject()).getContentManager().toFrontRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), myRunContentDescriptor);
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          boolean focusWnd = Registry.is("debugger.mayBringFrameToFrontOnBreakpoint");
-          ProjectUtil.focusProjectWindow(getProject(), focusWnd);
-          if (!focusWnd) {
-            AppIcon.getInstance().requestAttention(getProject(), true);
+      if (focus) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            boolean focusWnd = Registry.is("debugger.mayBringFrameToFrontOnBreakpoint");
+            ProjectUtil.focusProjectWindow(getProject(), focusWnd);
+            if (!focusWnd) {
+              AppIcon.getInstance().requestAttention(getProject(), true);
+            }
           }
-        }
-      });
+        });
+      }
     }
   }
 }

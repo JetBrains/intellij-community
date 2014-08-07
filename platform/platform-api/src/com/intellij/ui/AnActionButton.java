@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.ui.UIUtil;
@@ -187,7 +188,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      myAction.actionPerformed(e);
+      myAction.actionPerformed(new AnActionEventWrapper(e, this));
     }
 
     @Override
@@ -204,5 +205,21 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     public boolean isDumbAware() {
       return myAction.isDumbAware();
     }
+  }
+
+  public static class AnActionEventWrapper extends AnActionEvent {
+    private final AnActionButton myPeer;
+
+    private AnActionEventWrapper(AnActionEvent e, AnActionButton peer) {
+      super(e.getInputEvent(), e.getDataContext(), e.getPlace(), e.getPresentation(), e.getActionManager(), e.getModifiers());
+      myPeer = peer;
+    }
+
+    public void showPopup(JBPopup popup) {
+      popup.show(myPeer.getPreferredPopupPoint());
+    }
+
+
+
   }
 }

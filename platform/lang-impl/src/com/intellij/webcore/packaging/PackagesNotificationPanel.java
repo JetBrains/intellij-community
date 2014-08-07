@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,18 +23,17 @@ import java.util.Map;
  * @author yole
  */
 public class PackagesNotificationPanel {
-  private final JEditorPane myEditorPane = new MyNotificationPane();
   private final Project myProject;
+  private final JEditorPane myHtmlViewer;
   private final Map<String, Runnable> myLinkHandlers = new HashMap<String, Runnable>();
   private String myErrorTitle;
   private String myErrorDescription;
 
-  public PackagesNotificationPanel(Project project) {
+  public PackagesNotificationPanel(@NotNull Project project) {
     myProject = project;
-    myEditorPane.setBackground(UIManager.getColor("ArrowButton.background"));
-    myEditorPane.setContentType("text/html");
-    myEditorPane.setEditable(false);
-    myEditorPane.addHyperlinkListener(new HyperlinkAdapter() {
+    myHtmlViewer = SwingHelper.createHtmlViewer(true, null, null, null);
+    myHtmlViewer.setVisible(false);
+    myHtmlViewer.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(HyperlinkEvent e) {
         final Runnable handler = myLinkHandlers.get(e.getDescription());
@@ -76,11 +76,18 @@ public class PackagesNotificationPanel {
 
   public void showResult(String packageName, @Nullable String errorDescription) {
     if (StringUtil.isEmpty(errorDescription)) {
-      showSuccess("Package successfully installed.");
+      String message = "Package installed successfully";
+      if (packageName != null) {
+        message = "Package '" + packageName + "' installed successfully";
+      }
+      showSuccess(message);
     }
     else {
-      String title = "Install packages failed";
-      final String firstLine = title + ": Error occurred when installing package " + packageName + ". ";
+      String title = "Failed to install packages";
+      if (packageName != null) {
+        title = "Failed to install package '" + packageName + "'";
+      }
+      String firstLine = "Error occurred when installing package '" + packageName + "'. ";
       showError(firstLine + "<a href=\"xxx\">Details...</a>",
                 title,
                 firstLine + errorDescription);
@@ -96,19 +103,18 @@ public class PackagesNotificationPanel {
   }
 
   public JComponent getComponent() {
-    return myEditorPane;
+    return myHtmlViewer;
   }
 
   public void showSuccess(String text) {
     showContent(text, MessageType.INFO.getPopupBackground());
   }
 
-  private void showContent(String text, final Color background) {
-    myEditorPane.removeAll();
+  private void showContent(@NotNull String text, @NotNull Color background) {
     String htmlText = text.startsWith("<html>") ? text : UIUtil.toHtml(text);
-    myEditorPane.setText(htmlText);
-    myEditorPane.setBackground(background);
-    myEditorPane.setVisible(true);
+    myHtmlViewer.setText(htmlText);
+    myHtmlViewer.setBackground(background);
+    setVisibleEditorPane(true);
     myErrorTitle = null;
     myErrorDescription = null;
   }
@@ -124,22 +130,20 @@ public class PackagesNotificationPanel {
   }
 
   public void hide() {
-    myEditorPane.setVisible(false);
+    setVisibleEditorPane(false);
+  }
+
+  private void setVisibleEditorPane(boolean visible) {
+    boolean oldVisible = myHtmlViewer.isVisible();
+    myHtmlViewer.setVisible(visible);
+    if (oldVisible != visible) {
+      myHtmlViewer.revalidate();
+      myHtmlViewer.repaint();
+    }
   }
 
   public boolean hasLinkHandler(String key) {
     return myLinkHandlers.containsKey(key);
-  }
-
-  private static class MyNotificationPane extends JEditorPane {
-    @Override
-    public Dimension getPreferredSize() {
-      // This trick makes text component to carry text over to the next line
-      // iff the text line width exceeds parent's width
-      Dimension dimension = super.getPreferredSize();
-      dimension.width = 0;
-      return dimension;
-    }
   }
 
   public void removeLinkHandler(String key) {

@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
@@ -46,10 +47,12 @@ public class RunBuildAction extends MavenAction {
 
     if (!perform) return true;
 
+    MavenExplicitProfiles explicitProfiles = MavenActionUtil.getProjectsManager(context).getExplicitProfiles();
     final MavenRunnerParameters params = new MavenRunnerParameters(true,
                                                                    project.getDirectory(),
                                                                    goals,
-                                                                   MavenActionUtil.getProjectsManager(context).getExplicitProfiles());
+                                                                   explicitProfiles.getEnabledProfiles(),
+                                                                   explicitProfiles.getDisabledProfiles());
     MavenRunConfigurationType.runConfiguration(MavenActionUtil.getProject(context), params, null);
 
     return true;

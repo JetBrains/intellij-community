@@ -239,13 +239,13 @@ public final class UpdateChecker {
     updateSettings.myOutdatedPlugins.clear();
     if (!toUpdate.isEmpty()) {
       try {
-        final List<IdeaPluginDescriptor> process = RepositoryHelper.loadPluginsFromRepository(indicator);
+        final List<IdeaPluginDescriptor> process = RepositoryHelper.loadPluginsFromRepository(indicator, buildNumber);
         for (IdeaPluginDescriptor loadedPlugin : process) {
           final PluginId pluginId = loadedPlugin.getPluginId();
           final String idString = pluginId.getIdString();
           if (!toUpdate.containsKey(idString)) continue;
           if (!downloaded.containsKey(pluginId)) {
-            prepareToInstall(PluginDownloader.createDownloader(loadedPlugin), buildNumber, downloaded, incompatiblePlugins, true, indicator);
+            prepareToInstall(PluginDownloader.createDownloader(loadedPlugin, buildNumber), buildNumber, downloaded, incompatiblePlugins, true, indicator);
           }
         }
       }
@@ -376,7 +376,7 @@ public final class UpdateChecker {
     final List<IdeaPluginDescriptor> descriptors = RepositoryHelper.loadPluginsFromDescription(inputStream, indicator);
     for (IdeaPluginDescriptor descriptor : descriptors) {
       ((PluginNode)descriptor).setRepositoryName(host);
-      prepareToInstall(PluginDownloader.createDownloader(descriptor), buildNumber, downloaded, incompatiblePlugins, collectToUpdate,
+      prepareToInstall(PluginDownloader.createDownloader(descriptor, buildNumber), buildNumber, downloaded, incompatiblePlugins, collectToUpdate,
                        indicator);
     }
 
@@ -424,7 +424,7 @@ public final class UpdateChecker {
               if (progressIndicator != null) {
                 progressIndicator.setText2(finalPluginUrl);
               }
-              final PluginDownloader downloader = new PluginDownloader(pluginId, finalPluginUrl, pluginVersion, null, null);
+              final PluginDownloader downloader = new PluginDownloader(pluginId, finalPluginUrl, pluginVersion, null, null, buildNumber);
               prepareToInstall(downloader, buildNumber, downloaded, incompatiblePlugins, collectToUpdate, indicator);
             }
             catch (IOException e) {
@@ -617,12 +617,21 @@ public final class UpdateChecker {
     Future<?> downloadThreadFuture = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         try {
-          URL requestUrl = new URL(url);
-          if (!StandardFileSystems.FILE_PROTOCOL.equals(requestUrl.getProtocol())) {
-            HttpConfigurable.getInstance().prepareURL(url);
-            requestUrl = new URL(url + (url.contains("?") ? "&" : "?") + "build=" + ApplicationInfo.getInstance().getBuild().asString());
+          final String urlToCheck;
+          if (!StandardFileSystems.FILE_PROTOCOL.equals(new URL(url).getProtocol())) {
+            urlToCheck = url + (url.contains("?") ? "&" : "?") + "build=" + ApplicationInfo.getInstance().getBuild().asString();
+          } else {
+            urlToCheck = url;
           }
-          inputStreams[0] = requestUrl.openStream();
+
+          HttpURLConnection connection = ApplicationManager.getApplication() != null ?
+                                         HttpConfigurable.getInstance().openHttpConnection(urlToCheck) :
+                                         (HttpURLConnection)new URL(urlToCheck).openConnection();
+          connection.setReadTimeout(HttpConfigurable.CONNECTION_TIMEOUT);
+          connection.setConnectTimeout(HttpConfigurable.CONNECTION_TIMEOUT);
+          connection.connect();
+
+          inputStreams[0] = connection.getInputStream();
         }
         catch (IOException e) {
           exception[0] = e;
@@ -853,7 +862,7 @@ public final class UpdateChecker {
     }
   }
 
-  static String getDownloadUrl(IdeaPluginDescriptor descriptor) throws UnsupportedEncodingException {
+  static String getDownloadUrl(IdeaPluginDescriptor descriptor, @Nullable BuildNumber buildNumber) throws UnsupportedEncodingException {
     String url = null;
     if (descriptor instanceof PluginNode) {
       url = ((PluginNode)descriptor).getDownloadUrl();
@@ -872,11 +881,13 @@ public final class UpdateChecker {
       String uuid = ApplicationManager.getApplication() == null ?
                     UUID.randomUUID().toString() :
                     getInstallationUID(PropertiesComponent.getInstance());
-      String buildNumber = ApplicationManager.getApplication() != null
-                           ? ApplicationInfo.getInstance().getApiVersion()
-                           :  ApplicationInfoImpl.getShadowInstance().getBuild().asString();
+      String buildNumberAsString = buildNumber != null
+                                   ? buildNumber.asString()
+                                   : ApplicationManager.getApplication() != null
+                                     ? ApplicationInfo.getInstance().getApiVersion()
+                                     : ApplicationInfoImpl.getShadowInstance().getBuild().asString();
       url = RepositoryHelper.getDownloadUrl() + URLEncoder.encode(descriptor.getPluginId().getIdString(), "UTF8") +
-            "&build=" + buildNumber + "&uuid=" + URLEncoder.encode(uuid, "UTF8");
+            "&build=" + buildNumberAsString + "&uuid=" + URLEncoder.encode(uuid, "UTF8");
     }
     return url;
   }

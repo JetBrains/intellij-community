@@ -10,9 +10,8 @@ import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.jetbrains.idea.svn.info.Info;
-import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
-import org.tmatesoft.svn.core.wc.SVNPropertyData;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -24,6 +23,7 @@ import javax.xml.bind.annotation.XmlValue;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -32,10 +32,10 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
 
   @Nullable
   @Override
-  public SVNPropertyData getProperty(@NotNull SvnTarget target,
-                                     @NotNull String property,
-                                     boolean revisionProperty,
-                                     @Nullable SVNRevision revision)
+  public PropertyValue getProperty(@NotNull SvnTarget target,
+                                   @NotNull String property,
+                                   boolean revisionProperty,
+                                   @Nullable SVNRevision revision)
     throws VcsException {
     List<String> parameters = new ArrayList<String>();
 
@@ -57,7 +57,9 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     parameters.add("--xml");
 
     CommandExecutor command = execute(myVcs, target, SvnCommandName.propget, parameters, null);
-    return parseSingleProperty(target, command.getOutput());
+    PropertyData data = parseSingleProperty(target, command.getOutput());
+
+    return data != null ? data.getValue() : null;
   }
 
   @Override
@@ -65,7 +67,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
                           @NotNull String property,
                           @Nullable SVNRevision revision,
                           @Nullable Depth depth,
-                          @Nullable ISVNPropertyHandler handler) throws VcsException {
+                          @Nullable PropertyConsumer handler) throws VcsException {
     List<String> parameters = new ArrayList<String>();
 
     parameters.add(property);
@@ -79,7 +81,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
   public void list(@NotNull SvnTarget target,
                    @Nullable SVNRevision revision,
                    @Nullable Depth depth,
-                   @Nullable ISVNPropertyHandler handler) throws VcsException {
+                   @Nullable PropertyConsumer handler) throws VcsException {
     List<String> parameters = new ArrayList<String>();
     fillListParameters(target, revision, depth, parameters, true);
 
@@ -90,39 +92,39 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
   @Override
   public void setProperty(@NotNull File file,
                           @NotNull String property,
-                          @Nullable SVNPropertyValue value,
+                          @Nullable PropertyValue value,
                           @Nullable Depth depth,
                           boolean force) throws VcsException {
     runSetProperty(SvnTarget.fromFile(file), property, null, depth, value, force);
   }
 
   @Override
-  public void setProperties(@NotNull File file, @NotNull SVNProperties properties) throws VcsException {
-    SVNProperties currentProperties = collectPropertiesToDelete(file);
+  public void setProperties(@NotNull File file, @NotNull PropertiesMap properties) throws VcsException {
+    PropertiesMap currentProperties = collectPropertiesToDelete(file);
     currentProperties.putAll(properties);
 
-    for (String propertyName : currentProperties.nameSet()) {
-      setProperty(file, propertyName, currentProperties.getSVNPropertyValue(propertyName), Depth.EMPTY, true);
+    for (Map.Entry<String, PropertyValue> entry : currentProperties.entrySet()) {
+      setProperty(file, entry.getKey(), entry.getValue(), Depth.EMPTY, true);
     }
   }
 
   @NotNull
-  private SVNProperties collectPropertiesToDelete(@NotNull File file) throws VcsException {
-    final SVNProperties result = new SVNProperties();
+  private PropertiesMap collectPropertiesToDelete(@NotNull File file) throws VcsException {
+    final PropertiesMap result = new PropertiesMap();
 
-    list(SvnTarget.fromFile(file), null, Depth.EMPTY, new ISVNPropertyHandler() {
+    list(SvnTarget.fromFile(file), null, Depth.EMPTY, new PropertyConsumer() {
       @Override
-      public void handleProperty(File path, SVNPropertyData property) throws SVNException {
+      public void handleProperty(File path, PropertyData property) throws SVNException {
         // null indicates property will be deleted
-        result.put(property.getName(), (SVNPropertyValue)null);
+        result.put(property.getName(), null);
       }
 
       @Override
-      public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException {
+      public void handleProperty(SVNURL url, PropertyData property) throws SVNException {
       }
 
       @Override
-      public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
+      public void handleProperty(long revision, PropertyData property) throws SVNException {
       }
     });
 
@@ -133,7 +135,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
   public void setRevisionProperty(@NotNull SvnTarget target,
                                   @NotNull String property,
                                   @NotNull SVNRevision revision,
-                                  @Nullable SVNPropertyValue value,
+                                  @Nullable PropertyValue value,
                                   boolean force) throws VcsException {
     runSetProperty(target, property, revision, null, value, force);
   }
@@ -142,7 +144,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
                               @NotNull String property,
                               @Nullable SVNRevision revision,
                               @Nullable Depth depth,
-                              @Nullable SVNPropertyValue value,
+                              @Nullable PropertyValue value,
                               boolean force) throws VcsException {
     List<String> parameters = new ArrayList<String>();
     boolean isDelete = value == null;
@@ -153,7 +155,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
       CommandUtil.put(parameters, revision);
     }
     if (!isDelete) {
-      parameters.add(SVNPropertyValue.getPropertyAsString(value));
+      parameters.add(PropertyValue.toString(value));
       // --force could only be used in "propset" command, but not in "propdel" command
       CommandUtil.put(parameters, force, "--force");
     }
@@ -180,21 +182,22 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     CommandUtil.put(parameters, verbose, "--verbose");
   }
 
-  private SVNPropertyData parseSingleProperty(SvnTarget target, String output) throws VcsException {
-    final SVNPropertyData[] data = new SVNPropertyData[1];
-    ISVNPropertyHandler handler = new ISVNPropertyHandler() {
+  @Nullable
+  private PropertyData parseSingleProperty(SvnTarget target, String output) throws VcsException {
+    final PropertyData[] data = new PropertyData[1];
+    PropertyConsumer handler = new PropertyConsumer() {
       @Override
-      public void handleProperty(File path, SVNPropertyData property) throws SVNException {
+      public void handleProperty(File path, PropertyData property) throws SVNException {
         data[0] = property;
       }
 
       @Override
-      public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException {
+      public void handleProperty(SVNURL url, PropertyData property) throws SVNException {
         data[0] = property;
       }
 
       @Override
-      public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
+      public void handleProperty(long revision, PropertyData property) throws SVNException {
         data[0] = property;
       }
     };
@@ -204,7 +207,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     return data[0];
   }
 
-  private static void parseOutput(SvnTarget target, String output, ISVNPropertyHandler handler) throws VcsException {
+  private static void parseOutput(SvnTarget target, String output, PropertyConsumer handler) throws VcsException {
     try {
       Properties properties = CommandUtil.parse(output, Properties.class);
 
@@ -231,7 +234,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     }
   }
 
-  private static void invokeHandler(@NotNull SvnTarget target, @Nullable SVNPropertyData data, @Nullable ISVNPropertyHandler handler)
+  private static void invokeHandler(@NotNull SvnTarget target, @Nullable PropertyData data, @Nullable PropertyConsumer handler)
     throws SVNException {
     if (handler != null && data != null) {
       if (target.isFile()) {
@@ -242,7 +245,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     }
   }
 
-  private static void invokeHandler(long revision, @Nullable SVNPropertyData data, @Nullable ISVNPropertyHandler handler)
+  private static void invokeHandler(long revision, @Nullable PropertyData data, @Nullable PropertyConsumer handler)
     throws SVNException {
     if (handler != null && data != null) {
       handler.handleProperty(revision, data);
@@ -250,13 +253,13 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
   }
 
   @Nullable
-  private static SVNPropertyData create(@NotNull String property, @Nullable String value) {
-    SVNPropertyData result = null;
+  private static PropertyData create(@NotNull String property, @Nullable String value) {
+    PropertyData result = null;
 
     // such behavior is required to compatibility with SVNKit as some logic in merge depends on
     // whether null property data or property data with empty string value is returned
     if (value != null) {
-      result = new SVNPropertyData(property, SVNPropertyValue.create(value.trim()), LF_SEPARATOR_OPTIONS);
+      result = new PropertyData(property, PropertyValue.create(value.trim()));
     }
 
     return result;

@@ -25,6 +25,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -106,6 +107,58 @@ public class FormatterImpl extends FormatterEx
       return;
     }
     myProgressTask.set(progressIndicator);
+  }
+
+  @Override
+  public int getSpacingForBlockAtOffset(FormattingModel model, int offset) {
+    Couple<Block> blockWithParent = getBlockAtOffset(null, model.getRootBlock(), offset);
+    if (blockWithParent == null) {
+      return 0;
+    }
+    Block parentBlock = blockWithParent.first;
+    Block targetBlock = blockWithParent.second;
+    if (parentBlock == null || targetBlock == null) {
+      return 0;
+    }
+    Block prevBlock = findPreviousSibling(parentBlock, targetBlock);
+    if (prevBlock == null) {
+      return 0;
+    }
+    SpacingImpl spacing = (SpacingImpl)parentBlock.getSpacing(prevBlock, targetBlock);
+    if (spacing == null) {
+      return 0;
+    }
+    return Math.max(spacing.getMinSpaces(), 0);
+  }
+
+  private static Couple<Block> getBlockAtOffset(Block parent, Block block, int offset) {
+    TextRange textRange = block.getTextRange();
+    int startOffset = textRange.getStartOffset();
+    int endOffset = textRange.getEndOffset();
+    if (startOffset == offset) {
+      return Couple.of(parent, block);
+    }
+    if (startOffset > offset || endOffset < offset || block.isLeaf()) {
+      return null;
+    }
+    for (Block subBlock : block.getSubBlocks()) {
+      Couple<Block> result = getBlockAtOffset(block, subBlock, offset);
+      if (result != null) {
+        return result;
+      }
+    }
+    return null;
+  }
+
+  private static Block findPreviousSibling(Block parent, Block block) {
+    Block result = null;
+    for (Block subBlock : parent.getSubBlocks()) {
+      if (subBlock == block) {
+        return result;
+      }
+      result = subBlock;
+    }
+    return null;
   }
 
   @Override

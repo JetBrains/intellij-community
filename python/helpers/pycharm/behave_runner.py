@@ -141,7 +141,11 @@ class _BehaveRunner(_bdd_utils.BddRunner):
             elif element.status == 'passed':
                 self._test_passed(element.name, element.duration)
             elif element.status == 'failed':
-                self._test_failed(element.name, element.error_message, traceback.format_exc())
+                try:
+                    trace = traceback.format_exc()
+                except Exception:
+                    trace = "".join(traceback.format_tb(element.exc_traceback))
+                self._test_failed(element.name, element.error_message, trace)
             elif element.status == 'undefined':
                 self._test_undefined(element.name, element.location)
             else:
@@ -220,21 +224,19 @@ if __name__ == "__main__":
         """
         pass
 
-    tags = ""
-    if len(sys.argv) > 1:
-        for arg in filter(None, sys.argv[2::]):
-            if str(arg).startswith("--tags"):
-                tags += " " + str(arg)
-            else:
-                raise Exception("Not a tag expression (should be --tags=..):{}".format(str(arg)))
-    my_config = configuration.Configuration(command_args=tags)
+    command_args = list(filter(None, sys.argv[1:]))
+    my_config = configuration.Configuration(command_args=command_args)
     formatters.register_as(_Null, "com.intellij.python.null")
     my_config.format = ["com.intellij.python.null"]  # To prevent output to stdout
     my_config.reporters = []  # To prevent summary to stdout
     my_config.stdout_capture = False  # For test output
     my_config.stderr_capture = False  # For test output
-    base_dir = _bdd_utils.get_path_by_args(sys.argv)
-    my_config.paths = _get_dirs_to_run(base_dir)
+    (base_dir, what_to_run) = _bdd_utils.get_path_by_args(sys.argv)
+    if not my_config.paths:  # No path provided, trying to load dit manually
+        if os.path.isfile(what_to_run):  # File is provided, load it
+            my_config.paths = [what_to_run]
+        else:  # Dir is provided, find subdirs ro run
+            my_config.paths = _get_dirs_to_run(base_dir)
     _BehaveRunner(my_config, base_dir).run()
 
 

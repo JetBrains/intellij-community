@@ -179,4 +179,9 @@ public class PySmartEnterTest extends PyTestCase {
   public void testWithTargetIncomplete() {
     doTest();
   }
+
+  // PY-12877
+  public void testWithExpressionMissing() {
+    doTest();
+  }
 }

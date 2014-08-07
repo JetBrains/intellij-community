@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,11 @@
  */
 package com.intellij.openapi.diagnostic;
 
-
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * This is a very primitive fast logging class, primary for race-conditions debugging.
- */
+/** @deprecated use {@link com.intellij.openapi.diagnostic.Logger} (to be removed in IDEA 15) */
+@SuppressWarnings("unused")
 public class Log {
   private static final List<String> myStrings = new ArrayList<String>();
   private static final List<Throwable> myThrowables = new ArrayList<Throwable>();

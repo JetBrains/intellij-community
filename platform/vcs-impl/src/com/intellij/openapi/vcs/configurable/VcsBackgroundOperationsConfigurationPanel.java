@@ -31,7 +31,7 @@ import java.awt.event.ActionListener;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class VcsBackgroundOperationsConfigurationPanel implements SearchableConfigurable {
+public class VcsBackgroundOperationsConfigurationPanel {
 
   private JPanel myPanel;
 
@@ -151,30 +151,6 @@ public class VcsBackgroundOperationsConfigurationPanel implements SearchableConf
     return myPanel;
   }
 
-  @Nls
-  public String getDisplayName() {
-    return "Background";
-  }
-
-  public String getHelpTopic() {
-    return "project.propVCSSupport.Background";
-  }
-
-  @NotNull
-  public String getId() {
-    return getHelpTopic();
-  }
-
-  public Runnable enableSearch(String option) {
-    return null;
-  }
-
-  public JComponent createComponent() {
-    return getPanel();
-  }
-
-  public void disposeUIResources() {
-  }
 
   private void createUIComponents() {
     myCacheSettingsPanel = new CacheSettingsPanel();

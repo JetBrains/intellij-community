@@ -256,6 +256,6 @@ public class ImportTree extends NodeRenderer {
   }
 
   private boolean isIgnoredByVcs(VirtualFile vFile) {
-    return myProject != null && ProjectLevelVcsManager.getInstance(myProject).isIgnoredByVcs(vFile);
+    return myProject != null && ProjectLevelVcsManager.getInstance(myProject).isIgnored(vFile);
   }
 }

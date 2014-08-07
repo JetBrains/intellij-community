@@ -27,9 +27,9 @@ public abstract class SplitterActionBase extends AnAction implements DumbAware {
   public void update(final AnActionEvent event) {
     final Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
     final Presentation presentation = event.getPresentation();
-    boolean context = ActionPlaces.isPopupPlace(event.getPlace());
-    boolean enabled = project != null && isActionEnabled(project, context);
-    if (context) {
+    boolean inContextMenu = ActionPlaces.isPopupPlace(event.getPlace());
+    boolean enabled = project != null && isActionEnabled(project, inContextMenu);
+    if (inContextMenu) {
       presentation.setVisible(enabled);
     }
     else {
@@ -37,7 +37,17 @@ public abstract class SplitterActionBase extends AnAction implements DumbAware {
     }
   }
 
-  protected boolean isActionEnabled(Project project, boolean context) {
+  /**
+   * This method determines whether the action is enabled for {@code project}
+   * if {@code inContextMenu} is set to {@code false}.  Otherwise,
+   * it determines whether the action is visible in the context menu.
+   *
+   * @param project       the specified project
+   * @param inContextMenu whether the action is used in context menu
+   * @return              {@code true} if the action is enabled,
+   *                      {@code false} otherwise
+   */
+  protected boolean isActionEnabled(Project project, boolean inContextMenu) {
     final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
     return fileEditorManager.isInSplitter();
   }

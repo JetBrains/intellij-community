@@ -79,7 +79,7 @@ public class PySmartEnterProcessor extends SmartEnterProcessor {
     }
 
     final PsiElement[] children = element.getChildren();
-    for (PsiElement child : children) {
+    for (final PsiElement child : children) {
       if (element instanceof PyStatement && child instanceof PyStatement) {
         continue;
       }

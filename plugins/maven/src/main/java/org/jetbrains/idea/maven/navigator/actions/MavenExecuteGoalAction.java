@@ -37,6 +37,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -105,7 +106,7 @@ public class MavenExecuteGoalAction extends DumbAwareAction {
       return;
     }
 
-    MavenRunnerParameters parameters = new MavenRunnerParameters(true, workDirectory, Arrays.asList(ParametersList.parse(goals)), null);
+    MavenRunnerParameters parameters = new MavenRunnerParameters(true, workDirectory, Arrays.asList(ParametersList.parse(goals)), Collections.<String>emptyList());
 
     MavenGeneralSettings generalSettings = new MavenGeneralSettings();
     generalSettings.setMavenHome(mavenHome.getPath());

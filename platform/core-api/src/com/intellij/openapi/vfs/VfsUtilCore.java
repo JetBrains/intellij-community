@@ -84,6 +84,20 @@ public class VfsUtilCore {
     return false;
   }
 
+  /**
+   * @return {@code true} if {@code url} is located under one of {@code rootUrls} or equal to one of them
+   */
+  public static boolean isUnder(@NotNull String url, @Nullable Collection<String> rootUrls) {
+    if (rootUrls == null || rootUrls.isEmpty()) return false;
+
+    for (String excludesUrl : rootUrls) {
+      if (isEqualOrAncestor(excludesUrl, url)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public static boolean isEqualOrAncestor(@NotNull String ancestorUrl, @NotNull String fileUrl) {
     if (ancestorUrl.equals(fileUrl)) return true;
     if (StringUtil.endsWithChar(ancestorUrl, '/')) {

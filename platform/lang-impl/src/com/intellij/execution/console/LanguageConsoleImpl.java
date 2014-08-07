@@ -670,12 +670,14 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     }
   }
 
+  @NotNull
   public Editor getCurrentEditor() {
-    return ObjectUtils.chooseNotNull(myCurrentEditor, myConsoleEditor);
+    return ObjectUtils.notNull(myCurrentEditor, myConsoleEditor);
   }
 
+  @NotNull
   public Language getLanguage() {
-    return myVirtualFile.getLanguage();
+    return ObjectUtils.assertNotNull(myVirtualFile.getLanguage());
   }
 
   public void setLanguage(@NotNull Language language) {

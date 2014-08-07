@@ -61,6 +61,15 @@ public class RestartAction extends FakeRerunAction implements DumbAware, AnActio
     myDescriptor = descriptor;
     myExecutor = executor;
     // see IDEADEV-698
+
+    if (descriptor.getRestarter() == null) {
+      descriptor.setRestarter(new Runnable() {
+        @Override
+        public void run() {
+          restart();
+        }
+      });
+    }
   }
 
   @Override

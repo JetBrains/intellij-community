@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Locale;
 
 public class StringSearcher {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.text.StringSearcher");
@@ -48,7 +49,7 @@ public class StringSearcher {
     myPattern = pattern;
     myCaseSensitive = caseSensitive;
     myForwardDirection = forwardDirection;
-    myPatternArray = myCaseSensitive ? myPattern.toCharArray() : myPattern.toLowerCase().toCharArray();
+    myPatternArray = myCaseSensitive ? myPattern.toCharArray() : myPattern.toLowerCase(Locale.US).toCharArray();
     myPatternLength = myPatternArray.length;
     Arrays.fill(mySearchTable, -1);
     myJavaIdentifier = pattern.isEmpty() ||

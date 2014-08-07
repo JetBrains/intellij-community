@@ -18,11 +18,13 @@ package com.intellij.openapi.util.io;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairProcessor;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Arrays;
@@ -188,5 +190,12 @@ public class FileUtilLightTest {
     else {
       assertEquals("/a/b/.././c/", FileUtil.normalize("\\\\\\a\\\\//b//..///./c//"));
     }
+  }
+
+  @Test
+  public void testRelativeToUserHome() {
+    assertEquals(SystemProperties.getUserHome(), FileUtil.getLocationRelativeToUserHome(SystemProperties.getUserHome(), false));
+    String expected = SystemInfo.isWindows ? "~\\relative" : "~/relative";
+    assertEquals(expected, FileUtil.getLocationRelativeToUserHome(SystemProperties.getUserHome() + "/relative", false));
   }
 }

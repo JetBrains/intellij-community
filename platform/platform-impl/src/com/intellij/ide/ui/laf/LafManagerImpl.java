@@ -46,6 +46,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.mac.MacPopupMenuUI;
+import com.intellij.ui.popup.OurHeavyWeightPopup;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
@@ -853,6 +854,9 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       final Point point = fixPopupLocation(contents, x, y);
 
       final int popupType = UIUtil.isUnderGTKLookAndFeel() ? WEIGHT_HEAVY : PopupUtil.getPopupType(this);
+      if (popupType == WEIGHT_HEAVY && OurHeavyWeightPopup.isEnabled()) {
+        return new OurHeavyWeightPopup(owner, contents, point.x, point.y);
+      }
       if (popupType >= 0) {
         PopupUtil.setPopupType(myDelegate, popupType);
       }

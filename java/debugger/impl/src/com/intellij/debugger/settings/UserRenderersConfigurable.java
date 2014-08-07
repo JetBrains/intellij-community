@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,36 +35,28 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Eugene Zhuravlev
- *         Date: Feb 19, 2005
- */
-public class UserRenderersConfigurable implements ConfigurableUi<NodeRendererSettings> {
+public final class UserRenderersConfigurable extends JPanel implements ConfigurableUi<NodeRendererSettings> {
   private static final Icon ADD_ICON = IconUtil.getAddIcon();
   private static final Icon REMOVE_ICON = IconUtil.getRemoveIcon();
   private static final Icon COPY_ICON = PlatformIcons.COPY_ICON;
   private static final Icon UP_ICON = IconUtil.getMoveUpIcon();
   private static final Icon DOWN_ICON = IconUtil.getMoveDownIcon();
 
-  private JPanel myNameFieldPanel;
-  private JTextField myNameField;
-  private ElementsChooser<NodeRenderer> myRendererChooser;
+  private final JPanel myNameFieldPanel;
+  private final JTextField myNameField;
+  private final ElementsChooser<NodeRenderer> myRendererChooser;
   private NodeRenderer myCurrentRenderer = null;
   private final CompoundRendererConfigurable myRendererDataConfigurable = new CompoundRendererConfigurable();
 
-  @Override
-  @NotNull
-  public JComponent getComponent() {
-    final JPanel panel = new JPanel(new BorderLayout(4, 0));
+  public UserRenderersConfigurable() {
+    super(new BorderLayout(4, 0));
 
-    final JComponent renderersList = createRenderersList();
-    final JComponent toolbar = createToolbar();
-    final JComponent rendererDataPanel = myRendererDataConfigurable.createComponent();
+    myRendererChooser = new ElementsChooser<NodeRenderer>(true);
+    setupRenderersList();
 
-    final JPanel left = new JPanel(new BorderLayout());
-
-    left.add(toolbar, BorderLayout.NORTH);
-    left.add(renderersList, BorderLayout.CENTER);
+    JPanel left = new JPanel(new BorderLayout());
+    left.add(createToolbar(), BorderLayout.NORTH);
+    left.add(myRendererChooser, BorderLayout.CENTER);
 
     myNameField = new JTextField();
     myNameFieldPanel = new JPanel(new BorderLayout());
@@ -73,9 +65,8 @@ public class UserRenderersConfigurable implements ConfigurableUi<NodeRendererSet
     myNameFieldPanel.setVisible(false);
 
     final JPanel center = new JPanel(new BorderLayout(0, 4));
-
     center.add(myNameFieldPanel, BorderLayout.NORTH);
-    center.add(rendererDataPanel, BorderLayout.CENTER);
+    center.add(myRendererDataConfigurable, BorderLayout.CENTER);
 
     myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
@@ -87,14 +78,17 @@ public class UserRenderersConfigurable implements ConfigurableUi<NodeRendererSet
       }
     });
 
-    panel.add(left, BorderLayout.WEST);
-    panel.add(center, BorderLayout.CENTER);
-
-    return panel;
+    add(left, BorderLayout.WEST);
+    add(center, BorderLayout.CENTER);
   }
 
-  private JComponent createRenderersList() {
-    myRendererChooser = new ElementsChooser<NodeRenderer>(true);
+  @Override
+  @NotNull
+  public JComponent getComponent() {
+    return this;
+  }
+
+  private void setupRenderersList() {
     myRendererChooser.getEmptyText().setText(DebuggerBundle.message("text.user.renderers.configurable.no.renderers"));
 
     myRendererChooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<NodeRenderer>() {
@@ -111,7 +105,6 @@ public class UserRenderersConfigurable implements ConfigurableUi<NodeRendererSet
         }
       }
     });
-    return myRendererChooser;
   }
 
   private void updateCurrentRenderer(List<NodeRenderer> selectedElements) {
@@ -143,6 +136,7 @@ public class UserRenderersConfigurable implements ConfigurableUi<NodeRendererSet
     myRendererDataConfigurable.setRenderer(renderer);
   }
 
+  @NotNull
   private JComponent createToolbar() {
     final DefaultActionGroup group = new DefaultActionGroup();
     group.add(new AddAction());
@@ -150,8 +144,7 @@ public class UserRenderersConfigurable implements ConfigurableUi<NodeRendererSet
     group.add(new CopyAction());
     group.add(new MoveAction(true));
     group.add(new MoveAction(false));
-    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
-    return toolbar.getComponent();
+    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
   }
 
   @Override
@@ -240,8 +233,8 @@ public class UserRenderersConfigurable implements ConfigurableUi<NodeRendererSet
     @Override
     public void update(AnActionEvent e) {
       super.update(e);
-      final Presentation presentation = e.getPresentation();
-      presentation.setEnabled(myRendererChooser.getSelectedElement() != null);
+
+      e.getPresentation().setEnabled(myRendererChooser.getSelectedElement() != null);
     }
   }
 
@@ -254,16 +247,14 @@ public class UserRenderersConfigurable implements ConfigurableUi<NodeRendererSet
     public void actionPerformed(AnActionEvent e) {
       final NodeRenderer selectedElement = myRendererChooser.getSelectedElement();
       if (selectedElement != null) {
-        final NodeRenderer cloned = (NodeRenderer)selectedElement.clone();
-        myRendererChooser.addElement(cloned, true);
+        myRendererChooser.addElement((NodeRenderer)selectedElement.clone(), true);
       }
     }
 
     @Override
     public void update(AnActionEvent e) {
       super.update(e);
-      final Presentation presentation = e.getPresentation();
-      presentation.setEnabled(myRendererChooser.getSelectedElement() != null);
+      e.getPresentation().setEnabled(myRendererChooser.getSelectedElement() != null);
     }
   }
 
@@ -296,8 +287,7 @@ public class UserRenderersConfigurable implements ConfigurableUi<NodeRendererSet
     @Override
     public void update(AnActionEvent e) {
       super.update(e);
-      final Presentation presentation = e.getPresentation();
-      presentation.setEnabled(myRendererChooser.getSelectedElement() != null);
+      e.getPresentation().setEnabled(myRendererChooser.getSelectedElement() != null);
     }
   }
 }

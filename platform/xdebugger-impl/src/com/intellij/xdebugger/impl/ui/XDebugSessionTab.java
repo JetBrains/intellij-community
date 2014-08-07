@@ -27,6 +27,7 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.layout.PlaceInGrid;
+import com.intellij.execution.ui.layout.impl.ViewImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.idea.ActionsBundle;
@@ -37,6 +38,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManagerAdapter;
+import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
@@ -65,7 +68,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
                           @NotNull XDebugSessionImpl session,
                           @Nullable Icon icon,
                           @Nullable ExecutionEnvironment environment,
-                          @Nullable ProgramRunner runner) {
+                          @Nullable ProgramRunner runner,
+                          @Nullable RunContentDescriptor contentToReuse) {
     super(project, "Debug", session.getSessionName(), GlobalSearchScope.allScope(project));
     if (environment != null) {
       setEnvironment(environment);
@@ -73,6 +77,9 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     myConsole = session.getConsoleView();
     XDebugProcess debugProcess = session.getDebugProcess();
     myRunContentDescriptor = new RunContentDescriptor(myConsole, debugProcess.getProcessHandler(), myUi.getComponent(), mySessionName, icon);
+    if (contentToReuse != null && contentToReuse.isReuseToolWindowActivation()) {
+      myRunContentDescriptor.setActivateToolWindowWhenAdded(contentToReuse.isActivateToolWindowWhenAdded());
+    }
     attachToSession(session, runner, environment, session.getSessionData(), debugProcess);
   }
 
@@ -241,6 +248,18 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     final DefaultActionGroup focus = new DefaultActionGroup();
     focus.add(ActionManager.getInstance().getAction(XDebuggerActions.FOCUS_ON_BREAKPOINT));
     myUi.getOptions().setAdditionalFocusActions(focus);
+
+    myUi.addListener(new ContentManagerAdapter() {
+      @Override
+      public void selectionChanged(ContentManagerEvent event) {
+        Content content = event.getContent();
+        if (content.isSelected() && DebuggerContentInfo.WATCHES_CONTENT.equals(content.getUserData(ViewImpl.ID))) {
+          if (myWatchesView.rebuildNeeded()) {
+            myWatchesView.processSessionEvent(XDebugView.SessionEvent.SETTINGS_CHANGED);
+          }
+        }
+      }
+    }, this);
 
     rebuildViews();
   }

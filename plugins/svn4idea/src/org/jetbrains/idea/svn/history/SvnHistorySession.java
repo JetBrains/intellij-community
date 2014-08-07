@@ -77,11 +77,6 @@ public class SvnHistorySession extends VcsAbstractHistorySession {
     return myCommittedPath;
   }
 
-  @Override
-  public boolean isContentAvailable(final VcsFileRevision revision) {
-    return !myCommittedPath.isDirectory();
-  }
-
   public boolean isHaveMergeSources() {
     return myHaveMergeSources;
   }

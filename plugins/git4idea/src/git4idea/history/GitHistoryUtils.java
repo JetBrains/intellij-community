@@ -520,9 +520,19 @@ public class GitHistoryUtils {
                                                  @NotNull VirtualFile root,
                                                  @NotNull final Consumer<VcsUser> userRegistry,
                                                  @NotNull List<String> parameters) throws VcsException {
+    List<TimedVcsCommit> collector = ContainerUtil.newArrayList();
+    readCommits(project, root, userRegistry, parameters, new CollectConsumer<TimedVcsCommit>(collector));
+    return collector;
+  }
+
+  public static void readCommits(@NotNull final Project project,
+                                                 @NotNull VirtualFile root,
+                                                 @NotNull final Consumer<VcsUser> userRegistry,
+                                                 @NotNull List<String> parameters,
+                                                 @NotNull final Consumer<TimedVcsCommit> commitConsumer) throws VcsException {
     final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
-      return Collections.emptyList();
+      return;
     }
 
     final int COMMIT_BUFFER = 1000;
@@ -535,8 +545,6 @@ public class GitHistoryUtils {
     h.addParameters("--date-order");
     h.addParameters(parameters);
     h.endOptions();
-
-    final List<TimedVcsCommit> commits = ContainerUtil.newArrayList();
 
     final StringBuilder record = new StringBuilder();
     final AtomicInteger records = new AtomicInteger();
@@ -560,7 +568,10 @@ public class GitHistoryUtils {
             afterParseRemainder = line.substring(recordEnd + 1);
           }
           if (afterParseRemainder != null && records.incrementAndGet() > COMMIT_BUFFER) { // null means can't parse now
-            commits.addAll(parseCommit(parser, record, userRegistry, factory));
+            List<TimedVcsCommit> commits = parseCommit(parser, record, userRegistry, factory);
+            for (TimedVcsCommit commit : commits) {
+              commitConsumer.consume(commit);
+            }
             record.setLength(0);
             record.append(afterParseRemainder);
           }
@@ -573,7 +584,10 @@ public class GitHistoryUtils {
       @Override
       public void processTerminated(int exitCode) {
         try {
-          commits.addAll(parseCommit(parser, record, userRegistry, factory));
+          List<TimedVcsCommit> commits = parseCommit(parser, record, userRegistry, factory);
+          for (TimedVcsCommit commit : commits) {
+            commitConsumer.consume(commit);
+          }
         }
         catch (Exception e) {
           ex.set(new VcsException(e));
@@ -589,7 +603,6 @@ public class GitHistoryUtils {
     if (!ex.isNull()) {
       throw ex.get();
     }
-    return commits;
   }
 
   @NotNull

@@ -214,7 +214,7 @@ public class DebuggerPanelsManager implements ProjectComponent {
   public void toFront(DebuggerSession session) {
     DebuggerSessionTab sessionTab = getSessionTab(session);
     if (sessionTab != null) {
-      sessionTab.toFront();
+      sessionTab.toFront(true);
     }
   }
 

@@ -130,7 +130,6 @@ public class MethodCandidateInfo extends CandidateInfo{
           final CurrentCandidateProperties properties = new CurrentCandidateProperties(method, substitutor, isVarargs(), true);
           final CurrentCandidateProperties alreadyThere = map.put(getMarkerList(), properties);
           try {
-            properties.setSubstitutor(substitutor);
             PsiType[] argumentTypes = getArgumentTypes();
             if (argumentTypes == null) {
               return ApplicabilityLevel.NOT_APPLICABLE;
@@ -143,7 +142,11 @@ public class MethodCandidateInfo extends CandidateInfo{
             return applicabilityLevel;
           }
           finally {
-            if (alreadyThere == null) map.remove(getMarkerList());
+            if (alreadyThere == null) {
+              map.remove(getMarkerList());
+            } else {
+              map.put(getMarkerList(), alreadyThere);
+            }
           }
         }
         return getApplicabilityLevelInner();
@@ -180,7 +183,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   @NotNull
   public PsiSubstitutor getSubstitutor(boolean includeReturnConstraint) {
     PsiSubstitutor substitutor = myCalcedSubstitutor;
-    if (substitutor == null || !includeReturnConstraint && myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+    if (substitutor == null || !includeReturnConstraint && myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) || isOverloadCheck()) {
       PsiSubstitutor incompleteSubstitutor = super.getSubstitutor();
       PsiMethod method = getElement();
       if (myTypeArguments == null) {
@@ -189,7 +192,7 @@ public class MethodCandidateInfo extends CandidateInfo{
         final PsiSubstitutor inferredSubstitutor = inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE, includeReturnConstraint);
 
          if (!stackStamp.mayCacheNow() ||
-             !ourOverloadGuard.currentStack().isEmpty() ||
+             isOverloadCheck() ||
              !includeReturnConstraint && myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) ||
              getMarkerList() != null && PsiResolveHelper.ourGraphGuard.currentStack().contains(getMarkerList().getParent())) {
           return inferredSubstitutor;
@@ -207,6 +210,10 @@ public class MethodCandidateInfo extends CandidateInfo{
     }
 
     return substitutor;
+  }
+
+  public static boolean isOverloadCheck() {
+    return !ourOverloadGuard.currentStack().isEmpty();
   }
 
 
@@ -265,10 +272,8 @@ public class MethodCandidateInfo extends CandidateInfo{
       CURRENT_CANDIDATE.set(map);
     }
     final PsiMethod method = getElement();
-    final CurrentCandidateProperties alreadyThere = map.get(getMarkerList());
-    if (alreadyThere == null) {
+    final CurrentCandidateProperties alreadyThere = 
       map.put(getMarkerList(), new CurrentCandidateProperties(method, super.getSubstitutor(), isVarargs(), !includeReturnConstraint));
-    }
     try {
       PsiTypeParameter[] typeParameters = method.getTypeParameters();
 
@@ -289,7 +294,11 @@ public class MethodCandidateInfo extends CandidateInfo{
         .inferTypeArguments(typeParameters, method.getParameterList().getParameters(), arguments, mySubstitutor, parent, policy, myLanguageLevel);
     }
     finally {
-      if (alreadyThere == null) map.remove(getMarkerList());
+      if (alreadyThere == null) {
+        map.remove(getMarkerList());
+      } else {
+        map.put(getMarkerList(), alreadyThere);
+      }
     }
   }
 

@@ -33,6 +33,7 @@ import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager;
+import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.XDebuggerEditorBase;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
@@ -138,7 +139,11 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
           // add to watches
           XExpression expression = myInputComponent.getInputEditor().getExpression();
           if (!XDebuggerUtilImpl.isEmptyExpression(expression)) {
-            ((XDebugSessionImpl)mySession).getSessionTab().getWatchesView().addWatchExpression(expression, -1, false);
+            XDebugSessionTab tab = ((XDebugSessionImpl)mySession).getSessionTab();
+            if (tab != null) {
+              tab.getWatchesView().addWatchExpression(expression, -1, true);
+              requestFocusInEditor();
+            }
           }
         }
       }
@@ -195,7 +200,11 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
     setTitle(myInputComponent.getTitle());
     mySwitchModeAction.putValue(Action.NAME, getSwitchButtonText(mode));
-    final JComponent preferredFocusedComponent = myInputComponent.getInputEditor().getPreferredFocusedComponent();
+    requestFocusInEditor();
+  }
+
+  private void requestFocusInEditor() {
+    JComponent preferredFocusedComponent = myInputComponent.getInputEditor().getPreferredFocusedComponent();
     if (preferredFocusedComponent != null) {
       IdeFocusManager.getInstance(mySession.getProject()).requestFocus(preferredFocusedComponent, true);
     }

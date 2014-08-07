@@ -51,10 +51,7 @@ public class PythonTracebackFilter implements Filter {
     if (matcher.find()) {
       String fileName = matcher.group(1).replace('\\', '/');
       int lineNumber = Integer.parseInt(matcher.group(2));
-      VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fileName);
-      if (vFile == null && !StringUtil.isEmptyOrSpaces(myWorkingDirectory)) {
-        vFile = LocalFileSystem.getInstance().findFileByIoFile(new File(myWorkingDirectory, fileName)); 
-      }
+      VirtualFile vFile = findFileByName(fileName);
       
       if (vFile != null) {
         OpenFileHyperlinkInfo hyperlink = new OpenFileHyperlinkInfo(myProject, vFile, lineNumber - 1);
@@ -65,5 +62,14 @@ public class PythonTracebackFilter implements Filter {
       }
     }
     return null;
+  }
+
+  @Nullable
+  protected VirtualFile findFileByName(String fileName) {
+    VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fileName);
+    if (vFile == null && !StringUtil.isEmptyOrSpaces(myWorkingDirectory)) {
+      vFile = LocalFileSystem.getInstance().findFileByIoFile(new File(myWorkingDirectory, fileName));
+    }
+    return vFile;
   }
 }

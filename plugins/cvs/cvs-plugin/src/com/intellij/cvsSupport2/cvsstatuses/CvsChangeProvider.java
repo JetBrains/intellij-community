@@ -164,7 +164,7 @@ public class CvsChangeProvider implements ChangeProvider {
         for (VirtualFile file : children) {
           progress.checkCanceled();
           if (file.isDirectory()) {
-            final boolean isIgnored = myVcsManager.isIgnoredByVcs(file);
+            final boolean isIgnored = myVcsManager.isIgnored(file);
             if (!isIgnored) {
               processEntriesIn(file, scope, builder, true, progress);
             }

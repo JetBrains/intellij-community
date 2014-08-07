@@ -63,6 +63,6 @@ public class XBreakpointGroupingByPackageRule<B> extends XBreakpointGroupingRule
   @Nullable
   @Override
   public Icon getIcon() {
-    return AllIcons.Nodes.Package;
+    return AllIcons.Actions.GroupByPackage;
   }
 }

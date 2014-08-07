@@ -89,6 +89,10 @@
     </extensionPoint>
 
     <extensionPoint name="xml.undefinedElementFixProvider" interface="com.intellij.xml.XmlUndefinedElementFixProvider"/>
+
+    <extensionPoint qualifiedName="org.jetbrains.webServerPathHandler" interface="org.jetbrains.builtInWebServer.WebServerPathHandler"/>
+    <extensionPoint qualifiedName="org.jetbrains.webServerFileHandler" interface="org.jetbrains.builtInWebServer.WebServerFileHandler"/>
+    <extensionPoint qualifiedName="org.jetbrains.webServerRootsProvider" interface="org.jetbrains.builtInWebServer.WebServerRootsProvider"/>
   </extensionPoints>
 
   <project-components>
@@ -530,8 +534,21 @@
     <applicationConfigurable groupId="tools" instance="com.intellij.ide.browsers.BrowserSettings" id="reference.settings.ide.settings.web.browsers"
                              key="browsers.settings" bundle="messages.IdeBundle"/>
     <lang.inspectionSuppressor language="XML" implementationClass="com.intellij.codeInspection.XmlInspectionSuppressor"/>
+
+    <httpRequestHandler implementation="org.jetbrains.builtInWebServer.BuiltInWebServer"/>
+    <webBrowserUrlProvider implementation="org.jetbrains.builtInWebServer.BuiltInWebBrowserUrlProvider"/>
+
+    <customPortServerManager implementation="org.jetbrains.builtInWebServer.BuiltInServerOptions$MyCustomPortServerManager"/>
+    <xdebugger.configurableProvider implementation="org.jetbrains.builtInWebServer.BuiltInServerOptions$BuiltInServerDebuggerConfigurableProvider"/>
+
+    <exportable serviceInterface="org.jetbrains.builtInWebServer.BuiltInServerOptions"/>
+    <applicationService serviceInterface="org.jetbrains.builtInWebServer.BuiltInServerOptions" serviceImplementation="org.jetbrains.builtInWebServer.BuiltInServerOptions"/>
+    <projectService serviceInterface="org.jetbrains.builtInWebServer.WebServerPathToFileManager" serviceImplementation="org.jetbrains.builtInWebServer.WebServerPathToFileManager"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>
+    <webServerPathHandler implementation="org.jetbrains.builtInWebServer.DefaultWebServerPathHandler"/>
+    <webServerFileHandler implementation="org.jetbrains.builtInWebServer.BuiltInWebServer$StaticFileHandler" order="last"/>
+    <webServerRootsProvider implementation="org.jetbrains.builtInWebServer.DefaultWebServerRootsProvider"/>
   </extensions>
 </idea-plugin>

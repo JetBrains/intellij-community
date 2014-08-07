@@ -81,7 +81,7 @@ public class PyTestCommandLineState extends PythonTestCommandLineStateBase {
   protected ConsoleView createAndAttachConsole(Project project, ProcessHandler processHandler, Executor executor)
     throws ExecutionException {
     final ConsoleView consoleView = super.createAndAttachConsole(project, processHandler, executor);
-    consoleView.addMessageFilter(new PyTestTracebackFilter(project, myConfiguration.getWorkingDirectory()));
+    addTracebackFilter(project, consoleView, processHandler);
     return consoleView;
   }
 }

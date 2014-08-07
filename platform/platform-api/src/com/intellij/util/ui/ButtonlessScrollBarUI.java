@@ -23,6 +23,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.ReflectionUtil;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -316,28 +317,21 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     resetMacScrollbarFadeout();
   }
   
+  private static final Method setValueFrom = ReflectionUtil.getDeclaredMethod(TrackListener.class, "setValueFrom", MouseEvent.class);
+  static {
+    LOG.assertTrue(setValueFrom != null, "Cannot get TrackListener.setValueFrom method");
+  }
+
   @Override
   protected TrackListener createTrackListener() {
     return new TrackListener() {
-      private Method mySetValueFrom;
-
-      {
-        try {
-          mySetValueFrom = TrackListener.class.getDeclaredMethod("setValueFrom", MouseEvent.class);
-          mySetValueFrom.setAccessible(true);
-        }
-        catch (Exception e) {
-          LOG.error("Cannot get TrackListener.setValueFrom method", e);
-        }
-      }
-
       @Override
       public void mousePressed(MouseEvent e) {
         if (scrollbar.isEnabled()
             && SwingUtilities.isLeftMouseButton(e)
             && !getThumbBounds().contains(e.getPoint())
             && NSScrollerHelper.getClickBehavior() == NSScrollerHelper.ClickBehavior.JumpToSpot
-            && mySetValueFrom != null) {
+            && setValueFrom != null) {
 
           switch (scrollbar.getOrientation()) {
             case Adjustable.VERTICAL:
@@ -349,7 +343,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
           }
           isDragging = true;
           try {
-            mySetValueFrom.invoke(this, e);
+            setValueFrom.invoke(this, e);
           }
           catch (Exception ex) {
             LOG.error(ex);

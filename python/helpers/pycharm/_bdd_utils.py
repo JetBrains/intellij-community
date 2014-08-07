@@ -19,12 +19,16 @@ def get_path_by_args(arguments):
     """
     :type arguments list
     :param arguments: arguments (sys.argv)
-    :return: Folder (current or first argument from argv) checking it exists
-    :rtype str
+    :return: tuple (base_dir, what_to_run) where dir is current or first argument from argv, checking it exists
+    :rtype tuple of str
     """
-    path = arguments[1] if len(arguments) > 1 else "."
-    assert os.path.exists(path), "{} does not exist".format(path)
-    return path
+    what_to_run = arguments[1] if len(arguments) > 1 else "."
+    base_dir = what_to_run
+    assert os.path.exists(what_to_run), "{} does not exist".format(what_to_run)
+
+    if os.path.isfile(what_to_run):
+        base_dir = os.path.dirname(what_to_run) # User may point to the file directly
+    return base_dir, what_to_run
 
 
 class BddRunner(object):
@@ -68,7 +72,8 @@ class BddRunner(object):
         :param location object with "file" (relative to base_dir) and "line" fields.
         :return: location in format file:line (as supported in tcmessages)
         """
-        return "file:///{}/{}:{}".format(self.__base_dir, location.file, location.line)
+        my_file = str(location.file).lstrip("/\\")
+        return "file:///{}:{}".format(os.path.normpath(os.path.join(self.__base_dir, my_file)), location.line)
 
     def _test_undefined(self, test_name, location):
         """

@@ -20,7 +20,10 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.EmptyChangelistBuilder;
 import com.intellij.openapi.vcs.update.UpdatedFilesReverseSide;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -28,12 +31,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.wc.SVNPropertyData;
+import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 public class GatheringChangelistBuilder extends EmptyChangelistBuilder {
 
@@ -92,13 +97,13 @@ public class GatheringChangelistBuilder extends EmptyChangelistBuilder {
     SvnTarget target = SvnTarget.fromFile(file);
 
     try {
-      SVNPropertyData current =
+      PropertyValue current =
         myVcs.getFactory(target).createPropertyClient().getProperty(target, SvnPropertyKeys.MERGE_INFO, false, SVNRevision.WORKING);
-      SVNPropertyData base =
+      PropertyValue base =
         myVcs.getFactory(target).createPropertyClient().getProperty(target, SvnPropertyKeys.MERGE_INFO, false, SVNRevision.BASE);
 
       if (current != null) {
-        return base == null || !Comparing.equal(current.getValue(), base.getValue());
+        return base == null || !Comparing.equal(current, base);
       }
     }
     catch (VcsException e) {

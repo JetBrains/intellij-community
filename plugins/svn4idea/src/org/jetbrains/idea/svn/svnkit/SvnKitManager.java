@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnConfiguration;
-import org.jetbrains.idea.svn.SvnFormatSelector;
 import org.jetbrains.idea.svn.SvnHttpAuthMethodsDefaultChecker;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
@@ -72,7 +71,7 @@ public class SvnKitManager {
     SVNJNAUtil.setJNAEnabled(true);
     SvnHttpAuthMethodsDefaultChecker.check();
 
-    SVNAdminAreaFactory.setSelector(new SvnFormatSelector());
+    SVNAdminAreaFactory.setSelector(new SvnKitAdminAreaFactorySelector());
 
     DAVRepositoryFactory.setup();
     SVNRepositoryFactoryImpl.setup();

@@ -76,10 +76,26 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
   }
 
   public void setRepositoryURLs(SVNURL[] urls, final boolean showFiles) {
+    setRepositoryURLs(urls, showFiles, null, false);
+  }
+
+  public void setRepositoryURLs(SVNURL[] urls,
+                                final boolean showFiles,
+                                @Nullable NotNullFunction<RepositoryBrowserComponent, Expander> defaultExpanderFactory,
+                                boolean expandFirst) {
     RepositoryTreeModel model = new RepositoryTreeModel(myVCS, showFiles, this);
+
+    if (defaultExpanderFactory != null) {
+      model.setDefaultExpanderFactory(defaultExpanderFactory);
+    }
+
     model.setRoots(urls);
     Disposer.register(this, model);
     myRepositoryTree.setModel(model);
+
+    if (expandFirst) {
+      myRepositoryTree.expandRow(0);
+    }
   }
 
   public void setRepositoryURL(SVNURL url, boolean showFiles, final NotNullFunction<RepositoryBrowserComponent, Expander> defaultExpanderFactory) {

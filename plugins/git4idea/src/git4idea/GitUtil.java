@@ -1025,4 +1025,14 @@ public class GitUtil {
     ApplicationManager.getApplication().getMessageBus().syncPublisher(BatchFileChangeListener.TOPIC).batchChangeCompleted(project);
   }
 
+  @NotNull
+  public static String cleanupErrorPrefixes(@NotNull String msg) {
+    final String[] PREFIXES = { "fatal:", "error:" };
+    for (String prefix : PREFIXES) {
+      if (msg.startsWith(prefix)) {
+        return msg.substring(prefix.length()).trim();
+      }
+    }
+    return msg;
+  }
 }

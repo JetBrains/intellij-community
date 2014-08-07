@@ -16,67 +16,31 @@
 package com.intellij.dvcs.ui;
 
 import com.intellij.dvcs.repo.Repository;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLog;
-import com.intellij.vcs.log.VcsLogDataKeys;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.Collection;
+import java.util.Map;
 
-public abstract class VcsLogSingleCommitAction<Repo extends Repository> extends DumbAwareAction {
+public abstract class VcsLogSingleCommitAction<Repo extends Repository> extends VcsLogAction<Repo> {
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    VcsLog log = e.getRequiredData(VcsLogDataKeys.VSC_LOG);
-    List<VcsFullCommitDetails> details = log.getSelectedDetails();
-    assert details.size() == 1;
-    VcsFullCommitDetails commit = details.get(0);
-    Repo repository = getRepositoryForRoot(project, commit.getRoot());
-    assert repository != null;
-
-    actionPerformed(repository, commit);
+  protected boolean isEnabled(@NotNull MultiMap<Repo, VcsFullCommitDetails> grouped) {
+    return grouped.size() == 1;
   }
 
   @Override
-  public void update(AnActionEvent e) {
-    Project project = e.getProject();
-    VcsLog log = e.getData(VcsLogDataKeys.VSC_LOG);
-    if (project == null || log == null) {
-      e.getPresentation().setEnabledAndVisible(false);
-      return;
-    }
-
-    List<VcsFullCommitDetails> details = log.getSelectedDetails();
-    if (containsCommitFromOtherVcs(project, details)) {
-      e.getPresentation().setEnabledAndVisible(false);
-    }
-    else {
-      e.getPresentation().setVisible(true);
-      e.getPresentation().setEnabled(details.size() == 1);
-    }
+  protected void actionPerformed(@NotNull Project project, @NotNull MultiMap<Repo, VcsFullCommitDetails> grouped) {
+    assert grouped.size() == 1;
+    Map.Entry<Repo, Collection<VcsFullCommitDetails>> entry = grouped.entrySet().iterator().next();
+    Repo repository = entry.getKey();
+    Collection<VcsFullCommitDetails> commits = entry.getValue();
+    assert commits.size() == 1;
+    actionPerformed(repository, commits.iterator().next());
   }
-
-  @Nullable
-  protected abstract Repo getRepositoryForRoot(@NotNull Project project, @NotNull VirtualFile root);
 
   protected abstract void actionPerformed(@NotNull Repo repository, @NotNull VcsFullCommitDetails commit);
-
-  private boolean containsCommitFromOtherVcs(@NotNull final Project project, @NotNull List<VcsFullCommitDetails> details) {
-    return ContainerUtil.exists(details, new Condition<VcsFullCommitDetails>() {
-      @Override
-      public boolean value(VcsFullCommitDetails details) {
-        return getRepositoryForRoot(project, details.getRoot()) == null;
-      }
-    });
-  }
 
 }

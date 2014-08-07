@@ -79,7 +79,7 @@ public class StatusWalkerPartner {
       @Override
       public Boolean compute() {
         if (myVcs.getProject().isDisposed()) throw new ProcessCanceledException();
-        return myVcsManager.isIgnoredByVcs(vFile);
+        return myVcsManager.isIgnored(vFile);
       }
     });
   }

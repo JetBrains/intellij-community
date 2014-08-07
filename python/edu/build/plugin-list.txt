@@ -1,0 +1,11 @@
+svn4idea
+git4idea
+remote-servers-git
+github
+terminal
+IntelliLang
+IntelliLang-xml
+IntelliLang-js
+IntelliLang-python
+rest
+python-rest

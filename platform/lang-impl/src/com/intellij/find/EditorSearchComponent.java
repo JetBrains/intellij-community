@@ -392,6 +392,9 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     if (secondaryActionsAvailable()) {
       actionGroup.addAction(new ToggleInCommentsAction(this)).setAsSecondary(true);
       actionGroup.addAction(new ToggleInLiteralsOnlyAction(this)).setAsSecondary(true);
+      actionGroup.addAction(new ToggleExceptCommentsAction(this)).setAsSecondary(true);
+      actionGroup.addAction(new ToggleExceptLiteralsAction(this)).setAsSecondary(true);
+      actionGroup.addAction(new ToggleExceptCommentsAndLiteralsAction(this)).setAsSecondary(true);
     }
     actionGroup.addAction(new TogglePreserveCaseAction(this));
     actionGroup.addAction(new ToggleSelectionOnlyAction(this));
@@ -473,8 +476,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     to.setCaseSensitive(from.isCaseSensitive());
     to.setWholeWordsOnly(from.isWholeWordsOnly());
     to.setRegularExpressions(from.isRegularExpressions());
-    to.setInCommentsOnly(from.isInCommentsOnly());
-    to.setInStringLiteralsOnly(from.isInStringLiteralsOnly());
+    to.setSearchContext(from.getSearchContext());
     if (from.isReplaceState()) {
       to.setPreserveCase(from.isPreserveCase());
     }

@@ -16,10 +16,14 @@
 package git4idea.commands;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import git4idea.GitUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -64,9 +68,10 @@ public class GitCommandResult {
 
   @NotNull
   public String getErrorOutputAsHtmlString() {
-    return StringUtil.join(myErrorOutput, "<br/>");
+    return StringUtil.join(cleanup(myErrorOutput), "<br/>");
   }
-  
+
+  @NotNull
   public String getErrorOutputAsJoinedString() {
     return StringUtil.join(myErrorOutput, "\n");
   }
@@ -88,6 +93,16 @@ public class GitCommandResult {
 
   public boolean cancelled() {
     return false; // will be implemented later
+  }
+
+  @NotNull
+  private static Collection<String> cleanup(@NotNull Collection<String> errorOutput) {
+    return ContainerUtil.map(errorOutput, new Function<String, String>() {
+      @Override
+      public String fun(String errorMessage) {
+        return GitUtil.cleanupErrorPrefixes(errorMessage);
+      }
+    });
   }
 
 }

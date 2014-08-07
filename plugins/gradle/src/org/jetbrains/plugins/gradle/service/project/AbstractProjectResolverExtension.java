@@ -28,6 +28,7 @@ import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.util.KeyValue;
 import com.intellij.util.Consumer;
 import org.gradle.tooling.model.idea.IdeaModule;
+import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,6 +79,11 @@ public abstract class AbstractProjectResolverExtension implements GradleProjectR
   @Override
   public JavaProjectData createJavaProjectData() {
     return nextResolver.createJavaProjectData();
+  }
+
+  @Override
+  public void populateProjectExtraModels(@NotNull IdeaProject gradleProject, @NotNull DataNode<ProjectData> ideProject) {
+    nextResolver.populateProjectExtraModels(gradleProject, ideProject);
   }
 
   @NotNull

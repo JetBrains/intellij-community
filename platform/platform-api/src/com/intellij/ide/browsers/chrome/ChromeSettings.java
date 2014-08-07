@@ -88,6 +88,7 @@ public final class ChromeSettings extends BrowserSpecificSettings {
     return cliOptions;
   }
 
+  @Override
   @NotNull
   @Tag("environment-variables")
   @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
@@ -105,8 +106,9 @@ public final class ChromeSettings extends BrowserSpecificSettings {
     return new ChromeSettingsConfigurable(this);
   }
 
+  @Override
   public ChromeSettings clone() {
-    final ChromeSettings clone = (ChromeSettings)super.clone();
+    ChromeSettings clone = (ChromeSettings)super.clone();
     clone.myEnvironmentVariables = myEnvironmentVariables.clone();
     return clone;
   }

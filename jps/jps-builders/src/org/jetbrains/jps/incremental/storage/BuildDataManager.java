@@ -42,7 +42,7 @@ import java.util.concurrent.ConcurrentMap;
  *         Date: 10/7/11
  */
 public class BuildDataManager implements StorageOwner {
-  private static final int VERSION = 24;
+  private static final int VERSION = 25;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.BuildDataManager");
   private static final String SRC_TO_FORM_STORAGE = "src-form";
   private static final String OUT_TARGET_STORAGE = "out-target";

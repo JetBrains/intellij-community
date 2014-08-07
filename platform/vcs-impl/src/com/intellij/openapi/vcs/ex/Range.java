@@ -31,29 +31,28 @@ public class Range {
   public static final byte INSERTED = 2;
   public static final byte DELETED = 3;
 
-  // offset1/offset2 - line numbers
   // (2,3) - modified 2nd line
   // (2,2) - empty range between 1 and 2 lines
   // index of first line is 0
-  private int myOffset1;
-  private int myOffset2;
-  private final int myUpToDateOffset1;
-  private final int myUpToDateOffset2;
+  private int myLine1;
+  private int myLine2;
+  private final int myVcsLine1;
+  private final int myVcsLine2;
   private final byte myType;
   @Nullable private RangeHighlighter myRangeHighlighter;
 
   private boolean myValid = true;
 
-  public static Range createOn(@NotNull Diff.Change change, int shift, int upToDateShift) {
+  public static Range createOn(@NotNull Diff.Change change, int shift, int vcsShift) {
     byte type = getChangeTypeFrom(change);
 
-    int offset1 = shift + change.line1;
-    int offset2 = offset1 + change.inserted;
+    int line1 = shift + change.line1;
+    int line2 = line1 + change.inserted;
 
-    int uOffset1 = upToDateShift + change.line0;
-    int uOffset2 = uOffset1 + change.deleted;
+    int vcsLine1 = vcsShift + change.line0;
+    int vcsLine2 = vcsLine1 + change.deleted;
 
-    return new Range(offset1, offset2, uOffset1, uOffset2, type);
+    return new Range(line1, line2, vcsLine1, vcsLine2, type);
   }
 
   private static byte getChangeTypeFrom(@NotNull Diff.Change change) {
@@ -64,31 +63,35 @@ public class Range {
     return 0;
   }
 
-  public Range(int offset1, int offset2, int uOffset1, int uOffset2, byte type) {
-    myOffset1 = offset1;
-    myOffset2 = offset2;
-    myUpToDateOffset1 = uOffset1;
-    myUpToDateOffset2 = uOffset2;
+  public Range(@NotNull Range range) {
+    this(range.getLine1(), range.getLine2(), range.getVcsLine1(), range.getVcsLine2(), range.getType());
+  }
+
+  public Range(int line1, int line2, int vcsLine1, int vcsLine2, byte type) {
+    myLine1 = line1;
+    myLine2 = line2;
+    myVcsLine1 = vcsLine1;
+    myVcsLine2 = vcsLine2;
     myType = type;
   }
 
   public int hashCode() {
-    return myUpToDateOffset1 ^ myUpToDateOffset2 ^ myType ^ myOffset1 ^ myOffset2;
+    return myVcsLine1 ^ myVcsLine2 ^ myType ^ myLine1 ^ myLine2;
   }
 
   public boolean equals(Object object) {
     if (!(object instanceof Range)) return false;
     Range other = (Range)object;
     return
-      (myUpToDateOffset1 == other.myUpToDateOffset1)
-      && (myUpToDateOffset2 == other.myUpToDateOffset2)
-      && (myOffset1 == other.myOffset1)
-      && (myOffset2 == other.myOffset2)
+      (myVcsLine1 == other.myVcsLine1)
+      && (myVcsLine2 == other.myVcsLine2)
+      && (myLine1 == other.myLine1)
+      && (myLine2 == other.myLine2)
       && (myType == other.myType);
   }
 
   public String toString() {
-    return String.format("%s, %s, %s, %s, %s", myOffset1, myOffset2, myUpToDateOffset1, myUpToDateOffset2, getTypeName());
+    return String.format("%s, %s, %s, %s, %s", myLine1, myLine2, myVcsLine1, myVcsLine2, getTypeName());
   }
 
   @NonNls
@@ -109,43 +112,32 @@ public class Range {
   }
 
   public int getUpToDateRangeLength() {
-    return myUpToDateOffset2 - myUpToDateOffset1;
+    return myVcsLine2 - myVcsLine1;
   }
 
   public void shift(int shift) {
-    myOffset1 += shift;
-    myOffset2 += shift;
+    myLine1 += shift;
+    myLine2 += shift;
   }
 
-  public int getOffset1() {
-    return myOffset1;
+  public int getLine1() {
+    return myLine1;
   }
 
-  public int getOffset2() {
-    return myOffset2;
+  public int getLine2() {
+    return myLine2;
   }
 
-  public int getUOffset1() {
-    return myUpToDateOffset1;
+  public int getVcsLine1() {
+    return myVcsLine1;
   }
 
-  public int getUOffset2() {
-    return myUpToDateOffset2;
+  public int getVcsLine2() {
+    return myVcsLine2;
   }
 
-  public boolean canBeMergedWith(@NotNull Range range) {
-    return myOffset2 == range.myOffset1;
-  }
-
-  @NotNull
-  public Range mergeWith(@NotNull Range range) {
-    return new Range(myOffset1, range.myOffset2, myUpToDateOffset1, range.myUpToDateOffset2, mergedStatusWith(range));
-  }
-
-  private byte mergedStatusWith(@NotNull Range range) {
-    byte type = myType;
-    if (myType != range.myType) type = MODIFIED;
-    return type;
+  public boolean rightBefore(@NotNull Range range) {
+    return myLine2 == range.myLine1;
   }
 
   public boolean hasHighlighter() {

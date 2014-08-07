@@ -184,3 +184,16 @@ class Ferrari458Spider implements java.io.Serializable {
     new java.io.ObjectStreamField("b", String.class)
   };
 }
+
+class TestIDEA128098 {
+  private static final String[] CONSTANT_ARRAY = new String[]{""}; // warning is on this constant
+
+
+  enum SomeEnum {
+    ITEM( CONSTANT_ARRAY);
+    private final String[] myPatterns;
+    SomeEnum(String... patterns) {
+      myPatterns = patterns;
+    }
+  }
+}

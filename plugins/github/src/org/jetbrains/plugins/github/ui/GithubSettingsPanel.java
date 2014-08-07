@@ -130,8 +130,7 @@ public class GithubSettingsPanel {
               @NotNull
               @Override
               public String convert(ProgressIndicator indicator) throws IOException {
-                return GithubUtil.runTaskWithBasicAuthForHost(project, GithubAuthDataHolder.createFromSettings(indicator.getModalityState()),
-                                                              indicator, getHost(),
+                return GithubUtil.runTaskWithBasicAuthForHost(project, GithubAuthDataHolder.createFromSettings(), indicator, getHost(),
                                                               new ThrowableConvertor<GithubAuthData, String, IOException>() {
                                                                 @NotNull
                                                                 @Override
@@ -263,7 +262,7 @@ public class GithubSettingsPanel {
   @NotNull
   public GithubAuthData getAuthData() {
     if (!myCredentialsModified) {
-      return mySettings.getAuthData(null);
+      return mySettings.getAuthData();
     }
     Object selected = myAuthTypeComboBox.getSelectedItem();
     if (AUTH_PASSWORD.equals(selected)) return GithubAuthData.createBasicAuth(getHost(), getLogin(), getPassword());
@@ -291,7 +290,7 @@ public class GithubSettingsPanel {
 
   public void apply() {
     if (myCredentialsModified) {
-      mySettings.setAuthData(getAuthData(), true, null);
+      mySettings.setAuthData(getAuthData(), true);
     }
     mySettings.setConnectionTimeout(getConnectionTimeout());
     resetCredentialsModification();

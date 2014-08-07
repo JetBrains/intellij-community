@@ -31,17 +31,17 @@ import java.util.List;
 public class RangesBuilder {
   private List<Range> myRanges;
 
-  public RangesBuilder(@NotNull Document current, @NotNull Document upToDate) throws FilesTooBigForDiffException {
-    this(new DocumentWrapper(current).getLines(), new DocumentWrapper(upToDate).getLines(), 0, 0);
+  public RangesBuilder(@NotNull Document current, @NotNull Document vcs) throws FilesTooBigForDiffException {
+    this(new DocumentWrapper(current).getLines(), new DocumentWrapper(vcs).getLines(), 0, 0);
   }
 
-  public RangesBuilder(@NotNull List<String> current, @NotNull List<String> upToDate, int shift, int uShift) throws FilesTooBigForDiffException {
+  public RangesBuilder(@NotNull List<String> current, @NotNull List<String> vcs, int shift, int vcsShift) throws FilesTooBigForDiffException {
     myRanges = new LinkedList<Range>();
 
-    Diff.Change ch = Diff.buildChanges(ArrayUtil.toStringArray(upToDate), ArrayUtil.toStringArray(current));
+    Diff.Change ch = Diff.buildChanges(ArrayUtil.toStringArray(vcs), ArrayUtil.toStringArray(current));
 
     while (ch != null) {
-      Range range = Range.createOn(ch, shift, uShift);
+      Range range = Range.createOn(ch, shift, vcsShift);
       myRanges.add(range);
       ch = ch.link;
     }

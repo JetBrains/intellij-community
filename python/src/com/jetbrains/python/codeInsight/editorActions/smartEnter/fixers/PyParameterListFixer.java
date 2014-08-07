@@ -23,6 +23,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
 import com.jetbrains.python.psi.PyParameterList;
 import com.jetbrains.python.psi.PyUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -30,19 +31,22 @@ import com.jetbrains.python.psi.PyUtil;
  * Date:   16.04.2010
  * Time:   17:25:46
  */
-public class PyParameterListFixer implements PyFixer {
-  public void apply(Editor editor, PySmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
-    if (psiElement instanceof PyParameterList) {
-      final PsiElement lBrace = PyUtil.getChildByFilter(psiElement, PyTokenTypes.OPEN_BRACES, 0);
-      final PsiElement rBrace = PyUtil.getChildByFilter(psiElement, PyTokenTypes.CLOSE_BRACES, 0);
-      if (lBrace == null || rBrace == null) {
-        final Document document = editor.getDocument();
-        if (lBrace == null) {
-          document.insertString(psiElement.getTextRange().getStartOffset(), "(");
-        }
-        else {
-          document.insertString(psiElement.getTextRange().getEndOffset(), ")");
-        }
+public class PyParameterListFixer extends PyFixer<PyParameterList> {
+  public PyParameterListFixer() {
+    super(PyParameterList.class);
+  }
+
+  @Override
+  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyParameterList psiElement) throws IncorrectOperationException {
+    final PsiElement lBrace = PyUtil.getChildByFilter(psiElement, PyTokenTypes.OPEN_BRACES, 0);
+    final PsiElement rBrace = PyUtil.getChildByFilter(psiElement, PyTokenTypes.CLOSE_BRACES, 0);
+    if (lBrace == null || rBrace == null) {
+      final Document document = editor.getDocument();
+      if (lBrace == null) {
+        document.insertString(psiElement.getTextRange().getStartOffset(), "(");
+      }
+      else {
+        document.insertString(psiElement.getTextRange().getEndOffset(), ")");
       }
     }
   }

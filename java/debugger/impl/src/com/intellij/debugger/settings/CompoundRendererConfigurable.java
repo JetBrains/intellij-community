@@ -25,13 +25,10 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.DebuggerExpressionTextField;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.debugger.ui.tree.render.*;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -51,54 +48,33 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Eugene Zhuravlev
- *         Date: Feb 24, 2005
- */
-public class CompoundRendererConfigurable implements UnnamedConfigurable {
+class CompoundRendererConfigurable extends JPanel {
   private CompoundReferenceRenderer myRenderer;
   private CompoundReferenceRenderer myOriginalRenderer;
   private Project myProject;
-  private ClassNameEditorWithBrowseButton myClassNameField;
-  private JRadioButton myRbDefaultLabel;
-  private JRadioButton myRbExpressionLabel;
-  private JRadioButton myRbDefaultChildrenRenderer;
-  private JRadioButton myRbExpressionChildrenRenderer;
-  private JRadioButton myRbListChildrenRenderer;
-  private DebuggerExpressionTextField myLabelEditor;
-  private DebuggerExpressionTextField myChildrenEditor;
-  private DebuggerExpressionTextField myChildrenExpandedEditor;
+  private final ClassNameEditorWithBrowseButton myClassNameField;
+  private final JRadioButton myRbDefaultLabel;
+  private final JRadioButton myRbExpressionLabel;
+  private final JRadioButton myRbDefaultChildrenRenderer;
+  private final JRadioButton myRbExpressionChildrenRenderer;
+  private final JRadioButton myRbListChildrenRenderer;
+  private final DebuggerExpressionTextField myLabelEditor;
+  private final DebuggerExpressionTextField myChildrenEditor;
+  private final DebuggerExpressionTextField myChildrenExpandedEditor;
   private DebuggerExpressionTextField myListChildrenEditor;
-  private JLabel myExpandedLabel;
-  private JPanel myMainPanel;
+  private final JLabel myExpandedLabel;
   private JBTable myTable;
   @NonNls private static final String EMPTY_PANEL_ID = "EMPTY";
   @NonNls private static final String DATA_PANEL_ID = "DATA";
   private static final int NAME_TABLE_COLUMN = 0;
   private static final int EXPRESSION_TABLE_COLUMN = 1;
 
-  public void setRenderer(NodeRenderer renderer) {
-    if (renderer instanceof CompoundReferenceRenderer) {
-      myRenderer = (CompoundReferenceRenderer)renderer;
-      myOriginalRenderer = (CompoundReferenceRenderer)renderer.clone();
-    }
-    else {
-      myRenderer = myOriginalRenderer = null;
-    }
-    reset();
-  }
+  public CompoundRendererConfigurable() {
+    super(new CardLayout());
 
-  public CompoundReferenceRenderer getRenderer() {
-    return myRenderer;
-  }
-
-  @Override
-  @NotNull
-  public JComponent createComponent() {
     if (myProject == null) {
       myProject = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
     }
-    final JPanel panel = new JPanel(new GridBagLayout());
 
     myRbDefaultLabel = new JRadioButton(DebuggerBundle.message("label.compound.renderer.configurable.use.default.renderer"));
     myRbExpressionLabel = new JRadioButton(DebuggerBundle.message("label.compound.renderer.configurable.use.expression"));
@@ -141,21 +117,14 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
         }
       }
     }, myProject);
-    final EditorTextField textField = myClassNameField.getEditorTextField();
-    final FocusAdapter updateContextListener = new FocusAdapter() {
+    myClassNameField.getEditorTextField().addFocusListener(new FocusAdapter() {
       @Override
       public void focusLost(@NotNull FocusEvent e) {
         updateContext(myClassNameField.getText());
       }
-    };
-    textField.addFocusListener(updateContextListener);
-    Disposer.register(myClassNameField, new Disposable() {
-      @Override
-      public void dispose() {
-        textField.removeFocusListener(updateContextListener);
-      }
     });
 
+    JPanel panel = new JPanel(new GridBagLayout());
     panel.add(new JLabel(DebuggerBundle.message("label.compound.renderer.configurable.apply.to")),
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                      new Insets(0, 0, 0, 0), 0, 0));
@@ -196,11 +165,23 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
     panel.add(myChildrenListEditor,
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
                                      new Insets(4, 30, 0, 0), 0, 0));
+    add(new JPanel(), EMPTY_PANEL_ID);
+    add(panel, DATA_PANEL_ID);
+  }
 
-    myMainPanel = new JPanel(new CardLayout());
-    myMainPanel.add(new JPanel(), EMPTY_PANEL_ID);
-    myMainPanel.add(panel, DATA_PANEL_ID);
-    return myMainPanel;
+  public void setRenderer(NodeRenderer renderer) {
+    if (renderer instanceof CompoundReferenceRenderer) {
+      myRenderer = (CompoundReferenceRenderer)renderer;
+      myOriginalRenderer = (CompoundReferenceRenderer)renderer.clone();
+    }
+    else {
+      myRenderer = myOriginalRenderer = null;
+    }
+    reset();
+  }
+
+  public CompoundReferenceRenderer getRenderer() {
+    return myRenderer;
   }
 
   private void updateContext(final String qName) {
@@ -305,7 +286,6 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
       }).createPanel();
   }
 
-  @Override
   public boolean isModified() {
     if (myRenderer == null) {
       return false;
@@ -315,7 +295,6 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
     return !DebuggerUtilsEx.externalizableEqual(cloned, myOriginalRenderer);
   }
 
-  @Override
   public void apply() {
     if (myRenderer == null) {
       return;
@@ -347,10 +326,9 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
     renderer.setClassName(myClassNameField.getText());
   }
 
-  @Override
   public void reset() {
     final TextWithImports emptyExpressionFragment = new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "");
-    ((CardLayout)myMainPanel.getLayout()).show(myMainPanel, myRenderer == null ? EMPTY_PANEL_ID : DATA_PANEL_ID);
+    ((CardLayout)getLayout()).show(this, myRenderer == null ? EMPTY_PANEL_ID : DATA_PANEL_ID);
     if (myRenderer == null) {
       return;
     }
@@ -396,23 +374,6 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
 
     updateEnabledState();
     updateContext(className);
-  }
-
-  @Override
-  public void disposeUIResources() {
-    myRenderer = null;
-    myOriginalRenderer = null;
-    myLabelEditor.dispose();
-    myChildrenEditor.dispose();
-    myChildrenExpandedEditor.dispose();
-    myListChildrenEditor.dispose();
-    Disposer.dispose(myClassNameField);
-    myLabelEditor = null;
-    myChildrenEditor = null;
-    myChildrenExpandedEditor = null;
-    myListChildrenEditor = null;
-    myClassNameField = null;
-    myProject = null;
   }
 
   private MyTableModel getTableModel() {

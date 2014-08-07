@@ -24,12 +24,10 @@ public class FindManagerTestUtils {
   }
 
   public static void runFindInCommentsAndLiterals(FindManager findManager, FindModel findModel, String text, String ext) {
-    findModel.setInStringLiteralsOnly(true);
-    findModel.setInCommentsOnly(false);
+    findModel.setSearchContext(FindModel.SearchContext.IN_STRING_LITERALS);
     runFindForwardAndBackward(findManager, findModel, text, ext);
 
-    findModel.setInStringLiteralsOnly(false);
-    findModel.setInCommentsOnly(true);
+    findModel.setSearchContext(FindModel.SearchContext.IN_COMMENTS);
     runFindForwardAndBackward(findManager, findModel, text, ext);
   }
 

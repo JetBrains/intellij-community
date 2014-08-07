@@ -18,8 +18,6 @@ public class ToggleInLiteralsOnlyAction extends EditorHeaderToggleAction  implem
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    FindModel findModel = getEditorSearchComponent().getFindModel();
-    findModel.setInStringLiteralsOnly(state);
-    if (state) findModel.setInCommentsOnly(false);
+    getEditorSearchComponent().getFindModel().setSearchContext(state ? FindModel.SearchContext.IN_STRING_LITERALS : FindModel.SearchContext.ANY);
   }
 }

@@ -42,4 +42,12 @@ public class XStandaloneVariablesView extends XVariablesViewBase {
       }
     });
   }
+
+  @Override
+  public void processSessionEvent(@NotNull SessionEvent event) {
+  }
+
+  @Override
+  protected void clear() {
+  }
 }

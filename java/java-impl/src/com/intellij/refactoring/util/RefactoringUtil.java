@@ -617,7 +617,7 @@ public class RefactoringUtil {
     Project project = expr.getProject();
     String[] suggestedNames =
       JavaCodeStyleManager.getInstance(project).suggestVariableName(VariableKind.LOCAL_VARIABLE, null, expr, null).names;
-    final String prefix = suggestedNames[0];
+    final String prefix = suggestedNames.length > 0 ? suggestedNames[0] : "var";
     final String id = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName(prefix, context, true);
 
     PsiElementFactory factory = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory();

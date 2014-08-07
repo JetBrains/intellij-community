@@ -73,7 +73,7 @@ public class VcsGuess {
         final boolean inContent = myVcsManager.isFileInContent(validParent);
         if (inContent) return true;
         if (filePath != null) {
-          return isFileInBaseDir(filePath, myProject.getBaseDir()) && !myVcsManager.isIgnoredByVcs(validParent);
+          return isFileInBaseDir(filePath, myProject.getBaseDir()) && !myVcsManager.isIgnored(validParent);
         }
         return false;
       }

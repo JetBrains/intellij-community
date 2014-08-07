@@ -20,7 +20,7 @@ import com.intellij.vcs.log.graph.GraphCommit;
 import java.util.List;
 
 /**
- * A {@link GraphCommit} with information about date & time when this commit was made.
+ * A typified {@link GraphCommit}.
  * <p/>
  * An instance of this object can be obtained via
  * {@link VcsLogObjectsFactory#createTimedCommit(Hash, List, long) VcsLogObjectsFactory#createTimedCommit}.
@@ -30,13 +30,5 @@ import java.util.List;
  * hash codes. The VCS Log framework heavily relies on this fact.
  */
 public interface TimedVcsCommit extends GraphCommit<Hash> {
-
-  /**
-   * <p>Returns the timestamp indicating the date & time when this commit was made.</p>
-   * <p>This time is displayed in the table by default;
-   *    is used for joining commits from different repositories;
-   *    is used for ordering commits in a single repository (keeping the preference of the topological ordering of course).</p>
-   */
-  long getTimestamp();
 
 }

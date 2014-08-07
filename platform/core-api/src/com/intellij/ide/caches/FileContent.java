@@ -47,7 +47,7 @@ public class FileContent extends UserDataHolderBase {
   @NotNull
   public byte[] getBytes() throws IOException {
     if (myCachedBytes == null) {
-      myCachedBytes = myVirtualFile.contentsToByteArray(false);
+      myCachedBytes = myVirtualFile.isValid() ? myVirtualFile.contentsToByteArray(false) : ArrayUtil.EMPTY_BYTE_ARRAY;
     }
 
     return myCachedBytes;

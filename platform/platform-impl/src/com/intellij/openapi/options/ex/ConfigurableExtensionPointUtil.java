@@ -71,7 +71,7 @@ public class ConfigurableExtensionPointUtil {
           idToConfigurable.put(parentId, parent.addChild(wrapper));
         }
         else {
-          LOG.error("Can't find parent for " + parentId + " (" + wrapper + ")");
+          LOG.debug("Can't find parent for " + parentId + " (" + wrapper + ")");
         }
       }
     }
@@ -79,8 +79,9 @@ public class ConfigurableExtensionPointUtil {
     for (final Iterator<String> iterator = idToConfigurable.keySet().iterator(); iterator.hasNext(); ) {
       final String key = iterator.next();
       final ConfigurableWrapper wrapper = idToConfigurable.get(key);
-      if (wrapper.getParentId() != null) {
-        iterator.remove();
+      final String parentId = wrapper.getParentId();
+      if (parentId != null && idToConfigurable.containsKey(parentId)) {
+        iterator.remove(); // remove only processed parents
       }
     }
     ContainerUtil.addAll(result, idToConfigurable.values());

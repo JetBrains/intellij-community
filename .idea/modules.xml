@@ -65,6 +65,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/google-app-engine/google-app-engine.iml" filepath="$PROJECT_DIR$/plugins/google-app-engine/google-app-engine.iml" group="plugins/GAE" />
       <module fileurl="file://$PROJECT_DIR$/plugins/google-app-engine/jps-plugin/google-app-engine-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/google-app-engine/jps-plugin/google-app-engine-jps-plugin.iml" group="plugins/GAE" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/gradle.iml" filepath="$PROJECT_DIR$/plugins/gradle/gradle.iml" group="community/plugins/gradle" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/gradle/jps-plugin/gradle-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/gradle/jps-plugin/gradle-jps-plugin.iml" group="community/plugins/gradle" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/tooling-extension-api/gradle-tooling-extension-api.iml" filepath="$PROJECT_DIR$/plugins/gradle/tooling-extension-api/gradle-tooling-extension-api.iml" group="community/plugins/gradle" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/tooling-extension-impl/gradle-tooling-extension-impl.iml" filepath="$PROJECT_DIR$/plugins/gradle/tooling-extension-impl/gradle-tooling-extension-impl.iml" group="community/plugins/gradle" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/jps-plugin/groovy-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/groovy/jps-plugin/groovy-jps-plugin.iml" group="plugins/Groovy" />
@@ -118,6 +119,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/lvcs-impl/lvcs-impl.iml" filepath="$PROJECT_DIR$/platform/lvcs-impl/lvcs-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/python/main_idea_python_plugin.iml" filepath="$PROJECT_DIR$/python/main_idea_python_plugin.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/python/main_pycharm_ce.iml" filepath="$PROJECT_DIR$/python/main_pycharm_ce.iml" group="python" />
+      <module fileurl="file://$PROJECT_DIR$/python/edu/main_pycharm_edu.iml" filepath="$PROJECT_DIR$/python/edu/main_pycharm_edu.iml" group="python/educational" />
       <module fileurl="file://$PROJECT_DIR$/java/manifest/manifest.iml" filepath="$PROJECT_DIR$/java/manifest/manifest.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven.iml" filepath="$PROJECT_DIR$/plugins/maven/maven.iml" group="plugins/maven" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/artifact-resolver-m2/maven-artifact-resolver-m2.iml" filepath="$PROJECT_DIR$/plugins/maven/artifact-resolver-m2/maven-artifact-resolver-m2.iml" group="plugins/maven" />
@@ -144,6 +146,8 @@
       <module fileurl="file://$PROJECT_DIR$/python/build/python-community-build.iml" filepath="$PROJECT_DIR$/python/build/python-community-build.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/python/pluginSrc/python-community-plugin.iml" filepath="$PROJECT_DIR$/python/pluginSrc/python-community-plugin.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/python/testSrc/python-community-tests.iml" filepath="$PROJECT_DIR$/python/testSrc/python-community-tests.iml" group="python" />
+      <module fileurl="file://$PROJECT_DIR$/python/edu/build/python-edu-build.iml" filepath="$PROJECT_DIR$/python/edu/build/python-edu-build.iml" group="python/educational" />
+      <module fileurl="file://$PROJECT_DIR$/python/edu/python-educational.iml" filepath="$PROJECT_DIR$/python/edu/python-educational.iml" group="python/educational" />
       <module fileurl="file://$PROJECT_DIR$/python/python-helpers.iml" filepath="$PROJECT_DIR$/python/python-helpers.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/python/ide/python-ide-community.iml" filepath="$PROJECT_DIR$/python/ide/python-ide-community.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/python/openapi/python-openapi.iml" filepath="$PROJECT_DIR$/python/openapi/python-openapi.iml" group="python" />

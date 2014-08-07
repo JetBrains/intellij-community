@@ -23,6 +23,7 @@ import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenConstants;
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.utils.Path;
 
 import java.io.File;
@@ -48,6 +49,13 @@ public class MavenRunnerParameters implements Cloneable {
                                @Nullable List<String> goals,
                                @Nullable Collection<String> explicitEnabledProfiles) {
     this(isPomExecution, workingDirPath, goals, explicitEnabledProfiles, null);
+  }
+
+  public MavenRunnerParameters(boolean isPomExecution,
+                               @NotNull String workingDirPath,
+                               @Nullable List<String> goals,
+                               @NotNull MavenExplicitProfiles explicitProfiles) {
+    this(isPomExecution, workingDirPath, goals, explicitProfiles.getEnabledProfiles(), explicitProfiles.getDisabledProfiles());
   }
 
   public MavenRunnerParameters(boolean isPomExecution,

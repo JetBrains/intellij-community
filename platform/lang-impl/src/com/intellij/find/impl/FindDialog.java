@@ -74,8 +74,7 @@ public class FindDialog extends DialogWrapper {
   private StateRestoringCheckBox myCbCaseSensitive;
   private StateRestoringCheckBox myCbPreserveCase;
   private StateRestoringCheckBox myCbWholeWordsOnly;
-  private StateRestoringCheckBox myCbInCommentsOnly;
-  private StateRestoringCheckBox myCbInStringLiteralsOnly;
+  private ComboBox mySearchContext;
   private StateRestoringCheckBox myCbRegularExpressions;
   private JRadioButton myRbGlobal;
   private JRadioButton myRbSelectedText;
@@ -219,7 +218,7 @@ public class FindDialog extends DialogWrapper {
     myReplacePrompt.setVisible(myModel.isReplaceState());
     myReplaceComboBox.setVisible(myModel.isReplaceState());
     if (myCbToSkipResultsWhenOneUsage != null) {
-      myCbToSkipResultsWhenOneUsage.setVisible(myModel.isReplaceState());
+      myCbToSkipResultsWhenOneUsage.setVisible(!myModel.isReplaceState());
     }
     myCbPreserveCase.setVisible(myModel.isReplaceState());
   }
@@ -350,9 +349,9 @@ public class FindDialog extends DialogWrapper {
       gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
       optionsPanel.add(createFilterPanel(),gbConstraints);
 
-      myCbToSkipResultsWhenOneUsage = createCheckbox(FindSettings.getInstance().isSkipResultsWithOneUsage(), FindBundle.message("find.options.skip.results.tab.with.one.usage.checkbox"));
+      myCbToSkipResultsWhenOneUsage = createCheckbox(FindSettings.getInstance().isSkipResultsWithOneUsage(), FindBundle.message("find.options.skip.results.tab.with.one.occurrence.checkbox"));
       optionsPanel.add(myCbToSkipResultsWhenOneUsage, gbConstraints);
-      myCbToSkipResultsWhenOneUsage.setVisible(myModel.isReplaceState());
+      myCbToSkipResultsWhenOneUsage.setVisible(!myModel.isReplaceState());
     }
     else {
       if (FindManagerImpl.ourHasSearchInCommentsAndLiterals) {
@@ -472,6 +471,9 @@ public class FindDialog extends DialogWrapper {
     findSettings.setWholeWordsOnly(myModel.isWholeWordsOnly());
     findSettings.setInStringLiteralsOnly(myModel.isInStringLiteralsOnly());
     findSettings.setInCommentsOnly(myModel.isInCommentsOnly());
+    findSettings.setExceptComments(myModel.isExceptComments());
+    findSettings.setExceptStringLiterals(myModel.isExceptStringLiterals());
+    findSettings.setExceptCommentsAndLiterals(myModel.isExceptCommentsAndStringLiterals());
 
     findSettings.setRegularExpressions(myModel.isRegularExpressions());
     if (!myModel.isMultipleFiles()){
@@ -603,24 +605,22 @@ public class FindDialog extends DialogWrapper {
 
     findOptionsPanel.add(regExPanel);
 
-    myCbInCommentsOnly = createCheckbox(FindBundle.message("find.options.comments.only"));
-    myCbInStringLiteralsOnly = createCheckbox(FindBundle.message("find.options.string.literals.only"));
-    ItemListener itemListener = new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        if (e.getSource() == myCbInCommentsOnly) {
-          if (myCbInCommentsOnly.isSelected()) myCbInStringLiteralsOnly.setSelected(false);
-        } else if (e.getSource() == myCbInStringLiteralsOnly) {
-          if (myCbInStringLiteralsOnly.isSelected()) myCbInCommentsOnly.setSelected(false);
-        }
-      }
-    };
-    myCbInCommentsOnly.addItemListener(itemListener);
-    myCbInStringLiteralsOnly.addItemListener(itemListener);
+    mySearchContext = new ComboBox(new Object[] {FindBundle.message("find.context.anywhere.scope.label", 200),
+      FindBundle.message("find.context.in.comments.scope.label"), FindBundle.message("find.context.in.literals.scope.label"),
+      FindBundle.message("find.context.except.comments.scope.label"),
+      FindBundle.message("find.context.except.literals.scope.label"),
+      FindBundle.message("find.context.except.comments.and.literals.scope.label")});
+    final JPanel searchContextPanel = new JPanel(new BorderLayout());
+    searchContextPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+    JLabel searchContextLabel = new JLabel(FindBundle.message("find.context.combo.label"));
+    searchContextLabel.setLabelFor(mySearchContext);
+    searchContextPanel.add(searchContextLabel, BorderLayout.WEST);
+
+    searchContextPanel.add(mySearchContext, BorderLayout.CENTER);
 
     if (FindManagerImpl.ourHasSearchInCommentsAndLiterals) {
-      findOptionsPanel.add(myCbInCommentsOnly);
-      findOptionsPanel.add(myCbInStringLiteralsOnly);
+      findOptionsPanel.add(searchContextPanel);
     }
 
     ActionListener actionListener = new ActionListener() {
@@ -985,9 +985,25 @@ public class FindDialog extends DialogWrapper {
     }
 
     model.setWholeWordsOnly(myCbWholeWordsOnly.isSelected());
-    model.setInStringLiteralsOnly(myCbInStringLiteralsOnly.isSelected());
 
-    model.setInCommentsOnly(myCbInCommentsOnly.isSelected());
+    String selectedSearchContextInUi = (String)mySearchContext.getSelectedItem();
+    FindModel.SearchContext searchContext = FindModel.SearchContext.ANY;
+    if (FindBundle.message("find.context.in.literals.scope.label").equals(selectedSearchContextInUi)) {
+      searchContext = FindModel.SearchContext.IN_STRING_LITERALS;
+    }
+    else if (FindBundle.message("find.context.in.comments.scope.label").equals(selectedSearchContextInUi)) {
+      searchContext = FindModel.SearchContext.IN_COMMENTS;
+    }
+    else if (FindBundle.message("find.context.except.comments.scope.label").equals(selectedSearchContextInUi)) {
+      searchContext = FindModel.SearchContext.EXCEPT_COMMENTS;
+    }
+    else if (FindBundle.message("find.context.except.literals.scope.label").equals(selectedSearchContextInUi)) {
+      searchContext = FindModel.SearchContext.EXCEPT_STRING_LITERALS;
+    } else if (FindBundle.message("find.context.except.comments.and.literals.scope.label").equals(selectedSearchContextInUi)) {
+      searchContext = FindModel.SearchContext.EXCEPT_COMMENTS_AND_STRING_LITERALS;
+    }
+
+    model.setSearchContext(searchContext);
 
     model.setRegularExpressions(myCbRegularExpressions.isSelected());
     String stringToFind = getStringToFind();
@@ -1053,8 +1069,14 @@ public class FindDialog extends DialogWrapper {
   private void initByModel() {
     myCbCaseSensitive.setSelected(myModel.isCaseSensitive());
     myCbWholeWordsOnly.setSelected(myModel.isWholeWordsOnly());
-    myCbInStringLiteralsOnly.setSelected(myModel.isInStringLiteralsOnly());
-    myCbInCommentsOnly.setSelected(myModel.isInCommentsOnly());
+    String searchContext = FindBundle.message("find.context.anywhere.scope.label");
+    if (myModel.isInCommentsOnly()) searchContext = FindBundle.message("find.context.in.comments.scope.label");
+    else if (myModel.isInStringLiteralsOnly()) searchContext = FindBundle.message("find.context.in.literals.scope.label");
+    else if (myModel.isExceptStringLiterals()) searchContext = FindBundle.message("find.context.except.literals.scope.label");
+    else if (myModel.isExceptComments()) searchContext = FindBundle.message("find.context.except.comments.scope.label");
+    else if (myModel.isExceptCommentsAndStringLiterals()) searchContext = FindBundle.message("find.context.except.comments.and.literals.scope.label");
+    mySearchContext.setSelectedItem(searchContext);
+
     myCbRegularExpressions.setSelected(myModel.isRegularExpressions());
 
     if (myModel.isMultipleFiles()) {

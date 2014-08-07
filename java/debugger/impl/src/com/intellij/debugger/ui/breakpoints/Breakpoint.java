@@ -33,6 +33,7 @@ import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
@@ -98,12 +99,17 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
    */
   public abstract void createRequest(DebugProcessImpl debugProcess);
 
-  protected boolean shouldCreateRequest(DebugProcessImpl debugProcess) {
-    JavaDebugProcess process = debugProcess.getXdebugProcess();
-    return process != null
-           && debugProcess.isAttached()
-           && ((XDebugSessionImpl)process.getSession()).isBreakpointActive(myXBreakpoint)
-           && debugProcess.getRequestsManager().findRequests(this).isEmpty();
+  protected boolean shouldCreateRequest(final DebugProcessImpl debugProcess) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        JavaDebugProcess process = debugProcess.getXdebugProcess();
+        return process != null
+               && debugProcess.isAttached()
+               && ((XDebugSessionImpl)process.getSession()).isBreakpointActive(myXBreakpoint)
+               && debugProcess.getRequestsManager().findRequests(Breakpoint.this).isEmpty();
+      }
+    });
   }
 
   /**

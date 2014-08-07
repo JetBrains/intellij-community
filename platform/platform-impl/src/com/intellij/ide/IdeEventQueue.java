@@ -590,7 +590,6 @@ public class IdeEventQueue extends EventQueue {
         final Method setActive = ReflectionUtil.findMethod(ReflectionUtil.getClassDeclaredMethods(KeyboardFocusManager.class, false), resetMethod, Window.class);
         if (setActive != null) {
           try {
-            setActive.setAccessible(true);
             setActive.invoke(mgr, (Window)showingWindow);
           }
           catch (Exception exc) {
@@ -630,7 +629,6 @@ public class IdeEventQueue extends EventQueue {
           if (showingWindow == null) {
             Method getNativeFocusOwner = ReflectionUtil.getDeclaredMethod(KeyboardFocusManager.class, "getNativeFocusOwner");
             if (getNativeFocusOwner != null) {
-              getNativeFocusOwner.setAccessible(true);
               try {
                 Object owner = getNativeFocusOwner.invoke(mgr);
                 if (owner instanceof Component) {
@@ -744,10 +742,7 @@ public class IdeEventQueue extends EventQueue {
           && !(e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT)) {
         try {
           if (stickyAltField == null) {
-            stickyAltField = Class
-              .forName("com.sun.java.swing.plaf.windows.WindowsRootPaneUI$AltProcessor")
-              .getDeclaredField("menuCanceledOnPress");
-            stickyAltField.setAccessible(true);
+            stickyAltField = ReflectionUtil.getDeclaredField(Class.forName("com.sun.java.swing.plaf.windows.WindowsRootPaneUI$AltProcessor"), "menuCanceledOnPress");
           }
           stickyAltField.set(null, true);
         }

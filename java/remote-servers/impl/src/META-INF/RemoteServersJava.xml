@@ -2,7 +2,7 @@
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.remoteServer.moduleBuilderContribution"
-                    interface="com.intellij.remoteServer.impl.module.CloudModuleBuilderContribution"/>
+                    interface="com.intellij.remoteServer.impl.module.CloudModuleBuilderContributionFactory"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
