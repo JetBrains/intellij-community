@@ -28,13 +28,13 @@ public abstract class XDebugView implements Disposable {
   private final SingleAlarm myClearAlarm;
   private static final int VIEW_CLEAR_DELAY = 100; //ms
 
-  public XDebugView(@NotNull Disposable disposable) {
+  public XDebugView() {
     myClearAlarm = new SingleAlarm(new Runnable() {
       @Override
       public void run() {
         clear();
       }
-    }, VIEW_CLEAR_DELAY, disposable);
+    }, VIEW_CLEAR_DELAY, this);
   }
 
   protected final void requestClear() {

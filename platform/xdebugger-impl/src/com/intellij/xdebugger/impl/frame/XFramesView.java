@@ -69,7 +69,6 @@ public class XFramesView extends XDebugView {
   private final TransferToEDTQueue<Runnable> myLaterInvocator = TransferToEDTQueue.createRunnableMerger("XFramesView later invocator", 50);
 
   public XFramesView(@NotNull final XDebugSession session) {
-    super(session.getProject());
     mySession = session;
 
     myMainPanel = new JPanel(new BorderLayout());
