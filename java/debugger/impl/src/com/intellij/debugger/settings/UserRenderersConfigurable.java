@@ -44,16 +44,19 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
 
   private final JPanel myNameFieldPanel;
   private final JTextField myNameField;
-  private ElementsChooser<NodeRenderer> myRendererChooser;
+  private final ElementsChooser<NodeRenderer> myRendererChooser;
   private NodeRenderer myCurrentRenderer = null;
   private final CompoundRendererConfigurable myRendererDataConfigurable = new CompoundRendererConfigurable();
 
   public UserRenderersConfigurable() {
     super(new BorderLayout(4, 0));
 
+    myRendererChooser = new ElementsChooser<NodeRenderer>(true);
+    setupRenderersList();
+
     JPanel left = new JPanel(new BorderLayout());
     left.add(createToolbar(), BorderLayout.NORTH);
-    left.add(createRenderersList(), BorderLayout.CENTER);
+    left.add(myRendererChooser, BorderLayout.CENTER);
 
     myNameField = new JTextField();
     myNameFieldPanel = new JPanel(new BorderLayout());
@@ -85,8 +88,7 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
     return this;
   }
 
-  private JComponent createRenderersList() {
-    myRendererChooser = new ElementsChooser<NodeRenderer>(true);
+  private void setupRenderersList() {
     myRendererChooser.getEmptyText().setText(DebuggerBundle.message("text.user.renderers.configurable.no.renderers"));
 
     myRendererChooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<NodeRenderer>() {
@@ -103,7 +105,6 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
         }
       }
     });
-    return myRendererChooser;
   }
 
   private void updateCurrentRenderer(List<NodeRenderer> selectedElements) {
@@ -135,6 +136,7 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
     myRendererDataConfigurable.setRenderer(renderer);
   }
 
+  @NotNull
   private JComponent createToolbar() {
     final DefaultActionGroup group = new DefaultActionGroup();
     group.add(new AddAction());
@@ -142,8 +144,7 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
     group.add(new CopyAction());
     group.add(new MoveAction(true));
     group.add(new MoveAction(false));
-    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
-    return toolbar.getComponent();
+    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
   }
 
   @Override
