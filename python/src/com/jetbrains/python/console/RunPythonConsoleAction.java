@@ -52,7 +52,7 @@ import java.util.Map;
  */
 public class RunPythonConsoleAction extends AnAction implements DumbAware {
 
-  public static final String WORKING_DIR_ENV = "WORKING_DIR_AND_PYTHON_PATHS";
+  public static final String WORKING_DIR_ENV = "\"$WORKING_DIR_AND_PYTHON_PATHS$\"";
 
   public static final String CONSOLE_START_COMMAND = "import sys; print('Python %s on %s' % (sys.version, sys.platform))\n" +
                                                    "sys.path.extend([" + WORKING_DIR_ENV + "])\n";
