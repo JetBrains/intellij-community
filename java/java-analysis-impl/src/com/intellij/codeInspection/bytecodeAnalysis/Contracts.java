@@ -30,15 +30,21 @@ import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.*;
 import static org.jetbrains.org.objectweb.asm.Opcodes.*;
 
 class InOutAnalysis extends Analysis<Result<Key, Value>> {
+  private static final ThreadLocal<Result<Key, Value>[]> ourResults = new ThreadLocal<Result<Key, Value>[]>() {
+    @Override
+    protected Result<Key, Value>[] initialValue() {
+      return new Result[Analysis.STEPS_LIMIT];
+    }
+  };
 
-  final ResultUtil<Key, Value> resultUtil =
+  static final ResultUtil<Key, Value> resultUtil =
     new ResultUtil<Key, Value>(new ELattice<Value>(Value.Bot, Value.Top));
 
   private final InOutInterpreter interpreter;
   private final Value inValue;
 
   protected InOutAnalysis(RichControlFlow richControlFlow, Direction direction, boolean[] resultOrigins, boolean stable) {
-    super(richControlFlow, direction, stable);
+    super(richControlFlow, direction, stable, ourResults.get());
     interpreter = new InOutInterpreter(direction, richControlFlow.controlFlow.methodNode.instructions, resultOrigins);
     inValue = direction instanceof InOut ? ((InOut)direction).inValue : null;
   }
@@ -92,7 +98,7 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
     Frame<BasicValue> nextFrame = execute(frame, insnNode);
 
     if (interpreter.deReferenced) {
-      results.put(stateIndex, new Final<Key, Value>(Value.Bot));
+      results[stateIndex] = new Final<Key, Value>(Value.Bot);
       addComputed(insnIndex, state);
       return;
     }
@@ -107,28 +113,28 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
       case RETURN:
         BasicValue stackTop = popValue(frame);
         if (FalseValue == stackTop) {
-          results.put(stateIndex, new Final<Key, Value>(Value.False));
+          results[stateIndex] = new Final<Key, Value>(Value.False);
           addComputed(insnIndex, state);
         }
         else if (TrueValue == stackTop) {
-          results.put(stateIndex, new Final<Key, Value>(Value.True));
+          results[stateIndex] = new Final<Key, Value>(Value.True);
           addComputed(insnIndex, state);
         }
         else if (NullValue == stackTop) {
-          results.put(stateIndex, new Final<Key, Value>(Value.Null));
+          results[stateIndex] = new Final<Key, Value>(Value.Null);
           addComputed(insnIndex, state);
         }
         else if (stackTop instanceof NotNullValue) {
-          results.put(stateIndex, new Final<Key, Value>(Value.NotNull));
+          results[stateIndex] = new Final<Key, Value>(Value.NotNull);
           addComputed(insnIndex, state);
         }
         else if (stackTop instanceof ParamValue) {
-          results.put(stateIndex, new Final<Key, Value>(inValue));
+          results[stateIndex] = new Final<Key, Value>(inValue);
           addComputed(insnIndex, state);
         }
         else if (stackTop instanceof CallResultValue) {
           Set<Key> keys = ((CallResultValue) stackTop).inters;
-          results.put(stateIndex, new Pending<Key, Value>(Collections.singleton(new Product<Key, Value>(Value.Top, keys))));
+          results[stateIndex] = new Pending<Key, Value>(Collections.singleton(new Product<Key, Value>(Value.Top, keys)));
           addComputed(insnIndex, state);
         }
         else {
@@ -136,7 +142,7 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
         }
         return;
       case ATHROW:
-        results.put(stateIndex, new Final<Key, Value>(Value.Bot));
+        results[stateIndex] = new Final<Key, Value>(Value.Bot);
         addComputed(insnIndex, state);
         return;
       default:

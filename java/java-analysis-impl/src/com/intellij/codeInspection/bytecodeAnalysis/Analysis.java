@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
-import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.Type;
@@ -222,7 +221,7 @@ abstract class Analysis<Res> {
 
   final Deque<PendingAction<Res>> pending = new LinkedList<PendingAction<Res>>();
   final protected List<State>[] computed;
-  final TIntObjectHashMap<Res> results = new TIntObjectHashMap<Res>();
+  final protected Res[] results;
   final Key aKey;
 
   Res earlyResult = null;
@@ -234,9 +233,10 @@ abstract class Analysis<Res> {
   abstract Equation<Key, Value> mkEquation(Res result);
   abstract void processState(State state) throws AnalyzerException;
 
-  protected Analysis(RichControlFlow richControlFlow, Direction direction, boolean stable) {
+  protected Analysis(RichControlFlow richControlFlow, Direction direction, boolean stable, Res[] results) {
     this.richControlFlow = richControlFlow;
     this.direction = direction;
+    this.results = results;
     controlFlow = richControlFlow.controlFlow;
     methodNode = controlFlow.methodNode;
     method = new Method(controlFlow.className, methodNode.name, methodNode.desc);
@@ -287,7 +287,7 @@ abstract class Analysis<Res> {
         MakeResult<Res> makeResult = (MakeResult<Res>) action;
         ArrayList<Res> subResults = new ArrayList<Res>();
         for (int index : makeResult.indices) {
-          subResults.add(results.get(index));
+          subResults.add(results[index]);
         }
         Res result = combineResults(makeResult.subResult, subResults);
         if (isEarlyResult(result)) {
@@ -295,7 +295,7 @@ abstract class Analysis<Res> {
         } else {
           State state = makeResult.state;
           int insnIndex = state.conf.insnIndex;
-          results.put(state.index, result);
+          results[state.index] = result;
           addComputed(insnIndex, state);
         }
       }
@@ -315,7 +315,7 @@ abstract class Analysis<Res> {
           }
         }
         if (fold) {
-          results.put(state.index, myIdentity);
+          results[state.index] = myIdentity;
           addComputed(insnIndex, state);
         }
         else {
@@ -330,7 +330,7 @@ abstract class Analysis<Res> {
             }
           }
           if (baseState != null) {
-            results.put(state.index, results.get(baseState.index));
+            results[state.index] = results[baseState.index];
           } else {
             // the main call
             processState(state);
@@ -342,7 +342,7 @@ abstract class Analysis<Res> {
     if (earlyResult != null) {
       return mkEquation(earlyResult);
     } else {
-      return mkEquation(results.get(0));
+      return mkEquation(results[0]);
     }
   }
 

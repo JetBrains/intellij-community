@@ -130,10 +130,17 @@ abstract class PResults {
 
 class NonNullInAnalysis extends Analysis<PResult> {
 
+  private static final ThreadLocal<PResult[]> ourResults = new ThreadLocal<PResult[]>() {
+    @Override
+    protected PResult[] initialValue() {
+      return new PResult[Analysis.STEPS_LIMIT];
+    }
+  };
+
   private final NonNullInInterpreter interpreter = new NonNullInInterpreter();
 
   protected NonNullInAnalysis(RichControlFlow richControlFlow, Direction direction, boolean stable) {
-    super(richControlFlow, direction, stable);
+    super(richControlFlow, direction, stable, ourResults.get());
   }
 
   @Override
@@ -194,7 +201,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
     boolean notEmptySubResult = subResult != Identity;
 
     if (subResult == NPE) {
-      results.put(stateIndex, NPE);
+      results[stateIndex] = NPE;
       addComputed(insnIndex, state);
       return;
     }
@@ -210,7 +217,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
         if (!hasCompanions) {
           earlyResult = Return;
         } else {
-          results.put(stateIndex, Return);
+          results[stateIndex] = Return;
           addComputed(insnIndex, state);
         }
         return;
@@ -219,9 +226,9 @@ class NonNullInAnalysis extends Analysis<PResult> {
 
     if (opcode == ATHROW) {
       if (taken) {
-        results.put(stateIndex, NPE);
+        results[stateIndex] = NPE;
       } else {
-        results.put(stateIndex, Identity);
+        results[stateIndex] = Identity;
       }
       addComputed(insnIndex, state);
       return;
