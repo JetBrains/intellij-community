@@ -21,7 +21,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
@@ -43,7 +42,6 @@ public class BranchesLoader implements Runnable {
   @NotNull private final Project myProject;
   @NotNull private final NewRootBunch myBunch;
   @NotNull private final VirtualFile myRoot;
-  @Nullable private final Runnable myCallback;
   @NotNull private final String myUrl;
   @NotNull private final InfoReliability myInfoReliability;
   private final boolean myPassive;
@@ -53,14 +51,12 @@ public class BranchesLoader implements Runnable {
                         @NotNull String url,
                         @NotNull InfoReliability infoReliability,
                         @NotNull VirtualFile root,
-                        @Nullable Runnable callback,
                         boolean passive) {
     myProject = project;
     myBunch = bunch;
     myUrl = url;
     myInfoReliability = infoReliability;
     myRoot = root;
-    myCallback = callback;
     myPassive = passive;
   }
 
@@ -74,11 +70,6 @@ public class BranchesLoader implements Runnable {
     }
     catch (SVNException e) {
       showError(e);
-    }
-    finally {
-      if (myCallback != null) {
-        myCallback.run();
-      }
     }
   }
 

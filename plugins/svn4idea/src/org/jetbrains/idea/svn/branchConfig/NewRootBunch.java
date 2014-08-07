@@ -91,7 +91,7 @@ public class NewRootBunch {
 
   public void reloadBranches(@NotNull final VirtualFile root, @NotNull final String branchParentUrl) {
     ApplicationManager.getApplication()
-      .executeOnPooledThread(new BranchesLoader(myProject, this, branchParentUrl, InfoReliability.setByUser, root, null, true));
+      .executeOnPooledThread(new BranchesLoader(myProject, this, branchParentUrl, InfoReliability.setByUser, root, true));
   }
 
   @Nullable
@@ -101,23 +101,11 @@ public class NewRootBunch {
     try {
       final SvnBranchConfigurationNew configuration = myMap.get(root).getValue();
       final String group = configuration.getGroupToLoadToReachUrl(svnurl);
-      final Runnable runnable = new Runnable() {
-        public void run() {
-          final SvnBranchConfigurationNew reloadedConfiguration = myMap.get(root).getValue();
-          try {
-            result.set(reloadedConfiguration.getWorkingBranch(svnurl));
-          }
-          catch (SVNException e) {
-            //
-          }
-        }
-      };
 
-      if (group == null) {
-        runnable.run();
-      } else {
-        new BranchesLoader(myProject, this, group, InfoReliability.setByUser, root, runnable, true).run();
+      if (group != null) {
+        new BranchesLoader(myProject, this, group, InfoReliability.setByUser, root, true).run();
       }
+      result.set(myMap.get(root).getValue().getWorkingBranch(svnurl));
     }
     catch (SVNException e) {
       //

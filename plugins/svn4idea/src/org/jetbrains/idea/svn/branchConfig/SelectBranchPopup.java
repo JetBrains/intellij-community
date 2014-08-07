@@ -219,7 +219,7 @@ public class SelectBranchPopup {
         @Override
         protected void runImpl(@NotNull ProgressIndicator indicator) {
           final NewRootBunch manager = SvnBranchConfigurationManager.getInstance(myProject).getSvnBranchConfigManager();
-          new BranchesLoader(myProject, manager, selectedBranchesHolder, InfoReliability.setByUser, myVcsRoot, null, false).run();
+          new BranchesLoader(myProject, manager, selectedBranchesHolder, InfoReliability.setByUser, myVcsRoot, false).run();
         }
       });
     }
