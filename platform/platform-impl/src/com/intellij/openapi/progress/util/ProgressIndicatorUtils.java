@@ -61,7 +61,7 @@ public class ProgressIndicatorUtils {
     runWithWriteActionPriority(new ProgressIndicatorBase(), task);
   }
 
-  public static void runWithWriteActionPriority(final ProgressIndicator progressIndicator, final ReadTask task) {
+  public static void runWithWriteActionPriority(@NotNull final ProgressIndicator progressIndicator, @NotNull final ReadTask task) {
     final ApplicationAdapter listener = new ApplicationAdapter() {
       @Override
       public void beforeWriteActionStart(Object action) {
@@ -103,7 +103,7 @@ public class ProgressIndicatorUtils {
     scheduleWithWriteActionPriority(new ProgressIndicatorBase(), task);
   }
 
-  public static void scheduleWithWriteActionPriority(final ProgressIndicator indicator, final ReadTask task) {
+  public static void scheduleWithWriteActionPriority(@NotNull final ProgressIndicator indicator, @NotNull final ReadTask task) {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
