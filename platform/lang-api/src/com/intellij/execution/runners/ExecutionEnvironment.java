@@ -102,6 +102,7 @@ public class ExecutionEnvironment extends UserDataHolderBase {
 
   /**
    * @deprecated, use {@link com.intellij.execution.runners.ExecutionEnvironmentBuilder} instead
+   * to remove in IDEA 15
    */
   public ExecutionEnvironment(@NotNull RunProfile runProfile,
                               @NotNull Executor executor,

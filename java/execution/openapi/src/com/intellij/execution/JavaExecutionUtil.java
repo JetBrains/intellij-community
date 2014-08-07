@@ -21,6 +21,7 @@ import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -58,8 +59,7 @@ public class JavaExecutionUtil {
     final DefaultRunProfile profile = new DefaultRunProfile(project, cmdLine, contentName, icon, filters);
     final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, profile);
     if (runner != null) {
-      Executor executor = DefaultRunExecutor.getRunExecutorInstance();
-      runner.execute(new ExecutionEnvironment(profile, executor, project, null));
+      runner.execute(new ExecutionEnvironmentBuilder(project, DefaultRunExecutor.getRunExecutorInstance()).runProfile(profile).build());
       return true;
     }
 

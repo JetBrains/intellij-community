@@ -88,6 +88,11 @@ public final class ExecutionEnvironmentBuilder {
     return this;
   }
 
+  public ExecutionEnvironmentBuilder runnerSettings(@Nullable RunnerSettings runnerSettings) {
+    myRunnerSettings = runnerSettings;
+    return this;
+  }
+
   public ExecutionEnvironmentBuilder setConfigurationSettings(@Nullable ConfigurationPerRunnerSettings configurationSettings) {
     myConfigurationSettings = configurationSettings;
     return this;
@@ -99,6 +104,10 @@ public final class ExecutionEnvironmentBuilder {
   }
 
   public ExecutionEnvironmentBuilder setRunProfile(@NotNull RunProfile runProfile) {
+    return runProfile(runProfile);
+  }
+
+  public ExecutionEnvironmentBuilder runProfile(@NotNull RunProfile runProfile) {
     myRunProfile = runProfile;
     return this;
   }

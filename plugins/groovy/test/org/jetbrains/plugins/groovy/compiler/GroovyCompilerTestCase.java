@@ -25,6 +25,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.DefaultJavaProgramRunner;
 import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.Disposable;
@@ -234,7 +235,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
                                           ProgramRunner runner,
                                           RunProfile configuration) throws ExecutionException {
     final Executor executor = Executor.EXECUTOR_EXTENSION_NAME.findExtension(executorClass);
-    final ExecutionEnvironment environment = new ExecutionEnvironment(configuration, executor, getProject(), null);
+    final ExecutionEnvironment environment = new ExecutionEnvironmentBuilder(getProject(), executor).runProfile(configuration).build();
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
 
