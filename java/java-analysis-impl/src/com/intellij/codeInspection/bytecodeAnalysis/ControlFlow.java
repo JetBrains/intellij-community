@@ -240,10 +240,8 @@ final class cfg {
   // Graphs: Theory and Algorithms. by K. Thulasiraman , M. N. S. Swamy (1992)
   // 11.7.2 DFS of a directed graph
   static DFSTree buildDFSTree(int[][] transitions) {
-    Set<Edge> tree = new HashSet<Edge>();
-    Set<Edge> forward = new HashSet<Edge>();
+    Set<Edge> nonBack = new HashSet<Edge>();
     Set<Edge> back = new HashSet<Edge>();
-    Set<Edge> cross = new HashSet<Edge>();
 
     boolean[] marked = new boolean[transitions.length];
     boolean[] scanned = new boolean[transitions.length];
@@ -278,7 +276,7 @@ final class cfg {
         int from = examineEdgeAction.from;
         int to = examineEdgeAction.to;
         if (!marked[to]) {
-          tree.add(new Edge(from, to));
+          nonBack.add(new Edge(from, to));
           // enter to
           entered ++;
           preOrder[to] = entered;
@@ -289,18 +287,18 @@ final class cfg {
           }
         }
         else if (preOrder[to] > preOrder[from]) {
-          forward.add(new Edge(from, to));
+          nonBack.add(new Edge(from, to));
         }
         else if (preOrder[to] < preOrder[from] && !scanned[to]) {
           back.add(new Edge(from, to));
           loopEnters[to] = true;
         } else {
-          cross.add(new Edge(from, to));
+          nonBack.add(new Edge(from, to));
         }
       }
     }
 
-    return new DFSTree(preOrder, postOrder, tree, forward, back, cross, loopEnters);
+    return new DFSTree(preOrder, postOrder, nonBack, back, loopEnters);
   }
 
   // Tarjan. Testing flow graph reducibility.
@@ -319,13 +317,7 @@ final class cfg {
     for (Edge edge : dfs.back) {
       cycles[edge.to].add(edge.from);
     }
-    for (Edge edge : dfs.tree) {
-      nonCycles[edge.to].add(edge.from);
-    }
-    for (Edge edge : dfs.forward) {
-      nonCycles[edge.to].add(edge.from);
-    }
-    for (Edge edge : dfs.cross) {
+    for (Edge edge : dfs.nonBack) {
       nonCycles[edge.to].add(edge.from);
     }
 
@@ -468,22 +460,18 @@ final class ControlFlowBuilder extends CfgAnalyzer {
 
 final class DFSTree {
   final int[] preOrder, postOrder;
-  final Set<Edge> tree, forward, back, cross;
+  final Set<Edge> nonBack, back;
   final boolean[] loopEnters;
 
   DFSTree(int[] preOrder,
           int[] postOrder,
-          Set<Edge> tree,
-          Set<Edge> forward,
+          Set<Edge> nonBack,
           Set<Edge> back,
-          Set<Edge> cross,
           boolean[] loopEnters) {
     this.preOrder = preOrder;
     this.postOrder = postOrder;
-    this.tree = tree;
-    this.forward = forward;
+    this.nonBack = nonBack;
     this.back = back;
-    this.cross = cross;
     this.loopEnters = loopEnters;
   }
 
