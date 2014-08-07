@@ -38,7 +38,6 @@ setProperty("pluginFilter", new File("$pythonEduHome/build/plugin-list.txt").rea
 private String getHome(){
   // current file is supposed to be at build/scripts/*.gant path
   String uri = this["gant.file"]
-  print ("uri: " + uri )
   return new File(new URI(uri).getSchemeSpecificPart()).getParentFile().getParentFile().getParentFile().getParentFile().getParentFile()
 }
 
