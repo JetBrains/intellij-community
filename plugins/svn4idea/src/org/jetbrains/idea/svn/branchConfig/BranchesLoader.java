@@ -20,7 +20,6 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnConfiguration;
@@ -44,7 +43,7 @@ public class BranchesLoader implements Runnable {
   @NotNull private final Project myProject;
   @NotNull private final NewRootBunch myBunch;
   @NotNull private final VirtualFile myRoot;
-  @Nullable private final Consumer<List<SvnBranchItem>> myCallback;
+  @Nullable private final Runnable myCallback;
   @NotNull private final String myUrl;
   @NotNull private final InfoReliability myInfoReliability;
   private final boolean myPassive;
@@ -54,7 +53,7 @@ public class BranchesLoader implements Runnable {
                         @NotNull String url,
                         @NotNull InfoReliability infoReliability,
                         @NotNull VirtualFile root,
-                        @Nullable Consumer<List<SvnBranchItem>> callback,
+                        @Nullable Runnable callback,
                         boolean passive) {
     myProject = project;
     myBunch = bunch;
@@ -66,10 +65,8 @@ public class BranchesLoader implements Runnable {
   }
 
   public void run() {
-    List<SvnBranchItem> branches = null;
-
     try {
-      branches = loadBranches();
+      List<SvnBranchItem> branches = loadBranches();
       myBunch.updateBranches(myRoot, myUrl, new InfoStorage<List<SvnBranchItem>>(branches, myInfoReliability));
     }
     catch (VcsException e) {
@@ -80,7 +77,7 @@ public class BranchesLoader implements Runnable {
     }
     finally {
       if (myCallback != null) {
-        myCallback.consume(branches);
+        myCallback.run();
       }
     }
   }

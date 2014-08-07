@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.CalledInBackground;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,10 +89,9 @@ public class NewRootBunch {
     }
   }
 
-  public void reloadBranches(@NotNull final VirtualFile root, @NotNull final String branchParentUrl,
-                             final Consumer<List<SvnBranchItem>> callback) {
+  public void reloadBranches(@NotNull final VirtualFile root, @NotNull final String branchParentUrl) {
     ApplicationManager.getApplication()
-      .executeOnPooledThread(new BranchesLoader(myProject, this, branchParentUrl, InfoReliability.setByUser, root, callback, true));
+      .executeOnPooledThread(new BranchesLoader(myProject, this, branchParentUrl, InfoReliability.setByUser, root, null, true));
   }
 
   @Nullable
@@ -118,12 +116,7 @@ public class NewRootBunch {
       if (group == null) {
         runnable.run();
       } else {
-        new BranchesLoader(myProject, this, group, InfoReliability.setByUser, root,
-                                 new Consumer<List<SvnBranchItem>>() {
-                                   public void consume(List<SvnBranchItem> svnBranchItems) {
-                                     runnable.run();
-                                   }
-                                 }, true).run();
+        new BranchesLoader(myProject, this, group, InfoReliability.setByUser, root, runnable, true).run();
       }
     }
     catch (SVNException e) {
