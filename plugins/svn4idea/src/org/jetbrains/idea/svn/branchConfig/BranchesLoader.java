@@ -41,20 +41,20 @@ import java.util.List;
  * @author Konstantin Kolosovsky.
  */
 public class BranchesLoader implements Runnable {
-  private final Project myProject;
-  private final NewRootBunch myBunch;
-  private final VirtualFile myRoot;
+  @NotNull private final Project myProject;
+  @NotNull private final NewRootBunch myBunch;
+  @NotNull private final VirtualFile myRoot;
   @Nullable private final Consumer<List<SvnBranchItem>> myCallback;
-  private final String myUrl;
-  private final InfoReliability myInfoReliability;
-  private boolean myPassive;
+  @NotNull private final String myUrl;
+  @NotNull private final InfoReliability myInfoReliability;
+  private final boolean myPassive;
 
-  public BranchesLoader(final Project project,
-                        final NewRootBunch bunch,
-                        final String url,
-                        final InfoReliability infoReliability,
-                        final VirtualFile root,
-                        @Nullable final Consumer<List<SvnBranchItem>> callback,
+  public BranchesLoader(@NotNull Project project,
+                        @NotNull NewRootBunch bunch,
+                        @NotNull String url,
+                        @NotNull InfoReliability infoReliability,
+                        @NotNull VirtualFile root,
+                        @Nullable Consumer<List<SvnBranchItem>> callback,
                         boolean passive) {
     myProject = project;
     myBunch = bunch;
@@ -66,14 +66,11 @@ public class BranchesLoader implements Runnable {
   }
 
   public void run() {
-    boolean callbackCalled = false;
+    List<SvnBranchItem> branches = null;
+
     try {
-      final List<SvnBranchItem> items = loadBranches();
-      myBunch.updateBranches(myRoot, myUrl, new InfoStorage<List<SvnBranchItem>>(items, myInfoReliability));
-      if (myCallback != null) {
-        myCallback.consume(items);
-        callbackCalled = true;
-      }
+      branches = loadBranches();
+      myBunch.updateBranches(myRoot, myUrl, new InfoStorage<List<SvnBranchItem>>(branches, myInfoReliability));
     }
     catch (VcsException e) {
       showError(e);
@@ -82,13 +79,13 @@ public class BranchesLoader implements Runnable {
       showError(e);
     }
     finally {
-      // callback must be called by contract
-      if (myCallback != null && (!callbackCalled)) {
-        myCallback.consume(null);
+      if (myCallback != null) {
+        myCallback.consume(branches);
       }
     }
   }
 
+  @NotNull
   public List<SvnBranchItem> loadBranches() throws SVNException, VcsException {
     final SvnConfiguration configuration = SvnConfiguration.getInstance(myProject);
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
