@@ -819,11 +819,18 @@ public class PyTypeTest extends PyTestCase {
            "    pass\n");
   }
 
-  // PY-8836
+  //PY-8836
   public void testNumpyArrayIntMultiplicationType() {
     doMultiFileTest("ndarray",
                     "import numpy as np\n" +
                     "expr = np.ones(10) * 2\n");
+  }
+
+  // PY-9439
+  public void testNumpyArrayType() {
+    doMultiFileTest("ndarray",
+                    "import numpy as np\n" +
+                    "expr = np.array([1,2,3])\n");
   }
 
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {
