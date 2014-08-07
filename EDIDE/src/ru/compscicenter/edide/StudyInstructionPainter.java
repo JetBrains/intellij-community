@@ -3,7 +3,6 @@ package ru.compscicenter.edide;
 import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Pair;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.PairFunction;
@@ -36,11 +35,11 @@ public class StudyInstructionPainter extends EditorEmptyTextPainter {
     painter.appendLine("Welcome to PyCharm Educational Edition").underlined(new JBColor(Gray._150, Gray._180));
     painter.appendLine("Learn Python programming in your favorite IDE").smaller();
     painter.appendLine("Navigate between windows with alt < >").smaller().withBullet();
-    painter.draw(g, new PairFunction<Integer, Integer, Pair<Integer, Integer>>() {
+    painter.draw(g, new PairFunction<Integer, Integer, Couple<Integer>>() {
       @Override
-      public Pair<Integer, Integer> fun(Integer t, Integer v) {
+      public Couple<Integer> fun(Integer width, Integer height) {
         Dimension s = splitters.getSize();
-        return  Couple.of((s.width - t)/2, (s.height - v)/2);
+        return Couple.of((s.width - width) / 2, (s.height - height) / 2);
       }
     });
   }

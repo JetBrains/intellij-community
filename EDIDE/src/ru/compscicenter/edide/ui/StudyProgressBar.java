@@ -19,7 +19,7 @@ import java.awt.geom.Rectangle2D;
 
 public class StudyProgressBar extends JComponent implements DumbAware {
   public static final Color BLUE = JBColor.BLUE;
-  private static final Color SHADOW1 = new JBColor(Gray._190, UIUtil.getBorderColor());
+  private static final Color SHADOW1 = new JBColor(Gray._190, JBColor.border());
   private static final Color SHADOW2 = Gray._105;
   private static final int BRICK_WIDTH = 10;
   private static final int BRICK_SPACE = 2;
@@ -64,7 +64,7 @@ public class StudyProgressBar extends JComponent implements DumbAware {
     Rectangle2D rect = new Rectangle2D.Double(myIndent, 0, width, myHeight);
     g2.fill(rect);
 
-    g2.setPaint(new JBColor(SHADOW1, UIUtil.getBorderColor()));
+    g2.setPaint(new JBColor(SHADOW1, JBColor.border()));
     rect.setRect(myIndent, 0, width, myHeight);
     int arcWidth = 5;
     int arcHeight = 5;
