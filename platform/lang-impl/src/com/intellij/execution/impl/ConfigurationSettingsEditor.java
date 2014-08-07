@@ -75,16 +75,14 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
 
 
       myRunnersComponent = new RunnersEditorComponent();
-      ProgramRunner[] runners = RunnerRegistry.getInstance().getRegisteredRunners();
 
       final Executor[] executors = ExecutorRegistry.getInstance().getRegisteredExecutors();
       for (final Executor executor : executors) {
-        for (ProgramRunner runner : runners) {
-          if (runner.canRun(executor.getId(), myConfiguration)) {
-            JComponent perRunnerSettings = createCompositePerRunnerSettings(executor, runner);
-            if (perRunnerSettings != null) {
-              myRunnersComponent.addExecutorComponent(executor, perRunnerSettings);
-            }
+        ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), myConfiguration);
+        if (runner != null) {
+          JComponent perRunnerSettings = createCompositePerRunnerSettings(executor, runner);
+          if (perRunnerSettings != null) {
+            myRunnersComponent.addExecutorComponent(executor, perRunnerSettings);
           }
         }
       }

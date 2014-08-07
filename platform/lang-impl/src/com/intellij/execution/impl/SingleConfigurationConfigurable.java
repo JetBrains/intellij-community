@@ -151,12 +151,10 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         if (snapshot != null) {
           snapshot.setName(getNameText());
           snapshot.checkSettings(myExecutor);
-          for (ProgramRunner runner : RunnerRegistry.getInstance().getRegisteredRunners()) {
-            for (Executor executor : ExecutorRegistry.getInstance().getRegisteredExecutors()) {
-              if (runner.canRun(executor.getId(), snapshot.getConfiguration())) {
-                checkConfiguration(runner, snapshot);
-                break;
-              }
+          for (Executor executor : ExecutorRegistry.getInstance().getRegisteredExecutors()) {
+            ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), snapshot.getConfiguration());
+            if (runner != null) {
+              checkConfiguration(runner, snapshot);
             }
           }
         }
