@@ -140,10 +140,6 @@ target('default': "Build artifacts") {
   layoutEducational("${paths.sandbox}/classes/production", usedJars)
 
 
-  //buildNSIS([paths.distAll, paths.distWin],
-  //          "${pythonEduHome}/build/strings.nsi", "${pythonEduHome}/build/paths.nsi",
-  //          "pycharm", false, true, ".py", system_selector)
-
   def extraArgs = ["build.code": "pycharmEDU-${buildNumber}", "build.number": "PE-$buildNumber", "artifacts.path": "${paths.artifacts}"]
   signMacZip("pycharm", extraArgs)
   buildDmg("pycharm", "${pythonEduHome}/build/DMG_background.png", extraArgs)
@@ -194,6 +190,10 @@ public layoutEducational(String classesPath, Set usedJars) {
   executeExternalAnt(["dirName": "${paths.distWin}/bin", "fileName": "pycharm.exe"], "$home/build/signBuild.xml")
 
   buildWinZip("${paths.artifacts}/pycharmPE-${buildNumber}.zip", [paths.distAll, paths.distWin])
+
+  buildNSIS([paths.distAll, paths.distWin],
+            "$pythonEduHome/build/strings.nsi", "$pythonEduHome/build/paths.nsi",
+            "pycharm", false, true, ".py", system_selector)
 
   String tarRoot = isEap() ? "pycharm-edu-$buildNumber" : "pycharm-edu-${p("component.version.major")}.${p("component.version.minor")}"
   buildTarGz(tarRoot, "$paths.artifacts/pycharmPE-${buildNumber}.tar", [paths.distAll, paths.distUnix])
