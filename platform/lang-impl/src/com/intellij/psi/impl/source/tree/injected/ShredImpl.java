@@ -23,7 +23,7 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class ShredImpl implements PsiLanguageInjectionHost.Shred {
+public class ShredImpl implements PsiLanguageInjectionHost.Shred {
   private final RangeMarker relevantRangeInHost;
   private final SmartPsiElementPointer<PsiLanguageInjectionHost> hostElementPointer;
   private final TextRange range; // range in (decoded) PSI
