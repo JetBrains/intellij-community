@@ -91,6 +91,32 @@ final class cfg {
     return collector.leaking;
   }
 
+  static boolean[] fastLeakingParameters(String className, MethodNode methodNode) throws AnalyzerException {
+    Frame<IParamsValue>[] frames = new Analyzer<IParamsValue>(new IParametersUsage(methodNode)).analyze(className, methodNode);
+    InsnList insns = methodNode.instructions;
+    ILeakingParametersCollector collector = new ILeakingParametersCollector(methodNode);
+    for (int i = 0; i < frames.length; i++) {
+      AbstractInsnNode insnNode = insns.get(i);
+      Frame<IParamsValue> frame = frames[i];
+      if (frame != null) {
+        switch (insnNode.getType()) {
+          case AbstractInsnNode.LABEL:
+          case AbstractInsnNode.LINE:
+          case AbstractInsnNode.FRAME:
+            break;
+          default:
+            frame.execute(insnNode, collector);
+        }
+      }
+    }
+    int leakingMask = collector.leaking;
+    boolean[] result = new boolean[collector.arity];
+    for (int i = 0; i < result.length; i++) {
+      result[i] = (leakingMask & (1 << i)) != 0;
+    }
+    return result;
+  }
+
   static class MinimalOriginInterpreter extends SourceInterpreter {
     //static final SourceValue[] sourceVals = {new SourceValue(1), new SourceValue(2)};
 
@@ -508,6 +534,35 @@ final class ParamsValue implements Value {
   }
 }
 
+// specialized version
+final class IParamsValue implements Value {
+  final int params;
+  final int size;
+
+  IParamsValue(int params, int size) {
+    this.params = params;
+    this.size = size;
+  }
+
+  @Override
+  public int getSize() {
+    return size;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null) return false;
+    IParamsValue that = (IParamsValue)o;
+    return (this.size == that.size && this.params == that.params);
+  }
+
+  @Override
+  public int hashCode() {
+    return 31 * params + size;
+  }
+}
+
 class ParametersUsage extends Interpreter<ParamsValue> {
   final ParamsValue val1;
   final ParamsValue val2;
@@ -661,6 +716,148 @@ class ParametersUsage extends Interpreter<ParamsValue> {
   }
 }
 
+class IParametersUsage extends Interpreter<IParamsValue> {
+  static final IParamsValue val1 = new IParamsValue(0, 1);
+  static final IParamsValue val2 = new IParamsValue(0, 1);
+  int called = -1;
+  final int rangeStart;
+  final int rangeEnd;
+  final int arity;
+  final int shift;
+
+  IParametersUsage(MethodNode methodNode) {
+    super(ASM5);
+    arity = Type.getArgumentTypes(methodNode.desc).length;
+    shift = (methodNode.access & ACC_STATIC) == 0 ? 2 : 1;
+    rangeStart = shift;
+    rangeEnd = arity + shift;
+  }
+
+  @Override
+  public IParamsValue newValue(Type type) {
+    if (type == null) return val1;
+    called++;
+    if (type == Type.VOID_TYPE) return null;
+    if (called < rangeEnd && rangeStart <= called && (cfg.isReferenceType(type) || cfg.isBooleanType(type))) {
+      int n = called - shift;
+      return type.getSize() == 1 ? new IParamsValue(1 << n, 1) : new IParamsValue(1 << n, 2);
+    }
+    else {
+      return type.getSize() == 1 ? val1 : val2;
+    }
+  }
+
+  @Override
+  public IParamsValue newOperation(final AbstractInsnNode insn) {
+    int size;
+    switch (insn.getOpcode()) {
+      case LCONST_0:
+      case LCONST_1:
+      case DCONST_0:
+      case DCONST_1:
+        size = 2;
+        break;
+      case LDC:
+        Object cst = ((LdcInsnNode) insn).cst;
+        size = cst instanceof Long || cst instanceof Double ? 2 : 1;
+        break;
+      case GETSTATIC:
+        size = Type.getType(((FieldInsnNode) insn).desc).getSize();
+        break;
+      default:
+        size = 1;
+    }
+    return size == 1 ? val1 : val2;
+  }
+
+  @Override
+  public IParamsValue copyOperation(AbstractInsnNode insn, IParamsValue value) {
+    return value;
+  }
+
+  @Override
+  public IParamsValue unaryOperation(AbstractInsnNode insn, IParamsValue value) {
+    int size;
+    switch (insn.getOpcode()) {
+      case CHECKCAST:
+        return value;
+      case LNEG:
+      case DNEG:
+      case I2L:
+      case I2D:
+      case L2D:
+      case F2L:
+      case F2D:
+      case D2L:
+        size = 2;
+        break;
+      case GETFIELD:
+        size = Type.getType(((FieldInsnNode) insn).desc).getSize();
+        break;
+      default:
+        size = 1;
+    }
+    return size == 1 ? val1 : val2;
+  }
+
+  @Override
+  public IParamsValue binaryOperation(AbstractInsnNode insn, IParamsValue value1, IParamsValue value2) {
+    int size;
+    switch (insn.getOpcode()) {
+      case LALOAD:
+      case DALOAD:
+      case LADD:
+      case DADD:
+      case LSUB:
+      case DSUB:
+      case LMUL:
+      case DMUL:
+      case LDIV:
+      case DDIV:
+      case LREM:
+      case DREM:
+      case LSHL:
+      case LSHR:
+      case LUSHR:
+      case LAND:
+      case LOR:
+      case LXOR:
+        size = 2;
+        break;
+      default:
+        size = 1;
+    }
+    return size == 1 ? val1 : val2;
+  }
+
+  @Override
+  public IParamsValue ternaryOperation(AbstractInsnNode insn, IParamsValue value1, IParamsValue value2, IParamsValue value3) {
+    return val1;
+  }
+
+  @Override
+  public IParamsValue naryOperation(AbstractInsnNode insn, List<? extends IParamsValue> values) {
+    int size;
+    int opcode = insn.getOpcode();
+    if (opcode == MULTIANEWARRAY) {
+      size = 1;
+    } else {
+      String desc = (opcode == INVOKEDYNAMIC) ? ((InvokeDynamicInsnNode) insn).desc : ((MethodInsnNode) insn).desc;
+      size = Type.getReturnType(desc).getSize();
+    }
+    return size == 1 ? val1 : val2;
+  }
+
+  @Override
+  public void returnOperation(AbstractInsnNode insn, IParamsValue value, IParamsValue expected) {}
+
+  @Override
+  public IParamsValue merge(IParamsValue v1, IParamsValue v2) {
+    if (v1.equals(v2)) return v1;
+    return new IParamsValue(v1.params | v2.params, Math.min(v1.size, v2.size));
+  }
+}
+
 class LeakingParametersCollector extends ParametersUsage {
   final boolean[] leaking;
   LeakingParametersCollector(MethodNode methodNode) {
@@ -746,6 +943,86 @@ class LeakingParametersCollector extends ParametersUsage {
           for (int i = 0; i < arity; i++) {
             leaking[i] |= params[i];
           }
+        }
+        break;
+      default:
+    }
+    return super.naryOperation(insn, values);
+  }
+}
+
+class ILeakingParametersCollector extends IParametersUsage {
+  int leaking = 0;
+  ILeakingParametersCollector(MethodNode methodNode) {
+    super(methodNode);
+  }
+
+  @Override
+  public IParamsValue unaryOperation(AbstractInsnNode insn, IParamsValue value) {
+    switch (insn.getOpcode()) {
+      case GETFIELD:
+      case ARRAYLENGTH:
+      case MONITORENTER:
+      case INSTANCEOF:
+      case IRETURN:
+      case ARETURN:
+      case IFNONNULL:
+      case IFNULL:
+      case IFEQ:
+      case IFNE:
+        leaking |= value.params;
+        break;
+      default:
+    }
+    return super.unaryOperation(insn, value);
+  }
+
+  @Override
+  public IParamsValue binaryOperation(AbstractInsnNode insn, IParamsValue value1, IParamsValue value2) {
+    switch (insn.getOpcode()) {
+      case IALOAD:
+      case LALOAD:
+      case FALOAD:
+      case DALOAD:
+      case AALOAD:
+      case BALOAD:
+      case CALOAD:
+      case SALOAD:
+      case PUTFIELD:
+        leaking |= value1.params;
+        break;
+      default:
+    }
+    return super.binaryOperation(insn, value1, value2);
+  }
+
+  @Override
+  public IParamsValue ternaryOperation(AbstractInsnNode insn, IParamsValue value1, IParamsValue value2, IParamsValue value3) {
+    switch (insn.getOpcode()) {
+      case IASTORE:
+      case LASTORE:
+      case FASTORE:
+      case DASTORE:
+      case AASTORE:
+      case BASTORE:
+      case CASTORE:
+      case SASTORE:
+        leaking |= value1.params;
+        break;
+      default:
+    }
+    return super.ternaryOperation(insn, value1, value2, value3);
+  }
+
+  @Override
+  public IParamsValue naryOperation(AbstractInsnNode insn, List<? extends IParamsValue> values) {
+    switch (insn.getOpcode()) {
+      case INVOKESTATIC:
+      case INVOKESPECIAL:
+      case INVOKEVIRTUAL:
+      case INVOKEINTERFACE:
+        for (IParamsValue value : values) {
+          leaking |= value.params;
         }
         break;
       default:
