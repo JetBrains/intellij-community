@@ -552,7 +552,96 @@
           }
         }
       ]
+    },
+    {
+      "name": "Loops",
+      "task_list": [
+        {
+          "name": "For loop",
+          "test_num": 4,
+          "task_files": {
+            "for_loop.py": {
+              "task_windows": [
+                {
+                  "line": 6,
+                  "start": 0,
+                  "text": "print each prime using for loop",
+                  "hint": "lesson6.task1.docs",
+                  "possible_answer": "for prime in primes:\n  print(prime)"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "For loop using string",
+          "test_num": 4,
+          "task_files": {
+            "for_string.py": {
+              "task_windows": [
+                {
+                  "line": 7,
+                  "start": 0,
+                  "text": "count how many characters are in the hello_world using loop",
+                  "hint": "lesson6.task2.docs",
+                  "possible_answer": "for ch in hello_world:\n  length += 1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "While loop",
+          "test_num": 4,
+          "task_files": {
+            "while_loop.py": {
+              "task_windows": [
+                {
+                  "line": 11,
+                  "start": 0,
+                  "text": "print all squares from 0 to 99",
+                  "hint": "lesson6.task3.docs",
+                  "possible_answer": "while count < 100:\n  count = number ** 2\n  print(count)\n num += 1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Break keyword",
+          "test_num": 4,
+          "task_files": {
+            "break_keyword.py": {
+              "task_windows": [
+                {
+                  "line": 13,
+                  "start": 7,
+                  "text": "exit loop if animal is 'elephant'",
+                  "hint": "lesson6.task4.docs",
+                  "possible_answer": "animal == 'elephant'"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Continue keyword",
+          "test_num": 4,
+          "task_files": {
+            "continue_keyword.py": {
+              "task_windows": [
+                {
+                  "line": 6,
+                  "start": 7,
+                  "text": "Check if x is even",
+                  "hint": "lesson6.task5.docs",
+                  "possible_answer": "x % 2 == 0"
+                }
+              ]
+            }
+          }
+        }
+      ]
     }
-
   ]
 }
