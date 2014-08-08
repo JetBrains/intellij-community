@@ -279,8 +279,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
       if (controlFlow.errors[nextInsnIndex] && controlFlow.errorTransitions.contains(new Edge(insnIndex, nextInsnIndex))) {
         nextFrame1 = new Frame<BasicValue>(frame);
         nextFrame1.clearStack();
-        // TODO - make constant
-        nextFrame1.push(new BasicValue(Type.getType("java/lang/Throwable")));
+        nextFrame1.push(THROWABLE_VALUE);
       }
       pendingPush(new ProceedState<PResult>(new State(subIndices[i], new Conf(nextInsnIndex, nextFrame1), nextHistory, taken, hasCompanions || notEmptySubResult)));
     }

@@ -215,6 +215,8 @@ abstract class Analysis<Res> {
     }
   };
 
+  protected static final BasicValue THROWABLE_VALUE = new BasicValue(Type.getType("java/lang/Throwable"));
+
   public static final int STEPS_LIMIT = 30000;
   public static final int EQUATION_SIZE_LIMIT = 30;
   public static final int MERGE_LIMIT = 100000;
@@ -289,7 +291,7 @@ abstract class Analysis<Res> {
       if (steps >= STEPS_LIMIT) {
         throw new AnalyzerException(null, "limit is reached, steps: " + steps + " in method " + method);
       }
-      PendingAction<Res> action = pendingPop();
+      PendingAction<Res> action = pending[--pendingTop];
       if (action instanceof MakeResult) {
         MakeResult<Res> makeResult = (MakeResult<Res>) action;
         Res result = combineResults(makeResult.subResult, makeResult.indices);
@@ -314,6 +316,7 @@ abstract class Analysis<Res> {
           for (Conf prev : history) {
             if (AbstractValues.isInstance(conf, prev)) {
               fold = true;
+              break;
             }
           }
         }
@@ -387,12 +390,6 @@ abstract class Analysis<Res> {
   protected final void pendingPush(PendingAction<Res> action) {
     pending[pendingTop++] = action;
   }
-
-  protected final PendingAction<Res> pendingPop() {
-    return pending[--pendingTop];
-  }
-
-
 
   static BasicValue popValue(Frame<BasicValue> frame) {
     return frame.getStack(frame.getStackSize() - 1);

@@ -209,10 +209,10 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
       if (controlFlow.errors[nextInsnIndex] && controlFlow.errorTransitions.contains(new Edge(insnIndex, nextInsnIndex))) {
         nextFrame1 = new Frame<BasicValue>(frame);
         nextFrame1.clearStack();
-        // TODO - make constant
-        nextFrame1.push(new BasicValue(Type.getType("java/lang/Throwable")));
+        nextFrame1.push(THROWABLE_VALUE);
       }
-      pendingPush(new ProceedState<Result<Key, Value>>(new State(subIndices[i], new Conf(nextInsnIndex, nextFrame1), nextHistory, taken, false)));
+      pendingPush(new ProceedState<Result<Key, Value>>(
+        new State(subIndices[i], new Conf(nextInsnIndex, nextFrame1), nextHistory, taken, false)));
     }
   }
 
