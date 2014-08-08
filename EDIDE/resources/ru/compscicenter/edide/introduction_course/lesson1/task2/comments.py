@@ -1,2 +1,5 @@
-# Here is the comment for comments.py file
+# This is the comment for the comments.py file
+print("Hello!")  # this comment is for the second line
+
+print("# this is not a comment")
 # type here

@@ -1,27 +1,31 @@
-from test_helper import run_common_tests, import_file
+from test_helper import run_common_tests, import_file, passed, failed
 
 
 def test_value(path):
     file = import_file(path)
-    if file.first_half == '\nit is a reall':
-        return "#study_plugin test OK"
-    return "#study_plugin Remember about string slicing."
+    if file.first_half == '''\nit's a really long string\ntriple-quoted st''':
+        passed()
+    failed("Remember about string slicing.")
 
 
 if __name__ == '__main__':
     run_common_tests('''phrase = """
-it is a really long string
+it's a really long string
+triple-quoted strings are used
+to define multi-line strings
 """
 first_half = type here
-print (first_half)
+print(first_half)
 ''', '''phrase = """
-it is a really long string
+it's a really long string
+triple-quoted strings are used
+to define multi-line strings
 """
 first_half =
-print (first_half)
+print(first_half)
 ''', "You should modify the file")
 
-    # TODO: get filepath. Let's now assume that we pass it as the last item in command-line
     import sys
     path = sys.argv[-1]
-    print(test_value(path))
+    test_value(path)
+# TODO: check it's not hardcoded

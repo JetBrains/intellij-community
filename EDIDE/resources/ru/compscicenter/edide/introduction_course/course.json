@@ -12,7 +12,7 @@
           "test_file": "task1_test.py",
           "test_num" : 4,
           "task_files": {
-            "helloworld.py": {
+            "hello_world.py": {
               "task_windows": [
                 {
                   "line": 0,
@@ -34,7 +34,7 @@
             "comments.py": {
               "task_windows": [
                 {
-                  "line": 1,
+                  "line": 4,
                   "start": 2,
                   "text": "type here",
                   "hint": "lesson1.task2.docs",
@@ -58,7 +58,7 @@
             "variable_definition.py": {
               "task_windows": [
                 {
-                  "line": 1,
+                  "line": 6,
                   "start": 12,
                   "text": "another value",
                   "hint": "lesson2.task1.docs",
@@ -72,7 +72,7 @@
           "name": "Undefined variable",
           "text": "task2.html",
           "test_file": "task2_test.py",
-          "test_num": 3,
+          "test_num": 4,
           "task_files": {
             "undefined_variable.py": {
               "task_windows": [
@@ -91,7 +91,7 @@
           "name": "Variable types",
           "text": "task3.html",
           "test_file": "task3_test.py",
-          "test_num": 4,
+          "test_num": 5,
           "task_files": {
             "variable_type.py": {
               "task_windows": [
@@ -110,7 +110,7 @@
           "name": "Arithmetic Operators",
           "text": "task4.html",
           "test_file": "task4_test.py",
-          "test_num": 5,
+          "test_num": 6,
           "task_files": {
             "arithmetic_operators.py": {
               "task_windows": [
@@ -142,7 +142,7 @@
               "task_windows": [
                 {
                   "line": 2,
-                  "start": 6,
+                  "start": 7,
                   "text": "operator",
                   "hint": "lesson2.task5.docs",
                   "possible_answer": "+="
@@ -179,7 +179,7 @@
             "comparison_operators.py": {
               "task_windows": [
                 {
-                  "line": 3,
+                  "line": 6,
                   "start": 19,
                   "text": "operator",
                   "hint": "lesson2.task7.docs",
@@ -199,7 +199,7 @@
           "name": "Concatenation",
           "text": "task1.html",
           "test_file": "task1_test.py",
-          "test_num": 5,
+          "test_num": 6,
           "task_files": {
             "concatenation.py": {
               "name": "concatenation.py",
@@ -283,7 +283,7 @@
               "name": "slicing.py",
               "task_windows": [
                 {
-                  "line": 1,
+                  "line": 3,
                   "start": 9,
                   "text": "type here",
                   "hint": "lesson3.task5.docs",
@@ -303,7 +303,7 @@
               "name": "in_operator.py",
               "task_windows": [
                 {
-                  "line": 1,
+                  "line": 3,
                   "start": 11,
                   "text": "type here",
                   "hint": "lesson3.task6.docs",
@@ -323,7 +323,7 @@
               "name": "len_function.py",
               "task_windows": [
                 {
-                  "line": 3,
+                  "line": 5,
                   "start": 13,
                   "text": "type here",
                   "hint": "lesson3.task7.docs",
@@ -332,8 +332,306 @@
               ]
             }
           }
+        },
+        {
+          "name": "Character escaping",
+          "text": "task8.html",
+          "test_file": "task8_test.py",
+          "test_num": 4,
+          "task_files": {
+            "character_escaping.py": {
+              "name": "character_escaping.py",
+              "task_windows": [
+                {
+                  "line": 3,
+                  "start": 7,
+                  "text": "text",
+                  "hint": "lesson3.task8.docs",
+                  "possible_answer": "'text\'more text'"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Basic string methods",
+          "text": "task9.html",
+          "test_file": "task9_test.py",
+          "test_num": 4,
+          "task_files": {
+            "string_methods.py": {
+              "name": "string_methods.py",
+              "task_windows": [
+                {
+                  "line": 5,
+                  "start": 6,
+                  "text": "upper cased monty_python",
+                  "hint": "lesson3.task9.docs",
+                  "possible_answer": "monty_python.upper()"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "String formatting",
+          "text": "task10.html",
+          "test_file": "task10_test.py",
+          "test_num": 4,
+          "task_files": {
+            "string_formatting.py": {
+              "name": "string_formatting.py",
+              "task_windows": [
+                {
+                  "line": 3,
+                  "start": 11,
+                  "text": "special symbol",
+                  "hint": "lesson3.task10.1.docs",
+                  "possible_answer": "%d"
+                },
+                {
+                  "line": 3,
+                  "start": 39,
+                  "text": "years",
+                  "hint": "lesson3.task10.2.docs",
+                  "possible_answer": "17"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Data structures",
+      "task_list": [
+        {
+          "name": "Lists introduction",
+          "text": "task1.html",
+          "test_file": "task1_test.py",
+          "test_num": 4,
+          "task_files": {
+            "lists.py": {
+              "name": "lists.py",
+              "task_windows": [
+                {
+                  "line": 3,
+                  "start": 6,
+                  "text": "slice",
+                  "hint": "lesson4.task1.docs",
+                  "possible_answer": "squares[1:4]"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Lists operations",
+          "text": "task2.html",
+          "test_file": "task2_test.py",
+          "test_num": 4,
+          "task_files": {
+            "list_operations.py": {
+              "name": "list_operations.py",
+              "task_windows": [
+                {
+                  "line": 9,
+                  "start": 0,
+                  "text": "replace 'dino' with 'dinosaur'",
+                  "hint": "lesson4.task2.docs",
+                  "possible_answer": "animals[-1] = 'dinosaur'"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List items",
+          "text": "task3.html",
+          "test_file": "task3_test.py",
+          "test_num": 4,
+          "task_files": {
+            "list_items.py": {
+              "name": "list_items.py",
+              "task_windows": [
+                {
+                  "line": 9,
+                  "start": 0,
+                  "text": "clear list",
+                  "hint": "lesson4.task3.docs",
+                  "possible_answer": "animals[:] = []"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Tuples",
+          "text": "task4.html",
+          "test_file": "task4_test.py",
+          "test_num": 4,
+          "task_files": {
+            "tuples.py": {
+              "name": "tuples.py",
+              "task_windows": [
+                {
+                  "line": 3,
+                  "start": 6,
+                  "text": "alphabet length",
+                  "hint": "lesson4.task4.docs",
+                  "possible_answer": "len(alphabet)"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Dictionaries",
+          "text": "task5.html",
+          "test_file": "task5_test.py",
+          "test_num": 4,
+          "task_files": {
+            "dicts.py": {
+              "name": "dicts.py",
+              "task_windows": [
+                {
+                  "line": 10,
+                  "start": 6,
+                  "text": "Jane's phone",
+                  "hint": "lesson4.task5.docs",
+                  "possible_answer": "phone_book['Jane']"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Dictionary keys() and values()",
+          "text": "task6.html",
+          "test_file": "task6_test.py",
+          "test_num": 4,
+          "task_files": {
+            "dict_key_value.py": {
+              "name": "dict_key_value.py",
+              "task_windows": [
+                {
+                  "line": 9,
+                  "start": 6,
+                  "text": "phone_book values",
+                  "hint": "lesson4.task6.docs",
+                  "possible_answer": "phone_book.values()"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "In keyword",
+          "text": "task7.html",
+          "test_file": "task7_test.py",
+          "test_num": 4,
+          "task_files": {
+            "in_keyword.py": {
+              "name": "in_keyword.py",
+              "task_windows": [
+                {
+                  "line": 6,
+                  "start": 6,
+                  "text": "is 'fish' in grocery_dict keys",
+                  "hint": "lesson4.task7.docs",
+                  "possible_answer": "'fish' in grocery_dict.keys()"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Condition expressions",
+      "task_list": [
+        {
+          "name": "Boolean operators",
+          "text": "task1.html",
+          "test_file": "task1_test.py",
+          "test_num": 4,
+          "task_files": {
+            "boolean_operators.py": {
+              "name": "boolean_operators.py",
+              "task_windows": [
+                {
+                  "line": 5,
+                  "start": 6,
+                  "text": "John is not 23 years old",
+                  "hint": "lesson5.task1.docs",
+                  "possible_answer": "name == 'John' and age != 23"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Boolean operators order",
+          "text": "task2.html",
+          "test_file": "task2_test.py",
+          "test_num": 4,
+          "task_files": {
+            "boolean_order.py": {
+              "name": "boolean_order.py",
+              "task_windows": [
+                {
+                  "line": 5,
+                  "start": 6,
+                  "text": "'name' is 'Ellis' or not ('name' equal 'John' and he is 17 years old)",
+                  "hint": "lesson5.task2.docs",
+                  "possible_answer": "name == 'Ellis' or not(name == 'John' and years == 17)"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "If statement",
+          "text": "task3.html",
+          "test_file": "task3_test.py",
+          "test_num": 4,
+          "task_files": {
+            "if_statement.py": {
+              "name": "if_statement.py",
+              "task_windows": [
+                {
+                  "line": 9,
+                  "start": 0,
+                  "text": "print 'empty' if 'tasks' is empty",
+                  "hint": "lesson5.task3.docs",
+                  "possible_answer": "if len(tasks) == 0:\n  print('empty')"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Else, elif part in if statement",
+          "text": "task4.html",
+          "test_file": "task4_test.py",
+          "test_num": 4,
+          "task_files": {
+            "else_elif.py": {
+              "name": "else_elif.py",
+              "task_windows": [
+                {
+                  "line": 13,
+                  "start": 0,
+                  "text": "print True is name equal to 'John' and False otherwise",
+                  "hint": "lesson5.task4.docs",
+                  "possible_answer": "if name == 'John':\n    print(True)\nelse:\n    print(False)"
+                }
+              ]
+            }
+          }
         }
       ]
     }
+
   ]
 }

@@ -164,24 +164,14 @@ print (first_half)
 - String formatting
 
 
-4. Input-output
+4. Input-output --- ?
 
 - sys.argv
 - open/close file to read
 - write file
 - raw_input
 
-I am a test file. Maybe someday, he will promote me to a real file.
-
-
-
-
-
-
-
-
-
-
+I am a temporary file. Maybe someday, I'll become a real file.
 
 
 
@@ -191,11 +181,14 @@ I am a test file. Maybe someday, he will promote me to a real file.
 - Lists
 - Dicts
 - tuples
+- in keyword
 
 6. Conditions
 
 - Indentation matters
+- and, or
 - in, is, not
+
 
 7. Looping
 - for
@@ -231,3 +224,4 @@ Specific
 - parallel programming
 - regular expressions
 - packaging
+
