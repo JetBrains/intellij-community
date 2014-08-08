@@ -69,12 +69,13 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
                           @Nullable ExecutionEnvironment environment,
                           @Nullable RunContentDescriptor contentToReuse) {
     super(project, "Debug", session.getSessionName(), GlobalSearchScope.allScope(project));
+
     if (environment != null) {
       setEnvironment(environment);
     }
     myConsole = session.getConsoleView();
     XDebugProcess debugProcess = session.getDebugProcess();
-    myRunContentDescriptor = new RunContentDescriptor(myConsole, debugProcess.getProcessHandler(), myUi.getComponent(), mySessionName, icon);
+    myRunContentDescriptor = new RunContentDescriptor(myConsole, debugProcess.getProcessHandler(), myUi.getComponent(), session.getSessionName(), icon);
     if (contentToReuse != null && contentToReuse.isReuseToolWindowActivation()) {
       myRunContentDescriptor.setActivateToolWindowWhenAdded(contentToReuse.isActivateToolWindowWhenAdded());
     }
