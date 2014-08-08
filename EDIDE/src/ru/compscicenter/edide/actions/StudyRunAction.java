@@ -23,6 +23,7 @@ import ru.compscicenter.edide.editor.StudyEditor;
 import java.io.File;
 
 public class StudyRunAction extends DumbAwareAction {
+  public static final String ACTION_ID = "StudyRunAction";
   public void run(Project project) {
     Editor selectedEditor = StudyEditor.getSelectedEditor(project);
     FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
