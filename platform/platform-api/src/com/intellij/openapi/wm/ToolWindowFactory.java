@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.openapi.wm;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Performs lazy initialization of a toolwindow registered in plugin.xml.
@@ -25,5 +26,5 @@ import com.intellij.openapi.project.Project;
  * @see ToolWindowEP
  */
 public interface ToolWindowFactory {
-  void createToolWindowContent(Project project, ToolWindow toolWindow);
+  void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow);
 }

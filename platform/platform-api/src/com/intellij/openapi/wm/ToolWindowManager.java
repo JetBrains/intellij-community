@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,16 +47,25 @@ public abstract class ToolWindowManager {
    * @return tool window
    * @deprecated  {@link com.intellij.openapi.wm.ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}
    */
-  public abstract ToolWindow registerToolWindow(@NotNull String id,@NotNull JComponent component,@NotNull ToolWindowAnchor anchor);
+  @Deprecated
+  @NotNull
+  public abstract ToolWindow registerToolWindow(@NotNull String id, @NotNull JComponent component, @NotNull ToolWindowAnchor anchor);
 
   /**
   * @deprecated  {@link com.intellij.openapi.wm.ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}
   */
-  public abstract ToolWindow registerToolWindow(@NotNull String id,@NotNull JComponent component,@NotNull ToolWindowAnchor anchor, Disposable parentDisposable);
+  @Deprecated
+  @NotNull
+  public abstract ToolWindow registerToolWindow(@NotNull String id,
+                                                @NotNull JComponent component,
+                                                @NotNull ToolWindowAnchor anchor,
+                                                @NotNull Disposable parentDisposable);
 
   /**
   * @deprecated  {@link com.intellij.openapi.wm.ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}
   */
+  @Deprecated
+  @NotNull
   public abstract ToolWindow registerToolWindow(@NotNull String id,
                                                 @NotNull JComponent component,
                                                 @NotNull ToolWindowAnchor anchor,
@@ -65,6 +74,8 @@ public abstract class ToolWindowManager {
   /**
   * @deprecated  {@link com.intellij.openapi.wm.ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}
   */
+  @Deprecated
+  @NotNull
   public abstract ToolWindow registerToolWindow(@NotNull String id,
                                                 @NotNull JComponent component,
                                                 @NotNull ToolWindowAnchor anchor,
@@ -72,12 +83,16 @@ public abstract class ToolWindowManager {
                                                 boolean canWorkInDumbMode,
                                                 boolean canCloseContents);
 
+  @NotNull
   public abstract ToolWindow registerToolWindow(@NotNull String id, boolean canCloseContent, @NotNull ToolWindowAnchor anchor);
 
+  @NotNull
   public abstract ToolWindow registerToolWindow(@NotNull String id, boolean canCloseContent, @NotNull ToolWindowAnchor anchor, boolean secondary);
 
+  @NotNull
   public abstract ToolWindow registerToolWindow(@NotNull String id, boolean canCloseContent, @NotNull ToolWindowAnchor anchor, Disposable parentDisposable, boolean canWorkInDumbMode);
 
+  @NotNull
   public ToolWindow registerToolWindow(@NotNull final String id,
                                        final boolean canCloseContent,
                                        @NotNull final ToolWindowAnchor anchor,
@@ -102,6 +117,7 @@ public abstract class ToolWindowManager {
   /**
    * @return array of <code>id</code>s of all registered tool windows.
    */
+  @NotNull
   public abstract String[] getToolWindowIds();
 
   /**
@@ -120,11 +136,12 @@ public abstract class ToolWindowManager {
   /**
    * Puts specified runnable to the tail of current command queue.
    */
-  public abstract void invokeLater(Runnable runnable);
+  public abstract void invokeLater(@NotNull Runnable runnable);
 
   /**
    * Utility method for quick access to the focus manager
    */
+  @NotNull
   public abstract IdeFocusManager getFocusManager();
 
   public abstract void notifyByBalloon(@NotNull final String toolWindowId, @NotNull final MessageType type, @NotNull final String htmlBody);
