@@ -687,21 +687,21 @@
             "return_keyword.py": {
               "task_windows": [
                 {
-                  "line": 11,
+                  "line": 10,
                   "start": 11,
                   "length": 20,
                   "hint": "lesson7.task3.1.docs",
                   "possible_answer": "0, 1"
                 },
                 {
-                  "line": 15,
+                  "line": 14,
                   "start": 8,
                   "length": 17,
                   "hint": "lesson7.task3.2.docs",
                   "possible_answer": "b = a + b"
                 },
                 {
-                  "line": 16,
+                  "line": 15,
                   "start": 8,
                   "length": 17,
                   "hint": "lesson7.task3.3.docs",
@@ -709,12 +709,13 @@
                 }
               ]
             }
-          },
-          {
+          }
+        },
+        {
           "name": "Function default parameters",
           "test_num": 4,
           "task_files": {
-            "param_args.py": {
+            "default_parameter.py": {
               "task_windows": [
                 {
                   "line": 7,
@@ -726,7 +727,6 @@
               ]
             }
           }
-        }
         }
       ]
     }
