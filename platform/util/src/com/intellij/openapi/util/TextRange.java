@@ -99,6 +99,16 @@ public class TextRange implements Segment, Serializable {
   }
 
   @NotNull
+  public CharSequence subSequence(@NotNull CharSequence str) {
+    try {
+      return str.subSequence(myStartOffset, myEndOffset);
+    }
+    catch (IndexOutOfBoundsException e) {
+      throw new IndexOutOfBoundsException("Can't extract " + this + " range from " + str);
+    }
+  }
+
+  @NotNull
   public TextRange cutOut(@NotNull TextRange subRange) {
     assert subRange.getStartOffset() <= getLength() : subRange + "; this="+this;
     assert subRange.getEndOffset() <= getLength() : subRange + "; this="+this;
