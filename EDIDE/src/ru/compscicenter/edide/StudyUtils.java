@@ -3,14 +3,19 @@ package ru.compscicenter.edide;
 import com.intellij.ide.SaveAndSyncHandlerImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import ru.compscicenter.edide.course.TaskFile;
+import ru.compscicenter.edide.course.TaskWindow;
 import ru.compscicenter.edide.editor.StudyEditor;
 import ru.compscicenter.edide.ui.StudyToolWindowFactory;
 
@@ -103,5 +108,29 @@ public class StudyUtils {
       throw new IllegalArgumentException();
     }
     return Integer.parseInt(fullName.substring(logicalName.length())) - 1;
+  }
+
+  public static void flushWindows(Document document, TaskFile taskFile, VirtualFile file) {
+    VirtualFile taskDir = file.getParent();
+    if (taskDir != null) {
+      String name = file.getNameWithoutExtension() + "_windows";
+      PrintWriter printWriter = null;
+      try {
+        VirtualFile file_windows = taskDir.createChildData(taskFile, name);
+        printWriter = new PrintWriter(new FileOutputStream(file_windows.getPath()));
+        for (TaskWindow taskWindow : taskFile.getTaskWindows()) {
+          int start = taskWindow.getRealStartOffset(document);
+          String windowDescription = document.getText(new TextRange(start, start + taskWindow.getLength()));
+          printWriter.println("#study_plugin_window = " + windowDescription);
+        }
+      }
+      catch (IOException e) {
+        e.printStackTrace();
+      }
+      finally {
+        closeSilently(printWriter);
+        StudyUtils.synchronize();
+      }
+    }
   }
 }

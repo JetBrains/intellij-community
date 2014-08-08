@@ -126,6 +126,7 @@ public class CheckAction extends DumbAwareAction {
                 StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
                 final TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
                 if (selectedTaskFile != null) {
+                  StudyUtils.flushWindows(selectedEditor.getDocument(),selectedTaskFile, openedFile);
                   FileDocumentManager.getInstance().saveAllDocuments();
                   final VirtualFile taskDir = openedFile.getParent();
                   Task currentTask = selectedTaskFile.getTask();
