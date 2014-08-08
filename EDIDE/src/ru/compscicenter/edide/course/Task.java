@@ -22,7 +22,7 @@ import java.util.Map;
 public class Task {
   public static final String TASK_DIR = "task";
   private static final Logger LOG = Logger.getInstance(Task.class.getName());
-  public String testFile;
+  private static final String ourTestFile = "tests.py";
   public int testNum;
   public String name;
   private static final String ourTextFile = "task.html";
@@ -76,7 +76,7 @@ public class Task {
   }
 
   public String getTestFile() {
-    return testFile;
+    return ourTestFile;
   }
 
   public String getText() {
