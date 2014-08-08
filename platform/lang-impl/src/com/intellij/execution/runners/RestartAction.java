@@ -15,10 +15,7 @@
  */
 package com.intellij.execution.runners;
 
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.ExecutionManager;
-import com.intellij.execution.Executor;
-import com.intellij.execution.ExecutorRegistry;
+import com.intellij.execution.*;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
@@ -125,7 +122,8 @@ public class RestartAction extends FakeRerunAction implements DumbAware, AnActio
   public void restart() {
     Project project = myEnvironment.getProject();
     if (!ExecutorRegistry.getInstance().isStarting(project, myExecutor.getId(), getRunnerId())) {
-      ExecutionManager.getInstance(project).restartRunProfile(myRunner, myEnvironment, myDescriptor);
+      ProgramRunner runner = myRunner == null ? RunnerRegistry.getInstance().findRunnerById(myEnvironment.getRunnerId()) : myRunner;
+      ExecutionManager.getInstance(project).restartRunProfile(runner, myEnvironment, myDescriptor);
     }
   }
 
