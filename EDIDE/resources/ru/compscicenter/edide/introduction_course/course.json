@@ -15,7 +15,7 @@
                 {
                   "line": 0,
                   "start": 33,
-                  "text": "type your name",
+                  "length": 14,
                   "hint": "lesson1.task1.docs",
                   "possible_answer": "Liana"
                 }
@@ -32,7 +32,7 @@
                 {
                   "line": 4,
                   "start": 2,
-                  "text": "type here",
+                  "length": 9,
                   "hint": "lesson1.task2.docs",
                   "possible_answer": "new comment"
                 }
@@ -54,7 +54,7 @@
                 {
                   "line": 6,
                   "start": 12,
-                  "text": "another value",
+                  "length": 13,
                   "hint": "lesson2.task1.docs",
                   "possible_answer": "5"
                 }
@@ -71,7 +71,7 @@
                 {
                   "line": 1,
                   "start": 7,
-                  "text": "other variable",
+                  "length": 14,
                   "hint": "lesson2.task2.docs",
                   "possible_answer": "other_variable"
                 }
@@ -88,7 +88,7 @@
                 {
                   "line": 4,
                   "start": 6,
-                  "text": "float_number type",
+                  "length": 17,
                   "hint": "lesson2.task3.docs",
                   "possible_answer": "type(float_number)"
                 }
@@ -105,14 +105,14 @@
                 {
                   "line": 2,
                   "start": 11,
-                  "text": "divide 'number' by two",
+                  "length": 22,
                   "hint": "lesson2.task4.1.docs",
                   "possible_answer": "number/2"
                 },
                 {
                   "line": 4,
                   "start": 12,
-                  "text": "calculate the remainder",
+                  "length": 23,
                   "hint": "lesson2.task4.2.docs",
                   "possible_answer": "number%2"
                 }
@@ -129,7 +129,7 @@
                 {
                   "line": 2,
                   "start": 7,
-                  "text": "operator",
+                  "length": 8,
                   "hint": "lesson2.task5.docs",
                   "possible_answer": "+="
                 }
@@ -146,7 +146,7 @@
                 {
                   "line": 3,
                   "start": 15,
-                  "text": "operator",
+                  "length": 8,
                   "hint": "lesson2.task6.docs",
                   "possible_answer": "=="
                 }
@@ -163,7 +163,7 @@
                 {
                   "line": 6,
                   "start": 19,
-                  "text": "operator",
+                  "length": 8,
                   "hint": "lesson2.task7.docs",
                   "possible_answer": ">="
                 }
@@ -186,7 +186,7 @@
                 {
                   "line": 3,
                   "start": 14,
-                  "text": "type here",
+                  "length": 9,
                   "hint": "lesson3.task1.docs",
                   "possible_answer": "hello + ' ' + world"
                 }
@@ -203,7 +203,7 @@
                 {
                   "line": 1,
                   "start": 20,
-                  "text": "operator",
+                  "length": 8,
                   "hint": "lesson3.task2.docs",
                   "possible_answer": "hello * 10"
                 }
@@ -220,7 +220,7 @@
                 {
                   "line": 1,
                   "start": 11,
-                  "text": "type here",
+                  "length": 9,
                   "hint": "lesson3.task3.docs",
                   "possible_answer": "python[0]"
                 }
@@ -237,7 +237,7 @@
                 {
                   "line": 1,
                   "start": 14,
-                  "text": "type here",
+                  "length": 9,
                   "hint": "lesson3.task4.docs",
                   "possible_answer": "long_string[-1]"
                 }
@@ -254,7 +254,7 @@
                 {
                   "line": 3,
                   "start": 9,
-                  "text": "type here",
+                  "length": 9,
                   "hint": "lesson3.task5.docs",
                   "possible_answer": "monty_python[6:]"
                 }
@@ -271,7 +271,7 @@
                 {
                   "line": 3,
                   "start": 11,
-                  "text": "type here",
+                  "length": 9,
                   "hint": "lesson3.task6.docs",
                   "possible_answer": "'ice' in ice_cream"
                 }
@@ -288,7 +288,7 @@
                 {
                   "line": 5,
                   "start": 13,
-                  "text": "type here",
+                  "length": 9,
                   "hint": "lesson3.task7.docs",
                   "possible_answer": "phrase[:len(phrase)/2]"
                 }
@@ -305,7 +305,7 @@
                 {
                   "line": 3,
                   "start": 7,
-                  "text": "text",
+                  "length": 4,
                   "hint": "lesson3.task8.docs",
                   "possible_answer": "'text\'more text'"
                 }
@@ -322,7 +322,7 @@
                 {
                   "line": 5,
                   "start": 6,
-                  "text": "upper cased monty_python",
+                  "length": 24,
                   "hint": "lesson3.task9.docs",
                   "possible_answer": "monty_python.upper()"
                 }
@@ -339,14 +339,14 @@
                 {
                   "line": 3,
                   "start": 11,
-                  "text": "special symbol",
+                  "length": 14,
                   "hint": "lesson3.task10.1.docs",
                   "possible_answer": "%d"
                 },
                 {
                   "line": 3,
                   "start": 39,
-                  "text": "years",
+                  "length": 5,
                   "hint": "lesson3.task10.2.docs",
                   "possible_answer": "17"
                 }
@@ -368,7 +368,7 @@
                 {
                   "line": 3,
                   "start": 6,
-                  "text": "slice",
+                  "length": 5,
                   "hint": "lesson4.task1.docs",
                   "possible_answer": "squares[1:4]"
                 }
@@ -385,7 +385,7 @@
                 {
                   "line": 9,
                   "start": 0,
-                  "text": "replace 'dino' with 'dinosaur'",
+                  "length": 30,
                   "hint": "lesson4.task2.docs",
                   "possible_answer": "animals[-1] = 'dinosaur'"
                 }
@@ -402,7 +402,7 @@
                 {
                   "line": 9,
                   "start": 0,
-                  "text": "clear list",
+                  "length": 10,
                   "hint": "lesson4.task3.docs",
                   "possible_answer": "animals[:] = []"
                 }
@@ -419,7 +419,7 @@
                 {
                   "line": 3,
                   "start": 6,
-                  "text": "alphabet length",
+                  "length": 15,
                   "hint": "lesson4.task4.docs",
                   "possible_answer": "len(alphabet)"
                 }
@@ -436,7 +436,7 @@
                 {
                   "line": 10,
                   "start": 6,
-                  "text": "Jane's phone",
+                  "length": 12,
                   "hint": "lesson4.task5.docs",
                   "possible_answer": "phone_book['Jane']"
                 }
@@ -453,7 +453,7 @@
                 {
                   "line": 9,
                   "start": 6,
-                  "text": "phone_book values",
+                  "length": 17,
                   "hint": "lesson4.task6.docs",
                   "possible_answer": "phone_book.values()"
                 }
@@ -470,7 +470,7 @@
                 {
                   "line": 6,
                   "start": 6,
-                  "text": "is 'fish' in grocery_dict keys",
+                  "length": 30,
                   "hint": "lesson4.task7.docs",
                   "possible_answer": "'fish' in grocery_dict.keys()"
                 }
@@ -492,7 +492,7 @@
                 {
                   "line": 5,
                   "start": 6,
-                  "text": "John is not 23 years old",
+                  "length": 24,
                   "hint": "lesson5.task1.docs",
                   "possible_answer": "name == 'John' and age != 23"
                 }
@@ -509,7 +509,7 @@
                 {
                   "line": 5,
                   "start": 6,
-                  "text": "'name' is 'Ellis' or not ('name' equal 'John' and he is 17 years old)",
+                  "length": 69,
                   "hint": "lesson5.task2.docs",
                   "possible_answer": "name == 'Ellis' or not(name == 'John' and years == 17)"
                 }
@@ -526,7 +526,7 @@
                 {
                   "line": 9,
                   "start": 0,
-                  "text": "print 'empty' if 'tasks' is empty",
+                  "length": 33,
                   "hint": "lesson5.task3.docs",
                   "possible_answer": "if len(tasks) == 0:\n  print('empty')"
                 }
@@ -543,7 +543,7 @@
                 {
                   "line": 13,
                   "start": 0,
-                  "text": "print True is name equal to 'John' and False otherwise",
+                  "length": 54,
                   "hint": "lesson5.task4.docs",
                   "possible_answer": "if name == 'John':\n    print(True)\nelse:\n    print(False)"
                 }
@@ -565,7 +565,7 @@
                 {
                   "line": 6,
                   "start": 0,
-                  "text": "print each prime using for loop",
+                  "length": 31,
                   "hint": "lesson6.task1.docs",
                   "possible_answer": "for prime in primes:\n  print(prime)"
                 }
@@ -582,7 +582,7 @@
                 {
                   "line": 7,
                   "start": 0,
-                  "text": "count how many characters are in the hello_world using loop",
+                  "length": 59,
                   "hint": "lesson6.task2.docs",
                   "possible_answer": "for ch in hello_world:\n  length += 1"
                 }
@@ -599,7 +599,7 @@
                 {
                   "line": 11,
                   "start": 0,
-                  "text": "print all squares from 0 to 99",
+                  "length": 30,
                   "hint": "lesson6.task3.docs",
                   "possible_answer": "while count < 100:\n  count = number ** 2\n  print(count)\n num += 1"
                 }
@@ -616,7 +616,7 @@
                 {
                   "line": 13,
                   "start": 7,
-                  "text": "exit loop if animal is 'elephant'",
+                  "length": 33,
                   "hint": "lesson6.task4.docs",
                   "possible_answer": "animal == 'elephant'"
                 }
@@ -633,9 +633,48 @@
                 {
                   "line": 6,
                   "start": 7,
-                  "text": "Check if x is even",
+                  "length": 18,
                   "hint": "lesson6.task5.docs",
                   "possible_answer": "x % 2 == 0"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Functions",
+      "task_list": [
+        {
+          "name": "Function definition",
+          "test_num": 4,
+          "task_files": {
+            "functions.py": {
+              "task_windows": [
+                {
+                  "line": 11,
+                  "start": 0,
+                  "length": 58,
+                  "hint": "lesson7.task1.docs",
+                  "possible_answer": "def fun():\n  print('I want to be a function')"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Function parameters and call arguments",
+          "test_num": 4,
+          "task_files": {
+            "param_args.py": {
+              "task_windows": [
+                {
+                  "line": 5,
+                  "start": 0,
+                  "length": 71,
+                  "hint": "lesson7.task2.docs",
+                  "possible_answer": "def square(n):\n  print(n ** 2)"
                 }
               ]
             }

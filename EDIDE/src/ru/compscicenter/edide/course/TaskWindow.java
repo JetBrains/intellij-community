@@ -20,10 +20,9 @@ public class TaskWindow implements Comparable {
 
   public int line = 0;
   public int start = 0;
-  public String text = "";
   public String hint = "";
   public String possibleAnswer = "";
-  public int myLength = text.length();
+  public int length = 0;
   private TaskFile myTaskFile;
   public int myIndex = -1;
   public int myInitialLine = -1;
@@ -44,11 +43,11 @@ public class TaskWindow implements Comparable {
   }
 
   public int getLength() {
-    return myLength;
+    return length;
   }
 
   public void setLength(int length) {
-    myLength = length;
+    this.length = length;
   }
 
   public int getStart() {
@@ -81,14 +80,14 @@ public class TaskWindow implements Comparable {
     JBColor color = getColor();
     int startOffset = document.getLineStartOffset(line) + start;
     RangeHighlighter
-      rh = editor.getMarkupModel().addRangeHighlighter(startOffset, startOffset + myLength, HighlighterLayer.LAST + 1,
+      rh = editor.getMarkupModel().addRangeHighlighter(startOffset, startOffset + length, HighlighterLayer.LAST + 1,
                                                        new TextAttributes(defaultTestAttributes.getForegroundColor(),
                                                                           defaultTestAttributes.getBackgroundColor(), color,
                                                                           defaultTestAttributes.getEffectType(),
                                                                           defaultTestAttributes.getFontType()),
                                                        HighlighterTargetArea.EXACT_RANGE);
     if (drawSelection) {
-      editor.getSelectionModel().setSelection(startOffset, startOffset + myLength);
+      editor.getSelectionModel().setSelection(startOffset, startOffset + length);
     }
     if (moveCaret) {
       editor.getCaretModel().moveToOffset(startOffset);
@@ -101,7 +100,7 @@ public class TaskWindow implements Comparable {
     boolean isLineValid = line < document.getLineCount() && line >= 0;
     if (!isLineValid) return false;
     boolean isStartValid = start >= 0 && start < document.getLineEndOffset(line);
-    boolean isLengthValid = (getRealStartOffset(document) + myLength) <= document.getTextLength();
+    boolean isLengthValid = (getRealStartOffset(document) + length) <= document.getTextLength();
     return isLengthValid && isStartValid;
   }
 
@@ -127,8 +126,7 @@ public class TaskWindow implements Comparable {
   public void init(final TaskFile file, boolean isRestarted) {
     if (!isRestarted) {
       myInitialLine = line;
-      myLength = text.length();
-      myInitialLength = myLength;
+      myInitialLength = length;
       myInitialStart = start;
     }
     myTaskFile = file;
@@ -158,7 +156,7 @@ public class TaskWindow implements Comparable {
     myStatus = StudyStatus.Unchecked;
     line = myInitialLine;
     start = myInitialStart;
-    myLength = myInitialLength;
+    length = myInitialLength;
   }
 
   public String getHint() {

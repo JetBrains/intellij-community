@@ -199,6 +199,9 @@ I am a temporary file. Maybe someday, I'll become a real file.
 8. Functions
 - definition
 - call
+- argument/parameter
+- return value
+- default value
 
 9. Classes and objects
 10. Modules and packages
