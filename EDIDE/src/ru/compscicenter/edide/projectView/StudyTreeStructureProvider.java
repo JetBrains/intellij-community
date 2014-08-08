@@ -11,15 +11,13 @@ import com.intellij.psi.PsiDirectory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.compscicenter.edide.StudyTaskManager;
+import ru.compscicenter.edide.course.Course;
+import ru.compscicenter.edide.course.Task;
 import ru.compscicenter.edide.course.TaskFile;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
-/**
- * author: liana
- * data: 6/25/14.
- */
 public class StudyTreeStructureProvider implements TreeStructureProvider, DumbAware {
   @NotNull
   @Override
@@ -35,8 +33,10 @@ public class StudyTreeStructureProvider implements TreeStructureProvider, DumbAw
       if (project != null) {
         if (node.getValue() instanceof PsiDirectory) {
           PsiDirectory nodeValue = (PsiDirectory)node.getValue();
-          StudyDirectoryNode newNode = new StudyDirectoryNode(project, nodeValue, settings);
-          nodes.add(newNode);
+          if (!nodeValue.getName().contains(Task.USER_TESTS)) {
+            StudyDirectoryNode newNode = new StudyDirectoryNode(project, nodeValue, settings);
+            nodes.add(newNode);
+          }
         }
         else {
           if (parent instanceof StudyDirectoryNode) {
@@ -52,7 +52,7 @@ public class StudyTreeStructureProvider implements TreeStructureProvider, DumbAw
               }
               String parentName = parent.getName();
               if (parentName != null) {
-                if (parentName.equals("Playground")) {
+                if (parentName.equals(Course.PLAYGROUND_DIR)) {
                   nodes.add(node);
                 }
               }

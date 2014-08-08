@@ -106,22 +106,20 @@ public class StudyEditor implements FileEditor {
     myNextTaskButton = addButton(taskActionsPanel, "Next Task", StudyIcons.Next);
     myRefreshButton = addButton(taskActionsPanel, "Start task again", StudyIcons.Refresh24);
     if (!taskFile.getTask().getUserTests().isEmpty()) {
-      myWatchInputButton = addButton(taskActionsPanel, "Watch test input", StudyIcons.WatchInput);
-      myWatchInputButton.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          WatchInputAction watchInputAction = (WatchInputAction)ActionManager.getInstance().getAction("WatchInputAction");
-          watchInputAction.showInput(project);
-        }
-      });
-    }
-    if (taskFile.getTask().getTaskFiles().size() == 1) {
       JButton runButton = addButton(taskActionsPanel, "Run", StudyIcons.Run);
       runButton.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
           StudyRunAction studyRunAction = (StudyRunAction)ActionManager.getInstance().getAction("StudyRunAction");
           studyRunAction.run(project);
+        }
+      });
+      myWatchInputButton = addButton(taskActionsPanel, "Watch test input", StudyIcons.WatchInput);
+      myWatchInputButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          WatchInputAction watchInputAction = (WatchInputAction)ActionManager.getInstance().getAction("WatchInputAction");
+          watchInputAction.showInput(project);
         }
       });
     }

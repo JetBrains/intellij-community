@@ -13,7 +13,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import ru.compscicenter.edide.StudyTaskManager;
 import ru.compscicenter.edide.StudyUtils;
-import ru.compscicenter.edide.course.Course;
 import ru.compscicenter.edide.course.Lesson;
 import ru.compscicenter.edide.course.Task;
 import ru.compscicenter.edide.course.TaskFile;
@@ -54,10 +53,9 @@ abstract public class TaskNavigationAction extends DumbAwareAction {
     TaskFile nextFile = nextTask.getTaskFiles().values().iterator().next();
     if (nextFile != null) {
       VirtualFile projectDir = project.getBaseDir();
-      VirtualFile courseDir = projectDir.findChild(Course.COURSE_DIR);
       String lessonDirName = Lesson.LESSON_DIR + String.valueOf(lessonIndex + 1);
-      if (courseDir != null) {
-        VirtualFile lessonDir = courseDir.findChild(lessonDirName);
+      if (projectDir != null) {
+        VirtualFile lessonDir = projectDir.findChild(lessonDirName);
         if (lessonDir != null) {
           String taskDirName = Task.TASK_DIR + String.valueOf(nextTaskIndex + 1);
           VirtualFile taskDir = lessonDir.findChild(taskDirName);

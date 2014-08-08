@@ -30,6 +30,7 @@ public class Task {
   private Lesson myLesson;
   public int myIndex;
   public List<UserTest> userTests = new ArrayList<UserTest>();
+  public static final String USER_TESTS= "userTests";
 
   public int getTestNum() {
     return testNum;
@@ -177,7 +178,7 @@ public class Task {
   public VirtualFile getTaskDir(Project project) {
     String lessonDirName = Lesson.LESSON_DIR + String.valueOf(myLesson.getIndex() + 1);
     String taskDirName = TASK_DIR + String.valueOf(myIndex + 1);
-    VirtualFile courseDir = project.getBaseDir().findChild(Course.COURSE_DIR);
+    VirtualFile courseDir = project.getBaseDir();
     if (courseDir != null) {
       VirtualFile lessonDir = courseDir.findChild(lessonDirName);
       if (lessonDir != null) {

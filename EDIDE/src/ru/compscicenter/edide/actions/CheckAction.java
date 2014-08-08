@@ -3,6 +3,7 @@ package ru.compscicenter.edide.actions;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.ide.projectView.ProjectView;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -54,7 +55,7 @@ public class CheckAction extends DumbAwareAction {
       GeneralCommandLine commandLine = new GeneralCommandLine();
       commandLine.setWorkDirectory(myTaskDir.getPath());
       final Map<String, String> env = commandLine.getEnvironment();
-      final VirtualFile courseDir = project.getBaseDir().findChild(Course.COURSE_DIR);
+      final VirtualFile courseDir = project.getBaseDir();
       if (courseDir != null)
         env.put("PYTHONPATH", courseDir.getPath());
       if (sdk != null) {
@@ -132,6 +133,10 @@ public class CheckAction extends DumbAwareAction {
                   FileDocumentManager.getInstance().saveAllDocuments();
                   final VirtualFile taskDir = openedFile.getParent();
                   Task currentTask = selectedTaskFile.getTask();
+                  StudyRunAction runAction = (StudyRunAction)ActionManager.getInstance().getAction(StudyRunAction.ACTION_ID);
+                  if (runAction != null) {
+                    runAction.run(project);
+                  }
                   final StudyTestRunner testRunner = new StudyTestRunner(currentTask, taskDir);
                   Process testProcess = null;
                   try {
@@ -216,7 +221,7 @@ public class CheckAction extends DumbAwareAction {
             documentManager.saveDocument(windowDocument);
           }
         });
-        Process smartTestProcess = testRunner.launchTests(project, windowCopy.getNameWithoutExtension());
+        Process smartTestProcess = testRunner.launchTests(project, windowCopy.getPath());
         boolean res = testRunner.testsPassed(smartTestProcess);
         userTaskWindow.setStatus(res ? StudyStatus.Solved : StudyStatus.Failed);
         windowCopy.delete(this);

@@ -4,10 +4,6 @@ import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
 
-/**
- * author: liana
- * data: 7/7/14.
- */
 public class StudyIcons {
   private static Icon load(String path) {
     return IconLoader.getIcon(path, StudyIcons.class);

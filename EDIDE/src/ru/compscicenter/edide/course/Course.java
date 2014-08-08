@@ -2,10 +2,12 @@ package ru.compscicenter.edide.course;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,13 +57,21 @@ public class Course {
             @Override
             public void run() {
               try {
-                VirtualFile courseDir = baseDir.createChildDirectory(this, COURSE_DIR);
                 for (int i = 0; i < lessons.size(); i++) {
                   Lesson lesson = lessons.get(i);
                   lesson.setIndex(i);
-                  lesson.create(courseDir, resourceRoot);
+                  lesson.create(baseDir, resourceRoot);
                 }
                 baseDir.createChildDirectory(this, PLAYGROUND_DIR);
+                File[] files = resourceRoot.listFiles(new FilenameFilter() {
+                  @Override
+                  public boolean accept(File dir, String name) {
+                   return !name.contains(Lesson.LESSON_DIR) && !name.equals("course.json") && !name.equals("hints");
+                  }
+                });
+                for (File file: files) {
+                  FileUtil.copy(file, new File(baseDir.getPath(), file.getName()));
+                }
               }
               catch (IOException e) {
                 LOG.error(e);
