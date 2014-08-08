@@ -23,6 +23,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
 import gnu.trove.THashSet;
@@ -112,7 +113,7 @@ public class LogFilesManager implements Disposable {
     final ArrayList<LogFileOptions> logFiles = base.getAllLogFiles();
     for (LogFileOptions logFile : logFiles) {
       if (logFile.isEnabled()) {
-        addConfigurationConsoles(logFile, Condition.TRUE, logFile.getPaths());
+        addConfigurationConsoles(logFile, Conditions.<String>alwaysTrue(), logFile.getPaths());
       }
     }
     base.createAdditionalTabComponents(myManager, startedProcess);
