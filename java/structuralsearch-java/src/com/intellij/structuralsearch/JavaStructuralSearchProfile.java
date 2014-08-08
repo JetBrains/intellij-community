@@ -67,6 +67,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     }
   }
 
+  @NotNull
   public String getTypedVarString(final PsiElement element) {
     String text;
 

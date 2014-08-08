@@ -176,6 +176,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
         return false;
       }
 
+      @NotNull
       @Override
       public String getTypedVarString(PsiElement element) {
         final PsiElement initialElement = element;
