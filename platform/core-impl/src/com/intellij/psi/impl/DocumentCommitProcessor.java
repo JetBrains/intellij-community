@@ -51,20 +51,20 @@ public abstract class DocumentCommitProcessor {
   public abstract void commitAsynchronously(@NotNull final Project project, @NotNull final Document document, @NonNls @NotNull Object reason);
 
   protected static class CommitTask {
-    public final Document document;
-    public final Project project;
+    @NotNull public final Document document;
+    @NotNull public final Project project;
 
     // when queued it's not started
     // when dequeued it's started
     // when failed it's canceled
-    public final ProgressIndicator indicator; // progress to commit this doc under.
-    public final Object reason;
+    @NotNull public final ProgressIndicator indicator; // progress to commit this doc under.
+    @NotNull public final Object reason;
     public boolean removed; // task marked as removed, should be ignored.
 
     public CommitTask(@NotNull Document document,
-                       @NotNull Project project,
-                       @NotNull ProgressIndicator indicator,
-                       @NotNull Object reason) {
+                      @NotNull Project project,
+                      @NotNull ProgressIndicator indicator,
+                      @NotNull Object reason) {
       this.document = document;
       this.project = project;
       this.indicator = indicator;
