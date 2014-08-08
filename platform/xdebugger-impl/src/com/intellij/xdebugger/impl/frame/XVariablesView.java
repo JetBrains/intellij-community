@@ -22,6 +22,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode.createInfoMessage;
 
@@ -29,16 +30,13 @@ import static com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode.createIn
  * @author nik
  */
 public class XVariablesView extends XVariablesViewBase {
-  @NotNull private final XDebugSession mySession;
-
-  public XVariablesView(@NotNull XDebugSession session) {
-    super(session.getProject(), session.getDebugProcess().getEditorsProvider(), ((XDebugSessionImpl)session).getValueMarkers());
-    mySession = session;
+  public XVariablesView(@NotNull XDebugSessionImpl session) {
+    super(session.getProject(), session.getDebugProcess().getEditorsProvider(), session.getValueMarkers());
   }
 
   @Override
-  public void processSessionEvent(@NotNull final SessionEvent event) {
-    XStackFrame stackFrame = mySession.getCurrentStackFrame();
+  public void processSessionEvent(@NotNull final SessionEvent event, @NotNull XDebugSession session) {
+    XStackFrame stackFrame = session.getCurrentStackFrame();
     XDebuggerTree tree = getTree();
 
     if (event == SessionEvent.BEFORE_RESUME || event == SessionEvent.SETTINGS_CHANGED) {
@@ -54,20 +52,21 @@ public class XVariablesView extends XVariablesViewBase {
       buildTreeAndRestoreState(stackFrame);
     }
     else {
-      requestClear();
+      requestClear(session);
     }
   }
 
-  protected void clear() {
+  @Override
+  protected void clear(@Nullable XDebugSession session) {
     XDebuggerTree tree = getTree();
     tree.setSourcePosition(null);
 
     XDebuggerTreeNode node;
-    if (!mySession.isStopped() && mySession.isPaused()) {
+    if (session == null || (!session.isStopped() && session.isPaused())) {
       node = createInfoMessage(tree, "Frame is not available");
     }
     else {
-      XDebugProcess debugProcess = mySession.getDebugProcess();
+      XDebugProcess debugProcess = session.getDebugProcess();
       node = createInfoMessage(tree, debugProcess.getCurrentStateMessage(), debugProcess.getCurrentStateHyperlinkListener());
     }
     tree.setRoot(node, true);

@@ -23,9 +23,11 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
@@ -36,18 +38,17 @@ import java.util.*;
  * Date: 01-Feb-2006
  */
 public class LogFilesManager implements Disposable {
-  public static final Logger LOG = Logger.getInstance("#" + LogFilesManager.class.getName());
+  public static final Logger LOG = Logger.getInstance(LogFilesManager.class);
 
   private static final int UPDATE_INTERVAL = 500;
 
   private final Map<LogFileOptions, Set<String>> myLogFileManagerMap = new LinkedHashMap<LogFileOptions, Set<String>>();
-  private final Map<LogFileOptions, RunConfigurationBase> myLogFileToConfiguration = new HashMap<LogFileOptions, RunConfigurationBase>();
   private final Runnable myUpdateRequest;
   private final LogConsoleManager myManager;
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
   private boolean myDisposed;
 
-  public LogFilesManager(final Project project, LogConsoleManager manager, Disposable parentDisposable) {
+  public LogFilesManager(@NotNull final Project project, LogConsoleManager manager, Disposable parentDisposable) {
     myManager = manager;
     Disposer.register(parentDisposable, this);
 
@@ -86,12 +87,11 @@ public class LogFilesManager implements Disposable {
     };
   }
 
-  public void registerFileMatcher(final RunConfigurationBase runConfiguration) {
+  public void registerFileMatcher(@NotNull RunConfigurationBase runConfiguration) {
     final ArrayList<LogFileOptions> logFiles = runConfiguration.getAllLogFiles();
     for (LogFileOptions logFile : logFiles) {
       if (logFile.isEnabled()) {
         myLogFileManagerMap.put(logFile, logFile.getPaths());
-        myLogFileToConfiguration.put(logFile, runConfiguration);
       }
     }
     Alarm updateAlarm = myUpdateAlarm;
@@ -108,11 +108,11 @@ public class LogFilesManager implements Disposable {
     }
   }
 
-  public void initLogConsoles(RunConfigurationBase base, ProcessHandler startedProcess) {
-    final ArrayList<LogFileOptions> logFiles = base.getAllLogFiles();
+  public void initLogConsoles(@NotNull RunConfigurationBase base, ProcessHandler startedProcess) {
+    List<LogFileOptions> logFiles = base.getAllLogFiles();
     for (LogFileOptions logFile : logFiles) {
       if (logFile.isEnabled()) {
-        addConfigurationConsoles(logFile, Condition.TRUE, logFile.getPaths());
+        addConfigurationConsoles(logFile, Conditions.<String>alwaysTrue(), logFile.getPaths());
       }
     }
     base.createAdditionalTabComponents(myManager, startedProcess);

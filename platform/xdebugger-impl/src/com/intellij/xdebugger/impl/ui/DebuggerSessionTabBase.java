@@ -100,13 +100,13 @@ public abstract class DebuggerSessionTabBase extends LogConsoleManagerBase imple
     return myUi;
   }
 
-  protected void registerFileMatcher(final RunProfile runConfiguration) {
+  protected void registerFileMatcher(@NotNull RunProfile runConfiguration) {
     if (runConfiguration instanceof RunConfigurationBase) {
       myManager.registerFileMatcher((RunConfigurationBase)runConfiguration);
     }
   }
 
-  protected void initLogConsoles(final RunProfile runConfiguration, final ProcessHandler processHandler, ExecutionConsole console) {
+  protected void initLogConsoles(@NotNull RunProfile runConfiguration, final ProcessHandler processHandler, ExecutionConsole console) {
     if (runConfiguration instanceof RunConfigurationBase) {
       myManager.initLogConsoles((RunConfigurationBase)runConfiguration, processHandler);
       OutputFileUtil.attachDumpListener((RunConfigurationBase)runConfiguration, processHandler, console);

@@ -636,8 +636,9 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     myManager.addContentManagerListener(new ContentManagerListener() {
       @Override
       public void contentAdded(final ContentManagerEvent event) {
-        final GridImpl grid = getGridFor(event.getContent(), true);
+        initUi();
 
+        GridImpl grid = getGridFor(event.getContent(), true);
         if (grid == null) {
           return;
         }

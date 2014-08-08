@@ -314,7 +314,7 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   private void initSessionTab(@Nullable RunContentDescriptor contentToReuse) {
-    mySessionTab = new XDebugSessionTab(myProject, this, myIcon, myEnvironment, contentToReuse);
+    mySessionTab = XDebugSessionTab.create(this, myIcon, myEnvironment, contentToReuse);
     myDebugProcess.sessionInitialized();
   }
 
@@ -849,6 +849,10 @@ public class XDebugSessionImpl implements XDebugSession {
     myDebugProcess.stop();
     if (!myProject.isDisposed()) {
       myProject.getMessageBus().syncPublisher(XDebuggerManager.TOPIC).processStopped(myDebugProcess);
+    }
+
+    if (mySessionTab != null) {
+      mySessionTab.detachFromSession();
     }
 
     adjustMouseTrackingCounter(myCurrentPosition, -1);

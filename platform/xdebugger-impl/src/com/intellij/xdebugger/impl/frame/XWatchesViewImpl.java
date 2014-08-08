@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XStackFrame;
@@ -69,15 +70,13 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
   private XDebuggerTreeState myTreeState;
   private XDebuggerTreeRestorer myTreeRestorer;
   private final WatchesRootNode myRootNode;
-  @NotNull private final XDebugSessionImpl mySession;
   private final JPanel myDecoratedPanel;
   private final CompositeDisposable myDisposables = new CompositeDisposable();
   private boolean myRebuildNeeded;
 
-  public XWatchesViewImpl(@NotNull final XDebugSessionImpl session) {
-    mySession = session;
+  public XWatchesViewImpl(@NotNull XDebugSessionImpl session) {
     myTreePanel = new XDebuggerTreePanel(session.getProject(), session.getDebugProcess().getEditorsProvider(), this, null,
-                                         XDebuggerActions.WATCHES_TREE_POPUP_GROUP, ((XDebugSessionImpl)session).getValueMarkers());
+                                         XDebuggerActions.WATCHES_TREE_POPUP_GROUP, session.getValueMarkers());
 
     ActionManager actionManager = ActionManager.getInstance();
 
@@ -89,7 +88,7 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
     actionManager.getAction(XDebuggerActions.XEDIT_WATCH).registerCustomShortcutSet(f2Shortcut, tree);
 
     DnDManager.getInstance().registerTarget(this, tree);
-    myRootNode = new WatchesRootNode(tree, session, this, session.getSessionData().getWatchExpressions());
+    myRootNode = new WatchesRootNode(tree, this, session.getSessionData().getWatchExpressions());
     tree.setRoot(myRootNode, false);
 
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTreePanel.getTree()).disableUpDownActions();
@@ -134,6 +133,7 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
         DataContext context = DataManager.getInstance().getDataContext(watchTree);
         final AnActionEvent actionEvent = new AnActionEvent(null, context, "WATCH_TREE", presentation, ActionManager.getInstance(), 0);
         Runnable runnable = new Runnable() {
+          @Override
           public void run() {
             editWatchAction.actionPerformed(actionEvent);
           }
@@ -219,15 +219,20 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
 
   @Override
   public void addWatchExpression(@NotNull XExpression expression, int index, final boolean navigateToWatchNode) {
-    myRootNode.addWatchExpression(mySession.getDebugProcess().getEvaluator(), expression, index, navigateToWatchNode);
+    XDebugSession session = getSession(getTree());
+    if (session == null) {
+      return;
+    }
+
+    myRootNode.addWatchExpression(session.getDebugProcess().getEvaluator(), expression, index, navigateToWatchNode);
     updateSessionData();
     if (navigateToWatchNode) {
-      showWatchesTab();
+      showWatchesTab((XDebugSessionImpl)session);
     }
   }
 
-  private void showWatchesTab() {
-    XDebugSessionTab tab = mySession.getSessionTab();
+  private static void showWatchesTab(@NotNull XDebugSessionImpl session) {
+    XDebugSessionTab tab = session.getSessionTab();
     if (tab != null) {
       tab.toFront(false);
       // restore watches tab if minimized
@@ -246,7 +251,7 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
   }
 
   @Override
-  public void processSessionEvent(@NotNull final SessionEvent event) {
+  public void processSessionEvent(@NotNull final SessionEvent event, @NotNull XDebugSession session) {
     if (getMainPanel().isShowing() || ApplicationManager.getApplication().isUnitTestMode()) {
       myRebuildNeeded = false;
     }
@@ -255,7 +260,7 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
       return;
     }
 
-    XStackFrame stackFrame = mySession.getCurrentStackFrame();
+    XStackFrame stackFrame = session.getCurrentStackFrame();
     XDebuggerTree tree = myTreePanel.getTree();
 
     if (event == SessionEvent.BEFORE_RESUME || event == SessionEvent.SETTINGS_CHANGED) {
@@ -277,11 +282,12 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
       }
     }
     else {
-      requestClear();
+      requestClear(session);
     }
   }
 
-  protected void clear() {
+  @Override
+  protected void clear(@Nullable XDebugSession session) {
     getTree().setSourcePosition(null);
     myRootNode.updateWatches(null);
   }
@@ -295,7 +301,7 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
   }
 
   @Override
-  public void removeWatches(final List<? extends XDebuggerTreeNode> nodes) {
+  public void removeWatches(List<? extends XDebuggerTreeNode> nodes) {
     List<? extends WatchNode> children = myRootNode.getAllChildren();
     int minIndex = Integer.MAX_VALUE;
     List<XDebuggerTreeNode> toRemove = new ArrayList<XDebuggerTreeNode>();
@@ -333,7 +339,11 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
         watchExpressions.add(child.getExpression());
       }
     }
-    mySession.setWatchExpressions(watchExpressions.toArray(new XExpression[watchExpressions.size()]));
+
+    XDebugSession session = getSession(getTree());
+    if (session != null) {
+      ((XDebugSessionImpl)session).setWatchExpressions(watchExpressions.toArray(new XExpression[watchExpressions.size()]));
+    }
   }
 
   @Override
@@ -353,13 +363,14 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
   }
 
   @Override
-  public void drop(final DnDEvent aEvent) {
+  public void drop(DnDEvent aEvent) {
     Object object = aEvent.getAttachedObject();
     if (object instanceof XValueNodeImpl[]) {
       final XValueNodeImpl[] nodes = (XValueNodeImpl[])object;
       for (XValueNodeImpl node : nodes) {
         String expression = node.getValueContainer().getEvaluationExpression();
         if (expression != null) {
+          //noinspection ConstantConditions
           addWatchExpression(XExpressionImpl.fromText(expression), -1, false);
         }
       }
@@ -367,6 +378,7 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
     else if (object instanceof EventInfo) {
       String text = ((EventInfo)object).getTextForFlavor(DataFlavor.stringFlavor);
       if (text != null) {
+        //noinspection ConstantConditions
         addWatchExpression(XExpressionImpl.fromText(text), -1, false);
       }
     }
