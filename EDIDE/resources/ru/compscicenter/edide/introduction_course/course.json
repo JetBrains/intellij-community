@@ -679,6 +679,54 @@
               ]
             }
           }
+        },
+        {
+          "name": "Function return value",
+          "test_num": 4,
+          "task_files": {
+            "return_keyword.py": {
+              "task_windows": [
+                {
+                  "line": 10,
+                  "start": 11,
+                  "length": 20,
+                  "hint": "lesson7.task3.1.docs",
+                  "possible_answer": "0, 1"
+                },
+                {
+                  "line": 14,
+                  "start": 8,
+                  "length": 17,
+                  "hint": "lesson7.task3.2.docs",
+                  "possible_answer": "b = a + b"
+                },
+                {
+                  "line": 15,
+                  "start": 8,
+                  "length": 17,
+                  "hint": "lesson7.task3.3.docs",
+                  "possible_answer": "a = tmp_var"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Function default parameters",
+          "test_num": 4,
+          "task_files": {
+            "default_parameter.py": {
+              "task_windows": [
+                {
+                  "line": 7,
+                  "start": 10,
+                  "length": 55,
+                  "hint": "lesson7.task4.docs",
+                  "possible_answer": "subject, name='John'"
+                }
+              ]
+            }
+          }
         }
       ]
     }
