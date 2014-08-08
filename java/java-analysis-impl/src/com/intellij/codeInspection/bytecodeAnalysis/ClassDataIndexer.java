@@ -190,7 +190,7 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
 
                 // specialized version working over bit masks
                 boolean[] leakingParameters = maybeLeakingParameter ?
-                                              (argumentTypes.length < 0 ? cfg.fastLeakingParameters(className, methodNode) : cfg.leakingParameters(className, methodNode)) :
+                                              (argumentTypes.length < 32 ? cfg.fastLeakingParameters(className, methodNode) : cfg.leakingParameters(className, methodNode)) :
                                               null;
 
                 if (isReferenceResult) {

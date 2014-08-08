@@ -718,7 +718,7 @@ class ParametersUsage extends Interpreter<ParamsValue> {
 
 class IParametersUsage extends Interpreter<IParamsValue> {
   static final IParamsValue val1 = new IParamsValue(0, 1);
-  static final IParamsValue val2 = new IParamsValue(0, 1);
+  static final IParamsValue val2 = new IParamsValue(0, 2);
   int called = -1;
   final int rangeStart;
   final int rangeEnd;
