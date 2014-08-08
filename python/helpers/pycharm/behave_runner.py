@@ -145,6 +145,8 @@ class _BehaveRunner(_bdd_utils.BddRunner):
                     trace = traceback.format_exc()
                 except Exception:
                     trace = "".join(traceback.format_tb(element.exc_traceback))
+                if trace in str(element.error_message):
+                    trace = None  # No reason to duplicate output (see PY-13647)
                 self._test_failed(element.name, element.error_message, trace)
             elif element.status == 'undefined':
                 self._test_undefined(element.name, element.location)
