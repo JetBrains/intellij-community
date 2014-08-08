@@ -138,7 +138,8 @@ public class SliceUtil {
       }
     }
     if (expression instanceof PsiMethodCallExpression) { // ctr call can't return value or be container get, so don't use PsiCall here
-      Flow anno = isMethodFlowAnnotated(((PsiMethodCallExpression)expression).resolveMethod());
+      PsiMethod method = ((PsiMethodCallExpression)expression).resolveMethod();
+      Flow anno = isMethodFlowAnnotated(method);
       if (anno != null) {
         String target = anno.target();
         if (target.equals(Flow.DEFAULT_TARGET)) target = Flow.RETURN_METHOD_TARGET;

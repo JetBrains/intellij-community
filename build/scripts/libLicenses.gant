@@ -278,6 +278,7 @@ libraryLicense(name: "ANTLR 4 Runtime", libraryName: "antlr-runtime-4.1.jar", ve
 libraryLicense(name: "minlog", libraryName: "minlog-1.2.jar", version: "1.2", license: "BSD", url: "https://github.com/EsotericSoftware/minlog", licenseUrl: "http://opensource.org/licenses/BSD-3-Clause")
 libraryLicense(name: "ReflectASM", libraryName: "reflectasm-1.0.7.jar", version: "1.0.7", license: "BSD", url: "https://github.com/EsotericSoftware/reflectasm", licenseUrl: "http://opensource.org/licenses/BSD-3-Clause")
 libraryLicense(name: "Objenesis", libraryName: "objenesis-1.2.jar", version: "1.2", license: "Apache 2.0", url: "http://objenesis.org/", licenseUrl: "http://apache.org/licenses/LICENSE-2.0")
+libraryLicense(name: "EditorConfig Java Core", libraryName: "editorconfig-core-java.jar", version: "1.0", license: "Apache 2.0", url: "https://github.com/editorconfig/editorconfig-core-java/", licenseUrl: "https://github.com/editorconfig/editorconfig-core-java/blob/master/LICENSE")
 jetbrainsLibrary("Coverage")
 jetbrainsLibrary("CoverageReport")
 jetbrainsLibrary("JPS")

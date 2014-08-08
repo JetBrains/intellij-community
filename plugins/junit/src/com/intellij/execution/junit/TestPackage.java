@@ -43,7 +43,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -442,7 +441,7 @@ public class TestPackage extends TestObject {
                                     : DefaultRunExecutor.getRunExecutorInstance();
           final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), myConfiguration);
           assert runner != null;
-          runner.execute(new ExecutionEnvironmentBuilder(myEnvironment).setContentToReuse(null).build());
+          runner.execute(new ExecutionEnvironmentBuilder(myEnvironment).contentToReuse(null).build());
           final Balloon balloon = myToolWindowManager.getToolWindowBalloon(myTestRunDebugId);
           if (balloon != null) {
             balloon.hide();

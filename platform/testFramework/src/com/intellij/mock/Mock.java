@@ -321,10 +321,6 @@ public class Mock {
     public void closeAllFiles() {
     }
 
-    public Editor openTextEditorEnsureNoFocus(@NotNull OpenFileDescriptor descriptor) {
-      return null;
-    }
-
     @Override
     @NotNull
     public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
@@ -558,52 +554,55 @@ public class Mock {
       return false;
     }
 
+    @NotNull
     @Override
     public ToolWindow registerToolWindow(@NotNull String id, @NotNull JComponent component, @NotNull ToolWindowAnchor anchor) {
-      return null;
+      throw new RuntimeException();
     }
 
+    @NotNull
     @Override
     public ToolWindow registerToolWindow(@NotNull String id,
                                          @NotNull JComponent component,
                                          @NotNull ToolWindowAnchor anchor,
                                          Disposable parentDisposable,
                                          boolean canWorkInDumbMode, boolean canCloseContents) {
-      return null;
+      throw new RuntimeException();
     }
 
+    @NotNull
     @Override
     public ToolWindow registerToolWindow(@NotNull String id,
                                          @NotNull JComponent component,
                                          @NotNull ToolWindowAnchor anchor,
                                          Disposable parentDisposable,
                                          boolean canWorkInDumbMode) {
-      return null;
+      throw new RuntimeException();
     }
 
+    @NotNull
     @Override
-    public ToolWindow registerToolWindow(@NotNull String id, @NotNull JComponent component, @NotNull ToolWindowAnchor anchor, Disposable parentDisposable) {
-      return null;
+    public ToolWindow registerToolWindow(@NotNull String id, @NotNull JComponent component, @NotNull ToolWindowAnchor anchor, @NotNull Disposable parentDisposable) {
+      throw new RuntimeException();
     }
 
+    @NotNull
     @Override
     public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor) {
-      return null;
+      throw new RuntimeException();
     }
 
+    @NotNull
     @Override
     public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor,
                                          final Disposable parentDisposable, final boolean dumbAware) {
-      return null;
+      throw new RuntimeException();
     }
 
+    @NotNull
     @Override
     public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor, final boolean secondary) {
-      return null;
-    }
-
-    public JComponent getFocusTargetFor(final JComponent comp) {
-      return null;
+      throw new RuntimeException();
     }
 
     @Override
@@ -614,19 +613,12 @@ public class Mock {
     public void activateEditorComponent() {
     }
 
-    public ActionCallback requestFocus(final Component c, final boolean forced) {
-      return new ActionCallback.Done();
-    }
-
-    public ActionCallback requestFocus(final ActiveRunnable command, final boolean forced) {
-      return new ActionCallback.Done();
-    }
-
     @Override
     public boolean isEditorComponentActive() {
       return false;
     }
 
+    @NotNull
     @Override
     public String[] getToolWindowIds() {
       return ArrayUtil.EMPTY_STRING_ARRAY;
@@ -643,9 +635,10 @@ public class Mock {
     }
 
     @Override
-    public void invokeLater(Runnable runnable) {
+    public void invokeLater(@NotNull Runnable runnable) {
     }
 
+    @NotNull
     @Override
     public IdeFocusManager getFocusManager() {
       return IdeFocusManagerHeadless.INSTANCE;

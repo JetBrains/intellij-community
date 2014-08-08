@@ -1,0 +1,30 @@
+<idea-plugin version="2">
+  <id>org.editorconfig.editorconfigjetbrains</id>
+  <name>EditorConfig</name>
+  <version>1.0</version>
+  <vendor url="http://editorconfig.org">Kevin Bell, JetBrains</vendor>
+
+  <description><![CDATA[
+      A JetBrains IDE plugin supporting the EditorConfig standard
+      ]]></description>
+
+  <idea-version since-build="138.1293"/>
+
+  <depends>com.intellij.modules.lang</depends>
+
+  <application-components>
+      <component>
+          <implementation-class>org.editorconfig.plugincomponents.SettingsProviderComponent</implementation-class>
+      </component>
+  </application-components>
+
+  <project-components>
+      <component>
+          <implementation-class>org.editorconfig.plugincomponents.ConfigProjectComponent</implementation-class>
+      </component>
+  </project-components>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+  </extensions>
+</idea-plugin>

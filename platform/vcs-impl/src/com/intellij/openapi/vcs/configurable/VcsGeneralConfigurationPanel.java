@@ -36,7 +36,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-public class VcsGeneralConfigurationPanel implements SearchableConfigurable {
+public class VcsGeneralConfigurationPanel {
 
   private JCheckBox myForceNonEmptyComment;
   private JCheckBox myShowReadOnlyStatusDialog;
@@ -294,29 +294,4 @@ public class VcsGeneralConfigurationPanel implements SearchableConfigurable {
     return StringUtil.join(result, ", ");
   }
 
-  @Nls
-  public String getDisplayName() {
-    return "Confirmation";
-  }
-
-  @NotNull
-  public String getHelpTopic() {
-    return "project.propVCSSupport.Confirmation";
-  }
-
-  public JComponent createComponent() {
-    return getPanel();
-  }
-
-  public void disposeUIResources() {
-  }
-
-  @NotNull
-  public String getId() {
-    return getHelpTopic();
-  }
-
-  public Runnable enableSearch(String option) {
-    return null;
-  }
 }

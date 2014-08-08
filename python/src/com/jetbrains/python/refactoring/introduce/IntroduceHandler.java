@@ -192,7 +192,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     String text = expression.getText();
     final Pair<PsiElement, TextRange> selection = expression.getUserData(PyReplaceExpressionUtil.SELECTION_BREAKS_AST_NODE);
     if (selection != null) {
-      text = selection.getSecond().substring(text);
+      text = selection.getSecond().substring(selection.getFirst().getText());
     }
     if (expression instanceof PyCallExpression) {
       final PyExpression callee = ((PyCallExpression)expression).getCallee();

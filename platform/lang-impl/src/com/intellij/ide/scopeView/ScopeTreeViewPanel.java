@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -252,7 +252,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
 
   public void selectScope(final NamedScope scope) {
     refreshScope(scope);
-    if (scope != DefaultScopesProvider.getAllScope() && scope != null) {
+    if (scope != CustomScopesProviderEx.getAllScope() && scope != null) {
       CURRENT_SCOPE_NAME = scope.getName();
     }
   }
@@ -323,7 +323,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   public void refreshScope(@Nullable NamedScope scope) {
     FileTreeModelBuilder.clearCaches(myProject);
     if (scope == null) { //was deleted
-      scope = DefaultScopesProvider.getAllScope();
+      scope = CustomScopesProviderEx.getAllScope();
     }
     LOG.assertTrue(scope != null);
     final NamedScopesHolder holder = NamedScopesHolder.getHolder(myProject, scope.getName(), myDependencyValidationManager);
@@ -364,7 +364,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   protected NamedScope getCurrentScope() {
     NamedScope scope = NamedScopesHolder.getScope(myProject, CURRENT_SCOPE_NAME);
     if (scope == null) {
-      scope = DefaultScopesProvider.getAllScope();
+      scope = CustomScopesProviderEx.getAllScope();
     }
     LOG.assertTrue(scope != null);
     return scope;
@@ -888,6 +888,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
       return null;
     }
 
+    @NotNull
     @Override
     public PsiDirectory[] getDirectories() {
       PsiDirectory directory = getDirectory();

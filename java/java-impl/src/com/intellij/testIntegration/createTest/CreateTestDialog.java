@@ -181,7 +181,7 @@ public class CreateTestDialog extends DialogWrapper {
       }
     });
 
-    myTargetClassNameField = new EditorTextField(targetClass.getName() + "Test");
+    myTargetClassNameField = new EditorTextField(suggestTestClassName(targetClass));
     myTargetClassNameField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       public void documentChanged(DocumentEvent e) {
@@ -215,6 +215,10 @@ public class CreateTestDialog extends DialogWrapper {
     restoreShowInheritedMembersStatus();
     myMethodsTable = new MemberSelectionTable(Collections.<MemberInfo>emptyList(), null);
     updateMethodsTable();
+  }
+
+  protected String suggestTestClassName(PsiClass targetClass) {
+    return targetClass.getName() + "Test";
   }
 
   private boolean isSuperclassSelectedManually() {

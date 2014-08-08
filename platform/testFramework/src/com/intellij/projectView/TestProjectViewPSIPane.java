@@ -1,8 +1,22 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.projectView;
 
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
-import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
 import com.intellij.ide.projectView.impl.ProjectTreeBuilder;
@@ -10,10 +24,7 @@ import com.intellij.ide.projectView.impl.ProjectViewTree;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.AlphaComparator;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -24,21 +35,18 @@ import javax.swing.tree.DefaultTreeModel;
 * @author yole
 */
 class TestProjectViewPSIPane extends AbstractProjectViewPSIPane {
-  private TestProjectTreeStructure myTestTreeStructure;
+  private final TestProjectTreeStructure myTestTreeStructure;
+  private final int myWeight;
 
-  public TestProjectViewPSIPane(Project project, TestProjectTreeStructure treeStructure) {
+  public TestProjectViewPSIPane(Project project, TestProjectTreeStructure treeStructure, int weight) {
     super(project);
     myTestTreeStructure = treeStructure;
+    myWeight = weight;
   }
 
   @Override
   public SelectInTarget createSelectInTarget() {
     return null;
-  }
-
-  @NonNls
-  public String getComponentName() {
-    return "comp name";
   }
 
   @Override
@@ -54,11 +62,6 @@ class TestProjectViewPSIPane extends AbstractProjectViewPSIPane {
       @Override
       protected AbstractTreeUpdater createUpdater() {
         return createTreeUpdater(this);
-      }
-
-      protected void addTaskToWorker(final Runnable runnable, boolean first, final Runnable postRunnable) {
-        runnable.run();
-        postRunnable.run();
       }
     };
   }
@@ -96,26 +99,6 @@ class TestProjectViewPSIPane extends AbstractProjectViewPSIPane {
 
   @Override
   public int getWeight() {
-    return 0;
-  }
-
-  public void projectOpened() {
-    final Runnable runnable = new DumbAwareRunnable() {
-      @Override
-      public void run() {
-        final ProjectView projectView = ProjectView.getInstance(myProject);
-        projectView.addProjectPane(TestProjectViewPSIPane.this);
-      }
-    };
-    StartupManager.getInstance(myProject).registerPostStartupActivity(runnable);
-  }
-
-  public void projectClosed() {
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
-
+    return myWeight;
   }
 }

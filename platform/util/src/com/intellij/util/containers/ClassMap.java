@@ -16,6 +16,7 @@
 package com.intellij.util.containers;
 
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Map;
@@ -29,18 +30,18 @@ public class ClassMap<T> {
   public ClassMap() {
     this(new THashMap<Class, T>());
   }
-  protected ClassMap(Map<Class, T> map) {
+  protected ClassMap(@NotNull Map<Class, T> map) {
     myMap = map; 
   }
 
-  public void put(Class aClass, T value) {
+  public void put(@NotNull Class aClass, T value) {
     myMap.put(aClass, value);
   }
-  public void remove(Class aClass) {
+  public void remove(@NotNull Class aClass) {
     myMap.remove(aClass);
   }
 
-  public T get(Class aClass) {
+  public T get(@NotNull Class aClass) {
     T t = myMap.get(aClass);
     if (t != null) {
       return t;
@@ -63,6 +64,7 @@ public class ClassMap<T> {
     return null;
   }
 
+  @NotNull
   public final Collection<T> values() {
     return myMap.values();
   }

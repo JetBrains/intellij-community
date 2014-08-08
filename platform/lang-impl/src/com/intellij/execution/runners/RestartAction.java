@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package com.intellij.execution.runners;
 
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.ExecutionManager;
-import com.intellij.execution.Executor;
-import com.intellij.execution.ExecutorRegistry;
+import com.intellij.execution.*;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
@@ -38,9 +35,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * @author dyoma
- */
 public class RestartAction extends FakeRerunAction implements DumbAware, AnAction.TransparentUpdate, Disposable {
   private final ProgramRunner myRunner;
   @NotNull private final RunContentDescriptor myDescriptor;
@@ -48,13 +42,25 @@ public class RestartAction extends FakeRerunAction implements DumbAware, AnActio
   private final ExecutionEnvironment myEnvironment;
 
   public RestartAction(@NotNull Executor executor,
-                       @NotNull ProgramRunner runner,
                        @NotNull RunContentDescriptor descriptor,
-                       @NotNull ExecutionEnvironment env) {
+                       @NotNull ExecutionEnvironment environment) {
+    //noinspection deprecation
+    this(executor, null, descriptor, environment);
+  }
+
+  @Deprecated
+  /**
+   * @deprecated environment must provide runner id
+   * to remove in IDEA 15
+   */
+  public RestartAction(@NotNull Executor executor,
+                       @Nullable ProgramRunner runner,
+                       @NotNull RunContentDescriptor descriptor,
+                       @NotNull ExecutionEnvironment environment) {
     Disposer.register(descriptor, this);
     registry.add(this);
 
-    myEnvironment = env;
+    myEnvironment = environment;
     getTemplatePresentation().setEnabled(false);
     myRunner = runner;
     myDescriptor = descriptor;
@@ -115,9 +121,14 @@ public class RestartAction extends FakeRerunAction implements DumbAware, AnActio
 
   public void restart() {
     Project project = myEnvironment.getProject();
-    if (!ExecutorRegistry.getInstance().isStarting(project, myExecutor.getId(), myRunner.getRunnerId())) {
-      ExecutionManager.getInstance(project).restartRunProfile(myRunner, myEnvironment, myDescriptor);
+    if (!ExecutorRegistry.getInstance().isStarting(project, myExecutor.getId(), getRunnerId())) {
+      ProgramRunner runner = myRunner == null ? RunnerRegistry.getInstance().findRunnerById(myEnvironment.getRunnerId()) : myRunner;
+      ExecutionManager.getInstance(project).restartRunProfile(runner, myEnvironment, myDescriptor);
     }
+  }
+
+  private String getRunnerId() {
+    return myRunner == null ? myEnvironment.getRunnerId() : myRunner.getRunnerId();
   }
 
   @Override
@@ -134,7 +145,7 @@ public class RestartAction extends FakeRerunAction implements DumbAware, AnActio
 
   boolean isEnabled() {
     ProcessHandler processHandler = myDescriptor.getProcessHandler();
-    return !ExecutorRegistry.getInstance().isStarting(myEnvironment.getProject(), myExecutor.getId(), myRunner.getRunnerId()) &&
+    return !ExecutorRegistry.getInstance().isStarting(myEnvironment.getProject(), myExecutor.getId(), getRunnerId()) &&
            !(processHandler != null && processHandler.isProcessTerminating());
   }
 

@@ -30,6 +30,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -67,6 +68,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -85,6 +87,7 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhan
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParamsEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.spock.SpockUtils;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -768,6 +771,8 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
     private void checkOperator(CallInfo<? extends GrBinaryExpression> info) {
       if (hasErrorElements(info.getCall())) return;
 
+      if (isSpockTimesOperator(info.getCall())) return;
+
       GroovyResolveResult[] results = info.multiResolve();
       GroovyResolveResult resolveResult = info.advancedResolve();
 
@@ -785,6 +790,20 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
         registerError(info.getElementToHighlight(), GroovyBundle.message("method.call.is.ambiguous"));
       }
+    }
+
+    private static boolean isSpockTimesOperator(GrBinaryExpression call) {
+      if (call.getOperationTokenType() == GroovyTokenTypes.mSTAR && PsiUtil.isExpressionStatement(call)) {
+        GrExpression operand = call.getLeftOperand();
+        if (operand instanceof GrLiteral && TypesUtil.isNumericType(operand.getType())) {
+          PsiClass aClass = PsiUtil.getContextClass(call);
+          if (InheritanceUtil.isInheritor(aClass, false, SpockUtils.SPEC_CLASS_NAME)) {
+            return true;
+          }
+        }
+      }
+
+      return false;
     }
 
     private static boolean isOperatorWithSimpleTypes(GrBinaryExpression binary, GroovyResolveResult result) {

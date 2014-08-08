@@ -162,6 +162,7 @@ public class ScopeViewPane extends AbstractProjectViewPane {
   public void addToolbarActions(DefaultActionGroup actionGroup) {
     actionGroup.add(ActionManager.getInstance().getAction("ScopeView.EditScopes"));
     actionGroup.addAction(new ShowModulesAction(myProject){
+      @NotNull
       @Override
       protected String getId() {
         return ScopeViewPane.this.getId();
@@ -169,6 +170,7 @@ public class ScopeViewPane extends AbstractProjectViewPane {
     }).setAsSecondary(true);
   }
 
+  @NotNull
   @Override
   public ActionCallback updateFromRoot(boolean restoreExpandedPaths) {
     saveExpandedPaths();
@@ -249,14 +251,13 @@ public class ScopeViewPane extends AbstractProjectViewPane {
     if (data != null) {
       return data;
     }
-    return myViewPanel != null ? myViewPanel.getData(dataId) : null;
+    return myViewPanel == null ? null : myViewPanel.getData(dataId);
   }
 
   @NotNull
   @Override
   public ActionCallback getReady(@NotNull Object requestor) {
     final ActionCallback callback = myViewPanel.getActionCallback();
-    return myViewPanel == null ? new ActionCallback.Rejected() :
-           callback != null ? callback : new ActionCallback.Done();
+    return callback == null ? new ActionCallback.Done() : callback;
   }
 }

@@ -196,12 +196,12 @@ public class DomUIFactoryImpl extends DomUIFactory {
   }
 
   @Override
-  public void registerCustomControl(Class aClass, Function<DomWrapper<String>, BaseControl> creator) {
+  public void registerCustomControl(@NotNull Class aClass, Function<DomWrapper<String>, BaseControl> creator) {
     myCustomControlCreators.put(aClass, creator);
   }
 
   @Override
-  public void registerCustomCellEditor(final Class aClass, final Function<DomElement, TableCellEditor> creator) {
+  public void registerCustomCellEditor(@NotNull final Class aClass, final Function<DomElement, TableCellEditor> creator) {
     myCustomCellEditorCreators.put(aClass, creator);
   }
 

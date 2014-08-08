@@ -75,6 +75,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private boolean myShowLicensee = true;
   private String myWelcomeScreenCaptionUrl;
   private String myWelcomeScreenDeveloperSloganUrl;
+  private String myCustomizeIDEWizardStepsProvider;
   private UpdateUrls myUpdateUrls;
   private String myDocumentationUrl;
   private String mySupportUrl;
@@ -171,6 +172,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   @NonNls private static final String ELEMENT_THIRD_PARTY = "third-party";
 
+  @NonNls private static final String CUSTOMIZE_IDE_WIZARD_STEPS = "customize-ide-wizard";
+  @NonNls private static final String STEPS_PROVIDER = "provider";
 
   public void initComponent() { }
 
@@ -309,6 +312,12 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @Override
   public String getWelcomeScreenLogoUrl() {
     return myWelcomeScreenLogoUrl;
+  }
+
+  @Nullable
+  @Override
+  public String getCustomizeIDEWizardStepsProvider() {
+    return myCustomizeIDEWizardStepsProvider;
   }
 
   @Override
@@ -596,6 +605,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       myWelcomeScreenLogoUrl = welcomeScreen.getAttributeValue(LOGO_URL_ATTR);
       myWelcomeScreenCaptionUrl = welcomeScreen.getAttributeValue(CAPTION_URL_ATTR);
       myWelcomeScreenDeveloperSloganUrl = welcomeScreen.getAttributeValue(SLOGAN_URL_ATTR);
+    }
+
+    Element wizardSteps = parentNode.getChild(CUSTOMIZE_IDE_WIZARD_STEPS);
+    if (wizardSteps != null) {
+      myCustomizeIDEWizardStepsProvider = wizardSteps.getAttributeValue(STEPS_PROVIDER);
     }
 
     Element editor = parentNode.getChild(ELEMENT_EDITOR);

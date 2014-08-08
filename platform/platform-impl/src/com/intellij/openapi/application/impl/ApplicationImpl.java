@@ -782,7 +782,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void restart(boolean exitConfirmed) {
-    exit(false, exitConfirmed, true, true);
+    exit(exitConfirmed, exitConfirmed, true, true);
   }
 
   /*

@@ -18,24 +18,25 @@ package com.intellij.ui.tabs;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.FileColorManager;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.LightColors;
-import com.intellij.util.containers.hash.LinkedHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author spleaner
@@ -52,25 +53,14 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
   private final FileColorsModel myModel;
   private FileColorSharedConfigurationManager mySharedConfigurationManager;
 
-  private static final Map<String, Color> ourDefaultColors;
-  private static final Map<String, Color> ourDefaultDarkColors;
-
-  static {
-    ourDefaultColors = new LinkedHashMap<String, Color>();
-    ourDefaultColors.put("Blue", new Color(0xdcf0ff));
-    ourDefaultColors.put("Green", new Color(231, 250, 219));
-    ourDefaultColors.put("Orange", new Color(246, 224, 202));
-    ourDefaultColors.put("Rose", new Color(242, 206, 202));
-    ourDefaultColors.put("Violet", new Color(222, 213, 241));
-    ourDefaultColors.put("Yellow", new Color(255, 255, 228));
-    ourDefaultDarkColors = new LinkedHashMap<String, Color>();
-    ourDefaultDarkColors.put("Blue", new Color(0x2B3557));
-    ourDefaultDarkColors.put("Green", new Color(0x2A3B2C));
-    ourDefaultDarkColors.put("Orange", new Color(0x823B1C));
-    ourDefaultDarkColors.put("Rose", new Color(0x542F3A));
-    ourDefaultDarkColors.put("Violet", new Color(0x4f4056));
-    ourDefaultDarkColors.put("Yellow", new Color(0x494539));
-  }
+  private static final Map<String, Color> ourDefaultColors = ContainerUtil.<String, Color>immutableMapBuilder()
+    .put("Blue", new JBColor(new Color(0xdcf0ff), new Color(0x2B3557)))
+    .put("Green", new JBColor(new Color(231, 250, 219), new Color(0x2A3B2C)))
+    .put("Orange", new JBColor(new Color(246, 224, 202), new Color(0x823B1C)))
+    .put("Rose", new JBColor(new Color(242, 206, 202), new Color(0x542F3A)))
+    .put("Violet", new JBColor(new Color(222, 213, 241), new Color(0x4f4056)))
+    .put("Yellow", new JBColor(new Color(255, 255, 228), new Color(0x494539)))
+    .build();
 
   public FileColorManagerImpl(@NotNull final Project project) {
     myProject = project;
@@ -133,7 +123,7 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
   @SuppressWarnings({"MethodMayBeStatic"})
   @Nullable
   public Color getColor(@NotNull final String name) {
-    final Color color = UIUtil.isUnderDarcula() ? ourDefaultDarkColors.get(name) : ourDefaultColors.get(name);
+    Color color = ourDefaultColors.get(name);
     return color == null ? ColorUtil.fromHex(name, null) : color;
   }
 
@@ -151,8 +141,7 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
   @Override
   @SuppressWarnings({"MethodMayBeStatic"})
   public Collection<String> getColorNames() {
-    final Set<String> names = ourDefaultColors.keySet();
-    final List<String> sorted = new ArrayList<String>(names);
+    List<String> sorted = ContainerUtil.newArrayList(ourDefaultColors.keySet());
     Collections.sort(sorted);
     return sorted;
   }

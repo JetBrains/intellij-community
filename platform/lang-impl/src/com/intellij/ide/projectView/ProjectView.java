@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -34,14 +35,15 @@ public abstract class ProjectView {
 
   public abstract void select(Object element, VirtualFile file, boolean requestFocus);
 
+  @NotNull
   public abstract ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus);
 
   @Nullable
   public abstract PsiElement getParentOfCurrentSelection();
 
   // show pane identified by id using default(or currently selected) subId
-  public abstract void changeView(String viewId);
-  public abstract void changeView(String viewId, String subId);
+  public abstract void changeView(@NotNull String viewId);
+  public abstract void changeView(@NotNull String viewId, String subId);
 
   public abstract void changeView();
 
@@ -55,19 +57,19 @@ public abstract class ProjectView {
 
   public abstract boolean isHideEmptyMiddlePackages(String paneId);
 
-  public abstract void setHideEmptyPackages(boolean hideEmptyPackages, String paneId);
+  public abstract void setHideEmptyPackages(boolean hideEmptyPackages, @NotNull String paneId);
 
   public abstract boolean isShowLibraryContents(String paneId);
 
-  public abstract void setShowLibraryContents(boolean showLibraryContents, String paneId);
+  public abstract void setShowLibraryContents(boolean showLibraryContents, @NotNull String paneId);
 
   public abstract boolean isShowModules(String paneId);
 
-  public abstract void setShowModules(boolean showModules, String paneId);
+  public abstract void setShowModules(boolean showModules, @NotNull String paneId);
 
-  public abstract void addProjectPane(final AbstractProjectViewPane pane);
+  public abstract void addProjectPane(@NotNull AbstractProjectViewPane pane);
 
-  public abstract void removeProjectPane(AbstractProjectViewPane instance);
+  public abstract void removeProjectPane(@NotNull AbstractProjectViewPane pane);
 
   public abstract AbstractProjectViewPane getProjectViewPaneById(String id);
 
@@ -75,7 +77,7 @@ public abstract class ProjectView {
 
   public abstract boolean isAbbreviatePackageNames(String paneId);
 
-  public abstract void setAbbreviatePackageNames(boolean abbreviatePackageNames, String paneId);
+  public abstract void setAbbreviatePackageNames(boolean abbreviatePackageNames, @NotNull String paneId);
 
   /**
    * e.g. {@link com.intellij.ide.projectView.impl.ProjectViewPane#ID}
@@ -86,11 +88,13 @@ public abstract class ProjectView {
   public abstract void selectPsiElement(PsiElement element, boolean requestFocus);
 
   public abstract boolean isSortByType(String paneId);
-  public abstract void setSortByType(String paneId, final boolean sortByType);
+  public abstract void setSortByType(@NotNull String paneId, final boolean sortByType);
 
   public abstract AbstractProjectViewPane getCurrentProjectViewPane();
 
+  @NotNull
   public abstract Collection<String> getPaneIds();
 
+  @NotNull
   public abstract Collection<SelectInTarget> getSelectInTargets();
 }

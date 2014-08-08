@@ -204,9 +204,11 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     myTreeStructure = null;
   }
 
+  @NotNull
   public abstract ActionCallback updateFromRoot(boolean restoreExpandedPaths);
 
   public abstract void select(Object element, VirtualFile file, boolean requestFocus);
+
   public void selectModule(final Module module, final boolean requestFocus) {
     doSelectModuleOrGroup(module, requestFocus);
   }
@@ -482,6 +484,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return myTree;
   }
 
+  @NotNull
   public PsiDirectory[] getSelectedDirectories() {
     List<PsiDirectory> directories = ContainerUtil.newArrayList();
     for (PsiDirectoryNode node : getSelectedNodes(PsiDirectoryNode.class)) {
@@ -541,6 +544,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return PsiDirectory.EMPTY_ARRAY;
   }
 
+  @NotNull
   protected PsiDirectory[] getSelectedDirectoriesInAmbiguousCase(@NotNull final DefaultMutableTreeNode node) {
     final Object userObject = node.getUserObject();
     if (userObject instanceof AbstractModuleNode) {

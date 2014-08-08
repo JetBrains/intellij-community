@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,12 +55,13 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     select(myProject, selector, getMinorViewId(), mySubId, virtualFile, requestFocus);
   }
 
+  @NotNull
   public static ActionCallback select(@NotNull Project project,
-                            final Object toSelect,
-                            @Nullable final String viewId,
-                            @Nullable final String subviewId,
-                            final VirtualFile virtualFile,
-                            final boolean requestFocus) {
+                                      final Object toSelect,
+                                      @Nullable final String viewId,
+                                      @Nullable final String subviewId,
+                                      final VirtualFile virtualFile,
+                                      final boolean requestFocus) {
     final ActionCallback result = new ActionCallback();
 
 
@@ -86,7 +87,8 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
 
     if (requestFocus) {
       projectViewToolWindow.activate(runnable, false);
-    } else {
+    }
+    else {
       projectViewToolWindow.show(runnable);
     }
 
@@ -96,7 +98,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
 
   @Override
   @NotNull
-  public Collection<SelectInTarget> getSubTargets(SelectInContext context) {
+  public Collection<SelectInTarget> getSubTargets(@NotNull SelectInContext context) {
     List<SelectInTarget> result = new ArrayList<SelectInTarget>();
     AbstractProjectViewPane pane = ProjectView.getInstance(myProject).getProjectViewPaneById(getMinorViewId());
     int index = 0;

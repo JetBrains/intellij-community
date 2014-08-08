@@ -60,7 +60,7 @@ public abstract class PyCommandLineTestCase extends PyTestCase {
   protected List<String> buildRunCommandLine(AbstractPythonRunConfiguration configuration) {
     try {
       final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
-      ExecutionEnvironment env = new ExecutionEnvironmentBuilder(myFixture.getProject(), executor).setRunProfile(configuration).build();
+      ExecutionEnvironment env = new ExecutionEnvironmentBuilder(myFixture.getProject(), executor).runProfile(configuration).build();
       final PythonCommandLineState state = (PythonCommandLineState)configuration.getState(executor, env);
       final GeneralCommandLine generalCommandLine = state.generateCommandLine();
       return generalCommandLine.getParametersList().getList();
@@ -73,7 +73,7 @@ public abstract class PyCommandLineTestCase extends PyTestCase {
   protected List<String> buildDebugCommandLine(AbstractPythonRunConfiguration configuration) {
     try {
       final Executor executor = DefaultDebugExecutor.getDebugExecutorInstance();
-      ExecutionEnvironment env = new ExecutionEnvironmentBuilder(myFixture.getProject(), executor).setRunProfile(configuration).build();
+      ExecutionEnvironment env = new ExecutionEnvironmentBuilder(myFixture.getProject(), executor).runProfile(configuration).build();
       final PythonCommandLineState state = (PythonCommandLineState)configuration.getState(executor, env);
       final GeneralCommandLine generalCommandLine =
         state.generateCommandLine(PyDebugRunner.createCommandLinePatchers(configuration.getProject(), state, configuration, PORT));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public class SelectInAction extends AnAction implements DumbAware {
     }
   }
 
-  private static void invoke(DataContext dataContext, SelectInContext context) {
+  private static void invoke(@NotNull DataContext dataContext, @NotNull SelectInContext context) {
     final List<SelectInTarget> targetVector = Arrays.asList(getSelectInManager(context.getProject()).getTargets());
     ListPopup popup;
     if (targetVector.isEmpty()) {
@@ -71,10 +71,10 @@ public class SelectInAction extends AnAction implements DumbAware {
   }
 
   private static class SelectInActionsStep extends BaseListPopupStep<SelectInTarget> {
-    private final SelectInContext mySelectInContext;
+    @NotNull private final SelectInContext mySelectInContext;
     private final List<SelectInTarget> myVisibleTargets;
 
-    public SelectInActionsStep(@NotNull final Collection<SelectInTarget> targetVector, SelectInContext selectInContext) {
+    public SelectInActionsStep(@NotNull final Collection<SelectInTarget> targetVector, @NotNull SelectInContext selectInContext) {
       mySelectInContext = selectInContext;
       myVisibleTargets = new ArrayList<SelectInTarget>();
       for (SelectInTarget target : targetVector) {

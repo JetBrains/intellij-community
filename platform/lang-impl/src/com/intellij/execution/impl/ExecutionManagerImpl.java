@@ -157,7 +157,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
                 LOG.warn("Cannot find BeforeRunTaskProvider for id='" + task.getProviderId() + "'");
                 continue;
               }
-              ExecutionEnvironment taskEnvironment = new ExecutionEnvironmentBuilder(env).setContentToReuse(null).build();
+              ExecutionEnvironment taskEnvironment = new ExecutionEnvironmentBuilder(env).contentToReuse(null).build();
               taskEnvironment.setExecutionId(finalId);
               EXECUTION_SESSION_ID_KEY.set(taskEnvironment, executionSessionId);
               if (!provider.executeTask(projectContext, runConfiguration, taskEnvironment, task)) {
@@ -192,11 +192,11 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   @Override
   public void startRunProfile(@NotNull final RunProfileStarter starter, @NotNull final RunProfileState state,
                               @NotNull final Project project, @NotNull final Executor executor, @NotNull final ExecutionEnvironment env) {
-    final RunContentDescriptor reuseContent =
-      ExecutionManager.getInstance(project).getContentManager().getReuseContent(env);
+    final RunContentDescriptor reuseContent = ExecutionManager.getInstance(project).getContentManager().getReuseContent(env);
     if (reuseContent != null) {
       reuseContent.setExecutionId(env.getExecutionId());
     }
+
     final RunProfile profile = env.getRunProfile();
 
     project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processStartScheduled(executor.getId(), env);

@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.PlatformUtils;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author anna
@@ -43,6 +44,7 @@ public abstract class ShowModulesAction extends ToggleAction {
     return ProjectView.getInstance(myProject).isShowModules(getId());
   }
 
+  @NotNull
   protected abstract String getId();
 
   @Override

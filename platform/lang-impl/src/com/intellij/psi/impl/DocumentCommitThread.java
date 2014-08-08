@@ -18,8 +18,7 @@ package com.intellij.psi.impl;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -54,6 +53,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
 
   private final Queue<CommitTask> documentsToCommit = new Queue<CommitTask>(10);
   private final List<CommitTask> documentsToApplyInEDT = new ArrayList<CommitTask>(10);  // guarded by documentsToCommit
+  private final ApplicationEx myApplication;
   private volatile boolean isDisposed;
   private CommitTask currentTask; // guarded by documentsToCommit
   private volatile boolean threadFinished;
@@ -63,8 +63,9 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
     return ServiceManager.getService(DocumentCommitThread.class);
   }
 
-  public DocumentCommitThread() {
-    log("Starting thread",null, false);
+  public DocumentCommitThread(ApplicationEx application) {
+    myApplication = application;
+    log("Starting thread", null, false);
     new Thread(this, "Document commit thread").start();
   }
 
@@ -107,7 +108,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
     }
   }
 
-  private void cancel(@NonNls Object reason) {
+  private void cancel(@NonNls @NotNull Object reason) {
     startNewTask(null, reason);
   }
 
@@ -126,7 +127,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
     doQueue(project, document, reason);
   }
 
-  private void doQueue(Project project, Document document, Object reason) {
+  private void doQueue(@NotNull Project project, @NotNull Document document, @NotNull Object reason) {
     synchronized (documentsToCommit) {
       ProgressIndicator indicator = new DaemonProgressIndicator();
       CommitTask newTask = new CommitTask(document, project, indicator, reason);
@@ -303,9 +304,9 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
       }
 
       if (success) {
-        assert !ApplicationManager.getApplication().isDispatchThread();
+        assert !myApplication.isDispatchThread();
         UIUtil.invokeLaterIfNeeded(finishRunnable);
-        log("Invoked later finishRunnable", task, false, success, finishRunnable, indicator);
+        log("Invoked later finishRunnable", task, false, finishRunnable, indicator);
       }
     }
     catch (ProcessCanceledException e) {
@@ -334,7 +335,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
   @Override
   public void commitSynchronously(@NotNull Document document, @NotNull Project project) {
     assert !isDisposed;
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    myApplication.assertWriteAccessAllowed();
 
     if (!project.isInitialized() && !project.isDefault()) {
       @NonNls String s = project + "; Disposed: "+project.isDisposed()+"; Open: "+project.isOpen();
@@ -380,7 +381,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
     return new ProgressIndicatorBase();
   }
 
-  private void startNewTask(CommitTask task, Object reason) {
+  private void startNewTask(@Nullable CommitTask task, @NotNull Object reason) {
     synchronized (documentsToCommit) { // sync to prevent overwriting
       CommitTask cur = currentTask;
       if (cur != null) {
@@ -388,19 +389,19 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
       }
       currentTask = task;
     }
+    log("new task started", task, false, reason);
   }
 
   // returns finish commit Runnable (to be invoked later in EDT), or null on failure
   @Nullable
-  private Runnable commitUnderProgress(@NotNull final CommitTask task,
-                                       final boolean synchronously) {
+  private Runnable commitUnderProgress(@NotNull final CommitTask task, final boolean synchronously) {
     final Project project = task.project;
     final Document document = task.document;
     final List<Processor<Document>> finishProcessors = new SmartList<Processor<Document>>();
     Runnable runnable = new Runnable() {
       @Override
       public void run() {
-        ApplicationManager.getApplication().assertReadAccessAllowed();
+        myApplication.assertReadAccessAllowed();
         if (project.isDisposed()) return;
 
         final PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project);
@@ -424,14 +425,12 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
       }
     };
     if (synchronously) {
-      ApplicationManager.getApplication().assertWriteAccessAllowed();
+      myApplication.assertWriteAccessAllowed();
       runnable.run();
     }
-    else {
-      if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(runnable)) {
-        log("Could not start read action", task, synchronously, ApplicationManager.getApplication().isReadAccessAllowed(), Thread.currentThread());
-        return null;
-      }
+    else if (!myApplication.tryRunReadAction(runnable)) {
+      log("Could not start read action", task, synchronously, myApplication.isReadAccessAllowed(), Thread.currentThread());
+      return null;
     }
 
     boolean canceled = task.indicator.isCanceled();
@@ -443,7 +442,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
     Runnable finishRunnable = new Runnable() {
       @Override
       public void run() {
-        ApplicationManager.getApplication().assertIsDispatchThread();
+        myApplication.assertIsDispatchThread();
 
         Project project = task.project;
         if (project.isDisposed()) return;

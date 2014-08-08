@@ -480,8 +480,10 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
     private void visitLiteral(PsiElement literal) {
       String value = literal.getText();
 
-      if (value.length() > 2 &&
-          (value.charAt(0) == '"' && value.charAt(value.length() - 1) == '"') ||
+      if (value.length() <= 2) {
+        return;
+      }
+      if ((value.charAt(0) == '"' && value.charAt(value.length() - 1) == '"') ||
           (value.charAt(0) == '\'' && value.charAt(value.length() - 1) == '\'')) {
 
         if (mySubstitutionPatterns == null) {
