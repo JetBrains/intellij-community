@@ -1,44 +1,30 @@
 <idea-plugin version="2">
   <id>org.editorconfig.editorconfigjetbrains</id>
   <name>EditorConfig</name>
-  <version>0.4.1</version>
-  <vendor email="kevin.a.bell@gmail.com" url="http://editorconfig.org">Kevin Bell</vendor>
+  <version>1.0</version>
+  <vendor url="http://editorconfig.org">Kevin Bell, JetBrains</vendor>
 
   <description><![CDATA[
       A JetBrains IDE plugin supporting the EditorConfig standard
       ]]></description>
 
-  <change-notes>
-  </change-notes>
-
-  <!-- please see http://confluence.jetbrains.net/display/IDEADEV/Build+Number+Ranges for description -->
   <idea-version since-build="138.1293"/>
 
-  <!-- please see http://confluence.jetbrains.net/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
-       on how to target different products -->
-  <!-- uncomment to enable plugin in all products-->
   <depends>com.intellij.modules.lang</depends>
 
-
   <application-components>
-    <!-- Add your application components here -->
       <component>
           <implementation-class>org.editorconfig.plugincomponents.SettingsProviderComponent</implementation-class>
       </component>
   </application-components>
 
   <project-components>
-    <!-- Add your project components here -->
       <component>
           <implementation-class>org.editorconfig.plugincomponents.ConfigProjectComponent</implementation-class>
       </component>
   </project-components>
 
-  <actions>
-    <!-- Add your actions here -->
-  </actions>
-
   <extensions defaultExtensionNs="com.intellij">
-    <!-- Add your extensions here -->
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
   </extensions>
 </idea-plugin>
