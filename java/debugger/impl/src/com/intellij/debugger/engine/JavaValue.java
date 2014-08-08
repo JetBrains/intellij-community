@@ -41,6 +41,7 @@ import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation;
 import com.intellij.xdebugger.frame.presentation.XStringValuePresentation;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
+import com.intellij.xdebugger.impl.ui.XValueTextProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +51,7 @@ import java.util.List;
 /**
 * @author egor
 */
-public class JavaValue extends XNamedValue implements NodeDescriptorProvider {
+public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XValueTextProvider {
   private static final Logger LOG = Logger.getInstance(JavaValue.class);
 
   private final JavaValue myParent;
@@ -376,5 +377,10 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider {
       });
     }
     return evaluationExpression;
+  }
+
+  @Override
+  public String getValueText() {
+    return myValueDescriptor.getValueText();
   }
 }
