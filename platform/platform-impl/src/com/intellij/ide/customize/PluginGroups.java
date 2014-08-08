@@ -16,7 +16,6 @@
 package com.intellij.ide.customize;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.RepositoryHelper;
 import com.intellij.idea.StartupUtil;
@@ -32,12 +31,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 
-class PluginGroups {
+public class PluginGroups {
   static final String CORE = "Core";
   private static final int MAX_DESCR_LENGTH = 55;
-
-
-  private static PluginGroups instance = null;
 
   final Map<String, Pair<String, List<String>>> myTree = new LinkedHashMap<String, Pair<String, List<String>>>();
   final Map<String, String> myFeaturedPlugins = new LinkedHashMap<String, String>();
@@ -50,15 +46,7 @@ class PluginGroups {
   private boolean myInitialized = false;
   private Set<String> myFeaturedIds = new HashSet<String>();
 
-
-  static synchronized PluginGroups getInstance() {
-    if (instance == null) {
-      instance = new PluginGroups();
-    }
-    return instance;
-  }
-
-  private PluginGroups() {
+  public PluginGroups() {
     myAllPlugins = PluginManagerCore.loadDescriptors(null);
     try {
       myPluginsFromRepository.addAll(RepositoryHelper.loadPluginsFromRepository(null));
@@ -68,8 +56,12 @@ class PluginGroups {
     }
     PluginManagerCore.loadDisabledPlugins(new File(PathManager.getConfigPath()).getPath(), myDisabledPluginIds);
 
+    initGroups(myTree, myFeaturedPlugins);
+  }
 
-    myTree.put(CORE, Pair.create((String)null, Arrays.asList(
+  protected void
+  initGroups(Map<String, Pair<String, List<String>>> tree, Map<String, String> featuredPlugins) {
+    tree.put(CORE, Pair.create((String)null, Arrays.asList(
       "com.intellij.copyright",
       "com.intellij.java-i18n",
       "org.intellij.intelliLang",
@@ -78,7 +70,7 @@ class PluginGroups {
       "Type Migration",
       "ZKM"
     )));
-    myTree.put("Java Frameworks", Pair.create("/plugins/JavaFrameworks.png", Arrays.asList(
+    tree.put("Java Frameworks", Pair.create("/plugins/JavaFrameworks.png", Arrays.asList(
       "com.intellij.appengine",
       "org.intellij.grails",
       "com.intellij.gwt",
@@ -113,12 +105,12 @@ class PluginGroups {
       "com.intellij.aspectj",
       "Osmorc"
     )));
-    myTree.put("Build Tools", Pair.create("/plugins/BuildTools.png", Arrays.asList(
+    tree.put("Build Tools", Pair.create("/plugins/BuildTools.png", Arrays.asList(
       "AntSupport",
       "Maven:org.jetbrains.idea.maven,org.jetbrains.idea.maven.ext",
       "org.jetbrains.plugins.gradle"
     )));
-    myTree.put("Web Development", Pair.create("/plugins/WebDevelopment.png", Arrays.asList(
+    tree.put("Web Development", Pair.create("/plugins/WebDevelopment.png", Arrays.asList(
       "HTML:HtmlTools,QuirksMode,W3Validators",
       "org.jetbrains.plugins.haml",
       "com.jetbrains.plugins.jade",
@@ -132,7 +124,7 @@ class PluginGroups {
       "com.intellij.plugins.html.instantEditing",
       "com.jetbrains.restClient"
     )));
-    myTree.put("Version Controls", Pair.create("/plugins/VersionControls.png", Arrays.asList(
+    tree.put("Version Controls", Pair.create("/plugins/VersionControls.png", Arrays.asList(
       "ClearcasePlugin",
       "CVS",
       "Git4Idea",
@@ -142,14 +134,14 @@ class PluginGroups {
       "Subversion",
       "TFS"
     )));
-    myTree.put("Test Tools", Pair.create("/plugins/TestTools.png", Arrays.asList(
+    tree.put("Test Tools", Pair.create("/plugins/TestTools.png", Arrays.asList(
       "JUnit",
       "TestNG-J",
       "cucumber-java",
       "cucumber",
       "Coverage:Coverage,Emma"
     )));
-    myTree.put("Application Servers", Pair.create("/plugins/ApplicationServers.png", Arrays.asList(
+    tree.put("Application Servers", Pair.create("/plugins/ApplicationServers.png", Arrays.asList(
       "com.intellij.javaee.view",
       "Geronimo",
       "GlassFish",
@@ -162,7 +154,7 @@ class PluginGroups {
       "com.intellij.dmserver",
       "JSR45Plugin"
     )));
-    myTree.put("Clouds", Pair.create("/plugins/Clouds.png", Arrays.asList(
+    tree.put("Clouds", Pair.create("/plugins/Clouds.png", Arrays.asList(
       "CloudFoundry",
       "CloudBees",
       "Heroku",
@@ -170,16 +162,16 @@ class PluginGroups {
     )));
     //myTree.put("Groovy", Arrays.asList("org.intellij.grails"));
     //TODO Scala -> Play 2.x (Play 2.0 Support)
-    myTree.put("Swing", Pair.create("/plugins/Swing.png", Arrays.asList(
+    tree.put("Swing", Pair.create("/plugins/Swing.png", Arrays.asList(
       "com.intellij.uiDesigner"//TODO JavaFX?
     )));
-    myTree.put("Android", Pair.create("/plugins/Android.png", Arrays.asList(
+    tree.put("Android", Pair.create("/plugins/Android.png", Arrays.asList(
       "org.jetbrains.android",
       "com.intellij.android-designer")));
-    myTree.put("Database Tools", Pair.create("/plugins/DatabaseTools.png", Arrays.asList(
+    tree.put("Database Tools", Pair.create("/plugins/DatabaseTools.png", Arrays.asList(
       "com.intellij.database"
     )));
-    myTree.put("Other Tools", Pair.create("/plugins/OtherTools.png", Arrays.asList(
+    tree.put("Other Tools", Pair.create("/plugins/OtherTools.png", Arrays.asList(
       "ByteCodeViewer",
       "com.intellij.dsm",
       "org.jetbrains.idea.eclipse",
@@ -190,14 +182,15 @@ class PluginGroups {
       "org.jetbrains.plugins.yaml",
       "XSLT and XPath:XPathView,XSLT-Debugger"
     )));
-    myTree.put("Plugin Development", Pair.create("/plugins/PluginDevelopment.png", Arrays.asList("DevKit")));
+    tree.put("Plugin Development", Pair.create("/plugins/PluginDevelopment.png", Arrays.asList("DevKit")));
 
-    myFeaturedPlugins.put("Scala", "Custom Languages:Plugin for Scala language support:org.intellij.scala");
-    myFeaturedPlugins.put("Live Edit Tool", "Web Development:Provides live edit HTML/CSS/JavaScript:com.intellij.plugins.html.instantEditing");
-    myFeaturedPlugins.put("IdeaVIM", "Editor:Vim emulation plug-in for IDEs based on the IntelliJ platform:IdeaVIM");
-    myFeaturedPlugins.put("NodeJS", "JavaScript:Node.js integration:NodeJS");
-    myFeaturedPlugins.put("Atlassian Connector", "Tools Integration:Integration for Atlassian JIRA, Bamboo, Cricible, FishEye:atlassian-idea-plugin");
-
+    featuredPlugins.put("Scala", "Custom Languages:Plugin for Scala language support:org.intellij.scala");
+    featuredPlugins.put("Live Edit Tool",
+                          "Web Development:Provides live edit HTML/CSS/JavaScript:com.intellij.plugins.html.instantEditing");
+    featuredPlugins.put("IdeaVIM", "Editor:Vim emulation plug-in for IDEs based on the IntelliJ platform:IdeaVIM");
+    featuredPlugins.put("NodeJS", "JavaScript:Node.js integration:NodeJS");
+    featuredPlugins.put("Atlassian Connector",
+                          "Tools Integration:Integration for Atlassian JIRA, Bamboo, Cricible, FishEye:atlassian-idea-plugin");
   }
 
   private void initIfNeed() {
@@ -210,7 +203,7 @@ class PluginGroups {
       List<IdSet> idSets = new ArrayList<IdSet>();
       StringBuilder description = new StringBuilder();
       for (String idDescription : entry.getValue().getSecond()) {
-        IdSet idSet = new IdSet(idDescription);
+        IdSet idSet = new IdSet(this, idDescription);
         String idSetTitle = idSet.getTitle();
         if (idSetTitle == null) continue;
         idSets.add(idSet);

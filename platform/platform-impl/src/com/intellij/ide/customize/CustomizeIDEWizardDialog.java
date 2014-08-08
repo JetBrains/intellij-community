@@ -94,9 +94,11 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     if (SystemInfo.isMac) {
       mySteps.add(new CustomizeKeyboardSchemeStepPanel());
     }
-    mySteps.add(new CustomizePluginsStepPanel());
+
+    PluginGroups pluginGroups = new PluginGroups();
+    mySteps.add(new CustomizePluginsStepPanel(pluginGroups));
     try {
-      mySteps.add(new CustomizeFeaturedPluginsStepPanel());
+      mySteps.add(new CustomizeFeaturedPluginsStepPanel(pluginGroups));
     }
     catch (CustomizeFeaturedPluginsStepPanel.OfflineException e) {
       //skip featured step if we're offline
