@@ -786,16 +786,20 @@ public class XDebugSessionImpl implements XDebugSession {
       myDebuggerManager.setActiveSession(this, myCurrentPosition, false, getPositionIconRenderer(true));
     }
     adjustMouseTrackingCounter(myCurrentPosition, 1);
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        if (myShowTabOnSuspend) {
-          myShowTabOnSuspend = false;
-          initSessionTab(null);
-          showSessionTab();
+
+    if (myShowTabOnSuspend) {
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          if (myShowTabOnSuspend) {
+            myShowTabOnSuspend = false;
+            initSessionTab(null);
+            showSessionTab();
+          }
         }
-      }
-    });
+      });
+    }
+
     myDispatcher.getMulticaster().sessionPaused();
   }
 
