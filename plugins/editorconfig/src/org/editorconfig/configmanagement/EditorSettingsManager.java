@@ -19,62 +19,67 @@ import java.util.List;
 import java.util.Map;
 
 public class EditorSettingsManager extends FileDocumentManagerAdapter {
-    // Handles the following EditorConfig settings:
-    private static final String trimTrailingWhitespaceKey = "trim_trailing_whitespace";
-    private static final String insertFinalNewlineKey = "insert_final_newline";
-    private static final Map<String, String> trimMap;
-    static {
-        Map<String, String> map = new HashMap<String, String>();
-        map.put("true", EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
-        map.put("false", EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
-        trimMap = Collections.unmodifiableMap(map);
-    }
-    private static final Map<String, Boolean> newlineMap;
-    static {
-        Map<String, Boolean> map = new HashMap<String, Boolean>();
-        map.put("true", Boolean.TRUE);
-        map.put("false", Boolean.FALSE);
-        newlineMap = Collections.unmodifiableMap(map);
-    }
+  // Handles the following EditorConfig settings:
+  private static final String trimTrailingWhitespaceKey = "trim_trailing_whitespace";
+  private static final String insertFinalNewlineKey = "insert_final_newline";
+  private static final Map<String, String> trimMap;
 
-    private static final Logger LOG = Logger.getInstance("#org.editorconfig.configmanagement.EditorSettingsManager");
+  static {
+    Map<String, String> map = new HashMap<String, String>();
+    map.put("true", EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
+    map.put("false", EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
+    trimMap = Collections.unmodifiableMap(map);
+  }
 
-    @Override
-    public void beforeDocumentSaving(@NotNull Document document) {
-        // This is fired when any document is saved, regardless of whether it is part of a save-all or
-        // a save-one operation
-        final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-        applySettings(file);
-    }
+  private static final Map<String, Boolean> newlineMap;
 
-    private static void applySettings(VirtualFile file) {
-        if (file == null || !file.isInLocalFileSystem()) return;
-        // Get editorconfig settings
-        final String filePath = file.getCanonicalPath();
-        final SettingsProviderComponent settingsProvider = SettingsProviderComponent.getInstance();
-        final List<EditorConfig.OutPair> outPairs = settingsProvider.getOutPairs(filePath);
-        // Apply trailing spaces setting
-        final String trimTrailingWhitespace = Utils.configValueForKey(outPairs, trimTrailingWhitespaceKey);
-        applyConfigValueToUserData(file, TrailingSpacesStripper.OVERRIDE_STRIP_TRAILING_SPACES_KEY,
-                                   trimTrailingWhitespaceKey, trimTrailingWhitespace, trimMap);
-        // Apply final newline setting
-        final String insertFinalNewline = Utils.configValueForKey(outPairs, insertFinalNewlineKey);
-        applyConfigValueToUserData(file, TrailingSpacesStripper.OVERRIDE_ENSURE_NEWLINE_KEY,
-                                   insertFinalNewlineKey, insertFinalNewline, newlineMap);
-    }
+  static {
+    Map<String, Boolean> map = new HashMap<String, Boolean>();
+    map.put("true", Boolean.TRUE);
+    map.put("false", Boolean.FALSE);
+    newlineMap = Collections.unmodifiableMap(map);
+  }
 
-    private static <T> void applyConfigValueToUserData(VirtualFile file, Key<T> userDataKey, String editorConfigKey,
-                                                       String configValue, Map<String, T> configMap) {
-        if (configValue.isEmpty()) {
-            file.putUserData(userDataKey, null);
-        } else {
-            final T data = configMap.get(configValue);
-            if (data == null) {
-                LOG.warn(Utils.invalidConfigMessage(configValue, editorConfigKey, file.getCanonicalPath()));
-            } else {
-                file.putUserData(userDataKey, data);
-                LOG.debug("Applied " + editorConfigKey + " settings for: " + file.getCanonicalPath());
-            }
-        }
+  private static final Logger LOG = Logger.getInstance("#org.editorconfig.configmanagement.EditorSettingsManager");
+
+  @Override
+  public void beforeDocumentSaving(@NotNull Document document) {
+    // This is fired when any document is saved, regardless of whether it is part of a save-all or
+    // a save-one operation
+    final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+    applySettings(file);
+  }
+
+  private static void applySettings(VirtualFile file) {
+    if (file == null || !file.isInLocalFileSystem()) return;
+    // Get editorconfig settings
+    final String filePath = file.getCanonicalPath();
+    final SettingsProviderComponent settingsProvider = SettingsProviderComponent.getInstance();
+    final List<EditorConfig.OutPair> outPairs = settingsProvider.getOutPairs(filePath);
+    // Apply trailing spaces setting
+    final String trimTrailingWhitespace = Utils.configValueForKey(outPairs, trimTrailingWhitespaceKey);
+    applyConfigValueToUserData(file, TrailingSpacesStripper.OVERRIDE_STRIP_TRAILING_SPACES_KEY,
+                               trimTrailingWhitespaceKey, trimTrailingWhitespace, trimMap);
+    // Apply final newline setting
+    final String insertFinalNewline = Utils.configValueForKey(outPairs, insertFinalNewlineKey);
+    applyConfigValueToUserData(file, TrailingSpacesStripper.OVERRIDE_ENSURE_NEWLINE_KEY,
+                               insertFinalNewlineKey, insertFinalNewline, newlineMap);
+  }
+
+  private static <T> void applyConfigValueToUserData(VirtualFile file, Key<T> userDataKey, String editorConfigKey,
+                                                     String configValue, Map<String, T> configMap) {
+    if (configValue.isEmpty()) {
+      file.putUserData(userDataKey, null);
     }
+    else {
+      final T data = configMap.get(configValue);
+      if (data == null) {
+        LOG.warn(Utils.invalidConfigMessage(configValue, editorConfigKey, file.getCanonicalPath()));
+      }
+      else {
+        file.putUserData(userDataKey, data);
+        LOG.debug("Applied " + editorConfigKey + " settings for: " + file.getCanonicalPath());
+      }
+    }
+  }
 }

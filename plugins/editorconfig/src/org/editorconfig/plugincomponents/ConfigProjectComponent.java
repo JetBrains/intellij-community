@@ -16,44 +16,46 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 
 public class ConfigProjectComponent implements ProjectComponent {
-    private final Project project;
-    private final CodeStyleManager codeStyleManager;
+  private final Project project;
+  private final CodeStyleManager codeStyleManager;
 
-    public ConfigProjectComponent(Project project) {
-        this.project = project;
+  public ConfigProjectComponent(Project project) {
+    this.project = project;
 
-        // Register project-level config managers
-        MessageBus bus = project.getMessageBus();
-        codeStyleManager = new CodeStyleManager(project);
-        EditorSettingsManager editorSettingsManager = new EditorSettingsManager();
-        EncodingManager encodingManager = new EncodingManager(project);
-        LineEndingsManager lineEndingsManager = new LineEndingsManager(project);
-        bus.connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, codeStyleManager);
-        bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, encodingManager);
-        bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, editorSettingsManager);
-        bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, lineEndingsManager);
-    }
+    // Register project-level config managers
+    MessageBus bus = project.getMessageBus();
+    codeStyleManager = new CodeStyleManager(project);
+    EditorSettingsManager editorSettingsManager = new EditorSettingsManager();
+    EncodingManager encodingManager = new EncodingManager(project);
+    LineEndingsManager lineEndingsManager = new LineEndingsManager(project);
+    bus.connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, codeStyleManager);
+    bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, encodingManager);
+    bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, editorSettingsManager);
+    bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, lineEndingsManager);
+  }
 
-    public void initComponent() {}
+  public void initComponent() {
+  }
 
-    public void disposeComponent() {}
+  public void disposeComponent() {
+  }
 
-    @NotNull
-    public String getComponentName() {
-        return "ConfigProjectComponent";
-    }
+  @NotNull
+  public String getComponentName() {
+    return "ConfigProjectComponent";
+  }
 
-    public void projectOpened() {
-        // called when project is opened
-        IdeFrame frame = WindowManager.getInstance().getIdeFrame(project);
-        final Window window = (Window)frame;
-        window.addWindowFocusListener(codeStyleManager);
-    }
+  public void projectOpened() {
+    // called when project is opened
+    IdeFrame frame = WindowManager.getInstance().getIdeFrame(project);
+    final Window window = (Window)frame;
+    window.addWindowFocusListener(codeStyleManager);
+  }
 
-    public void projectClosed() {
-        // called when project is being closed
-        IdeFrame frame = WindowManager.getInstance().getIdeFrame(project);
-        final Window window = (Window) frame;
-        window.removeWindowFocusListener(codeStyleManager);
-    }
+  public void projectClosed() {
+    // called when project is being closed
+    IdeFrame frame = WindowManager.getInstance().getIdeFrame(project);
+    final Window window = (Window)frame;
+    window.removeWindowFocusListener(codeStyleManager);
+  }
 }

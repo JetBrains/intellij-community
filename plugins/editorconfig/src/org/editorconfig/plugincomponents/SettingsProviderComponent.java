@@ -12,37 +12,39 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SettingsProviderComponent implements ApplicationComponent {
-    private static final Logger LOG =
-            Logger.getInstance("#org.editorconfig.plugincomponents.SettingsProviderComponent");
+  private static final Logger LOG =
+    Logger.getInstance("#org.editorconfig.plugincomponents.SettingsProviderComponent");
 
-    private EditorConfig editorConfig;
-    
-    public SettingsProviderComponent() {
-        editorConfig = new EditorConfig();
-    }
-    
-    public static SettingsProviderComponent getInstance() {
-        return ServiceManager.getService(SettingsProviderComponent.class); 
-    }
-    
-    public List<OutPair> getOutPairs (String filePath) {
-        final List<OutPair> outPairs;
-        try {
-            outPairs = editorConfig.getProperties(filePath);
-            return outPairs;
-        }
-        catch (EditorConfigException error) {
-            LOG.error(error);
-            return new ArrayList<OutPair>();
-        }   
-    }
-    
-    public void initComponent() {}
+  private EditorConfig editorConfig;
 
-    public void disposeComponent() {}
+  public SettingsProviderComponent() {
+    editorConfig = new EditorConfig();
+  }
 
-    @NotNull
-    public String getComponentName() {
-        return "SettingsProviderComponent";
+  public static SettingsProviderComponent getInstance() {
+    return ServiceManager.getService(SettingsProviderComponent.class);
+  }
+
+  public List<OutPair> getOutPairs(String filePath) {
+    final List<OutPair> outPairs;
+    try {
+      outPairs = editorConfig.getProperties(filePath);
+      return outPairs;
     }
+    catch (EditorConfigException error) {
+      LOG.error(error);
+      return new ArrayList<OutPair>();
+    }
+  }
+
+  public void initComponent() {
+  }
+
+  public void disposeComponent() {
+  }
+
+  @NotNull
+  public String getComponentName() {
+    return "SettingsProviderComponent";
+  }
 }

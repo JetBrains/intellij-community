@@ -28,67 +28,68 @@ import java.util.Locale;
  * @author Dennis.Ushakov
  */
 public class LineEndingsManager extends FileDocumentManagerAdapter {
-    // Handles the following EditorConfig settings:
-    private static final String lineEndingsKey = "end_of_line";
+  // Handles the following EditorConfig settings:
+  private static final String lineEndingsKey = "end_of_line";
 
-    private final Logger LOG = Logger.getInstance("#org.editorconfig.codestylesettings.LineEndingsManager");
-    private final Project project;
-    private boolean statusBarUpdated = false;
+  private final Logger LOG = Logger.getInstance("#org.editorconfig.codestylesettings.LineEndingsManager");
+  private final Project project;
+  private boolean statusBarUpdated = false;
 
-    public LineEndingsManager(Project project) {
-        this.project = project;
-    }
+  public LineEndingsManager(Project project) {
+    this.project = project;
+  }
 
-    @Override
-    public void beforeAllDocumentsSaving() {
-        statusBarUpdated = false;
-    }
+  @Override
+  public void beforeAllDocumentsSaving() {
+    statusBarUpdated = false;
+  }
 
-    private void updateStatusBar() {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                IdeFrame frame = WindowManager.getInstance().getIdeFrame(project);
-                StatusBar statusBar = frame.getStatusBar();
-                StatusBarWidget widget = statusBar != null ? statusBar.getWidget("LineSeparator") : null;
+  private void updateStatusBar() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        IdeFrame frame = WindowManager.getInstance().getIdeFrame(project);
+        StatusBar statusBar = frame.getStatusBar();
+        StatusBarWidget widget = statusBar != null ? statusBar.getWidget("LineSeparator") : null;
 
-                if (widget instanceof LineSeparatorPanel) {
-                    FileEditorManagerEvent event = new FileEditorManagerEvent(FileEditorManager.getInstance(project),
-                                                                              null, null, null, null);
-                    ((LineSeparatorPanel)widget).selectionChanged(event);
-                }
-            }
-        });
-    }
-
-    @Override
-    public void beforeDocumentSaving(@NotNull Document document) {
-        VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-        applySettings(file);
-    }
-
-    private void applySettings(VirtualFile file) {
-        if (file == null || !file.isInLocalFileSystem()) return;
-
-        final String filePath = file.getCanonicalPath();
-        final List<EditorConfig.OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(filePath);
-        final String lineEndings = Utils.configValueForKey(outPairs, lineEndingsKey);
-        if (!lineEndings.isEmpty()) {
-            try {
-                LineSeparator separator = LineSeparator.valueOf(lineEndings.toUpperCase(Locale.US));
-                String oldSeparator = file.getDetectedLineSeparator();
-                String newSeparator = separator.getSeparatorString();
-                if (!StringUtil.equals(oldSeparator, newSeparator)) {
-                    file.setDetectedLineSeparator(newSeparator);
-                    if (!statusBarUpdated) {
-                        statusBarUpdated = true;
-                        updateStatusBar();
-                    }
-                    LOG.debug(Utils.appliedConfigMessage(lineEndings, lineEndingsKey, filePath));
-                }
-            } catch (IllegalArgumentException e) {
-                LOG.warn(Utils.invalidConfigMessage(lineEndings, lineEndingsKey, filePath));
-            }
+        if (widget instanceof LineSeparatorPanel) {
+          FileEditorManagerEvent event = new FileEditorManagerEvent(FileEditorManager.getInstance(project),
+                                                                    null, null, null, null);
+          ((LineSeparatorPanel)widget).selectionChanged(event);
         }
+      }
+    });
+  }
+
+  @Override
+  public void beforeDocumentSaving(@NotNull Document document) {
+    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+    applySettings(file);
+  }
+
+  private void applySettings(VirtualFile file) {
+    if (file == null || !file.isInLocalFileSystem()) return;
+
+    final String filePath = file.getCanonicalPath();
+    final List<EditorConfig.OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(filePath);
+    final String lineEndings = Utils.configValueForKey(outPairs, lineEndingsKey);
+    if (!lineEndings.isEmpty()) {
+      try {
+        LineSeparator separator = LineSeparator.valueOf(lineEndings.toUpperCase(Locale.US));
+        String oldSeparator = file.getDetectedLineSeparator();
+        String newSeparator = separator.getSeparatorString();
+        if (!StringUtil.equals(oldSeparator, newSeparator)) {
+          file.setDetectedLineSeparator(newSeparator);
+          if (!statusBarUpdated) {
+            statusBarUpdated = true;
+            updateStatusBar();
+          }
+          LOG.debug(Utils.appliedConfigMessage(lineEndings, lineEndingsKey, filePath));
+        }
+      }
+      catch (IllegalArgumentException e) {
+        LOG.warn(Utils.invalidConfigMessage(lineEndings, lineEndingsKey, filePath));
+      }
     }
+  }
 }
