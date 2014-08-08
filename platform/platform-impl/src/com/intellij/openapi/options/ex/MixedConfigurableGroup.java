@@ -18,9 +18,11 @@ package com.intellij.openapi.options.ex;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.OptionsBundle;
+import com.intellij.openapi.options.SearchableConfigurable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map.Entry;
 
 public final class MixedConfigurableGroup implements ConfigurableGroup {
@@ -66,6 +68,16 @@ public final class MixedConfigurableGroup implements ConfigurableGroup {
       }
       list.add(configurable);
     }
+    ArrayList<Configurable> buildList = map.get("build");
+    if (buildList != null) {
+      NodeConfigurable buildTools = new NodeConfigurable("build.tools");
+      buildTools.add(find("MavenSettings", buildList.iterator()));
+      buildTools.add(find("reference.settingsdialog.project.gradle", buildList.iterator()));
+      buildTools.add(find("reference.settingsdialog.project.gant", buildList.iterator()));
+      if (buildTools.getConfigurables() != null) {
+        buildList.add(0, buildTools);
+      }
+    }
     ArrayList<ConfigurableGroup> groups = new ArrayList<ConfigurableGroup>(map.size());
     groups.add(new MixedConfigurableGroup("appearance", map));
     groups.add(new MixedConfigurableGroup("editor", map));
@@ -79,5 +91,19 @@ public final class MixedConfigurableGroup implements ConfigurableGroup {
     }
     groups.add(other);
     return groups.toArray(new ConfigurableGroup[groups.size()]);
+  }
+
+  private static Configurable find(String id, Iterator<Configurable> iterator) {
+    while (iterator.hasNext()) {
+      Configurable configurable = iterator.next();
+      if (configurable instanceof SearchableConfigurable) {
+        SearchableConfigurable sc = (SearchableConfigurable)configurable;
+        if (id.equals(sc.getId())) {
+          iterator.remove();
+          return configurable;
+        }
+      }
+    }
+    return null;
   }
 }
