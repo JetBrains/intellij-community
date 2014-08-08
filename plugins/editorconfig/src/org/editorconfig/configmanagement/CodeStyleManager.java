@@ -32,8 +32,7 @@ public class CodeStyleManager extends FileEditorManagerAdapter implements Window
   private static final String tabWidthKey = "tab_width";
   private static final String indentStyleKey = "indent_style";
 
-  private static final Logger LOG =
-    Logger.getInstance("#org.editorconfig.configmanagement.CodeStyleManager");
+  private static final Logger LOG = Logger.getInstance("#org.editorconfig.configmanagement.CodeStyleManager");
   private final CodeStyleSettingsManager codeStyleSettingsManager;
   private final Project project;
 
@@ -91,8 +90,8 @@ public class CodeStyleManager extends FileEditorManagerAdapter implements Window
     }
   }
 
-  private void applyCodeStyleSettings(final List<OutPair> outPairs, final CodeStyleSettings codeStyleSettings,
-                                      final VirtualFile file) {
+  private static void applyCodeStyleSettings(final List<OutPair> outPairs, final CodeStyleSettings codeStyleSettings,
+                                             final VirtualFile file) {
     // Apply indent options
     final String indentSize = Utils.configValueForKey(outPairs, indentSizeKey);
     final String tabWidth = Utils.configValueForKey(outPairs, tabWidthKey);
@@ -105,8 +104,8 @@ public class CodeStyleManager extends FileEditorManagerAdapter implements Window
     applyIndentOptions(indentOptions, indentSize, tabWidth, indentStyle, file.getCanonicalPath());
   }
 
-  private void applyIndentOptions(CommonCodeStyleSettings.IndentOptions indentOptions,
-                                  String indentSize, String tabWidth, String indentStyle, String filePath) {
+  private static void applyIndentOptions(CommonCodeStyleSettings.IndentOptions indentOptions,
+                                         String indentSize, String tabWidth, String indentStyle, String filePath) {
     final String calculatedIndentSize = calculateIndentSize(tabWidth, indentSize);
     final String calculatedTabWidth = calculateTabWidth(tabWidth, indentSize);
     if (!calculatedIndentSize.isEmpty()) {
@@ -135,11 +134,11 @@ public class CodeStyleManager extends FileEditorManagerAdapter implements Window
     }
   }
 
-  private String calculateIndentSize(final String tabWidth, final String indentSize) {
+  private static String calculateIndentSize(final String tabWidth, final String indentSize) {
     return indentSize.equals("tab") ? tabWidth : indentSize;
   }
 
-  private String calculateTabWidth(final String tabWidth, final String indentSize) {
+  private static String calculateTabWidth(final String tabWidth, final String indentSize) {
     if (tabWidth.isEmpty() && indentSize.equals("tab")) {
       return "";
     }
@@ -151,7 +150,7 @@ public class CodeStyleManager extends FileEditorManagerAdapter implements Window
     }
   }
 
-  private boolean applyIndentSize(final CommonCodeStyleSettings.IndentOptions indentOptions, final String indentSize) {
+  private static boolean applyIndentSize(final CommonCodeStyleSettings.IndentOptions indentOptions, final String indentSize) {
     try {
       int indent = Integer.parseInt(indentSize);
       indentOptions.INDENT_SIZE = indent;
@@ -163,7 +162,7 @@ public class CodeStyleManager extends FileEditorManagerAdapter implements Window
     }
   }
 
-  private boolean applyTabWidth(final CommonCodeStyleSettings.IndentOptions indentOptions, final String tabWidth) {
+  private static boolean applyTabWidth(final CommonCodeStyleSettings.IndentOptions indentOptions, final String tabWidth) {
     try {
       indentOptions.TAB_SIZE = Integer.parseInt(tabWidth);
       return true;
@@ -173,7 +172,7 @@ public class CodeStyleManager extends FileEditorManagerAdapter implements Window
     }
   }
 
-  private boolean applyIndentStyle(CommonCodeStyleSettings.IndentOptions indentOptions, String indentStyle) {
+  private static boolean applyIndentStyle(CommonCodeStyleSettings.IndentOptions indentOptions, String indentStyle) {
     if (indentStyle.equals("tab") || indentStyle.equals("space")) {
       indentOptions.USE_TAB_CHARACTER = indentStyle.equals("tab");
       return true;

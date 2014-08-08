@@ -12,8 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SettingsProviderComponent implements ApplicationComponent {
-  private static final Logger LOG =
-    Logger.getInstance("#org.editorconfig.plugincomponents.SettingsProviderComponent");
+  private static final Logger LOG = Logger.getInstance("#org.editorconfig.plugincomponents.SettingsProviderComponent");
 
   private EditorConfig editorConfig;
 
