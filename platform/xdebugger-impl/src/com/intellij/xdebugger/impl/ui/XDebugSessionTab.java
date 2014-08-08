@@ -20,7 +20,6 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.RestartAction;
 import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.execution.ui.ExecutionConsole;
@@ -68,7 +67,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
                           @NotNull XDebugSessionImpl session,
                           @Nullable Icon icon,
                           @Nullable ExecutionEnvironment environment,
-                          @Nullable ProgramRunner runner,
                           @Nullable RunContentDescriptor contentToReuse) {
     super(project, "Debug", session.getSessionName(), GlobalSearchScope.allScope(project));
     if (environment != null) {
@@ -80,7 +78,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     if (contentToReuse != null && contentToReuse.isReuseToolWindowActivation()) {
       myRunContentDescriptor.setActivateToolWindowWhenAdded(contentToReuse.isActivateToolWindowWhenAdded());
     }
-    attachToSession(session, runner, environment, session.getSessionData(), debugProcess);
+    attachToSession(session, environment, session.getSessionData(), debugProcess);
   }
 
   private Content createVariablesContent(final XDebugSession session) {
@@ -136,7 +134,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   }
 
   private void attachToSession(final @NotNull XDebugSessionImpl session,
-                               @Nullable ProgramRunner runner,
                                @Nullable ExecutionEnvironment environment,
                                final @NotNull XDebugSessionData sessionData,
                                @NotNull XDebugProcess debugProcess) {
@@ -178,8 +175,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     DefaultActionGroup leftToolbar = new DefaultActionGroup();
     final Executor debugExecutor = DefaultDebugExecutor.getDebugExecutorInstance();
     final Executor executor = environment != null ? environment.getExecutor() : debugExecutor;
-    if (runner != null && environment != null) {
-      RestartAction restartAction = new RestartAction(executor, runner, myRunContentDescriptor, environment);
+    if (environment != null) {
+      RestartAction restartAction = new RestartAction(executor, myRunContentDescriptor, environment);
       leftToolbar.add(restartAction);
       restartAction.registerShortcut(myUi.getComponent());
 

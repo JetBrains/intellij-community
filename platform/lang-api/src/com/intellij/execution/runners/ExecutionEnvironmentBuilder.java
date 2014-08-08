@@ -68,6 +68,16 @@ public final class ExecutionEnvironmentBuilder {
     myExecutor = copySource.getExecutor();
   }
 
+  @NotNull
+  public static ExecutionEnvironment fix(@NotNull ExecutionEnvironment environment, @Nullable RunContentDescriptor contentToReuse) {
+    if (environment.getContentToReuse() == contentToReuse) {
+      return environment;
+    }
+    else {
+      return new ExecutionEnvironmentBuilder(environment).contentToReuse(contentToReuse).build();
+    }
+  }
+
   @SuppressWarnings("UnusedDeclaration")
   @Deprecated
   /**

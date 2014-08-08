@@ -15,11 +15,13 @@
  */
 package com.intellij.debugger.ui;
 
-import com.intellij.debugger.*;
+import com.intellij.debugger.DebugEnvironment;
+import com.intellij.debugger.DebugUIEnvironment;
+import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.DefaultDebugUIEnvironment;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.impl.DebuggerContextListener;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.ui.impl.MainWatchPanel;
@@ -31,6 +33,7 @@ import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -39,9 +42,7 @@ import com.intellij.execution.ui.RunContentManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.xdebugger.XDebugProcess;
@@ -96,21 +97,39 @@ public class DebuggerPanelsManager implements ProjectComponent {
   }
 
   @Nullable
+  @Deprecated
+  /**
+   * @deprecated to remove in IDEA 15
+   */
   public RunContentDescriptor attachVirtualMachine(Executor executor,
-                                                   ProgramRunner runner,
-                                                   ExecutionEnvironment environment,
+                                                   @NotNull ProgramRunner runner,
+                                                   @NotNull ExecutionEnvironment environment,
+                                                   RunProfileState state,
+                                                   RunContentDescriptor reuseContent,
+                                                   RemoteConnection remoteConnection,
+                                                   boolean pollConnection) throws ExecutionException {
+    if (executor != environment.getExecutor()) {
+      // fix invalid environment
+      environment = new ExecutionEnvironmentBuilder(environment).executor(executor).build();
+    }
+    if (!runner.getRunnerId().equals(environment.getRunnerId())) {
+      // fix invalid environment
+      environment = new ExecutionEnvironmentBuilder(environment).runnerId(runner.getRunnerId()).build();
+    }
+    return attachVirtualMachine(environment, state, reuseContent, remoteConnection, pollConnection);
+  }
+
+  @Nullable
+  public RunContentDescriptor attachVirtualMachine(@NotNull ExecutionEnvironment environment,
                                                    RunProfileState state,
                                                    RunContentDescriptor reuseContent,
                                                    RemoteConnection remoteConnection,
                                                    boolean pollConnection) throws ExecutionException {
     return attachVirtualMachine(new DefaultDebugUIEnvironment(myProject,
-                                                            executor,
-                                                            runner,
-                                                            environment,
-                                                            state,
-                                                            reuseContent,
-                                                            remoteConnection,
-                                                            pollConnection));
+                                                              environment,
+                                                              state,
+                                                              remoteConnection,
+                                                              pollConnection));
   }
 
   @Nullable
@@ -146,8 +165,6 @@ public class DebuggerPanelsManager implements ProjectComponent {
 
   public void projectOpened() {
     final RunContentManager contentManager = myExecutionManager.getContentManager();
-    LOG.assertTrue(contentManager != null, "Content manager is null");
-
     final RunContentListener myContentListener = new RunContentListener() {
       public void contentSelected(RunContentDescriptor descriptor) {
         DebuggerSession session = getSession(myProject, descriptor.getExecutionConsole());
