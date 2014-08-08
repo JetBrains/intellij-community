@@ -20,12 +20,13 @@ class CacheManager(object):
     def get_cache_size(self):
         return sys.getsizeof(self.cache)
 
-    #only for analysis
     def write_cache_size(self, default=None):
         cache_size = self.get_cache_size()
         if self.log:
             open(self.log, 'w').write(str(cache_size))
-            #self.log.write(str(cache_size) + '\n')
+
+    def write_cache(self):
+        open(self.log, "w+").write(self.print_cache())
 
 
 class CallSignatureCacheManager(CacheManager):
@@ -46,8 +47,6 @@ class CallSignatureCacheManager(CacheManager):
         name_calls = calls_from_file[name]
         name_calls[args_type] = None
 
-        #self.write_cache_size()
-
     def is_repetition(self, signature):
         filename, name, args_type = get_signature_info(signature)
         if filename in self.cache and name in self.cache[filename] and args_type in self.cache[filename][name]:
@@ -61,9 +60,10 @@ class CallSignatureCacheManager(CacheManager):
         return True
 
     def print_cache(self):
+        output = ""
         for filename, calls_from_file in self.cache.items():
             for name, args_type in calls_from_file.items():
-                print "filename=%s, name=%s, args_type=%s" % (filename, name, args_type)
+                output += "filename=%s, name=%s, args_type=%s \n" % (filename, name, args_type)
 
 
 class ReturnSignatureCacheManager(CacheManager):
@@ -84,8 +84,6 @@ class ReturnSignatureCacheManager(CacheManager):
         returns = calls_from_file[name]
         returns[return_info] = None
 
-        #self.write_cache_size()
-
     def is_repetition(self, signature, return_info):
         filename, name = get_signature_info(signature)[:-1]
         if filename in self.cache and name in self.cache[filename] and return_info in self.cache[filename][name]:
@@ -93,9 +91,10 @@ class ReturnSignatureCacheManager(CacheManager):
         return False
 
     def print_cache(self):
+        output = ""
         for filename, calls_from_file in self.cache.items():
             for name, returns in calls_from_file.items():
-                print 'filename=%s, name=%s, returns=%s' % (filename, name, returns)
+                output += 'filename=%s, name=%s, returns=%s \n' % (filename, name, returns)
 
 
 class CallInfo(object):
@@ -121,9 +120,6 @@ class CallHierarchyCacheManager(CacheManager): #stores for every function in fil
                         output += '    file="%s", caller="%s", lines="%s"\n' % (caller_filename, caller_func_name, lines_in_caller_func)
                 output += '\n'
         return output
-
-    def write_cache(self):
-        open("/home/user/call_hierarchy", "w+").write(self.print_cache())
 
     def add(self, frame): #result is True if it is not repetition otherwise return false
         caller_frame = frame.f_back

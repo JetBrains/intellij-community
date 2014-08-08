@@ -16,18 +16,15 @@
 package com.jetbrains.python.hierarchy.call;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.find.findUsages.FindUsagesUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
@@ -44,11 +41,11 @@ import com.intellij.ui.LayeredIcon;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.FileOutputStream;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -57,7 +54,7 @@ public class PyCallHierarchyNodeDescriptor extends HierarchyNodeDescriptor imple
   private final List<PsiReference> myReferences = new ArrayList<PsiReference>();
   private final boolean myNavigateToReference;
 
-  protected PyCallHierarchyNodeDescriptor(@NotNull Project project, NodeDescriptor parentDescriptor, @NotNull PsiElement element, boolean isBase, boolean navigateToReference) {
+  protected PyCallHierarchyNodeDescriptor(@NotNull Project project, @Nullable NodeDescriptor parentDescriptor, @NotNull PsiElement element, boolean isBase, boolean navigateToReference) {
     super(project, parentDescriptor, element, isBase);
     myNavigateToReference = navigateToReference;
   }

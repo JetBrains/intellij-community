@@ -483,8 +483,15 @@
     <projectService serviceInterface="com.jetbrains.python.debugger.PyHierarchyCallCacheManager"
                     serviceImplementation="com.jetbrains.python.debugger.PyHierarchyCallCacheManagerImpl"/>
 
+    <projectService serviceInterface="com.jetbrains.python.hierarchy.call.PyStaticFunctionCallInfoManager"
+                    serviceImplementation="com.jetbrains.python.hierarchy.call.PyStaticFunctionCallInfoManagerImpl"/>
+
+    <projectService serviceInterface="com.jetbrains.python.hierarchy.call.PyDynamicFunctionCallInfoManager"
+                    serviceImplementation="com.jetbrains.python.hierarchy.call.PyDynamicFunctionCallInfoManagerImpl"/>
+
     <projectService serviceInterface="com.jetbrains.python.psi.PyPsiFacade"
                     serviceImplementation="com.jetbrains.python.psi.impl.PyPsiFacadeImpl"/>
+
     <applicationService serviceInterface="com.jetbrains.python.packaging.PyPackageManagers"
                         serviceImplementation="com.jetbrains.python.packaging.PyPackageManagersImpl"/>
 

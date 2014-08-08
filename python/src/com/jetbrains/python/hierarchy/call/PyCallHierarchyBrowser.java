@@ -16,7 +16,6 @@
 package com.jetbrains.python.hierarchy.call;
 
 import com.intellij.ide.hierarchy.CallHierarchyBrowserBase;
-import com.intellij.ide.hierarchy.HierarchyBrowser;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -25,10 +24,8 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.PopupHandler;
-import com.intellij.ui.content.Content;
 import com.jetbrains.python.hierarchy.PyHierarchyUtils;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
@@ -41,10 +38,6 @@ import java.util.Map;
 
 public class PyCallHierarchyBrowser extends CallHierarchyBrowserBase {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.hierarchy.call.PyCallHierarchyBrowser");
-
-  public PyCallHierarchyBrowser(@NotNull Project project, @NotNull PsiElement method) {
-    super(project, method);
-  }
 
   public PyCallHierarchyBrowser(PyFunction function) {
     super(function.getProject(), function);

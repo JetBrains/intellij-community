@@ -19,25 +19,14 @@ import com.google.common.collect.Lists;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.HashSet;
-import com.jetbrains.python.debugger.PyHierarchyCallCacheManager;
-import com.jetbrains.python.debugger.PyHierarchyCalleeData;
-import com.jetbrains.python.debugger.PyHierarchyCallerData;
-import com.jetbrains.python.psi.PyCallExpression;
-import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 public class PyCalleeFunctionTreeStructure extends HierarchyTreeStructure {
@@ -57,37 +46,21 @@ public class PyCalleeFunctionTreeStructure extends HierarchyTreeStructure {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
-    PsiElement baseClass = function.getContainingClass();
-
     final List<PyFunction> callees = Lists.newArrayList();
-    final Map<PyFunction, PyCallHierarchyNodeDescriptor> calleeToDescriptorMap = new HashMap<PyFunction, PyCallHierarchyNodeDescriptor>();
-    final List<PyCallHierarchyNodeDescriptor> descriptors = Lists.newArrayList();
-
-    findCallees(function, callees);
-
-    PyHierarchyCallCacheManager callCacheManager = PyHierarchyCallCacheManager.getInstance(myProject);
-    Object[] dynamicCallees = callCacheManager.findFunctionCallees(function);
-    if (dynamicCallees.length > 0) {
-      for (Object calleeData: dynamicCallees) {
-        PyHierarchyCalleeData data = (PyHierarchyCalleeData)calleeData;
-        VirtualFile calleeFile = LocalFileSystem.getInstance().findFileByPath(data.getCalleeFile());
-        if (calleeFile == null) {
-          continue;
-        }
-        PsiFile file = PsiManager.getInstance(myProject).findFile(calleeFile);
-        if (!(file instanceof PyFile)) {
-          continue;
-        }
-        PyFile pyCalleeFile = (PyFile)file;
-        PsiElement callee = pyCalleeFile.getElementNamed(data.getCalleeName());
-        if (callee instanceof PyFunction) {
-          callees.add((PyFunction)callee);
-        }
-      }
+    PyFunctionCallInfoManager[] functionManagers = {
+      PyStaticFunctionCallInfoManager.getInstance(myProject),
+      PyDynamicFunctionCallInfoManager.getInstance(myProject)
+    };
+    for (PyFunctionCallInfoManager functionManager: functionManagers) {
+      callees.addAll(functionManager.getCallees(function));
     }
 
+    final Map<PyFunction, PyCallHierarchyNodeDescriptor> calleeToDescriptorMap = new HashMap<PyFunction, PyCallHierarchyNodeDescriptor>();
+    final List<PyCallHierarchyNodeDescriptor> descriptors = Lists.newArrayList();
+    PsiElement baseClass = function.getContainingClass();
+
     for (PyFunction callee: callees) {
-      if (!isInScope(baseClass, callee, myScopeType)) continue;
+      if (baseClass != null && !isInScope(baseClass, callee, myScopeType)) continue;
 
       PyCallHierarchyNodeDescriptor calleeDescriptor = calleeToDescriptorMap.get(callee);
       if (calleeDescriptor == null) {
@@ -98,19 +71,5 @@ public class PyCalleeFunctionTreeStructure extends HierarchyTreeStructure {
     }
 
     return ArrayUtil.toObjectArray(descriptors);
-  }
-
-  private static void findCallees(final PsiElement element, List<PyFunction> callees) {
-    final PsiElement[] children = element.getChildren();
-    for (PsiElement child: children) {
-      findCallees(child, callees);
-      if (child instanceof PyCallExpression) {
-        PyCallExpression callExpression = (PyCallExpression)child;
-        PsiElement function = callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
-        if (function instanceof PyFunction) {
-          callees.add((PyFunction)function);
-        }
-      }
-    }
   }
 }
