@@ -25,7 +25,7 @@ public class Task {
   public String testFile;
   public int testNum;
   public String name;
-  public String text;
+  private static final String ourTextFile = "task.html";
   public Map<String, TaskFile> taskFiles = new HashMap<String, TaskFile>();
   private Lesson myLesson;
   public int myIndex;
@@ -80,7 +80,7 @@ public class Task {
   }
 
   public String getText() {
-    return text;
+    return ourTextFile;
   }
 
   /**

@@ -8,7 +8,6 @@
       "task_list": [
         {
           "name": "Our first program",
-          "text": "task1.html",
           "test_file": "task1_test.py",
           "test_num" : 4,
           "task_files": {
@@ -27,7 +26,6 @@
         },
         {
           "name": "Comments",
-          "text": "task2.html",
           "test_file": "task2_test.py",
           "test_num": 4,
           "task_files": {
@@ -51,7 +49,6 @@
       "task_list": [
         {
           "name": "Variable definition",
-          "text": "task1.html",
           "test_file": "task1_test.py",
           "test_num": 4,
           "task_files": {
@@ -70,7 +67,6 @@
         },
         {
           "name": "Undefined variable",
-          "text": "task2.html",
           "test_file": "task2_test.py",
           "test_num": 4,
           "task_files": {
@@ -89,7 +85,6 @@
         },
         {
           "name": "Variable types",
-          "text": "task3.html",
           "test_file": "task3_test.py",
           "test_num": 5,
           "task_files": {
@@ -108,7 +103,6 @@
         },
         {
           "name": "Arithmetic Operators",
-          "text": "task4.html",
           "test_file": "task4_test.py",
           "test_num": 6,
           "task_files": {
@@ -134,7 +128,6 @@
         },
         {
           "name": "Assignments",
-          "text": "task5.html",
           "test_file": "task5_test.py",
           "test_num": 5,
           "task_files": {
@@ -153,7 +146,6 @@
         },
         {
           "name": "Boolean operators",
-          "text": "task6.html",
           "test_file": "task6_test.py",
           "test_num": 5,
           "task_files": {
@@ -172,7 +164,6 @@
         },
         {
           "name": "Comparison operators",
-          "text": "task7.html",
           "test_file": "task7_test.py",
           "test_num": 5,
           "task_files": {
@@ -197,12 +188,10 @@
       "task_list": [
         {
           "name": "Concatenation",
-          "text": "task1.html",
           "test_file": "task1_test.py",
           "test_num": 6,
           "task_files": {
             "concatenation.py": {
-              "name": "concatenation.py",
               "task_windows": [
                 {
                   "line": 3,
@@ -217,7 +206,6 @@
         },
         {
           "name": "String multiplication",
-          "text": "task2.html",
           "test_file": "task2_test.py",
           "test_num": 5,
           "task_files": {
@@ -236,7 +224,6 @@
         },
         {
           "name": "String indexing",
-          "text": "task3.html",
           "test_file": "task3_test.py",
           "test_num": 5,
           "task_files": {
@@ -255,12 +242,10 @@
         },
         {
           "name": "String negative indexing",
-          "text": "task4.html",
           "test_file": "task4_test.py",
           "test_num": 5,
           "task_files": {
             "negative_indexing.py": {
-              "name": "negative_indexing.py",
               "task_windows": [
                 {
                   "line": 1,
@@ -275,12 +260,10 @@
         },
         {
           "name": "String slicing",
-          "text": "task5.html",
           "test_file": "task5_test.py",
           "test_num": 5,
           "task_files": {
             "slicing.py": {
-              "name": "slicing.py",
               "task_windows": [
                 {
                   "line": 3,
@@ -295,12 +278,10 @@
         },
         {
           "name": "In operator",
-          "text": "task6.html",
           "test_file": "task6_test.py",
           "test_num": 5,
           "task_files": {
             "in_operator.py": {
-              "name": "in_operator.py",
               "task_windows": [
                 {
                   "line": 3,
@@ -315,12 +296,10 @@
         },
         {
           "name": "String length",
-          "text": "task7.html",
           "test_file": "task7_test.py",
           "test_num": 5,
           "task_files": {
             "len_function.py": {
-              "name": "len_function.py",
               "task_windows": [
                 {
                   "line": 5,
@@ -335,12 +314,10 @@
         },
         {
           "name": "Character escaping",
-          "text": "task8.html",
           "test_file": "task8_test.py",
           "test_num": 4,
           "task_files": {
             "character_escaping.py": {
-              "name": "character_escaping.py",
               "task_windows": [
                 {
                   "line": 3,
@@ -355,12 +332,10 @@
         },
         {
           "name": "Basic string methods",
-          "text": "task9.html",
           "test_file": "task9_test.py",
           "test_num": 4,
           "task_files": {
             "string_methods.py": {
-              "name": "string_methods.py",
               "task_windows": [
                 {
                   "line": 5,
@@ -375,12 +350,10 @@
         },
         {
           "name": "String formatting",
-          "text": "task10.html",
           "test_file": "task10_test.py",
           "test_num": 4,
           "task_files": {
             "string_formatting.py": {
-              "name": "string_formatting.py",
               "task_windows": [
                 {
                   "line": 3,
@@ -407,12 +380,10 @@
       "task_list": [
         {
           "name": "Lists introduction",
-          "text": "task1.html",
           "test_file": "task1_test.py",
           "test_num": 4,
           "task_files": {
             "lists.py": {
-              "name": "lists.py",
               "task_windows": [
                 {
                   "line": 3,
@@ -427,12 +398,10 @@
         },
         {
           "name": "Lists operations",
-          "text": "task2.html",
           "test_file": "task2_test.py",
           "test_num": 4,
           "task_files": {
             "list_operations.py": {
-              "name": "list_operations.py",
               "task_windows": [
                 {
                   "line": 9,
@@ -447,12 +416,10 @@
         },
         {
           "name": "List items",
-          "text": "task3.html",
           "test_file": "task3_test.py",
           "test_num": 4,
           "task_files": {
             "list_items.py": {
-              "name": "list_items.py",
               "task_windows": [
                 {
                   "line": 9,
@@ -467,12 +434,10 @@
         },
         {
           "name": "Tuples",
-          "text": "task4.html",
           "test_file": "task4_test.py",
           "test_num": 4,
           "task_files": {
             "tuples.py": {
-              "name": "tuples.py",
               "task_windows": [
                 {
                   "line": 3,
@@ -487,12 +452,10 @@
         },
         {
           "name": "Dictionaries",
-          "text": "task5.html",
           "test_file": "task5_test.py",
           "test_num": 4,
           "task_files": {
             "dicts.py": {
-              "name": "dicts.py",
               "task_windows": [
                 {
                   "line": 10,
@@ -507,12 +470,10 @@
         },
         {
           "name": "Dictionary keys() and values()",
-          "text": "task6.html",
           "test_file": "task6_test.py",
           "test_num": 4,
           "task_files": {
             "dict_key_value.py": {
-              "name": "dict_key_value.py",
               "task_windows": [
                 {
                   "line": 9,
@@ -527,12 +488,10 @@
         },
         {
           "name": "In keyword",
-          "text": "task7.html",
           "test_file": "task7_test.py",
           "test_num": 4,
           "task_files": {
             "in_keyword.py": {
-              "name": "in_keyword.py",
               "task_windows": [
                 {
                   "line": 6,
@@ -552,12 +511,10 @@
       "task_list": [
         {
           "name": "Boolean operators",
-          "text": "task1.html",
           "test_file": "task1_test.py",
           "test_num": 4,
           "task_files": {
             "boolean_operators.py": {
-              "name": "boolean_operators.py",
               "task_windows": [
                 {
                   "line": 5,
@@ -572,12 +529,10 @@
         },
         {
           "name": "Boolean operators order",
-          "text": "task2.html",
           "test_file": "task2_test.py",
           "test_num": 4,
           "task_files": {
             "boolean_order.py": {
-              "name": "boolean_order.py",
               "task_windows": [
                 {
                   "line": 5,
@@ -592,12 +547,10 @@
         },
         {
           "name": "If statement",
-          "text": "task3.html",
           "test_file": "task3_test.py",
           "test_num": 4,
           "task_files": {
             "if_statement.py": {
-              "name": "if_statement.py",
               "task_windows": [
                 {
                   "line": 9,
@@ -612,12 +565,10 @@
         },
         {
           "name": "Else, elif part in if statement",
-          "text": "task4.html",
           "test_file": "task4_test.py",
           "test_num": 4,
           "task_files": {
             "else_elif.py": {
-              "name": "else_elif.py",
               "task_windows": [
                 {
                   "line": 13,
