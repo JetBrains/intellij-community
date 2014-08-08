@@ -729,6 +729,103 @@
           }
         }
       ]
+    },
+    {
+      "name": "Classes and objects",
+      "task_list": [
+        {
+          "name": "Class definition",
+          "test_num": 4,
+          "task_files": {
+            "class_definition.py": {
+              "task_windows": [
+                {
+                  "line": 1,
+                  "start": 15,
+                  "length": 28,
+                  "hint": "lesson8.task1.docs",
+                  "possible_answer": "4"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Variable access",
+          "test_num": 4,
+          "task_files": {
+            "access_variable.py": {
+              "task_windows": [
+                {
+                  "line": 17,
+                  "start": 6,
+                  "length": 33,
+                  "hint": "lesson8.task2.docs",
+                  "possible_answer": "my_object.variable1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Variable access",
+          "test_num": 4,
+          "task_files": {
+            "access_variable.py": {
+              "task_windows": [
+                {
+                  "line": 7,
+                  "start": 7,
+                  "length": 20,
+                  "hint": "lesson8.task3.1.docs",
+                  "possible_answer": "car2 = Car()"
+                },
+                {
+                  "line": 10,
+                  "start": 0,
+                  "length": 14,
+                  "hint": "lesson8.task3.2.docs",
+                  "possible_answer": "car2.color = 'blue'"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Self explanation",
+          "test_num": 4,
+          "task_files": {
+            "self_parameter.py": {
+              "task_windows": [
+                {
+                  "line": 9,
+                  "start": 8,
+                  "length": 21,
+                  "hint": "lesson8.task4.1.docs",
+                  "possible_answer": "self.current += amount"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Special __init__ method",
+          "test_num": 4,
+          "task_files": {
+            "init_method.py": {
+              "task_windows": [
+                {
+                  "line": 9,
+                  "start": 17,
+                  "length": 19,
+                  "hint": "lesson8.task5.docs",
+                  "possible_answer": "self, color"
+                }
+              ]
+            }
+          }
+        }
+      ]
     }
   ]
 }
