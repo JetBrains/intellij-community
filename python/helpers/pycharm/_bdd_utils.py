@@ -62,8 +62,11 @@ class BddRunner(object):
         """"
         Runs runner. To be called right after constructor.
         """
-        self.tc_messages.testCount(self._get_number_of_tests())
+        number_of_tests = self._get_number_of_tests()
+        self.tc_messages.testCount(number_of_tests)
         self.tc_messages.testMatrixEntered()
+        if number_of_tests == 0:  # Nothing to run, so no need to report even feature/scenario start. (See PY-13623)
+            return
         self._run_tests()
 
     def __gen_location(self, location):
