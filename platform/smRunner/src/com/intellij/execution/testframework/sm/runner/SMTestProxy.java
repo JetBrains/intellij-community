@@ -644,8 +644,7 @@ public class SMTestProxy extends AbstractTestProxy {
       // test - no matter what we will return
       myIsEmpty = true;
       myIsEmptyIsCached = true;
-
-      return myIsEmpty;
+      return true;
     }
 
     myIsEmpty = true;
