@@ -99,9 +99,10 @@ public class TaskWindow implements Comparable {
 
   private boolean isValid(@NotNull final Document document) {
     boolean isLineValid = line < document.getLineCount() && line >= 0;
+    if (!isLineValid) return false;
     boolean isStartValid = start >= 0 && start < document.getLineEndOffset(line);
     boolean isLengthValid = (getRealStartOffset(document) + myLength) <= document.getTextLength();
-    return isLengthValid && isStartValid && isLineValid;
+    return isLengthValid && isStartValid;
   }
 
   private JBColor getColor() {
