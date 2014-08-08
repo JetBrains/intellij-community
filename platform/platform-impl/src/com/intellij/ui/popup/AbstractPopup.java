@@ -780,11 +780,6 @@ public class AbstractPopup implements JBPopup {
       if (myMovable) {
         ScreenUtil.moveRectangleToFitTheScreen(targetBounds);
       }
-      else {
-        Rectangle screen = ScreenUtil.getScreenRectangle(targetBounds.x, targetBounds.y);
-        targetBounds.width = screen.width;
-        targetBounds.height = screen.height;
-      }
     }
 
     if (myMouseOutCanceller != null) {
