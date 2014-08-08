@@ -46,6 +46,9 @@ public class ShowHintAction extends DumbAwareAction {
             TaskWindow taskWindow = taskFile.getTaskWindow(selectedEditor.getDocument(), pos);
             if (taskWindow != null) {
               String hint = taskWindow.getHint();
+              if (hint == null) {
+                return;
+              }
               Course course = taskManager.getCourse();
               if (course != null) {
                 File resourceFile = new File(course.getResourcePath());

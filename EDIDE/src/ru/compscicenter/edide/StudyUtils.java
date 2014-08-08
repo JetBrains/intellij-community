@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import ru.compscicenter.edide.editor.StudyEditor;
 import ru.compscicenter.edide.ui.StudyToolWindowFactory;
 
@@ -40,7 +41,8 @@ public class StudyUtils {
   }
 
   public static String getFileText(String parentDir, String fileName, boolean wrapHTML) {
-    File inputFile = new File(parentDir, fileName);
+
+    File inputFile = parentDir !=null ? new File(parentDir, fileName) : new File(fileName);
     StringBuilder taskText = new StringBuilder();
     BufferedReader reader = null;
     try {
@@ -87,5 +89,19 @@ public class StudyUtils {
     FileDocumentManager.getInstance().saveAllDocuments();
     SaveAndSyncHandlerImpl.refreshOpenFiles();
     VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
+  }
+
+  /**
+   * Gets number index in directory names like "task1", "lesson2"
+   *
+   * @param fullName    full name of directory
+   * @param logicalName part of name without index
+   * @return index of object
+   */
+  public static int getIndex(@NotNull final String fullName, @NotNull final String logicalName) {
+    if (!fullName.contains(logicalName)) {
+      throw new IllegalArgumentException();
+    }
+    return Integer.parseInt(fullName.substring(logicalName.length())) - 1;
   }
 }

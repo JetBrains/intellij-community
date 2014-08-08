@@ -54,7 +54,7 @@ public class CheckAction extends DumbAwareAction {
       GeneralCommandLine commandLine = new GeneralCommandLine();
       commandLine.setWorkDirectory(myTaskDir.getPath());
       final Map<String, String> env = commandLine.getEnvironment();
-      final VirtualFile courseDir = project.getBaseDir().findChild(Course.COURSE_DIR);
+      final VirtualFile courseDir = project.getBaseDir();
       if (courseDir != null)
         env.put("PYTHONPATH", courseDir.getPath());
       if (sdk != null) {
@@ -216,7 +216,7 @@ public class CheckAction extends DumbAwareAction {
             documentManager.saveDocument(windowDocument);
           }
         });
-        Process smartTestProcess = testRunner.launchTests(project, windowCopy.getNameWithoutExtension());
+        Process smartTestProcess = testRunner.launchTests(project, windowCopy.getPath());
         boolean res = testRunner.testsPassed(smartTestProcess);
         userTaskWindow.setStatus(res ? StudyStatus.Solved : StudyStatus.Failed);
         windowCopy.delete(this);

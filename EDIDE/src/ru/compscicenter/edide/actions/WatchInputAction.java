@@ -41,8 +41,8 @@ import java.util.Map;
 public class WatchInputAction extends DumbAwareAction {
 
   public static final String TEST_TAB_NAME = "test";
-  public static final String USER_TEST_INPUT = "userTestInput";
-  public static final String USER_TEST_OUTPUT = "userTestOutput";
+  public static final String USER_TEST_INPUT = "input";
+  public static final String USER_TEST_OUTPUT = "output";
   private static final Logger LOG = Logger.getInstance(WatchInputAction.class.getName());
   private JBEditorTabs tabbedPane;
   private Map<TabInfo, UserTest> myEditableTabs = new HashMap<TabInfo, UserTest>();
@@ -51,7 +51,7 @@ public class WatchInputAction extends DumbAwareAction {
     final Editor selectedEditor = StudyEditor.getSelectedEditor(project);
     if (selectedEditor != null) {
       FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
-      VirtualFile openedFile = fileDocumentManager.getFile(selectedEditor.getDocument());
+      final VirtualFile openedFile = fileDocumentManager.getFile(selectedEditor.getDocument());
       StudyTaskManager studyTaskManager = StudyTaskManager.getInstance(project);
       assert openedFile != null;
       TaskFile taskFile = studyTaskManager.getTaskFile(openedFile);
@@ -63,7 +63,10 @@ public class WatchInputAction extends DumbAwareAction {
         public void selectionChanged(TabInfo oldSelection, TabInfo newSelection) {
           if (newSelection.getIcon() != null) {
             int tabCount = tabbedPane.getTabCount();
-            UserTest userTest = createUserTest(currentTask);
+            VirtualFile taskDir = openedFile.getParent();
+            VirtualFile testsDir = taskDir.findChild(Task.USER_TESTS);
+            assert testsDir != null;
+            UserTest userTest = createUserTest(testsDir, currentTask);
             userTest.setEditable(true);
             TestContentPanel testContentPanel = new TestContentPanel(userTest);
             TabInfo testTab = addTestTab(tabbedPane.getTabCount(), testContentPanel, currentTask, true);
@@ -76,8 +79,8 @@ public class WatchInputAction extends DumbAwareAction {
       List<UserTest> userTests = currentTask.getUserTests();
       int i = 1;
       for (UserTest userTest : userTests) {
-        String inputFileText = currentTask.getResourceText(project, userTest.getInput(), false);
-        String outputFileText = currentTask.getResourceText(project, userTest.getOutput(), false);
+        String inputFileText = StudyUtils.getFileText(null, userTest.getInput(), false);
+        String outputFileText = StudyUtils.getFileText(null, userTest.getOutput(), false);
         TestContentPanel myContentPanel = new TestContentPanel(userTest);
         myContentPanel.addInputContent(inputFileText);
         myContentPanel.addOutputContent(outputFileText);
@@ -100,7 +103,7 @@ public class WatchInputAction extends DumbAwareAction {
       StudyEditor selectedStudyEditor = StudyEditor.getSelectedStudyEditor(project);
       assert selectedStudyEditor != null;
       hint.showInCenterOf(selectedStudyEditor.getComponent());
-      hint.addListener(new HintClosedListener(currentTask, project));
+      hint.addListener(new HintClosedListener(currentTask));
     }
   }
 
@@ -120,14 +123,16 @@ public class WatchInputAction extends DumbAwareAction {
     StudyUtils.synchronize();
   }
 
-  private UserTest createUserTest(@NotNull final Task currentTask) {
+  private UserTest createUserTest(@NotNull final VirtualFile testsDir, @NotNull final Task currentTask) {
     UserTest userTest = new UserTest();
     List<UserTest> userTests = currentTask.getUserTests();
-    int testNum = userTests.size();
+    int testNum = userTests.size() + 1;
     String inputName = USER_TEST_INPUT + testNum;
+    File inputFile = new File(testsDir.getPath(), inputName);
     String outputName = USER_TEST_OUTPUT + testNum;
-    userTest.setInput(inputName);
-    userTest.setOutput(outputName);
+    File outputFile = new File(testsDir.getPath(), outputName);
+    userTest.setInput(inputFile.getPath());
+    userTest.setOutput(outputFile.getPath());
     userTests.add(userTest);
     return userTest;
   }
@@ -151,10 +156,8 @@ public class WatchInputAction extends DumbAwareAction {
 
   private class HintClosedListener extends  JBPopupAdapter {
     private final Task myTask;
-    private final Project myProject;
-    private HintClosedListener(@NotNull final Task task, @NotNull final Project project) {
+    private HintClosedListener(@NotNull final Task task) {
       myTask = task;
-      myProject = project;
     }
 
     @Override
@@ -163,10 +166,12 @@ public class WatchInputAction extends DumbAwareAction {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
-            File inputFile = new File(myTask.createResourceFile(myProject, userTest.getInput()).getPath());
-            File outputFile = new File(myTask.createResourceFile(myProject, userTest.getOutput()).getPath());
-            flushBuffer(userTest.getInputBuffer(), inputFile);
-            flushBuffer(userTest.getOutputBuffer(), outputFile);
+            if (userTest.isEditable()) {
+              File inputFile = new File(userTest.getInput());
+              File outputFile = new File(userTest.getOutput());
+              flushBuffer(userTest.getInputBuffer(), inputFile);
+              flushBuffer(userTest.getOutputBuffer(), outputFile);
+            }
           }
         });
       }
@@ -195,6 +200,13 @@ public class WatchInputAction extends DumbAwareAction {
     public void actionPerformed(final AnActionEvent e) {
       tabbedPane.removeTab(myTabInfo);
       UserTest userTest = myEditableTabs.get(myTabInfo);
+      File testInputFile = new File(userTest.getInput());
+      File testOutputFile = new File(userTest.getOutput());
+      if (testInputFile.delete() && testOutputFile.delete()) {
+        StudyUtils.synchronize();
+      } else {
+        LOG.error("failed to delete user tests");
+      }
       myTask.getUserTests().remove(userTest);
     }
   }

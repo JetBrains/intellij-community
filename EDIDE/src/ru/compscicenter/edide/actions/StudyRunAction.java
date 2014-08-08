@@ -14,11 +14,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.sdk.PythonSdkType;
+import ru.compscicenter.edide.StudyResourceManger;
 import ru.compscicenter.edide.StudyTaskManager;
-import ru.compscicenter.edide.StudyUtils;
 import ru.compscicenter.edide.course.Task;
 import ru.compscicenter.edide.course.TaskFile;
 import ru.compscicenter.edide.editor.StudyEditor;
+
+import java.io.File;
 
 public class StudyRunAction extends DumbAwareAction {
   public void run(Project project) {
@@ -36,14 +38,28 @@ public class StudyRunAction extends DumbAwareAction {
         String pythonPath = sdk.getHomePath();
         if (pythonPath != null) {
           cmd.setExePath(pythonPath);
-          cmd.addParameter(filePath);
           TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
           assert selectedTaskFile != null;
           Task currentTask = selectedTaskFile.getTask();
           if (!currentTask.getUserTests().isEmpty()) {
-            cmd.addParameter(StudyUtils.getFirst(currentTask.getUserTests()).getInput());
+            cmd.addParameter(new File(project.getBaseDir().getPath(), StudyResourceManger.USER_TESTER).getPath());
+            cmd.addParameter(pythonPath);
+            cmd.addParameter(filePath);
+            Process p = null;
+            try {
+              p = cmd.createProcess();
+            }
+            catch (ExecutionException e) {
+              e.printStackTrace();
+            }
+            ProcessHandler handler = new OSProcessHandler(p);
+
+            RunContentExecutor executor = new RunContentExecutor(project, handler);
+            executor.run();
+            return;
           }
           try {
+            cmd.addParameter(filePath);
             Process p = cmd.createProcess();
             ProcessHandler handler = new OSProcessHandler(p);
 

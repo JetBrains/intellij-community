@@ -170,19 +170,7 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
     return item != null ? item : new StudyTaskManager(project);
   }
 
-  /**
-   * Gets number index in directory names like "task1", "lesson2"
-   *
-   * @param fullName    full name of directory
-   * @param logicalName part of name without index
-   * @return index of object
-   */
-  private int getIndex(@NotNull final String fullName, @NotNull final String logicalName) {
-    if (!fullName.contains(logicalName)) {
-      throw new IllegalArgumentException();
-    }
-    return Integer.parseInt(fullName.substring(logicalName.length())) - 1;
-  }
+
 
   @Nullable
   public TaskFile getTaskFile(@NotNull final VirtualFile file) {
@@ -193,9 +181,9 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
         VirtualFile lessonDir = taskDir.getParent();
         if (lessonDir != null) {
           String lessonDirName = lessonDir.getName();
-          int lessonIndex = getIndex(lessonDirName, Lesson.LESSON_DIR);
+          int lessonIndex = StudyUtils.getIndex(lessonDirName, Lesson.LESSON_DIR);
           Lesson lesson = myCourse.getLessons().get(lessonIndex);
-          int taskIndex = getIndex(taskDirName, Task.TASK_DIR);
+          int taskIndex = StudyUtils.getIndex(taskDirName, Task.TASK_DIR);
           Task task = lesson.getTaskList().get(taskIndex);
           return task.getFile(file.getName());
         }

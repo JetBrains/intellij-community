@@ -76,13 +76,6 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
         }
       }
     }
-    PsiDirectory parent = myValue.getParent();
-    if (parent != null) {
-      if (myProject.getName().equals(parent.getName()) && valueName.contains(Course.COURSE_DIR)) {
-        data.setPresentableText(course.getName());
-        return;
-      }
-    }
     data.setPresentableText(valueName);
   }
 
