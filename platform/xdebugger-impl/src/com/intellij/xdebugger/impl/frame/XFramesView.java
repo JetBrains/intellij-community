@@ -112,6 +112,7 @@ public class XFramesView extends XDebugView {
         XSuspendContext context = mySession.getSuspendContext();
         if (context != null && !myThreadsCalculated) {
           myThreadsCalculated = true;
+          //noinspection unchecked
           myThreadComboBox.addItem(null); // rendered as "Loading..."
           context.computeExecutionStacks(new XSuspendContext.XExecutionStackContainer() {
             @Override
@@ -225,6 +226,7 @@ public class XFramesView extends XDebugView {
     myListenersEnabled = true;
   }
 
+  @Override
   protected void clear() {
     myThreadComboBox.removeAllItems();
     myFramesList.clear();
