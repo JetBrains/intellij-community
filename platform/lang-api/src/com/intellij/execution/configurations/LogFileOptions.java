@@ -123,11 +123,8 @@ public class LogFileOptions implements JDOMExternalizable {
     final File[] dirs = root.listFiles();
     if (dirs == null) return;
     for (File dir : dirs) {
-      if (dir.isFile()) {
-        final String path = FileUtil.toSystemIndependentName(FileUtil.getRelativePath(root, dir));
-        if (pattern.matcher(path).matches()) {
-          files.add(dir);
-        }
+      if (pattern.matcher(dir.getName()).matches() && dir.isFile()) {
+        files.add(dir);
       }
     }
   }
