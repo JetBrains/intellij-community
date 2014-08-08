@@ -234,7 +234,7 @@ abstract class Analysis<Res> {
   Res earlyResult = null;
 
   abstract Res identity();
-  abstract Res combineResults(Res delta, List<Res> subResults) throws AnalyzerException;
+  abstract Res combineResults(Res delta, int[] subResults) throws AnalyzerException;
   abstract boolean isEarlyResult(Res res);
   @NotNull
   abstract Equation<Key, Value> mkEquation(Res result);
@@ -292,11 +292,7 @@ abstract class Analysis<Res> {
       PendingAction<Res> action = pendingPop();
       if (action instanceof MakeResult) {
         MakeResult<Res> makeResult = (MakeResult<Res>) action;
-        ArrayList<Res> subResults = new ArrayList<Res>();
-        for (int index : makeResult.indices) {
-          subResults.add(results[index]);
-        }
-        Res result = combineResults(makeResult.subResult, subResults);
+        Res result = combineResults(makeResult.subResult, makeResult.indices);
         if (isEarlyResult(result)) {
           earlyResult = result;
         } else {

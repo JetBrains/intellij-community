@@ -149,12 +149,12 @@ class NonNullInAnalysis extends Analysis<PResult> {
   }
 
   @Override
-  PResult combineResults(PResult delta, List<PResult> subResults) throws AnalyzerException {
-    PResult subResult = Identity;
-    for (PResult sr : subResults) {
-      subResult = join(subResult, sr);
+  PResult combineResults(PResult delta, int[] subResults) throws AnalyzerException {
+    PResult result = Identity;
+    for (int subResult : subResults) {
+      result = join(result, results[subResult]);
     }
-    return meet(delta, subResult);
+    return meet(delta, result);
   }
 
   @Override
@@ -268,24 +268,21 @@ class NonNullInAnalysis extends Analysis<PResult> {
 
     // general case
     int[] nextInsnIndices = controlFlow.transitions[insnIndex];
-    List<State> nextStates = new ArrayList<State>(nextInsnIndices.length);
     int[] subIndices = new int[nextInsnIndices.length];
-
+    for (int i = 0; i < nextInsnIndices.length; i++) {
+      subIndices[i] = ++id;
+    }
+    pendingPush(new MakeResult<PResult>(state, subResult, subIndices));
     for (int i = 0; i < nextInsnIndices.length; i++) {
       int nextInsnIndex = nextInsnIndices[i];
       Frame<BasicValue> nextFrame1 = nextFrame;
       if (controlFlow.errors[nextInsnIndex] && controlFlow.errorTransitions.contains(new Edge(insnIndex, nextInsnIndex))) {
         nextFrame1 = new Frame<BasicValue>(frame);
         nextFrame1.clearStack();
+        // TODO - make constant
         nextFrame1.push(new BasicValue(Type.getType("java/lang/Throwable")));
       }
-      nextStates.add(new State(++id, new Conf(nextInsnIndex, nextFrame1), nextHistory, taken, hasCompanions || notEmptySubResult));
-      subIndices[i] = (id);
-    }
-
-    pendingPush(new MakeResult<PResult>(state, subResult, subIndices));
-    for (State nextState : nextStates) {
-      pendingPush(new ProceedState<PResult>(nextState));
+      pendingPush(new ProceedState<PResult>(new State(subIndices[i], new Conf(nextInsnIndex, nextFrame1), nextHistory, taken, hasCompanions || notEmptySubResult)));
     }
 
   }

@@ -55,13 +55,13 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
   }
 
   @Override
-  Result<Key, Value> combineResults(Result<Key, Value> delta, List<Result<Key, Value>> subResults) throws AnalyzerException {
+  Result<Key, Value> combineResults(Result<Key, Value> delta, int[] subResults) throws AnalyzerException {
     Result<Key, Value> result = null;
-    for (Result<Key, Value> subResult : subResults) {
+    for (int subResult : subResults) {
       if (result == null) {
-        result = subResult;
+        result = results[subResult];
       } else {
-        result = resultUtil.join(result, subResult);
+        result = resultUtil.join(result, results[subResult]);
       }
     }
     return result;
@@ -198,24 +198,21 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
 
     // general case
     int[] nextInsnIndices = controlFlow.transitions[insnIndex];
-    List<State> nextStates = new ArrayList<State>(nextInsnIndices.length);
     int[] subIndices = new int[nextInsnIndices.length];
-
+    for (int i = 0; i < nextInsnIndices.length; i++) {
+      subIndices[i] = ++id;
+    }
+    pendingPush(new MakeResult<Result<Key, Value>>(state, myIdentity, subIndices));
     for (int i = 0; i < nextInsnIndices.length; i++) {
       int nextInsnIndex = nextInsnIndices[i];
       Frame<BasicValue> nextFrame1 = nextFrame;
       if (controlFlow.errors[nextInsnIndex] && controlFlow.errorTransitions.contains(new Edge(insnIndex, nextInsnIndex))) {
         nextFrame1 = new Frame<BasicValue>(frame);
         nextFrame1.clearStack();
+        // TODO - make constant
         nextFrame1.push(new BasicValue(Type.getType("java/lang/Throwable")));
       }
-      nextStates.add(new State(++id, new Conf(nextInsnIndex, nextFrame1), nextHistory, taken, false));
-      subIndices[i] = id;
-    }
-
-    pendingPush(new MakeResult<Result<Key, Value>>(state, myIdentity, subIndices));
-    for (State nextState : nextStates) {
-      pendingPush(new ProceedState<Result<Key, Value>>(nextState));
+      pendingPush(new ProceedState<Result<Key, Value>>(new State(subIndices[i], new Conf(nextInsnIndex, nextFrame1), nextHistory, taken, false)));
     }
   }
 
