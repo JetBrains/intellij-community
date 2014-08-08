@@ -46,12 +46,22 @@ public class BeforeTestEvent extends AbstractTestEvent {
     getConsoleManager().getTestsMap().put(testId, testProxy);
 
     if (StringUtil.isEmpty(parentTestId)) {
-      getResultsViewer().getTestsRootNode().addChild(testProxy);
+      addToInvokeLater(new Runnable() {
+        @Override
+        public void run() {
+          getResultsViewer().getTestsRootNode().addChild(testProxy);
+        }
+      });
     }
     else {
       final SMTestProxy parentTestProxy = getConsoleManager().getTestsMap().get(parentTestId);
       if (parentTestProxy != null) {
-        parentTestProxy.addChild(testProxy);
+        addToInvokeLater(new Runnable() {
+          @Override
+          public void run() {
+            parentTestProxy.addChild(testProxy);
+          }
+        });
       }
     }
 
