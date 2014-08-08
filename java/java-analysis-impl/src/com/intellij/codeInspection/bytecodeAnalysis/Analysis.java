@@ -71,6 +71,12 @@ class AbstractValues {
     }
   }
 
+  static final BasicValue CLASS_VALUE = new NotNullValue(Type.getObjectType("java/lang/Class"));
+  static final BasicValue METHOD_VALUE = new NotNullValue(Type.getObjectType("java/lang/invoke/MethodType"));
+  static final BasicValue STRING_VALUE = new NotNullValue(Type.getObjectType("java/lang/String"));
+  static final BasicValue METHOD_HANDLE_VALUE = new NotNullValue(Type.getObjectType("java/lang/invoke/MethodHandle"));
+
+
   static boolean isInstance(Conf curr, Conf prev) {
     if (curr.insnIndex != prev.insnIndex) {
       return false;
