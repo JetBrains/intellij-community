@@ -25,7 +25,6 @@ import java.util.List;
 /**
  * @author Eugene.Kudelevsky
  */
-@Bombed(day = 14, month = Calendar.JULY)
 public class GroovyStructuralSearchTest extends StructuralSearchTestCase {
 
   public void test1() throws Exception {
