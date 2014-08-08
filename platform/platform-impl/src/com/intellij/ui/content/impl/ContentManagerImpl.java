@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.content.impl;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -62,14 +63,15 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   private final List<Content> mySelection = new ArrayList<Content>();
   private final boolean myCanCloseContents;
 
-  private MyContentComponent myContentComponent;
-  private MyFocusProxy myFocusProxy;
-  private JPanel myComponent;
+  private Wrapper.FocusHolder myFocusProxy;
+  private MyNonOpaquePanel myComponent;
 
   private final Set<Content> myContentWithChangedComponent = new HashSet<Content>();
 
   private boolean myDisposed;
   private final Project myProject;
+
+  private final List<DataProvider> dataProviders = new SmartList<DataProvider>();
 
   /**
    * WARNING: as this class adds listener to the ProjectManager which is removed on projectClosed event, all instances of this class
@@ -94,15 +96,18 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   @Override
   public JComponent getComponent() {
     if (myComponent == null) {
-      myComponent = new NonOpaquePanel(new BorderLayout());
+      myComponent = new MyNonOpaquePanel();
 
-      myFocusProxy = new MyFocusProxy();
-      myContentComponent = new MyContentComponent();
-      myContentComponent.setContent(myUI.getComponent());
-      myContentComponent.setFocusCycleRoot(true);
+      myFocusProxy = new Wrapper.FocusHolder();
+      myFocusProxy.setOpaque(false);
+      myFocusProxy.setPreferredSize(new Dimension(0, 0));
+
+      MyContentComponent contentComponent = new MyContentComponent();
+      contentComponent.setContent(myUI.getComponent());
+      contentComponent.setFocusCycleRoot(true);
 
       myComponent.add(myFocusProxy, BorderLayout.NORTH);
-      myComponent.add(myContentComponent, BorderLayout.CENTER);
+      myComponent.add(contentComponent, BorderLayout.CENTER);
     }
     return myComponent;
   }
@@ -116,75 +121,56 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return busyObject != null ? busyObject.getReady(requestor) : new ActionCallback.Done();
   }
 
-  private class MyContentComponent extends NonOpaquePanel implements DataProvider, SwitchProvider {
-    private final List<DataProvider> myProviders = new SmartList<DataProvider>();
-
-    public void addProvider(final DataProvider provider) {
-      myProviders.add(provider);
+  private class MyNonOpaquePanel extends NonOpaquePanel implements DataProvider {
+    public MyNonOpaquePanel() {
+      super(new BorderLayout());
     }
 
     @Override
     @Nullable
-    public Object getData(@NonNls final String dataId) {
-      if (PlatformDataKeys.CONTENT_MANAGER.is(dataId)) return ContentManagerImpl.this;
-      if (PlatformDataKeys.NONEMPTY_CONTENT_MANAGER.is(dataId) && getContentCount() > 1) {
+    public Object getData(@NonNls String dataId) {
+      if (PlatformDataKeys.CONTENT_MANAGER.is(dataId) || PlatformDataKeys.NONEMPTY_CONTENT_MANAGER.is(dataId) && getContentCount() > 1) {
         return ContentManagerImpl.this;
       }
 
-      for (DataProvider each : myProviders) {
-        final Object data = each.getData(dataId);
-        if (data != null) return data;
+      for (DataProvider dataProvider : dataProviders) {
+        Object data = dataProvider.getData(dataId);
+        if (data != null) {
+          return data;
+        }
       }
 
       if (myUI instanceof DataProvider) {
         return ((DataProvider)myUI).getData(dataId);
       }
 
-      return null;
+      DataProvider provider = DataManager.getDataProvider(this);
+      return provider == null ? null : provider.getData(dataId);
     }
+  }
 
+  private class MyContentComponent extends NonOpaquePanel implements SwitchProvider {
     @Override
     public List<SwitchTarget> getTargets(boolean onlyVisible, boolean originalProvider) {
       if (myUI instanceof SwitchProvider) {
         return ((SwitchProvider)myUI).getTargets(onlyVisible, false);
       }
-      return new ArrayList<SwitchTarget>();
+      return new SmartList<SwitchTarget>();
     }
 
     @Override
     public SwitchTarget getCurrentTarget() {
-      if (myUI instanceof SwitchProvider) {
-        return ((SwitchProvider)myUI).getCurrentTarget();
-      }
-
-      return null;
+      return myUI instanceof SwitchProvider ? ((SwitchProvider)myUI).getCurrentTarget() : null;
     }
 
     @Override
     public JComponent getComponent() {
-      if (myUI instanceof SwitchProvider) {
-        return myUI.getComponent();
-      }
-
-      return this;
+      return myUI instanceof SwitchProvider ? myUI.getComponent() : this;
     }
 
     @Override
     public boolean isCycleRoot() {
       return myUI instanceof SwitchProvider && ((SwitchProvider)myUI).isCycleRoot();
-    }
-  }
-
-  private class MyFocusProxy extends Wrapper.FocusHolder implements DataProvider {
-    private MyFocusProxy() {
-      setOpaque(false);
-      setPreferredSize(new Dimension(0, 0));
-    }
-
-    @Override
-    @Nullable
-    public Object getData(@NonNls final String dataId) {
-      return myContentComponent.getData(dataId);
     }
   }
 
@@ -687,7 +673,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   @Override
   public void addDataProvider(@NotNull final DataProvider provider) {
-    myContentComponent.addProvider(provider);
+    dataProviders.add(provider);
   }
 
   @Override

@@ -27,6 +27,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XStackFrame;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -84,7 +85,7 @@ public class XDebuggerFramesList extends DebuggerFramesList {
 
   private XStackFrame mySelectedFrame;
 
-  public XDebuggerFramesList(Project project) {
+  public XDebuggerFramesList(@NotNull Project project) {
     super(project);
 
     doInit();

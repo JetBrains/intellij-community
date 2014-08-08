@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.SystemProperties;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
@@ -149,11 +150,11 @@ public class VariablesPanel extends DebuggerTreePanel implements DataProvider {
     }
 
     @Override
-    protected void clear() {
+    protected void clear(@Nullable XDebugSession session) {
     }
 
     @Override
-    public void processSessionEvent(@NotNull SessionEvent event) {
+    public void processSessionEvent(@NotNull SessionEvent event, @NotNull XDebugSession session) {
     }
   }
 }
