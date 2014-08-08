@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module type="PLUGIN_MODULE" version="4">
+<module relativePaths="true" type="JAVA_MODULE" version="4">
   <component name="DevKit.ModuleBuildProperties" url="file://$MODULE_DIR$/META-INF/plugin.xml" />
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
@@ -8,18 +8,21 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module-library" exported="">
+    <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../editorconfig-core-java/lib/editorconfig-core-java.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/editorconfig-core-java.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/../editorconfig-core-java/lib/editorconfig-core-java.jar!/" />
-          <root url="jar://$MODULE_DIR$/../editorconfig-core-java/lib/editorconfig-core-java.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/editorconfig-core-java.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="core-api" />
+    <orderEntry type="module" module-name="platform-api" />
+    <orderEntry type="module" module-name="platform-impl" />
+    <orderEntry type="module" module-name="lang-api" />
   </component>
 </module>
 
