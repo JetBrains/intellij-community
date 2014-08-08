@@ -62,7 +62,10 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA120992() { doTest(); }
   public void testTargetTypeConflictResolverShouldNotTryToEvaluateCurrentArgumentType() { doTest(); }
   public void testIDEA119535() { doTest(); }
+
+  @Bombed(day = 20, month = Calendar.AUGUST)
   public void testIDEA119003() { doTest(); }
+  public void testIDEA125674() { doTest(); }
   public void testIDEA117124() { doTest(); }
   public void testWildcardParameterization() { doTest(); }
   public void testDiamondInLambdaReturn() { doTest(); }
