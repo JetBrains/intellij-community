@@ -261,7 +261,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
         return;
       }
 
-      builder.setDataContext(dataContext).setTarget(target).setRunnerAndSettings(runner, configuration);
+      builder.dataContext(dataContext).target(target).runnerAndSettings(runner, configuration);
       ExecutionManager.getInstance(project).restartRunProfile(runner, builder.build(), null);
     }
   }

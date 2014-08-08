@@ -57,32 +57,58 @@ public final class ExecutionEnvironmentBuilder {
    * @param copySource the environment to copy from.
    */
   public ExecutionEnvironmentBuilder(@NotNull ExecutionEnvironment copySource) {
-    setTarget(copySource.getExecutionTarget());
+    myTarget = copySource.getExecutionTarget();
     myProject = copySource.getProject();
     myRunnerAndConfigurationSettings = copySource.getRunnerAndConfigurationSettings();
     myRunProfile = copySource.getRunProfile();
     myRunnerSettings = copySource.getRunnerSettings();
     myConfigurationSettings = copySource.getConfigurationSettings();
     myRunnerId = copySource.getRunnerId();
-    setContentToReuse(copySource.getContentToReuse());
+    myContentToReuse = copySource.getContentToReuse();
     myExecutor = copySource.getExecutor();
   }
 
+  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
+  /**
+   * to remove in IDEA 15
+   */
   public ExecutionEnvironmentBuilder setTarget(@NotNull ExecutionTarget target) {
-    myTarget = target;
+    return target(target);
+  }
+
+  public ExecutionEnvironmentBuilder target(@Nullable ExecutionTarget target) {
+    if (target != null) {
+      myTarget = target;
+    }
     return this;
   }
 
+  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
+  /**
+   * to remove in IDEA 15
+   */
   public ExecutionEnvironmentBuilder setRunnerAndSettings(@NotNull ProgramRunner programRunner,
                                                           @NotNull RunnerAndConfigurationSettings settings) {
+    return runnerAndSettings(programRunner, settings);
+  }
+
+  public ExecutionEnvironmentBuilder runnerAndSettings(@NotNull ProgramRunner programRunner,
+                                                       @NotNull RunnerAndConfigurationSettings settings) {
     myRunnerAndConfigurationSettings = settings;
-    setRunProfile(settings.getConfiguration());
-    setRunnerSettings(settings.getRunnerSettings(programRunner));
-    setConfigurationSettings(settings.getConfigurationSettings(programRunner));
-    setRunnerId(programRunner.getRunnerId());
+    myRunProfile = settings.getConfiguration();
+    myRunnerSettings = settings.getRunnerSettings(programRunner);
+    myConfigurationSettings = settings.getConfigurationSettings(programRunner);
+    myRunnerId = programRunner.getRunnerId();
     return this;
   }
 
+  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
+  /**
+   * to remove in IDEA 15
+   */
   public ExecutionEnvironmentBuilder setRunnerSettings(@Nullable RunnerSettings runnerSettings) {
     myRunnerSettings = runnerSettings;
     return this;
@@ -93,12 +119,27 @@ public final class ExecutionEnvironmentBuilder {
     return this;
   }
 
+  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
+  /**
+   * to remove in IDEA 15
+   */
   public ExecutionEnvironmentBuilder setConfigurationSettings(@Nullable ConfigurationPerRunnerSettings configurationSettings) {
     myConfigurationSettings = configurationSettings;
     return this;
   }
 
+  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
+  /**
+   * to remove in IDEA 15
+   */
   public ExecutionEnvironmentBuilder setContentToReuse(@Nullable RunContentDescriptor contentToReuse) {
+    contentToReuse(contentToReuse);
+    return this;
+  }
+
+  public ExecutionEnvironmentBuilder contentToReuse(@Nullable RunContentDescriptor contentToReuse) {
     myContentToReuse = contentToReuse;
     return this;
   }
@@ -112,7 +153,16 @@ public final class ExecutionEnvironmentBuilder {
     return this;
   }
 
+  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
+  /**
+   * to remove in IDEA 15
+   */
   public ExecutionEnvironmentBuilder setRunnerId(@Nullable String runnerId) {
+    return runnerId(runnerId);
+  }
+
+  public ExecutionEnvironmentBuilder runnerId(@Nullable String runnerId) {
     myRunnerId = runnerId;
     return this;
   }
@@ -122,12 +172,30 @@ public final class ExecutionEnvironmentBuilder {
     return this;
   }
 
+  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
+  /**
+   * to remove in IDEA 15
+   */
   public ExecutionEnvironmentBuilder setDataContext(@Nullable DataContext dataContext) {
+    return dataContext(dataContext);
+  }
+
+  public ExecutionEnvironmentBuilder dataContext(@Nullable DataContext dataContext) {
     myDataContext = dataContext;
     return this;
   }
 
+  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
+  /**
+   * to remove in IDEA 15
+   */
   public ExecutionEnvironmentBuilder setExecutor(@NotNull Executor executor) {
+    return executor(executor);
+  }
+
+  public ExecutionEnvironmentBuilder executor(@NotNull Executor executor) {
     myExecutor = executor;
     return this;
   }

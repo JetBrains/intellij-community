@@ -157,7 +157,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
                 LOG.warn("Cannot find BeforeRunTaskProvider for id='" + task.getProviderId() + "'");
                 continue;
               }
-              ExecutionEnvironment taskEnvironment = new ExecutionEnvironmentBuilder(env).setContentToReuse(null).build();
+              ExecutionEnvironment taskEnvironment = new ExecutionEnvironmentBuilder(env).contentToReuse(null).build();
               taskEnvironment.setExecutionId(finalId);
               EXECUTION_SESSION_ID_KEY.set(taskEnvironment, executionSessionId);
               if (!provider.executeTask(projectContext, runConfiguration, taskEnvironment, task)) {
