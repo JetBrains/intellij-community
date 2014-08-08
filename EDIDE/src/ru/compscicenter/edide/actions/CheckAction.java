@@ -15,7 +15,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -27,7 +26,10 @@ import org.jetbrains.annotations.NotNull;
 import ru.compscicenter.edide.StudyDocumentListener;
 import ru.compscicenter.edide.StudyTaskManager;
 import ru.compscicenter.edide.StudyUtils;
-import ru.compscicenter.edide.course.*;
+import ru.compscicenter.edide.course.StudyStatus;
+import ru.compscicenter.edide.course.Task;
+import ru.compscicenter.edide.course.TaskFile;
+import ru.compscicenter.edide.course.TaskWindow;
 import ru.compscicenter.edide.editor.StudyEditor;
 
 import javax.swing.*;
@@ -41,12 +43,22 @@ public class CheckAction extends DumbAwareAction {
 
   class StudyTestRunner {
     private static final String TEST_OK = "#study_plugin test OK";
+    private static final String TEST_FAILED = "#study_plugin FAILED + ";
     private final Task myTask;
     private final VirtualFile myTaskDir;
+    private int myTestPassed;
 
     StudyTestRunner(Task task, VirtualFile taskDir) {
       myTask = task;
       myTaskDir = taskDir;
+    }
+
+    public int getTestPassed() {
+      return myTestPassed;
+    }
+
+    public void setTestPassed(int testPassed) {
+      myTestPassed = testPassed;
     }
 
     Process launchTests(Project project, String executablePath) throws ExecutionException {
@@ -70,15 +82,18 @@ public class CheckAction extends DumbAwareAction {
       return null;
     }
 
-    int getPassedTests(Process p) {
-      int testPassed = 0;
+
+    String getPassedTests(Process p) {
       InputStream testOutput = p.getInputStream();
       BufferedReader testOutputReader = new BufferedReader(new InputStreamReader(testOutput));
       String line;
       try {
         while ((line = testOutputReader.readLine()) != null) {
           if (line.equals(TEST_OK)) {
-            testPassed++;
+            myTestPassed++;
+          }
+          if (line.contains(TEST_FAILED)) {
+             return line.substring(TEST_FAILED.length(), line.length());
           }
         }
       }
@@ -88,30 +103,11 @@ public class CheckAction extends DumbAwareAction {
       finally {
         StudyUtils.closeSilently(testOutputReader);
       }
-      return testPassed;
+      return null;
     }
 
     boolean testsPassed(Process p) {
-      return getPassedTests(p) == myTask.getTestNum();
-    }
-
-    String getRunFailedMessage(Process p) {
-      InputStream testOutput = p.getErrorStream();
-      BufferedReader testOutputReader = new BufferedReader(new InputStreamReader(testOutput));
-      StringBuilder errorText = new StringBuilder();
-      String line;
-      try {
-        while ((line = testOutputReader.readLine()) != null) {
-          errorText.append(line).append("\n");
-        }
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-      finally {
-        StudyUtils.closeSilently(testOutputReader);
-      }
-      return errorText.toString();
+      return myTestPassed == myTask.getTestNum();
     }
   }
 
@@ -147,8 +143,9 @@ public class CheckAction extends DumbAwareAction {
                   }
                   if (testProcess != null) {
                     final int testNum = currentTask.getTestNum();
-                    final int testPassed = testRunner.getPassedTests(testProcess);
-                    if (testPassed == testNum) {
+                    String failedMessage = testRunner.getPassedTests(testProcess);
+                    final int testPassed = testRunner.getTestPassed();
+                    if (testPassed !=0 && failedMessage == null) {
                       currentTask.setStatus(StudyStatus.Solved);
                       StudyUtils.updateStudyToolWindow(project);
                       selectedTaskFile.drawAllWindows(selectedEditor);
@@ -168,18 +165,12 @@ public class CheckAction extends DumbAwareAction {
                     catch (IOException e) {
                       LOG.error(e);
                     }
-                    if (testPassed == 0) {
-                      String message = testRunner.getRunFailedMessage(testProcess);
-                      if (message.length() != 0) {
-                        Messages.showErrorDialog(project, message, "Failed to Run");
-                        selectedTaskFile.drawAllWindows(selectedEditor);
-                        ProjectView.getInstance(project).refresh();
-                        return;
-                      }
-                    }
 
+                    if (failedMessage == null) {
+                      failedMessage = "";
+                    }
                     selectedTaskFile.drawAllWindows(selectedEditor);
-                    String result = String.format("%d from %d tests failed", testNum - testPassed, testNum);
+                    String result = String.format("%d from %d tests failed\n %s", testNum - testPassed, testNum, failedMessage);
                     createTestResultPopUp(result, JBColor.RED, project);
                   }
                 }
