@@ -3,6 +3,7 @@ package ru.compscicenter.edide.actions;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.ide.projectView.ProjectView;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -132,6 +133,10 @@ public class CheckAction extends DumbAwareAction {
                   FileDocumentManager.getInstance().saveAllDocuments();
                   final VirtualFile taskDir = openedFile.getParent();
                   Task currentTask = selectedTaskFile.getTask();
+                  StudyRunAction runAction = (StudyRunAction)ActionManager.getInstance().getAction(StudyRunAction.ACTION_ID);
+                  if (runAction != null) {
+                    runAction.run(project);
+                  }
                   final StudyTestRunner testRunner = new StudyTestRunner(currentTask, taskDir);
                   Process testProcess = null;
                   try {
