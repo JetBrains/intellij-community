@@ -90,19 +90,6 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     }
   }
 
-  @Override
-  public void visitDocTagValue(final PsiDocTagValue value) {
-    final PsiDocTagValue value2 = (PsiDocTagValue)myMatchingVisitor.getElement();
-    final boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(value);
-
-    if (isTypedVar) {
-      myMatchingVisitor.setResult(myMatchingVisitor.handleTypedElement(value, value2));
-    }
-    else {
-      myMatchingVisitor.setResult(value.textMatches(value2));
-    }
-  }
-
   private static boolean isNotInstanceModifier(final PsiModifierList list2) {
     return list2.hasModifierProperty(PsiModifier.STATIC) ||
            list2.hasModifierProperty(PsiModifier.ABSTRACT);
