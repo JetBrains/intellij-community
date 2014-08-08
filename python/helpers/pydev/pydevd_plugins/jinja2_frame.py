@@ -1,8 +1,7 @@
 
-from django_frame import FCode
+from pydevd_plugins.django_frame import FCode
 from pydevd_file_utils import GetFileNameAndBaseFromFile
 from runfiles import DictContains
-
 
 class Jinja2TemplateFrame:
 

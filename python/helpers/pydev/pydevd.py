@@ -1,8 +1,7 @@
 #IMPORTANT: pydevd_constants must be the 1st thing defined because it'll keep a reference to the original sys._getframe
 import traceback
 
-from jinja2_debug import Jinja2LineBreakpoint
-from django_debug import DjangoLineBreakpoint
+from pluginbase import PluginBase
 from pydevd_signature import SignatureFactory
 from pydevd_frame import add_exception_to_frame
 import pydev_imports
@@ -78,6 +77,7 @@ else:
     import threading
 
 import os
+
 
 
 threadingEnumerate = threading.enumerate
@@ -325,6 +325,9 @@ class PyDB:
         self.signature_factory = None
         self.SetTrace = pydevd_tracing.SetTrace
 
+        plugin_base = PluginBase(package='pydevd_plugins')
+        self.plugin_source = plugin_base.make_plugin_source(searchpath=[os.path.dirname(os.path.realpath(__file__)) + '/pydevd_plugins'])
+
         #this is a dict of thread ids pointing to thread ids. Whenever a command is passed to the java end that
         #acknowledges that a thread was created, the thread id should be passed here -- and if at some time we do not
         #find that thread alive anymore, we must remove it from this list and make the java side know that the thread
@@ -542,6 +545,8 @@ class PyDB:
         probably will give better performance).
         '''
 
+
+
         self._main_lock.acquire()
         try:
             try:
@@ -725,16 +730,23 @@ class PyDB:
                     if len(expression) <= 0 or expression is None or expression == "None":
                         expression = None
 
+                    supported_type = False
                     if type == 'python-line':
                         breakpoint = LineBreakpoint(type, True, condition, func_name, expression)
                         breakpoint.add(self.breakpoints, file, line, func_name)
-                    elif type == 'django-line':
-                        breakpoint = DjangoLineBreakpoint(type, file, line, True, condition, func_name, expression)
-                        breakpoint.add(self.django_breakpoints, file, line, func_name)
-                    elif type == 'jinja2-line':
-                        breakpoint = Jinja2LineBreakpoint(type, file, line, True, condition, func_name, expression)
-                        breakpoint.add(self.jinja2_breakpoints, file, line, func_name)
+                        supported_type = True
                     else:
+                        for plugin in self.plugin_source.list_plugins():
+                            loaded_plugin = None
+                            try:
+                                loaded_plugin = self.plugin_source.load_plugin(plugin)
+                            except:
+                                pass
+                            if hasattr(loaded_plugin, 'add_line_breakpoint'):
+                                supported_type = supported_type or \
+                                    loaded_plugin.add_line_breakpoint(self, type, file, line, condition, expression, func_name)
+
+                    if not supported_type:
                         raise NameError(type)
 
                     self.setTracingForUntracedContexts()

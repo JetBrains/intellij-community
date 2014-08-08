@@ -1,10 +1,10 @@
-from django_debug import is_django_render_call, get_template_file_name, get_template_line, is_django_suspended, suspend_django, is_django_resolve_call, is_django_context_get_call
-from django_debug import find_django_render_frame
-from django_frame import just_raised
-from django_frame import is_django_exception_break_context
-from django_frame import DjangoTemplateFrame
-from jinja2_debug import Jinja2LineBreakpoint, is_jinja2_render_call, suspend_jinja2, is_jinja2_suspended, is_jinja2_context_call, is_jinja2_internal_function, find_jinja2_render_frame
-from jinja2_frame import Jinja2TemplateFrame, get_jinja2_template_filename, get_jinja2_template_line
+from pydevd_plugins.django_debug import is_django_render_call, get_template_file_name, get_template_line, is_django_suspended, suspend_django, is_django_resolve_call, is_django_context_get_call
+from pydevd_plugins.django_debug import find_django_render_frame
+from pydevd_plugins.django_frame import just_raised
+from pydevd_plugins.django_frame import is_django_exception_break_context
+from pydevd_plugins.django_frame import DjangoTemplateFrame
+from pydevd_plugins.jinja2_debug import Jinja2LineBreakpoint, is_jinja2_render_call, suspend_jinja2, is_jinja2_suspended, is_jinja2_context_call, is_jinja2_internal_function, find_jinja2_render_frame
+from pydevd_plugins.jinja2_frame import Jinja2TemplateFrame, get_jinja2_template_filename, get_jinja2_template_line
 from pydevd_comm import * #@UnusedWildImport
 from pydevd_breakpoints import * #@UnusedWildImport
 import traceback #@Reimport

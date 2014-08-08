@@ -1,6 +1,6 @@
 
 from pydevd_breakpoints import LineBreakpoint
-from jinja2_frame import Jinja2TemplateFrame, get_jinja2_template_filename, get_jinja2_template_line
+from pydevd_plugins.jinja2_frame import Jinja2TemplateFrame, get_jinja2_template_filename, get_jinja2_template_line
 from pydevd_constants import JINJA2_SUSPEND, GetThreadId
 from pydevd_comm import  CMD_SET_BREAK
 import pydevd_vars
@@ -25,6 +25,15 @@ class Jinja2LineBreakpoint(LineBreakpoint):
 
     def __str__(self):
         return "Jinja2LineBreakpoint: %s-%d" %(self.file, self.line)
+
+
+def add_line_breakpoint(pydb, type, file, line, condition, expression, func_name):
+    if type == 'jinja2-line':
+        breakpoint = Jinja2LineBreakpoint(type, file, line, True, condition, func_name, expression)
+        breakpoint.add(pydb.jinja2_breakpoints, file, line, func_name)
+        return True
+    return False
+
 
 def is_jinja2_render_call(frame):
     try:
