@@ -413,9 +413,9 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   }
 
   @Override
-  public void showRunContent(@NotNull final Executor info, RunContentDescriptor descriptor, RunContentDescriptor contentToReuse) {
+  public void showRunContent(@NotNull Executor info, RunContentDescriptor descriptor, @Nullable RunContentDescriptor contentToReuse) {
     if (contentToReuse != null) {
-      final Content attachedContent = contentToReuse.getAttachedContent();
+      Content attachedContent = contentToReuse.getAttachedContent();
       if (attachedContent.getManager() != null) {
         descriptor.setAttachedContent(attachedContent);
       }

@@ -32,6 +32,7 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.*;
 import com.intellij.ui.switcher.SwitchProvider;
 import com.intellij.ui.switcher.SwitchTarget;
+import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -63,7 +64,6 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   private MyContentComponent myContentComponent;
   private MyFocusProxy myFocusProxy;
   private JPanel myComponent;
-
 
   private final Set<Content> myContentWithChangedComponent = new HashSet<Content>();
 
@@ -118,8 +118,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   private class MyContentComponent extends NonOpaquePanel implements DataProvider, SwitchProvider {
-
-    private final List<DataProvider> myProviders = new ArrayList<DataProvider>();
+    private final List<DataProvider> myProviders = new SmartList<DataProvider>();
 
     public void addProvider(final DataProvider provider) {
       myProviders.add(provider);

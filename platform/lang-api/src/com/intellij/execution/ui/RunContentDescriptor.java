@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,18 +20,16 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.HelpIdProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class RunContentDescriptor implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.ui.RunContentDescriptor");
-
+public class RunContentDescriptor implements Disposable, DataProvider {
   private ExecutionConsole myExecutionConsole;
   private ProcessHandler myProcessHandler;
   private JComponent myComponent;
@@ -51,29 +49,34 @@ public class RunContentDescriptor implements Disposable {
   private Content myContent;
   private Runnable myRestarter;
 
-  public RunContentDescriptor(final ExecutionConsole executionConsole,
-                              final ProcessHandler processHandler, final JComponent component, final String displayName, final Icon icon) {
+  public RunContentDescriptor(@Nullable ExecutionConsole executionConsole,
+                              @Nullable ProcessHandler processHandler,
+                              @NotNull JComponent component,
+                              String displayName,
+                              @Nullable Icon icon) {
     myExecutionConsole = executionConsole;
     myProcessHandler = processHandler;
     myComponent = component;
     myDisplayName = displayName;
     myIcon = icon;
     myHelpId = myExecutionConsole instanceof HelpIdProvider ? ((HelpIdProvider)myExecutionConsole).getHelpId() : null;
-    DataManager.registerDataProvider(myComponent, new DataProvider() {
-
-      @Override
-      public Object getData(@NonNls final String dataId) {
-        if (RunContentManager.RUN_CONTENT_DESCRIPTOR.is(dataId)) {
-          return RunContentDescriptor.this;
-        }
-        return null;
-      }
-    });
+    DataManager.registerDataProvider(myComponent, this);
   }
 
-  public RunContentDescriptor(final ExecutionConsole executionConsole,
-                              final ProcessHandler processHandler, final JComponent component, final String displayName) {
+  public RunContentDescriptor(@Nullable ExecutionConsole executionConsole,
+                              @Nullable ProcessHandler processHandler,
+                              @NotNull JComponent component,
+                              String displayName) {
     this(executionConsole, processHandler, component, displayName, null);
+  }
+
+  @Nullable
+  @Override
+  public Object getData(@NonNls String dataId) {
+    if (RunContentManager.RUN_CONTENT_DESCRIPTOR.is(dataId)) {
+      return this;
+    }
+    return null;
   }
 
   public ExecutionConsole getExecutionConsole() {

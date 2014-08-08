@@ -42,6 +42,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -252,8 +253,8 @@ public class RunContentBuilder extends LogConsoleManagerBase {
   /**
    * @param reuseContent see {@link RunContentDescriptor#myContent}
    */
-  public RunContentDescriptor showRunContent(final RunContentDescriptor reuseContent) {
-    final RunContentDescriptor descriptor = createDescriptor();
+  public RunContentDescriptor showRunContent(@Nullable RunContentDescriptor reuseContent) {
+    RunContentDescriptor descriptor = createDescriptor();
     if (reuseContent != null) {
       descriptor.setAttachedContent(reuseContent.getAttachedContent());
       if (reuseContent.isReuseToolWindowActivation()) {
