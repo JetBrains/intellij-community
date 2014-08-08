@@ -24,6 +24,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyParameterList;
 import com.jetbrains.python.refactoring.PyReplaceExpressionUtil;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
 import com.jetbrains.python.refactoring.introduce.IntroduceOperation;
@@ -63,6 +64,11 @@ public class PyIntroduceConstantHandler extends IntroduceHandler {
       names.add(StringUtil.toUpperCase(name));
     }
     return names;
+  }
+
+  @Override
+  protected boolean isValidIntroduceContext(PsiElement element) {
+    return super.isValidIntroduceContext(element) || PsiTreeUtil.getParentOfType(element, PyParameterList.class) != null;
   }
 
   @Override
