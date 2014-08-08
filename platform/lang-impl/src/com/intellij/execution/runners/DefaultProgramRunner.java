@@ -36,10 +36,10 @@ public abstract class DefaultProgramRunner extends GenericProgramRunner {
                                            @NotNull final ExecutionEnvironment env) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
     ExecutionResult executionResult = state.execute(env.getExecutor(), this);
-    if (executionResult == null) return null;
-
-    final RunContentBuilder contentBuilder = new RunContentBuilder(this, executionResult, env);
-    return contentBuilder.showRunContent(contentToReuse);
+    if (executionResult == null) {
+      return null;
+    }
+    return new RunContentBuilder(executionResult, env).showRunContent(contentToReuse);
   }
 
 }

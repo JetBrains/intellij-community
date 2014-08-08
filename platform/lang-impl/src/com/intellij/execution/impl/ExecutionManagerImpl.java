@@ -192,11 +192,11 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   @Override
   public void startRunProfile(@NotNull final RunProfileStarter starter, @NotNull final RunProfileState state,
                               @NotNull final Project project, @NotNull final Executor executor, @NotNull final ExecutionEnvironment env) {
-    final RunContentDescriptor reuseContent =
-      ExecutionManager.getInstance(project).getContentManager().getReuseContent(env);
+    final RunContentDescriptor reuseContent = ExecutionManager.getInstance(project).getContentManager().getReuseContent(env);
     if (reuseContent != null) {
       reuseContent.setExecutionId(env.getExecutionId());
     }
+
     final RunProfile profile = env.getRunProfile();
 
     project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processStartScheduled(executor.getId(), env);

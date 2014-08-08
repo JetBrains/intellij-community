@@ -54,7 +54,6 @@ import java.util.Collection;
 public class RunContentBuilder extends LogConsoleManagerBase {
   @NonNls private static final String JAVA_RUNNER = "JavaRunner";
 
-  private final ProgramRunner myRunner;
   private final ArrayList<AnAction> myRunnerActions = new ArrayList<AnAction>();
   private ExecutionResult myExecutionResult;
 
@@ -66,33 +65,33 @@ public class RunContentBuilder extends LogConsoleManagerBase {
   /**
    * @deprecated use {@link #RunContentBuilder(ProgramRunner, com.intellij.execution.ExecutionResult, ExecutionEnvironment)}
    */
+  @SuppressWarnings("UnusedParameters")
   public RunContentBuilder(@NotNull Project project,
                            ProgramRunner runner,
                            Executor executor,
                            ExecutionResult executionResult,
                            @NotNull ExecutionEnvironment environment) {
+    //noinspection deprecation
     this(runner, executionResult, environment);
   }
 
+  /**
+   * @deprecated use {@link #RunContentBuilder(com.intellij.execution.ExecutionResult, ExecutionEnvironment)}
+   * to remove in IDEA 15
+   */
   public RunContentBuilder(ProgramRunner runner,
                            ExecutionResult executionResult,
                            @NotNull ExecutionEnvironment environment) {
+    this(executionResult, ExecutionEnvironmentBuilder.fix(environment, runner));
+  }
+
+  public RunContentBuilder(ExecutionResult executionResult, @NotNull ExecutionEnvironment environment) {
     super(environment.getProject(), SearchScopeProvider.createSearchScope(environment.getProject(), environment.getRunProfile()));
-    myRunner = runner;
+
     myExecutor = environment.getExecutor();
     myManager = new LogFilesManager(environment.getProject(), this, this);
     myExecutionResult = executionResult;
     setEnvironment(environment);
-  }
-
-  /**
-   * @deprecated use {@link #RunContentBuilder(com.intellij.openapi.project.Project, ProgramRunner, com.intellij.execution.Executor, com.intellij.execution.ExecutionResult, ExecutionEnvironment)}
-   */
-  public RunContentBuilder(final Project project, final ProgramRunner runner, Executor executor) {
-    super(project);
-    myRunner = runner;
-    myExecutor = executor;
-    myManager = new LogFilesManager(project, this, this);
   }
 
   @Deprecated
@@ -204,7 +203,7 @@ public class RunContentBuilder extends LogConsoleManagerBase {
   private ActionGroup createActionToolbar(final RunContentDescriptor contentDescriptor, final JComponent component) {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
 
-    final RestartAction restartAction = new RestartAction(myExecutor, myRunner, contentDescriptor, getEnvironment());
+    final RestartAction restartAction = new RestartAction(myExecutor, contentDescriptor, getEnvironment());
     restartAction.registerShortcut(component);
     actionGroup.add(restartAction);
 

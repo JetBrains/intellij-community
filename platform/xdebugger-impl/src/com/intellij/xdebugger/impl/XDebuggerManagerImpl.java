@@ -174,11 +174,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
                                     @NotNull ExecutionEnvironment environment,
                                     @Nullable RunContentDescriptor contentToReuse,
                                     @NotNull XDebugProcessStarter processStarter) throws ExecutionException {
-    if (!runner.getRunnerId().equals(environment.getRunnerId())) {
-      // fix invalid environment
-      environment = new ExecutionEnvironmentBuilder(environment).runnerId(runner.getRunnerId()).build();
-    }
-    return startSession(contentToReuse, processStarter, new XDebugSessionImpl(environment, this));
+    return startSession(contentToReuse, processStarter, new XDebugSessionImpl(ExecutionEnvironmentBuilder.fix(environment, runner), this));
   }
 
   @Override

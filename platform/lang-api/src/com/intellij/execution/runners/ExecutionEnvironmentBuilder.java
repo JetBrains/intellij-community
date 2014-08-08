@@ -78,6 +78,16 @@ public final class ExecutionEnvironmentBuilder {
     }
   }
 
+  @NotNull
+  public static ExecutionEnvironment fix(@NotNull ExecutionEnvironment environment, @NotNull ProgramRunner runner) {
+    if (runner.getRunnerId().equals(environment.getRunnerId())) {
+      return environment;
+    }
+    else {
+      return new ExecutionEnvironmentBuilder(environment).runnerId(runner.getRunnerId()).build();
+    }
+  }
+
   @SuppressWarnings("UnusedDeclaration")
   @Deprecated
   /**
