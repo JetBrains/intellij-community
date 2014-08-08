@@ -19,8 +19,12 @@
  */
 package com.intellij.ide.ui;
 
+import com.intellij.util.messages.Topic;
+
 import java.util.EventListener;
 
 public interface UISettingsListener extends EventListener{
+  Topic<UISettingsListener> TOPIC = Topic.create("UI settings", UISettingsListener.class);
+
   void uiSettingsChanged(UISettings source);
 }
