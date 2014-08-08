@@ -89,7 +89,7 @@ final class DefaultWebServerRootsProvider extends WebServerRootsProvider {
   public PathInfo getRoot(@NotNull VirtualFile file, @NotNull Project project) {
     AccessToken token = ReadAction.start();
     try {
-      VirtualFile root = null;
+      VirtualFile root;
       ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
       if (fileIndex.isInSourceContent(file)) {
         root = fileIndex.getSourceRootForFile(file);
@@ -99,6 +99,10 @@ final class DefaultWebServerRootsProvider extends WebServerRootsProvider {
       }
       else if (fileIndex.isInLibraryClasses(file)) {
         root = fileIndex.getClassRootForFile(file);
+      }
+      else {
+        // excluded
+        return null;
       }
       assert root != null : file.getPresentableUrl();
       return new PathInfo(file, root, getModuleNameQualifier(project, fileIndex.getModuleForFile(file)));
