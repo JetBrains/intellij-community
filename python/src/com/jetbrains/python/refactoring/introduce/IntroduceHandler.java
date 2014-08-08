@@ -69,6 +69,11 @@ import static com.jetbrains.python.inspections.PyStringFormatParser.*;
 abstract public class IntroduceHandler implements RefactoringActionHandler {
   protected static PsiElement findAnchor(List<PsiElement> occurrences) {
     PsiElement anchor = occurrences.get(0);
+    final Pair<PsiElement, TextRange> data = anchor.getUserData(PyReplaceExpressionUtil.SELECTION_BREAKS_AST_NODE);
+    // Search anchor in the origin file, not in dummy.py, if selection breaks statement and thus element was generated
+    if (data != null && occurrences.size() == 1) {
+      return PsiTreeUtil.getParentOfType(data.getFirst(), PyStatement.class);
+    }
     next:
     do {
       final PyStatement statement = PsiTreeUtil.getParentOfType(anchor, PyStatement.class);

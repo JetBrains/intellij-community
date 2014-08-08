@@ -245,6 +245,8 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
     }
   }
 
+  public void testSelectionBreaksBinaryOperator() {doTest();}
+
   private void doTestCannotPerform() {
     boolean thrownExpectedException = false;
     try {

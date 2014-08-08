@@ -52,6 +52,7 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
    * It can happen in cases like (here {@code <start> and <end>} represent selection boundaries):
    * <ul>
    *   <li>Selection conflicts with operator precedence: {@code n = 1 * <start>2 + 3<end>}</li>
+   *   <li>Selection conflicts with operator associativity: {@code n = 1 + <start>2 + 3<end>}</li>
    *   <li>Part of string literal is selected: {@code s = 'green <start>eggs<end> and ham'}</li>
    * </ul>
    */
