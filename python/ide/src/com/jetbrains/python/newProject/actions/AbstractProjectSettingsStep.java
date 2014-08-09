@@ -243,6 +243,8 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
 
   @Nullable
   protected JPanel extendBasePanel() {
+    if (myProjectGenerator instanceof PythonProjectGenerator)
+      return ((PythonProjectGenerator)myProjectGenerator).extendBasePanel();
     return null;
   }
 
