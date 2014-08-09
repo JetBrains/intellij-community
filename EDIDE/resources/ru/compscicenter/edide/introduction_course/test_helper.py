@@ -90,8 +90,6 @@ def failed(message="Please, reload the task and try again."):
 def passed():
     print("#study_plugin test OK")
 
-# TODO: check text in exact task window
-
 def get_task_windows():
     prefix = "#study_plugin_window = "
     path = sys.argv[-1]
@@ -117,7 +115,7 @@ def get_task_windows():
     f.close()
     return windows
 
-def run_common_tests(error_text):
+def run_common_tests(error_text="Please, reload file and try again"):
     test_file_importable()
     test_is_not_empty()
     test_is_initial_text(error_text)
