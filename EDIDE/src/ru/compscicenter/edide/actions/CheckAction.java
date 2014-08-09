@@ -26,10 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import ru.compscicenter.edide.StudyDocumentListener;
 import ru.compscicenter.edide.StudyTaskManager;
 import ru.compscicenter.edide.StudyUtils;
-import ru.compscicenter.edide.course.StudyStatus;
-import ru.compscicenter.edide.course.Task;
-import ru.compscicenter.edide.course.TaskFile;
-import ru.compscicenter.edide.course.TaskWindow;
+import ru.compscicenter.edide.course.*;
 import ru.compscicenter.edide.editor.StudyEditor;
 
 import javax.swing.*;
@@ -75,6 +72,9 @@ public class CheckAction extends DumbAwareAction {
         if (pythonPath != null) {
           commandLine.setExePath(pythonPath);
           commandLine.addParameter(testRunner.getPath());
+          final Course course = StudyTaskManager.getInstance(project).getCourse();
+          assert course != null;
+          commandLine.addParameter(new File(course.getResourcePath()).getParent());
           commandLine.addParameter(executablePath);
           return commandLine.createProcess();
         }
