@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myLafComboBox.setModel(new DefaultComboBoxModel(LafManager.getInstance().getInstalledLookAndFeels()));
     myComponent.myLafComboBox.setRenderer(new LafComboBoxRenderer());
 
-    Dictionary<Integer, JLabel> delayDictionary = new Hashtable<Integer, JLabel>();
+    Dictionary<Integer, JComponent> delayDictionary = new Hashtable<Integer, JComponent>();
     delayDictionary.put(new Integer(0), new JLabel("0"));
     delayDictionary.put(new Integer(1200), new JLabel("1200"));
     //delayDictionary.put(new Integer(2400), new JLabel("2400"));
@@ -94,7 +94,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     myComponent.myAlphaModeRatioSlider.setSize(100, 50);
     @SuppressWarnings({"UseOfObsoleteCollectionType"})
-    Dictionary<Integer, JLabel> dictionary = new Hashtable<Integer, JLabel>();
+    Dictionary<Integer, JComponent> dictionary = new Hashtable<Integer, JComponent>();
     dictionary.put(new Integer(0), new JLabel("0%"));
     dictionary.put(new Integer(50), new JLabel("50%"));
     dictionary.put(new Integer(100), new JLabel("100%"));

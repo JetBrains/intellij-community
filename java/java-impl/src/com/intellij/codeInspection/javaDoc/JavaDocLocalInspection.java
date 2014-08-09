@@ -100,7 +100,7 @@ public class JavaDocLocalInspection extends JavaDocLocalInspectionBase {
         InspectionsBundle.message("inspection.scope.for.title"), true),
                                                          BorderFactory.createEmptyBorder(0, 3, 3, 3)));
 
-      final Hashtable<Integer, JLabel> sliderLabels = new Hashtable<Integer, JLabel>();
+      final Hashtable<Integer, JComponent> sliderLabels = new Hashtable<Integer, JComponent>();
       for (int i = 0; i < modifiers.length; i++) {
         sliderLabels.put(i + 1, new JLabel(modifiers[i]));
       }
