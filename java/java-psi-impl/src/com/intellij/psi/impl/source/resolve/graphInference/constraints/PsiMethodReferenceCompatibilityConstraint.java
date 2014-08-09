@@ -63,7 +63,6 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
     final PsiType[] typeParameters = myExpression.getTypeParameters();
 
     final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(myExpression);
-    PsiSubstitutor psiSubstitutor = qualifierResolveResult.getSubstitutor();
 
     if (!myExpression.isExact()) {
       for (PsiParameter parameter : targetParameters) {
@@ -78,6 +77,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       final PsiClass applicableMemberContainingClass = applicableMember.getContainingClass();
       final PsiClass containingClass = qualifierResolveResult.getContainingClass();
 
+      PsiSubstitutor psiSubstitutor = qualifierResolveResult.getSubstitutor();
       psiSubstitutor = applicableMemberContainingClass == null || containingClass == null || myExpression.isConstructor()
                        ? psiSubstitutor
                        : TypeConversionUtil.getSuperClassSubstitutor(applicableMemberContainingClass, containingClass, psiSubstitutor);
@@ -91,7 +91,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       }
       final PsiParameter[] parameters = applicableMember instanceof PsiMethod ? ((PsiMethod)applicableMember).getParameterList().getParameters() : PsiParameter.EMPTY_ARRAY;
       if (targetParameters.length == parameters.length + 1) {
-        specialCase(session, constraints, substitutor, targetParameters);
+        specialCase(session, constraints, substitutor, targetParameters, true);
         for (int i = 1; i < targetParameters.length; i++) {
           constraints.add(new TypeCompatibilityConstraint(psiSubstitutor.substitute(parameters[i - 1].getType()), substitutor.substitute(targetParameters[i].getType())));
         }
@@ -146,11 +146,16 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       final PsiType referencedMethodReturnType;
       final PsiClass containingClass = method.getContainingClass();
       LOG.assertTrue(containingClass != null, method);
-
       PsiClass qContainingClass = qualifierResolveResult.getContainingClass();
-      if (qContainingClass != null && InheritanceUtil.isInheritorOrSelf(qContainingClass, containingClass, true)) {
-        psiSubstitutor = TypeConversionUtil.getClassSubstitutor(containingClass, qContainingClass, PsiSubstitutor.EMPTY);
-        LOG.assertTrue(psiSubstitutor != null);
+      PsiSubstitutor psiSubstitutor = qualifierResolveResult.getSubstitutor();
+      if (qContainingClass != null) {
+        if ( PsiUtil.isRawSubstitutor(qContainingClass, psiSubstitutor)) {
+          psiSubstitutor = PsiSubstitutor.EMPTY;
+        }
+        if (qContainingClass.isInheritor(containingClass, true)) {
+          psiSubstitutor = TypeConversionUtil.getClassSubstitutor(containingClass, qContainingClass, PsiSubstitutor.EMPTY);
+          LOG.assertTrue(psiSubstitutor != null);
+        }
       }
 
       if (method.isConstructor()) {
@@ -198,7 +203,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       if (targetParameters.length == parameters.length + 1 && !method.isVarArgs() && 
           PsiPolyExpressionUtil.mentionsTypeParameters(referencedMethodReturnType, ContainerUtil.newHashSet(containingClass.getTypeParameters()))) { //todo specification bug?
-        specialCase(session, constraints, substitutor, targetParameters);
+        specialCase(session, constraints, substitutor, targetParameters, false);
       }
       constraints.add(new TypeCompatibilityConstraint(returnType, psiSubstitutor.substitute(referencedMethodReturnType)));
     }
@@ -209,7 +214,8 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
   private void specialCase(InferenceSession session,
                            List<ConstraintFormula> constraints,
                            PsiSubstitutor substitutor,
-                           PsiParameter[] targetParameters) {
+                           PsiParameter[] targetParameters,
+                           boolean ignoreRaw) {
     final PsiElement qualifier = myExpression.getQualifier();
     PsiType qualifierType = null;
     if (qualifier instanceof PsiTypeElement) {
@@ -226,8 +232,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         final PsiElement res = resolveResult.getElement();
         if (res instanceof PsiClass) {
           PsiClass containingClass = (PsiClass)res;
-          final boolean isRawSubst = !myExpression.isConstructor() &&
-                                     PsiUtil.isRawSubstitutor(containingClass, resolveResult.getSubstitutor());
+          final boolean isRawSubst = !ignoreRaw && !myExpression.isConstructor() && PsiUtil.isRawSubstitutor(containingClass, resolveResult.getSubstitutor());
           qualifierType = JavaPsiFacade.getElementFactory(res.getProject()).createType(containingClass, isRawSubst ? PsiSubstitutor.EMPTY : resolveResult.getSubstitutor());
         }
       }

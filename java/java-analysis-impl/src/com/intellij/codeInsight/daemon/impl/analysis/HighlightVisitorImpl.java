@@ -1213,6 +1213,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       final String accessProblem = HighlightUtil.buildProblemWithAccessDescription(expression, result);
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(accessProblem).create();
       myHolder.add(info);
+    } else {
+      final TextAttributesScheme colorsScheme = myHolder.getColorsScheme();
+      if (method instanceof PsiMethod) {
+        final PsiElement methodNameElement = expression.getReferenceNameElement();
+        myHolder.add(HighlightNamesUtil.highlightMethodName((PsiMethod)method, methodNameElement, false, colorsScheme));
+      }
+      myHolder.add(HighlightNamesUtil.highlightClassNameInQualifier(expression, colorsScheme));
     }
     if (!myHolder.hasErrorResults()) {
       final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();

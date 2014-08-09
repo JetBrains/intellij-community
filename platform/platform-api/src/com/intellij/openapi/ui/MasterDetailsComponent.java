@@ -122,7 +122,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   private boolean myHasDeletedItems;
   protected AutoScrollToSourceHandler myAutoScrollHandler;
 
-  private boolean myToReInitWholePanel = true;
+  protected boolean myToReInitWholePanel = true;
 
   protected MasterDetailsComponent() {
     this(new MasterDetailsState());
@@ -139,7 +139,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     reInitWholePanelIfNeeded();
   }
 
-  private void reInitWholePanelIfNeeded() {
+  protected void reInitWholePanelIfNeeded() {
     if (!myToReInitWholePanel) return;
 
     myWholePanel = new JPanel(new BorderLayout()) {
@@ -177,7 +177,8 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
         decorator.setActionGroup(group);
       }
       //left.add(myNorthPanel, BorderLayout.NORTH);
-      myMaster = decorator.setPanelBorder(new EmptyBorder(0, 0, 0, 0)).createPanel();
+      myMaster = decorator.setAsUsualTopToolbar().setPanelBorder(new EmptyBorder(0, 0, 0, 0)).createPanel();
+      myNorthPanel.setVisible(false);
     } else {
       left.add(myNorthPanel, BorderLayout.NORTH);
       myMaster = ScrollPaneFactory.createScrollPane(myTree);
@@ -280,6 +281,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   private void initToolbar() {
+    if (Registry.is("ide.new.project.settings")) return;
     DefaultActionGroup group = createToolbarActionGroup();
     if (group != null) {
       final JComponent component = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
@@ -960,7 +962,11 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
                                                                 myPreselection != null ? myPreselection.getDefaultIndex() : 0, true);
       final ListPopup listPopup = popupFactory.createListPopup(step);
       listPopup.setHandleAutoSelectionBeforeShow(true);
-      listPopup.showUnderneathOf(myNorthPanel);
+      if (e instanceof AnActionButton.AnActionEventWrapper) {
+        ((AnActionButton.AnActionEventWrapper)e).showPopup(listPopup);
+      } else {
+        listPopup.showUnderneathOf(myNorthPanel);
+      }
     }
   }
 

@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  * @see DiffRequestFactory#createMergeRequest
  */
 public abstract class MergeRequest extends DiffRequest {
-  protected MergeRequest(Project project) {
+  protected MergeRequest(@Nullable Project project) {
     super(project);
   }
 

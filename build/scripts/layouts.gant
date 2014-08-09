@@ -519,6 +519,12 @@ public def layoutCommunityPlugins(String home) {
       }
     }
 
+    layoutPlugin("editorconfig") {
+      fileset(dir: "$home/plugins/editorconfig/lib") {
+        include(name: "**/*.jar")
+      }
+    }
+
     pluginDir("coverage") {
       dir("lib") {
         jar("coverage.jar") {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,6 +156,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     CustomizationUtil.installPopupHandler(myTree, IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionPlaces.PROJECT_VIEW_POPUP);
   }
 
+  @NotNull
   @Override
   public final ActionCallback updateFromRoot(boolean restoreExpandedPaths) {
     final ArrayList<Object> pathsToExpand = new ArrayList<Object>();
@@ -190,6 +191,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     selectCB(element, file, requestFocus);
   }
 
+  @NotNull
   public ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus) {
     if (file != null) {
       return ((BaseProjectTreeBuilder)getTreeBuilder()).select(element, file, requestFocus);

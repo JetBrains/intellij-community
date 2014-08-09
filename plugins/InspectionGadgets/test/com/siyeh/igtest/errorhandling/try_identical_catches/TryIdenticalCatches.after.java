@@ -117,4 +117,18 @@ class TryIdenticalCatches {
       e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
     }
   }
+
+  public static void main() {
+    Throwable causeException;
+    try {
+      throw new NullPointerException();
+    } catch (final NullPointerException e) {
+      causeException = e;
+    } catch (final IllegalArgumentException e) {
+      causeException = e;
+    } catch (final IndexOutOfBoundsException e) {
+      causeException = e;
+    }
+    System.out.println("causeException = " + causeException);
+  }
 }

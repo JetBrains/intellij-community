@@ -188,7 +188,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     if (temp.trim().length() > 0) {
       try {
         int newTabTitleLimit = Integer.parseInt(temp);
-        newTabTitleLimit = Math.max(10, Math.min(100, newTabTitleLimit));
+        newTabTitleLimit = Math.max(25, Math.min(100, newTabTitleLimit));
         if (newTabTitleLimit != uiSettings.EDITOR_TAB_TITLE_LIMIT){
           uiSettings.EDITOR_TAB_TITLE_LIMIT = newTabTitleLimit;
           uiSettingsChanged = true;

@@ -466,7 +466,7 @@ public class Javac2 extends Javac {
       public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
         classfileVersion[0] = version;
       }
-    }, 0);
+    }, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
     return classfileVersion[0];
   }

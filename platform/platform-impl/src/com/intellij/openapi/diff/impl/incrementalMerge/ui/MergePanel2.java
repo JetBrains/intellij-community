@@ -143,9 +143,6 @@ public class MergePanel2 implements DiffViewer {
   private DiffRequest.ToolbarAddons createToolbar() {
     return new DiffRequest.ToolbarAddons() {
       public void customize(DiffToolbar toolbar) {
-        ActionManager actionManager = ActionManager.getInstance();
-        toolbar.addAction(actionManager.getAction(IdeActions.ACTION_COPY));
-        toolbar.addAction(actionManager.getAction(IdeActions.ACTION_FIND));
         toolbar.addAction(PreviousDiffAction.find());
         toolbar.addAction(NextDiffAction.find());
         toolbar.addSeparator();

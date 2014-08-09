@@ -21,19 +21,8 @@ import java.util.List;
  */
 public interface VcsShortCommitDetails extends TimedVcsCommit {
 
-  @Override
-  @NotNull
-  Hash getId();
-
   @NotNull
   VirtualFile getRoot();
-
-  @Override
-  @NotNull
-  List<Hash> getParents();
-
-  @Override
-  long getTimestamp();
 
   @NotNull
   String getSubject();

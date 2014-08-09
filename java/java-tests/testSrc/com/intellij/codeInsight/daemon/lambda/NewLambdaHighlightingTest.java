@@ -18,11 +18,14 @@ package com.intellij.codeInsight.daemon.lambda;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Calendar;
 
 public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/newLambda";
@@ -59,7 +62,10 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA120992() { doTest(); }
   public void testTargetTypeConflictResolverShouldNotTryToEvaluateCurrentArgumentType() { doTest(); }
   public void testIDEA119535() { doTest(); }
+
+  @Bombed(day = 20, month = Calendar.AUGUST)
   public void testIDEA119003() { doTest(); }
+  public void testIDEA125674() { doTest(); }
   public void testIDEA117124() { doTest(); }
   public void testWildcardParameterization() { doTest(); }
   public void testDiamondInLambdaReturn() { doTest(); }
@@ -89,6 +95,21 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA126809() { doTest(); }
 
   public void testIDEA127596() throws Exception {
+    doTest();
+  }
+
+  @Bombed(day = 20, month = Calendar.AUGUST)
+  public void testIDEA124983() throws Exception {
+    doTest();
+  }
+
+  @Bombed(day = 20, month = Calendar.AUGUST)
+  public void testIDEA123951() throws Exception {
+    doTest();
+  }
+
+  @Bombed(day = 20, month = Calendar.AUGUST)
+  public void testIDEA124190() throws Exception {
     doTest();
   }
 

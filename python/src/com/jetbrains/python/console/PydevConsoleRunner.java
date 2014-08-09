@@ -16,6 +16,10 @@
 package com.jetbrains.python.console;
 
 import com.google.common.base.CharMatcher;
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.collect.FluentIterable;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionHelper;
@@ -59,11 +63,14 @@ import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.remote.RemoteSshProcess;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.ui.content.Content;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.PathMappingSettings;
@@ -132,6 +139,9 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
   private static final long APPROPRIATE_TO_WAIT = 60000;
   private PyRemoteSdkCredentials myRemoteCredentials;
+  private ToolWindow myToolWindow;
+
+  private String myConsoleTitle = null;
 
   protected PydevConsoleRunner(@NotNull final Project project,
                                @NotNull Sdk sdk, @NotNull final PyConsoleType consoleType,
@@ -192,8 +202,10 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
                                                 @NotNull final PyConsoleType consoleType,
                                                 @Nullable final String workingDirectory,
                                                 @NotNull final Map<String, String> environmentVariables,
+                                                @Nullable final ToolWindow toolWindow,
                                                 final String... statements2execute) {
     final PydevConsoleRunner consoleRunner = create(project, sdk, consoleType, workingDirectory, environmentVariables);
+    consoleRunner.setToolWindow(toolWindow);
     consoleRunner.setStatementsToExecute(statements2execute);
     consoleRunner.run();
     return consoleRunner;
@@ -481,6 +493,20 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     }
   }
 
+  @Override
+  protected String constructConsoleTitle(@NotNull String consoleTitle) {
+    if (myConsoleTitle == null) {
+      myConsoleTitle = super.constructConsoleTitle(consoleTitle);
+    }
+    return myConsoleTitle;
+  }
+
+  @Override
+  protected void showConsole(Executor defaultExecutor, RunContentDescriptor contentDescriptor) {
+    PythonConsoleToolWindow terminalView = PythonConsoleToolWindow.getInstance(getProject());
+    terminalView.init(getToolWindow(), contentDescriptor);
+  }
+
   protected AnAction createRerunAction() {
     return new RestartAction(this);
   }
@@ -583,9 +609,32 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   }
 
   @Override
-  protected AnAction createCloseAction(Executor defaultExecutor, RunContentDescriptor myDescriptor) {
-    final AnAction generalCloseAction = super.createCloseAction(defaultExecutor, myDescriptor);
-    return createConsoleStoppingAction(generalCloseAction);
+  protected AnAction createCloseAction(Executor defaultExecutor, final RunContentDescriptor descriptor) {
+    final AnAction generalCloseAction = super.createCloseAction(defaultExecutor, descriptor);
+
+    final AnAction stopAction = new DumbAwareAction() {
+      @Override
+      public void update(AnActionEvent e) {
+        generalCloseAction.update(e);
+      }
+
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        e = stopConsole(e);
+
+        clearContent(descriptor);
+
+        generalCloseAction.actionPerformed(e);
+      }
+    };
+    stopAction.copyFrom(generalCloseAction);
+    return stopAction;
+  }
+
+  private void clearContent(RunContentDescriptor descriptor) {
+    Content content = getToolWindow().getContentManager().findContent(descriptor.getDisplayName());
+    assert content != null;
+    getToolWindow().getContentManager().removeContent(content, true);
   }
 
   private AnAction createConsoleStoppingAction(final AnAction generalStopAction) {
@@ -597,24 +646,29 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        if (myPydevConsoleCommunication != null) {
-          final AnActionEvent furtherActionEvent =
-            new AnActionEvent(e.getInputEvent(), e.getDataContext(), e.getPlace(),
-                              e.getPresentation(), e.getActionManager(), e.getModifiers());
-          try {
-            closeCommunication();
-            // waiting for REPL communication before destroying process handler
-            Thread.sleep(300);
-          }
-          catch (Exception ignored) {
-            // Ignore
-          }
-          generalStopAction.actionPerformed(furtherActionEvent);
-        }
+        e = stopConsole(e);
+
+        generalStopAction.actionPerformed(e);
       }
     };
     stopAction.copyFrom(generalStopAction);
     return stopAction;
+  }
+
+  private AnActionEvent stopConsole(AnActionEvent e) {
+    if (myPydevConsoleCommunication != null) {
+      e = new AnActionEvent(e.getInputEvent(), e.getDataContext(), e.getPlace(),
+                            e.getPresentation(), e.getActionManager(), e.getModifiers());
+      try {
+        closeCommunication();
+        // waiting for REPL communication before destroying process handler
+        Thread.sleep(300);
+      }
+      catch (Exception ignored) {
+        // Ignore
+      }
+    }
+    return e;
   }
 
   protected AnAction createSplitLineAction() {
@@ -736,6 +790,17 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     for (ConsoleListener listener : myConsoleListeners) {
       listener.handleConsoleInitialized(consoleView);
     }
+  }
+
+  public ToolWindow getToolWindow() {
+    if (myToolWindow == null) {
+      myToolWindow = ToolWindowManager.getInstance(getProject()).getToolWindow(PythonConsoleToolWindowFactory.ID);
+    }
+    return myToolWindow;
+  }
+
+  public void setToolWindow(ToolWindow toolWindow) {
+    myToolWindow = toolWindow;
   }
 
   public interface ConsoleListener {
@@ -888,5 +953,22 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       });
 
     return session;
+  }
+
+  @Override
+  protected List<String> getActiveConsoleNames(final String consoleTitle) {
+    return FluentIterable.from(
+      Lists.newArrayList(PythonConsoleToolWindow.getInstance(getProject()).getToolWindow().getContentManager().getContents())).transform(
+      new Function<Content, String>() {
+        @Override
+        public String apply(Content input) {
+          return input.getDisplayName();
+        }
+      }).filter(new Predicate<String>() {
+      @Override
+      public boolean apply(String input) {
+        return input.contains(consoleTitle);
+      }
+    }).toList();
   }
 }

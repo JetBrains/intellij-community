@@ -29,5 +29,5 @@ public interface CloudGitAgent<C extends CloudAgentConfigBase, D extends CloudGi
   void disconnect();
 
   @ChildCall
-  D createDeployment(String deploymentName, CloudLoggingHandler loggingHandler);
+  D createDeployment(String deploymentName, CloudAgentLoggingHandler loggingHandler);
 }

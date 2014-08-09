@@ -49,10 +49,10 @@ public class ShowLineStatusRangeDiffAction extends BaseLineStatusRangeAction {
     return new DiffRequest(myLineStatusTracker.getProject()) {
       @NotNull
       public DiffContent[] getContents() {
-        Range range = expand(myRange, myLineStatusTracker.getDocument(), myLineStatusTracker.getUpToDateDocument());
+        Range range = expand(myRange, myLineStatusTracker.getDocument(), myLineStatusTracker.getVcsDocument());
         return new DiffContent[]{
-          createDiffContent(myLineStatusTracker.getUpToDateDocument(),
-                            myLineStatusTracker.getUpToDateRange(range),
+          createDiffContent(myLineStatusTracker.getVcsDocument(),
+                            myLineStatusTracker.getVcsRange(range),
                             null),
           createDiffContent(myLineStatusTracker.getDocument(),
                             myLineStatusTracker.getCurrentTextRange(range),
@@ -81,12 +81,12 @@ public class ShowLineStatusRangeDiffAction extends BaseLineStatusRangeAction {
   private static Range expand(@NotNull Range range, @NotNull Document document, @NotNull Document uDocument) {
     if (range.getType() == Range.MODIFIED) return range;
     if (range.getType() == Range.INSERTED || range.getType() == Range.DELETED) {
-      boolean canExpandBefore = range.getOffset1() != 0 && range.getUOffset1() != 0;
-      boolean canExpandAfter = range.getOffset2() < document.getLineCount() && range.getUOffset2() < uDocument.getLineCount();
-      int offset1 = range.getOffset1() - (canExpandBefore ? 1 : 0);
-      int uOffset1 = range.getUOffset1() - (canExpandBefore ? 1 : 0);
-      int offset2 = range.getOffset2() + (canExpandAfter ? 1 : 0);
-      int uOffset2 = range.getUOffset2() + (canExpandAfter ? 1 : 0);
+      boolean canExpandBefore = range.getLine1() != 0 && range.getVcsLine1() != 0;
+      boolean canExpandAfter = range.getLine2() < document.getLineCount() && range.getVcsLine2() < uDocument.getLineCount();
+      int offset1 = range.getLine1() - (canExpandBefore ? 1 : 0);
+      int uOffset1 = range.getVcsLine1() - (canExpandBefore ? 1 : 0);
+      int offset2 = range.getLine2() + (canExpandAfter ? 1 : 0);
+      int uOffset2 = range.getVcsLine2() + (canExpandAfter ? 1 : 0);
       return new Range(offset1, offset2, uOffset1, uOffset2, range.getType());
     }
     throw new IllegalArgumentException("Unknown range type: " + range.getType());

@@ -30,6 +30,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.JavaPatchableProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -69,39 +70,48 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
   @Nullable
   protected RunContentDescriptor createContentDescriptor(Project project, RunProfileState state,
                                                          RunContentDescriptor contentToReuse,
-                                                         ExecutionEnvironment env) throws ExecutionException {
+                                                         ExecutionEnvironment environment) throws ExecutionException {
+    environment = ExecutionEnvironmentBuilder.fix(environment, contentToReuse);
     if (state instanceof JavaCommandLine) {
       final JavaParameters parameters = ((JavaCommandLine)state).getJavaParameters();
-      runCustomPatchers(parameters, env.getExecutor(), env.getRunProfile());
+      runCustomPatchers(parameters, environment.getExecutor(), environment.getRunProfile());
       RemoteConnection connection = DebuggerManagerImpl.createDebugParameters(parameters, true, DebuggerSettings.getInstance().DEBUGGER_TRANSPORT, "", false);
-      return attachVirtualMachine(project, state, contentToReuse, env, connection, true);
+      return attachVirtualMachine(project, state, environment, connection, true);
     }
     if (state instanceof PatchedRunnableState) {
-      final RemoteConnection connection = doPatch(new JavaParameters(), env.getRunnerSettings());
-      return attachVirtualMachine(project, state, contentToReuse, env, connection, true);
+      final RemoteConnection connection = doPatch(new JavaParameters(), environment.getRunnerSettings());
+      return attachVirtualMachine(project, state, environment, connection, true);
     }
     if (state instanceof RemoteState) {
-      final RemoteConnection connection = createRemoteDebugConnection((RemoteState)state, env.getRunnerSettings());
-      return attachVirtualMachine(project, state, contentToReuse, env, connection, false);
+      final RemoteConnection connection = createRemoteDebugConnection((RemoteState)state, environment.getRunnerSettings());
+      return attachVirtualMachine(project, state, environment, connection, false);
     }
 
     return null;
   }
 
   @Nullable
-  protected RunContentDescriptor attachVirtualMachine(final Project project, RunProfileState state,
+  @Deprecated
+  protected RunContentDescriptor attachVirtualMachine(@NotNull Project project,
+                                                      RunProfileState state,
                                                       RunContentDescriptor contentToReuse,
-                                                      ExecutionEnvironment env, RemoteConnection connection, boolean pollConnection)
-    throws ExecutionException {
-    DefaultDebugUIEnvironment debugEnvironment = new DefaultDebugUIEnvironment(project,
-                                                                               env.getExecutor(),
-                                                                               this,
-                                                                               env,
-                                                                               state,
-                                                                               contentToReuse,
-                                                                               connection,
-                                                                               pollConnection);
-    DebugEnvironment environment = debugEnvironment.getEnvironment();
+                                                      ExecutionEnvironment environment,
+                                                      RemoteConnection connection,
+                                                      boolean pollConnection) throws ExecutionException {
+    return attachVirtualMachine(project, state, ExecutionEnvironmentBuilder.fix(environment, contentToReuse), connection, pollConnection);
+  }
+
+  @Nullable
+  protected RunContentDescriptor attachVirtualMachine(@NotNull Project project,
+                                                      RunProfileState state,
+                                                      ExecutionEnvironment env,
+                                                      RemoteConnection connection,
+                                                      boolean pollConnection) throws ExecutionException {
+    DebugEnvironment environment = new DefaultDebugUIEnvironment(project,
+                                                                 env,
+                                                                 state,
+                                                                 connection,
+                                                                 pollConnection).getEnvironment();
     final DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(project).attachVirtualMachine(environment);
     if (debuggerSession == null) {
       return null;
@@ -118,22 +128,20 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
       debugProcess.putUserData(BatchEvaluator.REMOTE_SESSION_KEY, Boolean.TRUE);
     }
 
-    XDebugSession debugSession =
-      XDebuggerManager.getInstance(project).startSession(this, env, contentToReuse, new XDebugProcessStarter() {
-        @Override
-        @NotNull
-        public XDebugProcess start(@NotNull XDebugSession session) {
-          XDebugSessionImpl sessionImpl = (XDebugSessionImpl)session;
-          ExecutionResult executionResult = debugProcess.getExecutionResult();
-          sessionImpl.addExtraActions(executionResult.getActions());
-          if (executionResult instanceof DefaultExecutionResult) {
-            sessionImpl.addRestartActions(((DefaultExecutionResult)executionResult).getRestartActions());
-            sessionImpl.addExtraStopActions(((DefaultExecutionResult)executionResult).getAdditionalStopActions());
-          }
-          return new JavaDebugProcess(session, debuggerSession);
+    return XDebuggerManager.getInstance(project).startSession(env, new XDebugProcessStarter() {
+      @Override
+      @NotNull
+      public XDebugProcess start(@NotNull XDebugSession session) {
+        XDebugSessionImpl sessionImpl = (XDebugSessionImpl)session;
+        ExecutionResult executionResult = debugProcess.getExecutionResult();
+        sessionImpl.addExtraActions(executionResult.getActions());
+        if (executionResult instanceof DefaultExecutionResult) {
+          sessionImpl.addRestartActions(((DefaultExecutionResult)executionResult).getRestartActions());
+          sessionImpl.addExtraStopActions(((DefaultExecutionResult)executionResult).getAdditionalStopActions());
         }
-      });
-    return debugSession.getRunContentDescriptor();
+        return new JavaDebugProcess(session, debuggerSession);
+      }
+    }).getRunContentDescriptor();
   }
 
   private static RemoteConnection createRemoteDebugConnection(RemoteState connection, final RunnerSettings settings) {

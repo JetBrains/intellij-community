@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.server;
 
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
 
 import java.io.File;
@@ -35,6 +36,6 @@ public interface MavenServer extends Remote {
 
   ProfileApplicationResult applyProfiles(MavenModel model,
                                          File basedir,
-                                         Collection<String> explicitProfiles,
+                                         MavenExplicitProfiles explicitProfiles,
                                          Collection<String> alwaysOnProfiles) throws RemoteException;
 }

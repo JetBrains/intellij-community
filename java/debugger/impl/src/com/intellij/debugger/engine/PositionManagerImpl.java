@@ -27,6 +27,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -194,12 +195,17 @@ public class PositionManagerImpl implements PositionManager {
       return element.getContainingFile();
     }
     else {
-      // for now just take the first file with the required name
-      // TODO: if there are more than one, we can try matching package name and sourcePath if available
+      // try to search by filename
       try {
         PsiFile[] files = FilenameIndex.getFilesByName(project, refType.sourceName(), GlobalSearchScope.allScope(project));
-        if (files.length > 0) {
-          return files[0];
+        for (PsiFile file : files) {
+          if (file instanceof PsiJavaFile) {
+            for (PsiClass cls : ((PsiJavaFile)file).getClasses()) {
+              if (StringUtil.equals(originalQName, cls.getQualifiedName())) {
+                return file;
+              }
+            }
+          }
         }
       }
       catch (AbsentInformationException ignore) {

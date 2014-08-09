@@ -69,7 +69,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
   protected ExecutionEnvironment myEnvironment;
   private final JComponent myParent;
 
-
+  @SuppressWarnings("UnusedDeclaration")
   public AbstractRerunFailedTestsAction() {
     //We call this constructor with a little help from reflection.
     myParent = null;
@@ -83,6 +83,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     registerCustomShortcutSet(getShortcutSet(), myParent);
   }
 
+  @Override
   public void dispose() {
     registry.remove(this);
   }
@@ -127,6 +128,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     return candidates.get(0);
   }
 
+  @Override
   public final void update(AnActionEvent e) {
     AbstractRerunFailedTestsAction action = findActualAction();
     e.getPresentation().setEnabled(action.isActive(e));
@@ -167,6 +169,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     return Filter.FAILED_OR_INTERRUPTED;
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     findActualAction().showPopup(e);
   }
@@ -225,6 +228,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
         .setResizable(false)
         .setRequestFocus(true)
         .setItemChoosenCallback(new Runnable() {
+          @Override
           public void run() {
             final Object value = list.getSelectedValue();
             if (value instanceof Executor) {
@@ -237,12 +241,10 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
 
   private void performAction(ProgramRunner runner, MyRunProfile profile, Executor executor) {
     try {
-      final ExecutionEnvironment environment =
-        new ExecutionEnvironmentBuilder(myEnvironment).setRunnerId(runner.getRunnerId())
-          .setExecutor(executor)
-          .setRunProfile(profile)
-          .build();
-      runner.execute(environment);
+      runner.execute(new ExecutionEnvironmentBuilder(myEnvironment).runnerId(runner.getRunnerId())
+                       .executor(executor)
+                       .runProfile(profile)
+                       .build());
     }
     catch (ExecutionException e1) {
       LOG.error(e1);
@@ -291,56 +293,69 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     }
 
 
+    @Override
     public void checkConfiguration() throws RuntimeConfigurationException {
     }
 
     ///////////////////////////////////Delegates
+    @Override
     public void readExternal(final Element element) throws InvalidDataException {
       myConfiguration.readExternal(element);
     }
 
+    @Override
     public void writeExternal(final Element element) throws WriteExternalException {
       myConfiguration.writeExternal(element);
     }
 
+    @Override
     @NotNull
     public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
       return myConfiguration.getConfigurationEditor();
     }
 
+    @Override
     @NotNull
     public ConfigurationType getType() {
       return myConfiguration.getType();
     }
 
+    @Override
     public ConfigurationPerRunnerSettings createRunnerSettings(final ConfigurationInfoProvider provider) {
       return myConfiguration.createRunnerSettings(provider);
     }
 
+    @Override
     public SettingsEditor<ConfigurationPerRunnerSettings> getRunnerSettingsEditor(final ProgramRunner runner) {
       return myConfiguration.getRunnerSettingsEditor(runner);
     }
 
+    @Override
     public RunConfiguration clone() {
       return myConfiguration.clone();
     }
 
+    @Override
     public int getUniqueID() {
       return myConfiguration.getUniqueID();
     }
 
+    @Override
     public LogFileOptions getOptionsForPredefinedLogFile(PredefinedLogFile predefinedLogFile) {
       return myConfiguration.getOptionsForPredefinedLogFile(predefinedLogFile);
     }
 
+    @Override
     public ArrayList<PredefinedLogFile> getPredefinedLogFiles() {
       return myConfiguration.getPredefinedLogFiles();
     }
 
+    @Override
     public ArrayList<LogFileOptions> getAllLogFiles() {
       return myConfiguration.getAllLogFiles();
     }
 
+    @Override
     public ArrayList<LogFileOptions> getLogFiles() {
       return myConfiguration.getLogFiles();
     }

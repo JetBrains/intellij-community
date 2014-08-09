@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -250,7 +250,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     private static final OurConstValueComputer INSTANCE = new OurConstValueComputer();
 
     @Override
-    public Object execute(PsiVariable variable, Set<PsiVariable> visitedVars) {
+    public Object execute(@NotNull PsiVariable variable, Set<PsiVariable> visitedVars) {
       return ((PsiFieldImpl)variable)._computeConstantValue(visitedVars);
     }
   }

@@ -136,20 +136,23 @@ class _BehaveRunner(_bdd_utils.BddRunner):
         element.location.file = element.location.filename  # To preserve _bdd_utils contract
         if isinstance(element, Step):
             # Process step
+            step_name = "{} {}".format(element.keyword, element.name)
             if is_started:
-                self._test_started(element.name, element.location)
+                self._test_started(step_name, element.location)
             elif element.status == 'passed':
-                self._test_passed(element.name, element.duration)
+                self._test_passed(step_name, element.duration)
             elif element.status == 'failed':
                 try:
                     trace = traceback.format_exc()
                 except Exception:
                     trace = "".join(traceback.format_tb(element.exc_traceback))
-                self._test_failed(element.name, element.error_message, trace)
+                if trace in str(element.error_message):
+                    trace = None  # No reason to duplicate output (see PY-13647)
+                self._test_failed(step_name, element.error_message, trace)
             elif element.status == 'undefined':
-                self._test_undefined(element.name, element.location)
+                self._test_undefined(step_name, element.location)
             else:
-                self._test_skipped(element.name, element.status, element.location)
+                self._test_skipped(step_name, element.status, element.location)
         elif not is_started and isinstance(element, Scenario) and element.status == 'failed':
             # To process scenarios with undefined/skipped tests
             for step in element.steps:

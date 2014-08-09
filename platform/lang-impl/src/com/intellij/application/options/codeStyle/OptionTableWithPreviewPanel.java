@@ -18,6 +18,7 @@ package com.intellij.application.options.codeStyle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.ui.TreeTableSpeedSearch;
@@ -378,7 +379,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
       this.groupName = groupName;
 
       try {
-        Class styleSettingsClass = clazz == null ? CodeStyleSettings.class : clazz;
+        Class styleSettingsClass = clazz == null ? CommonCodeStyleSettings.class : clazz;
         this.field = styleSettingsClass.getField(fieldName);
       }
       catch (NoSuchFieldException e) {

@@ -30,16 +30,14 @@ public abstract class LogPipe {
   private final ILogger myLog;
 
   private final String myDeploymentName;
-  private final String myKind;
 
   private boolean myClosed;
 
   private int myTotalLines;
   private int myLines2Skip;
 
-  public LogPipe(String deploymentName, String logKind, ILogger log) {
+  public LogPipe(String deploymentName, ILogger log) {
     myDeploymentName = deploymentName;
-    myKind = logKind;
     myLog = log;
     myClosed = false;
   }
@@ -73,7 +71,7 @@ public abstract class LogPipe {
             }
 
             if (myLines2Skip == 0) {
-              getLogListener().lineLogged(line, myDeploymentName, myKind);
+              getLogListener().lineLogged(line);
               myTotalLines++;
             }
             else {

@@ -29,6 +29,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
@@ -36,7 +37,6 @@ import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyQualifiedExpression;
-import com.intellij.psi.util.QualifiedName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -138,7 +138,7 @@ public class AutoImportQuickFix implements LocalQuickFix, HighPriorityAction {
       myImports.size() > 1,
       ImportCandidateHolder.getQualifiedName(name, myImports.get(0).getPath(), myImports.get(0).getImportElement())
     );
-    final ImportFromExistingAction action = new ImportFromExistingAction(myNode, myImports, name, myUseQualifiedImport);
+    final ImportFromExistingAction action = new ImportFromExistingAction(myNode, myImports, name, myUseQualifiedImport, false);
     action.onDone(new Runnable() {
       public void run() {
         myExpended = true;
@@ -166,9 +166,14 @@ public class AutoImportQuickFix implements LocalQuickFix, HighPriorityAction {
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     if (ImportFromExistingAction.isResolved(myReference)) return;
     // act
-    ImportFromExistingAction action = new ImportFromExistingAction(myNode, myImports, getNameToImport(), myUseQualifiedImport);
+    ImportFromExistingAction action = createAction();
     action.execute(); // assume that action runs in WriteAction on its own behalf
     myExpended = true;
+  }
+
+  @NotNull
+  protected ImportFromExistingAction createAction() {
+    return new ImportFromExistingAction(myNode, myImports, getNameToImport(), myUseQualifiedImport, false);
   }
 
   public void sortCandidates() {
@@ -202,5 +207,28 @@ public class AutoImportQuickFix implements LocalQuickFix, HighPriorityAction {
       }
     }
     return false;
+  }
+
+  @NotNull
+  public AutoImportQuickFix forLocalImport() {
+    return new AutoImportQuickFix(myNode, myReference, myUseQualifiedImport) {
+      @NotNull
+      @Override
+      public String getName() {
+        return super.getName() + " locally";
+      }
+
+      @NotNull
+      @Override
+      public String getFamilyName() {
+        return "import locally";
+      }
+
+      @NotNull
+      @Override
+      protected ImportFromExistingAction createAction() {
+        return new ImportFromExistingAction(myNode, myImports, getNameToImport(), myUseQualifiedImport, true);
+      }
+    };
   }
 }

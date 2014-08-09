@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.execution.runners;
 
 import com.intellij.execution.*;
@@ -39,9 +38,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static com.intellij.openapi.actionSystem.LangDataKeys.*;
 
-
 public class ExecutionEnvironment extends UserDataHolderBase {
-
   private static final AtomicLong myIdHolder = new AtomicLong(1L);
 
   @NotNull private final Project myProject;
@@ -67,8 +64,8 @@ public class ExecutionEnvironment extends UserDataHolderBase {
   }
 
   public ExecutionEnvironment(@NotNull Executor executor,
-                              @NotNull final ProgramRunner runner,
-                              @NotNull final RunnerAndConfigurationSettings configuration,
+                              @NotNull ProgramRunner runner,
+                              @NotNull RunnerAndConfigurationSettings configuration,
                               @NotNull Project project) {
     this(configuration.getConfiguration(),
          executor,
@@ -83,6 +80,7 @@ public class ExecutionEnvironment extends UserDataHolderBase {
 
   /**
    * @deprecated, use {@link com.intellij.execution.runners.ExecutionEnvironmentBuilder} instead
+   * to remove in IDEA 14
    */
   @TestOnly
   public ExecutionEnvironment(@NotNull Executor executor,
@@ -102,6 +100,7 @@ public class ExecutionEnvironment extends UserDataHolderBase {
 
   /**
    * @deprecated, use {@link com.intellij.execution.runners.ExecutionEnvironmentBuilder} instead
+   * to remove in IDEA 15
    */
   public ExecutionEnvironment(@NotNull RunProfile runProfile,
                               @NotNull Executor executor,

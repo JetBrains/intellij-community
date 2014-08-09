@@ -47,10 +47,10 @@ public class BeforeSuiteEvent extends AbstractTestEvent {
       getConsoleManager().getTestsMap().put(testId, testProxy);
       final SMTestProxy parentTestProxy = getConsoleManager().getTestsMap().get(parentTestId);
       if (parentTestProxy != null) {
-        parentTestProxy.addChild(testProxy);
         addToInvokeLater(new Runnable() {
           @Override
           public void run() {
+            parentTestProxy.addChild(testProxy);
             getResultsViewer().onSuiteStarted(testProxy);
           }
         });

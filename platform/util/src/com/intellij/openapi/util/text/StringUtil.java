@@ -923,6 +923,10 @@ public class StringUtil extends StringUtilRt {
     }
   }
 
+  public static String defaultIfEmpty(@Nullable String value, String defaultValue) {
+    return isEmpty(value) ? defaultValue : value;
+  }
+
   @Contract("null -> false")
   public static boolean isNotEmpty(@Nullable String s) {
     return s != null && !s.isEmpty();
@@ -2674,11 +2678,18 @@ public class StringUtil extends StringUtilRt {
         continue;
       }
 
-      if (i > 0 && (ch == '/' || ch == '.' || Character.isUpperCase(ch))) {
+      if (i > 0 && (ch == '/' || ch == '\\' || ch == '.' || Character.isUpperCase(ch))) {
         words.add(builder.toString());
         builder.delete(0, builder.length());
       }
       builder.append(ch);
+    }
+    for (int i = 0; i < words.size(); i++) {
+      String word = words.get(i);
+      if (i < words.size() - 1 && word.length() == 1) {
+        words.remove(i);
+        words.set(i, word + words.get(i));
+      }
     }
 
     int removedLength = 0;
@@ -2689,8 +2700,8 @@ public class StringUtil extends StringUtilRt {
       index = Math.max(0, (words.size() - 1) / 2);
       String aWord = words.get(index);
       words.remove(index);
-      if (words.size() < 2) {
-        int toCut = length - removedLength - maxWidth + 3;
+      int toCut = length - removedLength - maxWidth + 3;
+      if (words.size() < 2 || (toCut < aWord.length() - 2 && removedLength == 0)) {
         int pos = (aWord.length() - toCut) / 2;
         toPaste = aWord.substring(0, pos) + "..." + aWord.substring(pos+toCut);
         break;

@@ -56,7 +56,6 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   public CodeStyleSettings(boolean loadExtensions) {
     super(null);
-    RIGHT_MARGIN = DEFAULT_RIGHT_MARGIN;
     initTypeToName();
     initImportsByDefault();
 
@@ -108,12 +107,16 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   private void addCustomSettings(CustomCodeStyleSettings settings) {
     if (settings != null) {
-      myCustomSettings.put(settings.getClass(), settings);
+      synchronized (myCustomSettings) {
+        myCustomSettings.put(settings.getClass(), settings);
+      }
     }
   }
 
-  public <T extends CustomCodeStyleSettings> T getCustomSettings(Class<T> aClass) {
-    return (T)myCustomSettings.get(aClass);
+  public <T extends CustomCodeStyleSettings> T getCustomSettings(@NotNull Class<T> aClass) {
+    synchronized (myCustomSettings) {
+      return (T)myCustomSettings.get(aClass);
+    }
   }
 
   @Override
@@ -124,8 +127,10 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   }
 
   private void copyCustomSettingsFrom(@NotNull CodeStyleSettings from) {
-    myCustomSettings.clear();
-    for (final CustomCodeStyleSettings settings : from.myCustomSettings.values()) {
+    synchronized (myCustomSettings) {
+      myCustomSettings.clear();
+    }
+    for (final CustomCodeStyleSettings settings : from.getCustomSettingsValues()) {
       addCustomSettings((CustomCodeStyleSettings) settings.clone());
     }
 
@@ -244,6 +249,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   public int INNER_CLASSES_ORDER_WEIGHT = 7;
 
 //----------------- WRAPPING ---------------------------
+  public int RIGHT_MARGIN = 120;
   public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = false;
 
 
@@ -431,6 +437,13 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   private CodeStyleSettings myParentSettings;
   private boolean myLoadedAdditionalIndentOptions;
 
+  @NotNull
+  private Collection<CustomCodeStyleSettings> getCustomSettingsValues() {
+    synchronized (myCustomSettings) {
+      return Collections.unmodifiableCollection(myCustomSettings.values());
+    }
+  }
+
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
@@ -452,7 +465,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
       }
     }
     boolean oldOptionsImported = importOldIndentOptions(element);
-    for (final CustomCodeStyleSettings settings : myCustomSettings.values()) {
+    for (final CustomCodeStyleSettings settings : getCustomSettingsValues()) {
       settings.readExternal(element);
       settings.importLegacySettings();
     }
@@ -514,7 +527,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
       @NonNls Element option = (Element)option1;
       @NonNls final String name = option.getAttributeValue("name");
       if ("TAB_SIZE".equals(name)) {
-        final int value = Integer.valueOf(option.getAttributeValue("value")).intValue();
+        final int value = Integer.parseInt(option.getAttributeValue("value"));
         JAVA_INDENT_OPTIONS.TAB_SIZE = value;
         JSP_INDENT_OPTIONS.TAB_SIZE = value;
         XML_INDENT_OPTIONS.TAB_SIZE = value;
@@ -522,7 +535,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
         optionsImported = true;
       }
       else if ("INDENT_SIZE".equals(name)) {
-        final int value = Integer.valueOf(option.getAttributeValue("value")).intValue();
+        final int value = Integer.parseInt(option.getAttributeValue("value"));
         JAVA_INDENT_OPTIONS.INDENT_SIZE = value;
         JSP_INDENT_OPTIONS.INDENT_SIZE = value;
         XML_INDENT_OPTIONS.INDENT_SIZE = value;
@@ -530,7 +543,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
         optionsImported = true;
       }
       else if ("CONTINUATION_INDENT_SIZE".equals(name)) {
-        final int value = Integer.valueOf(option.getAttributeValue("value")).intValue();
+        final int value = Integer.parseInt(option.getAttributeValue("value"));
         JAVA_INDENT_OPTIONS.CONTINUATION_INDENT_SIZE = value;
         JSP_INDENT_OPTIONS.CONTINUATION_INDENT_SIZE = value;
         XML_INDENT_OPTIONS.CONTINUATION_INDENT_SIZE = value;
@@ -538,7 +551,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
         optionsImported = true;
       }
       else if ("USE_TAB_CHARACTER".equals(name)) {
-        final boolean value = Boolean.valueOf(option.getAttributeValue("value")).booleanValue();
+        final boolean value = Boolean.parseBoolean(option.getAttributeValue("value"));
         JAVA_INDENT_OPTIONS.USE_TAB_CHARACTER = value;
         JSP_INDENT_OPTIONS.USE_TAB_CHARACTER = value;
         XML_INDENT_OPTIONS.USE_TAB_CHARACTER = value;
@@ -546,14 +559,15 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
         optionsImported = true;
       }
       else if ("SMART_TABS".equals(name)) {
-        final boolean value = Boolean.valueOf(option.getAttributeValue("value")).booleanValue();
+        final boolean value = Boolean.parseBoolean(option.getAttributeValue("value"));
         JAVA_INDENT_OPTIONS.SMART_TABS = value;
         JSP_INDENT_OPTIONS.SMART_TABS = value;
         XML_INDENT_OPTIONS.SMART_TABS = value;
         OTHER_INDENT_OPTIONS.SMART_TABS = value;
         optionsImported = true;
-      } else if ("SPACE_AFTER_UNARY_OPERATOR".equals(name)) {
-        SPACE_AROUND_UNARY_OPERATOR = Boolean.valueOf(option.getAttributeValue("value")).booleanValue();
+      }
+      else if ("SPACE_AFTER_UNARY_OPERATOR".equals(name)) {
+        SPACE_AROUND_UNARY_OPERATOR = Boolean.parseBoolean(option.getAttributeValue("value"));
         optionsImported = true;
       }
     }
@@ -564,7 +578,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   public void writeExternal(Element element) throws WriteExternalException {
     final CodeStyleSettings parentSettings = new CodeStyleSettings();
     DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<CodeStyleSettings>(this, parentSettings));
-    List<CustomCodeStyleSettings> customSettings = new ArrayList<CustomCodeStyleSettings>(myCustomSettings.values());
+    List<CustomCodeStyleSettings> customSettings = new ArrayList<CustomCodeStyleSettings>(getCustomSettingsValues());
     
     Collections.sort(customSettings, new Comparator<CustomCodeStyleSettings>(){
       @Override
@@ -741,6 +755,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
       myNames.addAll(from.myNames);
     }
 
+    @Override
     public boolean equals(Object other) {
       if (other instanceof TypeToNameMap) {
         TypeToNameMap otherMap = (TypeToNameMap)other;
@@ -749,6 +764,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
       return false;
     }
 
+    @Override
     public int hashCode() {
       int code = 0;
       for (String myPattern : myPatterns) {

@@ -1,2 +1,0 @@
-<spot>import sys</spot>
-name = sys.argv[0]

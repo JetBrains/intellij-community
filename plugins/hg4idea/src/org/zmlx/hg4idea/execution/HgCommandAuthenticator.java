@@ -35,7 +35,7 @@ import org.zmlx.hg4idea.HgVcsMessages;
 class HgCommandAuthenticator {
 
   private static final Logger LOG = Logger.getInstance(HgCommandAuthenticator.class.getName());
-
+  
   private GetPasswordRunnable myGetPassword;
   private final Project myProject;
   private boolean myForceAuthorization;
@@ -71,7 +71,7 @@ class HgCommandAuthenticator {
   }
 
   public boolean promptForAuthentication(Project project, String proposedLogin, String uri, String path, @Nullable ModalityState state) {
-    GetPasswordRunnable runnable = new GetPasswordRunnable(project, proposedLogin, uri, path, myForceAuthorization, state);
+    GetPasswordRunnable runnable = new GetPasswordRunnable(project, proposedLogin, uri, path, myForceAuthorization);
     ApplicationManager.getApplication().invokeAndWait(runnable, state == null ? ModalityState.defaultModalityState() : state);
     myGetPassword = runnable;
     return runnable.isOk();
@@ -96,21 +96,14 @@ class HgCommandAuthenticator {
     @Nullable private String myURL;
     private boolean myRememberPassword;
     private boolean myForceAuthorization;
-    @Nullable private ModalityState myState;
 
-    public GetPasswordRunnable(Project project,
-                               String proposedLogin,
-                               String uri,
-                               String path,
-                               boolean forceAuthorization,
-                               @Nullable ModalityState state) {
+    public GetPasswordRunnable(Project project, String proposedLogin, String uri, String path, boolean forceAuthorization) {
       this.myProject = project;
       this.myProposedLogin = proposedLogin;
       this.myURL = uri + path;
       this.myForceAuthorization = forceAuthorization;
-      myState = state;
     }
-
+    
     public void run() {
 
       // find if we've already been here
@@ -135,9 +128,11 @@ class HgCommandAuthenticator {
         final String key = keyForUrlAndLogin(myURL, login);
         try {
           final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
-          password = passwordSafe.getPassword(myProject, HgCommandAuthenticator.class, key, myState);
-        }
-        catch (PasswordSafeException e) {
+          password = passwordSafe.getMemoryProvider().getPassword(myProject, HgCommandAuthenticator.class, key);
+          if (password == null) {
+            password = passwordSafe.getPassword(myProject, HgCommandAuthenticator.class, key);
+          }
+        } catch (PasswordSafeException e) {
           LOG.info("Couldn't get password for key [" + key + "]", e);
         }
       }

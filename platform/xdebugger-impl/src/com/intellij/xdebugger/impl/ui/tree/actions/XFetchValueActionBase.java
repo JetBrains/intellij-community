@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
+import com.intellij.xdebugger.impl.ui.XValueTextProvider;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.HeadlessValueEvaluationCallback;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchMessageNode;
@@ -74,7 +75,14 @@ public abstract class XFetchValueActionBase extends AnAction {
         XValueNodeImpl valueNode = (XValueNodeImpl)node;
         XFullValueEvaluator fullValueEvaluator = valueNode.getFullValueEvaluator();
         if (fullValueEvaluator == null) {
-          valueCollector.add(StringUtil.notNullize(valueNode.getRawValue()));
+          String rawValue;
+          if (valueNode.getValueContainer() instanceof XValueTextProvider) {
+            rawValue = ((XValueTextProvider)valueNode.getValueContainer()).getValueText();
+          }
+          else {
+            rawValue = valueNode.getRawValue();
+          }
+          valueCollector.add(StringUtil.notNullize(rawValue));
         }
         else {
           new CopyValueEvaluationCallback(valueNode, valueCollector).startFetchingValue(fullValueEvaluator);

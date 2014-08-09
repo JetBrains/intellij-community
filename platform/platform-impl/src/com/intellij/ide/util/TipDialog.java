@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2014 JetBrains s.r.o.
  *
@@ -33,6 +32,12 @@ import java.awt.event.ActionEvent;
 public class TipDialog extends DialogWrapper{
   private TipPanel myTipPanel;
 
+  @Nullable
+  @Override
+  protected String getDimensionServiceKey() {
+    return getClass().getName();
+  }
+
   public TipDialog(){
     super(WindowManagerEx.getInstanceEx().findVisibleFrame(), true);
     initialize();
@@ -52,9 +57,6 @@ public class TipDialog extends DialogWrapper{
       setHorizontalStretch(1.33f);
       setVerticalStretch(1.25f);
       init();
-      if (getPeer() instanceof DialogWrapperPeerImpl) {
-        ((DialogWrapperPeerImpl)getPeer()).setAutoRequestFocus(false);
-      }
     }
 
   @NotNull

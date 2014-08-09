@@ -45,6 +45,7 @@ import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
@@ -102,6 +103,7 @@ public abstract class ContentRootPanel extends JPanel {
 
   public void initUI() {
     myHeader = createHeader();
+    myHeader.setBorder(new EmptyBorder(0, 8, 0, 0));
     this.add(myHeader, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 8, 0), 0, 0));
 
     addFolderGroupComponents();
@@ -198,7 +200,7 @@ public abstract class ContentRootPanel extends JPanel {
     final Font labelFont = UIUtil.getLabelFont();
     titleLabel.setFont(labelFont.deriveFont(Font.BOLD));
     titleLabel.setOpaque(false);
-    titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 0));
+    titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
     registerTextComponent(titleLabel, foregroundColor);
 
     final JPanel groupPanel = new JPanel(new BorderLayout());

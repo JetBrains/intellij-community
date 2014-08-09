@@ -21,10 +21,9 @@ import com.intellij.remoteServer.agent.annotation.ChildCall;
  * @author michael.golubev
  */
 public interface CloudAgentWithDeployment<Config extends CloudAgentConfig,
-  DeploymentConfig extends CloudAgentDeploymentConfig,
-  LoggingHandler extends CloudAgentLoggingHandler>
+  DeploymentConfig extends CloudAgentDeploymentConfig>
   extends CloudAgentBase<Config> {
 
   @ChildCall
-  CloudAgentDeployment createDeployment(DeploymentConfig config, LoggingHandler loggingHandler);
+  CloudAgentDeployment createDeployment(DeploymentConfig config, CloudAgentLoggingHandler loggingHandler);
 }

@@ -217,6 +217,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
 
               }
 
+              @NotNull
               @Override
               public PsiDirectory[] getDirectories() {
                 return new PsiDirectory[] {psiDirectory};

@@ -47,6 +47,15 @@ import static com.jetbrains.python.inspections.PyStringFormatParser.parsePercent
  * @author Dennis.Ushakov
  */
 public class PyReplaceExpressionUtil implements PyElementTypes {
+  /**
+   * This marker is added in cases where valid selection nevertheless breaks existing expression.
+   * It can happen in cases like (here {@code <start> and <end>} represent selection boundaries):
+   * <ul>
+   *   <li>Selection conflicts with operator precedence: {@code n = 1 * <start>2 + 3<end>}</li>
+   *   <li>Selection conflicts with operator associativity: {@code n = 1 + <start>2 + 3<end>}</li>
+   *   <li>Part of string literal is selected: {@code s = 'green <start>eggs<end> and ham'}</li>
+   * </ul>
+   */
   public static final Key<Pair<PsiElement, TextRange>> SELECTION_BREAKS_AST_NODE =
     new Key<Pair<PsiElement, TextRange>>("python.selection.breaks.ast.node");
 

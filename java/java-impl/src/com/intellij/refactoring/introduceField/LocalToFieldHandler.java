@@ -18,6 +18,7 @@ package com.intellij.refactoring.introduceField;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.codeInsight.daemon.impl.quickfix.AnonymousTargetClassPreselectionUtil;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
@@ -66,7 +67,7 @@ public abstract class LocalToFieldHandler {
   public boolean convertLocalToField(final PsiLocalVariable local, final Editor editor) {
     boolean tempIsStatic = myIsConstant;
     PsiElement parent = local.getParent();
-    List<PsiClass> classes = new ArrayList<PsiClass>();
+    final List<PsiClass> classes = new ArrayList<PsiClass>();
     while (parent != null && parent.getContainingFile() != null) {
       if (parent instanceof PsiClass && !(myIsConstant && parent instanceof PsiAnonymousClass)) {
         classes.add((PsiClass)parent);
@@ -90,13 +91,16 @@ public abstract class LocalToFieldHandler {
       if (convertLocalToField(local, classes.get(getChosenClassIndex(classes)), editor, tempIsStatic)) return false;
     } else {
       final boolean isStatic = tempIsStatic;
+      final PsiClass firstClass = classes.get(0);
+      final PsiClass preselection = AnonymousTargetClassPreselectionUtil.getPreselection(classes, firstClass);
       NavigationUtil.getPsiElementPopup(classes.toArray(new PsiClass[classes.size()]), new PsiClassListCellRenderer(), "Choose class to introduce " + (myIsConstant ? "constant" : "field"), new PsiElementProcessor<PsiClass>() {
         @Override
         public boolean execute(@NotNull PsiClass aClass) {
+          AnonymousTargetClassPreselectionUtil.rememberSelection(aClass, aClass);
           convertLocalToField(local, aClass, editor, isStatic);
           return false;
         }
-      }).showInBestPositionFor(editor);
+      }, preselection).showInBestPositionFor(editor);
     }
 
     return true;

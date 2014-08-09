@@ -74,7 +74,7 @@ public class ProgramRunnerUtil {
   }
 
   public static void executeConfiguration(Project project,
-                                          DataContext context,
+                                          @Nullable DataContext context,
                                           @Nullable RunnerAndConfigurationSettings configuration,
                                           Executor executor,
                                           ExecutionTarget target,
@@ -120,20 +120,19 @@ public class ProgramRunnerUtil {
     }
 
     try {
-      ExecutionEnvironmentBuilder builder =
-        new ExecutionEnvironmentBuilder(project, executor);
-      if (configuration != null) {
-        builder.setRunnerAndSettings(runner, configuration);
+      ExecutionEnvironmentBuilder builder = new ExecutionEnvironmentBuilder(project, executor);
+      if (configuration == null) {
+        builder.runnerId(runner.getRunnerId());
       }
       else {
-        builder.setRunnerId(runner.getRunnerId());
+        builder.runnerAndSettings(runner, configuration);
       }
-      builder.setTarget(target).setContentToReuse(contentToReuse).setDataContext(context);
+      builder.target(target).contentToReuse(contentToReuse).dataContext(context);
       if (assignNewId) {
         builder.assignNewId();
       }
       if (runProfile != null) {
-        builder.setRunProfile(runProfile);
+        builder.runProfile(runProfile);
       }
       runner.execute(builder.build());
     }
@@ -145,7 +144,6 @@ public class ProgramRunnerUtil {
       ExecutionUtil.handleExecutionError(project, executor.getToolWindowId(), name, e);
     }
   }
-
 
   public static void executeConfiguration(@NotNull Project project,
                                           @NotNull RunnerAndConfigurationSettings configuration,

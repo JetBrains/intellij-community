@@ -27,7 +27,7 @@ def get_path_by_args(arguments):
     assert os.path.exists(what_to_run), "{} does not exist".format(what_to_run)
 
     if os.path.isfile(what_to_run):
-        base_dir = os.path.dirname(what_to_run) # User may point to the file directly
+        base_dir = os.path.dirname(what_to_run)  # User may point to the file directly
     return base_dir, what_to_run
 
 
@@ -62,8 +62,11 @@ class BddRunner(object):
         """"
         Runs runner. To be called right after constructor.
         """
-        self.tc_messages.testCount(self._get_number_of_tests())
+        number_of_tests = self._get_number_of_tests()
+        self.tc_messages.testCount(number_of_tests)
         self.tc_messages.testMatrixEntered()
+        if number_of_tests == 0:  # Nothing to run, so no need to report even feature/scenario start. (See PY-13623)
+            return
         self._run_tests()
 
     def __gen_location(self, location):
@@ -175,9 +178,9 @@ class BddRunner(object):
         num_of_steps = 0
         for feature in self._get_features_to_run():
             if feature.background:
-                num_of_steps += len(feature.background.steps) * len(feature.scenarios)
+                num_of_steps += len(list(feature.background.steps)) * len(list(feature.scenarios))
             for scenario in feature.scenarios:
-                num_of_steps += len(scenario.steps)
+                num_of_steps += len(list(scenario.steps))
         return num_of_steps
 
     @abc.abstractmethod

@@ -27,7 +27,7 @@ public class BuiltInWebBrowserUrlProvider extends WebBrowserUrlProvider implemen
       return Collections.emptyList();
     }
 
-    String path = PathToFileManager.getInstance(project).getPath(file);
+    String path = WebServerPathToFileManager.getInstance(project).getPath(file);
     if (path == null) {
       return Collections.emptyList();
     }

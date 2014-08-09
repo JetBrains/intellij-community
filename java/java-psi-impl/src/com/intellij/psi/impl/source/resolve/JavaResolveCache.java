@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,12 +86,13 @@ public class JavaResolveCache {
 
   @Nullable
   public <T extends PsiExpression> PsiType getType(@NotNull T expr, @NotNull Function<T, PsiType> f) {
-    PsiType type = getCachedType(expr);
+    final boolean isOverloadCheck = MethodCandidateInfo.isOverloadCheck();
+    PsiType type = !isOverloadCheck ? getCachedType(expr) : null;
     if (type == null) {
       final RecursionGuard.StackStamp dStackStamp = PsiDiamondType.ourDiamondGuard.markStack();
       final RecursionGuard.StackStamp gStackStamp = PsiResolveHelper.ourGraphGuard.markStack();
       type = f.fun(expr);
-      if (!dStackStamp.mayCacheNow() || !gStackStamp.mayCacheNow() || !MethodCandidateInfo.ourOverloadGuard.currentStack().isEmpty()) {
+      if (!dStackStamp.mayCacheNow() || !gStackStamp.mayCacheNow() || isOverloadCheck) {
         return type;
       }
       if (type == null) type = TypeConversionUtil.NULL_TYPE;
@@ -143,6 +144,6 @@ public class JavaResolveCache {
   }
 
   public interface ConstValueComputer{
-    Object execute(PsiVariable variable, Set<PsiVariable> visitedVars);
+    Object execute(@NotNull PsiVariable variable, Set<PsiVariable> visitedVars);
   }
 }

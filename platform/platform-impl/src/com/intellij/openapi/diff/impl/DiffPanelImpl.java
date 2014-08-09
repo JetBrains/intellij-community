@@ -612,7 +612,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     return myData.getProject();
   }
 
-  public void showSource(OpenFileDescriptor descriptor) {
+  public void showSource(@Nullable OpenFileDescriptor descriptor) {
     myOptions.showSource(descriptor);
   }
 
@@ -1009,10 +1009,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
     @Override
     public void navigate(boolean requestFocus) {
-      final OpenFileDescriptor descriptor = mySide.getCurrentOpenFileDescriptor();
-      if (descriptor != null) {
-        showSource(descriptor);
-      }
+      showSource(mySide.getCurrentOpenFileDescriptor());
     }
   }
 }

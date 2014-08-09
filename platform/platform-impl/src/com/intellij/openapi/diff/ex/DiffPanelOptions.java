@@ -23,6 +23,8 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -56,25 +58,26 @@ public class DiffPanelOptions {
     myShowSourcePolicy = showSourcePolicy;
   }
 
-  public void showSource(OpenFileDescriptor descriptor) {
+  public void showSource(@Nullable OpenFileDescriptor descriptor) {
+    if (descriptor == null || myDiffPanel.getProject() == null) return;
     myShowSourcePolicy.showSource(descriptor, myDiffPanel);
   }
 
   public interface ShowSourcePolicy {
-    void showSource(OpenFileDescriptor descriptor, DiffPanelImpl diffPanel);
+    void showSource(@NotNull OpenFileDescriptor descriptor, @NotNull DiffPanelImpl diffPanel);
 
     ShowSourcePolicy DONT_SHOW = new ShowSourcePolicy() {
-      public void showSource(OpenFileDescriptor descriptor, DiffPanelImpl diffPanel) {}
+      public void showSource(@NotNull OpenFileDescriptor descriptor, @NotNull DiffPanelImpl diffPanel) {}
     };
 
     ShowSourcePolicy OPEN_EDITOR = new ShowSourcePolicy() {
-      public void showSource(OpenFileDescriptor descriptor, DiffPanelImpl diffPanel) {
+      public void showSource(@NotNull OpenFileDescriptor descriptor, @NotNull DiffPanelImpl diffPanel) {
         FileEditorManager.getInstance(diffPanel.getProject()).openTextEditor(descriptor, true);
       }
     };
 
     ShowSourcePolicy OPEN_EDITOR_AND_CLOSE_DIFF = new ShowSourcePolicy() {
-      public void showSource(OpenFileDescriptor descriptor, DiffPanelImpl diffPanel) {
+      public void showSource(@NotNull OpenFileDescriptor descriptor, @NotNull DiffPanelImpl diffPanel) {
         OPEN_EDITOR.showSource(descriptor, diffPanel);
         if (diffPanel.getOwnerWindow() == null) return;
         Disposer.dispose(diffPanel);
@@ -97,7 +100,7 @@ public class DiffPanelOptions {
     };
 
     ShowSourcePolicy DEFAULT = new ShowSourcePolicy() {
-      public void showSource(OpenFileDescriptor descriptor, DiffPanelImpl diffPanel) {
+      public void showSource(@NotNull OpenFileDescriptor descriptor, @NotNull DiffPanelImpl diffPanel) {
         Window window = diffPanel.getOwnerWindow();
         if (window == null) return;
         else if (window instanceof Frame) OPEN_EDITOR.showSource(descriptor, diffPanel);

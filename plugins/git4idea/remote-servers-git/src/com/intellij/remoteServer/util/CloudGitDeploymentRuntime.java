@@ -15,8 +15,8 @@ import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.remoteServer.agent.util.CloudAgentLoggingHandler;
 import com.intellij.remoteServer.agent.util.CloudGitApplication;
-import com.intellij.remoteServer.agent.util.CloudLoggingHandler;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
 import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
@@ -350,7 +350,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
   }
 
   @Override
-  protected CloudLoggingHandler getLoggingHandler() {
+  protected CloudAgentLoggingHandler getLoggingHandler() {
     return super.getLoggingHandler();
   }
 

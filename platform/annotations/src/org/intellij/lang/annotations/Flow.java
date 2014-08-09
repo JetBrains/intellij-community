@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ public @interface Flow {
    * </li>
    * </ul>
    */
-  String source() default DEFAULT_SOURCE;
+  String source() default org.intellij.lang.annotations.Flow.DEFAULT_SOURCE;
   @NonNls String DEFAULT_SOURCE = "The method argument (if parameter was annotated) or this container (if instance method was annotated)";
   @NonNls String THIS_SOURCE = "this";
 
@@ -108,7 +108,7 @@ public @interface Flow {
    * </li>
    * </ul>
    */
-  String target() default DEFAULT_TARGET;
+  String target() default org.intellij.lang.annotations.Flow.DEFAULT_TARGET;
   @NonNls String DEFAULT_TARGET = "This container (if the parameter was annotated) or the return value (if instance method was annotated)";
   @NonNls String RETURN_METHOD_TARGET = "The return value of this method";
   @NonNls String THIS_TARGET = "this";

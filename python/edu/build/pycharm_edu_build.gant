@@ -14,23 +14,21 @@
  * limitations under the License.
  */
 import org.jetbrains.jps.LayoutInfo
-
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
-setProperty("home", guessHome(this as Script))
-
-includeTargets << new File("${guessHome(this as Script)}/build/scripts/utils.gant")
-includeTargets << new File("${guessHome(this)}/build/scripts/libLicenses.gant")
+setProperty("home", getHome())
+includeTargets << new File("$home/community/build/scripts/utils.gant")
+includeTargets << new File("$home/community/build/scripts/libLicenses.gant")
+includeTargets << new File("$home/build/scripts/ultimate_utils.gant")
 
 requireProperty("buildNumber", requireProperty("build.number", snapshot))
-
-setProperty("ch", home)
-setProperty("pythonCommunityHome", "$home/python")
-setProperty("pythonEduHome", "$home/python/edu")
+setProperty("buildName", "PE-$buildNumber")
+setProperty("ch", "$home/community")
+setProperty("pythonCommunityHome", "$ch/python")
+setProperty("pythonEduHome", "$ch/python/edu")
 
 // load ApplicationInfo.xml properties
 ant.xmlproperty(file: "$pythonCommunityHome/resources/idea/PyCharmEduApplicationInfo.xml", collapseAttributes: "true")
-
 setProperty("system_selector", "PyCharm${p("component.version.major")}0")
 setProperty("dryRun", false)
 setProperty("jdk16", guessJdk())
@@ -38,14 +36,20 @@ setProperty("jdk16", guessJdk())
 //modules to compile
 setProperty("pluginFilter", new File("$pythonEduHome/build/plugin-list.txt").readLines())
 
+private String getHome(){
+  // current file is supposed to be at build/scripts/*.gant path
+  String uri = this["gant.file"]
+  return new File(new URI(uri).getSchemeSpecificPart()).getParentFile().getParentFile().getParentFile().getParentFile().getParentFile()
+}
+
 private List<String> pycharmPlatformApiModules() {
   return [platformApiModules, "dom-openapi"].flatten()
 }
 
 
 private List pycharmImplementationModules() {   //modules to put into pycharm.jar
-  return [platformImplementationModules, "dom-impl", "python-community", "python-ide-community", "python-openapi", "python-psi-api",
-    "platform-main", "python-educational"].flatten()
+  return [platformImplementationModules, "dom-impl", "python-community", "python-ide-community", "python-educational", "python-openapi", "python-psi-api",
+    "platform-main"].flatten()
 }
 
 private List modules() {
@@ -91,6 +95,10 @@ target('default': "Build artifacts") {
 
   loadProject()
 
+  List resourcePaths = ["$ch/community-resources/src",
+                        "$ch/platform/icons/src",
+                        "$pythonEduHome/resources"]
+
   projectBuilder.stage("Cleaning up sandbox folder")
 
   projectBuilder.targetFolder = "${paths.sandbox}/classes"
@@ -133,14 +141,9 @@ target('default': "Build artifacts") {
   layoutEducational("${paths.sandbox}/classes/production", usedJars)
 
 
-  buildNSIS([paths.distAll, paths.distWin],
-            "${pythonEduHome}/build/strings.nsi", "${pythonEduHome}/build/paths.nsi",
-            "pycharm", false, true, system_selector)
-
-
-
-  signMacZip("pycharm")
-  buildDmg("pycharm", "${pythonEduHome}/build/DMG_background.png")
+  def extraArgs = ["build.code": "pycharm${buildName}", "build.number": "PE-$buildNumber", "artifacts.path": "${paths.artifacts}"]
+  signMacZip("pycharm", extraArgs)
+  buildDmg("pycharm", "${pythonEduHome}/build/DMG_background.png", extraArgs)
 
 }
 
@@ -151,7 +154,7 @@ public layoutEducational(String classesPath, Set usedJars) {
     usedJars = collectUsedJars(modules(), approvedJars(), ["/ant/"], null)
   }
 
-  def appInfo = appInfoFile(classesPath)
+  def appInfo = appInfoFile()
   def paths = new Paths(home)
   buildSearchableOptions("${projectBuilder.moduleOutput(findModule("platform-resources"))}/search", [], {
     projectBuilder.moduleRuntimeClasspath(findModule("main_pycharm_edu"), false).each {
@@ -180,17 +183,24 @@ public layoutEducational(String classesPath, Set usedJars) {
   def launcher = "${paths.distWin}/bin/pycharm.exe"
   List resourcePaths = ["$ch/community-resources/src",
     "$ch/platform/icons/src",
+    "$pythonCommunityHome/resources",
     "$pythonEduHome/resources"]
-  buildWinLauncher("$ch", "$ch/bin/WinLauncher/WinLauncher.exe", launcher,
-                   appInfo, "$pythonCommunityHome/build/pycharm_edu_launcher.properties", system_selector, resourcePaths)
+  buildWinLauncher(ch, "$ch/bin/WinLauncher/WinLauncher.exe", launcher,
+                   appInfo, "$pythonEduHome/build/pycharm_edu_launcher.properties", system_selector, resourcePaths)
+  //signExe(launcher)
+  executeExternalAnt(["dirName": "${paths.distWin}/bin", "fileName": "pycharm.exe"], "$home/build/signBuild.xml")
 
-  buildWinZip("${paths.artifacts}/pycharmPE-${buildNumber}.zip", [paths.distAll, paths.distWin])
+  buildWinZip("${paths.artifacts}/pycharm${buildName}.zip", [paths.distAll, paths.distWin])
 
-  String tarRoot = isEap() ? "pycharm-edu-$buildNumber" : "pycharm-edu-${p("component.version.major")}.${p("component.version.minor")}"
-  buildTarGz(tarRoot, "$paths.artifacts/pycharmPE-${buildNumber}.tar", [paths.distAll, paths.distUnix])
+  buildNSIS([paths.distAll, paths.distWin],
+            "$pythonEduHome/build/strings.nsi", "$pythonEduHome/build/paths.nsi",
+            "pycharmPE-", false, true, ".py", system_selector)
 
-  String macAppRoot = isEap() ? "PyCharm EDU ${p("component.version.major")}.${p("component.version.minor")} EAP.app/Contents" : "PyCharm EDU.app/Contents"
-  buildMacZip(macAppRoot, "${paths.artifacts}/pycharmEDU-${buildNumber}.sit", [paths.distAll], paths.distMac)
+  String tarRoot = isEap() ? "pycharm-pe-$buildNumber" : "pycharm-pe-${p("component.version.major")}.${p("component.version.minor")}"
+  buildTarGz(tarRoot, "$paths.artifacts/pycharm${buildName}.tar", [paths.distAll, paths.distUnix])
+
+  String macAppRoot = isEap() ? "PyCharm PE ${p("component.version.major")}.${p("component.version.minor")} EAP.app/Contents" : "PyCharm PE.app/Contents"
+  buildMacZip(macAppRoot, "${paths.artifacts}/pycharm${buildName}.sit", [paths.distAll], paths.distMac)
 }
 
 private layoutPlugins(layouts) {
@@ -199,11 +209,11 @@ private layoutPlugins(layouts) {
     layouts.layoutPlugin("python-rest")
   }
 
-  layouts.layoutEducationalPlugins(ch)
+  layouts.layoutCommunityPlugins(ch)
 }
 
-private String appInfoFile(String classesPath) {
-  return "$classesPath/python-community/idea/PyCharmEduApplicationInfo.xml"
+private String appInfoFile() {
+  return "$pythonCommunityHome/resources/idea/PyCharmEduApplicationInfo.xml"
 }
 
 private layoutFull(Map args, String target, Set usedJars) {

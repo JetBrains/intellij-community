@@ -16,6 +16,7 @@
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.ApplicationInfo;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Calendar;
@@ -117,4 +118,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   /** @deprecated to remove in IDEA 14 */
   @SuppressWarnings("UnusedDeclaration")
   public abstract String getWelcomeScreenDeveloperSloganUrl();
+
+  @Nullable
+  public abstract String getCustomizeIDEWizardStepsProvider();
 }

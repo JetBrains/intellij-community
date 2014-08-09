@@ -66,7 +66,6 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   private static final Key<RunContentDescriptor> DESCRIPTOR_KEY = new Key<RunContentDescriptor>("Descriptor");
 
   private final Project myProject;
-  private DockableGridContainerFactory myContentFactory;
   private final Map<String, ContentManager> myToolwindowIdToContentManagerMap = new HashMap<String, ContentManager>();
 
   private final Map<RunContentListener, Disposable> myListeners = new HashMap<RunContentListener, Disposable>();
@@ -74,9 +73,9 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
 
   public RunContentManagerImpl(Project project, DockManager dockManager) {
     myProject = project;
-    myContentFactory = new DockableGridContainerFactory();
-    dockManager.register(DockableGridContainerFactory.TYPE, myContentFactory);
-    Disposer.register(myProject, myContentFactory);
+    DockableGridContainerFactory containerFactory = new DockableGridContainerFactory();
+    dockManager.register(DockableGridContainerFactory.TYPE, containerFactory);
+    Disposer.register(myProject, containerFactory);
   }
 
   public void init() {
@@ -202,8 +201,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
         final ContentManager contentManager = getContentManagerForRunner(requestor);
 
         final Content content = getRunContentByDescriptor(contentManager, descriptor);
-
-        if (contentManager != null && content != null) {
+        if (content != null) {
           contentManager.setSelectedContent(content);
 
           final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(requestor.getToolWindowId());
@@ -232,17 +230,8 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   @Override
   @Nullable
   public RunContentDescriptor getSelectedContent(final Executor executor) {
-    final ContentManager contentManager = getContentManagerForRunner(executor);
-    if (contentManager != null) {
-      final Content selectedContent = contentManager.getSelectedContent();
-      if (selectedContent != null) {
-        final RunContentDescriptor runContentDescriptorByContent = getRunContentDescriptorByContent(selectedContent);
-        if (runContentDescriptorByContent != null) {
-          return runContentDescriptorByContent;
-        }
-      }
-    }
-    return null;
+    final Content selectedContent = getContentManagerForRunner(executor).getSelectedContent();
+    return selectedContent != null ? getRunContentDescriptorByContent(selectedContent) : null;
   }
 
   @Override
@@ -293,7 +282,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
 
     final Content content;
 
-    Content oldAttachedContent = oldDescriptor != null ? oldDescriptor.getAttachedContent() : null;
+    Content oldAttachedContent = oldDescriptor == null ? null : oldDescriptor.getAttachedContent();
     if (oldDescriptor != null) {
       content = oldAttachedContent;
       getSyncPublisher().contentRemoved(oldDescriptor, executor);
@@ -382,11 +371,13 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   @Nullable
   @Deprecated
   public RunContentDescriptor getReuseContent(Executor requestor, @Nullable RunContentDescriptor contentToReuse) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return null;
-    if (contentToReuse != null) return contentToReuse;
-
-    final ContentManager contentManager = getContentManagerForRunner(requestor);
-    return chooseReuseContentForDescriptor(contentManager, contentToReuse, 0L, null);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return null;
+    }
+    if (contentToReuse != null) {
+      return contentToReuse;
+    }
+    return chooseReuseContentForDescriptor(getContentManagerForRunner(requestor), null, 0L, null);
   }
 
   @Nullable
@@ -400,10 +391,12 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   public RunContentDescriptor getReuseContent(@NotNull ExecutionEnvironment executionEnvironment) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return null;
     RunContentDescriptor contentToReuse = executionEnvironment.getContentToReuse();
-    if (contentToReuse != null) return contentToReuse;
+    if (contentToReuse != null) {
+      return contentToReuse;
+    }
 
     final ContentManager contentManager = getContentManagerForRunner(executionEnvironment.getExecutor());
-    return chooseReuseContentForDescriptor(contentManager, contentToReuse, executionEnvironment.getExecutionId(),
+    return chooseReuseContentForDescriptor(contentManager, null, executionEnvironment.getExecutionId(),
                                            executionEnvironment.toString());
   }
 
@@ -413,9 +406,9 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   }
 
   @Override
-  public void showRunContent(@NotNull final Executor info, RunContentDescriptor descriptor, RunContentDescriptor contentToReuse) {
+  public void showRunContent(@NotNull Executor info, RunContentDescriptor descriptor, @Nullable RunContentDescriptor contentToReuse) {
     if (contentToReuse != null) {
-      final Content attachedContent = contentToReuse.getAttachedContent();
+      Content attachedContent = contentToReuse.getAttachedContent();
       if (attachedContent.getManager() != null) {
         descriptor.setAttachedContent(attachedContent);
       }

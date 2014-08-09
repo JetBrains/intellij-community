@@ -528,6 +528,12 @@
     <!-- Packaging -->
     <moduleService serviceInterface="com.jetbrains.python.packaging.PyPackageRequirementsSettings"
                    serviceImplementation="com.jetbrains.python.packaging.PyPackageRequirementsSettings"/>
+
+    <!-- Console -->
+    <toolWindow id="Python Console" anchor="bottom" icon=""
+                factoryClass="com.jetbrains.python.console.PythonConsoleToolWindowFactory" secondary="false"/>
+
+
   </extensions>
 
   <extensionPoints>    
@@ -612,6 +618,12 @@
   <project-components>
     <component>
       <implementation-class>com.jetbrains.python.PythonPsiManager</implementation-class>
+    </component>
+  </project-components>
+
+  <project-components>
+    <component>
+      <implementation-class>com.jetbrains.python.console.PythonConsoleToolWindow</implementation-class>
     </component>
   </project-components>
 

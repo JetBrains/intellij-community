@@ -178,6 +178,9 @@ public abstract class AbstractValueHint {
   }
 
   protected boolean showHint(final JComponent component) {
+    if (myCurrentHint != null) {
+      myCurrentHint.hide();
+    }
     myCurrentHint = new LightweightHint(component);
     myCurrentHint.addHintListener(new HintListener() {
       @Override

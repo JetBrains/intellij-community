@@ -96,24 +96,24 @@ public class ColorSelectionComponent extends JPanel {
   }
 
   @Nullable
-  private ColorButton getSelectedButtonInner() {
+  public String getSelectedColorName() {
     for (String name : myColorToButtonMap.keySet()) {
       ColorButton button = myColorToButtonMap.get(name);
-      if (button.isSelected()) return button;
+      if (!button.isSelected()) continue;
+      if (button instanceof CustomColorButton) return ColorUtil.toHex(button.getColor());
+      return name;
     }
     return null;
   }
 
   @Nullable
-  public String getSelectedColorName() {
-    ColorButton button = getSelectedButtonInner();
-    return button == null? null : button instanceof CustomColorButton ? ColorUtil.toHex(button.getColor()) : button.getText();
-  }
-
-  @Nullable
   public Color getSelectedColor() {
-    ColorButton button = getSelectedButtonInner();
-    return button == null? null : button.getColor();
+    for (String name : myColorToButtonMap.keySet()) {
+      ColorButton button = myColorToButtonMap.get(name);
+      if (!button.isSelected()) continue;
+      return button.getColor();
+    }
+    return null;
   }
 
   public void initDefault(@NotNull FileColorManager manager, @Nullable String selectedColorName) {

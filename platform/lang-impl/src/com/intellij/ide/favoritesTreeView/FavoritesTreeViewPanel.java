@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -777,6 +777,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
       return selectedNodeElements[0] instanceof PsiDirectory ? new PsiDirectory[]{(PsiDirectory)selectedNodeElements[0]} : null;
     }
 
+    @NotNull
     @Override
     public PsiDirectory[] getDirectories() {
       final PsiDirectory[] directories = getSelectedDirectories();

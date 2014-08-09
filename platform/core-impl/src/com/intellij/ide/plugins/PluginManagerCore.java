@@ -30,10 +30,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.io.ZipFileCache;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.PlatformUtilsCore;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.execution.ParametersListUtil;
@@ -325,15 +322,8 @@ public class PluginManagerCore {
     Extensions.registerAreaClass(ExtensionAreas.IDEA_MODULE, ExtensionAreas.IDEA_PROJECT);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  static Method getAddUrlMethod(final ClassLoader loader) throws NoSuchMethodException {
-    if (loader instanceof URLClassLoader) {
-      final Method addUrlMethod = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
-      addUrlMethod.setAccessible(true);
-      return addUrlMethod;
-    }
-
-    return loader.getClass().getDeclaredMethod("addURL", URL.class);
+  private static Method getAddUrlMethod(final ClassLoader loader) {
+    return ReflectionUtil.getDeclaredMethod(loader instanceof URLClassLoader ? URLClassLoader.class : loader.getClass(), "addURL", URL.class);
   }
 
   @Nullable
@@ -353,9 +343,6 @@ public class PluginManagerCore {
         }
 
         return loader;
-      }
-      catch (NoSuchMethodException e) {
-        e.printStackTrace();
       }
       catch (IOException e) {
         e.printStackTrace();
