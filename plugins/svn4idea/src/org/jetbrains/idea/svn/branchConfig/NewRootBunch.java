@@ -24,12 +24,11 @@ import com.intellij.openapi.vcs.CalledInBackground;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 // synch is here
 public class NewRootBunch {
@@ -66,7 +65,7 @@ public class NewRootBunch {
         myBranchesLoader.run(new Runnable() {
           @Override
           public void run() {
-            new BranchesPreloader(myProject, NewRootBunch.this, root).loadImpl(previous, config.getValue());
+            reloadBranches(root, previous, config.getValue());
           }
         });
       }
@@ -104,6 +103,20 @@ public class NewRootBunch {
   public void reloadBranches(@NotNull final VirtualFile root, @NotNull final String branchParentUrl) {
     ApplicationManager.getApplication()
       .executeOnPooledThread(new BranchesLoader(myProject, this, branchParentUrl, InfoReliability.setByUser, root, true));
+  }
+
+  public void reloadBranches(@NotNull VirtualFile root, @Nullable SvnBranchConfigurationNew prev, @NotNull SvnBranchConfigurationNew next) {
+    final Set<String> oldUrls = (prev == null) ? Collections.<String>emptySet() : new HashSet<String>(prev.getBranchUrls());
+    final SvnVcs vcs = SvnVcs.getInstance(myProject);
+    if (!vcs.isVcsBackgroundOperationsAllowed(root)) return;
+
+    for (String newBranchUrl : next.getBranchUrls()) {
+      // check if cancel had been put
+      if (!vcs.isVcsBackgroundOperationsAllowed(root)) return;
+      if (!oldUrls.contains(newBranchUrl)) {
+        new BranchesLoader(myProject, this, newBranchUrl, InfoReliability.defaultValues, root, true).run();
+      }
+    }
   }
 
   @Nullable
