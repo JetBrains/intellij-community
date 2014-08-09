@@ -56,7 +56,8 @@ public class NewRootBunch {
         previous = null;
         override = true;
         myMap.put(root, config);
-      } else {
+      }
+      else {
         previous = existing.getValue();
         override = existing.accept(config);
       }
@@ -93,16 +94,23 @@ public class NewRootBunch {
         result = new SvnBranchConfigurationNew();
         myMap.put(root, new InfoStorage<SvnBranchConfigurationNew>(result, InfoReliability.empty));
         myBranchesLoader.run(new DefaultBranchConfigInitializer(myProject, this, root));
-      } else {
+      }
+      else {
         result = value.getValue();
       }
       return result;
     }
   }
 
-  public void reloadBranches(@NotNull final VirtualFile root, @NotNull final String branchParentUrl) {
-    ApplicationManager.getApplication()
-      .executeOnPooledThread(new BranchesLoader(myProject, this, branchParentUrl, InfoReliability.setByUser, root, true));
+  public void reloadBranchesAsync(@NotNull final VirtualFile root,
+                                  @NotNull final String branchLocation,
+                                  @NotNull final InfoReliability reliability) {
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        reloadBranches(root, branchLocation, reliability, true);
+      }
+    });
   }
 
   public void reloadBranches(@NotNull VirtualFile root, @Nullable SvnBranchConfigurationNew prev, @NotNull SvnBranchConfigurationNew next) {
@@ -114,9 +122,16 @@ public class NewRootBunch {
       // check if cancel had been put
       if (!vcs.isVcsBackgroundOperationsAllowed(root)) return;
       if (!oldUrls.contains(newBranchUrl)) {
-        new BranchesLoader(myProject, this, newBranchUrl, InfoReliability.defaultValues, root, true).run();
+        reloadBranches(root, newBranchUrl, InfoReliability.defaultValues, true);
       }
     }
+  }
+
+  public void reloadBranches(@NotNull VirtualFile root,
+                             @NotNull String branchLocation,
+                             @NotNull InfoReliability reliability,
+                             boolean passive) {
+    new BranchesLoader(myProject, this, branchLocation, reliability, root, passive).run();
   }
 
   @Nullable
@@ -128,7 +143,7 @@ public class NewRootBunch {
       final String group = configuration.getGroupToLoadToReachUrl(svnurl);
 
       if (group != null) {
-        new BranchesLoader(myProject, this, group, InfoReliability.setByUser, root, true).run();
+        reloadBranches(root, group, InfoReliability.setByUser, true);
       }
       result.set(myMap.get(root).getValue().getWorkingBranch(svnurl));
     }

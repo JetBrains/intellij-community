@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.svn.branchConfig;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -65,8 +64,7 @@ public class DefaultBranchConfigInitializer implements Runnable {
 
     if (configuration != null) {
       for (String url : configuration.getBranchUrls()) {
-        ApplicationManager.getApplication().executeOnPooledThread(
-          new BranchesLoader(myProject, myBunch, url, InfoReliability.defaultValues, myRoot, true));
+        myBunch.reloadBranchesAsync(myRoot, url, InfoReliability.defaultValues);
       }
 
       myBunch.updateForRoot(myRoot, new InfoStorage<SvnBranchConfigurationNew>(configuration, InfoReliability.defaultValues), false);
