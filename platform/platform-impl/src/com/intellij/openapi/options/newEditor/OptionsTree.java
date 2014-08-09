@@ -117,10 +117,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       }
     });
 
-    final JScrollPane scrolls = ScrollPaneFactory.createScrollPane(myTree);
-    scrolls.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-
-    add(scrolls, BorderLayout.CENTER);
+    add(new StickySeparator(myTree), BorderLayout.CENTER);
 
     mySelection = new MergingUpdateQueue("OptionsTree", 150, false, this, this, this).setRestartTimerOnAdd(true);
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
@@ -921,5 +918,64 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       }
     }
     return getConfigurableProject(node.getParent());
+  }
+
+  private static final class StickySeparator extends JComponent {
+    private final SimpleTree myTree;
+    private final JScrollPane myScroller;
+    private final SeparatorWithText mySeparator;
+
+    public StickySeparator(SimpleTree tree) {
+      myTree = tree;
+      myScroller = ScrollPaneFactory.createScrollPane(myTree);
+      myScroller.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+      mySeparator = new SeparatorWithText();
+      mySeparator.setCaptionCentered(false);
+      //mySeparator.setVisible(true);
+      add(myScroller);
+      mySeparator.setOpaque(true);
+    }
+
+    @Override
+    public void doLayout() {
+      myScroller.setBounds(0, 0, getWidth(), getHeight());
+    }
+
+    @Override
+    public void paint(Graphics g) {
+      super.paint(g);
+
+      if (Registry.is("ide.file.settings.order.new")) {
+        String name = null;
+        int offset = 2 * mySeparator.getFont().getSize();
+        TreePath path = myTree.getClosestPathForLocation(-myTree.getX(), -myTree.getY() + offset);
+        SimpleNode node = myTree.getNodeFor(path);
+        if (node instanceof FilteringTreeStructure.FilteringNode) {
+          Object delegate = ((FilteringTreeStructure.FilteringNode)node).getDelegate();
+          if (delegate instanceof EditorNode) {
+            EditorNode editor = (EditorNode)delegate;
+            ConfigurableGroup group = editor.getGroup();
+            if (group != null) {
+              name = group.getDisplayName();
+            }
+          }
+        }
+        if (name != null) {
+          mySeparator.setCaption(name);
+
+          Rectangle bounds = myScroller.getViewport().getBounds();
+          int height = mySeparator.getPreferredSize().height;
+          if (bounds.height > height) {
+            bounds.height = height;
+          }
+          g.setColor(myTree.getBackground());
+          g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+          g.setColor(myTree.getForeground());
+          g.drawLine(0, bounds.height, bounds.width, bounds.height);
+          mySeparator.setBounds(bounds);
+          mySeparator.paint(g);
+        }
+      }
+    }
   }
 }
