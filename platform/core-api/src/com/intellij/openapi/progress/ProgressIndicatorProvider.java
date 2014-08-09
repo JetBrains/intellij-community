@@ -38,6 +38,7 @@ public abstract class ProgressIndicatorProvider {
     return ourInstance != null ? ourInstance.getProgressIndicator() : null;
   }
 
+  @NotNull
   public abstract NonCancelableSection startNonCancelableSection();
 
   @NotNull
