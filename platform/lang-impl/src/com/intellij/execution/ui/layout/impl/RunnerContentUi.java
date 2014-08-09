@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   private ContentManager myManager;
   private final RunnerLayout myLayoutSettings;
 
-  private final ActionManager myActionManager;
+  @NotNull private final ActionManager myActionManager;
   private final String mySessionName;
   private final MyComponent myComponent = new MyComponent();
 
@@ -1580,6 +1580,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     return myManager;
   }
 
+  @NotNull
   @Override
   public ActionManager getActionManager() {
     return myActionManager;

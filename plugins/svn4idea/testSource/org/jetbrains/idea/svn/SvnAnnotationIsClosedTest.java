@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
@@ -144,7 +141,7 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
                                                  }
                                                  return null;
                                                }
-                                             }, "test", new Presentation(), null, 0));
+                                             }, "test", new Presentation(), ActionManager.getInstance(), 0));
 
     myChangeListManager.ensureUpToDate(false);
     myChangeListManager.ensureUpToDate(false);  // wait for after-events like annotations recalculation
@@ -191,7 +188,7 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
                                                  }
                                                  return null;
                                                }
-                                             }, "test", new Presentation(), null, 0));
+                                             }, "test", new Presentation(), ActionManager.getInstance(), 0));
 
     myChangeListManager.ensureUpToDate(false);
     myChangeListManager.ensureUpToDate(false);  // wait for after-events like annotations recalculation

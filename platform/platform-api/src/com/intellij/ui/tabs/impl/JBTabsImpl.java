@@ -69,7 +69,7 @@ public class JBTabsImpl extends JComponent
 
   public static final Color MAC_AQUA_BG_COLOR = Gray._200;
 
-  final ActionManager myActionManager;
+  @NotNull final ActionManager myActionManager;
   private final List<TabInfo> myVisibleInfos = new ArrayList<TabInfo>();
   private final Map<TabInfo, Integer> myHiddenInfos = new HashMap<TabInfo, Integer>();
 
@@ -153,8 +153,8 @@ public class JBTabsImpl extends JComponent
   private JBTabsPosition myPosition = JBTabsPosition.top;
 
   private final TabsBorder myBorder = new TabsBorder(this);
-  private BaseNavigationAction myNextAction;
-  private BaseNavigationAction myPrevAction;
+  private final BaseNavigationAction myNextAction;
+  private final BaseNavigationAction myPrevAction;
 
   private boolean myTabDraggingEnabled;
   private DragHelper myDragHelper;
@@ -186,7 +186,7 @@ public class JBTabsImpl extends JComponent
     this(project, ActionManager.getInstance(), focusManager, parent);
   }
 
-  public JBTabsImpl(@Nullable Project project, ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
+  public JBTabsImpl(@Nullable Project project, @NotNull ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
     myProject = project;
     myActionManager = actionManager;
     myFocusManager = focusManager != null ? focusManager : IdeFocusManager.getGlobalInstance();
@@ -198,13 +198,11 @@ public class JBTabsImpl extends JComponent
 
     myNavigationActions = new DefaultActionGroup();
 
-    if (myActionManager != null) {
-      myNextAction = new SelectNextAction(this, myActionManager);
-      myPrevAction = new SelectPreviousAction(this, myActionManager);
+    myNextAction = new SelectNextAction(this, myActionManager);
+    myPrevAction = new SelectPreviousAction(this, myActionManager);
 
-      myNavigationActions.add(myNextAction);
-      myNavigationActions.add(myPrevAction);
-    }
+    myNavigationActions.add(myNextAction);
+    myNavigationActions.add(myPrevAction);
 
     setUiDecorator(null);
 
@@ -452,14 +450,14 @@ public class JBTabsImpl extends JComponent
   }
 
   private void addTimerUpdate() {
-    if (myActionManager != null && !myListenerAdded) {
+    if (!myListenerAdded) {
       myActionManager.addTimerListener(500, this);
       myListenerAdded = true;
     }
   }
 
   private void removeTimerUpdate() {
-    if (myActionManager != null && myListenerAdded) {
+    if (myListenerAdded) {
       myActionManager.removeTimerListener(this);
       myListenerAdded = false;
     }
@@ -1408,7 +1406,7 @@ public class JBTabsImpl extends JComponent
       final ActionGroup group = info.getGroup();
       final JComponent side = info.getSideComponent();
 
-      if (group != null && myTabs.myActionManager != null) {
+      if (group != null) {
         final String place = info.getPlace();
         ActionToolbar toolbar =
           myTabs.myActionManager.createActionToolbar(place != null ? place : ActionPlaces.UNKNOWN, group, myTabs.myHorizontalSide);
@@ -2755,8 +2753,7 @@ public class JBTabsImpl extends JComponent
   }
 
   private static boolean isChanged(Object oldObject, Object newObject) {
-    if (oldObject == null && newObject == null) return false;
-    return oldObject != null && !oldObject.equals(newObject) || newObject != null && !newObject.equals(oldObject);
+    return !Comparing.equal(oldObject, newObject);
   }
 
   @Override
@@ -2794,12 +2791,11 @@ public class JBTabsImpl extends JComponent
   }
 
   private abstract static class BaseNavigationAction extends AnAction {
-
     private final ShadowAction myShadow;
-    private final ActionManager myActionManager;
+    @NotNull private final ActionManager myActionManager;
     private final JBTabsImpl myTabs;
 
-    protected BaseNavigationAction(final String copyFromID, JBTabsImpl tabs, ActionManager mgr) {
+    protected BaseNavigationAction(@NotNull String copyFromID, @NotNull JBTabsImpl tabs, @NotNull ActionManager mgr) {
       myActionManager = mgr;
       myTabs = tabs;
       myShadow = new ShadowAction(this, myActionManager.getAction(copyFromID), tabs);
@@ -2867,7 +2863,7 @@ public class JBTabsImpl extends JComponent
 
   private static class SelectNextAction extends BaseNavigationAction {
 
-    private SelectNextAction(JBTabsImpl tabs, ActionManager mgr) {
+    private SelectNextAction(JBTabsImpl tabs, @NotNull ActionManager mgr) {
       super(IdeActions.ACTION_NEXT_TAB, tabs, mgr);
     }
 
@@ -2883,7 +2879,7 @@ public class JBTabsImpl extends JComponent
   }
 
   private static class SelectPreviousAction extends BaseNavigationAction {
-    private SelectPreviousAction(JBTabsImpl tabs, ActionManager mgr) {
+    private SelectPreviousAction(JBTabsImpl tabs, @NotNull ActionManager mgr) {
       super(IdeActions.ACTION_PREVIOUS_TAB, tabs, mgr);
     }
 

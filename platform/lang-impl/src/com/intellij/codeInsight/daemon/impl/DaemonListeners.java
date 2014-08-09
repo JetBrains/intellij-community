@@ -104,7 +104,7 @@ public class DaemonListeners implements Disposable {
   private final ProjectLevelVcsManager myProjectLevelVcsManager;
   private final VcsDirtyScopeManager myVcsDirtyScopeManager;
   private final FileStatusManager myFileStatusManager;
-  private final ActionManager myActionManager;
+  @NotNull private final ActionManager myActionManager;
   private final TooltipController myTooltipController;
 
   private boolean myEscPressed;
