@@ -313,6 +313,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       myProjectIcon.setOpaque(true);
       content.add(myProjectIcon, BorderLayout.EAST);
       myRendererComponent.add(content, BorderLayout.CENTER);
+      mySeparatorComponent.setCaptionCentered(false);
     }
 
     public Component getTreeCellRendererComponent(final JTree tree,
