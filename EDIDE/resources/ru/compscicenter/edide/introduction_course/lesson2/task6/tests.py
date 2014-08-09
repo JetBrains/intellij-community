@@ -11,7 +11,7 @@ def test_value():
 
 def test_window():
     window = get_task_windows()[0]
-    if window == "==":
+    if "==" in window:
         passed()
     else:
         failed("Use == operator")

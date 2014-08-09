@@ -5,12 +5,13 @@ def test_value():
     file = import_task_file()
     if file.is_greater:
         passed()
-    failed("Use > operator")
+    else:
+        failed("Use > operator")
 
 
 def test_window():
     window = get_task_windows()[0]
-    if window == ">":
+    if ">" in window:
         passed()
     else:
         failed("Use > operator")

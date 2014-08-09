@@ -6,7 +6,7 @@ def test_value():
     if file.python == "Python":
         passed()
     else:
-        failed("Use slicing")
+        failed("Check indexes used in slicing")
 
 
 def test_monty_python():

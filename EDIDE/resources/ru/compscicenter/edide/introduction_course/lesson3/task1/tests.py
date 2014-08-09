@@ -21,7 +21,7 @@ def test_concat_used():
     if "hello" in window and "world" in window and "+" in window:
         passed()
     else:
-        failed("Use concatenation (+) to combine variables")
+        failed("Use previously defined variables and concatenation (+) to combine variables")
 
 if __name__ == '__main__':
     run_common_tests()

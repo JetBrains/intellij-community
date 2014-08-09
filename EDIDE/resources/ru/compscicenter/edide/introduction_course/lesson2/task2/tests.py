@@ -6,8 +6,10 @@ def test_is_identifier():
         import_task_file()
     except NameError:
         passed()
+        return
     except SyntaxError:
         failed("Used invalid identifier")
+        return
     failed("Use undefined variable")
 
 

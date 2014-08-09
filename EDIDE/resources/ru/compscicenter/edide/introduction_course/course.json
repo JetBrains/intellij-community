@@ -8,7 +8,7 @@
       "task_list": [
         {
           "name": "Our first program",
-          "test_num" : 5,
+          "test_num" : 6,
           "task_files": {
             "hello_world.py": {
               "task_windows": [
@@ -98,7 +98,7 @@
         },
         {
           "name": "Arithmetic Operators",
-          "test_num": 6,
+          "test_num": 7,
           "task_files": {
             "arithmetic_operators.py": {
               "task_windows": [
@@ -122,12 +122,12 @@
         },
         {
           "name": "Assignments",
-          "test_num": 5,
+          "test_num": 6,
           "task_files": {
             "assignments.py": {
               "task_windows": [
                 {
-                  "line": 0,
+                  "line": 6,
                   "start": 7,
                   "length": 8,
                   "hint": "lesson2.task5.docs",

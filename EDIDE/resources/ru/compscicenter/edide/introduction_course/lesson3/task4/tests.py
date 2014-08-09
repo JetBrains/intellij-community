@@ -6,18 +6,19 @@ def test_value():
     if file.exclamation == "!":
         passed()
     else:
-        failed("Use negative index.")
+        failed("Use -1 index to get the last character")
 
 
 def test_negative_index():
     window = get_task_windows()[0]
-    if "-1" in window:
+    if "-" in window:
         passed()
     else:
-        failed("Use -1 index to get the last character")
+        failed("Use negative index")
 
 if __name__ == '__main__':
     run_common_tests()
 
-    test_value()
     test_negative_index()
+    test_value()
+
