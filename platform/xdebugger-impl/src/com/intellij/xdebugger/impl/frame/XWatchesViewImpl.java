@@ -161,12 +161,12 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
 
     final FocusListener focusListener = new FocusListener() {
       @Override
-      public void focusGained(FocusEvent e) {
+      public void focusGained(@NotNull FocusEvent e) {
         quitePeriod.addRequest(EmptyRunnable.getInstance(), UIUtil.getMultiClickInterval());
       }
 
       @Override
-      public void focusLost(FocusEvent e) {
+      public void focusLost(@NotNull FocusEvent e) {
         editAlarm.cancelAllRequests();
       }
     };
@@ -174,7 +174,7 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
 
     final TreeSelectionListener selectionListener = new TreeSelectionListener() {
       @Override
-      public void valueChanged(TreeSelectionEvent e) {
+      public void valueChanged(@NotNull TreeSelectionEvent e) {
         quitePeriod.addRequest(EmptyRunnable.getInstance(), UIUtil.getMultiClickInterval());
       }
     };
