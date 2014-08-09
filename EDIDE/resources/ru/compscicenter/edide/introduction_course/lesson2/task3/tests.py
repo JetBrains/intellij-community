@@ -1,19 +1,13 @@
-from test_helper import run_common_tests, test_text_equals
+from test_helper import run_common_tests, get_task_windows, passed, failed
 
+
+def test_type_used():
+    window = get_task_windows()[0]
+    if "type" in window and "float_number" in window:
+        passed()
+    else:
+        failed("Use type() function")
 
 if __name__ == '__main__':
-    run_common_tests('''number = 9
-print(type(number))
-
-float_number = 9.0
-print(float_number type)''', '''number = 9
-print(type(number))
-
-float_number = 9.0
-print()''', "You should redefine variable 'greetings'")
-    test_text_equals('''number = 9
-print(type(number))
-
-float_number = 9.0
-print(type(float_number))''', "Use type() function.")
-    # TODO: check only text in task window
+    run_common_tests("You should redefine variable 'greetings'")
+    test_type_used()

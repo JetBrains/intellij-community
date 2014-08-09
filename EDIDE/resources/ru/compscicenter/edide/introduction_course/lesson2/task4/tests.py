@@ -1,37 +1,23 @@
-from test_helper import run_common_tests, import_file, passed, failed
+from test_helper import run_common_tests, passed, failed, import_task_file
 
 
-def test_division(path):
-    file = import_file(path)
+def test_division():
+    file = import_task_file()
     if file.division == 4.5:
         passed()
-    failed("Use / operator")
+    else:
+        failed("Use / operator")
 
-def test_remainder(path):
-    file = import_file(path)
+def test_remainder():
+    file = import_task_file()
     if file.remainder == 1.0:
         passed()
-    failed("Use % operator")
+    else:
+        failed("Use % operator")
 
 
 if __name__ == '__main__':
-    run_common_tests('''number = 9.0
+    run_common_tests("Use / and % operators")
 
-division = divide 'number' by two
-
-remainder = calculate the remainder
-
-print("division = " + str(division))
-print("remainder = " + str(remainder))''', '''number = 9.0
-
-division =
-
-remainder =
-
-print("division = " + str(division))
-print("remainder = " + str(remainder))''', "You should modify the file")
-
-    import sys
-    path = sys.argv[-1]
-    test_division(path)
-    test_remainder(path)
+    test_division()
+    test_remainder()

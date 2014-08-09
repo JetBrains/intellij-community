@@ -34,6 +34,11 @@ def import_file(path):
     tmp = imp.load_source('tmp', path)
     return tmp
 
+def import_task_file():
+    """ returns imported file """
+    path = sys.argv[-1]
+    return import_file(path)
+
 def test_is_not_empty():
     path = sys.argv[-1]
     file_text = get_file_text(path)
@@ -43,7 +48,7 @@ def test_is_not_empty():
     else:
         failed("The file is empty. Please, reload the task and try again.")
 
-def test_is_initial_text(error_text):
+def test_is_initial_text(error_text="You should modify the file"):
     path = sys.argv[-1]
     text = get_initial_text(path)
     file_text = get_file_text(path)
@@ -74,7 +79,7 @@ def test_text_equals(text, error_text):
     else:
         failed(error_text)
 
-def test_window_text_deleted(error_text):
+def test_window_text_deleted(error_text="Don't just delete task text"):
     windows = get_task_windows()
 
     for window in windows:

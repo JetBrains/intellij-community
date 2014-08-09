@@ -8,7 +8,7 @@
       "task_list": [
         {
           "name": "Our first program",
-          "test_num" : 4,
+          "test_num" : 5,
           "task_files": {
             "hello_world.py": {
               "task_windows": [
@@ -32,7 +32,7 @@
                 {
                   "line": 4,
                   "start": 2,
-                  "length": 9,
+                  "length": 20,
                   "hint": "lesson1.task2.docs",
                   "possible_answer": "new comment"
                 }
@@ -47,7 +47,7 @@
       "task_list": [
         {
           "name": "Variable definition",
-          "test_num": 4,
+          "test_num": 5,
           "task_files": {
             "variable_definition.py": {
               "task_windows": [
@@ -104,7 +104,7 @@
               "task_windows": [
                 {
                   "line": 2,
-                  "start": 11,
+                  "start": 9,
                   "length": 22,
                   "hint": "lesson2.task4.1.docs",
                   "possible_answer": "number/2"
@@ -127,7 +127,7 @@
             "assignments.py": {
               "task_windows": [
                 {
-                  "line": 2,
+                  "line": 0,
                   "start": 7,
                   "length": 8,
                   "hint": "lesson2.task5.docs",
@@ -139,7 +139,7 @@
         },
         {
           "name": "Boolean operators",
-          "test_num": 5,
+          "test_num": 6,
           "task_files": {
             "boolean_operators.py": {
               "task_windows": [
@@ -156,7 +156,7 @@
         },
         {
           "name": "Comparison operators",
-          "test_num": 5,
+          "test_num": 6,
           "task_files": {
             "comparison_operators.py": {
               "task_windows": [

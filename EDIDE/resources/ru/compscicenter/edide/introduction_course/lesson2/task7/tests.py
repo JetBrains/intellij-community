@@ -1,31 +1,21 @@
-from test_helper import run_common_tests, import_file, passed, failed
+from test_helper import run_common_tests, passed, failed, import_task_file, get_task_windows
 
 
-def test_value(path):
-    file = import_file(path)
+def test_value():
+    file = import_task_file()
     if file.is_greater:
         passed()
     failed("Use > operator")
 
 
+def test_window():
+    window = get_task_windows()[0]
+    if window == ">":
+        passed()
+    else:
+        failed("Use > operator")
 
 if __name__ == '__main__':
-    run_common_tests('''one = 1
-two = 2
-three = 3
-
-print(one < two < three)
-
-is_greater = three operator two
-print(is_greater)''', '''one = 1
-two = 2
-three = 3
-
-print(one < two < three)
-
-is_greater = three  two
-print(is_greater)''', "You should modify the file")
-
-    import sys
-    path = sys.argv[-1]
-    test_value(path)
+    run_common_tests("You should modify the file")
+    test_value()
+    test_window()

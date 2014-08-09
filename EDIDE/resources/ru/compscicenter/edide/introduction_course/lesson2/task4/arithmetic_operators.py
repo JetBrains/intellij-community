@@ -1,8 +1,8 @@
-number = 9.0
+number = 9.0        # float number
 
-division = divide 'number' by two
+result = divide 'number' by two
 
 remainder = calculate the remainder
 
-print("division = " + str(division))
+print("relult = " + str(result))
 print("remainder = " + str(remainder))
