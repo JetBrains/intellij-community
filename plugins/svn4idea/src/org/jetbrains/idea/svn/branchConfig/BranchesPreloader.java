@@ -15,10 +15,8 @@
  */
 package org.jetbrains.idea.svn.branchConfig;
 
-import com.intellij.openapi.progress.ProgressManagerQueue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 
@@ -29,25 +27,15 @@ import java.util.Set;
 /**
 * @author Konstantin Kolosovsky.
 */
-public class BranchesPreloader implements PairConsumer<SvnBranchConfigurationNew, SvnBranchConfigurationNew> {
+public class BranchesPreloader {
   private final Project myProject;
   private final VirtualFile myRoot;
-  private final ProgressManagerQueue myQueue;
   private final NewRootBunch myBunch;
 
-  public BranchesPreloader(Project project, @NotNull final NewRootBunch bunch, VirtualFile root, final ProgressManagerQueue queue) {
+  public BranchesPreloader(Project project, @NotNull final NewRootBunch bunch, VirtualFile root) {
     myBunch = bunch;
     myProject = project;
     myRoot = root;
-    myQueue = queue;
-  }
-
-  public void consume(final SvnBranchConfigurationNew prev, final SvnBranchConfigurationNew next) {
-    myQueue.run(new Runnable() {
-      public void run() {
-        loadImpl(prev, next);
-      }
-    });
   }
 
   public void loadImpl(final SvnBranchConfigurationNew prev, final SvnBranchConfigurationNew next) {

@@ -121,8 +121,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
   }
 
   public void setConfiguration(final VirtualFile vcsRoot, final SvnBranchConfigurationNew configuration) {
-    myBunch.updateForRoot(vcsRoot, new InfoStorage<SvnBranchConfigurationNew>(configuration, InfoReliability.setByUser),
-                          new BranchesPreloader(myProject, myBunch, vcsRoot, myBranchesLoader));
+    myBunch.updateForRoot(vcsRoot, new InfoStorage<SvnBranchConfigurationNew>(configuration, InfoReliability.setByUser), true);
 
     SvnBranchMapperManager.getInstance().notifyBranchesChanged(myProject, vcsRoot, configuration);
 
@@ -191,7 +190,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
         }
       }
 
-      myBunch.updateForRoot(root, new InfoStorage<SvnBranchConfigurationNew>(newConfig, InfoReliability.setByUser), null);
+      myBunch.updateForRoot(root, new InfoStorage<SvnBranchConfigurationNew>(newConfig, InfoReliability.setByUser), false);
     }
     return branchPointsToLoad;
   }
@@ -203,7 +202,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
           public void run() {
             try {
               for (Pair<VirtualFile, SvnBranchConfigurationNew> pair : branchPoints) {
-                new BranchesPreloader(myProject, myBunch, pair.getFirst(), myBranchesLoader).loadImpl(null, pair.getSecond());
+                new BranchesPreloader(myProject, myBunch, pair.getFirst()).loadImpl(null, pair.getSecond());
               }
             }
             catch (ProcessCanceledException e) {

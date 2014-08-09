@@ -69,7 +69,7 @@ public class DefaultBranchConfigInitializer implements Runnable {
           new BranchesLoader(myProject, myBunch, url, InfoReliability.defaultValues, myRoot, true));
       }
 
-      myBunch.updateForRoot(myRoot, new InfoStorage<SvnBranchConfigurationNew>(configuration, InfoReliability.defaultValues), null);
+      myBunch.updateForRoot(myRoot, new InfoStorage<SvnBranchConfigurationNew>(configuration, InfoReliability.defaultValues), false);
     }
   }
 

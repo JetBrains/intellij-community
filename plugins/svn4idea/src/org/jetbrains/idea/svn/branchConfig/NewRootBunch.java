@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.CalledInBackground;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
@@ -46,10 +45,11 @@ public class NewRootBunch {
     myMap = new HashMap<VirtualFile, InfoStorage<SvnBranchConfigurationNew>>();
   }
 
-  public void updateForRoot(@NotNull final VirtualFile root, @NotNull final InfoStorage<SvnBranchConfigurationNew> config,
-                            @Nullable final PairConsumer<SvnBranchConfigurationNew, SvnBranchConfigurationNew> callbackOnUpdate) {
+  public void updateForRoot(@NotNull final VirtualFile root,
+                            @NotNull final InfoStorage<SvnBranchConfigurationNew> config,
+                            boolean reload) {
     synchronized (myLock) {
-      SvnBranchConfigurationNew previous;
+      final SvnBranchConfigurationNew previous;
       boolean override;
       final InfoStorage<SvnBranchConfigurationNew> existing = myMap.get(root);
 
@@ -62,8 +62,13 @@ public class NewRootBunch {
         override = existing.accept(config);
       }
 
-      if (callbackOnUpdate != null && override) {
-        callbackOnUpdate.consume(previous, config.getValue());
+      if (reload && override) {
+        myBranchesLoader.run(new Runnable() {
+          @Override
+          public void run() {
+            new BranchesPreloader(myProject, NewRootBunch.this, root).loadImpl(previous, config.getValue());
+          }
+        });
       }
     }
   }
