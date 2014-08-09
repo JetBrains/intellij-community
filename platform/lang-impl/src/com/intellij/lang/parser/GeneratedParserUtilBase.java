@@ -933,7 +933,8 @@ public class GeneratedParserUtilBase {
           for (Pair<PsiBuilder.Marker, Integer> pair : siblingList) {
             if (pair.second != rating || parenPair != null && pair.first == parenPair.second) break main;
             if (++count >= MAX_CHILDREN_IN_TREE) {
-              final PsiBuilder.Marker parentMarker = pair.first.precede();
+              PsiBuilder.Marker parentMarker = pair.first.precede();
+              parentMarker.setCustomEdgeTokenBinders(WhitespacesBinders.GREEDY_LEFT_BINDER, null);
               while (count-- > 0) {
                 siblingList.removeFirst();
               }
@@ -986,6 +987,7 @@ public class GeneratedParserUtilBase {
       else {
         if (marker == null) {
           marker = builder_.mark();
+          marker.setCustomEdgeTokenBinders(WhitespacesBinders.GREEDY_LEFT_BINDER, null);
         }
         final boolean result = (!parenList.isEmpty() || eatMoreCondition.parse(builder_, level + 1)) && parser.parse(builder_, level + 1);
         if (result) {
