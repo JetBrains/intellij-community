@@ -889,6 +889,73 @@
           }
         }
       ]
+    },
+    {
+      "name": "File input/output",
+      "task_list": [
+        {
+          "name": "Read file",
+          "test_num": 4,
+          "task_files": {
+            "read_file.py": {
+              "task_windows": [
+                {
+                  "line": 5,
+                  "start": 4,
+                  "length": 15,
+                  "hint": "lesson10.task1.1.docs",
+                  "possible_answer": "print(line)"
+                },
+                {
+                  "line": 11,
+                  "start": 0,
+                  "length": 27,
+                  "hint": "lesson10.task1.2.docs",
+                  "possible_answer": "print(f1.readline())"
+                },
+                {
+                  "line": 13,
+                  "start": 0,
+                  "length": 27,
+                  "hint": "lesson10.task1.2.docs",
+                  "possible_answer": "f1.close()"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Write to file",
+          "test_num": 4,
+          "task_files": {
+            "write_to_file.py": {
+              "task_windows": [
+                {
+                  "line": 2,
+                  "start": 23,
+                  "length": 15,
+                  "hint": "lesson10.task2.1.docs",
+                  "possible_answer": "'a'"
+                },
+                {
+                  "line": 4,
+                  "start": 0,
+                  "length": 35,
+                  "hint": "lesson10.task2.2.docs",
+                  "possible_answer": "for i in zoo:\n  f.write(i)"
+                },
+                {
+                  "line": 6,
+                  "start": 0,
+                  "length": 14,
+                  "hint": "lesson10.task2.3.docs",
+                  "possible_answer": "f.close()"
+                }
+              ]
+            }
+          }
+        }
+      ]
     }
   ]
 }
