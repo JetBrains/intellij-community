@@ -826,6 +826,69 @@
           }
         }
       ]
+    },
+    {
+      "name": "Modules and packages",
+      "task_list": [
+        {
+          "name": "Import module",
+          "test_num": 4,
+          "task_files": {
+            "imports.py": {
+              "task_windows": [
+                {
+                  "line": 7,
+                  "start": 0,
+                  "length": 21,
+                  "hint": "lesson9.task1.1.docs",
+                  "possible_answer": "import my_module"
+                },
+                {
+                  "line": 9,
+                  "start": 0,
+                  "length": 40,
+                  "hint": "lesson9.task1.2.docs",
+                  "possible_answer": "my_module.hello_world('John')"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Builtin modules",
+          "test_num": 4,
+          "task_files": {
+            "builtin_modules.py": {
+              "task_windows": [
+                {
+                  "line": 2,
+                  "start": 6,
+                  "length": 12,
+                  "hint": "lesson9.task2.docs",
+                  "possible_answer": "datetime.datetime.today()"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "From import",
+          "test_num": 4,
+          "task_files": {
+            "from_import.py": {
+              "task_windows": [
+                {
+                  "line": 7,
+                  "start": 0,
+                  "length": 33,
+                  "hint": "lesson9.task3.docs",
+                  "possible_answer": "from my_module import hello_world"
+                }
+              ]
+            }
+          }
+        }
+      ]
     }
   ]
 }

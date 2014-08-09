@@ -30,7 +30,7 @@ public class Task {
   private Lesson myLesson;
   public int myIndex;
   public List<UserTest> userTests = new ArrayList<UserTest>();
-  public static final String USER_TESTS= "userTests";
+  public static final String USER_TESTS = "userTests";
 
   public int getTestNum() {
     return testNum;

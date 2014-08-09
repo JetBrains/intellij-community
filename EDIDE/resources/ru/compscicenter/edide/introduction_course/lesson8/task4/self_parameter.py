@@ -9,5 +9,5 @@ class Calculator:
     def add(self, amount):
         add number to current
 
-    def getCurrent(self):
+    def get_current(self):
         return self.current
