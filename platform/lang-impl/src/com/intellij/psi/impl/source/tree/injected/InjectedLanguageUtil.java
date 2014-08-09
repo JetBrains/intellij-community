@@ -596,12 +596,12 @@ public class InjectedLanguageUtil {
         shreds = getShreds(((VirtualFileWindow)virtualFile).getDocumentWindow());
       }
     }
-    return shreds != null ? shreds.get(0).getHost() : null;
+    return shreds != null ? shreds.getHostPointer().getElement() : null;
   }
 
   @Nullable
   public static PsiLanguageInjectionHost findInjectionHost(@Nullable VirtualFile virtualFile) {
     return virtualFile instanceof VirtualFileWindow ?
-           getShreds(((VirtualFileWindow)virtualFile).getDocumentWindow()).get(0).getHost() : null;
+           getShreds(((VirtualFileWindow)virtualFile).getDocumentWindow()).getHostPointer().getElement() : null;
   }
 }
