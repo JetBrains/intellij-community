@@ -1,20 +1,17 @@
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
+import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.structuralsearch.MatchOptions;
-import com.intellij.structuralsearch.MatchVariableConstraint;
-import com.intellij.structuralsearch.SSRBundle;
-import com.intellij.structuralsearch.UnsupportedPatternException;
+import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.JavaCompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.filters.*;
 import com.intellij.structuralsearch.impl.matcher.handlers.*;
 import com.intellij.structuralsearch.impl.matcher.iterators.DocValuesIterator;
-import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.structuralsearch.impl.matcher.strategies.*;
 import org.jetbrains.annotations.NonNls;
@@ -84,6 +81,9 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       );
 
       SubstitutionHandler handler = (SubstitutionHandler)myCompilingVisitor.getContext().getPattern().getHandler(str);
+      if (handler == null) {
+        throw new MalformedPatternException();
+      }
 
       if (handler.getPredicate() != null) {
         ((RegExpPredicate)handler.getPredicate()).setMultiline(true);
