@@ -614,7 +614,7 @@
     <editorCustomization implementation="com.intellij.ui.RightMarginEditorCustomization"/>
 
     <!-- Colors & Fonts-->
-    <editorOptionsProvider instance="com.intellij.application.options.colors.ColorAndFontOptions"
+    <applicationConfigurable groupId="editor" dynamic="true" instance="com.intellij.application.options.colors.ColorAndFontOptions"
                            id="reference.settingsdialog.IDE.editor.colors"/>
     <editorOptionsProvider instance="com.intellij.application.options.editor.EditorTabsConfigurable" id="editor.preferences.tabs"
                            displayName="Editor Tabs"/>
