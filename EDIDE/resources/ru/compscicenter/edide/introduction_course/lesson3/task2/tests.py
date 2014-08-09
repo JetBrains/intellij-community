@@ -1,22 +1,21 @@
-from test_helper import run_common_tests, import_file, passed, failed
+from test_helper import run_common_tests, passed, failed, import_task_file, get_task_windows
 
 
-def test_value(path):
-    file = import_file(path)
+def test_value():
+    file = import_task_file()
     if file.tenofhellos == "hellohellohellohellohellohellohellohellohellohello":
         passed()
     failed("Use multiplication")
 
+def test_window():
+    window = get_task_windows()[0]
+    if "*" in window:
+        passed()
+    else:
+        failed("Use multiplication")
 
 if __name__ == '__main__':
-    run_common_tests('''hello  = "hello"
-tenofhellos = hello operator 10
-print(tenofhellos)''',
-                     '''hello  = "hello"
-tenofhellos = hello  10
-print(tenofhellos)''', "You should modify the file")
+    run_common_tests("You should modify the file")
 
-    import sys
-    path = sys.argv[-1]
-    test_value(path)
-    #TODO check mult operation used
+    test_value()
+    test_window()

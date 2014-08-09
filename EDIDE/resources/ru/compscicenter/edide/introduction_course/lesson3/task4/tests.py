@@ -1,22 +1,23 @@
-from test_helper import run_common_tests, import_file, passed, failed
+from test_helper import run_common_tests, passed, failed, import_task_file, get_task_windows
 
 
-def test_value(path):
-    file = import_file(path)
+def test_value():
+    file = import_task_file()
     if file.exclamation == "!":
         passed()
-    failed("Use negative index.")
+    else:
+        failed("Use negative index.")
 
+
+def test_negative_index():
+    window = get_task_windows()[0]
+    if "-1" in window:
+        passed()
+    else:
+        failed("Use -1 index to get the last character")
 
 if __name__ == '__main__':
-    run_common_tests('''long_string = "This is a very long string!"
-exclamation = type here
-print (exclamation)''', '''long_string = "This is a very long string!"
-exclamation =
-print (exclamation)''', "You should modify the file")
+    run_common_tests()
 
-    import sys
-    path = sys.argv[-1]
-    test_value(path)
-
-    #TODO: check that used negative index instead of positive
+    test_value()
+    test_negative_index()

@@ -179,7 +179,7 @@
       "task_list": [
         {
           "name": "Concatenation",
-          "test_num": 6,
+          "test_num": 7,
           "task_files": {
             "concatenation.py": {
               "task_windows": [
@@ -196,13 +196,13 @@
         },
         {
           "name": "String multiplication",
-          "test_num": 5,
+          "test_num": 6,
           "task_files": {
             "string_multiplication.py": {
               "task_windows": [
                 {
                   "line": 1,
-                  "start": 20,
+                  "start": 22,
                   "length": 8,
                   "hint": "lesson3.task2.docs",
                   "possible_answer": "hello * 10"
@@ -213,12 +213,12 @@
         },
         {
           "name": "String indexing",
-          "test_num": 5,
+          "test_num": 6,
           "task_files": {
             "string_indexing.py": {
               "task_windows": [
                 {
-                  "line": 1,
+                  "line": 3,
                   "start": 11,
                   "length": 9,
                   "hint": "lesson3.task3.docs",
@@ -230,7 +230,7 @@
         },
         {
           "name": "String negative indexing",
-          "test_num": 5,
+          "test_num": 6,
           "task_files": {
             "negative_indexing.py": {
               "task_windows": [
@@ -247,7 +247,7 @@
         },
         {
           "name": "String slicing",
-          "test_num": 5,
+          "test_num": 6,
           "task_files": {
             "slicing.py": {
               "task_windows": [
@@ -264,7 +264,7 @@
         },
         {
           "name": "In operator",
-          "test_num": 5,
+          "test_num": 6,
           "task_files": {
             "in_operator.py": {
               "task_windows": [
@@ -281,7 +281,7 @@
         },
         {
           "name": "String length",
-          "test_num": 5,
+          "test_num": 6,
           "task_files": {
             "len_function.py": {
               "task_windows": [
@@ -298,7 +298,7 @@
         },
         {
           "name": "Character escaping",
-          "test_num": 4,
+          "test_num": 5,
           "task_files": {
             "character_escaping.py": {
               "task_windows": [
@@ -315,7 +315,7 @@
         },
         {
           "name": "Basic string methods",
-          "test_num": 4,
+          "test_num": 5,
           "task_files": {
             "string_methods.py": {
               "task_windows": [
@@ -332,7 +332,7 @@
         },
         {
           "name": "String formatting",
-          "test_num": 4,
+          "test_num": 6,
           "task_files": {
             "string_formatting.py": {
               "task_windows": [

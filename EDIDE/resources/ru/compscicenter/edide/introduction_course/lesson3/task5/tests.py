@@ -1,28 +1,23 @@
-from test_helper import run_common_tests, import_file, failed, passed
+from test_helper import run_common_tests, failed, passed, import_task_file, get_task_windows
 
 
-def test_value(path):
-    file = import_file(path)
+def test_value():
+    file = import_task_file()
     if file.python == "Python":
         passed()
-    failed("Use slicing")
+    else:
+        failed("Use slicing")
+
+
+def test_monty_python():
+    window = get_task_windows()[0]
+    if "monty_python" in window:
+        passed()
+    else:
+        failed("Use slicing")
 
 
 if __name__ == '__main__':
-    run_common_tests('''monty_python = "Monty Python"
-monty = monty_python[:5]
-print(monty)
-python = type here
-print(python)
-''', '''monty_python = "Monty Python"
-monty = monty_python[:5]
-print(monty)
-python =
-print(python)
-''', "You should modify the file")
-
-    import sys
-    path = sys.argv[-1]
-    test_value(path)
-
-    #TODO: check that python extracted from monty_python
+    run_common_tests()
+    test_value()
+    test_monty_python()
