@@ -362,7 +362,7 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
 
   @Nullable
   @Override
-  public JComponent getSettingsPanel(File baseDir) throws ProcessCanceledException {
+  public JPanel extendBasePanel() throws ProcessCanceledException {
     StudyNewProjectPanel settingsPanel = new StudyNewProjectPanel(this);
     settingsPanel.registerValidators(new FacetValidatorsManager() {
       public void registerValidator(FacetEditorValidator validator, JComponent... componentsToWatch) {
