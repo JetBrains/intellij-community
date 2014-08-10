@@ -23,6 +23,7 @@ import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
+import com.intellij.openapi.options.ex.NodeConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
@@ -116,10 +117,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       }
     });
 
-    final JScrollPane scrolls = ScrollPaneFactory.createScrollPane(myTree);
-    scrolls.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-
-    add(scrolls, BorderLayout.CENTER);
+    add(new StickySeparator(myTree), BorderLayout.CENTER);
 
     mySelection = new MergingUpdateQueue("OptionsTree", 150, false, this, this, this).setRestartTimerOnAdd(true);
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
@@ -312,6 +310,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       myProjectIcon.setOpaque(true);
       content.add(myProjectIcon, BorderLayout.EAST);
       myRendererComponent.add(content, BorderLayout.CENTER);
+      mySeparatorComponent.setCaptionCentered(false);
     }
 
     public Component getTreeCellRendererComponent(final JTree tree,
@@ -404,8 +403,25 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
         myTextLabel.setBorder(new EmptyBorder(1,2,1,0));
       }
 
-      Project project = getConfigurableProject(base);
-      if (project != null && Registry.is("ide.file.settings.order.new")) {
+      Project project = null;
+      if (base != null && Registry.is("ide.file.settings.order.new")) {
+        SimpleNode parent = base.getParent();
+        if (parent == myRoot) {
+          project = getConfigurableProject(base); // show icon for top-level nodes
+          if (base.getConfigurable() instanceof NodeConfigurable) { // special case for custom subgroups (build.tools)
+            Configurable[] configurables = ((NodeConfigurable)base.getConfigurable()).getConfigurables();
+            if (configurables != null) { // assume that all configurables have the same project
+              project = getConfigurableProject(configurables[0]);
+            }
+          }
+        }
+        else if (parent instanceof Base && ((Base)parent).getConfigurable() instanceof NodeConfigurable) {
+          if (((Base)base.getParent()).getConfigurable() instanceof NodeConfigurable) {
+            project = getConfigurableProject(base); // special case for custom subgroups
+          }
+        }
+      }
+      if (project != null) {
         myProjectIcon.setBackground(selected ? getSelectionBackground() : getBackground());
         myProjectIcon.setIcon(selected ? AllIcons.General.ProjectConfigurableSelected : AllIcons.General.ProjectConfigurable);
         myProjectIcon.setVisible(true);
@@ -902,5 +918,64 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       }
     }
     return getConfigurableProject(node.getParent());
+  }
+
+  private static final class StickySeparator extends JComponent {
+    private final SimpleTree myTree;
+    private final JScrollPane myScroller;
+    private final SeparatorWithText mySeparator;
+
+    public StickySeparator(SimpleTree tree) {
+      myTree = tree;
+      myScroller = ScrollPaneFactory.createScrollPane(myTree);
+      myScroller.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+      mySeparator = new SeparatorWithText();
+      mySeparator.setCaptionCentered(false);
+      //mySeparator.setVisible(true);
+      add(myScroller);
+      mySeparator.setOpaque(true);
+    }
+
+    @Override
+    public void doLayout() {
+      myScroller.setBounds(0, 0, getWidth(), getHeight());
+    }
+
+    @Override
+    public void paint(Graphics g) {
+      super.paint(g);
+
+      if (Registry.is("ide.file.settings.order.new")) {
+        String name = null;
+        int offset = 2 * mySeparator.getFont().getSize();
+        TreePath path = myTree.getClosestPathForLocation(-myTree.getX(), -myTree.getY() + offset);
+        SimpleNode node = myTree.getNodeFor(path);
+        if (node instanceof FilteringTreeStructure.FilteringNode) {
+          Object delegate = ((FilteringTreeStructure.FilteringNode)node).getDelegate();
+          if (delegate instanceof EditorNode) {
+            EditorNode editor = (EditorNode)delegate;
+            ConfigurableGroup group = editor.getGroup();
+            if (group != null) {
+              name = group.getDisplayName();
+            }
+          }
+        }
+        if (name != null) {
+          mySeparator.setCaption(name);
+
+          Rectangle bounds = myScroller.getViewport().getBounds();
+          int height = mySeparator.getPreferredSize().height;
+          if (bounds.height > height) {
+            bounds.height = height;
+          }
+          g.setColor(myTree.getBackground());
+          g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+          g.setColor(myTree.getForeground());
+          g.drawLine(0, bounds.height, bounds.width, bounds.height);
+          mySeparator.setBounds(bounds);
+          mySeparator.paint(g);
+        }
+      }
+    }
   }
 }

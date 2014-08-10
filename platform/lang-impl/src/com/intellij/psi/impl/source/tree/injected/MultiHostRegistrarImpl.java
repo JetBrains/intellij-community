@@ -389,7 +389,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
                                                   "\nLeaf texts concatenated:'"+ patcher.catLeafs +"';" +
                                                   "\nFile root: "+parsedNode+
                                                   "\nLanguage: "+parsedNode.getPsi().getLanguage()+
-                                                  "\nHost file: "+ shreds.get(0).getHost().getContainingFile().getVirtualFile()
+                                                  "\nHost file: "+ shreds.getHostPointer().getVirtualFile()
         ;
     DebugUtil.startPsiModification("injection leaf patching");
     try {

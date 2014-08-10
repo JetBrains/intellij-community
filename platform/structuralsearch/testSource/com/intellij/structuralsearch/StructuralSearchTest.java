@@ -2943,4 +2943,13 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String pattern3 = "'_a::'_b";
     assertEquals("should find all method references", 3, findMatchesCount(source, pattern3));
   }
+
+  public void testNoUnexpectedException() {
+    String source = "{}";
+
+    String pattern1 = "/*$A$a*/";
+    try {
+      findMatchesCount(source, pattern1);
+    } catch (MalformedPatternException ignore) {}
+  }
 }
