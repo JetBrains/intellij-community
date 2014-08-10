@@ -858,7 +858,9 @@
                   "possible_answer": "my_module.hello_world('John')"
                 }
               ]
-            }
+            },
+            "calculator.py": {},
+            "my_module.py": {}
           }
         },
         {
@@ -892,7 +894,9 @@
                   "possible_answer": "from my_module import hello_world"
                 }
               ]
-            }
+            },
+            "calculator.py": {},
+            "my_module.py": {}
           }
         }
       ]
@@ -928,7 +932,9 @@
                   "possible_answer": "f1.close()"
                 }
               ]
-            }
+            },
+            "input.txt": {},
+            "input1.txt": {}
           }
         },
         {
@@ -940,7 +946,7 @@
                 {
                   "line": 2,
                   "start": 23,
-                  "length": 15,
+                  "length": 12,
                   "hint": "lesson10.task2.1.docs",
                   "possible_answer": "'a'"
                 },
@@ -959,7 +965,8 @@
                   "possible_answer": "f.close()"
                 }
               ]
-            }
+            },
+            "output.txt": {}
           }
         }
       ]
