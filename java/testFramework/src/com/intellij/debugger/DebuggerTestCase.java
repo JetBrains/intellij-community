@@ -569,5 +569,4 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       //To change body of implemented methods use File | Settings | File Templates.
     }
   }
-
 }
