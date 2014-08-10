@@ -86,7 +86,7 @@ public interface PsiSearchHelper {
                                       @NotNull GlobalSearchScope searchScope);
 
   /**
-   * Passes all occurrences of the specified full-qualified class name in plain text context in the
+   * Passes all occurrences of the specified fully qualified class name in plain text context in the
    * use scope of the specified element to the specified processor.
    *
    * @param originalElement the element whose use scope is used to restrict the search scope,
@@ -126,7 +126,7 @@ public interface PsiSearchHelper {
                                   final boolean caseSensitively);
 
   /**
-   * Passes all files containing the specified word in {@link UsageSearchContext#IN_PLAIN_TEXT code}
+   * Passes all files containing the specified word in {@link UsageSearchContext#IN_PLAIN_TEXT plain text}
    * context to the specified processor.
    *
    * @param word      the word to search.
@@ -189,7 +189,7 @@ public interface PsiSearchHelper {
   @NotNull
   SearchCostResult isCheapEnoughToSearch(@NotNull String name,
                                          @NotNull GlobalSearchScope scope,
-                                         @Nullable PsiFile fileToIgnoreOccurencesIn,
+                                         @Nullable PsiFile fileToIgnoreOccurrencesIn,
                                          @Nullable ProgressIndicator progress);
 
   enum SearchCostResult {

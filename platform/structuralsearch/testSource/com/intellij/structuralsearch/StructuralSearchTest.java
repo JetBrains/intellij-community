@@ -2948,8 +2948,20 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String source = "{}";
 
     String pattern1 = "/*$A$a*/";
+    MalformedPatternException ex = null;
     try {
       findMatchesCount(source, pattern1);
-    } catch (MalformedPatternException ignore) {}
+    } catch (MalformedPatternException e) {
+      ex = e;
+    }
+    assertNotNull(ex);
+
+    String pattern2 = "class $A$Visitor {}";
+    try {
+      findMatchesCount(source, pattern2);
+    } catch (MalformedPatternException e) {
+      ex = e;
+    }
+    assertNotNull(ex);
   }
 }
