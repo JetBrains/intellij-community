@@ -8,7 +8,8 @@ def fib(n):
     """This is documentation string for function. It'll be availabe by fib.__doc__()
     Return a list containing the Fibonacci series up to n."""
     result = []
-    a, b = initialize variables
+    a = 0
+    b = initialize variable b
     while a < n:
         result.append(a)
         tmp_var = b

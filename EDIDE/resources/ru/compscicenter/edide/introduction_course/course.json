@@ -655,7 +655,7 @@
       "task_list": [
         {
           "name": "Function definition",
-          "test_num": 4,
+          "test_num": 7,
           "task_files": {
             "functions.py": {
               "task_windows": [
@@ -664,7 +664,7 @@
                   "start": 0,
                   "length": 58,
                   "hint": "lesson7.task1.docs",
-                  "possible_answer": "def fun():\n  print('I want to be a function')"
+                  "possible_answer": "def fun():"
                 }
               ]
             }
@@ -672,7 +672,7 @@
         },
         {
           "name": "Function parameters and call arguments",
-          "test_num": 4,
+          "test_num": 6,
           "task_files": {
             "param_args.py": {
               "task_windows": [
@@ -681,7 +681,7 @@
                   "start": 0,
                   "length": 71,
                   "hint": "lesson7.task2.docs",
-                  "possible_answer": "def square(n):\n  print(n ** 2)"
+                  "possible_answer": "def square(n):"
                 }
               ]
             }
@@ -689,26 +689,26 @@
         },
         {
           "name": "Function return value",
-          "test_num": 4,
+          "test_num": 7,
           "task_files": {
             "return_keyword.py": {
               "task_windows": [
                 {
-                  "line": 10,
-                  "start": 11,
-                  "length": 20,
+                  "line": 11,
+                  "start": 8,
+                  "length": 21,
                   "hint": "lesson7.task3.1.docs",
-                  "possible_answer": "0, 1"
+                  "possible_answer": "1"
                 },
                 {
-                  "line": 14,
+                  "line": 15,
                   "start": 8,
                   "length": 17,
                   "hint": "lesson7.task3.2.docs",
                   "possible_answer": "b = a + b"
                 },
                 {
-                  "line": 15,
+                  "line": 16,
                   "start": 8,
                   "length": 17,
                   "hint": "lesson7.task3.3.docs",
@@ -720,7 +720,7 @@
         },
         {
           "name": "Function default parameters",
-          "test_num": 4,
+          "test_num": 6,
           "task_files": {
             "default_parameter.py": {
               "task_windows": [

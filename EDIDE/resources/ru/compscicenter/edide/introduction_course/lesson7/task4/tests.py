@@ -1,15 +1,21 @@
-from test_helper import run_common_tests
+from test_helper import run_common_tests, failed, passed, get_task_windows
+
+
+def test_window():
+    window = get_task_windows()[0]
+    if "=" in window:
+        passed()
+    else:
+        failed("Add default value to the parameter")
+
+def test_window_names():
+    window = get_task_windows()[0]
+    if "subject" in window and "name" in window:
+        passed()
+    else:
+        failed("Add default value to the parameter")
 
 if __name__ == '__main__':
-    run_common_tests('''name = "John"
-age = 17
-
-print(name == "John" or age == 17)
-
-print(John is not 23 years old)''',
-                     '''name = "John"
-age = 17
-
-print(name == "John" or age == 17)
-
-print()''', "Use and keyword and != operator")
+    run_common_tests()
+    test_window()
+    test_window_names()
