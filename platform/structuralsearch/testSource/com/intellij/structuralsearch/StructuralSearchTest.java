@@ -2955,5 +2955,13 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       ex = e;
     }
     assertNotNull(ex);
+
+    String pattern2 = "class $A$Visitor {}";
+    try {
+      findMatchesCount(source, pattern2);
+    } catch (MalformedPatternException e) {
+      ex = e;
+    }
+    assertNotNull(ex);
   }
 }
