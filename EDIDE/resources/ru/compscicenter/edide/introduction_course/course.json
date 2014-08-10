@@ -485,7 +485,7 @@
       "task_list": [
         {
           "name": "Boolean operators",
-          "test_num": 4,
+          "test_num": 5,
           "task_files": {
             "boolean_operators.py": {
               "task_windows": [
@@ -502,7 +502,7 @@
         },
         {
           "name": "Boolean operators order",
-          "test_num": 4,
+          "test_num": 5,
           "task_files": {
             "boolean_order.py": {
               "task_windows": [
@@ -519,16 +519,16 @@
         },
         {
           "name": "If statement",
-          "test_num": 4,
+          "test_num": 6,
           "task_files": {
             "if_statement.py": {
               "task_windows": [
                 {
                   "line": 9,
                   "start": 0,
-                  "length": 33,
+                  "length": 25,
                   "hint": "lesson5.task3.docs",
-                  "possible_answer": "if len(tasks) == 0:\n  print('empty')"
+                  "possible_answer": "if len(tasks) == 0:"
                 }
               ]
             }
@@ -536,16 +536,23 @@
         },
         {
           "name": "Else, elif part in if statement",
-          "test_num": 4,
+          "test_num": 7,
           "task_files": {
             "else_elif.py": {
               "task_windows": [
                 {
                   "line": 13,
                   "start": 0,
-                  "length": 54,
-                  "hint": "lesson5.task4.docs",
-                  "possible_answer": "if name == 'John':\n    print(True)\nelse:\n    print(False)"
+                  "length": 29,
+                  "hint": "lesson5.task4.1.docs",
+                  "possible_answer": "if name == 'John':"
+                },
+                {
+                  "line": 15,
+                  "start": 0,
+                  "length": 9,
+                  "hint": "lesson5.task4.2.docs",
+                  "possible_answer": "else:"
                 }
               ]
             }

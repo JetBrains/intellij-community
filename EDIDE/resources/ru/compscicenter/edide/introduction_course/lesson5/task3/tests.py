@@ -1,15 +1,23 @@
-from test_helper import run_common_tests
+from test_helper import run_common_tests, failed, passed, get_task_windows
+
+
+def test_window():
+    window = get_task_windows()[0]
+    if ":" in window:
+        passed()
+    else:
+        failed("Don't forget about column at the end")
+
+
+def test_len():
+    window = get_task_windows()[0]
+    if "len" in window:
+        passed()
+    else:
+        failed("Use len function to check that tasks is empty")
+
 
 if __name__ == '__main__':
-    run_common_tests('''name = "John"
-age = 17
-
-print(name == "John" or age == 17)
-
-print("name" is "Ellis" or not ("name" equal "John" and he is 17 years old))''',
-                     '''name = "John"
-age = 17
-
-print(name == "John" or age == 17)
-
-print()''', "Use 'and', 'or' and 'not' keywords")
+    run_common_tests()
+    test_window()
+    test_len()
