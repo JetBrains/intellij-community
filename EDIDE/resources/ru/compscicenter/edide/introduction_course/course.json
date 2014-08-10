@@ -361,7 +361,7 @@
       "task_list": [
         {
           "name": "Lists introduction",
-          "test_num": 4,
+          "test_num": 5,
           "task_files": {
             "lists.py": {
               "task_windows": [
@@ -378,7 +378,7 @@
         },
         {
           "name": "Lists operations",
-          "test_num": 4,
+          "test_num": 6,
           "task_files": {
             "list_operations.py": {
               "task_windows": [
@@ -395,7 +395,7 @@
         },
         {
           "name": "List items",
-          "test_num": 4,
+          "test_num": 6,
           "task_files": {
             "list_items.py": {
               "task_windows": [
@@ -412,7 +412,7 @@
         },
         {
           "name": "Tuples",
-          "test_num": 4,
+          "test_num": 5,
           "task_files": {
             "tuples.py": {
               "task_windows": [
@@ -429,12 +429,12 @@
         },
         {
           "name": "Dictionaries",
-          "test_num": 4,
+          "test_num": 5,
           "task_files": {
             "dicts.py": {
               "task_windows": [
                 {
-                  "line": 10,
+                  "line": 11,
                   "start": 6,
                   "length": 12,
                   "hint": "lesson4.task5.docs",
@@ -446,7 +446,7 @@
         },
         {
           "name": "Dictionary keys() and values()",
-          "test_num": 4,
+          "test_num": 5,
           "task_files": {
             "dict_key_value.py": {
               "task_windows": [
@@ -463,7 +463,7 @@
         },
         {
           "name": "In keyword",
-          "test_num": 4,
+          "test_num": 5,
           "task_files": {
             "in_keyword.py": {
               "task_windows": [

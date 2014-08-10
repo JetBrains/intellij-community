@@ -1,11 +1,13 @@
-from test_helper import run_common_tests
+from test_helper import run_common_tests, passed, failed, get_task_windows
+
+
+def test_window():
+    window = get_task_windows()[0]
+    if "len(" in window:
+        passed()
+    else:
+        failed("Use len() function")
+
 
 if __name__ == '__main__':
-    run_common_tests('''alphabet = ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
-            'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z')
-
-print(alphabet length)''',
-                     '''alphabet = ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
-            'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z')
-
-print()''', "Use len() function")
+    run_common_tests("Use len() function")

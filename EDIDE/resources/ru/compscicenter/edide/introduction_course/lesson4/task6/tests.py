@@ -1,23 +1,14 @@
-from test_helper import run_common_tests
+from test_helper import run_common_tests, passed, failed, get_task_windows
+
+
+def test_window():
+    window = get_task_windows()[0]
+    if "phone_book" in window and "values" in window:
+        passed()
+    else:
+        failed("Use values() method")
+
 
 if __name__ == '__main__':
-    run_common_tests('''phone_book = {"John": 123, "Jane": 234} # Empty dictionary
-print(phone_book)
-
-# Add new item to the dictionary
-phone_book["Jill"] = 345
-print(phone_book)
-
-print(Jane's phone)
-
-''',
-                     '''phone_book = {"John": 123, "Jane": 234} # Empty dictionary
-print(phone_book)
-
-# Add new item to the dictionary
-phone_book["Jill"] = 345
-print(phone_book)
-
-print()
-
-''', "")
+    run_common_tests()
+    test_window()

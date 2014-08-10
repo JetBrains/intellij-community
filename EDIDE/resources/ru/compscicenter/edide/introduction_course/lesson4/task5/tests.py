@@ -1,29 +1,13 @@
-from test_helper import run_common_tests
+from test_helper import run_common_tests, get_task_windows, passed, failed
+
+
+def test_window():
+    window = get_task_windows()[0]
+    if "phone_book" in window and "Jane" in window:
+        passed()
+    else:
+        failed("Use indexing e.g. dct[key]")
 
 if __name__ == '__main__':
-    run_common_tests('''phone_book = {"John": 123, "Jane": 234, "Jerard": 345}
-print(phone_book)
-
-# Add new item to the dictionary
-phone_book["Jill"] = 345
-print(phone_book)
-
-# Remove key-value pair from phone_book
-del phone_book['John']
-
-print(Jane's phone)
-
-''',
-                     '''phone_book = {"John": 123, "Jane": 234, "Jerard": 345}
-print(phone_book)
-
-# Add new item to the dictionary
-phone_book["Jill"] = 345
-print(phone_book)
-
-# Remove key-value pair from phone_book
-del phone_book['John']
-
-print()
-
-''', "")
+    run_common_tests("Use indexing e.g. dct[key]")
+    test_window()
