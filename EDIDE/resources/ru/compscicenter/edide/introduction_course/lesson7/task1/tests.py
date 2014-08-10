@@ -3,7 +3,7 @@ from test_helper import run_common_tests, failed, get_task_windows, passed
 
 def test_window():
     window = get_task_windows()[0]
-    if "fun " in window:
+    if "fun" in window:
         passed()
     else:
         failed("Name your function 'fun'")

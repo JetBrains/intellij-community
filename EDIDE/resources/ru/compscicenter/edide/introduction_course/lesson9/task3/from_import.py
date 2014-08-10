@@ -7,4 +7,4 @@ print(calc.get_current())
 
 import hello_world from my_module
 
-print(hello_world())
+print(hello_world())    # Note: hello_world function used without prefix

@@ -1,7 +1,7 @@
 
 import calculator
 
-calc = calculator.Calculator()
+calc = calculator.Calculator()    # create new instance of Calculator class defined in calculator module
 calc.add(2)
 print(calc.get_current())
 

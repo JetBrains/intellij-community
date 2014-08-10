@@ -759,7 +759,7 @@
         },
         {
           "name": "Variable access",
-          "test_num": 4,
+          "test_num": 5,
           "task_files": {
             "access_variable.py": {
               "task_windows": [
@@ -776,7 +776,7 @@
         },
         {
           "name": "Variable access",
-          "test_num": 4,
+          "test_num": 6,
           "task_files": {
             "access_variable.py": {
               "task_windows": [
@@ -800,7 +800,7 @@
         },
         {
           "name": "Self explanation",
-          "test_num": 4,
+          "test_num": 5,
           "task_files": {
             "self_parameter.py": {
               "task_windows": [
@@ -817,7 +817,7 @@
         },
         {
           "name": "Special __init__ method",
-          "test_num": 4,
+          "test_num": 6,
           "task_files": {
             "init_method.py": {
               "task_windows": [
@@ -839,7 +839,7 @@
       "task_list": [
         {
           "name": "Import module",
-          "test_num": 4,
+          "test_num": 8,
           "task_files": {
             "imports.py": {
               "task_windows": [
@@ -863,7 +863,7 @@
         },
         {
           "name": "Builtin modules",
-          "test_num": 4,
+          "test_num": 5,
           "task_files": {
             "builtin_modules.py": {
               "task_windows": [
@@ -880,7 +880,7 @@
         },
         {
           "name": "From import",
-          "test_num": 4,
+          "test_num": 5,
           "task_files": {
             "from_import.py": {
               "task_windows": [
