@@ -902,7 +902,7 @@
       "task_list": [
         {
           "name": "Read file",
-          "test_num": 4,
+          "test_num": 7,
           "task_files": {
             "read_file.py": {
               "task_windows": [
@@ -945,14 +945,14 @@
                   "possible_answer": "'a'"
                 },
                 {
-                  "line": 4,
-                  "start": 0,
+                  "line": 5,
+                  "start": 4,
                   "length": 35,
                   "hint": "lesson10.task2.2.docs",
-                  "possible_answer": "for i in zoo:\n  f.write(i)"
+                  "possible_answer": "f.write(i)"
                 },
                 {
-                  "line": 6,
+                  "line": 7,
                   "start": 0,
                   "length": 14,
                   "hint": "lesson10.task2.3.docs",

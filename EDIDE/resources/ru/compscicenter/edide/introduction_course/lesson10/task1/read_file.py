@@ -5,7 +5,7 @@ f = open("input.txt", "r")   # here we open file "input.txt". Second argument us
 for line in f.readlines():   # read lines
     print each line
 
-f.close()
+f.close()                   # It's important to close the file to free up any system resources.
 
 f1 = open("input1.txt", "r")
 
