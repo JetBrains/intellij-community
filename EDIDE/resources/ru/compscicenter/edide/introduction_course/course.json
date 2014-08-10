@@ -565,16 +565,16 @@
       "task_list": [
         {
           "name": "For loop",
-          "test_num": 4,
+          "test_num": 5,
           "task_files": {
             "for_loop.py": {
               "task_windows": [
                 {
                   "line": 6,
                   "start": 0,
-                  "length": 31,
+                  "length": 34,
                   "hint": "lesson6.task1.docs",
-                  "possible_answer": "for prime in primes:\n  print(prime)"
+                  "possible_answer": "for prime in primes:"
                 }
               ]
             }
@@ -582,7 +582,7 @@
         },
         {
           "name": "For loop using string",
-          "test_num": 4,
+          "test_num": 6,
           "task_files": {
             "for_string.py": {
               "task_windows": [
@@ -591,7 +591,7 @@
                   "start": 0,
                   "length": 59,
                   "hint": "lesson6.task2.docs",
-                  "possible_answer": "for ch in hello_world:\n  length += 1"
+                  "possible_answer": "for ch in hello_world:"
                 }
               ]
             }
@@ -599,7 +599,7 @@
         },
         {
           "name": "While loop",
-          "test_num": 4,
+          "test_num": 6,
           "task_files": {
             "while_loop.py": {
               "task_windows": [
@@ -608,7 +608,7 @@
                   "start": 0,
                   "length": 30,
                   "hint": "lesson6.task3.docs",
-                  "possible_answer": "while count < 100:\n  count = number ** 2\n  print(count)\n num += 1"
+                  "possible_answer": "while count < 100:"
                 }
               ]
             }
@@ -616,7 +616,7 @@
         },
         {
           "name": "Break keyword",
-          "test_num": 4,
+          "test_num": 5,
           "task_files": {
             "break_keyword.py": {
               "task_windows": [
@@ -633,7 +633,7 @@
         },
         {
           "name": "Continue keyword",
-          "test_num": 4,
+          "test_num": 5,
           "task_files": {
             "continue_keyword.py": {
               "task_windows": [

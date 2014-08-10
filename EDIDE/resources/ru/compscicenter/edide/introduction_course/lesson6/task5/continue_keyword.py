@@ -5,5 +5,5 @@ for i in range(5):
 
 for x in range(10):
     if Check if x is even:
-        continue
+        continue   # skip print(x) for this loop
     print(x)

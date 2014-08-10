@@ -10,3 +10,6 @@ count = 0
 number = 1
 
 print all squares from 0 to 99
+    count = number ** 2
+    print(count)
+    number += 1
