@@ -26,7 +26,7 @@
 
   <project-components>
     <component>
-      <implementation-class>com.jetbrains.python.PythonConsoleToolWindow</implementation-class>
+      <implementation-class>com.jetbrains.python.console.PythonConsoleToolWindow</implementation-class>
     </component>
   </project-components>
 
@@ -84,7 +84,7 @@
 
     <!-- Console -->
     <toolWindow id="Python Console" anchor="bottom" icon="PythonIcons.Python.PythonConsoleToolWindow"
-                factoryClass="com.jetbrains.python.PythonConsoleToolWindowFactory" secondary="false"/>
+                factoryClass="com.jetbrains.python.console.PythonConsoleToolWindowFactory" secondary="false"/>
   </extensions>
 
   <actions>

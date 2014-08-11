@@ -654,7 +654,7 @@
 
 
     <action id="ExecuteInPyConsoleAction"
-            class="com.jetbrains.python.actions.ExecuteInConsoleAction"
+            class="com.jetbrains.python.actions.PyExecuteSelectionAction"
             text="Execute selection in console"
             description="Executes selected code fragment in Python/Django console">
       <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="CompareClipboardWithSelection"/>

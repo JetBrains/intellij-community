@@ -1,9 +1,10 @@
-package com.jetbrains.python;
+package com.jetbrains.python.console;
 
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
@@ -11,8 +12,6 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
-import com.jetbrains.python.console.PyConsoleType;
-import com.jetbrains.python.console.PydevConsoleRunner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +24,7 @@ import java.util.Map;
  * @author traff
  */
 public class PythonConsoleToolWindow {
+  public static final Key<RunContentDescriptor> CONTENT_DESCRIPTOR = Key.create("CONTENT_DESCRIPTOR");
 
   private final Project myProject;
 
@@ -119,10 +119,11 @@ public class PythonConsoleToolWindow {
 
   private static void resetContent(RunContentDescriptor contentDescriptor, SimpleToolWindowPanel panel, Content content) {
     panel.setContent(contentDescriptor.getComponent());
-    //panel.addFocusListener(createFocusListener(toolWindow));
 
     content.setComponent(panel);
     content.setPreferredFocusableComponent(contentDescriptor.getComponent());
+
+    content.putUserData(CONTENT_DESCRIPTOR, contentDescriptor);
   }
 
   private static FocusListener createFocusListener(final ToolWindow toolWindow) {
