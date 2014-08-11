@@ -45,7 +45,7 @@ public abstract class HierarchyViewTestBase extends CodeInsightTestCase {
     }
   }
 
-  private static String dump(final HierarchyTreeStructure treeStructure, @Nullable HierarchyNodeDescriptor descriptor, int level) {
+  public static String dump(final HierarchyTreeStructure treeStructure, @Nullable HierarchyNodeDescriptor descriptor, int level) {
     StringBuilder s = new StringBuilder();
     dump(treeStructure, descriptor, level, s);
     return s.toString();
@@ -80,7 +80,7 @@ public abstract class HierarchyViewTestBase extends CodeInsightTestCase {
     }
   }
 
-  private static void checkHierarchyTreeStructure(final HierarchyTreeStructure treeStructure, final Document document) {
+  public static void checkHierarchyTreeStructure(final HierarchyTreeStructure treeStructure, final Document document) {
     final HierarchyNodeDescriptor rootNodeDescriptor = (HierarchyNodeDescriptor)treeStructure.getRootElement();
     rootNodeDescriptor.update();
     final Element rootElement = document.getRootElement();

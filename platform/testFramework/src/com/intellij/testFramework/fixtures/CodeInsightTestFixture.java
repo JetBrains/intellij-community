@@ -27,6 +27,7 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -44,6 +45,7 @@ import com.intellij.testFramework.HighlightTestInfo;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -414,6 +416,11 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   @NotNull
   Collection<UsageInfo> testFindUsages(@TestDataFile @NonNls @NotNull String... fileNames);
+
+  @NotNull
+  void testCallHierarchy(@NotNull Function<PsiElement, HierarchyTreeStructure> pyFunction2CallTreeStructure,
+                         @NotNull String verificationFilePath,
+                         @TestDataFile @NonNls @NotNull String... fileNames) throws Exception;
 
   @NotNull
   Collection<UsageInfo> findUsages(@NotNull PsiElement to);
