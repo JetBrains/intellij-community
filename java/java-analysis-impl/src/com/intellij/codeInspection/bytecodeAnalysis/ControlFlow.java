@@ -67,26 +67,9 @@ final class cfg {
     return new Pair<boolean[], Frame<Value>[]>(result, (Frame<Value>[]) frames);
   }
 
-  private interface Action {}
-  private static class MarkScanned implements Action {
-    final int node;
-    private MarkScanned(int node) {
-      this.node = node;
-    }
-  }
-  private static class ExamineEdge implements Action {
-    final int from;
-    final int to;
-
-    private ExamineEdge(int from, int to) {
-      this.from = from;
-      this.to = to;
-    }
-  }
-
   // Graphs: Theory and Algorithms. by K. Thulasiraman , M. N. S. Swamy (1992)
   // 11.7.2 DFS of a directed graph
-  static DFSTree buildDFSTree(int[][] transitions) {
+  static DFSTree buildDFSTree(int[][] transitions, int edgeCount) {
     Set<Edge> nonBack = new HashSet<Edge>();
     Set<Edge> back = new HashSet<Edge>();
 
@@ -98,39 +81,63 @@ final class cfg {
     int entered = 0;
     int completed = 0;
 
-    Deque<Action> stack = new LinkedList<Action>();
     boolean[] loopEnters = new boolean[transitions.length];
 
     // enter 0
     entered ++;
     preOrder[0] = entered;
     marked[0] = true;
-    stack.push(new MarkScanned(0));
+
+    boolean[] stackFlag = new boolean[edgeCount*2 + 1];
+    int[] stackFrom = new int[edgeCount*2 + 1];
+    int[] stackTo = new int[edgeCount*2 + 1];
+
+    int top = 0;
+
+    // stack.push(new MarkScanned(0));
+    stackFlag[top] = true;
+    stackTo[top] = 0;
+    top++;
+
     for (int to : transitions[0]) {
-      stack.push(new ExamineEdge(0, to));
+      //stack.push(new ExamineEdge(0, to));
+      stackFlag[top] = false;
+      stackFrom[top] = 0;
+      stackTo[top] = to;
+      top++;
     }
 
-    while (!stack.isEmpty()) {
-      Action action = stack.pop();
-      if (action instanceof MarkScanned) {
-        MarkScanned markScannedAction = (MarkScanned) action;
+    while (top > 0) {
+      top--;
+      //Action action = stack.pop();
+      // markScanned
+      if (stackFlag[top]) {
         completed ++;
-        postOrder[markScannedAction.node] = completed;
-        scanned[markScannedAction.node] = true;
+        postOrder[stackTo[top]] = completed;
+        scanned[stackTo[top]] = true;
       }
       else {
-        ExamineEdge examineEdgeAction = (ExamineEdge) action;
-        int from = examineEdgeAction.from;
-        int to = examineEdgeAction.to;
+        //ExamineEdge examineEdgeAction = (ExamineEdge) action;
+        int from = stackFrom[top];
+        int to = stackTo[top];
         if (!marked[to]) {
           nonBack.add(new Edge(from, to));
           // enter to
           entered ++;
           preOrder[to] = entered;
           marked[to] = true;
-          stack.push(new MarkScanned(to));
+
+          //stack.push(new MarkScanned(to));
+          stackFlag[top] = true;
+          stackTo[top] = to;
+          top++;
+
           for (int to1 : transitions[to]) {
-            stack.push(new ExamineEdge(to, to1));
+            //stack.push(new ExamineEdge(to, to1));
+            stackFlag[top] = false;
+            stackFrom[top] = to;
+            stackTo[top] = to1;
+            top++;
           }
         }
         else if (preOrder[to] > preOrder[from]) {
@@ -228,13 +235,15 @@ final class ControlFlowGraph {
   final String className;
   final MethodNode methodNode;
   final int[][] transitions;
+  final int edgeCount;
   final boolean[] errors;
   final Set<Edge> errorTransitions;
 
-  ControlFlowGraph(String className, MethodNode methodNode, int[][] transitions, boolean[] errors, Set<Edge> errorTransitions) {
+  ControlFlowGraph(String className, MethodNode methodNode, int[][] transitions, int edgeCount, boolean[] errors, Set<Edge> errorTransitions) {
     this.className = className;
     this.methodNode = methodNode;
     this.transitions = transitions;
+    this.edgeCount = edgeCount;
     this.errors = errors;
     this.errorTransitions = errorTransitions;
   }
@@ -264,6 +273,7 @@ final class ControlFlowBuilder extends CfgAnalyzer {
   final TIntArrayList[] transitions;
   final Set<Edge> errorTransitions;
   private final boolean[] errors;
+  private int edgeCount;
 
   ControlFlowBuilder(String className, MethodNode methodNode) {
     this.className = className;
@@ -284,13 +294,14 @@ final class ControlFlowBuilder extends CfgAnalyzer {
     for (int i = 0; i < resultTransitions.length; i++) {
       resultTransitions[i] = transitions[i].toNativeArray();
     }
-    return new ControlFlowGraph(className, methodNode, resultTransitions, errors, errorTransitions);
+    return new ControlFlowGraph(className, methodNode, resultTransitions, edgeCount, errors, errorTransitions);
   }
 
   @Override
   protected final void newControlFlowEdge(int insn, int successor) {
     if (!transitions[insn].contains(successor)) {
       transitions[insn].add(successor);
+      edgeCount++;
     }
   }
 
@@ -298,6 +309,7 @@ final class ControlFlowBuilder extends CfgAnalyzer {
   protected final boolean newControlFlowExceptionEdge(int insn, int successor) {
     if (!transitions[insn].contains(successor)) {
       transitions[insn].add(successor);
+      edgeCount++;
       errorTransitions.add(new Edge(insn, successor));
       errors[successor] = true;
     }
@@ -531,7 +543,7 @@ class ParametersUsage extends Interpreter<ParamsValue> {
     boolean[] params1 = v1.params;
     boolean[] params2 = v2.params;
     for (int i = 0; i < arity; i++) {
-        params[i] = params1[i] || params2[i];
+      params[i] = params1[i] || params2[i];
     }
     return new ParamsValue(params, Math.min(v1.size, v2.size));
   }

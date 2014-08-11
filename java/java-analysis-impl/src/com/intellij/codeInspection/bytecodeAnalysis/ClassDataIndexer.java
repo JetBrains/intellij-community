@@ -137,7 +137,7 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
           }
 
           if (graph.transitions.length > 0) {
-            final DFSTree dfs = cfg.buildDFSTree(graph.transitions);
+            final DFSTree dfs = cfg.buildDFSTree(graph.transitions, graph.edgeCount);
 
             boolean complex = !dfs.back.isEmpty();
             if (!complex) {
