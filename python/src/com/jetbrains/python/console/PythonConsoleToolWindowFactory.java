@@ -15,10 +15,12 @@
  */
 package com.jetbrains.python.console;
 
+import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author traff
@@ -27,7 +29,14 @@ public class PythonConsoleToolWindowFactory implements ToolWindowFactory, DumbAw
   public static final String ID = "Python Console";
 
   @Override
-  public void createToolWindowContent(Project project, ToolWindow toolWindow) {
-    RunPythonConsoleAction.runPythonConsole(project, null, toolWindow);
+  public void createToolWindowContent(final @NotNull Project project, final @NotNull ToolWindow toolWindow) {
+    PydevConsoleRunner runner = PythonConsoleRunnerFactory.getInstance().createConsoleRunner(project, null);
+    runner.addConsoleListener(new PydevConsoleRunner.ConsoleListener() {
+      @Override
+      public void handleConsoleInitialized(LanguageConsoleView consoleView) {
+        PythonConsoleToolWindow.getInstance(project).initialized();
+      }
+    });
+    runner.run();
   }
 }

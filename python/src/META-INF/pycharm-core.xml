@@ -24,6 +24,12 @@
     </component>
   </project-components>
 
+  <project-components>
+    <component>
+      <implementation-class>com.jetbrains.python.console.PythonConsoleToolWindow</implementation-class>
+    </component>
+  </project-components>
+
   <module value="com.intellij.modules.xml"/>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -75,6 +81,10 @@
 
     <renameHandler implementation="com.intellij.platform.renameProject.RenameProjectHandler"/>
     <renameHandler implementation="com.intellij.platform.renameProject.ProjectFolderRenameHandler"/>
+
+    <!-- Console -->
+    <toolWindow id="Python Console" anchor="bottom" icon="PythonIcons.Python.PythonConsoleToolWindow"
+                factoryClass="com.jetbrains.python.console.PythonConsoleToolWindowFactory" secondary="false"/>
   </extensions>
 
   <actions>

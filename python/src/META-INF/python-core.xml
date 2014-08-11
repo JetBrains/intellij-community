@@ -529,11 +529,6 @@
     <moduleService serviceInterface="com.jetbrains.python.packaging.PyPackageRequirementsSettings"
                    serviceImplementation="com.jetbrains.python.packaging.PyPackageRequirementsSettings"/>
 
-    <!-- Console -->
-    <toolWindow id="Python Console" anchor="bottom" icon=""
-                factoryClass="com.jetbrains.python.console.PythonConsoleToolWindowFactory" secondary="false"/>
-
-
   </extensions>
 
   <extensionPoints>    
@@ -621,12 +616,6 @@
     </component>
   </project-components>
 
-  <project-components>
-    <component>
-      <implementation-class>com.jetbrains.python.console.PythonConsoleToolWindow</implementation-class>
-    </component>
-  </project-components>
-
   <actions>
     <group id="PyTypeHierarchyPopupMenu">
       <reference ref="TypeHierarchyBase.BaseOnThisType"/>
@@ -655,11 +644,7 @@
       <reference ref="CompareFileWithEditor"/>
     </group>
 
-    <action id="com.jetbrains.python.console.RunPythonConsoleAction"
-            class="com.jetbrains.python.console.RunPythonConsoleAction"
-            text="Run Python Console..." description="Allows to quickly run Python console">
-      <add-to-group group-id="ToolsMenu" anchor="last"/>
-    </action>
+
 
     <action id="com.jetbrains.python.console.PyOpenDebugConsoleAction"
             class="com.jetbrains.python.console.PyOpenDebugConsoleAction"
@@ -669,7 +654,7 @@
 
 
     <action id="ExecuteInPyConsoleAction"
-            class="com.jetbrains.python.actions.ExecuteInConsoleAction"
+            class="com.jetbrains.python.actions.PyExecuteSelectionAction"
             text="Execute selection in console"
             description="Executes selected code fragment in Python/Django console">
       <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="CompareClipboardWithSelection"/>

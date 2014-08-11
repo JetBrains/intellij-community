@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,14 @@ import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.components.ServiceManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class TodoToolWindowFactory implements ToolWindowFactory {
   @Override
-  public void createToolWindowContent(Project project, ToolWindow toolWindow) {
+  public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
     TodoView todoView = ServiceManager.getService(project, TodoView.class);
     todoView.initToolWindow(toolWindow);
   }

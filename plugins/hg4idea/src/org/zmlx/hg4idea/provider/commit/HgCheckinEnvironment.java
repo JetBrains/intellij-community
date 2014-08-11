@@ -13,6 +13,7 @@
 package org.zmlx.hg4idea.provider.commit;
 
 import com.intellij.dvcs.DvcsCommitAdditionalComponent;
+import com.intellij.dvcs.push.ui.VcsPushDialog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -37,6 +38,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.*;
+import org.zmlx.hg4idea.action.HgActionUtil;
 import org.zmlx.hg4idea.command.*;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
@@ -132,13 +134,12 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
 
     // push if needed
     if (myNextCommitIsPushed && exceptions.isEmpty()) {
-      final VirtualFile preselectedRepo = repositoriesMap.size() == 1 ? repositoriesMap.keySet().iterator().next() : null;
+      final Set<VirtualFile> preselectedFiles = repositoriesMap.keySet();
       HgRepositoryManager repositoryManager = HgUtil.getRepositoryManager(myProject);
-      final HgRepository repo = preselectedRepo != null ? repositoryManager.getRepositoryForFile(preselectedRepo) : null;
-      final Collection<HgRepository> repositories = repositoryManager.getRepositories();
+      final List<HgRepository> preselectedRepositories = HgActionUtil.collectRepositoriesFromFiles(repositoryManager, preselectedFiles);
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         public void run() {
-          new HgPusher(myProject).showDialogAndPush(repositories, repo);
+          new VcsPushDialog(myProject, preselectedRepositories).show();
         }
       });
     }

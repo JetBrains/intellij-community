@@ -16,6 +16,7 @@
 package com.intellij.ide.customize;
 
 import com.intellij.ide.startup.StartupActionScriptManager;
+import com.intellij.idea.Main;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.SystemInfo;
@@ -62,6 +63,26 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     System.setProperty(StartupActionScriptManager.STARTUP_WIZARD_MODE, "true");
   }
 
+  public static void showCustomSteps(String stepsProviderName) {
+    final CustomizeIDEWizardStepsProvider provider;
+
+    try {
+      Class<CustomizeIDEWizardStepsProvider> providerClass = (Class<CustomizeIDEWizardStepsProvider>)Class.forName(stepsProviderName);
+      provider = providerClass.newInstance();
+    }
+    catch (Throwable e) {
+      Main.showMessage("Start Failed", e);
+      return;
+    }
+
+    new CustomizeIDEWizardDialog() {
+      @Override
+      protected void initSteps() {
+        provider.initSteps(this, mySteps);
+      }
+    }.show();
+  }
+
   @Override
   protected void dispose() {
     System.clearProperty(StartupActionScriptManager.STARTUP_WIZARD_MODE);
@@ -73,9 +94,11 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     if (SystemInfo.isMac) {
       mySteps.add(new CustomizeKeyboardSchemeStepPanel());
     }
-    mySteps.add(new CustomizePluginsStepPanel());
+
+    PluginGroups pluginGroups = new PluginGroups();
+    mySteps.add(new CustomizePluginsStepPanel(pluginGroups));
     try {
-      mySteps.add(new CustomizeFeaturedPluginsStepPanel());
+      mySteps.add(new CustomizeFeaturedPluginsStepPanel(pluginGroups));
     }
     catch (CustomizeFeaturedPluginsStepPanel.OfflineException e) {
       //skip featured step if we're offline

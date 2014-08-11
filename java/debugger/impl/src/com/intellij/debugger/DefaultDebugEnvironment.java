@@ -32,7 +32,7 @@ public class DefaultDebugEnvironment implements DebugEnvironment {
   private final GlobalSearchScope mySearchScope;
   private final Executor myExecutor;
   private final ProgramRunner myRunner;
-  private RunProfileState myState;
+  private final RunProfileState myState;
   private final RemoteConnection myRemoteConnection;
   private final boolean myPollConnection;
   private final RunProfile myRunProfile;

@@ -352,6 +352,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     }
   }
 
+  @NotNull
   @Override
   public PsiDirectory[] getDirectories() {
     return getSelectedDirectories();

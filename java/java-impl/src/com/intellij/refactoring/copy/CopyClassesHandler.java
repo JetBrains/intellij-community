@@ -332,7 +332,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     for (final PsiClass[] psiClasses : fileToClasses.values()) {
       if (psiClasses != null) {
         for (PsiClass aClass : psiClasses) {
-          if (aClass instanceof SyntheticElement) {
+          if (isSynthetic(aClass)) {
             continue;
           }
           oldToNewMap.put(aClass, null);
@@ -349,7 +349,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
         final PsiFile createdFile = copy(psiFile, targetDirectory, copyClassName, map == null ? null : map.get(psiFile), choice);
         if (createdFile == null) return null;
         for (final PsiClass destination : ((PsiClassOwner)createdFile).getClasses()) {
-          if (destination instanceof SyntheticElement) {
+          if (isSynthetic(destination)) {
             continue;
           }
           PsiClass source = findByName(sources, destination.getName());
@@ -408,6 +408,10 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     return newElement != null ? newElement : createdFiles.size() > 0 ? createdFiles.get(0) : null;
   }
 
+  protected static boolean isSynthetic(PsiClass aClass) {
+    return aClass instanceof SyntheticElement || !aClass.isPhysical();
+  }
+
   private static PsiFile copy(@NotNull PsiFile file, PsiDirectory directory, String name, String relativePath, int[] choice) {
     final String fileName = getNewFileName(file, name);
     if (relativePath != null && !relativePath.isEmpty()) {
@@ -420,9 +424,10 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
   private static String getNewFileName(PsiFile file, String name) {
     if (name != null) {
       if (file instanceof PsiClassOwner) {
-        final PsiClass[] classes = ((PsiClassOwner)file).getClasses();
-        if (classes.length > 0 && !(classes[0] instanceof SyntheticElement)) {
-          return name + "." + file.getViewProvider().getVirtualFile().getExtension();
+        for (final PsiClass psiClass : ((PsiClassOwner)file).getClasses()) {
+          if (!isSynthetic(psiClass)) {
+            return name + "." + file.getViewProvider().getVirtualFile().getExtension();
+          }
         }
       }
       return name;
@@ -530,15 +535,14 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     if (element instanceof PsiCompiledElement) return null;
     if (element instanceof PsiClassOwner) {
       PsiClass[] classes = ((PsiClassOwner)element).getClasses();
-      if (classes.length > 0) {
-        for (final PsiClass aClass : classes) {
-          if (aClass instanceof SyntheticElement) {
-            return null;
-          }
+      ArrayList<PsiClass> buffer = new ArrayList<PsiClass>();
+      for (final PsiClass aClass : classes) {
+        if (isSynthetic(aClass)) {
+          return null;
         }
-
-        return classes;
+        buffer.add(aClass);
       }
+      return buffer.toArray(new PsiClass[buffer.size()]);
     }
     return element instanceof PsiClass ? new PsiClass[]{(PsiClass)element} : null;
   }

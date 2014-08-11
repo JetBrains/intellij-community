@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public class PsiAnnotationMethodImpl extends PsiMethodImpl implements PsiAnnotationMethod {
-  private SoftReference<PsiAnnotationMemberValue> myCachedDefaultValue = null;
+  private SoftReference<PsiAnnotationMemberValue> myCachedDefaultValue;
 
   public PsiAnnotationMethodImpl(final PsiMethodStub stub) {
     super(stub, JavaStubElementTypes.ANNOTATION_METHOD);
@@ -62,7 +62,7 @@ public class PsiAnnotationMethodImpl extends PsiMethodImpl implements PsiAnnotat
         return value;
       }
 
-      @NonNls final String annoText = "@interface _Dummy_ { Class foo() default " + text + "; }";
+      @NonNls final String annoText = "@interface _Dummy_ { " + getReturnType() + " " + getName() + "() default " + text + "; }";
       final PsiFileFactory factory = PsiFileFactory.getInstance(getProject());
       final PsiJavaFile file = (PsiJavaFile)factory.createFileFromText("a.java", JavaFileType.INSTANCE, annoText);
       value = ((PsiAnnotationMethod)file.getClasses()[0].getMethods()[0]).getDefaultValue();

@@ -18,10 +18,10 @@ package org.zmlx.hg4idea.action;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.zmlx.hg4idea.repo.HgRepository;
 
-public abstract class HgProcessRebaseAction extends HgAbstractGlobalAction {
+public abstract class HgProcessRebaseAction extends HgAbstractGlobalSingleRepoAction {
 
   protected static boolean isRebasing(AnActionEvent e) {
-    HgRepository repository = HgAbstractGlobalAction.getSelectedRepositoryFromEvent(e);
+    HgRepository repository = HgActionUtil.getSelectedRepositoryFromEvent(e);
     return repository != null && repository.getState() == HgRepository.State.REBASING;
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,7 @@ package org.jetbrains.idea;
 
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
@@ -506,7 +503,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
                                                  }
                                                  return null;
                                                }
-                                             }, "test", new Presentation(), null, 0));
+                                             }, "test", new Presentation(), ActionManager.getInstance(), 0));
 
     final ChangeListManager clManager = ChangeListManager.getInstance(project);
     clManager.ensureUpToDate(false);

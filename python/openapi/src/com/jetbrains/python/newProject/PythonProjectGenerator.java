@@ -19,6 +19,11 @@ public abstract class PythonProjectGenerator {
     return null;
   }
 
+  @Nullable
+  public JPanel extendBasePanel() throws ProcessCanceledException {
+    return null;
+  }
+
   public Object getProjectSettings() {
     return new PyNewProjectSettings();
   }

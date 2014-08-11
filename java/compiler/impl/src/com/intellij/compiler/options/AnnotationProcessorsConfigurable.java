@@ -100,6 +100,7 @@ public class AnnotationProcessorsConfigurable implements SearchableConfigurable,
   }
 
   public void disposeUIResources() {
+    myMainPanel = null;
   }
 
 }

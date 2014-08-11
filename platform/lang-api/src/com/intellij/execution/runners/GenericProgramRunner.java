@@ -51,7 +51,8 @@ public abstract class GenericProgramRunner<Settings extends RunnerSettings> exte
   }
 
   @Nullable
-  protected abstract RunContentDescriptor doExecute(@NotNull Project project, @NotNull RunProfileState state,
+  protected abstract RunContentDescriptor doExecute(@NotNull Project project,
+                                                    @NotNull RunProfileState state,
                                                     @Nullable RunContentDescriptor contentToReuse,
                                                     @NotNull ExecutionEnvironment environment) throws ExecutionException;
 

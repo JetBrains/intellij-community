@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   private ContentManager myManager;
   private final RunnerLayout myLayoutSettings;
 
-  private final ActionManager myActionManager;
+  @NotNull private final ActionManager myActionManager;
   private final String mySessionName;
   private final MyComponent myComponent = new MyComponent();
 
@@ -164,7 +164,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
                          @NotNull String sessionName) {
     myProject = project;
     myRunnerUi = ui;
-    myLayoutSettings = settings;
+    myLayoutSettings =  settings;
     myActionManager = actionManager;
     mySessionName = sessionName;
     myFocusManager = focusManager;
@@ -299,10 +299,11 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   private void rebuildTabPopup() {
+    initUi();
+
     myTabs.setPopupGroup(getCellPopupGroup(TAB_POPUP_PLACE), TAB_POPUP_PLACE, true);
 
-    final ArrayList<GridImpl> grids = getGrids();
-    for (GridImpl each : grids) {
+    for (GridImpl each : getGrids()) {
       each.rebuildTabPopup();
     }
   }
@@ -636,8 +637,9 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     myManager.addContentManagerListener(new ContentManagerListener() {
       @Override
       public void contentAdded(final ContentManagerEvent event) {
-        final GridImpl grid = getGridFor(event.getContent(), true);
+        initUi();
 
+        GridImpl grid = getGridFor(event.getContent(), true);
         if (grid == null) {
           return;
         }
@@ -1391,8 +1393,8 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       }
     }
 
+    @SuppressWarnings("NullableProblems")
     @Override
-    @NotNull
     public String getName() {
       return RunnerContentUi.this.getName();
     }
@@ -1577,6 +1579,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     return myManager;
   }
 
+  @NotNull
   @Override
   public ActionManager getActionManager() {
     return myActionManager;

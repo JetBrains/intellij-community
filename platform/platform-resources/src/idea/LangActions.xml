@@ -697,6 +697,7 @@
     </group>
 
     <group id="XDebugger.ToolWindow.LeftToolbar">
+      <reference ref="Rerun"/>
       <reference ref="Resume"/>
       <reference ref="Pause"/>
       <reference ref="Stop"/>

@@ -43,7 +43,7 @@ public final class HgErrorUtil {
     }
     final List<String> errorLines = result.getErrorLines();
     for (String line : errorLines) {
-      if (!StringUtil.isEmptyOrSpaces(line) && line.trim().startsWith("abort:")) {
+      if (isAbortLine(line)) {
         return true;
       }
     }
@@ -55,8 +55,7 @@ public final class HgErrorUtil {
       return false;
     }
     String line = getLastErrorLine(result);
-    return !StringUtil.isEmptyOrSpaces(line) && (line.contains("authorization required") || line.contains("authorization failed")
-    );
+    return isAuthorizationError(line);
   }
 
   @Nullable
@@ -118,5 +117,13 @@ public final class HgErrorUtil {
     final Pattern UNCOMMITTED_PATTERN = Pattern.compile(".*abort.*uncommitted\\s*(change|merge).*", Pattern.DOTALL);
     Matcher matcher = UNCOMMITTED_PATTERN.matcher(result.getRawError());
     return matcher.matches();
+  }
+
+  public static boolean isAuthorizationError(String line) {
+    return !StringUtil.isEmptyOrSpaces(line) && (line.contains("authorization required") || line.contains("authorization failed"));
+  }
+
+  public static boolean isAbortLine(String line) {
+    return !StringUtil.isEmptyOrSpaces(line) && line.trim().startsWith("abort:");
   }
 }

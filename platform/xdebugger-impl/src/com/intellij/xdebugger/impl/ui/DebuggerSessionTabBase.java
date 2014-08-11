@@ -51,22 +51,18 @@ import java.util.Collection;
 public abstract class DebuggerSessionTabBase extends LogConsoleManagerBase implements DebuggerLogConsoleManager {
   @NotNull private final LogFilesManager myManager;
 
-  @NotNull final String mySessionName;
   @NotNull protected final RunnerLayoutUi myUi;
 
   protected ExecutionConsole myConsole;
   protected RunContentDescriptor myRunContentDescriptor;
 
-  public DebuggerSessionTabBase(@NotNull Project project, @NotNull String runnerId, @NotNull final String sessionName,
-                                @NotNull GlobalSearchScope searchScope) {
+  public DebuggerSessionTabBase(@NotNull Project project, @NotNull String runnerId, @NotNull String sessionName, @NotNull GlobalSearchScope searchScope) {
     super(project, searchScope);
+
     Disposer.register(project, this);
     myManager = new LogFilesManager(project, this, this);
 
-    mySessionName = sessionName;
-
-    myUi = RunnerLayoutUi.Factory.getInstance(project).create(
-      runnerId, XDebuggerBundle.message("xdebugger.default.content.title"), sessionName, this);
+    myUi = RunnerLayoutUi.Factory.getInstance(project).create(runnerId, XDebuggerBundle.message("xdebugger.default.content.title"), sessionName, this);
 
     myUi.getDefaults()
       .initTabDefaults(0, XDebuggerBundle.message("xdebugger.debugger.tab.title"), null)
@@ -104,13 +100,13 @@ public abstract class DebuggerSessionTabBase extends LogConsoleManagerBase imple
     return myUi;
   }
 
-  protected void registerFileMatcher(final RunProfile runConfiguration) {
+  protected void registerFileMatcher(@NotNull RunProfile runConfiguration) {
     if (runConfiguration instanceof RunConfigurationBase) {
       myManager.registerFileMatcher((RunConfigurationBase)runConfiguration);
     }
   }
 
-  protected void initLogConsoles(final RunProfile runConfiguration, final ProcessHandler processHandler, ExecutionConsole console) {
+  protected void initLogConsoles(@NotNull RunProfile runConfiguration, final ProcessHandler processHandler, ExecutionConsole console) {
     if (runConfiguration instanceof RunConfigurationBase) {
       myManager.initLogConsoles((RunConfigurationBase)runConfiguration, processHandler);
       OutputFileUtil.attachDumpListener((RunConfigurationBase)runConfiguration, processHandler, console);

@@ -15,6 +15,7 @@
  */
 package git4idea.reset;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -26,7 +27,6 @@ import com.intellij.util.ui.RadioButtonEnumModel;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.xml.util.XmlStringUtil;
-import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -127,7 +127,7 @@ public class GitNewResetDialog extends DialogWrapper {
     String currentRevision = repository.getCurrentRevision();
     assert currentRevision != null;
     String text = repository.getCurrentBranch() == null ?
-                  "HEAD (" + GitUtil.getShortHash(currentRevision) + ")" :
+                  "HEAD (" + DvcsUtil.getShortHash(currentRevision) + ")" :
                   repository.getCurrentBranch().getName();
     return "<b>" + text + "</b>";
   }

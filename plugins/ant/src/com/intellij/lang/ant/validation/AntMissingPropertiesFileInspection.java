@@ -18,8 +18,11 @@ package com.intellij.lang.ant.validation;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.dom.AntDomProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.DomHighlightingHelper;
 import org.jetbrains.annotations.Nls;
@@ -45,11 +48,21 @@ public class AntMissingPropertiesFileInspection extends AntInspection {
   protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
     if (element instanceof AntDomProperty) {
       final AntDomProperty property = (AntDomProperty)element;
-      final String fileName = property.getFile().getStringValue();
+      final GenericAttributeValue<PsiFileSystemItem> fileValue = property.getFile();
+      final String fileName = fileValue.getStringValue();
       if (fileName != null) {
-        final PsiFileSystemItem file = property.getFile().getValue();
-        if (!(file instanceof PropertiesFile)) {
-          holder.createProblem(property.getFile(), AntBundle.message("file.doesnt.exist", fileName));
+        final PropertiesFile propertiesFile = property.getPropertiesFile();
+        if (propertiesFile == null) {
+          final PsiFileSystemItem file = fileValue.getValue();
+          if (file instanceof XmlFile) {
+            holder.createProblem(fileValue, AntBundle.message("file.type.xml.not.supported", fileName));
+          }
+          else if (file instanceof PsiFile) {
+            holder.createProblem(fileValue, AntBundle.message("file.type.not.supported", fileName));
+          }
+          else {
+            holder.createProblem(fileValue, AntBundle.message("file.doesnt.exist", fileName));
+          }
         }
       }
     }

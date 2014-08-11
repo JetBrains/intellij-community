@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
@@ -168,7 +169,7 @@ public class GrDelegatesToUtil {
         final PsiType baseType = signature.getParameters()[param].getType();
         final PsiClass baseClass = PsiUtil.resolveClassInClassTypeOnly(baseType);
 
-        if (baseClass != null && psiClass.isInheritor(baseClass, true)) {
+        if (baseClass != null && InheritanceUtil.isInheritorOrSelf(psiClass, baseClass, true)) {
           final PsiTypeParameter[] typeParameters = baseClass.getTypeParameters();
           if (genericIndex < typeParameters.length) {
             final PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, psiClass, substitutor);

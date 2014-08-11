@@ -25,7 +25,7 @@ import org.zmlx.hg4idea.ui.HgRunConflictResolverDialog;
 
 import java.util.Collection;
 
-public class HgRunConflictResolverAction extends HgAbstractGlobalAction {
+public class HgRunConflictResolverAction extends HgAbstractGlobalSingleRepoAction {
 
   @Override
   public void execute(@NotNull final Project project, @NotNull Collection<HgRepository> repositories, @Nullable HgRepository selectedRepo) {

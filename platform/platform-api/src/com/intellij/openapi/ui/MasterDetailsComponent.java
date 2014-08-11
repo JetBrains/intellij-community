@@ -177,7 +177,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
         decorator.setActionGroup(group);
       }
       //left.add(myNorthPanel, BorderLayout.NORTH);
-      myMaster = decorator.setPanelBorder(new EmptyBorder(0, 0, 0, 0)).createPanel();
+      myMaster = decorator.setAsUsualTopToolbar().setPanelBorder(new EmptyBorder(0, 0, 0, 0)).createPanel();
       myNorthPanel.setVisible(false);
     } else {
       left.add(myNorthPanel, BorderLayout.NORTH);

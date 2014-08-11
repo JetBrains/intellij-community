@@ -605,7 +605,7 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   @NotNull
-  public static List<VirtualFile> markDirty(boolean recursive, boolean reloadChildren, VirtualFile... files) {
+  public static List<VirtualFile> markDirty(boolean recursive, boolean reloadChildren, @NotNull VirtualFile... files) {
     List<VirtualFile> list = ContainerUtil.filter(Condition.NOT_NULL, files);
     if (list.isEmpty()) {
       return Collections.emptyList();
@@ -628,7 +628,7 @@ public class VfsUtil extends VfsUtilCore {
     return list;
   }
 
-  public static void markDirtyAndRefresh(boolean async, boolean recursive, boolean reloadChildren, VirtualFile... files) {
+  public static void markDirtyAndRefresh(boolean async, boolean recursive, boolean reloadChildren, @NotNull VirtualFile... files) {
     List<VirtualFile> list = markDirty(recursive, reloadChildren, files);
     if (list.isEmpty()) return;
     LocalFileSystem.getInstance().refreshFiles(list, async, recursive, null);

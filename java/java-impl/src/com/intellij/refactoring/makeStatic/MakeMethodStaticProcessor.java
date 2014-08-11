@@ -27,6 +27,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.javadoc.MethodJavaDocHelper;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.MultiMap;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +40,20 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
 
   public MakeMethodStaticProcessor(final Project project, final PsiMethod method, final Settings settings) {
     super(project, method, settings);
+  }
+
+  @Override
+  protected MultiMap<PsiElement, String> getConflictDescriptions(UsageInfo[] usages) {
+    MultiMap<PsiElement, String> descriptions = super.getConflictDescriptions(usages);
+    if (mySettings.isMakeClassParameter()) {
+      for (UsageInfo usage : usages) {
+        PsiElement element = usage.getElement();
+        if (element instanceof PsiMethodReferenceExpression) {
+          descriptions.putValue(element, "Method reference will be corrupted");
+        }
+      }
+    }
+    return descriptions;
   }
 
   protected void changeSelfUsage(SelfUsageInfo usageInfo) throws IncorrectOperationException {

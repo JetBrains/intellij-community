@@ -12,14 +12,14 @@
 // limitations under the License.
 package org.zmlx.hg4idea.action;
 
+import com.intellij.dvcs.push.ui.VcsPushDialog;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgPusher;
 import org.zmlx.hg4idea.repo.HgRepository;
 
 import java.util.Collection;
+import java.util.List;
 
 public class HgPushAction extends HgAbstractGlobalAction {
   public HgPushAction() {
@@ -29,7 +29,7 @@ public class HgPushAction extends HgAbstractGlobalAction {
   @Override
   public void execute(@NotNull final Project project,
                       @NotNull Collection<HgRepository> repositories,
-                      @Nullable final HgRepository selectedRepo) {
-    new HgPusher(project).showDialogAndPush(repositories, selectedRepo);
+                      @NotNull final List<HgRepository> selectedRepositories) {
+    new VcsPushDialog(project, selectedRepositories).show();
   }
 }

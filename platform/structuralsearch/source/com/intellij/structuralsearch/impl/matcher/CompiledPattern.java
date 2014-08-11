@@ -12,6 +12,7 @@ import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SimpleHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -82,7 +83,7 @@ public abstract class CompiledPattern {
   public boolean isRealTypedVar(PsiElement element) {
     if (element!=null && element.getTextLength()>0) {
       String str = getTypedVarString(element);
-      if (str == null || str.length()==0) {
+      if (str.length() == 0) {
         return false;
       }
       return isTypedVar( str );
@@ -91,6 +92,7 @@ public abstract class CompiledPattern {
     }
   }
 
+  @NotNull
   public String getTypedVarString(PsiElement element) {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(element);
     if (profile == null) {

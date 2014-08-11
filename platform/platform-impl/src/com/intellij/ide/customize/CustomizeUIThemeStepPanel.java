@@ -34,12 +34,12 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
+  protected static final String DEFAULT = "Default";
+  protected static final String DARCULA = "Darcula";
+  protected static final String INTELLIJ = "IntelliJ";
+  protected static final String ALLOY = "Alloy. IDEA Theme";
+  protected static final String GTK = "GTK+";
 
-  private static final String DEFAULT = "Default";
-  private static final String DARCULA = "Darcula";
-  private static final String INTELLIJ = "IntelliJ";
-  private static final String ALLOY = "Alloy. IDEA Theme";
-  private static final String GTK = "GTK+";
   private boolean myInitial = true;
   private boolean myColumnMode;
   private JLabel myPreviewLabel;
@@ -49,24 +49,8 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
     setLayout(new BorderLayout(10, 10));
     IconLoader.activate();
 
-    if (SystemInfo.isMac) {
-      myLafNames.put(DEFAULT, IconLoader.getIcon("/lafs/OSXAqua.png"));
-      myLafNames.put(DARCULA, IconLoader.getIcon("/lafs/OSXDarcula.png"));
-    }
-    else if (SystemInfo.isWindows) {
-      //if (PlatformUtils.isIdeaCommunity()) {
-        myLafNames.put(INTELLIJ, IconLoader.getIcon("/lafs/WindowsIntelliJ.png"));
-      //}
-      //else {
-      //  myLafNames.put(ALLOY, IconLoader.getIcon("/lafs/WindowsAlloy.png"));
-      //}
-      myLafNames.put(DARCULA, IconLoader.getIcon("/lafs/WindowsDarcula.png"));
-    }
-    else {
-      myLafNames.put(INTELLIJ, IconLoader.getIcon("/lafs/LinuxIntelliJ.png"));
-      myLafNames.put(DARCULA, IconLoader.getIcon("/lafs/LinuxDarcula.png"));
-      myLafNames.put(GTK, IconLoader.getIcon("/lafs/LinuxGTK.png"));
-    }
+    initLafs();
+
     myColumnMode = myLafNames.size() > 2;
     JPanel buttonsPanel = new JPanel(new GridLayout(myColumnMode ? myLafNames.size() : 1, myColumnMode ? 1 : myLafNames.size(), 5, 5));
     ButtonGroup group = new ButtonGroup();
@@ -111,13 +95,37 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
     myInitial = false;
   }
 
+  protected void initLafs() {
+    if (SystemInfo.isMac) {
+      addLaf(DEFAULT, "/lafs/OSXAqua.png");
+      addLaf(DARCULA, "/lafs/OSXDarcula.png");
+    }
+    else if (SystemInfo.isWindows) {
+      //if (PlatformUtils.isIdeaCommunity()) {
+      addLaf(INTELLIJ,"/lafs/WindowsIntelliJ.png");
+      //}
+      //else {
+      //  addLaf(ALLOY, "/lafs/WindowsAlloy.png");
+      //}
+      addLaf(DARCULA, "/lafs/WindowsDarcula.png");
+    }
+    else {
+      addLaf(INTELLIJ, "/lafs/LinuxIntelliJ.png");
+      addLaf(DARCULA, "/lafs/LinuxDarcula.png");
+      addLaf(GTK, "/lafs/LinuxGTK.png");
+    }
+  }
+
+  protected final void addLaf(String name, String icon) {
+    myLafNames.put(name, IconLoader.getIcon(icon));
+  }
+
   @Override
   public Dimension getPreferredSize() {
     Dimension size = super.getPreferredSize();
     size.width += 30;
     return size;
   }
-
 
   @Override
   public String getTitle() {

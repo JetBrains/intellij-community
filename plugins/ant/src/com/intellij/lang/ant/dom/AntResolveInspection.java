@@ -25,7 +25,6 @@ import com.intellij.lang.ant.quickfix.AntCreateTargetFix;
 import com.intellij.lang.ant.validation.AntInspection;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlElement;
@@ -175,9 +174,9 @@ public class AntResolveInspection extends AntInspection {
       }
       if (child instanceof AntDomProperty) {
         final AntDomProperty property = (AntDomProperty)child;
-        final PsiFileSystemItem file = property.getFile().getValue();
-        if (file instanceof PropertiesFile) {
-          files.add((PropertiesFile)file);
+        final PropertiesFile file = property.getPropertiesFile();
+        if (file != null) {
+          files.add(file);
         }
       }
     }

@@ -15,6 +15,7 @@
  */
 package git4idea.push;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -219,7 +220,7 @@ public class GitPushDialog extends DialogWrapper {
   private static String logMessageForCommits(GitCommitsByRepoAndBranch commitsToPush) {
     StringBuilder logMessage = new StringBuilder();
     for (GitCommit commit : commitsToPush.getAllCommits()) {
-      logMessage.append(GitUtil.getShortHash(commit.getId().toString()));
+      logMessage.append(DvcsUtil.getShortHash(commit.getId().toString()));
     }
     return logMessage.toString();
   }

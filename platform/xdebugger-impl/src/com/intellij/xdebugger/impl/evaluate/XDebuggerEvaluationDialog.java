@@ -129,6 +129,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     evaluate();
   }
 
+  @Override
   protected void createDefaultActions() {
     super.createDefaultActions();
     myOKAction = new OkAction(){

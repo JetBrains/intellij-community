@@ -58,6 +58,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.content.*;
 import com.intellij.util.Processor;
 import com.intellij.util.SequentialModalProgressTask;
@@ -354,7 +355,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
         final FileViewProvider viewProvider = psiManager.findViewProvider(virtualFile);
         final com.intellij.openapi.editor.Document document = viewProvider == null ? null : viewProvider.getDocument();
-        if (document == null || virtualFile.getFileType().isBinary()) return; //do not inspect binary files
+        if (document == null || isBinary(file)) return; //do not inspect binary files
         final LocalInspectionsPass pass = new LocalInspectionsPass(file, document, 0,
                                                                    file.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true,
                                                                    HighlightInfoProcessor.getEmpty());
@@ -656,8 +657,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     scope.accept(new PsiElementVisitor() {
       @Override
       public void visitFile(PsiFile file) {
-        final VirtualFile virtualFile = file.getVirtualFile();
-        if (virtualFile == null || virtualFile.getFileType().isBinary()) return;
+        if (isBinary(file)) return;
         for (final Tools tools : profile.getAllEnabledInspectionTools(project)) {
           if (tools.getTool().getTool() instanceof CleanupLocalInspectionTool) {
             final InspectionToolWrapper tool = tools.getEnabledTool(file);
@@ -723,5 +723,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     } else {
       ApplicationManager.getApplication().invokeLater(runnable);
     }
+  }
+
+  private static boolean isBinary(PsiFile file) {
+    return file instanceof PsiBinaryFile || file.getFileType().isBinary();
   }
 }

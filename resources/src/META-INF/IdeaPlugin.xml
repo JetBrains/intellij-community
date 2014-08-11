@@ -241,6 +241,10 @@
     <extensionPoint name="lang.psiAugmentProvider" interface="com.intellij.psi.augment.PsiAugmentProvider"/>
 
     <extensionPoint name="custom.exception.handler" interface="com.intellij.codeInsight.CustomExceptionHandler"/>
+
+    <extensionPoint name="refactoring.moveInnerClassUsagesHandler" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.refactoring.move.moveInner.MoveInnerClassUsagesHandler"/>
+    </extensionPoint>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -1536,6 +1540,7 @@
     <nonProjectFileWritingAccessExtension
         implementation="com.intellij.codeInsight.ExternalAnnotationsNonProjectFileWritingAccessExtension"/>
     <lang.inspectionSuppressor language="JAVA" implementationClass="com.intellij.codeInspection.SuppressManagerImpl"/>
+    <refactoring.moveInnerClassUsagesHandler language="JAVA" implementationClass="com.intellij.refactoring.move.moveInner.MoveInnerClassJavaUsagesHandler" id="java"/>
   </extensions>
 
   <actions>

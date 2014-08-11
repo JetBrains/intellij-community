@@ -119,9 +119,9 @@ public abstract class DomUIFactory {
 
   public abstract BaseControl createTextControl(DomWrapper<String> wrapper, final boolean commitOnEveryChange);
 
-  public abstract void registerCustomControl(Class aClass, Function<DomWrapper<String>, BaseControl> creator);
+  public abstract void registerCustomControl(@NotNull Class aClass, Function<DomWrapper<String>, BaseControl> creator);
 
-  public abstract void registerCustomCellEditor(Class aClass, Function<DomElement, TableCellEditor> creator);
+  public abstract void registerCustomCellEditor(@NotNull Class aClass, Function<DomElement, TableCellEditor> creator);
 
   @Nullable
   public abstract BaseControl createCustomControl(final Type type, DomWrapper<String> wrapper, final boolean commitOnEveryChange);

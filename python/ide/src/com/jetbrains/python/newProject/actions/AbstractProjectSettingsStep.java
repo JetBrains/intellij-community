@@ -205,7 +205,19 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
     final Project project = ProjectManager.getInstance().getDefaultProject();
     final List<Sdk> sdks = PyConfigurableInterpreterList.getInstance(project).getAllPythonSdks();
     VirtualEnvProjectFilter.removeAllAssociated(sdks);
-    final Sdk preferred = sdks.isEmpty() ? null : sdks.iterator().next();
+    Sdk compatibleSdk = sdks.isEmpty() ? null : sdks.iterator().next();
+    DirectoryProjectGenerator generator = getProjectGenerator();
+    if (generator instanceof PyFrameworkProjectGenerator && !((PyFrameworkProjectGenerator)generator).supportsPython3()) {
+      if (compatibleSdk != null && PythonSdkType.getLanguageLevelForSdk(compatibleSdk).isPy3K()) {
+        Sdk python2Sdk = PythonSdkType.findPython2Sdk(sdks);
+        if (python2Sdk != null) {
+          compatibleSdk = python2Sdk;
+
+        }
+      }
+    }
+
+    final Sdk preferred = compatibleSdk;
     mySdkCombo = new PythonSdkChooserCombo(project, sdks, new Condition<Sdk>() {
       @Override
       public boolean value(Sdk sdk) {
@@ -231,6 +243,8 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
 
   @Nullable
   protected JPanel extendBasePanel() {
+    if (myProjectGenerator instanceof PythonProjectGenerator)
+      return ((PythonProjectGenerator)myProjectGenerator).extendBasePanel();
     return null;
   }
 
@@ -354,17 +368,19 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
   }
 
   public void selectCompatiblePython() {
-    DirectoryProjectGenerator generator = getProjectGenerator();
-    if (generator instanceof PyFrameworkProjectGenerator && !((PyFrameworkProjectGenerator)generator).supportsPython3()) {
-      Sdk sdk = getSdk();
-      if (sdk != null && PythonSdkType.getLanguageLevelForSdk(sdk).isPy3K()) {
-        Sdk python2Sdk = PythonSdkType.findPython2Sdk(null);
-        if (python2Sdk != null) {
-          mySdkCombo.getComboBox().setSelectedItem(python2Sdk);
-          mySdkCombo.getComboBox().repaint();
-        }
-      }
-    }
+    //DirectoryProjectGenerator generator = getProjectGenerator();
+    //if (generator instanceof PyFrameworkProjectGenerator && !((PyFrameworkProjectGenerator)generator).supportsPython3()) {
+    //  Sdk sdk = getSdk();
+    //  if (sdk != null && PythonSdkType.getLanguageLevelForSdk(sdk).isPy3K()) {
+    //    Sdk python2Sdk = PythonSdkType.findPython2Sdk(null);
+    //    if (python2Sdk != null) {
+    //      mySdkCombo.getComboBox().setSelectedItem(python2Sdk);
+    //      mySdkCombo.getComboBox().revalidate();
+    //      mySdkCombo.getComboBox().repaint();
+    //
+    //    }
+    //  }
+    //}
   }
 
   private static boolean acceptsRemoteSdk(DirectoryProjectGenerator generator) {

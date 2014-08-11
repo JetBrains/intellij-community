@@ -119,7 +119,7 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
     myExecuteActionHandler = consoleExecuteActionHandler;
   }
 
-  private void addSaveContentFocusListener(JComponent component){
+  private void addSaveContentFocusListener(JComponent component) {
     component.addFocusListener(new FocusListener() {
       @Override
       public void focusGained(FocusEvent e) {
@@ -129,7 +129,8 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
       }
 
       @Override
-      public void focusLost(FocusEvent e) {}
+      public void focusLost(FocusEvent e) {
+      }
     });
   }
 
@@ -150,36 +151,51 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
 
   @Override
   public void executeCode(final @NotNull String code, @Nullable final Editor editor) {
-    ProgressManager.getInstance().run(new Task.Backgroundable(null, "Executing code in console...", false) {
+    showConsole(new Runnable() {
       @Override
-      public void run(@NotNull final ProgressIndicator indicator) {
-        long time = System.currentTimeMillis();
-        while (!myExecuteActionHandler.isEnabled() || !myExecuteActionHandler.canExecuteNow()) {
-          if (indicator.isCanceled()) {
-            break;
-          }
-          if (System.currentTimeMillis() - time > 1000) {
-            if (editor != null) {
-              UIUtil.invokeLaterIfNeeded(new Runnable() {
-                @Override
-                public void run() {
-                  HintManager.getInstance().showErrorHint(editor, myExecuteActionHandler.getCantExecuteMessage());
+      public void run() {
+        ProgressManager.getInstance().run(new Task.Backgroundable(null, "Executing code in console...", false) {
+          @Override
+          public void run(@NotNull final ProgressIndicator indicator) {
+            long time = System.currentTimeMillis();
+            while (!myExecuteActionHandler.isEnabled() || !myExecuteActionHandler.canExecuteNow()) {
+              if (indicator.isCanceled()) {
+                break;
+              }
+              if (System.currentTimeMillis() - time > 1000) {
+                if (editor != null) {
+                  UIUtil.invokeLaterIfNeeded(new Runnable() {
+                    @Override
+                    public void run() {
+                      HintManager.getInstance().showErrorHint(editor, myExecuteActionHandler.getCantExecuteMessage());
+                    }
+                  });
                 }
-              });
+                return;
+              }
+              try {
+                Thread.sleep(300);
+              }
+              catch (InterruptedException ignored) {
+              }
             }
-            return;
+            if (!indicator.isCanceled()) {
+              doExecute(code);
+            }
           }
-          try {
-            Thread.sleep(300);
-          }
-          catch (InterruptedException ignored) {
-          }
-        }
-        if (!indicator.isCanceled()) {
-          doExecute(code);
-        }
+        });
       }
     });
+  }
+
+  private void showConsole(Runnable runnable) {
+    PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(myProject);
+    if (toolWindow != null) {
+      toolWindow.getToolWindow().activate(runnable);
+    }
+    else {
+      runnable.run();
+    }
   }
 
 

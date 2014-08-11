@@ -10,6 +10,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.io.File;
 import java.util.List;
 
 public class TemplateLanguagePanel extends JPanel {
@@ -17,7 +20,7 @@ public class TemplateLanguagePanel extends JPanel {
   private JPanel myMainPanel;
   private JLabel myTemplatesFolderLabel;
   private JComboBox myTemplateLanguage;
-
+  private boolean myTemplateFolderModified = false;
   private static final String DEFAULT_TEMPLATES_FOLDER = "templates";
 
   public TemplateLanguagePanel() {
@@ -33,6 +36,15 @@ public class TemplateLanguagePanel extends JPanel {
         myTemplateLanguage.addItem(configuration);
     }
     myTemplatesFolder.setText(DEFAULT_TEMPLATES_FOLDER);
+    myTemplatesFolder.addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyTyped(KeyEvent e) {
+        final int dot = myTemplatesFolder.getCaret().getDot();
+        final int index = myTemplatesFolder.getText().indexOf(File.separator);
+        if (index >= dot)
+          myTemplateFolderModified = true;
+      }
+    });
   }
 
   public String getTemplatesFolder() {
@@ -56,6 +68,19 @@ public class TemplateLanguagePanel extends JPanel {
 
   public void setTemplatesFolder(@NotNull final String folder) {
     myTemplatesFolder.setText(folder);
+  }
+
+  public void locationChanged(@NotNull final String baseLocation) {
+    final String templatesFolder = myTemplatesFolder.getText();
+    final int index = templatesFolder.indexOf(File.separator);
+    final String templateFolderName = index >= 0 ? templatesFolder.substring(index) : File.separator + "templates";
+    final String oldBase = index >= 0 ? templatesFolder.substring(0, index) : "";
+    if (oldBase.equals(baseLocation)) {
+      myTemplateFolderModified = false;
+    }
+    if (!myTemplateFolderModified) {
+      myTemplatesFolder.setText(baseLocation + templateFolderName);
+    }
   }
 
   public Dimension getLabelSize() {

@@ -21,6 +21,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.frame.WatchInplaceEditor;
+import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -37,18 +38,15 @@ import java.util.List;
  * @author nik
  */
 public class WatchesRootNode extends XDebuggerTreeNode {
-  private final XDebugSession mySession;
   private final XWatchesView myWatchesView;
   private List<WatchNode> myChildren;
   private List<XDebuggerTreeNode> myLoadedChildren;
   private XDebuggerEvaluator myCurrentEvaluator;
 
-  public WatchesRootNode(final @NotNull XDebuggerTree tree,
-                         @NotNull XDebugSession session,
+  public WatchesRootNode(@NotNull XDebuggerTree tree,
                          @NotNull XWatchesView watchesView,
                          @NotNull XExpression[] watchExpressions) {
     super(tree, null, false);
-    mySession = session;
     myWatchesView = watchesView;
     myChildren = new ArrayList<WatchNode>();
     for (XExpression watchExpression : watchExpressions) {
@@ -189,7 +187,10 @@ public class WatchesRootNode extends XDebuggerTreeNode {
       myChildren.set(index, messageNode);
       fireNodeStructureChanged(messageNode);
     }
-    new WatchInplaceEditor(this, mySession, myWatchesView, messageNode, "watch", node).show();
+    XDebugSession session = XDebugView.getSession(myTree);
+    if (session != null) {
+      new WatchInplaceEditor(this, session, myWatchesView, messageNode, "watch", node).show();
+    }
   }
 
   private class MyEvaluationCallback extends XEvaluationCallbackBase {

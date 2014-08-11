@@ -39,6 +39,7 @@ public abstract class DebuggerFramesList extends JBList implements OccurenceNavi
     getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     setCellRenderer(createListRenderer());
     getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(final ListSelectionEvent e) {
         if (!e.getValueIsAdjusting()) {
           onFrameChanged(getSelectedValue());
@@ -49,6 +50,7 @@ public abstract class DebuggerFramesList extends JBList implements OccurenceNavi
     getEmptyText().setText(XDebuggerBundle.message("debugger.frames.not.available"));
   }
 
+  @Override
   public DefaultListModel getModel() {
     return (DefaultListModel)super.getModel();
   }
@@ -61,19 +63,23 @@ public abstract class DebuggerFramesList extends JBList implements OccurenceNavi
     return getModel().getSize();
   }
 
+  @Override
   public String getNextOccurenceActionName() {
     return XDebuggerBundle.message("action.next.frame.text");
   }
 
+  @Override
   public String getPreviousOccurenceActionName() {
     return XDebuggerBundle.message("action.previous.frame.text");
   }
 
+  @Override
   public OccurenceInfo goNextOccurence() {
     setSelectedIndex(getSelectedIndex() + 1);
     return createInfo();
   }
 
+  @Override
   public OccurenceInfo goPreviousOccurence() {
     setSelectedIndex(getSelectedIndex() - 1);
     return createInfo();
@@ -83,10 +89,12 @@ public abstract class DebuggerFramesList extends JBList implements OccurenceNavi
     return OccurenceInfo.position(getSelectedIndex(), getElementCount());
   }
 
+  @Override
   public boolean hasNextOccurence() {
     return getSelectedIndex() < getElementCount() - 1;
   }
 
+  @Override
   public boolean hasPreviousOccurence() {
     return getSelectedIndex() > 0;
   }

@@ -17,7 +17,6 @@ package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.debugger.impl.GenericDebuggerRunner;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
@@ -54,13 +53,13 @@ public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
   protected RunContentDescriptor createContentDescriptor(Project project,
                                                          RunProfileState state,
                                                          RunContentDescriptor contentToReuse,
-                                                         ExecutionEnvironment env) throws ExecutionException
+                                                         ExecutionEnvironment environment) throws ExecutionException
   {
     if (state instanceof ExternalSystemRunConfiguration.MyRunnableState) {
       int port = ((ExternalSystemRunConfiguration.MyRunnableState)state).getDebugPort();
       if (port > 0) {
         RemoteConnection connection = new RemoteConnection(true, "127.0.0.1", String.valueOf(port), true);
-        return attachVirtualMachine(project, state, contentToReuse, env, connection, true);
+        return attachVirtualMachine(project, state, contentToReuse, environment, connection, true);
       }
       else {
         LOG.warn("Can't attach debugger to external system task execution. Reason: target debug port is unknown");

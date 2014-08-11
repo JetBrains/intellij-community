@@ -22,7 +22,7 @@ import org.zmlx.hg4idea.repo.HgRepository;
 
 import java.util.Collection;
 
-public class HgBranchesAction extends HgAbstractGlobalAction {
+public class HgBranchesAction extends HgAbstractGlobalSingleRepoAction {
 
   @Override
   protected void execute(@NotNull Project project, @NotNull Collection<HgRepository> repositories, @Nullable HgRepository selectedRepo) {

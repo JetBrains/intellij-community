@@ -25,6 +25,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
+import java.util.Locale;
 
 public class PsiKeywordImpl extends LeafPsiElement implements PsiKeyword, PsiJavaToken {
   public PsiKeywordImpl(@NotNull IElementType type, CharSequence text) {
@@ -52,7 +53,7 @@ public class PsiKeywordImpl extends LeafPsiElement implements PsiKeyword, PsiJav
 
   static {
     for(Field field: PsiKeyword.class.getFields()) {
-      CharTableImpl.staticIntern(field.getName().toLowerCase());
+      CharTableImpl.staticIntern(field.getName().toLowerCase(Locale.ENGLISH));
     }
   }
 }

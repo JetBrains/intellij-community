@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,14 +43,13 @@ import javax.annotation.Generated;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.regex.Matcher;
 
 public class JavaSuppressionUtil {
   public static final String SUPPRESS_INSPECTIONS_ANNOTATION_NAME = "java.lang.SuppressWarnings";
   public static boolean alreadyHas14Suppressions(@NotNull PsiDocCommentOwner commentOwner) {
     final PsiDocComment docComment = commentOwner.getDocComment();
-    return docComment != null && docComment.findTagByName(SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME) != null;
+    return docComment != null && docComment.findTagByName(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME) != null;
   }
 
   @Nullable
@@ -63,7 +63,7 @@ public class JavaSuppressionUtil {
     else if (element instanceof PsiReferenceExpression) {
       final PsiElement psiElement = ((PsiReferenceExpression)element).resolve();
       if (psiElement instanceof PsiVariableEx) {
-        final Object val = ((PsiVariableEx)psiElement).computeConstantValue(new HashSet<PsiVariable>());
+        final Object val = ((PsiVariableEx)psiElement).computeConstantValue(new THashSet<PsiVariable>());
         if (val instanceof String) {
           return (String)val;
         }
@@ -150,7 +150,7 @@ public class JavaSuppressionUtil {
       }
     }
     if (docComment != null) {
-      PsiDocTag inspectionTag = docComment.findTagByName(SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME);
+      PsiDocTag inspectionTag = docComment.findTagByName(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME);
       if (inspectionTag != null) {
         final PsiElement[] dataElements = inspectionTag.getDataElements();
         for (PsiElement dataElement : dataElements) {
@@ -181,7 +181,7 @@ public class JavaSuppressionUtil {
     if (element instanceof PsiDocCommentOwner) {
       PsiDocComment docComment = ((PsiDocCommentOwner)element).getDocComment();
       if (docComment != null) {
-        PsiDocTag inspectionTag = docComment.findTagByName(SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME);
+        PsiDocTag inspectionTag = docComment.findTagByName(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME);
         if (inspectionTag != null) {
           String valueText = "";
           for (PsiElement dataElement : inspectionTag.getDataElements()) {

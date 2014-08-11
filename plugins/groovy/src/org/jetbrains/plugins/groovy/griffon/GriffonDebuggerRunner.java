@@ -45,7 +45,7 @@ public class GriffonDebuggerRunner extends GenericDebuggerRunner {
   protected RunContentDescriptor createContentDescriptor(Project project,
                                                          RunProfileState state,
                                                          RunContentDescriptor contentToReuse,
-                                                         ExecutionEnvironment env) throws ExecutionException {
+                                                         ExecutionEnvironment environment) throws ExecutionException {
     final JavaCommandLine javaCommandLine = (JavaCommandLine)state;
     final JavaParameters params = javaCommandLine.getJavaParameters();
 
@@ -68,11 +68,11 @@ public class GriffonDebuggerRunner extends GenericDebuggerRunner {
     }
 
     if (address == null) {
-      return super.createContentDescriptor(project, state, contentToReuse, env);
+      return super.createContentDescriptor(project, state, contentToReuse, environment);
     }
 
     RemoteConnection connection = new RemoteConnection(true, "127.0.0.1", address, false);
-    return attachVirtualMachine(project, state, contentToReuse, env, connection, true);
+    return attachVirtualMachine(project, state, contentToReuse, environment, connection, true);
   }
 
 }

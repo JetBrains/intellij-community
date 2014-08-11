@@ -63,7 +63,6 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
     final PsiType[] typeParameters = myExpression.getTypeParameters();
 
     final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(myExpression);
-    PsiSubstitutor psiSubstitutor = qualifierResolveResult.getSubstitutor();
 
     if (!myExpression.isExact()) {
       for (PsiParameter parameter : targetParameters) {
@@ -78,6 +77,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       final PsiClass applicableMemberContainingClass = applicableMember.getContainingClass();
       final PsiClass containingClass = qualifierResolveResult.getContainingClass();
 
+      PsiSubstitutor psiSubstitutor = qualifierResolveResult.getSubstitutor();
       psiSubstitutor = applicableMemberContainingClass == null || containingClass == null || myExpression.isConstructor()
                        ? psiSubstitutor
                        : TypeConversionUtil.getSuperClassSubstitutor(applicableMemberContainingClass, containingClass, psiSubstitutor);
@@ -146,11 +146,16 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       final PsiType referencedMethodReturnType;
       final PsiClass containingClass = method.getContainingClass();
       LOG.assertTrue(containingClass != null, method);
-
       PsiClass qContainingClass = qualifierResolveResult.getContainingClass();
-      if (qContainingClass != null && InheritanceUtil.isInheritorOrSelf(qContainingClass, containingClass, true)) {
-        psiSubstitutor = TypeConversionUtil.getClassSubstitutor(containingClass, qContainingClass, PsiSubstitutor.EMPTY);
-        LOG.assertTrue(psiSubstitutor != null);
+      PsiSubstitutor psiSubstitutor = qualifierResolveResult.getSubstitutor();
+      if (qContainingClass != null) {
+        if ( PsiUtil.isRawSubstitutor(qContainingClass, psiSubstitutor)) {
+          psiSubstitutor = PsiSubstitutor.EMPTY;
+        }
+        if (qContainingClass.isInheritor(containingClass, true)) {
+          psiSubstitutor = TypeConversionUtil.getClassSubstitutor(containingClass, qContainingClass, PsiSubstitutor.EMPTY);
+          LOG.assertTrue(psiSubstitutor != null);
+        }
       }
 
       if (method.isConstructor()) {

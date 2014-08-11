@@ -910,6 +910,16 @@ public class PythonSdkType extends SdkType {
     return null;
   }
 
+  @Nullable
+  public static Sdk findPython2Sdk(List<Sdk> sdks) {
+    Collections.sort(sdks, PreferredSdkComparator.INSTANCE);
+    for (Sdk sdk : sdks) {
+      if (!getLanguageLevelForSdk(sdk).isPy3K()) {
+        return sdk;
+      }
+    }
+    return null;
+  }
 
   @Nullable
   public static Sdk findLocalCPython(@Nullable Module module) {

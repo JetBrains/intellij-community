@@ -94,23 +94,33 @@ public class HgHistoryUtil {
   }
 
   /**
-   * <p>Get & parse hg log detailed output with commits, their parents and their changes.</p>
+   * <p>Get & parse hg log detailed output with commits, their parents and their changes.
+   * For null destination return log command result</p>
    * <p/>
    * <p>Warning: this is method is efficient by speed, but don't query too much, because the whole log output is retrieved at once,
    * and it can occupy too much memory. The estimate is ~600Kb for 1000 commits.</p>
    */
   @NotNull
-  public static List<? extends VcsFullCommitDetails> history(@NotNull final Project project, @NotNull final VirtualFile root, int limit,
+  public static List<? extends VcsFullCommitDetails> history(@NotNull final Project project,
+                                                             @NotNull final VirtualFile root,
+                                                             int limit,
                                                              @NotNull List<String> parameters) throws VcsException {
-    final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
-    if (factory == null) {
-      return Collections.emptyList();
-    }
     HgVcs hgvcs = HgVcs.getInstance(project);
     assert hgvcs != null;
     final HgVersion version = hgvcs.getVersion();
     String[] templates = HgBaseLogParser.constructFullTemplateArgument(true, version);
     HgCommandResult result = getLogResult(project, root, version, limit, parameters, HgChangesetUtil.makeTemplate(templates));
+    return createFullCommitsFromResult(project, root, result, version);
+  }
+
+  public static List<? extends VcsFullCommitDetails> createFullCommitsFromResult(@NotNull Project project,
+                                                                                 @NotNull VirtualFile root,
+                                                                                 @Nullable HgCommandResult result,
+                                                                                 @NotNull HgVersion version) {
+    final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
+    if (factory == null) {
+      return Collections.emptyList();
+    }
     List<HgFileRevision> hgRevisions =
       getCommitRecords(project, result, new HgFileRevisionLogParser(project, getOriginalHgFile(project, root), version));
     List<VcsFullCommitDetails> vcsFullCommitDetailsList = new ArrayList<VcsFullCommitDetails>();
@@ -330,5 +340,9 @@ public class HgHistoryUtil {
       branchHeads.addAll(attributes);
     }
     return branchHeads;
+  }
+
+  public static String prepareParameter(String paramName, String value) {
+    return "--" + paramName + "=" + value; // no value escaping needed, because the parameter itself will be quoted by GeneralCommandLine
   }
 }

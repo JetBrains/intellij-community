@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,10 @@ import org.jetbrains.annotations.Nullable;
  * @author Konstantin Bulenkov
  */
 public class ProjectProductionScope extends NamedScope {
+  public static final String NAME = IdeBundle.message("predefined.scope.production.name");
+
   public ProjectProductionScope() {
-    super(IdeBundle.message("predefined.scope.production.name"), new AbstractPackageSet("src:*..*") {
+    super(NAME, new AbstractPackageSet("src:*..*") {
       @Override
       public boolean contains(VirtualFile file, NamedScopesHolder holder) {
         return contains(file, holder.getProject(), holder);

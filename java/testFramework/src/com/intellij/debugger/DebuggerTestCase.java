@@ -143,7 +143,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     final RemoteConnection debugParameters = DebuggerManagerImpl.createDebugParameters(javaParameters, debuggerRunnerSettings, false);
 
     ExecutionEnvironment environment = new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
-      .setRunnerSettings(debuggerRunnerSettings)
+      .runnerSettings(debuggerRunnerSettings)
       .setRunProfile(new MockConfiguration())
       .build();
     final JavaCommandLineState javaCommandLineState = new JavaCommandLineState(environment){
@@ -208,8 +208,8 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     debuggerRunnerSettings.DEBUG_PORT = "3456";
 
     ExecutionEnvironment environment = new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
-      .setRunnerSettings(debuggerRunnerSettings)
-      .setRunProfile(new MockConfiguration())
+      .runnerSettings(debuggerRunnerSettings)
+      .runProfile(new MockConfiguration())
       .build();
     final JavaCommandLineState javaCommandLineState = new JavaCommandLineState(environment) {
       @Override
@@ -569,5 +569,4 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       //To change body of implemented methods use File | Settings | File Templates.
     }
   }
-
 }

@@ -16,11 +16,13 @@
 package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.properties.IProperty;
+import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.HashMap;
@@ -131,8 +133,9 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
         }
         _propertyName = propertyName.substring(prefix.length());
       }
-      if (psiFile instanceof PropertiesFile) {
-        final IProperty property = ((PropertiesFile)psiFile).findPropertyByKey(_propertyName);
+      final PropertiesFile pf = toPropertiesFile(psiFile);
+      if (pf != null) {
+        final IProperty property = pf.findPropertyByKey(_propertyName);
         return property != null? property.getPsiElement() : null;
       }
     }
@@ -185,9 +188,10 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
     else { // name attrib is not specified
       final PsiFileSystemItem psiFile = getFile().getValue();
       if (psiFile != null) {
-        if (psiFile instanceof PropertiesFile) {
+        final PropertiesFile file = toPropertiesFile(psiFile);
+        if (file != null) {
           result = new HashMap<String, String>();
-          for (final IProperty property : ((PropertiesFile)psiFile).getProperties()) {
+          for (final IProperty property : file.getProperties()) {
             result.put(property.getUnescapedKey(), property.getUnescapedValue());
           }
         }
@@ -212,6 +216,7 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
             final InputStream stream = loader.getResourceAsStream(resource);
             if (stream != null) {
               try {
+                // todo: Remote file can be XmlPropertiesFile
                 final PropertiesFile propFile = (PropertiesFile)CustomAntElementsRegistry.loadContentAsFile(getXmlTag().getProject(), stream, StdFileTypes.PROPERTIES);
                 result = new HashMap<String, String>();
                 for (final IProperty property : propFile.getProperties()) {
@@ -255,4 +260,17 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
     return loader;
   }
 
+  @Nullable
+  public PropertiesFile getPropertiesFile() {
+    return toPropertiesFile(getFile().getValue());
+  }
+
+  @Nullable
+  private static PropertiesFile toPropertiesFile(@Nullable final PsiFileSystemItem item) {
+    if (item instanceof PropertiesFile) {
+      return (PropertiesFile)item;
+    }
+    // Sometimes XmlPropertiesFile is just XmlFile, sao we should ask PropertiesImplUtil about that.
+    return item instanceof PsiFile? PropertiesImplUtil.getPropertiesFile(((PsiFile)item)) : null;
+  }
 }

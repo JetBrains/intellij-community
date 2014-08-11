@@ -109,7 +109,7 @@ public class PyRefactoringUtil {
       final PyElementGenerator generator = PyElementGenerator.getInstance(project);
       final LanguageLevel langLevel = LanguageLevel.forElement(element1);
       final PyExpression expression = generator.createFromText(langLevel, PyAssignmentStatement.class, "z=" + selection).getAssignedValue();
-      if (PsiUtilCore.hasErrorElementChild(expression) || !(expression instanceof PyBinaryExpression)) {
+      if (!(expression instanceof PyBinaryExpression) || PsiUtilCore.hasErrorElementChild(expression)) {
         return null;
       }
       final String parentText = parent.getText();

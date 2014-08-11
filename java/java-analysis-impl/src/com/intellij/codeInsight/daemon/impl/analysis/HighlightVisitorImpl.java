@@ -1229,11 +1229,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression)
                          .descriptionAndTooltip(functionalInterfaceType.getPresentableText() + " is not a functional interface").create());
         }
-        else if (LambdaUtil.dependsOnTypeParams(functionalInterfaceType, functionalInterfaceType, expression)) {
-          HighlightInfo result1 =
-            HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip("Cyclic inference").create();
-          myHolder.add(result1); //todo[ann] append not inferred type params info
-        }
       }
       if (!myHolder.hasErrorResults()) {
         final PsiElement referenceNameElement = expression.getReferenceNameElement();

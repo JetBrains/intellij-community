@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,7 +107,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   private final ActionButtonLook myButtonLook = null;
   private final ActionButtonLook myMinimalButtonLook = new InplaceActionButtonLook();
   private final DataManager myDataManager;
-  protected final ActionManagerEx myActionManager;
+  @NotNull protected final ActionManagerEx myActionManager;
 
   private Rectangle myAutoPopupRec;
 
@@ -135,7 +135,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
                            @NotNull final ActionGroup actionGroup,
                            final boolean horizontal,
                            DataManager dataManager,
-                           ActionManagerEx actionManager,
+                           @NotNull ActionManagerEx actionManager,
                            KeymapManagerEx keymapManager) {
     this(place, actionGroup, horizontal, false, dataManager, actionManager, keymapManager, false);
   }
@@ -144,7 +144,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
                            final boolean horizontal,
                            final boolean decorateButtons,
                            DataManager dataManager,
-                           ActionManagerEx actionManager,
+                           @NotNull ActionManagerEx actionManager,
                            KeymapManagerEx keymapManager) {
     this(place, actionGroup, horizontal, decorateButtons, dataManager, actionManager, keymapManager, false);
   }
@@ -154,7 +154,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
                            final boolean horizontal,
                            final boolean decorateButtons,
                            DataManager dataManager,
-                           ActionManagerEx actionManager,
+                           @NotNull ActionManagerEx actionManager,
                            KeymapManagerEx keymapManager,
                            boolean updateActionsNow) {
     super(null);
@@ -1185,7 +1185,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
                         final ActionGroup actionGroup,
                         final boolean horizontal,
                         final DataManager dataManager,
-                        final ActionManagerEx actionManager,
+                        @NotNull ActionManagerEx actionManager,
                         final KeymapManagerEx keymapManager,
                         JComponent parent) {
       super(place, actionGroup, horizontal, false, dataManager, actionManager, keymapManager, true);

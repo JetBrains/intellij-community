@@ -39,10 +39,13 @@ class HgCommandAuthenticator {
   private GetPasswordRunnable myGetPassword;
   private final Project myProject;
   private boolean myForceAuthorization;
+  //todo replace silent mode and/or force authorization
+  private boolean mySilentMode;
 
-  public HgCommandAuthenticator(Project project, boolean forceAuthorization) {
+  public HgCommandAuthenticator(Project project, boolean forceAuthorization, boolean silent) {
     myProject = project;
     myForceAuthorization = forceAuthorization;
+    mySilentMode = silent;
   }
 
   public void saveCredentials() {
@@ -71,7 +74,7 @@ class HgCommandAuthenticator {
   }
 
   public boolean promptForAuthentication(Project project, String proposedLogin, String uri, String path, @Nullable ModalityState state) {
-    GetPasswordRunnable runnable = new GetPasswordRunnable(project, proposedLogin, uri, path, myForceAuthorization);
+    GetPasswordRunnable runnable = new GetPasswordRunnable(project, proposedLogin, uri, path, myForceAuthorization, mySilentMode);
     ApplicationManager.getApplication().invokeAndWait(runnable, state == null ? ModalityState.defaultModalityState() : state);
     myGetPassword = runnable;
     return runnable.isOk();
@@ -96,19 +99,27 @@ class HgCommandAuthenticator {
     @Nullable private String myURL;
     private boolean myRememberPassword;
     private boolean myForceAuthorization;
+    private final boolean mySilent;
 
-    public GetPasswordRunnable(Project project, String proposedLogin, String uri, String path, boolean forceAuthorization) {
+    public GetPasswordRunnable(Project project,
+                               String proposedLogin,
+                               String uri,
+                               String path,
+                               boolean forceAuthorization, boolean silent) {
       this.myProject = project;
       this.myProposedLogin = proposedLogin;
       this.myURL = uri + path;
       this.myForceAuthorization = forceAuthorization;
+      mySilent = silent;
     }
-    
+
     public void run() {
 
       // find if we've already been here
       final HgVcs vcs = HgVcs.getInstance(myProject);
-      if (vcs == null) { return; }
+      if (vcs == null) {
+        return;
+      }
 
       @NotNull final HgGlobalSettings hgGlobalSettings = vcs.getGlobalSettings();
       @Nullable String rememberedLoginsForUrl = null;
@@ -128,11 +139,14 @@ class HgCommandAuthenticator {
         final String key = keyForUrlAndLogin(myURL, login);
         try {
           final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
-          password = passwordSafe.getMemoryProvider().getPassword(myProject, HgCommandAuthenticator.class, key);
-          if (password == null) {
+          if (mySilent) {
+            password = passwordSafe.getMemoryProvider().getPassword(myProject, HgCommandAuthenticator.class, key);
+          }
+          else {
             password = passwordSafe.getPassword(myProject, HgCommandAuthenticator.class, key);
           }
-        } catch (PasswordSafeException e) {
+        }
+        catch (PasswordSafeException e) {
           LOG.info("Couldn't get password for key [" + key + "]", e);
         }
       }
@@ -146,7 +160,13 @@ class HgCommandAuthenticator {
         return;
       }
 
-      final AuthDialog dialog = new AuthDialog(myProject, HgVcsMessages.message("hg4idea.dialog.login.password.required"), HgVcsMessages.message("hg4idea.dialog.login.description", myURL),
+      if (mySilent) {
+        ok = false;
+        return;
+      }
+
+      final AuthDialog dialog = new AuthDialog(myProject, HgVcsMessages.message("hg4idea.dialog.login.password.required"),
+                                               HgVcsMessages.message("hg4idea.dialog.login.description", myURL),
                                                login, password, true);
       dialog.show();
       if (dialog.isOK()) {
@@ -182,5 +202,4 @@ class HgCommandAuthenticator {
   private static String keyForUrlAndLogin(String stringUrl, String login) {
     return login + ":" + stringUrl;
   }
-
 }

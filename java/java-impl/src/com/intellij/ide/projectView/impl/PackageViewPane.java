@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,6 +136,7 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
     return result;
   }
 
+  @NotNull
   @Override
   public PsiDirectory[] getSelectedDirectories() {
     List<PsiDirectory> directories = ContainerUtil.newArrayList();
@@ -194,6 +195,7 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
   @Override
   public void addToolbarActions(DefaultActionGroup actionGroup) {
     actionGroup.addAction(new ShowModulesAction(myProject){
+      @NotNull
       @Override
       protected String getId() {
         return PackageViewPane.this.getId();

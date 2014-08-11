@@ -214,35 +214,11 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
 
       // correct references in usages
       for (UsageInfo usage : usages) {
-        if (usage.isNonCodeUsage) continue;
-        PsiElement refElement = usage.getElement();
-        if (myParameterNameOuterClass != null) { // should pass outer as parameter
-          PsiElement refParent = refElement.getParent();
-          if (refParent instanceof PsiNewExpression || refParent instanceof PsiAnonymousClass) {
-            PsiNewExpression newExpr = refParent instanceof PsiNewExpression
-                                       ? (PsiNewExpression)refParent
-                                       : (PsiNewExpression)refParent.getParent();
+        if (usage.isNonCodeUsage || myParameterNameOuterClass == null) continue; // should pass outer as parameter
 
-            PsiExpressionList argList = newExpr.getArgumentList();
-
-            if (argList != null) { // can happen in incomplete code
-              if (newExpr.getQualifier() == null) {
-                PsiThisExpression thisExpr;
-                PsiClass parentClass = RefactoringChangeUtil.getThisClass(newExpr);
-                if (myOuterClass.equals(parentClass)) {
-                  thisExpr = RefactoringChangeUtil.createThisExpression(manager, null);
-                }
-                else {
-                  thisExpr = RefactoringChangeUtil.createThisExpression(manager, myOuterClass);
-                }
-                argList.addAfter(thisExpr, null);
-              }
-              else {
-                argList.addAfter(newExpr.getQualifier(), null);
-                newExpr.getQualifier().delete();
-              }
-            }
-          }
+        MoveInnerClassUsagesHandler usagesHandler = MoveInnerClassUsagesHandler.EP_NAME.forLanguage(usage.getElement().getLanguage());
+        if (usagesHandler != null) {
+          usagesHandler.correctInnerClassUsage(usage, myOuterClass);
         }
       }
 

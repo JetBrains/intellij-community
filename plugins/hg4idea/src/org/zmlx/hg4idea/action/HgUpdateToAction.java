@@ -29,7 +29,7 @@ import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import java.util.Collection;
 
-public class HgUpdateToAction extends HgAbstractGlobalAction {
+public class HgUpdateToAction extends HgAbstractGlobalSingleRepoAction {
 
   @Override
   protected void execute(@NotNull Project project, @NotNull Collection<HgRepository> repositories, @Nullable HgRepository selectedRepo) {

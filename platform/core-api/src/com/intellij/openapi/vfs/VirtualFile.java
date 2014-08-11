@@ -717,6 +717,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     putUserData(BOM_KEY, BOM);
   }
 
+  @Override
   @NonNls
   public String toString() {
     return "VirtualFile: " + getPresentableUrl();

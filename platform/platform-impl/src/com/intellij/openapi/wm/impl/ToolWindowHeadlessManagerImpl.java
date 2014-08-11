@@ -87,6 +87,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     return tw;
   }
 
+  @NotNull
   @Override
   public ToolWindow registerToolWindow(@NotNull String id,
                                        @NotNull JComponent component,
@@ -96,11 +97,13 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     return doRegisterToolWindow(id, parentDisposable);
   }
 
+  @NotNull
   @Override
   public ToolWindow registerToolWindow(@NotNull String id, @NotNull JComponent component, @NotNull ToolWindowAnchor anchor) {
     return doRegisterToolWindow(id, null);
   }
 
+  @NotNull
   @Override
   public ToolWindow registerToolWindow(@NotNull String id,
                                        @NotNull JComponent component,
@@ -111,19 +114,22 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     return doRegisterToolWindow(id, parentDisposable);
   }
 
+  @NotNull
   @Override
   public ToolWindow registerToolWindow(@NotNull String id,
                                        @NotNull JComponent component,
                                        @NotNull ToolWindowAnchor anchor,
-                                       Disposable parentDisposable) {
+                                       @NotNull Disposable parentDisposable) {
     return doRegisterToolWindow(id, parentDisposable);
   }
 
+  @NotNull
   @Override
   public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor) {
     return doRegisterToolWindow(id, null);
   }
 
+  @NotNull
   @Override
   public ToolWindow registerToolWindow(@NotNull final String id,
                                        final boolean canCloseContent,
@@ -132,6 +138,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     return doRegisterToolWindow(id, null);
   }
 
+  @NotNull
   @Override
   public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor,
                                        final Disposable parentDisposable, final boolean dumbAware) {
@@ -152,6 +159,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     return false;
   }
 
+  @NotNull
   @Override
   public String[] getToolWindowIds() {
     return ArrayUtil.EMPTY_STRING_ARRAY;
@@ -168,9 +176,10 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   }
 
   @Override
-  public void invokeLater(Runnable runnable) {
+  public void invokeLater(@NotNull Runnable runnable) {
   }
 
+  @NotNull
   @Override
   public IdeFocusManager getFocusManager() {
     return IdeFocusManagerHeadless.INSTANCE;
@@ -190,7 +199,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   }
 
   @Override
-  public void initToolWindow(ToolWindowEP bean) {
+  public void initToolWindow(@NotNull ToolWindowEP bean) {
 
   }
 

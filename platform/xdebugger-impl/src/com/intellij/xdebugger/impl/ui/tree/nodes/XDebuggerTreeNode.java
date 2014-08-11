@@ -49,8 +49,7 @@ public abstract class XDebuggerTreeNode implements TreeNode, TreeSpeedSearch.Pat
 
   @Override
   public TreeNode getChildAt(final int childIndex) {
-    if (isLeaf()) return null;
-    return getChildren().get(childIndex);
+    return isLeaf() ? null : getChildren().get(childIndex);
   }
 
   @Override
@@ -64,7 +63,7 @@ public abstract class XDebuggerTreeNode implements TreeNode, TreeSpeedSearch.Pat
   }
 
   @Override
-  public int getIndex(final TreeNode node) {
+  public int getIndex(@NotNull TreeNode node) {
     if (isLeaf()) return -1;
     return getChildren().indexOf(node);
   }

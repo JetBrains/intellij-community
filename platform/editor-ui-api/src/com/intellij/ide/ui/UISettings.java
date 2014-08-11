@@ -21,9 +21,10 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.PlatformUtilsCore;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
@@ -36,7 +37,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.EventListenerList;
 import java.awt.*;
 import java.io.File;
 import java.util.Map;
@@ -50,7 +50,7 @@ import static com.intellij.util.ui.UIUtil.isValidFont;
       file = StoragePathMacros.APP_CONFIG + "/ui.lnf.xml"
     )}
 )
-public class UISettings implements PersistentStateComponent<UISettings>, ExportableApplicationComponent {
+public class UISettings extends SimpleModificationTracker implements PersistentStateComponent<UISettings>, ExportableApplicationComponent {
   /** Not tabbed pane. */
   public static final int TABS_NONE = 0;
 
@@ -121,10 +121,9 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
   public boolean SHOW_TABS_TOOLTIPS = true;
   public boolean SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES = true;
 
-  private final EventListenerList myListenerList;
+  private final EventDispatcher<UISettingsListener> myDispatcher = EventDispatcher.create(UISettingsListener.class);
 
   public UISettings() {
-    myListenerList = new EventListenerList();
     tweakPlatformDefaults();
     setSystemFontFaceAndSize();
   }
@@ -142,31 +141,24 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
    * @deprecated use {@link UISettings#addUISettingsListener(com.intellij.ide.ui.UISettingsListener, Disposable disposable)} instead.
    */
   public void addUISettingsListener(UISettingsListener listener) {
-    myListenerList.add(UISettingsListener.class, listener);
+    myDispatcher.addListener(listener);
   }
 
   public void addUISettingsListener(@NotNull final UISettingsListener listener, @NotNull Disposable parentDisposable) {
-    myListenerList.add(UISettingsListener.class, listener);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        removeUISettingsListener(listener);
-      }
-    });
+    myDispatcher.addListener(listener, parentDisposable);
   }
 
   /**
    * Notifies all registered listeners that UI settings has been changed.
    */
   public void fireUISettingsChanged() {
-    UISettingsListener[] listeners = myListenerList.getListeners(UISettingsListener.class);
-    for (UISettingsListener listener : listeners) {
-      listener.uiSettingsChanged(this);
-    }
+    incModificationCount();
+    myDispatcher.getMulticaster().uiSettingsChanged(this);
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(this);
   }
 
   public void removeUISettingsListener(UISettingsListener listener) {
-    myListenerList.remove(UISettingsListener.class, listener);
+    myDispatcher.removeListener(listener);
   }
 
   private void setSystemFontFaceAndSize() {

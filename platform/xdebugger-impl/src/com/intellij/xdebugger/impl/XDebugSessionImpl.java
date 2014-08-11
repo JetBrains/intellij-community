@@ -25,7 +25,6 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -108,10 +107,9 @@ public class XDebugSessionImpl implements XDebugSession {
   private final EventDispatcher<XDebugSessionListener> myDispatcher = EventDispatcher.create(XDebugSessionListener.class);
   private final Project myProject;
   private final @Nullable ExecutionEnvironment myEnvironment;
-  private final @Nullable ProgramRunner myRunner;
   private boolean myStopped;
   private boolean myPauseActionSupported;
-  private boolean myShowTabOnSuspend;
+  private final AtomicBoolean myShowTabOnSuspend;
   private final List<AnAction> myRestartActions = new SmartList<AnAction>();
   private final List<AnAction> myExtraStopActions = new SmartList<AnAction>();
   private final List<AnAction> myExtraActions = new SmartList<AnAction>();
@@ -121,23 +119,19 @@ public class XDebugSessionImpl implements XDebugSession {
   private volatile boolean breakpointsInitialized;
   private boolean autoInitBreakpoints = true;
 
-  public XDebugSessionImpl(@NotNull ExecutionEnvironment environment,
-                           @Nullable ProgramRunner runner,
-                           @NotNull XDebuggerManagerImpl debuggerManager) {
-    this(environment, runner, debuggerManager, environment.getRunProfile().getName(), environment.getRunProfile().getIcon(), false);
+  public XDebugSessionImpl(@NotNull ExecutionEnvironment environment, @NotNull XDebuggerManagerImpl debuggerManager) {
+    this(environment, debuggerManager, environment.getRunProfile().getName(), environment.getRunProfile().getIcon(), false);
   }
 
   public XDebugSessionImpl(@Nullable ExecutionEnvironment environment,
-                           @Nullable ProgramRunner runner,
                            @NotNull XDebuggerManagerImpl debuggerManager,
                            @NotNull String sessionName,
                            @Nullable Icon icon,
                            boolean showTabOnSuspend) {
     myEnvironment = environment;
-    myRunner = runner;
     mySessionName = sessionName;
     myDebuggerManager = debuggerManager;
-    myShowTabOnSuspend = showTabOnSuspend;
+    myShowTabOnSuspend = new AtomicBoolean(showTabOnSuspend);
     myProject = debuggerManager.getProject();
     ValueLookupManager.getInstance(myProject).startListening();
     myIcon = icon;
@@ -158,7 +152,7 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   private void assertSessionTabInitialized() {
-    if (myShowTabOnSuspend) {
+    if (myShowTabOnSuspend.get()) {
       LOG.error("Debug tool window isn't shown yet because debug process isn't suspended");
     }
     else {
@@ -208,7 +202,7 @@ public class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void rebuildViews() {
-    if (!myShowTabOnSuspend && mySessionTab != null) {
+    if (!myShowTabOnSuspend.get() && mySessionTab != null) {
       mySessionTab.rebuildViews();
     }
   }
@@ -279,7 +273,7 @@ public class XDebugSessionImpl implements XDebugSession {
     });
     //todo[nik] make 'createConsole()' method return ConsoleView
     myConsoleView = (ConsoleView)myDebugProcess.createConsole();
-    if (!myShowTabOnSuspend) {
+    if (!myShowTabOnSuspend.get()) {
       initSessionTab(contentToReuse);
     }
 
@@ -316,11 +310,12 @@ public class XDebugSessionImpl implements XDebugSession {
   @Override
   public RunnerLayoutUi getUI() {
     assertSessionTabInitialized();
+    assert mySessionTab != null;
     return mySessionTab.getUi();
   }
 
   private void initSessionTab(@Nullable RunContentDescriptor contentToReuse) {
-    mySessionTab = new XDebugSessionTab(myProject, this, myIcon, myEnvironment, myRunner, contentToReuse);
+    mySessionTab = XDebugSessionTab.create(this, myIcon, myEnvironment, contentToReuse);
     myDebugProcess.sessionInitialized();
   }
 
@@ -792,16 +787,17 @@ public class XDebugSessionImpl implements XDebugSession {
       myDebuggerManager.setActiveSession(this, myCurrentPosition, false, getPositionIconRenderer(true));
     }
     adjustMouseTrackingCounter(myCurrentPosition, 1);
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        if (myShowTabOnSuspend) {
-          myShowTabOnSuspend = false;
+
+    if (myShowTabOnSuspend.compareAndSet(true, false)) {
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
+        public void run() {
           initSessionTab(null);
           showSessionTab();
         }
-      }
-    });
+      });
+    }
+
     myDispatcher.getMulticaster().sessionPaused();
   }
 
@@ -851,6 +847,10 @@ public class XDebugSessionImpl implements XDebugSession {
     myDebugProcess.stop();
     if (!myProject.isDisposed()) {
       myProject.getMessageBus().syncPublisher(XDebuggerManager.TOPIC).processStopped(myDebugProcess);
+    }
+
+    if (mySessionTab != null) {
+      mySessionTab.detachFromSession();
     }
 
     adjustMouseTrackingCounter(myCurrentPosition, -1);

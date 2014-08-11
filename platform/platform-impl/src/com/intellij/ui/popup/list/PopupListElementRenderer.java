@@ -16,7 +16,7 @@
 package com.intellij.ui.popup.list;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.ui.popup.ListItemDescriptor;
+import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ui.UIUtil;
@@ -27,15 +27,10 @@ public class PopupListElementRenderer extends GroupedItemsListRenderer {
   private final ListPopupImpl myPopup;
 
   public PopupListElementRenderer(final ListPopupImpl aPopup) {
-    super(new ListItemDescriptor() {
+    super(new ListItemDescriptorAdapter() {
       @Override
       public String getTextFor(Object value) {
         return aPopup.getListStep().getTextFor(value);
-      }
-
-      @Override
-      public String getTooltipFor(Object value) {
-        return null;
       }
 
       @Override

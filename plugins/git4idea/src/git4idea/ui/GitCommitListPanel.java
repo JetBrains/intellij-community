@@ -15,6 +15,7 @@
  */
 package git4idea.ui;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
@@ -28,7 +29,6 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitCommit;
-import git4idea.GitUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -198,7 +198,7 @@ public class GitCommitListPanel extends JPanel implements TypeSafeDataProvider {
   }
 
   private static String getHash(GitCommit commit) {
-    return GitUtil.getShortHash(commit.getId().toString());
+    return DvcsUtil.getShortHash(commit.getId().toString());
   }
 
   private static String getAuthor(GitCommit commit) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -163,9 +163,8 @@ public abstract class IdeFocusManager implements FocusRequestor {
   public abstract void toFront(JComponent c);
 
   public static IdeFocusManager getInstance(@Nullable Project project) {
-    if (project == null) return getGlobalInstance();
+    if (project == null || project.isDisposed() || !project.isInitialized()) return getGlobalInstance();
 
-    if (project.isDisposed() || !project.isInitialized()) return getGlobalInstance();
     return project.getComponent(IdeFocusManager.class);
   }
 

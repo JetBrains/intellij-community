@@ -830,35 +830,21 @@ public class InferenceSession {
   }
 
   private boolean proceedWithAdditionalConstraints(Set<ConstraintFormula> additionalConstraints) {
-    final Set<InferenceVariable> mentionedVars = new HashSet<InferenceVariable>();
-    for (ConstraintFormula constraint : additionalConstraints) {
-      if (constraint instanceof InputOutputConstraintFormula) {
-        final Set<InferenceVariable> inputVariables = ((InputOutputConstraintFormula)constraint).getInputVariables(this);
-        if (inputVariables != null) {
-          mentionedVars.addAll(inputVariables);
-        }
-        final Set<InferenceVariable> outputVariables = ((InputOutputConstraintFormula)constraint).getOutputVariables(inputVariables, this);
-        if (outputVariables != null) {
-          mentionedVars.addAll(outputVariables);
-        }
-      }
-    }
-
-    final Set<InferenceVariable> readyVariables = new LinkedHashSet<InferenceVariable>(myInferenceVariables.values());
-    readyVariables.removeAll(mentionedVars);
-
-    final PsiSubstitutor siteSubstitutor = resolveBounds(readyVariables, mySiteSubstitutor);
+    final PsiSubstitutor siteSubstitutor = mySiteSubstitutor;
 
     while (!additionalConstraints.isEmpty()) {
       //extract subset of constraints
       final Set<ConstraintFormula> subset = buildSubset(additionalConstraints);
 
       //collect all input variables of selection 
-      final Set<InferenceVariable> varsToResolve = new HashSet<InferenceVariable>();
+      final Set<InferenceVariable> varsToResolve = new LinkedHashSet<InferenceVariable>();
       for (ConstraintFormula formula : subset) {
         if (formula instanceof InputOutputConstraintFormula) {
           final Set<InferenceVariable> inputVariables = ((InputOutputConstraintFormula)formula).getInputVariables(this);
           if (inputVariables != null) {
+            for (InferenceVariable inputVariable : inputVariables) {
+              varsToResolve.addAll(inputVariable.getDependencies(this));
+            }
             varsToResolve.addAll(inputVariables);
           }
         }

@@ -15,6 +15,7 @@
  */
 package git4idea;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -103,7 +104,7 @@ public class GitRevisionNumber implements ShortVcsRevisionNumber {
    */
   @NotNull
   public String getShortRev() {
-    return GitUtil.getShortHash(myRevisionHash);
+    return DvcsUtil.getShortHash(myRevisionHash);
   }
 
   /**

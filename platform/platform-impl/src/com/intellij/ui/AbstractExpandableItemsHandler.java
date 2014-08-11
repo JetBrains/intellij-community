@@ -54,7 +54,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
     myTipComponent = new TipComponent();
 
-    myTipComponent.addMouseListener(new MouseAdapter() {
+    MouseAdapter tipMouseAdapter = new MouseAdapter() {
       @Override
       public void mouseExited(MouseEvent e) {
         // don't hide the hint if mouse exited to myComponent
@@ -62,7 +62,60 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
           hideHint();
         }
       }
-    });
+
+      @Override
+      public void mouseWheelMoved(MouseWheelEvent e) {
+        Point p = e.getLocationOnScreen();
+        SwingUtilities.convertPointFromScreen(p, myComponent);
+        myComponent.dispatchEvent(new MouseWheelEvent(myComponent,
+                                                        e.getID(),
+                                                        e.getWhen(),
+                                                        e.getModifiers(),
+                                                        p.x, p.y,
+                                                        e.getClickCount(),
+                                                        e.isPopupTrigger(),
+                                                        e.getScrollType(),
+                                                        e.getScrollAmount(),
+                                                        e.getWheelRotation()));
+      }
+
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        Point p = e.getLocationOnScreen();
+        SwingUtilities.convertPointFromScreen(p, myComponent);
+        myComponent.dispatchEvent(new MouseEvent(myComponent,
+                                                      e.getID(),
+                                                      e.getWhen(),
+                                                      e.getModifiers(),
+                                                      p.x, p.y,
+                                                      e.getClickCount(),
+                                                      e.isPopupTrigger(),
+                                                      e.getButton()));
+      }
+
+      @Override
+      public void mousePressed(MouseEvent e) {
+        mouseClicked(e);
+      }
+
+      @Override
+      public void mouseReleased(MouseEvent e) {
+        mouseClicked(e);
+      }
+
+      @Override
+      public void mouseMoved(MouseEvent e) {
+        mouseClicked(e);
+      }
+
+      @Override
+      public void mouseDragged(MouseEvent e) {
+        mouseClicked(e);
+      }
+    };
+    myTipComponent.addMouseListener(tipMouseAdapter);
+    myTipComponent.addMouseWheelListener(tipMouseAdapter);
+    myTipComponent.addMouseMotionListener(tipMouseAdapter);
 
     myComponent.addMouseListener(
       new MouseListener() {
