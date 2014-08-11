@@ -10,16 +10,12 @@ import com.intellij.psi.PsiElement;
 import icons.StudyIcons;
 import org.jetbrains.annotations.NotNull;
 import ru.compscicenter.edide.StudyTaskManager;
+import ru.compscicenter.edide.StudyUtils;
 import ru.compscicenter.edide.course.*;
 
-/**
- * author: liana
- * data: 6/25/14.
- */
-
 public class StudyDirectoryNode extends PsiDirectoryNode {
-  private PsiDirectory myValue;
-  private Project myProject;
+  private final PsiDirectory myValue;
+  private final Project myProject;
 
   public StudyDirectoryNode(@NotNull final Project project,
                             PsiDirectory value,
@@ -81,6 +77,11 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
 
   @Override
   public int getTypeSortWeight(boolean sortByType) {
-    return myValue.getName().contains(Course.PLAYGROUND_DIR)? 0 : 3;
+    String name = myValue.getName();
+    if (name.contains(Lesson.LESSON_DIR) || name.contains(Task.TASK_DIR)) {
+      String logicalName = name.contains(Lesson.LESSON_DIR) ? Lesson.LESSON_DIR : Task.TASK_DIR;
+      return StudyUtils.getIndex(name, logicalName) + 1;
+    }
+    return name.contains(Course.PLAYGROUND_DIR)? 0 : 3;
   }
 }
