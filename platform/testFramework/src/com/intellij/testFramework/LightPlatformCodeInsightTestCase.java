@@ -145,7 +145,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @throws java.io.IOException
    */
   @NotNull
-  protected static Document configureFromFileText(@NonNls @NotNull final String fileName, @NonNls @NotNull final String fileText) throws IOException {
+  protected static Document configureFromFileText(@NonNls @NotNull final String fileName, @NonNls @NotNull final String fileText) {
     return new WriteCommandAction<Document>(null) {
       @Override
       protected void run(@NotNull Result<Document> result) throws Throwable {
