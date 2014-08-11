@@ -34,7 +34,7 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
 
   public RunPythonConsoleAction() {
     super();
-    getTemplatePresentation().setIcon(PythonIcons.Python.Python);
+    getTemplatePresentation().setIcon(PythonIcons.Python.PythonConsole);
   }
 
   @Override
