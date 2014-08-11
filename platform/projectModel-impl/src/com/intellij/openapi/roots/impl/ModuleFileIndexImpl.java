@@ -18,17 +18,18 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.ModuleFileIndex;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -79,12 +80,12 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
   @Override
   @NotNull
   public List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile fileOrDir) {
-    return myDirectoryIndex.findAllOrderEntriesWithOwnerModule(getInfoForFileOrDirectory(fileOrDir), myModule);
+    return findAllOrderEntriesWithOwnerModule(myModule, myDirectoryIndex.getOrderEntries(getInfoForFileOrDirectory(fileOrDir)));
   }
 
   @Override
   public OrderEntry getOrderEntryForFile(@NotNull VirtualFile fileOrDir) {
-    return myDirectoryIndex.findOrderEntryWithOwnerModule(getInfoForFileOrDirectory(fileOrDir), myModule);
+    return findOrderEntryWithOwnerModule(myModule, myDirectoryIndex.getOrderEntries(getInfoForFileOrDirectory(fileOrDir)));
   }
 
   @Override
@@ -98,6 +99,97 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
   public boolean isUnderSourceRootOfType(@NotNull VirtualFile fileOrDir, @NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
     DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
     return info.isInModuleSource() && myModule.equals(info.getModule()) && rootTypes.contains(myDirectoryIndex.getSourceRootType(info));
+  }
+
+  @Nullable
+  static OrderEntry findOrderEntryWithOwnerModule(@NotNull Module ownerModule, @NotNull OrderEntry[] orderEntries) {
+    if (orderEntries.length < 10) {
+      for (OrderEntry entry : orderEntries) {
+        if (entry.getOwnerModule() == ownerModule) return entry;
+      }
+      return null;
+    }
+    int index = Arrays.binarySearch(orderEntries, new FakeOrderEntry(ownerModule), RootIndex.BY_OWNER_MODULE);
+    return index < 0 ? null : orderEntries[index];
+  }
+
+  @NotNull
+  private static List<OrderEntry> findAllOrderEntriesWithOwnerModule(@NotNull Module ownerModule, @NotNull OrderEntry[] entries) {
+    if (entries.length == 0) return Collections.emptyList();
+
+    if (entries.length == 1) {
+      OrderEntry entry = entries[0];
+      return entry.getOwnerModule() == ownerModule ? Arrays.asList(entries) : Collections.<OrderEntry>emptyList();
+    }
+    int index = Arrays.binarySearch(entries, new FakeOrderEntry(ownerModule), RootIndex.BY_OWNER_MODULE);
+    if (index < 0) {
+      return Collections.emptyList();
+    }
+    int firstIndex = index;
+    while (firstIndex - 1 >= 0 && entries[firstIndex - 1].getOwnerModule() == ownerModule) {
+      firstIndex--;
+    }
+    int lastIndex = index + 1;
+    while (lastIndex < entries.length && entries[lastIndex].getOwnerModule() == ownerModule) {
+      lastIndex++;
+    }
+
+    OrderEntry[] subArray = new OrderEntry[lastIndex - firstIndex];
+    System.arraycopy(entries, firstIndex, subArray, 0, lastIndex - firstIndex);
+
+    return Arrays.asList(subArray);
+  }
+
+  private static class FakeOrderEntry implements OrderEntry {
+    private final Module myOwnerModule;
+
+    public FakeOrderEntry(Module ownerModule) {
+      myOwnerModule = ownerModule;
+    }
+
+    @NotNull
+    @Override
+    public VirtualFile[] getFiles(OrderRootType type) {
+      throw new IncorrectOperationException();
+    }
+
+    @NotNull
+    @Override
+    public String[] getUrls(OrderRootType rootType) {
+      throw new IncorrectOperationException();
+    }
+
+    @NotNull
+    @Override
+    public String getPresentableName() {
+      throw new IncorrectOperationException();
+    }
+
+    @Override
+    public boolean isValid() {
+      throw new IncorrectOperationException();
+    }
+
+    @NotNull
+    @Override
+    public Module getOwnerModule() {
+      return myOwnerModule;
+    }
+
+    @Override
+    public <R> R accept(RootPolicy<R> policy, @Nullable R initialValue) {
+      throw new IncorrectOperationException();
+    }
+
+    @Override
+    public int compareTo(@NotNull OrderEntry o) {
+      throw new IncorrectOperationException();
+    }
+
+    @Override
+    public boolean isSynthetic() {
+      throw new IncorrectOperationException();
+    }
   }
 
   private class ContentFilter implements VirtualFileFilter {

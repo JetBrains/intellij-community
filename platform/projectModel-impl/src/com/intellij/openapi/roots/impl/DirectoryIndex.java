@@ -17,7 +17,6 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,8 +24,6 @@ import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
-
-import java.util.List;
 
 public abstract class DirectoryIndex {
   public static DirectoryIndex getInstance(Project project) {
@@ -65,10 +62,4 @@ public abstract class DirectoryIndex {
 
   @NotNull
   public abstract OrderEntry[] getOrderEntries(@NotNull DirectoryInfo info);
-
-  @Nullable
-  abstract OrderEntry findOrderEntryWithOwnerModule(@NotNull DirectoryInfo info, @NotNull Module ownerModule);
-
-  @NotNull
-  abstract List<OrderEntry> findAllOrderEntriesWithOwnerModule(@NotNull DirectoryInfo info, @NotNull Module ownerModule);
 }
