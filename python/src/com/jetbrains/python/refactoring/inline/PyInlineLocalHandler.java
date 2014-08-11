@@ -134,7 +134,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
     if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {
       highlightManager.addOccurrenceHighlights(editor, refsToInline, attributes, true, null);
       int occurrencesCount = refsToInline.length;
-      String occurencesString = RefactoringBundle.message("occurences.string", occurrencesCount);
+      String occurencesString = RefactoringBundle.message("occurrences.string", occurrencesCount);
       final String promptKey = "inline.local.variable.prompt";
       final String question = RefactoringBundle.message(promptKey, localName) + " " + occurencesString;
       RefactoringMessageDialog dialog = new RefactoringMessageDialog(REFACTORING_NAME, question, HELP_ID, "OptionPane.questionIcon", true, project);
