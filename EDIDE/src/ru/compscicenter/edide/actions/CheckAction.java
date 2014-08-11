@@ -129,7 +129,7 @@ public class CheckAction extends DumbAwareAction {
                   }
                   if (testProcess != null) {
                     String failedMessage = testRunner.getPassedTests(testProcess);
-                    if (failedMessage == StudyTestRunner.TEST_OK) {
+                    if (failedMessage.equals(StudyTestRunner.TEST_OK)) {
                       currentTask.setStatus(StudyStatus.Solved);
                       StudyUtils.updateStudyToolWindow(project);
                       selectedTaskFile.drawAllWindows(selectedEditor);
