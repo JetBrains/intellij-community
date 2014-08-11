@@ -152,17 +152,17 @@ final class CombinedInterpreter extends BasicInterpreter {
         if (cst instanceof Type) {
           Type type = (Type)cst;
           if (type.getSort() == Type.OBJECT || type.getSort() == Type.ARRAY) {
-            return new NotNullValue(Type.getObjectType("java/lang/Class"));
+            return CLASS_VALUE;
           }
           if (type.getSort() == Type.METHOD) {
-            return new NotNullValue(Type.getObjectType("java/lang/invoke/MethodType"));
+            return METHOD_VALUE;
           }
         }
         else if (cst instanceof String) {
-          return new NotNullValue(Type.getObjectType("java/lang/String"));
+          return STRING_VALUE;
         }
         else if (cst instanceof Handle) {
-          return new NotNullValue(Type.getObjectType("java/lang/invoke/MethodHandle"));
+          return METHOD_HANDLE_VALUE;
         }
         break;
       case NEW:
