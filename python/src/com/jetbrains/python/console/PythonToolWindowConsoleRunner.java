@@ -38,7 +38,7 @@ import java.util.Map;
 public class PythonToolWindowConsoleRunner extends PydevConsoleRunner {
   private ToolWindow myToolWindow;
 
-  protected PythonToolWindowConsoleRunner(@NotNull Project project,
+  public PythonToolWindowConsoleRunner(@NotNull Project project,
                                           @NotNull Sdk sdk,
                                           @NotNull PyConsoleType consoleType,
                                           @Nullable String workingDir, Map<String, String> environmentVariables,
@@ -52,11 +52,6 @@ public class PythonToolWindowConsoleRunner extends PydevConsoleRunner {
     }
     return myToolWindow;
   }
-
-  public void setToolWindow(ToolWindow toolWindow) {
-    myToolWindow = toolWindow;
-  }
-
 
   @Override
   protected void showConsole(Executor defaultExecutor, RunContentDescriptor contentDescriptor) {

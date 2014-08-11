@@ -30,12 +30,13 @@ public class PythonConsoleToolWindowFactory implements ToolWindowFactory, DumbAw
 
   @Override
   public void createToolWindowContent(final @NotNull Project project, final @NotNull ToolWindow toolWindow) {
-    PydevConsoleRunner runner = PydevConsoleRunner.runPythonConsole(project, null, PythonConsoleToolWindow.toolWindowConsole(toolWindow));
+    PydevConsoleRunner runner = PythonConsoleRunnerFactory.getInstance().createConsoleRunner(project, null);
     runner.addConsoleListener(new PydevConsoleRunner.ConsoleListener() {
       @Override
       public void handleConsoleInitialized(LanguageConsoleView consoleView) {
         PythonConsoleToolWindow.getInstance(project).initialized();
       }
     });
+    runner.run();
   }
 }

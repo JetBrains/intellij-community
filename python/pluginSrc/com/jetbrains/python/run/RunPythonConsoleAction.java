@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
 import com.jetbrains.python.console.PydevConsoleRunner;
+import com.jetbrains.python.console.PythonConsoleRunnerFactory;
 import icons.PythonIcons;
 
 /**
@@ -51,6 +52,7 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(final AnActionEvent e) {
-    PydevConsoleRunner.runPythonConsole(e.getData(CommonDataKeys.PROJECT), e.getData(LangDataKeys.MODULE), PydevConsoleRunner.factory());
+    PydevConsoleRunner runner = PythonConsoleRunnerFactory.getInstance().createConsoleRunner(e.getData(CommonDataKeys.PROJECT), e.getData(LangDataKeys.MODULE));
+    runner.run();
   }
 }

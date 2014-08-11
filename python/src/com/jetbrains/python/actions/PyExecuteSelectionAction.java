@@ -32,6 +32,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
 import com.jetbrains.python.console.PyCodeExecutor;
 import com.jetbrains.python.console.PydevConsoleRunner;
+import com.jetbrains.python.console.PythonConsoleRunnerFactory;
 import com.jetbrains.python.console.PythonConsoleToolWindow;
 import com.jetbrains.python.psi.PyFile;
 import org.jetbrains.annotations.NotNull;
@@ -237,7 +238,8 @@ public class PyExecuteSelectionAction extends AnAction {
       });
     }
     else {
-      PydevConsoleRunner runner = PydevConsoleRunner.runPythonConsole(project, context, PydevConsoleRunner.factory());
+      PythonConsoleRunnerFactory consoleRunnerFactory = PythonConsoleRunnerFactory.getInstance();
+      PydevConsoleRunner runner = consoleRunnerFactory.createConsoleRunner(project, null);
       runner.addConsoleListener(new PydevConsoleRunner.ConsoleListener() {
         @Override
         public void handleConsoleInitialized(LanguageConsoleView consoleView) {
@@ -246,6 +248,7 @@ public class PyExecuteSelectionAction extends AnAction {
           }
         }
       });
+      runner.run();
     }
   }
 

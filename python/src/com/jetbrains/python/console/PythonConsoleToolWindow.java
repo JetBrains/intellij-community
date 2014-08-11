@@ -6,7 +6,6 @@ import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Lists;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Key;
@@ -24,7 +23,6 @@ import javax.swing.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author traff
@@ -82,28 +80,12 @@ public class PythonConsoleToolWindow {
         if (window != null) {
           boolean visible = window.isVisible();
           if (visible && toolWindow.getContentManager().getContentCount() == 0) {
-            PydevConsoleRunner.runPythonConsole(myProject, null, toolWindowConsole(window));
+            PydevConsoleRunner runner = PythonConsoleRunnerFactory.getInstance().createConsoleRunner(myProject, null);
+            runner.run();
           }
         }
       }
     });
-  }
-
-  public static PydevConsoleRunner.PythonConsoleRunnerFactory toolWindowConsole(@Nullable final ToolWindow toolWindow) {
-    return new PydevConsoleRunner.PythonConsoleRunnerFactory() {
-      @Override
-      public PydevConsoleRunner createConsoleRunner(@NotNull Project project,
-                                                    @NotNull Sdk sdk,
-                                                    @NotNull PyConsoleType consoleType,
-                                                    @Nullable String workingDirectory,
-                                                    @NotNull Map<String, String> environmentVariables,
-                                                    String... statements2execute) {
-        PythonToolWindowConsoleRunner consoleRunner =
-          new PythonToolWindowConsoleRunner(project, sdk, consoleType, workingDirectory, environmentVariables, statements2execute);
-        consoleRunner.setToolWindow(toolWindow);
-        return consoleRunner;
-      }
-    };
   }
 
   private static void addContent(ToolWindow toolWindow, RunContentDescriptor contentDescriptor) {
@@ -169,10 +151,6 @@ public class PythonConsoleToolWindow {
 
   public void initialized() {
     myActivation.setDone();
-  }
-
-  public ActionCallback getActivation() {
-    return myActivation;
   }
 
   public void activate(@NotNull Runnable runnable) {

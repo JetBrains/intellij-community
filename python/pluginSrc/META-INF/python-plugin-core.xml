@@ -40,6 +40,7 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
 
+    <!-- Console -->
     <action id="com.jetbrains.python.run.RunPythonConsoleAction"
             class="com.jetbrains.python.run.RunPythonConsoleAction"
             text="Run Python Console..." description="Allows to quickly run Python console">

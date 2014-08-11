@@ -1,0 +1,11 @@
+<idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <!-- Components and extensions declared in this file work ONLY in PyCharm, not in Python plugin. -->
+  <xi:include href="/META-INF/pycharm-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+  <application-components>
+    <component>
+      <interface-class>com.jetbrains.python.console.PythonConsoleRunnerFactory</interface-class>
+      <implementation-class>com.jetbrains.python.console.PythonToolWindowConsoleRunnerFactory</implementation-class>
+    </component>
+  </application-components>
+</idea-plugin>
