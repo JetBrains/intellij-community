@@ -110,13 +110,15 @@ public class StudyUtils {
     return Integer.parseInt(fullName.substring(logicalName.length())) - 1;
   }
 
-  public static void flushWindows(Document document, TaskFile taskFile, VirtualFile file) {
+  public static VirtualFile flushWindows(Document document, TaskFile taskFile, VirtualFile file) {
     VirtualFile taskDir = file.getParent();
+    VirtualFile file_windows = null;
     if (taskDir != null) {
       String name = file.getNameWithoutExtension() + "_windows";
       PrintWriter printWriter = null;
       try {
-        VirtualFile file_windows = taskDir.createChildData(taskFile, name);
+
+        file_windows = taskDir.createChildData(taskFile, name);
         printWriter = new PrintWriter(new FileOutputStream(file_windows.getPath()));
         for (TaskWindow taskWindow : taskFile.getTaskWindows()) {
           int start = taskWindow.getRealStartOffset(document);
@@ -132,5 +134,6 @@ public class StudyUtils {
         StudyUtils.synchronize();
       }
     }
+    return file_windows;
   }
 }
