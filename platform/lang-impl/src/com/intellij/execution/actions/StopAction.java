@@ -93,7 +93,8 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
     final DataContext dataContext = e.getDataContext();
     ProcessHandler activeProcessHandler = getHandler(dataContext);
 
-    List<Pair<TaskInfo, ProgressIndicator>> backgroundTasks = getCancellableProcesses(e.getProject());
+    Project project = e.getProject();
+    List<Pair<TaskInfo, ProgressIndicator>> backgroundTasks = getCancellableProcesses(project);
     if (ActionPlaces.MAIN_MENU.equals(e.getPlace())) {
       if (activeProcessHandler != null && !activeProcessHandler.isProcessTerminating() && !activeProcessHandler.isProcessTerminated()
           && backgroundTasks.isEmpty()) {
@@ -103,7 +104,9 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
 
       Pair<List<HandlerItem>, HandlerItem>
         handlerItems = getItemsList(backgroundTasks, getActiveDescriptors(dataContext), activeProcessHandler);
-      if (handlerItems.first.isEmpty()) return;
+      if (handlerItems == null || handlerItems.first.isEmpty()) {
+        return;
+      }
 
       final JBList list = new JBList(handlerItems.first);
       if (handlerItems.second != null) list.setSelectedValue(handlerItems.second, true);
@@ -145,7 +148,8 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
           }
         }).setRequestFocus(true).createPopup();
 
-      popup.showCenteredInCurrentWindow(e.getProject());
+      assert project != null;
+      popup.showCenteredInCurrentWindow(project);
     }
     else {
       if (activeProcessHandler != null) {
@@ -168,12 +172,15 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
                                  });
   }
 
+  @Nullable
   private static Pair<List<HandlerItem>, HandlerItem> getItemsList(List<Pair<TaskInfo, ProgressIndicator>> tasks,
                                                                    List<RunContentDescriptor> descriptors,
                                                                    ProcessHandler activeProcessHandler) {
-    if (tasks.isEmpty() && descriptors.isEmpty()) return Pair.create(Collections.<HandlerItem>emptyList(), null);
+    if (tasks.isEmpty() && descriptors.isEmpty()) {
+      return null;
+    }
 
-    ArrayList<HandlerItem> items = new ArrayList<HandlerItem>(tasks.size() + descriptors.size());
+    List<HandlerItem> items = new ArrayList<HandlerItem>(tasks.size() + descriptors.size());
     HandlerItem selected = null;
     for (RunContentDescriptor descriptor : descriptors) {
       final ProcessHandler handler = descriptor.getProcessHandler();
@@ -185,7 +192,9 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
           }
         };
         items.add(item);
-        if (handler == activeProcessHandler) selected = item;
+        if (handler == activeProcessHandler) {
+          selected = item;
+        }
       }
     }
 
@@ -199,7 +208,7 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
       });
       hasSeparator = false;
     }
-    return Pair.<List<HandlerItem>, HandlerItem>create(items, selected);
+    return Pair.create(items, selected);
   }
 
   private static void stopProcess(ProcessHandler processHandler) {
