@@ -299,12 +299,11 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   private void rebuildTabPopup() {
-    if (myTabs == null) return;
+    initUi();
 
     myTabs.setPopupGroup(getCellPopupGroup(TAB_POPUP_PLACE), TAB_POPUP_PLACE, true);
 
-    final ArrayList<GridImpl> grids = getGrids();
-    for (GridImpl each : grids) {
+    for (GridImpl each : getGrids()) {
       each.rebuildTabPopup();
     }
   }
