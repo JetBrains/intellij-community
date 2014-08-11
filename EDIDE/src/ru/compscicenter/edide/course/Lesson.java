@@ -1,6 +1,7 @@
 package ru.compscicenter.edide.course;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -8,7 +9,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Lesson {
+public class Lesson implements Stateful{
   public String name;
   public List<Task> taskList = new ArrayList<Task>();
   private Course myCourse = null;
@@ -20,6 +21,7 @@ public class Lesson {
     return myLessonInfo;
   }
 
+  @Transient
   public StudyStatus getStatus() {
     for (Task task : taskList) {
       StudyStatus taskStatus = task.getStatus();
@@ -30,10 +32,25 @@ public class Lesson {
     return StudyStatus.Solved;
   }
 
+  @Override
+  public void setStatus(StudyStatus status) {
+    for (Task task : taskList) {
+      task.setStatus(status);
+    }
+  }
+
   public List<Task> getTaskList() {
     return taskList;
   }
 
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
 
   /**
    * Creates lesson directory in its course folder in project user created

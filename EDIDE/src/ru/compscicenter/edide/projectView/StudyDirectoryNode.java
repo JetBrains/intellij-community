@@ -7,11 +7,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.SimpleTextAttributes;
 import icons.StudyIcons;
 import org.jetbrains.annotations.NotNull;
 import ru.compscicenter.edide.StudyTaskManager;
 import ru.compscicenter.edide.StudyUtils;
 import ru.compscicenter.edide.course.*;
+
+import javax.swing.*;
+import java.awt.*;
 
 public class StudyDirectoryNode extends PsiDirectoryNode {
   private final PsiDirectory myValue;
@@ -25,12 +30,21 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
     myProject = project;
   }
 
-  //TODO:improve
   @Override
   protected void updateImpl(PresentationData data) {
     data.setIcon(StudyIcons.UncheckedTask);
     String valueName = myValue.getName();
     StudyTaskManager studyTaskManager = StudyTaskManager.getInstance(myProject);
+    Course course = studyTaskManager.getCourse();
+    if (course == null) {
+      return;
+    }
+    if (valueName.equals(myProject.getName())) {
+      data.clearText();
+      data.addText(course.getName(), new SimpleTextAttributes(Font.BOLD, JBColor.BLUE));
+      data.addText(" (" + valueName + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      return;
+    }
     if (valueName.contains(Task.TASK_DIR)) {
       TaskFile file = null;
       for (PsiElement child : myValue.getChildren()) {
@@ -41,26 +55,14 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
         }
       }
       if (file != null) {
-        StudyStatus taskStatus = file.getTask().getStatus();
-        if (taskStatus == StudyStatus.Failed) {
-          data.setIcon(StudyIcons.FailedTask);
-        }
-        if (taskStatus == StudyStatus.Solved) {
-          data.setIcon(StudyIcons.CheckedTask);
-        }
+        Task task = file.getTask();
+        setStudyAttributes(task, data, task.getName());
       }
-    }
-
-    Course course = studyTaskManager.getCourse();
-    if (course == null) {
-      return;
     }
     if (valueName.contains(Lesson.LESSON_DIR)) {
       int lessonIndex = Integer.parseInt(valueName.substring(Lesson.LESSON_DIR.length())) - 1;
       Lesson lesson = course.getLessons().get(lessonIndex);
-      if (lesson.getStatus() == StudyStatus.Solved) {
-        data.setIcon(StudyIcons.CheckedTask);
-      }
+      setStudyAttributes(lesson, data, lesson.getName());
     }
 
     if (valueName.contains(Course.PLAYGROUND_DIR)) {
@@ -82,6 +84,29 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
       String logicalName = name.contains(Lesson.LESSON_DIR) ? Lesson.LESSON_DIR : Task.TASK_DIR;
       return StudyUtils.getIndex(name, logicalName) + 1;
     }
-    return name.contains(Course.PLAYGROUND_DIR)? 0 : 3;
+    return name.contains(Course.PLAYGROUND_DIR) ? 0 : 3;
+  }
+
+  private void setStudyAttributes(Stateful stateful, PresentationData data, String additionalName) {
+    StudyStatus taskStatus = stateful.getStatus();
+    switch (taskStatus) {
+      case Unchecked: {
+        updatePresentation(data, additionalName, JBColor.blue, StudyIcons.UncheckedTask);
+        break;
+      }
+      case Solved: {
+        updatePresentation(data, additionalName, JBColor.GREEN, StudyIcons.CheckedTask);
+        break;
+      }
+      case Failed: {
+        updatePresentation(data, additionalName, JBColor.RED, StudyIcons.FailedTask);
+      }
+    }
+  }
+
+  private void updatePresentation(PresentationData data, String additionalName, JBColor color, Icon icon) {
+    data.clearText();
+    data.addText(additionalName, new SimpleTextAttributes(Font.BOLD, color));
+    data.setIcon(icon);
   }
 }
