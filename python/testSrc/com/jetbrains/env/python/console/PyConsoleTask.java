@@ -1,13 +1,9 @@
 package com.jetbrains.env.python.console;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.intellij.execution.ExecutionManager;
-import com.intellij.execution.Executor;
 import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
@@ -24,11 +20,9 @@ import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Semaphore;
 
 /**
@@ -137,7 +131,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
     setProcessCanTerminate(false);
 
-    PydevConsoleRunner consoleRunner = new PythonTestConsoleRunner(project, sdk, PyConsoleType.PYTHON, getWorkingFolder(), Maps.<String, String>newHashMap());
+    PydevConsoleRunner consoleRunner = PydevConsoleRunner.create(project, sdk, PyConsoleType.PYTHON, getWorkingFolder());
     before();
 
     mySemaphore0 = new Semaphore(0);
@@ -384,27 +378,5 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
       }
     }
     );
-  }
-
-  private static class PythonTestConsoleRunner extends PydevConsoleRunner {
-
-    protected PythonTestConsoleRunner(@NotNull Project project,
-                                      @NotNull Sdk sdk,
-                                      @NotNull PyConsoleType consoleType,
-                                      @Nullable String workingDir,
-                                      Map<String, String> environmentVariables) {
-      super(project, sdk, consoleType, workingDir, environmentVariables);
-    }
-
-    @Override
-    protected void showConsole(Executor defaultExecutor, RunContentDescriptor contentDescriptor) {
-      // Show in run toolwindow
-      ExecutionManager.getInstance(getProject()).getContentManager().showRunContent(defaultExecutor, contentDescriptor);
-    }
-
-    @Override
-    protected List<String> getActiveConsoleNames(String consoleTitle) {
-      return getActiveConsolesFromRunToolWindow(consoleTitle);
-    }
   }
 }
