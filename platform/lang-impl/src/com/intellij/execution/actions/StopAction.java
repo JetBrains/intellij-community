@@ -15,8 +15,10 @@
  */
 package com.intellij.execution.actions;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.KillableProcess;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
@@ -53,12 +55,14 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
     boolean enable = false;
     Icon icon = getTemplatePresentation().getIcon();
     String description = getTemplatePresentation().getDescription();
-
+    Presentation presentation = e.getPresentation();
     if (ActionPlaces.MAIN_MENU.equals(e.getPlace())) {
       enable = !getCancellableProcesses(e.getProject()).isEmpty() || !getActiveDescriptors(e.getDataContext()).isEmpty();
+      presentation.setText(getTemplatePresentation().getText());
     }
     else {
-      final ProcessHandler processHandler = getHandler(e.getDataContext());
+      RunContentDescriptor contentDescriptor = e.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR);
+      ProcessHandler processHandler = contentDescriptor == null ? null : contentDescriptor.getProcessHandler();
       if (processHandler != null && !processHandler.isProcessTerminated()) {
         if (!processHandler.isProcessTerminating()) {
           enable = true;
@@ -69,9 +73,16 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
           description = "Kill process";
         }
       }
+
+      RunProfile runProfile = e.getData(LangDataKeys.RUN_PROFILE);
+      if (runProfile == null && contentDescriptor == null) {
+        presentation.setText(getTemplatePresentation().getText());
+      }
+      else {
+        presentation.setText(ExecutionBundle.message("stop.configuration.action.name", runProfile == null ? contentDescriptor.getDisplayName() : runProfile.getName()));
+      }
     }
 
-    Presentation presentation = e.getPresentation();
     presentation.setEnabled(enable);
     presentation.setIcon(icon);
     presentation.setDescription(description);
@@ -208,19 +219,17 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
   @Nullable
   static ProcessHandler getHandler(@NotNull DataContext dataContext) {
     final RunContentDescriptor contentDescriptor = LangDataKeys.RUN_CONTENT_DESCRIPTOR.getData(dataContext);
-    final ProcessHandler processHandler;
     if (contentDescriptor != null) {
       // toolwindow case
-      processHandler = contentDescriptor.getProcessHandler();
+      return contentDescriptor.getProcessHandler();
     }
     else {
       // main menu toolbar
       final Project project = CommonDataKeys.PROJECT.getData(dataContext);
       final RunContentDescriptor selectedContent =
         project == null ? null : ExecutionManager.getInstance(project).getContentManager().getSelectedContent();
-      processHandler = selectedContent == null ? null : selectedContent.getProcessHandler();
+      return selectedContent == null ? null : selectedContent.getProcessHandler();
     }
-    return processHandler;
   }
 
   @NotNull
