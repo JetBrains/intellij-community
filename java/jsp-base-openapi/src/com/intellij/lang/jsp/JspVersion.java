@@ -65,6 +65,8 @@ public interface JspVersion {
     }
   };
 
+  JspVersion MAX_VERSION = JSP_2_3;
+
   String getNumber();
 
   boolean betterThan(JspVersion other);
