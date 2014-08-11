@@ -952,12 +952,14 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
         SimpleNode node = myTree.getNodeFor(path);
         if (node instanceof FilteringTreeStructure.FilteringNode) {
           Object delegate = ((FilteringTreeStructure.FilteringNode)node).getDelegate();
-          if (delegate instanceof EditorNode) {
+          while (delegate instanceof EditorNode) {
             EditorNode editor = (EditorNode)delegate;
             ConfigurableGroup group = editor.getGroup();
             if (group != null) {
               name = group.getDisplayName();
+              break;
             }
+            delegate = editor.getParent();
           }
         }
         if (name != null) {
