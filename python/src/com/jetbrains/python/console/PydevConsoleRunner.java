@@ -148,11 +148,12 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   public PydevConsoleRunner(@NotNull final Project project,
                                @NotNull Sdk sdk, @NotNull final PyConsoleType consoleType,
                                @Nullable final String workingDir,
-                               Map<String, String> environmentVariables, String[] statementsToExecute) {
+                               Map<String, String> environmentVariables, String ... statementsToExecute) {
     super(project, consoleType.getTitle(), workingDir);
     mySdk = sdk;
     myConsoleType = consoleType;
     myEnvironmentVariables = environmentVariables;
+    myStatementsToExecute = statementsToExecute;
   }
 
   public static PathMappingSettings getMappings(Project project, Sdk sdk) {
@@ -160,6 +161,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     if (PySdkUtil.isRemote(sdk)) {
       PythonRemoteInterpreterManager instance = PythonRemoteInterpreterManager.getInstance();
       if (instance != null) {
+        //noinspection ConstantConditions
         mappingSettings =
           instance.setupMappings(project, (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData(), null);
       }
