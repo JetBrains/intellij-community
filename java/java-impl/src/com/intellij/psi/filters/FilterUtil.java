@@ -40,6 +40,12 @@ public class FilterUtil{
       return JavaPsiFacade.getInstance(element.getProject()).getElementFactory().createType((PsiClass)element);
     }
     if(element instanceof PsiMethod){
+      if (((PsiMethod)element).isConstructor()) {
+        final PsiClass containingClass = ((PsiMethod)element).getContainingClass();
+        if (containingClass != null) {
+          return JavaPsiFacade.getInstance(element.getProject()).getElementFactory().createType(containingClass);
+        }
+      }
       return ((PsiMethod)element).getReturnType();
     }
     if(element instanceof PsiVariable){
