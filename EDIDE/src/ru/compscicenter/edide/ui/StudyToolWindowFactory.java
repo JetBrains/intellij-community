@@ -8,6 +8,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import ru.compscicenter.edide.StudyTaskManager;
 import ru.compscicenter.edide.course.Course;
 import ru.compscicenter.edide.course.Lesson;
@@ -26,7 +27,7 @@ public class StudyToolWindowFactory implements ToolWindowFactory, DumbAware {
   JPanel contentPanel = new JPanel();
 
   @Override
-  public void createToolWindowContent(final Project project, final ToolWindow toolWindow) {
+  public void createToolWindowContent(@NotNull final Project project, @NotNull final ToolWindow toolWindow) {
     if (StudyTaskManager.getInstance(project).getCourse() != null) {
       contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.PAGE_AXIS));
       contentPanel.add(Box.createRigidArea(new Dimension(10, 0)));
