@@ -1393,8 +1393,8 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       }
     }
 
+    @SuppressWarnings("NullableProblems")
     @Override
-    @NotNull
     public String getName() {
       return RunnerContentUi.this.getName();
     }
