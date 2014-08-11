@@ -1,7 +1,5 @@
 package com.intellij.execution.runners;
 
-import com.intellij.execution.ExecutionManager;
-import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.Disposable;
@@ -29,10 +27,8 @@ public class RerunTestsAction extends DumbAwareAction implements AnAction.Transp
   public static final String ID = "RerunTests";
   private static final List<RerunInfo> REGISTRY = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  public static void register(@NotNull RunContentDescriptor descriptor,
-                              @NotNull ExecutionEnvironment env,
-                              @NotNull ProgramRunner runner) {
-    final RerunInfo rerunInfo = new RerunInfo(descriptor, env, runner);
+  public static void register(@NotNull RunContentDescriptor descriptor, @NotNull ExecutionEnvironment environment) {
+    final RerunInfo rerunInfo = new RerunInfo(descriptor, environment);
     REGISTRY.add(rerunInfo);
     Disposer.register(descriptor, new Disposable() {
       @Override
@@ -49,17 +45,12 @@ public class RerunTestsAction extends DumbAwareAction implements AnAction.Transp
     if (project == null) {
       return;
     }
-    ExecutionManager executionManager = ExecutionManager.getInstance(project);
     for (RerunInfo rerunInfo : REGISTRY) {
       RunContentDescriptor descriptor = rerunInfo.getDescriptor();
       if (!Disposer.isDisposed(descriptor)) {
-        ExecutionEnvironment env = rerunInfo.getEnv();
-        ProgramRunner runner = rerunInfo.getRunner();
         ProcessHandler processHandler = descriptor.getProcessHandler();
         if (processHandler != null && processHandler.isProcessTerminated()) {
-          if (!ExecutorRegistry.getInstance().isStarting(project, env.getExecutor().getId(), runner.getRunnerId())) {
-            executionManager.restartRunProfile(runner, env, descriptor);
-          }
+          ExecutionUtil.restart(rerunInfo.getEnvironment(), descriptor);
         }
       }
     }
@@ -72,30 +63,20 @@ public class RerunTestsAction extends DumbAwareAction implements AnAction.Transp
   }
 
   private static class RerunInfo {
-
     private final RunContentDescriptor myDescriptor;
     private final ExecutionEnvironment myEnv;
-    private final ProgramRunner myRunner;
 
-    public RerunInfo(@NotNull RunContentDescriptor descriptor,
-                     @NotNull ExecutionEnvironment env,
-                     @NotNull ProgramRunner runner) {
+    public RerunInfo(@NotNull RunContentDescriptor descriptor, @NotNull ExecutionEnvironment env) {
       myDescriptor = descriptor;
       myEnv = env;
-      myRunner = runner;
     }
 
     private RunContentDescriptor getDescriptor() {
       return myDescriptor;
     }
 
-    private ExecutionEnvironment getEnv() {
+    private ExecutionEnvironment getEnvironment() {
       return myEnv;
     }
-
-    private ProgramRunner getRunner() {
-      return myRunner;
-    }
   }
-
 }

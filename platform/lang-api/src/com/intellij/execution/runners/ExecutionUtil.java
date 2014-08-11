@@ -16,11 +16,10 @@
 
 package com.intellij.execution.runners;
 
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.RunCanceledByUserException;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessNotCreatedException;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationListener;
@@ -33,6 +32,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
@@ -106,5 +106,15 @@ public class ExecutionUtil {
         ourNotificationGroup.createNotification(title, finalDescription, NotificationType.ERROR, notificationListener).notify(project);
       }
     });
+  }
+
+  public static void restart(@NotNull ExecutionEnvironment environment) {
+    restart(environment, null);
+  }
+
+  public static void restart(@NotNull ExecutionEnvironment environment, @Nullable RunContentDescriptor contentDescriptor) {
+    if (!ExecutorRegistry.getInstance().isStarting(environment)) {
+      ExecutionManager.getInstance(environment.getProject()).restartRunProfile(environment, contentDescriptor == null ? environment.getContentToReuse() : contentDescriptor);
+    }
   }
 }

@@ -20,7 +20,6 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.RestartAction;
 import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -153,6 +152,9 @@ public class XDebugSessionTab extends DebuggerSessionTabBase implements DataProv
       ExecutionEnvironment environment = getEnvironment();
       return environment == null ? null : environment.getRunProfile();
     }
+    else if (LangDataKeys.EXECUTION_ENVIRONMENT.is(dataId)) {
+      return getEnvironment();
+    }
 
     if (session != null) {
       if (SESSION_KEY.is(dataId)) {
@@ -241,18 +243,14 @@ public class XDebugSessionTab extends DebuggerSessionTabBase implements DataProv
     DefaultActionGroup leftToolbar = new DefaultActionGroup();
     final Executor debugExecutor = DefaultDebugExecutor.getDebugExecutorInstance();
     ExecutionEnvironment environment = getEnvironment();
-    final Executor executor = environment != null ? environment.getExecutor() : debugExecutor;
     if (environment != null) {
-      RestartAction restartAction = new RestartAction(executor, myRunContentDescriptor, environment);
-      leftToolbar.add(restartAction);
-      restartAction.registerShortcut(myUi.getComponent());
-
       List<AnAction> additionalRestartActions = session.getRestartActions();
-      leftToolbar.addAll(additionalRestartActions);
-      if (!additionalRestartActions.isEmpty()) leftToolbar.addSeparator();
+      if (!additionalRestartActions.isEmpty()) {
+        leftToolbar.addAll(additionalRestartActions);
+        leftToolbar.addSeparator();
+      }
       leftToolbar.addAll(session.getExtraActions());
     }
-
     leftToolbar.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_LEFT_TOOLBAR_GROUP));
 
     for (AnAction action : session.getExtraStopActions()) {
@@ -294,7 +292,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase implements DataProv
     leftToolbar.addSeparator();
 
     leftToolbar.add(PinToolwindowTabAction.getPinAction());
-    leftToolbar.add(new CloseAction(executor, myRunContentDescriptor, getProject()));
+    leftToolbar.add(new CloseAction(environment != null ? environment.getExecutor() : debugExecutor, myRunContentDescriptor, getProject()));
     leftToolbar.add(new ContextHelpAction(debugExecutor.getHelpId()));
 
     DefaultActionGroup topToolbar = new DefaultActionGroup();

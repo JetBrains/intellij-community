@@ -20,6 +20,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.HelpIdProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.content.Content;
@@ -73,10 +74,7 @@ public class RunContentDescriptor implements Disposable, DataProvider {
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
-    if (RunContentManager.RUN_CONTENT_DESCRIPTOR.is(dataId)) {
-      return this;
-    }
-    return null;
+    return LangDataKeys.RUN_CONTENT_DESCRIPTOR.is(dataId) ? this : null;
   }
 
   public ExecutionConsole getExecutionConsole() {

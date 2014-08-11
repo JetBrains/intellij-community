@@ -293,6 +293,11 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   }
 
   @Override
+  public void restartRunProfile(@NotNull ExecutionEnvironment environment, @Nullable RunContentDescriptor currentDescriptor) {
+    restartRunProfile(RunnerRegistry.getInstance().findRunnerById(environment.getRunnerId()), environment, currentDescriptor);
+  }
+
+  @Override
   public void restartRunProfile(@Nullable ProgramRunner runner,
                                 @NotNull ExecutionEnvironment environment,
                                 @Nullable RunContentDescriptor currentDescriptor) {
@@ -378,7 +383,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
             return;
           }
         }
-        start(project, context, runner, runProfile, runnerSettings, configurationPerRunnerSettings, configuration, executor, target,
+        start(project, context, runner, runProfile, configuration, executor, target,
               currentDescriptor);
       }
     };
@@ -389,8 +394,6 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
                             @Nullable DataContext context,
                             @Nullable ProgramRunner runner,
                             @Nullable RunProfile runProfile,
-                            @Nullable RunnerSettings runnerSettings,
-                            @Nullable ConfigurationPerRunnerSettings configurationPerRunnerSettings,
                             @Nullable RunnerAndConfigurationSettings configuration,
                             @NotNull Executor executor,
                             @NotNull ExecutionTarget target,

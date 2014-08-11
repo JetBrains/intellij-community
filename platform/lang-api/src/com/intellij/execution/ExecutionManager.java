@@ -104,4 +104,6 @@ public abstract class ExecutionManager {
   public abstract void restartRunProfile(@Nullable ProgramRunner runner,
                                          @NotNull ExecutionEnvironment environment,
                                          @Nullable RunContentDescriptor currentDescriptor);
+
+  public abstract void restartRunProfile(@NotNull ExecutionEnvironment environment, @Nullable RunContentDescriptor currentDescriptor);
 }

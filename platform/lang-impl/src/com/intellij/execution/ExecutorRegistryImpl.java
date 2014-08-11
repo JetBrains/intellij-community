@@ -178,7 +178,12 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
 
   @Override
   public boolean isStarting(Project project, final String executorId, final String runnerId) {
-    return myInProgress.contains(new Trinity<Project, String, String>(project, executorId, runnerId));
+    return myInProgress.contains(Trinity.create(project, executorId, runnerId));
+  }
+
+  @Override
+  public boolean isStarting(@NotNull ExecutionEnvironment environment) {
+    return isStarting(environment.getProject(), environment.getExecutor().getId(), environment.getRunnerId());
   }
 
   @Override
