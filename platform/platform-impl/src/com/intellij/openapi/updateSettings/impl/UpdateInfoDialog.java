@@ -155,6 +155,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
         }.show();
       }
       restart();
+      close(OK_EXIT_CODE);
     }
     else if (result == UpdateChecker.DownloadPatchResult.FAILED) {
       openDownloadPage();

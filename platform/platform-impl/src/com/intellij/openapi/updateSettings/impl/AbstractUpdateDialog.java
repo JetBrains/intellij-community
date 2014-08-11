@@ -17,6 +17,7 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -77,7 +78,7 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
       public void run() {
         app.restart(true);
       }
-    });
+    }, ModalityState.NON_MODAL);
   }
 
   protected void initLicensingInfo(@NotNull UpdateChannel channel, @NotNull BuildInfo build) {
