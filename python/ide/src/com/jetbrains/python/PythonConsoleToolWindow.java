@@ -1,7 +1,8 @@
-package com.jetbrains.python.console;
+package com.jetbrains.python;
 
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -10,11 +11,15 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import com.jetbrains.python.console.PyConsoleType;
+import com.jetbrains.python.console.PydevConsoleRunner;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.util.Map;
 
 /**
  * @author traff
@@ -42,7 +47,7 @@ public class PythonConsoleToolWindow {
     }
   }
 
-  private void doInit(final ToolWindow toolWindow) {
+  private void doInit(@NotNull final ToolWindow toolWindow) {
     myInitialized = true;
 
     toolWindow.setToHideOnEmptyContent(true);
@@ -58,11 +63,27 @@ public class PythonConsoleToolWindow {
         if (window != null) {
           boolean visible = window.isVisible();
           if (visible && toolWindow.getContentManager().getContentCount() == 0) {
-            RunPythonConsoleAction.runPythonConsole(myProject, null, toolWindow);
+            PydevConsoleRunner.runPythonConsole(myProject, null, toolWindowConsole(window));
           }
         }
       }
     });
+  }
+
+  public static PydevConsoleRunner.PythonConsoleRunnerFactory toolWindowConsole(@Nullable final ToolWindow toolWindow) {
+    return new PydevConsoleRunner.PythonConsoleRunnerFactory() {
+      @Override
+      public PydevConsoleRunner createConsoleRunner(@NotNull Project project,
+                                                    @NotNull Sdk sdk,
+                                                    @NotNull PyConsoleType consoleType,
+                                                    @Nullable String workingDirectory,
+                                                    @NotNull Map<String, String> environmentVariables,
+                                                    String... statements2execute) {
+        PythonToolWindowConsoleRunner consoleRunner = new PythonToolWindowConsoleRunner(project, sdk, consoleType, workingDirectory, environmentVariables, statements2execute);
+        consoleRunner.setToolWindow(toolWindow);
+        return consoleRunner;
+      }
+    };
   }
 
   private static void addContent(ToolWindow toolWindow, RunContentDescriptor contentDescriptor) {

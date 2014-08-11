@@ -16,7 +16,6 @@
 package com.jetbrains.python.actions;
 
 import com.intellij.execution.ExecutionHelper;
-import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.*;
@@ -31,8 +30,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
 import com.jetbrains.python.console.PyCodeExecutor;
-import com.jetbrains.python.console.PydevConsoleRunner;
-import com.jetbrains.python.console.RunPythonConsoleAction;
 import com.jetbrains.python.psi.PyFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -214,15 +211,16 @@ public class ExecuteInConsoleAction extends AnAction {
   private static void startConsole(final Project project,
                                    final Consumer<PyCodeExecutor> consumer,
                                    Module context) {
-    PydevConsoleRunner runner = RunPythonConsoleAction.runPythonConsole(project, context, null);
-    runner.addConsoleListener(new PydevConsoleRunner.ConsoleListener() {
-      @Override
-      public void handleConsoleInitialized(LanguageConsoleView consoleView) {
-        if (consoleView instanceof PyCodeExecutor) {
-          consumer.consume((PyCodeExecutor)consoleView);
-        }
-      }
-    });
+    //TODO
+    //PydevConsoleRunner runner = PydevConsoleRunner.runPythonConsole(project, context);
+    //runner.addConsoleListener(new PydevConsoleRunner.ConsoleListener() {
+    //  @Override
+    //  public void handleConsoleInitialized(LanguageConsoleView consoleView) {
+    //    if (consoleView instanceof PyCodeExecutor) {
+    //      consumer.consume((PyCodeExecutor)consoleView);
+    //    }
+    //  }
+    //});
   }
 
   private static boolean canFindConsole(AnActionEvent e) {

@@ -17,9 +17,8 @@ package com.jetbrains.python.console;
 
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.Lists;
+import com.google.common.base.Joiner;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.Maps;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionHelper;
@@ -48,6 +47,8 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.actions.SplitLineAction;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -55,22 +56,22 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.remote.RemoteSshProcess;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.ui.content.Content;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.PathMappingSettings;
@@ -82,6 +83,7 @@ import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.console.completion.PydevConsoleElement;
 import com.jetbrains.python.console.parsing.PythonConsoleData;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
@@ -94,6 +96,8 @@ import com.jetbrains.python.run.ProcessRunner;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonTracebackFilter;
 import com.jetbrains.python.sdk.PySdkUtil;
+import com.jetbrains.python.sdk.PythonEnvUtil;
+import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import icons.PythonIcons;
 import org.apache.xmlrpc.XmlRpcException;
@@ -115,6 +119,9 @@ import static com.jetbrains.python.sdk.PythonEnvUtil.setPythonUnbuffered;
  * @author oleg
  */
 public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonConsoleView> {
+  public static final String WORKING_DIR_ENV = "WORKING_DIR_AND_PYTHON_PATHS";
+  public static final String CONSOLE_START_COMMAND = "import sys; print('Python %s on %s' % (sys.version, sys.platform))\n" +
+                                                     "sys.path.extend([" + WORKING_DIR_ENV + "])\n";
   private static final Logger LOG = Logger.getInstance(PydevConsoleRunner.class.getName());
   @SuppressWarnings("SpellCheckingInspection")
   public static final String PYDEV_PYDEVCONSOLE_PY = "pydev/pydevconsole.py";
@@ -139,18 +146,173 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
   private static final long APPROPRIATE_TO_WAIT = 60000;
   private PyRemoteSdkCredentials myRemoteCredentials;
-  private ToolWindow myToolWindow;
 
   private String myConsoleTitle = null;
 
   protected PydevConsoleRunner(@NotNull final Project project,
                                @NotNull Sdk sdk, @NotNull final PyConsoleType consoleType,
                                @Nullable final String workingDir,
-                               Map<String, String> environmentVariables) {
+                               Map<String, String> environmentVariables, String[] statementsToExecute) {
     super(project, consoleType.getTitle(), workingDir);
     mySdk = sdk;
     myConsoleType = consoleType;
     myEnvironmentVariables = environmentVariables;
+  }
+
+  @NotNull
+  public static PydevConsoleRunner runPythonConsole(@NotNull Project project,
+                                                    @Nullable Module contextModule,
+                                                    @NotNull PythonConsoleRunnerFactory runnerFactory) {
+    Pair<Sdk, Module> sdkAndModule = findPythonSdkAndModule(project, contextModule);
+
+    Module module = sdkAndModule.second;
+    Sdk sdk = sdkAndModule.first;
+
+    assert sdk != null;
+
+    PathMappingSettings mappingSettings = getMappings(project, sdk);
+
+    String[] setupFragment;
+
+    PyConsoleOptions.PyConsoleSettings settingsProvider = PyConsoleOptions.getInstance(project).getPythonConsoleSettings();
+    Collection<String> pythonPath = PythonCommandLineState.collectPythonPath(module, settingsProvider.addContentRoots(),
+                                                                             settingsProvider.addSourceRoots());
+
+    if (mappingSettings != null) {
+      pythonPath = mappingSettings.convertToRemote(pythonPath);
+    }
+
+    String customStartScript = settingsProvider == null ? "" : settingsProvider.getCustomStartScript();
+
+    if (customStartScript.trim().length() > 0) {
+      customStartScript = "\n" + customStartScript;
+    }
+
+    String selfPathAppend = constructPythonPathCommand(pythonPath, customStartScript);
+
+    String workingDir = settingsProvider.getWorkingDirectory();
+    if (StringUtil.isEmpty(workingDir)) {
+      if (module != null && ModuleRootManager.getInstance(module).getContentRoots().length > 0) {
+        workingDir = ModuleRootManager.getInstance(module).getContentRoots()[0].getPath();
+      }
+      else {
+        if (ModuleManager.getInstance(project).getModules().length > 0) {
+          VirtualFile[] roots = ModuleRootManager.getInstance(ModuleManager.getInstance(project).getModules()[0]).getContentRoots();
+          if (roots.length > 0) {
+            workingDir = roots[0].getPath();
+          }
+        }
+      }
+    }
+
+    if (mappingSettings != null) {
+      workingDir = mappingSettings.convertToRemote(workingDir);
+    }
+
+    BuildoutFacet facet = null;
+    if (module != null) {
+      facet = BuildoutFacet.getInstance(module);
+    }
+
+    if (facet != null) {
+      List<String> path = facet.getAdditionalPythonPath();
+      if (mappingSettings != null) {
+        path = mappingSettings.convertToRemote(path);
+      }
+      String prependStatement = facet.getPathPrependStatement(path);
+      setupFragment = new String[]{prependStatement, selfPathAppend};
+    }
+    else {
+      setupFragment = new String[]{selfPathAppend};
+    }
+
+    Map<String, String> envs = Maps.newHashMap(settingsProvider.getEnvs());
+    String ipythonEnabled = PyConsoleOptions.getInstance(project).isIpythonEnabled() ? "True" : "False";
+    envs.put(PythonEnvUtil.IPYTHONENABLE, ipythonEnabled);
+
+    return createAndRun(runnerFactory, project, sdk, PyConsoleType.PYTHON, workingDir, envs, setupFragment);
+  }
+
+
+  public static PathMappingSettings getMappings(Project project, Sdk sdk) {
+    PathMappingSettings mappingSettings = null;
+    if (PySdkUtil.isRemote(sdk)) {
+      PythonRemoteInterpreterManager instance = PythonRemoteInterpreterManager.getInstance();
+      if (instance != null) {
+        mappingSettings =
+          instance.setupMappings(project, (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData(), null);
+      }
+    }
+    return mappingSettings;
+  }
+
+  @NotNull
+  public static Pair<Sdk, Module> findPythonSdkAndModule(Project project, Module contextModule) {
+    Sdk sdk = null;
+    Module module = null;
+    PyConsoleOptions.PyConsoleSettings settings = PyConsoleOptions.getInstance(project).getPythonConsoleSettings();
+    String sdkHome = settings.getSdkHome();
+    if (sdkHome != null) {
+      sdk = PythonSdkType.findSdkByPath(sdkHome);
+      if (settings.getModuleName() != null) {
+        module = ModuleManager.getInstance(project).findModuleByName(settings.getModuleName());
+      }
+      else {
+        module = contextModule;
+        if (module == null && ModuleManager.getInstance(project).getModules().length > 0) {
+          module = ModuleManager.getInstance(project).getModules()[0];
+        }
+      }
+    }
+    if (sdk == null && settings.isUseModuleSdk()) {
+      if (contextModule != null) {
+        module = contextModule;
+      }
+      else if (settings.getModuleName() != null) {
+        module = ModuleManager.getInstance(project).findModuleByName(settings.getModuleName());
+      }
+      if (module != null) {
+        if (PythonSdkType.findPythonSdk(module) != null) {
+          sdk = PythonSdkType.findPythonSdk(module);
+        }
+      }
+    }
+    else if (contextModule != null) {
+      if (module == null) {
+        module = contextModule;
+      }
+      if (sdk == null) {
+        sdk = PythonSdkType.findPythonSdk(module);
+      }
+    }
+
+    if (sdk == null) {
+      for (Module m : ModuleManager.getInstance(project).getModules()) {
+        if (PythonSdkType.findPythonSdk(m) != null) {
+          sdk = PythonSdkType.findPythonSdk(m);
+          module = m;
+          break;
+        }
+      }
+    }
+    if (sdk == null) {
+      if (PythonSdkType.getAllSdks().size() > 0) {
+        //noinspection UnusedAssignment
+        sdk = PythonSdkType.getAllSdks().get(0); //take any python sdk
+      }
+    }
+    return Pair.create(sdk, module);
+  }
+
+  public static String constructPythonPathCommand(Collection<String> pythonPath, String command) {
+    final String path = Joiner.on(", ").join(Collections2.transform(pythonPath, new Function<String, String>() {
+      @Override
+      public String apply(String input) {
+        return "'" + input.replace("\\", "\\\\").replace("'", "\\'") + "'";
+      }
+    }));
+
+    return command.replace(WORKING_DIR_ENV, path);
   }
 
   public void setStatementsToExecute(String... statementsToExecute) {
@@ -197,16 +359,15 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   }
 
   @NotNull
-  public static PydevConsoleRunner createAndRun(@NotNull final Project project,
+  public static PydevConsoleRunner createAndRun(@NotNull PythonConsoleRunnerFactory runnerFactory,
+                                                @NotNull final Project project,
                                                 @NotNull final Sdk sdk,
                                                 @NotNull final PyConsoleType consoleType,
                                                 @Nullable final String workingDirectory,
                                                 @NotNull final Map<String, String> environmentVariables,
-                                                @Nullable final ToolWindow toolWindow,
                                                 final String... statements2execute) {
-    final PydevConsoleRunner consoleRunner = create(project, sdk, consoleType, workingDirectory, environmentVariables);
-    consoleRunner.setToolWindow(toolWindow);
-    consoleRunner.setStatementsToExecute(statements2execute);
+    final PydevConsoleRunner consoleRunner =
+      runnerFactory.createConsoleRunner(project, sdk, consoleType, workingDirectory, environmentVariables, statements2execute);
     consoleRunner.run();
     return consoleRunner;
   }
@@ -250,16 +411,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
                                           Sdk sdk,
                                           PyConsoleType consoleType,
                                           String workingDirectory) {
-    return create(project, sdk, consoleType, workingDirectory, Maps.<String, String>newHashMap());
-  }
-
-  @NotNull
-  private static PydevConsoleRunner create(@NotNull final Project project,
-                                           @NotNull final Sdk sdk,
-                                           @NotNull final PyConsoleType consoleType,
-                                           @Nullable final String workingDirectory,
-                                           @NotNull final Map<String, String> environmentVariables) {
-    return new PydevConsoleRunner(project, sdk, consoleType, workingDirectory, environmentVariables);
+    return new PydevConsoleRunner(project, sdk, consoleType, workingDirectory, Maps.<String, String>newHashMap(), new String[]{});
   }
 
   private static int[] findAvailablePorts(Project project, PyConsoleType consoleType) {
@@ -501,12 +653,6 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     return myConsoleTitle;
   }
 
-  @Override
-  protected void showConsole(Executor defaultExecutor, RunContentDescriptor contentDescriptor) {
-    PythonConsoleToolWindow terminalView = PythonConsoleToolWindow.getInstance(getProject());
-    terminalView.init(getToolWindow(), contentDescriptor);
-  }
-
   protected AnAction createRerunAction() {
     return new RestartAction(this);
   }
@@ -631,10 +777,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     return stopAction;
   }
 
-  private void clearContent(RunContentDescriptor descriptor) {
-    Content content = getToolWindow().getContentManager().findContent(descriptor.getDisplayName());
-    assert content != null;
-    getToolWindow().getContentManager().removeContent(content, true);
+  protected void clearContent(RunContentDescriptor descriptor) {
   }
 
   private AnAction createConsoleStoppingAction(final AnAction generalStopAction) {
@@ -792,16 +935,6 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     }
   }
 
-  public ToolWindow getToolWindow() {
-    if (myToolWindow == null) {
-      myToolWindow = ToolWindowManager.getInstance(getProject()).getToolWindow(PythonConsoleToolWindowFactory.ID);
-    }
-    return myToolWindow;
-  }
-
-  public void setToolWindow(ToolWindow toolWindow) {
-    myToolWindow = toolWindow;
-  }
 
   public interface ConsoleListener {
     void handleConsoleInitialized(LanguageConsoleView consoleView);
@@ -955,20 +1088,27 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     return session;
   }
 
-  @Override
-  protected List<String> getActiveConsoleNames(final String consoleTitle) {
-    return FluentIterable.from(
-      Lists.newArrayList(PythonConsoleToolWindow.getInstance(getProject()).getToolWindow().getContentManager().getContents())).transform(
-      new Function<Content, String>() {
-        @Override
-        public String apply(Content input) {
-          return input.getDisplayName();
-        }
-      }).filter(new Predicate<String>() {
+  public static PythonConsoleRunnerFactory factory() {
+    return new PythonConsoleRunnerFactory() {
       @Override
-      public boolean apply(String input) {
-        return input.contains(consoleTitle);
+      public PydevConsoleRunner createConsoleRunner(@NotNull Project project,
+                                                    @NotNull Sdk sdk,
+                                                    @NotNull PyConsoleType consoleType,
+                                                    @Nullable String workingDirectory,
+                                                    @NotNull Map<String, String> environmentVariables,
+                                                    String... statements2execute) {
+        return new PydevConsoleRunner(project, sdk, consoleType, workingDirectory, environmentVariables, statements2execute);
       }
-    }).toList();
+    };
+  }
+
+
+  public interface PythonConsoleRunnerFactory {
+    PydevConsoleRunner createConsoleRunner(@NotNull final Project project,
+                                           @NotNull final Sdk sdk,
+                                           @NotNull final PyConsoleType consoleType,
+                                           @Nullable final String workingDirectory,
+                                           @NotNull final Map<String, String> environmentVariables,
+                                           final String... statements2execute);
   }
 }

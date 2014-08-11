@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.console;
+package com.jetbrains.python;
 
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
+import com.jetbrains.python.console.PydevConsoleRunner;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,6 +30,6 @@ public class PythonConsoleToolWindowFactory implements ToolWindowFactory, DumbAw
 
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
-    RunPythonConsoleAction.runPythonConsole(project, null, toolWindow);
+    PydevConsoleRunner.runPythonConsole(project, null, PythonConsoleToolWindow.toolWindowConsole(toolWindow));
   }
 }
