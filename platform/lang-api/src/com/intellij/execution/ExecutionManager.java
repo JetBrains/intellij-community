@@ -67,6 +67,7 @@ public abstract class ExecutionManager {
 
   /**
    * @deprecated  use {@link #startRunProfile(RunProfileStarter, com.intellij.execution.configurations.RunProfileState, com.intellij.execution.runners.ExecutionEnvironment)}
+   * to remove in IDEA 14
    */
   public abstract void startRunProfile(@NotNull RunProfileStarter starter,
                                        @NotNull RunProfileState state,
@@ -79,11 +80,11 @@ public abstract class ExecutionManager {
    *
    * @param starter the callback to start the process execution.
    * @param state   the ready-to-start process
-   * @param env     the execution environment describing the process to be started.
+   * @param environment     the execution environment describing the process to be started.
    */
   public abstract void startRunProfile(@NotNull RunProfileStarter starter,
                                        @NotNull RunProfileState state,
-                                       @NotNull ExecutionEnvironment env);
+                                       @NotNull ExecutionEnvironment environment);
 
   public abstract void restartRunProfile(@NotNull Project project,
                                          @NotNull Executor executor,

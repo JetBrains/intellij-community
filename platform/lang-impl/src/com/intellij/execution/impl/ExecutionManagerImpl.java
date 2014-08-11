@@ -167,7 +167,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
                 return;
               }
             }
-            // important! Do not use DumbService.smartInvokelater here because it depends on modality state
+            // important! Do not use DumbService.smartInvokeLater here because it depends on modality state
             // and execution of startRunnable could be skipped if modality state check fails
             SwingUtilities.invokeLater(new Runnable() {
               @Override
@@ -261,8 +261,8 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   }
 
   @Override
-  public void startRunProfile(@NotNull RunProfileStarter starter, @NotNull RunProfileState state, @NotNull ExecutionEnvironment env) {
-    startRunProfile(starter, state, env.getProject(), env.getExecutor(), env);
+  public void startRunProfile(@NotNull RunProfileStarter starter, @NotNull RunProfileState state, @NotNull ExecutionEnvironment environment) {
+    startRunProfile(starter, state, environment.getProject(), environment.getExecutor(), environment);
   }
 
   @Override
@@ -275,12 +275,12 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
       for (RunContentDescriptor descriptor : getContentManager().getAllDescriptors()) {
         final ProcessHandler handler = descriptor.getProcessHandler();
         if (handler == processHandler) {
-          restartRunProfile(project, null, null, null, null, null, executor, target, configuration, descriptor);
+          restartRunProfile(project, null, null, null, executor, target, configuration, descriptor);
           return;
         }
       }
     }
-    restartRunProfile(project, null, null, null, null, null, executor, target, configuration, null);
+    restartRunProfile(project, null, null, null, executor, target, configuration, null);
   }
 
   @Override
@@ -289,7 +289,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
                                 @NotNull ExecutionTarget target,
                                 @Nullable RunnerAndConfigurationSettings configuration,
                                 @Nullable RunContentDescriptor currentDescriptor) {
-    restartRunProfile(project, null, null, null, null, null, executor, target, configuration, currentDescriptor);
+    restartRunProfile(project, null, null, null, executor, target, configuration, currentDescriptor);
   }
 
   @Override
@@ -305,8 +305,6 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
                       environment.getDataContext(),
                       runner,
                       environment.getRunProfile(),
-                      environment.getRunnerSettings(),
-                      environment.getConfigurationSettings(),
                       environment.getExecutor(),
                       environment.getExecutionTarget(),
                       environment.getRunnerAndConfigurationSettings(), currentDescriptor);
@@ -317,8 +315,6 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
                                  @Nullable final DataContext context,
                                  @Nullable ProgramRunner r,
                                  @Nullable final RunProfile runProfile,
-                                 @Nullable final RunnerSettings runnerSettings,
-                                 @Nullable final ConfigurationPerRunnerSettings configurationPerRunnerSettings,
                                  @NotNull final Executor executor,
                                  @NotNull final ExecutionTarget target,
                                  @Nullable final RunnerAndConfigurationSettings configuration,
