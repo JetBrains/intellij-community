@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.console;
 
+import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
@@ -28,7 +29,13 @@ public class PythonConsoleToolWindowFactory implements ToolWindowFactory, DumbAw
   public static final String ID = "Python Console";
 
   @Override
-  public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
-    PydevConsoleRunner.runPythonConsole(project, null, PythonConsoleToolWindow.toolWindowConsole(toolWindow));
+  public void createToolWindowContent(final @NotNull Project project, final @NotNull ToolWindow toolWindow) {
+    PydevConsoleRunner runner = PydevConsoleRunner.runPythonConsole(project, null, PythonConsoleToolWindow.toolWindowConsole(toolWindow));
+    runner.addConsoleListener(new PydevConsoleRunner.ConsoleListener() {
+      @Override
+      public void handleConsoleInitialized(LanguageConsoleView consoleView) {
+        PythonConsoleToolWindow.getInstance(project).initialized();
+      }
+    });
   }
 }

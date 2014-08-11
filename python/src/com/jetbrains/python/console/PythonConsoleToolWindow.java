@@ -1,9 +1,14 @@
 package com.jetbrains.python.console;
 
+import com.google.common.base.Function;
+import com.google.common.base.Predicates;
+import com.google.common.collect.FluentIterable;
+import com.google.common.collect.Lists;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -18,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -30,12 +36,25 @@ public class PythonConsoleToolWindow {
 
   private boolean myInitialized = false;
 
+  private ActionCallback myActivation = new ActionCallback();
+
   public PythonConsoleToolWindow(Project project) {
     myProject = project;
   }
 
   public static PythonConsoleToolWindow getInstance(@NotNull Project project) {
     return project.getComponent(PythonConsoleToolWindow.class);
+  }
+
+  public List<RunContentDescriptor> getConsoleContentDescriptors() {
+    return FluentIterable.from(Lists.newArrayList(getToolWindow().getContentManager().getContents()))
+      .transform(new Function<Content, RunContentDescriptor>() {
+        @Override
+        public RunContentDescriptor apply(@Nullable Content input) {
+          return input != null ? input.getUserData(CONTENT_DESCRIPTOR) : null;
+        }
+      }).filter(
+        Predicates.notNull()).toList();
   }
 
 
@@ -79,7 +98,8 @@ public class PythonConsoleToolWindow {
                                                     @Nullable String workingDirectory,
                                                     @NotNull Map<String, String> environmentVariables,
                                                     String... statements2execute) {
-        PythonToolWindowConsoleRunner consoleRunner = new PythonToolWindowConsoleRunner(project, sdk, consoleType, workingDirectory, environmentVariables, statements2execute);
+        PythonToolWindowConsoleRunner consoleRunner =
+          new PythonToolWindowConsoleRunner(project, sdk, consoleType, workingDirectory, environmentVariables, statements2execute);
         consoleRunner.setToolWindow(toolWindow);
         return consoleRunner;
       }
@@ -145,5 +165,18 @@ public class PythonConsoleToolWindow {
 
   private static JComponent getComponentToFocus(ToolWindow window) {
     return window.getContentManager().getComponent();
+  }
+
+  public void initialized() {
+    myActivation.setDone();
+  }
+
+  public ActionCallback getActivation() {
+    return myActivation;
+  }
+
+  public void activate(@NotNull Runnable runnable) {
+    myActivation.doWhenDone(runnable);
+    getToolWindow().activate(null);
   }
 }

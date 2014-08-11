@@ -15,10 +15,6 @@
  */
 package com.jetbrains.python.actions;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicates;
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionHelper;
 import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.process.ProcessHandler;
@@ -30,22 +26,19 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.content.Content;
 import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
 import com.jetbrains.python.console.PyCodeExecutor;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.PythonConsoleToolWindow;
-import com.jetbrains.python.console.PythonConsoleToolWindowFactory;
 import com.jetbrains.python.psi.PyFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
 public class PyExecuteSelectionAction extends AnAction {
 
@@ -197,17 +190,8 @@ public class PyExecuteSelectionAction extends AnAction {
     PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(project);
 
     if (toolWindow != null) {
-      ToolWindow tw = toolWindow.getToolWindow();
-      return FluentIterable.from(Lists.newArrayList(tw.getContentManager().getContents()))
-        .transform(new Function<Content, RunContentDescriptor>() {
-          @Override
-          public RunContentDescriptor apply(@Nullable Content input) {
-            return input != null ? input.getUserData(PythonConsoleToolWindow.CONTENT_DESCRIPTOR) : null;
-          }
-        }).filter(
-          Predicates.notNull()).toList();
+      return toolWindow.getConsoleContentDescriptors();
     }
-
 
     return ExecutionHelper.findRunningConsole(project, new NotNullFunction<RunContentDescriptor, Boolean>() {
       @NotNull
@@ -237,20 +221,32 @@ public class PyExecuteSelectionAction extends AnAction {
   private static void startConsole(final Project project,
                                    final Consumer<PyCodeExecutor> consumer,
                                    Module context) {
-    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(PythonConsoleToolWindowFactory.ID);
+    final PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(project);
 
+    if (toolWindow != null) {
+      toolWindow.activate(new Runnable() {
+        @Override
+        public void run() {
+          List<RunContentDescriptor> descs = toolWindow.getConsoleContentDescriptors();
 
-    PydevConsoleRunner runner = PydevConsoleRunner.runPythonConsole(project, context, toolWindow != null ? PythonConsoleToolWindow
-      .toolWindowConsole(toolWindow)
-                                                                                                         : PydevConsoleRunner.factory());
-    runner.addConsoleListener(new PydevConsoleRunner.ConsoleListener() {
-      @Override
-      public void handleConsoleInitialized(LanguageConsoleView consoleView) {
-        if (consoleView instanceof PyCodeExecutor) {
-          consumer.consume((PyCodeExecutor)consoleView);
+          RunContentDescriptor descriptor = descs.get(0);
+          if (descriptor != null && descriptor.getExecutionConsole() instanceof PyCodeExecutor) {
+            consumer.consume((PyCodeExecutor)descriptor.getExecutionConsole());
+          }
         }
-      }
-    });
+      });
+    }
+    else {
+      PydevConsoleRunner runner = PydevConsoleRunner.runPythonConsole(project, context, PydevConsoleRunner.factory());
+      runner.addConsoleListener(new PydevConsoleRunner.ConsoleListener() {
+        @Override
+        public void handleConsoleInitialized(LanguageConsoleView consoleView) {
+          if (consoleView instanceof PyCodeExecutor) {
+            consumer.consume((PyCodeExecutor)consoleView);
+          }
+        }
+      });
+    }
   }
 
   private static boolean canFindConsole(AnActionEvent e) {
