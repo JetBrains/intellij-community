@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.execution.actions;
 
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.KillableProcess;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunContentManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -29,7 +27,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListItemDescriptor;
+import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
@@ -49,13 +47,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
+class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
   @Override
   public void update(final AnActionEvent e) {
     boolean enable = false;
     Icon icon = getTemplatePresentation().getIcon();
     String description = getTemplatePresentation().getDescription();
-    final Presentation presentation = e.getPresentation();
 
     if (ActionPlaces.MAIN_MENU.equals(e.getPlace())) {
       enable = !getCancellableProcesses(e.getProject()).isEmpty() || !getActiveDescriptors(e.getDataContext()).isEmpty();
@@ -74,6 +71,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
       }
     }
 
+    Presentation presentation = e.getPresentation();
     presentation.setEnabled(enable);
     presentation.setIcon(icon);
     presentation.setDescription(description);
@@ -99,17 +97,11 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
       final JBList list = new JBList(handlerItems.first);
       if (handlerItems.second != null) list.setSelectedValue(handlerItems.second, true);
 
-      list.setCellRenderer(new GroupedItemsListRenderer(new ListItemDescriptor() {
+      list.setCellRenderer(new GroupedItemsListRenderer(new ListItemDescriptorAdapter() {
         @Nullable
         @Override
         public String getTextFor(Object value) {
           return value instanceof HandlerItem ? ((HandlerItem)value).displayName : null;
-        }
-
-        @Nullable
-        @Override
-        public String getTooltipFor(Object value) {
-          return null;
         }
 
         @Nullable
@@ -121,12 +113,6 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
         @Override
         public boolean hasSeparatorAboveOf(Object value) {
           return value instanceof HandlerItem && ((HandlerItem)value).hasSeparator;
-        }
-
-        @Nullable
-        @Override
-        public String getCaptionAboveOf(Object value) {
-          return null;
         }
       }));
 
@@ -220,8 +206,8 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
   }
 
   @Nullable
-  static ProcessHandler getHandler(final DataContext dataContext) {
-    final RunContentDescriptor contentDescriptor = RunContentManager.RUN_CONTENT_DESCRIPTOR.getData(dataContext);
+  static ProcessHandler getHandler(@NotNull DataContext dataContext) {
+    final RunContentDescriptor contentDescriptor = LangDataKeys.RUN_CONTENT_DESCRIPTOR.getData(dataContext);
     final ProcessHandler processHandler;
     if (contentDescriptor != null) {
       // toolwindow case

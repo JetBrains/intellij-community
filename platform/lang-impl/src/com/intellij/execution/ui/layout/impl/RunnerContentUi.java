@@ -164,7 +164,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
                          @NotNull String sessionName) {
     myProject = project;
     myRunnerUi = ui;
-    myLayoutSettings = settings;
+    myLayoutSettings =  settings;
     myActionManager = actionManager;
     mySessionName = sessionName;
     myFocusManager = focusManager;

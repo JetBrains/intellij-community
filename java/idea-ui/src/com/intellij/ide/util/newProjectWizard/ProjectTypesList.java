@@ -23,7 +23,7 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.ui.popup.ListItemDescriptor;
+import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ProjectTemplate;
@@ -114,17 +114,11 @@ public class ProjectTypesList implements Disposable {
       }
     });
 
-    myList.setCellRenderer(new GroupedItemsListRenderer(new ListItemDescriptor() {
+    myList.setCellRenderer(new GroupedItemsListRenderer(new ListItemDescriptorAdapter() {
       @Nullable
       @Override
       public String getTextFor(Object value) {
         return ((TemplateItem)value).getName();
-      }
-
-      @Nullable
-      @Override
-      public String getTooltipFor(Object value) {
-        return null;
       }
 
       @Nullable
