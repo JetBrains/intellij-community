@@ -76,6 +76,10 @@ public class PyCallHierarchyTest extends PyTestCase { // extends HierarchyViewTe
     testCallHierarchy("main.py");
   }
 
+  public void testArgumentList() throws Exception {
+    testCallHierarchy("main.py", "file_1.py");
+  }
+
   public void testAnotherSimple() throws Exception {
     testCallHierarchy("main.py", "file_2.py");
   }

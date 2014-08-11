@@ -1,0 +1,4 @@
+<node text="target_func(file_1.py)" base="true">
+  <node text="func1(file_1.py)"/>
+  <node text="func2(main.py)"/>
+</node>
