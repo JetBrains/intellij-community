@@ -782,17 +782,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void restart(final boolean exitConfirmed) {
-    final Runnable restartRunnable = new Runnable() {
-      public void run() {
-        exit(false, exitConfirmed, true, true);
-      }
-    };
-    if (getDefaultModalityState() == ModalityState.NON_MODAL) {
-      restartRunnable.run();
-    }
-    else {
-      invokeLater(restartRunnable, ModalityState.NON_MODAL);
-    }
+    exit(false, exitConfirmed, true, true);
   }
 
   /*
@@ -811,7 +801,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     exiting = true;
     try {
-      if (!force && getDefaultModalityState() != ModalityState.NON_MODAL) {
+      if (!force && !exitConfirmed && getDefaultModalityState() != ModalityState.NON_MODAL) {
         return;
       }
 
