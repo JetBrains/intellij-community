@@ -94,7 +94,7 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
           public void visitEnd() {
             super.visitEnd();
             try {
-              map.put(method, cfg.leakingParameters(classReader.getClassName(), node));
+              map.put(method, cfg.leakingParameters(classReader.getClassName(), node).first);
             }
             catch (AnalyzerException ignore) {}
           }

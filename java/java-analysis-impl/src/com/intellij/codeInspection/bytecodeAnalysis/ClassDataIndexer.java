@@ -19,18 +19,16 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileContent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.tree.MethodNode;
-import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
+import org.jetbrains.org.objectweb.asm.tree.analysis.*;
 
 import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
 
@@ -129,10 +127,10 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
           boolean added = false;
           final ControlFlowGraph graph = cfg.buildControlFlowGraph(className, methodNode);
 
-          boolean maybeLeakingParameter = false;
+          boolean maybeLeakingParameter = isInterestingResult;
           for (Type argType : argumentTypes) {
             int argSort = argType.getSort();
-            if (argSort == Type.OBJECT || argSort == Type.ARRAY || (isInterestingResult && Type.BOOLEAN_TYPE.equals(argType))) {
+            if (argSort == Type.OBJECT || argSort == Type.ARRAY) {
               maybeLeakingParameter = true;
               break;
             }
@@ -153,20 +151,23 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
 
 
             boolean reducible = dfs.back.isEmpty() || cfg.reducible(graph, dfs);
-            // start complex
+            // TODO - switch to complex/simple when ready
             if (true) {
               if (reducible) {
 
+                final Pair<boolean[], Frame<org.jetbrains.org.objectweb.asm.tree.analysis.Value>[]> pair =
+                  maybeLeakingParameter ?
+                  (argumentTypes.length < 32 ? cfg.fastLeakingParameters(className, methodNode) : cfg.leakingParameters(className, methodNode)) :
+                  null;
+                boolean[] leakingParameters =  pair != null ? pair.first : null;
                 final NullableLazyValue<boolean[]> resultOrigins = new NullableLazyValue<boolean[]>() {
                   @Override
                   protected boolean[] compute() {
                     try {
-                      return cfg.resultOrigins(className, methodNode);
+                      return OriginsAnalysis.resultOrigins(pair.second, methodNode.instructions, graph);
                     }
                     catch (AnalyzerException e) {
-                      return null;
-                    }
-                    catch (LimitReachedException e) {
+                      LOG.debug("when processing " + method + " in " + presentableUrl, e);
                       return null;
                     }
                   }
@@ -187,11 +188,6 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
                     return new Equation<Key, Value>(new Key(method, new Out(), stable), new Final<Key, Value>(Value.Top));
                   }
                 };
-
-                // specialized version working over bit masks
-                boolean[] leakingParameters = maybeLeakingParameter ?
-                                              (argumentTypes.length < 32 ? cfg.fastLeakingParameters(className, methodNode) : cfg.leakingParameters(className, methodNode)) :
-                                              null;
 
                 if (isReferenceResult) {
                   contractEquations.add(resultEquation.getValue());

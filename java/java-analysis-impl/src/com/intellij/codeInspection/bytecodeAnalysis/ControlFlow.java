@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
+import com.intellij.openapi.util.Pair;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.Opcodes;
@@ -32,34 +33,6 @@ final class cfg {
     return new ControlFlowBuilder(className, methodNode).buildCFG();
   }
 
-  static boolean[] resultOrigins(String className, MethodNode methodNode) throws AnalyzerException {
-    Type returnType = Type.getReturnType(methodNode.desc);
-    Frame<SourceValue>[] frames = new Analyzer<SourceValue>(new MinimalOriginInterpreter(isReferenceType(returnType))).analyze(className, methodNode);
-    InsnList insns = methodNode.instructions;
-    boolean[] result = new boolean[insns.size()];
-    for (int i = 0; i < frames.length; i++) {
-      AbstractInsnNode insnNode = insns.get(i);
-      Frame<SourceValue> frame = frames[i];
-      if (frame != null) {
-        switch (insnNode.getOpcode()) {
-          case ARETURN:
-          case IRETURN:
-          case LRETURN:
-          case FRETURN:
-          case DRETURN:
-            for (AbstractInsnNode sourceInsn : frame.pop().insns) {
-              result[insns.indexOf(sourceInsn)] = true;
-            }
-            break;
-
-          default:
-            break;
-        }
-      }
-    }
-    return result;
-  }
-
   static boolean isReferenceType(Type tp) {
     int sort = tp.getSort();
     return sort == Type.OBJECT || sort == Type.ARRAY;
@@ -69,8 +42,7 @@ final class cfg {
     return Type.BOOLEAN_TYPE.equals(tp);
   }
 
-
-  static boolean[] leakingParameters(String className, MethodNode methodNode) throws AnalyzerException {
+  static Pair<boolean[], Frame<Value>[]> leakingParameters(String className, MethodNode methodNode) throws AnalyzerException {
     Frame<ParamsValue>[] frames = new Analyzer<ParamsValue>(new ParametersUsage(methodNode)).analyze(className, methodNode);
     InsnList insns = methodNode.instructions;
     LeakingParametersCollector collector = new LeakingParametersCollector(methodNode);
@@ -84,151 +56,24 @@ final class cfg {
           case AbstractInsnNode.FRAME:
             break;
           default:
-            frame.execute(insnNode, collector);
+            new Frame<ParamsValue>(frame).execute(insnNode, collector);
         }
       }
     }
-    return collector.leaking;
+    // to hack type checker
+    Frame<?>[] frames1 = frames;
+    return new Pair<boolean[], Frame<Value>[]>(collector.leaking, (Frame<Value>[]) frames1);
   }
 
-  static boolean[] fastLeakingParameters(String className, MethodNode methodNode) throws AnalyzerException {
+  static Pair<boolean[], Frame<Value>[]> fastLeakingParameters(String className, MethodNode methodNode) throws AnalyzerException {
     IParametersUsage parametersUsage = new IParametersUsage(methodNode);
-    new Analyzer<IParamsValue>(parametersUsage).analyze(className, methodNode);
+    Frame<?>[] frames = new Analyzer<IParamsValue>(parametersUsage).analyze(className, methodNode);
     int leakingMask = parametersUsage.leaking;
     boolean[] result = new boolean[parametersUsage.arity];
     for (int i = 0; i < result.length; i++) {
       result[i] = (leakingMask & (1 << i)) != 0;
     }
-    return result;
-  }
-
-  static class MinimalOriginInterpreter extends SourceInterpreter {
-    //static final SourceValue[] sourceVals = {new SourceValue(1), new SourceValue(2)};
-
-    private final boolean isReference;
-    private int mergedCount = 0;
-
-    MinimalOriginInterpreter(boolean isReference) {
-      this.isReference = isReference;
-    }
-
-    @Override
-    public SourceValue newOperation(AbstractInsnNode insn) {
-      SourceValue result = super.newOperation(insn);
-      switch (insn.getOpcode()) {
-        case ICONST_0:
-        case ICONST_1:
-          if (!isReference) {
-            return result;
-          }
-          return new SourceValue(result.getSize());
-        case ACONST_NULL:
-        case LDC:
-        case NEW:
-          if (isReference) {
-            return result;
-          }
-          return new SourceValue(result.getSize());
-        default:
-          return new SourceValue(result.getSize());
-      }
-    }
-
-    @Override
-    public SourceValue unaryOperation(AbstractInsnNode insn, SourceValue value) {
-      SourceValue result = super.unaryOperation(insn, value);
-      switch (insn.getOpcode()) {
-        case CHECKCAST:
-        case NEWARRAY:
-        case ANEWARRAY:
-          if (isReference) {
-            return result;
-          }
-        default:
-          return new SourceValue(result.getSize());
-      }
-    }
-
-    @Override
-    public SourceValue binaryOperation(AbstractInsnNode insn, SourceValue value1, SourceValue value2) {
-      switch (insn.getOpcode()) {
-        case LALOAD:
-        case DALOAD:
-        case LADD:
-        case DADD:
-        case LSUB:
-        case DSUB:
-        case LMUL:
-        case DMUL:
-        case LDIV:
-        case DDIV:
-        case LREM:
-        case LSHL:
-        case LSHR:
-        case LUSHR:
-        case LAND:
-        case LOR:
-        case LXOR:
-          return new SourceValue(2);
-        default:
-          return new SourceValue(1);
-      }
-    }
-
-    @Override
-    public SourceValue ternaryOperation(AbstractInsnNode insn, SourceValue value1, SourceValue value2, SourceValue value3) {
-      return new SourceValue(1);
-    }
-
-
-    @Override
-    public SourceValue naryOperation(AbstractInsnNode insn, List<? extends SourceValue> values) {
-      int opCode = insn.getOpcode();
-      switch (opCode) {
-        case INVOKESTATIC:
-        case INVOKESPECIAL:
-        case INVOKEVIRTUAL:
-        case INVOKEINTERFACE:
-          MethodInsnNode mNode = (MethodInsnNode)insn;
-          Type retType = Type.getReturnType(mNode.desc);
-          if (INVOKEINTERFACE == opCode) {
-            return new SourceValue(retType.getSize());
-          }
-          if (isReference && isReferenceType(retType)) {
-            return new SourceValue(1, insn);
-          }
-          if (!isReference && isBooleanType(retType)) {
-            return new SourceValue(1, insn);
-          }
-          return new SourceValue(retType.getSize());
-        case MULTIANEWARRAY:
-          return new SourceValue(1, insn);
-        default:
-          InvokeDynamicInsnNode dNode = (InvokeDynamicInsnNode) insn;
-          retType = Type.getReturnType(dNode.desc);
-          return new SourceValue(retType.getSize());
-      }
-    }
-
-
-
-    @Override
-    public SourceValue copyOperation(AbstractInsnNode insn, SourceValue value) {
-      return value;
-    }
-
-    @Override
-    public SourceValue merge(SourceValue d, SourceValue w) {
-      SourceValue merged = super.merge(d, w);
-      int mergedSize = merged.insns.size();
-      if (mergedSize > 2) {
-        mergedCount += mergedSize;
-      }
-      if (mergedCount > Analysis.MERGE_LIMIT) {
-        throw new LimitReachedException();
-      }
-      return merged;
-    }
+    return new Pair<boolean[], Frame<Value>[]>(result, (Frame<Value>[]) frames);
   }
 
   private interface Action {}
