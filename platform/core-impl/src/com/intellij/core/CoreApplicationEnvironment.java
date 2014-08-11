@@ -234,6 +234,7 @@ public class CoreApplicationEnvironment {
       protected void doCheckCanceled() throws ProcessCanceledException {
       }
 
+      @NotNull
       @Override
       public NonCancelableSection startNonCancelableSection() {
         return NonCancelableSection.EMPTY;

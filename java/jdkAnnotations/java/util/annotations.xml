@@ -1120,13 +1120,22 @@
   <item name='java.util.ResourceBundle boolean containsKey(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.util.ResourceBundle java.lang.Object getObject(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.util.ResourceBundle java.lang.Object getObject(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.util.ResourceBundle java.lang.Object handleGetObject(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.util.ResourceBundle java.lang.String getString(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.util.ResourceBundle java.lang.String getString(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ResourceBundle java.lang.String[] getStringArray(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.util.ResourceBundle java.lang.String[] getStringArray(java.lang.String) 0'>

@@ -1,8 +1,6 @@
 def func():
-    try:
+    if True:
         import module
 
         module
-#       <ref>
-    except:
-        pass
+#            <ref>

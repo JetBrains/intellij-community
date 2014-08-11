@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,7 @@ package com.intellij.execution.runners;
 import com.intellij.diagnostic.logging.LogConsoleManagerBase;
 import com.intellij.diagnostic.logging.LogFilesManager;
 import com.intellij.diagnostic.logging.OutputFileUtil;
-import com.intellij.execution.DefaultExecutionResult;
-import com.intellij.execution.ExecutionManager;
-import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.Executor;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.SearchScopeProvider;
@@ -60,7 +57,6 @@ public class RunContentBuilder extends LogConsoleManagerBase {
   private final LogFilesManager myManager;
 
   private RunnerLayoutUi myUi;
-  private final Executor myExecutor;
 
   /**
    * @deprecated use {@link #RunContentBuilder(ProgramRunner, com.intellij.execution.ExecutionResult, ExecutionEnvironment)}
@@ -88,7 +84,6 @@ public class RunContentBuilder extends LogConsoleManagerBase {
   public RunContentBuilder(ExecutionResult executionResult, @NotNull ExecutionEnvironment environment) {
     super(environment.getProject(), SearchScopeProvider.createSearchScope(environment.getProject(), environment.getRunProfile()));
 
-    myExecutor = environment.getExecutor();
     myManager = new LogFilesManager(environment.getProject(), this, this);
     myExecutionResult = executionResult;
     setEnvironment(environment);
@@ -142,7 +137,7 @@ public class RunContentBuilder extends LogConsoleManagerBase {
         runnerType = JAVA_RUNNER + "." + id;
       }
     }
-    myUi = RunnerLayoutUi.Factory.getInstance(getProject()).create(runnerType, myExecutor.getId(), profile.getName(), this);
+    myUi = RunnerLayoutUi.Factory.getInstance(getProject()).create(runnerType, getEnvironment().getExecutor().getId(), profile.getName(), this);
     myUi.getOptions().setMoveToGridActionEnabled(false).setMinimizeActionEnabled(false);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -168,7 +163,7 @@ public class RunContentBuilder extends LogConsoleManagerBase {
       if (console instanceof ObservableConsoleView && !ApplicationManager.getApplication().isUnitTestMode()) {
         ((ObservableConsoleView)console).addChangeListener(new ConsoleToFrontListener((RunConfigurationBase)profile,
                                                                                       getProject(),
-                                                                                      myExecutor,
+                                                                                      getEnvironment().getExecutor(),
                                                                                       contentDescriptor,
                                                                                       myUi),
                                                            this);
@@ -192,8 +187,8 @@ public class RunContentBuilder extends LogConsoleManagerBase {
     final DefaultActionGroup consoleActions = new DefaultActionGroup();
     if (console instanceof ConsoleView) {
       AnAction[] actions = ((ConsoleView)console).createConsoleActions();
-      for (AnAction goaction: actions) {
-        consoleActions.add(goaction);
+      for (AnAction action: actions) {
+        consoleActions.add(action);
       }
     }
 
@@ -203,9 +198,15 @@ public class RunContentBuilder extends LogConsoleManagerBase {
   private ActionGroup createActionToolbar(final RunContentDescriptor contentDescriptor, final JComponent component) {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
 
-    final RestartAction restartAction = new RestartAction(myExecutor, contentDescriptor, getEnvironment());
+    final RestartAction restartAction = new RestartAction(contentDescriptor, getEnvironment());
     restartAction.registerShortcut(component);
     actionGroup.add(restartAction);
+    contentDescriptor.setRestarter(new Runnable() {
+      @Override
+      public void run() {
+        ExecutionUtil.restart(getEnvironment(), contentDescriptor);
+      }
+    });
 
     if (myExecutionResult instanceof DefaultExecutionResult) {
       final AnAction[] actions = ((DefaultExecutionResult)myExecutionResult).getRestartActions();
@@ -238,9 +239,9 @@ public class RunContentBuilder extends LogConsoleManagerBase {
     actionGroup.add(myUi.getOptions().getLayoutActions());
     actionGroup.addSeparator();
     actionGroup.add(PinToolwindowTabAction.getPinAction());
-    actionGroup.add(new CloseAction(myExecutor, contentDescriptor, getProject()));
+    actionGroup.add(new CloseAction(getEnvironment().getExecutor(), contentDescriptor, getProject()));
     final String helpId = contentDescriptor.getHelpId();
-    actionGroup.add(new ContextHelpAction(helpId != null ? helpId : myExecutor.getHelpId()));
+    actionGroup.add(new ContextHelpAction(helpId != null ? helpId : getEnvironment().getExecutor().getHelpId()));
     return actionGroup;
   }
 

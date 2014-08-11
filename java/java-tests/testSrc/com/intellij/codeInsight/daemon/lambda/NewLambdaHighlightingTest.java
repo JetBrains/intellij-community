@@ -62,8 +62,6 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA120992() { doTest(); }
   public void testTargetTypeConflictResolverShouldNotTryToEvaluateCurrentArgumentType() { doTest(); }
   public void testIDEA119535() { doTest(); }
-
-  @Bombed(day = 20, month = Calendar.AUGUST)
   public void testIDEA119003() { doTest(); }
   public void testIDEA125674() { doTest(); }
   public void testIDEA117124() { doTest(); }
@@ -79,6 +77,7 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA122700() { doTest(); }
   public void testIDEA122406() { doTest(); }
   public void testNestedCallsInsideLambdaReturnExpression() { doTest(); }
+  @Bombed(day = 20, month = Calendar.AUGUST)
   public void testIDEA123731() { doTest(); }
   public void testIDEA123869() { doTest(); }
   public void testIDEA123848() { doTest(); }
@@ -108,7 +107,6 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
-  @Bombed(day = 20, month = Calendar.AUGUST)
   public void testIDEA124190() throws Exception {
     doTest();
   }

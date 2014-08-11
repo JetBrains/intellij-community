@@ -109,7 +109,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private final @Nullable ExecutionEnvironment myEnvironment;
   private boolean myStopped;
   private boolean myPauseActionSupported;
-  private boolean myShowTabOnSuspend;
+  private final AtomicBoolean myShowTabOnSuspend;
   private final List<AnAction> myRestartActions = new SmartList<AnAction>();
   private final List<AnAction> myExtraStopActions = new SmartList<AnAction>();
   private final List<AnAction> myExtraActions = new SmartList<AnAction>();
@@ -131,7 +131,7 @@ public class XDebugSessionImpl implements XDebugSession {
     myEnvironment = environment;
     mySessionName = sessionName;
     myDebuggerManager = debuggerManager;
-    myShowTabOnSuspend = showTabOnSuspend;
+    myShowTabOnSuspend = new AtomicBoolean(showTabOnSuspend);
     myProject = debuggerManager.getProject();
     ValueLookupManager.getInstance(myProject).startListening();
     myIcon = icon;
@@ -152,7 +152,7 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   private void assertSessionTabInitialized() {
-    if (myShowTabOnSuspend) {
+    if (myShowTabOnSuspend.get()) {
       LOG.error("Debug tool window isn't shown yet because debug process isn't suspended");
     }
     else {
@@ -202,7 +202,7 @@ public class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void rebuildViews() {
-    if (!myShowTabOnSuspend && mySessionTab != null) {
+    if (!myShowTabOnSuspend.get() && mySessionTab != null) {
       mySessionTab.rebuildViews();
     }
   }
@@ -273,7 +273,7 @@ public class XDebugSessionImpl implements XDebugSession {
     });
     //todo[nik] make 'createConsole()' method return ConsoleView
     myConsoleView = (ConsoleView)myDebugProcess.createConsole();
-    if (!myShowTabOnSuspend) {
+    if (!myShowTabOnSuspend.get()) {
       initSessionTab(contentToReuse);
     }
 
@@ -310,6 +310,7 @@ public class XDebugSessionImpl implements XDebugSession {
   @Override
   public RunnerLayoutUi getUI() {
     assertSessionTabInitialized();
+    assert mySessionTab != null;
     return mySessionTab.getUi();
   }
 
@@ -787,15 +788,12 @@ public class XDebugSessionImpl implements XDebugSession {
     }
     adjustMouseTrackingCounter(myCurrentPosition, 1);
 
-    if (myShowTabOnSuspend) {
+    if (myShowTabOnSuspend.compareAndSet(true, false)) {
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         @Override
         public void run() {
-          if (myShowTabOnSuspend) {
-            myShowTabOnSuspend = false;
-            initSessionTab(null);
-            showSessionTab();
-          }
+          initSessionTab(null);
+          showSessionTab();
         }
       });
     }

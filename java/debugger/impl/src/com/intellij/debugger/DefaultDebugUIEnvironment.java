@@ -94,7 +94,7 @@ public class DefaultDebugUIEnvironment implements DebugUIEnvironment {
   @Override
   public void initActions(RunContentDescriptor content, DefaultActionGroup actionGroup) {
     Executor executor = myExecutionEnvironment.getExecutor();
-    RestartAction restartAction = new RestartAction(executor, content, myExecutionEnvironment);
+    RestartAction restartAction = new RestartAction(content, myExecutionEnvironment);
     actionGroup.add(restartAction, Constraints.FIRST);
     restartAction.registerShortcut(content.getComponent());
 

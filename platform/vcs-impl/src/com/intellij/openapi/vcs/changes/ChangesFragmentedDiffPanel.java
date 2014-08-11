@@ -549,7 +549,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
   }
 
   private static final int[] ourMarks = {1,2,4,8,-1};
-  public static final Hashtable<Integer,JLabel> LABELS = new Hashtable<Integer, JLabel>();
+  public static final Hashtable<Integer, JComponent> LABELS = new Hashtable<Integer, JComponent>();
   public static final int ALL_VALUE = 5;
 
   static {

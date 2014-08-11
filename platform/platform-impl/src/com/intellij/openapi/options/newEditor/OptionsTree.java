@@ -952,12 +952,14 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
         SimpleNode node = myTree.getNodeFor(path);
         if (node instanceof FilteringTreeStructure.FilteringNode) {
           Object delegate = ((FilteringTreeStructure.FilteringNode)node).getDelegate();
-          if (delegate instanceof EditorNode) {
+          while (delegate instanceof EditorNode) {
             EditorNode editor = (EditorNode)delegate;
             ConfigurableGroup group = editor.getGroup();
             if (group != null) {
               name = group.getDisplayName();
+              break;
             }
+            delegate = editor.getParent();
           }
         }
         if (name != null) {
@@ -969,9 +971,18 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
             bounds.height = height;
           }
           g.setColor(myTree.getBackground());
-          g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
-          g.setColor(myTree.getForeground());
-          g.drawLine(0, bounds.height, bounds.width, bounds.height);
+          if (g instanceof Graphics2D) {
+            int h = bounds.height / 3;
+            int y = bounds.y + bounds.height - h;
+            g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height - h);
+            ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(
+              0, y, g.getColor(),
+              0, y + h, ColorUtil.toAlpha(g.getColor(), 0)));
+            g.fillRect(bounds.x, y, bounds.width, h);
+          }
+          else {
+            g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+          }
           mySeparator.setBounds(bounds);
           mySeparator.paint(g);
         }

@@ -781,8 +781,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  public void restart(boolean exitConfirmed) {
-    exit(exitConfirmed, exitConfirmed, true, true);
+  public void restart(final boolean exitConfirmed) {
+    exit(false, exitConfirmed, true, true);
   }
 
   /*
@@ -801,7 +801,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     exiting = true;
     try {
-      if (!force && getDefaultModalityState() != ModalityState.NON_MODAL) {
+      if (!force && !exitConfirmed && getDefaultModalityState() != ModalityState.NON_MODAL) {
         return;
       }
 

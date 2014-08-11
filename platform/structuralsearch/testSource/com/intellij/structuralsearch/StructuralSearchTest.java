@@ -2963,5 +2963,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       ex = e;
     }
     assertNotNull(ex);
+
+    String pattern3 = "class $Class$ { \n" +
+                      "  class $n$$FieldType$ $FieldName$ = $Init$;\n" +
+                      "}";
+    try {
+      findMatchesCount(source, pattern3);
+    } catch (MalformedPatternException e) {
+      ex = e;
+    }
+    assertNotNull(ex);
   }
 }

@@ -837,11 +837,14 @@ public class InferenceSession {
       final Set<ConstraintFormula> subset = buildSubset(additionalConstraints);
 
       //collect all input variables of selection 
-      final Set<InferenceVariable> varsToResolve = new HashSet<InferenceVariable>();
+      final Set<InferenceVariable> varsToResolve = new LinkedHashSet<InferenceVariable>();
       for (ConstraintFormula formula : subset) {
         if (formula instanceof InputOutputConstraintFormula) {
           final Set<InferenceVariable> inputVariables = ((InputOutputConstraintFormula)formula).getInputVariables(this);
           if (inputVariables != null) {
+            for (InferenceVariable inputVariable : inputVariables) {
+              varsToResolve.addAll(inputVariable.getDependencies(this));
+            }
             varsToResolve.addAll(inputVariables);
           }
         }
