@@ -33,15 +33,6 @@ final class cfg {
     return new ControlFlowBuilder(className, methodNode).buildCFG();
   }
 
-  static boolean isReferenceType(Type tp) {
-    int sort = tp.getSort();
-    return sort == Type.OBJECT || sort == Type.ARRAY;
-  }
-
-  static boolean isBooleanType(Type tp) {
-    return Type.BOOLEAN_TYPE.equals(tp);
-  }
-
   static Pair<boolean[], Frame<Value>[]> leakingParameters(String className, MethodNode methodNode) throws AnalyzerException {
     Frame<ParamsValue>[] frames = new Analyzer<ParamsValue>(new ParametersUsage(methodNode)).analyze(className, methodNode);
     InsnList insns = methodNode.instructions;
@@ -419,7 +410,7 @@ class ParametersUsage extends Interpreter<ParamsValue> {
     if (type == null) return val1;
     called++;
     if (type == Type.VOID_TYPE) return null;
-    if (called < rangeEnd && rangeStart <= called && (cfg.isReferenceType(type) || cfg.isBooleanType(type))) {
+    if (called < rangeEnd && rangeStart <= called && (ASMUtils.isReferenceType(type) || ASMUtils.isBooleanType(type))) {
       boolean[] params = new boolean[arity];
       params[called - shift] = true;
       return type.getSize() == 1 ? new ParamsValue(params, 1) : new ParamsValue(params, 2);
@@ -569,7 +560,7 @@ class IParametersUsage extends Interpreter<IParamsValue> {
     if (type == null) return val1;
     called++;
     if (type == Type.VOID_TYPE) return null;
-    if (called < rangeEnd && rangeStart <= called && (cfg.isReferenceType(type) || cfg.isBooleanType(type))) {
+    if (called < rangeEnd && rangeStart <= called && (ASMUtils.isReferenceType(type) || ASMUtils.isBooleanType(type))) {
       int n = called - shift;
       return type.getSize() == 1 ? new IParamsValue(1 << n, 1) : new IParamsValue(1 << n, 2);
     }
@@ -593,7 +584,7 @@ class IParametersUsage extends Interpreter<IParamsValue> {
         size = cst instanceof Long || cst instanceof Double ? 2 : 1;
         break;
       case GETSTATIC:
-        size = Type.getType(((FieldInsnNode) insn).desc).getSize();
+        size = ASMUtils.getSizeFast(((FieldInsnNode)insn).desc);
         break;
       default:
         size = 1;
@@ -623,7 +614,7 @@ class IParametersUsage extends Interpreter<IParamsValue> {
         size = 2;
         break;
       case GETFIELD:
-        size = Type.getType(((FieldInsnNode) insn).desc).getSize();
+        size = ASMUtils.getSizeFast(((FieldInsnNode)insn).desc);
         leaking |= value.params;
         break;
       case ARRAYLENGTH:
@@ -724,7 +715,7 @@ class IParametersUsage extends Interpreter<IParamsValue> {
       size = 1;
     } else {
       String desc = (opcode == INVOKEDYNAMIC) ? ((InvokeDynamicInsnNode) insn).desc : ((MethodInsnNode) insn).desc;
-      size = Type.getReturnType(desc).getSize();
+      size = ASMUtils.getReturnSizeFast(desc);
     }
     return size == 1 ? val1 : val2;
   }

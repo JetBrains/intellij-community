@@ -48,12 +48,12 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
       List<Equation<Key, Value>> rawContractEquations = rawEquations.contractEquations;
 
       for (Equation<Key, Value> rawParameterEquation: rawParameterEquations) {
-        HEquation equation = BytecodeAnalysisConverter.convert(rawParameterEquation, md);
-        map.put(equation.key, equation.result);
+        //HEquation equation = BytecodeAnalysisConverter.convert(rawParameterEquation, md);
+        //map.put(equation.key, equation.result);
       }
       for (Equation<Key, Value> rawContractEquation: rawContractEquations) {
-        HEquation equation = BytecodeAnalysisConverter.convert(rawContractEquation, md);
-        map.put(equation.key, equation.result);
+        //HEquation equation = BytecodeAnalysisConverter.convert(rawContractEquation, md);
+        //map.put(equation.key, equation.result);
       }
     }
     catch (ProcessCanceledException e) {
@@ -152,7 +152,7 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
 
             boolean reducible = dfs.back.isEmpty() || cfg.reducible(graph, dfs);
             // TODO - switch to complex/simple when ready
-            if (true) {
+            if (complex) {
               if (reducible) {
 
                 final Pair<boolean[], Frame<org.jetbrains.org.objectweb.asm.tree.analysis.Value>[]> pair =
