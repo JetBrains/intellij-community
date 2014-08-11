@@ -28,6 +28,7 @@ import com.intellij.openapi.wm.*;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
+import com.intellij.ui.components.OrphanGuardian;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.switcher.SwitchProvider;
 import com.intellij.ui.switcher.SwitchTarget;
@@ -36,6 +37,7 @@ import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowPassInfo;
 import com.intellij.ui.tabs.impl.table.TableLayout;
 import com.intellij.ui.tabs.impl.table.TablePassInfo;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.Animator;
@@ -314,6 +316,16 @@ public class JBTabsImpl extends JComponent
         }
       }
     };
+    putClientProperty(OrphanGuardian.CLIENT_PROPERTY_KEY, new OrphanGuardian() {
+
+      @Override
+      public void iterateOrphans(Consumer<JComponent> consumer) {
+        for (TabInfo info : getVisibleInfos()) {
+          if (info == mySelectedInfo) continue;
+          consumer.consume(info.getComponent());
+        }
+      }
+    });
   }
 
   protected SingleRowLayout createSingleRowLayout() {
