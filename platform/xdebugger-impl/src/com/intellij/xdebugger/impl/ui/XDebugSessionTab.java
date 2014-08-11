@@ -149,12 +149,16 @@ public class XDebugSessionTab extends DebuggerSessionTabBase implements DataProv
     else if (TAB_KEY.is(dataId)) {
       return this;
     }
-    else if (SESSION_KEY.is(dataId)) {
-      return session;
+    else if (LangDataKeys.RUN_PROFILE.is(dataId)) {
+      ExecutionEnvironment environment = getEnvironment();
+      return environment == null ? null : environment.getRunProfile();
     }
 
     if (session != null) {
-      if (LangDataKeys.CONSOLE_VIEW.is(dataId)) {
+      if (SESSION_KEY.is(dataId)) {
+        return session;
+      }
+      else if (LangDataKeys.CONSOLE_VIEW.is(dataId)) {
         return session.getConsoleView();
       }
       else if (XDebugSessionData.DATA_KEY.is(dataId)) {
