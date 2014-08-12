@@ -87,7 +87,7 @@ public class PsiElementResolveResult implements ResolveResult{
   }
 
   @NotNull
-  public static ResolveResult[] createResults(@Nullable PsiElement[] elements) {
+  public static ResolveResult[] createResults(@Nullable PsiElement... elements) {
     if (elements == null || elements.length == 0) return EMPTY_ARRAY;
 
     final ResolveResult[] results = new ResolveResult[elements.length];
