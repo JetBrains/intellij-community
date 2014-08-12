@@ -15,7 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
-import com.jetbrains.env.community.python.debug.PyBaseDebuggerTask;
+import com.jetbrains.env.python.debug.PyBaseDebuggerTask;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.debugger.remote.*;
 import com.jetbrains.python.debugger.remote.vfs.PyRemotePositionConverter;

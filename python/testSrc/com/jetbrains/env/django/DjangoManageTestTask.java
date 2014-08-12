@@ -29,7 +29,7 @@ import com.jetbrains.django.fixtures.DjangoTestCase;
 import com.jetbrains.django.manage.DjangoManageTask;
 import com.jetbrains.django.testRunner.DjangoTestsConfigurationType;
 import com.jetbrains.django.ui.DjangoBundle;
-import com.jetbrains.env.community.PyExecutionFixtureTestTask;
+import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.PythonTracebackFilter;

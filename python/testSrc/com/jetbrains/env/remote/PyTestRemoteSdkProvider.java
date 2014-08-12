@@ -14,7 +14,7 @@ import com.intellij.remote.RemoteCredentialsHolder;
 import com.intellij.remote.RemoteSdkException;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ui.UIUtil;
-import com.jetbrains.env.community.PyTestTask;
+import com.jetbrains.env.PyTestTask;
 import com.jetbrains.python.remote.PyRemoteInterpreterManagerImpl;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
 import org.jetbrains.annotations.NotNull;

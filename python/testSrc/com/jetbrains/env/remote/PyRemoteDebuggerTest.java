@@ -5,10 +5,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.util.ui.UIUtil;
-import com.jetbrains.env.community.PyEnvTaskRunner;
-import com.jetbrains.env.community.PyExecutionFixtureTestTask;
-import com.jetbrains.env.community.PyTestTask;
-import com.jetbrains.env.community.python.PythonDebuggerTest;
+import com.jetbrains.env.PyEnvTaskRunner;
+import com.jetbrains.env.PyExecutionFixtureTestTask;
+import com.jetbrains.env.PyTestTask;
+import com.jetbrains.env.python.PythonDebuggerTest;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
 import org.jetbrains.annotations.Nullable;
 

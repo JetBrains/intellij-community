@@ -4,7 +4,7 @@ import com.google.common.collect.Sets;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.jetbrains.django.util.VirtualFileUtil;
-import com.jetbrains.env.community.PyEnvTestCase;
+import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.python.debugger.django.DjangoExceptionBreakpointProperties;
 import com.jetbrains.python.debugger.django.DjangoExceptionBreakpointType;
 
