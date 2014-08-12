@@ -15,6 +15,7 @@
  */
 package com.intellij.execution;
 
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
@@ -55,6 +56,10 @@ public abstract class ExecutionTargetManager {
 
   public static boolean canRun(@Nullable RunnerAndConfigurationSettings settings, @Nullable ExecutionTarget target) {
     return settings != null && target != null && settings.canRunOn(target) && target.canRun(settings);
+  }
+
+  public static boolean canRun(@NotNull ExecutionEnvironment environment) {
+    return canRun(environment.getRunnerAndConfigurationSettings(), environment.getExecutionTarget());
   }
 
   public static void update(@NotNull Project project) {

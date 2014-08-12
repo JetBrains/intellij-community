@@ -15,10 +15,7 @@
  */
 package com.intellij.execution.runners;
 
-import com.intellij.execution.DefaultExecutionTarget;
-import com.intellij.execution.ExecutionTarget;
-import com.intellij.execution.Executor;
-import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunnerSettings;
@@ -42,6 +39,7 @@ public final class ExecutionEnvironmentBuilder {
   @Nullable private RunContentDescriptor myContentToReuse;
   @Nullable private RunnerAndConfigurationSettings myRunnerAndConfigurationSettings;
   @Nullable private String myRunnerId;
+  private ProgramRunner<?> runner;
   private boolean myAssignNewId;
   @NotNull private Executor myExecutor;
   @Nullable private DataContext myDataContext;
@@ -49,6 +47,26 @@ public final class ExecutionEnvironmentBuilder {
   public ExecutionEnvironmentBuilder(@NotNull Project project, @NotNull Executor executor) {
     myProject = project;
     myExecutor = executor;
+  }
+
+  @NotNull
+  public static ExecutionEnvironmentBuilder create(@NotNull Project project, @NotNull Executor executor, @NotNull RunProfile runProfile) throws ExecutionException {
+    ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), runProfile);
+    if (runner == null) {
+      throw new ExecutionException("Cannot find runner for " + runProfile.getName());
+    }
+    return new ExecutionEnvironmentBuilder(project, executor).runnerId(runner.getRunnerId()).runProfile(runProfile);
+  }
+
+  @NotNull
+  public static ExecutionEnvironmentBuilder create(@NotNull Executor executor, @NotNull RunnerAndConfigurationSettings settings) throws ExecutionException {
+    ExecutionEnvironmentBuilder builder = create(settings.getConfiguration().getProject(), executor, settings.getConfiguration());
+    return builder.runnerAndSettings(builder.runner, settings);
+  }
+
+  @NotNull
+  Executor getExecutor() {
+    return myExecutor;
   }
 
   /**
@@ -64,13 +82,14 @@ public final class ExecutionEnvironmentBuilder {
     myRunnerSettings = copySource.getRunnerSettings();
     myConfigurationSettings = copySource.getConfigurationSettings();
     myRunnerId = copySource.getRunnerId();
+    runner = copySource.runner;
     myContentToReuse = copySource.getContentToReuse();
     myExecutor = copySource.getExecutor();
   }
 
   @NotNull
   public static ExecutionEnvironment fix(@NotNull ExecutionEnvironment environment, @Nullable RunContentDescriptor contentToReuse) {
-    if (environment.getContentToReuse() == contentToReuse) {
+    if (contentToReuse == null || environment.getContentToReuse() == contentToReuse) {
       return environment;
     }
     else {
@@ -79,12 +98,12 @@ public final class ExecutionEnvironmentBuilder {
   }
 
   @NotNull
-  public static ExecutionEnvironment fix(@NotNull ExecutionEnvironment environment, @NotNull ProgramRunner runner) {
-    if (runner.getRunnerId().equals(environment.getRunnerId())) {
+  public static ExecutionEnvironment fix(@NotNull ExecutionEnvironment environment, @Nullable ProgramRunner runner) {
+    if (runner == null || runner.getRunnerId().equals(environment.getRunnerId())) {
       return environment;
     }
     else {
-      return new ExecutionEnvironmentBuilder(environment).runnerId(runner.getRunnerId()).build();
+      return new ExecutionEnvironmentBuilder(environment).runner(runner).build();
     }
   }
 
@@ -104,6 +123,11 @@ public final class ExecutionEnvironmentBuilder {
     return this;
   }
 
+  public ExecutionEnvironmentBuilder activeTarget() {
+    myTarget = ExecutionTargetManager.getActiveTarget(myProject);
+    return this;
+  }
+
   @SuppressWarnings("UnusedDeclaration")
   @Deprecated
   /**
@@ -114,13 +138,13 @@ public final class ExecutionEnvironmentBuilder {
     return runnerAndSettings(programRunner, settings);
   }
 
-  public ExecutionEnvironmentBuilder runnerAndSettings(@NotNull ProgramRunner programRunner,
+  public ExecutionEnvironmentBuilder runnerAndSettings(@NotNull ProgramRunner runner,
                                                        @NotNull RunnerAndConfigurationSettings settings) {
     myRunnerAndConfigurationSettings = settings;
     myRunProfile = settings.getConfiguration();
-    myRunnerSettings = settings.getRunnerSettings(programRunner);
-    myConfigurationSettings = settings.getConfigurationSettings(programRunner);
-    myRunnerId = programRunner.getRunnerId();
+    myRunnerSettings = settings.getRunnerSettings(runner);
+    myConfigurationSettings = settings.getConfigurationSettings(runner);
+    this.runner = runner;
     return this;
   }
 
@@ -187,6 +211,11 @@ public final class ExecutionEnvironmentBuilder {
     return this;
   }
 
+  public ExecutionEnvironmentBuilder runner(@NotNull ProgramRunner<?> runner) {
+    this.runner = runner;
+    return this;
+  }
+
   public ExecutionEnvironmentBuilder assignNewId() {
     myAssignNewId = true;
     return this;
@@ -224,7 +253,7 @@ public final class ExecutionEnvironmentBuilder {
   public ExecutionEnvironment build() {
     ExecutionEnvironment environment =
       new ExecutionEnvironment(myRunProfile, myExecutor, myTarget, myProject, myRunnerSettings, myConfigurationSettings, myContentToReuse,
-                               myRunnerAndConfigurationSettings, myRunnerId);
+                               myRunnerAndConfigurationSettings, myRunnerId, runner);
     if (myAssignNewId) {
       environment.assignNewExecutionId();
     }

@@ -112,10 +112,7 @@ public class DebuggerPanelsManager implements ProjectComponent {
       // fix invalid environment
       environment = new ExecutionEnvironmentBuilder(environment).executor(executor).build();
     }
-    if (!runner.getRunnerId().equals(environment.getRunnerId())) {
-      // fix invalid environment
-      environment = new ExecutionEnvironmentBuilder(environment).runnerId(runner.getRunnerId()).build();
-    }
+    environment = ExecutionEnvironmentBuilder.fix(environment, runner);
     return attachVirtualMachine(environment, state, reuseContent, remoteConnection, pollConnection);
   }
 

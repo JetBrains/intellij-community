@@ -20,6 +20,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
@@ -109,6 +110,10 @@ public class RunDialog extends DialogWrapper implements RunConfigurable.RunDialo
 
   public static boolean editConfiguration(final Project project, final RunnerAndConfigurationSettings configuration, final String title) {
     return editConfiguration(project, configuration, title, null);
+  }
+
+  public static boolean editConfiguration(@NotNull ExecutionEnvironment environment, @NotNull String title) {
+    return editConfiguration(environment.getProject(), environment.getRunnerAndConfigurationSettings(), title, environment.getExecutor());
   }
 
   public static boolean editConfiguration(final Project project, final RunnerAndConfigurationSettings configuration, final String title, @Nullable final Executor executor) {

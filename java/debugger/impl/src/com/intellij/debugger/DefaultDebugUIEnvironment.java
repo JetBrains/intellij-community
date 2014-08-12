@@ -18,7 +18,6 @@ package com.intellij.debugger;
 import com.intellij.diagnostic.logging.LogFilesManager;
 import com.intellij.diagnostic.logging.OutputFileUtil;
 import com.intellij.execution.Executor;
-import com.intellij.execution.RunnerRegistry;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
@@ -55,7 +54,7 @@ public class DefaultDebugUIEnvironment implements DebugUIEnvironment {
     myExecutionEnvironment = environment;
     myModelEnvironment = new DefaultDebugEnvironment(project,
                                                      environment.getExecutor(),
-                                                     RunnerRegistry.getInstance().findRunnerById(environment.getRunnerId()),
+                                                     environment.getRunner(),
                                                      myExecutionEnvironment.getRunProfile(),
                                                      state,
                                                      remoteConnection,

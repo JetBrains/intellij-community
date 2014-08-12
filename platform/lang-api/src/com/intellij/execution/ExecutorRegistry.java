@@ -35,10 +35,8 @@ public abstract class ExecutorRegistry implements ApplicationComponent {
 
   public abstract Executor getExecutorById(final String executorId);
 
-  @Deprecated
   /**
-   * @deprecated
-   * to remove in IDEA 15
+   * Consider to use {@link #isStarting(com.intellij.execution.runners.ExecutionEnvironment)}
    */
   public abstract boolean isStarting(Project project, String executorId, String runnerId);
 

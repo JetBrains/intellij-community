@@ -52,6 +52,10 @@ public class ExecutionUtil {
     handleExecutionError(project, toolWindowId, runProfile.getName(), e);
   }
 
+  public static void handleExecutionError(@NotNull ExecutionEnvironment environment, @NotNull ExecutionException e) {
+    handleExecutionError(environment.getProject(), environment.getExecutor().getToolWindowId(), environment.getRunProfile().getName(), e);
+  }
+
   public static void handleExecutionError(@NotNull final Project project,
                                           @NotNull final String toolWindowId,
                                           @NotNull String taskName,
@@ -114,7 +118,28 @@ public class ExecutionUtil {
 
   public static void restart(@NotNull ExecutionEnvironment environment, @Nullable RunContentDescriptor contentDescriptor) {
     if (!ExecutorRegistry.getInstance().isStarting(environment)) {
-      ExecutionManager.getInstance(environment.getProject()).restartRunProfile(environment, contentDescriptor == null ? environment.getContentToReuse() : contentDescriptor);
+      ExecutionManager.getInstance(environment.getProject()).restartRunProfile(ExecutionEnvironmentBuilder.fix(environment, contentDescriptor));
+    }
+  }
+
+  public static void runConfiguration(@NotNull RunnerAndConfigurationSettings configuration, @NotNull Executor executor) {
+    ExecutionEnvironmentBuilder builder = createEnvironment(executor, configuration);
+    if (builder != null) {
+      ExecutionManager.getInstance(configuration.getConfiguration().getProject()).restartRunProfile(builder
+                                                                                                      .activeTarget()
+                                                                                                      .build());
+    }
+  }
+
+  @Nullable
+  public static ExecutionEnvironmentBuilder createEnvironment(@NotNull Executor executor, @NotNull RunnerAndConfigurationSettings settings) {
+    try {
+      return ExecutionEnvironmentBuilder.create(executor, settings);
+    }
+    catch (ExecutionException e) {
+      handleExecutionError(settings.getConfiguration().getProject(), executor.getToolWindowId(), settings.getConfiguration().getName(), e);
+      LOG.info(e);
+      return null;
     }
   }
 }
