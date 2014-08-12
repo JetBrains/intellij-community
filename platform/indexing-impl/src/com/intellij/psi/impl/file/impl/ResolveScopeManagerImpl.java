@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.ResolveScopeManager;
@@ -37,14 +38,17 @@ import java.util.List;
 import java.util.Map;
 
 public class ResolveScopeManagerImpl extends ResolveScopeManager {
-
+  /**
+   * if true then getUseScope() returns scope restricted to only relevant files which are stored in {@link RefResolveService}
+   */
+  public static final boolean ENABLED_REF_BACK = /*ApplicationManager.getApplication().isUnitTestMode() ||*/ Boolean.getBoolean("ref.back");
   private final Project myProject;
   private final ProjectRootManager myProjectRootManager;
   private final PsiManager myManager;
 
   private final Map<VirtualFile, GlobalSearchScope> myDefaultResolveScopesCache = new ConcurrentFactoryMap<VirtualFile, GlobalSearchScope>() {
     @Override
-    protected GlobalSearchScope create(VirtualFile key) {
+    protected GlobalSearchScope create(@NotNull VirtualFile key) {
       GlobalSearchScope scope = null;
       for(ResolveScopeProvider resolveScopeProvider: ResolveScopeProvider.EP_NAME.getExtensions()) {
         scope = resolveScopeProvider.getResolveScope(key, myProject);
@@ -180,34 +184,37 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
   @Override
   @NotNull
   public GlobalSearchScope getUseScope(@NotNull PsiElement element) {
-    VirtualFile vFile;
+    VirtualFile vDirectory;
+    final VirtualFile virtualFile;
+    final PsiFile containingFile;
     final GlobalSearchScope allScope = GlobalSearchScope.allScope(myManager.getProject());
     if (element instanceof PsiDirectory) {
-      vFile = ((PsiDirectory)element).getVirtualFile();
+      vDirectory = ((PsiDirectory)element).getVirtualFile();
+      virtualFile = null;
+      containingFile = null;
     }
     else {
-      final PsiFile containingFile = element.getContainingFile();
+      containingFile = element.getContainingFile();
       if (containingFile == null) return allScope;
-      final VirtualFile virtualFile = containingFile.getVirtualFile();
+      virtualFile = containingFile.getVirtualFile();
       if (virtualFile == null) return allScope;
-      vFile = virtualFile.getParent();
+      vDirectory = virtualFile.getParent();
     }
 
-    if (vFile == null) return allScope;
-    ProjectFileIndex projectFileIndex = myProjectRootManager.getFileIndex();
-    Module module = projectFileIndex.getModuleForFile(vFile);
-    if (module != null) {
-      boolean isTest = projectFileIndex.isInTestSourceContent(vFile);
-      return isTest
-             ? GlobalSearchScope.moduleTestsWithDependentsScope(module)
-             : GlobalSearchScope.moduleWithDependentsScope(module);
+    if (vDirectory == null) return allScope;
+    final ProjectFileIndex projectFileIndex = myProjectRootManager.getFileIndex();
+    final Module module = projectFileIndex.getModuleForFile(vDirectory);
+    if (module == null) {
+      return containingFile == null || virtualFile.isDirectory() || allScope.contains(virtualFile)
+             ? allScope : GlobalSearchScope.fileScope(containingFile).uniteWith(allScope);
     }
-    else {
-      final PsiFile f = element.getContainingFile();
-      final VirtualFile vf = f == null ? null : f.getVirtualFile();
-
-      return f == null || vf == null || vf.isDirectory() || allScope.contains(vf)
-             ? allScope : GlobalSearchScope.fileScope(f).uniteWith(allScope);
+    boolean isTest = projectFileIndex.isInTestSourceContent(vDirectory);
+    GlobalSearchScope scope = isTest
+                              ? GlobalSearchScope.moduleTestsWithDependentsScope(module)
+                              : GlobalSearchScope.moduleWithDependentsScope(module);
+    if (virtualFile instanceof VirtualFileWithId && ENABLED_REF_BACK) {
+      return RefResolveService.getInstance(myProject).restrictByBackwardIds(virtualFile, scope);
     }
+    return scope;
   }
 }
