@@ -124,16 +124,9 @@ public class PluginGroups {
       "com.intellij.plugins.html.instantEditing",
       "com.jetbrains.restClient"
     )));
-    tree.put("Version Controls", Pair.create("/plugins/VersionControls.png", Arrays.asList(
-      "ClearcasePlugin",
-      "CVS",
-      "Git4Idea",
-      "org.jetbrains.plugins.github",
-      "hg4idea",
-      "PerforceDirectPlugin",
-      "Subversion",
-      "TFS"
-    )));
+
+    addVcsGroup(tree);
+
     tree.put("Test Tools", Pair.create("/plugins/TestTools.png", Arrays.asList(
       "JUnit",
       "TestNG-J",
@@ -187,10 +180,27 @@ public class PluginGroups {
     featuredPlugins.put("Scala", "Custom Languages:Plugin for Scala language support:org.intellij.scala");
     featuredPlugins.put("Live Edit Tool",
                           "Web Development:Provides live edit HTML/CSS/JavaScript:com.intellij.plugins.html.instantEditing");
-    featuredPlugins.put("IdeaVIM", "Editor:Vim emulation plug-in for IDEs based on the IntelliJ platform:IdeaVIM");
+    addVimPlugin(featuredPlugins);
     featuredPlugins.put("NodeJS", "JavaScript:Node.js integration:NodeJS");
     featuredPlugins.put("Atlassian Connector",
                           "Tools Integration:Integration for Atlassian JIRA, Bamboo, Cricible, FishEye:atlassian-idea-plugin");
+  }
+
+  protected static void addVcsGroup(Map<String, Pair<String, List<String>>> tree) {
+    tree.put("Version Controls", Pair.create("/plugins/VersionControls.png", Arrays.asList(
+      "ClearcasePlugin",
+      "CVS",
+      "Git4Idea",
+      "org.jetbrains.plugins.github",
+      "hg4idea",
+      "PerforceDirectPlugin",
+      "Subversion",
+      "TFS"
+    )));
+  }
+
+  protected static void addVimPlugin(Map<String, String> featuredPlugins) {
+    featuredPlugins.put("IdeaVIM", "Editor:Vim emulation plug-in for IDEs based on the IntelliJ platform:IdeaVIM");
   }
 
   private void initIfNeed() {
