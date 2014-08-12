@@ -15,14 +15,15 @@
  */
 package org.jetbrains.idea.svn.branchConfig;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.messages.Topic;
 
 import java.io.File;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Holds what working copies we have for URLs
@@ -55,7 +56,6 @@ public class SvnBranchMapperManager implements PersistentStateComponent<SvnBranc
 
   public void put(final String url, final String value) {
     myStateHolder.put(url, value);
-    notifyWcRootsChanged(url, Collections.unmodifiableCollection(myStateHolder.get(url)));
   }
 
   public void remove(final String url, final File value) {
@@ -63,11 +63,6 @@ public class SvnBranchMapperManager implements PersistentStateComponent<SvnBranc
     if (set != null) {
       set.remove(value.getAbsolutePath());
     }
-    notifyWcRootsChanged(url, Collections.unmodifiableCollection(set));
-  }
-
-  private static void notifyWcRootsChanged(final String url, final Collection<String> roots) {
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(WC_ROOTS_CHANGED).rootsChanged(url, roots);
   }
 
   public void notifyBranchesChanged(final Project project, final VirtualFile vcsRoot, final SvnBranchConfigurationNew configuration) {
@@ -103,11 +98,4 @@ public class SvnBranchMapperManager implements PersistentStateComponent<SvnBranc
       return myMapping.get(key);
     }
   }
-
-  public static interface WcRootsChangeConsumer {
-    void rootsChanged(final String url, final Collection<String> roots);
-  }
-
-  public static final Topic<WcRootsChangeConsumer> WC_ROOTS_CHANGED =
-      new Topic<WcRootsChangeConsumer>("SVN_WC_ROOTS_CHANGED", WcRootsChangeConsumer.class);
 }
