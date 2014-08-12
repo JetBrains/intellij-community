@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -176,6 +176,16 @@ public class StringUtilTest extends TestCase {
     assertEquals("foo", StringUtil.unquoteString("|foo|", '|'));
     assertEquals("|foo", StringUtil.unquoteString("|foo", '|'));
     assertEquals("foo|", StringUtil.unquoteString("foo|", '|'));
+  }
+
+  public void testIsQuotedString() {
+    assertFalse(StringUtil.isQuotedString(""));
+    assertFalse(StringUtil.isQuotedString("'"));
+    assertFalse(StringUtil.isQuotedString("\""));
+    assertTrue(StringUtil.isQuotedString("\"\""));
+    assertTrue(StringUtil.isQuotedString("''"));
+    assertTrue(StringUtil.isQuotedString("'ab'"));
+    assertTrue(StringUtil.isQuotedString("\"foo\""));
   }
 
   public void testJoin() {
