@@ -43,6 +43,7 @@ public class HgPusher extends Pusher {
         HgSource source = (HgSource)hgSpec.getSource();
         Project project = repository.getProject();
         final HgPushCommand pushCommand = new HgPushCommand(project, repository.getRoot(), destination.myTarget);
+        pushCommand.setIsNewBranch(true); // set always true, because it just allow mercurial to create a new one if needed
         pushCommand.setForce(force);
         if (source.mySource.equals(hgRepository.getCurrentBookmark())) {
           if (vcsPushOptionValue == HgVcsPushOptionValue.Current) {
