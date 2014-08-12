@@ -293,4 +293,8 @@ public class StudyEditor implements FileEditor {
     }
     return null;
   }
+
+  public static void removeListener(Document document) {
+    myDocumentListeners.remove(document);
+  }
 }
