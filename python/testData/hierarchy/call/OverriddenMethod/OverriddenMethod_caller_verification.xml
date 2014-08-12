@@ -1,6 +1,5 @@
-<node text="A.target_func(main.py)" base="true">
+<node text="B.target_func(main.py)" base="true">
   <node text="C.func(main.py)"/>
   <node text="foo(main.py)"/>
   <node text="fuu(main.py)"/>
-  <node text="bar(main.py)"/>
 </node>

@@ -15,24 +15,21 @@
  */
 package com.jetbrains.python.hierarchy;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.ide.hierarchy.HierarchyBrowserBaseEx;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
-import com.intellij.ide.hierarchy.call.CallerMethodsTreeStructure;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.codeInsight.hierarchy.HierarchyViewTestBase;
 import com.intellij.util.Function;
-import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.hierarchy.call.PyCalleeFunctionTreeStructure;
 import com.jetbrains.python.hierarchy.call.PyCallerFunctionTreeStructure;
 import com.jetbrains.python.psi.PyFunction;
+import org.jetbrains.annotations.Nullable;
 
 
-public class PyCallHierarchyTest extends PyTestCase { // extends HierarchyViewTestBase {
+public class PyCallHierarchyTest extends PyTestCase {
 
   private final Function<PsiElement, HierarchyTreeStructure> functionToCallerTreeStructure = new Function<PsiElement, HierarchyTreeStructure>() {
+    @Nullable
     @Override
     public HierarchyTreeStructure fun(PsiElement element) {
       if (!(element instanceof PyFunction)) {
@@ -44,6 +41,7 @@ public class PyCallHierarchyTest extends PyTestCase { // extends HierarchyViewTe
   };
 
   private final Function<PsiElement, HierarchyTreeStructure> functionToCalleeTreeStructure = new Function<PsiElement, HierarchyTreeStructure>() {
+    @Nullable
     @Override
     public HierarchyTreeStructure fun(PsiElement element) {
       if (!(element instanceof PyFunction)) {
@@ -54,11 +52,11 @@ public class PyCallHierarchyTest extends PyTestCase { // extends HierarchyViewTe
     }
   };
 
-  protected String getBasePath() {
+  private String getBasePath() {
     return "hierarchy/call/" + getTestName(false);
   }
 
-  private void testCallHierarchy(String ... fileNames) throws Exception {
+  private void doTestCallHierarchy(String ... fileNames) throws Exception {
     String[] filePaths = new String[fileNames.length];
     int i = 0;
     for (String fileName: fileNames) {
@@ -67,20 +65,25 @@ public class PyCallHierarchyTest extends PyTestCase { // extends HierarchyViewTe
     }
     String verificationCallerFilePath = getTestDataPath() + "/" + getBasePath() + "/" + getTestName(false) + "_caller_verification.xml";
     String verificationCalleeFilePath = getTestDataPath() + "/" + getBasePath() + "/" + getTestName(false) + "_callee_verification.xml";
+
     myFixture.configureByFiles(filePaths);
     myFixture.testCallHierarchy(functionToCallerTreeStructure, verificationCallerFilePath, filePaths);
     myFixture.testCallHierarchy(functionToCalleeTreeStructure, verificationCalleeFilePath, filePaths);
   }
 
   public void testSimple() throws Exception {
-    testCallHierarchy("main.py");
+    doTestCallHierarchy("main.py");
   }
 
   public void testArgumentList() throws Exception {
-    testCallHierarchy("main.py", "file_1.py");
+    doTestCallHierarchy("main.py", "file_1.py");
   }
 
   public void testInheritance() throws Exception {
-    testCallHierarchy("main.py");
+    doTestCallHierarchy("main.py");
+  }
+
+  public void testOverriddenMethod() throws Exception {
+    doTestCallHierarchy("main.py", "file_1.py");
   }
 }
