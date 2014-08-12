@@ -1,0 +1,2 @@
+from S<caret>ystem.Web import AspNetHostingPermission
+print AspNetHostingPermission
