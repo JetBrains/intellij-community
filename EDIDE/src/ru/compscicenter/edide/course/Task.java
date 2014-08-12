@@ -19,7 +19,7 @@ import java.util.Map;
 /**
  * Implementation of task which contains task files, tests, input file for tests
  */
-public class Task {
+public class Task implements Stateful{
   public static final String TASK_DIR = "task";
   private static final Logger LOG = Logger.getInstance(Task.class.getName());
   private static final String ourTestFile = "tests.py";
@@ -52,6 +52,14 @@ public class Task {
       }
     }
     return StudyStatus.Solved;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
   }
 
   public void setStatus(@NotNull final StudyStatus status) {

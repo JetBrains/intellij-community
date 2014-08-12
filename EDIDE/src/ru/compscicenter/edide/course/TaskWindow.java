@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  */
 
 
-public class TaskWindow implements Comparable {
+public class TaskWindow implements Comparable, Stateful {
 
   public int line = 0;
   public int start = 0;

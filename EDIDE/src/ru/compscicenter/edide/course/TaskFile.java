@@ -20,7 +20,7 @@ import java.util.List;
  * which is visible to student in project view
  */
 
-public class TaskFile {
+public class TaskFile implements Stateful{
   public List<TaskWindow> taskWindows = new ArrayList<TaskWindow>();
   private Task myTask;
   @Transient

@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -39,23 +40,14 @@ public class CheckAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(CheckAction.class.getName());
 
   class StudyTestRunner {
-    private static final String TEST_OK = "#study_plugin test OK";
+    public static final String TEST_OK = "#study_plugin test OK";
     private static final String TEST_FAILED = "#study_plugin FAILED + ";
     private final Task myTask;
     private final VirtualFile myTaskDir;
-    private int myTestPassed;
 
     StudyTestRunner(Task task, VirtualFile taskDir) {
       myTask = task;
       myTaskDir = taskDir;
-    }
-
-    public int getTestPassed() {
-      return myTestPassed;
-    }
-
-    public void setTestPassed(int testPassed) {
-      myTestPassed = testPassed;
     }
 
     Process launchTests(Project project, String executablePath) throws ExecutionException {
@@ -89,9 +81,6 @@ public class CheckAction extends DumbAwareAction {
       String line;
       try {
         while ((line = testOutputReader.readLine()) != null) {
-          if (line.equals(TEST_OK)) {
-            myTestPassed++;
-          }
           if (line.contains(TEST_FAILED)) {
              return line.substring(TEST_FAILED.length(), line.length());
           }
@@ -103,11 +92,7 @@ public class CheckAction extends DumbAwareAction {
       finally {
         StudyUtils.closeSilently(testOutputReader);
       }
-      return null;
-    }
-
-    boolean testsPassed(Process p) {
-      return myTestPassed == myTask.getTestNum();
+      return StudyTestRunner.TEST_OK;
     }
   }
 
@@ -143,10 +128,8 @@ public class CheckAction extends DumbAwareAction {
                     LOG.error(e);
                   }
                   if (testProcess != null) {
-                    final int testNum = currentTask.getTestNum();
                     String failedMessage = testRunner.getPassedTests(testProcess);
-                    final int testPassed = testRunner.getTestPassed();
-                    if (testPassed !=0 && failedMessage == null) {
+                    if (failedMessage.equals(StudyTestRunner.TEST_OK)) {
                       currentTask.setStatus(StudyStatus.Solved);
                       StudyUtils.updateStudyToolWindow(project);
                       selectedTaskFile.drawAllWindows(selectedEditor);
@@ -158,7 +141,7 @@ public class CheckAction extends DumbAwareAction {
                     final TaskFile taskFileCopy = new TaskFile();
                     final VirtualFile copyWithAnswers = getCopyWithAnswers(taskDir, openedFile, selectedTaskFile, taskFileCopy);
                     for (final TaskWindow taskWindow : taskFileCopy.getTaskWindows()) {
-                      check(project, taskWindow, copyWithAnswers, taskFileCopy, selectedTaskFile, selectedEditor.getDocument(), testRunner);
+                      check(project, taskWindow, copyWithAnswers, taskFileCopy, selectedTaskFile, selectedEditor.getDocument(), testRunner, openedFile);
                     }
                     try {
                       copyWithAnswers.delete(this);
@@ -166,13 +149,8 @@ public class CheckAction extends DumbAwareAction {
                     catch (IOException e) {
                       LOG.error(e);
                     }
-
-                    if (failedMessage == null) {
-                      failedMessage = "";
-                    }
                     selectedTaskFile.drawAllWindows(selectedEditor);
-                    String result = String.format("%d from %d tests failed\n %s", testNum - testPassed, testNum, failedMessage);
-                    createTestResultPopUp(result, JBColor.RED, project);
+                    createTestResultPopUp(failedMessage, JBColor.RED, project);
                   }
                 }
               }
@@ -189,13 +167,23 @@ public class CheckAction extends DumbAwareAction {
                      TaskFile answerTaskFile,
                      TaskFile usersTaskFile,
                      Document usersDocument,
-                     StudyTestRunner testRunner) {
+                     StudyTestRunner testRunner,
+                     VirtualFile openedFile) {
 
     try {
       VirtualFile windowCopy = answerFile.copy(this, answerFile.getParent(), "window" + taskWindow.getIndex() + ".py");
       final FileDocumentManager documentManager = FileDocumentManager.getInstance();
       final Document windowDocument = documentManager.getDocument(windowCopy);
       if (windowDocument != null) {
+        StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
+        Course course = taskManager.getCourse();
+        Task task = usersTaskFile.getTask();
+        int taskNum = task.getIndex() + 1;
+        int lessonNum = task.getLesson().getIndex() + 1;
+        assert course != null;
+        String pathToResource = FileUtil.join(new File(course.getResourcePath()).getParent(), Lesson.LESSON_DIR + lessonNum,  Task.TASK_DIR + taskNum);
+        File resourceFile = new File(pathToResource, windowCopy.getName());
+        FileUtil.copy(new File(pathToResource, openedFile.getName()), resourceFile);
         TaskFile windowTaskFile = new TaskFile();
         TaskFile.copy(answerTaskFile, windowTaskFile);
         StudyDocumentListener listener = new StudyDocumentListener(windowTaskFile);
@@ -213,10 +201,15 @@ public class CheckAction extends DumbAwareAction {
             documentManager.saveDocument(windowDocument);
           }
         });
+        VirtualFile fileWindows = StudyUtils.flushWindows(windowDocument, windowTaskFile, windowCopy);
         Process smartTestProcess = testRunner.launchTests(project, windowCopy.getPath());
-        boolean res = testRunner.testsPassed(smartTestProcess);
+        boolean res = testRunner.getPassedTests(smartTestProcess).equals(StudyTestRunner.TEST_OK);
         userTaskWindow.setStatus(res ? StudyStatus.Solved : StudyStatus.Failed);
         windowCopy.delete(this);
+        fileWindows.delete(this);
+        if (!resourceFile.delete()) {
+          LOG.error("failed to delete", resourceFile.getPath());
+        }
       }
     }
     catch (IOException e) {

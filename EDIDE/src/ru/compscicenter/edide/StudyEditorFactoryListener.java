@@ -94,6 +94,7 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
     StudyDocumentListener listener = StudyEditor.getListener(document);
     if (listener != null) {
       document.removeDocumentListener(listener);
+      StudyEditor.removeListener(document);
     }
     editor.getMarkupModel().removeAllHighlighters();
     editor.getSelectionModel().removeSelection();

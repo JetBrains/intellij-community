@@ -6,7 +6,10 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorLocation;
+import com.intellij.openapi.fileEditor.FileEditorState;
+import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
@@ -20,9 +23,11 @@ import org.jetbrains.annotations.Nullable;
 import ru.compscicenter.edide.StudyDocumentListener;
 import ru.compscicenter.edide.StudyTaskManager;
 import ru.compscicenter.edide.actions.*;
-import ru.compscicenter.edide.course.*;
+import ru.compscicenter.edide.course.Task;
+import ru.compscicenter.edide.course.TaskFile;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -85,10 +90,12 @@ public class StudyEditor implements FileEditor {
       Task currentTask = taskFile.getTask();
       String taskText = currentTask.getResourceText(project, currentTask.getText(), false);
       final JLabel taskTextLabel = new JLabel(taskText);
+      taskTextLabel.setBorder(new EmptyBorder(15, 20, 0, 100));
       int fontSize = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize();
       String fontName = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName();
       taskTextLabel.setFont(new Font(fontName, Font.PLAIN, fontSize));
       HideableTitledPanel taskTextPanel = new HideableTitledPanel(TASK_TEXT_HEADER, taskTextLabel, true);
+      taskTextPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
       studyPanel.add(taskTextPanel);
       JPanel studyButtonPanel = new JPanel(new GridLayout(1, 2));
       JPanel taskActionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -285,5 +292,9 @@ public class StudyEditor implements FileEditor {
       }
     }
     return null;
+  }
+
+  public static void removeListener(Document document) {
+    myDocumentListeners.remove(document);
   }
 }

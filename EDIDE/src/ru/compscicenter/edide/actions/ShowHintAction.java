@@ -70,7 +70,7 @@ public class ShowHintAction extends DumbAwareAction {
                             .setRequestFocus(true)
                             .createPopup();
                         component.setHint(popup);
-                        popup.showInFocusCenter();
+                        popup.showInBestPositionFor(selectedEditor);
                       }
                     }
                   }
