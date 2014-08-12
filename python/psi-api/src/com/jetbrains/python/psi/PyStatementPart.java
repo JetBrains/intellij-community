@@ -15,8 +15,6 @@
  */
 package com.jetbrains.python.psi;
 
-import org.jetbrains.annotations.NotNull;
-
 /**
  * Abstract part of a multipart statement.
  * User: dcheryasov
@@ -24,10 +22,4 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface PyStatementPart extends PyElement, PyStatementListContainer {
   PyStatementPart[] EMPTY_ARRAY = new PyStatementPart[0];
-
-  /**
-   * @return the body of the part.
-   */
-  @NotNull
-  PyStatementList getStatementList();
 }
