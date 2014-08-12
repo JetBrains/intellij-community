@@ -113,20 +113,16 @@ public class DebuggerPanelsManager implements ProjectComponent {
       environment = new ExecutionEnvironmentBuilder(environment).executor(executor).build();
     }
     environment = ExecutionEnvironmentBuilder.fix(environment, runner);
-    return attachVirtualMachine(environment, state, reuseContent, remoteConnection, pollConnection);
+    environment = ExecutionEnvironmentBuilder.fix(environment, reuseContent);
+    return attachVirtualMachine(environment, state, remoteConnection, pollConnection);
   }
 
   @Nullable
   public RunContentDescriptor attachVirtualMachine(@NotNull ExecutionEnvironment environment,
                                                    RunProfileState state,
-                                                   RunContentDescriptor reuseContent,
                                                    RemoteConnection remoteConnection,
                                                    boolean pollConnection) throws ExecutionException {
-    return attachVirtualMachine(new DefaultDebugUIEnvironment(myProject,
-                                                              environment,
-                                                              state,
-                                                              remoteConnection,
-                                                              pollConnection));
+    return attachVirtualMachine(new DefaultDebugUIEnvironment(environment, state, remoteConnection, pollConnection));
   }
 
   @Nullable

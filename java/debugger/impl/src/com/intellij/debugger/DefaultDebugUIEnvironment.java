@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,32 +30,21 @@ import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.actionSystem.Constraints;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: michael.golubev
- */
 public class DefaultDebugUIEnvironment implements DebugUIEnvironment {
-  private final Project myProject;
   private final ExecutionEnvironment myExecutionEnvironment;
   private final DebugEnvironment myModelEnvironment;
 
-  public DefaultDebugUIEnvironment(Project project,
-                                   @NotNull ExecutionEnvironment environment,
+  public DefaultDebugUIEnvironment(@NotNull ExecutionEnvironment environment,
                                    RunProfileState state,
                                    RemoteConnection remoteConnection,
                                    boolean pollConnection) {
-    myProject = project;
     myExecutionEnvironment = environment;
-    myModelEnvironment = new DefaultDebugEnvironment(project,
-                                                     environment.getExecutor(),
-                                                     environment.getRunner(),
-                                                     myExecutionEnvironment.getRunProfile(),
+    myModelEnvironment = new DefaultDebugEnvironment(environment,
                                                      state,
                                                      remoteConnection,
                                                      pollConnection);
@@ -97,7 +86,7 @@ public class DefaultDebugUIEnvironment implements DebugUIEnvironment {
     actionGroup.add(restartAction, Constraints.FIRST);
     restartAction.registerShortcut(content.getComponent());
 
-    actionGroup.add(new CloseAction(executor, content, myProject));
+    actionGroup.add(new CloseAction(executor, content, myExecutionEnvironment.getProject()));
     actionGroup.add(new ContextHelpAction(executor.getHelpId()));
   }
 

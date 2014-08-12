@@ -203,10 +203,6 @@ public final class ExecutionEnvironmentBuilder {
    * to remove in IDEA 15
    */
   public ExecutionEnvironmentBuilder setRunnerId(@Nullable String runnerId) {
-    return runnerId(runnerId);
-  }
-
-  public ExecutionEnvironmentBuilder runnerId(@Nullable String runnerId) {
     myRunnerId = runnerId;
     return this;
   }
@@ -251,9 +247,12 @@ public final class ExecutionEnvironmentBuilder {
 
   @NotNull
   public ExecutionEnvironment build() {
-    ExecutionEnvironment environment =
-      new ExecutionEnvironment(myRunProfile, myExecutor, myTarget, myProject, myRunnerSettings, myConfigurationSettings, myContentToReuse,
-                               myRunnerAndConfigurationSettings, myRunnerId, runner);
+    if (runner == null && myRunnerId == null) {
+      runner = RunnerRegistry.getInstance().getRunner(myExecutor.getId(), myRunProfile);
+    }
+
+    ExecutionEnvironment environment = new ExecutionEnvironment(myRunProfile, myExecutor, myTarget, myProject, myRunnerSettings, myConfigurationSettings, myContentToReuse,
+                                                                myRunnerAndConfigurationSettings, myRunnerId, runner);
     if (myAssignNewId) {
       environment.assignNewExecutionId();
     }

@@ -320,7 +320,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
                                 @Nullable RunContentDescriptor currentDescriptor) {
     ExecutionEnvironmentBuilder builder = new ExecutionEnvironmentBuilder(environment).contentToReuse(currentDescriptor);
     if (runner != null) {
-      builder.runnerId(runner.getRunnerId());
+      builder.runner(runner);
     }
     restartRunProfile(builder.build());
   }

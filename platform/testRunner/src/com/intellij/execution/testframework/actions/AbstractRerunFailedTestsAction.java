@@ -241,7 +241,8 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
 
   private void performAction(ProgramRunner runner, MyRunProfile profile, Executor executor) {
     try {
-      runner.execute(new ExecutionEnvironmentBuilder(myEnvironment).runnerId(runner.getRunnerId())
+      runner.execute(new ExecutionEnvironmentBuilder(myEnvironment)
+                       .runner(runner)
                        .executor(executor)
                        .runProfile(profile)
                        .build());
