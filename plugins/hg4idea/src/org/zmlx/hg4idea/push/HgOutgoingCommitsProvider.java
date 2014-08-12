@@ -98,6 +98,6 @@ public class HgOutgoingCommitsProvider extends OutgoingCommitsProvider {
       }
       LOG.warn(resultErrors.toString());
     }
-    return new OutgoingResult(HgHistoryUtil.createFullCommitsFromResult(project, repository.getRoot(), result, version), errors);
+    return new OutgoingResult(HgHistoryUtil.createFullCommitsFromResult(project, repository.getRoot(), result, version, true), errors);
   }
 }
