@@ -59,10 +59,12 @@ public class MavenRunConfigurationType implements ConfigurationType {
    */
   MavenRunConfigurationType() {
     myFactory = new ConfigurationFactory(this) {
+      @Override
       public RunConfiguration createTemplateConfiguration(Project project) {
         return new MavenRunConfiguration(project, this, "");
       }
 
+      @Override
       public RunConfiguration createTemplateConfiguration(Project project, RunManager runManager) {
         return new MavenRunConfiguration(project, this, "");
       }
@@ -99,22 +101,27 @@ public class MavenRunConfigurationType implements ConfigurationType {
     };
   }
 
+  @Override
   public String getDisplayName() {
     return RunnerBundle.message("maven.run.configuration.name");
   }
 
+  @Override
   public String getConfigurationTypeDescription() {
     return RunnerBundle.message("maven.run.configuration.description");
   }
 
+  @Override
   public Icon getIcon() {
     return MavenIcons.Phase;
   }
 
+  @Override
   public ConfigurationFactory[] getConfigurationFactories() {
     return new ConfigurationFactory[]{myFactory};
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getId() {
