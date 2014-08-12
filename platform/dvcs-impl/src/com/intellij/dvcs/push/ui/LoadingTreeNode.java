@@ -41,7 +41,6 @@ public class LoadingTreeNode extends DefaultMutableTreeNode implements CustomRen
     myLoadingIcon = new ImageIcon(loadingIconPath.getPath());
   }
 
-
   @Override
   public void render(@NotNull ColoredTreeCellRenderer renderer) {
     renderer.setIcon(myLoadingIcon);

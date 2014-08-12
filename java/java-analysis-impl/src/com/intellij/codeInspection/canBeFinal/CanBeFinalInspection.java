@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -295,6 +295,7 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
           final PsiModifierList modifierList = psiElement.getModifierList();
           LOG.assertTrue(modifierList != null);
           modifierList.setModifierProperty(PsiModifier.FINAL, true);
+          modifierList.setModifierProperty(PsiModifier.VOLATILE, false);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);

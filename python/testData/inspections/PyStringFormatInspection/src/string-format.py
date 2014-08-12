@@ -97,3 +97,9 @@ my_tuple = (1,2,3,4,5,6,7,8)
 print '%d, %d' % my_tuple[:7:3]
 print '%d, %d, %d' % my_tuple[:7:3]
 print '%d, %d, %d, %d' % my_tuple[:7:3]
+
+# PY-12801
+print '%d %s' % ((42,) + ('spam',))
+print '%d %s' % (('ham',) + ('spam',))
+print '%d %s' % ((42,) + ())
+print '%d' % ((42,) + ('spam',))

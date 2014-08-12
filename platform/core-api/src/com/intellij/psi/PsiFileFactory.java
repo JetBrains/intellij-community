@@ -63,6 +63,10 @@ public abstract class PsiFileFactory {
 
   public abstract PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text);
 
+  public PsiFile createFileFromText(@NotNull Language language, @NotNull CharSequence text) {
+    return createFileFromText("foo.bar", language, text);
+  }
+
   public abstract PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text,
                                              boolean eventSystemEnabled, boolean markAsCopy);
 
