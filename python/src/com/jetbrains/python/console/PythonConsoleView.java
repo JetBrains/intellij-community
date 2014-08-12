@@ -29,6 +29,7 @@ import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -188,9 +189,9 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
     });
   }
 
-  private void showConsole(Runnable runnable) {
+  private void showConsole(@NotNull Runnable runnable) {
     PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(myProject);
-    if (toolWindow != null) {
+    if (toolWindow != null && !ApplicationManager.getApplication().isUnitTestMode()) {
       toolWindow.getToolWindow().activate(runnable);
     }
     else {
