@@ -29,7 +29,6 @@ import java.awt.event.ActionEvent;
 public class TipDialog extends DialogWrapper{
   private final TipPanel myTipPanel;
 
-  @Nullable
   @Override
   protected String getDimensionServiceKey() {
     return getClass().getName();
