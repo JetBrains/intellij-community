@@ -174,6 +174,7 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
 
   @Nullable
   public TaskFile getTaskFile(@NotNull final VirtualFile file) {
+    if (myCourse == null) return null;
     VirtualFile taskDir = file.getParent();
     if (taskDir != null) {
       String taskDirName = taskDir.getName();
