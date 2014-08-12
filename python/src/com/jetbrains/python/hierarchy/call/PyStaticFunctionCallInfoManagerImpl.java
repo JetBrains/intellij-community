@@ -23,6 +23,7 @@ import com.intellij.usageView.UsageInfo;
 import com.jetbrains.python.psi.PyArgumentList;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -68,6 +69,11 @@ public class PyStaticFunctionCallInfoManagerImpl extends PyStaticFunctionCallInf
         if (caller != null) {
           callers.add((PyFunction)caller);
         }
+      }
+
+      PsiElement caller = PsiTreeUtil.getParentOfType(element, PyFunction.class, false);
+      if (caller != null) {
+        callers.add((PyFunction)caller);
       }
     }
 
