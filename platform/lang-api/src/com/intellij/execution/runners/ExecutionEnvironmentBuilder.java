@@ -55,7 +55,7 @@ public final class ExecutionEnvironmentBuilder {
     if (runner == null) {
       throw new ExecutionException("Cannot find runner for " + runProfile.getName());
     }
-    return new ExecutionEnvironmentBuilder(project, executor).runnerId(runner.getRunnerId()).runProfile(runProfile);
+    return new ExecutionEnvironmentBuilder(project, executor).runner(runner).runProfile(runProfile);
   }
 
   @NotNull
