@@ -47,7 +47,6 @@
       "task_list": [
         {
           "name": "Variable definition",
-          "test_num": 5,
           "task_files": {
             "variable_definition.py": {
               "task_windows": [
@@ -64,7 +63,6 @@
         },
         {
           "name": "Undefined variable",
-          "test_num": 4,
           "task_files": {
             "undefined_variable.py": {
               "task_windows": [
@@ -81,7 +79,6 @@
         },
         {
           "name": "Variable types",
-          "test_num": 5,
           "task_files": {
             "variable_type.py": {
               "task_windows": [
@@ -98,7 +95,6 @@
         },
         {
           "name": "Arithmetic Operators",
-          "test_num": 7,
           "task_files": {
             "arithmetic_operators.py": {
               "task_windows": [
@@ -122,7 +118,6 @@
         },
         {
           "name": "Assignments",
-          "test_num": 6,
           "task_files": {
             "assignments.py": {
               "task_windows": [
@@ -139,7 +134,6 @@
         },
         {
           "name": "Boolean operators",
-          "test_num": 6,
           "task_files": {
             "boolean_operators.py": {
               "task_windows": [
@@ -156,7 +150,6 @@
         },
         {
           "name": "Comparison operators",
-          "test_num": 6,
           "task_files": {
             "comparison_operators.py": {
               "task_windows": [
@@ -179,7 +172,6 @@
       "task_list": [
         {
           "name": "Concatenation",
-          "test_num": 7,
           "task_files": {
             "concatenation.py": {
               "task_windows": [
@@ -196,7 +188,6 @@
         },
         {
           "name": "String multiplication",
-          "test_num": 6,
           "task_files": {
             "string_multiplication.py": {
               "task_windows": [
@@ -213,7 +204,6 @@
         },
         {
           "name": "String indexing",
-          "test_num": 6,
           "task_files": {
             "string_indexing.py": {
               "task_windows": [
@@ -230,7 +220,6 @@
         },
         {
           "name": "String negative indexing",
-          "test_num": 6,
           "task_files": {
             "negative_indexing.py": {
               "task_windows": [
@@ -247,7 +236,6 @@
         },
         {
           "name": "String slicing",
-          "test_num": 6,
           "task_files": {
             "slicing.py": {
               "task_windows": [
@@ -264,7 +252,6 @@
         },
         {
           "name": "In operator",
-          "test_num": 6,
           "task_files": {
             "in_operator.py": {
               "task_windows": [
@@ -281,7 +268,6 @@
         },
         {
           "name": "String length",
-          "test_num": 6,
           "task_files": {
             "len_function.py": {
               "task_windows": [
@@ -298,7 +284,6 @@
         },
         {
           "name": "Character escaping",
-          "test_num": 5,
           "task_files": {
             "character_escaping.py": {
               "task_windows": [
@@ -315,7 +300,6 @@
         },
         {
           "name": "Basic string methods",
-          "test_num": 5,
           "task_files": {
             "string_methods.py": {
               "task_windows": [
@@ -332,7 +316,6 @@
         },
         {
           "name": "String formatting",
-          "test_num": 6,
           "task_files": {
             "string_formatting.py": {
               "task_windows": [
@@ -361,7 +344,6 @@
       "task_list": [
         {
           "name": "Lists introduction",
-          "test_num": 5,
           "task_files": {
             "lists.py": {
               "task_windows": [
@@ -378,7 +360,6 @@
         },
         {
           "name": "Lists operations",
-          "test_num": 6,
           "task_files": {
             "list_operations.py": {
               "task_windows": [
@@ -395,7 +376,6 @@
         },
         {
           "name": "List items",
-          "test_num": 6,
           "task_files": {
             "list_items.py": {
               "task_windows": [
@@ -412,7 +392,6 @@
         },
         {
           "name": "Tuples",
-          "test_num": 5,
           "task_files": {
             "tuples.py": {
               "task_windows": [
@@ -429,7 +408,6 @@
         },
         {
           "name": "Dictionaries",
-          "test_num": 5,
           "task_files": {
             "dicts.py": {
               "task_windows": [
@@ -446,7 +424,6 @@
         },
         {
           "name": "Dictionary keys() and values()",
-          "test_num": 5,
           "task_files": {
             "dict_key_value.py": {
               "task_windows": [
@@ -463,7 +440,6 @@
         },
         {
           "name": "In keyword",
-          "test_num": 5,
           "task_files": {
             "in_keyword.py": {
               "task_windows": [
@@ -485,7 +461,6 @@
       "task_list": [
         {
           "name": "Boolean operators",
-          "test_num": 5,
           "task_files": {
             "boolean_operators.py": {
               "task_windows": [
@@ -502,7 +477,6 @@
         },
         {
           "name": "Boolean operators order",
-          "test_num": 5,
           "task_files": {
             "boolean_order.py": {
               "task_windows": [
@@ -519,7 +493,6 @@
         },
         {
           "name": "If statement",
-          "test_num": 6,
           "task_files": {
             "if_statement.py": {
               "task_windows": [
@@ -536,7 +509,6 @@
         },
         {
           "name": "Else, elif part in if statement",
-          "test_num": 7,
           "task_files": {
             "else_elif.py": {
               "task_windows": [
@@ -565,7 +537,6 @@
       "task_list": [
         {
           "name": "For loop",
-          "test_num": 5,
           "task_files": {
             "for_loop.py": {
               "task_windows": [
@@ -582,7 +553,6 @@
         },
         {
           "name": "For loop using string",
-          "test_num": 6,
           "task_files": {
             "for_string.py": {
               "task_windows": [
@@ -599,7 +569,6 @@
         },
         {
           "name": "While loop",
-          "test_num": 6,
           "task_files": {
             "while_loop.py": {
               "task_windows": [
@@ -616,7 +585,6 @@
         },
         {
           "name": "Break keyword",
-          "test_num": 5,
           "task_files": {
             "break_keyword.py": {
               "task_windows": [
@@ -633,7 +601,6 @@
         },
         {
           "name": "Continue keyword",
-          "test_num": 5,
           "task_files": {
             "continue_keyword.py": {
               "task_windows": [
@@ -655,7 +622,6 @@
       "task_list": [
         {
           "name": "Function definition",
-          "test_num": 7,
           "task_files": {
             "functions.py": {
               "task_windows": [
@@ -672,7 +638,6 @@
         },
         {
           "name": "Function parameters and call arguments",
-          "test_num": 6,
           "task_files": {
             "param_args.py": {
               "task_windows": [
@@ -689,7 +654,6 @@
         },
         {
           "name": "Function return value",
-          "test_num": 7,
           "task_files": {
             "return_keyword.py": {
               "task_windows": [
@@ -720,7 +684,6 @@
         },
         {
           "name": "Function default parameters",
-          "test_num": 6,
           "task_files": {
             "default_parameter.py": {
               "task_windows": [
@@ -742,7 +705,6 @@
       "task_list": [
         {
           "name": "Class definition",
-          "test_num": 4,
           "task_files": {
             "class_definition.py": {
               "task_windows": [
@@ -759,7 +721,6 @@
         },
         {
           "name": "Variable access",
-          "test_num": 5,
           "task_files": {
             "access_variable.py": {
               "task_windows": [
@@ -776,7 +737,6 @@
         },
         {
           "name": "Variable access",
-          "test_num": 6,
           "task_files": {
             "access_variable.py": {
               "task_windows": [
@@ -800,7 +760,6 @@
         },
         {
           "name": "Self explanation",
-          "test_num": 5,
           "task_files": {
             "self_parameter.py": {
               "task_windows": [
@@ -817,7 +776,6 @@
         },
         {
           "name": "Special __init__ method",
-          "test_num": 6,
           "task_files": {
             "init_method.py": {
               "task_windows": [
@@ -839,7 +797,6 @@
       "task_list": [
         {
           "name": "Import module",
-          "test_num": 8,
           "task_files": {
             "imports.py": {
               "task_windows": [
@@ -865,7 +822,6 @@
         },
         {
           "name": "Builtin modules",
-          "test_num": 5,
           "task_files": {
             "builtin_modules.py": {
               "task_windows": [
@@ -882,7 +838,6 @@
         },
         {
           "name": "From import",
-          "test_num": 5,
           "task_files": {
             "from_import.py": {
               "task_windows": [
@@ -906,7 +861,6 @@
       "task_list": [
         {
           "name": "Read file",
-          "test_num": 7,
           "task_files": {
             "read_file.py": {
               "task_windows": [
@@ -939,7 +893,6 @@
         },
         {
           "name": "Write to file",
-          "test_num": 4,
           "task_files": {
             "write_to_file.py": {
               "task_windows": [
