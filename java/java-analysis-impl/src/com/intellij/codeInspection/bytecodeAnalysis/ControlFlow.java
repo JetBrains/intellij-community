@@ -17,6 +17,8 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.openapi.util.Pair;
 import gnu.trove.TIntArrayList;
+import gnu.trove.TIntHashSet;
+import gnu.trove.TIntIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.Type;
@@ -70,8 +72,8 @@ final class cfg {
   // Graphs: Theory and Algorithms. by K. Thulasiraman , M. N. S. Swamy (1992)
   // 11.7.2 DFS of a directed graph
   static DFSTree buildDFSTree(int[][] transitions, int edgeCount) {
-    Set<Edge> nonBack = new HashSet<Edge>();
-    Set<Edge> back = new HashSet<Edge>();
+    HashSet<Edge> nonBack = new HashSet<Edge>();
+    HashSet<Edge> back = new HashSet<Edge>();
 
     boolean[] marked = new boolean[transitions.length];
     boolean[] scanned = new boolean[transitions.length];
@@ -159,41 +161,59 @@ final class cfg {
   // Journal of Computer and System Sciences 9.3 (1974): 355-365.
   static boolean reducible(ControlFlowGraph cfg, DFSTree dfs) {
     int size = cfg.transitions.length;
-    HashSet<Integer>[] cycles = new HashSet[size];
-    HashSet<Integer>[] nonCycles = new HashSet[size];
+    boolean[] loopEnters = dfs.loopEnters;
+    TIntHashSet[] cycleIncomings = new TIntHashSet[size];
+    // really this may be array, since dfs already ensures no duplicates
+    TIntArrayList[] nonCycleIncomings = new TIntArrayList[size];
     int[] collapsedTo = new int[size];
+    int[] queue = new int[size];
+    int top;
     for (int i = 0; i < size; i++) {
-      cycles[i] = new HashSet<Integer>();
-      nonCycles[i] = new HashSet<Integer>();
+      if (loopEnters[i]) {
+        cycleIncomings[i] = new TIntHashSet();
+      }
+      nonCycleIncomings[i] = new TIntArrayList();
       collapsedTo[i] = i;
     }
 
+    // from whom back connections
     for (Edge edge : dfs.back) {
-      cycles[edge.to].add(edge.from);
+      cycleIncomings[edge.to].add(edge.from);
     }
+    // from whom ordinary connections
     for (Edge edge : dfs.nonBack) {
-      nonCycles[edge.to].add(edge.from);
+      nonCycleIncomings[edge.to].add(edge.from);
     }
 
     for (int w = size - 1; w >= 0 ; w--) {
-      HashSet<Integer> p = new HashSet<Integer>(cycles[w]);
-      Queue<Integer> queue = new LinkedList<Integer>(cycles[w]);
+      top = 0;
+      // NB - it is modified later!
+      TIntHashSet p = cycleIncomings[w];
+      if (p == null) {
+        continue;
+      }
+      TIntIterator iter = p.iterator();
+      while (iter.hasNext()) {
+        queue[top++] = iter.next();
+      }
 
-      while (!queue.isEmpty()) {
-        int x = queue.remove();
-        for (int y : nonCycles[x]) {
-          int y1 = collapsedTo[y];
+      while (top > 0) {
+        int x = queue[--top];
+        TIntArrayList incoming = nonCycleIncomings[x];
+        for (int i = 0; i < incoming.size(); i++) {
+          int y1 = collapsedTo[incoming.getQuick(i)];
           if (!dfs.isDescendant(y1, w)) {
             return false;
           }
           if (y1 != w && p.add(y1)) {
-            queue.add(y1);
+            queue[top++] = y1;
           }
         }
       }
 
-      for (int x : p) {
-        collapsedTo[x] = w;
+      iter = p.iterator();
+      while (iter.hasNext()) {
+        collapsedTo[iter.next()] = w;
       }
     }
 
