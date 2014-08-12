@@ -541,8 +541,17 @@ public class RedundantCastUtil {
             }
           }
         }
-        if (parent instanceof PsiInstanceOfExpression || (TypeConversionUtil.isAssignable(castTo, opType, false) && 
-                                                          (expectedTypeByParent == null || TypeConversionUtil.isAssignable(expectedTypeByParent, opType, false)))) {
+        if (parent instanceof PsiInstanceOfExpression) {
+          //15.20.2. Type Comparison Operator instanceof:
+          //If a cast (§15.16) of the RelationalExpression to the ReferenceType would be rejected as a compile-time error,
+          //then the instanceof relational expression likewise produces a compile-time error.
+          final PsiTypeElement checkTypeElement = ((PsiInstanceOfExpression)parent).getCheckType();
+          if (checkTypeElement != null && TypeConversionUtil.areTypesConvertible(opType, checkTypeElement.getType())) {
+            addToResults(typeCast);
+          }
+        }
+        else if (TypeConversionUtil.isAssignable(castTo, opType, false) &&
+                 (expectedTypeByParent == null || TypeConversionUtil.isAssignable(expectedTypeByParent, opType, false))) {
           addToResults(typeCast);
         }
       }
