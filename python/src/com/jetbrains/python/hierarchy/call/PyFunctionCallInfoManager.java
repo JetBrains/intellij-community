@@ -18,11 +18,12 @@ package com.jetbrains.python.hierarchy.call;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.List;
 
 
 public interface PyFunctionCallInfoManager {
-  List<PyFunction> getCallees(@NotNull PyFunction pyFunction);
+  Collection<PyFunction> getCallees(@NotNull PyFunction pyFunction);
 
-  List<PyFunction> getCallers(@NotNull PyFunction pyFunction);
+  Collection<PyFunction> getCallers(@NotNull PyFunction pyFunction);
 }
