@@ -53,12 +53,12 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
       List<Equation<Key, Value>> rawContractEquations = rawEquations.contractEquations;
 
       for (Equation<Key, Value> rawParameterEquation: rawParameterEquations) {
-        //HEquation equation = BytecodeAnalysisConverter.convert(rawParameterEquation, md);
-        //map.put(equation.key, equation.result);
+        HEquation equation = BytecodeAnalysisConverter.convert(rawParameterEquation, md);
+        map.put(equation.key, equation.result);
       }
       for (Equation<Key, Value> rawContractEquation: rawContractEquations) {
-        //HEquation equation = BytecodeAnalysisConverter.convert(rawContractEquation, md);
-        //map.put(equation.key, equation.result);
+        HEquation equation = BytecodeAnalysisConverter.convert(rawContractEquation, md);
+        map.put(equation.key, equation.result);
       }
     }
     catch (ProcessCanceledException e) {
@@ -149,7 +149,7 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
             }
             // simple
             else {
-              processNonBranchingMethod(method, graph);
+              processNonBranchingMethod(method, argumentTypes, graph, isReferenceResult, isBooleanResult, stable);
               return;
             }
           }
@@ -305,9 +305,32 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
         }
       }
 
-      private void processNonBranchingMethod(Method method, ControlFlowGraph graph) throws AnalyzerException {
+      private void processNonBranchingMethod(Method method,
+                                             Type[] argumentTypes,
+                                             ControlFlowGraph graph,
+                                             boolean isReferenceResult,
+                                             boolean isBooleanResult,
+                                             boolean stable) throws AnalyzerException {
         CombinedSingleAnalysis analyzer = new CombinedSingleAnalysis(method, graph);
         analyzer.analyze();
+        if (isReferenceResult) {
+          contractEqs.add(analyzer.outContractEquation(stable));
+        }
+        for (int i = 0; i < argumentTypes.length; i++) {
+          Type argType = argumentTypes[i];
+          boolean isRefArg = ASMUtils.isReferenceType(argType);
+          if (isRefArg) {
+            parameterEqs.add(analyzer.notNullParamEquation(i, stable));
+          }
+          if (isRefArg && (isReferenceResult || isBooleanResult)) {
+            contractEqs.add(analyzer.nullContractEquation(i, stable));
+            contractEqs.add(analyzer.notNullContractEquation(i, stable));
+          }
+          if (ASMUtils.isBooleanType(argType) && (isReferenceResult || isBooleanResult)) {
+            contractEqs.add(analyzer.trueContractEquation(i, stable));
+            contractEqs.add(analyzer.falseContractEquation(i, stable));
+          }
+        }
       }
 
       private Pair<boolean[], Frame<org.jetbrains.org.objectweb.asm.tree.analysis.Value>[]> leakingParametersAndFrames(Method method,

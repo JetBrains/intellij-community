@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
+import com.intellij.util.SingletonSet;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.org.objectweb.asm.Handle;
 import org.jetbrains.org.objectweb.asm.Opcodes;
@@ -102,6 +103,246 @@ final class CombinedSingleAnalysis {
     }
   }
 
+  final Equation<Key, Value> notNullParamEquation(int i, boolean stable) {
+    final Key key = new Key(method, new In(i), stable);
+    final Result<Key, Value> result;
+    if (interpreter.dereferenced[i]) {
+      result = new Final<Key, Value>(Value.NotNull);
+    }
+    else {
+      Set<Key> calls = interpreter.callDerefs[i];
+      if (calls == null || calls.isEmpty()) {
+        result = new Final<Key, Value>(Value.Top);
+      }
+      else {
+        result = new Pending<Key, Value>(new SingletonSet<Product<Key, Value>>(new Product<Key, Value>(Value.Top, calls)));
+      }
+    }
+    return new Equation<Key, Value>(key, result);
+  }
+
+  final Equation<Key, Value> trueContractEquation(int i, boolean stable) {
+    final Key key = new Key(method, new InOut(i, Value.True), stable);
+    final Result<Key, Value> result;
+    if (exception) {
+      result = new Final<Key, Value>(Value.Bot);
+    }
+    else if (FalseValue == returnValue) {
+      result = new Final<Key, Value>(Value.False);
+    }
+    else if (TrueValue == returnValue) {
+      result = new Final<Key, Value>(Value.True);
+    }
+    else if (NullValue == returnValue) {
+      result = new Final<Key, Value>(Value.Null);
+    }
+    else if (returnValue instanceof NotNullValue) {
+      result = new Final<Key, Value>(Value.NotNull);
+    }
+    else if (returnValue instanceof NParamValue && ((NParamValue)returnValue).n == i) {
+      result = new Final<Key, Value>(Value.True);
+    }
+    else if (returnValue instanceof CombinedCall) {
+      CombinedCall call = (CombinedCall)returnValue;
+      HashSet<Key> keys = new HashSet<Key>();
+      for (int argI = 0; argI < call.args.size(); argI++) {
+        BasicValue arg = call.args.get(argI);
+        if (arg instanceof NParamValue) {
+          NParamValue npv = (NParamValue)arg;
+          if (npv.n == i) {
+            keys.add(new Key(call.method, new InOut(argI, Value.True), call.stableCall));
+          }
+        }
+      }
+      if (ASMUtils.isReferenceType(call.getType())) {
+        keys.add(new Key(call.method, new Out(), call.stableCall));
+      }
+      if (keys.isEmpty()) {
+        result = new Final<Key, Value>(Value.Top);
+      } else {
+        result = new Pending<Key, Value>(new SingletonSet<Product<Key, Value>>(new Product<Key, Value>(Value.Top, keys)));
+      }
+    }
+    else {
+      result = new Final<Key, Value>(Value.Top);
+    }
+    return new Equation<Key, Value>(key, result);
+  }
+
+  final Equation<Key, Value> falseContractEquation(int i, boolean stable) {
+    final Key key = new Key(method, new InOut(i, Value.False), stable);
+    final Result<Key, Value> result;
+    if (exception) {
+      result = new Final<Key, Value>(Value.Bot);
+    }
+    else if (FalseValue == returnValue) {
+      result = new Final<Key, Value>(Value.False);
+    }
+    else if (TrueValue == returnValue) {
+      result = new Final<Key, Value>(Value.True);
+    }
+    else if (NullValue == returnValue) {
+      result = new Final<Key, Value>(Value.Null);
+    }
+    else if (returnValue instanceof NotNullValue) {
+      result = new Final<Key, Value>(Value.NotNull);
+    }
+    else if (returnValue instanceof NParamValue && ((NParamValue)returnValue).n == i) {
+      result = new Final<Key, Value>(Value.False);
+    }
+    else if (returnValue instanceof CombinedCall) {
+      CombinedCall call = (CombinedCall)returnValue;
+      HashSet<Key> keys = new HashSet<Key>();
+      for (int argI = 0; argI < call.args.size(); argI++) {
+        BasicValue arg = call.args.get(argI);
+        if (arg instanceof NParamValue) {
+          NParamValue npv = (NParamValue)arg;
+          if (npv.n == i) {
+            keys.add(new Key(call.method, new InOut(argI, Value.False), call.stableCall));
+          }
+        }
+      }
+      if (ASMUtils.isReferenceType(call.getType())) {
+        keys.add(new Key(call.method, new Out(), call.stableCall));
+      }
+      if (keys.isEmpty()) {
+        result = new Final<Key, Value>(Value.Top);
+      } else {
+        result = new Pending<Key, Value>(new SingletonSet<Product<Key, Value>>(new Product<Key, Value>(Value.Top, keys)));
+      }
+    }
+    else {
+      result = new Final<Key, Value>(Value.Top);
+    }
+    return new Equation<Key, Value>(key, result);
+  }
+
+  final Equation<Key, Value> notNullContractEquation(int i, boolean stable) {
+    final Key key = new Key(method, new InOut(i, Value.NotNull), stable);
+    final Result<Key, Value> result;
+    if (exception) {
+      result = new Final<Key, Value>(Value.Bot);
+    }
+    else if (FalseValue == returnValue) {
+      result = new Final<Key, Value>(Value.False);
+    }
+    else if (TrueValue == returnValue) {
+      result = new Final<Key, Value>(Value.True);
+    }
+    else if (NullValue == returnValue) {
+      result = new Final<Key, Value>(Value.Null);
+    }
+    else if (returnValue instanceof NotNullValue) {
+      result = new Final<Key, Value>(Value.NotNull);
+    }
+    else if (returnValue instanceof NParamValue && ((NParamValue)returnValue).n == i) {
+      result = new Final<Key, Value>(Value.NotNull);
+    }
+    else if (returnValue instanceof CombinedCall) {
+      CombinedCall call = (CombinedCall)returnValue;
+      HashSet<Key> keys = new HashSet<Key>();
+      for (int argI = 0; argI < call.args.size(); argI++) {
+        BasicValue arg = call.args.get(argI);
+        if (arg instanceof NParamValue) {
+          NParamValue npv = (NParamValue)arg;
+          if (npv.n == i) {
+            keys.add(new Key(call.method, new InOut(argI, Value.NotNull), call.stableCall));
+          }
+        }
+      }
+      if (ASMUtils.isReferenceType(call.getType())) {
+        keys.add(new Key(call.method, new Out(), call.stableCall));
+      }
+      if (keys.isEmpty()) {
+        result = new Final<Key, Value>(Value.Top);
+      } else {
+        result = new Pending<Key, Value>(new SingletonSet<Product<Key, Value>>(new Product<Key, Value>(Value.Top, keys)));
+      }
+    }
+    else {
+      result = new Final<Key, Value>(Value.Top);
+    }
+    return new Equation<Key, Value>(key, result);
+  }
+
+  final Equation<Key, Value> nullContractEquation(int i, boolean stable) {
+    final Key key = new Key(method, new InOut(i, Value.Null), stable);
+    final Result<Key, Value> result;
+    if (exception || interpreter.dereferenced[i]) {
+      result = new Final<Key, Value>(Value.Bot);
+    }
+    else if (FalseValue == returnValue) {
+      result = new Final<Key, Value>(Value.False);
+    }
+    else if (TrueValue == returnValue) {
+      result = new Final<Key, Value>(Value.True);
+    }
+    else if (NullValue == returnValue) {
+      result = new Final<Key, Value>(Value.Null);
+    }
+    else if (returnValue instanceof NotNullValue) {
+      result = new Final<Key, Value>(Value.NotNull);
+    }
+    else if (returnValue instanceof NParamValue && ((NParamValue)returnValue).n == i) {
+      result = new Final<Key, Value>(Value.Null);
+    }
+    else if (returnValue instanceof CombinedCall) {
+      CombinedCall call = (CombinedCall)returnValue;
+      HashSet<Key> keys = new HashSet<Key>();
+      for (int argI = 0; argI < call.args.size(); argI++) {
+        BasicValue arg = call.args.get(argI);
+        if (arg instanceof NParamValue) {
+          NParamValue npv = (NParamValue)arg;
+          if (npv.n == i) {
+            keys.add(new Key(call.method, new InOut(argI, Value.Null), call.stableCall));
+          }
+        }
+      }
+      if (ASMUtils.isReferenceType(call.getType())) {
+        keys.add(new Key(call.method, new Out(), call.stableCall));
+      }
+      if (keys.isEmpty()) {
+        result = new Final<Key, Value>(Value.Top);
+      } else {
+        result = new Pending<Key, Value>(new SingletonSet<Product<Key, Value>>(new Product<Key, Value>(Value.Top, keys)));
+      }
+    }
+    else {
+      result = new Final<Key, Value>(Value.Top);
+    }
+    return new Equation<Key, Value>(key, result);
+  }
+
+  final Equation<Key, Value> outContractEquation(boolean stable) {
+    final Key key = new Key(method, new Out(), stable);
+    final Result<Key, Value> result;
+    if (exception) {
+      result = new Final<Key, Value>(Value.Bot);
+    }
+    else if (FalseValue == returnValue) {
+      result = new Final<Key, Value>(Value.False);
+    }
+    else if (TrueValue == returnValue) {
+      result = new Final<Key, Value>(Value.True);
+    }
+    else if (NullValue == returnValue) {
+      result = new Final<Key, Value>(Value.Null);
+    }
+    else if (returnValue instanceof NotNullValue) {
+      result = new Final<Key, Value>(Value.NotNull);
+    }
+    else if (returnValue instanceof CombinedCall) {
+      CombinedCall call = (CombinedCall)returnValue;
+      Key callKey = new Key(call.method, new Out(), call.stableCall);
+      Set<Key> keys = new SingletonSet<Key>(callKey);
+      result = new Pending<Key, Value>(new SingletonSet<Product<Key, Value>>(new Product<Key, Value>(Value.Top, keys)));
+    }
+    else {
+      result = new Final<Key, Value>(Value.Top);
+    }
+    return new Equation<Key, Value>(key, result);
+  }
+
   final Frame<BasicValue> createStartFrame() {
     Frame<BasicValue> frame = new Frame<BasicValue>(methodNode.maxLocals, methodNode.maxStack);
     Type returnType = Type.getReturnType(methodNode.desc);
@@ -129,8 +370,8 @@ final class CombinedSingleAnalysis {
 
 final class CombinedInterpreter extends BasicInterpreter {
   private final int arity;
-  private final boolean[] dereferenced;
-  private final Set<Key>[] callDerefs;
+  final boolean[] dereferenced;
+  final Set<Key>[] callDerefs;
 
   CombinedInterpreter(int arity) {
     this.arity = arity;
@@ -207,7 +448,7 @@ final class CombinedInterpreter extends BasicInterpreter {
       case CALOAD:
       case SALOAD:
       case PUTFIELD:
-        if (value1 instanceof ParamValue) {
+        if (value1 instanceof NParamValue) {
           dereferenced[((NParamValue)value1).n] = true;
         }
         break;
@@ -260,7 +501,6 @@ final class CombinedInterpreter extends BasicInterpreter {
         MethodInsnNode mNode = (MethodInsnNode)insn;
         Method method = new Method(mNode.owner, mNode.name, mNode.desc);
         Type retType = Type.getReturnType(mNode.desc);
-        boolean isRefRetType = retType.getSort() == Type.OBJECT || retType.getSort() == Type.ARRAY;
 
         for (int i = shift; i < values.size(); i++) {
           if (values.get(i) instanceof NParamValue) {
