@@ -42,7 +42,7 @@ public class PluginInstaller {
   private PluginInstaller() { }
 
   public static boolean prepareToInstall(List<PluginNode> pluginsToInstall, List<IdeaPluginDescriptor> allPlugins) {
-    HashSet<PluginNode> dependant = new HashSet<>();
+    HashSet<PluginNode> dependant = new HashSet<PluginNode>();
     boolean install = prepareToInstall(pluginsToInstall, allPlugins, dependant);
     for (PluginNode node : dependant) {
       if (!pluginsToInstall.contains(node)) {
