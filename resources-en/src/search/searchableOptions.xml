@@ -4906,10 +4906,6 @@
     <option name="data" hit="Data View" />
     <option name="view" hit="Data View" />
     <option name="database" hit="Database" />
-    <option name="explicit" hit="Explicit parameter patterns (RegExp):" />
-    <option name="parameter" hit="Explicit parameter patterns (RegExp):" />
-    <option name="patterns" hit="Explicit parameter patterns (RegExp):" />
-    <option name="regexp" hit="Explicit parameter patterns (RegExp):" />
     <option name="column" hit="Include column names" />
     <option name="include" hit="Include column names" />
     <option name="names" hit="Include column names" />
