@@ -80,7 +80,7 @@ public class PyCallHierarchyTest extends PyTestCase { // extends HierarchyViewTe
     testCallHierarchy("main.py", "file_1.py");
   }
 
-  public void testAnotherSimple() throws Exception {
-    testCallHierarchy("main.py", "file_2.py");
+  public void testInheritance() throws Exception {
+    testCallHierarchy("main.py");
   }
 }
