@@ -31,3 +31,15 @@ interface List<T> {
 interface Consumer<T> {
   void accept(T t);
 }
+class EnumConstant {
+  private static final StringBuilder sb = new StringBuilder();
+  static {
+    sb.append("");
+  }
+
+  enum SomeEnum {
+    ITEM(sb); // passed as argument
+
+    SomeEnum(StringBuilder sb) {}
+  }
+}
