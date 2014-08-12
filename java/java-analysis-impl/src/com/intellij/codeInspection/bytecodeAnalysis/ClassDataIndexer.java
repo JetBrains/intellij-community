@@ -37,6 +37,11 @@ import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalys
  */
 public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent> {
 
+  private static final int STABLE_FLAGS = Opcodes.ACC_FINAL | Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC;
+  public static final Final<Key, Value> FINAL_TOP = new Final<Key, Value>(Value.Top);
+  public static final Final<Key, Value> FINAL_BOT = new Final<Key, Value>(Value.Bot);
+  public static final Final<Key, Value> FINAL_NOT_NULL = new Final<Key, Value>(Value.NotNull);
+
   @NotNull
   @Override
   public Map<HKey, HResult> map(@NotNull FileContent inputData) {
@@ -78,14 +83,17 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
   }
 
   public static ClassEquations processClass(final ClassReader classReader, final String presentableUrl) {
-    final List<Equation<Key, Value>> parameterEquations = new ArrayList<Equation<Key, Value>>();
-    final List<Equation<Key, Value>> contractEquations = new ArrayList<Equation<Key, Value>>();
+
+    final List<Equation<Key, Value>> parameterEqs = new ArrayList<Equation<Key, Value>>();
+    final List<Equation<Key, Value>> contractEqs = new ArrayList<Equation<Key, Value>>();
 
     classReader.accept(new ClassVisitor(Opcodes.ASM5) {
+      private String className;
       private boolean stableClass;
 
       @Override
       public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+        className = name;
         stableClass = (access & Opcodes.ACC_FINAL) != 0;
         super.visit(version, access, name, signature, superName, interfaces);
       }
@@ -97,48 +105,31 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
           @Override
           public void visitEnd() {
             super.visitEnd();
-            processMethod(classReader.getClassName(), node, stableClass);
+            processMethod(node);
           }
         };
       }
 
-      void processMethod(final String className, final MethodNode methodNode, boolean stableClass) {
+      private void processMethod(final MethodNode methodNode) {
         ProgressManager.checkCanceled();
-        Type[] argumentTypes = Type.getArgumentTypes(methodNode.desc);
-        Type resultType = Type.getReturnType(methodNode.desc);
-        int resultSort = resultType.getSort();
-        boolean isReferenceResult = resultSort == Type.OBJECT || resultSort == Type.ARRAY;
-        boolean isBooleanResult = Type.BOOLEAN_TYPE == resultType;
-        boolean isInterestingResult = isReferenceResult || isBooleanResult;
+        final Type[] argumentTypes = Type.getArgumentTypes(methodNode.desc);
+        final Type resultType = Type.getReturnType(methodNode.desc);
+        final boolean isReferenceResult = ASMUtils.isReferenceType(resultType);
+        final boolean isBooleanResult = ASMUtils.isBooleanType(resultType);
+        final boolean isInterestingResult = isReferenceResult || isBooleanResult;
 
         if (argumentTypes.length == 0 && !isInterestingResult) {
           return;
         }
 
         final Method method = new Method(className, methodNode.name, methodNode.desc);
-        int access = methodNode.access;
-        final boolean stable =
-          stableClass ||
-          (access & Opcodes.ACC_FINAL) != 0 ||
-          (access & Opcodes.ACC_PRIVATE) != 0 ||
-          (access & Opcodes.ACC_STATIC) != 0 ||
-          "<init>".equals(methodNode.name);
+        final boolean stable = stableClass || (methodNode.access & STABLE_FLAGS) != 0 || "<init>".equals(methodNode.name);
+
         try {
           boolean added = false;
           final ControlFlowGraph graph = cfg.buildControlFlowGraph(className, methodNode);
-
-          boolean maybeLeakingParameter = isInterestingResult;
-          for (Type argType : argumentTypes) {
-            int argSort = argType.getSort();
-            if (argSort == Type.OBJECT || argSort == Type.ARRAY) {
-              maybeLeakingParameter = true;
-              break;
-            }
-          }
-
           if (graph.transitions.length > 0) {
             final DFSTree dfs = cfg.buildDFSTree(graph.transitions, graph.edgeCount);
-
             boolean complex = !dfs.back.isEmpty();
             if (!complex) {
               for (int[] transition : graph.transitions) {
@@ -149,159 +140,43 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
               }
             }
 
-
-            boolean reducible = dfs.back.isEmpty() || cfg.reducible(graph, dfs);
-            // TODO - switch to complex/simple when ready
             if (complex) {
-              if (reducible) {
-
-                final Pair<boolean[], Frame<org.jetbrains.org.objectweb.asm.tree.analysis.Value>[]> pair =
-                  maybeLeakingParameter ?
-                  (argumentTypes.length < 32 ? cfg.fastLeakingParameters(className, methodNode) : cfg.leakingParameters(className, methodNode)) :
-                  null;
-                boolean[] leakingParameters =  pair != null ? pair.first : null;
-                final NullableLazyValue<boolean[]> resultOrigins = new NullableLazyValue<boolean[]>() {
-                  @Override
-                  protected boolean[] compute() {
-                    try {
-                      return OriginsAnalysis.resultOrigins(pair.second, methodNode.instructions, graph);
-                    }
-                    catch (AnalyzerException e) {
-                      LOG.debug("when processing " + method + " in " + presentableUrl, e);
-                      return null;
-                    }
-                  }
-                };
-
-                NotNullLazyValue<Equation<Key, Value>> resultEquation = new NotNullLazyValue<Equation<Key, Value>>() {
-                  @NotNull
-                  @Override
-                  protected Equation<Key, Value> compute() {
-                    boolean[] origins = resultOrigins.getValue();
-                    if (origins != null) {
-                      try {
-                        return new InOutAnalysis(new RichControlFlow(graph, dfs), new Out(), origins, stable).analyze();
-                      }
-                      catch (AnalyzerException ignored) {
-                      }
-                    }
-                    return new Equation<Key, Value>(new Key(method, new Out(), stable), new Final<Key, Value>(Value.Top));
-                  }
-                };
-
-                if (isReferenceResult) {
-                  contractEquations.add(resultEquation.getValue());
-                }
-
-                for (int i = 0; i < argumentTypes.length; i++) {
-                  Type argType = argumentTypes[i];
-                  int argSort = argType.getSort();
-                  boolean isReferenceArg = argSort == Type.OBJECT || argSort == Type.ARRAY;
-                  boolean isBooleanArg = Type.BOOLEAN_TYPE.equals(argType);
-                  boolean notNullParam = false;
-                  if (isReferenceArg) {
-                    if (leakingParameters[i]) {
-                      Equation<Key, Value> notNullParamEquation = new NonNullInAnalysis(new RichControlFlow(graph, dfs), new In(i), stable).analyze();
-                      notNullParam = notNullParamEquation.rhs.equals(new Final<Key, Value>(Value.NotNull));
-                      parameterEquations.add(notNullParamEquation);
-                    }
-                    else {
-                      // parameter is not leaking, so it is definitely NOT @NotNull
-                      parameterEquations.add(new Equation<Key, Value>(new Key(method, new In(i), stable), new Final<Key, Value>(Value.Top)));
-                    }
-                  }
-                  if (isReferenceArg && isInterestingResult) {
-                    if (leakingParameters[i]) {
-                      if (resultOrigins.getValue() != null) {
-                        // result origins analysis was ok
-                        if (!notNullParam) {
-                          // may be null on some branch
-                          contractEquations.add(
-                            new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.Null), resultOrigins.getValue(), stable)
-                              .analyze());
-                        }
-                        else {
-                          // definitely NPE -> bottom
-                          contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), new Final<Key, Value>(Value.Bot)));
-                        }
-                        contractEquations.add(
-                          new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.NotNull), resultOrigins.getValue(), stable)
-                            .analyze());
-                      }
-                      else {
-                        // result origins  analysis failed, approximating to Top
-                        contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), new Final<Key, Value>(Value.Top)));
-                        contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull), stable), new Final<Key, Value>(Value.Top)));
-                      }
-                    }
-                    else {
-                      // parameter is not leaking, so a contract is the same as for the whole method
-                      contractEquations
-                        .add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), resultEquation.getValue().rhs));
-                      contractEquations
-                        .add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull), stable), resultEquation.getValue().rhs));
-                    }
-                  }
-                  if (isBooleanArg && isInterestingResult) {
-                    if (leakingParameters[i]) {
-                      if (resultOrigins.getValue() != null) {
-                        // result origins analysis was ok
-                        contractEquations.add(
-                          new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.False), resultOrigins.getValue(), stable)
-                            .analyze());
-                        contractEquations.add(
-                          new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.True), resultOrigins.getValue(), stable)
-                            .analyze());
-                      }
-                      else {
-                        // result origins  analysis failed, approximating to Top
-                        contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.False), stable), new Final<Key, Value>(Value.Top)));
-                        contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.True), stable), new Final<Key, Value>(Value.Top)));
-                      }
-                    }
-                    else {
-                      // parameter is not leaking, so a contract is the same as for the whole method
-                      contractEquations
-                        .add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.False), stable), resultEquation.getValue().rhs));
-                      contractEquations
-                        .add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.True), stable), resultEquation.getValue().rhs));
-                    }
-                  }
-                }
+              // reducible?
+              if (dfs.back.isEmpty() || cfg.reducible(graph, dfs)) {
+                processBranchingMethod(method, methodNode, graph, dfs, argumentTypes, isReferenceResult, isInterestingResult, stable);
                 added = true;
               }
               else {
-                LOG.debug("CFG for " + method + " is not reducible");
+                LOG.debug(method + ": CFG is not reducible");
               }
             }
             // simple
             else {
-              CombinedSingleAnalysis analyzer = new CombinedSingleAnalysis(method, graph);
-              analyzer.analyze();
+              processNonBranchingMethod(method, graph);
               added = true;
             }
           }
 
           if (!added) {
+            // default top equations
             if (isReferenceResult) {
-              contractEquations.add(new Equation<Key, Value>(new Key(method, new Out(), stable), new Final<Key, Value>(Value.Top)));
+              contractEqs.add(new Equation<Key, Value>(new Key(method, new Out(), stable), FINAL_TOP));
             }
             for (int i = 0; i < argumentTypes.length; i++) {
               Type argType = argumentTypes[i];
-              int argSort = argType.getSort();
-              boolean isReferenceArg = argSort == Type.OBJECT || argSort == Type.ARRAY;
-              boolean isBooleanArg = Type.BOOLEAN_TYPE.equals(argType);
+              boolean isReferenceArg = ASMUtils.isReferenceType(argType);
+              boolean isBooleanArg = ASMUtils.isBooleanType(argType);
 
               if (isReferenceArg) {
-                parameterEquations.add(new Equation<Key, Value>(new Key(method, new In(i), stable), new Final<Key, Value>(Value.Top)));
+                parameterEqs.add(new Equation<Key, Value>(new Key(method, new In(i), stable), FINAL_TOP));
               }
               if (isReferenceArg && isInterestingResult) {
-                contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), new Final<Key, Value>(Value.Top)));
-                contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull), stable), new Final<Key, Value>(Value.Top)));
+                contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), FINAL_TOP));
+                contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull), stable), FINAL_TOP));
               }
               if (isBooleanArg && isInterestingResult) {
-                contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.False), stable), new Final<Key, Value>(Value.Top)));
-                contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.True), stable), new Final<Key, Value>(Value.Top)));
+                contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.False), stable), FINAL_TOP));
+                contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.True), stable), FINAL_TOP));
               }
             }
           }
@@ -315,8 +190,139 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
           LOG.debug("Unexpected Error during processing of " + method + " in " + presentableUrl, e);
         }
       }
+
+      private void processBranchingMethod(final Method method,
+                                          final MethodNode methodNode,
+                                          final ControlFlowGraph graph,
+                                          final DFSTree dfs,
+                                          Type[] argumentTypes,
+                                          boolean isReferenceResult,
+                                          boolean isInterestingResult,
+                                          final boolean stable) throws AnalyzerException {
+
+        boolean maybeLeakingParameter = isInterestingResult;
+        for (Type argType : argumentTypes) {
+          if (ASMUtils.isReferenceType(argType) || (isReferenceResult && ASMUtils.isBooleanType(argType))) {
+            maybeLeakingParameter = true;
+            break;
+          }
+        }
+
+        final Pair<boolean[], Frame<org.jetbrains.org.objectweb.asm.tree.analysis.Value>[]> leakingParametersAndFrames =
+          maybeLeakingParameter ? leakingParametersAndFrames(method, methodNode, argumentTypes) : null;
+        boolean[] leakingParameters = leakingParametersAndFrames != null ? leakingParametersAndFrames.first : null;
+        final NullableLazyValue<boolean[]> origins = new NullableLazyValue<boolean[]>() {
+          @Override
+          protected boolean[] compute() {
+            try {
+              return OriginsAnalysis.resultOrigins(leakingParametersAndFrames.second, methodNode.instructions, graph);
+            }
+            catch (AnalyzerException e) {
+              LOG.debug("when processing " + method + " in " + presentableUrl, e);
+              return null;
+            }
+          }
+        };
+
+        NotNullLazyValue<Equation<Key, Value>> outEquation = new NotNullLazyValue<Equation<Key, Value>>() {
+          @NotNull
+          @Override
+          protected Equation<Key, Value> compute() {
+            boolean[] origs = origins.getValue();
+            if (origs != null) {
+              try {
+                return new InOutAnalysis(new RichControlFlow(graph, dfs), new Out(), origs, stable).analyze();
+              }
+              catch (AnalyzerException ignored) {
+              }
+            }
+            return new Equation<Key, Value>(new Key(method, new Out(), stable), FINAL_TOP);
+          }
+        };
+
+        if (isReferenceResult) {
+          contractEqs.add(outEquation.getValue());
+        }
+
+        for (int i = 0; i < argumentTypes.length; i++) {
+          Type argType = argumentTypes[i];
+          int argSort = argType.getSort();
+          boolean isReferenceArg = argSort == Type.OBJECT || argSort == Type.ARRAY;
+          boolean isBooleanArg = Type.BOOLEAN_TYPE.equals(argType);
+          boolean notNullParam = false;
+          RichControlFlow richControlFlow = new RichControlFlow(graph, dfs);
+          if (isReferenceArg) {
+            if (leakingParameters[i]) {
+              Equation<Key, Value> notNullParamEquation = new NonNullInAnalysis(richControlFlow, new In(i), stable).analyze();
+              notNullParam = notNullParamEquation.rhs.equals(FINAL_NOT_NULL);
+              parameterEqs.add(notNullParamEquation);
+            }
+            else {
+              // parameter is not leaking, so it is definitely NOT @NotNull
+              parameterEqs.add(new Equation<Key, Value>(new Key(method, new In(i), stable), FINAL_TOP));
+            }
+          }
+          if (isReferenceArg && isInterestingResult) {
+            if (leakingParameters[i]) {
+              if (origins.getValue() != null) {
+                // result origins analysis was ok
+                if (!notNullParam) {
+                  // may be null on some branch, running "null->..." analysis
+                  contractEqs.add(new InOutAnalysis(richControlFlow, new InOut(i, Value.Null), origins.getValue(), stable).analyze());
+                }
+                else {
+                  // @NotNull, so "null->fail"
+                  contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), FINAL_BOT));
+                }
+                contractEqs.add(new InOutAnalysis(richControlFlow, new InOut(i, Value.NotNull), origins.getValue(), stable).analyze());
+              }
+              else {
+                // result origins  analysis failed, approximating to Top
+                contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), FINAL_TOP));
+                contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull), stable), FINAL_TOP));
+              }
+            }
+            else {
+              // parameter is not leaking, so a contract is the same as for the whole method
+              contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), outEquation.getValue().rhs));
+              contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull), stable), outEquation.getValue().rhs));
+            }
+          }
+          if (isBooleanArg && isInterestingResult) {
+            if (leakingParameters[i]) {
+              if (origins.getValue() != null) {
+                // result origins analysis was ok
+                contractEqs.add(new InOutAnalysis(richControlFlow, new InOut(i, Value.False), origins.getValue(), stable).analyze());
+                contractEqs.add(new InOutAnalysis(richControlFlow, new InOut(i, Value.True), origins.getValue(), stable).analyze());
+              }
+              else {
+                // result origins  analysis failed, approximating to Top
+                contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.False), stable), FINAL_TOP));
+                contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.True), stable), FINAL_TOP));
+              }
+            }
+            else {
+              // parameter is not leaking, so a contract is the same as for the whole method
+              contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.False), stable), outEquation.getValue().rhs));
+              contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.True), stable), outEquation.getValue().rhs));
+            }
+          }
+        }
+      }
+
+      private void processNonBranchingMethod(Method method, ControlFlowGraph graph) throws AnalyzerException {
+        CombinedSingleAnalysis analyzer = new CombinedSingleAnalysis(method, graph);
+        analyzer.analyze();
+      }
+
+      private Pair<boolean[], Frame<org.jetbrains.org.objectweb.asm.tree.analysis.Value>[]> leakingParametersAndFrames(Method method,
+                                                                                                                       MethodNode methodNode,
+                                                                                                                       Type[] argumentTypes)
+        throws AnalyzerException {
+        return (argumentTypes.length < 32 ? cfg.fastLeakingParameters(method.internalClassName, methodNode) : cfg.leakingParameters(method.internalClassName, methodNode));
+      }
     }, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
-    return new ClassEquations(parameterEquations, contractEquations);
+    return new ClassEquations(parameterEqs, contractEqs);
   }
 }
