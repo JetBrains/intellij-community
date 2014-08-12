@@ -36,6 +36,7 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
   private static final String REMOTE_ROOTS = "REMOTE_ROOTS";
   private static final String REMOTE_PATH = "REMOTE_PATH";
   private static final String INITIALIZED = "INITIALIZED";
+  private static final String VALID = "VALID";
   private static final String PATH_MAPPINGS = "PATH_MAPPINGS";
 
   private String mySdkId;
@@ -50,6 +51,8 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
   private Set<String> myRemoteRoots = Sets.newTreeSet();
 
   private boolean myInitialized = false;
+
+  private boolean myValid = true;
 
   @NotNull
   private PathMappingSettings myPathMappings = new PathMappingSettings();
@@ -144,6 +147,16 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
     myInitialized = initialized;
   }
 
+  @Override
+  public boolean isValid() {
+    return myValid;
+  }
+
+  @Override
+  public void setValid(boolean valid) {
+    myValid = valid;
+  }
+
   public void copyTo(RemoteSdkProperties copy) {
     copy.setInterpreterPath(getInterpreterPath());
     copy.setHelpersPath(getHelpersPath());
@@ -152,6 +165,8 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
     copy.setRemoteRoots(getRemoteRoots());
 
     copy.setInitialized(isInitialized());
+
+    copy.setValid(isValid());
   }
 
   public void save(Element rootElement) {
@@ -159,6 +174,7 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
     rootElement.setAttribute(HELPERS_PATH, StringUtil.notNullize(getHelpersPath()));
 
     rootElement.setAttribute(INITIALIZED, Boolean.toString(isInitialized()));
+    rootElement.setAttribute(VALID, Boolean.toString(isValid()));
 
     PathMappingSettings.writeExternal(rootElement, myPathMappings);
 
@@ -176,6 +192,8 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
     setRemoteRoots(JDOMExternalizer.loadStringsList(element, REMOTE_ROOTS, REMOTE_PATH));
 
     setInitialized(StringUtil.parseBoolean(element.getAttributeValue(INITIALIZED), true));
+
+    setValid(StringUtil.parseBoolean(element.getAttributeValue(VALID), true));
 
     setPathMappings(PathMappingSettings.readExternal(element));
   }
