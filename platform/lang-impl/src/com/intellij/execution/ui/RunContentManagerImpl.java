@@ -269,32 +269,30 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   }
 
   @Override
-  public void showRunContent(@NotNull final Executor executor, final RunContentDescriptor descriptor) {
-    showRunContent(executor, descriptor, descriptor != null ? descriptor.getExecutionId() : 0L);
+  public void showRunContent(@NotNull Executor executor, @NotNull RunContentDescriptor descriptor) {
+    showRunContent(executor, descriptor, descriptor.getExecutionId());
   }
 
-  public void showRunContent(@NotNull final Executor executor, final RunContentDescriptor descriptor, long executionId) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+  public void showRunContent(@NotNull final Executor executor, @NotNull final RunContentDescriptor descriptor, long executionId) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
 
     final ContentManager contentManager = getContentManagerForRunner(executor);
-    RunContentDescriptor oldDescriptor =
-      chooseReuseContentForDescriptor(contentManager, descriptor, executionId, descriptor != null ? descriptor.getDisplayName() : null);
-
+    RunContentDescriptor oldDescriptor = chooseReuseContentForDescriptor(contentManager, descriptor, executionId, descriptor.getDisplayName());
     final Content content;
-
     Content oldAttachedContent = oldDescriptor == null ? null : oldDescriptor.getAttachedContent();
-    if (oldDescriptor != null) {
+    if (oldDescriptor == null) {
+      content = createNewContent(contentManager, descriptor, executor);
+      Icon icon = descriptor.getIcon();
+      content.setIcon(icon == null ? executor.getToolWindowIcon() : icon);
+    }
+    else {
       content = oldAttachedContent;
       getSyncPublisher().contentRemoved(oldDescriptor, executor);
       Disposer.dispose(oldDescriptor); // is of the same category, can be reused
     }
-    else if (oldAttachedContent == null || !oldAttachedContent.isValid() /*|| oldAttachedContent.getUserData(MARKED_TO_BE_REUSED) != null */) {
-      content = createNewContent(contentManager, descriptor, executor);
-      final Icon icon = descriptor.getIcon();
-      content.setIcon(icon == null ? executor.getToolWindowIcon() : icon);
-    } else {
-      content = oldAttachedContent;
-    }
+
     content.setExecutionId(executionId);
     content.setComponent(descriptor.getComponent());
     content.setPreferredFocusedComponent(descriptor.getPreferredFocusComputable());
@@ -342,10 +340,10 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     if (!descriptor.isActivateToolWindowWhenAdded()) {
       return;
     }
+
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (myProject.isDisposed()) return;
         ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(executor.getToolWindowId());
         // let's activate tool window, but don't move focus
         //
@@ -356,7 +354,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
         descriptor.getPreferredFocusComputable();
         window.activate(null, descriptor.isAutoFocusContent(), descriptor.isAutoFocusContent());
       }
-    });
+    }, myProject.getDisposed());
   }
 
   @Override
@@ -406,14 +404,21 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   }
 
   @Override
-  public void showRunContent(@NotNull Executor info, RunContentDescriptor descriptor, @Nullable RunContentDescriptor contentToReuse) {
+  public void showRunContent(@NotNull Executor info, @NotNull RunContentDescriptor descriptor, @Nullable RunContentDescriptor contentToReuse) {
+    copyContentAndBehavior(descriptor, contentToReuse);
+    showRunContent(info, descriptor, descriptor.getExecutionId());
+  }
+
+  public static void copyContentAndBehavior(@NotNull RunContentDescriptor descriptor, @Nullable RunContentDescriptor contentToReuse) {
     if (contentToReuse != null) {
       Content attachedContent = contentToReuse.getAttachedContent();
-      if (attachedContent.getManager() != null) {
+      if (attachedContent.isValid()) {
         descriptor.setAttachedContent(attachedContent);
       }
+      if (contentToReuse.isReuseToolWindowActivation()) {
+        descriptor.setActivateToolWindowWhenAdded(contentToReuse.isActivateToolWindowWhenAdded());
+      }
     }
-    showRunContent(info, descriptor, descriptor != null ? descriptor.getExecutionId(): 0L);
   }
 
   @Nullable
@@ -429,7 +434,9 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       }
       //Stage two: try to get content from descriptor itself
       final Content attachedContent = descriptor.getAttachedContent();
-      if (attachedContent != null && attachedContent.isValid() && contentManager.getIndexOfContent(attachedContent) != -1) content = attachedContent;
+      if (attachedContent != null && attachedContent.isValid() && contentManager.getIndexOfContent(attachedContent) != -1) {
+        content = attachedContent;
+      }
     }
     //Stage three: choose the content with name we prefer
     if (content == null) {

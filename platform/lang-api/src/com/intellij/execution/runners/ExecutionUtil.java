@@ -19,7 +19,6 @@ package com.intellij.execution.runners;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessNotCreatedException;
-import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationListener;
@@ -113,12 +112,8 @@ public class ExecutionUtil {
   }
 
   public static void restart(@NotNull ExecutionEnvironment environment) {
-    restart(environment, null);
-  }
-
-  public static void restart(@NotNull ExecutionEnvironment environment, @Nullable RunContentDescriptor contentDescriptor) {
     if (!ExecutorRegistry.getInstance().isStarting(environment)) {
-      ExecutionManager.getInstance(environment.getProject()).restartRunProfile(ExecutionEnvironmentBuilder.fix(environment, contentDescriptor));
+      ExecutionManager.getInstance(environment.getProject()).restartRunProfile(environment);
     }
   }
 

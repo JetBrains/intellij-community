@@ -194,29 +194,26 @@ public class MavenRunConfigurationType implements ConfigurationType {
 
     ProgramRunner runner = DefaultJavaProgramRunner.getInstance();
     Executor executor = DefaultRunExecutor.getRunExecutorInstance();
-    ExecutionEnvironment env = new ExecutionEnvironment(executor, runner, configSettings, project);
-
     try {
-      runner.execute(env, callback);
+      runner.execute(new ExecutionEnvironment(executor, runner, configSettings, project), callback);
     }
     catch (ExecutionException e) {
       MavenUtil.showError(project, "Failed to execute Maven goal", e);
     }
   }
 
+  @NotNull
   public static RunnerAndConfigurationSettings createRunnerAndConfigurationSettings(@Nullable MavenGeneralSettings generalSettings,
-                                                                             @Nullable MavenRunnerSettings runnerSettings,
-                                                                             MavenRunnerParameters params,
-                                                                             Project project) {
+                                                                                    @Nullable MavenRunnerSettings runnerSettings,
+                                                                                    MavenRunnerParameters params,
+                                                                                    Project project) {
     MavenRunConfigurationType type = ConfigurationTypeUtil.findConfigurationType(MavenRunConfigurationType.class);
 
-    final RunnerAndConfigurationSettings settings = RunManagerEx.getInstanceEx(project)
-      .createConfiguration(generateName(project, params), type.myFactory);
+    RunnerAndConfigurationSettings settings = RunManager.getInstance(project).createRunConfiguration(generateName(project, params), type.myFactory);
     MavenRunConfiguration runConfiguration = (MavenRunConfiguration)settings.getConfiguration();
     runConfiguration.setRunnerParameters(params);
     runConfiguration.setGeneralSettings(generalSettings);
     runConfiguration.setRunnerSettings(runnerSettings);
-
     return settings;
   }
 }
