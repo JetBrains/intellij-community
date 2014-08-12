@@ -16,10 +16,16 @@
 package com.jetbrains.python.hierarchy.call;
 
 import com.google.common.collect.Lists;
+import com.intellij.find.FindManager;
+import com.intellij.find.findUsages.FindUsagesHandler;
+import com.intellij.find.findUsages.FindUsagesOptions;
+import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonProcessors;
 import com.jetbrains.python.psi.PyArgumentList;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyFunction;
@@ -28,16 +34,19 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.List;
 
 
 public class PyStaticFunctionCallInfoManagerImpl extends PyStaticFunctionCallInfoManager {
+  private final Project myProject;
 
   public PyStaticFunctionCallInfoManagerImpl(Project project) {
+    myProject = project;
   }
 
   @Override
-  public List<PyFunction> getCallees(@NotNull PyFunction function) {
+  public Collection<PyFunction> getCallees(@NotNull PyFunction function) {
     List<PyFunction> callees = Lists.newArrayList();
     findCallees(function, callees);
 
@@ -45,11 +54,10 @@ public class PyStaticFunctionCallInfoManagerImpl extends PyStaticFunctionCallInf
   }
 
   @Override
-  public List<PyFunction> getCallers(@NotNull PyFunction function) {
-    List<PyFunction> callers = Lists.newArrayList();
+  public Collection<PyFunction> getCallers(@NotNull PyFunction function) {
+    final Collection<PyFunction> callers = Lists.newArrayList();
 
-    final List<UsageInfo> usages = Lists.newArrayList();
-    usages.addAll(PyRefactoringUtil.findUsages(function, false));
+    final Collection<UsageInfo> usages = findUsages(function);
     for (UsageInfo usage: usages) {
       PsiElement element = usage.getElement();
       if (element != null) {
@@ -78,6 +86,19 @@ public class PyStaticFunctionCallInfoManagerImpl extends PyStaticFunctionCallInf
     }
 
     return callers;
+  }
+
+  private Collection<UsageInfo> findUsages(@NotNull final PyFunction function) {
+    final FindUsagesHandler handler =
+      ((FindManagerImpl)FindManager.getInstance(myProject)).getFindUsagesManager().getFindUsagesHandler(function, true);
+
+    final CommonProcessors.CollectProcessor<UsageInfo> processor = new CommonProcessors.CollectProcessor<UsageInfo>();
+    final PsiElement[] psiElements = ArrayUtil.mergeArrays(handler.getPrimaryElements(), handler.getSecondaryElements());
+    final FindUsagesOptions options = handler.getFindUsagesOptions(null);
+    for (PsiElement psiElement : psiElements) {
+      handler.processElementUsages(psiElement, processor, options);
+    }
+    return processor.getResults();
   }
 
   private static void findCallees(final PsiElement element, List<PyFunction> callees) {
