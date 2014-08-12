@@ -221,6 +221,9 @@ public class PersistentIntList implements Disposable {
           capacity = 0;
         }
         else {
+          int[] oldIds = get(id);
+          checkSorted(oldIds);
+
           assertPointer(pointer);
           int storedListLength = data.getInt(pointer);
           capacity = data.getInt(pointer + 4);
@@ -253,6 +256,9 @@ public class PersistentIntList implements Disposable {
               i++;
             }
           }
+          int[] mergedInts = fromBytes(mergedBytes, outPtr);
+          checkSorted(mergedInts);
+
           newListLength = outPtr / 4;
           assertListLength(newListLength, newListLength);
           if (newListLength <= capacity) {
@@ -274,11 +280,15 @@ public class PersistentIntList implements Disposable {
     });
 
     int[] ids = get(id);
-    for (int i = 1; i < ids.length; i++) {
-      assert ids[i] > ids[i - 1] : ids[i-1] + ", " + ids[i];
-    }
+    checkSorted(ids);
     TIntHashSet set = new TIntHashSet(ids);
     assert set.containsAll(values): "ids: "+Arrays.toString(ids)+";\n values:"+Arrays.toString(values);
+  }
+
+  private static void checkSorted(int[] oldIds) {
+    for (int i = 1; i < oldIds.length; i++) {
+      assert oldIds[i - 1] < oldIds[i] : oldIds[i-1] + ", " + oldIds[i];
+    }
   }
 
   private static byte[] toBytes(@NotNull int[] values) {
@@ -288,6 +298,16 @@ public class PersistentIntList implements Disposable {
       Bits.putInt(mergedBytes, i * 4, value);
     }
     return mergedBytes;
+  }
+
+  private static int[] fromBytes(@NotNull byte[] bytes, int length) {
+    assert length % 4 == 0;
+    int[] ints = new int[length/4];
+    for (int i = 0; i < length; i+=4) {
+      int value = Bits.getInt(bytes, i);
+      ints[i/4] = value;
+    }
+    return ints;
   }
 
   private static void storeArray(@NotNull RandomAccessDataFile data,

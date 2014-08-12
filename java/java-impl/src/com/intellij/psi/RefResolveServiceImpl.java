@@ -41,7 +41,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
@@ -49,6 +48,8 @@ import com.intellij.psi.impl.PersistentIntList;
 import com.intellij.psi.impl.file.impl.ResolveScopeManagerImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
@@ -85,6 +86,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
   private final ApplicationEx myApplication;
   private volatile boolean myDisposed;
   private volatile boolean upToDate;
+  private volatile boolean enabled = true;
   private final FileWriter log;
   private final ProjectFileIndex myProjectFileIndex;
 
@@ -162,10 +164,6 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
   }
 
   private void init(@NotNull MessageBus messageBus, @NotNull PsiManager psiManager) {
-    //if (true) {
-    //  upToDate = false;
-    //  return;
-    //}
     messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter(){
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
@@ -198,31 +196,52 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     messageBus.connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
       @Override
       public void enteredDumbMode() {
-        wakeUp();
+        disable();
       }
 
       @Override
       public void exitDumbMode() {
-        wakeUp();
+        enable();
       }
     });
     myApplication.addApplicationListener(new ApplicationAdapter() {
       @Override
+      public void beforeWriteActionStart(Object action) {
+        disable();
+      }
+
+      @Override
       public void writeActionFinished(Object action) {
-        wakeUp();
+        enable();
+      }
+
+      @Override
+      public void applicationExiting() {
+        disable();
       }
     }, this);
     VirtualFileManager.getInstance().addVirtualFileManagerListener(new VirtualFileManagerListener() {
       @Override
       public void beforeRefreshStart(boolean asynchronous) {
-        wakeUp();
+        disable();
       }
 
       @Override
       public void afterRefreshFinish(boolean asynchronous) {
-        wakeUp();
+        enable();
       }
     }, this);
+    Disposer.register(this, HeavyProcessLatch.INSTANCE.addListener(new HeavyProcessLatch.HeavyProcessListener() {
+      @Override
+      public void processStarted() {
+        disable();
+      }
+
+      @Override
+      public void processFinished() {
+        enable();
+      }
+    }));
 
     startThread();
   }
@@ -233,10 +252,11 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
   }
 
   private boolean toResolve(VirtualFile virtualFile, @NotNull Project project) {
-    if (virtualFile != null && virtualFile.isValid() &&
+    if (virtualFile != null &&
+        virtualFile.isValid() &&
         project.isInitialized() &&
-        myProjectFileIndex.isContentSourceFile(virtualFile) &&
-        (virtualFile.isDirectory() || virtualFile.getFileType() == StdFileTypes.JAVA)) {
+        myProjectFileIndex.isInContent(virtualFile) &&
+        (virtualFile.isDirectory() || virtualFile.getFileType() == StdFileTypes.JAVA || virtualFile.getFileType() == StdFileTypes.XML)) {
       return true;
     }
 
@@ -286,7 +306,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     synchronized (filesToResolve) {
       if (!(file instanceof VirtualFileWithId)) return false;
       int fileId = getAbsId(file);
-      countAndMarkUnresolved(file, new int[1]);
+      countAndMarkUnresolved(file, new THashSet<VirtualFile>(), true);
       boolean alreadyAdded = fileIsInQueue.set(fileId);
       if (!alreadyAdded) {
         filesToResolve.add(file);
@@ -349,7 +369,11 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
   @Override
   public void run() {
     while (!myDisposed) {
-      if (!hasSomething()) {
+      boolean isEmpty;
+      synchronized (filesToResolve) {
+        isEmpty = filesToResolve.isEmpty();
+      }
+      if (!enabled || isEmpty) {
         try {
           waitForQueue();
         }
@@ -407,10 +431,11 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
       }
       filesToResolve.clear();
     }
-    final Set<VirtualFile> toProcess = Collections.synchronizedSet(set);
     final ConcurrentIntObjectMap<int[]> fileToForwardIds = new StripedLockIntObjectConcurrentHashMap<int[]>();
-    final int size = countAndMarkUnresolved(set);
-    if (size == 0) return;
+    Set<VirtualFile> files = countAndMarkUnresolved(set, false);
+    if (files.isEmpty()) return;
+    final int size = files.size();
+    final Set<VirtualFile> toProcess = Collections.synchronizedSet(files);
     log("Started to resolve "+ size + " files (was queued "+queuedSize+")");
 
     indicator.setIndeterminate(false);
@@ -422,31 +447,19 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
         double fraction = 1 - toProcess.size() * 1.0 / size;
         indicator.setFraction(fraction);
         try {
-          VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
-            @Override
-            public boolean visitFile(@NotNull VirtualFile file) {
-              if (!toResolve(file, myProject)) {
-                return true;
-              }
-              int fileId = getAbsId(file);
-              int i = size - toProcess.size();
-              indicator.setText(i + "/" + size + ": Resolving " + file.getPresentableUrl());
-              int[] forwardIds = processFile(file, fileId, indicator);
-              if (forwardIds == null) {
-                //queueUpdate(file);
-                return false;
-              }
-              toProcess.remove(file);
-              fileToForwardIds.put(fileId, forwardIds);
-              return true;
-            }
-
-            @Nullable
-            @Override
-            public Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile file) {
-              return ((NewVirtualFile)file).iterInDbChildren();
-            }
-          }, RuntimeException.class);
+          if (file.isDirectory() || !toResolve(file, myProject)) {
+            return true;
+          }
+          int fileId = getAbsId(file);
+          int i = size - toProcess.size();
+          indicator.setText(i + "/" + size + ": Resolving " + file.getPresentableUrl());
+          int[] forwardIds = processFile(file, fileId, indicator);
+          if (forwardIds == null) {
+            //queueUpdate(file);
+            return false;
+          }
+          toProcess.remove(file);
+          fileToForwardIds.put(fileId, forwardIds);
         }
         catch (RuntimeException e) {
           indicator.checkCanceled();
@@ -457,7 +470,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     boolean success = true;
     try {
       success = JobLauncher
-        .getInstance().invokeConcurrentlyUnderProgress(new ArrayList<VirtualFile>(set), indicator, false, false, processor);
+        .getInstance().invokeConcurrentlyUnderProgress(new ArrayList<VirtualFile>(files), indicator, false, false, processor);
     }
     finally {
       queue(toProcess, "re-added after fail. success=" + success);
@@ -472,52 +485,54 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     return Math.abs(((VirtualFileWithId)file).getId());
   }
 
-  private int countAndMarkUnresolved(@NotNull Collection<VirtualFile> files) {
-    final int[] count = new int[1];
+  @NotNull
+  private Set<VirtualFile> countAndMarkUnresolved(@NotNull Collection<VirtualFile> files, boolean inDbOnly) {
+    Set<VirtualFile> result = new THashSet<VirtualFile>();
     for (VirtualFile file : files) {
-      countAndMarkUnresolved(file, count);
+      countAndMarkUnresolved(file, result, inDbOnly);
     }
-    return count[0];
+    return result;
   }
 
-  private void countAndMarkUnresolved(@NotNull VirtualFile file, @NotNull final int[] count) {
+  private void countAndMarkUnresolved(@NotNull VirtualFile file, @NotNull final Set<VirtualFile> result, final boolean inDbOnly) {
     if (file.isDirectory()) {
       VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
         @Override
         public boolean visitFile(@NotNull VirtualFile file) {
-          doCountAndMarkUnresolved(file, count);
+          doCountAndMarkUnresolved(file, result);
           return true;
         }
 
         @Nullable
         @Override
         public Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile file) {
-          return ((NewVirtualFile)file).iterInDbChildren();
+          return inDbOnly ? ((NewVirtualFile)file).iterInDbChildren() : null;
         }
       });
     }
     else {
-      doCountAndMarkUnresolved(file, count);
+      doCountAndMarkUnresolved(file, result);
     }
   }
 
-  private void doCountAndMarkUnresolved(@NotNull VirtualFile file, @NotNull int[] count) {
-    if (toResolve(file, myProject)) {
-      count[0]++;
+  private void doCountAndMarkUnresolved(@NotNull VirtualFile file, @NotNull Set<VirtualFile> result) {
+    if (file.isDirectory()) {
+      fileIsResolved.set(getAbsId(file));
+    }
+    else if (toResolve(file, myProject)) {
+      result.add(file);
       fileIsResolved.clear(getAbsId(file));
     }
   }
 
-  private boolean hasSomething() {
-    if (DumbService.isDumb(myProject) ||
-        myApplication.isWriteActionInProgress() ||
-        RefreshQueueImpl.isRefreshInProgress() ||
-        HeavyProcessLatch.INSTANCE.isRunning()) {
-      return false;
-    }
-    synchronized (filesToResolve) {
-      return !filesToResolve.isEmpty();
-    }
+  private void enable() {
+    enabled = true;
+    wakeUp();
+  }
+
+  private void disable() {
+    enabled = false;
+    wakeUp();
   }
 
   // returns list of resolved files if updated successfully, or null if write action or dumb mode started
@@ -623,24 +638,28 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
         public void run() {
           indicator.checkCanceled();
 
-          psiFile.accept(new JavaRecursiveElementWalkingVisitor() {
-            @Override
-            public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-              indicator.checkCanceled();
-              PsiElement element = reference.resolve();
-              if (element != null) {
-                resolved.add(element);
-              }
-              refCount.incrementAndGet();
+          if (psiFile instanceof PsiJavaFile) {
+            psiFile.accept(new JavaRecursiveElementWalkingVisitor() {
+              @Override
+              public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+                resolveReference(reference, indicator, resolved);
 
-              super.visitReferenceElement(reference);
-            }
-          });
-        }
-      });
-      ApplicationUtil.tryRunReadAction(new Runnable() {
-        @Override
-        public void run() {
+                super.visitReferenceElement(reference);
+              }
+            });
+          }
+          else if (psiFile instanceof XmlFile) {
+            psiFile.accept(new XmlRecursiveElementWalkingVisitor() {
+              @Override
+              public void visitXmlElement(XmlElement element) {
+                for (PsiReference reference : element.getReferences()) {
+                  resolveReference(reference, indicator, resolved);
+                }
+                super.visitXmlElement(element);
+              }
+            });
+          }
+
           indicator.checkCanceled();
           for (PsiElement element : resolved) {
             PsiFile file = element.getContainingFile();
@@ -652,6 +671,15 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
 
     forward.remove(fileId);
     return forward;
+  }
+
+  private void resolveReference(@NotNull PsiReference reference, @NotNull ProgressIndicator indicator, @NotNull Set<PsiElement> resolved) {
+    indicator.checkCanceled();
+    PsiElement element = reference.resolve();
+    if (element != null) {
+      resolved.add(element);
+    }
+    refCount.incrementAndGet();
   }
 
   private static void addIdAndSuperClasses(PsiFile file, @NotNull TIntHashSet forward) {

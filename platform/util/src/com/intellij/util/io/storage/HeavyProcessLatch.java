@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,19 +19,47 @@
  */
 package com.intellij.util.io.storage;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.util.EventDispatcher;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.EventListener;
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class HeavyProcessLatch {
   public static final HeavyProcessLatch INSTANCE = new HeavyProcessLatch();
-  private int myHeavyProcessCounter = 0;
-  
-  public synchronized void processStarted() {
-    myHeavyProcessCounter++;
+
+  private final AtomicInteger myHeavyProcessCounter = new AtomicInteger();
+  private final EventDispatcher<HeavyProcessListener> myEventDispatcher = EventDispatcher.create(HeavyProcessListener.class);
+
+  private HeavyProcessLatch() {
   }
 
-  public synchronized void processFinished() {
-    myHeavyProcessCounter--;
+  public void processStarted() {
+    myHeavyProcessCounter.incrementAndGet();
+    myEventDispatcher.getMulticaster().processStarted();
   }
 
-  public synchronized boolean isRunning() {
-    return myHeavyProcessCounter != 0;
+  public void processFinished() {
+    myHeavyProcessCounter.decrementAndGet();
+    myEventDispatcher.getMulticaster().processFinished();
+  }
+
+  public boolean isRunning() {
+    return myHeavyProcessCounter.get() != 0;
+  }
+
+  public interface HeavyProcessListener extends EventListener {
+    public void processStarted();
+
+    public void processFinished();
+  }
+
+  @NotNull
+  public Disposable addListener(@NotNull HeavyProcessListener listener) {
+    Disposable disposable = Disposer.newDisposable();
+    myEventDispatcher.addListener(listener, disposable);
+    return disposable;
   }
 }
