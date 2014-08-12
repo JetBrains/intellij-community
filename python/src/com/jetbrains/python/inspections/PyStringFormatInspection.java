@@ -41,6 +41,7 @@ import java.util.Map;
 
 import static com.jetbrains.python.inspections.PyStringFormatParser.filterSubstitutions;
 import static com.jetbrains.python.inspections.PyStringFormatParser.parsePercentFormat;
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author Alexey.Ivanov
@@ -416,9 +417,9 @@ public class PyStringFormatInspection extends PyInspection {
           inspectValues(((PyParenthesizedExpression)rightExpression).getContainedExpression());
         }
         else {
-          final PyType type = myTypeEvalContext.getType(rightExpression);
+          final PyClassType type = as(myTypeEvalContext.getType(rightExpression), PyClassType.class);
           if (type != null) {
-            if (myUsedMappingKeys.size() > 0 && !("dict".equals(type.getName()))) {
+            if (myUsedMappingKeys.size() > 0 && !PyABCUtil.isSubclass(type.getPyClass(), PyNames.MAPPING)) {
               registerProblem(rightExpression, PyBundle.message("INSP.format.requires.mapping"));
               return;
             }
