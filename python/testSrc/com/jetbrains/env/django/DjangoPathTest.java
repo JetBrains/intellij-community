@@ -5,7 +5,7 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.openapi.util.io.FileUtil;
 import com.jetbrains.django.run.DjangoServerRunConfiguration;
 import com.jetbrains.django.run.DjangoServerRunConfigurationType;
-import com.jetbrains.env.python.debug.PyEnvTestCase;
+import com.jetbrains.env.community.PyEnvTestCase;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import junit.framework.Assert;
 import org.jetbrains.annotations.Nullable;

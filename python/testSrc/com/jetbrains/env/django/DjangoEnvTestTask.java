@@ -9,7 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.django.facet.DjangoFacet;
 import com.jetbrains.django.fixtures.DjangoTestCase;
-import com.jetbrains.env.python.debug.PyDebuggerTask;
+import com.jetbrains.env.community.python.debug.PyDebuggerTask;
 import com.jetbrains.python.fixtures.PyProfessionalTestCase;
 import com.jetbrains.python.templateLanguages.TemplatesService;
 import org.junit.Assert;

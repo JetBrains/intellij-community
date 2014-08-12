@@ -7,7 +7,7 @@ import com.jetbrains.django.actions.manage.ManageTaskActions;
 import com.jetbrains.django.manage.BaseCommand;
 import com.jetbrains.django.testRunner.DjangoTestsConfigurationType;
 import com.jetbrains.django.util.DjangoUtil;
-import com.jetbrains.env.python.debug.PyEnvTestCase;
+import com.jetbrains.env.community.PyEnvTestCase;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
