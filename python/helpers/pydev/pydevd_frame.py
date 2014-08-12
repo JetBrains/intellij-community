@@ -63,12 +63,12 @@ class PyDBFrame:
                         flag = False
                 else:
                     try:
-                        if mainDebugger.django_exception_break and get_exception_name(exception) in \
-                                ['VariableDoesNotExist', 'TemplateDoesNotExist', 'TemplateSyntaxError'] and \
+                        if hasattr(mainDebugger, 'django_exception_break') and mainDebugger.django_exception_break and \
+                                get_exception_name(exception) in ['VariableDoesNotExist', 'TemplateDoesNotExist', 'TemplateSyntaxError'] and \
                                 just_raised(trace) and is_django_exception_break_context(frame):
                             render_frame = find_django_render_frame(frame)
                             if render_frame:
-                                suspend_frame = suspend_django(self, mainDebugger, thread, render_frame, CMD_ADD_DJANGO_EXCEPTION_BREAK)
+                                suspend_frame = suspend_django(self, mainDebugger, thread, render_frame, CMD_ADD_EXCEPTION_BREAK)
 
                                 if suspend_frame:
                                     add_exception_to_frame(suspend_frame, (exception, value, trace))
@@ -77,12 +77,12 @@ class PyDBFrame:
                                     suspend_frame.f_back = frame
                                     frame = suspend_frame
 
-                        if mainDebugger.jinja2_exception_break:
+                        if hasattr(mainDebugger, 'jinja2_exception_break') and mainDebugger.jinja2_exception_break:
                             if get_exception_name(exception) in ('UndefinedError', 'TemplateNotFound', 'TemplatesNotFound'):
                                 #errors in rendering
                                 render_frame = find_jinja2_render_frame(frame)
                                 if render_frame:
-                                    suspend_frame = suspend_jinja2(self, mainDebugger, thread, render_frame, CMD_ADD_JINJA2_EXCEPTION_BREAK)
+                                    suspend_frame = suspend_jinja2(self, mainDebugger, thread, render_frame, CMD_ADD_EXCEPTION_BREAK)
                                     if suspend_frame:
                                         add_exception_to_frame(suspend_frame, (exception, value, trace))
                                         flag = True
@@ -93,7 +93,7 @@ class PyDBFrame:
                                 name = frame.f_code.co_name
                                 if name in ('template', 'top-level template code') or name.startswith('block '):
                                     #Jinja2 translates exception info and creates fake frame on his own
-                                    self.setSuspend(thread, CMD_ADD_JINJA2_EXCEPTION_BREAK)
+                                    self.setSuspend(thread, CMD_ADD_EXCEPTION_BREAK)
                                     add_exception_to_frame(frame, (exception, value, trace))
                                     thread.additionalInfo.suspend_type = JINJA2_SUSPEND
                                     flag = True
@@ -144,10 +144,10 @@ class PyDBFrame:
                     can_skip = (info.pydev_step_cmd is None and info.pydev_step_stop is None)\
                     or (info.pydev_step_cmd in (CMD_STEP_RETURN, CMD_STEP_OVER) and info.pydev_step_stop is not frame)
 
-                if  mainDebugger.django_breakpoints:
+                if hasattr(mainDebugger, 'django_breakpoints') and mainDebugger.django_breakpoints:
                     can_skip = False
 
-                if  mainDebugger.jinja2_breakpoints:
+                if hasattr(mainDebugger, 'jinja2_breakpoints') and mainDebugger.jinja2_breakpoints:
                     can_skip = False
 
                 if info.pydev_call_inside_jinja2 is not None:
@@ -160,7 +160,9 @@ class PyDBFrame:
                 #so, that's why the additional checks are there.
                 if not breakpoints_for_file:
                     if can_skip:
-                        if mainDebugger.always_exception_set or mainDebugger.django_exception_break or mainDebugger.jinja2_exception_break:
+                        if mainDebugger.always_exception_set or \
+                                (hasattr(mainDebugger, 'django_exception_break') and mainDebugger.django_exception_break) or \
+                                (hasattr(mainDebugger, 'jinja2_exception_break') and mainDebugger.jinja2_exception_break):
                             return self.trace_exception
                         else:
                             return None
@@ -192,12 +194,12 @@ class PyDBFrame:
                 line = frame.f_lineno
                 flag = False
 
-                if event == 'call' and info.pydev_state != STATE_SUSPEND and mainDebugger.django_breakpoints \
-                and is_django_render_call(frame):
+                if event == 'call' and info.pydev_state != STATE_SUSPEND and hasattr(mainDebugger, 'django_breakpoints') and\
+                        mainDebugger.django_breakpoints and is_django_render_call(frame):
                     (flag, frame) = self.shouldStopOnDjangoBreak(frame, event, arg)
 
-                if event in ('line', 'call') and info.pydev_state != STATE_SUSPEND and mainDebugger.jinja2_breakpoints \
-                        and is_jinja2_render_call(frame):
+                if event in ('line', 'call') and info.pydev_state != STATE_SUSPEND and hasattr(mainDebugger, 'jinja2_breakpoints') and\
+                        mainDebugger.jinja2_breakpoints and is_jinja2_render_call(frame):
                     (flag, frame) = self.shouldStopOnJinja2Break(frame, event, arg)
 
                 #return is not taken into account for breakpoint hit because we'd have a double-hit in this case

@@ -19,8 +19,12 @@ if IS_PY24:
 else:
     from uuid import uuid4
 
+if IS_PY3K:
+    import pkgutil
+else:
+    import pkgutil_old as pkgutil
+
 import errno
-import pkgutil
 try:
     from hashlib import md5
 except ImportError:

@@ -30,10 +30,42 @@ class Jinja2LineBreakpoint(LineBreakpoint):
 def add_line_breakpoint(pydb, type, file, line, condition, expression, func_name):
     if type == 'jinja2-line':
         breakpoint = Jinja2LineBreakpoint(type, file, line, True, condition, func_name, expression)
+        if not hasattr(pydb, 'jinja2_breakpoints'):
+            pydb.jinja2_breakpoints = {}
         breakpoint.add(pydb.jinja2_breakpoints, file, line, func_name)
         return True
     return False
 
+def add_exception_breakpoint(pydb, type, exception):
+    if type == 'jinja2':
+        if not hasattr(pydb, 'jinja2_exception_break'):
+            pydb.jinja2_exception_break = {}
+        pydb.jinja2_exception_break[exception] = True
+        pydb.setTracingForUntracedContexts()
+        return True
+    return False
+
+def remove_exception_breakpoint(pydb, type, exception):
+    if type == 'jinja2':
+        try:
+            del pydb.jinja2_exception_break[exception]
+            return True
+        except:
+            pass
+    return False
+
+def find_and_remove_line_break(pydb, type, file, line):
+    if type == 'jinja2-line':
+        del pydb.jinja2_breakpoints[file][line]
+        return True
+    return False
+
+def remove_line_break(pydb, type, file, line):
+    try:
+        del pydb.jinja2_breakpoints[file][line]
+        return True
+    except:
+        return False
 
 def is_jinja2_render_call(frame):
     try:

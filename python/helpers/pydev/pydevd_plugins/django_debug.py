@@ -31,9 +31,43 @@ class DjangoLineBreakpoint(LineBreakpoint):
 def add_line_breakpoint(pydb, type, file, line, condition, expression, func_name):
     if type == 'django-line':
         breakpoint = DjangoLineBreakpoint(type, file, line, True, condition, func_name, expression)
+        if not hasattr(pydb, 'django_breakpoints'):
+            pydb.django_breakpoints = {}
         breakpoint.add(pydb.django_breakpoints, file, line, func_name)
         return True
     return False
+
+def add_exception_breakpoint(pydb, type, exception):
+    if type == 'django':
+        if not hasattr(pydb, 'django_exception_break'):
+            pydb.django_exception_break = {}
+        pydb.django_exception_break[exception] = True
+        pydb.setTracingForUntracedContexts()
+        return True
+    return False
+
+
+def remove_exception_breakpoint(pydb, type, exception):
+    if type == 'django':
+        try:
+            del pydb.django_exception_break[exception]
+            return True
+        except:
+            pass
+    return False
+
+def find_and_remove_line_break(pydb, type, file, line):
+    if type == 'django-line':
+        del pydb.django_breakpoints[file][line]
+        return True
+    return False
+
+def remove_line_break(pydb, type, file, line):
+    try:
+        del pydb.django_breakpoints[file][line]
+        return True
+    except:
+        return False
 
 
 def inherits(cls, *names):

@@ -32,10 +32,6 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          CMD_ADD_EXCEPTION_BREAK, \
                          CMD_REMOVE_EXCEPTION_BREAK, \
                          CMD_LOAD_SOURCE, \
-                         CMD_ADD_DJANGO_EXCEPTION_BREAK, \
-                         CMD_REMOVE_DJANGO_EXCEPTION_BREAK,\
-                         CMD_ADD_JINJA2_EXCEPTION_BREAK, \
-                         CMD_REMOVE_JINJA2_EXCEPTION_BREAK, \
                          CMD_SMART_STEP_INTO,\
     InternalChangeVariable, \
                          InternalGetCompletions, \
@@ -308,12 +304,8 @@ class PyDB:
         self.cmdFactory = NetCommandFactory()
         self._cmd_queue = {}  # the hash of Queues. Key is thread id, value is thread
         self.breakpoints = {}
-        self.django_breakpoints = {}
-        self.jinja2_breakpoints = {}
         self.exception_set = {}
         self.always_exception_set = set()
-        self.django_exception_break = {}
-        self.jinja2_exception_break = {}
         self.readyToRun = False
         self._main_lock = threading.Lock()
         self._lock_running_thread_ids = threading.Lock()
@@ -736,15 +728,8 @@ class PyDB:
                         breakpoint.add(self.breakpoints, file, line, func_name)
                         supported_type = True
                     else:
-                        for plugin in self.plugin_source.list_plugins():
-                            loaded_plugin = None
-                            try:
-                                loaded_plugin = self.plugin_source.load_plugin(plugin)
-                            except:
-                                pass
-                            if hasattr(loaded_plugin, 'add_line_breakpoint'):
-                                supported_type = supported_type or \
-                                    loaded_plugin.add_line_breakpoint(self, type, file, line, condition, expression, func_name)
+                        supported_type = search_for_plugins(self.plugin_source, 'add_line_breakpoint',
+                                                            self, type, file, line, condition, expression, func_name)
 
                     if not supported_type:
                         raise NameError(type)
@@ -764,28 +749,32 @@ class PyDB:
                     else:
                         found = False
                         try:
-                            if type == 'django-line':
-                                del self.django_breakpoints[file][line]
-                            elif type == 'jinja2-line':
-                                del self.jinja2_breakpoints[file][line]
-                            elif type == 'python-line':
-                                del self.breakpoints[file][line] #remove the breakpoint in that line
+                            specific_type = False
+                            if type == 'python-line':
+                                del self.breakpoints[file][line]
+                                specific_type = True
                             else:
-                                try:
-                                    del self.django_breakpoints[file][line]
-                                    found = True
-                                except:
-                                    pass
-                                try:
-                                    del self.jinja2_breakpoints[file][line]
-                                    found = True
-                                except:
-                                    pass
+                                specific_type = search_for_plugins(self.plugin_source, 'find_and_remove_line_break',
+                                                                   self, type, file, line)
+
+                            if not specific_type:
+                                #remove all
                                 try:
                                     del self.breakpoints[file][line] #remove the breakpoint in that line
                                     found = True
                                 except:
                                     pass
+                                # for plugin in plugin_source.list_plugins():
+                                #     loaded_plugin = plugin_source.load_plugin(plugin)
+                                #     try:
+                                #         loaded_plugin = plugin_source.load_plugin(plugin)
+                                #     except:
+                                #         pydev_log.error("Failed to load plugin %s" % plugin)
+                                #     if hasattr(loaded_plugin, 'remove_line_break'):
+                                #         func = getattr(loaded_plugin, func_name)
+                                #         found = found or func(self, type, file, line)
+
+                                found = found or search_for_plugins(self.plugin_source, 'remove_line_break', self, type, file, line)
 
                             if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
                                 sys.stderr.write('Removed breakpoint:%s - %s\n' % (file, line))
@@ -818,31 +807,51 @@ class PyDB:
                     self.postInternalCommand(int_cmd, thread_id)
 
                 elif cmd_id == CMD_ADD_EXCEPTION_BREAK:
-                    exception, notify_always, notify_on_terminate = text.split('\t', 2)
+                    exception = text.split('\t', 2)[0]
+                    type, exception = exception.split('-')
+                    supported_type = False
 
-                    eb = ExceptionBreakpoint(exception, notify_always, notify_on_terminate)
+                    if type == 'python':
+                        notify_always, notify_on_terminate = text.split('\t', 2)[1:3]
+                        eb = ExceptionBreakpoint(exception, notify_always, notify_on_terminate)
 
-                    self.exception_set[exception] = eb
+                        self.exception_set[exception] = eb
 
-                    if eb.notify_on_terminate:
-                        update_exception_hook(self)
-                    if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
-                        pydev_log.error("Exceptions to hook on terminate: %s\n" % (self.exception_set,))
-
-                    if eb.notify_always:
-                        self.always_exception_set.add(exception)
+                        if eb.notify_on_terminate:
+                            update_exception_hook(self)
                         if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
-                            pydev_log.error("Exceptions to hook always: %s\n" % (self.always_exception_set,))
-                        self.setTracingForUntracedContexts()
+                            pydev_log.error("Exceptions to hook on terminate: %s\n" % (self.exception_set,))
+
+                        if eb.notify_always:
+                            self.always_exception_set.add(exception)
+                            if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
+                                pydev_log.error("Exceptions to hook always: %s\n" % (self.always_exception_set,))
+                            self.setTracingForUntracedContexts()
+                        supported_type = True
+
+                    else:
+                        supported_type = search_for_plugins(self.plugin_source, 'add_exception_breakpoint', self, type, exception)
+
+                    if not supported_type:
+                        raise NameError(type)
 
                 elif cmd_id == CMD_REMOVE_EXCEPTION_BREAK:
-                    exception = text
-                    try:
-                        del self.exception_set[exception]
-                        self.always_exception_set.remove(exception)
-                    except:
-                        pydev_log.debug("Error while removing exception %s"%sys.exc_info()[0]);
-                    update_exception_hook(self)
+                    type, exception = text.split('-', 1)
+
+                    supported_type = False
+                    if type == 'python':
+                        try:
+                            del self.exception_set[exception]
+                            self.always_exception_set.remove(exception)
+                        except:
+                            pydev_log.debug("Error while removing exception %s"%sys.exc_info()[0]);
+                        update_exception_hook(self)
+                        supported_type = True
+                    else:
+                        supported_type = search_for_plugins(self.plugin_source, 'remove_exception_breakpoint', self, type, exception)
+
+                    if not supported_type:
+                        raise NameError(type)
 
                 elif cmd_id == CMD_LOAD_SOURCE:
                     path = text
@@ -852,34 +861,6 @@ class PyDB:
                         self.cmdFactory.makeLoadSourceMessage(seq, source, self)
                     except:
                         return self.cmdFactory.makeErrorMessage(seq, pydevd_tracing.GetExceptionTracebackStr())
-
-                elif cmd_id == CMD_ADD_DJANGO_EXCEPTION_BREAK:
-                    exception = text
-
-                    self.django_exception_break[exception] = True
-                    self.setTracingForUntracedContexts()
-
-                elif cmd_id == CMD_REMOVE_DJANGO_EXCEPTION_BREAK:
-                    exception = text
-
-                    try:
-                        del self.django_exception_break[exception]
-                    except :
-                        pass
-
-                elif cmd_id == CMD_ADD_JINJA2_EXCEPTION_BREAK:
-                    exception = text
-
-                    self.jinja2_exception_break[exception] = True
-                    self.setTracingForUntracedContexts()
-
-                elif cmd_id == CMD_REMOVE_JINJA2_EXCEPTION_BREAK:
-                    exception = text
-
-                    try:
-                        del self.jinja2_exception_break[exception]
-                    except :
-                        pass
 
                 else:
                     #I have no idea what this is all about
@@ -1272,6 +1253,20 @@ class PyDB:
         self.checkOutputRedirect()
         cmd = self.cmdFactory.makeExitMessage()
         self.writer.addCommand(cmd)
+
+
+def search_for_plugins(plugin_source, func_name, *args, **kwargs):
+    result = False
+    for plugin in plugin_source.list_plugins():
+        loaded_plugin = None
+        try:
+            loaded_plugin = plugin_source.load_plugin(plugin)
+        except:
+            pydev_log.error("Failed to load plugin %s" % plugin)
+        if hasattr(loaded_plugin, func_name):
+            func = getattr(loaded_plugin, func_name)
+            result = result or func(*args, **kwargs)
+    return result
 
 def set_debug(setup):
     setup['DEBUG_RECORD_SOCKET_READS'] = True
