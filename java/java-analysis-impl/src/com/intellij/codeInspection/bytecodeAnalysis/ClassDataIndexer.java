@@ -126,7 +126,6 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
         final boolean stable = stableClass || (methodNode.access & STABLE_FLAGS) != 0 || "<init>".equals(methodNode.name);
 
         try {
-          boolean added = false;
           final ControlFlowGraph graph = cfg.buildControlFlowGraph(className, methodNode);
           if (graph.transitions.length > 0) {
             final DFSTree dfs = cfg.buildDFSTree(graph.transitions, graph.edgeCount);
@@ -144,40 +143,36 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
               // reducible?
               if (dfs.back.isEmpty() || cfg.reducible(graph, dfs)) {
                 processBranchingMethod(method, methodNode, graph, dfs, argumentTypes, isReferenceResult, isInterestingResult, stable);
-                added = true;
+                return;
               }
-              else {
-                LOG.debug(method + ": CFG is not reducible");
-              }
+              LOG.debug(method + ": CFG is not reducible");
             }
             // simple
             else {
               processNonBranchingMethod(method, graph);
-              added = true;
+              return;
             }
           }
 
-          if (!added) {
-            // default top equations
-            if (isReferenceResult) {
-              contractEqs.add(new Equation<Key, Value>(new Key(method, new Out(), stable), FINAL_TOP));
-            }
-            for (int i = 0; i < argumentTypes.length; i++) {
-              Type argType = argumentTypes[i];
-              boolean isReferenceArg = ASMUtils.isReferenceType(argType);
-              boolean isBooleanArg = ASMUtils.isBooleanType(argType);
+          // default top equations
+          if (isReferenceResult) {
+            contractEqs.add(new Equation<Key, Value>(new Key(method, new Out(), stable), FINAL_TOP));
+          }
+          for (int i = 0; i < argumentTypes.length; i++) {
+            Type argType = argumentTypes[i];
+            boolean isReferenceArg = ASMUtils.isReferenceType(argType);
+            boolean isBooleanArg = ASMUtils.isBooleanType(argType);
 
-              if (isReferenceArg) {
-                parameterEqs.add(new Equation<Key, Value>(new Key(method, new In(i), stable), FINAL_TOP));
-              }
-              if (isReferenceArg && isInterestingResult) {
-                contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), FINAL_TOP));
-                contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull), stable), FINAL_TOP));
-              }
-              if (isBooleanArg && isInterestingResult) {
-                contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.False), stable), FINAL_TOP));
-                contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.True), stable), FINAL_TOP));
-              }
+            if (isReferenceArg) {
+              parameterEqs.add(new Equation<Key, Value>(new Key(method, new In(i), stable), FINAL_TOP));
+            }
+            if (isReferenceArg && isInterestingResult) {
+              contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), FINAL_TOP));
+              contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull), stable), FINAL_TOP));
+            }
+            if (isBooleanArg && isInterestingResult) {
+              contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.False), stable), FINAL_TOP));
+              contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.True), stable), FINAL_TOP));
             }
           }
         }
