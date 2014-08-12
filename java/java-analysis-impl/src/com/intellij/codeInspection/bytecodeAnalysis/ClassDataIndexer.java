@@ -210,7 +210,11 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
 
         final Pair<boolean[], Frame<org.jetbrains.org.objectweb.asm.tree.analysis.Value>[]> leakingParametersAndFrames =
           maybeLeakingParameter ? leakingParametersAndFrames(method, methodNode, argumentTypes) : null;
-        boolean[] leakingParameters = leakingParametersAndFrames != null ? leakingParametersAndFrames.first : null;
+        boolean[] leakingParameters =
+          leakingParametersAndFrames != null ? leakingParametersAndFrames.first : null;
+
+        final RichControlFlow richControlFlow = new RichControlFlow(graph, dfs);
+
         final NullableLazyValue<boolean[]> origins = new NullableLazyValue<boolean[]>() {
           @Override
           protected boolean[] compute() {
@@ -228,10 +232,9 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
           @NotNull
           @Override
           protected Equation<Key, Value> compute() {
-            boolean[] origs = origins.getValue();
-            if (origs != null) {
+            if (origins.getValue() != null) {
               try {
-                return new InOutAnalysis(new RichControlFlow(graph, dfs), new Out(), origs, stable).analyze();
+                return new InOutAnalysis(richControlFlow, new Out(), origins.getValue(), stable).analyze();
               }
               catch (AnalyzerException ignored) {
               }
@@ -245,12 +248,9 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
         }
 
         for (int i = 0; i < argumentTypes.length; i++) {
-          Type argType = argumentTypes[i];
-          int argSort = argType.getSort();
-          boolean isReferenceArg = argSort == Type.OBJECT || argSort == Type.ARRAY;
-          boolean isBooleanArg = Type.BOOLEAN_TYPE.equals(argType);
+          boolean isReferenceArg = ASMUtils.isReferenceType(argumentTypes[i]);
           boolean notNullParam = false;
-          RichControlFlow richControlFlow = new RichControlFlow(graph, dfs);
+
           if (isReferenceArg) {
             if (leakingParameters[i]) {
               Equation<Key, Value> notNullParamEquation = new NonNullInAnalysis(richControlFlow, new In(i), stable).analyze();
@@ -288,7 +288,7 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
               contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull), stable), outEquation.getValue().rhs));
             }
           }
-          if (isBooleanArg && isInterestingResult) {
+          if (ASMUtils.isBooleanType(argumentTypes[i]) && isInterestingResult) {
             if (leakingParameters[i]) {
               if (origins.getValue() != null) {
                 // result origins analysis was ok
