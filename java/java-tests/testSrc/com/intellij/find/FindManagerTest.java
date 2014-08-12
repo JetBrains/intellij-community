@@ -670,6 +670,18 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertTrue(findResult.getStartOffset() > prefix.length());
   }
 
+  public void testFindExceptComments2() {
+    FindModel findModel = FindManagerTestUtils.configureFindModel("oo");
+
+    String text = "//oooo";
+
+    findModel.setSearchContext(FindModel.SearchContext.EXCEPT_COMMENTS);
+    LightVirtualFile file = new LightVirtualFile("A.java", text);
+
+    FindResult findResult = myFindManager.findString(text, 0, findModel, file);
+    assertFalse(findResult.isStringFound());
+  }
+
   public void testFindExceptLiterals() {
     FindModel findModel = FindManagerTestUtils.configureFindModel("done");
 

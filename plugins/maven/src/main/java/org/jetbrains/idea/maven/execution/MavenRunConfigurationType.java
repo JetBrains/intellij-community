@@ -59,10 +59,12 @@ public class MavenRunConfigurationType implements ConfigurationType {
    */
   MavenRunConfigurationType() {
     myFactory = new ConfigurationFactory(this) {
+      @Override
       public RunConfiguration createTemplateConfiguration(Project project) {
         return new MavenRunConfiguration(project, this, "");
       }
 
+      @Override
       public RunConfiguration createTemplateConfiguration(Project project, RunManager runManager) {
         return new MavenRunConfiguration(project, this, "");
       }
@@ -99,22 +101,27 @@ public class MavenRunConfigurationType implements ConfigurationType {
     };
   }
 
+  @Override
   public String getDisplayName() {
     return RunnerBundle.message("maven.run.configuration.name");
   }
 
+  @Override
   public String getConfigurationTypeDescription() {
     return RunnerBundle.message("maven.run.configuration.description");
   }
 
+  @Override
   public Icon getIcon() {
     return MavenIcons.Phase;
   }
 
+  @Override
   public ConfigurationFactory[] getConfigurationFactories() {
     return new ConfigurationFactory[]{myFactory};
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getId() {
@@ -187,29 +194,26 @@ public class MavenRunConfigurationType implements ConfigurationType {
 
     ProgramRunner runner = DefaultJavaProgramRunner.getInstance();
     Executor executor = DefaultRunExecutor.getRunExecutorInstance();
-    ExecutionEnvironment env = new ExecutionEnvironment(executor, runner, configSettings, project);
-
     try {
-      runner.execute(env, callback);
+      runner.execute(new ExecutionEnvironment(executor, runner, configSettings, project), callback);
     }
     catch (ExecutionException e) {
       MavenUtil.showError(project, "Failed to execute Maven goal", e);
     }
   }
 
+  @NotNull
   public static RunnerAndConfigurationSettings createRunnerAndConfigurationSettings(@Nullable MavenGeneralSettings generalSettings,
-                                                                             @Nullable MavenRunnerSettings runnerSettings,
-                                                                             MavenRunnerParameters params,
-                                                                             Project project) {
+                                                                                    @Nullable MavenRunnerSettings runnerSettings,
+                                                                                    MavenRunnerParameters params,
+                                                                                    Project project) {
     MavenRunConfigurationType type = ConfigurationTypeUtil.findConfigurationType(MavenRunConfigurationType.class);
 
-    final RunnerAndConfigurationSettings settings = RunManagerEx.getInstanceEx(project)
-      .createConfiguration(generateName(project, params), type.myFactory);
+    RunnerAndConfigurationSettings settings = RunManager.getInstance(project).createRunConfiguration(generateName(project, params), type.myFactory);
     MavenRunConfiguration runConfiguration = (MavenRunConfiguration)settings.getConfiguration();
     runConfiguration.setRunnerParameters(params);
     runConfiguration.setGeneralSettings(generalSettings);
     runConfiguration.setRunnerSettings(runnerSettings);
-
     return settings;
   }
 }

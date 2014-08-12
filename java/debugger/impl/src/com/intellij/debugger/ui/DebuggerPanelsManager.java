@@ -108,13 +108,11 @@ public class DebuggerPanelsManager implements ProjectComponent {
                                                    RunContentDescriptor reuseContent,
                                                    RemoteConnection remoteConnection,
                                                    boolean pollConnection) throws ExecutionException {
-    if (executor != environment.getExecutor()) {
-      // fix invalid environment
-      environment = new ExecutionEnvironmentBuilder(environment).executor(executor).build();
-    }
-    environment = ExecutionEnvironmentBuilder.fix(environment, runner);
-    environment = ExecutionEnvironmentBuilder.fix(environment, reuseContent);
-    return attachVirtualMachine(environment, state, remoteConnection, pollConnection);
+    return attachVirtualMachine(new ExecutionEnvironmentBuilder(environment)
+                                  .executor(executor)
+                                  .runner(runner)
+                                  .contentToReuse(reuseContent)
+                                  .build(), state, remoteConnection, pollConnection);
   }
 
   @Nullable

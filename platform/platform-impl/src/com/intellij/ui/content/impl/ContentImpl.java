@@ -44,7 +44,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   private JComponent myComponent;
   private Icon myIcon;
   private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
-  private ContentManager myManager = null;
+  private ContentManager myManager;
   private boolean myIsLocked = false;
   private boolean myPinnable = true;
   private Icon myLayeredIcon = new LayeredIcon(2);

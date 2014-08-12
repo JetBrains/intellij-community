@@ -25,7 +25,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,8 +33,7 @@ import org.jetbrains.annotations.Nullable;
  * @since 6/7/13 11:18 AM
  */
 public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
-
-  private static final Logger LOG = Logger.getInstance("#" + ExternalSystemTaskDebugRunner.class.getName());
+  private static final Logger LOG = Logger.getInstance(ExternalSystemTaskDebugRunner.class);
 
   @NotNull
   @Override
@@ -50,16 +48,12 @@ public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
 
   @Nullable
   @Override
-  protected RunContentDescriptor createContentDescriptor(Project project,
-                                                         RunProfileState state,
-                                                         RunContentDescriptor contentToReuse,
-                                                         ExecutionEnvironment environment) throws ExecutionException
-  {
+  protected RunContentDescriptor createContentDescriptor(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment) throws ExecutionException {
     if (state instanceof ExternalSystemRunConfiguration.MyRunnableState) {
       int port = ((ExternalSystemRunConfiguration.MyRunnableState)state).getDebugPort();
       if (port > 0) {
         RemoteConnection connection = new RemoteConnection(true, "127.0.0.1", String.valueOf(port), true);
-        return attachVirtualMachine(project, state, contentToReuse, environment, connection, true);
+        return attachVirtualMachine(state, environment, connection, true);
       }
       else {
         LOG.warn("Can't attach debugger to external system task execution. Reason: target debug port is unknown");

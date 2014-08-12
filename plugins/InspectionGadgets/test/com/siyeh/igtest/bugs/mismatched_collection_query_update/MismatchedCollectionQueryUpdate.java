@@ -276,3 +276,17 @@ class SimpleAdd {
   }
 
 }
+class EnumConstant {
+  private static final List<String> CONSTANT_ARRAY = new ArrayList();
+  static {
+    CONSTANT_ARRAY.add("asdf");
+  }
+
+  enum SomeEnum {
+    ITEM(CONSTANT_ARRAY); // passed as argument
+    private final List<String> myPatterns;
+    SomeEnum(List<String> patterns) {
+      myPatterns = patterns;
+    }
+  }
+}

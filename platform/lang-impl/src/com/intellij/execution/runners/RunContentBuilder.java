@@ -78,7 +78,7 @@ public class RunContentBuilder extends LogConsoleManagerBase {
   public RunContentBuilder(ProgramRunner runner,
                            ExecutionResult executionResult,
                            @NotNull ExecutionEnvironment environment) {
-    this(executionResult, ExecutionEnvironmentBuilder.fix(environment, runner));
+    this(executionResult, fix(environment, runner));
   }
 
   public RunContentBuilder(ExecutionResult executionResult, @NotNull ExecutionEnvironment environment) {
@@ -87,6 +87,16 @@ public class RunContentBuilder extends LogConsoleManagerBase {
     myManager = new LogFilesManager(environment.getProject(), this, this);
     myExecutionResult = executionResult;
     setEnvironment(environment);
+  }
+
+  @NotNull
+  public static ExecutionEnvironment fix(@NotNull ExecutionEnvironment environment, @Nullable ProgramRunner runner) {
+    if (runner == null || runner.getRunnerId().equals(environment.getRunnerId())) {
+      return environment;
+    }
+    else {
+      return new ExecutionEnvironmentBuilder(environment).runner(runner).build();
+    }
   }
 
   @Deprecated
@@ -195,7 +205,7 @@ public class RunContentBuilder extends LogConsoleManagerBase {
     consoleContent.setActions(consoleActions, ActionPlaces.UNKNOWN, console.getComponent());
   }
 
-  private ActionGroup createActionToolbar(final RunContentDescriptor contentDescriptor, final JComponent component) {
+  private ActionGroup createActionToolbar(RunContentDescriptor contentDescriptor, final JComponent component) {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
 
     final RestartAction restartAction = new RestartAction(contentDescriptor, getEnvironment());
@@ -204,7 +214,7 @@ public class RunContentBuilder extends LogConsoleManagerBase {
     contentDescriptor.setRestarter(new Runnable() {
       @Override
       public void run() {
-        ExecutionUtil.restart(getEnvironment(), contentDescriptor);
+        ExecutionUtil.restart(getEnvironment());
       }
     });
 
@@ -255,12 +265,7 @@ public class RunContentBuilder extends LogConsoleManagerBase {
    */
   public RunContentDescriptor showRunContent(@Nullable RunContentDescriptor reuseContent) {
     RunContentDescriptor descriptor = createDescriptor();
-    if (reuseContent != null) {
-      descriptor.setAttachedContent(reuseContent.getAttachedContent());
-      if (reuseContent.isReuseToolWindowActivation()) {
-        descriptor.setActivateToolWindowWhenAdded(reuseContent.isActivateToolWindowWhenAdded());
-      }
-    }
+    RunContentManagerImpl.copyContentAndBehavior(descriptor, reuseContent);
     return descriptor;
   }
 

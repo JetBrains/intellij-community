@@ -35,8 +35,8 @@ import javax.swing.*;
  * to remove in IDEA 15
  */
 public class RestartAction extends FakeRerunAction implements DumbAware, AnAction.TransparentUpdate, Disposable {
-  private final RunContentDescriptor descriptor;
-  private final ExecutionEnvironment environment;
+  private final RunContentDescriptor myDescriptor;
+  private final ExecutionEnvironment myEnvironment;
 
   public RestartAction(@NotNull RunContentDescriptor descriptor, @NotNull ExecutionEnvironment environment) {
     //noinspection deprecation
@@ -55,9 +55,9 @@ public class RestartAction extends FakeRerunAction implements DumbAware, AnActio
     Disposer.register(descriptor, this);
     FakeRerunAction.registry.add(this);
 
-    this.environment = runner == null ? environment : ExecutionEnvironmentBuilder.fix(environment, runner);
+    myEnvironment = runner == null ? environment : RunContentBuilder.fix(environment, runner);
     getTemplatePresentation().setEnabled(false);
-    this.descriptor = descriptor;
+    myDescriptor = descriptor;
   }
 
   @Override
@@ -68,13 +68,13 @@ public class RestartAction extends FakeRerunAction implements DumbAware, AnActio
   @Override
   @NotNull
   protected RunContentDescriptor getDescriptor(AnActionEvent event) {
-    return descriptor;
+    return myDescriptor;
   }
 
   @Override
   @NotNull
   protected ExecutionEnvironment getEnvironment(AnActionEvent event) {
-    return environment;
+    return myEnvironment;
   }
 
   public void registerShortcut(JComponent component) {

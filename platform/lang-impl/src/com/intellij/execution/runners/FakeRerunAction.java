@@ -17,6 +17,7 @@ package com.intellij.execution.runners;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutorRegistry;
+import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
@@ -49,10 +50,7 @@ class FakeRerunAction extends AnAction implements DumbAware {
     ExecutionEnvironment environment = getEnvironment(event);
     if (environment != null) {
       presentation.setText(ExecutionBundle.message("rerun.configuration.action.name", environment.getRunProfile().getName()));
-
-      RunContentDescriptor descriptor = getDescriptor(event);
-      ProcessHandler processHandler = descriptor == null ? null : descriptor.getProcessHandler();
-      presentation.setIcon(processHandler != null && !processHandler.isProcessTerminated() ? AllIcons.Actions.Restart : environment.getExecutor().getIcon());
+      presentation.setIcon(ExecutionManagerImpl.isProcessRunning(getDescriptor(event)) ? AllIcons.Actions.Restart : environment.getExecutor().getIcon());
       presentation.setEnabledAndVisible(isEnabled(event));
       return;
     }
@@ -66,7 +64,7 @@ class FakeRerunAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent event) {
     ExecutionEnvironment environment = getEnvironment(event);
     if (environment != null) {
-      ExecutionUtil.restart(environment, getDescriptor(event));
+      ExecutionUtil.restart(environment);
       return;
     }
 

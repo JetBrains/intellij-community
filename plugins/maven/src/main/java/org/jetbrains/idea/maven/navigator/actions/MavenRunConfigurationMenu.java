@@ -57,9 +57,9 @@ public class MavenRunConfigurationMenu extends DefaultActionGroup implements Dum
 
     @Override
     public void actionPerformed(AnActionEvent event) {
-      if (!myEnabled) return;
-
-      ProgramRunnerUtil.executeConfiguration(myProject, mySettings, myExecutor);
+      if (myEnabled) {
+        ProgramRunnerUtil.executeConfiguration(myProject, mySettings, myExecutor);
+      }
     }
 
     @Override

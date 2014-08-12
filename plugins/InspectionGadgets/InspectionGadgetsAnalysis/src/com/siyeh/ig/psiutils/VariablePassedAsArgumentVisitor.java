@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,33 +37,29 @@ class VariablePassedAsArgumentVisitor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
+  public void visitCallExpression(PsiCallExpression callExpression) {
+    super.visitCallExpression(callExpression);
     if (passed) {
       return;
     }
-    super.visitMethodCallExpression(call);
-    final PsiExpressionList argumentList = call.getArgumentList();
-    final PsiExpression[] arguments = argumentList.getExpressions();
-    for (PsiExpression argument : arguments) {
-      if (VariableAccessUtils.mayEvaluateToVariable(argument, variable)) {
-        passed = true;
-        break;
-      }
-    }
+    visitCall(callExpression);
   }
 
   @Override
-  public void visitNewExpression(@NotNull PsiNewExpression newExpression) {
+  public void visitEnumConstant(PsiEnumConstant enumConstant) {
     if (passed) {
       return;
     }
-    super.visitNewExpression(newExpression);
-    final PsiExpressionList argumentList = newExpression.getArgumentList();
+    super.visitEnumConstant(enumConstant);
+    visitCall(enumConstant);
+  }
+
+  private void visitCall(PsiCall call) {
+    final PsiExpressionList argumentList = call.getArgumentList();
     if (argumentList == null) {
       return;
     }
-    final PsiExpression[] arguments = argumentList.getExpressions();
-    for (PsiExpression argument : arguments) {
+    for (PsiExpression argument : argumentList.getExpressions()) {
       if (VariableAccessUtils.mayEvaluateToVariable(argument, variable)) {
         passed = true;
         break;

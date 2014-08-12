@@ -553,9 +553,9 @@
     </option>
     <option name="ERRORS_ATTRIBUTES">
       <value>
-        <option name="EFFECT_COLOR" value="dc3737" />
+        <option name="EFFECT_COLOR" value="bc3f3c" />
         <option name="EFFECT_TYPE" value="2" />
-        <option name="ERROR_STRIPE_COLOR" value="dc3737" />
+        <option name="ERROR_STRIPE_COLOR" value="bc3f3c" />
       </value>
     </option>
     <option name="EXECUTIONPOINT_ATTRIBUTES">
@@ -578,9 +578,9 @@
     </option>
     <option name="GENERIC_SERVER_ERROR_OR_WARNING">
       <value>
-        <option name="EFFECT_COLOR" value="fa8c00" />
+        <option name="EFFECT_COLOR" value="f49810" />
         <option name="EFFECT_TYPE" value="1" />
-        <option name="ERROR_STRIPE_COLOR" value="fa8c00" />
+        <option name="ERROR_STRIPE_COLOR" value="f49810" />
       </value>
     </option>
     <option name="GRADLE_CHANGE_CONFLICT">
@@ -1565,9 +1565,9 @@
     </option>
     <option name="WARNING_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="ffd900" />
+        <option name="BACKGROUND" value="52503a" />
         <option name="EFFECT_TYPE" value="2" />
-        <option name="ERROR_STRIPE_COLOR" value="ffd900" />
+        <option name="ERROR_STRIPE_COLOR" value="8c8c00" />
       </value>
     </option>
     <option name="WRITE_IDENTIFIER_UNDER_CARET_ATTRIBUTES">

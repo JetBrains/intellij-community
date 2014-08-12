@@ -239,9 +239,9 @@
         <value>
           <option name="FOREGROUND"/>
           <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR" value="dc3737"/>
+          <option name="EFFECT_COLOR" value="ff0000"/>
           <option name="EFFECT_TYPE" value="2"/>
-          <option name="ERROR_STRIPE_COLOR" value="dc3737" />
+          <option name="ERROR_STRIPE_COLOR" value="ff0000" />
         </value>
       </option>
       <option name="BLINKING_HIGHLIGHTS_ATTRIBUTES">
@@ -281,19 +281,19 @@
       <option name="WARNING_ATTRIBUTES">
         <value>
           <option name="FOREGROUND"/>
-          <option name="BACKGROUND" value="ffd900"/>
+          <option name="BACKGROUND" value="f6ebbc"/>
           <option name="EFFECT_COLOR"/>
           <option name="EFFECT_TYPE" value="1"/>
-          <option name="ERROR_STRIPE_COLOR" value="ffd900" />
+          <option name="ERROR_STRIPE_COLOR" value="ffff00" />
         </value>
       </option>
       <option name="GENERIC_SERVER_ERROR_OR_WARNING">
         <value>
           <option name="FOREGROUND"/>
           <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR" value="fa8c00"/>
+          <option name="EFFECT_COLOR" value="f49810"/>
           <option name="EFFECT_TYPE" value="2"/>
-          <option name="ERROR_STRIPE_COLOR" value="fa8c00" />
+          <option name="ERROR_STRIPE_COLOR" value="f49810" />
         </value>
       </option>
       <option name="DUPLICATE_FROM_SERVER">

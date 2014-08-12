@@ -17,12 +17,12 @@ package com.intellij.psi.search.scope;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.scope.packageSet.AbstractPackageSet;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.Colored;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +45,7 @@ public class NonProjectFilesScope extends NamedScope {
       @Override
       public boolean contains(VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
         // do not include fake-files e.g. fragment-editors, database consoles, etc.
-        if (file == null || file instanceof LightVirtualFile) return false;
+        if (file == null || file.getFileSystem() instanceof NonPhysicalFileSystem) return false;
         if (!file.isInLocalFileSystem()) return true;
         if (isInsideProjectContent(project, file)) return false;
         return !ProjectScope.getProjectScope(project).contains(file);

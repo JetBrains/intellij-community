@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static com.intellij.openapi.actionSystem.LangDataKeys.*;
 
-public class ExecutionEnvironment extends UserDataHolderBase {
+public class ExecutionEnvironment extends UserDataHolderBase implements Disposable {
   private static final AtomicLong myIdHolder = new AtomicLong(1L);
 
   @NotNull private final Project myProject;
@@ -52,7 +52,7 @@ public class ExecutionEnvironment extends UserDataHolderBase {
   @Nullable private final RunnerAndConfigurationSettings myRunnerAndConfigurationSettings;
   @Nullable private RunContentDescriptor myContentToReuse;
   @Nullable private String myRunnerId;
-  @Nullable final ProgramRunner<?> runner;
+  @Nullable final ProgramRunner<?> myRunner;
   private long myExecutionId = 0;
   @Nullable private DataContext myDataContext;
 
@@ -62,7 +62,7 @@ public class ExecutionEnvironment extends UserDataHolderBase {
     myContentToReuse = null;
     myRunnerAndConfigurationSettings = null;
     myExecutor = null;
-    runner = null;
+    myRunner = null;
   }
 
   public ExecutionEnvironment(@NotNull Executor executor,
@@ -133,20 +133,16 @@ public class ExecutionEnvironment extends UserDataHolderBase {
     myRunnerSettings = runnerSettings;
     myConfigurationSettings = configurationSettings;
     myProject = project;
-    myContentToReuse = contentToReuse;
+    setContentToReuse(contentToReuse);
     myRunnerAndConfigurationSettings = settings;
 
-    this.runner = runner;
+    myRunner = runner;
     myRunnerId = runner == null ? runnerId : runner.getRunnerId();
+  }
 
-    if (myContentToReuse != null) {
-      Disposer.register(myContentToReuse, new Disposable() {
-        @Override
-        public void dispose() {
-          myContentToReuse = null;
-        }
-      });
-    }
+  @Override
+  public void dispose() {
+    myContentToReuse = null;
   }
 
   @NotNull
@@ -174,6 +170,14 @@ public class ExecutionEnvironment extends UserDataHolderBase {
     return myContentToReuse;
   }
 
+  public void setContentToReuse(@Nullable RunContentDescriptor contentToReuse) {
+    myContentToReuse = contentToReuse;
+
+    if (contentToReuse != null) {
+      Disposer.register(contentToReuse, this);
+    }
+  }
+
   @Nullable
   public String getRunnerId() {
     return myRunnerId;
@@ -181,7 +185,7 @@ public class ExecutionEnvironment extends UserDataHolderBase {
 
   @Nullable
   public ProgramRunner<?> getRunner() {
-    return runner == null ? RunnerRegistry.getInstance().findRunnerById(getRunnerId()) : runner;
+    return myRunner == null ? RunnerRegistry.getInstance().findRunnerById(getRunnerId()) : myRunner;
   }
 
   @Nullable

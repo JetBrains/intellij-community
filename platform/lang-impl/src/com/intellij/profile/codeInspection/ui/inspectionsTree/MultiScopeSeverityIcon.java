@@ -62,7 +62,6 @@ public class MultiScopeSeverityIcon implements Icon {
 
     final Collection<HighlightSeverity> values = myScopeToAverageSeverityMap.values();
     int idx = 0;
-    ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
     for (final HighlightSeverity severity : values) {
       final Icon icon = HighlightDisplayLevel.find(severity).getIcon();
       g.setColor(icon instanceof HighlightDisplayLevel.SingleColorIconWithMask ?
@@ -71,6 +70,7 @@ public class MultiScopeSeverityIcon implements Icon {
       g.fillRect(x, j, partWidth, getIconHeight());
       idx++;
     }
+    g.drawImage(HighlightDisplayLevel.ImageHolder.ourErrorMaskImage, i, j, null);
   }
 
   @Override

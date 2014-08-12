@@ -54,7 +54,7 @@ public class PythonToolWindowConsoleRunner extends PydevConsoleRunner {
   }
 
   @Override
-  protected void showConsole(Executor defaultExecutor, RunContentDescriptor contentDescriptor) {
+  protected void showConsole(Executor defaultExecutor, @NotNull RunContentDescriptor contentDescriptor) {
     PythonConsoleToolWindow terminalView = PythonConsoleToolWindow.getInstance(getProject());
     terminalView.init(getToolWindow(), contentDescriptor);
   }

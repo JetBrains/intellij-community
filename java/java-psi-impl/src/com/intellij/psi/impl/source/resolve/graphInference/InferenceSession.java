@@ -27,6 +27,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -220,8 +221,9 @@ public class InferenceSession {
         return prepareSubstitution();
       }
 
-      if (parameters != null && args != null && !MethodCandidateInfo.isOverloadCheck()) {
-        final Set<ConstraintFormula> additionalConstraints = new HashSet<ConstraintFormula>();
+      if (parameters != null && args != null &&
+          !MethodCandidateInfo.ourOverloadGuard.currentStack().contains(PsiUtil.skipParenthesizedExprUp(parent.getParent()))) {
+        final Set<ConstraintFormula> additionalConstraints = new LinkedHashSet<ConstraintFormula>();
         if (parameters.length > 0) {
           collectAdditionalConstraints(parameters, args, properties.getMethod(), PsiSubstitutor.EMPTY, additionalConstraints, properties.isVarargs(), true);
         }
@@ -881,7 +883,7 @@ public class InferenceSession {
 
   private Set<ConstraintFormula> buildSubset(final Set<ConstraintFormula> additionalConstraints) {
 
-    final Set<ConstraintFormula> subset = new HashSet<ConstraintFormula>();
+    final Set<ConstraintFormula> subset = new LinkedHashSet<ConstraintFormula>();
     final Set<InferenceVariable> outputVariables = new HashSet<InferenceVariable>();
     for (ConstraintFormula constraint : additionalConstraints) {
       if (constraint instanceof InputOutputConstraintFormula) {
@@ -899,8 +901,19 @@ public class InferenceSession {
         if (inputVariables != null) {
           boolean dependsOnOutput = false;
           for (InferenceVariable inputVariable : inputVariables) {
+            if (dependsOnOutput) break;
+            if (inputVariable.hasInstantiation(this)) continue;
             final Set<InferenceVariable> dependencies = inputVariable.getDependencies(this);
             dependencies.add(inputVariable);
+            if (!hasCapture(inputVariable)) {
+              for (InferenceVariable outputVariable : outputVariables) {
+                if (ContainerUtil.intersects(outputVariable.getDependencies(this), dependencies)) {
+                  dependsOnOutput = true;
+                  break;
+                }
+              }
+            }
+
             dependencies.retainAll(outputVariables);
             if (!dependencies.isEmpty()) {
               dependsOnOutput = true;

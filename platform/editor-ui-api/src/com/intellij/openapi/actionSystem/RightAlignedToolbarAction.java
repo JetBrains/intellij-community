@@ -13,14 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.facet.ui;
-
-import org.jetbrains.annotations.NotNull;
+package com.intellij.openapi.actionSystem;
 
 /**
- * @author nik
+ * @author Konstantin Bulenkov
  */
-public abstract class FacetEditorValidator {
-  @NotNull
-  public abstract ValidationResult check();
+public interface RightAlignedToolbarAction {
 }

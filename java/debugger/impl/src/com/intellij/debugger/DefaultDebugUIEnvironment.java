@@ -44,10 +44,7 @@ public class DefaultDebugUIEnvironment implements DebugUIEnvironment {
                                    RemoteConnection remoteConnection,
                                    boolean pollConnection) {
     myExecutionEnvironment = environment;
-    myModelEnvironment = new DefaultDebugEnvironment(environment,
-                                                     state,
-                                                     remoteConnection,
-                                                     pollConnection);
+    myModelEnvironment = new DefaultDebugEnvironment(environment, state, remoteConnection, pollConnection);
   }
 
   @Override

@@ -176,9 +176,6 @@ public class DownloadUtil {
     URLConnection urlConnection = HttpConfigurable.getInstance().openConnection(location);
     HttpURLConnection httpURLConnection = ObjectUtils.tryCast(urlConnection, HttpURLConnection.class);
     try {
-      int timeout = (int) TimeUnit.MINUTES.toMillis(2);
-      urlConnection.setConnectTimeout(timeout);
-      urlConnection.setReadTimeout(timeout);
       urlConnection.connect();
       InputStream in = urlConnection.getInputStream();
       int contentLength = urlConnection.getContentLength();

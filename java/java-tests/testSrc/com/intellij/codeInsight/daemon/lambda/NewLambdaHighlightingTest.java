@@ -92,6 +92,7 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA124961() { doTest(); }
   public void testIDEA126109() { doTest(); }
   public void testIDEA126809() { doTest(); }
+  public void testIDEA124424() { doTest(); }
 
   public void testIDEA127596() throws Exception {
     doTest();
@@ -102,12 +103,14 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
-  @Bombed(day = 20, month = Calendar.AUGUST)
   public void testIDEA123951() throws Exception {
     doTest();
   }
 
   public void testIDEA124190() throws Exception {
+    doTest();
+  }
+  public void testIDEA127124comment() throws Exception {
     doTest();
   }
 

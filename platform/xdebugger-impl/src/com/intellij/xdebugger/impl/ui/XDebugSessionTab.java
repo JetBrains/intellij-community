@@ -77,22 +77,21 @@ public class XDebugSessionTab extends DebuggerSessionTabBase implements DataProv
       if (component != null) {
         XDebugSessionTab oldTab = TAB_KEY.getData(DataManager.getInstance().getDataContext(component));
         if (oldTab != null) {
-          oldTab.setSession(session, environment, contentToReuse, icon);
+          oldTab.setSession(session, environment, icon);
           oldTab.attachToSession();
           return oldTab;
         }
       }
     }
-    return new XDebugSessionTab(session, icon, environment, contentToReuse);
+    return new XDebugSessionTab(session, icon, environment);
   }
 
   private XDebugSessionTab(@NotNull XDebugSessionImpl session,
-                          @Nullable Icon icon,
-                          @Nullable ExecutionEnvironment environment,
-                          @Nullable RunContentDescriptor contentToReuse) {
+                           @Nullable Icon icon,
+                           @Nullable ExecutionEnvironment environment) {
     super(session.getProject(), "Debug", session.getSessionName(), GlobalSearchScope.allScope(session.getProject()));
 
-    setSession(session, environment, contentToReuse, icon);
+    setSession(session, environment, icon);
 
     myUi.addContent(createFramesContent(), 0, PlaceInGrid.left, false);
     myUi.addContent(createVariablesContent(), 0, PlaceInGrid.center, false);
@@ -126,7 +125,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase implements DataProv
     rebuildViews();
   }
 
-  private void setSession(@NotNull XDebugSessionImpl session, @Nullable ExecutionEnvironment environment, @Nullable RunContentDescriptor contentToReuse, @Nullable Icon icon) {
+  private void setSession(@NotNull XDebugSessionImpl session, @Nullable ExecutionEnvironment environment, @Nullable Icon icon) {
     if (environment != null) {
       setEnvironment(environment);
     }
@@ -134,9 +133,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase implements DataProv
     this.session = session;
     myConsole = session.getConsoleView();
     myRunContentDescriptor = new RunContentDescriptor(myConsole, session.getDebugProcess().getProcessHandler(), myUi.getComponent(), session.getSessionName(), icon);
-    if (contentToReuse != null && contentToReuse.isReuseToolWindowActivation()) {
-      myRunContentDescriptor.setActivateToolWindowWhenAdded(contentToReuse.isActivateToolWindowWhenAdded());
-    }
   }
 
   @Nullable
