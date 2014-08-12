@@ -20,6 +20,7 @@ import ru.compscicenter.edide.editor.StudyEditor;
 import ru.compscicenter.edide.ui.StudyToolWindowFactory;
 
 import java.io.*;
+import java.util.Collection;
 
 /**
  * author: liana
@@ -43,6 +44,11 @@ public class StudyUtils {
 
   public static <T> T getFirst(Iterable<T> container) {
     return container.iterator().next();
+  }
+
+  public static boolean indexIsValid(int index, Collection collection) {
+    int size = collection.size();
+    return index >= 0 && index < size;
   }
 
   public static String getFileText(String parentDir, String fileName, boolean wrapHTML) {

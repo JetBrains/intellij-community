@@ -1,6 +1,5 @@
 package ru.compscicenter.edide.course;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -21,9 +20,7 @@ import java.util.Map;
  */
 public class Task implements Stateful{
   public static final String TASK_DIR = "task";
-  private static final Logger LOG = Logger.getInstance(Task.class.getName());
   private static final String ourTestFile = "tests.py";
-  public int testNum;
   public String name;
   private static final String ourTextFile = "task.html";
   public Map<String, TaskFile> taskFiles = new HashMap<String, TaskFile>();
@@ -31,10 +28,6 @@ public class Task implements Stateful{
   public int myIndex;
   public List<UserTest> userTests = new ArrayList<UserTest>();
   public static final String USER_TESTS = "userTests";
-
-  public int getTestNum() {
-    return testNum;
-  }
 
   public Map<String, TaskFile> getTaskFiles() {
     return taskFiles;
@@ -212,17 +205,4 @@ public class Task implements Stateful{
     return null;
   }
 
-  public VirtualFile createResourceFile(@NotNull  final Project project, @NotNull final String name) {
-    VirtualFile taskDir = getTaskDir(project);
-    if (taskDir != null) {
-      try {
-        return taskDir.createChildData(this, name);
-      }
-      catch (IOException e) {
-        LOG.error("Failed to create resource file");
-        LOG.error(e);
-      }
-    }
-    return null;
-  }
 }
