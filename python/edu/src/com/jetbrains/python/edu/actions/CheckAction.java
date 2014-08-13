@@ -22,13 +22,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
-import com.jetbrains.python.sdk.PythonSdkType;
-import org.jetbrains.annotations.NotNull;
 import com.jetbrains.python.edu.StudyDocumentListener;
 import com.jetbrains.python.edu.StudyTaskManager;
 import com.jetbrains.python.edu.StudyUtils;
 import com.jetbrains.python.edu.course.*;
 import com.jetbrains.python.edu.editor.StudyEditor;
+import com.jetbrains.python.sdk.PythonSdkType;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -39,7 +39,7 @@ public class CheckAction extends DumbAwareAction {
 
   private static final Logger LOG = Logger.getInstance(CheckAction.class.getName());
 
-  class StudyTestRunner {
+  static class StudyTestRunner {
     public static final String TEST_OK = "#study_plugin test OK";
     private static final String TEST_FAILED = "#study_plugin FAILED + ";
     private final Task myTask;
@@ -92,7 +92,7 @@ public class CheckAction extends DumbAwareAction {
       finally {
         StudyUtils.closeSilently(testOutputReader);
       }
-      return StudyTestRunner.TEST_OK;
+      return TEST_OK;
     }
   }
 
@@ -219,7 +219,7 @@ public class CheckAction extends DumbAwareAction {
       LOG.error(e);
     }
     catch (ExecutionException e) {
-      e.printStackTrace();
+      LOG.error(e);
     }
   }
 
@@ -263,7 +263,7 @@ public class CheckAction extends DumbAwareAction {
     return copy;
   }
 
-  private void createTestResultPopUp(final String text, Color color, @NotNull final Project project) {
+  private static void createTestResultPopUp(final String text, Color color, @NotNull final Project project) {
     BalloonBuilder balloonBuilder =
       JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(text, null, color, null);
     Balloon balloon = balloonBuilder.createBalloon();

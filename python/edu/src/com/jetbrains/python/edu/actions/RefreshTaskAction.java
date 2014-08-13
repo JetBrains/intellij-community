@@ -4,6 +4,7 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -27,6 +28,7 @@ import java.io.*;
  * data: 7/8/14.
  */
 public class RefreshTaskAction extends DumbAwareAction {
+  private static final Logger LOG = Logger.getInstance(RefreshTaskAction.class.getName());
 
   public void refresh(final Project project) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -103,10 +105,10 @@ public class RefreshTaskAction extends DumbAwareAction {
                     balloon.showInCenterOf(selectedStudyEditor.getRefreshButton());
                   }
                   catch (FileNotFoundException e1) {
-                    e1.printStackTrace();
+                    LOG.error(e1);
                   }
                   catch (IOException e1) {
-                    e1.printStackTrace();
+                    LOG.error(e1);
                   }
                   finally {
                     if (reader != null) {
@@ -114,7 +116,7 @@ public class RefreshTaskAction extends DumbAwareAction {
                         reader.close();
                       }
                       catch (IOException e) {
-                        e.printStackTrace();
+                        LOG.error(e);
                       }
                     }
                   }
