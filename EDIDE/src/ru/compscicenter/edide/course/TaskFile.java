@@ -26,6 +26,7 @@ public class TaskFile implements Stateful{
   @Transient
   private TaskWindow mySelectedTaskWindow = null;
   public int myIndex = -1;
+  private boolean myUserCreated = false;
 
   /**
    * @return if all the windows in task file are marked as resolved
@@ -200,4 +201,11 @@ public class TaskFile implements Stateful{
     }
   }
 
+  public void setUserCreated(boolean userCreated) {
+    myUserCreated = userCreated;
+  }
+
+  public boolean isUserCreated() {
+    return myUserCreated;
+  }
 }

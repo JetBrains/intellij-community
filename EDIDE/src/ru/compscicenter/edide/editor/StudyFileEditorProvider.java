@@ -25,7 +25,7 @@ class StudyFileEditorProvider implements FileEditorProvider, DumbAware {
   @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
     TaskFile taskFile = StudyTaskManager.getInstance(project).getTaskFile(file);
-    return taskFile != null;
+    return taskFile != null && !taskFile.isUserCreated();
   }
 
   @NotNull
