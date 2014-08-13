@@ -60,17 +60,17 @@ public class DomHelper {
 			stats.addWithKey(new BasicBlockStatement(block), block.id);
 		}
 
+		BasicBlock firstblock = graph.getFirst();
 		// head statement
-		Statement firstst = stats.getWithKey(graph.getFirst().id);
+		Statement firstst = stats.getWithKey(firstblock.id);
 		// dummy exit statement
 		Statement dummyexit = new Statement();
 		dummyexit.type = Statement.TYPE_DUMMYEXIT;
 		
 		Statement general;
-		if(stats.size() > 1) {
+		if(stats.size() > 1 || firstblock.isSuccessor(firstblock)) { // multiple basic blocks or an infinite loop of one block
 			general = new GeneralStatement(firstst, stats, null);
-		} else {
-			// special case: one basic block
+		} else { // one straightforward basic block
 			RootStatement root = new RootStatement(firstst, dummyexit);
 			firstst.addSuccessor(new StatEdge(StatEdge.TYPE_BREAK, firstst, dummyexit, root));
 			
