@@ -25,38 +25,17 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public abstract class ProgressManager {
-  static {
-    ProgressIndicatorProvider.ourInstance = new ProgressIndicatorProvider() {
-      @Override
-      public ProgressIndicator getProgressIndicator() {
-        ProgressManager manager = ProgressManager.getInstance();
-        return manager != null ? manager.getProgressIndicator() : null;
-      }
-
-      @Override
-      protected void doCheckCanceled() throws ProcessCanceledException {
-        ProgressManager manager = ProgressManager.getInstance();
-        if (manager != null) {
-          manager.doCheckCanceled();
-        }
-      }
-
-      @Override
-      public NonCancelableSection startNonCancelableSection() {
-        ProgressManager manager = ProgressManager.getInstance();
-        return manager != null ? manager.startNonCancelableSection() : NonCancelableSection.EMPTY;
-      }
-    };
+public abstract class ProgressManager extends ProgressIndicatorProvider {
+  public ProgressManager() {
+    ProgressIndicatorProvider.ourInstance = this;
   }
 
-  private static ProgressManager ourInstance;
+  private static class ProgressManagerHolder {
+    private static final ProgressManager ourInstance = ServiceManager.getService(ProgressManager.class);
+  }
 
   public static ProgressManager getInstance() {
-    if (ourInstance == null) {
-      ourInstance = ServiceManager.getService(ProgressManager.class);
-    }
-    return ourInstance;
+    return ProgressManagerHolder.ourInstance;
   }
 
   public abstract boolean hasProgressIndicator();
@@ -66,17 +45,13 @@ public abstract class ProgressManager {
   public abstract void runProcess(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException;
   public abstract <T> T runProcess(@NotNull Computable<T> process, ProgressIndicator progress) throws ProcessCanceledException;
 
+  @Override
   public ProgressIndicator getProgressIndicator() {
     return myThreadIndicator.get();
   }
 
-  protected static volatile boolean ourNeedToCheckCancel = false;
   public static void checkCanceled() throws ProcessCanceledException {
-    // smart optimization! There's a thread started in ProgressManagerImpl, that set's this flag up once in 10 milliseconds
-    if (ourNeedToCheckCancel) {
-      getInstance().doCheckCanceled();
-      ourNeedToCheckCancel = false;
-    }
+    ProgressIndicatorProvider.checkCanceled();
   }
 
   public static void progress(@NotNull String text) throws ProcessCanceledException {
@@ -100,11 +75,7 @@ public abstract class ProgressManager {
     }
   }
 
-  protected abstract void doCheckCanceled() throws ProcessCanceledException;
-
   public abstract void executeNonCancelableSection(@NotNull Runnable runnable);
-  @NotNull
-  public abstract NonCancelableSection startNonCancelableSection();
 
   public abstract void setCancelButtonText(String cancelButtonText);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,23 +27,27 @@ import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 
 public class ModalityInvokatorImpl implements ModalityInvokator {
+  @NotNull
   @Override
-  public ActionCallback invokeLater(Runnable runnable) {
+  public ActionCallback invokeLater(@NotNull Runnable runnable) {
     return invokeLater(runnable, ApplicationManager.getApplication().getDisposed());
   }
 
+  @NotNull
   @Override
-  public ActionCallback invokeLater(final Runnable runnable, @NotNull final Condition expired) {
+  public ActionCallback invokeLater(@NotNull final Runnable runnable, @NotNull final Condition expired) {
     return LaterInvocator.invokeLater(runnable, expired);
   }
 
+  @NotNull
   @Override
-  public ActionCallback invokeLater(final Runnable runnable, @NotNull final ModalityState state, @NotNull final Condition expired) {
+  public ActionCallback invokeLater(@NotNull final Runnable runnable, @NotNull final ModalityState state, @NotNull final Condition expired) {
     return LaterInvocator.invokeLater(runnable, state, expired);
   }
 
+  @NotNull
   @Override
-  public ActionCallback invokeLater(Runnable runnable, @NotNull ModalityState state) {
+  public ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state) {
     return invokeLater(runnable, state, ApplicationManager.getApplication().getDisposed());
   }  
 }

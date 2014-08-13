@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsRunnable;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -33,7 +34,6 @@ import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.properties.PropertyClient;
 import org.jetbrains.idea.svn.properties.PropertyValue;
-import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -162,8 +162,8 @@ public class SvnMergeProvider implements MergeProvider {
       File ioFile = new File(file.getPath());
       PropertyClient client = vcs.getFactory(ioFile).createPropertyClient();
 
-      PropertyValue value = client.getProperty(SvnTarget.fromFile(ioFile), SVNProperty.MIME_TYPE, false, SVNRevision.WORKING);
-      if (value != null && SVNProperty.isBinaryMimeType(value.toString())) {
+      PropertyValue value = client.getProperty(SvnTarget.fromFile(ioFile), SvnPropertyKeys.SVN_MIME_TYPE, false, SVNRevision.WORKING);
+      if (value != null && isBinaryMimeType(value.toString())) {
         return true;
       }
     }
@@ -172,5 +172,9 @@ public class SvnMergeProvider implements MergeProvider {
     }
 
     return false;
+  }
+
+  private static boolean isBinaryMimeType(@NotNull String mimeType) {
+    return !mimeType.startsWith("text/");
   }
 }

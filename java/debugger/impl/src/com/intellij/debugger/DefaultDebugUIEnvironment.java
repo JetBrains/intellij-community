@@ -71,8 +71,10 @@ public class DefaultDebugUIEnvironment implements DebugUIEnvironment {
 
       logFilesManager.registerFileMatcher(runConfiguration);
 
-      logFilesManager.initLogConsoles(runConfiguration, processHandler);
-      OutputFileUtil.attachDumpListener(runConfiguration, processHandler, content.getExecutionConsole());
+      if (processHandler != null) {
+        logFilesManager.initLogConsoles(runConfiguration, processHandler);
+        OutputFileUtil.attachDumpListener(runConfiguration, processHandler, content.getExecutionConsole());
+      }
     }
   }
 

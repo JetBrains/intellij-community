@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.actions.SelectBranchPopup;
+import org.jetbrains.idea.svn.branchConfig.SelectBranchPopup;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;

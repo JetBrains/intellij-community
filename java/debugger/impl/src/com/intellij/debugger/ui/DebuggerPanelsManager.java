@@ -35,16 +35,11 @@ import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.ui.ExecutionConsole;
-import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunContentListener;
-import com.intellij.execution.ui.RunContentManager;
-import com.intellij.openapi.Disposable;
+import com.intellij.execution.ui.*;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
@@ -154,45 +149,43 @@ public class DebuggerPanelsManager implements ProjectComponent {
   }
 
 
+  @Override
   public void projectOpened() {
-    final RunContentManager contentManager = myExecutionManager.getContentManager();
-    final RunContentListener myContentListener = new RunContentListener() {
-      public void contentSelected(RunContentDescriptor descriptor) {
-        DebuggerSession session = getSession(myProject, descriptor.getExecutionConsole());
-
-        if (session != null) {
-          getContextManager()
-            .setState(session.getContextManager().getContext(), session.getState(), DebuggerSession.EVENT_CONTEXT, null);
-        }
-        else {
-          getContextManager()
-            .setState(DebuggerContextImpl.EMPTY_CONTEXT, DebuggerSession.STATE_DISPOSED, DebuggerSession.EVENT_CONTEXT, null);
+    myProject.getMessageBus().connect(myProject).subscribe(RunContentManager.TOPIC, new RunContentWithExecutorListener() {
+      @Override
+      public void contentSelected(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
+        if (executor == DefaultDebugExecutor.getDebugExecutorInstance()) {
+          DebuggerSession session = descriptor == null ? null : getSession(myProject, descriptor.getExecutionConsole());
+          if (session != null) {
+            getContextManager().setState(session.getContextManager().getContext(), session.getState(), DebuggerSession.EVENT_CONTEXT, null);
+          }
+          else {
+            getContextManager().setState(DebuggerContextImpl.EMPTY_CONTEXT, DebuggerSession.STATE_DISPOSED, DebuggerSession.EVENT_CONTEXT, null);
+          }
         }
       }
 
-      public void contentRemoved(RunContentDescriptor descriptor) {
-      }
-    };
-
-    contentManager.addRunContentListener(myContentListener, DefaultDebugExecutor.getDebugExecutorInstance());
-    Disposer.register(myProject, new Disposable() {
-      public void dispose() {
-        contentManager.removeRunContentListener(myContentListener);
+      @Override
+      public void contentRemoved(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
       }
     });
   }
 
+  @Override
   public void projectClosed() {
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "DebuggerPanelsManager";
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void disposeComponent() {
   }
 
@@ -226,7 +219,7 @@ public class DebuggerPanelsManager implements ProjectComponent {
     }
   }
 
-  private DebuggerSession getSession(Project project, ExecutionConsole console) {
+  private static DebuggerSession getSession(Project project, ExecutionConsole console) {
     XDebugSession session = XDebuggerManager.getInstance(project).getDebugSession(console);
     if (session != null) {
       XDebugProcess process = session.getDebugProcess();

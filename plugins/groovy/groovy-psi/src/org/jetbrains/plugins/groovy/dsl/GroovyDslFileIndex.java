@@ -467,7 +467,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     }
 
     @Override
-    public boolean acceptInput(final VirtualFile file) {
+    public boolean acceptInput(@NotNull final VirtualFile file) {
       return StringUtil.endsWith(file.getNameSequence(), ".gdsl");
     }
   }

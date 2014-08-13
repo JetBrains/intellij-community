@@ -49,7 +49,7 @@ public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel<Ch
   private final DetailsPanel myDetailsPanel;
   private final GenericDetailsLoader<Ticket, T> myDetailsLoader;
   private final BackgroundTaskQueue myQueue;
-  private boolean myDisposed;
+  private volatile boolean myDisposed;
 
   protected AbstractRefreshablePanel(final Project project, final String loadingTitle, final BackgroundTaskQueue queue) {
     myQueue = queue;

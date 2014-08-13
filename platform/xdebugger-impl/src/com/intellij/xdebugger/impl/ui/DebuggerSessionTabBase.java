@@ -16,7 +16,8 @@
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.debugger.ui.DebuggerContentInfo;
-import com.intellij.diagnostic.logging.*;
+import com.intellij.diagnostic.logging.AdditionalTabComponent;
+import com.intellij.diagnostic.logging.DebuggerLogConsoleManager;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
@@ -24,6 +25,7 @@ import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.RunContentBuilder;
+import com.intellij.execution.runners.RunTab;
 import com.intellij.execution.ui.*;
 import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
 import com.intellij.execution.ui.layout.LayoutViewOptions;
@@ -48,21 +50,13 @@ import java.util.Collection;
 /**
  * @author nik
  */
-public abstract class DebuggerSessionTabBase extends LogConsoleManagerBase implements DebuggerLogConsoleManager {
-  @NotNull private final LogFilesManager myManager;
-
-  @NotNull protected final RunnerLayoutUi myUi;
-
+public abstract class DebuggerSessionTabBase extends RunTab implements DebuggerLogConsoleManager {
   protected ExecutionConsole myConsole;
-  protected RunContentDescriptor myRunContentDescriptor;
 
   public DebuggerSessionTabBase(@NotNull Project project, @NotNull String runnerId, @NotNull String sessionName, @NotNull GlobalSearchScope searchScope) {
-    super(project, searchScope);
+    super(project, searchScope, runnerId, XDebuggerBundle.message("xdebugger.default.content.title"), sessionName);
 
     Disposer.register(project, this);
-    myManager = new LogFilesManager(project, this, this);
-
-    myUi = RunnerLayoutUi.Factory.getInstance(project).create(runnerId, XDebuggerBundle.message("xdebugger.default.content.title"), sessionName, this);
 
     myUi.getDefaults()
       .initTabDefaults(0, XDebuggerBundle.message("xdebugger.debugger.tab.title"), null)
@@ -98,23 +92,6 @@ public abstract class DebuggerSessionTabBase extends LogConsoleManagerBase imple
   @NotNull
   public RunnerLayoutUi getUi() {
     return myUi;
-  }
-
-  protected void registerFileMatcher(@NotNull RunProfile runConfiguration) {
-    if (runConfiguration instanceof RunConfigurationBase) {
-      myManager.registerFileMatcher((RunConfigurationBase)runConfiguration);
-    }
-  }
-
-  protected void initLogConsoles(@NotNull RunProfile runConfiguration, final ProcessHandler processHandler, ExecutionConsole console) {
-    if (runConfiguration instanceof RunConfigurationBase) {
-      myManager.initLogConsoles((RunConfigurationBase)runConfiguration, processHandler);
-      OutputFileUtil.attachDumpListener((RunConfigurationBase)runConfiguration, processHandler, console);
-    }
-  }
-
-  protected LogFilesManager getLogManager() {
-    return myManager;
   }
 
   protected void attachNotificationTo(final Content content) {

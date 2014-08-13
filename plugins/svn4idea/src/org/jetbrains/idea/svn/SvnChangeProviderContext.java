@@ -27,6 +27,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.actions.AbstractShowPropertiesDiffAction;
+import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.lock.Lock;
 import org.jetbrains.idea.svn.status.Status;
@@ -244,7 +245,13 @@ class SvnChangeProviderContext implements StatusReceiver {
         myChangelistBuilder.processLocallyDeletedFile(createLocallyDeletedChange(filePath, status));
       }
       else if (status.is(StatusType.STATUS_IGNORED)) {
-        if (!myVcs.isWcRoot(filePath)) {
+        if (filePath.getVirtualFile() == null) {
+          filePath.hardRefresh();
+        }
+        if (filePath.getVirtualFile() == null) {
+          LOG.error("No virtual file for ignored file: " + filePath.getPresentableUrl() + ", isNonLocal: " + filePath.isNonLocal());
+        }
+        else if (!myVcs.isWcRoot(filePath)) {
           myChangelistBuilder.processIgnoredFile(filePath.getVirtualFile());
         }
       }

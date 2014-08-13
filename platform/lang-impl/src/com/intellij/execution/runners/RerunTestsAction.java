@@ -27,7 +27,6 @@ public class RerunTestsAction extends DumbAwareAction implements AnAction.Transp
   private static final List<ExecutionEnvironment> REGISTRY = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public static void register(@NotNull final ExecutionEnvironment environment) {
-    assert environment.getContentToReuse() != null;
     REGISTRY.add(environment);
     Disposer.register(environment, new Disposable() {
       @Override

@@ -17,7 +17,6 @@ package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.RunContentBuilder;
@@ -55,10 +54,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author spleaner
- */
-public class XDebugSessionTab extends DebuggerSessionTabBase implements DataProvider {
+public class XDebugSessionTab extends DebuggerSessionTabBase {
   private static final DataKey<XDebugSessionTab> TAB_KEY = DataKey.create("XDebugSessionTab");
   public static final DataKey<XDebugSession> SESSION_KEY = DataKey.create("XDebugSessionTab.XDebugSession");
 
@@ -103,8 +99,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase implements DataProv
 
     attachToSession();
 
-    myUi.getContentManager().addDataProvider(this);
-
     DefaultActionGroup focus = new DefaultActionGroup();
     focus.add(ActionManager.getInstance().getAction(XDebuggerActions.FOCUS_ON_BREAKPOINT));
     myUi.getOptions().setAdditionalFocusActions(focus);
@@ -144,13 +138,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase implements DataProv
     else if (TAB_KEY.is(dataId)) {
       return this;
     }
-    else if (LangDataKeys.RUN_PROFILE.is(dataId)) {
-      ExecutionEnvironment environment = getEnvironment();
-      return environment == null ? null : environment.getRunProfile();
-    }
-    else if (LangDataKeys.EXECUTION_ENVIRONMENT.is(dataId)) {
-      return getEnvironment();
-    }
 
     if (session != null) {
       if (SESSION_KEY.is(dataId)) {
@@ -164,7 +151,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase implements DataProv
       }
     }
 
-    return null;
+    return super.getData(dataId);
   }
 
   private Content createVariablesContent() {
@@ -299,9 +286,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase implements DataProv
     myUi.getOptions().setTopToolbar(topToolbar, ActionPlaces.DEBUGGER_TOOLBAR);
 
     if (environment != null) {
-      RunProfile runConfiguration = environment.getRunProfile();
-      registerFileMatcher(runConfiguration);
-      initLogConsoles(runConfiguration, myRunContentDescriptor.getProcessHandler(), myConsole);
+      initLogConsoles(environment.getRunProfile(), myRunContentDescriptor.getProcessHandler(), myConsole);
     }
   }
 

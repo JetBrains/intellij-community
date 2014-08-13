@@ -21,12 +21,16 @@ import com.intellij.openapi.vcs.AreaMap;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.PairProcessor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.dialogs.MergeContext;
 import org.jetbrains.idea.svn.properties.PropertyConsumer;
 import org.jetbrains.idea.svn.properties.PropertyData;
 import org.jetbrains.idea.svn.properties.PropertyValue;
-import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNMergeRange;
+import org.tmatesoft.svn.core.SVNMergeRangeList;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -83,7 +87,7 @@ public class OneRecursiveShotMergeInfoWorker implements MergeInfoWorker {
     File path = new File(myMergeContext.getWcInfo().getPath());
 
     myMergeContext.getVcs().getFactory(path).createPropertyClient()
-      .getProperty(SvnTarget.fromFile(path), SVNProperty.MERGE_INFO, SVNRevision.WORKING, depth, handler);
+      .getProperty(SvnTarget.fromFile(path), SvnPropertyKeys.MERGE_INFO, SVNRevision.WORKING, depth, handler);
   }
 
   public SvnMergeInfoCache.MergeCheckResult isMerged(final String relativeToRepoURLPath, final long revisionNumber) {

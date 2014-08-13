@@ -221,11 +221,16 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
   }
 
   public void realRefresh(final Runnable afterRefreshCallback) {
-    final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    final VirtualFile[] roots = myHelper.executeDefended(myProject);
-    final SvnRootsDetector rootsDetector = new SvnRootsDetector(vcs, this, myNestedCopiesHolder);
-    // do not send additional request for nested copies when in init state
-    rootsDetector.detectCopyRoots(roots, init(), afterRefreshCallback);
+    if (myProject.isDisposed()) {
+      afterRefreshCallback.run();
+    }
+    else {
+      final SvnVcs vcs = SvnVcs.getInstance(myProject);
+      final VirtualFile[] roots = myHelper.executeDefended(myProject);
+      final SvnRootsDetector rootsDetector = new SvnRootsDetector(vcs, this, myNestedCopiesHolder);
+      // do not send additional request for nested copies when in init state
+      rootsDetector.detectCopyRoots(roots, init(), afterRefreshCallback);
+    }
   }
 
   public void applyDetectionResult(@NotNull SvnRootsDetector.Result result) {

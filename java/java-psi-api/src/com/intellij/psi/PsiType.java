@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayFactory;
@@ -134,6 +135,19 @@ public abstract class PsiType implements PsiAnnotationOwner {
   public abstract boolean equalsToText(@NotNull @NonNls String text);
 
   /**
+   * Returns the class type for qualified class name.
+   *
+   * @param qName qualified class name.
+   * @param project
+   * @param resolveScope the scope in which the class is searched.
+   * @return the class instance.
+   */
+  public static PsiClassType getTypeByName(String qName, Project project, GlobalSearchScope resolveScope) {
+    PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    return factory.createTypeByFQClassName(qName, resolveScope);
+  }
+
+  /**
    * Returns the class type for the java.lang.Object class.
    *
    * @param manager      the PSI manager used to create the class type.
@@ -142,8 +156,7 @@ public abstract class PsiType implements PsiAnnotationOwner {
    */
   @NotNull
   public static PsiClassType getJavaLangObject(@NotNull PsiManager manager, @NotNull GlobalSearchScope resolveScope) {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-    return factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, resolveScope);
+    return getTypeByName(CommonClassNames.JAVA_LANG_OBJECT, manager.getProject(), resolveScope);
   }
 
   /**
@@ -155,8 +168,7 @@ public abstract class PsiType implements PsiAnnotationOwner {
    */
   @NotNull
   public static PsiClassType getJavaLangClass(@NotNull PsiManager manager, @NotNull GlobalSearchScope resolveScope) {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-    return factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_CLASS, resolveScope);
+    return getTypeByName(CommonClassNames.JAVA_LANG_CLASS, manager.getProject(), resolveScope);
   }
 
   /**
@@ -168,8 +180,7 @@ public abstract class PsiType implements PsiAnnotationOwner {
    */
   @NotNull
   public static PsiClassType getJavaLangThrowable(@NotNull PsiManager manager, @NotNull GlobalSearchScope resolveScope) {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-    return factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE, resolveScope);
+    return getTypeByName(CommonClassNames.JAVA_LANG_THROWABLE, manager.getProject(), resolveScope);
   }
 
   /**
@@ -181,8 +192,7 @@ public abstract class PsiType implements PsiAnnotationOwner {
    */
   @NotNull
   public static PsiClassType getJavaLangString(@NotNull PsiManager manager, @NotNull GlobalSearchScope resolveScope) {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-    return factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, resolveScope);
+    return getTypeByName(CommonClassNames.JAVA_LANG_STRING, manager.getProject(), resolveScope);
   }
 
   /**
@@ -194,8 +204,7 @@ public abstract class PsiType implements PsiAnnotationOwner {
    */
   @NotNull
   public static PsiClassType getJavaLangError(@NotNull PsiManager manager, @NotNull GlobalSearchScope resolveScope) {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-    return factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_ERROR, resolveScope);
+    return getTypeByName(CommonClassNames.JAVA_LANG_ERROR, manager.getProject(), resolveScope);
   }
 
   /**
@@ -207,8 +216,7 @@ public abstract class PsiType implements PsiAnnotationOwner {
    */
   @NotNull
   public static PsiClassType getJavaLangRuntimeException(@NotNull PsiManager manager, @NotNull GlobalSearchScope resolveScope) {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-    return factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION, resolveScope);
+    return getTypeByName(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION, manager.getProject(), resolveScope);
   }
 
   /**

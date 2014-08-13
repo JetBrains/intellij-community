@@ -145,6 +145,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
     }
 
     public void onRefreshFilesCompleted() {
+      // TODO: why do we need to mark all roots as dirty here???
       dirtyRoots();
 
       for (Runnable groupWorker : myGroupWorkers) {

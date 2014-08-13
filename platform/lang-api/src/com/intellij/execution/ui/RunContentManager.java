@@ -22,13 +22,21 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public interface RunContentManager {
+  Topic<RunContentWithExecutorListener> TOPIC =
+    Topic.create("Run Content", RunContentWithExecutorListener.class);
+
+  @SuppressWarnings("UnusedDeclaration")
   @Deprecated
+  /**
+   * @deprecated Use {@link LangDataKeys#RUN_CONTENT_DESCRIPTOR} instead
+   */
   DataKey<RunContentDescriptor> RUN_CONTENT_DESCRIPTOR = LangDataKeys.RUN_CONTENT_DESCRIPTOR;
 
   @Nullable
@@ -41,28 +49,33 @@ public interface RunContentManager {
   List<RunContentDescriptor> getAllDescriptors();
 
   /**
-   * to reduce number of open contents RunContentManager reuses
-   * some of them during showRunContent (for ex. if a process was stopped)
-   *
-   * @return content that will be reused by showRunContent
-   * @deprecated use {@link #getReuseContent(com.intellij.execution.Executor, ExecutionEnvironment)}
+   * @deprecated use {@link #getReuseContent(ExecutionEnvironment)}
+   * to remove in IDEA 15
    */
+  @Deprecated
   @Nullable
   RunContentDescriptor getReuseContent(Executor requestor, @Nullable RunContentDescriptor contentToReuse);
 
   /**
    * @deprecated use {@link #getReuseContent(ExecutionEnvironment)}
+   * to remove in IDEA 15
    */
   @Deprecated
   @Nullable
   RunContentDescriptor getReuseContent(Executor requestor, @NotNull ExecutionEnvironment executionEnvironment);
 
   @Nullable
+  /**
+   * To reduce number of open contents RunContentManager reuses
+   * some of them during showRunContent (for ex. if a process was stopped)
+   */
   RunContentDescriptor getReuseContent(@NotNull ExecutionEnvironment executionEnvironment);
 
   /**
    * @deprecated use {@link #getReuseContent(ExecutionEnvironment)}
+   * to remove in IDEA 15
    */
+  @SuppressWarnings("UnusedDeclaration")
   @Deprecated
   @Nullable
   RunContentDescriptor getReuseContent(Executor requestor, DataContext dataContext);
@@ -82,11 +95,29 @@ public interface RunContentManager {
 
   void toFrontRunContent(Executor requestor, ProcessHandler handler);
 
-  void addRunContentListener(RunContentListener listener);
+  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
+  /**
+   * @deprecated Use {@link RunContentManager#TOPIC} instead
+   * to remove in IDEA 15
+   */
+  void addRunContentListener(@NotNull RunContentListener listener);
 
+  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
+  /**
+   * @deprecated Use {@link RunContentManager#TOPIC} instead
+   * to remove in IDEA 15
+   */
   void removeRunContentListener(RunContentListener listener);
 
-  void addRunContentListener(RunContentListener myContentListener, Executor executor);
+  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
+  /**
+   * @deprecated Use {@link RunContentManager#TOPIC} instead
+   * to remove in IDEA 15
+   */
+  void addRunContentListener(@NotNull RunContentListener myContentListener, Executor executor);
 
   @Nullable
   ToolWindow getToolWindowByDescriptor(@NotNull RunContentDescriptor descriptor);

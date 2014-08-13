@@ -166,8 +166,7 @@
     <applicationService serviceInterface="com.intellij.util.download.DownloadableFileService"
                         serviceImplementation="com.intellij.util.download.impl.DownloadableFileServiceImpl"/>
 
-    <applicationService serviceInterface="com.intellij.psi.impl.DocumentCommitThread"
-                        serviceImplementation="com.intellij.psi.impl.DocumentCommitThread"/>
+    <applicationService serviceImplementation="com.intellij.psi.impl.DocumentCommitThread"/>
 
     <applicationService serviceInterface="com.intellij.psi.stubs.StubTreeLoader"
                         serviceImplementation="com.intellij.psi.stubs.StubTreeLoaderImpl"/>

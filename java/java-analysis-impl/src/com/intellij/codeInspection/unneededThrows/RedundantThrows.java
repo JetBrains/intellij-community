@@ -294,7 +294,10 @@ public class RedundantThrows extends GlobalJavaBatchInspectionTool {
 
       if (refMethod != null) {
         for (RefMethod refDerived : refMethod.getDerivedMethods()) {
-          removeException(refDerived, exceptionType, refsToDelete, (PsiMethod)refDerived.getElement());
+          PsiModifierListOwner method = refDerived.getElement();
+          if (method != null) {
+            removeException(refDerived, exceptionType, refsToDelete, (PsiMethod)method);
+          }
         }
       } else {
         final Query<Pair<PsiMethod,PsiMethod>> query = AllOverridingMethodsSearch.search(psiMethod.getContainingClass());

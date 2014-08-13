@@ -17,6 +17,7 @@ package com.intellij.ide.startup;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.io.ZipUtil;
 import org.jetbrains.annotations.NonNls;
@@ -71,21 +72,26 @@ public class StartupActionScriptManager {
   private static List<ActionCommand> loadActionScript() throws IOException {
     File file = new File(getActionScriptPath());
     if (file.exists()) {
+      boolean fileCorrupted = false;
       ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file));
       try {
         //noinspection unchecked
         return (List<ActionCommand>)ois.readObject();
       }
-      catch (ClassNotFoundException e) {
-        // problem with scrambled code
-        // fas fixed, but still appear because corrupted file still exists
-        // return empty list.
+      catch (Throwable e) {    // ClassNotFoundException / IOException
+        fileCorrupted = true;
         LOG.error("Internal file was corrupted. Problem is fixed.\nIf some plugins has been installed/uninstalled, please re-install/-uninstall them.", e);
+        //noinspection InstanceofCatchParameter
+        if (e instanceof IOException) throw (IOException)e;
 
         return new ArrayList<ActionCommand>();
       }
       finally {
-        ois.close();
+        try {
+          ois.close();
+        } finally {
+          if (fileCorrupted) FileUtil.delete(file); // do not need corrupted file anymore
+        }
       }
     }
     else {
@@ -189,7 +195,8 @@ public class StartupActionScriptManager {
 
     public void execute() throws IOException {
       if (!mySource.exists()) {
-        //noinspection HardCodedStringLiteral
+        // Note, that we can not use LOG at this moment because it throws AssertionError 
+        //noinspection HardCodedStringLiteral,UseOfSystemOutOrSystemErr
         System.err.println("Source file " + mySource.getAbsolutePath() + " does not exist for action " + this);
       }
       else if (!canCreateFile(myDestination)) {
@@ -203,6 +210,7 @@ public class StartupActionScriptManager {
           ZipUtil.extract(mySource, myDestination, myFilenameFilter);
         }
         catch(Exception ex) {
+          //noinspection CallToPrintStackTrace
           ex.printStackTrace();
           JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
                                         MessageFormat.format("<html>Failed to extract ZIP file {0}<br>to<br>{1}<br>You may need to re-download the plugin you tried to install.",
@@ -228,7 +236,7 @@ public class StartupActionScriptManager {
 
     public void execute() throws IOException {
       if (mySource != null && mySource.exists() && !FileUtilRt.delete(mySource)) {
-        //noinspection HardCodedStringLiteral
+        //noinspection HardCodedStringLiteral,UseOfSystemOutOrSystemErr
         System.err.println("Action " + this + " failed.");
         JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
                                       MessageFormat.format("<html>Cannot delete {0}<br>Please, check your access rights on folder <br>{1}",

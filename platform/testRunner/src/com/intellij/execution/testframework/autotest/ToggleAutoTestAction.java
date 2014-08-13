@@ -2,10 +2,10 @@ package com.intellij.execution.testframework.autotest;
 
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunContentManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
 
@@ -21,15 +21,15 @@ public class ToggleAutoTestAction extends ToggleAction {
 
   @Override
   public boolean isSelected(AnActionEvent e) {
-    Project project = e.getData(CommonDataKeys.PROJECT);
-    RunContentDescriptor descriptor = e.getData(RunContentManager.RUN_CONTENT_DESCRIPTOR);
+    Project project = e.getProject();
+    RunContentDescriptor descriptor = e.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR);
     return !(project == null || descriptor == null) && AutoTestManager.getInstance(project).isAutoTestEnabled(descriptor);
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
     Project project = e.getData(CommonDataKeys.PROJECT);
-    RunContentDescriptor descriptor = e.getData(RunContentManager.RUN_CONTENT_DESCRIPTOR);
+    RunContentDescriptor descriptor = e.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR);
     if (project != null && descriptor != null) {
       AutoTestManager.getInstance(project).setAutoTestEnabled(descriptor, state);
     }
