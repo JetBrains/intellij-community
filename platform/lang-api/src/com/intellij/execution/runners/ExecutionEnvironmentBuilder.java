@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,11 +51,26 @@ public final class ExecutionEnvironmentBuilder {
 
   @NotNull
   public static ExecutionEnvironmentBuilder create(@NotNull Project project, @NotNull Executor executor, @NotNull RunProfile runProfile) throws ExecutionException {
-    ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), runProfile);
-    if (runner == null) {
+    ExecutionEnvironmentBuilder builder = createOrNull(project, executor, runProfile);
+    if (builder == null) {
       throw new ExecutionException("Cannot find runner for " + runProfile.getName());
     }
+    return builder;
+  }
+
+  @Nullable
+  public static ExecutionEnvironmentBuilder createOrNull(@NotNull Project project, @NotNull Executor executor, @NotNull RunProfile runProfile) {
+    ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), runProfile);
+    if (runner == null) {
+      return null;
+    }
     return new ExecutionEnvironmentBuilder(project, executor).runner(runner).runProfile(runProfile);
+  }
+
+  @Nullable
+  public static ExecutionEnvironmentBuilder createOrNull(@NotNull Executor executor, @NotNull RunnerAndConfigurationSettings settings) {
+    ExecutionEnvironmentBuilder builder = createOrNull(settings.getConfiguration().getProject(), executor, settings.getConfiguration());
+    return builder == null ? null : builder.runnerAndSettings(builder.myRunner, settings);
   }
 
   @NotNull

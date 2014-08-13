@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.execution;
 
 import com.intellij.execution.actions.RunContextAction;
@@ -35,12 +34,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author spleaner
- */
 public class ExecutorRegistryImpl extends ExecutorRegistry {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.ExecutorRegistryImpl");
-
+  private static final Logger LOG = Logger.getInstance(ExecutorRegistryImpl.class);
 
   @NonNls public static final String RUNNERS_GROUP = "RunnerActions";
   @NonNls public static final String RUN_CONTEXT_GROUP = "RunContextGroup";
@@ -84,8 +79,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
       action = anAction;
     }
 
-    final DefaultActionGroup group = (DefaultActionGroup) myActionManager.getAction(groupId);
-    group.add(action);
+    ((DefaultActionGroup)myActionManager.getAction(groupId)).add(action);
   }
 
   synchronized void deinitExecutor(@NotNull final Executor executor) {
@@ -189,15 +183,12 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
 
   @Override
   public synchronized void disposeComponent() {
-    if (myExecutors.size() > 0) {
-      List<Executor> executors = new ArrayList<Executor>(myExecutors);
-      for (Executor executor : executors) {
+    if (!myExecutors.isEmpty()) {
+      for (Executor executor : new ArrayList<Executor>(myExecutors)) {
         deinitExecutor(executor);
       }
-
-      myExecutors = null;
     }
-
+    myExecutors = null;
     myActionManager = null;
   }
 
@@ -250,25 +241,17 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
 
     @Override
     public void actionPerformed(final AnActionEvent e) {
-      final DataContext dataContext = e.getDataContext();
       final Project project = e.getProject();
       if (project == null || project.isDisposed()) {
         return;
       }
-      final RunnerAndConfigurationSettings configuration = getConfiguration(project);
-      if (configuration == null) {
+
+      RunnerAndConfigurationSettings configuration = getConfiguration(project);
+      ExecutionEnvironmentBuilder builder = configuration == null ? null : ExecutionEnvironmentBuilder.createOrNull(myExecutor, configuration);
+      if (builder == null) {
         return;
       }
-
-      ExecutionTarget target = ExecutionTargetManager.getActiveTarget(project);
-      ExecutionEnvironmentBuilder builder = new ExecutionEnvironmentBuilder(project, myExecutor);
-      ProgramRunner runner = ProgramRunnerUtil.getRunner(myExecutor.getId(), configuration);
-      if (runner == null) {
-        return;
-      }
-
-      builder.dataContext(dataContext).target(target).runnerAndSettings(runner, configuration);
-      ExecutionManager.getInstance(project).restartRunProfile(builder.build());
+      ExecutionManager.getInstance(project).restartRunProfile(builder.activeTarget().dataContext(e.getDataContext()).build());
     }
   }
 }

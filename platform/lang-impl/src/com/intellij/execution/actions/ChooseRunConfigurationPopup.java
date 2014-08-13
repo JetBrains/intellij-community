@@ -399,7 +399,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
 
         @Override
         public boolean available(Executor executor) {
-          return null != ProgramRunnerUtil.getRunner(executor.getId(), getValue());
+          return ProgramRunnerUtil.getRunner(executor.getId(), getValue()) != null;
         }
 
         @Override

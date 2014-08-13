@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.DirtBuilder;
 import com.intellij.openapi.vcs.changes.FilePathUnderVcs;
@@ -116,7 +117,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
       .isValidAncestor(myBaseDir, file)) {
       return myBaseDir;
     }
-    final VirtualFile contentRoot = ProjectRootManager.getInstance(myProject).getFileIndex().getContentRootForFile(file);
+    final VirtualFile contentRoot = ProjectRootManager.getInstance(myProject).getFileIndex().getContentRootForFile(file, Registry.is("ide.hide.excluded.files"));
     if (contentRoot != null) {
       return contentRoot;
     }

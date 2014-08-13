@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
@@ -91,10 +92,18 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
 
   @Override
   public Module getModuleForFile(@NotNull VirtualFile file) {
+    return getModuleForFile(file, true);
+  }
+
+  @Nullable
+  @Override
+  public Module getModuleForFile(@NotNull VirtualFile file, boolean honorExclusion) {
     if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
     DirectoryInfo info = getInfoForFileOrDirectory(file);
-    if (!info.isInProject()) return null;
-    return info.getModule();
+    if (info.isInProject() || !honorExclusion && info.isExcluded()) {
+      return info.getModule();
+    }
+    return null;
   }
 
   @Override
@@ -119,9 +128,16 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
 
   @Override
   public VirtualFile getContentRootForFile(@NotNull VirtualFile file) {
+    return getContentRootForFile(file, true);
+  }
+
+  @Override
+  public VirtualFile getContentRootForFile(@NotNull VirtualFile file, final boolean honorExclusion) {
     final DirectoryInfo info = getInfoForFileOrDirectory(file);
-    if (!info.isInProject()) return null;
-    return info.getContentRoot();
+    if (info.isInProject() || !honorExclusion && info.isExcluded()) {
+      return info.getContentRoot();
+    }
+    return null;
   }
 
   @Override

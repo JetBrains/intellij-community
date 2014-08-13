@@ -27,7 +27,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
-import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.application.ApplicationManager;
@@ -437,12 +437,10 @@ public class TestPackage extends TestObject {
       if (moduleByName != null) {
         myConfiguration.getConfigurationModule().setModule(moduleByName);
         try {
-          final Executor executor = myConsoleProperties.isDebug() ? DefaultDebugExecutor.getDebugExecutorInstance()
-                                    : DefaultRunExecutor.getRunExecutorInstance();
-          final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), myConfiguration);
-          assert runner != null;
-          runner.execute(new ExecutionEnvironmentBuilder(myEnvironment).contentToReuse(null).build());
-          final Balloon balloon = myToolWindowManager.getToolWindowBalloon(myTestRunDebugId);
+          Executor executor = myConsoleProperties.isDebug() ? DefaultDebugExecutor.getDebugExecutorInstance()
+                                                            : DefaultRunExecutor.getRunExecutorInstance();
+          ExecutionUtil.execute(ExecutionEnvironmentBuilder.create(myProject, executor, myConfiguration).contentToReuse(null).build());
+          Balloon balloon = myToolWindowManager.getToolWindowBalloon(myTestRunDebugId);
           if (balloon != null) {
             balloon.hide();
           }

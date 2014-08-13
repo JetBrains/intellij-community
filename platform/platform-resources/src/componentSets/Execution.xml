@@ -26,9 +26,5 @@
     <component>
       <implementation-class>com.intellij.execution.impl.ProjectRunConfigurationManager</implementation-class>
     </component>
-    <component>
-      <interface-class>com.intellij.execution.ExecutionManager</interface-class>
-      <implementation-class>com.intellij.execution.impl.ExecutionManagerImpl</implementation-class>
-    </component>
   </project-components>
 </components>
