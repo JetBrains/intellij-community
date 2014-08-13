@@ -280,7 +280,6 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
       assert configuration != null;
       builder.runnerAndSettings(runner, configuration);
     }
-
     return builder;
   }
 

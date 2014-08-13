@@ -166,8 +166,12 @@ public class ExecutionUtil {
     }
     catch (ExecutionException e) {
       handleExecutionError(settings.getConfiguration().getProject(), executor.getToolWindowId(), settings.getConfiguration().getName(), e);
-      LOG.info(e);
       return null;
     }
+  }
+
+  public static void execute(@NotNull ExecutionEnvironment environment) throws ExecutionException {
+    //noinspection ConstantConditions
+    environment.getRunner().execute(environment);
   }
 }

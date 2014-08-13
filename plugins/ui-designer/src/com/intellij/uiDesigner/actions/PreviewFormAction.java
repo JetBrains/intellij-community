@@ -26,6 +26,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
+import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.PropertiesReferenceManager;
@@ -313,12 +314,9 @@ public final class PreviewFormAction extends AnAction{
     }
 
     try {
-      final RunProfile profile = new MyRunProfile(module, parameters, tempPath,
-                                                  UIDesignerBundle.message("progress.preview.started", formFile.getPresentableUrl()));
-      ProgramRunner defaultRunner = RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, profile);
-      LOG.assertTrue(defaultRunner != null);
-      Executor executor = DefaultRunExecutor.getRunExecutorInstance();
-      defaultRunner.execute(new ExecutionEnvironmentBuilder(module.getProject(), executor).runProfile(profile).build());
+      RunProfile profile = new MyRunProfile(module, parameters, tempPath,
+                                            UIDesignerBundle.message("progress.preview.started", formFile.getPresentableUrl()));
+      ExecutionUtil.execute(ExecutionEnvironmentBuilder.create(module.getProject(), DefaultRunExecutor.getRunExecutorInstance(), profile).build());
     }
     catch (ExecutionException e) {
       Messages.showErrorDialog(
