@@ -281,14 +281,14 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     final ContentManager contentManager = getContentManagerForRunner(executor);
     RunContentDescriptor oldDescriptor = chooseReuseContentForDescriptor(contentManager, descriptor, executionId, descriptor.getDisplayName());
     final Content content;
-    Content oldAttachedContent = oldDescriptor == null ? null : oldDescriptor.getAttachedContent();
     if (oldDescriptor == null) {
       content = createNewContent(contentManager, descriptor, executor);
       Icon icon = descriptor.getIcon();
       content.setIcon(icon == null ? executor.getToolWindowIcon() : icon);
     }
     else {
-      content = oldAttachedContent;
+      content = oldDescriptor.getAttachedContent();
+      LOG.assertTrue(content != null);
       getSyncPublisher().contentRemoved(oldDescriptor, executor);
       Disposer.dispose(oldDescriptor); // is of the same category, can be reused
     }
