@@ -85,6 +85,8 @@ import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
  */
 public abstract class PluginManagerMain implements Disposable {
   public static final String JETBRAINS_VENDOR = "JetBrains";
+  public static final NotificationGroup PLUGIN_LIFECYCLE_NOTIFICATION_GROUP =
+    new NotificationGroup("Plugins Lifecycle Group", NotificationDisplayType.STICKY_BALLOON, true);
   public static Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginManagerMain");
 
   @NonNls private static final String TEXT_PREFIX = "<html><head>" +
@@ -652,7 +654,7 @@ public abstract class PluginManagerMain implements Disposable {
     message += "<br><a href=";
     message += restartCapable ? "\"restart\">Restart now" : "\"shutdown\">Shutdown";
     message += "</a>";
-    new NotificationGroup("Plugins Lifecycle Group", NotificationDisplayType.STICKY_BALLOON, true)
+    PLUGIN_LIFECYCLE_NOTIFICATION_GROUP
       .createNotification(title,
                           XmlStringUtil.wrapInHtml(message), NotificationType.INFORMATION,
                           new NotificationListener() {
