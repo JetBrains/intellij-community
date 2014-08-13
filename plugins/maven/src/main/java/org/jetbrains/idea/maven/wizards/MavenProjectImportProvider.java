@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,8 +43,11 @@ public class MavenProjectImportProvider extends ProjectImportProvider {
 
   public ModuleWizardStep[] createSteps(final WizardContext wizardContext) {
     final ProjectWizardStepFactory stepFactory = ProjectWizardStepFactory.getInstance();
-    return new ModuleWizardStep[]{new MavenProjectImportStep(wizardContext), new SelectProfilesStep(wizardContext),
+    return new ModuleWizardStep[]{
+      new MavenProjectImportStep(wizardContext),
+      new SelectProfilesStep(wizardContext),
       new SelectImportedProjectsStep<MavenProject>(wizardContext) {
+        @Override
         protected String getElementText(final MavenProject project) {
           final StringBuilder stringBuilder = new StringBuilder();
           stringBuilder.append(project.getMavenId());
@@ -71,15 +74,20 @@ public class MavenProjectImportProvider extends ProjectImportProvider {
           return !MavenProjectsManager.getInstance(project).isIgnored(mavenProject);
         }
 
+        @Override
         public void updateDataModel() {
           super.updateDataModel();
           getWizardContext().setProjectName(((MavenProjectBuilder)getBuilder()).getSuggestedProjectName());
         }
 
+        @Override
         public String getHelpId() {
           return "reference.dialogs.new.project.import.maven.page3";
         }
-      }, stepFactory.createProjectJdkStep(wizardContext), stepFactory.createNameAndLocationStep(wizardContext)};
+      },
+      stepFactory.createProjectJdkStep(wizardContext),
+      stepFactory.createNameAndLocationStep(wizardContext)
+    };
   }
 
   @Override

@@ -49,6 +49,7 @@ class LibNotifyWrapper implements SystemNotificationsImpl.Notifier {
   }
 
   private final LibNotify myLibNotify;
+  private final String myIcon;
 
   private LibNotifyWrapper() {
     myLibNotify = (LibNotify)Native.loadLibrary("libnotify.so.4", LibNotify.class);
@@ -57,6 +58,9 @@ class LibNotifyWrapper implements SystemNotificationsImpl.Notifier {
     if (myLibNotify.notify_init(appName) == 0) {
       throw new IllegalStateException("notify_init failed");
     }
+
+    String icon = AppUIUtil.findIcon(PathManager.getBinPath());
+    myIcon = icon != null ? icon : "dialog-information";
 
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
     connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
@@ -69,9 +73,7 @@ class LibNotifyWrapper implements SystemNotificationsImpl.Notifier {
 
   @Override
   public void notify(@NotNull Set<String> allNames, @NotNull String name, @NotNull String title, @NotNull String description) {
-    String icon = AppUIUtil.findIcon(PathManager.getBinPath());
-    if (icon == null) icon = "dialog-information";
-    Pointer notification = myLibNotify.notify_notification_new(title, description, icon);
+    Pointer notification = myLibNotify.notify_notification_new(title, description, myIcon);
     myLibNotify.notify_notification_show(notification, null);
   }
 }

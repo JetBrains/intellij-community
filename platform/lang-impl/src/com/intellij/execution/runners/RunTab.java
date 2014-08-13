@@ -23,6 +23,7 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.SearchScopeProvider;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -36,6 +37,7 @@ public abstract class RunTab extends LogConsoleManagerBase implements DataProvid
   @NotNull
   protected final RunnerLayoutUi myUi;
   protected final LogFilesManager myManager;
+  protected RunContentDescriptor myRunContentDescriptor;
 
   protected RunTab(@NotNull ExecutionEnvironment environment, @NotNull String runnerType) {
     this(environment.getProject(),
@@ -65,6 +67,9 @@ public abstract class RunTab extends LogConsoleManagerBase implements DataProvid
     }
     else if (LangDataKeys.EXECUTION_ENVIRONMENT.is(dataId)) {
       return getEnvironment();
+    }
+    else if (LangDataKeys.RUN_CONTENT_DESCRIPTOR.is(dataId)) {
+      return myRunContentDescriptor;
     }
     return null;
   }

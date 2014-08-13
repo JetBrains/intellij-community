@@ -19,6 +19,7 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.editorActions.wordSelection.DocTagSelectioner;
+import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.SuppressionUtil;
@@ -391,16 +392,19 @@ public class JavaDocCompletionContributor extends CompletionContributor {
     private static void shortenReferences(final Project project, final Editor editor, InsertionContext context, int offset) {
       PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
       final PsiElement element = context.getFile().findElementAt(offset);
-      final PsiDocTagValue tagValue = PsiTreeUtil.getParentOfType(element, PsiDocTagValue.class);
-      if (tagValue != null) {
-        try {
-          JavaCodeStyleManager.getInstance(project).shortenClassReferences(tagValue);
+      final PsiDocComment docComment = PsiTreeUtil.getParentOfType(element, PsiDocComment.class);
+      if (!JavaDocUtil.isInsidePackageInfo(docComment)) {
+        final PsiDocTagValue tagValue = PsiTreeUtil.getParentOfType(element, PsiDocTagValue.class);
+        if (tagValue != null) {
+          try {
+            JavaCodeStyleManager.getInstance(project).shortenClassReferences(tagValue);
+          }
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
+          }
         }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+        PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
       }
-      PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
     }
   }
 }

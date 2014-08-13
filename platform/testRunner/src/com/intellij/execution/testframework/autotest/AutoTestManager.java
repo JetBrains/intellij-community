@@ -2,9 +2,12 @@ package com.intellij.execution.testframework.autotest;
 
 import com.intellij.execution.DelayedDocumentWatcher;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunContentManagerImpl;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -15,6 +18,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.WeakHashMap;
 
+import javax.swing.*;
 import java.util.Collections;
 import java.util.Set;
 
@@ -79,21 +83,21 @@ public class AutoTestManager {
   }
 
   private static void runAutoTest(Content content) {
-    RunContentDescriptor descriptor = RunContentManagerImpl.getRunContentDescriptorByContent(content);
-    if (descriptor == null) {
-      return;
+    JComponent component = content.getComponent();
+    if (component != null) {
+      DataContext dataContext = DataManager.getInstance().getDataContext(component);
+      RunContentDescriptor descriptor = LangDataKeys.RUN_CONTENT_DESCRIPTOR.getData(dataContext);
+      if (descriptor != null) {
+        ProcessHandler processHandler = descriptor.getProcessHandler();
+        if (processHandler != null && !processHandler.isProcessTerminated()) {
+          return;
+        }
+
+        descriptor.setActivateToolWindowWhenAdded(false);
+        descriptor.setReuseToolWindowActivation(true);
+        ExecutionUtil.restart(content);
+      }
     }
-    Runnable restarter = descriptor.getRestarter();
-    if (restarter == null) {
-      return;
-    }
-    final ProcessHandler processHandler = descriptor.getProcessHandler();
-    if (processHandler != null && !processHandler.isProcessTerminated()) {
-      return;
-    }
-    descriptor.setActivateToolWindowWhenAdded(false);
-    descriptor.setReuseToolWindowActivation(true);
-    restarter.run();
   }
 
   int getDelay() {
