@@ -60,6 +60,7 @@ public class StudyDocumentListener extends DocumentAdapter {
       int newEndOffsetInLine = offset + e.getNewLength() - document.getLineStartOffset(newLine);
       int oldEndOffsetInLine = offset + e.getOldLength() - oldLineStartOffset;
       myTaskFile.updateLine(lineChange, oldLine, newEndOffsetInLine, oldEndOffsetInLine);
+      System.out.println();
     }
   }
 }
