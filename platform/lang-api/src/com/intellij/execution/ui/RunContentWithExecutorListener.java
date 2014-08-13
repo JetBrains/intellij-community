@@ -17,11 +17,13 @@ package com.intellij.execution.ui;
 
 import com.intellij.execution.Executor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
  */
 public interface RunContentWithExecutorListener {
-  void contentSelected(RunContentDescriptor descriptor, @NotNull Executor executor);
-  void contentRemoved(RunContentDescriptor descriptor, @NotNull Executor executor);
+  void contentSelected(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor);
+
+  void contentRemoved(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor);
 }

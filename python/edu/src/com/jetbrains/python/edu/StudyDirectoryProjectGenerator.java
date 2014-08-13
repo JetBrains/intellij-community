@@ -46,7 +46,7 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
   private static final Pattern CACHE_PATTERN = Pattern.compile("(name=(.*)) (path=(.*course.json)) (author=(.*)) (description=(.*))");
   private static final String REPOSITORY_NAME = "initial-python-course";
   public static final String AUTHOR_ATTRIBUTE = "author";
-  private final File myCoursesDir = new File(PathManager.getLibPath(), "courses");
+  private final File myCoursesDir = new File(PathManager.getConfigPath(), "courses");
   private static final String CACHE_NAME = "courseNames.txt";
   private Map<CourseInfo, File> myCourses = new HashMap<CourseInfo, File>();
   private File mySelectedCourseFile;
@@ -162,7 +162,7 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
       StudyTaskManager.getInstance(project).setCourse(course);
     }
     catch (FileNotFoundException e) {
-      LOG.error(e);
+      e.printStackTrace();
     }
     finally {
       StudyUtils.closeSilently(reader);
@@ -205,10 +205,10 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
       }
     }
     catch (IOException e) {
-      LOG.error("Failed to create Study project", e);
+      e.printStackTrace();
     }
     catch (GeneratorException e) {
-      LOG.error("Failed to create Study project", e);
+      e.printStackTrace();
     }
   }
 

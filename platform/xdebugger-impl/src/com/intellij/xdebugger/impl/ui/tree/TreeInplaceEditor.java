@@ -17,16 +17,19 @@ package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.Executor;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunContentListener;
 import com.intellij.execution.ui.RunContentManager;
+import com.intellij.execution.ui.RunContentWithExecutorListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -176,23 +179,22 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
       }
     });
 
-    final RunContentManager contentManager = ExecutionManager.getInstance(getProject()).getContentManager();
-    final RunContentListener runContentListener = new RunContentListener() {
+    final Disposable disposable = Disposer.newDisposable();
+    getProject().getMessageBus().connect(disposable).subscribe(RunContentManager.TOPIC, new RunContentWithExecutorListener() {
       @Override
-      public void contentSelected(RunContentDescriptor descriptor) {
+      public void contentSelected(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
         cancelEditing();
       }
 
       @Override
-      public void contentRemoved(RunContentDescriptor descriptor) {
+      public void contentRemoved(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
         cancelEditing();
       }
-    };
-    contentManager.addRunContentListener(runContentListener);
+    });
     myRemoveActions.add(new Runnable() {
       @Override
       public void run() {
-        contentManager.removeRunContentListener(runContentListener);
+        disposable.dispose();
       }
     });
 
@@ -246,13 +248,13 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     if (id != MouseEvent.MOUSE_PRESSED && id != MouseEvent.MOUSE_RELEASED && id != MouseEvent.MOUSE_CLICKED && id != MouseEvent.MOUSE_WHEEL) {
       return;
     }
-    
+
     final Component sourceComponent = mouseEvent.getComponent();
     final Point originalPoint = mouseEvent.getPoint();
 
     final Editor editor = getEditor();
     if (editor == null) return;
-    
+
     final LookupImpl activeLookup = (LookupImpl)LookupManager.getInstance(editor.getProject()).getActiveLookup();
     if (activeLookup != null){
       final Point lookupPoint = SwingUtilities.convertPoint(sourceComponent, originalPoint, activeLookup.getComponent());
