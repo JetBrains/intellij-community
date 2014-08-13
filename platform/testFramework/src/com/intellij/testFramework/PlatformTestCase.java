@@ -198,6 +198,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
 
     DocumentCommitThread.getInstance().clearQueue();
+    UIUtil.dispatchAllInvocationEvents();
   }
 
   public Project getProject() {

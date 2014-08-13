@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi;
+package com.intellij.psi.impl;
 
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.mock.MockDocument;
@@ -27,8 +27,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.PsiDocumentManagerImpl;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightVirtualFile;
@@ -44,6 +45,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class PsiDocumentManagerImplTest extends PlatformLangTestCase {
   private PsiDocumentManagerImpl getPsiDocumentManager() {
     return (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject());
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    DocumentCommitThread.getInstance();
+    UIUtil.dispatchAllInvocationEvents();
   }
 
   public void testGetCachedPsiFile_NoFile() throws Exception {
@@ -366,5 +374,24 @@ public class PsiDocumentManagerImplTest extends PlatformLangTestCase {
     finally {
       ProjectUtil.closeAndDispose(alienProject);
     }
+  }
+
+  public void testCommitThreadGetSuspendedDuringWriteActions() {
+    final DocumentCommitThread commitThread = DocumentCommitThread.getInstance();
+    assertTrue(commitThread.isEnabled());
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
+      @Override
+      public void run() {
+        assertFalse(commitThread.isEnabled());
+        WriteCommandAction.runWriteCommandAction(null, new Runnable() {
+          @Override
+          public void run() {
+            assertFalse(commitThread.isEnabled());
+          }
+        });
+        assertFalse(commitThread.isEnabled());
+      }
+    });
+    assertTrue(commitThread.isEnabled());
   }
 }
