@@ -16,6 +16,8 @@
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
+import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph;
+import com.intellij.codeInspection.bytecodeAnalysis.asm.OriginsAnalysis;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.NotNullLazyValue;

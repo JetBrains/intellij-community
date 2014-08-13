@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInspection.bytecodeAnalysis;
+package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +21,6 @@ import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.tree.AbstractInsnNode;
 import org.jetbrains.org.objectweb.asm.tree.InsnList;
 import org.jetbrains.org.objectweb.asm.tree.analysis.*;
-import org.jetbrains.org.objectweb.asm.tree.analysis.Value;
 
 import java.util.HashSet;
 import java.util.LinkedList;

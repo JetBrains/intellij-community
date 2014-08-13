@@ -16,6 +16,8 @@
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
+import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph;
+import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph.Edge;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.FramelessAnalyzer;
 import com.intellij.openapi.util.Pair;
 import gnu.trove.TIntArrayList;
@@ -27,7 +29,10 @@ import org.jetbrains.org.objectweb.asm.tree.*;
 import org.jetbrains.org.objectweb.asm.tree.analysis.*;
 import org.jetbrains.org.objectweb.asm.tree.analysis.Value;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static org.jetbrains.org.objectweb.asm.Opcodes.*;
 
@@ -223,61 +228,6 @@ final class cfg {
 
 }
 
-final class Edge {
-  final int from, to;
-
-  Edge(int from, int to) {
-    this.from = from;
-    this.to = to;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof Edge)) {
-      return false;
-    }
-    Edge edge = (Edge) o;
-    return from == edge.from && to == edge.to;
-  }
-
-  @Override
-  public int hashCode() {
-    return 31 * from + to;
-  }
-
-  @Override
-  public String toString() {
-    return "(" + from + "," + to + ")";
-  }
-}
-
-final class ControlFlowGraph {
-  final String className;
-  final MethodNode methodNode;
-  final int[][] transitions;
-  final int edgeCount;
-  final boolean[] errors;
-  final Set<Edge> errorTransitions;
-
-  ControlFlowGraph(String className, MethodNode methodNode, int[][] transitions, int edgeCount, boolean[] errors, Set<Edge> errorTransitions) {
-    this.className = className;
-    this.methodNode = methodNode;
-    this.transitions = transitions;
-    this.edgeCount = edgeCount;
-    this.errors = errors;
-    this.errorTransitions = errorTransitions;
-  }
-
-  @Override
-  public String toString() {
-    return "CFG(" +
-           Arrays.toString(transitions) + "," +
-           errorTransitions +
-           ')';
-  }
-}
-
 final class RichControlFlow {
   final ControlFlowGraph controlFlow;
   final DFSTree dfsTree;
@@ -292,7 +242,7 @@ final class ControlFlowBuilder extends FramelessAnalyzer {
   final String className;
   final MethodNode methodNode;
   final TIntArrayList[] transitions;
-  final Set<Edge> errorTransitions;
+  final Set<ControlFlowGraph.Edge> errorTransitions;
   private final boolean[] errors;
   private int edgeCount;
 
