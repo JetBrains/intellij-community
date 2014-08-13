@@ -392,7 +392,7 @@ public class DumbServiceImpl extends DumbService implements Disposable {
   }
 
   private class AppIconProgress extends ProgressIndicatorBase {
-    double lastFraction;
+    private double lastFraction;
 
     @Override
     public void setFraction(final double fraction) {
@@ -408,16 +408,18 @@ public class DumbServiceImpl extends DumbService implements Disposable {
 
     @Override
     public void finish(@NotNull TaskInfo task) {
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          AppIcon appIcon = AppIcon.getInstance();
-          if (appIcon.hideProgress(myProject, "indexUpdate")) {
-            appIcon.requestAttention(myProject, false);
-            appIcon.setOkBadge(myProject, true);
+      if (lastFraction != 0) { // we should call setProgress at least once before
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            AppIcon appIcon = AppIcon.getInstance();
+            if (appIcon.hideProgress(myProject, "indexUpdate")) {
+              appIcon.requestAttention(myProject, false);
+              appIcon.setOkBadge(myProject, true);
+            }
           }
-        }
-      });
+        });
+      }
     }
   }
 }
