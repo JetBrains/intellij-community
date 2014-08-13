@@ -19,10 +19,7 @@ import com.intellij.codeInsight.generation.actions.CommentByLineCommentAction;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -145,7 +142,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @throws java.io.IOException
    */
   @NotNull
-  protected static Document configureFromFileText(@NonNls @NotNull final String fileName, @NonNls @NotNull final String fileText) throws IOException {
+  protected static Document configureFromFileText(@NonNls @NotNull final String fileName, @NonNls @NotNull final String fileText) {
     return new WriteCommandAction<Document>(null) {
       @Override
       protected void run(@NotNull Result<Document> result) throws Throwable {
@@ -353,24 +350,6 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     return userMessage + " [" + engineMessage + "]";
   }
 
-  @Override
-  public Object getData(String dataId) {
-    if (CommonDataKeys.EDITOR.is(dataId)) {
-      return myEditor;
-    }
-    if (dataId.equals(AnActionEvent.injectedId(CommonDataKeys.EDITOR.getName()))) {
-      return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(getEditor(), getFile());
-    }
-    if (CommonDataKeys.PSI_FILE.is(dataId)) {
-      return myFile;
-    }
-    if (dataId.equals(AnActionEvent.injectedId(CommonDataKeys.PSI_FILE.getName()))) {
-      Editor editor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(getEditor(), getFile());
-      return editor instanceof EditorWindow ? ((EditorWindow)editor).getInjectedFile() : getFile();
-    }
-    return super.getData(dataId);
-  }
-
   /**
    * @return Editor used in test.
    */
@@ -508,9 +487,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
       @Override
       public void run() {
-        EditorActionManager actionManager = EditorActionManager.getInstance();
-        EditorActionHandler actionHandler = actionManager.getActionHandler(actionId);
-        actionHandler.execute(getEditor(), null, DataManager.getInstance().getDataContext());
+        EditorTestUtil.executeAction(getEditor(), actionId);
       }
     }, "", null);
   }

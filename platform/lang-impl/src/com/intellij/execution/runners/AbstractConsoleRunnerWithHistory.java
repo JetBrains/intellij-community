@@ -173,7 +173,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     return false;
   }
 
-  protected void showConsole(Executor defaultExecutor, RunContentDescriptor contentDescriptor) {
+  protected void showConsole(Executor defaultExecutor, @NotNull RunContentDescriptor contentDescriptor) {
     // Show in run toolwindow
     ExecutionManager.getInstance(myProject).getContentManager().showRunContent(defaultExecutor, contentDescriptor);
   }

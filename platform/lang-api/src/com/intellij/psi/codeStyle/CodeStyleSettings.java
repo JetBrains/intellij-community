@@ -249,6 +249,10 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   public int INNER_CLASSES_ORDER_WEIGHT = 7;
 
 //----------------- WRAPPING ---------------------------
+  /**
+   * @deprecated Use get/setRightMargin() methods instead.
+   */
+  @Deprecated
   public int RIGHT_MARGIN = 120;
   public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = false;
 
@@ -906,7 +910,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
         if (langSettings.RIGHT_MARGIN >= 0) return langSettings.RIGHT_MARGIN;
       }
     }
-    return RIGHT_MARGIN;
+    return getDefaultRightMargin();
   }
 
   /**
@@ -923,6 +927,16 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
         return;
       }
     }
+    setDefaultRightMargin(rightMargin);
+  }
+
+  @SuppressWarnings("deprecation")
+  public int getDefaultRightMargin() {
+    return RIGHT_MARGIN;
+  }
+
+  @SuppressWarnings("deprecation")
+  public void setDefaultRightMargin(int rightMargin) {
     RIGHT_MARGIN = rightMargin;
   }
 }

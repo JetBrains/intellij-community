@@ -51,7 +51,9 @@ import java.util.*;
 
 public class VfsUtil extends VfsUtilCore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VfsUtil");
-  public static final char VFS_PATH_SEPARATOR = '/';
+
+  /** @deprecated incorrect name, use {@link #VFS_SEPARATOR_CHAR} (to be removed in IDEA 15) */
+  public static final char VFS_PATH_SEPARATOR = VFS_SEPARATOR_CHAR;
 
   public static void saveText(@NotNull VirtualFile file, @NotNull String text) throws IOException {
     Charset charset = file.getCharset();
@@ -585,7 +587,7 @@ public class VfsUtil extends VfsUtilCore {
     if (url == null) {
       return null;
     }
-    final int index = url.lastIndexOf(VFS_PATH_SEPARATOR);
+    final int index = url.lastIndexOf(VfsUtil.VFS_SEPARATOR_CHAR);
     return index < 0 ? null : url.substring(0, index);
   }
 
@@ -598,7 +600,7 @@ public class VfsUtil extends VfsUtilCore {
     if (urlOrPath == null) {
       return null;
     }
-    final int index = urlOrPath.lastIndexOf(VFS_PATH_SEPARATOR);
+    final int index = urlOrPath.lastIndexOf(VfsUtil.VFS_SEPARATOR_CHAR);
     return index < 0 ? null : urlOrPath.substring(index+1);
   }
 

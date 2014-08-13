@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,7 +26,14 @@ import com.intellij.psi.PsiFile;
 public class CommonDataKeys {
   public static final DataKey<Project> PROJECT = DataKey.create("project");
   public static final DataKey<Editor> EDITOR = DataKey.create("editor");
-
+  /**
+   * This key can be used to obtain reference to host editor instance, in case {@link #EDITOR} key is referring to an injected editor.
+   */
+  public static final DataKey<Editor> HOST_EDITOR = DataKey.create("host.editor");
+  /**
+   * A key to retrieve caret instance (in host or injected editor, depending on context).
+   */
+  public static final DataKey<Caret> CARET = DataKey.create("caret");
   /**
    * Returns com.intellij.openapi.editor.Editor even if focus currently is in find bar
    */

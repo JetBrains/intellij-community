@@ -17,7 +17,7 @@ package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.ListItemDescriptor;
+import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
@@ -57,7 +57,7 @@ public class ProjectTemplateList extends JPanel {
     super(new BorderLayout());
     add(myPanel, BorderLayout.CENTER);
 
-    GroupedItemsListRenderer renderer = new GroupedItemsListRenderer(new ListItemDescriptor<ProjectTemplate>() {
+    GroupedItemsListRenderer renderer = new GroupedItemsListRenderer(new ListItemDescriptorAdapter<ProjectTemplate>() {
       @Nullable
       @Override
       public String getTextFor(ProjectTemplate value) {
@@ -66,25 +66,8 @@ public class ProjectTemplateList extends JPanel {
 
       @Nullable
       @Override
-      public String getTooltipFor(ProjectTemplate value) {
-        return null;
-      }
-
-      @Nullable
-      @Override
       public Icon getIconFor(ProjectTemplate value) {
         return value.getIcon();
-      }
-
-      @Override
-      public boolean hasSeparatorAboveOf(ProjectTemplate value) {
-        return false;
-      }
-
-      @Nullable
-      @Override
-      public String getCaptionAboveOf(ProjectTemplate value) {
-        return null;
       }
     }) {
 

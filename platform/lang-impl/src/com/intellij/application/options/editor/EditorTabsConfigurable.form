@@ -3,12 +3,12 @@
   <grid id="27dc6" binding="myRootPanel" layout-manager="GridLayoutManager" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="500" height="585"/>
+      <xy x="20" y="20" width="500" height="614"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
-      <grid id="ed507" layout-manager="GridLayoutManager" row-count="7" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="ed507" layout-manager="GridLayoutManager" row-count="8" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="9" fill="3" indent="0" use-parent-layout="false"/>
@@ -101,6 +101,35 @@
               <text resource-bundle="messages/ApplicationBundle" key="checkbox.show.tabs.tooltips"/>
             </properties>
           </component>
+          <grid id="e3283" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="2479d" class="javax.swing.JLabel">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text resource-bundle="messages/ApplicationBundle" key="editbox.tab.title.limit"/>
+                </properties>
+              </component>
+              <component id="3499c" class="javax.swing.JTextField" binding="myTabTitleLimitField">
+                <constraints>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0" indent="0" use-parent-layout="false">
+                    <preferred-size width="30" height="27"/>
+                  </grid>
+                </constraints>
+                <properties>
+                  <columns value="2"/>
+                  <text value="30"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
         </children>
       </grid>
       <vspacer id="651b4">
@@ -119,7 +148,7 @@
         </clientProperties>
         <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.tab.closing.policy"/>
         <children>
-          <grid id="5a5a7" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="5a5a7" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -145,25 +174,6 @@
                 </constraints>
                 <properties>
                   <text value="15"/>
-                </properties>
-              </component>
-              <component id="2479d" class="javax.swing.JLabel">
-                <constraints>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text resource-bundle="messages/ApplicationBundle" key="editbox.tab.title.limit"/>
-                </properties>
-              </component>
-              <component id="3499c" class="javax.swing.JTextField" binding="myTabTitleLimitField">
-                <constraints>
-                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0" indent="0" use-parent-layout="false">
-                    <preferred-size width="30" height="27"/>
-                  </grid>
-                </constraints>
-                <properties>
-                  <columns value="2"/>
-                  <text value="30"/>
                 </properties>
               </component>
             </children>

@@ -1064,7 +1064,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   public static boolean isStringPsiLiteral(PsiElement element) {
     if (element instanceof PsiLiteralExpression) {
       final String text = element.getText();
-      return text.length() > 1 && StringUtil.isQuotedString(text);
+      return StringUtil.isQuotedString(text);
     }
     return false;
   }

@@ -234,7 +234,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
         }
 
         @Override
-        protected void elementFinished(PsiElement element) {
+        protected void elementFinished(@NotNull PsiElement element) {
           if (!(element instanceof PsiReferenceExpressionImpl)) return;
           PsiReferenceExpressionImpl expression = (PsiReferenceExpressionImpl)element;
           resolveCache.resolveWithCaching(expression, INSTANCE, false, false, containingFile);

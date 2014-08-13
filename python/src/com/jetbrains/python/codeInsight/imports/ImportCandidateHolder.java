@@ -52,7 +52,7 @@ class ImportCandidateHolder implements Comparable<ImportCandidateHolder> {
    * Creates new instance.
    *
    * @param importable    an element that could be imported either from import element or from file.
-   * @param file          the file which is the source of the importable
+   * @param file          the file which is the source of the importable (module for symbols, containing directory for modules and packages)
    * @param importElement an existing import element that can be a source for the importable.
    * @param path          import path for the file, as a qualified name (a.b.c)
    *                      For top-level imported symbols it's <em>qualified name of containing module</em> (or package for __init__.py).

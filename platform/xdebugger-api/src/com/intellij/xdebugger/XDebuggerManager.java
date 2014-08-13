@@ -58,8 +58,8 @@ public abstract class XDebuggerManager {
   public abstract XDebugSession getCurrentSession();
 
   /**
-   * Start a new debugging session. Use this method only if debugging is started by using standard 'Debug' action i.e. this methods is called
-   * from {@link com.intellij.execution.runners.ProgramRunner#execute} method. Otherwise use {@link #startSessionAndShowTab} method
+   * @deprecated use {@link #startSession(com.intellij.execution.runners.ExecutionEnvironment, XDebugProcessStarter)} instead
+   * to remove in IDEA 15
    */
   @NotNull
   @Deprecated

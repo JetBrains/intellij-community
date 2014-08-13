@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,11 +88,11 @@ public class PagedFileStorage implements Forceable {
   private static final ByteOrder ourNativeByteOrder = ByteOrder.nativeOrder();
 
   public void lock() {
-    myStorageLockContext.myLock.lock();
+    myStorageLockContext.lock();
   }
 
   public void unlock() {
-    myStorageLockContext.myLock.unlock();
+    myStorageLockContext.unlock();
   }
 
   public StorageLockContext getStorageLockContext() {
@@ -510,11 +510,11 @@ public class PagedFileStorage implements Forceable {
     }
 
     public void lock() {
-      myDefaultStorageLockContext.myLock.lock();
+      myDefaultStorageLockContext.lock();
     }
 
     public void unlock() {
-      myDefaultStorageLockContext.myLock.unlock();
+      myDefaultStorageLockContext.unlock();
     }
 
     private int registerPagedFileStorage(@NotNull PagedFileStorage storage) {
@@ -658,7 +658,9 @@ public class PagedFileStorage implements Forceable {
                 LOG.info("Max memory:"+maxMemory.get(null) + ", reserved memory:" + reservedMemory.get(null));
               }
             }
-            catch (Throwable t) {}
+            catch (Throwable t) {
+
+            }
             throw new MappingFailedException(
               "Cannot recover from OOME in memory mapping: -Xmx=" + Runtime.getRuntime().maxMemory() / MB + "MB " +
               "new size limit: " + mySizeLimit / MB + "MB " +
@@ -669,7 +671,7 @@ public class PagedFileStorage implements Forceable {
       }
     }
 
-    private void checkThreadAccess(StorageLockContext storageLockContext) {
+    private static void checkThreadAccess(StorageLockContext storageLockContext) {
       if (storageLockContext.myCheckThreadAccess && !storageLockContext.myLock.isHeldByCurrentThread()) {
         throw new IllegalStateException("Must hold StorageLock lock to access PagedFileStorage");
       }
@@ -775,6 +777,13 @@ public class PagedFileStorage implements Forceable {
 
     public StorageLockContext(boolean checkAccess) {
       this(ourLock, checkAccess);
+    }
+
+    public void lock() {
+      myLock.lock();
+    }
+    public void unlock() {
+      myLock.unlock();
     }
   }
 }

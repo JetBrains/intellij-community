@@ -16,24 +16,29 @@
 
 package com.intellij.execution.runners;
 
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.RunCanceledByUserException;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessNotCreatedException;
+import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.content.Content;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 
@@ -52,6 +57,10 @@ public class ExecutionUtil {
     handleExecutionError(project, toolWindowId, runProfile.getName(), e);
   }
 
+  public static void handleExecutionError(@NotNull ExecutionEnvironment environment, @NotNull ExecutionException e) {
+    handleExecutionError(environment.getProject(), environment.getExecutor().getToolWindowId(), environment.getRunProfile().getName(), e);
+  }
+
   public static void handleExecutionError(@NotNull final Project project,
                                           @NotNull final String toolWindowId,
                                           @NotNull String taskName,
@@ -59,15 +68,15 @@ public class ExecutionUtil {
     if (e instanceof RunCanceledByUserException) return;
 
     LOG.debug(e);
-    
+
     String description = e.getMessage();
     HyperlinkListener listener = null;
-    
+
     if (description == null) {
       LOG.warn("Execution error without description", e);
       description = "Unknown error";
     }
-    
+
     if ((description.contains("87") || description.contains("111") || description.contains("206")) &&
         e instanceof ProcessNotCreatedException &&
         !PropertiesComponent.getInstance(project).isTrueValue("dynamic.classpath")) {
@@ -106,5 +115,63 @@ public class ExecutionUtil {
         ourNotificationGroup.createNotification(title, finalDescription, NotificationType.ERROR, notificationListener).notify(project);
       }
     });
+  }
+
+  public static void restartIfActive(@NotNull RunContentDescriptor descriptor) {
+    ProcessHandler processHandler = descriptor.getProcessHandler();
+    if (processHandler != null
+        && processHandler.isStartNotified()
+        && !processHandler.isProcessTerminating()
+        && !processHandler.isProcessTerminated()) {
+      restart(descriptor);
+    }
+  }
+
+  public static void restart(@NotNull RunContentDescriptor descriptor) {
+    restart(descriptor.getComponent());
+  }
+
+  public static void restart(@NotNull Content content) {
+    restart(content.getComponent());
+  }
+
+  private static void restart(@Nullable JComponent component) {
+    if (component != null) {
+      ExecutionEnvironment environment = LangDataKeys.EXECUTION_ENVIRONMENT.getData(DataManager.getInstance().getDataContext(component));
+      if (environment != null) {
+        restart(environment);
+      }
+    }
+  }
+
+  public static void restart(@NotNull ExecutionEnvironment environment) {
+    if (!ExecutorRegistry.getInstance().isStarting(environment)) {
+      ExecutionManager.getInstance(environment.getProject()).restartRunProfile(environment);
+    }
+  }
+
+  public static void runConfiguration(@NotNull RunnerAndConfigurationSettings configuration, @NotNull Executor executor) {
+    ExecutionEnvironmentBuilder builder = createEnvironment(executor, configuration);
+    if (builder != null) {
+      ExecutionManager.getInstance(configuration.getConfiguration().getProject()).restartRunProfile(builder
+                                                                                                      .activeTarget()
+                                                                                                      .build());
+    }
+  }
+
+  @Nullable
+  public static ExecutionEnvironmentBuilder createEnvironment(@NotNull Executor executor, @NotNull RunnerAndConfigurationSettings settings) {
+    try {
+      return ExecutionEnvironmentBuilder.create(executor, settings);
+    }
+    catch (ExecutionException e) {
+      handleExecutionError(settings.getConfiguration().getProject(), executor.getToolWindowId(), settings.getConfiguration().getName(), e);
+      return null;
+    }
+  }
+
+  public static void execute(@NotNull ExecutionEnvironment environment) throws ExecutionException {
+    //noinspection ConstantConditions
+    environment.getRunner().execute(environment);
   }
 }

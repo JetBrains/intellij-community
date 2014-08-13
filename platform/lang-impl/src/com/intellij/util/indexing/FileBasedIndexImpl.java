@@ -531,7 +531,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         extension.hasSnapshotMapping() && IdIndex.ourSnapshotMappingsEnabled
         ? createInputsIndexExternalizer(extension, indexId, extension.getKeyDescriptor())
         : null;
-      index = new MapReduceIndex<K, V, FileContent>(indexId, extension.getIndexer(), storage, externalizer, extension.getValueExternalizer());
+      index = new MapReduceIndex<K, V, FileContent>(
+        indexId, extension.getIndexer(), storage, externalizer, extension.getValueExternalizer(), extension instanceof PsiDependentIndex);
     }
     index.setInputIdToDataKeysIndex(new Factory<PersistentHashMap<Integer, Collection<K>>>() {
       @Override

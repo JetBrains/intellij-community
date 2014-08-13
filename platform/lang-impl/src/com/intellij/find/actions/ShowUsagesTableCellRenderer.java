@@ -77,7 +77,7 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
     textChunks.setBorder(null);
 
     if (usage == null || usageNode instanceof ShowUsagesAction.StringNode) {
-      textChunks.append(value.toString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      textChunks.append(value != null ? value.toString() : "", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       return textComponentSpanningWholeRow(textChunks, panelBackground, panelForeground, column, list, row);
     }
     if (usage == ShowUsagesAction.MORE_USAGES_SEPARATOR) {

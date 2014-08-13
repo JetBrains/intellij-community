@@ -19,6 +19,7 @@ package com.intellij.execution.impl;
 import com.intellij.ProjectTopics;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.NamedComponent;
@@ -106,7 +107,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   public final void initializeConfigurationTypes(@NotNull final ConfigurationType[] factories) {
     Arrays.sort(factories, new Comparator<ConfigurationType>() {
       @Override
-      public int compare(final ConfigurationType o1, final ConfigurationType o2) {
+      public int compare(@NotNull final ConfigurationType o1, @NotNull final ConfigurationType o2) {
         return o1.getDisplayName().compareTo(o2.getDisplayName());
       }
     });
@@ -461,7 +462,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
         // IDEA-63663 Sort run configurations alphabetically if clean checkout 
         Collections.sort(order, new Comparator<Pair<String, RunnerAndConfigurationSettings>>() {
           @Override
-          public int compare(Pair<String, RunnerAndConfigurationSettings> o1, Pair<String, RunnerAndConfigurationSettings> o2) {
+          public int compare(@NotNull Pair<String, RunnerAndConfigurationSettings> o1, @NotNull Pair<String, RunnerAndConfigurationSettings> o2) {
             boolean temporary1 = o1.getSecond().isTemporary();
             boolean temporary2 = o2.getSecond().isTemporary();
             if (temporary1 == temporary2) {
@@ -475,7 +476,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       else {
         Collections.sort(order, new Comparator<Pair<String, RunnerAndConfigurationSettings>>() {
           @Override
-          public int compare(Pair<String, RunnerAndConfigurationSettings> o1, Pair<String, RunnerAndConfigurationSettings> o2) {
+          public int compare(@NotNull Pair<String, RunnerAndConfigurationSettings> o1, @NotNull Pair<String, RunnerAndConfigurationSettings> o2) {
             int i1 = folderNames.indexOf(o1.getSecond().getFolderName());
             int i2 = folderNames.indexOf(o2.getSecond().getFolderName());
             if (i1 != i2) {
@@ -507,8 +508,12 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     return myConfigurations.values();
   }
 
-  public static boolean canRunConfiguration(@NotNull final RunnerAndConfigurationSettings configuration,
-                                            @NotNull final Executor executor) {
+  public static boolean canRunConfiguration(@NotNull ExecutionEnvironment environment) {
+    RunnerAndConfigurationSettings runnerAndConfigurationSettings = environment.getRunnerAndConfigurationSettings();
+    return runnerAndConfigurationSettings != null && canRunConfiguration(runnerAndConfigurationSettings, environment.getExecutor());
+  }
+
+  public static boolean canRunConfiguration(@NotNull RunnerAndConfigurationSettings configuration, @NotNull Executor executor) {
     try {
       configuration.checkSettings(executor);
     }
@@ -567,7 +572,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
     if (myUnknownElements != null) {
       for (Element unloadedElement : myUnknownElements) {
-        parentNode.addContent((Element)unloadedElement.clone());
+        parentNode.addContent(unloadedElement.clone());
       }
     }
   }
@@ -647,7 +652,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
     final Comparator<Element> comparator = new Comparator<Element>() {
       @Override
-      public int compare(Element a, Element b) {
+      public int compare(@NotNull Element a, @NotNull Element b) {
         final boolean aDefault = Boolean.valueOf(a.getAttributeValue("default", "false"));
         final boolean bDefault = Boolean.valueOf(b.getAttributeValue("default", "false"));
         return aDefault == bDefault ? 0 : aDefault ? -1 : 1;
@@ -666,7 +671,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     Collections.sort(sortedElements, comparator); // ensure templates are loaded first!
 
     for (final Element element : sortedElements) {
-      RunnerAndConfigurationSettings configurationSettings = null;
+      RunnerAndConfigurationSettings configurationSettings;
       try {
         configurationSettings = loadConfiguration(element, false);
       }
@@ -915,6 +920,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   public List<RunnerAndConfigurationSettings> getTempConfigurationsList() {
     List<RunnerAndConfigurationSettings> configurations =
       ContainerUtil.filter(myConfigurations.values(), new Condition<RunnerAndConfigurationSettings>() {
+      @Override
       public boolean value(RunnerAndConfigurationSettings settings) {
         return settings.isTemporary();
       }
@@ -933,6 +939,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     return result;
   }
 
+  @Override
   public void makeStable(@NotNull RunnerAndConfigurationSettings settings) {
       settings.setTemporary(false);
       myRecentlyUsedTemporaries.remove(settings.getConfiguration());

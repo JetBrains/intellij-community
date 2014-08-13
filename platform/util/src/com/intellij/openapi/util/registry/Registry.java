@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.openapi.util.registry;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.awt.*;
@@ -33,30 +34,29 @@ public class Registry  {
   @NonNls
   private static final String REGISTRY_BUNDLE = "misc.registry";
 
-  private final LinkedHashMap<String, String> myUserProperties = new LinkedHashMap<String, String>();
+  private final Map<String, String> myUserProperties = new LinkedHashMap<String, String>();
   private final Map<String, String> myLoadedUserProperties = new HashMap<String, String>();
   private final Map<String, RegistryValue> myValues = new ConcurrentHashMap<String, RegistryValue>();
 
   private static final Registry ourInstance = new Registry();
 
-  public static RegistryValue get(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) String key) {
+  @NotNull
+  public static RegistryValue get(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) @NotNull String key) {
     final Registry registry = getInstance();
 
-    if (registry.myValues.containsKey(key)) {
-      return registry.myValues.get(key);
-    }
-    else {
-      final RegistryValue value = new RegistryValue(registry, key);
+    RegistryValue value = registry.myValues.get(key);
+    if (value == null) {
+      value = new RegistryValue(registry, key);
       registry.myValues.put(key, value);
-      return value;
     }
+    return value;
   }
 
-  public static boolean is(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) String key) {
+  public static boolean is(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) @NotNull String key) throws MissingResourceException {
     return get(key).asBoolean();
   }
 
-  public static boolean is(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) String key, boolean defaultValue) {
+  public static boolean is(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) @NotNull String key, boolean defaultValue) {
     try {
       return get(key).asBoolean();
     }
@@ -65,11 +65,11 @@ public class Registry  {
     }
   }
 
-  public static int intValue(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) String key) {
+  public static int intValue(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) @NotNull String key) throws MissingResourceException {
     return get(key).asInteger();
   }
 
-  public static int intValue(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) String key, int defaultValue) {
+  public static int intValue(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) @NotNull String key, int defaultValue) {
     try {
       return get(key).asInteger();
     }
@@ -78,18 +78,20 @@ public class Registry  {
     }
   }
 
-  public static double doubleValue(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) String key) {
+  public static double doubleValue(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) @NotNull String key) throws MissingResourceException {
     return get(key).asDouble();
   }
 
-  public static String stringValue(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) String key) {
+  @NotNull
+  public static String stringValue(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) @NotNull String key) throws MissingResourceException {
     return get(key).asString();
   }
 
-  public static Color getColor(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) String key, Color defaultValue) {
+  public static Color getColor(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) @NotNull String key, Color defaultValue) throws MissingResourceException {
     return get(key).asColor(defaultValue);
   }
 
+  @NotNull
   static ResourceBundle getBundle() {
     ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
     if (bundle == null) {
@@ -104,6 +106,7 @@ public class Registry  {
     return ourInstance;
   }
 
+  @NotNull
   public Element getState() {
     final Element state = new Element("registry");
     for (String eachKey : myUserProperties.keySet()) {
@@ -115,7 +118,7 @@ public class Registry  {
     return state;
   }
 
-  public void loadState(Element state) {
+  public void loadState(@NotNull Element state) {
     final List entries = state.getChildren("entry");
     for (Object each : entries) {
       final Element eachEntry = (Element) each;
@@ -132,15 +135,17 @@ public class Registry  {
     }
   }
 
+  @NotNull
   Map<String, String> getUserProperties() {
     return myUserProperties;
   }
 
+  @NotNull
   public static List<RegistryValue> getAll() {
     final ResourceBundle bundle = getBundle();
     final Enumeration<String> keys = bundle.getKeys();
 
-    final ArrayList<RegistryValue> result = new ArrayList<RegistryValue>();
+    List<RegistryValue> result = new ArrayList<RegistryValue>();
 
     while (keys.hasMoreElements()) {
       final String each = keys.nextElement();
@@ -152,7 +157,7 @@ public class Registry  {
   }
 
   public void restoreDefaults() {
-    final HashMap<String, String> old = new HashMap<String, String>();
+    Map<String, String> old = new HashMap<String, String>();
     old.putAll(myUserProperties);
     for (String each : old.keySet()) {
       get(each).resetToDefault();      
@@ -167,7 +172,7 @@ public class Registry  {
     return isRestartNeeded(myUserProperties) || isRestartNeeded(myLoadedUserProperties);
   }
 
-  private static boolean isRestartNeeded(Map<String, String> map) {
+  private static boolean isRestartNeeded(@NotNull Map<String, String> map) {
     for (String s : map.keySet()) {
       final RegistryValue eachValue = get(s);
       if (eachValue.isRestartRequired() && eachValue.isChangedSinceAppStart()) return true;

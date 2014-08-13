@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,14 +30,16 @@ public class ReferenceRange {
   private ReferenceRange() {
   }
 
-  public static List<TextRange> getRanges(PsiReference ref) {
+  @NotNull
+  public static List<TextRange> getRanges(@NotNull PsiReference ref) {
     if (ref instanceof MultiRangeReference) {
       return ((MultiRangeReference)ref).getRanges();
     }
     return Collections.singletonList(ref.getRangeInElement());
   }
 
-  public static List<TextRange> getAbsoluteRanges(PsiReference ref) {
+  @NotNull
+  public static List<TextRange> getAbsoluteRanges(@NotNull PsiReference ref) {
     final PsiElement elt = ref.getElement();
     final List<TextRange> relativeRanges = getRanges(ref);
     final List<TextRange> answer = new ArrayList<TextRange>(relativeRanges.size());
@@ -47,7 +50,7 @@ public class ReferenceRange {
     return answer;
   }
 
-  public static TextRange getRange(PsiReference ref) {
+  public static TextRange getRange(@NotNull PsiReference ref) {
     if (ref instanceof MultiRangeReference) {
       final List<TextRange> ranges = ((MultiRangeReference)ref).getRanges();
       return new TextRange(ranges.get(0).getStartOffset(), ranges.get(ranges.size() - 1).getEndOffset());
@@ -56,7 +59,7 @@ public class ReferenceRange {
     return ref.getRangeInElement();
   }
 
-  public static boolean containsOffsetInElement(PsiReference ref, int offset) {
+  public static boolean containsOffsetInElement(@NotNull PsiReference ref, int offset) {
     if (ref instanceof MultiRangeReference) {
       for (TextRange range : ((MultiRangeReference)ref).getRanges()) {
         if (range.containsOffset(offset)) return true;
@@ -68,7 +71,7 @@ public class ReferenceRange {
     return rangeInElement != null && rangeInElement.containsOffset(offset);
   }
 
-  public static boolean containsRangeInElement(PsiReference ref, TextRange rangeInElement) {
+  public static boolean containsRangeInElement(@NotNull PsiReference ref, @NotNull TextRange rangeInElement) {
     if (ref instanceof MultiRangeReference) {
       for (TextRange range : ((MultiRangeReference)ref).getRanges()) {
         if (range.contains(rangeInElement)) return true;

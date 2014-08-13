@@ -35,6 +35,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,18 +46,13 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
     setInjectedContext(true);
   }
 
-  @Override
-  public EditorActionHandler getHandler() {
-    return new Handler(super.getHandler());
-  }
-
   private static class DefaultHandler extends EditorActionHandler {
     private DefaultHandler() {
       super(true);
     }
 
     @Override
-    public void execute(Editor editor, DataContext dataContext) {
+    public void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
       int lineNumber = editor.getCaretModel().getLogicalPosition().line;
       int caretOffset = editor.getCaretModel().getOffset();
       Document document = editor.getDocument();
@@ -94,23 +90,24 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
     }
   }
 
-  private static class Handler extends EditorActionHandler {
+  public static class Handler extends EditorActionHandler {
     private final EditorActionHandler myDefaultHandler;
 
-    private Handler(EditorActionHandler defaultHandler) {
+    public Handler(EditorActionHandler defaultHandler) {
       super(true);
       myDefaultHandler = defaultHandler;
+
     }
 
     @Override
-    public void execute(Editor editor, DataContext dataContext) {
+    public void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
       final IndentGuideDescriptor guide = editor.getIndentsModel().getCaretIndentGuide();
       final SelectionModel selectionModel = editor.getSelectionModel();
       if (guide != null && !selectionModel.hasSelection() && !selectionModel.hasBlockSelection() && isWhitespaceAtCaret(editor)) {
         selectWithGuide(editor, guide);
       }
       else {
-        myDefaultHandler.execute(editor, dataContext);
+        myDefaultHandler.execute(editor, caret, dataContext);
       }
     }
 

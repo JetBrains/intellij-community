@@ -30,7 +30,7 @@ public abstract class RunnerRegistry implements ApplicationComponent {
   public abstract boolean hasRunner(@NotNull final String executorId, @NotNull final RunProfile settings);
 
   @Nullable
-  public abstract ProgramRunner getRunner(@NotNull final String executorId, final RunProfile settings);
+  public abstract ProgramRunner getRunner(@NotNull String executorId, @Nullable RunProfile settings);
 
   public abstract ProgramRunner[] getRegisteredRunners();
 

@@ -457,6 +457,7 @@
       </group>
       <separator/>
       <reference ref="HelpTopics"/>
+      <reference ref="SearchEverywhere"/>
     </group>
 
     <group id="NavBarVcsGroup"/>

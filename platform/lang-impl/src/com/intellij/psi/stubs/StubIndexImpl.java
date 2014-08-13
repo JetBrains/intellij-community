@@ -302,7 +302,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     return true;
   }
 
-  private static void forceRebuild(@NotNull Throwable e) {
+  public void forceRebuild(@NotNull Throwable e) {
     LOG.info(e);
     FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID, e);
   }

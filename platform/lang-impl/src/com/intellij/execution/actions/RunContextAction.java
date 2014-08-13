@@ -18,10 +18,9 @@ package com.intellij.execution.actions;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,12 +46,8 @@ public class RunContextAction extends BaseRunConfigurationAction {
       runManager.setTemporaryConfiguration(configuration);
     }
     runManager.setSelectedConfiguration(configuration);
-    Project project = context.getProject();
-    ExecutionManager.getInstance(project).restartRunProfile(project,
-                                                            myExecutor,
-                                                            ExecutionTargetManager.getActiveTarget(project),
-                                                            configuration,
-                                                            (RunContentDescriptor)null);
+
+    ExecutionUtil.runConfiguration(configuration, myExecutor);
   }
 
   @Override
@@ -81,11 +76,10 @@ public class RunContextAction extends BaseRunConfigurationAction {
       configuration = context.getConfiguration();
     }
 
-    if (configuration == null) return Pair.create(false, false);
-
-    final ProgramRunner runner = getRunner(configuration.getConfiguration());
-    if (runner == null) return Pair.create(false, false);
-
+    ProgramRunner runner = configuration == null ? null : getRunner(configuration.getConfiguration());
+    if (runner == null) {
+      return Pair.create(false, false);
+    }
     return Pair.create(!ExecutorRegistry.getInstance().isStarting(context.getProject(), myExecutor.getId(), runner.getRunnerId()), true);
   }
 }

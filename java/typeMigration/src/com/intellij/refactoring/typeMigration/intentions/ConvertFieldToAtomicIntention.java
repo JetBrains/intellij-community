@@ -99,6 +99,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     final PsiVariable psiVariable = getVariable(element);
     LOG.assertTrue(psiVariable != null);
+    psiVariable.normalizeDeclaration();
 
     final Query<PsiReference> refs = ReferencesSearch.search(psiVariable);
 

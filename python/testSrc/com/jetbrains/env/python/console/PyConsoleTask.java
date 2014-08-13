@@ -1,0 +1,380 @@
+package com.jetbrains.env.python.console;
+
+import com.google.common.collect.Lists;
+import com.intellij.execution.console.LanguageConsoleView;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.jetbrains.env.PyExecutionFixtureTestTask;
+import com.jetbrains.python.console.*;
+import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
+import com.jetbrains.python.debugger.PyDebugValue;
+import com.jetbrains.python.debugger.PyDebuggerException;
+import com.jetbrains.python.sdkTools.SdkCreationType;
+import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
+
+import java.util.List;
+import java.util.concurrent.Semaphore;
+
+/**
+ * @author traff
+ */
+public class PyConsoleTask extends PyExecutionFixtureTestTask {
+  private boolean myProcessCanTerminate;
+
+  protected PyConsoleProcessHandler myProcessHandler;
+  protected PydevConsoleCommunication myCommunication;
+
+  private boolean shouldPrintOutput = false;
+  private PythonConsoleView myConsoleView;
+  private Semaphore mySemaphore;
+  private Semaphore mySemaphore0;
+  private PydevConsoleExecuteActionHandler myExecuteHandler;
+
+  public PyConsoleTask() {
+    setWorkingFolder(getTestDataPath());
+  }
+
+  public PythonConsoleView getConsoleView() {
+    return myConsoleView;
+  }
+
+  @Override
+  public void setUp(final String testName) throws Exception {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          if (myFixture == null) {
+            PyConsoleTask.super.setUp(testName);
+          }
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
+  }
+
+  @NotNull
+  protected String output() {
+    return myConsoleView.getConsole().getHistoryViewer().getDocument().getText();
+  }
+
+  public void setProcessCanTerminate(boolean processCanTerminate) {
+    myProcessCanTerminate = processCanTerminate;
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          if (myConsoleView != null) {
+            disposeConsole();
+          }
+          PyConsoleTask.super.tearDown();
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
+  }
+
+  private void disposeConsole() throws InterruptedException {
+    if (myCommunication != null) {
+      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            myCommunication.close();
+          }
+          catch (Exception e) {
+            e.printStackTrace();
+          }
+          myCommunication = null;
+        }
+      });
+    }
+
+    disposeConsoleProcess();
+
+    if (myConsoleView != null) {
+      new WriteAction() {
+        @Override
+        protected void run(@NotNull Result result) throws Throwable {
+          Disposer.dispose(myConsoleView);
+          myConsoleView = null;
+        }
+      }.execute();
+    }
+  }
+
+  @Override
+  public void runTestOn(final String sdkHome) throws Exception {
+    final Project project = getProject();
+
+    final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.EMPTY_SDK);
+
+    setProcessCanTerminate(false);
+
+    PydevConsoleRunner consoleRunner = PydevConsoleRunner.create(project, sdk, PyConsoleType.PYTHON, getWorkingFolder());
+    before();
+
+    mySemaphore0 = new Semaphore(0);
+
+    consoleRunner.addConsoleListener(new PydevConsoleRunner.ConsoleListener() {
+      @Override
+      public void handleConsoleInitialized(LanguageConsoleView consoleView) {
+        mySemaphore0.release();
+      }
+    });
+
+    consoleRunner.run();
+
+    waitFor(mySemaphore0);
+
+    mySemaphore = new Semaphore(0);
+
+    myConsoleView = consoleRunner.getConsoleView();
+    myProcessHandler = (PyConsoleProcessHandler)consoleRunner.getProcessHandler();
+
+    myExecuteHandler = (PydevConsoleExecuteActionHandler)consoleRunner.getConsoleExecuteActionHandler();
+
+    myCommunication = consoleRunner.getPydevConsoleCommunication();
+
+    myCommunication.addCommunicationListener(new ConsoleCommunicationListener() {
+      @Override
+      public void commandExecuted(boolean more) {
+        mySemaphore.release();
+      }
+
+      @Override
+      public void inputRequested() {
+      }
+    });
+
+    myProcessHandler.addProcessListener(new ProcessAdapter() {
+      @Override
+      public void processTerminated(ProcessEvent event) {
+        if (event.getExitCode() != 0 && !myProcessCanTerminate) {
+          Assert.fail("Process terminated unexpectedly\n" + output());
+        }
+      }
+    });
+
+    OutputPrinter myOutputPrinter = null;
+    if (shouldPrintOutput) {
+      myOutputPrinter = new OutputPrinter();
+      myOutputPrinter.start();
+    }
+
+    waitForOutput("PyDev console");
+
+    try {
+      testing();
+      after();
+    }
+    finally {
+      setProcessCanTerminate(true);
+
+      if (myOutputPrinter != null) {
+        myOutputPrinter.stop();
+      }
+
+      disposeConsole();
+    }
+  }
+
+  private void disposeConsoleProcess() throws InterruptedException {
+    myProcessHandler.destroyProcess();
+
+    waitFor(myProcessHandler);
+
+    if (!myProcessHandler.isProcessTerminated()) {
+      if (!waitFor(myProcessHandler)) {
+        if (!myProcessHandler.isProcessTerminated()) {
+          throw new RuntimeException("Cannot stop console process");
+        }
+      }
+    }
+    myProcessHandler = null;
+  }
+
+  /**
+   * Waits until all passed strings appear in output.
+   * If they don't appear in time limit, then exception is raised.
+   *
+   * @param string
+   * @throws InterruptedException
+   */
+  public void waitForOutput(String... string) throws InterruptedException {
+    int count = 0;
+    while (true) {
+      List<String> missing = Lists.newArrayList();
+      String out = output();
+      boolean flag = true;
+      for (String s : string) {
+        if (!out.contains(s)) {
+          flag = false;
+          missing.add(s);
+        }
+      }
+      if (flag) {
+        break;
+      }
+      if (count > 10) {
+        Assert.fail("Strings: <--\n" + StringUtil.join(missing, "\n---\n") + "-->" + "are not present in output.\n" + output());
+      }
+      Thread.sleep(2000);
+      count++;
+    }
+  }
+
+  protected void waitForReady() throws InterruptedException {
+    int count = 0;
+    while (!myExecuteHandler.isEnabled() || !canExecuteNow()) {
+      if (count > 10) {
+        Assert.fail("Console is not ready");
+      }
+      Thread.sleep(300);
+      count++;
+    }
+  }
+
+  protected boolean canExecuteNow() {
+    return myExecuteHandler.canExecuteNow();
+  }
+
+  public void setShouldPrintOutput(boolean shouldPrintOutput) {
+    this.shouldPrintOutput = shouldPrintOutput;
+  }
+
+  private class OutputPrinter {
+    private Thread myThread;
+    private int myLen = 0;
+
+    public void start() {
+      myThread = new Thread(new Runnable() {
+        @Override
+        public void run() {
+          doJob();
+        }
+      });
+      myThread.setDaemon(true);
+      myThread.start();
+    }
+
+    private void doJob() {
+      try {
+        while (true) {
+          printToConsole();
+
+          Thread.sleep(500);
+        }
+      }
+      catch (Exception ignored) {
+      }
+    }
+
+    private synchronized void printToConsole() {
+      String s = output();
+      if (s.length() > myLen) {
+        System.out.print(s.substring(myLen));
+      }
+      myLen = s.length();
+    }
+
+    public void stop() {
+      printToConsole();
+      myThread.interrupt();
+    }
+  }
+
+  protected void exec(String command) throws InterruptedException {
+    waitForReady();
+    int p = mySemaphore.availablePermits();
+    myConsoleView.executeInConsole(command);
+    mySemaphore.acquire(p + 1);
+    //waitForOutput(">>> " + command);
+  }
+
+  protected boolean hasValue(String varName, String value) throws PyDebuggerException {
+    PyDebugValue val = getValue(varName);
+    return val != null && value.equals(val.getValue());
+  }
+
+  protected void setValue(String varName, String value) throws PyDebuggerException {
+    PyDebugValue val = getValue(varName);
+    myCommunication.changeVariable(val, value);
+  }
+  
+  protected PyDebugValue getValue(String varName) throws PyDebuggerException {
+    XValueChildrenList l = myCommunication.loadFrame();
+
+    if (l == null) {
+      return null;
+    }
+    for (int i = 0; i < l.size(); i++) {
+      String name = l.getName(i);
+      if (varName.equals(name)) {
+        return (PyDebugValue)l.getValue(i);
+      }
+    }
+    
+    return null;
+  }
+  
+  protected List<String> getCompoundValueChildren(PyDebugValue value) throws PyDebuggerException {
+    XValueChildrenList list = myCommunication.loadVariable(value);
+    List<String> result = Lists.newArrayList();
+    for (int i = 0; i<list.size(); i++) {
+      result.add(((PyDebugValue)list.getValue(i)).getValue());
+    }
+    return result;
+  }
+
+  protected void input(String text) {
+    myConsoleView.executeInConsole(text);
+  }
+
+  protected void waitForFinish() throws InterruptedException {
+    waitFor(mySemaphore);
+  }
+
+  protected void execNoWait(final String command) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        myConsoleView.executeCode(command, null);
+      }
+    });
+  }
+
+  protected void interrupt() {
+    myCommunication.interrupt();
+  }
+
+
+  public void addTextToEditor(final String text) {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        getConsoleView().getLanguageConsole().setInputText(text);
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      }
+    }
+    );
+  }
+}

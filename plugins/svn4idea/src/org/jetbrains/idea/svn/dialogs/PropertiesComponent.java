@@ -41,7 +41,6 @@ import org.jetbrains.idea.svn.properties.PropertyConsumer;
 import org.jetbrains.idea.svn.properties.PropertyData;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -309,7 +308,7 @@ public class PropertiesComponent extends JPanel {
       PropertyValue propValue = null;
       try {
         propValue = myVcs.getFactory(myFile).createPropertyClient()
-          .getProperty(SvnTarget.fromFile(myFile), SVNProperty.KEYWORDS, false, SVNRevision.WORKING);
+          .getProperty(SvnTarget.fromFile(myFile), SvnPropertyKeys.SVN_KEYWORDS, false, SVNRevision.WORKING);
       }
       catch (VcsException e1) {
         // show erorr message

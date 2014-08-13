@@ -37,7 +37,7 @@ import java.util.Map;
 
 public class AnActionEvent implements PlaceProvider<String> {
   private final InputEvent myInputEvent;
-  private final ActionManager myActionManager;
+  @NotNull private final ActionManager myActionManager;
   @NotNull private final DataContext myDataContext;
   @NotNull private final String myPlace;
   @NotNull private final Presentation myPresentation;
@@ -49,12 +49,14 @@ public class AnActionEvent implements PlaceProvider<String> {
   /**
    * @throws IllegalArgumentException if <code>dataContext</code> is <code>null</code> or
    * <code>place</code> is <code>null</code> or <code>presentation</code> is <code>null</code>
+   *
+   * @see ActionManager#getInstance()
    */
   public AnActionEvent(InputEvent inputEvent,
                        @NotNull DataContext dataContext,
                        @NotNull @NonNls String place,
                        @NotNull Presentation presentation,
-                       ActionManager actionManager,
+                       @NotNull ActionManager actionManager,
                        @JdkConstants.InputEventMask int modifiers) {
     // TODO[vova,anton] make this constructor package local. No one is allowed to create AnActionEvents
     myInputEvent = inputEvent;
@@ -69,7 +71,7 @@ public class AnActionEvent implements PlaceProvider<String> {
   public static AnActionEvent createFromInputEvent(@NotNull AnAction action, InputEvent event, @NotNull String place) {
     DataContext context = event == null ? DataManager.getInstance().getDataContext() : DataManager.getInstance().getDataContext(event.getComponent());
     int modifiers = event == null ? 0 : event.getModifiers();
-    return new AnActionEvent(
+    AnActionEvent anActionEvent = new AnActionEvent(
       event,
       context,
       place,
@@ -77,6 +79,8 @@ public class AnActionEvent implements PlaceProvider<String> {
       ActionManager.getInstance(),
       modifiers
     );
+    anActionEvent.setInjectedContext(action.isInInjectedContext());
+    return anActionEvent;
   }
 
   /**
@@ -113,6 +117,18 @@ public class AnActionEvent implements PlaceProvider<String> {
     return StringUtil.trimStart(dataId, ourInjectedPrefix);
   }
 
+  public static DataContext getInjectedDataContext(final DataContext context) {
+    return new DataContext() {
+      @Override
+      @Nullable
+      public Object getData(@NonNls String dataId) {
+        Object injected = context.getData(injectedId(dataId));
+        if (injected != null) return injected;
+        return context.getData(dataId);
+      }
+    };
+  }
+
   /**
    * Returns the context which allows to retrieve information about the state of IDEA related to
    * the action invocation (active editor, selection and so on).
@@ -121,18 +137,7 @@ public class AnActionEvent implements PlaceProvider<String> {
    */
   @NotNull
   public DataContext getDataContext() {
-    if (!myWorksInInjected) {
-      return myDataContext;
-    }
-    return new DataContext() {
-      @Override
-      @Nullable
-      public Object getData(@NonNls String dataId) {
-        Object injected = myDataContext.getData(injectedId(dataId));
-        if (injected != null) return injected;
-        return myDataContext.getData(dataId);
-      }
-    };
+    return myWorksInInjected ? getInjectedDataContext(myDataContext) : myDataContext;
   }
 
   @Nullable
@@ -203,9 +208,11 @@ public class AnActionEvent implements PlaceProvider<String> {
     return myModifiers;
   }
 
+  @NotNull
   public ActionManager getActionManager() {
     return myActionManager;
   }
+
   public void setInjectedContext(boolean worksInInjected) {
     myWorksInInjected = worksInInjected;
   }

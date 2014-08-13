@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
@@ -67,7 +68,10 @@ public class UpdatesXmlLoader {
 
           URL requestUrl = prepareRequestUrl(updateUrl);
 
-          final InputStream inputStream = requestUrl.openStream();
+          URLConnection connection = requestUrl.openConnection();
+          connection.setConnectTimeout(HttpConfigurable.CONNECTION_TIMEOUT);
+          connection.setReadTimeout(HttpConfigurable.CONNECTION_TIMEOUT);
+          final InputStream inputStream = connection.getInputStream();
           Reader reader = new InputStreamReader(inputStream);
           try {
             return new UpdatesInfo(JDOMUtil.loadDocument(inputStream).getRootElement());

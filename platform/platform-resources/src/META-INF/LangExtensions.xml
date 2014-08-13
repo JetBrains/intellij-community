@@ -166,8 +166,7 @@
     <applicationService serviceInterface="com.intellij.util.download.DownloadableFileService"
                         serviceImplementation="com.intellij.util.download.impl.DownloadableFileServiceImpl"/>
 
-    <applicationService serviceInterface="com.intellij.psi.impl.DocumentCommitThread"
-                        serviceImplementation="com.intellij.psi.impl.DocumentCommitThread"/>
+    <applicationService serviceImplementation="com.intellij.psi.impl.DocumentCommitThread"/>
 
     <applicationService serviceInterface="com.intellij.psi.stubs.StubTreeLoader"
                         serviceImplementation="com.intellij.psi.stubs.StubTreeLoaderImpl"/>
@@ -652,6 +651,7 @@
     <editorActionHandler action="EditorEnter" implementationClass="com.intellij.codeInsight.editorActions.EnterHandler" id="editorEnter"/>
     <editorActionHandler action="EditorLineEnd" implementationClass="com.intellij.codeInsight.editorActions.EndHandler"/>
     <editorActionHandler action="EditorSelectWord" implementationClass="com.intellij.codeInsight.editorActions.SelectWordHandler"/>
+    <editorActionHandler action="EditorSelectWord" implementationClass="com.intellij.openapi.editor.actions.SelectWordAtCaretAction$Handler" order="first"/>
     <editorActionHandler action="EditorUnSelectWord" implementationClass="com.intellij.codeInsight.editorActions.UnSelectWordHandler"/>
     <editorActionHandler action="EditorPaste" implementationClass="com.intellij.codeInsight.editorActions.PasteHandler"/>
     <editorActionHandler action="EditorCopy" implementationClass="com.intellij.codeInsight.editorActions.CopyHandler"/>
@@ -889,6 +889,7 @@
     <editorOptionsProvider id="editing.postfixCompletion" instance="com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesConfigurable"/>
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.template.postfix.completion.PostfixTemplateCompletionContributor"/>
 
+    <projectService serviceInterface="com.intellij.execution.ExecutionManager" serviceImplementation="com.intellij.execution.impl.ExecutionManagerImpl"/>
   </extensions>
 </idea-plugin>
 

@@ -200,7 +200,7 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
     }
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      String occurencesString = RefactoringBundle.message("occurences.string", occurrences.size());
+      String occurencesString = RefactoringBundle.message("occurrences.string", occurrences.size());
       String question = RefactoringBundle.message("inline.parameter.confirmation", psiParameter.getName(),
                                                   constantExpression.getText()) + " " + occurencesString;
       RefactoringMessageDialog dialog = new RefactoringMessageDialog(

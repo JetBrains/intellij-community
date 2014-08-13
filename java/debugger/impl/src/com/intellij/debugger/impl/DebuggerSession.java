@@ -35,6 +35,7 @@ import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RemoteState;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -379,16 +380,13 @@ public class DebuggerSession implements AbstractDebuggerSession {
   }
 
   @Nullable
-  protected ExecutionResult attach(@NotNull final Executor executor,
-                                   @NotNull final ProgramRunner runner,
-                                   final ModuleRunProfile profile,
-                                   final RunProfileState state,
-                                   final RemoteConnection remoteConnection,
-                                   final boolean pollConnection) throws ExecutionException {
-    return attach(new DefaultDebugEnvironment(myDebugProcess.getProject(),
-                                              executor,
-                                              runner,
-                                              profile,
+  protected ExecutionResult attach(@NotNull Executor executor,
+                                   @NotNull ProgramRunner runner,
+                                   @NotNull ModuleRunProfile profile,
+                                   @NotNull RunProfileState state,
+                                   RemoteConnection remoteConnection,
+                                   boolean pollConnection) throws ExecutionException {
+    return attach(new DefaultDebugEnvironment(new ExecutionEnvironmentBuilder(myDebugProcess.getProject(), executor).runProfile(profile).runner(runner).build(),
                                               state,
                                               remoteConnection,
                                               pollConnection));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,49 +44,35 @@ class VariablePassedAsArgumentExcludedVisitor extends JavaRecursiveElementVisito
   }
 
   @Override
-  public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
+  public void visitCallExpression(PsiCallExpression callExpression) {
     if (passed) {
       return;
     }
-    super.visitMethodCallExpression(call);
+    super.visitCallExpression(callExpression);
+    visitCall(callExpression);
+  }
+
+  @Override
+  public void visitEnumConstant(PsiEnumConstant enumConstant) {
+    if (passed) {
+      return;
+    }
+    super.visitEnumConstant(enumConstant);
+    visitCall(enumConstant);
+  }
+
+  private void visitCall(PsiCall call) {
     final PsiExpressionList argumentList = call.getArgumentList();
-    final PsiExpression[] arguments = argumentList.getExpressions();
-    for (PsiExpression argument : arguments) {
+    if (argumentList == null) {
+      return;
+    }
+    for (PsiExpression argument : argumentList.getExpressions()) {
       if (!VariableAccessUtils.mayEvaluateToVariable(argument, variable, myBuilderPattern)) {
         continue;
       }
       final PsiMethod method = call.resolveMethod();
       if (method != null) {
         final PsiClass aClass = method.getContainingClass();
-        if (aClass != null) {
-          final String name = aClass.getQualifiedName();
-          if (excludes.contains(name)) {
-            continue;
-          }
-        }
-      }
-      passed = true;
-    }
-  }
-
-  @Override
-  public void visitNewExpression(@NotNull PsiNewExpression newExpression) {
-    if (passed) {
-      return;
-    }
-    super.visitNewExpression(newExpression);
-    final PsiExpressionList argumentList = newExpression.getArgumentList();
-    if (argumentList == null) {
-      return;
-    }
-    final PsiExpression[] arguments = argumentList.getExpressions();
-    for (PsiExpression argument : arguments) {
-      if (!VariableAccessUtils.mayEvaluateToVariable(argument, variable, myBuilderPattern)) {
-        continue;
-      }
-      final PsiMethod constructor = newExpression.resolveConstructor();
-      if (constructor != null) {
-        final PsiClass aClass = constructor.getContainingClass();
         if (aClass != null) {
           final String name = aClass.getQualifiedName();
           if (excludes.contains(name)) {

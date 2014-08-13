@@ -61,8 +61,8 @@ public class EnterHandler extends BaseEnterHandler {
   }
 
   @Override
-  public boolean isEnabled(Editor editor, DataContext dataContext) {
-    return myOriginalHandler.isEnabled(editor, dataContext);
+  public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
+    return myOriginalHandler.isEnabled(editor, caret, dataContext);
   }
 
   @Override

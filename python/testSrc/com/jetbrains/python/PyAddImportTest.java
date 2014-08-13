@@ -69,6 +69,16 @@ public class PyAddImportTest extends PyTestCase {
     doAddLocalImport("module", null);
   }
 
+  // PY-13668
+  public void testLocalImportInlineFunctionBody() {
+    testLocalImport();
+  }
+
+  // PY-13668
+  public void testLocalImportInlineBranch() {
+    testLocalImport();
+  }
+
   /**
    * Add local import statement
    * @param name      reference name in corresponding import element

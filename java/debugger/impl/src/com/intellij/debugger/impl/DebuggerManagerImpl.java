@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,16 +23,13 @@ import com.intellij.debugger.ui.GetJPDADialog;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.configurations.ModuleRunProfile;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -208,24 +205,8 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   }
 
   @Override
-  public DebuggerSession attachVirtualMachine(Executor executor,
-                                              ProgramRunner runner,
-                                              ModuleRunProfile profile,
-                                              RunProfileState state,
-                                              RemoteConnection remoteConnection,
-                                              boolean pollConnection
-  ) throws ExecutionException {
-    return attachVirtualMachine(new DefaultDebugEnvironment(myProject,
-                                                            executor,
-                                                            runner,
-                                                            profile,
-                                                            state,
-                                                            remoteConnection,
-                                                            pollConnection));
-  }
-
-  @Override
-  public DebuggerSession attachVirtualMachine(DebugEnvironment environment) throws ExecutionException {
+  @Nullable
+  public DebuggerSession attachVirtualMachine(@NotNull DebugEnvironment environment) throws ExecutionException {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final DebugProcessEvents debugProcess = new DebugProcessEvents(myProject);
     debugProcess.addDebugProcessListener(new DebugProcessAdapter() {
@@ -258,8 +239,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
         debugProcess.removeDebugProcessListener(this);
       }
     });
-    final DebuggerSession session = new DebuggerSession(environment.getSessionName(), debugProcess);
-
+    DebuggerSession session = new DebuggerSession(environment.getSessionName(), debugProcess);
     final ExecutionResult executionResult = session.attach(environment);
     if (executionResult == null) {
       return null;
@@ -302,7 +282,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     myDispatcher.getMulticaster().sessionCreated(session);
     return session;
   }
-
 
   @Override
   public DebugProcessImpl getDebugProcess(final ProcessHandler processHandler) {

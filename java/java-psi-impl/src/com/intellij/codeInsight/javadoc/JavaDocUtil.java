@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -361,6 +362,10 @@ public class JavaDocUtil {
     PsiReferenceList list = aClass.getExtendsList();
 
     return list == null ? PsiClassType.EMPTY_ARRAY : list.getReferencedTypes();
+  }
+
+  public static boolean isInsidePackageInfo(@Nullable PsiDocComment containingComment) {
+    return containingComment != null && containingComment.getOwner() == null && containingComment.getParent() instanceof PsiJavaFile;
   }
 
 }

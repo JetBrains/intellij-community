@@ -36,7 +36,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -278,7 +277,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
     if (e == null) return null;
 
     if (!myProject.isDisposed()) {
-      final Object o = ((FileEditorManagerImpl)FileEditorManager.getInstance(myProject)).getData(dataId, e, myFile);
+      final Object o = FileEditorManager.getInstance(myProject).getData(dataId, e, e.getCaretModel().getCurrentCaret());
       if (o != null) return o;
     }
 

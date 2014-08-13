@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,14 @@ import com.intellij.codeInsight.completion.LightCompletionTestCase;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 
 public class ManifestCompletionTest extends LightCompletionTestCase {
-  public void testHeaderNameCompletionVariants() throws Exception {
+  public void testHeaderNameCompletionVariants() {
     LightPlatformCodeInsightTestCase.configureFromFileText("MANIFEST.MF", "Specification-V<caret>\n");
     complete();
     assertContainsItems("Specification-Vendor", "Specification-Version");
     assertNotContainItems("Specification-Title");
   }
 
-  public void testHeaderNameEnterCompletion() throws Exception {
+  public void testHeaderNameEnterCompletion() {
     LightPlatformCodeInsightTestCase.configureFromFileText("MANIFEST.MF", "Specification-V<caret>\n");
     complete();
     assertContainsItems("Specification-Vendor");
@@ -34,7 +34,7 @@ public class ManifestCompletionTest extends LightCompletionTestCase {
     checkResultByText("Specification-Vendor: <caret>\n");
   }
 
-  public void testHeaderNameColonCompletion() throws Exception {
+  public void testHeaderNameColonCompletion() {
     LightPlatformCodeInsightTestCase.configureFromFileText("MANIFEST.MF", "Specification-V<caret>\n");
     complete();
     assertContainsItems("Specification-Vendor");
@@ -42,7 +42,7 @@ public class ManifestCompletionTest extends LightCompletionTestCase {
     checkResultByText("Specification-Vendor: <caret>\n");
   }
 
-  public void testHeaderNameSpaceCompletion() throws Exception {
+  public void testHeaderNameSpaceCompletion() {
     LightPlatformCodeInsightTestCase.configureFromFileText("MANIFEST.MF", "Specification-V<caret>\n");
     complete();
     assertContainsItems("Specification-Vendor");

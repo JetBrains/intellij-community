@@ -17,7 +17,6 @@
 package com.intellij.tools;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.RunnerRegistry;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -274,15 +273,11 @@ public class Tool implements SchemeElement {
     FileDocumentManager.getInstance().saveAllDocuments();
     try {
       if (isUseConsole()) {
-        final ToolRunProfile profile = new ToolRunProfile(this, dataContext);
-        final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, profile);
-        assert runner != null;
-
-        ExecutionEnvironment executionEnvironment = new ExecutionEnvironmentBuilder(project, DefaultRunExecutor.getRunExecutorInstance())
-          .setRunProfile(profile)
-          .build();
-        executionEnvironment.setExecutionId(executionId);
-        runner.execute(executionEnvironment, new ProgramRunner.Callback() {
+        ExecutionEnvironment environment = ExecutionEnvironmentBuilder.create(project,
+                                                                              DefaultRunExecutor.getRunExecutorInstance(),
+                                                                              new ToolRunProfile(this, dataContext)).build();
+        environment.setExecutionId(executionId);
+        environment.getRunner().execute(environment, new ProgramRunner.Callback() {
           @Override
           public void processStarted(RunContentDescriptor descriptor) {
             ProcessHandler processHandler = descriptor.getProcessHandler();

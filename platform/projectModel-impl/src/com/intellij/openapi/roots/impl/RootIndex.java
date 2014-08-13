@@ -497,10 +497,11 @@ public class RootIndex {
     }
 
     @Nullable
-    private Module findParentModuleForExcluded(@NotNull List<VirtualFile> hierarchy) {
+    private VirtualFile findNearestContentRootForExcluded(@NotNull List<VirtualFile> hierarchy) {
       for (VirtualFile root : hierarchy) {
-        Module module = contentRootOf.get(root);
-        if (module != null) return module;
+        if (contentRootOf.containsKey(root)) {
+          return root;
+        }
       }
       return null;
     }
@@ -604,10 +605,14 @@ public class RootIndex {
     VirtualFile moduleContentRoot = info.findModuleRootInfo(hierarchy);
     VirtualFile libraryClassRoot = info.findLibraryRootInfo(hierarchy, false);
     VirtualFile librarySourceRoot = info.findLibraryRootInfo(hierarchy, true);
-    Module parentModuleForExcluded = null;
-    if (moduleContentRoot == null && libraryClassRoot == null && librarySourceRoot == null) {
-      parentModuleForExcluded = info.findParentModuleForExcluded(hierarchy);
-      if (parentModuleForExcluded == null) {
+    boolean inProject = moduleContentRoot != null || libraryClassRoot != null || librarySourceRoot != null;
+    VirtualFile nearestContentRoot;
+    if (inProject) {
+      nearestContentRoot = moduleContentRoot;
+    }
+    else {
+      nearestContentRoot = info.findNearestContentRootForExcluded(hierarchy);
+      if (nearestContentRoot == null) {
         return new Pair<DirectoryInfo, String>(NonProjectDirectoryInfo.EXCLUDED, null);
       }
     }
@@ -619,10 +624,9 @@ public class RootIndex {
     boolean inLibrarySource = librarySourceRoot != null;
     int typeId = moduleSourceRoot != null ? info.rootTypeId.get(moduleSourceRoot) : 0;
 
-    Module module = parentModuleForExcluded != null ? parentModuleForExcluded : info.contentRootOf.get(moduleContentRoot);
+    Module module = info.contentRootOf.get(nearestContentRoot);
     DirectoryInfo directoryInfo =
-      new DirectoryInfoImpl(root, module, moduleContentRoot, sourceRoot, libraryClassRoot, inModuleSources, inLibrarySource,
-                            parentModuleForExcluded != null, typeId);
+      new DirectoryInfoImpl(root, module, nearestContentRoot, sourceRoot, libraryClassRoot, inModuleSources, inLibrarySource, !inProject, typeId);
 
     String packagePrefix = info.calcPackagePrefix(root, hierarchy, moduleContentRoot, libraryClassRoot, librarySourceRoot);
 

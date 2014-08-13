@@ -22,4 +22,11 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
   <vendor url="http://www.jetbrains.com/pycharm/" logo="/com/jetbrains/python/python.png">JetBrains</vendor>
   <xi:include href="/META-INF/python-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/python-plugin-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+  <application-components>
+    <component>
+      <interface-class>com.jetbrains.python.console.PythonConsoleRunnerFactory</interface-class>
+      <implementation-class>com.jetbrains.python.console.PydevConsoleRunnerFactory</implementation-class>
+    </component>
+  </application-components>
 </idea-plugin>

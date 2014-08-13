@@ -15,21 +15,20 @@
  */
 package com.intellij.execution.ui;
 
+import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.HelpIdProvider;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.content.Content;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class RunContentDescriptor implements Disposable, DataProvider {
+public class RunContentDescriptor implements Disposable {
   private ExecutionConsole myExecutionConsole;
   private ProcessHandler myProcessHandler;
   private JComponent myComponent;
@@ -43,9 +42,6 @@ public class RunContentDescriptor implements Disposable, DataProvider {
   private Computable<JComponent> myFocusComputable = null;
   private boolean myAutoFocusContent = false;
 
-  /**
-   * Used to hack {@link com.intellij.execution.runners.RestartAction}
-   */
   private Content myContent;
   private Runnable myRestarter;
 
@@ -60,7 +56,6 @@ public class RunContentDescriptor implements Disposable, DataProvider {
     myDisplayName = displayName;
     myIcon = icon;
     myHelpId = myExecutionConsole instanceof HelpIdProvider ? ((HelpIdProvider)myExecutionConsole).getHelpId() : null;
-    DataManager.registerDataProvider(myComponent, this);
   }
 
   public RunContentDescriptor(@Nullable ExecutionConsole executionConsole,
@@ -70,13 +65,8 @@ public class RunContentDescriptor implements Disposable, DataProvider {
     this(executionConsole, processHandler, component, displayName, null);
   }
 
-  @Nullable
-  @Override
-  public Object getData(@NonNls String dataId) {
-    if (RunContentManager.RUN_CONTENT_DESCRIPTOR.is(dataId)) {
-      return this;
-    }
-    return null;
+  public RunContentDescriptor(@NotNull RunProfile profile, @NotNull ExecutionResult executionResult, @NotNull RunnerLayoutUi ui) {
+    this(executionResult.getExecutionConsole(), executionResult.getProcessHandler(), ui.getComponent(), profile.getName(), profile.getIcon());
   }
 
   public ExecutionConsole getExecutionConsole() {
@@ -89,10 +79,7 @@ public class RunContentDescriptor implements Disposable, DataProvider {
       Disposer.dispose(myExecutionConsole);
       myExecutionConsole = null;
     }
-    if (myComponent != null) {
-      DataManager.removeDataProvider(myComponent);
-      myComponent = null;
-    }
+    myComponent = null;
     myRestarter = null;
   }
 
@@ -131,25 +118,30 @@ public class RunContentDescriptor implements Disposable, DataProvider {
     return myHelpId;
   }
 
-  /**
-   * @see #myContent
-   */
-  public void setAttachedContent(final Content content) {
-    myContent = content;
-  }
-
-  /**
-   * @see #myContent
-   */
+  @Nullable
   public Content getAttachedContent() {
     return myContent;
   }
 
+  public void setAttachedContent(@NotNull Content content) {
+    myContent = content;
+  }
+
   @Nullable
+  @Deprecated
+  /**
+   * @deprecated Use {@link com.intellij.execution.runners.ExecutionUtil#restart(RunContentDescriptor)} instead
+   * to remove in IDEA 15
+   */
   public Runnable getRestarter() {
     return myRestarter;
   }
 
+  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
+  /**
+   * @deprecated to remove in IDEA 15
+   */
   public void setRestarter(@Nullable Runnable runnable) {
     myRestarter = runnable;
   }

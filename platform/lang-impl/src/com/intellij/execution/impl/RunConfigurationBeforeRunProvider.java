@@ -23,6 +23,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
@@ -137,7 +138,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
   }
 
   @NotNull
-  private List<RunnerAndConfigurationSettings> getAvailableConfigurations(RunConfiguration runConfiguration) {
+  private static List<RunnerAndConfigurationSettings> getAvailableConfigurations(RunConfiguration runConfiguration) {
     Project project = runConfiguration.getProject();
     if (project == null || !project.isInitialized())
       return Collections.emptyList();
@@ -164,9 +165,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
     }
     String executorId = DefaultRunExecutor.getRunExecutorInstance().getId();
     final ProgramRunner runner = ProgramRunnerUtil.getRunner(executorId, settings);
-    if (runner == null)
-      return false;
-    return runner.canRun(executorId, settings.getConfiguration());
+    return runner != null && runner.canRun(executorId, settings.getConfiguration());
   }
 
   @Override
@@ -180,16 +179,17 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
     }
     final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     final String executorId = executor.getId();
-    final ProgramRunner runner = ProgramRunnerUtil.getRunner(executorId, settings);
-    if (runner == null)
+    ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.createOrNull(executor, settings);
+    if (builder == null) {
       return false;
-    final ExecutionEnvironment environment = new ExecutionEnvironment(executor, runner, settings, myProject);
+    }
+    final ExecutionEnvironment environment = builder.build();
     environment.setExecutionId(env.getExecutionId());
     if (!ExecutionTargetManager.canRun(settings, env.getExecutionTarget())) {
       return false;
     }
 
-    if (!runner.canRun(executorId, environment.getRunProfile())) {
+    if (!environment.getRunner().canRun(executorId, environment.getRunProfile())) {
       return false;
     }
     else {
@@ -198,23 +198,27 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
       final Disposable disposable = Disposer.newDisposable();
 
       myProject.getMessageBus().connect(disposable).subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionAdapter() {
+        @Override
         public void processStartScheduled(final String executorIdLocal, final ExecutionEnvironment environmentLocal) {
           if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
             targetDone.down();
           }
         }
 
+        @Override
         public void processNotStarted(final String executorIdLocal, @NotNull final ExecutionEnvironment environmentLocal) {
           if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
             targetDone.up();
           }
         }
 
+        @Override
         public void processStarted(final String executorIdLocal,
                                    @NotNull final ExecutionEnvironment environmentLocal,
                                    @NotNull final ProcessHandler handler) {
           if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
             handler.addProcessListener(new ProcessAdapter() {
+              @Override
               public void processTerminated(ProcessEvent event) {
                 result.set(event.getExitCode() == 0);
                 targetDone.up();
@@ -229,7 +233,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
           @Override
           public void run() {
             try {
-              runner.execute(environment);
+              environment.getRunner().execute(environment);
             }
             catch (ExecutionException e) {
               targetDone.up();

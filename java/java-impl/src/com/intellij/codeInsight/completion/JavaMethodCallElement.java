@@ -39,7 +39,11 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   private boolean myMayNeedExplicitTypeParameters;
 
   public JavaMethodCallElement(@NotNull PsiMethod method) {
-    super(method, method.getName());
+    this(method, method.getName());
+  }
+
+  public JavaMethodCallElement(@NotNull PsiMethod method, String methodName) {
+    super(method, methodName);
     myMethod = method;
     myHelper = null;
     myContainingClass = method.getContainingClass();

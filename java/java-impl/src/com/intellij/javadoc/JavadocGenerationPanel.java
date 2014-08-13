@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ final class JavadocGenerationPanel extends JPanel {
    );
 
     //noinspection UseOfObsoleteCollectionType
-    Hashtable<Integer, JLabel> labelTable = new Hashtable<Integer, JLabel>();
+    Hashtable<Integer, JComponent> labelTable = new Hashtable<Integer, JComponent>();
     labelTable.put(new Integer(1), new JLabel(PsiKeyword.PUBLIC));
     labelTable.put(new Integer(2), new JLabel(PsiKeyword.PROTECTED));
     labelTable.put(new Integer(3), new JLabel(PsiKeyword.PACKAGE));

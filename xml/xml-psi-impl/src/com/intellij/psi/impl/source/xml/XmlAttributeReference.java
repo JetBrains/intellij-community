@@ -22,7 +22,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -35,12 +34,7 @@ public class XmlAttributeReference implements PsiReference {
   private final NullableLazyValue<XmlAttributeDescriptor> myDescriptor = new NullableLazyValue<XmlAttributeDescriptor>() {
     @Override
     protected XmlAttributeDescriptor compute() {
-      XmlTag parent = myAttribute.getParent();
-      final XmlElementDescriptor descr = parent.getDescriptor();
-      if (descr != null) {
-        return descr.getAttributeDescriptor(myAttribute);
-      }
-      return null;
+      return myAttribute.getDescriptor();
     }
   };
   private final XmlAttributeImpl myAttribute;

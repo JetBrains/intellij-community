@@ -1,0 +1,230 @@
+1. Introduction to Python (and PyCharm ?)
+
+- Our first program.
+-> Write your first program in python. Traditionally first program in every programming language is "Hello World!"
+
+
+>FILE
+print(“<caret>Hello world!</caret>”)
+>FILE_END
+
+- File can contain comments which is not visible to interpreter.
+-> Change the comment.
+
+>FILE
+# <caret>Some comment</caret>
+>FILE_END
+
+- Что еще может быть в файле?
+
+2. Variables
+
+- Variables are used to store values so we can refer to it later. A variable is like a label, and you use the “=” symbol, known as the assignment operator, to assign a value to a variable.
+-> change the value stored in the variable “greetings”
+
+>FILE
+greetings = “greetings”
+greetings = <caret>another value</caret>
+>FILE_END
+
+- Undefined variable.
+->Check what happens if you try to use undefined variable
+>FILE
+variable = 1
+print (other_variable)
+>FILE_END
+
+
+
+- Variable types. In Python, there are two main types of numbers: integers and floats. The most important difference between an int and a float is that a float is a number that has a decimal point, and an int is a number without a decimal point.
+->Explore the type of variable
+
+>FILE
+number = 9
+type(number)
+
+float_number = 9.0
+<caret>Discover float_number type</caret>
+>FILE_END
+
+
+- Arithmetic Operators.
+-> Just as any other programming languages, the addition, subtraction, multiplication, and division operators can be used with numbers.
+
+
+>FILE
+number = 9.0
+answer = <caret>divide “number” by 2</caret>
+
+remainder = <caret>Calculate the remainder</caret>
+squared = <caret>calculate seven squared</caret>
+cubed = <caret>calculate two in cube</caret>
+>FILE_END
+
+- Other assignments +=, -=
+
+- Boolean Operators. Equation.
+Boolean is a type of value that can only be True or False. The == (equality) operator checks just that two variables are equal
+
+-> Check if two equal three
+>FILE
+two = 2
+three = 3
+
+is_equal = two <caret>==</caret> three
+>FILE_END
+
+- Greater then, less then
+-> Check if three is greater then two
+>FILE
+two = 2
+three = 3
+
+is_equal = three <caret>operator</caret>  two
+>FILE_END
+
+
+
+3. Strings
+- Concatenation. Combining the two words using the + symbol is called concatenation
+-> Use hello  and world variables to get “Hello world” string
+
+>FILE
+hello = “hello”
+world = “world”
+
+hello_world = <caret>type here</caret>
+>FILE_END
+
+- Multiplying strings
+-> Use hello to get “hellohellohellohellohellohellohellohellohellohello” string
+
+>FILE
+
+hello  = “hello”
+tenofhellos = hello * <caret></caret>
+print(tenofhellos )
+>FILE_END
+
+- String indexing. we can access a character of a string str at position index by writing str[index].
+-> Use index operator to get “P” from “Python”
+
+>FILE
+
+python = “Python”
+l_letter = <caret></caret>
+print(l_letter)
+>FILE_END
+
+-  Negative indexing.
+- > negative index to get the “!” sign from long_string
+
+>FILE
+long_string = “This is a very long string!”
+exclamation = <caret></caret>
+
+>FILE_END
+
+- String slicing. Slicing is used to get more than one character from the string
+Its syntax is similar to that of indexing, but instead of just one index, you give two indices (numbers) separated by a colon.
+-> use slicing to get “Python” from the monty_python
+
+>FILE
+monty_python = “Monty Python”
+python = <caret></caret>
+print(python)
+
+>FILE_END
+
+- In operator. If you want to check if the string contains specific letter or substring you can use “in” keyword
+-> Check if “ice cream” contains the “ice”
+
+>FILE
+ice_cream = “ice cream”
+contains = <caret></caret>
+print(contains)
+>FILE_END
+
+- String length. You can use len() function to count how many characters long a string is.
+-> get the first half of the string stored in the the variable called phrase.
+
+>FILE
+phrase = “””
+it’s a long-long string
+”””
+first_half = <caret></caret>
+print (first_half)
+
+>FILE_END
+
+- Character escaping
+
+- Basic string operations?
+
+- String formatting
+
+
+4. Input-output --- ?
+
+- sys.argv
+- open/close file to read
+- write file
+- raw_input
+
+I am a temporary file. Maybe someday, I'll become a real file.
+
+
+
+
+5. Data structures
+
+- Lists
+- Dicts
+- tuples
+- in keyword
+
+6. Conditions
+
+- Indentation matters
+- and, or
+- in, is, not
+
+
+7. Looping
+- for
+- while
+- break, continue
+
+
+8. Functions
+- definition
+- call
+- argument/parameter
+- return value
+- default value
+
+9. Classes and objects
+10. Modules and packages
+
+
+Advanced
+- with
+- generators
+- list comprehension
+- regexp
+-exception handling
+- set
+- serialization
+- decorators
+- lambdas
+-metaprogramming
+
+
+Specific
+- testing
+- performance
+- debugging
+- parallel programming
+- regular expressions
+- packaging
+

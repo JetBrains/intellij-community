@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,10 +33,10 @@ import java.util.List;
 
 public abstract class BaseToolManager<T extends Tool> implements ExportableApplicationComponent {
 
-  private final ActionManagerEx myActionManager;
+  @NotNull private final ActionManagerEx myActionManager;
   private final SchemesManager<ToolsGroup<T>, ToolsGroup<T>> mySchemesManager;
 
-  public BaseToolManager(ActionManagerEx actionManagerEx, SchemesManagerFactory factory) {
+  public BaseToolManager(@NotNull ActionManagerEx actionManagerEx, SchemesManagerFactory factory) {
     myActionManager = actionManagerEx;
 
     mySchemesManager = factory.createSchemesManager(

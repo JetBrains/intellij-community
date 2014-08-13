@@ -49,7 +49,7 @@ public class JBEditorTabs extends JBTabsImpl {
   private JBEditorTabsPainter myDefaultPainter = new DefaultEditorTabsPainter();
 
 
-  public JBEditorTabs(@Nullable Project project, ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
+  public JBEditorTabs(@Nullable Project project, @NotNull ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
     super(project, actionManager, focusManager, parent);
   }
 

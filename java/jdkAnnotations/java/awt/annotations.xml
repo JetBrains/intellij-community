@@ -71,6 +71,9 @@
   <item name="java.awt.CardLayout void show(java.awt.Container, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
+  <item name='java.awt.Component java.awt.Cursor getCursor()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.awt.Component java.awt.Point getLocation()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -98,6 +101,9 @@
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="valuesFromClass" val="java.awt.Cursor.class" />
     </annotation>
+  </item>
+  <item name='java.awt.Cursor java.awt.Cursor getPredefinedCursor(int)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name="java.awt.Cursor java.awt.Cursor getPredefinedCursor(int) 0">
     <annotation name="org.intellij.lang.annotations.MagicConstant">

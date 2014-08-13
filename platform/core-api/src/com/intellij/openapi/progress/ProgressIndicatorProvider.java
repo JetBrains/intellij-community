@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ public abstract class ProgressIndicatorProvider {
   @Nullable
   public static ProgressIndicatorProvider ourInstance;
 
-  @Nullable
   public static ProgressIndicatorProvider getInstance() {
     return ourInstance;
   }
@@ -39,6 +38,7 @@ public abstract class ProgressIndicatorProvider {
     return ourInstance != null ? ourInstance.getProgressIndicator() : null;
   }
 
+  @NotNull
   public abstract NonCancelableSection startNonCancelableSection();
 
   @NotNull
@@ -50,8 +50,8 @@ public abstract class ProgressIndicatorProvider {
   public static void checkCanceled() throws ProcessCanceledException {
     // smart optimization! There's a thread started in ProgressManagerImpl, that set's this flag up once in 10 milliseconds
     if (ourNeedToCheckCancel && ourInstance != null) {
+      ourNeedToCheckCancel = false; // doCheckCanceled() may flip it back to true
       ourInstance.doCheckCanceled();
-      ourNeedToCheckCancel = false;
     }
   }
 }

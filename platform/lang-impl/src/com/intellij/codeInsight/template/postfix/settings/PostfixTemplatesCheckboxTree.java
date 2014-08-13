@@ -17,6 +17,7 @@ package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.ide.util.treeView.TreeState;
+import com.intellij.lang.Language;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
@@ -35,7 +36,10 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.Map;
+import java.util.Set;
 
 public class PostfixTemplatesCheckboxTree extends CheckboxTree {
 
@@ -102,7 +106,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree {
 
     getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
-      public void valueChanged(TreeSelectionEvent event) {
+      public void valueChanged(@NotNull TreeSelectionEvent event) {
         selectionChanged();
       }
     });
@@ -117,10 +121,13 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree {
   public void initTree(@NotNull MultiMap<String, PostfixTemplate> langToTemplates) {
     myRoot.removeAllChildren();
     for (Map.Entry<String, Collection<PostfixTemplate>> entry : langToTemplates.entrySet()) {
-      CheckedTreeNode langNode = new CheckedTreeNode(entry.getKey());
+      String id = entry.getKey();
+      Language language = Language.findLanguageByID(id);
+      String langName = language != null ? language.getDisplayName() : id;  
+      CheckedTreeNode langNode = new CheckedTreeNode(langName);
       myRoot.add(langNode);
       for (PostfixTemplate template : entry.getValue()) {
-        CheckedTreeNode templateNode = new PostfixTemplateCheckedTreeNode(template, entry.getKey());
+        CheckedTreeNode templateNode = new PostfixTemplateCheckedTreeNode(template, langName);
         langNode.add(templateNode);
       }
     }

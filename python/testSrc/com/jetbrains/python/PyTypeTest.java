@@ -829,6 +829,12 @@ public class PyTypeTest extends PyTestCase {
            "    pass\n");
   }
 
+  // PY-12801
+  public void testTupleConcatenation() {
+    doTest("(int, bool, str)",
+           "expr = (1,) + (True, 'spam') + ()");
+  }
+
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {
     return TypeEvalContext.userInitiated(element.getContainingFile()).withTracing();
   }

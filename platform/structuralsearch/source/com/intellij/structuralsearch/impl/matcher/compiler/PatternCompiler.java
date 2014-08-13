@@ -344,11 +344,8 @@ public class PatternCompiler {
 
     @Override
     public String getPrefix(int varIndex) {
-      try {
-        return myPrefixes[varIndex];
-      } catch (ArrayIndexOutOfBoundsException e) {
-        return null;
-      }
+      if (varIndex >= myPrefixes.length) return null;
+      return myPrefixes[varIndex];
     }
   }
 

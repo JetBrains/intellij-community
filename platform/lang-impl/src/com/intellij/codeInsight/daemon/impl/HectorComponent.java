@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,7 +91,7 @@ public class HectorComponent extends JPanel {
     Collections.sort(languages, PsiUtilBase.LANGUAGE_COMPARATOR);
     for (Language language : languages) {
       @SuppressWarnings("UseOfObsoleteCollectionType")
-      final Hashtable<Integer, JLabel> sliderLabels = new Hashtable<Integer, JLabel>();
+      final Hashtable<Integer, JComponent> sliderLabels = new Hashtable<Integer, JComponent>();
       sliderLabels.put(1, new JLabel(EditorBundle.message("hector.none.slider.label")));
       sliderLabels.put(2, new JLabel(EditorBundle.message("hector.syntax.slider.label")));
       if (notInLibrary) {

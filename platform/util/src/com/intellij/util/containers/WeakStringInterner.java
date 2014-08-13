@@ -16,26 +16,27 @@
 package com.intellij.util.containers;
 
 import com.intellij.reference.SoftReference;
+import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.WeakReference;
-import java.util.*;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author peter
  */
 public class WeakStringInterner extends StringInterner {
-  private final WeakHashMap<String, WeakReference<String>> myMap = new WeakHashMap<String, WeakReference<String>>();
+  private final ConcurrentWeakHashMap<String, WeakReference<String>> myMap = new ConcurrentWeakHashMap<String, WeakReference<String>>();
   
   @NotNull
   @Override
   public String intern(@NotNull String name) {
-    String interned = SoftReference.dereference(myMap.get(name));
-    if (interned != null) {
-      return interned;
-    }
-    myMap.put(name, new WeakReference<String>(name));
+    WeakReference<String> key = new WeakReference<String>(name);
+    String interned = SoftReference.dereference(ConcurrencyUtil.cacheOrGet(myMap, name, key));
+    if (interned != null) return interned;
+
+    myMap.put(name, key);
     return name;
   }
 

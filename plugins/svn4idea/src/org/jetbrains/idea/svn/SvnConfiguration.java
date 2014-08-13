@@ -30,6 +30,7 @@ import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationProvider;
 import org.jetbrains.idea.svn.auth.SvnInteractiveAuthenticationProvider;
+import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.config.SvnServerFileKeys;
 import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.jetbrains.idea.svn.update.MergeRootInfo;

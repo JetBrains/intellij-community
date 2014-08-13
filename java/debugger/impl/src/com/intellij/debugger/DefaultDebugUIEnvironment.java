@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.debugger;
 import com.intellij.diagnostic.logging.LogFilesManager;
 import com.intellij.diagnostic.logging.OutputFileUtil;
 import com.intellij.execution.Executor;
-import com.intellij.execution.RunnerRegistry;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
@@ -31,35 +30,21 @@ import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.actionSystem.Constraints;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: michael.golubev
- */
 public class DefaultDebugUIEnvironment implements DebugUIEnvironment {
-  private final Project myProject;
   private final ExecutionEnvironment myExecutionEnvironment;
   private final DebugEnvironment myModelEnvironment;
 
-  public DefaultDebugUIEnvironment(Project project,
-                                   @NotNull ExecutionEnvironment environment,
+  public DefaultDebugUIEnvironment(@NotNull ExecutionEnvironment environment,
                                    RunProfileState state,
                                    RemoteConnection remoteConnection,
                                    boolean pollConnection) {
-    myProject = project;
     myExecutionEnvironment = environment;
-    myModelEnvironment = new DefaultDebugEnvironment(project,
-                                                     environment.getExecutor(),
-                                                     RunnerRegistry.getInstance().findRunnerById(environment.getRunnerId()),
-                                                     myExecutionEnvironment.getRunProfile(),
-                                                     state,
-                                                     remoteConnection,
-                                                     pollConnection);
+    myModelEnvironment = new DefaultDebugEnvironment(environment, state, remoteConnection, pollConnection);
   }
 
   @Override
@@ -86,19 +71,21 @@ public class DefaultDebugUIEnvironment implements DebugUIEnvironment {
 
       logFilesManager.registerFileMatcher(runConfiguration);
 
-      logFilesManager.initLogConsoles(runConfiguration, processHandler);
-      OutputFileUtil.attachDumpListener(runConfiguration, processHandler, content.getExecutionConsole());
+      if (processHandler != null) {
+        logFilesManager.initLogConsoles(runConfiguration, processHandler);
+        OutputFileUtil.attachDumpListener(runConfiguration, processHandler, content.getExecutionConsole());
+      }
     }
   }
 
   @Override
   public void initActions(RunContentDescriptor content, DefaultActionGroup actionGroup) {
     Executor executor = myExecutionEnvironment.getExecutor();
-    RestartAction restartAction = new RestartAction(executor, content, myExecutionEnvironment);
+    RestartAction restartAction = new RestartAction(content, myExecutionEnvironment);
     actionGroup.add(restartAction, Constraints.FIRST);
     restartAction.registerShortcut(content.getComponent());
 
-    actionGroup.add(new CloseAction(executor, content, myProject));
+    actionGroup.add(new CloseAction(executor, content, myExecutionEnvironment.getProject()));
     actionGroup.add(new ContextHelpAction(executor.getHelpId()));
   }
 

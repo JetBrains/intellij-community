@@ -537,9 +537,10 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       PsiClass[] classes = ((PsiClassOwner)element).getClasses();
       ArrayList<PsiClass> buffer = new ArrayList<PsiClass>();
       for (final PsiClass aClass : classes) {
-        if (!(aClass instanceof SyntheticElement)) {
-          buffer.add(aClass);
+        if (isSynthetic(aClass)) {
+          return null;
         }
+        buffer.add(aClass);
       }
       return buffer.toArray(new PsiClass[buffer.size()]);
     }

@@ -44,6 +44,7 @@ public class HgOutgoingCommand extends HgRemoteChangesetsCommand {
                                  boolean doNotShowAuthorizationRequest) {
 
     List<String> arguments = new LinkedList<String>();
+    arguments.add("-n");
     arguments.add("--template");
     arguments.add(template);
     arguments.add(HgHistoryUtil.prepareParameter("rev", source));

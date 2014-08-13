@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,7 @@ import com.intellij.history.integration.TestVirtualFile;
 import com.intellij.history.integration.ui.actions.LocalHistoryAction;
 import com.intellij.history.integration.ui.actions.ShowHistoryAction;
 import com.intellij.history.integration.ui.actions.ShowSelectionHistoryAction;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -135,6 +131,6 @@ public class LocalHistoryActionsTest extends LocalHistoryUITestCase {
         return null;
       }
     };
-    return new AnActionEvent(null, dc, "", a.getTemplatePresentation(), null, -1);
+    return new AnActionEvent(null, dc, "", a.getTemplatePresentation(), ActionManager.getInstance(), -1);
   }
 }

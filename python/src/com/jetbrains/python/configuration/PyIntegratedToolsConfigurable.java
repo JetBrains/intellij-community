@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,6 +120,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
     myErrorPanel.add(facetErrorPanel.getComponent(), BorderLayout.CENTER);
 
     facetErrorPanel.getValidatorsManager().registerValidator(new FacetEditorValidator() {
+      @NotNull
       @Override
       public ValidationResult check() {
         final Sdk sdk = PythonSdkType.findPythonSdk(myModule);

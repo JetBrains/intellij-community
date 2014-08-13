@@ -1,0 +1,928 @@
+{
+  "name": "Introduction to Python",
+  "description": "Introduction course to Python",
+  "author": "PyCharm",
+  "lessons": [
+    {
+      "name": "Introduction",
+      "task_list": [
+        {
+          "name": "Our first program",
+          "test_num" : 6,
+          "task_files": {
+            "hello_world.py": {
+              "task_windows": [
+                {
+                  "line": 0,
+                  "start": 33,
+                  "length": 14,
+                  "hint": "lesson1.task1.docs",
+                  "possible_answer": "Liana"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Comments",
+          "test_num": 4,
+          "task_files": {
+            "comments.py": {
+              "task_windows": [
+                {
+                  "line": 4,
+                  "start": 2,
+                  "length": 20,
+                  "hint": "lesson1.task2.docs",
+                  "possible_answer": "new comment"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Variables",
+      "task_list": [
+        {
+          "name": "Variable definition",
+          "task_files": {
+            "variable_definition.py": {
+              "task_windows": [
+                {
+                  "line": 6,
+                  "start": 12,
+                  "length": 13,
+                  "hint": "lesson2.task1.docs",
+                  "possible_answer": "5"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Undefined variable",
+          "task_files": {
+            "undefined_variable.py": {
+              "task_windows": [
+                {
+                  "line": 1,
+                  "start": 7,
+                  "length": 14,
+                  "hint": "lesson2.task2.docs",
+                  "possible_answer": "other_variable"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Variable types",
+          "task_files": {
+            "variable_type.py": {
+              "task_windows": [
+                {
+                  "line": 4,
+                  "start": 6,
+                  "length": 17,
+                  "hint": "lesson2.task3.docs",
+                  "possible_answer": "type(float_number)"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Arithmetic Operators",
+          "task_files": {
+            "arithmetic_operators.py": {
+              "task_windows": [
+                {
+                  "line": 2,
+                  "start": 9,
+                  "length": 22,
+                  "hint": "lesson2.task4.1.docs",
+                  "possible_answer": "number/2"
+                },
+                {
+                  "line": 4,
+                  "start": 12,
+                  "length": 23,
+                  "hint": "lesson2.task4.2.docs",
+                  "possible_answer": "number%2"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Assignments",
+          "task_files": {
+            "assignments.py": {
+              "task_windows": [
+                {
+                  "line": 6,
+                  "start": 7,
+                  "length": 8,
+                  "hint": "lesson2.task5.docs",
+                  "possible_answer": "+="
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Boolean operators",
+          "task_files": {
+            "boolean_operators.py": {
+              "task_windows": [
+                {
+                  "line": 3,
+                  "start": 15,
+                  "length": 8,
+                  "hint": "lesson2.task6.docs",
+                  "possible_answer": "=="
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Comparison operators",
+          "task_files": {
+            "comparison_operators.py": {
+              "task_windows": [
+                {
+                  "line": 6,
+                  "start": 19,
+                  "length": 8,
+                  "hint": "lesson2.task7.docs",
+                  "possible_answer": ">="
+                }
+              ]
+            }
+          }
+        }
+      ]
+
+    },
+    {
+      "name": "Strings",
+      "task_list": [
+        {
+          "name": "Concatenation",
+          "task_files": {
+            "concatenation.py": {
+              "task_windows": [
+                {
+                  "line": 3,
+                  "start": 14,
+                  "length": 9,
+                  "hint": "lesson3.task1.docs",
+                  "possible_answer": "hello + ' ' + world"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "String multiplication",
+          "task_files": {
+            "string_multiplication.py": {
+              "task_windows": [
+                {
+                  "line": 1,
+                  "start": 22,
+                  "length": 8,
+                  "hint": "lesson3.task2.docs",
+                  "possible_answer": "hello * 10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "String indexing",
+          "task_files": {
+            "string_indexing.py": {
+              "task_windows": [
+                {
+                  "line": 3,
+                  "start": 11,
+                  "length": 9,
+                  "hint": "lesson3.task3.docs",
+                  "possible_answer": "python[0]"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "String negative indexing",
+          "task_files": {
+            "negative_indexing.py": {
+              "task_windows": [
+                {
+                  "line": 1,
+                  "start": 14,
+                  "length": 9,
+                  "hint": "lesson3.task4.docs",
+                  "possible_answer": "long_string[-1]"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "String slicing",
+          "task_files": {
+            "slicing.py": {
+              "task_windows": [
+                {
+                  "line": 3,
+                  "start": 9,
+                  "length": 9,
+                  "hint": "lesson3.task5.docs",
+                  "possible_answer": "monty_python[6:]"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "In operator",
+          "task_files": {
+            "in_operator.py": {
+              "task_windows": [
+                {
+                  "line": 3,
+                  "start": 11,
+                  "length": 9,
+                  "hint": "lesson3.task6.docs",
+                  "possible_answer": "'ice' in ice_cream"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "String length",
+          "task_files": {
+            "len_function.py": {
+              "task_windows": [
+                {
+                  "line": 5,
+                  "start": 13,
+                  "length": 9,
+                  "hint": "lesson3.task7.docs",
+                  "possible_answer": "phrase[:len(phrase)/2]"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Character escaping",
+          "task_files": {
+            "character_escaping.py": {
+              "task_windows": [
+                {
+                  "line": 3,
+                  "start": 7,
+                  "length": 4,
+                  "hint": "lesson3.task8.docs",
+                  "possible_answer": "'text\'more text'"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Basic string methods",
+          "task_files": {
+            "string_methods.py": {
+              "task_windows": [
+                {
+                  "line": 5,
+                  "start": 6,
+                  "length": 24,
+                  "hint": "lesson3.task9.docs",
+                  "possible_answer": "monty_python.upper()"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "String formatting",
+          "task_files": {
+            "string_formatting.py": {
+              "task_windows": [
+                {
+                  "line": 3,
+                  "start": 11,
+                  "length": 14,
+                  "hint": "lesson3.task10.1.docs",
+                  "possible_answer": "%d"
+                },
+                {
+                  "line": 3,
+                  "start": 39,
+                  "length": 5,
+                  "hint": "lesson3.task10.2.docs",
+                  "possible_answer": "17"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Data structures",
+      "task_list": [
+        {
+          "name": "Lists introduction",
+          "task_files": {
+            "lists.py": {
+              "task_windows": [
+                {
+                  "line": 3,
+                  "start": 6,
+                  "length": 5,
+                  "hint": "lesson4.task1.docs",
+                  "possible_answer": "squares[1:4]"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Lists operations",
+          "task_files": {
+            "list_operations.py": {
+              "task_windows": [
+                {
+                  "line": 9,
+                  "start": 0,
+                  "length": 30,
+                  "hint": "lesson4.task2.docs",
+                  "possible_answer": "animals[-1] = 'dinosaur'"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List items",
+          "task_files": {
+            "list_items.py": {
+              "task_windows": [
+                {
+                  "line": 9,
+                  "start": 0,
+                  "length": 10,
+                  "hint": "lesson4.task3.docs",
+                  "possible_answer": "animals[:] = []"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Tuples",
+          "task_files": {
+            "tuples.py": {
+              "task_windows": [
+                {
+                  "line": 3,
+                  "start": 6,
+                  "length": 15,
+                  "hint": "lesson4.task4.docs",
+                  "possible_answer": "len(alphabet)"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Dictionaries",
+          "task_files": {
+            "dicts.py": {
+              "task_windows": [
+                {
+                  "line": 11,
+                  "start": 6,
+                  "length": 12,
+                  "hint": "lesson4.task5.docs",
+                  "possible_answer": "phone_book['Jane']"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Dictionary keys() and values()",
+          "task_files": {
+            "dict_key_value.py": {
+              "task_windows": [
+                {
+                  "line": 9,
+                  "start": 6,
+                  "length": 17,
+                  "hint": "lesson4.task6.docs",
+                  "possible_answer": "phone_book.values()"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "In keyword",
+          "task_files": {
+            "in_keyword.py": {
+              "task_windows": [
+                {
+                  "line": 6,
+                  "start": 6,
+                  "length": 30,
+                  "hint": "lesson4.task7.docs",
+                  "possible_answer": "'fish' in grocery_dict.keys()"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Condition expressions",
+      "task_list": [
+        {
+          "name": "Boolean operators",
+          "task_files": {
+            "boolean_operators.py": {
+              "task_windows": [
+                {
+                  "line": 5,
+                  "start": 6,
+                  "length": 24,
+                  "hint": "lesson5.task1.docs",
+                  "possible_answer": "name == 'John' and age != 23"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Boolean operators order",
+          "task_files": {
+            "boolean_order.py": {
+              "task_windows": [
+                {
+                  "line": 5,
+                  "start": 6,
+                  "length": 69,
+                  "hint": "lesson5.task2.docs",
+                  "possible_answer": "name == 'Ellis' or not(name == 'John' and years == 17)"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "If statement",
+          "task_files": {
+            "if_statement.py": {
+              "task_windows": [
+                {
+                  "line": 9,
+                  "start": 0,
+                  "length": 25,
+                  "hint": "lesson5.task3.docs",
+                  "possible_answer": "if len(tasks) == 0:"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Else, elif part in if statement",
+          "task_files": {
+            "else_elif.py": {
+              "task_windows": [
+                {
+                  "line": 13,
+                  "start": 0,
+                  "length": 29,
+                  "hint": "lesson5.task4.1.docs",
+                  "possible_answer": "if name == 'John':"
+                },
+                {
+                  "line": 15,
+                  "start": 0,
+                  "length": 9,
+                  "hint": "lesson5.task4.2.docs",
+                  "possible_answer": "else:"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Loops",
+      "task_list": [
+        {
+          "name": "For loop",
+          "task_files": {
+            "for_loop.py": {
+              "task_windows": [
+                {
+                  "line": 6,
+                  "start": 0,
+                  "length": 34,
+                  "hint": "lesson6.task1.docs",
+                  "possible_answer": "for prime in primes:"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "For loop using string",
+          "task_files": {
+            "for_string.py": {
+              "task_windows": [
+                {
+                  "line": 7,
+                  "start": 0,
+                  "length": 59,
+                  "hint": "lesson6.task2.docs",
+                  "possible_answer": "for ch in hello_world:"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "While loop",
+          "task_files": {
+            "while_loop.py": {
+              "task_windows": [
+                {
+                  "line": 11,
+                  "start": 0,
+                  "length": 30,
+                  "hint": "lesson6.task3.docs",
+                  "possible_answer": "while count < 100:"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Break keyword",
+          "task_files": {
+            "break_keyword.py": {
+              "task_windows": [
+                {
+                  "line": 13,
+                  "start": 7,
+                  "length": 33,
+                  "hint": "lesson6.task4.docs",
+                  "possible_answer": "animal == 'elephant'"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Continue keyword",
+          "task_files": {
+            "continue_keyword.py": {
+              "task_windows": [
+                {
+                  "line": 6,
+                  "start": 7,
+                  "length": 18,
+                  "hint": "lesson6.task5.docs",
+                  "possible_answer": "x % 2 == 0"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Functions",
+      "task_list": [
+        {
+          "name": "Function definition",
+          "task_files": {
+            "functions.py": {
+              "task_windows": [
+                {
+                  "line": 11,
+                  "start": 0,
+                  "length": 58,
+                  "hint": "lesson7.task1.docs",
+                  "possible_answer": "def fun():"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Function parameters and call arguments",
+          "task_files": {
+            "param_args.py": {
+              "task_windows": [
+                {
+                  "line": 5,
+                  "start": 0,
+                  "length": 71,
+                  "hint": "lesson7.task2.docs",
+                  "possible_answer": "def square(n):"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Function return value",
+          "task_files": {
+            "return_keyword.py": {
+              "task_windows": [
+                {
+                  "line": 11,
+                  "start": 8,
+                  "length": 21,
+                  "hint": "lesson7.task3.1.docs",
+                  "possible_answer": "1"
+                },
+                {
+                  "line": 15,
+                  "start": 8,
+                  "length": 17,
+                  "hint": "lesson7.task3.2.docs",
+                  "possible_answer": "b = a + b"
+                },
+                {
+                  "line": 16,
+                  "start": 8,
+                  "length": 17,
+                  "hint": "lesson7.task3.3.docs",
+                  "possible_answer": "a = tmp_var"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Function default parameters",
+          "task_files": {
+            "default_parameter.py": {
+              "task_windows": [
+                {
+                  "line": 7,
+                  "start": 10,
+                  "length": 55,
+                  "hint": "lesson7.task4.docs",
+                  "possible_answer": "subject, name='John'"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Classes and objects",
+      "task_list": [
+        {
+          "name": "Class definition",
+          "task_files": {
+            "class_definition.py": {
+              "task_windows": [
+                {
+                  "line": 1,
+                  "start": 15,
+                  "length": 28,
+                  "hint": "lesson8.task1.docs",
+                  "possible_answer": "4"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Variable access",
+          "task_files": {
+            "access_variable.py": {
+              "task_windows": [
+                {
+                  "line": 17,
+                  "start": 6,
+                  "length": 33,
+                  "hint": "lesson8.task2.docs",
+                  "possible_answer": "my_object.variable1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Variable access",
+          "task_files": {
+            "access_variable.py": {
+              "task_windows": [
+                {
+                  "line": 7,
+                  "start": 7,
+                  "length": 20,
+                  "hint": "lesson8.task3.1.docs",
+                  "possible_answer": "car2 = Car()"
+                },
+                {
+                  "line": 10,
+                  "start": 0,
+                  "length": 14,
+                  "hint": "lesson8.task3.2.docs",
+                  "possible_answer": "car2.color = 'blue'"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Self explanation",
+          "task_files": {
+            "self_parameter.py": {
+              "task_windows": [
+                {
+                  "line": 9,
+                  "start": 8,
+                  "length": 21,
+                  "hint": "lesson8.task4.1.docs",
+                  "possible_answer": "self.current += amount"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Special __init__ method",
+          "task_files": {
+            "init_method.py": {
+              "task_windows": [
+                {
+                  "line": 9,
+                  "start": 17,
+                  "length": 19,
+                  "hint": "lesson8.task5.docs",
+                  "possible_answer": "self, color"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Modules and packages",
+      "task_list": [
+        {
+          "name": "Import module",
+          "task_files": {
+            "imports.py": {
+              "task_windows": [
+                {
+                  "line": 7,
+                  "start": 0,
+                  "length": 21,
+                  "hint": "lesson9.task1.1.docs",
+                  "possible_answer": "import my_module"
+                },
+                {
+                  "line": 9,
+                  "start": 0,
+                  "length": 40,
+                  "hint": "lesson9.task1.2.docs",
+                  "possible_answer": "my_module.hello_world('John')"
+                }
+              ]
+            },
+            "calculator.py": {},
+            "my_module.py": {}
+          }
+        },
+        {
+          "name": "Builtin modules",
+          "task_files": {
+            "builtin_modules.py": {
+              "task_windows": [
+                {
+                  "line": 2,
+                  "start": 6,
+                  "length": 12,
+                  "hint": "lesson9.task2.docs",
+                  "possible_answer": "datetime.datetime.today()"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "From import",
+          "task_files": {
+            "from_import.py": {
+              "task_windows": [
+                {
+                  "line": 7,
+                  "start": 0,
+                  "length": 33,
+                  "hint": "lesson9.task3.docs",
+                  "possible_answer": "from my_module import hello_world"
+                }
+              ]
+            },
+            "calculator.py": {},
+            "my_module.py": {}
+          }
+        }
+      ]
+    },
+    {
+      "name": "File input/output",
+      "task_list": [
+        {
+          "name": "Read file",
+          "task_files": {
+            "read_file.py": {
+              "task_windows": [
+                {
+                  "line": 5,
+                  "start": 4,
+                  "length": 15,
+                  "hint": "lesson10.task1.1.docs",
+                  "possible_answer": "print(line)"
+                },
+                {
+                  "line": 11,
+                  "start": 0,
+                  "length": 27,
+                  "hint": "lesson10.task1.2.docs",
+                  "possible_answer": "print(f1.readline())"
+                },
+                {
+                  "line": 13,
+                  "start": 0,
+                  "length": 27,
+                  "hint": "lesson10.task1.2.docs",
+                  "possible_answer": "f1.close()"
+                }
+              ]
+            },
+            "input.txt": {},
+            "input1.txt": {}
+          }
+        },
+        {
+          "name": "Write to file",
+          "task_files": {
+            "write_to_file.py": {
+              "task_windows": [
+                {
+                  "line": 2,
+                  "start": 23,
+                  "length": 12,
+                  "hint": "lesson10.task2.1.docs",
+                  "possible_answer": "'a'"
+                },
+                {
+                  "line": 5,
+                  "start": 4,
+                  "length": 35,
+                  "hint": "lesson10.task2.2.docs",
+                  "possible_answer": "f.write(i)"
+                },
+                {
+                  "line": 7,
+                  "start": 0,
+                  "length": 14,
+                  "hint": "lesson10.task2.3.docs",
+                  "possible_answer": "f.close()"
+                }
+              ]
+            },
+            "output.txt": {}
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -285,7 +285,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
       myList = new JBList();
       myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-      myList.setCellRenderer(new GroupedItemsListRenderer(new ListItemDescriptor() {
+      myList.setCellRenderer(new GroupedItemsListRenderer(new ListItemDescriptorAdapter() {
         public String getTextFor(final Object value) {
           final LookupFile file = (LookupFile)value;
 
@@ -296,10 +296,6 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
                    file.getName();
           }
 
-        }
-
-        public String getTooltipFor(final Object value) {
-          return null;
         }
 
         public Icon getIconFor(final Object value) {

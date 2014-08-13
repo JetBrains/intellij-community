@@ -74,8 +74,7 @@ public class AddImportHelper {
 
   @Nullable
   public static PsiElement getLocalInsertPosition(@NotNull PyElement anchor) {
-    final PyStatement enclosingStatement = PsiTreeUtil.getParentOfType(anchor, PyStatement.class, false);
-    return enclosingStatement != null ? enclosingStatement.getFirstChild() : null;
+    return PsiTreeUtil.getParentOfType(anchor, PyStatement.class, false);
   }
 
   public enum ImportPriority {

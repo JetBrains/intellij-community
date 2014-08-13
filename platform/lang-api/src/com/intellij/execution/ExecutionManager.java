@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
@@ -30,11 +31,11 @@ import org.jetbrains.annotations.Nullable;
  * Manages the execution of run configurations and the relationship between running processes and Run/Debug toolwindow tabs.
  */
 public abstract class ExecutionManager {
-  public static final Topic<ExecutionListener> EXECUTION_TOPIC
-    = new Topic<ExecutionListener>("configuration executed", ExecutionListener.class, Topic.BroadcastDirection.TO_PARENT);
+  public static final Topic<ExecutionListener> EXECUTION_TOPIC =
+    Topic.create("configuration executed", ExecutionListener.class, Topic.BroadcastDirection.TO_PARENT);
 
-  public static ExecutionManager getInstance(final Project project) {
-    return project.getComponent(ExecutionManager.class);
+  public static ExecutionManager getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, ExecutionManager.class);
   }
 
   /**
@@ -49,12 +50,12 @@ public abstract class ExecutionManager {
    * Executes the before launch tasks for a run configuration.
    *
    * @param startRunnable    the runnable to actually start the process for the run configuration.
-   * @param env              the execution environment describing the process to be started.
+   * @param environment              the execution environment describing the process to be started.
    * @param state            the ready-to-start process
    * @param onCancelRunnable the callback to call if one of the before launch tasks cancels the process execution.
    */
   public abstract void compileAndRun(@NotNull Runnable startRunnable,
-                                     @NotNull ExecutionEnvironment env,
+                                     @NotNull ExecutionEnvironment environment,
                                      @Nullable RunProfileState state,
                                      @Nullable Runnable onCancelRunnable);
 
@@ -63,27 +64,19 @@ public abstract class ExecutionManager {
    *
    * @return the list of processes.
    */
+  @NotNull
   public abstract ProcessHandler[] getRunningProcesses();
-
-  /**
-   * @deprecated  use {@link #startRunProfile(RunProfileStarter, com.intellij.execution.configurations.RunProfileState, com.intellij.execution.runners.ExecutionEnvironment)}
-   */
-  public abstract void startRunProfile(@NotNull RunProfileStarter starter,
-                                       @NotNull RunProfileState state,
-                                       @NotNull Project project,
-                                       @NotNull Executor executor,
-                                       @NotNull ExecutionEnvironment env);
 
   /**
    * Prepares the run or debug tab for running the specified process and calls a callback to start it.
    *
    * @param starter the callback to start the process execution.
    * @param state   the ready-to-start process
-   * @param env     the execution environment describing the process to be started.
+   * @param environment     the execution environment describing the process to be started.
    */
   public abstract void startRunProfile(@NotNull RunProfileStarter starter,
                                        @NotNull RunProfileState state,
-                                       @NotNull ExecutionEnvironment env);
+                                       @NotNull ExecutionEnvironment environment);
 
   public abstract void restartRunProfile(@NotNull Project project,
                                          @NotNull Executor executor,
@@ -91,9 +84,10 @@ public abstract class ExecutionManager {
                                          @Nullable RunnerAndConfigurationSettings configuration,
                                          @Nullable ProcessHandler processHandler);
 
-  //currentDescriptor is null for toolbar/popup action and not null for actions in run/debug toolwindows
   /**
-   * @deprecated use {@link #restartRunProfile(com.intellij.execution.runners.ProgramRunner, com.intellij.execution.runners.ExecutionEnvironment, com.intellij.execution.ui.RunContentDescriptor)}
+   * currentDescriptor is null for toolbar/popup action and not null for actions in run/debug toolwindows
+   * @deprecated use {@link #restartRunProfile(com.intellij.execution.runners.ExecutionEnvironment)}
+   * to remove in IDEA 15
    */
   public abstract void restartRunProfile(@NotNull Project project,
                                          @NotNull Executor executor,
@@ -101,7 +95,14 @@ public abstract class ExecutionManager {
                                          @Nullable RunnerAndConfigurationSettings configuration,
                                          @Nullable RunContentDescriptor currentDescriptor);
 
+  /**
+   * currentDescriptor is null for toolbar/popup action and not null for actions in run/debug toolwindows
+   * @deprecated use {@link #restartRunProfile(com.intellij.execution.runners.ExecutionEnvironment)}
+   * to remove in IDEA 15
+   */
   public abstract void restartRunProfile(@Nullable ProgramRunner runner,
                                          @NotNull ExecutionEnvironment environment,
                                          @Nullable RunContentDescriptor currentDescriptor);
+
+  public abstract void restartRunProfile(@NotNull ExecutionEnvironment environment);
 }

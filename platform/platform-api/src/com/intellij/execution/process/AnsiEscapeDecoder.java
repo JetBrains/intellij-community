@@ -19,80 +19,105 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
+ * See <a href="http://en.wikipedia.org/wiki/ANSI_escape_code">ANSI escape code</a>.
+ *
  * @author traff
  */
 public class AnsiEscapeDecoder {
-  private static final char TEXT_ATTRS_PREFIX_CH = '\u001B';
-  private static final String TEXT_ATTRS_PREFIX = Character.toString(TEXT_ATTRS_PREFIX_CH) + "[";
-  private static final String TEXT_ATTRS_PATTERN = "m" + TEXT_ATTRS_PREFIX_CH + "\\[";
+  private static final char ESC_CHAR = '\u001B'; // Escape sequence start character
+  private static final String CSI = ESC_CHAR + "["; // "Control Sequence Initiator"
+  private static final Pattern INNER_PATTERN = Pattern.compile(Pattern.quote("m" + CSI));
 
-  private Key myCurrentColor;
+  private Key myCurrentTextAttributes;
 
   /**
    * Parses ansi-color codes from text and sends text fragments with color attributes to textAcceptor
    *
-   * @param text
-   * @param outputType
-   * @param textAcceptor if implements ColoredTextAcceptor then it will receive text fragments with color attributes
-   *                     if implements ColoredChunksAcceptor then it will receive list of pairs <text, attribute>
+   * @param text         a string with ANSI escape sequences
+   * @param outputType   stdout/stderr/system (from {@link ProcessOutputTypes})
+   * @param textAcceptor receives text fragments with color attributes.
+   *                     It can implement ColoredChunksAcceptor to receive list of pairs (text, attribute).
    */
-  public void escapeText(String text, Key outputType, ColoredTextAcceptor textAcceptor) {
-    final List<Pair<String, Key>> textChunks = ContainerUtil.newArrayList();
+  public void escapeText(@NotNull String text, @NotNull Key outputType, @NotNull ColoredTextAcceptor textAcceptor) {
+    List<Pair<String, Key>> chunks = null;
     int pos = 0;
     while (true) {
-      int macroPos = text.indexOf(TEXT_ATTRS_PREFIX, pos);
-      if (macroPos < 0) break;
-      if (pos != macroPos) {
-        textChunks.add(Pair.create(text.substring(pos, macroPos), getCurrentOutputAttributes(outputType)));
-      }
-      final int macroEndPos = getEndMacroPos(text, macroPos);
-      if (macroEndPos < 0) {
+      int escSeqBeginInd = text.indexOf(CSI, pos);
+      if (escSeqBeginInd < 0) {
         break;
       }
+      if (pos < escSeqBeginInd) {
+        chunks = processTextChunk(chunks, text.substring(pos, escSeqBeginInd), outputType, textAcceptor);
+      }
+      final int escSeqEndInd = findEscSeqEndIndex(text, escSeqBeginInd);
+      if (escSeqEndInd < 0) {
+        break;
+      }
+      String escSeq = text.substring(escSeqBeginInd, escSeqEndInd);
       // this is a simple fix for RUBY-8996:
       // we replace several consecutive escape sequences with one which contains all these sequences
-      final String colorAttribute = text.substring(macroPos, macroEndPos).replaceAll(TEXT_ATTRS_PATTERN, ";");
-      myCurrentColor = ColoredOutputTypeRegistry.getInstance().getOutputKey(colorAttribute);
-      pos = macroEndPos;
+      String colorAttribute = INNER_PATTERN.matcher(escSeq).replaceAll(";");
+      myCurrentTextAttributes = ColoredOutputTypeRegistry.getInstance().getOutputKey(colorAttribute);
+      pos = escSeqEndInd;
     }
     if (pos < text.length()) {
-      textChunks.add(Pair.create(text.substring(pos), getCurrentOutputAttributes(outputType)));
+      chunks = processTextChunk(chunks, text.substring(pos), outputType, textAcceptor);
     }
-    if (textAcceptor instanceof ColoredChunksAcceptor) {
-      ((ColoredChunksAcceptor)textAcceptor).coloredChunksAvailable(textChunks);
-    }
-    else {
-      coloredTextAvailable(textChunks, textAcceptor);
+    if (chunks != null && textAcceptor instanceof ColoredChunksAcceptor) {
+      ((ColoredChunksAcceptor)textAcceptor).coloredChunksAvailable(chunks);
     }
   }
 
-  // selects all consecutive escape sequences
-  private static int getEndMacroPos(final String text, int macroPos) {
-    int endMacroPos = text.indexOf('m', macroPos);
-    while (endMacroPos >= 0) {
-      endMacroPos += 1;
-      macroPos = text.indexOf(TEXT_ATTRS_PREFIX, endMacroPos);
-      if (macroPos != endMacroPos) {
+  /*
+   * Selects all consecutive escape sequences and returns escape sequence end index (exclusive).
+   * If the escape sequence isn't finished, returns -1.
+   */
+  private static int findEscSeqEndIndex(@NotNull String text, int escSeqBeginInd) {
+    escSeqBeginInd = text.indexOf('m', escSeqBeginInd);
+    while (escSeqBeginInd >= 0) {
+      escSeqBeginInd++;
+      if (!text.regionMatches(escSeqBeginInd, CSI, 0, CSI.length())) {
         break;
       }
-      endMacroPos = text.indexOf('m', macroPos);
+      escSeqBeginInd = text.indexOf('m', escSeqBeginInd);
     }
-    return endMacroPos;
+    return escSeqBeginInd;
   }
 
-  protected Key getCurrentOutputAttributes(final Key outputType) {
+  @Nullable
+  private List<Pair<String, Key>> processTextChunk(@Nullable List<Pair<String, Key>> buffer,
+                                                   @NotNull String text,
+                                                   @NotNull Key outputType,
+                                                   @NotNull ColoredTextAcceptor textAcceptor) {
+    Key attributes = getCurrentOutputAttributes(outputType);
+    if (textAcceptor instanceof ColoredChunksAcceptor) {
+      if (buffer == null) {
+        buffer = ContainerUtil.newArrayListWithCapacity(1);
+      }
+      buffer.add(Pair.create(text, attributes));
+    }
+    else {
+      textAcceptor.coloredTextAvailable(text, attributes);
+    }
+    return buffer;
+  }
+
+  @NotNull
+  protected Key getCurrentOutputAttributes(@NotNull Key outputType) {
     if (outputType == ProcessOutputTypes.STDERR || outputType == ProcessOutputTypes.SYSTEM) {
       return outputType;
     }
-    return myCurrentColor != null ? myCurrentColor : outputType;
+    return myCurrentTextAttributes != null ? myCurrentTextAttributes : outputType;
   }
 
-  public void coloredTextAvailable(@NotNull final List<Pair<String, Key>> textChunks, ColoredTextAcceptor textAcceptor) {
-    for (final Pair<String, Key> textChunk : textChunks) {
+  public void coloredTextAvailable(@NotNull List<Pair<String, Key>> textChunks, ColoredTextAcceptor textAcceptor) {
+    for (Pair<String, Key> textChunk : textChunks) {
       textAcceptor.coloredTextAvailable(textChunk.getFirst(), textChunk.getSecond());
     }
   }

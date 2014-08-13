@@ -18,17 +18,18 @@ package com.intellij.dvcs.push.ui;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ImageLoader;
+import com.intellij.util.ui.JBImageIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import java.awt.*;
 import java.net.URL;
 
 public class LoadingTreeNode extends DefaultMutableTreeNode implements CustomRenderedTreeNode {
   @NotNull protected ImageIcon myLoadingIcon;
-  private static final String LOADING_ICON = "loadingSimpleIcon.gif";
-  private static final String LOADING_DARK_ICON = "loadingSimpleDarkIcon.gif";
+  private static final String LOADING_ICON = "/icons/loading.gif";
 
   @NotNull
   public ImageIcon getIcon() {
@@ -37,10 +38,10 @@ public class LoadingTreeNode extends DefaultMutableTreeNode implements CustomRen
 
   public LoadingTreeNode() {
     super(null, false);
-    URL loadingIconPath = getClass().getResource(UIUtil.isUnderDarcula() ? LOADING_DARK_ICON : LOADING_ICON);
-    myLoadingIcon = new ImageIcon(loadingIconPath.getPath());
+    URL loadingIconUrl = getClass().getResource(LOADING_ICON);
+    Image image = ImageLoader.loadFromUrl(loadingIconUrl);
+    myLoadingIcon = new JBImageIcon(image);
   }
-
 
   @Override
   public void render(@NotNull ColoredTreeCellRenderer renderer) {

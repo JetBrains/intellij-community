@@ -19,7 +19,6 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBCardLayout;
@@ -68,8 +67,8 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
     add(scrollPane, MAIN);
     add(myCustomizePanel, CUSTOMIZE);
 
-    Map<String, Pair<String, List<String>>> groups = pluginGroups.getTree();
-    for (final Map.Entry<String, Pair<String, List<String>>> entry : groups.entrySet()) {
+    Map<String, Pair<Icon, List<String>>> groups = pluginGroups.getTree();
+    for (final Map.Entry<String, Pair<Icon, List<String>>> entry : groups.entrySet()) {
       final String group = entry.getKey();
       if (PluginGroups.CORE.equals(group)) continue;
 
@@ -91,7 +90,7 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
           return isGroupEnabled(group);
         }
       };
-      groupPanel.add(new JLabel(IconLoader.getIcon(entry.getValue().getFirst())), gbc);
+      groupPanel.add(new JLabel(entry.getValue().getFirst()), gbc);
       //gbc.insets.bottom = 5;
       groupPanel.add(titleLabel, gbc);
       JLabel descriptionLabel = new JLabel(pluginGroups.getDescription(group), SwingConstants.CENTER) {

@@ -21,7 +21,6 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgVcs;
@@ -99,7 +98,6 @@ public class HgOutgoingCommitsProvider extends OutgoingCommitsProvider {
       }
       LOG.warn(resultErrors.toString());
     }
-    return new OutgoingResult(
-      ContainerUtil.reverse(HgHistoryUtil.createFullCommitsFromResult(project, repository.getRoot(), result, version)), errors);
+    return new OutgoingResult(HgHistoryUtil.createFullCommitsFromResult(project, repository.getRoot(), result, version, true), errors);
   }
 }

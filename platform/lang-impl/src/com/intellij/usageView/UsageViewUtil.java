@@ -24,10 +24,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.ElementDescriptionUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.usages.Usage;
@@ -178,5 +181,18 @@ public class UsageViewUtil {
       }
     }
     return usageInfos;
+  }
+
+  public static boolean reportNonRegularUsages(UsageInfo[] usages, final Project project) {
+    boolean inGeneratedCode = hasUsagesInGeneratedCode(usages, project);
+    if (hasNonCodeUsages(usages) || inGeneratedCode) {
+      StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
+      if (statusBar != null) {
+        statusBar.setInfo(inGeneratedCode ? RefactoringBundle.message("occurrences.found.in.comments.strings.non.java.files.and.generated.code")
+                                          : RefactoringBundle.message("occurrences.found.in.comments.strings.and.non.java.files"));
+      }
+      return true;
+    }
+    return false;
   }
 }

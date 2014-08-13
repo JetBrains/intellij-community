@@ -31,6 +31,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Locale;
+
 public class PsiLiteralExpressionImpl
        extends ExpressionPsiElement
        implements PsiLiteralExpression, PsiLanguageInjectionHost, ContributedReferenceHost {
@@ -93,7 +95,7 @@ public class PsiLiteralExpressionImpl
   @Override
   public Object getValue() {
     final IElementType type = getLiteralElementType();
-    String text = NUMERIC_LITERALS.contains(type) ? getCanonicalText().toLowerCase() : getCanonicalText();
+    String text = NUMERIC_LITERALS.contains(type) ? getCanonicalText().toLowerCase(Locale.ENGLISH) : getCanonicalText();
     final int textLength = text.length();
 
     if (type == JavaTokenType.INTEGER_LITERAL) {

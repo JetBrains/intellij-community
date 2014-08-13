@@ -17,10 +17,14 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteSequence;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.*;
 import com.intellij.util.io.*;
@@ -50,6 +54,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
 
   private final DataExternalizer<Value> myValueExternalizer;
   private final DataExternalizer<Collection<Key>> mySnapshotIndexExternalizer;
+  private final boolean myIsPsiBackedIndex;
 
   private PersistentHashMap<Integer, Collection<Key>> myInputsIndex;
   private PersistentHashMap<Integer, ByteSequence> myContents;
@@ -75,14 +80,16 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   public MapReduceIndex(@Nullable final ID<Key, Value> indexId,
                         DataIndexer<Key, Value, Input> indexer,
                         @NotNull IndexStorage<Key, Value> storage) throws IOException {
-    this(indexId, indexer, storage, null, null);
+    this(indexId, indexer, storage, null, null, false);
   }
 
   public MapReduceIndex(@Nullable final ID<Key, Value> indexId,
                         DataIndexer<Key, Value, Input> indexer,
                         @NotNull IndexStorage<Key, Value> storage,
                         DataExternalizer<Collection<Key>> snapshotIndexExternalizer,
-                        DataExternalizer<Value> valueDataExternalizer) throws IOException {
+                        DataExternalizer<Value> valueDataExternalizer,
+                        boolean psiBasedIndex
+                        ) throws IOException {
     myIndexId = indexId;
     myIndexer = indexer;
     myStorage = storage;
@@ -91,6 +98,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     mySnapshotIndexExternalizer = snapshotIndexExternalizer;
     myValueExternalizer = valueDataExternalizer;
     myContents = createContentsIndex();
+    myIsPsiBackedIndex = psiBasedIndex;
   }
 
   private PersistentHashMap<Integer, ByteSequence> createContentsIndex() throws IOException {
@@ -557,7 +565,34 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     return result;
   }
 
-  private static Integer getHashOfContent(FileContent content) throws IOException {
+  private Integer getHashOfContent(FileContent content) throws IOException {
+    if (myIsPsiBackedIndex && myHasSnapshotMapping && content instanceof FileContentImpl) {
+      // psi backed index should use existing psi to build index value (FileContentImpl.getPsiFileAccountingForUnsavedDocument())
+      // so we should use different bytes to calculate hash(Id)
+      Integer previouslyCalculatedUncommittedHashId = content.getUserData(ourSavedUncommittedHashIdKey);
+      
+      if (previouslyCalculatedUncommittedHashId == null) {
+        Document document = FileDocumentManager.getInstance().getCachedDocument(content.getFile());
+        
+        if (document != null) {  // if document is not committed
+          PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(content.getProject());
+          
+          if (psiDocumentManager.isUncommited(document)) {
+            PsiFile file = psiDocumentManager.getCachedPsiFile(document);
+            Charset charset = ((FileContentImpl)content).getCharset();
+            
+            if (file != null) {
+              previouslyCalculatedUncommittedHashId = ContentHashesSupport
+                .calcContentHashIdWithFileType(file.getText().getBytes(charset), charset,
+                                               content.getFileType());
+              content.putUserData(ourSavedUncommittedHashIdKey, previouslyCalculatedUncommittedHashId);
+            }
+          }
+        }
+      }
+      if (previouslyCalculatedUncommittedHashId != null) return previouslyCalculatedUncommittedHashId;
+    }
+      
     Integer previouslyCalculatedContentHashId = content.getUserData(ourSavedContentHashIdKey);
     if (previouslyCalculatedContentHashId == null) {
       byte[] hash = content instanceof FileContentImpl ? ((FileContentImpl)content).getHash():null;
@@ -616,6 +651,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   }
 
   private static final com.intellij.openapi.util.Key<Integer> ourSavedContentHashIdKey = com.intellij.openapi.util.Key.create("saved.content.hash.id");
+  private static final com.intellij.openapi.util.Key<Integer> ourSavedUncommittedHashIdKey = com.intellij.openapi.util.Key.create("saved.uncommitted.hash.id");
 
   protected void updateWithMap(final int inputId,
                                int savedInputId, @NotNull Map<Key, Value> newData,

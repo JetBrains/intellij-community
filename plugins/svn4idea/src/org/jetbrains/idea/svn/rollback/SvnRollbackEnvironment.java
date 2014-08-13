@@ -37,8 +37,10 @@ import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.properties.PropertiesMap;
 import org.jetbrains.idea.svn.properties.PropertyConsumer;
 import org.jetbrains.idea.svn.properties.PropertyData;
-import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
@@ -312,7 +314,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
       if (info.isFile()) {
         doRevert(file, false);
       } else {
-        if (SVNProperty.SCHEDULE_ADD.equals(info.getSchedule())) {
+        if (Info.SCHEDULE_ADD.equals(info.getSchedule())) {
           doRevert(file, true);
         } else {
           boolean is17OrGreater = is17OrGreaterCopy(file, info);

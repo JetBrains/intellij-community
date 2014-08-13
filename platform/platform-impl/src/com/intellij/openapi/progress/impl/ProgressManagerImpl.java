@@ -17,7 +17,6 @@ package com.intellij.openapi.progress.impl;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -46,7 +45,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class ProgressManagerImpl extends ProgressManager implements Disposable{
+public class ProgressManagerImpl extends ProgressManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.impl.ProgressManagerImpl");
   private final AtomicInteger myCurrentUnsafeProgressCount = new AtomicInteger(0);
   private final AtomicInteger myCurrentModalProgressCount = new AtomicInteger(0);
@@ -55,7 +54,7 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
   private static final boolean DISABLED = "disabled".equals(System.getProperty("idea.ProcessCanceledException"));
   private final ScheduledFuture<?> myCheckCancelledFuture;
 
-  public ProgressManagerImpl(Application application) {
+  public ProgressManagerImpl() {
     if (DISABLED) {
       myCheckCancelledFuture = null;
     }
@@ -501,10 +500,6 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
 
   @Override
   public void dispose() {
-    stopCheckCanceled();
-  }
-
-  private void stopCheckCanceled() {
     if (myCheckCancelledFuture != null) myCheckCancelledFuture.cancel(false);
   }
 

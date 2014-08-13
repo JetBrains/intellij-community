@@ -76,7 +76,7 @@
       <reference id="Vcs.ShowTabbedFileHistory"/>
       <reference id="Vcs.ShowHistoryForBlock"/>
       <reference id="Annotate"/>
-      <action id="Subversion.Copy" class="org.jetbrains.idea.svn.actions.CreateBranchOrTagAction"/>
+      <action id="Subversion.Copy" class="org.jetbrains.idea.svn.branchConfig.CreateBranchOrTagAction"/>
       <separator/>
       <action id="Subversion.Lock" class="org.jetbrains.idea.svn.actions.LockAction"/>
       <action id="Subversion.Unlock" class="org.jetbrains.idea.svn.actions.UnlockAction"/>
@@ -122,16 +122,16 @@
     <applicationService serviceInterface="org.jetbrains.idea.svn.SvnApplicationSettings"
                         serviceImplementation="org.jetbrains.idea.svn.SvnApplicationSettings"/>
     <projectService serviceImplementation="org.jetbrains.idea.svn.SvnConfiguration"/>
-    <projectService serviceInterface="org.jetbrains.idea.svn.SvnBranchConfigurationManager"
-                    serviceImplementation="org.jetbrains.idea.svn.SvnBranchConfigurationManager"/>
+    <projectService serviceInterface="org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager"
+                    serviceImplementation="org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager"/>
     <projectService serviceInterface="org.jetbrains.idea.svn.history.LoadedRevisionsCache"
                     serviceImplementation="org.jetbrains.idea.svn.history.LoadedRevisionsCache"/>
     <projectService serviceInterface="org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache"
                     serviceImplementation="org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache"/>
-    <projectService serviceInterface="org.jetbrains.idea.svn.SvnLoadedBrachesStorage"
-                    serviceImplementation="org.jetbrains.idea.svn.SvnLoadedBrachesStorage"/>
-    <applicationService serviceInterface="org.jetbrains.idea.svn.SvnBranchMapperManager"
-      serviceImplementation="org.jetbrains.idea.svn.SvnBranchMapperManager"/>
+    <projectService serviceInterface="org.jetbrains.idea.svn.branchConfig.SvnLoadedBranchesStorage"
+                    serviceImplementation="org.jetbrains.idea.svn.branchConfig.SvnLoadedBranchesStorage"/>
+    <applicationService serviceInterface="org.jetbrains.idea.svn.branchConfig.SvnBranchMapperManager"
+      serviceImplementation="org.jetbrains.idea.svn.branchConfig.SvnBranchMapperManager"/>
     <applicationService serviceInterface="org.jetbrains.idea.svn.dialogs.browserCache.SvnRepositoryCache"
       serviceImplementation="org.jetbrains.idea.svn.dialogs.browserCache.SvnRepositoryCache"/>
     <applicationService serviceInterface="org.jetbrains.idea.svn.dialogs.browserCache.Loader"

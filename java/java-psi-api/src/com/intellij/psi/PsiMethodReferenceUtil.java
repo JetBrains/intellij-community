@@ -324,7 +324,8 @@ public class PsiMethodReferenceUtil {
     LOG.assertTrue(signature != null);
     final PsiType[] parameterTypes = signature.getParameterTypes();
     final QualifierResolveResult qualifierResolveResult = getQualifierResolveResult(methodRef);
-    return (method.getParameterList().getParametersCount() + 1 == parameterTypes.length || method.isVarArgs() && parameterTypes.length > 0)&&
+    return (method.getParameterList().getParametersCount() + 1 == parameterTypes.length ||
+            method.isVarArgs() && parameterTypes.length > 0 && !method.hasModifierProperty(PsiModifier.STATIC)) &&
            hasReceiver(parameterTypes, qualifierResolveResult, methodRef);
   }
 

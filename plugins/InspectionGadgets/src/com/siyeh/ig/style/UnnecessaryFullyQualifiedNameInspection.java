@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -205,11 +206,8 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
         return;
       }
       final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(reference.getProject());
-      if (styleSettings.USE_FQ_CLASS_NAMES_IN_JAVADOC) {
-        final PsiElement containingComment = PsiTreeUtil.getParentOfType(reference, PsiDocComment.class);
-        if (containingComment != null) {
-          return;
-        }
+      if (acceptFullyQualifiedNamesInJavadoc(reference, styleSettings)) {
+        return;
       }
       final PsiFile containingFile = reference.getContainingFile();
       if (!(containingFile instanceof PsiJavaFile)) {
@@ -260,5 +258,15 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
         rParent = rParent.getParent();
       }
     }
+  }
+
+  public static boolean acceptFullyQualifiedNamesInJavadoc(PsiJavaCodeReferenceElement reference, CodeStyleSettings styleSettings) {
+    final PsiDocComment containingComment = PsiTreeUtil.getParentOfType(reference, PsiDocComment.class);
+    if (containingComment != null) {
+      if (styleSettings.USE_FQ_CLASS_NAMES_IN_JAVADOC || JavaDocUtil.isInsidePackageInfo(containingComment)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

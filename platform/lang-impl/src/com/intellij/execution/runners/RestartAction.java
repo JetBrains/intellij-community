@@ -15,37 +15,32 @@
  */
 package com.intellij.execution.runners;
 
-import com.intellij.execution.*;
-import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.Executor;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 
+@Deprecated
+/**
+ * to remove in IDEA 15
+ */
 public class RestartAction extends FakeRerunAction implements DumbAware, AnAction.TransparentUpdate, Disposable {
-  private final ProgramRunner myRunner;
-  @NotNull private final RunContentDescriptor myDescriptor;
-  @NotNull private final Executor myExecutor;
+  private final RunContentDescriptor myDescriptor;
   private final ExecutionEnvironment myEnvironment;
 
-  public RestartAction(@NotNull Executor executor,
-                       @NotNull RunContentDescriptor descriptor,
-                       @NotNull ExecutionEnvironment environment) {
+  public RestartAction(@NotNull RunContentDescriptor descriptor, @NotNull ExecutionEnvironment environment) {
     //noinspection deprecation
-    this(executor, null, descriptor, environment);
+    this(environment.getExecutor(), null, descriptor, environment);
   }
 
   @Deprecated
@@ -53,100 +48,33 @@ public class RestartAction extends FakeRerunAction implements DumbAware, AnActio
    * @deprecated environment must provide runner id
    * to remove in IDEA 15
    */
-  public RestartAction(@NotNull Executor executor,
+  public RestartAction(@SuppressWarnings("UnusedParameters") @NotNull Executor executor,
                        @Nullable ProgramRunner runner,
                        @NotNull RunContentDescriptor descriptor,
                        @NotNull ExecutionEnvironment environment) {
     Disposer.register(descriptor, this);
-    registry.add(this);
+    FakeRerunAction.registry.add(this);
 
-    myEnvironment = environment;
+    myEnvironment = runner == null ? environment : RunContentBuilder.fix(environment, runner);
     getTemplatePresentation().setEnabled(false);
-    myRunner = runner;
     myDescriptor = descriptor;
-    myExecutor = executor;
-    // see IDEADEV-698
-
-    if (descriptor.getRestarter() == null) {
-      descriptor.setRestarter(new Runnable() {
-        @Override
-        public void run() {
-          restart();
-        }
-      });
-    }
   }
 
   @Override
   public void dispose() {
-    registry.remove(this);
-  }
-
-  @Nullable
-  static RestartAction findActualAction() {
-    if (registry.isEmpty()) {
-      return null;
-    }
-
-    List<RestartAction> candidates = new ArrayList<RestartAction>(registry);
-    Collections.sort(candidates, new Comparator<RestartAction>() {
-      @Override
-      public int compare(@NotNull RestartAction action1, @NotNull RestartAction action2) {
-        boolean isActive1 = action1.isEnabled();
-        boolean isActive2 = action2.isEnabled();
-        if (isActive1 != isActive2)
-          return isActive1? - 1 : 1;
-        Window window1 = SwingUtilities.windowForComponent(action1.myDescriptor.getComponent());
-        Window window2 = SwingUtilities.windowForComponent(action2.myDescriptor.getComponent());
-        if (window1 == null)
-          return 1;
-        if (window2 == null)
-          return -1;
-        boolean showing1 = action1.myDescriptor.getComponent().isShowing();
-        boolean showing2 = action2.myDescriptor.getComponent().isShowing();
-        if (showing1 && !showing2)
-          return -1;
-        if (showing2 && !showing1)
-          return 1;
-        return (window1.isActive() ? -1 : 1);
-      }
-    });
-    return candidates.get(0);
+    FakeRerunAction.registry.remove(this);
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
-    restart();
-  }
-
-  public void restart() {
-    Project project = myEnvironment.getProject();
-    if (!ExecutorRegistry.getInstance().isStarting(project, myExecutor.getId(), getRunnerId())) {
-      ProgramRunner runner = myRunner == null ? RunnerRegistry.getInstance().findRunnerById(myEnvironment.getRunnerId()) : myRunner;
-      ExecutionManager.getInstance(project).restartRunProfile(runner, myEnvironment, myDescriptor);
-    }
-  }
-
-  private String getRunnerId() {
-    return myRunner == null ? myEnvironment.getRunnerId() : myRunner.getRunnerId();
+  @NotNull
+  protected RunContentDescriptor getDescriptor(AnActionEvent event) {
+    return myDescriptor;
   }
 
   @Override
-  public void update(final AnActionEvent event) {
-    final Presentation presentation = event.getPresentation();
-    String name = myEnvironment.getRunProfile().getName();
-    ProcessHandler processHandler = myDescriptor.getProcessHandler();
-    final boolean isRunning = processHandler != null && !processHandler.isProcessTerminated();
-
-    presentation.setText(ExecutionBundle.message("rerun.configuration.action.name", name));
-    presentation.setIcon(isRunning ? AllIcons.Actions.Restart : myExecutor.getIcon());
-    presentation.setEnabled(isEnabled());
-  }
-
-  boolean isEnabled() {
-    ProcessHandler processHandler = myDescriptor.getProcessHandler();
-    return !ExecutorRegistry.getInstance().isStarting(myEnvironment.getProject(), myExecutor.getId(), getRunnerId()) &&
-           !(processHandler != null && processHandler.isProcessTerminating());
+  @NotNull
+  protected ExecutionEnvironment getEnvironment(AnActionEvent event) {
+    return myEnvironment;
   }
 
   public void registerShortcut(JComponent component) {

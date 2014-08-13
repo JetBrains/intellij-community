@@ -144,6 +144,16 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
     myRemoteSdkProperties.setInitialized(initialized);
   }
 
+  @Override
+  public boolean isValid() {
+    return myRemoteSdkProperties.isValid();
+  }
+
+  @Override
+  public void setValid(boolean valid) {
+    myRemoteSdkProperties.setValid(valid);
+  }
+
   public static boolean isRemoteSdk(@Nullable String path) {
     if (path != null) {
       return path.startsWith(SSH_PREFIX) || path.startsWith(RemoteConnectionCredentialsWrapper.VAGRANT_PREFIX) ||

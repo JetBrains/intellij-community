@@ -21,6 +21,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
+import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -40,12 +41,15 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Set;
@@ -91,7 +95,7 @@ public class ActionsTree {
             }
           }
         }
-        
+
       }
     };
     myTree.setRootVisible(false);
@@ -99,6 +103,36 @@ public class ActionsTree {
 
     myTree.putClientProperty(WideSelectionTreeUI.STRIPED_CLIENT_PROPERTY, Boolean.TRUE);
     myTree.setCellRenderer(new KeymapsRenderer());
+    myTree.addMouseMotionListener(new MouseMotionAdapter() {
+      @Override
+      public void mouseMoved(MouseEvent e) {
+        String description = getDescription(e);
+        if (description != null) {
+          ActionMenu.showDescriptionInStatusBar(true, myTree, description);
+        }
+        else {
+          ActionMenu.showDescriptionInStatusBar(false, myTree, null);
+        }
+      }
+
+      @Nullable
+      private String getDescription(@NotNull MouseEvent e) {
+        TreePath path = myTree.getPathForLocation(e.getX(), e.getY());
+        if (path == null) return null;
+
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+        if (node == null) return null;
+
+        Object userObject = node.getUserObject();
+        if (!(userObject instanceof String)) return null;
+
+        String actionId = (String)userObject;
+        AnAction action = ActionManager.getInstance().getActionOrStub(actionId);
+        if (action == null) return null;
+
+        return action.getTemplatePresentation().getDescription();
+      }
+    });
 
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
@@ -447,6 +481,7 @@ public class ActionsTree {
       Icon icon = null;
       String text;
       boolean bound = false;
+      setToolTipText(null);
 
       if (value instanceof DefaultMutableTreeNode) {
         Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
@@ -474,6 +509,7 @@ public class ActionsTree {
             if (actionIcon != null) {
               icon = actionIcon;
             }
+            setToolTipText(action.getTemplatePresentation().getDescription());
           }
           else {
             text = actionId;
@@ -521,7 +557,7 @@ public class ActionsTree {
       }
     }
   }
-  
+
   private void paintRowData(Tree tree, Object data, Rectangle bounds, Graphics2D g) {
     Shortcut[] shortcuts = null;
     Set<String> abbreviations = null;
@@ -552,7 +588,7 @@ public class ActionsTree {
       Color c2 = new Color(208, 200, 66);
 
       g.translate(0, bounds.y - 1);
-      
+
       for (Shortcut shortcut : shortcuts) {
         int width = metrics.stringWidth(KeymapUtil.getShortcutText(shortcut));
         UIUtil.drawSearchMatch(g, x, x + width, bounds.height, c1, c2);

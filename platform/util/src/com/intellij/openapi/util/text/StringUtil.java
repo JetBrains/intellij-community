@@ -1331,6 +1331,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   public static boolean isQuotedString(@NotNull String text) {
+    if (text.length() < 2) return false;
     return startsWithChar(text, '\"') && endsWithChar(text, '\"')
            || startsWithChar(text, '\'') && endsWithChar(text, '\'');
   }

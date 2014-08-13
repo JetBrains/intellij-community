@@ -6763,8 +6763,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public Insets getBorderInsets(Component c) {
       Container splitters = SwingUtilities.getAncestorOfClass(EditorsSplitters.class, c);
       boolean thereIsSomethingAbove = !SystemInfo.isMac || UISettings.getInstance().SHOW_MAIN_TOOLBAR || UISettings.getInstance().SHOW_NAVIGATION_BAR ||
-                                      myProject != null && !ToolWindowManagerEx.getInstanceEx(myProject).getIdsOn(ToolWindowAnchor.TOP).isEmpty();
+                                      toolWindowIsNotEmpty();
       return splitters == null ? super.getBorderInsets(c) : new Insets(thereIsSomethingAbove ? 1 : 0, 0, 0, 0);
+    }
+
+    public boolean toolWindowIsNotEmpty() {
+      if (myProject == null) return false;
+      ToolWindowManagerEx m = ToolWindowManagerEx.getInstanceEx(myProject);
+      if (m == null) return false;
+      return !m.getIdsOn(ToolWindowAnchor.TOP).isEmpty();
     }
 
     @Override

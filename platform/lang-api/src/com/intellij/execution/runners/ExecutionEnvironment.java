@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static com.intellij.openapi.actionSystem.LangDataKeys.*;
 
-public class ExecutionEnvironment extends UserDataHolderBase {
+public class ExecutionEnvironment extends UserDataHolderBase implements Disposable {
   private static final AtomicLong myIdHolder = new AtomicLong(1L);
 
   @NotNull private final Project myProject;
@@ -52,6 +52,7 @@ public class ExecutionEnvironment extends UserDataHolderBase {
   @Nullable private final RunnerAndConfigurationSettings myRunnerAndConfigurationSettings;
   @Nullable private RunContentDescriptor myContentToReuse;
   @Nullable private String myRunnerId;
+  @Nullable final ProgramRunner<?> myRunner;
   private long myExecutionId = 0;
   @Nullable private DataContext myDataContext;
 
@@ -61,6 +62,7 @@ public class ExecutionEnvironment extends UserDataHolderBase {
     myContentToReuse = null;
     myRunnerAndConfigurationSettings = null;
     myExecutor = null;
+    myRunner = null;
   }
 
   public ExecutionEnvironment(@NotNull Executor executor,
@@ -75,7 +77,8 @@ public class ExecutionEnvironment extends UserDataHolderBase {
          configuration.getConfigurationSettings(runner),
          null,
          null,
-         runner.getRunnerId());
+         null,
+         runner);
   }
 
   /**
@@ -95,7 +98,9 @@ public class ExecutionEnvironment extends UserDataHolderBase {
          configuration.getRunnerSettings(runner),
          configuration.getConfigurationSettings(runner),
          null,
-         configuration, runner.getRunnerId());
+         configuration,
+         null,
+         runner);
   }
 
   /**
@@ -106,9 +111,12 @@ public class ExecutionEnvironment extends UserDataHolderBase {
                               @NotNull Executor executor,
                               @NotNull Project project,
                               @Nullable RunnerSettings runnerSettings) {
-    this(runProfile, executor, DefaultExecutionTarget.INSTANCE, project, runnerSettings, null, null, null, null);
+    this(runProfile, executor, DefaultExecutionTarget.INSTANCE, project, runnerSettings, null, null, null, null, null);
   }
 
+  /**
+   * Don't use, use {@link com.intellij.execution.runners.ExecutionEnvironmentBuilder} instead
+   */
   public ExecutionEnvironment(@NotNull RunProfile runProfile,
                               @NotNull Executor executor,
                               @NotNull ExecutionTarget target,
@@ -117,24 +125,24 @@ public class ExecutionEnvironment extends UserDataHolderBase {
                               @Nullable ConfigurationPerRunnerSettings configurationSettings,
                               @Nullable RunContentDescriptor contentToReuse,
                               @Nullable RunnerAndConfigurationSettings settings,
-                              @Nullable String runnerId) {
+                              @Nullable String runnerId,
+                              @Nullable ProgramRunner<?> runner) {
     myExecutor = executor;
     myTarget = target;
     myRunProfile = runProfile;
     myRunnerSettings = runnerSettings;
     myConfigurationSettings = configurationSettings;
     myProject = project;
-    myContentToReuse = contentToReuse;
+    setContentToReuse(contentToReuse);
     myRunnerAndConfigurationSettings = settings;
-    myRunnerId = runnerId;
-    if (myContentToReuse != null) {
-      Disposer.register(myContentToReuse, new Disposable() {
-        @Override
-        public void dispose() {
-          myContentToReuse = null;
-        }
-      });
-    }
+
+    myRunner = runner;
+    myRunnerId = runner == null ? runnerId : runner.getRunnerId();
+  }
+
+  @Override
+  public void dispose() {
+    myContentToReuse = null;
   }
 
   @NotNull
@@ -162,9 +170,22 @@ public class ExecutionEnvironment extends UserDataHolderBase {
     return myContentToReuse;
   }
 
+  public void setContentToReuse(@Nullable RunContentDescriptor contentToReuse) {
+    myContentToReuse = contentToReuse;
+
+    if (contentToReuse != null) {
+      Disposer.register(contentToReuse, this);
+    }
+  }
+
   @Nullable
   public String getRunnerId() {
     return myRunnerId;
+  }
+
+  @Nullable
+  public ProgramRunner<?> getRunner() {
+    return myRunner == null ? RunnerRegistry.getInstance().findRunnerById(getRunnerId()) : myRunner;
   }
 
   @Nullable

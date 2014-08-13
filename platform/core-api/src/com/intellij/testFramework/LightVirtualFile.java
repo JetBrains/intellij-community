@@ -19,10 +19,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.CharsetUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.*;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -113,7 +110,7 @@ public class LightVirtualFile extends VirtualFile {
     myOriginalFile = originalFile;
   }
 
-  private static class MyVirtualFileSystem extends DeprecatedVirtualFileSystem {
+  private static class MyVirtualFileSystem extends DeprecatedVirtualFileSystem implements NonPhysicalFileSystem{
     @NonNls private static final String PROTOCOL = "mock";
 
     private MyVirtualFileSystem() {

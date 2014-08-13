@@ -42,7 +42,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.ListItemDescriptor;
+import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
@@ -143,7 +143,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
         updateSelection();
       }
     });
-    myProjectTypeList.setCellRenderer(new GroupedItemsListRenderer(new ListItemDescriptor<TemplatesGroup>() {
+    myProjectTypeList.setCellRenderer(new GroupedItemsListRenderer(new ListItemDescriptorAdapter<TemplatesGroup>() {
       @Nullable
       @Override
       public String getTextFor(TemplatesGroup value) {
@@ -170,12 +170,6 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
         if (upper.getParentGroup() == null && value.getParentGroup() == null) return true;
         return !Comparing.equal(upper.getParentGroup(), value.getParentGroup()) &&
                !Comparing.equal(upper.getName(), value.getParentGroup());
-      }
-
-      @Nullable
-      @Override
-      public String getCaptionAboveOf(TemplatesGroup value) {
-        return null;
       }
     }) {
       @Override

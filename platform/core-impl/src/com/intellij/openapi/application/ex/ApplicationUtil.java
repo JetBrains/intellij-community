@@ -35,6 +35,12 @@ public class ApplicationUtil {
     throw new CannotRunReadActionException();
   }
 
+  public static void tryRunReadAction(@NotNull final Runnable computable) throws CannotRunReadActionException {
+    if (!((ApplicationEx)ApplicationManager.getApplication()).tryRunReadAction(computable)) {
+      throw new CannotRunReadActionException();
+    }
+  }
+
   public static class CannotRunReadActionException extends RuntimeException{
     @Override
     public Throwable fillInStackTrace() {

@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.info.Info;
-import org.jetbrains.idea.svn.integrate.SvnBranchItem;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -98,7 +97,7 @@ public class SvnBranchConfigurationNew {
       LOG.info("Branches list not updated for : '" + branchParentName + "; since config has changed.");
       return;
     }
-    current.accept(items, null);
+    current.accept(items);
   }
 
   public Map<String, InfoStorage<List<SvnBranchItem>>> getBranchMap() {

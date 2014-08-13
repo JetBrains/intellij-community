@@ -741,7 +741,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       myActiveStack.push(id);
     }
 
-    if (autoFocusContents) {
+    if (autoFocusContents && ApplicationManager.getApplication().isActive()) {
       appendRequestFocusInToolWindowCmd(id, commandsList, forcedFocusRequest);
     }
   }

@@ -80,7 +80,7 @@ public abstract class BeforeRunTaskProvider<T extends BeforeRunTask> {
 
   @Nullable
   public static <T extends BeforeRunTask> BeforeRunTaskProvider<T> getProvider(Project project, Key<T> key) {
-    BeforeRunTaskProvider<BeforeRunTask>[] providers = Extensions.getExtensions(BeforeRunTaskProvider.EXTENSION_POINT_NAME, project);
+    BeforeRunTaskProvider<BeforeRunTask>[] providers = Extensions.getExtensions(EXTENSION_POINT_NAME, project);
     for (BeforeRunTaskProvider<BeforeRunTask> provider : providers) {
       if (provider.getId() == key)
         return (BeforeRunTaskProvider<T>)provider;

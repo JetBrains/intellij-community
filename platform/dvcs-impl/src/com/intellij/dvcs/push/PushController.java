@@ -208,7 +208,7 @@ public class PushController implements Disposable {
     Map<Repository, PushSpec> pushSpecs = new HashMap<Repository, PushSpec>();
     Collection<MyRepoModel> repositoriesInformation = getSelectedRepoNode();
     for (MyRepoModel repoModel : repositoriesInformation) {
-      if (repoModel.getSupport().equals(pushSupport)) {
+      if (pushSupport.equals(repoModel.getSupport())) {
         pushSpecs.put(repoModel.getRepository(), repoModel.getSpec());
       }
     }
@@ -281,19 +281,30 @@ public class PushController implements Disposable {
   public List<VcsPushOptionsPanel> getAdditionalPanels() {
     List<VcsPushOptionsPanel> additionalPanels = new ArrayList<VcsPushOptionsPanel>();
     for (final PushSupport support : myPushSupports) {
-      final VcsPushOptionsPanel panel = support.getVcsPushOptionsPanel();
-      if (panel != null) {
-        additionalPanels.add(panel);
-        myAdditionalValuesMap.put(support, new MyPushOptionValueModel(panel.getValue()));
-        panel.addValueChangeListener(new ActionListener() {
-          @Override
-          public void actionPerformed(ActionEvent e) {
-            myAdditionalValuesMap.get(support).setCurrentValue(panel.getValue());
-          }
-        });
+      if (hasRepoForPushSupport(support)) {
+        final VcsPushOptionsPanel panel = support.getVcsPushOptionsPanel();
+        if (panel != null) {
+          additionalPanels.add(panel);
+          myAdditionalValuesMap.put(support, new MyPushOptionValueModel(panel.getValue()));
+          panel.addValueChangeListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+              myAdditionalValuesMap.get(support).setCurrentValue(panel.getValue());
+            }
+          });
+        }
       }
     }
     return additionalPanels;
+  }
+
+  private boolean hasRepoForPushSupport(@NotNull PushSupport support) {
+    for (MyRepoModel model : myView2Model.values()) {
+      if (support.equals(model.getSupport())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static class MyRepoModel {

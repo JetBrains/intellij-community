@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,8 +47,6 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 
@@ -536,9 +534,9 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   protected void doSort() {
     Pair<ElementNode, List<ElementNode>> pair = storeSelection();
 
-    Enumeration<ParentNode> children = getRootNodeChildren();
+    Enumeration<TreeNode> children = getRootNodeChildren();
     while (children.hasMoreElements()) {
-      ParentNode classNode = children.nextElement();
+      ParentNode classNode = (ParentNode)children.nextElement();
       sortNode(classNode, myComparator);
       myTreeModel.nodeStructureChanged(classNode);
     }
@@ -548,9 +546,9 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
   private static void sortNode(ParentNode node, final Comparator<ElementNode> sortComparator) {
     ArrayList<MemberNode> arrayList = new ArrayList<MemberNode>();
-    Enumeration<MemberNode> children = node.children();
+    Enumeration<TreeNode> children = node.children();
     while (children.hasMoreElements()) {
-      arrayList.add(children.nextElement());
+      arrayList.add((MemberNode)children.nextElement());
     }
 
     Collections.sort(arrayList, sortComparator);
@@ -571,16 +569,16 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     DefaultMutableTreeNode root = getRootNode();
     if (!myShowClasses || myContainerNodes.isEmpty()) {
       List<ParentNode> otherObjects = new ArrayList<ParentNode>();
-      Enumeration<ParentNode> children = getRootNodeChildren();
+      Enumeration<TreeNode> children = getRootNodeChildren();
       ParentNode newRoot = new ParentNode(null, new MemberChooserObjectBase(getAllContainersNodeName()), new Ref<Integer>(0));
       while (children.hasMoreElements()) {
-        final ParentNode nextElement = children.nextElement();
+        final ParentNode nextElement = (ParentNode)children.nextElement();
         if (nextElement instanceof ContainerNode) {
           final ContainerNode containerNode = (ContainerNode)nextElement;
-          Enumeration<MemberNode> memberNodes = containerNode.children();
+          Enumeration<TreeNode> memberNodes = containerNode.children();
           List<MemberNode> memberNodesList = new ArrayList<MemberNode>();
           while (memberNodes.hasMoreElements()) {
-            memberNodesList.add(memberNodes.nextElement());
+            memberNodesList.add((MemberNode)memberNodes.nextElement());
           }
           for (MemberNode memberNode : memberNodesList) {
             newRoot.add(memberNode);
@@ -595,13 +593,13 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
       if (newRoot.children().hasMoreElements()) root.add(newRoot);
     }
     else {
-      Enumeration<ParentNode> children = getRootNodeChildren();
+      Enumeration<TreeNode> children = getRootNodeChildren();
       while (children.hasMoreElements()) {
-        ParentNode allClassesNode = children.nextElement();
-        Enumeration<MemberNode> memberNodes = allClassesNode.children();
+        ParentNode allClassesNode = (ParentNode)children.nextElement();
+        Enumeration<TreeNode> memberNodes = allClassesNode.children();
         ArrayList<MemberNode> arrayList = new ArrayList<MemberNode>();
         while (memberNodes.hasMoreElements()) {
-          arrayList.add(memberNodes.nextElement());
+          arrayList.add((MemberNode)memberNodes.nextElement());
         }
         Collections.sort(arrayList, myComparator);
         for (MemberNode memberNode : arrayList) {
@@ -626,7 +624,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     return IdeBundle.message("node.memberchooser.all.classes");
   }
 
-  private Enumeration<ParentNode> getRootNodeChildren() {
+  private Enumeration<TreeNode> getRootNodeChildren() {
     return getRootNode().children();
   }
 

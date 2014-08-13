@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package com.intellij.execution.runners;
 
-import com.intellij.execution.DefaultExecutionTarget;
-import com.intellij.execution.ExecutionTarget;
-import com.intellij.execution.Executor;
-import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunnerSettings;
@@ -42,6 +39,7 @@ public final class ExecutionEnvironmentBuilder {
   @Nullable private RunContentDescriptor myContentToReuse;
   @Nullable private RunnerAndConfigurationSettings myRunnerAndConfigurationSettings;
   @Nullable private String myRunnerId;
+  private ProgramRunner<?> myRunner;
   private boolean myAssignNewId;
   @NotNull private Executor myExecutor;
   @Nullable private DataContext myDataContext;
@@ -49,6 +47,41 @@ public final class ExecutionEnvironmentBuilder {
   public ExecutionEnvironmentBuilder(@NotNull Project project, @NotNull Executor executor) {
     myProject = project;
     myExecutor = executor;
+  }
+
+  @NotNull
+  public static ExecutionEnvironmentBuilder create(@NotNull Project project, @NotNull Executor executor, @NotNull RunProfile runProfile) throws ExecutionException {
+    ExecutionEnvironmentBuilder builder = createOrNull(project, executor, runProfile);
+    if (builder == null) {
+      throw new ExecutionException("Cannot find runner for " + runProfile.getName());
+    }
+    return builder;
+  }
+
+  @Nullable
+  public static ExecutionEnvironmentBuilder createOrNull(@NotNull Project project, @NotNull Executor executor, @NotNull RunProfile runProfile) {
+    ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), runProfile);
+    if (runner == null) {
+      return null;
+    }
+    return new ExecutionEnvironmentBuilder(project, executor).runner(runner).runProfile(runProfile);
+  }
+
+  @Nullable
+  public static ExecutionEnvironmentBuilder createOrNull(@NotNull Executor executor, @NotNull RunnerAndConfigurationSettings settings) {
+    ExecutionEnvironmentBuilder builder = createOrNull(settings.getConfiguration().getProject(), executor, settings.getConfiguration());
+    return builder == null ? null : builder.runnerAndSettings(builder.myRunner, settings);
+  }
+
+  @NotNull
+  public static ExecutionEnvironmentBuilder create(@NotNull Executor executor, @NotNull RunnerAndConfigurationSettings settings) throws ExecutionException {
+    ExecutionEnvironmentBuilder builder = create(settings.getConfiguration().getProject(), executor, settings.getConfiguration());
+    return builder.runnerAndSettings(builder.myRunner, settings);
+  }
+
+  @NotNull
+  Executor getExecutor() {
+    return myExecutor;
   }
 
   /**
@@ -64,28 +97,9 @@ public final class ExecutionEnvironmentBuilder {
     myRunnerSettings = copySource.getRunnerSettings();
     myConfigurationSettings = copySource.getConfigurationSettings();
     myRunnerId = copySource.getRunnerId();
+    myRunner = copySource.myRunner;
     myContentToReuse = copySource.getContentToReuse();
     myExecutor = copySource.getExecutor();
-  }
-
-  @NotNull
-  public static ExecutionEnvironment fix(@NotNull ExecutionEnvironment environment, @Nullable RunContentDescriptor contentToReuse) {
-    if (environment.getContentToReuse() == contentToReuse) {
-      return environment;
-    }
-    else {
-      return new ExecutionEnvironmentBuilder(environment).contentToReuse(contentToReuse).build();
-    }
-  }
-
-  @NotNull
-  public static ExecutionEnvironment fix(@NotNull ExecutionEnvironment environment, @NotNull ProgramRunner runner) {
-    if (runner.getRunnerId().equals(environment.getRunnerId())) {
-      return environment;
-    }
-    else {
-      return new ExecutionEnvironmentBuilder(environment).runnerId(runner.getRunnerId()).build();
-    }
   }
 
   @SuppressWarnings("UnusedDeclaration")
@@ -104,6 +118,11 @@ public final class ExecutionEnvironmentBuilder {
     return this;
   }
 
+  public ExecutionEnvironmentBuilder activeTarget() {
+    myTarget = ExecutionTargetManager.getActiveTarget(myProject);
+    return this;
+  }
+
   @SuppressWarnings("UnusedDeclaration")
   @Deprecated
   /**
@@ -114,13 +133,13 @@ public final class ExecutionEnvironmentBuilder {
     return runnerAndSettings(programRunner, settings);
   }
 
-  public ExecutionEnvironmentBuilder runnerAndSettings(@NotNull ProgramRunner programRunner,
+  public ExecutionEnvironmentBuilder runnerAndSettings(@NotNull ProgramRunner runner,
                                                        @NotNull RunnerAndConfigurationSettings settings) {
     myRunnerAndConfigurationSettings = settings;
     myRunProfile = settings.getConfiguration();
-    myRunnerSettings = settings.getRunnerSettings(programRunner);
-    myConfigurationSettings = settings.getConfigurationSettings(programRunner);
-    myRunnerId = programRunner.getRunnerId();
+    myRunnerSettings = settings.getRunnerSettings(runner);
+    myConfigurationSettings = settings.getConfigurationSettings(runner);
+    myRunner = runner;
     return this;
   }
 
@@ -179,11 +198,12 @@ public final class ExecutionEnvironmentBuilder {
    * to remove in IDEA 15
    */
   public ExecutionEnvironmentBuilder setRunnerId(@Nullable String runnerId) {
-    return runnerId(runnerId);
+    myRunnerId = runnerId;
+    return this;
   }
 
-  public ExecutionEnvironmentBuilder runnerId(@Nullable String runnerId) {
-    myRunnerId = runnerId;
+  public ExecutionEnvironmentBuilder runner(@NotNull ProgramRunner<?> runner) {
+    myRunner = runner;
     return this;
   }
 
@@ -222,9 +242,12 @@ public final class ExecutionEnvironmentBuilder {
 
   @NotNull
   public ExecutionEnvironment build() {
-    ExecutionEnvironment environment =
-      new ExecutionEnvironment(myRunProfile, myExecutor, myTarget, myProject, myRunnerSettings, myConfigurationSettings, myContentToReuse,
-                               myRunnerAndConfigurationSettings, myRunnerId);
+    if (myRunner == null && myRunnerId == null) {
+      myRunner = RunnerRegistry.getInstance().getRunner(myExecutor.getId(), myRunProfile);
+    }
+
+    ExecutionEnvironment environment = new ExecutionEnvironment(myRunProfile, myExecutor, myTarget, myProject, myRunnerSettings, myConfigurationSettings, myContentToReuse,
+                                                                myRunnerAndConfigurationSettings, myRunnerId, myRunner);
     if (myAssignNewId) {
       environment.assignNewExecutionId();
     }

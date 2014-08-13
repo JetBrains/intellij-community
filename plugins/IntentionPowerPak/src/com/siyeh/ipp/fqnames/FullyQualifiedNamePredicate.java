@@ -21,6 +21,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.ImportUtils;
+import com.siyeh.ig.style.UnnecessaryFullyQualifiedNameInspection;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class FullyQualifiedNamePredicate implements PsiElementPredicate {
@@ -40,6 +41,11 @@ class FullyQualifiedNamePredicate implements PsiElementPredicate {
     if (PsiTreeUtil.getParentOfType(element, PsiImportStatementBase.class, PsiPackageStatement.class, JavaCodeFragment.class) != null) {
       return false;
     }
+    final Project project = element.getProject();
+    final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
+    if (UnnecessaryFullyQualifiedNameInspection.acceptFullyQualifiedNamesInJavadoc(referenceElement, codeStyleSettings)) {
+      return false;
+    }
     final PsiElement qualifier = referenceElement.getQualifier();
     if (!(qualifier instanceof PsiJavaCodeReferenceElement)) {
       return false;
@@ -50,8 +56,6 @@ class FullyQualifiedNamePredicate implements PsiElementPredicate {
       if (!(resolved instanceof PsiClass)) {
         return false;
       }
-      final Project project = element.getProject();
-      final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
       if (!codeStyleSettings.INSERT_INNER_CLASS_IMPORTS) {
         return false;
       }
