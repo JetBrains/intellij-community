@@ -86,11 +86,11 @@ public interface RunContentManager {
 
   void toFrontRunContent(Executor requestor, ProcessHandler handler);
 
-  void addRunContentListener(RunContentListener listener);
+  void addRunContentListener(@NotNull RunContentListener listener);
 
   void removeRunContentListener(RunContentListener listener);
 
-  void addRunContentListener(RunContentListener myContentListener, Executor executor);
+  void addRunContentListener(@NotNull RunContentListener myContentListener, Executor executor);
 
   @Nullable
   ToolWindow getToolWindowByDescriptor(@NotNull RunContentDescriptor descriptor);
