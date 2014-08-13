@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,11 @@
 package com.intellij.codeInsight.controlflow;
 
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Collection;
 
 /**
  * @author oleg
  */
-public interface Instruction {
-  @Nullable
-  PsiElement getElement();
-
-  Collection<Instruction> allSucc();
-
-  Collection<Instruction> allPred();
-
-  String getElementPresentation();
-
-  int num();
+public interface ConditionalInstruction extends Instruction {
+  boolean getResult();
+  PsiElement getCondition();
 }
