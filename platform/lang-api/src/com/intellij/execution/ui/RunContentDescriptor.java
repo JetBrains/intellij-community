@@ -46,9 +46,6 @@ public class RunContentDescriptor implements Disposable, DataProvider {
   private Computable<JComponent> myFocusComputable = null;
   private boolean myAutoFocusContent = false;
 
-  /**
-   * Used to hack {@link com.intellij.execution.runners.RestartAction}
-   */
   private Content myContent;
   private Runnable myRestarter;
 
@@ -135,25 +132,30 @@ public class RunContentDescriptor implements Disposable, DataProvider {
     return myHelpId;
   }
 
-  /**
-   * @see #myContent
-   */
-  public void setAttachedContent(final Content content) {
-    myContent = content;
-  }
-
-  /**
-   * @see #myContent
-   */
+  @Nullable
   public Content getAttachedContent() {
     return myContent;
   }
 
+  public void setAttachedContent(@NotNull Content content) {
+    myContent = content;
+  }
+
   @Nullable
+  @Deprecated
+  /**
+   * @deprecated Use {@link com.intellij.execution.runners.ExecutionUtil#restart(RunContentDescriptor)} instead
+   * to remove in IDEA 15
+   */
   public Runnable getRestarter() {
     return myRestarter;
   }
 
+  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
+  /**
+   * @deprecated to remove in IDEA 15
+   */
   public void setRestarter(@Nullable Runnable runnable) {
     myRestarter = runnable;
   }

@@ -28,7 +28,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public interface RunContentManager {
+  @SuppressWarnings("UnusedDeclaration")
   @Deprecated
+  /**
+   * @deprecated Use {@link LangDataKeys#RUN_CONTENT_DESCRIPTOR} instead
+   */
   DataKey<RunContentDescriptor> RUN_CONTENT_DESCRIPTOR = LangDataKeys.RUN_CONTENT_DESCRIPTOR;
 
   @Nullable

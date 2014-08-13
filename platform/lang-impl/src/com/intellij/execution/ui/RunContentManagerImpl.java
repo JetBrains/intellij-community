@@ -412,7 +412,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   public static void copyContentAndBehavior(@NotNull RunContentDescriptor descriptor, @Nullable RunContentDescriptor contentToReuse) {
     if (contentToReuse != null) {
       Content attachedContent = contentToReuse.getAttachedContent();
-      if (attachedContent.isValid()) {
+      if (attachedContent != null && attachedContent.isValid()) {
         descriptor.setAttachedContent(attachedContent);
       }
       if (contentToReuse.isReuseToolWindowActivation()) {
@@ -511,7 +511,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   }
 
   @Nullable
-  public static RunContentDescriptor getRunContentDescriptorByContent(@NotNull final Content content) {
+  private static RunContentDescriptor getRunContentDescriptorByContent(@NotNull final Content content) {
     return content.getUserData(DESCRIPTOR_KEY);
   }
 

@@ -391,6 +391,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
 
   private static void start(@NotNull ExecutionEnvironment environment) {
     if (environment.getRunner() == null) {
+      @SuppressWarnings("deprecation")
       Runnable restarter = environment.getContentToReuse() == null ? null : environment.getContentToReuse().getRestarter();
       if (restarter != null) {
         restarter.run();
