@@ -154,12 +154,6 @@ public class UpdateEventHandler implements ProgressTracker {
         mySequentialUpdatesContext.registerExternalRootBeingUpdated(event.getFile());
       }
       myExternalsCount++;
-      if (myUpdatedFiles.getGroupById(AbstractSvnUpdateIntegrateEnvironment.EXTERNAL_ID) == null) {
-        myUpdatedFiles.registerGroup(new FileGroup(SvnBundle.message("status.group.name.externals"),
-                                                   SvnBundle.message("status.group.name.externals"),
-                                                   false, AbstractSvnUpdateIntegrateEnvironment.EXTERNAL_ID, true));
-      }
-      addFileToGroup(AbstractSvnUpdateIntegrateEnvironment.EXTERNAL_ID, event);
       myText = SvnBundle.message("progress.text.updating.external.location", event.getFile().getAbsolutePath());
     }
     else if (event.getAction() == EventAction.RESTORE) {

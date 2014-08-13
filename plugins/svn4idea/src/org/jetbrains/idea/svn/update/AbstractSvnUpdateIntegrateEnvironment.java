@@ -46,7 +46,6 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
   protected final SvnVcs myVcs;
   private final ProjectLevelVcsManager myVcsManager;
   @NonNls public static final String REPLACED_ID = "replaced";
-  @NonNls public static final String EXTERNAL_ID = "external";
 
   protected AbstractSvnUpdateIntegrateEnvironment(final SvnVcs vcs) {
     myVcs = vcs;
