@@ -45,7 +45,10 @@ public class RefreshTaskAction extends DumbAwareAction {
                 if (listener != null) {
                   document.removeDocumentListener(listener);
                 }
-                document.deleteString(0, document.getLineEndOffset(document.getLineCount() - 1));
+                int lineCount = document.getLineCount();
+                if (lineCount != 0) {
+                  document.deleteString(0, document.getLineEndOffset(lineCount - 1));
+                }
                 StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
                 Course course = taskManager.getCourse();
                 assert course != null;
