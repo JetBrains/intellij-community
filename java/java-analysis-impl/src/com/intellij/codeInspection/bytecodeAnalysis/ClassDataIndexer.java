@@ -17,6 +17,7 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph;
+import com.intellij.codeInspection.bytecodeAnalysis.asm.LeakingParametersAnalysis;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.OriginsAnalysis;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -340,7 +341,9 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
                                                                                                                        MethodNode methodNode,
                                                                                                                        Type[] argumentTypes)
         throws AnalyzerException {
-        return (argumentTypes.length < 32 ? cfg.fastLeakingParameters(method.internalClassName, methodNode) : cfg.leakingParameters(method.internalClassName, methodNode));
+        return argumentTypes.length < 32 ?
+                LeakingParametersAnalysis.fastLeakingParameters(method.internalClassName, methodNode) :
+                LeakingParametersAnalysis.leakingParameters(method.internalClassName, methodNode);
       }
     }, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
