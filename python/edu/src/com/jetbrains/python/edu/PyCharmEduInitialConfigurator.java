@@ -25,10 +25,8 @@ import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.ide.util.TipDialog;
 import com.intellij.notification.EventLog;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
@@ -41,7 +39,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.wm.ToolWindowEP;
@@ -51,7 +48,6 @@ import com.intellij.platform.DirectoryProjectConfigurator;
 import com.intellij.platform.PlatformProjectViewOpener;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.jetbrains.python.PythonLanguage;
@@ -89,14 +85,17 @@ public class PyCharmEduInitialConfigurator {
                                        FileTypeManager fileTypeManager,
                                        final ProjectManagerEx projectManager,
                                        RecentProjectsManagerBase recentProjectsManager) {
-    if (!propertiesComponent.getBoolean(CONFIGURED, false)) {
+    //if (!propertiesComponent.getBoolean(CONFIGURED, false)) {
+    if (true) {
       propertiesComponent.setValue(CONFIGURED, "true");
-      recentProjectsManager.loadState(new RecentProjectsManagerBase.State());
       propertiesComponent.setValue("toolwindow.stripes.buttons.info.shown", "true");
       UISettings.getInstance().HIDE_TOOL_STRIPES = false;
       uiSettings.SHOW_MEMORY_INDICATOR = false;
       uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES = true;
+      uiSettings.SHOW_MAIN_TOOLBAR = false;
       codeInsightSettings.REFORMAT_ON_PASTE = CodeInsightSettings.NO_REFORMAT;
+
+      GeneralSettings.getInstance().setShowTipsOnStartup(false);
 
       EditorSettingsExternalizable.getInstance().setVirtualSpace(false);
       final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance().getCurrentSettings();
@@ -116,7 +115,7 @@ public class PyCharmEduInitialConfigurator {
           });
         }
       });
-      PyCodeInsightSettings.getInstance().SHOW_IMPORT_POPUP = false;
+      PyCodeInsightSettings.getInstance().SHOW_IMPORT_POPUP = true;
     }
     bus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
       @Override
@@ -148,7 +147,8 @@ public class PyCharmEduInitialConfigurator {
         //  public void run() {
         //    if (project.isDisposed()) return;
         //
-        //    ToolWindowManager.getInstance(project).invokeLater(new Runnable() {
+        //    ToolWindowManager
+        //      .getInstance(project).invokeLater(new Runnable() {
         //      int count = 0;
         //      public void run() {
         //        if (project.isDisposed()) return;
@@ -175,25 +175,14 @@ public class PyCharmEduInitialConfigurator {
   private static void onFirstProjectOpened(@NotNull final Project project) {
     // show python console
 
-
-    GeneralSettings.getInstance().setShowTipsOnStartup(true);
-
-    // show tips once
-    final Alarm alarm = new Alarm(project);
-    alarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        Disposer.dispose(alarm);
-        TipDialog.createForProject(project).show();
-      }
-    }, 2000, ModalityState.NON_MODAL);
   }
 
   private static void patchRootAreaExtensions() {
     ExtensionsArea rootArea = Extensions.getArea(null);
 
     for (ToolWindowEP ep : Extensions.getExtensions(ToolWindowEP.EP_NAME)) {
-      if (ToolWindowId.FAVORITES_VIEW.equals(ep.id) || ToolWindowId.TODO_VIEW.equals(ep.id) || EventLog.LOG_TOOL_WINDOW_ID.equals(ep.id)) {
+      if (ToolWindowId.FAVORITES_VIEW.equals(ep.id) || ToolWindowId.TODO_VIEW.equals(ep.id) || EventLog.LOG_TOOL_WINDOW_ID.equals(ep.id)
+          || "Structure".equals(ep.id)) {
         rootArea.getExtensionPoint(ToolWindowEP.EP_NAME).unregisterExtension(ep);
       }
     }

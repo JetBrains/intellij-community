@@ -24,8 +24,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.wm.IdeGlassPane;
@@ -287,8 +285,6 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     return false;
   }
 
-  private MouseEvent myLastRedispatchedEvent = null;
-
   private boolean preprocess(final MouseEvent e, final boolean motion, JRootPane eventRootPane) {
     try {
       final MouseEvent event = convertEvent(e, eventRootPane);
@@ -296,25 +292,6 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
       if (!IdeGlassPaneUtil.canBePreprocessed(e)) {
         return false;
       }
-
-      Component c = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
-      Balloon balloon = JBPopupFactory.getInstance().getParentBalloonFor(c);
-      if (balloon != null && myLastRedispatchedEvent != e) {
-        if (e.getID() == MouseEvent.MOUSE_PRESSED
-            && IdeTooltipManager.getInstance().hasCurrent()
-            && IdeTooltipManager.getInstance().hideCurrent(event, null, null, false)) {
-          //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              myLastRedispatchedEvent = e;
-              IdeEventQueue.getInstance().dispatchEvent(e);
-            }
-          });
-        }
-        return false;
-      }
-      myLastRedispatchedEvent = null;
 
       for (EventListener each : mySortedMouseListeners) {
         if (motion && each instanceof MouseMotionListener) {
