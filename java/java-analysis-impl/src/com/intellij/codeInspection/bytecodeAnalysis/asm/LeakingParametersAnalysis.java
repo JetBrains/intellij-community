@@ -48,9 +48,7 @@ public class LeakingParametersAnalysis {
         }
       }
     }
-    // to hack type checker
-    Frame<?>[] frames1 = frames;
-    return new Pair<boolean[], Frame<Value>[]>(collector.leaking, (Frame<Value>[]) frames1);
+    return Pair.create(collector.leaking, (Frame<Value>[])(Frame<?>[])frames);
   }
 
   public static Pair<boolean[], Frame<Value>[]> fastLeakingParameters(String className, MethodNode methodNode) throws AnalyzerException {
@@ -61,7 +59,7 @@ public class LeakingParametersAnalysis {
     for (int i = 0; i < result.length; i++) {
       result[i] = (leakingMask & (1 << i)) != 0;
     }
-    return new Pair<boolean[], Frame<Value>[]>(result, (Frame<Value>[]) frames);
+    return Pair.create(result, (Frame<Value>[])frames);
   }
 }
 
