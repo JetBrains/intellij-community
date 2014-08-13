@@ -266,15 +266,20 @@ public class SwitchStatement extends Statement {
 				setPreds.remove(first);
 				
 				if(!setPreds.isEmpty()) {
-					Statement pred = setPreds.iterator().next(); // at most one predecessor node besides the head
-					for(int j=index+1;j<nodes.size();j++) {
-						if(nodes.get(j) == pred) {
+					Statement pred = setPreds.iterator().next(); // assumption: at most one predecessor node besides the head. May not hold true for obfuscated code.
+					for(int j=0;j<nodes.size();j++) {
+						if(j != (index - 1) && nodes.get(j) == pred) {
 							nodes.add(j+1, stat);
 							edges.add(j+1, edges.get(index));
 							
-							nodes.remove(index);
-							edges.remove(index);
-							index--;
+							if(j > index) {
+    							nodes.remove(index);
+    							edges.remove(index);
+    							index--;
+							} else {
+    							nodes.remove(index + 1);
+    							edges.remove(index + 1);
+							}
 							break;
 						}
 					}
