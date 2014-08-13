@@ -3,7 +3,9 @@ package com.jetbrains.python.edu;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import com.google.gson.stream.JsonReader;
 import com.intellij.facet.ui.FacetEditorValidator;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.facet.ui.ValidationResult;
@@ -83,7 +85,7 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
    * @return added course name or null if course is invalid
    */
   @Nullable
-  private CourseInfo addCourse(Map<CourseInfo, File> courses, File courseDir) {
+  private static CourseInfo addCourse(Map<CourseInfo, File> courses, File courseDir) {
     if (courseDir.isDirectory()) {
       File[] courseFiles = courseDir.listFiles(new FilenameFilter() {
         @Override
@@ -160,7 +162,7 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
       StudyTaskManager.getInstance(project).setCourse(course);
     }
     catch (FileNotFoundException e) {
-      e.printStackTrace();
+      LOG.error(e);
     }
     finally {
       StudyUtils.closeSilently(reader);
@@ -203,10 +205,10 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
       }
     }
     catch (IOException e) {
-      e.printStackTrace();
+      LOG.error("Failed to create Study project", e);
     }
     catch (GeneratorException e) {
-      e.printStackTrace();
+      LOG.error("Failed to create Study project", e);
     }
   }
 
@@ -242,15 +244,15 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
    * @return information about course or null if course file is invalid
    */
   @Nullable
-  private CourseInfo getCourseInfo(File courseFile) {
+  private static CourseInfo getCourseInfo(File courseFile) {
     CourseInfo courseInfo = null;
     BufferedReader reader = null;
     try {
       if (courseFile.getName().equals(COURSE_META_FILE)) {
         reader = new BufferedReader(new InputStreamReader(new FileInputStream(courseFile)));
-        com.google.gson.stream.JsonReader r = new com.google.gson.stream.JsonReader(reader);
+        JsonReader r = new JsonReader(reader);
         JsonParser parser = new JsonParser();
-        com.google.gson.JsonElement el = parser.parse(r);
+        JsonElement el = parser.parse(r);
         String courseName = el.getAsJsonObject().get(COURSE_NAME_ATTRIBUTE).getAsString();
         String courseAuthor = el.getAsJsonObject().get(AUTHOR_ATTRIBUTE).getAsString();
         String courseDescription = el.getAsJsonObject().get("description").getAsString();
@@ -258,7 +260,7 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
       }
     }
     catch (FileNotFoundException e) {
-      e.printStackTrace();
+      LOG.error(e);
     }
     finally {
       StudyUtils.closeSilently(reader);
@@ -319,7 +321,7 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
       }
     }
     catch (FileNotFoundException e) {
-      e.printStackTrace();
+      LOG.error(e);
     }
     finally {
       StudyUtils.closeSilently(writer);
@@ -331,7 +333,7 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
    *
    * @return map of course names and course files
    */
-  private Map<CourseInfo, File> getCoursesFromCache(File cashFile) {
+  private static Map<CourseInfo, File> getCoursesFromCache(File cashFile) {
     Map<CourseInfo, File> coursesFromCash = new HashMap<CourseInfo, File>();
     try {
       BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(cashFile)));
@@ -352,10 +354,10 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
       }
     }
     catch (FileNotFoundException e) {
-      e.printStackTrace();
+      LOG.error(e);
     }
     catch (IOException e) {
-      e.printStackTrace();
+      LOG.error(e);
     }
     return coursesFromCash;
   }
