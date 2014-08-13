@@ -615,9 +615,11 @@ public class FindDialog extends DialogWrapper {
 
     JLabel searchContextLabel = new JLabel(FindBundle.message("find.context.combo.label"));
     searchContextLabel.setLabelFor(mySearchContext);
-    searchContextPanel.add(searchContextLabel, BorderLayout.WEST);
-
-    searchContextPanel.add(mySearchContext, BorderLayout.CENTER);
+    JPanel panel = new JPanel();
+    panel.setAlignmentX(Component.LEFT_ALIGNMENT);
+    panel.add(searchContextLabel);
+    panel.add(mySearchContext);
+    searchContextPanel.add(panel, BorderLayout.WEST);
 
     if (FindManagerImpl.ourHasSearchInCommentsAndLiterals) {
       findOptionsPanel.add(searchContextPanel);
