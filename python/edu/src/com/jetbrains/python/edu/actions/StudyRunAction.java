@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.ModuleManager;
@@ -23,7 +24,9 @@ import com.jetbrains.python.edu.editor.StudyEditor;
 import java.io.File;
 
 public class StudyRunAction extends DumbAwareAction {
+  private static final Logger LOG = Logger.getInstance(StudyRunAction.class.getName());
   public static final String ACTION_ID = "StudyRunAction";
+
   public void run(Project project) {
     Editor selectedEditor = StudyEditor.getSelectedEditor(project);
     FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
@@ -46,12 +49,13 @@ public class StudyRunAction extends DumbAwareAction {
             cmd.addParameter(new File(project.getBaseDir().getPath(), StudyResourceManger.USER_TESTER).getPath());
             cmd.addParameter(pythonPath);
             cmd.addParameter(filePath);
-            Process p = null;
+            Process p;
             try {
               p = cmd.createProcess();
             }
             catch (ExecutionException e) {
-              e.printStackTrace();
+              LOG.error(e);
+              return;
             }
             ProcessHandler handler = new OSProcessHandler(p);
 
@@ -69,7 +73,7 @@ public class StudyRunAction extends DumbAwareAction {
           }
 
           catch (ExecutionException e) {
-            e.printStackTrace();
+            LOG.error(e);
           }
         }
       }
