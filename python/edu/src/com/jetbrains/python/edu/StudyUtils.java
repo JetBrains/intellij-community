@@ -3,6 +3,7 @@ package com.jetbrains.python.edu;
 import com.intellij.ide.SaveAndSyncHandlerImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -13,11 +14,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 import com.jetbrains.python.edu.course.TaskFile;
 import com.jetbrains.python.edu.course.TaskWindow;
 import com.jetbrains.python.edu.editor.StudyEditor;
 import com.jetbrains.python.edu.ui.StudyToolWindowFactory;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.Collection;
@@ -27,6 +28,7 @@ import java.util.Collection;
  * data: 7/15/14.
  */
 public class StudyUtils {
+  private static final Logger LOG = Logger.getInstance(StudyUtils.class.getName());
   public static void closeSilently(Closeable stream) {
     if (stream != null) {
       try {
@@ -68,10 +70,10 @@ public class StudyUtils {
       return wrapHTML ? UIUtil.toHtml(taskText.toString()) : taskText.toString();
     }
     catch (IOException e) {
-      e.printStackTrace();
+      LOG.error("Failed to get file text from file " + fileName, e);
     }
     finally {
-      StudyUtils.closeSilently(reader);
+      closeSilently(reader);
     }
     return null;
   }

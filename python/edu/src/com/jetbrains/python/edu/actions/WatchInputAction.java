@@ -19,8 +19,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
-import icons.StudyIcons;
-import org.jetbrains.annotations.NotNull;
 import com.jetbrains.python.edu.StudyTaskManager;
 import com.jetbrains.python.edu.StudyUtils;
 import com.jetbrains.python.edu.course.Task;
@@ -28,6 +26,8 @@ import com.jetbrains.python.edu.course.TaskFile;
 import com.jetbrains.python.edu.course.UserTest;
 import com.jetbrains.python.edu.editor.StudyEditor;
 import com.jetbrains.python.edu.ui.TestContentPanel;
+import icons.StudyIcons;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
@@ -108,7 +108,7 @@ public class WatchInputAction extends DumbAwareAction {
   }
 
 
-  private void flushBuffer(@NotNull final StringBuilder buffer, @NotNull final File file) {
+  private static void flushBuffer(@NotNull final StringBuilder buffer, @NotNull final File file) {
     PrintWriter printWriter = null;
     try {
       printWriter = new PrintWriter(new FileOutputStream(file));
@@ -123,7 +123,7 @@ public class WatchInputAction extends DumbAwareAction {
     StudyUtils.synchronize();
   }
 
-  private UserTest createUserTest(@NotNull final VirtualFile testsDir, @NotNull final Task currentTask) {
+  private static UserTest createUserTest(@NotNull final VirtualFile testsDir, @NotNull final Task currentTask) {
     UserTest userTest = new UserTest();
     List<UserTest> userTests = currentTask.getUserTests();
     int testNum = userTests.size() + 1;

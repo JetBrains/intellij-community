@@ -19,10 +19,6 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.xmlb.XmlSerializer;
-import icons.StudyIcons;
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import com.jetbrains.python.edu.actions.NextWindowAction;
 import com.jetbrains.python.edu.actions.PrevWindowAction;
 import com.jetbrains.python.edu.actions.ShowHintAction;
@@ -32,6 +28,10 @@ import com.jetbrains.python.edu.course.Task;
 import com.jetbrains.python.edu.course.TaskFile;
 import com.jetbrains.python.edu.ui.StudyCondition;
 import com.jetbrains.python.edu.ui.StudyToolWindowFactory;
+import icons.StudyIcons;
+import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.lang.reflect.Method;
@@ -143,7 +143,7 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
   }
 
 
-  private void addShortcut(@NotNull final String shortcutString, @NotNull final String actionIdString) {
+  private static void addShortcut(@NotNull final String shortcutString, @NotNull final String actionIdString) {
     Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
     Shortcut studyActionShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(shortcutString), null);
     String[] actionsIds = keymap.getActionIds(studyActionShortcut);

@@ -10,7 +10,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
@@ -271,9 +271,8 @@ public class StudyEditor implements FileEditor {
   @Nullable
   public static StudyEditor getSelectedStudyEditor(@NotNull final Project project) {
     try {
-      FileEditor fileEditor =
-        FileEditorManagerImpl.getInstanceEx(project).getSplitters().getCurrentWindow().getSelectedEditor().getSelectedEditorWithProvider()
-          .getFirst();
+      FileEditor fileEditor = FileEditorManagerEx.getInstanceEx(project).getSplitters().getCurrentWindow().
+        getSelectedEditor().getSelectedEditorWithProvider().getFirst();
       if (fileEditor instanceof StudyEditor) {
         return (StudyEditor)fileEditor;
       }
