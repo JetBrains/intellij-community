@@ -141,6 +141,9 @@ public class CheckAction extends DumbAwareAction {
                     final TaskFile taskFileCopy = new TaskFile();
                     final VirtualFile copyWithAnswers = getCopyWithAnswers(taskDir, openedFile, selectedTaskFile, taskFileCopy);
                     for (final TaskWindow taskWindow : taskFileCopy.getTaskWindows()) {
+                      if (!taskWindow.isValid(selectedEditor.getDocument())) {
+                        continue;
+                      }
                       check(project, taskWindow, copyWithAnswers, taskFileCopy, selectedTaskFile, selectedEditor.getDocument(), testRunner, openedFile);
                     }
                     try {
@@ -236,6 +239,9 @@ public class CheckAction extends DumbAwareAction {
         StudyDocumentListener listener = new StudyDocumentListener(target);
         document.addDocumentListener(listener);
         for (TaskWindow taskWindow : target.getTaskWindows()) {
+          if (!taskWindow.isValid(document)) {
+            continue;
+          }
           final int start = taskWindow.getRealStartOffset(document);
           final int end = start + taskWindow.getLength();
           final String text = taskWindow.getPossibleAnswer();

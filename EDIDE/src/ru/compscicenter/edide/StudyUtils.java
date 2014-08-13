@@ -127,6 +127,9 @@ public class StudyUtils {
         file_windows = taskDir.createChildData(taskFile, name);
         printWriter = new PrintWriter(new FileOutputStream(file_windows.getPath()));
         for (TaskWindow taskWindow : taskFile.getTaskWindows()) {
+          if (!taskWindow.isValid(document)) {
+            continue;
+          }
           int start = taskWindow.getRealStartOffset(document);
           String windowDescription = document.getText(new TextRange(start, start + taskWindow.getLength()));
           printWriter.println("#study_plugin_window = " + windowDescription);

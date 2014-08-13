@@ -96,7 +96,7 @@ public class TaskWindow implements Comparable, Stateful {
     rh.setGreedyToRight(true);
   }
 
-  private boolean isValid(@NotNull final Document document) {
+  public boolean isValid(@NotNull final Document document) {
     boolean isLineValid = line < document.getLineCount() && line >= 0;
     if (!isLineValid) return false;
     boolean isStartValid = start >= 0 && start < document.getLineEndOffset(line);
