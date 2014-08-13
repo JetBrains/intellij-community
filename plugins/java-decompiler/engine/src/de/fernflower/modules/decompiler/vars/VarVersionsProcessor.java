@@ -60,7 +60,7 @@ public class VarVersionsProcessor {
 		typeproc = new VarTypeProcessor();
 		typeproc.calculateVarTypes(root, dgraph);
 		
-		simpleMerge(typeproc, dgraph);
+		simpleMerge(typeproc, dgraph, mt);
 		
 		// FIXME: advanced merging
 		
@@ -146,6 +146,8 @@ public class VarVersionsProcessor {
 					type = type.type == CodeConstants.TYPE_BYTECHAR?VarType.VARTYPE_BYTE:VarType.VARTYPE_SHORT;
 				}
 				mapExprentMinTypes.put(paar, type);
+			//} else if(type.type == CodeConstants.TYPE_CHAR && (maxtype == null || maxtype.type == CodeConstants.TYPE_INT)) { // when possible, lift char to int 
+			//	mapExprentMinTypes.put(paar, VarType.VARTYPE_INT);
 			} else if(type.type == CodeConstants.TYPE_NULL) {
 				mapExprentMinTypes.put(paar, VarType.VARTYPE_OBJECT);
 			}
@@ -153,7 +155,7 @@ public class VarVersionsProcessor {
 		
 	}
 	
-	private void simpleMerge(VarTypeProcessor typeproc, DirectGraph dgraph) {
+	private void simpleMerge(VarTypeProcessor typeproc, DirectGraph dgraph, StructMethod mt) {
 		
 		HashMap<VarVersionPaar, VarType> mapExprentMaxTypes = typeproc.getMapExprentMaxTypes();
 		HashMap<VarVersionPaar, VarType> mapExprentMinTypes = typeproc.getMapExprentMinTypes();
@@ -171,6 +173,8 @@ public class VarVersionsProcessor {
 			}
 		}
 		
+		boolean is_method_static = (mt.getAccessFlags() & CodeConstants.ACC_STATIC) != 0;
+		
 		final HashMap<VarVersionPaar, Integer> mapMergedVersions = new HashMap<VarVersionPaar, Integer>();
 		
 		for(Entry<Integer, HashSet<Integer>> ent: mapVarVersions.entrySet()) {
@@ -182,6 +186,10 @@ public class VarVersionsProcessor {
 				for(int i=0;i<lstVersions.size();i++) {
 					VarVersionPaar firstpaar = new VarVersionPaar(ent.getKey(), lstVersions.get(i));
 					VarType firsttype = mapExprentMinTypes.get(firstpaar);
+					
+					if(firstpaar.var == 0 && firstpaar.version == 1 && !is_method_static) {
+						continue; // don't merge 'this' variable
+					}
 					
 					for(int j=i+1;j<lstVersions.size();j++) {
 						VarVersionPaar secpaar = new VarVersionPaar(ent.getKey(), lstVersions.get(j));
