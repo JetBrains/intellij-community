@@ -1,23 +1,21 @@
 <!--suppress XmlUnboundNsPrefix -->
 <idea-plugin version="2">
-  <id>ru.compscicenter.edide</id>
-  <name>Educational Python IDE</name>
+  <id>com.jetbrains.python.edu</id>
+  <name>Educational plugin for PyCharm</name>
   <version>1.0</version>
   <vendor email="support@yourcompany.com" url="http://www.yourcompany.com">YourCompany</vendor>
 
   <description><![CDATA[
-      Enter short description for your plugin here.<br>
-      <small>most HTML tags may be used</small>
+
       ]]></description>
 
   <change-notes><![CDATA[
-      Add change notes here.<br>
-      <small>most HTML tags may be used</small>
+
       ]]>
   </change-notes>
 
   <!-- please see http://confluence.jetbrains.net/display/IDEADEV/Build+Number+Ranges for description -->
-  <idea-version since-build="107.105"/>
+  <idea-version since-build="138.1550"/>
 
   <!--depends>com.intellij.modules.python</depends-->
 
@@ -25,7 +23,7 @@
        on how to target different products -->
 
   <depends>com.intellij.modules.lang</depends>
-
+  <depends optional="true">com.intellij.modules.python</depends>
   <application-components>
   </application-components>
 
@@ -40,13 +38,11 @@
     <action id="CheckAction" class="com.jetbrains.python.edu.actions.CheckAction" text="check"
             description="Runs tests for current tasks" icon="/icons/icon.jpg">
     </action>
-    <action id="PrevWindowAction" class="com.jetbrains.python.edu.actions.PrevWindowAction" text="PrevWindowAction" description="prev"
-            icon="/icons/prev.png">
+    <action id="PrevWindowAction" class="com.jetbrains.python.edu.actions.PrevWindowAction" text="PrevWindowAction" description="prev">
       <add-to-group group-id="MainToolBar" anchor="last"/>
     </action>
 
-    <action id="NextWindow" class="com.jetbrains.python.edu.actions.NextWindowAction" text="NextWindowAction" description="next"
-            icon="/icons/next.png">
+    <action id="NextWindow" class="com.jetbrains.python.edu.actions.NextWindowAction" text="NextWindowAction" description="next">
       <add-to-group group-id="MainToolBar" anchor="last"/>
     </action>
     <action id="NextTaskAction" class="com.jetbrains.python.edu.actions.NextTaskAction" text="NextTaskAction" description="Next Task"/>
@@ -58,14 +54,13 @@
             description="watch input"/>
     <action id="StudyRunAction" class="com.jetbrains.python.edu.actions.StudyRunAction" text="StudyRunAction" description="run your code"/>
     <action id="ShowHintAction" class="com.jetbrains.python.edu.actions.ShowHintAction" text="Show hint"
-            description="show hint" icon="/icons/showHint.png">
+            description="show hint">
       <add-to-group group-id="MainToolBar" anchor="last"/>
     </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <toolWindow id="StudyToolWindow" anchor="right" factoryClass="com.jetbrains.python.edu.ui.StudyToolWindowFactory"
-        icon="/icons/showHint.png" conditionClass="com.jetbrains.python.edu.ui.StudyCondition"/>
+    <toolWindow id="StudyToolWindow" anchor="right" factoryClass="com.jetbrains.python.edu.ui.StudyToolWindowFactory" conditionClass="com.jetbrains.python.edu.ui.StudyCondition"/>
     <fileEditorProvider implementation="com.jetbrains.python.edu.editor.StudyFileEditorProvider"/>
     <directoryProjectGenerator implementation="com.jetbrains.python.edu.StudyDirectoryProjectGenerator"/>
     <treeStructureProvider implementation="com.jetbrains.python.edu.projectView.StudyTreeStructureProvider"/>

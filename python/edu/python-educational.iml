@@ -6,6 +6,7 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/gen" isTestSource="false" generated="true" />
+      <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -24,6 +25,8 @@
     <orderEntry type="module" module-name="xdebugger-impl" />
     <orderEntry type="module" module-name="xml-psi-impl" />
     <orderEntry type="module" module-name="python-community" />
+    <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="library" name="JUnit4" level="project" />
   </component>
 </module>
 

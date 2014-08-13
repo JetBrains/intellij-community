@@ -20,12 +20,17 @@ import com.jetbrains.python.edu.course.Course;
 import com.jetbrains.python.edu.course.TaskFile;
 import com.jetbrains.python.edu.course.TaskWindow;
 import com.jetbrains.python.edu.editor.StudyEditor;
+import icons.StudyIcons;
 
 import java.io.File;
 
 public class ShowHintAction extends DumbAwareAction {
   public static final String ACTION_ID = "ShowHintAction";
   public static final String SHORTCUT = "ctrl pressed 7";
+
+  public ShowHintAction() {
+    super("Show hint", "Show hint", StudyIcons.ShowHint);
+  }
 
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getProject();

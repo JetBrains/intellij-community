@@ -80,7 +80,7 @@
               </grid>
             </constraints>
             <properties>
-              <icon value="icons/refresh.png"/>
+              <hideActionText value="false"/>
               <text value=""/>
               <toolTipText value="Refresh course list"/>
               <verticalAlignment value="1"/>

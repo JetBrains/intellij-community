@@ -12,6 +12,7 @@ import com.jetbrains.python.edu.course.StudyStatus;
 import com.jetbrains.python.edu.course.TaskFile;
 import com.jetbrains.python.edu.course.TaskWindow;
 import com.jetbrains.python.edu.editor.StudyEditor;
+import icons.StudyIcons;
 
 /**
  * author: liana
@@ -20,6 +21,11 @@ import com.jetbrains.python.edu.editor.StudyEditor;
 public class PrevWindowAction extends DumbAwareAction {
   public static final String ACTION_ID = "PrevWindowAction";
   public static final String SHORTCUT = "ctrl pressed COMMA";
+
+  public PrevWindowAction() {
+    super("PrevWindowAction", "Select previous window", StudyIcons.Prev);
+  }
+
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getProject();
     assert project != null;

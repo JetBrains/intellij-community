@@ -32,7 +32,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
 
   @Override
   protected void updateImpl(PresentationData data) {
-    data.setIcon(StudyIcons.UncheckedTask);
+    data.setIcon(StudyIcons.Unchecked);
     String valueName = myValue.getName();
     StudyTaskManager studyTaskManager = StudyTaskManager.getInstance(myProject);
     Course course = studyTaskManager.getCourse();
@@ -91,15 +91,15 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
     StudyStatus taskStatus = stateful.getStatus();
     switch (taskStatus) {
       case Unchecked: {
-        updatePresentation(data, additionalName, JBColor.blue, StudyIcons.UncheckedTask);
+        updatePresentation(data, additionalName, JBColor.blue, StudyIcons.Unchecked);
         break;
       }
       case Solved: {
-        updatePresentation(data, additionalName, new JBColor(new Color(0, 134, 0), new Color(98, 150, 85)), StudyIcons.CheckedTask);
+        updatePresentation(data, additionalName, new JBColor(new Color(0, 134, 0), new Color(98, 150, 85)), StudyIcons.Checked);
         break;
       }
       case Failed: {
-        updatePresentation(data, additionalName, JBColor.RED, StudyIcons.FailedTask);
+        updatePresentation(data, additionalName, JBColor.RED, StudyIcons.Failed);
       }
     }
   }
