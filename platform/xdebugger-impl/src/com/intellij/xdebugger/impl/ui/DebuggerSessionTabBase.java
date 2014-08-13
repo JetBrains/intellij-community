@@ -52,7 +52,6 @@ import java.util.Collection;
  */
 public abstract class DebuggerSessionTabBase extends RunTab implements DebuggerLogConsoleManager {
   protected ExecutionConsole myConsole;
-  protected RunContentDescriptor myRunContentDescriptor;
 
   public DebuggerSessionTabBase(@NotNull Project project, @NotNull String runnerId, @NotNull String sessionName, @NotNull GlobalSearchScope searchScope) {
     super(project, searchScope, runnerId, XDebuggerBundle.message("xdebugger.default.content.title"), sessionName);

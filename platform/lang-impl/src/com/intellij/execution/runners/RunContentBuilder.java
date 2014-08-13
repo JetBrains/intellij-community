@@ -114,7 +114,7 @@ public class RunContentBuilder extends RunTab {
   private RunContentDescriptor createDescriptor() {
     final RunProfile profile = getEnvironment().getRunProfile();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      RunContentDescriptor contentDescriptor = new RunContentDescriptor(profile, myExecutionResult, myUi.getComponent());
+      RunContentDescriptor contentDescriptor = new RunContentDescriptor(profile, myExecutionResult, myUi);
       Disposer.register(contentDescriptor, this);
       return contentDescriptor;
     }
@@ -129,7 +129,7 @@ public class RunContentBuilder extends RunTab {
       }
       initLogConsoles(profile, myExecutionResult.getProcessHandler(), console);
     }
-    RunContentDescriptor contentDescriptor = new RunContentDescriptor(profile, myExecutionResult, myUi.getComponent());
+    RunContentDescriptor contentDescriptor = new RunContentDescriptor(profile, myExecutionResult, myUi);
     Disposer.register(contentDescriptor, this);
     myUi.getOptions().setLeftToolbar(createActionToolbar(contentDescriptor), ActionPlaces.UNKNOWN);
 
@@ -231,6 +231,7 @@ public class RunContentBuilder extends RunTab {
   public RunContentDescriptor showRunContent(@Nullable RunContentDescriptor reuseContent) {
     RunContentDescriptor descriptor = createDescriptor();
     RunContentManagerImpl.copyContentAndBehavior(descriptor, reuseContent);
+    myRunContentDescriptor = descriptor;
     return descriptor;
   }
 

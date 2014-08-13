@@ -18,21 +18,17 @@ package com.intellij.execution.ui;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.HelpIdProvider;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.content.Content;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class RunContentDescriptor implements Disposable, DataProvider {
+public class RunContentDescriptor implements Disposable {
   private ExecutionConsole myExecutionConsole;
   private ProcessHandler myProcessHandler;
   private JComponent myComponent;
@@ -60,7 +56,6 @@ public class RunContentDescriptor implements Disposable, DataProvider {
     myDisplayName = displayName;
     myIcon = icon;
     myHelpId = myExecutionConsole instanceof HelpIdProvider ? ((HelpIdProvider)myExecutionConsole).getHelpId() : null;
-    DataManager.registerDataProvider(myComponent, this);
   }
 
   public RunContentDescriptor(@Nullable ExecutionConsole executionConsole,
@@ -70,14 +65,8 @@ public class RunContentDescriptor implements Disposable, DataProvider {
     this(executionConsole, processHandler, component, displayName, null);
   }
 
-  public RunContentDescriptor(@NotNull RunProfile profile, @NotNull ExecutionResult executionResult, @NotNull JComponent component) {
-    this(executionResult.getExecutionConsole(), executionResult.getProcessHandler(), component, profile.getName(), profile.getIcon());
-  }
-
-  @Nullable
-  @Override
-  public Object getData(@NonNls String dataId) {
-    return LangDataKeys.RUN_CONTENT_DESCRIPTOR.is(dataId) ? this : null;
+  public RunContentDescriptor(@NotNull RunProfile profile, @NotNull ExecutionResult executionResult, @NotNull RunnerLayoutUi ui) {
+    this(executionResult.getExecutionConsole(), executionResult.getProcessHandler(), ui.getComponent(), profile.getName(), profile.getIcon());
   }
 
   public ExecutionConsole getExecutionConsole() {
@@ -90,10 +79,7 @@ public class RunContentDescriptor implements Disposable, DataProvider {
       Disposer.dispose(myExecutionConsole);
       myExecutionConsole = null;
     }
-    if (myComponent != null) {
-      DataManager.removeDataProvider(myComponent);
-      myComponent = null;
-    }
+    myComponent = null;
     myRestarter = null;
   }
 

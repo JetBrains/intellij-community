@@ -37,6 +37,7 @@ public abstract class RunTab extends LogConsoleManagerBase implements DataProvid
   @NotNull
   protected final RunnerLayoutUi myUi;
   protected final LogFilesManager myManager;
+  protected RunContentDescriptor myRunContentDescriptor;
 
   protected RunTab(@NotNull ExecutionEnvironment environment, @NotNull String runnerType) {
     this(environment.getProject(),
@@ -68,11 +69,7 @@ public abstract class RunTab extends LogConsoleManagerBase implements DataProvid
       return getEnvironment();
     }
     else if (LangDataKeys.RUN_CONTENT_DESCRIPTOR.is(dataId)) {
-      ExecutionEnvironment environment = getEnvironment();
-      RunContentDescriptor descriptor = environment == null ? null : environment.getContentToReuse();
-      if (descriptor != null) {
-        return descriptor;
-      }
+      return myRunContentDescriptor;
     }
     return null;
   }
