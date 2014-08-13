@@ -14,6 +14,7 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HideableTitledPanel;
@@ -252,7 +253,7 @@ public class StudyEditor implements FileEditor {
 
   @Override
   public void dispose() {
-    myDefaultEditor.dispose();
+    Disposer.dispose(myDefaultEditor);
   }
 
   @Nullable

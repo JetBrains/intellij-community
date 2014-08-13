@@ -120,8 +120,9 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
                 method.invoke(toolWindowManager, toolWindowId, null, ToolWindowAnchor.LEFT, true, true, true);
               }
               catch (Exception e) {
-                toolWindowManager
-                  .registerToolWindow(toolWindowId, true, ToolWindowAnchor.RIGHT, myProject, true);
+                final ToolWindow toolWindow = toolWindowManager.getToolWindow(toolWindowId);
+                if (toolWindow == null)
+                  toolWindowManager.registerToolWindow(toolWindowId, true, ToolWindowAnchor.RIGHT, myProject, true);
               }
 
               final ToolWindow studyToolWindow = toolWindowManager.getToolWindow(toolWindowId);
