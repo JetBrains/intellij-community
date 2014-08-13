@@ -391,14 +391,15 @@ public class CodeFormatterFacade {
 
 
   /**
-   * Inspects all lines of the given document and wraps all of them that exceed {@link CodeStyleSettings#RIGHT_MARGIN right margin}.
+   * Inspects all lines of the given document and wraps all of them that exceed {@link CodeStyleSettings#getRightMargin(com.intellij.lang.Language)}
+   * right margin}.
    * <p/>
    * I.e. the algorithm is to do the following for every line:
    * <p/>
    * <pre>
    * <ol>
    *   <li>
-   *      Check if the line exceeds {@link CodeStyleSettings#RIGHT_MARGIN right margin}. Go to the next line in the case of
+   *      Check if the line exceeds {@link CodeStyleSettings#getRightMargin(com.intellij.lang.Language)}  right margin}. Go to the next line in the case of
    *      negative answer;
    *   </li>
    *   <li>Determine line wrap position; </li>
