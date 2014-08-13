@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
+import com.intellij.util.ArrayFactory;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 
@@ -97,6 +99,55 @@ class ResultUtil<Id, T extends Enum<T>> {
   }
 }
 
+class HResultUtil {
+  private static final HKey[] EMPTY_PRODUCT = new HKey[0];
+  private static final ArrayFactory<HComponent> HCOMPONENT_ARRAY_FACTORY = new ArrayFactory<HComponent>() {
+    @NotNull
+    @Override
+    public HComponent[] create(int count) {
+      return new HComponent[count];
+    }
+  };
+  private final ELattice<Value> lattice;
+  final Value top;
+
+  HResultUtil(ELattice<Value> lattice) {
+    this.lattice = lattice;
+    top = lattice.top;
+  }
+
+  HResult join(HResult r1, HResult r2) {
+    if (r1 instanceof HFinal && ((HFinal) r1).value == top) {
+      return r1;
+    }
+    if (r2 instanceof HFinal && ((HFinal) r2).value == top) {
+      return r2;
+    }
+    if (r1 instanceof HFinal && r2 instanceof HFinal) {
+      return new HFinal(lattice.join(((HFinal) r1).value, ((HFinal) r2).value));
+    }
+    if (r1 instanceof HFinal && r2 instanceof HPending) {
+      HFinal f1 = (HFinal)r1;
+      HPending pending = (HPending) r2;
+      HComponent[] delta = new HComponent[pending.delta.length + 1];
+      delta[0] = new HComponent(f1.value, EMPTY_PRODUCT);
+      System.arraycopy(pending.delta, 0, delta, 1, pending.delta.length);
+      return new HPending(delta);
+    }
+    if (r1 instanceof HPending && r2 instanceof HFinal) {
+      HFinal f2 = (HFinal)r2;
+      HPending pending = (HPending) r1;
+      HComponent[] delta = new HComponent[pending.delta.length + 1];
+      delta[0] = new HComponent(f2.value, EMPTY_PRODUCT);
+      System.arraycopy(pending.delta, 0, delta, 1, pending.delta.length);
+      return new HPending(delta);
+    }
+    HPending pending1 = (HPending) r1;
+    HPending pending2 = (HPending) r2;
+    return new HPending(ArrayUtil.mergeArrays(pending1.delta, pending2.delta, HCOMPONENT_ARRAY_FACTORY));
+  }
+}
+
 final class Product<K, V> {
   @NotNull final V value;
   @NotNull final Set<K> ids;
@@ -174,31 +225,69 @@ final class Equation<Id, T> {
   }
 }
 
+final class CoreHKey {
+  @NotNull
+  final byte[] key;
+  final int dirKey;
+
+  CoreHKey(@NotNull byte[] key, int dirKey) {
+    this.key = key;
+    this.dirKey = dirKey;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    CoreHKey coreHKey = (CoreHKey)o;
+
+    if (dirKey != coreHKey.dirKey) return false;
+    if (!Arrays.equals(key, coreHKey.key)) return false;
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Arrays.hashCode(key);
+    result = 31 * result + dirKey;
+    return result;
+  }
+}
+
 final class Solver {
 
-  private int size = 0;
   private final ELattice<Value> lattice;
   private final HashMap<HKey, HashSet<HKey>> dependencies = new HashMap<HKey, HashSet<HKey>>();
   private final HashMap<HKey, HPending> pending = new HashMap<HKey, HPending>();
   private final HashMap<HKey, Value> solved = new HashMap<HKey, Value>();
   private final Stack<HKey> moving = new Stack<HKey>();
 
-  int getSize() {
-    return size;
-  }
+  private final HResultUtil resultUtil;
+  private final HashMap<CoreHKey, HEquation> equations = new HashMap<CoreHKey, HEquation>();
 
   Solver(ELattice<Value> lattice) {
     this.lattice = lattice;
+    resultUtil = new HResultUtil(lattice);
   }
 
-  private final HashSet<HKey> queued = new HashSet<HKey>();
-
   void addEquation(HEquation equation) {
-    size ++;
-    HResult rhs = equation.result;
-    if (!queued.add(equation.key)) {
-      ProjectBytecodeAnalysis.LOG.error("duplicate");
+    HKey key = equation.key;
+    CoreHKey coreKey = new CoreHKey(key.key, key.dirKey);
+
+    HEquation previousEquation = equations.get(coreKey);
+    if (previousEquation == null) {
+      equations.put(coreKey, equation);
+    } else {
+      HKey joinKey = new HKey(coreKey.key, coreKey.dirKey, equation.key.stable && previousEquation.key.stable);
+      HResult joinResult = resultUtil.join(equation.result, previousEquation.result);
+      HEquation joinEquation = new HEquation(joinKey, joinResult);
+      equations.put(coreKey, joinEquation);
     }
+  }
+
+  void queueEquation(HEquation equation) {
+    HResult rhs = equation.result;
     if (rhs instanceof HFinal) {
       solved.put(equation.key, ((HFinal) rhs).value);
       moving.push(equation.key);
@@ -227,6 +316,9 @@ final class Solver {
   }
 
   HashMap<HKey, Value> solve() {
+    for (HEquation hEquation : equations.values()) {
+      queueEquation(hEquation);
+    }
     while (!moving.empty()) {
       HKey id = moving.pop();
       Value value = solved.get(id);
