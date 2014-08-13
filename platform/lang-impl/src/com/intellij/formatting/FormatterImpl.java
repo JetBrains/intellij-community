@@ -570,6 +570,7 @@ public class FormatterImpl extends FormatterEx
                               final TextRange affectedRange) {
     final FormattingDocumentModel documentModel = model.getDocumentModel();
     final Block block = model.getRootBlock();
+    if (block.getTextRange().isEmpty()) return null; // handing empty document case
     final FormatProcessor processor = buildProcessorAndWrapBlocks(
       documentModel, block, settings, indentOptions, new FormatTextRanges(affectedRange, true), offset
     );
