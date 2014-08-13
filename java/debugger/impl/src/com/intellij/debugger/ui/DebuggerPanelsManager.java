@@ -149,12 +149,13 @@ public class DebuggerPanelsManager implements ProjectComponent {
   }
 
 
+  @Override
   public void projectOpened() {
     myProject.getMessageBus().connect(myProject).subscribe(RunContentManager.TOPIC, new RunContentWithExecutorListener() {
       @Override
-      public void contentSelected(RunContentDescriptor descriptor, @NotNull Executor executor) {
+      public void contentSelected(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
         if (executor == DefaultDebugExecutor.getDebugExecutorInstance()) {
-          DebuggerSession session = getSession(myProject, descriptor.getExecutionConsole());
+          DebuggerSession session = descriptor == null ? null : getSession(myProject, descriptor.getExecutionConsole());
           if (session != null) {
             getContextManager().setState(session.getContextManager().getContext(), session.getState(), DebuggerSession.EVENT_CONTEXT, null);
           }
@@ -165,22 +166,26 @@ public class DebuggerPanelsManager implements ProjectComponent {
       }
 
       @Override
-      public void contentRemoved(RunContentDescriptor descriptor, @NotNull Executor executor) {
+      public void contentRemoved(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
       }
     });
   }
 
+  @Override
   public void projectClosed() {
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "DebuggerPanelsManager";
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void disposeComponent() {
   }
 
@@ -214,7 +219,7 @@ public class DebuggerPanelsManager implements ProjectComponent {
     }
   }
 
-  private DebuggerSession getSession(Project project, ExecutionConsole console) {
+  private static DebuggerSession getSession(Project project, ExecutionConsole console) {
     XDebugSession session = XDebuggerManager.getInstance(project).getDebugSession(console);
     if (session != null) {
       XDebugProcess process = session.getDebugProcess();

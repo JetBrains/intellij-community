@@ -119,9 +119,9 @@ public class XDebuggerManagerImpl extends XDebuggerManager
 
     messageBusConnection.subscribe(RunContentManager.TOPIC, new RunContentWithExecutorListener() {
       @Override
-      public void contentSelected(RunContentDescriptor descriptor, @NotNull Executor executor) {
-        if (executor.equals(DefaultDebugExecutor.getDebugExecutorInstance())) {
-          final XDebugSessionImpl session = mySessions.get(descriptor.getProcessHandler());
+      public void contentSelected(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
+        if (descriptor != null && executor.equals(DefaultDebugExecutor.getDebugExecutorInstance())) {
+          XDebugSessionImpl session = mySessions.get(descriptor.getProcessHandler());
           if (session != null) {
             session.activateSession();
           }
@@ -132,8 +132,8 @@ public class XDebuggerManagerImpl extends XDebuggerManager
       }
 
       @Override
-      public void contentRemoved(RunContentDescriptor descriptor, @NotNull Executor executor) {
-        if (executor.equals(DefaultDebugExecutor.getDebugExecutorInstance())) {
+      public void contentRemoved(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
+        if (descriptor != null && executor.equals(DefaultDebugExecutor.getDebugExecutorInstance())) {
           mySessions.remove(descriptor.getProcessHandler());
           mySessionData.remove(descriptor);
           XDebugSessionTab tab = mySessionTabs.remove(descriptor);

@@ -135,9 +135,8 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     }
 
     final ToolWindow toolWindow = toolWindowManager.registerToolWindow(toolWindowId, true, ToolWindowAnchor.BOTTOM, this, true);
-
     final ContentManager contentManager = toolWindow.getContentManager();
-    class MyDataProvider implements DataProvider {
+    contentManager.addDataProvider(new DataProvider() {
       private int myInsideGetData = 0;
 
       @Override
@@ -155,8 +154,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
           myInsideGetData--;
         }
       }
-    }
-    contentManager.addDataProvider(new MyDataProvider());
+    });
 
     toolWindow.setIcon(executor.getToolWindowIcon());
     new ContentManagerWatcher(toolWindow, contentManager);
@@ -164,8 +162,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       @Override
       public void selectionChanged(final ContentManagerEvent event) {
         final Content content = event.getContent();
-        final RunContentDescriptor descriptor = content != null ? getRunContentDescriptorByContent(content) : null;
-        getSyncPublisher().contentSelected(descriptor, executor);
+        getSyncPublisher().contentSelected(content == null ? null : getRunContentDescriptorByContent(content), executor);
       }
     });
     myToolwindowIdToContentManagerMap.put(toolWindowId, contentManager);
@@ -545,14 +542,14 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     final Disposable disposable = Disposer.newDisposable();
     myProject.getMessageBus().connect(disposable).subscribe(TOPIC, new RunContentWithExecutorListener() {
       @Override
-      public void contentSelected(RunContentDescriptor descriptor, @NotNull Executor executor2) {
+      public void contentSelected(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor2) {
         if (executor2.equals(executor)) {
           listener.contentSelected(descriptor);
         }
       }
 
       @Override
-      public void contentRemoved(RunContentDescriptor descriptor, @NotNull Executor executor2) {
+      public void contentRemoved(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor2) {
         if (executor2.equals(executor)) {
           listener.contentRemoved(descriptor);
         }
@@ -566,12 +563,12 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     final Disposable disposable = Disposer.newDisposable();
     myProject.getMessageBus().connect(disposable).subscribe(TOPIC, new RunContentWithExecutorListener() {
       @Override
-      public void contentSelected(RunContentDescriptor descriptor, @NotNull Executor executor) {
+      public void contentSelected(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
         listener.contentSelected(descriptor);
       }
 
       @Override
-      public void contentRemoved(RunContentDescriptor descriptor, @NotNull Executor executor) {
+      public void contentRemoved(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
         listener.contentRemoved(descriptor);
       }
     });
@@ -643,12 +640,11 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
 
       final Content content = myContent;
       try {
-        final RunContentDescriptor descriptor = getRunContentDescriptorByContent(content);
-
+        RunContentDescriptor descriptor = getRunContentDescriptorByContent(content);
         getSyncPublisher().contentRemoved(descriptor, myExecutor);
-
-        if (descriptor != null)
+        if (descriptor != null) {
           Disposer.dispose(descriptor);
+        }
       }
       finally {
         content.getManager().removeContentManagerListener(this);
