@@ -16,10 +16,13 @@
 package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
+
+import java.util.Calendar;
 
 public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/graphInference";
@@ -44,10 +47,12 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
+  @Bombed(day = 20, month = Calendar.AUGUST)
   public void testInferenceFromSiblings() throws Exception {
     doTest();
   }
 
+  @Bombed(day = 20, month = Calendar.AUGUST)
   public void testChainedInferenceTypeParamsOrderIndependent() throws Exception {
     doTest();
   }
@@ -193,6 +198,22 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   }
 
   public void testPrimitiveWrapperConditionInReturnConstraint() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA128174() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA128101() throws Exception {
+    doTest();
+  }
+
+  public void testOuterCallOverloads() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA127928() throws Exception {
     doTest();
   }
 

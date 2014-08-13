@@ -22,7 +22,6 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
-import com.intellij.execution.filters.Filter;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
@@ -42,12 +41,10 @@ import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PythonCommandLineState;
-import com.jetbrains.python.run.PythonTracebackFilter;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -62,7 +59,7 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
   }
 
   public PythonTestCommandLineStateBase(AbstractPythonRunConfiguration configuration, ExecutionEnvironment env) {
-    super(configuration, env, Collections.<Filter>emptyList());
+    super(configuration, env);
     myConfiguration = configuration;
   }
 
@@ -77,7 +74,6 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
                                                                                       consoleProperties,
                                                                                       getEnvironment());
       final ConsoleView consoleView = new PythonDebugLanguageConsoleView(project, PythonSdkType.findSdkByPath(myConfiguration.getInterpreterPath()), testsOutputConsoleView);
-      consoleView.addMessageFilter(new PythonTracebackFilter(project, myConfiguration.getWorkingDirectory()));
       consoleView.attachToProcess(processHandler);
       return consoleView;
     }
@@ -85,7 +81,7 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
                                                                                       processHandler,
                                                                                       consoleProperties,
                                                                                       getEnvironment());
-    consoleView.addMessageFilter(new PythonTracebackFilter(project, myConfiguration.getWorkingDirectory()));
+    addTracebackFilter(project, consoleView, processHandler);
     return consoleView;
   }
 

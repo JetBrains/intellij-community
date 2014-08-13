@@ -148,6 +148,9 @@ class ContractInferenceInterpreter {
                 }
                 else {
                   answer = withConstraint(answer, paramIndex, argConstraint);
+                  if (answer == null) {
+                    return null;
+                  }
                 }
               }
             }

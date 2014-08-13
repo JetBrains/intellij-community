@@ -29,7 +29,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import git4idea.GitBranch;
@@ -336,12 +335,12 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
 
   @NotNull
   private static String getDateString(@NotNull GitCommit commit) {
-    return DateFormatUtil.formatPrettyDateTime(commit.getTimestamp()) + " ";
+    return DvcsUtil.getDateString(commit);
   }
 
   @NotNull
   private static String getHashString(@NotNull GitCommit commit) {
-    return GitUtil.getShortHash(commit.getId().toString());
+    return DvcsUtil.getShortHash(commit.getId().toString());
   }
 
   private static class MyTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer {

@@ -19,11 +19,13 @@ import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitLocalBranch;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
+import git4idea.GitVcs;
 import git4idea.branch.GitBranchesCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -133,6 +135,12 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
   @Override
   public State getState() {
     return myInfo.getState();
+  }
+
+  @Nullable
+  @Override
+  public AbstractVcs getVcs() {
+    return GitVcs.getInstance(getProject());
   }
 
   /**

@@ -16,33 +16,51 @@
 package com.intellij.remoteServer.impl.module;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.remoteServer.ServerType;
-import com.intellij.remoteServer.configuration.RemoteServer;
+import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
+import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import org.jetbrains.annotations.Nullable;
 
 
 public abstract class CloudModuleBuilderContribution {
 
-  public static final ExtensionPointName<CloudModuleBuilderContribution> EP_NAME
-    = ExtensionPointName.create("com.intellij.remoteServer.moduleBuilderContribution");
+  private final CloudModuleBuilder myModuleBuilder;
 
-  public abstract ServerType<?> getCloudType();
+  private final ServerType<?> myCloudType;
+  private CloudApplicationConfigurable myApplicationConfigurable;
 
-  public abstract CloudApplicationConfigurable createApplicationConfigurable(@Nullable Project project, Disposable parentDisposable);
+  public CloudModuleBuilderContribution(CloudModuleBuilder moduleBuilder, ServerType<?> cloudType) {
+    myModuleBuilder = moduleBuilder;
+    myCloudType = cloudType;
+  }
 
-  public abstract void configureModule(Module module,
-                                       RemoteServer<?> account,
-                                       CloudApplicationConfiguration configuration);
+  protected CloudModuleBuilder getModuleBuilder() {
+    return myModuleBuilder;
+  }
 
-  public static CloudModuleBuilderContribution getInstanceByType(ServerType<?> cloudType) {
-    for (CloudModuleBuilderContribution contribution : EP_NAME.getExtensions()) {
-      if (contribution.getCloudType() == cloudType) {
-        return contribution;
-      }
+  protected ServerType<?> getCloudType() {
+    return myCloudType;
+  }
+
+  public CloudApplicationConfigurable getApplicationConfigurable(@Nullable Project project, Disposable parentDisposable) {
+    if (myApplicationConfigurable == null) {
+      myApplicationConfigurable = createApplicationConfigurable(project, parentDisposable);
     }
-    return null;
+    return myApplicationConfigurable;
+  }
+
+  public void preConfigureModule(Module module, ModifiableRootModel model) {
+
+  }
+
+  public abstract void configureModule(Module module);
+
+  protected abstract CloudApplicationConfigurable createApplicationConfigurable(@Nullable Project project, Disposable parentDisposable);
+
+  protected DeploymentConfiguration createDeploymentConfiguration(DeploymentSource deploymentSource) {
+    return myCloudType.createDeploymentConfigurator(null).createDefaultConfiguration(deploymentSource);
   }
 }

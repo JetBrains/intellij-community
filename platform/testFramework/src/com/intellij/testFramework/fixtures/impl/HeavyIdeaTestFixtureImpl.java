@@ -205,7 +205,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
         Editor editor = (Editor)getData(CommonDataKeys.EDITOR.getName());
         if (editor != null) {
           FileEditorManagerEx manager = FileEditorManagerEx.getInstanceEx(myProject);
-          return manager.getData(dataId, editor, manager.getSelectedFiles()[0]);
+          return manager.getData(dataId, editor, editor.getCaretModel().getCurrentCaret());
         }
         else if (LangDataKeys.IDE_VIEW.is(dataId)) {
           VirtualFile[] contentRoots = ProjectRootManager.getInstance(myProject).getContentRoots();
@@ -217,6 +217,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
 
               }
 
+              @NotNull
               @Override
               public PsiDirectory[] getDirectories() {
                 return new PsiDirectory[] {psiDirectory};

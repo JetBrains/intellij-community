@@ -176,6 +176,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
         return false;
       }
 
+      @NotNull
       @Override
       public String getTypedVarString(PsiElement element) {
         final PsiElement initialElement = element;
@@ -480,10 +481,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
     private void visitLiteral(PsiElement literal) {
       String value = literal.getText();
 
-      if (value.length() > 2 &&
-          (value.charAt(0) == '"' && value.charAt(value.length() - 1) == '"') ||
-          (value.charAt(0) == '\'' && value.charAt(value.length() - 1) == '\'')) {
-
+      if (StringUtil.isQuotedString(value)) {
         if (mySubstitutionPatterns == null) {
           final String[] prefixes = myGlobalVisitor.getContext().getPattern().getTypedVarPrefixes();
           mySubstitutionPatterns = createPatterns(prefixes);

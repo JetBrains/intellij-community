@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.engine;
 
+import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.InternalException;
@@ -296,7 +297,7 @@ public class SuspendManagerImpl implements SuspendManager {
     }
   }
 
-  private void processVote(SuspendContextImpl suspendContext) {
+  private void processVote(final SuspendContextImpl suspendContext) {
     LOG.assertTrue(suspendContext.myVotesToVote > 0);
     suspendContext.myVotesToVote--;
 
@@ -305,7 +306,18 @@ public class SuspendManagerImpl implements SuspendManager {
     }
     if(suspendContext.myVotesToVote == 0) {
       if(suspendContext.myIsVotedForResume) {
-        resume(suspendContext);
+        // resume in a separate request to allow other requests be processed (e.g. dependent bpts enable)
+        myDebugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
+          @Override
+          protected void action() throws Exception {
+            resume(suspendContext);
+          }
+
+          @Override
+          public Priority getPriority() {
+            return Priority.HIGH;
+          }
+        });
       }
       else {
         if (LOG.isDebugEnabled()) {

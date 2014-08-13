@@ -18,9 +18,11 @@ package com.intellij.ide.actions;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ChooseRunConfigurationPopup;
 import com.intellij.execution.actions.ExecutorProvider;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.impl.RunDialog;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -116,7 +118,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-public class SearchEverywhereAction extends AnAction implements CustomComponentAction, DumbAware{
+public class SearchEverywhereAction extends AnAction implements CustomComponentAction, DumbAware, DataProvider, RightAlignedToolbarAction {
   public static final String SE_HISTORY_KEY = "SearchEverywhereHistoryKey";
   public static final int SEARCH_FIELD_COLUMNS = 25;
   private static final int MAX_CLASSES = 6;
@@ -319,6 +321,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                                  + shortcutText
                                  + "</b> to access<br/> - Classes<br/> - Files<br/> - Tool Windows<br/> - Actions<br/> - Settings</body></html>");
 
+  }
+
+  @Nullable
+  @Override
+  public Object getData(@NonNls String dataId) {
+    return null;
   }
 
   private static String getShortcut() {
@@ -673,6 +681,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     panel.add(myPopupField, BorderLayout.CENTER);
     panel.add(topPanel, BorderLayout.NORTH);
     panel.setBorder(IdeBorderFactory.createEmptyBorder(3, 5, 4, 5));
+    DataManager.registerDataProvider(panel, this);
     final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, editor);
     myBalloon = builder
       .setCancelOnClickOutside(true)
@@ -695,7 +704,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     });
 
     Component parent = UIUtil.findUltimateParent(window);
-    registerDataProvider(panel);
+    registerDataProvider(panel, e.getProject());
     final RelativePoint showPoint;
     if (me != null) {
       final Component label = me.getComponent();
@@ -773,7 +782,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     storage.setValues(SE_HISTORY_KEY, newValues);
   }
 
-  private void registerDataProvider(JPanel panel) {
+  public Executor getExecutor() {
+    return ourShiftIsPressed.get() ? DefaultRunExecutor.getRunExecutorInstance()
+                                   : ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
+  }
+
+  private void registerDataProvider(JPanel panel, final Project project) {
     DataManager.registerDataProvider(panel, new DataProvider() {
       @Nullable
       @Override
@@ -783,6 +797,29 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           return value;
         } else if (CommonDataKeys.VIRTUAL_FILE.is(dataId) && value instanceof VirtualFile) {
           return value;
+        } else if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+              if (value instanceof Navigatable) return value;
+              if (value instanceof ChooseRunConfigurationPopup.ItemWrapper) {
+                final Object config = ((ChooseRunConfigurationPopup.ItemWrapper)value).getValue();
+                if (config instanceof RunnerAndConfigurationSettings) {
+                  return new Navigatable() {
+                    @Override
+                    public void navigate(boolean requestFocus) {
+                      RunDialog.editConfiguration(project, (RunnerAndConfigurationSettings)config, "Edit Configuration", getExecutor());
+                    }
+
+                    @Override
+                    public boolean canNavigate() {
+                      return true;
+                    }
+
+                    @Override
+                    public boolean canNavigateToSource() {
+                      return true;
+                    }
+                  };
+                }
+              }
         }
         return null;
       }

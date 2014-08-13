@@ -88,19 +88,24 @@ class WarModelBuilderImpl implements ModelBuilderService {
 
           if (resolver.metaClass.respondsTo(resolver, 'getSourcePaths')) {
             sourcePaths = resolver.getSourcePaths()
-          } else if (resolver.this$0.metaClass.respondsTo(resolver, 'getSourcePaths')) {
+          } else if (resolver.hasProperty('sourcePaths')) {
+            sourcePaths = resolver.sourcePaths
+          } else if (resolver.hasProperty('this$0') && resolver.this$0.metaClass.respondsTo(resolver, 'getSourcePaths')) {
             sourcePaths = resolver.this$0.getSourcePaths()
-          } else {
+          } else if (resolver.hasProperty('this$0') && resolver.this$0.hasProperty('sourcePaths')) {
+            sourcePaths = resolver.this$0.sourcePaths
+          } /*else {
             throw new RuntimeException("${GradleVersion.current()} is not supported by web artifact importer")
-          }
+          }*/
 
-          (sourcePaths.flatten() as List).each { def path ->
-            if (path instanceof String) {
-              def file = new File(warTask.project.projectDir, path)
-              addPath(webResources, relativePath, "", file)
+          if(sourcePaths) {
+            (sourcePaths.flatten() as List).each { def path ->
+              if (path instanceof String) {
+                def file = new File(warTask.project.projectDir, path)
+                addPath(webResources, relativePath, "", file)
+              }
             }
           }
-
 
           resolver.source.visit(new FileVisitor() {
             @Override

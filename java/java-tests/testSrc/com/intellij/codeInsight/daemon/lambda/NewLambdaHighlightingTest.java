@@ -18,11 +18,14 @@ package com.intellij.codeInsight.daemon.lambda;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Calendar;
 
 public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/newLambda";
@@ -60,6 +63,7 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testTargetTypeConflictResolverShouldNotTryToEvaluateCurrentArgumentType() { doTest(); }
   public void testIDEA119535() { doTest(); }
   public void testIDEA119003() { doTest(); }
+  public void testIDEA125674() { doTest(); }
   public void testIDEA117124() { doTest(); }
   public void testWildcardParameterization() { doTest(); }
   public void testDiamondInLambdaReturn() { doTest(); }
@@ -73,6 +77,7 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA122700() { doTest(); }
   public void testIDEA122406() { doTest(); }
   public void testNestedCallsInsideLambdaReturnExpression() { doTest(); }
+  @Bombed(day = 20, month = Calendar.AUGUST)
   public void testIDEA123731() { doTest(); }
   public void testIDEA123869() { doTest(); }
   public void testIDEA123848() { doTest(); }
@@ -87,8 +92,25 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA124961() { doTest(); }
   public void testIDEA126109() { doTest(); }
   public void testIDEA126809() { doTest(); }
+  public void testIDEA124424() { doTest(); }
 
   public void testIDEA127596() throws Exception {
+    doTest();
+  }
+
+  @Bombed(day = 20, month = Calendar.AUGUST)
+  public void testIDEA124983() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA123951() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA124190() throws Exception {
+    doTest();
+  }
+  public void testIDEA127124comment() throws Exception {
     doTest();
   }
 

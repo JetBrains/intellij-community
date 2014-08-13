@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,12 +33,15 @@ import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel;
 import com.intellij.openapi.roots.ui.componentsList.layout.VerticalStackLayout;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
-import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
+import com.intellij.ui.JBSplitter;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.roots.ToolbarPanel;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
@@ -48,6 +51,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -146,7 +150,9 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     myContentEntryEditorListener = new MyContentEntryEditorListener();
 
     final JPanel mainPanel = new JPanel(new BorderLayout());
-    mainPanel.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
+    if (!Registry.is("ide.new.project.settings")) {
+      mainPanel.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
+    }
 
     addAdditionalSettingsToPanel(mainPanel);
 
@@ -159,21 +165,32 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
 
     myEditorsPanel = new ScrollablePanel(new VerticalStackLayout());
     myEditorsPanel.setBackground(BACKGROUND_COLOR);
-    JScrollPane myScrollPane = ScrollPaneFactory.createScrollPane(myEditorsPanel);
-    entriesPanel.add(new ToolbarPanel(myScrollPane, group), BorderLayout.CENTER);
+    JScrollPane myScrollPane = ScrollPaneFactory.createScrollPane(myEditorsPanel, Registry.is("ide.new.project.settings"));
+    final ToolbarPanel toolbarPanel = new ToolbarPanel(myScrollPane, group);
+    if (Registry.is("ide.new.project.settings")) {
+      toolbarPanel.setBorder(new CustomLineBorder(1,0,0,0));
+    }
+    entriesPanel.add(toolbarPanel, BorderLayout.CENTER);
 
-    final Splitter splitter = new Splitter(false);
+    final JBSplitter splitter = Registry.is("ide.new.project.settings") ? new OnePixelSplitter(false) : new JBSplitter(false);
     splitter.setProportion(0.6f);
     splitter.setHonorComponentsMinimumSize(true);
 
     myRootTreeEditor = createContentEntryTreeEditor(project);
-    splitter.setFirstComponent(myRootTreeEditor.createComponent());
+    final JComponent component = myRootTreeEditor.createComponent();
+    if (Registry.is("ide.new.project.settings")) {
+      component.setBorder(new CustomLineBorder(1,0,0,0));
+    }
+
+    splitter.setFirstComponent(component);
     splitter.setSecondComponent(entriesPanel);
     JPanel contentPanel = new JPanel(new GridBagLayout());
-    contentPanel.setBorder(BorderFactory.createEtchedBorder());
+    if (!Registry.is("ide.new.project.settings")) {
+      contentPanel.setBorder(BorderFactory.createEtchedBorder());
+    }
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, myRootTreeEditor.getEditingActionsGroup(), true);
     contentPanel.add(new JLabel("Mark as:"),
-                     new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, 0, new Insets(0, 5, 0, 5), 0, 0));
+                     new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, 0, new Insets(0, 10, 0, 10), 0, 0));
     contentPanel.add(actionToolbar.getComponent(),
                      new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
                                             new Insets(0, 0, 0, 0), 0, 0));
@@ -236,7 +253,11 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     if (componentBorder != null) {
       border = BorderFactory.createCompoundBorder(border, componentBorder);
     }
-    component.setBorder(border);
+    if (Registry.is("ide.new.project.settings")) {
+      component.setBorder(new EmptyBorder(0,0,0,0));
+    } else {
+      component.setBorder(border);
+    }
     myEditorsPanel.add(component);
   }
 

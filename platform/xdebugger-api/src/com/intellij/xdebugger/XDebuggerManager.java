@@ -58,14 +58,22 @@ public abstract class XDebuggerManager {
   public abstract XDebugSession getCurrentSession();
 
   /**
+   * @deprecated use {@link #startSession(com.intellij.execution.runners.ExecutionEnvironment, XDebugProcessStarter)} instead
+   * to remove in IDEA 15
+   */
+  @NotNull
+  @Deprecated
+  public abstract XDebugSession startSession(@NotNull ProgramRunner runner,
+                                             @NotNull ExecutionEnvironment env,
+                                             @Nullable RunContentDescriptor contentToReuse,
+                                             @NotNull XDebugProcessStarter processStarter) throws ExecutionException;
+
+  /**
    * Start a new debugging session. Use this method only if debugging is started by using standard 'Debug' action i.e. this methods is called
    * from {@link com.intellij.execution.runners.ProgramRunner#execute} method. Otherwise use {@link #startSessionAndShowTab} method
    */
   @NotNull
-  public abstract XDebugSession startSession(@NotNull final ProgramRunner runner,
-                                             @NotNull ExecutionEnvironment env,
-                                             @Nullable RunContentDescriptor contentToReuse,
-                                             @NotNull XDebugProcessStarter processStarter) throws ExecutionException;
+  public abstract XDebugSession startSession(@NotNull ExecutionEnvironment environment, @NotNull XDebugProcessStarter processStarter) throws ExecutionException;
 
   /**
    * Start a new debugging session and open 'Debug' tool window

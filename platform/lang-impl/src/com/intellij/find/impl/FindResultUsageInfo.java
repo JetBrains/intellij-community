@@ -80,7 +80,7 @@ public class FindResultUsageInfo extends UsageInfo {
     Long data = myFindModel.getUserData(ourDocumentTimestampKey);
     if (data == null || data != myTimestamp) {
       data = myTimestamp;
-      myFindModel.putUserData(FindManagerImpl.ourCommentsLiteralsSearchDataKey, null);
+      FindManagerImpl.clearPreviousFindData(myFindModel);
     }
     myFindModel.putUserData(ourDocumentTimestampKey, data);
     FindResult result;
@@ -110,7 +110,13 @@ public class FindResultUsageInfo extends UsageInfo {
 
     assert result.isStringFound();
 
-    if (myFindModel.isRegularExpressions() || myFindModel.isInCommentsOnly() || myFindModel.isInStringLiteralsOnly()) {
+    if (myFindModel.isRegularExpressions() ||
+        myFindModel.isInCommentsOnly() ||
+        myFindModel.isInStringLiteralsOnly() ||
+        myFindModel.isExceptStringLiterals() ||
+        myFindModel.isExceptCommentsAndStringLiterals() ||
+        myFindModel.isExceptComments()
+      ) {
       myAnchor = SmartPointerManager.getInstance(getProject()).createSmartPsiFileRangePointer(file, TextRange.from(offset, 0));
     }
 

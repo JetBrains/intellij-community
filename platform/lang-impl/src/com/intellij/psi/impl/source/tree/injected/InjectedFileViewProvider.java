@@ -61,7 +61,7 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider impleme
                            @NotNull Language language) {
     super(psiManager, (VirtualFile)virtualFile, true, language);
     myDocumentWindow = documentWindow;
-    myProject = documentWindow.getShreds().get(0).getHost().getProject();
+    myProject = documentWindow.getShreds().getHostPointer().getProject();
   }
 
   @Override

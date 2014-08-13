@@ -121,7 +121,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
       @Override
       public Boolean compute() {
         checkIfDisposed();
-        return myVcsManager.isIgnoredByVcs(file);
+        return myVcsManager.isIgnored(file);
       }
     });
   }

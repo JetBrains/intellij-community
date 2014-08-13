@@ -18,7 +18,6 @@ package com.intellij.ui.switcher;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataKey;
 
-import javax.swing.*;
 import java.util.List;
 
 public interface QuickActionProvider extends QuickAccessProvider {

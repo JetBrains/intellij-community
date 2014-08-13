@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Locale;
 
 public class StringSearcher {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.text.StringSearcher");
@@ -48,7 +49,7 @@ public class StringSearcher {
     myPattern = pattern;
     myCaseSensitive = caseSensitive;
     myForwardDirection = forwardDirection;
-    myPatternArray = myCaseSensitive ? myPattern.toCharArray() : myPattern.toLowerCase().toCharArray();
+    myPatternArray = myCaseSensitive ? myPattern.toCharArray() : myPattern.toLowerCase(Locale.US).toCharArray();
     myPatternLength = myPatternArray.length;
     Arrays.fill(mySearchTable, -1);
     myJavaIdentifier = pattern.isEmpty() ||
@@ -122,7 +123,7 @@ public class StringSearcher {
           }
         }
 
-        int step = 0 <= lastChar && lastChar < 128 ? mySearchTable[lastChar] : 1;
+        int step = lastChar < 128 ? mySearchTable[lastChar] : 1;
 
         if (step <= 0) {
           int index;
@@ -159,7 +160,7 @@ public class StringSearcher {
           if (i < 0) return end - start - myPatternLength + 1;
         }
 
-        int step = 0 <= lastChar && lastChar < 128 ? mySearchTable[lastChar] : 1;
+        int step = lastChar < 128 ? mySearchTable[lastChar] : 1;
 
         if (step <= 0) {
           int index;

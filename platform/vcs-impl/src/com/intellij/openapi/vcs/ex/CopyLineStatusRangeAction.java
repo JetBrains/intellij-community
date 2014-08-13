@@ -35,7 +35,7 @@ public class CopyLineStatusRangeAction extends BaseLineStatusRangeAction {
   }
 
   public void actionPerformed(final AnActionEvent e) {
-    final String content = myLineStatusTracker.getUpToDateContent(myRange).toString();
+    final String content = myLineStatusTracker.getVcsContent(myRange).toString();
     CopyPasteManager.getInstance().setContents(new StringSelection(content));
   }
 }

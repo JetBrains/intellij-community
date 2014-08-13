@@ -363,6 +363,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return IdeFocusManager.getInstance(project);
   }
 
+  @NotNull
   public Project getProject() {
     return myProject;
   }
@@ -482,21 +483,14 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   @Override
-  public void initToolWindow(ToolWindowEP bean) {
-    ToolWindowAnchor toolWindowAnchor;
-    try {
-      toolWindowAnchor = ToolWindowAnchor.fromText(bean.anchor);
-    }
-    catch (Exception e) {
-      LOG.error(e);
-      return;
-    }
+  public void initToolWindow(@NotNull ToolWindowEP bean) {
     JLabel label = new JLabel("Initializing...", SwingConstants.CENTER);
     label.setOpaque(true);
     final Color treeBg = UIManager.getColor("Tree.background");
     label.setBackground(ColorUtil.toAlpha(treeBg, 180));
     final Color treeFg = UIUtil.getTreeForeground();
     label.setForeground(ColorUtil.toAlpha(treeFg, 180));
+    ToolWindowAnchor toolWindowAnchor = ToolWindowAnchor.fromText(bean.anchor);
     final ToolWindowFactory factory = bean.getToolWindowFactory();
     final ToolWindowImpl toolWindow =
       (ToolWindowImpl)registerToolWindow(bean.id, label, toolWindowAnchor, myProject, DumbService.isDumbAware(factory),
@@ -747,7 +741,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       myActiveStack.push(id);
     }
 
-    if (autoFocusContents) {
+    if (autoFocusContents && ApplicationManager.getApplication().isActive()) {
       appendRequestFocusInToolWindowCmd(id, commandsList, forcedFocusRequest);
     }
   }
@@ -826,6 +820,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     appendApplyWindowInfoCmd(info, commandsList);
   }
 
+  @NotNull
   @Override
   public String[] getToolWindowIds() {
     final WindowInfoImpl[] infos = myLayout.getInfos();
@@ -1087,6 +1082,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     appendApplyWindowInfoCmd(toBeShownInfo, commandsList);
   }
 
+  @NotNull
   @Override
   public ToolWindow registerToolWindow(@NotNull final String id,
                                        @NotNull final JComponent component,
@@ -1094,6 +1090,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return registerToolWindow(id, component, anchor, false);
   }
 
+  @NotNull
   @Override
   public ToolWindow registerToolWindow(@NotNull final String id,
                                        @NotNull JComponent component,
@@ -1102,6 +1099,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return registerToolWindow(id, component, anchor, parentDisposable, false, false);
   }
 
+  @NotNull
   @Override
   public ToolWindow registerToolWindow(@NotNull String id,
                                        @NotNull JComponent component,
@@ -1111,6 +1109,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return registerToolWindow(id, component, anchor, parentDisposable, canWorkInDumbMode, false);
   }
 
+  @NotNull
   @Override
   public ToolWindow registerToolWindow(@NotNull final String id,
                                        @NotNull JComponent component,
@@ -1120,6 +1119,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return registerDisposable(id, parentDisposable, registerToolWindow(id, component, anchor, false, canCloseContents, canWorkInDumbMode));
   }
 
+  @NotNull
   private ToolWindow registerToolWindow(@NotNull final String id,
                                         @NotNull final JComponent component,
                                         @NotNull final ToolWindowAnchor anchor,
@@ -1127,11 +1127,13 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return registerToolWindow(id, component, anchor, false, false, canWorkInDumbMode);
   }
 
+  @NotNull
   @Override
   public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor) {
     return registerToolWindow(id, null, anchor, false, canCloseContent, false);
   }
 
+  @NotNull
   @Override
   public ToolWindow registerToolWindow(@NotNull final String id,
                                        final boolean canCloseContent,
@@ -1141,15 +1143,18 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
 
+  @NotNull
   @Override
   public ToolWindow registerToolWindow(@NotNull final String id,
                                        final boolean canCloseContent,
                                        @NotNull final ToolWindowAnchor anchor,
                                        @NotNull final Disposable parentDisposable,
                                        final boolean canWorkInDumbMode) {
-    return registerDisposable(id, parentDisposable, registerToolWindow(id, null, anchor, false, canCloseContent, canWorkInDumbMode));
+    ToolWindow window = registerToolWindow(id, null, anchor, false, canCloseContent, canWorkInDumbMode);
+    return registerDisposable(id, parentDisposable, window);
   }
 
+  @NotNull
   private ToolWindow registerToolWindow(@NotNull final String id,
                                         @Nullable final JComponent component,
                                         @NotNull final ToolWindowAnchor anchor,
@@ -1216,7 +1221,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return toolWindow;
   }
 
-  private ToolWindow registerDisposable(final String id, @NotNull final Disposable parentDisposable, final ToolWindow window) {
+  @NotNull
+  private ToolWindow registerDisposable(@NotNull final String id, @NotNull final Disposable parentDisposable, @NotNull ToolWindow window) {
     Disposer.register(parentDisposable, new Disposable() {
       @Override
       public void dispose() {
@@ -1353,12 +1359,13 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   @Override
-  public void invokeLater(final Runnable runnable) {
+  public void invokeLater(@NotNull final Runnable runnable) {
     List<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
     commandList.add(new InvokeLaterCmd(runnable, myWindowManager.getCommandProcessor()));
     execute(commandList);
   }
 
+  @NotNull
   @Override
   public IdeFocusManager getFocusManager() {
     return IdeFocusManager.getInstance(myProject);

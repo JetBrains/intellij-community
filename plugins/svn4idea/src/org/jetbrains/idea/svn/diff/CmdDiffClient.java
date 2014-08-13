@@ -52,13 +52,14 @@ import java.util.List;
  */
 public class CmdDiffClient extends BaseSvnClient implements DiffClient {
 
+  @NotNull
   @Override
   public List<Change> compare(@NotNull SvnTarget target1, @NotNull SvnTarget target2) throws VcsException {
-    assertUrl(target2);
-    if (target1.isFile()) {
+    assertUrl(target1);
+    if (target2.isFile()) {
       // Such combination (file and url) with "--summarize" option is supported only in svn 1.8.
       // For svn 1.7 "--summarize" is only supported when both targets are repository urls.
-      assertDirectory(target1);
+      assertDirectory(target2);
 
       WorkingCopyFormat format = WorkingCopyFormat.from(myFactory.createVersionClient().getVersion());
       if (format.less(WorkingCopyFormat.ONE_DOT_EIGHT)) {
@@ -95,6 +96,7 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
     }
   }
 
+  @NotNull
   private List<Change> parseOutput(@NotNull SvnTarget target1, @NotNull SvnTarget target2, @NotNull CommandExecutor executor)
     throws SvnBindException {
     try {
@@ -114,16 +116,30 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
     }
   }
 
-  private ContentRevision createRemoteRevision(@NotNull FilePath remotePath, @NotNull FilePath localPath, @NotNull FileStatus status) {
+  @NotNull
+  private ContentRevision createRevision(@NotNull FilePath path,
+                                         @NotNull FilePath localPath,
+                                         @NotNull SVNRevision revision,
+                                         @NotNull FileStatus status) {
+    ContentRevision result;
+
+    if (path.isNonLocal()) {
     // explicitly use local path for deleted items - so these items will be correctly displayed as deleted under local working copy node
     // and not as deleted under remote branch node (in ChangesBrowser)
     // NOTE, that content is still retrieved using remotePath.
-    return SvnRepositoryContentRevision
-      .create(myVcs, remotePath, status == FileStatus.DELETED ? localPath : null, SVNRevision.HEAD.getNumber());
+      result = SvnRepositoryContentRevision.create(myVcs, path, status == FileStatus.DELETED ? localPath : null, revision.getNumber());
+    }
+    else {
+      result = CurrentContentRevision.create(path);
   }
 
-  private static ContentRevision createLocalRevision(@NotNull FilePath path) {
-    return CurrentContentRevision.create(path);
+    return result;
+  }
+
+  private static FilePath createFilePath(@NotNull SvnTarget target, boolean isDirectory) {
+    return target.isFile()
+           ? VcsUtil.getFilePath(target.getFile(), isDirectory)
+           : VcsUtil.getFilePathOnNonLocal(SvnUtil.toDecodedString(target), isDirectory);
   }
 
   @NotNull
@@ -134,9 +150,7 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
     // TODO: 3) Properties change is currently not added as part of result change like in SvnChangeProviderContext.patchWithPropertyChange
 
     SvnTarget subTarget1 = SvnUtil.append(target1, diffPath.path, true);
-    String relativePath = target1.isFile()
-                          ? FileUtil.getRelativePath(target1.getFile(), subTarget1.getFile())
-                          : SvnUtil.getRelativeUrl(SvnUtil.toDecodedString(target1), SvnUtil.toDecodedString(subTarget1));
+    String relativePath = SvnUtil.getRelativeUrl(SvnUtil.toDecodedString(target1), SvnUtil.toDecodedString(subTarget1));
 
     if (relativePath == null) {
       throw new SvnBindException("Could not get relative path for " + target1 + " and " + subTarget1);
@@ -144,27 +158,19 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
 
     SvnTarget subTarget2 = SvnUtil.append(target2, FileUtil.toSystemIndependentName(relativePath));
 
-    FilePath target1Path = target1.isFile()
-                           ? VcsUtil.getFilePath(subTarget1.getFile(), diffPath.isDirectory())
-                           : VcsUtil.getFilePathOnNonLocal(SvnUtil.toDecodedString(subTarget1), diffPath.isDirectory());
-    FilePath target2Path = VcsUtil.getFilePathOnNonLocal(SvnUtil.toDecodedString(subTarget2), diffPath.isDirectory());
+    FilePath target1Path = createFilePath(subTarget1, diffPath.isDirectory());
+    FilePath target2Path = createFilePath(subTarget2, diffPath.isDirectory());
 
     FileStatus status = SvnStatusConvertor
       .convertStatus(SvnStatusHandler.getStatus(diffPath.itemStatus), SvnStatusHandler.getStatus(diffPath.propertiesStatus));
 
-    // for "file + url" pair - statuses determine changes needs to be done to "url" to get "file" state
-    // for "url1 + url2" pair - statuses determine changes needs to be done to "url1" to get "url2" state
+    // statuses determine changes needs to be done to "target1" to get "target2" state
     ContentRevision beforeRevision = status == FileStatus.ADDED
                                      ? null
-                                     : target1.isFile()
-                                       ? createRemoteRevision(target2Path, target1Path, status)
-                                       : createRemoteRevision(target1Path, target2Path, status);
+                                     : createRevision(target1Path, target2Path, target1.getPegRevision(), status);
     ContentRevision afterRevision = status == FileStatus.DELETED
                                     ? null
-                                    : target1.isFile()
-                                      ? createLocalRevision(target1Path)
-                                      : createRemoteRevision(target2Path, target1Path, status);
-
+                                    : createRevision(target2Path, target1Path, target2.getPegRevision(), status);
 
     return createChange(status, beforeRevision, afterRevision);
   }

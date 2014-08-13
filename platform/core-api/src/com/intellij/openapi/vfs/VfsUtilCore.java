@@ -46,6 +46,8 @@ public class VfsUtilCore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VfsUtilCore");
 
   public static final String LOCALHOST_URI_PATH_PREFIX = "localhost/";
+  public static final char VFS_SEPARATOR_CHAR = '/';
+
   private static final String PROTOCOL_DELIMITER = ":";
 
   /**
@@ -84,6 +86,20 @@ public class VfsUtilCore {
     return false;
   }
 
+  /**
+   * @return {@code true} if {@code url} is located under one of {@code rootUrls} or equal to one of them
+   */
+  public static boolean isUnder(@NotNull String url, @Nullable Collection<String> rootUrls) {
+    if (rootUrls == null || rootUrls.isEmpty()) return false;
+
+    for (String excludesUrl : rootUrls) {
+      if (isEqualOrAncestor(excludesUrl, url)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public static boolean isEqualOrAncestor(@NotNull String ancestorUrl, @NotNull String fileUrl) {
     if (ancestorUrl.equals(fileUrl)) return true;
     if (StringUtil.endsWithChar(ancestorUrl, '/')) {
@@ -104,6 +120,11 @@ public class VfsUtilCore {
     return false;
   }
 
+  @Nullable
+  public static String getRelativePath(@NotNull VirtualFile file, @NotNull VirtualFile ancestor) {
+    return getRelativePath(file, ancestor, VFS_SEPARATOR_CHAR);
+  }
+
   /**
    * Gets the relative path of <code>file</code> to its <code>ancestor</code>. Uses <code>separator</code> for
    * separating files.
@@ -115,12 +136,10 @@ public class VfsUtilCore {
    */
   @Nullable
   public static String getRelativePath(@NotNull VirtualFile file, @NotNull VirtualFile ancestor, char separator) {
-    if (!file.getFileSystem().equals(ancestor.getFileSystem())) return null;
+    if (!file.getFileSystem().equals(ancestor.getFileSystem())) {
+      return null;
+    }
 
-    return doGetRelative(file, ancestor, separator);
-  }
-
-  public static String doGetRelative(VirtualFile file, VirtualFile ancestor, char separator) {
     int length = 0;
     VirtualFile parent = file;
     while (true) {

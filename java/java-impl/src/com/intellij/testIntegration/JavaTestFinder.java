@@ -47,14 +47,7 @@ public class JavaTestFinder implements TestFinder {
     PsiClass klass = findSourceElement(element);
     if (klass == null) return Collections.emptySet();
 
-    GlobalSearchScope scope;
-    Module module = getModule(element);
-    if (module != null) {
-      scope = GlobalSearchScope.moduleWithDependenciesScope(module);
-    }
-    else {
-      scope = GlobalSearchScope.projectScope(element.getProject());
-    }
+    GlobalSearchScope scope = getSearchScope(element);
 
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(element.getProject());
 
@@ -68,6 +61,16 @@ public class JavaTestFinder implements TestFinder {
     }
 
     return TestFinderHelper.getSortedElements(classesWithWeights, false);
+  }
+
+  protected GlobalSearchScope getSearchScope(PsiElement element) {
+    final Module module = getModule(element);
+    if (module != null) {
+      return GlobalSearchScope.moduleWithDependenciesScope(module);
+    }
+    else {
+      return GlobalSearchScope.projectScope(element.getProject());
+    }
   }
 
   private static boolean isTestSubjectClass(PsiClass klass) {
@@ -90,15 +93,8 @@ public class JavaTestFinder implements TestFinder {
     return TestFinderHelper.getSortedElements(classesWithProximities, true);
   }
 
-  private static boolean collectTests(PsiClass klass, Processor<Pair<? extends PsiNamedElement, Integer>> processor) {
-    GlobalSearchScope scope;
-    Module module = getModule(klass);
-    if (module != null) {
-      scope = GlobalSearchScope.moduleWithDependentsScope(module);
-    }
-    else {
-      scope = GlobalSearchScope.projectScope(klass.getProject());
-    }
+  private boolean collectTests(PsiClass klass, Processor<Pair<? extends PsiNamedElement, Integer>> processor) {
+    GlobalSearchScope scope = getSearchScope(klass);
 
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(klass.getProject());
 
@@ -130,14 +126,5 @@ public class JavaTestFinder implements TestFinder {
 
   public boolean isTest(@NotNull PsiElement element) {
     return TestIntegrationUtils.isTest(element);
-  }
-
-  public static boolean hasTestsForClass(PsiClass aClass) {
-    return collectTests(aClass, new CommonProcessors.FindProcessor<Pair<? extends PsiNamedElement, Integer>>() {
-      @Override
-      protected boolean accept(Pair<? extends PsiNamedElement, Integer> pair) {
-        return true;
-      }
-    });
   }
 }

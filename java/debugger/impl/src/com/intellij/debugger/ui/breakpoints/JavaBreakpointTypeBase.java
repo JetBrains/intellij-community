@@ -63,7 +63,7 @@ public abstract class JavaBreakpointTypeBase<T extends JavaBreakpointProperties>
     Breakpoint javaBreakpoint = BreakpointManager.getJavaBreakpoint(breakpoint);
     if (javaBreakpoint != null) {
       PsiClass aClass = javaBreakpoint.getPsiClass();
-      if (aClass != null && aClass.getContainingFile() != null) {
+      if (aClass != null && aClass.getContainingFile() != null && aClass.getTextOffset() >= 0) {
         return XDebuggerUtil.getInstance().createPositionByOffset(aClass.getContainingFile().getVirtualFile(), aClass.getTextOffset());
       }
     }

@@ -25,14 +25,16 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ModuleRootAdapter;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.StripedLockIntObjectConcurrentHashMap;
@@ -42,8 +44,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 public class DirectoryIndexImpl extends DirectoryIndex {
@@ -205,97 +205,5 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       ProgressManager.checkCanceled();
       LOG.error("Directory index is already disposed for " + myProject);
     }
-  }
-
-  @NotNull
-  private static OrderEntry createFakeOrderEntry(@NotNull final Module ownerModule) {
-    return new OrderEntry() {
-      @NotNull
-      @Override
-      public VirtualFile[] getFiles(OrderRootType type) {
-        throw new IncorrectOperationException();
-      }
-
-      @NotNull
-      @Override
-      public String[] getUrls(OrderRootType rootType) {
-        throw new IncorrectOperationException();
-      }
-
-      @NotNull
-      @Override
-      public String getPresentableName() {
-        throw new IncorrectOperationException();
-      }
-
-      @Override
-      public boolean isValid() {
-        throw new IncorrectOperationException();
-      }
-
-      @NotNull
-      @Override
-      public Module getOwnerModule() {
-        return ownerModule;
-      }
-
-      @Override
-      public <R> R accept(RootPolicy<R> policy, @Nullable R initialValue) {
-        throw new IncorrectOperationException();
-      }
-
-      @Override
-      public int compareTo(@NotNull OrderEntry o) {
-        throw new IncorrectOperationException();
-      }
-
-      @Override
-      public boolean isSynthetic() {
-        throw new IncorrectOperationException();
-      }
-    };
-  }
-
-  @Override
-  @Nullable
-  OrderEntry findOrderEntryWithOwnerModule(@NotNull DirectoryInfo info, @NotNull Module ownerModule) {
-    OrderEntry[] entries = getOrderEntries(info);
-    if (entries.length < 10) {
-      for (OrderEntry entry : entries) {
-        if (entry.getOwnerModule() == ownerModule) return entry;
-      }
-      return null;
-    }
-    int index = Arrays.binarySearch(entries, createFakeOrderEntry(ownerModule), RootIndex.BY_OWNER_MODULE);
-    return index < 0 ? null : entries[index];
-  }
-
-  @Override
-  @NotNull
-  List<OrderEntry> findAllOrderEntriesWithOwnerModule(@NotNull DirectoryInfo info, @NotNull Module ownerModule) {
-    OrderEntry[] entries = getOrderEntries(info);
-    if (entries.length == 0) return Collections.emptyList();
-
-    if (entries.length == 1) {
-      OrderEntry entry = entries[0];
-      return entry.getOwnerModule() == ownerModule ? Arrays.asList(entries) : Collections.<OrderEntry>emptyList();
-    }
-    int index = Arrays.binarySearch(entries, createFakeOrderEntry(ownerModule), RootIndex.BY_OWNER_MODULE);
-    if (index < 0) {
-      return Collections.emptyList();
-    }
-    int firstIndex = index;
-    while (firstIndex - 1 >= 0 && entries[firstIndex - 1].getOwnerModule() == ownerModule) {
-      firstIndex--;
-    }
-    int lastIndex = index + 1;
-    while (lastIndex < entries.length && entries[lastIndex].getOwnerModule() == ownerModule) {
-      lastIndex++;
-    }
-
-    OrderEntry[] subArray = new OrderEntry[lastIndex - firstIndex];
-    System.arraycopy(entries, firstIndex, subArray, 0, lastIndex - firstIndex);
-
-    return Arrays.asList(subArray);
   }
 }

@@ -19,6 +19,7 @@ import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
+import com.intellij.codeInsight.daemon.impl.quickfix.AnonymousTargetClassPreselectionUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.impl.AddNullableAnnotationFix;
 import com.intellij.codeInsight.navigation.NavigationUtil;
@@ -1133,6 +1134,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       final PsiElementProcessor<PsiClass> processor = new PsiElementProcessor<PsiClass>() {
         @Override
         public boolean execute(@NotNull PsiClass selectedClass) {
+          AnonymousTargetClassPreselectionUtil.rememberSelection(selectedClass, myTargetClass);
           final List<PsiVariable> array = classes.get(selectedClass);
           myNeedChangeContext = myTargetClass != selectedClass;
           myTargetClass = selectedClass;
@@ -1184,7 +1186,9 @@ public class ExtractMethodProcessor implements MatchProvider {
 
       if (classes.size() > 1) {
         final PsiClass[] psiClasses = classes.keySet().toArray(new PsiClass[classes.size()]);
-        NavigationUtil.getPsiElementPopup(psiClasses, new PsiClassListCellRenderer(), "Choose Destination Class", processor).showInBestPositionFor(myEditor);
+        final PsiClass preselection = AnonymousTargetClassPreselectionUtil.getPreselection(classes.keySet(), psiClasses[0]);
+        NavigationUtil.getPsiElementPopup(psiClasses, new PsiClassListCellRenderer(), "Choose Destination Class", processor, preselection)
+          .showInBestPositionFor(myEditor);
         return true;
       }
     }

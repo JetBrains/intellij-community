@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
@@ -46,7 +47,7 @@ public class JBTabsDemo {
     final JFrame frame = new JFrame();
     frame.getContentPane().setLayout(new BorderLayout(0, 0));
     final int[] count = new int[1];
-    final JBTabsImpl tabs = new JBTabsImpl(null, null, null, Disposer.newDisposable());
+    final JBTabsImpl tabs = new JBTabsImpl(null, ActionManager.getInstance(), null, Disposer.newDisposable());
     tabs.setTestMode(true);
 
 

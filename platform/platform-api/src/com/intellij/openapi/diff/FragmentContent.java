@@ -41,18 +41,28 @@ public class FragmentContent extends DiffContent {
   private final FileType myType;
   private final MyDocumentsSynchronizer mySynchonizer;
   public static final Key<Document> ORIGINAL_DOCUMENT = new Key<Document>("ORIGINAL_DOCUMENT");
+  private final boolean myForceReadOnly;
 
   public FragmentContent(@NotNull DiffContent original, @NotNull TextRange range, Project project, VirtualFile file) {
-    this(original, range, project, file != null ? DiffContentUtil.getContentType(file) : null);
+    this(original, range, project, file, false);
+  }
+
+  public FragmentContent(@NotNull DiffContent original, @NotNull TextRange range, Project project, VirtualFile file, boolean forceReadOnly) {
+    this(original, range, project, file != null ? DiffContentUtil.getContentType(file) : null, forceReadOnly);
   }
 
   public FragmentContent(@NotNull DiffContent original, @NotNull TextRange range, Project project, FileType fileType) {
+    this(original, range, project, fileType, false);
+  }
+
+  public FragmentContent(@NotNull DiffContent original, @NotNull TextRange range, Project project, FileType fileType, boolean forceReadOnly) {
     RangeMarker rangeMarker = original.getDocument().createRangeMarker(range.getStartOffset(), range.getEndOffset(), true);
     rangeMarker.setGreedyToLeft(true);
     rangeMarker.setGreedyToRight(true);
     mySynchonizer = new MyDocumentsSynchronizer(project, rangeMarker);
     myOriginal = original;
     myType = fileType;
+    myForceReadOnly = forceReadOnly;
   }
 
   public FragmentContent(DiffContent original, TextRange range, Project project) {
@@ -152,7 +162,7 @@ public class FragmentContent extends DiffContent {
       String textInRange =
         originalDocument.getCharsSequence().subSequence(myRangeMarker.getStartOffset(), myRangeMarker.getEndOffset()).toString();
       final Document result = EditorFactory.getInstance().createDocument(textInRange);
-      result.setReadOnly(!originalDocument.isWritable());
+      result.setReadOnly(myForceReadOnly || !originalDocument.isWritable());
       result.putUserData(ORIGINAL_DOCUMENT, originalDocument);
       return result;
     }

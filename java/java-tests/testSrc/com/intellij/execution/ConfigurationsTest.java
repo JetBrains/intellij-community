@@ -9,6 +9,7 @@ import com.intellij.execution.junit.*;
 import com.intellij.execution.junit2.configuration.JUnitConfigurable;
 import com.intellij.execution.junit2.configuration.JUnitConfigurationModel;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.openapi.module.Module;
@@ -421,7 +422,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
 
   private JavaParameters checkCanRun(RunConfiguration configuration) throws ExecutionException {
     final RunProfileState state;
-    state = configuration.getState(MOCK_EXECUTOR, new ExecutionEnvironment(new MockProfile(), MOCK_EXECUTOR, myProject, null));
+    state = configuration.getState(MOCK_EXECUTOR, new ExecutionEnvironmentBuilder(myProject, MOCK_EXECUTOR).runProfile(new MockProfile()).build());
     assertNotNull(state);
     assertTrue(state instanceof JavaCommandLine);
     if (state instanceof TestPackage) {
@@ -465,7 +466,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     }
 
     final RunProfileState state = configuration
-      .getState(MOCK_EXECUTOR, new ExecutionEnvironment(new MockProfile(), MOCK_EXECUTOR, myProject, null));
+      .getState(MOCK_EXECUTOR, new ExecutionEnvironmentBuilder(myProject, MOCK_EXECUTOR).runProfile(new MockProfile()).build());
     assertTrue(state instanceof JavaCommandLine);
 
     try {

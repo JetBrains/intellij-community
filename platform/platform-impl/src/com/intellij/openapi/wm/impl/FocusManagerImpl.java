@@ -203,9 +203,6 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   public ActionCallback requestFocus(@NotNull final FocusCommand command, final boolean forced) {
     assertDispatchThread();
 
-    if (!forced && !command.canFocusChangeFrom(getFocusOwner())) {
-      return ActionCallback.REJECTED;
-    }
     if (isInternalMode) {
       recordCommand(command, new Throwable(), forced);
     }

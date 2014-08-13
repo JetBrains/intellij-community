@@ -24,18 +24,25 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
-import com.jetbrains.python.psi.*;
 import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * An immutable holder of information for one auto-import candidate.
- * User: dcheryasov
- * Date: Apr 23, 2009 4:17:50 PM
+ * <p/>
+ * There can be do different flavors of such candidates:
+ * <ul>
+ *   <li>Candidates based on existing imports in module. In this case {@link #getImportElement()} must return not {@code null}.</li>
+ *   <li>Candidates not yet imported. In this case {@link #getPath()} must return not {@code null}.</li>
+ * </ul>
+ * <p/>
+ *
+ * @author dcheryasov
  */
 // visibility is intentionally package-level
-class ImportCandidateHolder implements Comparable {
+class ImportCandidateHolder implements Comparable<ImportCandidateHolder> {
   private final PsiElement myImportable;
   private final PyImportElement myImportElement;
   private final PsiFileSystemItem myFile;
@@ -43,15 +50,19 @@ class ImportCandidateHolder implements Comparable {
 
   /**
    * Creates new instance.
-   * @param importable an element that could be imported either from import element or from file.
-   * @param file the file which is the source of the importable
+   *
+   * @param importable    an element that could be imported either from import element or from file.
+   * @param file          the file which is the source of the importable (module for symbols, containing directory for modules and packages)
    * @param importElement an existing import element that can be a source for the importable.
-   * @param path import path for the file, as a qualified name (a.b.c)
+   * @param path          import path for the file, as a qualified name (a.b.c)
+   *                      For top-level imported symbols it's <em>qualified name of containing module</em> (or package for __init__.py).
+   *                      For modules and packages it should be <em>qualified name of their parental package</em>
+   *                      (empty for modules and packages located at source roots).
+   *
+   * @see com.jetbrains.python.codeInsight.imports.PythonReferenceImporter#proposeImportFix
    */
-  public ImportCandidateHolder(
-    @NotNull PsiElement importable, @NotNull PsiFileSystemItem file,
-    @Nullable PyImportElement importElement, @Nullable QualifiedName path
-  ) {
+  public ImportCandidateHolder(@NotNull PsiElement importable, @NotNull PsiFileSystemItem file,
+                               @Nullable PyImportElement importElement, @Nullable QualifiedName path) {
     myFile = file;
     myImportable = importable;
     myImportElement = importElement;
@@ -59,18 +70,22 @@ class ImportCandidateHolder implements Comparable {
     assert importElement != null || path != null; // one of these must be present
   }
 
+  @NotNull
   public PsiElement getImportable() {
     return myImportable;
   }
 
+  @Nullable
   public PyImportElement getImportElement() {
     return myImportElement;
   }
 
+  @NotNull
   public PsiFileSystemItem getFile() {
     return myFile;
   }
 
+  @Nullable
   public QualifiedName getPath() {
     return myPath;
   }
@@ -78,15 +93,17 @@ class ImportCandidateHolder implements Comparable {
   /**
    * Helper method that builds an import path, handling all these "import foo", "import foo as bar", "from bar import foo", etc.
    * Either importPath or importSource must be not null.
-   * @param name what is ultimately imported.
+   *
+   * @param name       what is ultimately imported.
    * @param importPath known path to import the name.
-   * @param source known ImportElement to import the name; its 'as' clause is used if present.
+   * @param source     known ImportElement to import the name; its 'as' clause is used if present.
    * @return a properly qualified name.
    */
-  public static String getQualifiedName(String name, QualifiedName importPath, PyImportElement source) {
-    StringBuilder sb = new StringBuilder();
+  @NotNull
+  public static String getQualifiedName(@NotNull String name, @Nullable QualifiedName importPath, @Nullable PyImportElement source) {
+    final StringBuilder sb = new StringBuilder();
     if (source != null) {
-      PsiElement parent = source.getParent();
+      final PsiElement parent = source.getParent();
       if (parent instanceof PyFromImportStatement) {
         sb.append(name);
       }
@@ -95,7 +112,7 @@ class ImportCandidateHolder implements Comparable {
       }
     }
     else {
-      if (importPath.getComponentCount() > 0) {
+      if (importPath != null && importPath.getComponentCount() > 0) {
         sb.append(importPath).append(".");
       }
       sb.append(name);
@@ -103,8 +120,9 @@ class ImportCandidateHolder implements Comparable {
     return sb.toString();
   }
 
-  public String getPresentableText(String myName) {
-    StringBuilder sb = new StringBuilder(getQualifiedName(myName, myPath, myImportElement));
+  @NotNull
+  public String getPresentableText(@NotNull String myName) {
+    final StringBuilder sb = new StringBuilder(getQualifiedName(myName, myPath, myImportElement));
     PsiElement parent = null;
     if (myImportElement != null) {
       parent = myImportElement.getParent();
@@ -113,13 +131,15 @@ class ImportCandidateHolder implements Comparable {
       sb.append(((PyFunction)myImportable).getParameterList().getPresentableText(false));
     }
     else if (myImportable instanceof PyClass) {
-      PyClass[] supers = ((PyClass)myImportable).getSuperClasses();
+      final PyClass[] supers = ((PyClass)myImportable).getSuperClasses();
       if (supers.length > 0) {
         sb.append("(");
         // ", ".join(x.getName() for x in getSuperClasses())
-        String[] super_names = new String[supers.length];
-        for (int i=0; i < supers.length; i += 1) super_names[i] = supers[i].getName();
-        sb.append(StringUtil.join(super_names, ", "));
+        final String[] superNames = new String[supers.length];
+        for (int i = 0; i < supers.length; i += 1) {
+          superNames[i] = supers[i].getName();
+        }
+        sb.append(StringUtil.join(superNames, ", "));
         sb.append(")");
       }
     }
@@ -135,10 +155,9 @@ class ImportCandidateHolder implements Comparable {
     return sb.toString();
   }
 
-  public int compareTo(Object o) {
-    ImportCandidateHolder rhs = (ImportCandidateHolder) o;
-    int lRelevance = getRelevance();
-    int rRelevance = rhs.getRelevance();
+  public int compareTo(@NotNull ImportCandidateHolder rhs) {
+    final int lRelevance = getRelevance();
+    final int rRelevance = rhs.getRelevance();
     if (rRelevance != lRelevance) {
       return rRelevance - lRelevance;
     }
@@ -150,7 +169,7 @@ class ImportCandidateHolder implements Comparable {
   }
 
   int getRelevance() {
-    Project project = myImportable.getProject();
+    final Project project = myImportable.getProject();
     final PsiFile psiFile = myImportable.getContainingFile();
     final VirtualFile vFile = psiFile == null ? null : psiFile.getVirtualFile();
     if (vFile == null) return 0;

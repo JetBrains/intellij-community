@@ -16,6 +16,8 @@
 package com.intellij.lexer;
 
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -29,5 +31,13 @@ public class LexerUtil {
 
   public static CharSequence internToken(Lexer lexer, CharTable table) {
     return table.intern(getTokenText(lexer));
+  }
+
+  @Contract("!null->!null")
+  public static Lexer getRootLexer(@Nullable Lexer lexer) {
+    while (lexer instanceof DelegateLexer) {
+      lexer = ((DelegateLexer)lexer).getDelegate();
+    }
+    return lexer;
   }
 }

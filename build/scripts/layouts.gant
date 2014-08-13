@@ -336,6 +336,10 @@ public def layoutCommunityPlugins(String home) {
     }
 
     layoutPlugin("gradle") {
+      jar("gradle-jps-plugin.jar") {
+        module("gradle-jps-plugin")
+      }
+
       jar("gradle-tooling-extension-api.jar") {
         module("gradle-tooling-extension-api")
       }
@@ -344,6 +348,13 @@ public def layoutCommunityPlugins(String home) {
         module("gradle-tooling-extension-impl")
       }
       fileset(dir: "$home/plugins/gradle/lib") { include(name: "*.jar") }
+      // add kryo lib
+      fileset(dir: "$home/lib/") {
+        include(name: "kryo-*.jar")
+        include(name: "reflectasm-*.jar")
+        include(name: "objenesis-*.jar")
+        include(name: "minlog-*.jar")
+      }
     }
 
     layoutPlugin("git4idea") {
@@ -505,6 +516,12 @@ public def layoutCommunityPlugins(String home) {
       fileset(dir: "$home/plugins/terminal/lib") {
         include(name: "*.jar")
         include(name: "*.in")
+      }
+    }
+
+    layoutPlugin("editorconfig") {
+      fileset(dir: "$home/plugins/editorconfig/lib") {
+        include(name: "**/*.jar")
       }
     }
 
@@ -753,6 +770,7 @@ def layoutJps(String home, String targetDir, String buildNumber, Closure additio
 
 
       jar("maven-jps-plugin.jar") { module("maven-jps-plugin") }
+      jar("gradle-jps-plugin.jar") { module("gradle-jps-plugin") }
       fileset(dir: "$home/plugins/maven/maven3-server-impl/lib/maven3/lib") {include(name: "plexus-utils-*.jar")}
 
       jar("eclipse-jps-plugin.jar") {

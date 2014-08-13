@@ -21,20 +21,22 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.DocStringUtil;
 import com.jetbrains.python.psi.*;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+
+import static com.jetbrains.python.psi.PyUtil.sure;
 
 /**
  * Does the actual job of adding an import statement into a file.
@@ -45,6 +47,34 @@ public class AddImportHelper {
   private static final Logger LOG = Logger.getInstance("#" + AddImportHelper.class.getName());
 
   private AddImportHelper() {
+  }
+
+  public static void addLocalImportStatement(@NotNull PyElement element, @NotNull String name) {
+    final PyElementGenerator generator = PyElementGenerator.getInstance(element.getProject());
+    final LanguageLevel languageLevel = LanguageLevel.forElement(element);
+
+    final PsiElement anchor = getLocalInsertPosition(element);
+    final PsiElement parentElement = sure(anchor).getParent();
+    if (parentElement != null) {
+      parentElement.addBefore(generator.createImportStatement(languageLevel, name, null), anchor);
+    }
+  }
+
+  public static void addLocalFromImportStatement(@NotNull PyElement element, @NotNull String qualifier, @NotNull String name) {
+    final PyElementGenerator generator = PyElementGenerator.getInstance(element.getProject());
+    final LanguageLevel languageLevel = LanguageLevel.forElement(element);
+
+    final PsiElement anchor = getLocalInsertPosition(element);
+    final PsiElement parentElement = sure(anchor).getParent();
+    if (parentElement != null) {
+      parentElement.addBefore(generator.createFromImportStatement(languageLevel, qualifier, name, null), anchor);
+    }
+
+  }
+
+  @Nullable
+  public static PsiElement getLocalInsertPosition(@NotNull PyElement anchor) {
+    return PsiTreeUtil.getParentOfType(anchor, PyStatement.class, false);
   }
 
   public enum ImportPriority {
@@ -81,7 +111,8 @@ public class AddImportHelper {
       // maybe we arrived at the doc comment stmt; skip over it, too
       else if (!skippedOverImports && !skippedOverDoc && file instanceof PyFile) {
         PsiElement doc_elt =
-          DocStringUtil.findDocStringExpression((PyElement)file); // this gives the literal; its parent is the expr seeker may have encountered
+          DocStringUtil
+            .findDocStringExpression((PyElement)file); // this gives the literal; its parent is the expr seeker may have encountered
         if (doc_elt != null && doc_elt.getParent() == feeler) {
           feeler = feeler.getNextSibling();
           seeker = feeler; // skip over doc even if there's nothing below it
@@ -147,19 +178,13 @@ public class AddImportHelper {
    * @param file   where to operate
    * @param name   which to import (qualified is OK)
    * @param asName optional name for 'as' clause
+   * @return whether import statement was actually added
    */
   public static boolean addImportStatement(PsiFile file, String name, @Nullable String asName, ImportPriority priority) {
-    String as_clause;
-    if (asName == null) {
-      as_clause = "";
-    }
-    else {
-      as_clause = " as " + asName;
-    }
     if (!(file instanceof PyFile)) {
       return false;
     }
-    List<PyImportElement> existingImports = ((PyFile)file).getImportTargets();
+    final List<PyImportElement> existingImports = ((PyFile)file).getImportTargets();
     for (PyImportElement element : existingImports) {
       final QualifiedName qName = element.getImportedQName();
       if (qName != null && name.equals(qName.toString())) {
@@ -171,7 +196,7 @@ public class AddImportHelper {
 
     final PyElementGenerator generator = PyElementGenerator.getInstance(file.getProject());
     final LanguageLevel languageLevel = LanguageLevel.forElement(file);
-    final PyImportStatement importNodeToInsert = generator.createImportStatementFromText(languageLevel, "import " + name + as_clause);
+    final PyImportStatement importNodeToInsert = generator.createImportStatement(languageLevel, name, asName);
     try {
       file.addBefore(importNodeToInsert, getInsertPosition(file, name, priority));
     }
@@ -180,6 +205,7 @@ public class AddImportHelper {
     }
     return true;
   }
+
   /**
    * Adds an "import ... from ..." statement below other top-level imports.
    *
@@ -189,20 +215,20 @@ public class AddImportHelper {
    * @param asName optional name for 'as' clause
    */
   public static void addImportFromStatement(PsiFile file, String from, String name, @Nullable String asName, ImportPriority priority) {
-    String asClause = asName == null ? "" : " as " + asName;
-
-    final PyFromImportStatement importNodeToInsert = PyElementGenerator.getInstance(file.getProject()).createFromText(
-      LanguageLevel.forElement(file), PyFromImportStatement.class, "from " + from + " import " + name + asClause);
+    final PyElementGenerator generator = PyElementGenerator.getInstance(file.getProject());
+    final LanguageLevel languageLevel = LanguageLevel.forElement(file);
+    final PyFromImportStatement nodeToInsert = generator.createFromImportStatement(languageLevel, from, name, asName);
     try {
       if (InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) {
-        final PsiElement element = file.addBefore(importNodeToInsert, getInsertPosition(file, from, priority));
+        final PsiElement element = file.addBefore(nodeToInsert, getInsertPosition(file, from, priority));
         PsiElement whitespace = element.getNextSibling();
-        if (!(whitespace instanceof PsiWhiteSpace))
+        if (!(whitespace instanceof PsiWhiteSpace)) {
           whitespace = PsiParserFacade.SERVICE.getInstance(file.getProject()).createWhiteSpaceFromText("  >>> ");
+        }
         file.addBefore(whitespace, element);
       }
       else {
-        file.addBefore(importNodeToInsert, getInsertPosition(file, from, priority));
+        file.addBefore(nodeToInsert, getInsertPosition(file, from, priority));
       }
     }
     catch (IncorrectOperationException e) {
@@ -228,7 +254,7 @@ public class AddImportHelper {
           }
         }
         final PyElementGenerator generator = PyElementGenerator.getInstance(file.getProject());
-        PyImportElement importElement = generator.createImportElement(LanguageLevel.forElement(file), name);
+        final PyImportElement importElement = generator.createImportElement(LanguageLevel.forElement(file), name);
         existingImport.add(importElement);
         return true;
       }
@@ -239,7 +265,8 @@ public class AddImportHelper {
 
   public static void addImport(final PsiNamedElement target, final PsiFile file, final PyElement element) {
     final boolean useQualified = !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT;
-    final PsiFileSystemItem toImport = target instanceof PsiFileSystemItem ? ((PsiFileSystemItem)target).getParent() : target.getContainingFile();
+    final PsiFileSystemItem toImport =
+      target instanceof PsiFileSystemItem ? ((PsiFileSystemItem)target).getParent() : target.getContainingFile();
     final ImportPriority priority = getImportPriority(file, toImport);
     final QualifiedName qName = QualifiedNameFinder.findCanonicalImportPath(target, element);
     if (qName == null) return;

@@ -20,8 +20,8 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.remoteServer.agent.util.CloudAgentLoggingHandler;
 import com.intellij.remoteServer.agent.util.CloudGitAgentDeployment;
-import com.intellij.remoteServer.agent.util.CloudLoggingHandler;
 import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +31,7 @@ public class CloudGitApplicationRuntime extends CloudApplicationRuntime {
 
   private final CloudMultiSourceServerRuntimeInstance myServerRuntime;
   private final DeploymentLogManager myLogManager;
-  private final CloudLoggingHandler myLoggingHandler;
+  private final CloudAgentLoggingHandler myLoggingHandler;
 
   private final CloudGitAgentDeployment myDeployment;
 
@@ -53,7 +53,7 @@ public class CloudGitApplicationRuntime extends CloudApplicationRuntime {
     return myLogManager;
   }
 
-  protected CloudLoggingHandler getLoggingHandler() {
+  protected CloudAgentLoggingHandler getLoggingHandler() {
     return myLoggingHandler;
   }
 

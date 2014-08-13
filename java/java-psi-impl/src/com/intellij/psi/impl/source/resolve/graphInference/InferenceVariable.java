@@ -26,6 +26,8 @@ import java.util.*;
  * User: anna
  */
 public class InferenceVariable extends LightTypeParameter {
+  private PsiElement myContext;
+
   public PsiTypeParameter getParameter() {
     return getDelegate();
   }
@@ -35,8 +37,9 @@ public class InferenceVariable extends LightTypeParameter {
 
   private PsiType myInstantiation = PsiType.NULL;
 
-  InferenceVariable(PsiTypeParameter parameter) {
+  InferenceVariable(PsiElement context, PsiTypeParameter parameter) {
     super(parameter);
+    myContext = context;
   }
 
   public PsiType getInstantiation() {
@@ -112,6 +115,16 @@ public class InferenceVariable extends LightTypeParameter {
     return dependencies;
   }
 
+  public boolean hasInstantiation(InferenceSession session) {
+    List<PsiType> bounds = getBounds(InferenceBound.EQ);
+    if (bounds != null) {
+      for (PsiType bound : bounds) {
+        if (session.isProperType(bound)) return true;
+      }
+    }
+    return false;
+  }
+
   public boolean isThrownBound() {
     return myThrownBound;
   }
@@ -128,5 +141,9 @@ public class InferenceVariable extends LightTypeParameter {
   @Override
   public String toString() {
     return getDelegate().toString();
+  }
+
+  public PsiElement getCallContext() {
+    return myContext;
   }
 }

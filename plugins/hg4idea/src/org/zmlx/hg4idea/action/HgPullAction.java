@@ -24,7 +24,7 @@ import org.zmlx.hg4idea.ui.HgPullDialog;
 
 import java.util.Collection;
 
-public class HgPullAction extends HgAbstractGlobalAction {
+public class HgPullAction extends HgAbstractGlobalSingleRepoAction {
   public HgPullAction() {
     super(AllIcons.Actions.CheckOut);
   }

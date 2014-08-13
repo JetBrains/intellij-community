@@ -61,6 +61,7 @@ public class PluginDownloader {
 
   private String myFileName;
   private String myPluginName;
+  private BuildNumber myBuildNumber;
 
   private File myFile;
   private File myOldFile;
@@ -74,12 +75,18 @@ public class PluginDownloader {
     myPluginVersion = pluginVersion;
   }
 
-  public PluginDownloader(String pluginId, String pluginUrl, String pluginVersion, String fileName, String pluginName) {
+  public PluginDownloader(String pluginId,
+                          String pluginUrl,
+                          String pluginVersion,
+                          String fileName,
+                          String pluginName,
+                          BuildNumber buildNumber) {
     myPluginId = pluginId;
     myPluginUrl = pluginUrl;
     myPluginVersion = pluginVersion;
     myFileName = fileName;
     myPluginName = pluginName;
+    myBuildNumber = buildNumber;
   }
 
   @SuppressWarnings("UnusedDeclaration")
@@ -89,7 +96,7 @@ public class PluginDownloader {
   }
 
   public boolean prepareToInstall(ProgressIndicator pi) throws IOException {
-    return prepareToInstall(pi, null);
+    return prepareToInstall(pi, myBuildNumber);
   }
 
   public boolean prepareToInstall(@Nullable ProgressIndicator pi, @Nullable BuildNumber forBuildNumber) throws IOException {
@@ -289,9 +296,15 @@ public class PluginDownloader {
   }
 
   private URLConnection openConnection(final String url) throws IOException {
-    final URLConnection connection = ApplicationManager.getApplication() != null
-                                     ? HttpConfigurable.getInstance().openConnection(url)
-                                     : new URL(url).openConnection();
+    final URLConnection connection;
+    if (ApplicationManager.getApplication() != null) {
+      connection = HttpConfigurable.getInstance().openConnection(url);
+    }
+    else {
+      connection = new URL(url).openConnection();
+      connection.setConnectTimeout(HttpConfigurable.CONNECTION_TIMEOUT);
+      connection.setReadTimeout(HttpConfigurable.CONNECTION_TIMEOUT);
+    }
     if (connection instanceof HttpURLConnection) {
       final int responseCode = ((HttpURLConnection)connection).getResponseCode();
       if (responseCode != HttpURLConnection.HTTP_OK) {
@@ -385,9 +398,14 @@ public class PluginDownloader {
   }
 
   public static PluginDownloader createDownloader(IdeaPluginDescriptor descriptor) throws UnsupportedEncodingException {
+    return createDownloader(descriptor, null);
+  }
+
+  public static PluginDownloader createDownloader(IdeaPluginDescriptor descriptor,
+                                                  BuildNumber buildNumber) throws UnsupportedEncodingException {
     PluginDownloader downloader = new PluginDownloader(descriptor.getPluginId().getIdString(), 
-                                                       UpdateChecker.getDownloadUrl(descriptor), 
-                                                       descriptor.getVersion(), null, descriptor.getName());
+                                                       UpdateChecker.getDownloadUrl(descriptor, buildNumber), 
+                                                       descriptor.getVersion(), null, descriptor.getName(), buildNumber);
     downloader.setDescriptor(descriptor);
     return downloader;
   }

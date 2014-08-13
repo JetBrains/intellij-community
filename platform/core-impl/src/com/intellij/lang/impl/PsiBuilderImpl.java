@@ -1113,7 +1113,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         if (curDepth > maxDepth) maxDepth = curDepth;
       }
       else if (item instanceof DoneMarker) {
-        if (((DoneMarker)item).myStart != curNode) LOG.error(UNBALANCED_MESSAGE);
+        assertMarkersBalanced(((DoneMarker)item).myStart == curNode, item);
         curNode = nodes.pop();
         curDepth--;
       }
@@ -1143,12 +1143,22 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myLexStarts[myCurrentLexeme + 1] = 0;
     myLexTypes[myCurrentLexeme] = null;
 
-    LOG.assertTrue(curNode == rootMarker, UNBALANCED_MESSAGE);
+    assertMarkersBalanced(curNode == rootMarker, curNode);
 
     checkTreeDepth(maxDepth, rootMarker.getTokenType() instanceof IFileElementType);
 
     clearCachedTokenType();
     return rootMarker;
+  }
+
+  private void assertMarkersBalanced(boolean condition, @Nullable ProductionMarker marker) {
+    if (condition) return;
+
+    int index = marker != null ? marker.getStartIndex() + 1 : myLexStarts.length;
+    CharSequence context =
+      index < myLexStarts.length ? myText.subSequence(Math.max(0, myLexStarts[index] - 1000), myLexStarts[index]) : "<none>";
+    String language = myFile != null ? myFile.getLanguage() + ", " : "";
+    LOG.error(UNBALANCED_MESSAGE + "\n" + language + context);
   }
 
   private void balanceWhiteSpaces() {
@@ -1158,8 +1168,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     for (int i = 1, size = myProduction.size() - 1; i < size; i++) {
       ProductionMarker item = myProduction.get(i);
-      if (item instanceof StartMarker && ((StartMarker)item).myDoneMarker == null) {
-        LOG.error(UNBALANCED_MESSAGE);
+      if (item instanceof StartMarker) {
+        assertMarkersBalanced(((StartMarker)item).myDoneMarker != null, item);
       }
 
       int prevProductionLexIndex = myProduction.get(i - 1).myLexemeIndex;

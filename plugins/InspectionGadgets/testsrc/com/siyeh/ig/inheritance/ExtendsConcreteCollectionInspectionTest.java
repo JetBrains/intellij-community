@@ -31,7 +31,7 @@ public class ExtendsConcreteCollectionInspectionTest extends LightInspectionTest
   protected String[] getEnvironmentClasses() {
     return new String[] {
       "package java.util;" +
-      "public class LinkedHashMap<K, V> {" +
+      "public class LinkedHashMap<K, V> extends HashMap<K,V> implements Map<K,V>{" +
       "  protected boolean removeEldestEntry(Map.Entry<K,V> eldest) {\n" +
       "    return false;\n" +
       "  }" +

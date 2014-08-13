@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescri
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Set;
@@ -50,6 +51,7 @@ public class FrameworkLibraryValidatorImpl extends FrameworkLibraryValidator {
     myLibraryCategoryName = libraryCategoryName;
   }
 
+  @NotNull
   @Override
   public ValidationResult check() {
     final Set<? extends LibraryKind> libraryKinds = myLibraryDescription.getSuitableLibraryKinds();

@@ -20,11 +20,11 @@ package com.intellij.remoteServer.agent.util.log;
  */
 public interface LogListener {
 
-  void lineLogged(String line, String deploymentName, String kind);
+  void lineLogged(String line);
 
   LogListener NULL = new LogListener() {
 
-    public void lineLogged(String line, String deploymentName, String kind) {
+    public void lineLogged(String line) {
 
     }
   };

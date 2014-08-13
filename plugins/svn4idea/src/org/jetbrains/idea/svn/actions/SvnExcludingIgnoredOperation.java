@@ -70,7 +70,7 @@ public class SvnExcludingIgnoredOperation {
       return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
         @Override
         public Boolean compute() {
-          return myVcsManager.isIgnoredByVcs(file);
+          return myVcsManager.isIgnored(file);
         }
       });
     }

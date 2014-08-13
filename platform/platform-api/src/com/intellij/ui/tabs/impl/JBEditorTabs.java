@@ -43,12 +43,13 @@ import java.util.List;
  * @author pegov
  */
 public class JBEditorTabs extends JBTabsImpl {
-  private static final String TABS_ALPHABETICAL_KEY = "tabs.alphabetical";
+  public static final String TABS_ALPHABETICAL_KEY = "tabs.alphabetical";
+  static final String TABS_SHORTEN_TITLE_IF_NEED = "tabs.shorten.title.if.need";
   private JBEditorTabsPainter myDarkPainter = new DarculaEditorTabsPainter();
   private JBEditorTabsPainter myDefaultPainter = new DefaultEditorTabsPainter();
 
 
-  public JBEditorTabs(@Nullable Project project, ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
+  public JBEditorTabs(@Nullable Project project, @NotNull ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
     super(project, actionManager, focusManager, parent);
   }
 
@@ -58,6 +59,13 @@ public class JBEditorTabs extends JBTabsImpl {
       return new ScrollableSingleRowLayout(this);
     }
     return super.createSingleRowLayout();
+  }
+
+  @Override
+  protected TabLabel createTabLabel(TabInfo info) {
+    TabLabel label = super.createTabLabel(info);
+    label.putClientProperty(TABS_SHORTEN_TITLE_IF_NEED, Boolean.TRUE);
+    return label;
   }
 
   @Override
@@ -130,7 +138,7 @@ public class JBEditorTabs extends JBTabsImpl {
     return UIUtil.isUnderDarcula() ? myDarkPainter : myDefaultPainter;
   }
 
-  public static boolean isAlphabeticalMode() {
+  public boolean isAlphabeticalMode() {
     return Registry.is(TABS_ALPHABETICAL_KEY);
   }
 

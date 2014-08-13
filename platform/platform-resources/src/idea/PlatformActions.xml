@@ -457,6 +457,7 @@
       </group>
       <separator/>
       <reference ref="HelpTopics"/>
+      <reference ref="SearchEverywhere"/>
     </group>
 
     <group id="NavBarVcsGroup"/>
@@ -563,7 +564,6 @@
     </group>
 
     <group id="DiffPanel.Toolbar">
-      <reference ref="$Copy"/>
       <reference ref="PreviousDiff"/>
       <reference ref="NextDiff"/>
       <separator/>

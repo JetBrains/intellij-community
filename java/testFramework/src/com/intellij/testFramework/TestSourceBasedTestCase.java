@@ -50,7 +50,7 @@ import java.io.File;
                                                                setupContentRoot();
                                                              }
                                                            });
-
+    ProjectViewTestUtil.setupImpl(getProject(), true);
   }
 
   @Override

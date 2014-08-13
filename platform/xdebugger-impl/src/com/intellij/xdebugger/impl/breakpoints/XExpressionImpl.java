@@ -18,6 +18,7 @@ package com.intellij.xdebugger.impl.breakpoints;
 import com.intellij.lang.Language;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,12 +66,12 @@ public class XExpressionImpl implements XExpression {
     return myMode;
   }
 
-  @Nullable
+  @Contract("null -> null; !null -> !null")
   public static XExpressionImpl fromText(@Nullable String text) {
     return text != null ? new XExpressionImpl(text, null, null, EvaluationMode.EXPRESSION) : null;
   }
 
-  @Nullable
+  @Contract("null, _ -> null; !null, _ -> !null")
   public static XExpressionImpl fromText(@Nullable String text, EvaluationMode mode) {
     return text != null ? new XExpressionImpl(text, null, null, mode) : null;
   }

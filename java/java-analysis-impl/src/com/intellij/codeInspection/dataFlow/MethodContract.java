@@ -89,10 +89,16 @@ public class MethodContract {
         throw new ParseException("A contract clause must be in form arg1, ..., argN -> return-value");
       }
 
-      String[] argStrings = clause.substring(0, arrowIndex).split(",");
-      ValueConstraint[] args = new ValueConstraint[argStrings.length];
-      for (int i = 0; i < args.length; i++) {
-        args[i] = parseConstraint(argStrings[i]);
+      String beforeArrow = clause.substring(0, arrowIndex);
+      ValueConstraint[] args;
+      if (StringUtil.isNotEmpty(beforeArrow)) {
+        String[] argStrings = beforeArrow.split(",");
+        args = new ValueConstraint[argStrings.length];
+        for (int i = 0; i < args.length; i++) {
+          args[i] = parseConstraint(argStrings[i]);
+        }
+      } else {
+        args = new ValueConstraint[0];
       }
       result.add(new MethodContract(args, parseConstraint(clause.substring(arrowIndex + arrow.length()))));
     }

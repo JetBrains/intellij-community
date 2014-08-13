@@ -46,7 +46,7 @@ public class TestProjectTreeStructure extends AbstractProjectTreeStructure imple
   }
 
   public AbstractProjectViewPSIPane createPane() {
-    final AbstractProjectViewPSIPane pane = new TestProjectViewPSIPane(myProject, this);
+    final AbstractProjectViewPSIPane pane = new TestProjectViewPSIPane(myProject, this, 9);
     pane.createComponent();
     Disposer.register(this, pane);
     return pane;

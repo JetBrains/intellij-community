@@ -781,7 +781,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  public void restart(boolean exitConfirmed) {
+  public void restart(final boolean exitConfirmed) {
     exit(false, exitConfirmed, true, true);
   }
 
@@ -801,7 +801,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     exiting = true;
     try {
-      if (!force && getDefaultModalityState() != ModalityState.NON_MODAL) {
+      if (!force && !exitConfirmed && getDefaultModalityState() != ModalityState.NON_MODAL) {
         return;
       }
 
@@ -1067,8 +1067,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private static Thread getEventQueueThread() {
     EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
     try {
-      Method method = EventQueue.class.getDeclaredMethod("getDispatchThread");
-      method.setAccessible(true);
+      Method method = ReflectionUtil.getDeclaredMethod(EventQueue.class, "getDispatchThread");
       return (Thread)method.invoke(eventQueue);
     }
     catch (Exception e) {

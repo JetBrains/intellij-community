@@ -184,15 +184,20 @@ public class SvnRecursiveStatusWalker {
       }
     };
     if (Depth.EMPTY.equals(newDepth)) {
-      directoryFilter = Processor.TRUE;
+      // just process immediate children - so only root directory itself should satisfy filter
+      directoryFilter = new Processor<File>() {
+        @Override
+        public boolean process(File file) {
+          return FileUtil.filesEqual(ioFile, file);
+        }
+      };
       processor = new Processor<File>() {
         @Override
         public boolean process(File file) {
-          // here we deal only with immediate children - so ignored on IDEA level for children is not important - we nevertheless do not go into
-          // other levels
-          if (! FileUtil.filesEqual(ioFile, file)) return true;
-          if (! FileUtil.filesEqual(ioFile, file.getParentFile())) return false;
-          return checkDirProcessor.process(file);
+          // TODO: check if we should still call checkDirProcessor() here - or we really could not check ignore settings but just call
+          // TODO: myReceiver.processUnversioned() for all immediate children
+          // here we deal only with immediate children - so ignored on IDEA level for children is not important
+          return FileUtil.filesEqual(ioFile, file) || checkDirProcessor.process(file);
         }
       };
     } else {

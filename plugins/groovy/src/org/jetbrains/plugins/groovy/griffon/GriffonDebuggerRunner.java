@@ -22,7 +22,6 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -42,10 +41,7 @@ public class GriffonDebuggerRunner extends GenericDebuggerRunner {
 
 
   @Override
-  protected RunContentDescriptor createContentDescriptor(Project project,
-                                                         RunProfileState state,
-                                                         RunContentDescriptor contentToReuse,
-                                                         ExecutionEnvironment env) throws ExecutionException {
+  protected RunContentDescriptor createContentDescriptor(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment) throws ExecutionException {
     final JavaCommandLine javaCommandLine = (JavaCommandLine)state;
     final JavaParameters params = javaCommandLine.getJavaParameters();
 
@@ -68,11 +64,8 @@ public class GriffonDebuggerRunner extends GenericDebuggerRunner {
     }
 
     if (address == null) {
-      return super.createContentDescriptor(project, state, contentToReuse, env);
+      return super.createContentDescriptor(state, environment);
     }
-
-    RemoteConnection connection = new RemoteConnection(true, "127.0.0.1", address, false);
-    return attachVirtualMachine(project, state, contentToReuse, env, connection, true);
+    return attachVirtualMachine(state, environment, new RemoteConnection(true, "127.0.0.1", address, false), true);
   }
-
 }

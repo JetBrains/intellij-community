@@ -3,6 +3,7 @@ package git4idea.log;
 import com.intellij.mock.MockVirtualFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.Function;
@@ -201,11 +202,6 @@ public class GitRefManagerTest extends UsefulTestCase {
         }
         return infos;
       }
-
-      @Override
-      public void dispose() {
-      }
-
     });
     return ContainerUtil.sorted(refs, new GitRefManager(manager).getComparator());
   }
@@ -286,6 +282,12 @@ public class GitRefManagerTest extends UsefulTestCase {
     @Override
     public State getState() {
       throw new UnsupportedOperationException();
+    }
+
+    @Nullable
+    @Override
+    public AbstractVcs getVcs() {
+      return null;
     }
 
     @Nullable

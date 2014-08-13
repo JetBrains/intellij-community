@@ -173,7 +173,7 @@ public class LocalChangeListImpl extends LocalChangeList {
           return false;
         }
         VirtualFile vFile = revision.getFile().getVirtualFile();
-        return vFile != null && ProjectLevelVcsManager.getInstance(project).isIgnoredByVcs(vFile);
+        return vFile != null && ProjectLevelVcsManager.getInstance(project).isIgnored(vFile);
       }
     });
   }

@@ -25,6 +25,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.PropertiesReferenceManager;
@@ -317,7 +318,7 @@ public final class PreviewFormAction extends AnAction{
       ProgramRunner defaultRunner = RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, profile);
       LOG.assertTrue(defaultRunner != null);
       Executor executor = DefaultRunExecutor.getRunExecutorInstance();
-      defaultRunner.execute(new ExecutionEnvironment(profile, executor, module.getProject(), null));
+      defaultRunner.execute(new ExecutionEnvironmentBuilder(module.getProject(), executor).runProfile(profile).build());
     }
     catch (ExecutionException e) {
       Messages.showErrorDialog(

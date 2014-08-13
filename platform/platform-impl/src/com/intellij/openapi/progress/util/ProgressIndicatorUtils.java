@@ -61,7 +61,7 @@ public class ProgressIndicatorUtils {
     runWithWriteActionPriority(new ProgressIndicatorBase(), task);
   }
 
-  public static void runWithWriteActionPriority(final ProgressIndicator progressIndicator, final ReadTask task) {
+  private static void surroundWithListener(@NotNull final ProgressIndicator progressIndicator, @NotNull Runnable runnable) {
     final ApplicationAdapter listener = new ApplicationAdapter() {
       @Override
       public void beforeWriteActionStart(Object action) {
@@ -69,45 +69,70 @@ public class ProgressIndicatorUtils {
       }
     };
     final Application application = ApplicationManager.getApplication();
+    application.addApplicationListener(listener);
     try {
-      application.addApplicationListener(listener);
-      ProgressManager.getInstance().runProcess(new Runnable(){
-          @Override
-          public void run() {
-            // This read action can possible last for a long time, we want it to stop immediately on the first write access.
-            // For this purpose we launch it under empty progress and invoke progressIndicator#cancel on write access to avoid possible write lock delays.
-            try {
-              application.runReadAction(new Runnable() {
-                @Override
-                public void run() {
-                  task.computeInReadAction(progressIndicator);
-                }
-              });
-            }
-            catch (ProcessCanceledException ignore) {
-            }
-            finally {
-              if (progressIndicator.isCanceled()) {
-                task.onCanceled(progressIndicator);
-              }
-            }
-          }
-        }, progressIndicator);
+      runnable.run();
     }
     finally {
       application.removeApplicationListener(listener);
     }
   }
 
+
+  public static void runWithWriteActionPriority(@NotNull final ProgressIndicator progressIndicator, @NotNull final ReadTask task) {
+    surroundWithListener(progressIndicator, new Runnable() {
+      @Override
+      public void run() {
+        runUnderProgress(progressIndicator, task);
+      }
+    });
+  }
+
+  private static void runUnderProgress(@NotNull final ProgressIndicator progressIndicator, @NotNull final ReadTask task) {
+    ProgressManager.getInstance().runProcess(new Runnable() {
+        @Override
+        public void run() {
+          // This read action can possible last for a long time, we want it to stop immediately on the first write access.
+          // For this purpose we launch it under empty progress and invoke progressIndicator#cancel on write access to avoid possible write lock delays.
+          try {
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
+              @Override
+              public void run() {
+                task.computeInReadAction(progressIndicator);
+              }
+            });
+          }
+          catch (ProcessCanceledException ignore) {
+          }
+          finally {
+            if (progressIndicator.isCanceled()) {
+              task.onCanceled(progressIndicator);
+            }
+          }
+        }
+      }, progressIndicator);
+  }
+
   public static void scheduleWithWriteActionPriority(@NotNull final ReadTask task) {
     scheduleWithWriteActionPriority(new ProgressIndicatorBase(), task);
   }
 
-  public static void scheduleWithWriteActionPriority(final ProgressIndicator indicator, final ReadTask task) {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+  public static void scheduleWithWriteActionPriority(@NotNull final ProgressIndicator indicator, @NotNull final ReadTask task) {
+    // we have to attach listeners in EDT to avoid "fire write action started while attach listeners from another thread" race condition
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        runWithWriteActionPriority(indicator, task);
+        surroundWithListener(indicator, new Runnable() {
+          @Override
+          public void run() {
+            ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+              @Override
+              public void run() {
+                runUnderProgress(indicator, task);
+              }
+            });
+          }
+        });
       }
     });
   }

@@ -32,6 +32,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.FileHistoryPanelImpl;
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
+import com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -474,7 +475,7 @@ public abstract class HgUtil {
    */
   @Nullable
   public static VirtualFile convertToLocalVirtualFile(@Nullable VirtualFile file) {
-    if (!(file instanceof VcsVirtualFile)) {
+    if (!(file instanceof AbstractVcsVirtualFile)) {
       return file;
     }
     LocalFileSystem lfs = LocalFileSystem.getInstance();
@@ -583,11 +584,16 @@ public abstract class HgUtil {
     if (state != HgRepository.State.NORMAL) {
       branchText += state.toString() + " ";
     }
+    return branchText + getActiveBranchName(repository);
+  }
+
+  @NotNull
+  public static String getActiveBranchName(@NotNull HgRepository repository) {
     String branchOrBookMarkName = repository.getCurrentBookmark();
     if (StringUtil.isEmptyOrSpaces(branchOrBookMarkName)) {
       branchOrBookMarkName = repository.getCurrentBranch();
     }
-    return branchText + branchOrBookMarkName;
+    return branchOrBookMarkName;
   }
 
   @NotNull

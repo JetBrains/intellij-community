@@ -18,19 +18,4 @@ package com.intellij.remoteServer.impl.module;
 
 public abstract class CloudApplicationConfiguration {
 
-  private boolean myExisting;
-  private final String myExistingAppName;
-
-  protected CloudApplicationConfiguration(boolean existing, String existingAppName) {
-    myExisting = existing;
-    myExistingAppName = existingAppName;
-  }
-
-  public boolean isExisting() {
-    return myExisting;
-  }
-
-  public String getExistingAppName() {
-    return myExistingAppName;
-  }
 }

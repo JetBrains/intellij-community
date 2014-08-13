@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.util.treeView;
 
-import com.intellij.openapi.diagnostic.Log;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Progressive;
@@ -2751,22 +2750,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     //suite.addTestSuite(QuickBgLoadingSyncUpdate.class);
 
     return suite;
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    AbstractTreeUi ui = getBuilder().getUi();
-    if (ui != null) {
-      ui.getReady(this).doWhenProcessed(new Runnable() {
-        @Override
-        public void run() {
-          Log.flush();
-        }
-      });
-    } else {
-      Log.flush();
-    }
-    super.tearDown();
   }
 
   private abstract static class MyRunnable implements Runnable {

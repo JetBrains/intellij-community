@@ -26,7 +26,7 @@ public class DevKitBundle extends AbstractBundle {
     return ourInstance.getMessage(key, params);
   }
 
-  @NonNls private static final String BUNDLE = "DevKitBundle";
+  @NonNls private static final String BUNDLE = "org.jetbrains.idea.devkit.DevKitBundle";
   private static final DevKitBundle ourInstance = new DevKitBundle();
 
   private DevKitBundle() {

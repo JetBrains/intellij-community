@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,8 +56,8 @@ public class TableLayout extends TabLayout {
         eachX = data.toFitRec.x;
       }
       myTabs.layout(eachLabel, eachX, 0, size.width, 1);
-      eachX += size.width + JBTabsImpl.getInterTabSpaceLength();
-      data.requiredWidth += size.width + JBTabsImpl.getInterTabSpaceLength();
+      eachX += size.width + myTabs.getInterTabSpaceLength();
+      data.requiredWidth += size.width + myTabs.getInterTabSpaceLength();
     }
 
     int selectedRow = -1;
@@ -84,7 +84,7 @@ public class TableLayout extends TabLayout {
         if (myTabs.getSelectedInfo() == eachInfo) {
           selectedRow = eachRow;
         }
-        eachX += size.width + JBTabsImpl.getInterTabSpaceLength();
+        eachX += size.width + myTabs.getInterTabSpaceLength();
       }
       else {
         eachTableRow = new TableRow(data);
@@ -161,9 +161,9 @@ public class TableLayout extends TabLayout {
         label.setAlignmentToCenter(deltaToFit > 0);
 
         boolean lastCell = i == eachRow.myColumns.size() - 1;
-        eachX += width + (lastCell ? 0 : JBTabsImpl.getInterTabSpaceLength());
+        eachX += width + (lastCell ? 0 : myTabs.getInterTabSpaceLength());
       }
-      eachY += myTabs.myHeaderFitSize.height - 1 + JBTabsImpl.getInterTabSpaceLength() - (row < data.table.size() - 1 ? tabUnderlineFix : 0);
+      eachY += myTabs.myHeaderFitSize.height - 1 + myTabs.getInterTabSpaceLength() - (row < data.table.size() - 1 ? tabUnderlineFix : 0);
       
       row++;
     }

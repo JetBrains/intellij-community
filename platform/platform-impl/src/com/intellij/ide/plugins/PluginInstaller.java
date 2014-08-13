@@ -30,10 +30,7 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author stathik
@@ -45,6 +42,19 @@ public class PluginInstaller {
   private PluginInstaller() { }
 
   public static boolean prepareToInstall(List<PluginNode> pluginsToInstall, List<IdeaPluginDescriptor> allPlugins) {
+    HashSet<PluginNode> dependant = new HashSet<PluginNode>();
+    boolean install = prepareToInstall(pluginsToInstall, allPlugins, dependant);
+    for (PluginNode node : dependant) {
+      if (!pluginsToInstall.contains(node)) {
+        pluginsToInstall.add(node);
+      }
+    }
+    return install;
+  }
+
+  private static boolean prepareToInstall(List<PluginNode> pluginsToInstall,
+                                          List<IdeaPluginDescriptor> allPlugins,
+                                          Set<PluginNode> installedDependant) {
     ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
 
     final List<PluginId> pluginIds = new ArrayList<PluginId>();
@@ -58,7 +68,7 @@ public class PluginInstaller {
       if (pi != null) pi.setText(pluginNode.getName());
 
       try {
-        result |= prepareToInstall(pluginNode, pluginIds, allPlugins);
+        result |= prepareToInstall(pluginNode, pluginIds, allPlugins, installedDependant);
       }
       catch (IOException e) {
         String title = IdeBundle.message("title.plugin.error");
@@ -72,7 +82,9 @@ public class PluginInstaller {
 
   private static boolean prepareToInstall(final PluginNode pluginNode,
                                           final List<PluginId> pluginIds,
-                                          List<IdeaPluginDescriptor> allPlugins) throws IOException {
+                                          List<IdeaPluginDescriptor> allPlugins,
+                                          Set<PluginNode> installedDependant) throws IOException {
+    installedDependant.add(pluginNode);
     // check for dependent plugins at first.
     if (pluginNode.getDepends() != null && pluginNode.getDepends().size() > 0) {
       // prepare plugins list for install
@@ -122,7 +134,7 @@ public class PluginInstaller {
           return false;
         }
         if (proceed[0]) {
-          if (!prepareToInstall(depends, allPlugins)) {
+          if (!prepareToInstall(depends, allPlugins, installedDependant)) {
             return false;
           }
         }
@@ -152,7 +164,7 @@ public class PluginInstaller {
           return false;
         }
         if (proceed[0]) {
-          if (!prepareToInstall(optionalDeps, allPlugins)) {
+          if (!prepareToInstall(optionalDeps, allPlugins, installedDependant)) {
             return false;
           }
         }

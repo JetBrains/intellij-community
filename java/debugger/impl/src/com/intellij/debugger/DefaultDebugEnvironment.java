@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,46 +17,33 @@ package com.intellij.debugger;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.*;
-import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.project.Project;
+import com.intellij.execution.configurations.RemoteConnection;
+import com.intellij.execution.configurations.RemoteState;
+import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.SearchScopeProvider;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: michael.golubev
- */
 public class DefaultDebugEnvironment implements DebugEnvironment {
-
   private final GlobalSearchScope mySearchScope;
-  private final Executor myExecutor;
-  private final ProgramRunner myRunner;
-  private RunProfileState myState;
   private final RemoteConnection myRemoteConnection;
   private final boolean myPollConnection;
-  private final RunProfile myRunProfile;
+  private final ExecutionEnvironment environment;
+  private final RunProfileState state;
 
-  public DefaultDebugEnvironment(Project project,
-                                 Executor executor,
-                                 ProgramRunner runner,
-                                 RunProfile runProfile,
-                                 RunProfileState state,
-                                 RemoteConnection remoteConnection,
-                                 boolean pollConnection) {
-    myExecutor = executor;
-    myRunner = runner;
-    myRunProfile = runProfile;
-    myState = state;
+  public DefaultDebugEnvironment(@NotNull ExecutionEnvironment environment, @NotNull RunProfileState state, RemoteConnection remoteConnection, boolean pollConnection) {
+    this.environment = environment;
+    this.state = state;
     myRemoteConnection = remoteConnection;
     myPollConnection = pollConnection;
 
-    mySearchScope = SearchScopeProvider.createSearchScope(project, runProfile);
+    mySearchScope = SearchScopeProvider.createSearchScope(environment.getProject(), environment.getRunProfile());
   }
 
   @Override
   public ExecutionResult createExecutionResult() throws ExecutionException {
-    return myState.execute(myExecutor, myRunner);
+    return state.execute(environment.getExecutor(), environment.getRunner());
   }
 
   @Override
@@ -66,7 +53,7 @@ public class DefaultDebugEnvironment implements DebugEnvironment {
 
   @Override
   public boolean isRemote() {
-    return myState instanceof RemoteState;
+    return environment.getRunProfile() instanceof RemoteState;
   }
 
   @Override
@@ -81,6 +68,6 @@ public class DefaultDebugEnvironment implements DebugEnvironment {
 
   @Override
   public String getSessionName() {
-    return myRunProfile.getName();
+    return environment.getRunProfile().getName();
   }
 }

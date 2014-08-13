@@ -102,7 +102,6 @@ public class GitUtil {
   public static final String DOT_GIT = ".git";
 
   private final static Logger LOG = Logger.getInstance(GitUtil.class);
-  private static final int SHORT_HASH_LENGTH = 8;
 
   public static final Predicate<GitBranchTrackInfo> NOT_NULL_PREDICATE = new Predicate<GitBranchTrackInfo>() {
     @Override
@@ -829,17 +828,6 @@ public class GitUtil {
   }
 
   @NotNull
-  public static String getShortHash(@NotNull String hash) {
-    if (hash.length() == 0) return "";
-    if (hash.length() == 40) return hash.substring(0, SHORT_HASH_LENGTH);
-    if (hash.length() > 40)  // revision string encoded with date too
-    {
-      return hash.substring(hash.indexOf("[") + 1, SHORT_HASH_LENGTH);
-    }
-    return hash;
-  }
-
-  @NotNull
   public static String fileOrFolder(@NotNull VirtualFile file) {
     if (file.isDirectory()) {
       return "Folder";
@@ -1025,4 +1013,14 @@ public class GitUtil {
     ApplicationManager.getApplication().getMessageBus().syncPublisher(BatchFileChangeListener.TOPIC).batchChangeCompleted(project);
   }
 
+  @NotNull
+  public static String cleanupErrorPrefixes(@NotNull String msg) {
+    final String[] PREFIXES = { "fatal:", "error:" };
+    for (String prefix : PREFIXES) {
+      if (msg.startsWith(prefix)) {
+        return msg.substring(prefix.length()).trim();
+      }
+    }
+    return msg;
+  }
 }

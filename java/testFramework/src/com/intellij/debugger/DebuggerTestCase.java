@@ -138,12 +138,12 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     DebuggerSettings.getInstance().DEBUGGER_TRANSPORT = DebuggerSettings.SOCKET_TRANSPORT;
 
     GenericDebuggerRunnerSettings debuggerRunnerSettings = new GenericDebuggerRunnerSettings();
-    debuggerRunnerSettings.LOCAL      = true;
+    debuggerRunnerSettings.LOCAL = true;
 
     final RemoteConnection debugParameters = DebuggerManagerImpl.createDebugParameters(javaParameters, debuggerRunnerSettings, false);
 
     ExecutionEnvironment environment = new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
-      .setRunnerSettings(debuggerRunnerSettings)
+      .runnerSettings(debuggerRunnerSettings)
       .setRunProfile(new MockConfiguration())
       .build();
     final JavaCommandLineState javaCommandLineState = new JavaCommandLineState(environment){
@@ -162,10 +162,12 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       @Override
       public void run() {
         try {
-          GenericDebuggerRunner runner = new GenericDebuggerRunner();
-          myDebuggerSession = DebuggerManagerEx.getInstanceEx(myProject).attachVirtualMachine(DefaultDebugExecutor.getDebugExecutorInstance(),
-            runner, new MockConfiguration(), javaCommandLineState, debugParameters, false);
-          XDebuggerManager.getInstance(myProject).startSession(runner, javaCommandLineState.getEnvironment(), null, new XDebugProcessStarter() {
+          myDebuggerSession =
+            DebuggerManagerEx.getInstanceEx(myProject)
+              .attachVirtualMachine(new DefaultDebugEnvironment(new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
+                                                                  .runProfile(new MockConfiguration())
+                                                                  .build(), javaCommandLineState, debugParameters, false));
+          XDebuggerManager.getInstance(myProject).startSession(javaCommandLineState.getEnvironment(), new XDebugProcessStarter() {
             @Override
             @NotNull
             public XDebugProcess start(@NotNull XDebugSession session) {
@@ -208,8 +210,8 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     debuggerRunnerSettings.DEBUG_PORT = "3456";
 
     ExecutionEnvironment environment = new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
-      .setRunnerSettings(debuggerRunnerSettings)
-      .setRunProfile(new MockConfiguration())
+      .runnerSettings(debuggerRunnerSettings)
+      .runProfile(new MockConfiguration())
       .build();
     final JavaCommandLineState javaCommandLineState = new JavaCommandLineState(environment) {
       @Override
@@ -230,8 +232,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       @Override
       public void run() {
         try {
-          GenericDebuggerRunner runner = new GenericDebuggerRunner();
-          debuggerSession[0] = attachVirtualMachine(runner, javaCommandLineState, javaCommandLineState.getEnvironment(), debugParameters, false);
+          debuggerSession[0] = attachVirtualMachine(javaCommandLineState, javaCommandLineState.getEnvironment(), debugParameters, false);
         }
         catch (ExecutionException e) {
           fail(e.getMessage());
@@ -273,14 +274,12 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
     println(launchCommandLine, ProcessOutputTypes.SYSTEM);
 
-    JavaParameters parameters = javaParameters;
-
     for(StringTokenizer tokenizer = new StringTokenizer(launchCommandLine);tokenizer.hasMoreTokens();) {
       String token = tokenizer.nextToken();
-      parameters.getVMParametersList().add(token);
+      javaParameters.getVMParametersList().add(token);
     }
 
-    GeneralCommandLine commandLine = CommandLineBuilder.createFromJavaParameters(parameters);
+    GeneralCommandLine commandLine = CommandLineBuilder.createFromJavaParameters(javaParameters);
 
 
     DebuggerSession debuggerSession;
@@ -305,16 +304,14 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
           throws InvocationTargetException, InterruptedException {
     final RemoteState remoteState = new RemoteStateState(myProject, remoteConnection);
 
-    final ExecutionEnvironment environment = new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
-      .setRunProfile(new MockConfiguration())
-      .build();
-
     final DebuggerSession[] debuggerSession = new DebuggerSession[1];
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
         try {
-          debuggerSession[0] = attachVirtualMachine(new GenericDebuggerRunner(), remoteState, environment, remoteConnection, pollConnection);
+          debuggerSession[0] = attachVirtualMachine(remoteState, new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
+            .runProfile(new MockConfiguration())
+            .build(), remoteConnection, pollConnection);
         }
         catch (ExecutionException e) {
           fail(e.getMessage());
@@ -366,7 +363,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
         try {
           request.join();
         }
-        catch (Exception e) {
+        catch (Exception ignored) {
         }
       }
     };
@@ -380,7 +377,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
           try {
             thread.join();
           }
-          catch (InterruptedException e) {
+          catch (InterruptedException ignored) {
           }
         }
       });
@@ -466,16 +463,13 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     return myDebuggerSession;
   }
 
-  protected DebuggerSession attachVirtualMachine(ProgramRunner runner,
-                                                 RunProfileState state,
+  protected DebuggerSession attachVirtualMachine(RunProfileState state,
                                                  ExecutionEnvironment environment,
                                                  RemoteConnection remoteConnection,
                                                  boolean pollConnection) throws ExecutionException {
     final DebuggerSession debuggerSession =
-      DebuggerManagerEx.getInstanceEx(myProject).attachVirtualMachine(DefaultDebugExecutor.getDebugExecutorInstance(),
-                                                                      runner, new MockConfiguration(), state, remoteConnection,
-                                                                      pollConnection);
-    XDebuggerManager.getInstance(myProject).startSession(runner, environment, null, new XDebugProcessStarter() {
+      DebuggerManagerEx.getInstanceEx(myProject).attachVirtualMachine(new DefaultDebugEnvironment(environment, state, remoteConnection, pollConnection));
+    XDebuggerManager.getInstance(myProject).startSession(environment, new XDebugProcessStarter() {
       @Override
       @NotNull
       public XDebugProcess start(@NotNull XDebugSession session) {
@@ -569,5 +563,4 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       //To change body of implemented methods use File | Settings | File Templates.
     }
   }
-
 }

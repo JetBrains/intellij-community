@@ -21,6 +21,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
@@ -94,6 +95,12 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
   @Override
   public State getState() {
     return myInfo.getState();
+  }
+
+  @Nullable
+  @Override
+  public AbstractVcs getVcs() {
+    return HgVcs.getInstance(getProject());
   }
 
   @Override

@@ -81,8 +81,7 @@ public abstract class JobScheduler {
   private static void enableRemoveOnCancelPolicy(ScheduledThreadPoolExecutor executor) {
     if (Patches.USE_REFLECTION_TO_ACCESS_JDK7) {
       try {
-        Method setRemoveOnCancelPolicy = ScheduledThreadPoolExecutor.class.getDeclaredMethod("setRemoveOnCancelPolicy", boolean.class);
-        setRemoveOnCancelPolicy.setAccessible(true);
+        Method setRemoveOnCancelPolicy = ReflectionUtil.getDeclaredMethod(ScheduledThreadPoolExecutor.class, "setRemoveOnCancelPolicy", boolean.class);
         setRemoveOnCancelPolicy.invoke(executor, true);
       }
       catch (Exception ignored) {

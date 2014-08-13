@@ -95,6 +95,7 @@ public class ReflectionUtil {
            + " loaded by " + ((Class)anInterface).getClassLoader();
   }
 
+  @NotNull
   public static Class<?> getRawType(@NotNull Type type) {
     if (type instanceof Class) {
       return (Class)type;
@@ -288,15 +289,18 @@ public class ReflectionUtil {
     });
   }
 
+  @NotNull
   public static List<Method> getClassPublicMethods(@NotNull Class aClass) {
     return getClassPublicMethods(aClass, false);
   }
-  
+
+  @NotNull
   public static List<Method> getClassPublicMethods(@NotNull Class aClass, boolean includeSynthetic) {
     Method[] methods = aClass.getMethods();
     return includeSynthetic ? Arrays.asList(methods) : filterRealMethods(methods);
   }
 
+  @NotNull
   public static List<Method> getClassDeclaredMethods(@NotNull Class aClass) {
     return getClassDeclaredMethods(aClass, false);
   }
@@ -306,13 +310,15 @@ public class ReflectionUtil {
     Method[] methods = aClass.getDeclaredMethods();
     return includeSynthetic ? Arrays.asList(methods) : filterRealMethods(methods);
   }
+
   @NotNull
   public static List<Field> getClassDeclaredFields(@NotNull Class aClass) {
     Field[] fields = aClass.getDeclaredFields();
     return Arrays.asList(fields);
   }
 
-  private static List<Method> filterRealMethods(Method[] methods) {
+  @NotNull
+  private static List<Method> filterRealMethods(@NotNull Method[] methods) {
     List<Method> result = ContainerUtil.newArrayList();
     for (Method method : methods) {
       if (!method.isSynthetic()) {
@@ -323,8 +329,8 @@ public class ReflectionUtil {
   }
 
   @Nullable
-  public static Class getMethodDeclaringClass(@NotNull Class<?> instanceClass, @NonNls @NotNull String name, @NotNull Class... parameters) {
-    Method method = getMethod(instanceClass, name, parameters);
+  public static Class getMethodDeclaringClass(@NotNull Class<?> instanceClass, @NonNls @NotNull String methodName, @NotNull Class... parameters) {
+    Method method = getMethod(instanceClass, methodName, parameters);
     return method == null ? null : method.getDeclaringClass();
   }
 

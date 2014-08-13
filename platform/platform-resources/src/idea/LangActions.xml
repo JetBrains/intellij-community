@@ -364,6 +364,7 @@
       <separator/>
       <reference id="NavBarToolBarOthers"/>
       <separator/>
+      <reference ref="SearchEverywhere"/>
     </group>
 
     <group id="Bookmarks">
@@ -697,6 +698,7 @@
     </group>
 
     <group id="XDebugger.ToolWindow.LeftToolbar">
+      <reference ref="Rerun"/>
       <reference ref="Resume"/>
       <reference ref="Pause"/>
       <reference ref="Stop"/>

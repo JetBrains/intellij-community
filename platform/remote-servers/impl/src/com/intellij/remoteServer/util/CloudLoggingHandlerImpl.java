@@ -15,7 +15,7 @@
  */
 package com.intellij.remoteServer.util;
 
-import com.intellij.remoteServer.agent.util.CloudLoggingHandler;
+import com.intellij.remoteServer.agent.util.CloudAgentLoggingHandler;
 import com.intellij.remoteServer.agent.util.log.LogListener;
 import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
 import com.intellij.remoteServer.runtime.log.LoggingHandler;
@@ -25,7 +25,7 @@ import java.util.HashMap;
 /**
  * @author michael.golubev
  */
-public class CloudLoggingHandlerImpl implements CloudLoggingHandler {
+public class CloudLoggingHandlerImpl implements CloudAgentLoggingHandler {
 
   private final HashMap<String, LogListener> myPipeName2LogListener;
 
@@ -52,7 +52,7 @@ public class CloudLoggingHandlerImpl implements CloudLoggingHandler {
       logListener = new LogListener() {
 
         @Override
-        public void lineLogged(String line, String deploymentName, String kind) {
+        public void lineLogged(String line) {
           loggingHandler.print(line + "\n");
         }
       };

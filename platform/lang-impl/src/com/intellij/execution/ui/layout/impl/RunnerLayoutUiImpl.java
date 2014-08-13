@@ -21,7 +21,6 @@ import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
 import com.intellij.execution.ui.layout.LayoutStateDefaults;
 import com.intellij.execution.ui.layout.LayoutViewOptions;
 import com.intellij.execution.ui.layout.PlaceInGrid;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -46,9 +45,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayoutUi, LayoutStateDefaults, LayoutViewOptions {
+public class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayoutUi, LayoutStateDefaults, LayoutViewOptions, DataProvider {
   private final RunnerLayout myLayout;
-  private final JPanel myContentPanel;
   private final RunnerContentUi myContentUI;
 
   private final ContentManager myViewsContentManager;
@@ -63,14 +61,12 @@ public class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayoutUi, La
     Disposer.register(parent, this);
 
     myContentUI = new RunnerContentUi(project, this, ActionManager.getInstance(), IdeFocusManager.getInstance(project), myLayout,
-                                           runnerTitle + " - " + sessionName);
+                                      runnerTitle + " - " + sessionName);
     Disposer.register(this, myContentUI);
-    myContentPanel = new MyContent();
 
     myViewsContentManager = getContentFactory().createContentManager(myContentUI.getContentUI(), false, project);
+    myViewsContentManager.addDataProvider(this);
     Disposer.register(this, myViewsContentManager);
-
-    myContentPanel.add(myViewsContentManager.getComponent(), BorderLayout.CENTER);
   }
 
   @Override
@@ -79,7 +75,6 @@ public class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayoutUi, La
     myContentUI.setTopActions(actions, place);
     return this;
   }
-
 
   @NotNull
   @Override
@@ -156,7 +151,7 @@ public class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayoutUi, La
   @Override
   @NotNull
   public JComponent getComponent() {
-    return myContentPanel;
+    return myViewsContentManager.getComponent();
   }
 
   private static ContentFactory getContentFactory() {
@@ -380,28 +375,12 @@ public class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayoutUi, La
     return contents;
   }
 
-  private class MyContent extends JPanel implements DataProvider {
-    public MyContent() {
-      super(new BorderLayout());
+  @Nullable
+  @Override
+  public Object getData(@NonNls String dataId) {
+    if (SwitchProvider.KEY.is(dataId) || QuickActionProvider.KEY.is(dataId) || RunnerContentUi.KEY.is(dataId)) {
+      return myContentUI;
     }
-
-    @Override
-    public Object getData(@NonNls String dataId) {
-      if (SwitchProvider.KEY.getName().equals(dataId)) {
-        return myContentUI;
-      }
-
-      if (QuickActionProvider.KEY.getName().equals(dataId)) {
-        return myContentUI;
-      }
-
-      if (RunnerContentUi.KEY.getName().equals(dataId)) {
-        return myContentUI;
-      }
-
-      final DataProvider provider = DataManager.getDataProvider(this);
-      return provider != null ? provider.getData(dataId) : null;
-    }
+    return null;
   }
-
 }

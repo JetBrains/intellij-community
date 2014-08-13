@@ -173,4 +173,9 @@ public class GradleSystemSettingsControl implements ExternalSystemSettingsContro
   public void disposeUIResources() {
     ExternalSystemUiUtil.disposeUi(this);
   }
+
+  @NotNull
+  public GradleSettings getInitialSettings() {
+    return myInitialSettings;
+  }
 }

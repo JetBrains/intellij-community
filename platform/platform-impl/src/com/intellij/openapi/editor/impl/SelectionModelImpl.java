@@ -567,7 +567,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
 
   @Override
   public void copySelectionToClipboard() {
-    CopyPasteSupport.copySelectionToClipboard(myEditor);
+    EditorCopyPasteHelper.getInstance().copySelectionToClipboard(myEditor);
   }
 
   @Override

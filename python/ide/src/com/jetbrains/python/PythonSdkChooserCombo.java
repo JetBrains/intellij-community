@@ -64,8 +64,15 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
     comboBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         notifyChanged(e);
+        updateTooltip();
       }
     });
+    updateTooltip();
+  }
+
+  private void updateTooltip() {
+    final Object item = getComboBox().getSelectedItem();
+    getComboBox().setToolTipText(item instanceof Sdk ? ((Sdk)item).getHomePath() : null);
   }
 
   private void showOptions(final Project project) {

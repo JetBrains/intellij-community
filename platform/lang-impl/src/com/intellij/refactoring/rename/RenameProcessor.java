@@ -320,11 +320,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   protected boolean isPreviewUsages(UsageInfo[] usages) {
     if (myForceShowPreview) return true;
     if (super.isPreviewUsages(usages)) return true;
-    if (UsageViewUtil.hasNonCodeUsages(usages)) {
-      WindowManager.getInstance().getStatusBar(myProject)
-        .setInfo(RefactoringBundle.message("occurrences.found.in.comments.strings.and.non.java.files"));
-      return true;
-    }
+    if (UsageViewUtil.reportNonRegularUsages(usages, myProject)) return true;
     return false;
   }
 

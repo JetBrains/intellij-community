@@ -1255,14 +1255,19 @@ public class FileUtil extends FileUtilRt {
   }
 
   @Contract("null -> null")
-  public static String getLocationRelativeToUserHome(@Nullable final String path) {
+  public static String getLocationRelativeToUserHome(@Nullable String path) {
+    return getLocationRelativeToUserHome(path, true);
+  }
+
+  @Contract("null,_ -> null")
+  public static String getLocationRelativeToUserHome(@Nullable String path, boolean unixOnly) {
     if (path == null) return null;
 
-    if (SystemInfo.isUnix) {
-      final File projectDir = new File(path);
-      final File userHomeDir = new File(SystemProperties.getUserHome());
+    if (SystemInfo.isUnix || !unixOnly) {
+      File projectDir = new File(path);
+      File userHomeDir = new File(SystemProperties.getUserHome());
       if (isAncestor(userHomeDir, projectDir, true)) {
-        return "~/" + getRelativePath(userHomeDir, projectDir);
+        return '~' + File.separator + getRelativePath(userHomeDir, projectDir);
       }
     }
 

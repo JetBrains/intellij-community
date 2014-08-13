@@ -1213,6 +1213,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       final String accessProblem = HighlightUtil.buildProblemWithAccessDescription(expression, result);
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(accessProblem).create();
       myHolder.add(info);
+    } else {
+      final TextAttributesScheme colorsScheme = myHolder.getColorsScheme();
+      if (method instanceof PsiMethod) {
+        final PsiElement methodNameElement = expression.getReferenceNameElement();
+        myHolder.add(HighlightNamesUtil.highlightMethodName((PsiMethod)method, methodNameElement, false, colorsScheme));
+      }
+      myHolder.add(HighlightNamesUtil.highlightClassNameInQualifier(expression, colorsScheme));
     }
     if (!myHolder.hasErrorResults()) {
       final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
@@ -1221,11 +1228,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         if (notFunctional) {
           myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression)
                          .descriptionAndTooltip(functionalInterfaceType.getPresentableText() + " is not a functional interface").create());
-        }
-        else if (LambdaUtil.dependsOnTypeParams(functionalInterfaceType, functionalInterfaceType, expression)) {
-          HighlightInfo result1 =
-            HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip("Cyclic inference").create();
-          myHolder.add(result1); //todo[ann] append not inferred type params info
         }
       }
       if (!myHolder.hasErrorResults()) {

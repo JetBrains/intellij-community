@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.editor.actionSystem;
 
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretAction;
 import com.intellij.openapi.editor.Editor;
@@ -35,7 +35,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class EditorActionHandler {
   private final boolean myRunForEachCaret;
+  private boolean myWorksInInjected;
   private boolean inExecution;
+  private boolean inCheck;
 
   protected EditorActionHandler() {
     this(false);
@@ -46,16 +48,91 @@ public abstract class EditorActionHandler {
   }
 
   /**
-   * Checks if the action handler is currently enabled.
-   *
-   * @param editor      the editor in which the action is invoked.
-   * @param dataContext the data context for the action.
-   * @return true if the action is enabled, false otherwise
+   * @deprecated Implementations should override
+   * {@link #isEnabledForCaret(com.intellij.openapi.editor.Editor, com.intellij.openapi.editor.Caret, com.intellij.openapi.actionSystem.DataContext)}
+   * instead,
+   * client code should invoke
+   * {@link #isEnabled(com.intellij.openapi.editor.Editor, com.intellij.openapi.editor.Caret, com.intellij.openapi.actionSystem.DataContext)}
+   * instead.
    */
-  public boolean isEnabled(Editor editor, DataContext dataContext) {
-    return true;
+  public boolean isEnabled(Editor editor, final DataContext dataContext) {
+    if (inCheck) {
+      return true;
+    }
+    inCheck = true;
+    try {
+      if (editor == null) {
+        return false;
+      }
+      Editor hostEditor = dataContext == null ? null : CommonDataKeys.HOST_EDITOR.getData(dataContext);
+      if (hostEditor == null) {
+        hostEditor = editor;
+      }
+      final boolean[] result = new boolean[1];
+      final CaretTask check = new CaretTask() {
+        @Override
+        public void perform(@NotNull Caret caret, @Nullable DataContext dataContext) {
+          result[0] = true;
+        }
+      };
+      if (myRunForEachCaret) {
+        hostEditor.getCaretModel().runForEachCaret(new CaretAction() {
+          @Override
+          public void perform(Caret caret) {
+            doIfEnabled(caret, dataContext, check);
+          }
+        });
+      }
+      else {
+        doIfEnabled(hostEditor.getCaretModel().getCurrentCaret(), dataContext, check);
+      }
+      return result[0];
+    }
+    finally {
+      inCheck = false;
+    }
   }
 
+  private void doIfEnabled(@NotNull Caret hostCaret, @Nullable DataContext context, @NotNull CaretTask task) {
+    DataContext caretContext = context == null ? null : new CaretSpecificDataContext(context, hostCaret);
+    if (myWorksInInjected && caretContext != null) {
+      DataContext injectedCaretContext = AnActionEvent.getInjectedDataContext(caretContext);
+      Caret injectedCaret = CommonDataKeys.CARET.getData(injectedCaretContext);
+      if (injectedCaret != null && injectedCaret != hostCaret && isEnabledForCaret(injectedCaret.getEditor(), injectedCaret, injectedCaretContext)) {
+        task.perform(injectedCaret, injectedCaretContext);
+        return;
+      }
+    }
+    if (isEnabledForCaret(hostCaret.getEditor(), hostCaret, caretContext)) {
+      task.perform(hostCaret, caretContext);
+    }
+  }
+
+  /**
+   * Implementations can override this method to define whether handler is enabled for a specific caret in a given editor.
+   */
+  protected boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
+    if (inCheck) {
+      return true;
+    }
+    inCheck = true;
+    try {
+      //noinspection deprecation
+      return isEnabled(editor, dataContext);
+    }
+    finally {
+      inCheck = false;
+    }
+  }
+
+  /**
+   * If <code>caret</code> is <code>null</code>, checks whether handler is enabled in general (i.e. enabled for at least one caret in editor),
+   * if <code>caret</code> is not <code>null</code>, checks whether it's enabled for specified caret.
+   */
+  public final boolean isEnabled(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    //noinspection deprecation
+    return caret == null ? isEnabled(editor, dataContext) : isEnabledForCaret(editor, caret, dataContext);
+  }
   /**
    * @deprecated To implement action logic, override
    * {@link #doExecute(com.intellij.openapi.editor.Editor, com.intellij.openapi.editor.Caret, com.intellij.openapi.actionSystem.DataContext)},
@@ -112,22 +189,49 @@ public abstract class EditorActionHandler {
    * @param editor      the editor in which the action is invoked.
    * @param dataContext the data context for the action.
    */
-  public final void execute(@NotNull final Editor editor, @Nullable Caret contextCaret, final DataContext dataContext) {
+  public final void execute(@NotNull Editor editor, @Nullable final Caret contextCaret, final DataContext dataContext) {
+    Editor hostEditor = dataContext == null ? null : CommonDataKeys.HOST_EDITOR.getData(dataContext);
+    if (hostEditor == null) {
+      hostEditor = editor;
+    }
     if (contextCaret == null && runForAllCarets()) {
-      editor.getCaretModel().runForEachCaret(new CaretAction() {
+      hostEditor.getCaretModel().runForEachCaret(new CaretAction() {
         @Override
         public void perform(Caret caret) {
-          doExecute(editor, caret, dataContext);
+          doIfEnabled(caret, dataContext, new CaretTask() {
+            @Override
+            public void perform(@NotNull Caret caret, @Nullable DataContext dataContext) {
+              doExecute(caret.getEditor(), caret, dataContext);
+            }
+          });
         }
       }, true);
     }
     else {
-      doExecute(editor, contextCaret, dataContext);
+      if (contextCaret == null) {
+        doIfEnabled(hostEditor.getCaretModel().getCurrentCaret(), dataContext, new CaretTask() {
+          @Override
+          public void perform(@NotNull Caret caret, @Nullable DataContext dataContext) {
+            doExecute(caret.getEditor(), null, dataContext);
+          }
+        });
+      }
+      else {
+        doExecute(editor, contextCaret, dataContext);
+      }
     }
+  }
+
+  void setWorksInInjected(boolean worksInInjected) {
+    myWorksInInjected = worksInInjected;
   }
 
   public DocCommandGroupId getCommandGroupId(Editor editor) {
     // by default avoid merging two consequential commands, and, in the same time, pass along the Document
     return DocCommandGroupId.noneGroupId(editor.getDocument());
+  }
+
+  private interface CaretTask {
+    void perform(@NotNull Caret caret, @Nullable DataContext dataContext);
   }
 }

@@ -24,6 +24,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitPlatformFacade;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -44,18 +45,18 @@ public class GitSmartOperationDialog extends DialogWrapper {
 
   @NotNull private final JComponent myFileBrowser;
   @NotNull private final String myOperationTitle;
-  private final boolean myShowForceButton;
+  @Nullable private final String myForceButton;
 
   /**
    * Shows the dialog with the list of local changes preventing merge/checkout and returns the dialog exit code.
    */
   static int showAndGetAnswer(@NotNull final Project project, @NotNull final JComponent fileBrowser,
-                              @NotNull final String operationTitle, final boolean showForceButton) {
+                              @NotNull final String operationTitle, @Nullable final String forceButtonTitle) {
     final AtomicInteger exitCode = new AtomicInteger();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        GitSmartOperationDialog dialog = new GitSmartOperationDialog(project, fileBrowser, operationTitle, showForceButton);
+        GitSmartOperationDialog dialog = new GitSmartOperationDialog(project, fileBrowser, operationTitle, forceButtonTitle);
         ServiceManager.getService(project, GitPlatformFacade.class).showDialog(dialog);
         exitCode.set(dialog.getExitCode());
       }
@@ -64,11 +65,11 @@ public class GitSmartOperationDialog extends DialogWrapper {
   }
 
   private GitSmartOperationDialog(@NotNull Project project, @NotNull JComponent fileBrowser, @NotNull String operationTitle,
-                                  boolean showForceButton) {
+                                  @Nullable String forceButton) {
     super(project);
     myFileBrowser = fileBrowser;
     myOperationTitle = operationTitle;
-    myShowForceButton = showForceButton;
+    myForceButton = forceButton;
     String capitalizedOperation = capitalize(myOperationTitle);
     setTitle("Git " + capitalizedOperation + " Problem");
 
@@ -82,8 +83,8 @@ public class GitSmartOperationDialog extends DialogWrapper {
   @NotNull
   @Override
   protected Action[] createLeftSideActions() {
-    if (myShowForceButton) {
-      return new Action[]  {new ForceCheckoutAction(myOperationTitle) };
+    if (myForceButton != null) {
+      return new Action[]{new ForceCheckoutAction(myForceButton, myOperationTitle)};
     }
     return new Action[0];
   }
@@ -110,8 +111,8 @@ public class GitSmartOperationDialog extends DialogWrapper {
 
   private class ForceCheckoutAction extends AbstractAction {
     
-    ForceCheckoutAction(@NotNull String operationTitle) {
-      super("&Force " + capitalize(operationTitle));
+    ForceCheckoutAction(@NotNull String buttonTitle, @NotNull String operationTitle) {
+      super(buttonTitle);
       putValue(Action.SHORT_DESCRIPTION, capitalize(operationTitle) + " and overwrite local changes");
     }
     

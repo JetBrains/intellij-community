@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,12 +35,16 @@ import java.awt.event.MouseListener;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 public class JBTabsPaneImpl implements TabbedPane, SwingConstants {
-
-  private final JBTabs myTabs;
+  private final JBTabsImpl myTabs;
   private final CopyOnWriteArraySet<ChangeListener> myListeners = new CopyOnWriteArraySet<ChangeListener>();
 
   public JBTabsPaneImpl(@Nullable Project project, int tabPlacement, @NotNull Disposable parent) {
     myTabs = new JBEditorTabs(project, ActionManager.getInstance(), project == null ? null : IdeFocusManager.getInstance(project), parent) {
+      @Override
+      public boolean isAlphabeticalMode() {
+        return false;
+      }
+
       @Override
       protected void doPaintBackground(Graphics2D g2d, Rectangle clip) {
         super.doPaintBackground(g2d, clip);
@@ -59,8 +64,11 @@ public class JBTabsPaneImpl implements TabbedPane, SwingConstants {
 
           maxOffset++;
           g2d.setPaint(UIUtil.getPanelBackground());
+          if (getFirstTabOffset() > 0) {
+            g2d.fillRect(clip.x, clip.y, clip.x + getFirstTabOffset() - 1, clip.y + maxLength - TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT);
+          }
           g2d.fillRect(clip.x + maxOffset, clip.y, clip.width - maxOffset, clip.y + maxLength - TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT);
-          g2d.setPaint(new JBColor(Gray._181, Gray._158));
+          g2d.setPaint(new JBColor(Gray._181, UIUtil.getPanelBackground()));
           g2d.drawLine(clip.x + maxOffset, clip.y + maxLength - TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT, clip.x + clip.width, clip.y + maxLength - TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT);
           g2d.setPaint(UIUtil.getPanelBackground());
           g2d.drawLine(clip.x, clip.y + maxLength, clip.width, clip.y + maxLength);
@@ -72,6 +80,7 @@ public class JBTabsPaneImpl implements TabbedPane, SwingConstants {
         super.paintSelectionAndBorder(g2d);
       }
     };
+    myTabs.setFirstTabOffset(10);
 
     myTabs.addListener(new TabsListener.Adapter() {
       @Override

@@ -1,6 +1,5 @@
-
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +44,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   private JComponent myComponent;
   private Icon myIcon;
   private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
-  private ContentManager myManager = null;
+  private ContentManager myManager;
   private boolean myIsLocked = false;
   private boolean myPinnable = true;
   private Icon myLayeredIcon = new LayeredIcon(2);
@@ -294,6 +293,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
     return myPlace;
   }
 
+  @Override
   @NonNls
   public String toString() {
     StringBuilder sb = new StringBuilder("Content name=").append(myDisplayName);

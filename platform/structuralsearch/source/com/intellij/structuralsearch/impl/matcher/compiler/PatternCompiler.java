@@ -10,10 +10,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -26,6 +23,7 @@ import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchPredicate;
+import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.predicates.*;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
@@ -73,7 +71,9 @@ public class PatternCompiler {
 
       List<PsiElement> elements = compileByAllPrefixes(project, options, result, context, prefixes);
 
-      context.getPattern().setNodes(elements);
+      final CompiledPattern pattern = context.getPattern();
+      checkForUnknownVariables(pattern, elements);
+      pattern.setNodes(elements);
 
       if (context.getSearchHelper().doOptimizing() && context.getSearchHelper().isScannedSomething()) {
         final Set<PsiFile> set = context.getSearchHelper().getFilesSetToScan();
@@ -103,6 +103,28 @@ public class PatternCompiler {
     }
 
     return result;
+  }
+
+  private static void checkForUnknownVariables(final CompiledPattern pattern, List<PsiElement> elements) {
+    for (PsiElement element : elements) {
+      element.accept(new PsiRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitElement(PsiElement element) {
+          if (element instanceof PsiComment) {
+            return;
+          }
+          super.visitElement(element);
+
+          if (!(element instanceof LeafElement) || !pattern.isTypedVar(element)) {
+            return;
+          }
+          final MatchingHandler handler = pattern.getHandler(pattern.getTypedVarString(element));
+          if (handler == null) {
+            throw new MalformedPatternException();
+          }
+        }
+      });
+    }
   }
 
   public static String getLastFindPlan() {
@@ -272,12 +294,8 @@ public class PatternCompiler {
 
     element.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
-        super.visitElement(element);
-
-        if (!(element instanceof PsiErrorElement)) {
-          return;
-        }
+      public void visitErrorElement(PsiErrorElement element) {
+        super.visitErrorElement(element);
 
         final int startOffset = element.getTextRange().getStartOffset();
 
@@ -326,11 +344,8 @@ public class PatternCompiler {
 
     @Override
     public String getPrefix(int varIndex) {
-      try {
-        return myPrefixes[varIndex];
-      } catch (ArrayIndexOutOfBoundsException e) {
-        return null;
-      }
+      if (varIndex >= myPrefixes.length) return null;
+      return myPrefixes[varIndex];
     }
   }
 
@@ -466,10 +481,9 @@ public class PatternCompiler {
     PsiElement[] matchStatements;
 
     try {
-      final String pattern = buf.toString();
-      matchStatements = MatcherImplUtil.createTreeFromText(pattern, PatternTreeContext.Block, options.getFileType(),
+      matchStatements = MatcherImplUtil.createTreeFromText(buf.toString(), PatternTreeContext.Block, options.getFileType(),
                                                            options.getDialect(), options.getPatternContext(), project, false);
-      if (matchStatements.length==0) throw new MalformedPatternException(pattern);
+      if (matchStatements.length==0) throw new MalformedPatternException();
     } catch (IncorrectOperationException e) {
       throw new MalformedPatternException(e.getMessage());
     }
@@ -491,12 +505,11 @@ public class PatternCompiler {
   }
 
   private static void addScriptConstraint(String name, MatchVariableConstraint constraint, SubstitutionHandler handler) {
-    MatchPredicate predicate;
     if (constraint.getScriptCodeConstraint()!= null && constraint.getScriptCodeConstraint().length() > 2) {
       final String script = StringUtil.stripQuotesAroundValue(constraint.getScriptCodeConstraint());
       final String s = ScriptSupport.checkValidScript(script);
       if (s != null) throw new MalformedPatternException("Script constraint for " + constraint.getName() + " has problem "+s);
-      predicate = new ScriptPredicate(name, script);
+      MatchPredicate predicate = new ScriptPredicate(name, script);
       addPredicate(handler,predicate);
     }
   }

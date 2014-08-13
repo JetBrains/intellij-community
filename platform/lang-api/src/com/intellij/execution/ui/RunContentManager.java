@@ -20,6 +20,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.wm.ToolWindow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,8 +28,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public interface RunContentManager {
-
-  DataKey<RunContentDescriptor> RUN_CONTENT_DESCRIPTOR = DataKey.create("RUN_CONTENT_DESCRIPTOR");
+  @Deprecated
+  DataKey<RunContentDescriptor> RUN_CONTENT_DESCRIPTOR = LangDataKeys.RUN_CONTENT_DESCRIPTOR;
 
   @Nullable
   RunContentDescriptor getSelectedContent();
@@ -38,9 +39,11 @@ public interface RunContentManager {
 
   @NotNull
   List<RunContentDescriptor> getAllDescriptors();
+
   /**
    * to reduce number of open contents RunContentManager reuses
-   * some of them during showRunContent (for ex. if a process was stopped) 
+   * some of them during showRunContent (for ex. if a process was stopped)
+   *
    * @return content that will be reused by showRunContent
    * @deprecated use {@link #getReuseContent(com.intellij.execution.Executor, ExecutionEnvironment)}
    */
@@ -67,15 +70,20 @@ public interface RunContentManager {
   @Nullable
   RunContentDescriptor findContentDescriptor(Executor requestor, ProcessHandler handler);
 
-  void showRunContent(@NotNull Executor executor, RunContentDescriptor descriptor, RunContentDescriptor contentToReuse);
-  void showRunContent(@NotNull Executor executor, RunContentDescriptor descriptor);
+  void showRunContent(@NotNull Executor executor, @NotNull RunContentDescriptor descriptor, @Nullable RunContentDescriptor contentToReuse);
+
+  void showRunContent(@NotNull Executor executor, @NotNull RunContentDescriptor descriptor);
+
   void hideRunContent(@NotNull Executor executor, RunContentDescriptor descriptor);
+
   boolean removeRunContent(@NotNull Executor executor, RunContentDescriptor descriptor);
 
   void toFrontRunContent(Executor requestor, RunContentDescriptor descriptor);
+
   void toFrontRunContent(Executor requestor, ProcessHandler handler);
 
   void addRunContentListener(RunContentListener listener);
+
   void removeRunContentListener(RunContentListener listener);
 
   void addRunContentListener(RunContentListener myContentListener, Executor executor);

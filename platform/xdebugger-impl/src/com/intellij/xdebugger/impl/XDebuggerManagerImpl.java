@@ -23,6 +23,7 @@ import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManagerImpl;
@@ -169,11 +170,17 @@ public class XDebuggerManagerImpl extends XDebuggerManager
 
   @Override
   @NotNull
-  public XDebugSession startSession(@NotNull final ProgramRunner runner,
-                                    @NotNull final ExecutionEnvironment environment,
-                                    @Nullable final RunContentDescriptor contentToReuse,
-                                    @NotNull final XDebugProcessStarter processStarter) throws ExecutionException {
-    return startSession(contentToReuse, processStarter, new XDebugSessionImpl(environment, runner, this));
+  public XDebugSession startSession(@NotNull ProgramRunner runner,
+                                    @NotNull ExecutionEnvironment environment,
+                                    @Nullable RunContentDescriptor contentToReuse,
+                                    @NotNull XDebugProcessStarter processStarter) throws ExecutionException {
+    return startSession(contentToReuse, processStarter, new XDebugSessionImpl(RunContentBuilder.fix(environment, runner), this));
+  }
+
+  @Override
+  @NotNull
+  public XDebugSession startSession(@NotNull ExecutionEnvironment environment, @NotNull XDebugProcessStarter processStarter) throws ExecutionException {
+    return startSession(environment.getContentToReuse(), processStarter, new XDebugSessionImpl(environment, this));
   }
 
   @Override
@@ -193,10 +200,12 @@ public class XDebuggerManagerImpl extends XDebuggerManager
 
   @NotNull
   @Override
-  public XDebugSession startSessionAndShowTab(@NotNull String sessionName, final Icon icon, @Nullable RunContentDescriptor contentToReuse,
+  public XDebugSession startSessionAndShowTab(@NotNull String sessionName,
+                                              Icon icon,
+                                              @Nullable RunContentDescriptor contentToReuse,
                                               boolean showToolWindowOnSuspendOnly,
                                               @NotNull XDebugProcessStarter starter) throws ExecutionException {
-    XDebugSessionImpl session = startSession(contentToReuse, starter, new XDebugSessionImpl(null, null, this, sessionName,
+    XDebugSessionImpl session = startSession(contentToReuse, starter, new XDebugSessionImpl(null, this, sessionName,
                                                                                             icon, showToolWindowOnSuspendOnly));
     if (!showToolWindowOnSuspendOnly) {
       session.showSessionTab();
@@ -206,8 +215,9 @@ public class XDebuggerManagerImpl extends XDebuggerManager
     return session;
   }
 
-  private XDebugSessionImpl startSession(final RunContentDescriptor contentToReuse, final XDebugProcessStarter processStarter,
-                                         final XDebugSessionImpl session) throws ExecutionException {
+  private XDebugSessionImpl startSession(@Nullable RunContentDescriptor contentToReuse,
+                                         @NotNull XDebugProcessStarter processStarter,
+                                         @NotNull XDebugSessionImpl session) throws ExecutionException {
     XDebugProcess process = processStarter.start(session);
     myProject.getMessageBus().syncPublisher(TOPIC).processStarted(process);
 
@@ -222,7 +232,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
       ((XDebugProcessConfiguratorStarter)processStarter).configure(oldSessionData);
     }
 
-    session.init(process, oldSessionData);
+    session.init(process, oldSessionData, contentToReuse);
 
     mySessions.put(session.getDebugProcess().getProcessHandler(), session);
 

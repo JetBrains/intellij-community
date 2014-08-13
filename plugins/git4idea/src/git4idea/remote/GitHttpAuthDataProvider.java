@@ -15,7 +15,6 @@
  */
 package git4idea.remote;
 
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.AuthData;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +31,7 @@ public interface GitHttpAuthDataProvider {
   ExtensionPointName<GitHttpAuthDataProvider> EP_NAME = ExtensionPointName.create("Git4Idea.GitHttpAuthDataProvider");
 
   @Nullable
-  AuthData getAuthData(@NotNull String url, @Nullable ModalityState modalityState);
+  AuthData getAuthData(@NotNull String url);
 
   void forgetPassword(@NotNull String url);
 

@@ -274,6 +274,7 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
     module.putUserData(MODULE_DATA_KEY, moduleData);
 
     module.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY, moduleData.getOwner().toString());
+    module.setOption(ExternalSystemConstants.LINKED_PROJECT_ID_KEY, moduleData.getId());
     module.setOption(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY, moduleData.getLinkedExternalProjectPath());
     final ProjectData projectData = moduleDataNode.getData(ProjectKeys.PROJECT);
     module.setOption(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY, projectData != null ? projectData.getLinkedExternalProjectPath() : "");

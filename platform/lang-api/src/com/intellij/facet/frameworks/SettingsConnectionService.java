@@ -17,10 +17,12 @@ package com.intellij.facet.frameworks;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,17 +67,22 @@ public abstract class SettingsConnectionService {
 
   @Nullable
   private Map<String, String> readSettings(String... attributes) {
-    Map<String, String> settings = new HashMap<String, String>();
+    Map<String, String> settings = ContainerUtil.newLinkedHashMap();
     try {
-      final URL url = new URL(getSettingsUrl());
-      final InputStream is = getStream(url);
-      final Document document = JDOMUtil.loadDocument(is);
-      final Element root = document.getRootElement();
-      for (String s : attributes) {
-        final String attributeValue = root.getAttributeValue(s);
-        if (StringUtil.isNotEmpty(attributeValue)) {
-          settings.put(s, attributeValue);
+      URL url = new URL(getSettingsUrl());
+      String text = FileUtil.loadTextAndClose(getStream(url));
+      try {
+        Document document = JDOMUtil.loadDocument(text);
+        Element root = document.getRootElement();
+        for (String s : attributes) {
+          String attributeValue = root.getAttributeValue(s);
+          if (StringUtil.isNotEmpty(attributeValue)) {
+            settings.put(s, attributeValue);
+          }
         }
+      }
+      catch (JDOMException e) {
+        LOG.error("", e, text);
       }
     }
     catch (MalformedURLException e) {

@@ -162,6 +162,25 @@ public class AbstractPopup implements JBPopup {
   private UiActivity myActivityKey;
   private Disposable myProjectDisposable;
 
+  private volatile State myState = State.NEW;
+
+  private enum State {NEW, INIT, SHOWING, SHOWN, CANCEL, DISPOSE}
+
+  private void debugState(String message, State... states) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(hashCode() + " - " + message);
+      if (!ApplicationManager.getApplication().isDispatchThread()) {
+        LOG.debug("unexpected thread");
+      }
+      for (State state : states) {
+        if (state == myState) {
+          return;
+        }
+      }
+      LOG.debug(new IllegalStateException("myState=" + myState));
+    }
+  }
+
   AbstractPopup() { }
 
   AbstractPopup init(Project project,
@@ -302,6 +321,8 @@ public class AbstractPopup implements JBPopup {
     }
 
     myKeyEventHandler = keyEventHandler;
+    debugState("popup initialized", State.NEW);
+    myState = State.INIT;
     return this;
   }
 
@@ -582,10 +603,18 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public void cancel(InputEvent e) {
+    if (myState == State.CANCEL || myState == State.DISPOSE) {
+      return;
+    }
+    debugState("cancel popup", State.SHOWN);
+    myState = State.CANCEL;
+
     if (isDisposed()) return;
 
     if (myPopup != null) {
       if (!canClose()) {
+        debugState("cannot cancel popup", State.CANCEL);
+        myState = State.SHOWN;
         return;
       }
       storeDimensionSize(myContent.getSize());
@@ -669,6 +698,9 @@ public class AbstractPopup implements JBPopup {
 
     assert ApplicationManager.getApplication().isDispatchThread();
 
+    debugState("show popup", State.INIT);
+    myState = State.SHOWING;
+
     installWindowHook(this);
     installProjectDisposer();
     addActivity();
@@ -678,6 +710,8 @@ public class AbstractPopup implements JBPopup {
     final boolean shouldShow = beforeShow();
     if (!shouldShow) {
       removeActivity();
+      debugState("rejected to show popup", State.SHOWING);
+      myState = State.INIT;
       return;
     }
 
@@ -743,7 +777,9 @@ public class AbstractPopup implements JBPopup {
 
     Rectangle original = new Rectangle(targetBounds);
     if (myLocateWithinScreen) {
-      ScreenUtil.moveRectangleToFitTheScreen(targetBounds);
+      if (myMovable) {
+        ScreenUtil.moveRectangleToFitTheScreen(targetBounds);
+      }
     }
 
     if (myMouseOutCanceller != null) {
@@ -763,10 +799,11 @@ public class AbstractPopup implements JBPopup {
     PopupComponent.Factory factory = getFactory(myForcedHeavyweight || myResizable, forcedDialog);
     myNativePopup = factory.isNativePopup();
     Component popupOwner = myOwner;
-    if (popupOwner instanceof RootPaneContainer) {
+    if (popupOwner instanceof RootPaneContainer && !(popupOwner instanceof IdeFrame && !Registry.is("popup.fix.ide.frame.owner"))) {
       // JDK uses cached heavyweight popup for a window ancestor
       RootPaneContainer root = (RootPaneContainer)popupOwner;
       popupOwner = root.getRootPane();
+      LOG.debug("popup owner fixed for JDK cache");
     }
     if (LOG.isDebugEnabled()) {
       LOG.debug("expected preferred size: " + myContent.getPreferredSize());
@@ -962,6 +999,8 @@ public class AbstractPopup implements JBPopup {
         }
       });
     }
+    debugState("popup shown", State.SHOWING);
+    myState = State.SHOWN;
   }
 
   public void focusPreferredComponent() {
@@ -1237,6 +1276,16 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public void dispose() {
+    if (myState == State.SHOWN) {
+      LOG.debug("shown popup must be cancelled");
+      cancel();
+    }
+    if (myState == State.DISPOSE) {
+      return;
+    }
+    debugState("dispose popup", State.INIT, State.CANCEL);
+    myState = State.DISPOSE;
+
     if (myDisposed) {
       return;
     }

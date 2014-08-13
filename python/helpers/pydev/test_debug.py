@@ -3,7 +3,7 @@ __author__ = 'Dmitry.Trofimov'
 import unittest
 import os
 
-test_data_path = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..', '..', '..', 'python', 'testData', 'debug'))
+test_data_path = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..', 'testData', 'debug'))
 
 class PyDevTestCase(unittest.TestCase):
     def testZipFileExits(self):

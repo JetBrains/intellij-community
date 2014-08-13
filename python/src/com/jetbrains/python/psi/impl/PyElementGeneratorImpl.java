@@ -20,6 +20,7 @@ import com.google.common.collect.Queues;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -87,8 +88,9 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
   }
 
 
+  @Override
   public PyStringLiteralExpression createStringLiteralFromString(@NotNull String unescaped) {
-    return createStringLiteralFromString(null, unescaped);
+    return createStringLiteralFromString(null, unescaped, true);
   }
 
   public PyStringLiteralExpression createStringLiteral(@NotNull PyStringLiteralExpression oldElement, @NotNull String unescaped) {
@@ -101,7 +103,11 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
     }
   }
 
-  public PyStringLiteralExpression createStringLiteralFromString(@Nullable PsiFile destination, @NotNull String unescaped) {
+
+  @Override
+  public PyStringLiteralExpression createStringLiteralFromString(@Nullable PsiFile destination,
+                                                                 @NotNull String unescaped,
+                                                                 final boolean preferUTF8) {
     boolean useDouble = !unescaped.contains("\"");
     boolean useMulti = unescaped.matches(".*(\r|\n).*");
     String quotes;
@@ -116,7 +122,7 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
     VirtualFile vfile = destination == null ? null : destination.getVirtualFile();
     Charset charset;
     if (vfile == null) {
-      charset = Charset.forName("US-ASCII");
+      charset = (preferUTF8 ? Charset.forName("UTF-8") : Charset.forName("US-ASCII"));
     }
     else {
       charset = vfile.getCharset();
@@ -280,12 +286,6 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
     throw new IllegalArgumentException("Invalid call expression text " + functionName);
   }
 
-  public PyImportStatement createImportStatementFromText(final LanguageLevel languageLevel,
-                                                         final String text) {
-    final PsiFile dummyFile = createDummyFile(languageLevel, text);
-    return (PyImportStatement)dummyFile.getFirstChild();
-  }
-
   @Override
   public PyImportElement createImportElement(final LanguageLevel languageLevel, String name) {
     return createFromText(languageLevel, PyImportElement.class, "from foo import " + name, new int[]{0, 6});
@@ -420,6 +420,23 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
   @Override
   public PsiElement createNewLine() {
     return createFromText(LanguageLevel.getDefault(), PsiWhiteSpace.class, " \n\n ");
+  }
+
+  @NotNull
+  @Override
+  public PyFromImportStatement createFromImportStatement(@NotNull LanguageLevel languageLevel, @NotNull String qualifier,
+                                                         @NotNull String name, @Nullable String alias) {
+    final String asClause = StringUtil.isNotEmpty(alias) ? " as " + alias : "";
+    final String statement = "from " + qualifier + " import " + name + asClause;
+    return createFromText(languageLevel, PyFromImportStatement.class, statement);
+  }
+
+  @NotNull
+  @Override
+  public PyImportStatement createImportStatement(@NotNull LanguageLevel languageLevel, @NotNull String name, @Nullable String alias) {
+    final String asClause = StringUtil.isNotEmpty(alias) ? " as " + alias : "";
+    final String statement = "import " + name + asClause;
+    return createFromText(languageLevel, PyImportStatement.class, statement);
   }
 
   private static class CommasOnly extends NotNullPredicate<LeafPsiElement> {

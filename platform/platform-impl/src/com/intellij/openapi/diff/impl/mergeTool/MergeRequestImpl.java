@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,39 +47,51 @@ public class MergeRequestImpl extends MergeRequest {
   @Nullable private final ActionButtonPresentation myOkButtonPresentation;
   @Nullable private final ActionButtonPresentation myCancelButtonPresentation;
 
-  public MergeRequestImpl(String left,
-                          MergeVersion base,
-                          String right,
-                          Project project,
+  public MergeRequestImpl(@NotNull String left,
+                          @NotNull MergeVersion base,
+                          @NotNull String right,
+                          @Nullable Project project,
                           @Nullable final ActionButtonPresentation okButtonPresentation,
                           @Nullable final ActionButtonPresentation cancelButtonPresentation) {
     this(new SimpleContent(left), new MergeContent(base, project), new SimpleContent(right), project, okButtonPresentation,
          cancelButtonPresentation);
   }
 
-  public MergeRequestImpl(DiffContent left,
-                          MergeVersion base,
-                          DiffContent right,
-                          Project project,
+  public MergeRequestImpl(@NotNull DiffContent left,
+                          @NotNull MergeVersion base,
+                          @NotNull DiffContent right,
+                          @Nullable Project project,
                           @Nullable final ActionButtonPresentation okButtonPresentation,
                           @Nullable final ActionButtonPresentation cancelButtonPresentation) {
     this(left, new MergeContent(base, project), right, project, okButtonPresentation, cancelButtonPresentation);
   }
 
-  public MergeRequestImpl(String left,
-                          String base,
-                          String right,
-                          Project project,
+  public MergeRequestImpl(@NotNull String left,
+                          @NotNull String base,
+                          @NotNull String right,
+                          @Nullable Project project,
                           @Nullable final ActionButtonPresentation okButtonPresentation,
                           @Nullable final ActionButtonPresentation cancelButtonPresentation) {
-    this(new SimpleContent(left), new SimpleContent(base), new SimpleContent(right), project, okButtonPresentation,
-         cancelButtonPresentation);
+    this(left, base, right, null, project, okButtonPresentation, cancelButtonPresentation);
   }
 
-  private MergeRequestImpl(DiffContent left,
-                           DiffContent base,
-                           DiffContent right,
-                           Project project,
+  public MergeRequestImpl(@NotNull String left,
+                          @NotNull String base,
+                          @NotNull String right,
+                          @Nullable FileType type,
+                          @Nullable Project project,
+                          @Nullable final ActionButtonPresentation okButtonPresentation,
+                          @Nullable final ActionButtonPresentation cancelButtonPresentation) {
+    this(new SimpleContent(left, type),
+         new SimpleContent(base, type),
+         new SimpleContent(right, type),
+         project, okButtonPresentation, cancelButtonPresentation);
+  }
+
+  private MergeRequestImpl(@NotNull DiffContent left,
+                           @NotNull DiffContent base,
+                           @NotNull DiffContent right,
+                           @Nullable Project project,
                            @Nullable final ActionButtonPresentation okButtonPresentation,
                            @Nullable final ActionButtonPresentation cancelButtonPresentation) {
     super(project);
@@ -176,6 +189,10 @@ public class MergeRequestImpl extends MergeRequest {
   }
 
   public void setActions(final DialogBuilder builder, MergePanel2 mergePanel) {
+    setActions(builder, mergePanel, null);
+  }
+
+  public void setActions(final DialogBuilder builder, MergePanel2 mergePanel, final Convertor<DialogWrapper, Boolean> preOkHook) {
     builder.removeAllActions(); // otherwise dialog will get default actions (OK, Cancel)
 
     if (myOkButtonPresentation != null) {
@@ -187,6 +204,7 @@ public class MergeRequestImpl extends MergeRequest {
       builder.setOkOperation(new Runnable() {
         @Override
         public void run() {
+          if (preOkHook != null && !preOkHook.convert(builder.getDialogWrapper())) return;
           myOkButtonPresentation.run(builder.getDialogWrapper());
         }
       });
@@ -221,11 +239,11 @@ public class MergeRequestImpl extends MergeRequest {
   }
 
   public static class MergeContent extends DiffContent {
-    private final MergeVersion myTarget;
+    @NotNull private final MergeVersion myTarget;
     private final Document myWorkingDocument;
     private final Project myProject;
 
-    public MergeContent(MergeVersion target, Project project) {
+    public MergeContent(@NotNull MergeVersion target, Project project) {
       myTarget = target;
       myProject = project;
       myWorkingDocument = myTarget.createWorkingDocument(project);

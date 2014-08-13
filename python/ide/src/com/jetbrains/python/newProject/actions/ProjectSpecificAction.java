@@ -42,6 +42,5 @@ public class ProjectSpecificAction extends DefaultActionGroup implements DumbAwa
   @Override
   public void actionPerformed(AnActionEvent e) {
     super.actionPerformed(e);
-    mySettings.selectCompatiblePython();
   }
 }

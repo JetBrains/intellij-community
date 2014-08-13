@@ -87,8 +87,6 @@ public class PyDocstringGenerator {
     for (PyParameter functionParam : function.getParameterList().getParameters()) {
       String paramName = functionParam.getName();
       if (!functionParam.isSelf() && !StringUtil.isEmpty(paramName)) {
-        assert paramName != null;
-
         String type = signature != null ? signature.getArgTypeQualifiedName(paramName) : null;
 
         if (type != null) {
@@ -140,12 +138,9 @@ public class PyDocstringGenerator {
 
       final VirtualFile virtualFile = myFile.getVirtualFile();
       if (virtualFile == null) return;
-      OpenFileDescriptor descriptor = new OpenFileDescriptor(
-        myProject, virtualFile, myDocStringOwner.getTextOffset() + myDocStringOwner.getTextLength()
-      );
+      OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, virtualFile, myDocStringExpression.getTextOffset());
       Editor targetEditor = FileEditorManager.getInstance(myProject).openTextEditor(descriptor, true);
       if (targetEditor != null) {
-        targetEditor.getCaretModel().moveToOffset(myDocStringExpression.getTextOffset());
         TemplateManager.getInstance(myProject).startTemplate(targetEditor, template);
       }
     }
@@ -298,7 +293,7 @@ public class PyDocstringGenerator {
     if (myDocStringOwner instanceof PyFunction) {
       final PyStatementList statementList = ((PyFunction)myDocStringOwner).getStatementList();
       final Document document = PsiDocumentManager.getInstance(myProject).getDocument(getFile());
-      if (document != null && statementList != null && myFunction != null && statementList.getStatements().length != 0
+      if (document != null && myFunction != null && statementList.getStatements().length != 0
           && document.getLineNumber(statementList.getTextOffset()) != document.getLineNumber(myFunction.getTextOffset())) {
         whitespace = PsiTreeUtil.getPrevSiblingOfType(statementList, PsiWhiteSpace.class);
       }
@@ -411,7 +406,7 @@ public class PyDocstringGenerator {
       final PyStatementList list = myFunction.getStatementList();
       final Document document = PsiDocumentManager.getInstance(myProject).getDocument(getFile());
 
-      if (document != null && list != null) {
+      if (document != null) {
         if (document.getLineNumber(list.getTextOffset()) == document.getLineNumber(myFunction.getTextOffset()) ||
             list.getStatements().length == 0) {
           PyFunction func = elementGenerator.createFromText(LanguageLevel.forElement(myFunction),

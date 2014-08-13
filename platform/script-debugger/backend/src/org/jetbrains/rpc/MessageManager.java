@@ -124,7 +124,10 @@ public final class MessageManager<OUTGOING, INCOMING, INCOMING_WITH_SEQ, SUCCESS
     Arrays.sort(keys);
     for (int key : keys) {
       try {
-        map.get(key).onError("Connection closed", null);
+        AsyncResultCallback<SUCCESS, ERROR_DETAILS> callback = map.get(key);
+        if (callback != null) {
+          callback.onError("Connection closed", null);
+        }
       }
       catch (Throwable e) {
         LOG.error("Failed to reject callback on connection closed", e);

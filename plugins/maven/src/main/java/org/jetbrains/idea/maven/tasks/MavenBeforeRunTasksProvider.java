@@ -39,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenEditGoalDialog;
 import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -162,7 +163,7 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
 
             FileDocumentManager.getInstance().saveAllDocuments();
 
-            final Collection<String> explicitProfiles = MavenProjectsManager.getInstance(project).getExplicitProfiles();
+            final MavenExplicitProfiles explicitProfiles = MavenProjectsManager.getInstance(project).getExplicitProfiles();
             final MavenRunner mavenRunner = MavenRunner.getInstance(project);
 
             targetDone.down();
@@ -173,7 +174,8 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
                     true,
                     mavenProject.getDirectory(),
                     ParametersListUtil.parse(task.getGoal()),
-                    explicitProfiles);
+                    explicitProfiles.getEnabledProfiles(),
+                    explicitProfiles.getDisabledProfiles());
 
                   result[0] = mavenRunner.runBatch(Collections.singletonList(params),
                                                 null,

@@ -30,16 +30,22 @@ import java.util.List;
 public class HgRemoteCommandExecutor extends HgCommandExecutor {
 
   @Nullable private ModalityState myState;
+  final boolean myIgnoreAuthorizationRequest;
 
   public HgRemoteCommandExecutor(@NotNull Project project, @Nullable String destination) {
-    this(project, destination, null);
+    this(project, destination, null, false);
+  }
+
+  public HgRemoteCommandExecutor(@NotNull Project project, @Nullable String destination, boolean ignoreAuthorizationRequest) {
+    this(project, destination, null, ignoreAuthorizationRequest);
   }
 
   public HgRemoteCommandExecutor(@NotNull Project project,
                                  @Nullable String destination,
-                                 @Nullable ModalityState state) {
+                                 @Nullable ModalityState state, boolean ignoreAuthorizationRequest) {
     super(project, destination);
     myState = state;
+    myIgnoreAuthorizationRequest = ignoreAuthorizationRequest;
   }
 
   @Nullable
@@ -48,7 +54,7 @@ public class HgRemoteCommandExecutor extends HgCommandExecutor {
 
 
     HgCommandResult result = executeInCurrentThread(repo, operation, arguments, false);
-    if (HgErrorUtil.isAuthorizationError(result)) {
+    if (!myIgnoreAuthorizationRequest && HgErrorUtil.isAuthorizationError(result)) {
       if (HgErrorUtil.hasAuthorizationInDestinationPath(myDestination)) {
         new HgCommandResultNotifier(myProject)
           .notifyError(result, "Authorization failed", "Your hgrc file settings have wrong username or password in [paths].\n" +
@@ -62,11 +68,11 @@ public class HgRemoteCommandExecutor extends HgCommandExecutor {
 
   @Nullable
   private HgCommandResult executeInCurrentThread(@Nullable final VirtualFile repo,
-                                                @NotNull final String operation,
-                                                @Nullable final List<String> arguments,
-                                                boolean forceAuthorization) {
+                                                 @NotNull final String operation,
+                                                 @Nullable final List<String> arguments,
+                                                 boolean forceAuthorization) {
 
-    PassReceiver passReceiver = new PassReceiver(myProject, forceAuthorization, myState);
+    PassReceiver passReceiver = new PassReceiver(myProject, forceAuthorization, myIgnoreAuthorizationRequest, myState);
     SocketServer passServer = new SocketServer(passReceiver);
     try {
       int passPort = passServer.start();
@@ -109,11 +115,13 @@ public class HgRemoteCommandExecutor extends HgCommandExecutor {
     private final Project myProject;
     private HgCommandAuthenticator myAuthenticator;
     private boolean myForceAuthorization;
+    private boolean mySilentMode;
     @Nullable private ModalityState myState;
 
-    private PassReceiver(Project project, boolean forceAuthorization, @Nullable ModalityState state) {
+    private PassReceiver(Project project, boolean forceAuthorization, boolean silent, @Nullable ModalityState state) {
       myProject = project;
       myForceAuthorization = forceAuthorization;
+      mySilentMode = silent;
       myState = state;
     }
 
@@ -129,7 +137,7 @@ public class HgRemoteCommandExecutor extends HgCommandExecutor {
       String path = new String(readDataBlock(dataInputStream));
       String proposedLogin = new String(readDataBlock(dataInputStream));
 
-      HgCommandAuthenticator authenticator = new HgCommandAuthenticator(myProject, myForceAuthorization);
+      HgCommandAuthenticator authenticator = new HgCommandAuthenticator(myProject, myForceAuthorization, mySilentMode);
       boolean ok = authenticator.promptForAuthentication(myProject, proposedLogin, uri, path, myState);
       if (ok) {
         myAuthenticator = authenticator;

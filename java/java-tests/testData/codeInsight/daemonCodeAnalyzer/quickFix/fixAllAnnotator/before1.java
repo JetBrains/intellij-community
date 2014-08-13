@@ -1,4 +1,4 @@
-// "Fix all 'Annotator' problems" "true"
+// "Fix all 'Annotator' problems in file" "true"
 public class Test {
   void f<caret>oo() {
   }

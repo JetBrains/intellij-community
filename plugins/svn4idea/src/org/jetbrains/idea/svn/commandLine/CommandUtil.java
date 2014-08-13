@@ -58,8 +58,7 @@ public class CommandUtil {
     boolean hasPegRevision = pegRevision != null &&
                              !SVNRevision.UNDEFINED.equals(pegRevision) &&
                              !SVNRevision.WORKING.equals(pegRevision) &&
-                             pegRevision.isValid() &&
-                             pegRevision.getNumber() != 0;
+                             pegRevision.isValid();
 
     if (hasPegRevision || hasAtSymbol) {
       // add '@' to correctly handle paths that contain '@' symbol

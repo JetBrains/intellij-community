@@ -105,15 +105,21 @@ public class ModuleScopesTest extends ModuleTestCase {
   }
 
   private Module addDependentModule(final Module moduleA, final DependencyScope scope) {
-    final Module moduleB = createModule("b.iml", StdModuleTypes.JAVA);
+    return addDependentModule("b", moduleA, scope, false);
+  }
+
+  private Module addDependentModule(final String name, final Module moduleA,
+                                    final DependencyScope scope,
+                                    final boolean exported) {
+    final Module moduleB = createModule(name + ".iml", StdModuleTypes.JAVA);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        VirtualFile rootB = myFixture.findOrCreateDir("b");
+        VirtualFile rootB = myFixture.findOrCreateDir(name);
         VirtualFile outB = myFixture.findOrCreateDir("out");
 
-        ModuleRootModificationUtil.addDependency(moduleA, moduleB, scope, false);
+        ModuleRootModificationUtil.addDependency(moduleA, moduleB, scope, exported);
 
         PsiTestUtil.addSourceRoot(moduleB, rootB);
         PsiTestUtil.setCompilerOutputPath(moduleB, outB.getUrl(), false);
@@ -121,6 +127,25 @@ public class ModuleScopesTest extends ModuleTestCase {
     });
 
     return moduleB;
+  }
+
+  public void testModuleTwiceInDependents() throws IOException {
+    Module m = createModule("m.iml", StdModuleTypes.JAVA);
+    Module a = createModule("a.iml", StdModuleTypes.JAVA);
+    Module b = createModule("b.iml", StdModuleTypes.JAVA);
+    Module c = createModule("c.iml", StdModuleTypes.JAVA);
+
+    ModuleRootModificationUtil.addDependency(a, m, DependencyScope.COMPILE, false);
+    ModuleRootModificationUtil.addDependency(b, m, DependencyScope.COMPILE, true);
+    ModuleRootModificationUtil.addDependency(a, b, DependencyScope.COMPILE, true);
+    ModuleRootModificationUtil.addDependency(c, a, DependencyScope.COMPILE, true);
+    
+    VirtualFile root = myFixture.findOrCreateDir("c");
+    PsiTestUtil.addSourceContentToRoots(c, root);
+    VirtualFile file = root.createChildData(this, "x.txt");
+
+    GlobalSearchScope deps = m.getModuleWithDependentsScope();
+    assertTrue(deps.contains(file));
   }
 
   public void testTestOnlyLibraryDependency() throws IOException {

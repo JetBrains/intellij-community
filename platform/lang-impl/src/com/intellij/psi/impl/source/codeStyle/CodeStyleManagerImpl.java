@@ -181,7 +181,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     transformAllChildren(treeElement);
 
     final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(), file.getLanguage());
-    LOG.assertTrue(file.isValid());
+    LOG.assertTrue(file.isValid(), "File name: " + file.getName() + " , class: " + file.getClass().getSimpleName());
 
     if (editor == null) {
       editor = PsiUtilBase.findEditor(file);

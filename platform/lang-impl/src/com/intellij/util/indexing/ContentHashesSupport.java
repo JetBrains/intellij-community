@@ -84,7 +84,7 @@ class ContentHashesSupport {
     messageDigest.update((byte)0);
     messageDigest.update(String.valueOf(bytes.length).getBytes(defaultCharset));
     messageDigest.update((byte)0);
-    messageDigest.update((charset != null ? charset.displayName():"null_charset").getBytes(defaultCharset));
+    messageDigest.update((charset != null ? charset.name():"null_charset").getBytes(defaultCharset));
     messageDigest.update((byte)0);
 
     messageDigest.update(bytes, 0, bytes.length);

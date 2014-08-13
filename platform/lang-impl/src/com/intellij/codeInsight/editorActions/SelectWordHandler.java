@@ -25,6 +25,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -51,14 +52,14 @@ public class SelectWordHandler extends EditorActionHandler {
   }
 
   @Override
-  public void execute(@NotNull Editor editor, DataContext dataContext) {
+  public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: execute(editor='" + editor + "')");
     }
     Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
     if (project == null) {
       if (myOriginalHandler != null) {
-        myOriginalHandler.execute(editor, dataContext);
+        myOriginalHandler.execute(editor, caret, dataContext);
       }
       return;
     }
@@ -74,7 +75,7 @@ public class SelectWordHandler extends EditorActionHandler {
     }
     if (range == null) {
       if (myOriginalHandler != null) {
-        myOriginalHandler.execute(editor, dataContext);
+        myOriginalHandler.execute(editor, caret, dataContext);
       }
     }
     else {

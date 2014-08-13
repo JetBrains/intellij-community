@@ -19,7 +19,6 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBCardLayout;
@@ -52,9 +51,11 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
   private static final String CUSTOMIZE_COMMAND = "Customize";
   private final JBCardLayout myCardLayout;
   private final IdSetPanel myCustomizePanel;
+  private final PluginGroups myPluginGroups;
 
 
-  public CustomizePluginsStepPanel() {
+  public CustomizePluginsStepPanel(PluginGroups pluginGroups) {
+    myPluginGroups = pluginGroups;
     myCardLayout = new JBCardLayout();
     setLayout(myCardLayout);
     JPanel gridPanel = new JPanel(new GridLayout(0, COLS));
@@ -66,8 +67,8 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
     add(scrollPane, MAIN);
     add(myCustomizePanel, CUSTOMIZE);
 
-    Map<String, Pair<String, List<String>>> groups = PluginGroups.getInstance().getTree();
-    for (final Map.Entry<String, Pair<String, List<String>>> entry : groups.entrySet()) {
+    Map<String, Pair<Icon, List<String>>> groups = pluginGroups.getTree();
+    for (final Map.Entry<String, Pair<Icon, List<String>>> entry : groups.entrySet()) {
       final String group = entry.getKey();
       if (PluginGroups.CORE.equals(group)) continue;
 
@@ -89,10 +90,10 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
           return isGroupEnabled(group);
         }
       };
-      groupPanel.add(new JLabel(IconLoader.getIcon(entry.getValue().getFirst())), gbc);
+      groupPanel.add(new JLabel(entry.getValue().getFirst()), gbc);
       //gbc.insets.bottom = 5;
       groupPanel.add(titleLabel, gbc);
-      JLabel descriptionLabel = new JLabel(PluginGroups.getInstance().getDescription(group), SwingConstants.CENTER) {
+      JLabel descriptionLabel = new JLabel(pluginGroups.getDescription(group), SwingConstants.CENTER) {
         @Override
         public Dimension getPreferredSize() {
           Dimension size = super.getPreferredSize();
@@ -116,7 +117,7 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
       gbc.weighty = 0;
       JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
       buttonsPanel.setOpaque(false);
-      if (PluginGroups.getInstance().getSets(group).size() == 1) {
+      if (pluginGroups.getSets(group).size() == 1) {
         buttonsPanel.add(createLink(SWITCH_COMMAND + ":" + group, getGroupSwitchTextProvider(group)));
       }
       else {
@@ -152,11 +153,11 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
 
     if (SWITCH_COMMAND.equals(command)) {
       boolean enabled = isGroupEnabled(group);
-      List<IdSet> sets = PluginGroups.getInstance().getSets(group);
+      List<IdSet> sets = myPluginGroups.getSets(group);
       for (IdSet idSet : sets) {
         String[] ids = idSet.getIds();
         for (String id : ids) {
-          PluginGroups.getInstance().setPluginEnabledWithDependencies(id, !enabled);
+          myPluginGroups.setPluginEnabledWithDependencies(id, !enabled);
         }
       }
       repaint();
@@ -190,17 +191,17 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
       @Override
       public String getText() {
         return (isGroupEnabled(group) ? "Disable" : "Enable") +
-               (PluginGroups.getInstance().getSets(group).size() > 1 ? " All" : "");
+               (myPluginGroups.getSets(group).size() > 1 ? " All" : "");
       }
     };
   }
 
   private boolean isGroupEnabled(String group) {
-    List<IdSet> sets = PluginGroups.getInstance().getSets(group);
+    List<IdSet> sets = myPluginGroups.getSets(group);
     for (IdSet idSet : sets) {
       String[] ids = idSet.getIds();
       for (String id : ids) {
-        if (PluginGroups.getInstance().isPluginEnabled(id)) return true;
+        if (myPluginGroups.isPluginEnabled(id)) return true;
       }
     }
     return false;
@@ -229,7 +230,7 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
   @Override
   public boolean beforeOkAction() {
     try {
-      PluginManager.saveDisabledPlugins(PluginGroups.getInstance().getDisabledPluginIds(), false);
+      PluginManager.saveDisabledPlugins(myPluginGroups.getDisabledPluginIds(), false);
     }
     catch (IOException ignored) {
     }
@@ -269,9 +270,9 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
     public void linkSelected(LinkLabel aSource, String command) {
       if (myGroup == null) return;
       boolean enable = "enable".equals(command);
-      List<IdSet> idSets = PluginGroups.getInstance().getSets(myGroup);
+      List<IdSet> idSets = myPluginGroups.getSets(myGroup);
       for (IdSet set : idSets) {
-        PluginGroups.getInstance().setIdSetEnabled(set, enable);
+        myPluginGroups.setIdSetEnabled(set, enable);
       }
       CustomizePluginsStepPanel.this.repaint();
     }
@@ -280,19 +281,19 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
       myGroup = group;
       myTitleLabel.setText("<html><body><h2 style=\"text-align:left;\">" + group + "</h2></body></html>");
       myContentPanel.removeAll();
-      List<IdSet> idSets = PluginGroups.getInstance().getSets(group);
+      List<IdSet> idSets = myPluginGroups.getSets(group);
       for (final IdSet set : idSets) {
-        final JCheckBox checkBox = new JCheckBox(set.getTitle(), PluginGroups.getInstance().isIdSetAllEnabled(set));
+        final JCheckBox checkBox = new JCheckBox(set.getTitle(), myPluginGroups.isIdSetAllEnabled(set));
         checkBox.setModel(new JToggleButton.ToggleButtonModel() {
           @Override
           public boolean isSelected() {
-            return PluginGroups.getInstance().isIdSetAllEnabled(set);
+            return myPluginGroups.isIdSetAllEnabled(set);
           }
         });
         checkBox.addActionListener(new ActionListener() {
           @Override
           public void actionPerformed(ActionEvent e) {
-            PluginGroups.getInstance().setIdSetEnabled(set, !checkBox.isSelected());
+            myPluginGroups.setIdSetEnabled(set, !checkBox.isSelected());
             CustomizePluginsStepPanel.this.repaint();
           }
         });

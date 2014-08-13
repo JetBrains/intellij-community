@@ -68,7 +68,7 @@ public class MethodReferenceCompletionProvider extends CompletionProvider<Comple
                   final PsiElement resolve = referenceExpression.resolve();
                   if (resolve != null && PsiEquivalenceUtil.areElementsEquivalent(element, resolve) && 
                       PsiMethodReferenceUtil.checkMethodReferenceContext(referenceExpression, resolve, functionalType) == null) {
-                    result.addElement(new JavaMethodReferenceElement((PsiMethod)element, refPlace, referenceExpression));
+                    result.addElement(new JavaMethodReferenceElement((PsiMethod)element, refPlace));
                   }
                 }
                 finally {
@@ -80,19 +80,20 @@ public class MethodReferenceCompletionProvider extends CompletionProvider<Comple
             }
 
             private PsiMethodReferenceExpression createMethodReferenceExpression(PsiMethod method) {
+              PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(method.getProject());
               if (refPlace instanceof PsiMethodReferenceExpression) {
                 final PsiMethodReferenceExpression referenceExpression = (PsiMethodReferenceExpression)refPlace.copy();
                 final PsiElement referenceNameElement = referenceExpression.getReferenceNameElement();
                 LOG.assertTrue(referenceNameElement != null, referenceExpression);
-                referenceNameElement.replace(JavaPsiFacade.getElementFactory(method.getProject()).createIdentifier(method.getName()));
+                referenceNameElement.replace(method.isConstructor() ? elementFactory.createKeyword("new") : elementFactory.createIdentifier(method.getName()));
                 return referenceExpression;
               }
               else if (method.hasModifierProperty(PsiModifier.STATIC)) {
                 final PsiClass aClass = method.getContainingClass();
                 LOG.assertTrue(aClass != null);
                 final String qualifiedName = aClass.getQualifiedName();
-                return (PsiMethodReferenceExpression)JavaPsiFacade.getElementFactory(method.getProject()).createExpressionFromText(
-                  qualifiedName + "::" + method.getName(), refPlace);
+                return (PsiMethodReferenceExpression)elementFactory.createExpressionFromText(
+                  qualifiedName + "::" + (method.isConstructor() ? "new" : method.getName()), refPlace);
               }
               else {
                 return null;
@@ -113,13 +114,11 @@ public class MethodReferenceCompletionProvider extends CompletionProvider<Comple
   private static class JavaMethodReferenceElement extends JavaMethodCallElement {
     private final PsiMethod myMethod;
     private final PsiElement myRefPlace;
-    private PsiMethodReferenceExpression myReferenceExpression;
 
-    public JavaMethodReferenceElement(PsiMethod method, PsiElement refPlace, PsiMethodReferenceExpression referenceExpression) {
-      super(method);
+    public JavaMethodReferenceElement(PsiMethod method, PsiElement refPlace) {
+      super(method, method.isConstructor() ? "new" : method.getName());
       myMethod = method;
       myRefPlace = refPlace;
-      myReferenceExpression = referenceExpression;
     }
 
     @Override

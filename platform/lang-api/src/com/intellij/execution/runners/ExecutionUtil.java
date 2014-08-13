@@ -16,9 +16,7 @@
 
 package com.intellij.execution.runners;
 
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.RunCanceledByUserException;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.ide.util.PropertiesComponent;
@@ -33,6 +31,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
@@ -50,6 +49,10 @@ public class ExecutionUtil {
                                           @NotNull RunProfile runProfile,
                                           @NotNull ExecutionException e) {
     handleExecutionError(project, toolWindowId, runProfile.getName(), e);
+  }
+
+  public static void handleExecutionError(@NotNull ExecutionEnvironment environment, @NotNull ExecutionException e) {
+    handleExecutionError(environment.getProject(), environment.getExecutor().getToolWindowId(), environment.getRunProfile().getName(), e);
   }
 
   public static void handleExecutionError(@NotNull final Project project,
@@ -106,5 +109,32 @@ public class ExecutionUtil {
         ourNotificationGroup.createNotification(title, finalDescription, NotificationType.ERROR, notificationListener).notify(project);
       }
     });
+  }
+
+  public static void restart(@NotNull ExecutionEnvironment environment) {
+    if (!ExecutorRegistry.getInstance().isStarting(environment)) {
+      ExecutionManager.getInstance(environment.getProject()).restartRunProfile(environment);
+    }
+  }
+
+  public static void runConfiguration(@NotNull RunnerAndConfigurationSettings configuration, @NotNull Executor executor) {
+    ExecutionEnvironmentBuilder builder = createEnvironment(executor, configuration);
+    if (builder != null) {
+      ExecutionManager.getInstance(configuration.getConfiguration().getProject()).restartRunProfile(builder
+                                                                                                      .activeTarget()
+                                                                                                      .build());
+    }
+  }
+
+  @Nullable
+  public static ExecutionEnvironmentBuilder createEnvironment(@NotNull Executor executor, @NotNull RunnerAndConfigurationSettings settings) {
+    try {
+      return ExecutionEnvironmentBuilder.create(executor, settings);
+    }
+    catch (ExecutionException e) {
+      handleExecutionError(settings.getConfiguration().getProject(), executor.getToolWindowId(), settings.getConfiguration().getName(), e);
+      LOG.info(e);
+      return null;
+    }
   }
 }

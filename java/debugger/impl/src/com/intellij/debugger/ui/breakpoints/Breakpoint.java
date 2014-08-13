@@ -33,6 +33,7 @@ import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
@@ -46,6 +47,7 @@ import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
@@ -95,7 +97,20 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
    * Request for creating all needed JPDA requests in the specified VM
    * @param debuggerProcess the requesting process
    */
-  public abstract void createRequest(DebugProcessImpl debuggerProcess);
+  public abstract void createRequest(DebugProcessImpl debugProcess);
+
+  protected boolean shouldCreateRequest(final DebugProcessImpl debugProcess) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        JavaDebugProcess process = debugProcess.getXdebugProcess();
+        return process != null
+               && debugProcess.isAttached()
+               && ((XDebugSessionImpl)process.getSession()).isBreakpointActive(myXBreakpoint)
+               && debugProcess.getRequestsManager().findRequests(Breakpoint.this).isEmpty();
+      }
+    });
+  }
 
   /**
    * Request for creating all needed JPDA requests in the specified VM

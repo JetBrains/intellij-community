@@ -28,7 +28,7 @@ class IdSet {
   String myTitle;
   String[] myIds;
 
-  IdSet(String description) {
+  IdSet(final PluginGroups pluginGroups, String description) {
     int i = description.indexOf(":");
     if (i > 0) {
       myTitle = description.substring(0, i);
@@ -38,7 +38,7 @@ class IdSet {
     myIds = ContainerUtil.filter(myIds, new Condition<String>() {
       @Override
       public boolean value(String id) {
-        return PluginGroups.getInstance().findPlugin(id) != null;
+        return pluginGroups.findPlugin(id) != null;
       }
     }).toArray(new String[]{});
 
@@ -47,7 +47,7 @@ class IdSet {
     }
     if (myTitle == null && myIds.length>0) {
       //noinspection ConstantConditions
-      myTitle = PluginGroups.getInstance().findPlugin(myIds[0]).getName();
+      myTitle = pluginGroups.findPlugin(myIds[0]).getName();
     }
     if (myTitle != null) {
       for (String skipWord : BLACK_LIST) {

@@ -50,7 +50,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
   public final AtomicBoolean myCanceled = new AtomicBoolean(false);
 
 
-  public CustomizeFeaturedPluginsStepPanel() throws OfflineException {
+  public CustomizeFeaturedPluginsStepPanel(PluginGroups pluginGroups) throws OfflineException {
     setLayout(new GridLayout(1, 1));
     JPanel gridPanel = new JPanel(new GridLayout(0, 3));
     JBScrollPane scrollPane =
@@ -58,9 +58,9 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
     scrollPane.getVerticalScrollBar().setUnitIncrement(10);
     scrollPane.setBorder(null);
 
-    Map<String, String> config = PluginGroups.getInstance().getFeaturedPlugins();
+    Map<String, String> config = pluginGroups.getFeaturedPlugins();
     boolean isEmptyOrOffline = true;
-    List<IdeaPluginDescriptor> pluginsFromRepository = PluginGroups.getInstance().getPluginsFromRepository();
+    List<IdeaPluginDescriptor> pluginsFromRepository = pluginGroups.getPluginsFromRepository();
     for (Map.Entry<String, String> entry : config.entrySet()) {
       JPanel groupPanel = new JPanel(new GridBagLayout());
       GridBagConstraints gbc = new GridBagConstraints();
@@ -263,5 +263,5 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
     return "New plugins can also be downloaded in " + CommonBundle.settingsTitle() + " | Plugins";
   }
 
-  static class OfflineException extends Exception {};
+  public static class OfflineException extends Exception {};
 }

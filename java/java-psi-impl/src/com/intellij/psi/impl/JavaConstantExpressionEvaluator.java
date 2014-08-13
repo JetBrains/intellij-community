@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,23 +41,25 @@ public class JavaConstantExpressionEvaluator extends JavaRecursiveElementWalking
   private static final Object NO_VALUE = ObjectUtils.NULL;
   private final ConstantExpressionVisitor myConstantExpressionVisitor;
 
-  private JavaConstantExpressionEvaluator(Set<PsiVariable> visitedVars, final boolean throwExceptionOnOverflow, final Project project, final PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
-    myMapFactory = auxEvaluator != null ? new Factory<ConcurrentMap<PsiElement, Object>>() {
-      @Override
-      public ConcurrentMap<PsiElement, Object> create() {
-        return auxEvaluator.getCacheMap(throwExceptionOnOverflow);
-      }
-    } : new Factory<ConcurrentMap<PsiElement, Object>>() {
+  private JavaConstantExpressionEvaluator(Set<PsiVariable> visitedVars,
+                                          final boolean throwExceptionOnOverflow,
+                                          @NotNull Project project,
+                                          final PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
+    myMapFactory = auxEvaluator == null ? new Factory<ConcurrentMap<PsiElement, Object>>() {
       @Override
       public ConcurrentMap<PsiElement, Object> create() {
         final Key<CachedValue<ConcurrentMap<PsiElement, Object>>> key =
           throwExceptionOnOverflow ? CONSTANT_VALUE_WITH_OVERFLOW_MAP_KEY : CONSTANT_VALUE_WO_OVERFLOW_MAP_KEY;
         return CachedValuesManager.getManager(myProject).getCachedValue(myProject, key, PROVIDER, false);
       }
+    } : new Factory<ConcurrentMap<PsiElement, Object>>() {
+      @Override
+      public ConcurrentMap<PsiElement, Object> create() {
+        return auxEvaluator.getCacheMap(throwExceptionOnOverflow);
+      }
     };
     myProject = project;
     myConstantExpressionVisitor = new ConstantExpressionVisitor(visitedVars, throwExceptionOnOverflow, auxEvaluator);
-
   }
 
   @Override
@@ -109,7 +111,9 @@ public class JavaConstantExpressionEvaluator extends JavaRecursiveElementWalking
     return computeConstantExpression(expression, visitedVars, throwExceptionOnOverflow, null);
   }
 
-  public static Object computeConstantExpression(@Nullable PsiExpression expression, @Nullable Set<PsiVariable> visitedVars, boolean throwExceptionOnOverflow,
+  public static Object computeConstantExpression(@Nullable PsiExpression expression,
+                                                 @Nullable Set<PsiVariable> visitedVars,
+                                                 boolean throwExceptionOnOverflow,
                                                  final PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
     if (expression == null) return null;
 

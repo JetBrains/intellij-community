@@ -17,6 +17,7 @@ package com.intellij.psi.search.scope;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.scope.packageSet.AbstractPackageSet;
@@ -43,7 +44,8 @@ public class NonProjectFilesScope extends NamedScope {
 
       @Override
       public boolean contains(VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
-        if (file == null) return true;
+        // do not include fake-files e.g. fragment-editors, database consoles, etc.
+        if (file == null || file.getFileSystem() instanceof NonPhysicalFileSystem) return false;
         if (!file.isInLocalFileSystem()) return true;
         if (isInsideProjectContent(project, file)) return false;
         return !ProjectScope.getProjectScope(project).contains(file);

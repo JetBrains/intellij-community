@@ -616,7 +616,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       sink.put(OpenFileDescriptor.NAVIGATE_IN_EDITOR, myConsoleEditor);
     }
     else if (getProject().isInitialized()) {
-      sink.put(key, FileEditorManagerEx.getInstanceEx(getProject()).getData(key.getName(), myConsoleEditor, myVirtualFile));
+      sink.put(key, FileEditorManagerEx.getInstanceEx(getProject()).getData(key.getName(), myConsoleEditor, myConsoleEditor.getCaretModel().getCurrentCaret()));
     }
   }
 
@@ -670,12 +670,14 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     }
   }
 
+  @NotNull
   public Editor getCurrentEditor() {
-    return ObjectUtils.chooseNotNull(myCurrentEditor, myConsoleEditor);
+    return ObjectUtils.notNull(myCurrentEditor, myConsoleEditor);
   }
 
+  @NotNull
   public Language getLanguage() {
-    return myVirtualFile.getLanguage();
+    return ObjectUtils.assertNotNull(myVirtualFile.getLanguage());
   }
 
   public void setLanguage(@NotNull Language language) {

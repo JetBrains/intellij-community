@@ -45,6 +45,7 @@ class ShredImpl implements PsiLanguageInjectionHost.Shred {
     assert relevantRangeInHost.isValid();
   }
 
+  @NotNull
   public SmartPsiElementPointer<PsiLanguageInjectionHost> getSmartPointer() {
     return hostElementPointer;
   }

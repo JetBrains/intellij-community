@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.ide;
 
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -41,6 +42,7 @@ public interface IdeView {
    *
    * @return the list of directories, or an empty array if nothing is selected.
    */
+  @NotNull
   PsiDirectory[] getDirectories();
 
   /**

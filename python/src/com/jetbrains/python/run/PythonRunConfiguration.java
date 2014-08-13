@@ -15,11 +15,9 @@
  */
 package com.jetbrains.python.run;
 
-import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.filters.Filter;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.options.SettingsEditor;
@@ -40,7 +38,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.List;
 
 /**
  * @author yole
@@ -64,10 +61,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
   }
 
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
-    List<Filter> filters = Lists.newArrayList();
-    filters.add(new PythonTracebackFilter(getProject(), getWorkingDirectory()));
-
-    return new PythonScriptCommandLineState(this, env, filters);
+    return new PythonScriptCommandLineState(this, env);
   }
 
   public void checkConfiguration() throws RuntimeConfigurationException {

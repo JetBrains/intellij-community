@@ -1113,6 +1113,10 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @NotNull
   public static <T> List<T> concat(@NotNull final List<? extends T> list1, @NotNull final List<? extends T> list2) {
+    if (list1.isEmpty() && list2.isEmpty()) {
+      return Collections.emptyList();
+    }
+
     final int size1 = list1.size();
     final int size = size1 + list2.size();
 

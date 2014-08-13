@@ -63,7 +63,7 @@ public class FieldCanBeLocalInspection extends FieldCanBeLocalInspectionBase {
     @Override
     protected PsiElement moveDeclaration(@NotNull final Project project, @NotNull final PsiField variable) {
       final Map<PsiCodeBlock, Collection<PsiReference>> refs = new HashMap<PsiCodeBlock, Collection<PsiReference>>();
-      groupByCodeBlocks(ReferencesSearch.search(variable).findAll(), refs);
+      if (!groupByCodeBlocks(ReferencesSearch.search(variable).findAll(), refs)) return null;
       PsiElement element = null;
       for (Collection<PsiReference> psiReferences : refs.values()) {
         element = super.moveDeclaration(project, variable, psiReferences, false);
@@ -82,11 +82,14 @@ public class FieldCanBeLocalInspection extends FieldCanBeLocalInspectionBase {
       return element;
     }
 
-    private static void groupByCodeBlocks(final Collection<PsiReference> allReferences, Map<PsiCodeBlock, Collection<PsiReference>> refs) {
+    private static boolean groupByCodeBlocks(final Collection<PsiReference> allReferences, Map<PsiCodeBlock, Collection<PsiReference>> refs) {
       for (PsiReference psiReference : allReferences) {
         final PsiElement element = psiReference.getElement();
         final PsiCodeBlock block = PsiTreeUtil.getTopmostParentOfType(element, PsiCodeBlock.class);
-        LOG.assertTrue(block != null);
+        if (block == null) {
+          return false;
+        }
+        
         Collection<PsiReference> references = refs.get(block);
         if (references == null) {
           references = new ArrayList<PsiReference>();
@@ -95,6 +98,7 @@ public class FieldCanBeLocalInspection extends FieldCanBeLocalInspectionBase {
         }
         references.add(psiReference);
       }
+      return true;
     }
 
     private static boolean findExistentBlock(Map<PsiCodeBlock, Collection<PsiReference>> refs,

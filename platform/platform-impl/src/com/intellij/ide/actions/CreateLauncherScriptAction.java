@@ -45,6 +45,7 @@ import static java.util.Arrays.asList;
  */
 public class CreateLauncherScriptAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.CreateLauncherScriptAction");
+  private static final String CONTENTS = "/Contents";
 
   public static boolean isAvailable() {
     return SystemInfo.isUnix;
@@ -137,6 +138,8 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
       // for Macs just use "*.app"
       final String productName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase();
       runPath += "/bin/" + productName + ".sh";
+    } else if (runPath.endsWith(CONTENTS)) {
+      runPath = runPath.substring(0, runPath.length() - CONTENTS.length());
     }
     String launcherContents = ExecUtil.loadTemplate(CreateLauncherScriptAction.class.getClassLoader(), "launcher.py",
                                                           newHashMap(asList("$CONFIG_PATH$", "$RUN_PATH$"),

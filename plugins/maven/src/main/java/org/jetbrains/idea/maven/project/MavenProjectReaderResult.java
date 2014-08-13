@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.project;
 
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.model.MavenProjectProblem;
@@ -28,14 +29,14 @@ import java.util.Set;
 public class MavenProjectReaderResult {
   public final MavenModel mavenModel;
   public final Map<String, String> nativeModelMap;
-  public final Collection<String> activatedProfiles;
+  public final MavenExplicitProfiles activatedProfiles;
   @Nullable public final NativeMavenProjectHolder nativeMavenProject;
   public final Collection<MavenProjectProblem> readingProblems;
   public final Set<MavenId> unresolvedArtifactIds;
 
   public MavenProjectReaderResult(MavenModel mavenModel,
                                   Map<String, String> nativeModelMap,
-                                  Collection<String> activatedProfiles,
+                                  MavenExplicitProfiles activatedProfiles,
                                   @Nullable NativeMavenProjectHolder nativeMavenProject,
                                   Collection<MavenProjectProblem> readingProblems,
                                   Set<MavenId> unresolvedArtifactIds) {

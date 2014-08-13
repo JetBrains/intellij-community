@@ -15,24 +15,42 @@
  */
 package com.intellij.openapi.externalSystem.test;
 
+import com.intellij.compiler.CompilerTestUtil;
+import com.intellij.compiler.CompilerWorkspaceConfiguration;
+import com.intellij.compiler.artifacts.ArtifactsTestUtil;
+import com.intellij.compiler.impl.ModuleCompileScope;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileScope;
+import com.intellij.openapi.compiler.CompileStatusNotification;
+import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.io.TestFileSystemItem;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -40,6 +58,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 
+import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -129,11 +148,11 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   @Override
   public void tearDown() throws Exception {
     try {
-      myProject = null;
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      edt(new Runnable() {
         @Override
         public void run() {
           try {
+            CompilerTestUtil.disableExternalCompiler(myProject);
             tearDownFixtures();
           }
           catch (Exception e) {
@@ -141,6 +160,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
           }
         }
       });
+      myProject = null;
       if (!FileUtil.delete(myTestDir) && myTestDir.exists()) {
         System.err.println("Cannot delete " + myTestDir);
         //printDirectoryContent(myDir);
@@ -319,7 +339,11 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   protected VirtualFile createProjectSubFile(String relativePath) throws IOException {
     File f = new File(getProjectPath(), relativePath);
     FileUtil.ensureExists(f.getParentFile());
-    f.createNewFile();
+    FileUtil.ensureCanCreateFile(f);
+    final boolean created = f.createNewFile();
+    if(!created) {
+      throw new AssertionError("Unable to create the project sub file: " + f.getAbsolutePath());
+    }
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
   }
 
@@ -327,6 +351,116 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     VirtualFile file = createProjectSubFile(relativePath);
     setFileContent(file, content, false);
     return file;
+  }
+
+
+  protected void compileModules(final String... moduleNames) {
+    compile(createModulesCompileScope(moduleNames));
+  }
+
+  protected void buildArtifacts(String... artifactNames) {
+    compile(createArtifactsScope(artifactNames));
+  }
+
+  private void compile(final CompileScope scope) {
+    edt(new Runnable() {
+      @Override
+      public void run() {
+        for (Module module : scope.getAffectedModules()) {
+          setupJdkForModule(module.getName());
+        }
+      }
+    });
+
+    CompilerWorkspaceConfiguration.getInstance(myProject).CLEAR_OUTPUT_DIRECTORY = true;
+
+    final Semaphore semaphore = new Semaphore();
+    semaphore.down();
+    edt(new Runnable() {
+      @Override
+      public void run() {
+        CompilerTestUtil.enableExternalCompiler();
+        CompilerManager.getInstance(myProject).make(scope, new CompileStatusNotification() {
+          @Override
+          public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
+            //assertFalse(aborted);
+            //assertEquals(collectMessages(compileContext, CompilerMessageCategory.ERROR), 0, errors);
+            //assertEquals(collectMessages(compileContext, CompilerMessageCategory.WARNING), 0, warnings);
+            semaphore.up();
+          }
+        });
+      }
+    });
+    while (!semaphore.waitFor(100)) {
+      if (SwingUtilities.isEventDispatchThread()) {
+        UIUtil.dispatchAllInvocationEvents();
+      }
+    }
+    if (SwingUtilities.isEventDispatchThread()) {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+  }
+
+  private CompileScope createModulesCompileScope(final String[] moduleNames) {
+    final List<Module> modules = new ArrayList<Module>();
+    for (String name : moduleNames) {
+      modules.add(getModule(name));
+    }
+    return new ModuleCompileScope(myProject, modules.toArray(new Module[modules.size()]), false);
+  }
+
+  private CompileScope createArtifactsScope(String[] artifactNames) {
+    List<Artifact> artifacts = new ArrayList<Artifact>();
+    for (String name : artifactNames) {
+      artifacts.add(ArtifactsTestUtil.findArtifact(myProject, name));
+    }
+    return ArtifactCompileScope.createArtifactsScope(myProject, artifacts);
+  }
+
+  protected Sdk setupJdkForModule(final String moduleName) {
+    final Sdk sdk = true ? JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk() : createJdk("Java 1.5");
+    ModuleRootModificationUtil.setModuleSdk(getModule(moduleName), sdk);
+    return sdk;
+  }
+
+  protected static Sdk createJdk(String versionName) {
+    return IdeaTestUtil.getMockJdk17(versionName);
+  }
+
+  protected Module getModule(final String name) {
+    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
+    try {
+      Module m = ModuleManager.getInstance(myProject).findModuleByName(name);
+      assertNotNull("Module " + name + " not found", m);
+      return m;
+    }
+    finally {
+      accessToken.finish();
+    }
+  }
+
+  protected void assertExplodedLayout(String artifactName, String expected) {
+    assertJarLayout(artifactName + " exploded", expected);
+  }
+
+  protected void assertJarLayout(String artifactName, String expected) {
+    ArtifactsTestUtil.assertLayout(myProject, artifactName, expected);
+  }
+
+  protected void assertArtifactOutputPath(final String artifactName, final String expected) {
+    ArtifactsTestUtil.assertOutputPath(myProject, artifactName, expected);
+  }
+
+  protected void assertArtifactOutputFileName(final String artifactName, final String expected) {
+    ArtifactsTestUtil.assertOutputFileName(myProject, artifactName, expected);
+  }
+
+  protected void assertArtifactOutput(String artifactName, TestFileSystemItem fs) {
+    final Artifact artifact = ArtifactsTestUtil.findArtifact(myProject, artifactName);
+    final VirtualFile outputFile = artifact.getOutputFile();
+    assert outputFile != null;
+    final File file = VfsUtilCore.virtualToIoFile(outputFile);
+    fs.assertFileEqual(file);
   }
 
   private static void setFileContent(final VirtualFile file, final String content, final boolean advanceStamps) throws IOException {

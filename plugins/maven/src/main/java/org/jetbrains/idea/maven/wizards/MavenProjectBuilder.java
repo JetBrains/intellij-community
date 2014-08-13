@@ -36,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
 import org.jetbrains.idea.maven.importing.MavenUIModifiableModelsProvider;
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.*;
@@ -53,7 +54,8 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     private VirtualFile myImportRoot;
     private List<VirtualFile> myFiles;
     private List<String> myProfiles = new ArrayList<String>();
-    private List<String> mySelectedProfiles = new ArrayList<String>();
+    private List<String> myActivatedProfiles = new ArrayList<String>();
+    private MavenExplicitProfiles mySelectedProfiles = MavenExplicitProfiles.NONE;
 
     private MavenProjectsTree myMavenProjectTree;
     private List<MavenProject> mySelectedProjects;
@@ -109,20 +111,14 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
       settings.generalSettings.setUserSettingsFile(settingsFile.trim());
     }
 
-    List<String> selectedProfiles = getSelectedProfiles();
+    MavenExplicitProfiles selectedProfiles = getSelectedProfiles();
 
-    String profilesList = System.getProperty("idea.maven.import.enabled.profiles");
-    if (profilesList != null) {
-      Set<String> selectedProfilesSet = new LinkedHashSet<String>(selectedProfiles);
-
-      for (String profile : StringUtil.split(profilesList, ",")) {
-        String trimmedProfileName = profile.trim();
-        if (!trimmedProfileName.isEmpty()) {
-          selectedProfilesSet.add(trimmedProfileName);
-        }
-      }
-
-      selectedProfiles = new ArrayList<String>(selectedProfilesSet);
+    String enabledProfilesList = System.getProperty("idea.maven.import.enabled.profiles");
+    String disabledProfilesList = System.getProperty("idea.maven.import.disabled.profiles");
+    if (enabledProfilesList != null || disabledProfilesList != null) {
+      selectedProfiles = selectedProfiles.clone();
+      appendProfilesFromString(selectedProfiles.getEnabledProfiles(), enabledProfilesList);
+      appendProfilesFromString(selectedProfiles.getDisabledProfiles(), disabledProfilesList);
     }
 
     MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
@@ -138,9 +134,21 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
                                   : new MavenDefaultModifiableModelsProvider(project));
   }
 
+  private void appendProfilesFromString(Collection<String> selectedProfiles, String profilesList) {
+    if (profilesList == null) return;
+
+    for (String profile : StringUtil.split(profilesList, ",")) {
+      String trimmedProfileName = profile.trim();
+      if (!trimmedProfileName.isEmpty()) {
+        selectedProfiles.add(trimmedProfileName);
+      }
+    }
+  }
+
   public boolean setRootDirectory(@Nullable Project projectToUpdate, final String root) throws ConfigurationException {
     getParameters().myFiles = null;
     getParameters().myProfiles.clear();
+    getParameters().myActivatedProfiles.clear();
     getParameters().myMavenProjectTree = null;
 
     getParameters().myProjectToUpdate = projectToUpdate; // We cannot determinate project in non-EDT thread.
@@ -174,7 +182,8 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
   private void collectProfiles(MavenProgressIndicator process) {
     process.setText(ProjectBundle.message("maven.searching.profiles"));
 
-    Set<String> uniqueProfiles = new LinkedHashSet<String>();
+    Set<String> availableProfiles = new LinkedHashSet<String>();
+    Set<String> activatedProfiles = new LinkedHashSet<String>();
     MavenProjectReader reader = new MavenProjectReader();
     MavenGeneralSettings generalSettings = getGeneralSettings();
     MavenProjectReaderProjectLocator locator = new MavenProjectReaderProjectLocator() {
@@ -185,21 +194,27 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     for (VirtualFile f : getParameters().myFiles) {
       MavenProject project = new MavenProject(f);
       process.setText2(ProjectBundle.message("maven.reading.pom", f.getPath()));
-      project.read(generalSettings, Collections.<String>emptyList(), reader, locator);
-      uniqueProfiles.addAll(project.getProfilesIds());
+      project.read(generalSettings, MavenExplicitProfiles.NONE, reader, locator);
+      availableProfiles.addAll(project.getProfilesIds());
+      activatedProfiles.addAll(project.getActivatedProfilesIds().getEnabledProfiles());
     }
-    getParameters().myProfiles = new ArrayList<String>(uniqueProfiles);
+    getParameters().myProfiles = new ArrayList<String>(availableProfiles);
+    getParameters().myActivatedProfiles = new ArrayList<String>(activatedProfiles);
   }
 
   public List<String> getProfiles() {
     return getParameters().myProfiles;
   }
 
-  public List<String> getSelectedProfiles() {
+  public List<String> getActivatedProfiles() {
+    return getParameters().myActivatedProfiles;
+  }
+
+  public MavenExplicitProfiles getSelectedProfiles() {
     return getParameters().mySelectedProfiles;
   }
 
-  public boolean setSelectedProfiles(List<String> profiles) {
+  public boolean setSelectedProfiles(MavenExplicitProfiles profiles) {
     getParameters().myMavenProjectTree = null;
     getParameters().mySelectedProfiles = profiles;
 

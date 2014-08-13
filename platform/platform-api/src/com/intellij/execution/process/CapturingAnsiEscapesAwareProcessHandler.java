@@ -44,7 +44,8 @@ public class CapturingAnsiEscapesAwareProcessHandler extends CapturingProcessHan
   private static class AnsiEscapesAwareAdapter extends CapturingProcessAdapter implements AnsiEscapeDecoder.ColoredTextAcceptor {
     private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder() {
       @Override
-      protected Key getCurrentOutputAttributes(Key outputType) {
+      @NotNull
+      protected Key getCurrentOutputAttributes(@NotNull Key outputType) {
         return outputType; //we don't need color information - only stdout and stderr keys are added to output in CapturingProcessAdapter
       }
     };

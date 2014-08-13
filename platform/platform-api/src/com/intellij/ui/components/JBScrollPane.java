@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.ui.components;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +30,6 @@ import javax.swing.plaf.ScrollPaneUI;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.lang.reflect.Method;
 
 public class JBScrollPane extends JScrollPane {
   private int myViewportBorderWidth = -1;
@@ -302,9 +302,7 @@ public class JBScrollPane extends JScrollPane {
       if (ui instanceof BasicScrollBarUI) {
         BasicScrollBarUI bui = (BasicScrollBarUI)ui;
         try {
-          Method m = BasicScrollBarUI.class.getDeclaredMethod("getThumbBounds", ArrayUtil.EMPTY_CLASS_ARRAY);
-          m.setAccessible(true);
-          Rectangle rect = (Rectangle)m.invoke(bui);
+          Rectangle rect = (Rectangle)ReflectionUtil.getDeclaredMethod(BasicScrollBarUI.class, "getThumbBounds", ArrayUtil.EMPTY_CLASS_ARRAY).invoke(bui);
           Point point = SwingUtilities.convertPoint(e.getComponent(), e.getX(), e.getY(), bar);
           return !rect.contains(point);
         }

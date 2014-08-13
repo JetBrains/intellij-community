@@ -27,6 +27,7 @@ package com.intellij.refactoring.introduceField;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.codeInsight.daemon.impl.quickfix.AnonymousTargetClassPreselectionUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.navigation.NavigationUtil;
@@ -129,18 +130,13 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       return !convertExpressionToField(selectedExpr, editor, file, project, tempType);
     }
     else {
-      PsiClass selection = null;
-      for (PsiClass psiClass : classes) {
-        if (!(psiClass instanceof PsiAnonymousClass)) {
-          selection = psiClass;
-          break;
-        }
-      }
+      PsiClass selection = AnonymousTargetClassPreselectionUtil.getPreselection(classes, myParentClass);
       NavigationUtil.getPsiElementPopup(classes.toArray(new PsiClass[classes.size()]), new PsiClassListCellRenderer(),
                                         "Choose class to introduce " + (myIsConstant ? "constant" : "field"),
                                         new PsiElementProcessor<PsiClass>() {
                                           @Override
                                           public boolean execute(@NotNull PsiClass aClass) {
+                                            AnonymousTargetClassPreselectionUtil.rememberSelection(aClass, myParentClass);
                                             myParentClass = aClass;
                                             convertExpressionToField(selectedExpr, editor, file, project, tempType);
                                             return false;

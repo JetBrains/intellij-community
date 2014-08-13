@@ -94,6 +94,6 @@ public class CustomizeKeyboardSchemeStepPanel extends AbstractCustomizeWizardSte
 
   @Override
   public String getHTMLFooter() {
-    return "Keymap scheme can be later changed in " + CommonBundle.settingsTitle() + " | Keymap";
+    return "Keymap scheme can be changed later in " + CommonBundle.settingsTitle() + " | Keymap";
   }
 }

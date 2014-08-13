@@ -97,9 +97,9 @@ public class PsiImplUtil {
     if (referenceElement != null) {
       PsiElement resolved = referenceElement.resolve();
       if (resolved != null) {
-        PsiMethod[] methods = ((PsiClass)resolved).getMethods();
+        PsiMethod[] methods = ((PsiClass)resolved).findMethodsByName(attributeName, false);
         for (PsiMethod method : methods) {
-          if (PsiUtil.isAnnotationMethod(method) && Comparing.equal(method.getName(), attributeName)) {
+          if (PsiUtil.isAnnotationMethod(method)) {
             return ((PsiAnnotationMethod)method).getDefaultValue();
           }
         }
@@ -687,4 +687,33 @@ public class PsiImplUtil {
     return element instanceof LeafElement && tokenSet.contains(((LeafElement)element).getElementType());
   }
 
+  public static PsiType buildTypeFromTypeString(@NotNull final String typeName, @NotNull final PsiElement context, @NotNull final PsiFile psiFile) {
+    PsiType resultType;
+    final PsiManager psiManager = psiFile.getManager();
+
+    if (typeName.indexOf('<') != -1 || typeName.indexOf('[') != -1 || typeName.indexOf('.') == -1) {
+      try {
+        return JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createTypeFromText(typeName, context);
+      } catch(Exception ex) {} // invalid syntax will produce unresolved class type
+    }
+
+    PsiClass aClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(typeName, context.getResolveScope());
+
+    if (aClass == null) {
+      final LightClassReference ref = new LightClassReference(
+        psiManager,
+        PsiNameHelper.getShortClassName(typeName),
+        typeName,
+        PsiSubstitutor.EMPTY,
+        psiFile
+      );
+      resultType = new PsiClassReferenceType(ref, null);
+    } else {
+      PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+      PsiSubstitutor substitutor = factory.createRawSubstitutor(aClass);
+      resultType = factory.createType(aClass, substitutor);
+    }
+
+    return resultType;
+  }
 }

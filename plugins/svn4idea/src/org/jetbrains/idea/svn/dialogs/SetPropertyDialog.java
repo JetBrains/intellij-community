@@ -24,15 +24,16 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.properties.PropertyClient;
-import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.jetbrains.idea.svn.properties.PropertyConsumer;
+import org.jetbrains.idea.svn.properties.PropertyData;
+import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
-import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -154,10 +155,10 @@ public class SetPropertyDialog extends DialogWrapper {
       return;
     }
     File file = myFiles[0];
-    SVNPropertyData property = !StringUtil.isEmpty(name) ? getProperty(file, name) : null;
+    PropertyValue property = !StringUtil.isEmpty(name) ? getProperty(file, name) : null;
 
     if (property != null) {
-      myValueText.setText(SVNPropertyValue.getPropertyAsString(property.getValue()));
+      myValueText.setText(property.toString());
       myValueText.selectAll();
     }
     else {
@@ -165,19 +166,20 @@ public class SetPropertyDialog extends DialogWrapper {
     }
   }
 
-  private SVNPropertyData getProperty(@NotNull File file, @NotNull String name) {
-    SVNPropertyData property;
+  @Nullable
+  private PropertyValue getProperty(@NotNull File file, @NotNull String name) {
+    PropertyValue result;
 
     try {
       PropertyClient client = myVCS.getFactory(file).createPropertyClient();
-      property = client.getProperty(SvnTarget.fromFile(file, SVNRevision.WORKING), name, false, SVNRevision.WORKING);
+      result = client.getProperty(SvnTarget.fromFile(file, SVNRevision.WORKING), name, false, SVNRevision.WORKING);
     }
     catch (VcsException e) {
       LOG.info(e);
-      property = null;
+      result = null;
     }
 
-    return property;
+    return result;
   }
 
   protected JComponent createCenterPanel() {
@@ -205,18 +207,18 @@ public class SetPropertyDialog extends DialogWrapper {
     if (files.length == 1) {
       File file = files[0];
       try {
-        ISVNPropertyHandler handler = new ISVNPropertyHandler() {
-          public void handleProperty(File path, SVNPropertyData property) {
+        PropertyConsumer handler = new PropertyConsumer() {
+          public void handleProperty(File path, PropertyData property) {
             String name = property.getName();
             if (name != null) {
               names.add(name);
             }
           }
 
-          public void handleProperty(SVNURL url, SVNPropertyData property) {
+          public void handleProperty(SVNURL url, PropertyData property) {
           }
 
-          public void handleProperty(long revision, SVNPropertyData property) {
+          public void handleProperty(long revision, PropertyData property) {
           }
         };
 

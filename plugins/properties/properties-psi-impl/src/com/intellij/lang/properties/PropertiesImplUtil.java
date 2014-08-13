@@ -115,21 +115,18 @@ public class PropertiesImplUtil extends PropertiesUtil {
 
   @Nullable
   public static ResourceBundle createByUrl(final @NotNull String url, final @NotNull Project project) {
-    if (!url.startsWith(ResourceBundleImpl.RESOURCE_BUNDLE_PREFIX)) return null;
-
-    final String defaultPropertiesUrl = url.substring(ResourceBundleImpl.RESOURCE_BUNDLE_PREFIX.length());
-    final int idx = defaultPropertiesUrl.lastIndexOf('/');
+    final int idx = url.lastIndexOf('/');
     if (idx == -1) return null;
-    final String baseDirectoryName = defaultPropertiesUrl.substring(0, idx);
-    final String baseName = defaultPropertiesUrl.substring(idx + 1);
+    final String baseDirectoryName = url.substring(0, idx);
+    final String baseName = url.substring(idx + 1);
     final VirtualFile baseDirectoryVirtualFile = VirtualFileManager.getInstance().findFileByUrl(baseDirectoryName);
     if (baseDirectoryVirtualFile == null) {
       return null;
     }
-    final PsiFile baseDirectory = PsiManager.getInstance(project).findFile(baseDirectoryVirtualFile);
-    if (baseDirectory == null || !(baseDirectory instanceof PsiDirectory)) {
+    final PsiDirectory baseDirectory = PsiManager.getInstance(project).findDirectory(baseDirectoryVirtualFile);
+    if (baseDirectory == null) {
       return null;
     }
-    return getResourceBundle(baseName, (PsiDirectory)baseDirectory);
+    return getResourceBundle(baseName, baseDirectory);
   }
 }

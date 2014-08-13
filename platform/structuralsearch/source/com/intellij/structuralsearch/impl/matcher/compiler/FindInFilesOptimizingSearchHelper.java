@@ -3,7 +3,6 @@ package com.intellij.structuralsearch.impl.matcher.compiler;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.refactoring.NamesValidator;
-import com.intellij.lexer.Lexer;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
@@ -22,7 +21,6 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
   private PsiSearchHelper helper;
   private THashMap<PsiFile,PsiFile> filesToScan;
   private THashMap<PsiFile,PsiFile> filesToScan2;
-  private Lexer javaLexer;
 
   private final boolean findMatchingFiles;
 

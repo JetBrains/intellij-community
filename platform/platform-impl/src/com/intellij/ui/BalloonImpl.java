@@ -200,8 +200,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     if (cmp == myCloseRec) return true;
     if (UIUtil.isDescendingFrom(cmp, myComp)) return true;
     if (myComp == null || !myComp.isShowing()) return false;
-    Rectangle rectangleOnScreen = new Rectangle(myComp.getLocationOnScreen(), myComp.getSize());
-    return rectangleOnScreen.contains(target.getScreenPoint());
+    return myComp.contains(target.getScreenPoint().x, target.getScreenPoint().y);
   }
 
   public boolean isMovingForward(RelativePoint target) {
@@ -332,7 +331,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     Integer result = JLayeredPane.DEFAULT_LAYER;
     switch (myLayer) {
       case normal:
-        result = JLayeredPane.DEFAULT_LAYER;
+        result = JLayeredPane.POPUP_LAYER;
         break;
       case top:
         result = JLayeredPane.DRAG_LAYER;
@@ -614,7 +613,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     myComp.setBorder(new EmptyBorder(borderSize, borderSize, borderSize, borderSize));
 
     myLayeredPane.add(myComp);
-    myLayeredPane.setLayer(myComp, getLayer());
+    myLayeredPane.setLayer(myComp, getLayer(), 0); // the second balloon must be over the first one
     myPosition.updateBounds(this);
     if (myBlockClicks) {
       myComp.addMouseListener(new MouseAdapter() {

@@ -30,7 +30,7 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.dialogs.SetPropertyDialog;
 import org.jetbrains.idea.svn.properties.PropertyClient;
-import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.jetbrains.idea.svn.properties.PropertyValue;
 
 import java.io.File;
 
@@ -79,7 +79,7 @@ public class SetPropertyAction extends BasicAction {
 
         // TODO: most likely SVNDepth.getInfinityOrEmptyDepth should be used instead of SVNDepth.fromRecursive - to have either "infinity"
         // TODO: or "empty" depth, and not "infinity" or "files" depth. But previous logic used SVNDepth.fromRecursive implicitly
-        client.setProperty(ioFile, name, SVNPropertyValue.create(value), Depth.allOrFiles(recursive), false);
+        client.setProperty(ioFile, name, PropertyValue.create(value), Depth.allOrFiles(recursive), false);
       }
       for(int i = 0; i < file.length; i++) {
         if (recursive && file[i].isDirectory()) {

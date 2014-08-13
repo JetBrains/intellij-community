@@ -16,6 +16,7 @@
 package com.intellij.openapi.diff;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -56,6 +57,14 @@ public abstract class DiffRequestFactory {
   public abstract MergeRequest create3WayDiffRequest(String leftText,
                                                      String rightText,
                                                      String originalContent,
+                                                     Project project,
+                                                     @Nullable ActionButtonPresentation okButtonPresentation,
+                                                     @Nullable ActionButtonPresentation cancelButtonPresentation);
+
+  public abstract MergeRequest create3WayDiffRequest(String leftText,
+                                                     String rightText,
+                                                     String originalContent,
+                                                     @Nullable FileType type,
                                                      Project project,
                                                      @Nullable ActionButtonPresentation okButtonPresentation,
                                                      @Nullable ActionButtonPresentation cancelButtonPresentation);

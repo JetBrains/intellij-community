@@ -135,18 +135,18 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
         final MessageBusConnection connect = project.getMessageBus().connect(project);
         connect.subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionAdapter(){
           @Override
-          public void processStartScheduled(String executorId, ExecutionEnvironment env) {
-            myInProgress.add(createExecutionId(executorId, env, project));
+          public void processStartScheduled(String executorId, ExecutionEnvironment environment) {
+            myInProgress.add(createExecutionId(executorId, environment));
           }
 
           @Override
-          public void processNotStarted(String executorId, @NotNull ExecutionEnvironment env) {
-            myInProgress.remove(createExecutionId(executorId, env, project));
+          public void processNotStarted(String executorId, @NotNull ExecutionEnvironment environment) {
+            myInProgress.remove(createExecutionId(executorId, environment));
           }
 
           @Override
-          public void processStarted(String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler) {
-            myInProgress.remove(createExecutionId(executorId, env, project));
+          public void processStarted(String executorId, @NotNull ExecutionEnvironment environment, @NotNull ProcessHandler handler) {
+            myInProgress.remove(createExecutionId(executorId, environment));
           }
         });
       }
@@ -172,13 +172,19 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
     }
   }
 
-  private static Trinity<Project, String, String> createExecutionId(String executorId, ExecutionEnvironment env, Project project) {
-    return new Trinity<Project, String, String>(project, executorId, env.getRunnerId());
+  @NotNull
+  private static Trinity<Project, String, String> createExecutionId(String executorId, @NotNull ExecutionEnvironment environment) {
+    return Trinity.create(environment.getProject(), executorId, environment.getRunnerId());
   }
 
   @Override
   public boolean isStarting(Project project, final String executorId, final String runnerId) {
-    return myInProgress.contains(new Trinity<Project, String, String>(project, executorId, runnerId));
+    return myInProgress.contains(Trinity.create(project, executorId, runnerId));
+  }
+
+  @Override
+  public boolean isStarting(@NotNull ExecutionEnvironment environment) {
+    return isStarting(environment.getProject(), environment.getExecutor().getId(), environment.getRunnerId());
   }
 
   @Override
@@ -206,7 +212,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
     @Override
     public void update(final AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
-      final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+      final Project project = e.getProject();
 
       if (project == null || !project.isInitialized() || project.isDisposed() || DumbService.getInstance(project).isDumb()) {
         presentation.setEnabled(false);
@@ -222,7 +228,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
 
         ExecutionTarget target = ExecutionTargetManager.getActiveTarget(project);
         enabled = ExecutionTargetManager.canRun(selectedConfiguration, target)
-                  &&  runner != null && !isStarting(project, myExecutor.getId(), runner.getRunnerId());
+                  && runner != null && !isStarting(project, myExecutor.getId(), runner.getRunnerId());
 
         if (enabled) {
           presentation.setDescription(myExecutor.getDescription());
@@ -261,8 +267,8 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
         return;
       }
 
-      builder.setDataContext(dataContext).setTarget(target).setRunnerAndSettings(runner, configuration);
-      ExecutionManager.getInstance(project).restartRunProfile(runner, builder.build(), null);
+      builder.dataContext(dataContext).target(target).runnerAndSettings(runner, configuration);
+      ExecutionManager.getInstance(project).restartRunProfile(builder.build());
     }
   }
 }

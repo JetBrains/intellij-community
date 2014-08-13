@@ -64,10 +64,13 @@ public class HgLogProvider implements VcsLogProvider {
     return HgHistoryUtil.loadMetadata(myProject, root, requirements.getCommitCount(), Collections.<String>emptyList());
   }
 
-  @NotNull
   @Override
-  public List<TimedVcsCommit> readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<VcsUser> userRegistry) throws VcsException {
-    return HgHistoryUtil.readAllHashes(myProject, root, userRegistry, Collections.<String>emptyList());
+  public void readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<VcsUser> userRegistry,
+                            @NotNull Consumer<TimedVcsCommit> commitConsumer) throws VcsException {
+    List<TimedVcsCommit> commits = HgHistoryUtil.readAllHashes(myProject, root, userRegistry, Collections.<String>emptyList());
+    for (TimedVcsCommit commit : commits) {
+      commitConsumer.consume(commit);
+    }
   }
 
   @NotNull
@@ -177,11 +180,11 @@ public class HgLogProvider implements VcsLogProvider {
       boolean atLeastOneBranchExists = false;
       for (String branchName : filterCollection.getBranchFilter().getBranchNames()) {
         if (branchName.equals(TIP_REFERENCE) || branchExists(repository, branchName)) {
-          filterParameters.add(prepareParameter("branch", branchName));
+          filterParameters.add(HgHistoryUtil.prepareParameter("branch", branchName));
           atLeastOneBranchExists = true;
         }
         else if (branchName.equals(HEAD_REFERENCE)) {
-          filterParameters.add(prepareParameter("branch", "."));
+          filterParameters.add(HgHistoryUtil.prepareParameter("branch", "."));
           filterParameters.add("-r");
           filterParameters.add("::."); //all ancestors for current revision;
           atLeastOneBranchExists = true;
@@ -194,7 +197,7 @@ public class HgLogProvider implements VcsLogProvider {
 
     if (filterCollection.getUserFilter() != null) {
       for (String authorName : filterCollection.getUserFilter().getUserNames(root)) {
-        filterParameters.add(prepareParameter("user", authorName));
+        filterParameters.add(HgHistoryUtil.prepareParameter("user", authorName));
       }
     }
 
@@ -220,7 +223,7 @@ public class HgLogProvider implements VcsLogProvider {
 
     if (filterCollection.getTextFilter() != null) {
       String textFilter = filterCollection.getTextFilter().getText();
-      filterParameters.add(prepareParameter("keyword", textFilter));
+      filterParameters.add(HgHistoryUtil.prepareParameter("keyword", textFilter));
     }
 
     if (filterCollection.getStructureFilter() != null) {
@@ -257,10 +260,6 @@ public class HgLogProvider implements VcsLogProvider {
   @Override
   public Collection<String> getContainingBranches(@NotNull VirtualFile root, @NotNull Hash commitHash) throws VcsException {
     return HgHistoryUtil.getDescendingHeadsOfBranches(myProject, root, commitHash);
-  }
-
-  private static String prepareParameter(String paramName, String value) {
-    return "--" + paramName + "=" + value; // no value escaping needed, because the parameter itself will be quoted by GeneralCommandLine
   }
 
   private static boolean branchExists(@NotNull HgRepository repository, @NotNull String branchName) {

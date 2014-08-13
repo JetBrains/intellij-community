@@ -69,6 +69,12 @@ class TeamcityDocTestResult(TeamcityTestResult):
     self.messages.testError(self.getTestName(test),
       message='Error', details=err)
 
+  def stopTest(self, test):
+    start = getattr(test, "startTime", datetime.datetime.now())
+    d = datetime.datetime.now() - start
+    duration=d.microseconds / 1000 + d.seconds * 1000 + d.days * 86400000
+    self.messages.testFinished(self.getTestName(test), duration=int(duration))
+
 class DocTestRunner(doctest.DocTestRunner):
   """
   Special runner for doctests,

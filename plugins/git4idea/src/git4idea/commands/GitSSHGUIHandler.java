@@ -16,7 +16,6 @@
 package git4idea.commands;
 
 import com.intellij.ide.passwordSafe.ui.PasswordSafePromptDialog;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -39,17 +38,9 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class GitSSHGUIHandler {
   @Nullable private final Project myProject;
-  @Nullable private final ModalityState myState;
 
-  /**
-   * A constructor
-   *
-   * @param project a project to use
-   * @param state   modality state using which any prompts initiated by the git process should be shown in the UI.
-   */
-  GitSSHGUIHandler(@Nullable Project project, @Nullable ModalityState state) {
+  GitSSHGUIHandler(@Nullable Project project) {
     myProject = project;
-    myState = state;
   }
 
   public boolean verifyServerHostKey(final String hostname,
@@ -76,7 +67,7 @@ public class GitSSHGUIHandler {
   @Nullable
   public String askPassphrase(final String username, final String keyPath, boolean resetPassword, final String lastError) {
     String error = processLastError(resetPassword, lastError);
-    return PasswordSafePromptDialog.askPassphrase(myProject, myState, GitBundle.getString("ssh.ask.passphrase.title"),
+    return PasswordSafePromptDialog.askPassphrase(myProject, GitBundle.getString("ssh.ask.passphrase.title"),
                                                   GitBundle.message("ssh.askPassphrase.message", keyPath, username),
                                                   GitSSHGUIHandler.class, "PASSPHRASE:" + keyPath, resetPassword, error
     );
@@ -165,7 +156,7 @@ public class GitSSHGUIHandler {
   @Nullable
   public String askPassword(final String username, boolean resetPassword, final String lastError) {
     String error = processLastError(resetPassword, lastError);
-    return PasswordSafePromptDialog.askPassword(myProject, myState, GitBundle.getString("ssh.password.title"),
+    return PasswordSafePromptDialog.askPassword(myProject, GitBundle.getString("ssh.password.title"),
                                                 GitBundle.message("ssh.password.message", username),
                                                 GitSSHGUIHandler.class, "PASSWORD:" + username, resetPassword, error);
   }

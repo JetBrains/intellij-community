@@ -172,7 +172,7 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
 
   @Override
   public int showSmartOperationDialog(@NotNull Project project, @NotNull List<Change> changes, @NotNull Collection<String> paths,
-                                      @NotNull String operation, boolean isForcePossible) {
+                                      @NotNull String operation, @Nullable String forceButtonTitle) {
     JComponent fileBrowser;
     if (!changes.isEmpty()) {
       fileBrowser = new ChangesBrowserWithRollback(project, changes);
@@ -180,7 +180,7 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
     else {
       fileBrowser = new GitSimplePathsBrowser(project, paths);
     }
-    return GitSmartOperationDialog.showAndGetAnswer(myProject, fileBrowser, operation, isForcePossible);
+    return GitSmartOperationDialog.showAndGetAnswer(myProject, fileBrowser, operation, forceButtonTitle);
   }
 
   @Override

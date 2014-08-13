@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
     return isNullable(owner, false) || isNotNull(owner, false);
   }
 
-  private static void addAllIfNotPresent(Collection<String> collection, String... annotations) {
+  private static void addAllIfNotPresent(@NotNull Collection<String> collection, @NotNull String... annotations) {
     for (String annotation : annotations) {
       LOG.assertTrue(annotation != null);
       if (!collection.contains(annotation)) {
@@ -79,30 +79,31 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
     }
   }
 
-  public void setNotNulls(String... annotations) {
+  public void setNotNulls(@NotNull String... annotations) {
     myNotNulls.clear();
     addAllIfNotPresent(myNotNulls, DEFAULT_NOT_NULLS);
     addAllIfNotPresent(myNotNulls, annotations);
   }
 
-  public void setNullables(String... annotations) {
+  public void setNullables(@NotNull String... annotations) {
     myNullables.clear();
     addAllIfNotPresent(myNullables, DEFAULT_NULLABLES);
     addAllIfNotPresent(myNullables, annotations);
   }
 
+  @NotNull
   public String getDefaultNullable() {
     return myDefaultNullable;
   }
   
   @Nullable
-  public String getNullable(PsiModifierListOwner owner) {
+  public String getNullable(@NotNull PsiModifierListOwner owner) {
     PsiAnnotation annotation = getNullableAnnotation(owner, false);
     return annotation == null ? null : annotation.getQualifiedName();
   }
 
   @Nullable
-  public PsiAnnotation getNullableAnnotation(PsiModifierListOwner owner, boolean checkBases) {
+  public PsiAnnotation getNullableAnnotation(@NotNull PsiModifierListOwner owner, boolean checkBases) {
     return findNullabilityAnnotation(owner, checkBases, true);
   }
 
@@ -116,17 +117,18 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
     myDefaultNullable = defaultNullable;
   }
 
+  @NotNull
   public String getDefaultNotNull() {
     return myDefaultNotNull;
   }
   
   @Nullable
-  public PsiAnnotation getNotNullAnnotation(PsiModifierListOwner owner, boolean checkBases) {
+  public PsiAnnotation getNotNullAnnotation(@NotNull PsiModifierListOwner owner, boolean checkBases) {
     return findNullabilityAnnotation(owner, checkBases, false);
   }
 
   @Nullable
-  public String getNotNull(PsiModifierListOwner owner) {
+  public String getNotNull(@NotNull PsiModifierListOwner owner) {
     PsiAnnotation annotation = getNotNullAnnotation(owner, false);
     return annotation == null ? null : annotation.getQualifiedName();
   }
@@ -226,10 +228,12 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
     return required.isEmpty() || ContainerUtil.intersects(required, Arrays.asList(placeTargetTypes));
   }
 
+  @NotNull
   public List<String> getNullables() {
     return myNullables;
   }
 
+  @NotNull
   public List<String> getNotNulls() {
     return myNotNulls;
   }

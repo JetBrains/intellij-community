@@ -162,11 +162,14 @@ public layoutCommunity(String classesPath, Set usedJars) {
   ant.echo(message: "PC-${buildNumber}", file: "${paths.distAll}/build.txt")
 
   def launcher = "${paths.distWin}/bin/pycharm.exe"
+  def launcher64 = "${paths.distWin}/bin/pycharm64.exe"
   List resourcePaths = ["$ch/community-resources/src",
     "$ch/platform/icons/src",
     "$pythonCommunityHome/resources"]
   buildWinLauncher("$ch", "$ch/bin/WinLauncher/WinLauncher.exe", launcher,
                    appInfo, "$pythonCommunityHome/build/pycharm_community_launcher.properties", system_selector, resourcePaths)
+  buildWinLauncher("$ch", "$ch/bin/WinLauncher/WinLauncher64.exe", launcher64,
+                   appInfo, "$pythonCommunityHome/build/pycharm64_community_launcher.properties", system_selector, resourcePaths)
 
   buildWinZip("${paths.artifacts}/pycharmPC-${buildNumber}.zip", [paths.distAll, paths.distWin])
 
@@ -328,8 +331,7 @@ private layoutWin(Map args, String target) {
   }
 
   winScripts(target, ch, "pycharm.bat", args)
-  winVMOptions(target, null, "pycharm.exe")
-
+  winVMOptions(target, null, "pycharm.exe", "pycharm64.exe")
   ant.copy(file: "$home/python/help/pycharmhelp.jar", todir: "$target/help", failonerror: false)
 }
 

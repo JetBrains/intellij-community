@@ -2943,4 +2943,35 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String pattern3 = "'_a::'_b";
     assertEquals("should find all method references", 3, findMatchesCount(source, pattern3));
   }
+
+  public void testNoUnexpectedException() {
+    String source = "{}";
+
+    String pattern1 = "/*$A$a*/";
+    MalformedPatternException ex = null;
+    try {
+      findMatchesCount(source, pattern1);
+    } catch (MalformedPatternException e) {
+      ex = e;
+    }
+    assertNotNull(ex);
+
+    String pattern2 = "class $A$Visitor {}";
+    try {
+      findMatchesCount(source, pattern2);
+    } catch (MalformedPatternException e) {
+      ex = e;
+    }
+    assertNotNull(ex);
+
+    String pattern3 = "class $Class$ { \n" +
+                      "  class $n$$FieldType$ $FieldName$ = $Init$;\n" +
+                      "}";
+    try {
+      findMatchesCount(source, pattern3);
+    } catch (MalformedPatternException e) {
+      ex = e;
+    }
+    assertNotNull(ex);
+  }
 }

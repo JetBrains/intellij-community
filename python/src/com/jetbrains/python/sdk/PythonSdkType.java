@@ -910,6 +910,16 @@ public class PythonSdkType extends SdkType {
     return null;
   }
 
+  @Nullable
+  public static Sdk findPython2Sdk(List<Sdk> sdks) {
+    Collections.sort(sdks, PreferredSdkComparator.INSTANCE);
+    for (Sdk sdk : sdks) {
+      if (!getLanguageLevelForSdk(sdk).isPy3K()) {
+        return sdk;
+      }
+    }
+    return null;
+  }
 
   @Nullable
   public static Sdk findLocalCPython(@Nullable Module module) {
@@ -997,7 +1007,7 @@ public class PythonSdkType extends SdkType {
   public static boolean isIncompleteRemote(Sdk sdk) {
     if (PySdkUtil.isRemote(sdk)) {
       //noinspection ConstantConditions
-      if (!((PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData()).isInitialized()) {
+      if (!((PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData()).isValid()) {
         return true;
       }
     }

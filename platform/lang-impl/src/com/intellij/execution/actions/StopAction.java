@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.execution.actions;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.KillableProcess;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunContentManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -29,7 +29,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListItemDescriptor;
+import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
@@ -49,19 +49,20 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
+class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
   @Override
   public void update(final AnActionEvent e) {
     boolean enable = false;
     Icon icon = getTemplatePresentation().getIcon();
     String description = getTemplatePresentation().getDescription();
-    final Presentation presentation = e.getPresentation();
-
+    Presentation presentation = e.getPresentation();
     if (ActionPlaces.MAIN_MENU.equals(e.getPlace())) {
       enable = !getCancellableProcesses(e.getProject()).isEmpty() || !getActiveDescriptors(e.getDataContext()).isEmpty();
+      presentation.setText(getTemplatePresentation().getText());
     }
     else {
-      final ProcessHandler processHandler = getHandler(e.getDataContext());
+      RunContentDescriptor contentDescriptor = e.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR);
+      ProcessHandler processHandler = contentDescriptor == null ? null : contentDescriptor.getProcessHandler();
       if (processHandler != null && !processHandler.isProcessTerminated()) {
         if (!processHandler.isProcessTerminating()) {
           enable = true;
@@ -71,6 +72,14 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
           icon = AllIcons.Debugger.KillProcess;
           description = "Kill process";
         }
+      }
+
+      RunProfile runProfile = e.getData(LangDataKeys.RUN_PROFILE);
+      if (runProfile == null && contentDescriptor == null) {
+        presentation.setText(getTemplatePresentation().getText());
+      }
+      else {
+        presentation.setText(ExecutionBundle.message("stop.configuration.action.name", runProfile == null ? contentDescriptor.getDisplayName() : runProfile.getName()));
       }
     }
 
@@ -84,7 +93,8 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
     final DataContext dataContext = e.getDataContext();
     ProcessHandler activeProcessHandler = getHandler(dataContext);
 
-    List<Pair<TaskInfo, ProgressIndicator>> backgroundTasks = getCancellableProcesses(e.getProject());
+    Project project = e.getProject();
+    List<Pair<TaskInfo, ProgressIndicator>> backgroundTasks = getCancellableProcesses(project);
     if (ActionPlaces.MAIN_MENU.equals(e.getPlace())) {
       if (activeProcessHandler != null && !activeProcessHandler.isProcessTerminating() && !activeProcessHandler.isProcessTerminated()
           && backgroundTasks.isEmpty()) {
@@ -94,22 +104,18 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
 
       Pair<List<HandlerItem>, HandlerItem>
         handlerItems = getItemsList(backgroundTasks, getActiveDescriptors(dataContext), activeProcessHandler);
-      if (handlerItems.first.isEmpty()) return;
+      if (handlerItems == null || handlerItems.first.isEmpty()) {
+        return;
+      }
 
       final JBList list = new JBList(handlerItems.first);
       if (handlerItems.second != null) list.setSelectedValue(handlerItems.second, true);
 
-      list.setCellRenderer(new GroupedItemsListRenderer(new ListItemDescriptor() {
+      list.setCellRenderer(new GroupedItemsListRenderer(new ListItemDescriptorAdapter() {
         @Nullable
         @Override
         public String getTextFor(Object value) {
           return value instanceof HandlerItem ? ((HandlerItem)value).displayName : null;
-        }
-
-        @Nullable
-        @Override
-        public String getTooltipFor(Object value) {
-          return null;
         }
 
         @Nullable
@@ -121,12 +127,6 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
         @Override
         public boolean hasSeparatorAboveOf(Object value) {
           return value instanceof HandlerItem && ((HandlerItem)value).hasSeparator;
-        }
-
-        @Nullable
-        @Override
-        public String getCaptionAboveOf(Object value) {
-          return null;
         }
       }));
 
@@ -148,7 +148,8 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
           }
         }).setRequestFocus(true).createPopup();
 
-      popup.showCenteredInCurrentWindow(e.getProject());
+      assert project != null;
+      popup.showCenteredInCurrentWindow(project);
     }
     else {
       if (activeProcessHandler != null) {
@@ -171,12 +172,15 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
                                  });
   }
 
+  @Nullable
   private static Pair<List<HandlerItem>, HandlerItem> getItemsList(List<Pair<TaskInfo, ProgressIndicator>> tasks,
                                                                    List<RunContentDescriptor> descriptors,
                                                                    ProcessHandler activeProcessHandler) {
-    if (tasks.isEmpty() && descriptors.isEmpty()) return Pair.create(Collections.<HandlerItem>emptyList(), null);
+    if (tasks.isEmpty() && descriptors.isEmpty()) {
+      return null;
+    }
 
-    ArrayList<HandlerItem> items = new ArrayList<HandlerItem>(tasks.size() + descriptors.size());
+    List<HandlerItem> items = new ArrayList<HandlerItem>(tasks.size() + descriptors.size());
     HandlerItem selected = null;
     for (RunContentDescriptor descriptor : descriptors) {
       final ProcessHandler handler = descriptor.getProcessHandler();
@@ -188,7 +192,9 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
           }
         };
         items.add(item);
-        if (handler == activeProcessHandler) selected = item;
+        if (handler == activeProcessHandler) {
+          selected = item;
+        }
       }
     }
 
@@ -202,7 +208,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
       });
       hasSeparator = false;
     }
-    return Pair.<List<HandlerItem>, HandlerItem>create(items, selected);
+    return Pair.create(items, selected);
   }
 
   private static void stopProcess(ProcessHandler processHandler) {
@@ -220,21 +226,19 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
   }
 
   @Nullable
-  static ProcessHandler getHandler(final DataContext dataContext) {
-    final RunContentDescriptor contentDescriptor = RunContentManager.RUN_CONTENT_DESCRIPTOR.getData(dataContext);
-    final ProcessHandler processHandler;
+  static ProcessHandler getHandler(@NotNull DataContext dataContext) {
+    final RunContentDescriptor contentDescriptor = LangDataKeys.RUN_CONTENT_DESCRIPTOR.getData(dataContext);
     if (contentDescriptor != null) {
       // toolwindow case
-      processHandler = contentDescriptor.getProcessHandler();
+      return contentDescriptor.getProcessHandler();
     }
     else {
       // main menu toolbar
       final Project project = CommonDataKeys.PROJECT.getData(dataContext);
       final RunContentDescriptor selectedContent =
         project == null ? null : ExecutionManager.getInstance(project).getContentManager().getSelectedContent();
-      processHandler = selectedContent == null ? null : selectedContent.getProcessHandler();
+      return selectedContent == null ? null : selectedContent.getProcessHandler();
     }
-    return processHandler;
   }
 
   @NotNull

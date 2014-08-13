@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ public abstract class AbstractExternalSystemToolWindowFactory implements ToolWin
   }
 
   @Override
-  public void createToolWindowContent(final Project project, final ToolWindow toolWindow) {
+  public void createToolWindowContent(@NotNull final Project project, @NotNull final ToolWindow toolWindow) {
     toolWindow.setTitle(myExternalSystemId.getReadableName());
     ContentManager contentManager = toolWindow.getContentManager();
     String tasksTitle = ExternalSystemBundle.message("tool.window.title.tasks");

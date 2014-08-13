@@ -41,10 +41,6 @@ public class CompileContext {
     return searchHelper;
   }
 
-  void setSearchHelper(OptimizingSearchHelper searchHelper) {
-    this.searchHelper = searchHelper;
-  }
-
   public CompiledPattern getPattern() {
     return pattern;
   }

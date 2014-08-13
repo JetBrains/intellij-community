@@ -124,7 +124,7 @@ public class GithubShareAction extends DumbAwareAction {
       externalRemoteDetected = !gitRepository.getRemotes().isEmpty();
     }
 
-    final GithubAuthDataHolder authHolder = GithubAuthDataHolder.createFromSettings(null);
+    final GithubAuthDataHolder authHolder = GithubAuthDataHolder.createFromSettings();
 
     // get available GitHub repos with modal progress
     final GithubInfo githubInfo = loadGithubInfoWithModal(authHolder, project);
@@ -354,7 +354,7 @@ public class GithubShareAction extends DumbAwareAction {
     return ContainerUtil.filter(files, new Condition<VirtualFile>() {
       @Override
       public boolean value(VirtualFile file) {
-        return !changeListManager.isIgnoredFile(file) && !vcsManager.isIgnoredByVcs(file);
+        return !changeListManager.isIgnoredFile(file) && !vcsManager.isIgnored(file);
       }
     });
   }

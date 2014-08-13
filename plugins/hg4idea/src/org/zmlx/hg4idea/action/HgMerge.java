@@ -33,7 +33,7 @@ import org.zmlx.hg4idea.ui.HgMergeDialog;
 
 import java.util.Collection;
 
-public class HgMerge extends HgAbstractGlobalAction {
+public class HgMerge extends HgAbstractGlobalSingleRepoAction {
 
   @Override
   public void execute(@NotNull final Project project,

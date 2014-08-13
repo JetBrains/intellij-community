@@ -53,6 +53,7 @@ public class ImportFromExistingAction implements QuestionAction {
   String myName;
   boolean myUseQualifiedImport;
   private Runnable myOnDoneCallback;
+  private final boolean myImportLocally;
 
   /**
    * @param target element to become qualified as imported.
@@ -60,12 +61,13 @@ public class ImportFromExistingAction implements QuestionAction {
    * @param name relevant name ot the target element (e.g. of identifier in an expression).
    * @param useQualified if True, use qualified "import modulename" instead of "from modulename import ...".
    */
-  public ImportFromExistingAction(@NotNull PyElement target, @NotNull List<ImportCandidateHolder> sources, String name,
-                                  boolean useQualified) {
+  public ImportFromExistingAction(@NotNull PyElement target, @NotNull List<ImportCandidateHolder> sources, @NotNull String name,
+                                  boolean useQualified, boolean importLocally) {
     myTarget = target;
     mySources = sources;
     myName = name;
     myUseQualifiedImport = useQualified;
+    myImportLocally = importLocally;
   }
 
   public void onDone(Runnable callback) {
@@ -151,24 +153,40 @@ public class ImportFromExistingAction implements QuestionAction {
     if (manager.isInjectedFragment(file)) {
       file = manager.getTopLevelFile(myTarget);
     }
+    // We are trying to import top-level module or package which thus cannot be qualified
     if (isRoot(item.getFile())) {
-      AddImportHelper.addImportStatement(file, myName, null, priority);
+      if (myImportLocally) {
+        AddImportHelper.addLocalImportStatement(myTarget, myName);
+      } else {
+        AddImportHelper.addImportStatement(file, myName, null, priority);
+      }
     }
     else {
-      String qualifiedName = item.getPath().toString();
+      final String qualifiedName = item.getPath().toString();
       if (myUseQualifiedImport) {
         String nameToImport = qualifiedName;
         if (item.getImportable() instanceof PsiFileSystemItem) {
           nameToImport += "." + myName;
         }
-        AddImportHelper.addImportStatement(file, nameToImport, null, priority);
+        if (myImportLocally) {
+          AddImportHelper.addLocalImportStatement(myTarget, nameToImport);
+        }
+        else {
+          AddImportHelper.addImportStatement(file, nameToImport, null, priority);
+        }
         myTarget.replace(gen.createExpressionFromText(LanguageLevel.forElement(myTarget), qualifiedName + "." + myName));
       }
       else {
-        AddImportHelper.addImportFrom(file, myTarget, qualifiedName, myName, null, priority);
+        if (myImportLocally) {
+          AddImportHelper.addLocalFromImportStatement(myTarget, qualifiedName, myName);
+        }
+        else {
+          AddImportHelper.addImportFromStatement(file, qualifiedName, myName, null, priority);
+        }
       }
     }
   }
+
 
   private void addToExistingImport(PyImportElement src) {
     final PyElementGenerator gen = PyElementGenerator.getInstance(myTarget.getProject());

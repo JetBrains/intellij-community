@@ -206,7 +206,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
     myErrorPanelPlace.add(myValidationManager.getMainErrorPanel(), BorderLayout.CENTER);
 
-    JBSplitter splitter = new JBSplitter(false);
+    final JBSplitter splitter = Registry.is("ide.new.project.settings") ? new OnePixelSplitter(false) : new JBSplitter(false);
     final JPanel leftPanel = new JPanel(new BorderLayout());
     JPanel treePanel = myLayoutTreeComponent.getTreePanel();
     if (UIUtil.isUnderDarcula()) {
@@ -262,7 +262,6 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     }
     splitter.setSecondComponent(rightPanel);
     if (Registry.is("ide.new.project.settings")) {
-      splitter.setOnePixelMode();
       splitter.getDivider().setBackground(UIUtil.getPanelBackground());
       treePanel.setBorder(new EmptyBorder(0, 0, 0, 0));
       rightPanel.setBorder(new EmptyBorder(0, 0, 0, 0));

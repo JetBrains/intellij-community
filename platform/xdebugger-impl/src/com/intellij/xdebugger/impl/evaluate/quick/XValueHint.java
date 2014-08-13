@@ -104,6 +104,7 @@ public class XValueHint extends AbstractValueHint {
       public void evaluated(@NotNull final XValue result) {
         result.computePresentation(new XValueNodePresentationConfigurator.ConfigurableXValueNodeImpl() {
           private XFullValueEvaluator myFullValueEvaluator;
+          private boolean myShown = false;
 
           @Override
           public void applyPresentation(@Nullable Icon icon,
@@ -131,7 +132,7 @@ public class XValueHint extends AbstractValueHint {
               }
               showHint(component);
             }
-            else if (getType() == ValueHintType.MOUSE_CLICK_HINT) {
+            else if (getType() == ValueHintType.MOUSE_CLICK_HINT && !myShown) {
               showTree(result);
             }
             else {
@@ -143,6 +144,7 @@ public class XValueHint extends AbstractValueHint {
               });
               showHint(component);
             }
+            myShown = true;
           }
 
           @Override

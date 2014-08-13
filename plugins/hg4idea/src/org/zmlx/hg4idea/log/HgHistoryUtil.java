@@ -94,25 +94,35 @@ public class HgHistoryUtil {
   }
 
   /**
-   * <p>Get & parse hg log detailed output with commits, their parents and their changes.</p>
+   * <p>Get & parse hg log detailed output with commits, their parents and their changes.
+   * For null destination return log command result</p>
    * <p/>
    * <p>Warning: this is method is efficient by speed, but don't query too much, because the whole log output is retrieved at once,
    * and it can occupy too much memory. The estimate is ~600Kb for 1000 commits.</p>
    */
   @NotNull
-  public static List<? extends VcsFullCommitDetails> history(@NotNull final Project project, @NotNull final VirtualFile root, int limit,
+  public static List<? extends VcsFullCommitDetails> history(@NotNull final Project project,
+                                                             @NotNull final VirtualFile root,
+                                                             int limit,
                                                              @NotNull List<String> parameters) throws VcsException {
-    final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
-    if (factory == null) {
-      return Collections.emptyList();
-    }
     HgVcs hgvcs = HgVcs.getInstance(project);
     assert hgvcs != null;
     final HgVersion version = hgvcs.getVersion();
     String[] templates = HgBaseLogParser.constructFullTemplateArgument(true, version);
     HgCommandResult result = getLogResult(project, root, version, limit, parameters, HgChangesetUtil.makeTemplate(templates));
+    return createFullCommitsFromResult(project, root, result, version, false);
+  }
+
+  public static List<? extends VcsFullCommitDetails> createFullCommitsFromResult(@NotNull Project project,
+                                                                                 @NotNull VirtualFile root,
+                                                                                 @Nullable HgCommandResult result,
+                                                                                 @NotNull HgVersion version, boolean silent) {
+    final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
+    if (factory == null) {
+      return Collections.emptyList();
+    }
     List<HgFileRevision> hgRevisions =
-      getCommitRecords(project, result, new HgFileRevisionLogParser(project, getOriginalHgFile(project, root), version));
+      getCommitRecords(project, result, new HgFileRevisionLogParser(project, getOriginalHgFile(project, root), version), silent);
     List<VcsFullCommitDetails> vcsFullCommitDetailsList = new ArrayList<VcsFullCommitDetails>();
     for (HgFileRevision revision : hgRevisions) {
 
@@ -184,6 +194,13 @@ public class HgHistoryUtil {
   public static <CommitInfo> List<CommitInfo> getCommitRecords(@NotNull Project project,
                                                                @Nullable HgCommandResult result,
                                                                @NotNull Function<String, CommitInfo> converter) {
+    return getCommitRecords(project, result, converter, false);
+  }
+
+  @NotNull
+  public static <CommitInfo> List<CommitInfo> getCommitRecords(@NotNull Project project,
+                                                               @Nullable HgCommandResult result,
+                                                               @NotNull Function<String, CommitInfo> converter, boolean silent) {
     final List<CommitInfo> revisions = new LinkedList<CommitInfo>();
     if (result == null) {
       return revisions;
@@ -192,7 +209,12 @@ public class HgHistoryUtil {
     List<String> errors = result.getErrorLines();
     if (errors != null && !errors.isEmpty()) {
       if (result.getExitValue() != 0) {
-        VcsNotifier.getInstance(project).notifyError(HgVcsMessages.message("hg4idea.error.log.command.execution"), errors.toString());
+        if (silent) {
+          LOG.warn(errors.toString());
+        }
+        else {
+          VcsNotifier.getInstance(project).notifyError(HgVcsMessages.message("hg4idea.error.log.command.execution"), errors.toString());
+        }
         return Collections.emptyList();
       }
       LOG.warn(errors.toString());
@@ -330,5 +352,9 @@ public class HgHistoryUtil {
       branchHeads.addAll(attributes);
     }
     return branchHeads;
+  }
+
+  public static String prepareParameter(String paramName, String value) {
+    return "--" + paramName + "=" + value; // no value escaping needed, because the parameter itself will be quoted by GeneralCommandLine
   }
 }

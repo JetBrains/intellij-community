@@ -69,6 +69,18 @@ public class DataNode<T> implements Serializable {
   }
 
   @NotNull
+  public <T> DataNode<T> createOrReplaceChild(@NotNull Key<T> key, @NotNull T data) {
+    for (Iterator<DataNode<?>> iterator = myChildren.iterator(); iterator.hasNext(); ) {
+      DataNode<?> child = iterator.next();
+      if (child.getKey().equals(key)) {
+        iterator.remove();
+        break;
+      }
+    }
+    return createChild(key, data);
+  }
+
+  @NotNull
   public Key<T> getKey() {
     return myKey;
   }

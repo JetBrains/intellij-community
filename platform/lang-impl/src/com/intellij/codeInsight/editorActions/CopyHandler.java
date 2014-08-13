@@ -19,12 +19,12 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actions.CopyAction;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.EditorCopyPasteHelperImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
@@ -92,7 +92,7 @@ public class CopyHandler extends EditorActionHandler {
     }
 
     String text = editor.getCaretModel().supportsMultipleCarets()
-                  ? CopyPasteSupport.getSelectedTextForClipboard(editor, transferableDatas)
+                  ? EditorCopyPasteHelperImpl.getSelectedTextForClipboard(editor, transferableDatas)
                   : selectionModel.getSelectedText();
     String rawText = TextBlockTransferable.convertLineSeparators(text, "\n", transferableDatas);
     String escapedText = null;

@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.DumbAware;
@@ -45,10 +46,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -62,9 +65,10 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
   private boolean myInstallFramework;
   private TextFieldWithBrowseButton myLocationField;
   protected final File myProjectDirectory;
-  private ActionButtonWithText myCreateButton;
+  private Button myCreateButton;
   private JLabel myErrorLabel;
   private AnAction myCreateAction;
+  private Sdk mySdk;
 
   public AbstractProjectSettingsStep(DirectoryProjectGenerator projectGenerator, NullableConsumer<AbstractProjectSettingsStep> callback) {
     super();
@@ -104,16 +108,24 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
 
   @Override
   public JPanel createPanel() {
-    final JPanel mainPanel = new JPanel(new BorderLayout());
+    final JPanel basePanel = createBasePanel();
+    final JPanel mainPanel = new JPanel(new BorderLayout()) {
+      @Override
+      protected void paintComponent(Graphics g) {
+        myLocationField.requestFocus();
+      }
+    };
+
     final JPanel scrollPanel = new JPanel(new BorderLayout());
 
-    mainPanel.setPreferredSize(new Dimension(mainPanel.getPreferredSize().width, 400));
+    final DirectoryProjectGenerator[] generators = Extensions.getExtensions(DirectoryProjectGenerator.EP_NAME);
+    final int height = generators.length == 0 ? 150 : 400;
+    mainPanel.setPreferredSize(new Dimension(mainPanel.getPreferredSize().width, height));
     myErrorLabel = new JLabel("");
     myErrorLabel.setForeground(JBColor.RED);
     myCreateButton = new Button(myCreateAction, myCreateAction.getTemplatePresentation());
 
-    final JPanel panel = createBasePanel();
-    scrollPanel.add(panel, BorderLayout.NORTH);
+    scrollPanel.add(basePanel, BorderLayout.NORTH);
     final JPanel advancedSettings = createAdvancedSettings();
     if (advancedSettings != null) {
       scrollPanel.add(advancedSettings, BorderLayout.CENTER);
@@ -125,8 +137,6 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
 
     final JPanel bottomPanel = new JPanel(new BorderLayout());
 
-
-    myCreateButton.setPreferredSize(new Dimension(mainPanel.getPreferredSize().width, 40));
     bottomPanel.add(myErrorLabel, BorderLayout.NORTH);
     bottomPanel.add(myCreateButton, BorderLayout.EAST);
     mainPanel.add(bottomPanel, BorderLayout.SOUTH);
@@ -150,7 +160,22 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     myLocationField.addBrowseFolderListener("Select base directory", "Select base directory for the Project",
                                             null, descriptor);
-
+    myLocationField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        if (myProjectGenerator instanceof PythonProjectGenerator) {
+          String path = myLocationField.getText().trim();
+          if (path.endsWith(File.separator)) {
+            path = path.substring(0, path.length() - File.separator.length());
+          }
+          int ind = path.lastIndexOf(File.separator);
+          if (ind != -1) {
+            String projectName = path.substring(ind + 1, path.length());
+            ((PythonProjectGenerator)myProjectGenerator).locationChanged(projectName);
+          }
+        }
+      }
+    });
     final JLabel locationLabel = new JLabel("Location:");
     c.gridx = 0;
     c.gridy = 0;
@@ -180,7 +205,19 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
     final Project project = ProjectManager.getInstance().getDefaultProject();
     final List<Sdk> sdks = PyConfigurableInterpreterList.getInstance(project).getAllPythonSdks();
     VirtualEnvProjectFilter.removeAllAssociated(sdks);
-    final Sdk preferred = sdks.isEmpty() ? null : sdks.iterator().next();
+    Sdk compatibleSdk = sdks.isEmpty() ? null : sdks.iterator().next();
+    DirectoryProjectGenerator generator = getProjectGenerator();
+    if (generator instanceof PyFrameworkProjectGenerator && !((PyFrameworkProjectGenerator)generator).supportsPython3()) {
+      if (compatibleSdk != null && PythonSdkType.getLanguageLevelForSdk(compatibleSdk).isPy3K()) {
+        Sdk python2Sdk = PythonSdkType.findPython2Sdk(sdks);
+        if (python2Sdk != null) {
+          compatibleSdk = python2Sdk;
+
+        }
+      }
+    }
+
+    final Sdk preferred = compatibleSdk;
     mySdkCombo = new PythonSdkChooserCombo(project, sdks, new Condition<Sdk>() {
       @Override
       public boolean value(Sdk sdk) {
@@ -193,13 +230,25 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
     c.gridy = 1;
     c.weightx = 1.;
     panel.add(mySdkCombo, c);
-
+    final JPanel basePanelExtension = extendBasePanel();
+    if (basePanelExtension != null) {
+      c.gridwidth = 2;
+      c.gridy = 2;
+      c.gridx = 0;
+      panel.add(basePanelExtension, c);
+    }
     registerValidators();
     return panel;
   }
 
-  protected void registerValidators() {
+  @Nullable
+  protected JPanel extendBasePanel() {
+    if (myProjectGenerator instanceof PythonProjectGenerator)
+      return ((PythonProjectGenerator)myProjectGenerator).extendBasePanel();
+    return null;
+  }
 
+  protected void registerValidators() {
     myLocationField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
@@ -319,17 +368,19 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
   }
 
   public void selectCompatiblePython() {
-    DirectoryProjectGenerator generator = getProjectGenerator();
-    if (generator instanceof PyFrameworkProjectGenerator && !((PyFrameworkProjectGenerator)generator).supportsPython3()) {
-      Sdk sdk = getSdk();
-      if (sdk != null && PythonSdkType.getLanguageLevelForSdk(sdk).isPy3K()) {
-        Sdk python2Sdk = PythonSdkType.findPython2Sdk(null);
-        if (python2Sdk != null) {
-          mySdkCombo.getComboBox().setSelectedItem(python2Sdk);
-          mySdkCombo.getComboBox().repaint();
-        }
-      }
-    }
+    //DirectoryProjectGenerator generator = getProjectGenerator();
+    //if (generator instanceof PyFrameworkProjectGenerator && !((PyFrameworkProjectGenerator)generator).supportsPython3()) {
+    //  Sdk sdk = getSdk();
+    //  if (sdk != null && PythonSdkType.getLanguageLevelForSdk(sdk).isPy3K()) {
+    //    Sdk python2Sdk = PythonSdkType.findPython2Sdk(null);
+    //    if (python2Sdk != null) {
+    //      mySdkCombo.getComboBox().setSelectedItem(python2Sdk);
+    //      mySdkCombo.getComboBox().revalidate();
+    //      mySdkCombo.getComboBox().repaint();
+    //
+    //    }
+    //  }
+    //}
   }
 
   private static boolean acceptsRemoteSdk(DirectoryProjectGenerator generator) {
@@ -358,13 +409,31 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
 
     public Button(AnAction action, Presentation presentation) {
       super(action, presentation, "NewProject", new Dimension(70, 50));
-      myBorder = UIUtil.isUnderDarcula() ? UIUtil.getButtonBorder() : BorderFactory.createLineBorder(UIUtil.getBorderColor());
+      final Border border = new LineBorder(JBColor.border(), 1, true);
+      myBorder = UIUtil.isUnderDarcula() ? UIUtil.getButtonBorder() : border;
       setBorder(myBorder);
     }
 
     @Override
     protected int iconTextSpace() {
       return 8;
+    }
+
+    @Override
+    public boolean isFocusable() {
+      return true;
+    }
+
+    @Override
+    protected void processFocusEvent(FocusEvent e) {
+      super.processFocusEvent(e);
+      if (e.getID() == FocusEvent.FOCUS_GAINED) {
+        processMouseEvent(new MouseEvent(this, MouseEvent.MOUSE_ENTERED, System.currentTimeMillis(), 0, 0, 0, 0, false));
+
+      }
+      else if (e.getID() == FocusEvent.FOCUS_LOST) {
+        processMouseEvent(new MouseEvent(this, MouseEvent.MOUSE_EXITED, System.currentTimeMillis(), 0, 0, 0, 0, false));
+      }
     }
 
     @Override
@@ -375,11 +444,6 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
     @Override
     protected int horizontalTextAlignment() {
       return SwingConstants.LEFT;
-    }
-
-    @Override
-    public String getToolTipText() {
-      return null;
     }
 
     protected void processMouseEvent(MouseEvent e) {
@@ -394,7 +458,12 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
   }
 
   public Sdk getSdk() {
+    if (mySdk != null) return mySdk;
     return (Sdk)mySdkCombo.getComboBox().getSelectedItem();
+  }
+
+  public void setSdk(final Sdk sdk) {
+    mySdk = sdk;
   }
 
   public String getProjectLocation() {

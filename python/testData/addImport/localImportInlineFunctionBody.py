@@ -1,0 +1,2 @@
+def func(): module
+#           <ref>

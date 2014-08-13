@@ -25,6 +25,9 @@ import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterPro
 import com.jetbrains.python.psi.PyConditionalStatementPart;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyUtil;
+import org.jetbrains.annotations.NotNull;
+
+import static com.jetbrains.python.psi.PyUtil.sure;
 
 /**
  * Created by IntelliJ IDEA.
@@ -32,31 +35,35 @@ import com.jetbrains.python.psi.PyUtil;
  * Date:   15.04.2010
  * Time:   19:33:14
  */
-public class PyConditionalStatementPartFixer implements PyFixer {
-  public void apply(Editor editor, PySmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
-    if (psiElement instanceof PyConditionalStatementPart) {
-      final PyConditionalStatementPart conditionalStatementPart = (PyConditionalStatementPart)psiElement;
-      final PyExpression condition = conditionalStatementPart.getCondition();
-      final Document document = editor.getDocument();
-      final PsiElement colon = PyUtil.getChildByFilter(conditionalStatementPart, TokenSet.create(PyTokenTypes.COLON), 0);
-      if (colon == null) {
-        if (condition != null) {
-          final PsiElement firstNonComment = PyUtil.getFirstNonCommentAfter(condition.getNextSibling());
-          if (firstNonComment != null && !":".equals(firstNonComment.getNode().getText())) {
-            document.insertString(firstNonComment.getTextRange().getEndOffset(), ":");
-          }
+public class PyConditionalStatementPartFixer extends PyFixer<PyConditionalStatementPart> {
+  public PyConditionalStatementPartFixer() {
+    super(PyConditionalStatementPart.class);
+  }
+
+  @Override
+  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyConditionalStatementPart statementPart)
+    throws IncorrectOperationException {
+    final PyExpression condition = statementPart.getCondition();
+    final Document document = editor.getDocument();
+    final PsiElement colon = PyUtil.getFirstChildOfType(statementPart, PyTokenTypes.COLON);
+    if (colon == null) {
+      if (condition != null) {
+        final PsiElement firstNonComment = PyUtil.getFirstNonCommentAfter(condition.getNextSibling());
+        if (firstNonComment != null && !":".equals(firstNonComment.getNode().getText())) {
+          document.insertString(firstNonComment.getTextRange().getEndOffset(), ":");
         }
-        else {
-          final PsiElement keywordToken = PyUtil.getChildByFilter(conditionalStatementPart,
-                                                                  TokenSet.create(PyTokenTypes.IF_KEYWORD, PyTokenTypes.ELIF_KEYWORD,
-                                                                                  PyTokenTypes.WHILE_KEYWORD), 0);
-          final int offset = keywordToken.getTextRange().getEndOffset();
-          document.insertString(offset, " :");
-          processor.registerUnresolvedError(offset + 1);
-        }
-      } else if (condition == null) {
-          processor.registerUnresolvedError(colon.getTextRange().getStartOffset());
       }
+      else {
+        final TokenSet keywords = TokenSet.create(PyTokenTypes.IF_KEYWORD, PyTokenTypes.ELIF_KEYWORD, PyTokenTypes.WHILE_KEYWORD);
+        final PsiElement keywordToken = PyUtil.getChildByFilter(statementPart,
+                                                                keywords, 0);
+        final int offset = sure(keywordToken).getTextRange().getEndOffset();
+        document.insertString(offset, " :");
+        processor.registerUnresolvedError(offset + 1);
+      }
+    }
+    else if (condition == null) {
+      processor.registerUnresolvedError(colon.getTextRange().getStartOffset());
     }
   }
 }

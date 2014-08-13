@@ -93,9 +93,9 @@ public class TestVcsLogProvider implements VcsLogProvider {
     return ContainerUtil.map(myCommits.subList(0, requirements.getCommitCount()), myCommitToMetadataConvertor);
   }
 
-  @NotNull
   @Override
-  public List<TimedVcsCommit> readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<VcsUser> userRegistry) throws VcsException {
+  public void readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<VcsUser> userRegistry,
+                            @NotNull Consumer<TimedVcsCommit> commitConsumer) throws VcsException {
     try {
       myFullLogSemaphore.acquire();
     }
@@ -103,7 +103,9 @@ public class TestVcsLogProvider implements VcsLogProvider {
       throw new RuntimeException(e);
     }
     assertRoot(root);
-    return myCommits;
+    for (TimedVcsCommit commit : myCommits) {
+      commitConsumer.consume(commit);
+    }
   }
 
   private void assertRoot(@NotNull VirtualFile root) {
