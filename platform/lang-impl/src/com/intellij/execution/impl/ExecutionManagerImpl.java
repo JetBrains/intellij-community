@@ -35,7 +35,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -58,10 +57,7 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author dyoma
- */
-public class ExecutionManagerImpl extends ExecutionManager implements ProjectComponent {
+public class ExecutionManagerImpl extends ExecutionManager implements Disposable {
   public static final Key<Object> EXECUTION_SESSION_ID_KEY = Key.create("EXECUTION_SESSION_ID_KEY");
 
   private static final Logger LOG = Logger.getInstance(ExecutionManagerImpl.class);
@@ -74,28 +70,12 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   private final List<Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor>> myRunningConfigurations =
     ContainerUtil.createLockFreeCopyOnWriteList();
 
-  /**
-   * reflection
-   */
-  ExecutionManagerImpl(final Project project) {
+  ExecutionManagerImpl(@NotNull Project project) {
     myProject = project;
   }
 
   @Override
-  public void projectOpened() {
-    ((RunContentManagerImpl)getContentManager()).init();
-  }
-
-  @Override
-  public void projectClosed() {
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
+  public void dispose() {
     for (Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity : myRunningConfigurations) {
       Disposer.dispose(trinity.first);
     }
@@ -107,6 +87,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   public RunContentManager getContentManager() {
     if (myContentManager == null) {
       myContentManager = new RunContentManagerImpl(myProject, DockManager.getInstance(myProject));
+      myContentManager.init();
       Disposer.register(myProject, myContentManager);
     }
     return myContentManager;
@@ -558,12 +539,6 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
         processHandler.destroyProcess();
       }
     }
-  }
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "ExecutionManager";
   }
 
   private static class ProcessExecutionListener extends ProcessAdapter {
