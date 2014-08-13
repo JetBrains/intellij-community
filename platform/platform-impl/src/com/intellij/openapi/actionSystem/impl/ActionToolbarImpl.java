@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.impl.ActionToolbarImpl");
 
   private static final List<ActionToolbarImpl> ourToolbars = new LinkedList<ActionToolbarImpl>();
+  private static final String RIGHT_ALIGN_KEY = "RIGHT_ALIGN";
+
   public static void updateAllToolbarsImmediately() {
     for (ActionToolbarImpl toolbar : new ArrayList<ActionToolbarImpl>(ourToolbars)) {
       toolbar.updateActionsImmediately();
@@ -268,11 +270,16 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   }
 
   private void fillToolBar(final List<AnAction> actions, boolean layoutSecondaries) {
+    final List<AnAction> rightAligned = new ArrayList<AnAction>();
     if (myAddSeparatorFirst) {
       add(new MySeparator());
     }
     for (int i = 0; i < actions.size(); i++) {
       final AnAction action = actions.get(i);
+      if (action instanceof RightAlignedToolbarAction) {
+        rightAligned.add(action);
+        continue;
+      }
 //      if (action instanceof Separator && isNavBar()) {
 //        continue;
 //      }
@@ -307,17 +314,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       add(mySecondaryActionsButton);
     }
 
-    if ((ActionPlaces.MAIN_TOOLBAR.equals(myPlace) || ActionPlaces.NAVIGATION_BAR.equals(myPlace))) {
-      final AnAction searchEverywhereAction = ActionManager.getInstance().getAction("SearchEverywhere");
-      if (searchEverywhereAction != null) {
-        try {
-          final CustomComponentAction searchEveryWhereAction = (CustomComponentAction)searchEverywhereAction;
-          final JComponent searchEverywhere = searchEveryWhereAction.createCustomComponent(searchEverywhereAction.getTemplatePresentation());
-          searchEverywhere.putClientProperty("SEARCH_EVERYWHERE", Boolean.TRUE);
-          add(searchEverywhere);
-        }
-        catch (Exception ignore) {}
-      }
+    for (AnAction action : rightAligned) {
+      JComponent button = action instanceof CustomComponentAction ? getCustomComponent(action) : createToolbarButton(action);
+      button.putClientProperty(RIGHT_ALIGN_KEY, Boolean.TRUE);
+      add(button);
     }
   }
 
@@ -727,13 +727,16 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     }
 
     if (getComponentCount() > 0 && size2Fit.width < Integer.MAX_VALUE) {
-      final Component component = getComponent(getComponentCount() - 1);
-      if (component instanceof JComponent && ((JComponent)component).getClientProperty("SEARCH_EVERYWHERE") == Boolean.TRUE) {
-        int max = 0;
-        for (int i = 0; i < bounds.size() - 2; i++) {
-          max = Math.max(max, bounds.get(i).height);
+      int maxHeight = 0;
+      for (int i = 0; i < bounds.size() - 2; i++) {
+        maxHeight = Math.max(maxHeight, bounds.get(i).height);
+      }
+
+      for (int i = getComponentCount() - 1, j = 1; i > 0; i--, j++) {
+        final Component component = getComponent(i);
+        if (component instanceof JComponent && ((JComponent)component).getClientProperty(RIGHT_ALIGN_KEY) == Boolean.TRUE) {
+          bounds.set(bounds.size() - j, new Rectangle(size2Fit.width - j * 25, 0, 25, maxHeight));
         }
-        bounds.set(bounds.size() - 1, new Rectangle(size2Fit.width - 25, 0, 25, max));
       }
     }
   }
@@ -1181,7 +1184,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
                         final ActionGroup actionGroup,
                         final boolean horizontal,
                         final DataManager dataManager,
-                        final ActionManagerEx actionManager,
+                        @NotNull ActionManagerEx actionManager,
                         final KeymapManagerEx keymapManager,
                         JComponent parent) {
       super(place, actionGroup, horizontal, false, dataManager, actionManager, keymapManager, true);

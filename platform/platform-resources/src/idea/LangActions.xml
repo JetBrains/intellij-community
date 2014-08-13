@@ -365,6 +365,7 @@
       <separator/>
       <reference id="NavBarToolBarOthers"/>
       <separator/>
+      <reference ref="SearchEverywhere"/>
     </group>
 
     <group id="Bookmarks">

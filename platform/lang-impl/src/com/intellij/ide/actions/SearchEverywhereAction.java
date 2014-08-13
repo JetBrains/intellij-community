@@ -117,7 +117,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * @author Konstantin Bulenkov
  */
-public class SearchEverywhereAction extends AnAction implements CustomComponentAction, DumbAware{
+public class SearchEverywhereAction extends AnAction implements CustomComponentAction, DumbAware, RightAlignedToolbarAction {
   public static final String SE_HISTORY_KEY = "SearchEverywhereHistoryKey";
   public static final int SEARCH_FIELD_COLUMNS = 25;
   private static final int MAX_CLASSES = 6;
