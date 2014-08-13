@@ -48,7 +48,7 @@ public class RightMarginForm {
 
   public RightMarginForm(@NotNull Language language, @NotNull CodeStyleSettings settings) {
     myLanguage = language;
-    myDefaultRightMargin = settings.RIGHT_MARGIN;
+    myDefaultRightMargin = settings.getDefaultRightMargin();
     myDefaultGeneralCheckBox.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent e) {
@@ -71,7 +71,7 @@ public class RightMarginForm {
     }
     else {
       myDefaultGeneralCheckBox.setSelected(true);
-      myRightMarginField.setText(Integer.toString(settings.RIGHT_MARGIN));
+      myRightMarginField.setText(Integer.toString(settings.getDefaultRightMargin()));
       if (langSettings == settings) {
         myDefaultGeneralCheckBox.setEnabled(false);
         myRightMarginField.setEnabled(false);
@@ -86,7 +86,7 @@ public class RightMarginForm {
         langSettings.RIGHT_MARGIN = -1;
       }
       else {
-        langSettings.RIGHT_MARGIN = getFieldRightMargin(settings.RIGHT_MARGIN);
+        langSettings.RIGHT_MARGIN = getFieldRightMargin(settings.getDefaultRightMargin());
       }
     }
   }
@@ -97,7 +97,7 @@ public class RightMarginForm {
       return langSettings.RIGHT_MARGIN >= 0;
     }
     else {
-      return langSettings.RIGHT_MARGIN != getFieldRightMargin(settings.RIGHT_MARGIN);
+      return langSettings.RIGHT_MARGIN != getFieldRightMargin(settings.getDefaultRightMargin());
     }
   }
 
