@@ -19,7 +19,6 @@ package com.intellij.psi.impl;
 import com.intellij.AppTopics;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindowImpl;
-import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.editor.Document;
@@ -33,7 +32,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.Processor;
@@ -79,18 +81,6 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
         documentCommitThread.queueCommit(project, doc, "Bulk update finished");
       }
     });
-    ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
-      @Override
-      public void beforeWriteActionStart(Object action) {
-        documentCommitThread.disable("Write action started: " + action);
-      }
-
-      @Override
-      public void writeActionFinished(Object action) {
-        documentCommitThread.enable("Write action finished: " + action);
-      }
-    }, project);
-    documentCommitThread.enable("project open");
   }
 
   @Nullable

@@ -296,9 +296,15 @@ public class PluginDownloader {
   }
 
   private URLConnection openConnection(final String url) throws IOException {
-    final URLConnection connection = ApplicationManager.getApplication() != null
-                                     ? HttpConfigurable.getInstance().openConnection(url)
-                                     : new URL(url).openConnection();
+    final URLConnection connection;
+    if (ApplicationManager.getApplication() != null) {
+      connection = HttpConfigurable.getInstance().openConnection(url);
+    }
+    else {
+      connection = new URL(url).openConnection();
+      connection.setConnectTimeout(HttpConfigurable.CONNECTION_TIMEOUT);
+      connection.setReadTimeout(HttpConfigurable.CONNECTION_TIMEOUT);
+    }
     if (connection instanceof HttpURLConnection) {
       final int responseCode = ((HttpURLConnection)connection).getResponseCode();
       if (responseCode != HttpURLConnection.HTTP_OK) {

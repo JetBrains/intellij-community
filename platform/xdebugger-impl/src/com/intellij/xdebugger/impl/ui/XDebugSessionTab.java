@@ -17,7 +17,6 @@ package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.RunContentBuilder;
@@ -55,10 +54,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author spleaner
- */
-public class XDebugSessionTab extends DebuggerSessionTabBase implements DataProvider {
+public class XDebugSessionTab extends DebuggerSessionTabBase {
   private static final DataKey<XDebugSessionTab> TAB_KEY = DataKey.create("XDebugSessionTab");
   public static final DataKey<XDebugSession> SESSION_KEY = DataKey.create("XDebugSessionTab.XDebugSession");
 
@@ -77,22 +73,21 @@ public class XDebugSessionTab extends DebuggerSessionTabBase implements DataProv
       if (component != null) {
         XDebugSessionTab oldTab = TAB_KEY.getData(DataManager.getInstance().getDataContext(component));
         if (oldTab != null) {
-          oldTab.setSession(session, environment, contentToReuse, icon);
+          oldTab.setSession(session, environment, icon);
           oldTab.attachToSession();
           return oldTab;
         }
       }
     }
-    return new XDebugSessionTab(session, icon, environment, contentToReuse);
+    return new XDebugSessionTab(session, icon, environment);
   }
 
   private XDebugSessionTab(@NotNull XDebugSessionImpl session,
-                          @Nullable Icon icon,
-                          @Nullable ExecutionEnvironment environment,
-                          @Nullable RunContentDescriptor contentToReuse) {
+                           @Nullable Icon icon,
+                           @Nullable ExecutionEnvironment environment) {
     super(session.getProject(), "Debug", session.getSessionName(), GlobalSearchScope.allScope(session.getProject()));
 
-    setSession(session, environment, contentToReuse, icon);
+    setSession(session, environment, icon);
 
     myUi.addContent(createFramesContent(), 0, PlaceInGrid.left, false);
     myUi.addContent(createVariablesContent(), 0, PlaceInGrid.center, false);
@@ -103,8 +98,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase implements DataProv
     }
 
     attachToSession();
-
-    myUi.getContentManager().addDataProvider(this);
 
     DefaultActionGroup focus = new DefaultActionGroup();
     focus.add(ActionManager.getInstance().getAction(XDebuggerActions.FOCUS_ON_BREAKPOINT));
@@ -126,7 +119,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase implements DataProv
     rebuildViews();
   }
 
-  private void setSession(@NotNull XDebugSessionImpl session, @Nullable ExecutionEnvironment environment, @Nullable RunContentDescriptor contentToReuse, @Nullable Icon icon) {
+  private void setSession(@NotNull XDebugSessionImpl session, @Nullable ExecutionEnvironment environment, @Nullable Icon icon) {
     if (environment != null) {
       setEnvironment(environment);
     }
@@ -134,9 +127,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase implements DataProv
     this.session = session;
     myConsole = session.getConsoleView();
     myRunContentDescriptor = new RunContentDescriptor(myConsole, session.getDebugProcess().getProcessHandler(), myUi.getComponent(), session.getSessionName(), icon);
-    if (contentToReuse != null && contentToReuse.isReuseToolWindowActivation()) {
-      myRunContentDescriptor.setActivateToolWindowWhenAdded(contentToReuse.isActivateToolWindowWhenAdded());
-    }
   }
 
   @Nullable
@@ -147,13 +137,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase implements DataProv
     }
     else if (TAB_KEY.is(dataId)) {
       return this;
-    }
-    else if (LangDataKeys.RUN_PROFILE.is(dataId)) {
-      ExecutionEnvironment environment = getEnvironment();
-      return environment == null ? null : environment.getRunProfile();
-    }
-    else if (LangDataKeys.EXECUTION_ENVIRONMENT.is(dataId)) {
-      return getEnvironment();
     }
 
     if (session != null) {
@@ -168,7 +151,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase implements DataProv
       }
     }
 
-    return null;
+    return super.getData(dataId);
   }
 
   private Content createVariablesContent() {
@@ -303,9 +286,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase implements DataProv
     myUi.getOptions().setTopToolbar(topToolbar, ActionPlaces.DEBUGGER_TOOLBAR);
 
     if (environment != null) {
-      RunProfile runConfiguration = environment.getRunProfile();
-      registerFileMatcher(runConfiguration);
-      initLogConsoles(runConfiguration, myRunContentDescriptor.getProcessHandler(), myConsole);
+      initLogConsoles(environment.getRunProfile(), myRunContentDescriptor.getProcessHandler(), myConsole);
     }
   }
 

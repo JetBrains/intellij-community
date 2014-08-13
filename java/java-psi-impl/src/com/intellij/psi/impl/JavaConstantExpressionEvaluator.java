@@ -63,7 +63,7 @@ public class JavaConstantExpressionEvaluator extends JavaRecursiveElementWalking
   }
 
   @Override
-  protected void elementFinished(PsiElement element) {
+  protected void elementFinished(@NotNull PsiElement element) {
     Object value = getCached(element);
     if (value == null) {
       Object result = myConstantExpressionVisitor.handle(element);

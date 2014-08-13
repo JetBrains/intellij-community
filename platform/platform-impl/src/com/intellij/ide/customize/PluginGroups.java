@@ -181,11 +181,11 @@ public class PluginGroups {
 
     featuredPlugins.put("Scala", "Custom Languages:Plugin for Scala language support:org.intellij.scala");
     featuredPlugins.put("Live Edit Tool",
-                          "Web Development:Provides live edit HTML/CSS/JavaScript:com.intellij.plugins.html.instantEditing");
+                        "Web Development:Provides live edit HTML/CSS/JavaScript:com.intellij.plugins.html.instantEditing");
     addVimPlugin(featuredPlugins);
     featuredPlugins.put("NodeJS", "JavaScript:Node.js integration:NodeJS");
     featuredPlugins.put("Atlassian Connector",
-                          "Tools Integration:Integration for Atlassian JIRA, Bamboo, Cricible, FishEye:atlassian-idea-plugin");
+                        "Tools Integration:Integration for Atlassian JIRA, Bamboo, Cricible, FishEye:atlassian-idea-plugin");
   }
 
   protected static void addVcsGroup(Map<String, Pair<Icon, List<String>>> tree) {
@@ -203,6 +203,24 @@ public class PluginGroups {
 
   protected static void addVimPlugin(Map<String, String> featuredPlugins) {
     featuredPlugins.put("IdeaVIM", "Editor:Vim emulation plug-in for IDEs based on the IntelliJ platform:IdeaVIM");
+  }
+
+  protected static void addLuaPlugin(Map<String, String> featuredPlugins) {
+    featuredPlugins.put("Lua", "Custom Languages:Lua language integration:Lua");
+  }
+
+  protected static void addMarkdownPlugin(Map<String, String> featuredPlugins) {
+    featuredPlugins.put("Markdown", "Custom Languages:Markdown language integration:net.nicoulaj.idea.markdown");
+  }
+
+  protected static void addConfigurationServerPlugin(Map<String, String> featuredPlugins) {
+    featuredPlugins.put("Configuration Server",
+                        "Team Work:Supports sharing settings between installations of IntelliJ Platform based products used by the same developer on different computers:IdeaServerPlugin");
+  }
+
+  protected static void addTeamCityPlugin(Map<String, String> featuredPlugins) {
+    featuredPlugins.put("TeamCity Integration",
+                        "Tools Integration:Integration with JetBrains TeamCity - innovative solution for continuous integration and build management:Jetbrains TeamCity Plugin");
   }
 
   private void initIfNeed() {
@@ -307,7 +325,8 @@ public class PluginGroups {
   void setFeaturedPluginEnabled(String pluginId, boolean enabled) {
     if (enabled) {
       myFeaturedIds.add(pluginId);
-    } else {
+    }
+    else {
       myFeaturedIds.remove(pluginId);
     }
     StartupUtil.setFeaturedPluginsToInstall(myFeaturedIds);

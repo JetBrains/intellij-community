@@ -103,6 +103,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
           // so it does not contain any <entry> element and current parsing logic returns null
 
           PortableStatus status = new PortableStatus();
+          status.setFile(path);
           status.setPath(path.getAbsolutePath());
           status.setContentsStatus(StatusType.STATUS_NORMAL);
           status.setInfoGetter(new Getter<Info>() {

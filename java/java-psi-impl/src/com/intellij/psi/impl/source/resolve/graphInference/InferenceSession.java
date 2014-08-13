@@ -221,7 +221,8 @@ public class InferenceSession {
         return prepareSubstitution();
       }
 
-      if (parameters != null && args != null && !MethodCandidateInfo.isOverloadCheck()) {
+      if (parameters != null && args != null &&
+          !MethodCandidateInfo.ourOverloadGuard.currentStack().contains(PsiUtil.skipParenthesizedExprUp(parent.getParent()))) {
         final Set<ConstraintFormula> additionalConstraints = new LinkedHashSet<ConstraintFormula>();
         if (parameters.length > 0) {
           collectAdditionalConstraints(parameters, args, properties.getMethod(), PsiSubstitutor.EMPTY, additionalConstraints, properties.isVarargs(), true);

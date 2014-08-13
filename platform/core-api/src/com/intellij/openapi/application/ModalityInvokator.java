@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,11 @@ public interface ModalityInvokator {
    *
    * @param runnable the runnable to execute.
    */
-  ActionCallback invokeLater(Runnable runnable);
+  @NotNull
+  ActionCallback invokeLater(@NotNull Runnable runnable);
 
-  ActionCallback invokeLater(Runnable runnable, @NotNull Condition expired);
+  @NotNull
+  ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull Condition expired);
 
   /**
    * Causes <i>runnable.run()</i> to be executed asynchronously on the
@@ -43,7 +45,9 @@ public interface ModalityInvokator {
    * @param runnable the runnable to execute.
    * @param state the state in which the runnable will be executed.
    */
-  ActionCallback invokeLater(Runnable runnable, @NotNull ModalityState state);
+  @NotNull
+  ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state);
 
-  ActionCallback invokeLater(Runnable runnable, @NotNull ModalityState state, @NotNull Condition expired);
+  @NotNull
+  ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition expired);
 }

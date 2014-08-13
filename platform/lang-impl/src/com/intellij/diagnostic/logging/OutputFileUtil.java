@@ -34,6 +34,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -51,41 +52,43 @@ public class OutputFileUtil {
   private OutputFileUtil() {
   }
 
-  public static void attachDumpListener(final RunConfigurationBase base, final ProcessHandler startedProcess, ExecutionConsole console) {
-    if (base.isSaveOutputToFile()) {
-      final String outputFilePath = base.getOutputFilePath();
-      if (outputFilePath != null) {
-        final String filePath = FileUtil.toSystemDependentName(outputFilePath);
-        startedProcess.addProcessListener(new ProcessAdapter() {
-          private PrintStream myOutput;
-          @Override
-          public void onTextAvailable(ProcessEvent event, Key outputType) {
-            if (base.collectOutputFromProcessHandler() && myOutput != null && outputType != ProcessOutputTypes.SYSTEM) {
-              myOutput.print(event.getText());
-            }
-          }
+  public static void attachDumpListener(@NotNull final RunConfigurationBase configuration, @NotNull final ProcessHandler startedProcess, @Nullable ExecutionConsole console) {
+    if (!configuration.isSaveOutputToFile()) {
+      return;
+    }
 
-          @Override
-          public void startNotified(ProcessEvent event) {
-            try {
-              myOutput = new PrintStream(new FileOutputStream(new File(filePath)));
-            }
-            catch (FileNotFoundException ignored) {
-            }
-            startedProcess.notifyTextAvailable(CONSOLE_OUTPUT_FILE_MESSAGE + filePath + "\n", ProcessOutputTypes.SYSTEM);
+    String outputFilePath = configuration.getOutputFilePath();
+    if (outputFilePath != null) {
+      final String filePath = FileUtil.toSystemDependentName(outputFilePath);
+      startedProcess.addProcessListener(new ProcessAdapter() {
+        private PrintStream myOutput;
+        @Override
+        public void onTextAvailable(ProcessEvent event, Key outputType) {
+          if (configuration.collectOutputFromProcessHandler() && myOutput != null && outputType != ProcessOutputTypes.SYSTEM) {
+            myOutput.print(event.getText());
           }
-
-          @Override
-          public void processTerminated(ProcessEvent event) {
-            startedProcess.removeProcessListener(this);
-            if (myOutput != null) {
-              myOutput.close();
-            }
-          }
-        });
-        if (console instanceof ConsoleView) {
-          ((ConsoleView)console).addMessageFilter(new ShowOutputFileFilter());
         }
+
+        @Override
+        public void startNotified(ProcessEvent event) {
+          try {
+            myOutput = new PrintStream(new FileOutputStream(new File(filePath)));
+          }
+          catch (FileNotFoundException ignored) {
+          }
+          startedProcess.notifyTextAvailable(CONSOLE_OUTPUT_FILE_MESSAGE + filePath + "\n", ProcessOutputTypes.SYSTEM);
+        }
+
+        @Override
+        public void processTerminated(ProcessEvent event) {
+          startedProcess.removeProcessListener(this);
+          if (myOutput != null) {
+            myOutput.close();
+          }
+        }
+      });
+      if (console instanceof ConsoleView) {
+        ((ConsoleView)console).addMessageFilter(new ShowOutputFileFilter());
       }
     }
   }

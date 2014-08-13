@@ -72,7 +72,7 @@ import javax.swing.tree.TreePath;
 import java.util.List;
 
 public class DebuggerSessionTab extends DebuggerSessionTabBase implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.DebuggerSessionTab");
+  private static final Logger LOG = Logger.getInstance(DebuggerSessionTab.class);
 
   private final VariablesPanel myVariablesPanel;
   private final MainWatchPanel myWatchPanel;
@@ -90,6 +90,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
   public DebuggerSessionTab(final Project project, final String sessionName, @NotNull final DebugUIEnvironment environment,
                             @NotNull DebuggerSession debuggerSession) {
     super(project, "JavaDebugger", sessionName, debuggerSession.getSearchScope());
+
     myDebuggerSession = debuggerSession;
     myDebugUIEnvironment = environment;
 
@@ -129,10 +130,8 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     topToolbar.add(Separator.getInstance(), new Constraints(Anchor.AFTER, DebuggerActions.POP_FRAME));
     myUi.getOptions().setTopToolbar(topToolbar, ActionPlaces.DEBUGGER_TOOLBAR);
 
-
     myWatchPanel = new MainWatchPanel(getProject(), getContextManager());
     myFramesPanel = new FramesPanel(getProject(), getContextManager());
-
 
     final AlertIcon breakpointAlert = new AlertIcon(AllIcons.Debugger.BreakpointAlert);
 
@@ -271,7 +270,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     }
     console.setActions(consoleActions, ActionPlaces.DEBUGGER_TOOLBAR, myConsole.getPreferredFocusableComponent());
 
-    myDebugUIEnvironment.initLogs(myRunContentDescriptor, getLogManager());
+    myDebugUIEnvironment.initLogs(myRunContentDescriptor, myManager);
 
     DefaultActionGroup leftToolbar = new DefaultActionGroup();
 
@@ -347,7 +346,6 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     AnAction action = ActionManager.getInstance().getAction(actionId);
     if (action != null) group.add(action);
   }
-
 
   @Override
   public void dispose() {

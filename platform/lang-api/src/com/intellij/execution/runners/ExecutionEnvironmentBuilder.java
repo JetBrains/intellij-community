@@ -39,7 +39,7 @@ public final class ExecutionEnvironmentBuilder {
   @Nullable private RunContentDescriptor myContentToReuse;
   @Nullable private RunnerAndConfigurationSettings myRunnerAndConfigurationSettings;
   @Nullable private String myRunnerId;
-  private ProgramRunner<?> runner;
+  private ProgramRunner<?> myRunner;
   private boolean myAssignNewId;
   @NotNull private Executor myExecutor;
   @Nullable private DataContext myDataContext;
@@ -61,7 +61,7 @@ public final class ExecutionEnvironmentBuilder {
   @NotNull
   public static ExecutionEnvironmentBuilder create(@NotNull Executor executor, @NotNull RunnerAndConfigurationSettings settings) throws ExecutionException {
     ExecutionEnvironmentBuilder builder = create(settings.getConfiguration().getProject(), executor, settings.getConfiguration());
-    return builder.runnerAndSettings(builder.runner, settings);
+    return builder.runnerAndSettings(builder.myRunner, settings);
   }
 
   @NotNull
@@ -82,29 +82,9 @@ public final class ExecutionEnvironmentBuilder {
     myRunnerSettings = copySource.getRunnerSettings();
     myConfigurationSettings = copySource.getConfigurationSettings();
     myRunnerId = copySource.getRunnerId();
-    runner = copySource.runner;
+    myRunner = copySource.myRunner;
     myContentToReuse = copySource.getContentToReuse();
     myExecutor = copySource.getExecutor();
-  }
-
-  @NotNull
-  public static ExecutionEnvironment fix(@NotNull ExecutionEnvironment environment, @Nullable RunContentDescriptor contentToReuse) {
-    if (contentToReuse == null || environment.getContentToReuse() == contentToReuse) {
-      return environment;
-    }
-    else {
-      return new ExecutionEnvironmentBuilder(environment).contentToReuse(contentToReuse).build();
-    }
-  }
-
-  @NotNull
-  public static ExecutionEnvironment fix(@NotNull ExecutionEnvironment environment, @Nullable ProgramRunner runner) {
-    if (runner == null || runner.getRunnerId().equals(environment.getRunnerId())) {
-      return environment;
-    }
-    else {
-      return new ExecutionEnvironmentBuilder(environment).runner(runner).build();
-    }
   }
 
   @SuppressWarnings("UnusedDeclaration")
@@ -144,7 +124,7 @@ public final class ExecutionEnvironmentBuilder {
     myRunProfile = settings.getConfiguration();
     myRunnerSettings = settings.getRunnerSettings(runner);
     myConfigurationSettings = settings.getConfigurationSettings(runner);
-    this.runner = runner;
+    myRunner = runner;
     return this;
   }
 
@@ -208,7 +188,7 @@ public final class ExecutionEnvironmentBuilder {
   }
 
   public ExecutionEnvironmentBuilder runner(@NotNull ProgramRunner<?> runner) {
-    this.runner = runner;
+    myRunner = runner;
     return this;
   }
 
@@ -247,12 +227,12 @@ public final class ExecutionEnvironmentBuilder {
 
   @NotNull
   public ExecutionEnvironment build() {
-    if (runner == null && myRunnerId == null) {
-      runner = RunnerRegistry.getInstance().getRunner(myExecutor.getId(), myRunProfile);
+    if (myRunner == null && myRunnerId == null) {
+      myRunner = RunnerRegistry.getInstance().getRunner(myExecutor.getId(), myRunProfile);
     }
 
     ExecutionEnvironment environment = new ExecutionEnvironment(myRunProfile, myExecutor, myTarget, myProject, myRunnerSettings, myConfigurationSettings, myContentToReuse,
-                                                                myRunnerAndConfigurationSettings, myRunnerId, runner);
+                                                                myRunnerAndConfigurationSettings, myRunnerId, myRunner);
     if (myAssignNewId) {
       environment.assignNewExecutionId();
     }

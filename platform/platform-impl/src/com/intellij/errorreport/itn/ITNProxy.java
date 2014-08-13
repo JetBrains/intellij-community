@@ -181,8 +181,6 @@ public class ITNProxy {
   private static HttpURLConnection post(URL url, byte[] bytes) throws IOException {
     HttpURLConnection connection = (HttpURLConnection)HttpConfigurable.getInstance().openConnection(url.toString());
 
-    connection.setReadTimeout(10 * 1000);
-    connection.setConnectTimeout(10 * 1000);
     connection.setRequestMethod(HTTP_POST);
     connection.setDoInput(true);
     connection.setDoOutput(true);

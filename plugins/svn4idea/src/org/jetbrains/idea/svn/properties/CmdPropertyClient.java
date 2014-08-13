@@ -1,5 +1,7 @@
 package org.jetbrains.idea.svn.properties;
 
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +32,8 @@ import java.util.Map;
  */
 public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
 
+  private static final Logger LOG = Logger.getInstance(CmdPropertyClient.class);
+
   @Nullable
   @Override
   public PropertyValue getProperty(@NotNull SvnTarget target,
@@ -57,7 +61,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     parameters.add("--xml");
 
     CommandExecutor command = execute(myVcs, target, SvnCommandName.propget, parameters, null);
-    PropertyData data = parseSingleProperty(target, command.getOutput());
+    PropertyData data = parseSingleProperty(target, command);
 
     return data != null ? data.getValue() : null;
   }
@@ -74,7 +78,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     fillListParameters(target, revision, depth, parameters, false);
 
     CommandExecutor command = execute(myVcs, target, SvnCommandName.propget, parameters, null);
-    parseOutput(target, command.getOutput(), handler);
+    parseOutput(target, command, handler);
   }
 
   @Override
@@ -86,7 +90,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     fillListParameters(target, revision, depth, parameters, true);
 
     CommandExecutor command = execute(myVcs, target, SvnCommandName.proplist, parameters, null);
-    parseOutput(target, command.getOutput(), handler);
+    parseOutput(target, command, handler);
   }
 
   @Override
@@ -183,7 +187,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
   }
 
   @Nullable
-  private PropertyData parseSingleProperty(SvnTarget target, String output) throws VcsException {
+  private PropertyData parseSingleProperty(SvnTarget target, @NotNull CommandExecutor command) throws VcsException {
     final PropertyData[] data = new PropertyData[1];
     PropertyConsumer handler = new PropertyConsumer() {
       @Override
@@ -202,14 +206,14 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
       }
     };
 
-    parseOutput(target, output, handler);
+    parseOutput(target, command, handler);
 
     return data[0];
   }
 
-  private static void parseOutput(SvnTarget target, String output, PropertyConsumer handler) throws VcsException {
+  private static void parseOutput(SvnTarget target, @NotNull CommandExecutor command, PropertyConsumer handler) throws VcsException {
     try {
-      Properties properties = CommandUtil.parse(output, Properties.class);
+      Properties properties = CommandUtil.parse(command.getOutput(), Properties.class);
 
       if (properties != null) {
         for (Target childInfo : properties.targets) {
@@ -227,6 +231,8 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
       }
     }
     catch (JAXBException e) {
+      LOG.error("Could not parse properties. Command: " + command.getCommandText() + ", Warning: " + command.getErrorOutput(),
+                new Attachment("output.xml", command.getOutput()));
       throw new VcsException(e);
     }
     catch (SVNException e) {

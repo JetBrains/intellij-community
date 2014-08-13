@@ -38,6 +38,7 @@ public class UsageViewPresentation {
   private boolean myShowCancelButton = false;
   private boolean myOpenInNewTab = true;
   private boolean myCodeUsages = true;
+  private boolean myUsageTypeFilteringAvailable;
   private String myUsagesWord = UsageViewBundle.message("usage.name");
 
   private String myTabName;
@@ -197,6 +198,14 @@ public class UsageViewPresentation {
 
   public void setMergeDupLinesAvailable(boolean mergeDupLinesAvailable) {
     myMergeDupLinesAvailable = mergeDupLinesAvailable;
+  }
+
+  public boolean isUsageTypeFilteringAvailable() {
+    return myCodeUsages || myUsageTypeFilteringAvailable;
+  }
+
+  public void setUsageTypeFilteringAvailable(boolean usageTypeFilteringAvailable) {
+    myUsageTypeFilteringAvailable = usageTypeFilteringAvailable;
   }
 }
 

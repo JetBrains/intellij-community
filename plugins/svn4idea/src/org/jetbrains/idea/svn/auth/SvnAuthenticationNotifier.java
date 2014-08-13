@@ -223,7 +223,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
   /**
    * Bases on presence of notifications!
    */
-  public ThreeState isAuthenticatedFor(final VirtualFile vf) {
+  public ThreeState isAuthenticatedFor(@NotNull VirtualFile vf) {
     final WorkingCopy wcCopy = myRootsToWorkingCopies.getWcRoot(vf);
     if (wcCopy == null) return ThreeState.UNSURE;
 

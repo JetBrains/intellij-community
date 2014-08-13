@@ -113,21 +113,20 @@ public class ProgramRunnerUtil {
   public static void executeConfiguration(@NotNull Project project,
                                           @NotNull RunnerAndConfigurationSettings configuration,
                                           @NotNull Executor executor) {
-    ProgramRunner runner = getRunner(executor.getId(), configuration);
-    if (runner == null) {
-      LOG.error("Runner MUST not be null! Cannot find runner for " +
-                executor.getId() +
-                " and " +
-                configuration.getConfiguration().getFactory().getName());
+    ExecutionEnvironmentBuilder builder;
+    try {
+      builder = ExecutionEnvironmentBuilder.create(executor, configuration);
+    }
+    catch (ExecutionException e) {
+      LOG.error(e);
       return;
     }
-    ExecutionEnvironment environment = new ExecutionEnvironmentBuilder(project, executor)
-      .runnerAndSettings(runner, configuration)
-      .contentToReuse(null)
-      .dataContext(null)
-      .target(ExecutionTargetManager.getActiveTarget(project))
-      .build();
-    executeConfiguration(environment, true, true);
+
+    executeConfiguration(builder
+                           .contentToReuse(null)
+                           .dataContext(null)
+                           .activeTarget()
+                           .build(), true, true);
   }
 
   public static Icon getConfigurationIcon(final RunnerAndConfigurationSettings settings,

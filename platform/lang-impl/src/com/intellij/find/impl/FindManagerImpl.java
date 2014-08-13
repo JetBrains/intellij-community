@@ -387,7 +387,8 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       if (input == null || !input.isStringFound()) return true;
       NavigableMap<Integer, Integer> map = mySkipRangesSet.headMap(input.getStartOffset(), true);
       for(Map.Entry<Integer, Integer> e:map.descendingMap().entrySet()) {
-        if (e.getKey() <= input.getStartOffset() && e.getValue() >= input.getEndOffset()) return false;
+        // [e.key, e.value] intersect with [input.start, input.end]
+        if (e.getKey() <= input.getStartOffset() && (input.getStartOffset() <= e.getValue() || e.getValue() >= input.getEndOffset())) return false;
         if (e.getValue() <= input.getStartOffset()) break;
       }
       return true;
