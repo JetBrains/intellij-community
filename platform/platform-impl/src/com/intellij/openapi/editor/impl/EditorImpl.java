@@ -2765,8 +2765,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (hEnd >= lEnd) {
         FoldRegion collapsedFolderAt = myFoldingModel.getCollapsedRegionAtOffset(start);
         if (collapsedFolderAt == null) {
-          drawStringWithSoftWraps(g, chars, start, lEnd - lIterator.getSeparatorLength(), position, clip, effectColor,
-                                  effectType, fontType, currentColor, logicalPosition);
+          int i = drawStringWithSoftWraps(g, chars, start, lEnd - lIterator.getSeparatorLength(), position, clip, effectColor,
+                                                effectType, fontType, currentColor, logicalPosition);
+          for (EditorLinePainter painter : EditorLinePainter.EP_NAME.getExtensions()) {
+            Collection<LineExtensionInfo> extensions = painter.getLineExtensions(myProject, getVirtualFile(), lIterator.getLineNumber());
+            if (extensions != null && !extensions.isEmpty()) {
+              for (LineExtensionInfo info : extensions) {
+                drawStringWithSoftWraps(g, info.getText(), 0, info.getText().length(), position, clip,
+                                        info.getEffectColor() == null ? effectColor : info.getEffectColor(),
+                                        info.getEffectType() == null ? effectType : info.getEffectType(),
+                                        info.getFontType(),
+                                        info.getColor() == null ? currentColor : info.getColor(),
+                                        logicalPosition);
+              }
+            }
+          }
+
           position.x = 0;
           if (position.y > clip.y + clip.height) {
             break;
