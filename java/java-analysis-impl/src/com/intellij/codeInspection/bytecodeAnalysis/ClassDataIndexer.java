@@ -15,10 +15,7 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
-import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
-import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph;
-import com.intellij.codeInspection.bytecodeAnalysis.asm.LeakingParametersAnalysis;
-import com.intellij.codeInspection.bytecodeAnalysis.asm.OriginsAnalysis;
+import com.intellij.codeInspection.bytecodeAnalysis.asm.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -132,7 +129,7 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
         try {
           final ControlFlowGraph graph = cfg.buildControlFlowGraph(className, methodNode);
           if (graph.transitions.length > 0) {
-            final DFSTree dfs = cfg.buildDFSTree(graph.transitions, graph.edgeCount);
+            final DFSTree dfs = DFSTree.build(graph.transitions, graph.edgeCount);
             boolean complex = !dfs.back.isEmpty();
             if (!complex) {
               for (int[] transition : graph.transitions) {
