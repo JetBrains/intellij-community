@@ -88,28 +88,32 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
                                                   final Editor editor,
                                                   final TypeMigrationRules rules,
                                                   final PsiElement root) {
+    final PsiFile containingFile = root.getContainingFile();
     final TypeMigrationProcessor processor = new TypeMigrationProcessor(project, root, rules) {
       @Override
       public void performRefactoring(final UsageInfo[] usages) {
         super.performRefactoring(usages);
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            final List<PsiElement> result = new ArrayList<PsiElement>();
-            for (UsageInfo usage : usages) {
-              final PsiElement element = usage.getElement();
-              if (element instanceof PsiMethod) {
-                result.add(((PsiMethod)element).getReturnTypeElement());
+        if (editor != null) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              final List<PsiElement> result = new ArrayList<PsiElement>();
+              for (UsageInfo usage : usages) {
+                final PsiElement element = usage.getElement();
+                if (element == null || containingFile != element.getContainingFile()) continue;
+                if (element instanceof PsiMethod) {
+                  result.add(((PsiMethod)element).getReturnTypeElement());
+                }
+                else if (element instanceof PsiVariable) {
+                  result.add(((PsiVariable)element).getTypeElement());
+                }
+                else {
+                  result.add(element);
+                }
               }
-              else if (element instanceof PsiVariable) {
-                result.add(((PsiVariable)element).getTypeElement());
-              }
-              else if (element != null) {
-                result.add(element);
-              }
+              RefactoringUtil.highlightAllOccurrences(project, PsiUtilCore.toPsiElementArray(result), editor);
             }
-            if (editor != null) RefactoringUtil.highlightAllOccurrences(project, PsiUtilCore.toPsiElementArray(result), editor);
-          }
-        });
+          });
+        }
       }
     };
     processor.run();
