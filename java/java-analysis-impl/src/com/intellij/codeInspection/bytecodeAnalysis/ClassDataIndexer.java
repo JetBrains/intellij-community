@@ -141,9 +141,9 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
             }
 
             if (complex) {
-              // reducible?
-              if (dfs.back.isEmpty() || cfg.reducible(graph, dfs)) {
-                processBranchingMethod(method, methodNode, graph, dfs, argumentTypes, isReferenceResult, isInterestingResult, stable);
+              RichControlFlow richControlFlow = new RichControlFlow(graph, dfs);
+              if (richControlFlow.reducible()) {
+                processBranchingMethod(method, methodNode, richControlFlow, argumentTypes, isReferenceResult, isInterestingResult, stable);
                 return;
               }
               LOG.debug(method + ": CFG is not reducible");
@@ -189,8 +189,7 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
 
       private void processBranchingMethod(final Method method,
                                           final MethodNode methodNode,
-                                          final ControlFlowGraph graph,
-                                          final DFSTree dfs,
+                                          final RichControlFlow richControlFlow,
                                           Type[] argumentTypes,
                                           boolean isReferenceResult,
                                           boolean isInterestingResult,
@@ -209,13 +208,11 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
         boolean[] leakingParameters =
           leakingParametersAndFrames != null ? leakingParametersAndFrames.first : null;
 
-        final RichControlFlow richControlFlow = new RichControlFlow(graph, dfs);
-
         final NullableLazyValue<boolean[]> origins = new NullableLazyValue<boolean[]>() {
           @Override
           protected boolean[] compute() {
             try {
-              return OriginsAnalysis.resultOrigins(leakingParametersAndFrames.second, methodNode.instructions, graph);
+              return OriginsAnalysis.resultOrigins(leakingParametersAndFrames.second, methodNode.instructions, richControlFlow.controlFlow);
             }
             catch (AnalyzerException e) {
               LOG.debug("when processing " + method + " in " + presentableUrl, e);

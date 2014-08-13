@@ -17,11 +17,8 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph.Edge;
-import com.intellij.codeInspection.bytecodeAnalysis.asm.DFSTree;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.FramelessAnalyzer;
 import gnu.trove.TIntArrayList;
-import gnu.trove.TIntHashSet;
-import gnu.trove.TIntIterator;
 import org.jetbrains.org.objectweb.asm.tree.MethodNode;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 
@@ -31,80 +28,6 @@ import java.util.Set;
 final class cfg {
   static ControlFlowGraph buildControlFlowGraph(String className, MethodNode methodNode) throws AnalyzerException {
     return new ControlFlowBuilder(className, methodNode).buildCFG();
-  }
-
-  // Tarjan. Testing flow graph reducibility.
-  // Journal of Computer and System Sciences 9.3 (1974): 355-365.
-  static boolean reducible(ControlFlowGraph cfg, DFSTree dfs) {
-    int size = cfg.transitions.length;
-    boolean[] loopEnters = dfs.loopEnters;
-    TIntHashSet[] cycleIncomings = new TIntHashSet[size];
-    // really this may be array, since dfs already ensures no duplicates
-    TIntArrayList[] nonCycleIncomings = new TIntArrayList[size];
-    int[] collapsedTo = new int[size];
-    int[] queue = new int[size];
-    int top;
-    for (int i = 0; i < size; i++) {
-      if (loopEnters[i]) {
-        cycleIncomings[i] = new TIntHashSet();
-      }
-      nonCycleIncomings[i] = new TIntArrayList();
-      collapsedTo[i] = i;
-    }
-
-    // from whom back connections
-    for (Edge edge : dfs.back) {
-      cycleIncomings[edge.to].add(edge.from);
-    }
-    // from whom ordinary connections
-    for (Edge edge : dfs.nonBack) {
-      nonCycleIncomings[edge.to].add(edge.from);
-    }
-
-    for (int w = size - 1; w >= 0 ; w--) {
-      top = 0;
-      // NB - it is modified later!
-      TIntHashSet p = cycleIncomings[w];
-      if (p == null) {
-        continue;
-      }
-      TIntIterator iter = p.iterator();
-      while (iter.hasNext()) {
-        queue[top++] = iter.next();
-      }
-
-      while (top > 0) {
-        int x = queue[--top];
-        TIntArrayList incoming = nonCycleIncomings[x];
-        for (int i = 0; i < incoming.size(); i++) {
-          int y1 = collapsedTo[incoming.getQuick(i)];
-          if (!dfs.isDescendant(y1, w)) {
-            return false;
-          }
-          if (y1 != w && p.add(y1)) {
-            queue[top++] = y1;
-          }
-        }
-      }
-
-      iter = p.iterator();
-      while (iter.hasNext()) {
-        collapsedTo[iter.next()] = w;
-      }
-    }
-
-    return true;
-  }
-
-}
-
-final class RichControlFlow {
-  final ControlFlowGraph controlFlow;
-  final DFSTree dfsTree;
-
-  RichControlFlow(ControlFlowGraph controlFlow, DFSTree dfsTree) {
-    this.controlFlow = controlFlow;
-    this.dfsTree = dfsTree;
   }
 }
 

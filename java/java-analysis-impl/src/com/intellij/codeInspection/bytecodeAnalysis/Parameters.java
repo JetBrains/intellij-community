@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph.Edge;
+import com.intellij.codeInspection.bytecodeAnalysis.asm.RichControlFlow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.tree.AbstractInsnNode;
