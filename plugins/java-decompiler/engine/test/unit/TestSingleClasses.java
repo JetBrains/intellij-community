@@ -63,18 +63,24 @@ public class TestSingleClasses {
     		String file_java_name = file_name+".java"; 
 
     		File reference_file = new File(current_path + "/test/unit/results/" + file_name + ".dec");  
+    		if(!reference_file.exists()) {
+    			return; // no reference file for some reason, not yet created 
+    		}
+    		
     		File temp_dir = new File(Files.createTempDirectory("tempdec_"+file_name).toString());
     	 	
     		// decompile it
     		decompiler.decompileContext(temp_dir);
     		
     		// get both the decompiled file content and the reference
-    		// NOTE: reference files are saved with Windows-style line endings. Convert them if you are decompiling to Unix. 
-    		String decompiled_content = new String(Files.readAllBytes(new File(temp_dir, file_java_name).toPath()), "UTF-8");
+    		// NOTE: reference files are saved with Windows-style line endings. Convert them if you are decompiling to Unix.
+    		File decompiled_file = new File(temp_dir, file_java_name);
+    		String decompiled_content = new String(Files.readAllBytes(decompiled_file.toPath()), "UTF-8");
     		String reference_content = new String(Files.readAllBytes(reference_file.toPath()), "UTF-8");
     		
     		// clean up
-    		//temp_dir.delete();
+    		decompiled_file.delete();
+    		temp_dir.delete();
 
     		// compare file content with the reference
     		assertEquals(decompiled_content, reference_content);

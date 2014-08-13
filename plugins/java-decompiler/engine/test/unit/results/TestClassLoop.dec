@@ -3,6 +3,12 @@ package unit.classes;
 
 public class TestClassLoop {
 
+   public static void testSimpleInfinite() {
+      while(true) {
+         System.out.println();
+      }
+   }
+
    public static void testFinally() {
       boolean var0 = Math.random() > 0.0D;
 
