@@ -23,10 +23,11 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
-import org.jetbrains.idea.svn.integrate.SvnBranchItem;
+import org.jetbrains.idea.svn.branchConfig.SvnBranchItem;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import java.io.File;

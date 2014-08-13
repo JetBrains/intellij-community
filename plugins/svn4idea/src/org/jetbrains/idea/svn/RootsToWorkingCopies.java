@@ -105,7 +105,7 @@ public class RootsToWorkingCopies implements VcsListener {
 
   @CalledInBackground
   @Nullable
-  public WorkingCopy getWcRoot(final VirtualFile root) {
+  public WorkingCopy getWcRoot(@NotNull VirtualFile root) {
     assert (! ApplicationManager.getApplication().isDispatchThread()) || ApplicationManager.getApplication().isUnitTestMode();
 
     synchronized (myLock) {
@@ -117,7 +117,7 @@ public class RootsToWorkingCopies implements VcsListener {
   }
 
   @Nullable
-  private WorkingCopy calculateRoot(final VirtualFile root) {
+  private WorkingCopy calculateRoot(@NotNull VirtualFile root) {
     File workingCopyRoot = SvnUtil.getWorkingCopyRootNew(new File(root.getPath()));
     WorkingCopy workingCopy = null;
 

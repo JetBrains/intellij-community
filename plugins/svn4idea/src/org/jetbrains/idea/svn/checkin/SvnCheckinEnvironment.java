@@ -124,7 +124,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
                                String comment,
                                List<VcsException> exception,
                                final Set<String> feedback,
-                               final WorkingCopyFormat format)
+                               @NotNull WorkingCopyFormat format)
   throws VcsException {
     if (committables.isEmpty()) {
       return;

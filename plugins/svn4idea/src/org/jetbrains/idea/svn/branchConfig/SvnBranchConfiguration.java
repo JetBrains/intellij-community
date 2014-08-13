@@ -14,22 +14,34 @@
  * limitations under the License.
  */
 
-package org.jetbrains.idea.svn;
+package org.jetbrains.idea.svn.branchConfig;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 /**
+ * Default constructor and setters are necessary for serialization purposes.
+ *
  * @author yole
  */
+@SuppressWarnings("UnusedDeclaration")
 public class SvnBranchConfiguration {
   private String myTrunkUrl;
-  private List<String> myBranchUrls;
+  @NotNull private List<String> myBranchUrls;
   private boolean myUserinfoInUrl;
 
   public SvnBranchConfiguration() {
     myBranchUrls = new ArrayList<String>();
+  }
+
+  public SvnBranchConfiguration(String trunkUrl, @NotNull List<String> branchUrls, boolean userinfoInUrl) {
+    myTrunkUrl = trunkUrl;
+    myBranchUrls = branchUrls;
+    Collections.sort(myBranchUrls);
+    myUserinfoInUrl = userinfoInUrl;
   }
 
   public boolean isUserinfoInUrl() {
@@ -39,8 +51,8 @@ public class SvnBranchConfiguration {
   public void setUserinfoInUrl(final boolean userinfoInUrl) {
     myUserinfoInUrl = userinfoInUrl;
   }
-  
-  public void setBranchUrls(final List<String> branchUrls) {
+
+  public void setBranchUrls(@NotNull List<String> branchUrls) {
     myBranchUrls = branchUrls;
     Collections.sort(myBranchUrls);
   }
@@ -53,6 +65,7 @@ public class SvnBranchConfiguration {
     return myTrunkUrl;
   }
 
+  @NotNull
   public List<String> getBranchUrls() {
     return myBranchUrls;
   }

@@ -15,7 +15,7 @@
  */
 
 
-package org.jetbrains.idea.svn.actions;
+package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Application;
@@ -35,10 +35,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.actions.BasicAction;
 import org.jetbrains.idea.svn.checkin.CommitEventHandler;
 import org.jetbrains.idea.svn.checkin.IdeaCommitHandler;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.jetbrains.idea.svn.dialogs.CreateBranchOrTagDialog;
 import org.jetbrains.idea.svn.update.AutoSvnUpdater;
 import org.jetbrains.idea.svn.update.SingleRootSwitcher;
 import org.tmatesoft.svn.core.SVNErrorCode;

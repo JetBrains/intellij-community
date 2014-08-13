@@ -35,6 +35,8 @@ import java.util.Date;
  */
 public class Info extends BaseNodeDescription {
 
+  public static final String SCHEDULE_ADD = "add";
+
   private final File myFile;
   private final String myPath;
   private final SVNURL myURL;

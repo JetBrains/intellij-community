@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn;
+package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
@@ -23,9 +23,6 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.branchConfig.InfoStorage;
-import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
-import org.jetbrains.idea.svn.integrate.SvnBranchItem;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -39,13 +36,13 @@ import java.util.*;
  * Date: 8/24/11
  * Time: 1:21 PM
  */
-public class SvnLoadedBrachesStorage {
+public class SvnLoadedBranchesStorage {
   private final Object myLock;
   private SmallMapSerializer<String, Map<String, Collection<SvnBranchItem>>> myState;
   private final File myFile;
   private final Project myProject;
 
-  public SvnLoadedBrachesStorage(final Project project) {
+  public SvnLoadedBranchesStorage(final Project project) {
     myProject = project;
     final File vcsFile = new File(PathManager.getSystemPath(), "vcs");
     File file = new File(vcsFile, "svn_branches");

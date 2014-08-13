@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.integrate;
+package org.jetbrains.idea.svn.branchConfig;
 
 import java.util.Date;
 

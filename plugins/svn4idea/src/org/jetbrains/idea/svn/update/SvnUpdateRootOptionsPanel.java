@@ -22,7 +22,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.FilePath;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
-import org.jetbrains.idea.svn.actions.SelectBranchPopup;
+import org.jetbrains.idea.svn.branchConfig.SelectBranchPopup;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.dialogs.SelectLocationDialog;
 import org.jetbrains.idea.svn.history.SvnChangeList;

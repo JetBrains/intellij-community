@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowserUseCase
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.branchConfig.SelectBranchPopup;
 import org.jetbrains.idea.svn.integrate.MergerFactory;
 import org.jetbrains.idea.svn.integrate.SelectedCommittedStuffChecker;
 import org.jetbrains.idea.svn.integrate.SvnIntegrateChangesActionPerformer;

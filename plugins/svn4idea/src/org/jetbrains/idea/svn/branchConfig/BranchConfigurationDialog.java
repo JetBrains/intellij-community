@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.idea.svn.dialogs;
+package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.project.Project;
@@ -32,12 +32,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
-import org.jetbrains.idea.svn.branchConfig.InfoReliability;
-import org.jetbrains.idea.svn.branchConfig.InfoStorage;
-import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigManager;
-import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.jetbrains.idea.svn.integrate.SvnBranchItem;
+import org.jetbrains.idea.svn.dialogs.SelectLocationDialog;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 
@@ -59,7 +55,7 @@ public class BranchConfigurationDialog extends DialogWrapper {
   private JList myLocationList;
   private JPanel myListPanel;
   private JLabel myErrorPrompt;
-  private final SvnBranchConfigManager mySvnBranchConfigManager;
+  private final NewRootBunch mySvnBranchConfigManager;
   private final VirtualFile myRoot;
 
   public BranchConfigurationDialog(@NotNull final Project project,
@@ -115,7 +111,7 @@ public class BranchConfigurationDialog extends DialogWrapper {
                 if (!configuration.getBranchUrls().contains(selectedUrl)) {
                   configuration
                     .addBranches(selectedUrl, new InfoStorage<List<SvnBranchItem>>(new ArrayList<SvnBranchItem>(), InfoReliability.empty));
-                  mySvnBranchConfigManager.reloadBranches(myRoot, selectedUrl, null);
+                  mySvnBranchConfigManager.reloadBranchesAsync(myRoot, selectedUrl, InfoReliability.setByUser);
                   listModel.fireItemAdded();
                   myLocationList.setSelectedIndex(listModel.getSize() - 1);
                 }

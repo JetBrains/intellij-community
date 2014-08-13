@@ -19,22 +19,25 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.changes.VcsDirtyScope;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class SvnScopeZipper implements Runnable {
-  private final VcsDirtyScope myIn;
-  private final List<FilePath> myRecursiveDirs;
-  // instead of set and heavy equals of file path
-  private final Map<String, MyDirNonRecursive> myNonRecursiveDirs;
-  // those alone in their immediate parent
-  private final List<FilePath> mySingleFiles;
 
-  public SvnScopeZipper(final VcsDirtyScope in) {
+  @NotNull private final VcsDirtyScope myIn;
+  @NotNull private final List<FilePath> myRecursiveDirs;
+  // instead of set and heavy equals of file path
+  @NotNull private final Map<String, MyDirNonRecursive> myNonRecursiveDirs;
+
+  public SvnScopeZipper(@NotNull VcsDirtyScope in) {
     myIn = in;
-    myRecursiveDirs = new ArrayList<FilePath>(in.getRecursivelyDirtyDirectories());
-    myNonRecursiveDirs = new HashMap<String, MyDirNonRecursive>();
-    mySingleFiles = new ArrayList<FilePath>();
+    myRecursiveDirs = ContainerUtil.newArrayList(in.getRecursivelyDirtyDirectories());
+    myNonRecursiveDirs = ContainerUtil.newHashMap();
   }
 
   public void run() {
@@ -46,85 +49,72 @@ public class SvnScopeZipper implements Runnable {
         final VirtualFile vFile = file.getVirtualFile();
         // todo take care about this 'not valid' - right now keeping things as they used to be
         final MyDirNonRecursive me = createOrGet(file);
-        me.setInterestedInParent(true);
         if (vFile != null && vFile.isValid()) {
           for (VirtualFile child : vFile.getChildren()) {
             me.add(new FilePathImpl(child));
           }
         }
       }
-      final FilePath parent = file.getParentPath();
-      if (parent != null) {
-        final MyDirNonRecursive item = createOrGet(parent);
-        item.add(file);
+      else {
+        final FilePath parent = file.getParentPath();
+        if (parent != null) {
+          final MyDirNonRecursive item = createOrGet(parent);
+          item.add(file);
+        }
       }
     }
-
-    // move alone files into a separate list
-    /*for (Iterator<Map.Entry<String, MyDirNonRecursive>> iterator = myNonRecursiveDirs.entrySet().iterator(); iterator.hasNext();) {
-      final Map.Entry<String, MyDirNonRecursive> entry = iterator.next();
-      final MyDirNonRecursive item = entry.getValue();
-      if ((! item.isInterestedInParent()) && (item.getChildrenList().size() == 1)) {
-        iterator.remove();
-        mySingleFiles.add(item.getChildrenList().iterator().next());
-      }
-    }*/
   }
 
-  private MyDirNonRecursive createOrGet(final FilePath parent) {
-    final String key = getKey(parent);
-    final MyDirNonRecursive result = myNonRecursiveDirs.get(key);
-    if (result != null) return result;
-    final MyDirNonRecursive newItem = new MyDirNonRecursive(parent);
-    myNonRecursiveDirs.put(key, newItem);
-    return newItem;
+  @NotNull
+  private MyDirNonRecursive createOrGet(@NotNull FilePath parent) {
+    String key = getKey(parent);
+    MyDirNonRecursive result = myNonRecursiveDirs.get(key);
+
+    if (result == null) {
+      result = new MyDirNonRecursive(parent);
+      myNonRecursiveDirs.put(key, result);
+    }
+
+    return result;
   }
 
+  @NotNull
   public List<FilePath> getRecursiveDirs() {
     return myRecursiveDirs;
   }
 
+  @NotNull
   public Map<String, MyDirNonRecursive> getNonRecursiveDirs() {
     return myNonRecursiveDirs;
   }
 
-  public List<FilePath> getSingleFiles() {
-    return mySingleFiles;
+  public static String getKey(@NotNull FilePath path) {
+    return path.getPresentableUrl();
   }
 
   static class MyDirNonRecursive {
-    private boolean myInterestedInParent;
-    private final FilePath myDir;
+
+    @NotNull private final FilePath myDir;
     // instead of set and heavy equals of file path
-    private final Map<String, FilePath> myChildren;
+    @NotNull private final Map<String, FilePath> myChildren;
 
-    private MyDirNonRecursive(final FilePath dir) {
+    private MyDirNonRecursive(@NotNull FilePath dir) {
       myDir = dir;
-      myChildren = new HashMap<String, FilePath>();
+      myChildren = ContainerUtil.newHashMap();
     }
 
-    public boolean isInterestedInParent() {
-      return myInterestedInParent;
-    }
-
-    public void setInterestedInParent(boolean interestedInParent) {
-      myInterestedInParent = interestedInParent;
-    }
-
-    public void add(final FilePath path) {
+    public void add(@NotNull FilePath path) {
       myChildren.put(getKey(path), path);
     }
 
+    @NotNull
     public Collection<FilePath> getChildrenList() {
       return myChildren.values();
     }
 
+    @NotNull
     public FilePath getDir() {
       return myDir;
     }
-  }
-
-  public static String getKey(final FilePath path) {
-    return path.getPresentableUrl();
   }
 }

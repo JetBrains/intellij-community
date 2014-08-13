@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.dialogs;
+package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,10 +33,9 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.RootUrlInfo;
-import org.jetbrains.idea.svn.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
+import org.jetbrains.idea.svn.dialogs.SelectLocationDialog;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.update.SvnRevisionPanel;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
