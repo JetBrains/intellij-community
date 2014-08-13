@@ -50,7 +50,6 @@ import com.intellij.ui.content.*;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.Topic;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -60,8 +59,6 @@ import javax.swing.*;
 import java.util.*;
 
 public class RunContentManagerImpl implements RunContentManager, Disposable {
-  public static final Topic<RunContentWithExecutorListener> RUN_CONTENT_TOPIC =
-    Topic.create("Run Content", RunContentWithExecutorListener.class);
   public static final Key<Boolean> ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY = Key.create("ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY");
   private static final Logger LOG = Logger.getInstance(RunContentManagerImpl.class);
   private static final Key<RunContentDescriptor> DESCRIPTOR_KEY = Key.create("Descriptor");
@@ -182,7 +179,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   }
 
   private RunContentWithExecutorListener getSyncPublisher() {
-    return myProject.getMessageBus().syncPublisher(RUN_CONTENT_TOPIC);
+    return myProject.getMessageBus().syncPublisher(TOPIC);
   }
 
   @Override
@@ -546,7 +543,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   @Override
   public void addRunContentListener(@NotNull final RunContentListener listener, final Executor executor) {
     final Disposable disposable = Disposer.newDisposable();
-    myProject.getMessageBus().connect(disposable).subscribe(RUN_CONTENT_TOPIC, new RunContentWithExecutorListener() {
+    myProject.getMessageBus().connect(disposable).subscribe(TOPIC, new RunContentWithExecutorListener() {
       @Override
       public void contentSelected(RunContentDescriptor descriptor, @NotNull Executor executor2) {
         if (executor2.equals(executor)) {
@@ -567,7 +564,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   @Override
   public void addRunContentListener(@NotNull final RunContentListener listener) {
     final Disposable disposable = Disposer.newDisposable();
-    myProject.getMessageBus().connect(disposable).subscribe(RUN_CONTENT_TOPIC, new RunContentWithExecutorListener() {
+    myProject.getMessageBus().connect(disposable).subscribe(TOPIC, new RunContentWithExecutorListener() {
       @Override
       public void contentSelected(RunContentDescriptor descriptor, @NotNull Executor executor) {
         listener.contentSelected(descriptor);
