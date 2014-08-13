@@ -72,4 +72,9 @@ public class PyCalleeFunctionTreeStructure extends HierarchyTreeStructure {
 
     return ArrayUtil.toObjectArray(descriptors);
   }
+
+  @Override
+  public boolean isAlwaysShowPlus() {
+    return true;
+  }
 }
