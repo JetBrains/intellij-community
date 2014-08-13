@@ -229,6 +229,20 @@ class Foo {
     myFixture.assertPreferredCompletionItems 0, 'param', 'param param2'
   }
 
+  public void "test fqns in package info"() {
+    myFixture.configureByText "package-info.java", '''
+/**
+ * {@link java.util.Map#putA<caret>}
+ */
+'''
+    myFixture.complete(CompletionType.BASIC)
+    myFixture.checkResult '''
+/**
+ * {@link java.util.Map#putAll(java.util.Map)}
+ */
+'''
+  }
+
   public void "test suggest same param descriptions"() {
     myFixture.configureByText "a.java", '''
 class Foo {
