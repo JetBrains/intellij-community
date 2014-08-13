@@ -4,5 +4,5 @@ result = divide 'number' by two
 
 remainder = calculate the remainder
 
-print("relult = " + str(result))
+print("result = " + str(result))
 print("remainder = " + str(remainder))
