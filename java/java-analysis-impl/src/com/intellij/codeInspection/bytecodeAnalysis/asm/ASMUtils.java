@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInspection.bytecodeAnalysis;
+package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
 import org.jetbrains.org.objectweb.asm.Type;
 
@@ -21,16 +21,16 @@ import org.jetbrains.org.objectweb.asm.Type;
  * @author lambdamix
  */
 public class ASMUtils {
-  static boolean isReferenceType(Type tp) {
+  public static boolean isReferenceType(Type tp) {
     int sort = tp.getSort();
     return sort == Type.OBJECT || sort == Type.ARRAY;
   }
 
-  static boolean isBooleanType(Type tp) {
+  public static boolean isBooleanType(Type tp) {
     return Type.BOOLEAN_TYPE.equals(tp);
   }
 
-  static int getSizeFast(String desc) {
+  public static int getSizeFast(String desc) {
     switch (desc.charAt(0)) {
       case 'J':
       case 'D':
@@ -40,7 +40,7 @@ public class ASMUtils {
     }
   }
 
-  static int getReturnSizeFast(String methodDesc) {
+  public static int getReturnSizeFast(String methodDesc) {
     switch (methodDesc.charAt(methodDesc.indexOf(')') + 1)) {
       case 'J':
       case 'D':

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
+import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.FramelessAnalyzer;
 import com.intellij.openapi.util.Pair;
 import gnu.trove.TIntArrayList;
