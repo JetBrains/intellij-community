@@ -18,10 +18,7 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
@@ -30,6 +27,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -48,13 +46,13 @@ public class SplitLineAction extends EditorAction {
     }
 
     @Override
-    public boolean isEnabled(Editor editor, DataContext dataContext) {
-      return getEnterHandler().isEnabled(editor, dataContext) &&
+    public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
+      return getEnterHandler().isEnabled(editor, caret, dataContext) &&
              !((EditorEx)editor).isEmbeddedIntoDialogWrapper();
     }
 
     @Override
-    public void executeWriteAction(Editor editor, DataContext dataContext) {
+    public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
       CopyPasteManager.getInstance().stopKillRings();
       final Document document = editor.getDocument();
       final RangeMarker rangeMarker =
@@ -77,7 +75,7 @@ public class SplitLineAction extends EditorAction {
       } else {
         DataManager.getInstance().saveInDataContext(dataContext, SPLIT_LINE_KEY, true);
         try {
-          getEnterHandler().execute(editor, dataContext);
+          getEnterHandler().execute(editor, caret, dataContext);
         }
         finally {
           DataManager.getInstance().saveInDataContext(dataContext, SPLIT_LINE_KEY, null);

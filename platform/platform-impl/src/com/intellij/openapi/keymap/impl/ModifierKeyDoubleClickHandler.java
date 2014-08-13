@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.containers.ConcurrentHashMap;
 import gnu.trove.TIntIntHashMap;
@@ -63,6 +64,9 @@ public class ModifierKeyDoubleClickHandler {
   public void registerAction(@NotNull String actionId,
                              int modifierKeyCode,
                              int actionKeyCode) {
+    if (SystemInfo.isMac && modifierKeyCode == KeyEvent.VK_CONTROL) {
+      modifierKeyCode = KeyEvent.VK_META;
+    }
     final MyDispatcher dispatcher = new MyDispatcher(actionId, modifierKeyCode, actionKeyCode);
     IdeEventQueue.EventDispatcher oldDispatcher = myDispatchers.put(actionId, dispatcher);
     IdeEventQueue.getInstance().addDispatcher(dispatcher, null);

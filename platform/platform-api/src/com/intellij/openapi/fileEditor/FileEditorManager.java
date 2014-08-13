@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -182,6 +183,13 @@ public abstract class FileEditorManager {
   public abstract Project getProject();
 
   public abstract void registerExtraEditorDataProvider(@NotNull EditorDataProvider provider, Disposable parentDisposable);
+
+  /**
+   * Returns data associated with given editor/caret context. Data providers are registered via
+   * {@link #registerExtraEditorDataProvider(EditorDataProvider, com.intellij.openapi.Disposable)} method.
+   */
+  @Nullable
+  public abstract Object getData(@NotNull String dataId, @NotNull Editor editor, @NotNull Caret caret);
 
   /**
    * Selects a specified file editor tab for the specified editor.
