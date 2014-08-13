@@ -368,43 +368,48 @@ public class FunctionExprent extends Exprent {
 			break;
 		case FUNCTION_AND:
 		case FUNCTION_OR:
-		case FUNCTION_XOR:
-			if(type1.type == CodeConstants.TYPE_BOOLEAN && 
-						((type1.convinfo & VarType.FALSEBOOLEAN) != 0 || type2.type != CodeConstants.TYPE_BOOLEAN)) {
-				result.addMinTypeExprent(param1, VarType.VARTYPE_BYTECHAR);
-			} 
-			if(type2.type == CodeConstants.TYPE_BOOLEAN && 
-					((type2.convinfo & VarType.FALSEBOOLEAN) != 0 || type1.type != CodeConstants.TYPE_BOOLEAN)) {
-				result.addMinTypeExprent(param2, VarType.VARTYPE_BYTECHAR);
+		case FUNCTION_XOR: 
+			{
+    			boolean param1_false_boolean = type1.isFalseBoolean() || (param1.type == Exprent.EXPRENT_CONST && !((ConstExprent)param1).hasBooleanValue()); 
+    			boolean param2_false_boolean = type1.isFalseBoolean() || (param2.type == Exprent.EXPRENT_CONST && !((ConstExprent)param2).hasBooleanValue()); 
+    
+    			if(param1_false_boolean || param2_false_boolean) {
+    				if(type1.type == CodeConstants.TYPE_BOOLEAN) {
+    					result.addMinTypeExprent(param1, VarType.VARTYPE_BYTECHAR);
+    				}
+    				
+    				if(type2.type == CodeConstants.TYPE_BOOLEAN) {
+    					result.addMinTypeExprent(param2, VarType.VARTYPE_BYTECHAR);
+    				}
+    			}
 			}
 			break;
 		case FUNCTION_EQ:
 		case FUNCTION_NE:
-			
-			if(type1.type == CodeConstants.TYPE_BOOLEAN) {
-				
-				if(type2.isStrictSuperset(type1)) {
-					result.addMinTypeExprent(param1, VarType.VARTYPE_BYTECHAR);
-				} else {
-					if(param1.type == Exprent.EXPRENT_CONST && !((ConstExprent)param1).hasBooleanValue()) {
-						if(param2.type != Exprent.EXPRENT_CONST || !((ConstExprent)param2).hasBooleanValue()) { // variable or not boolean constant
-							result.addMinTypeExprent(param1, VarType.VARTYPE_BYTECHAR);
-						}
-					}
-				}
-			}
-			
-			if(type2.type == CodeConstants.TYPE_BOOLEAN) {
-				
-				if(type1.isStrictSuperset(type2)) {
-					result.addMinTypeExprent(param2, VarType.VARTYPE_BYTECHAR);
-				} else {
-					if(param2.type == Exprent.EXPRENT_CONST && !((ConstExprent)param2).hasBooleanValue()) {
-						if(param1.type != Exprent.EXPRENT_CONST || !((ConstExprent)param1).hasBooleanValue()) { // variable or not boolean constant
-							result.addMinTypeExprent(param2, VarType.VARTYPE_BYTECHAR);
-						}
-					}
-				}
+			{
+    			if(type1.type == CodeConstants.TYPE_BOOLEAN) {
+    				
+    				if(type2.isStrictSuperset(type1)) {
+    					
+    					result.addMinTypeExprent(param1, VarType.VARTYPE_BYTECHAR);
+    					
+    				} else { // both are booleans
+    					
+    					boolean param1_false_boolean = type1.isFalseBoolean() || (param1.type == Exprent.EXPRENT_CONST && !((ConstExprent)param1).hasBooleanValue()); 
+    					boolean param2_false_boolean = type1.isFalseBoolean() || (param2.type == Exprent.EXPRENT_CONST && !((ConstExprent)param2).hasBooleanValue()); 
+    					
+    					if(param1_false_boolean || param2_false_boolean) {
+    						result.addMinTypeExprent(param1, VarType.VARTYPE_BYTECHAR);
+    						result.addMinTypeExprent(param2, VarType.VARTYPE_BYTECHAR);
+    					}
+    				}
+    				
+    			} else if(type2.type == CodeConstants.TYPE_BOOLEAN) {
+    				
+    				if(type1.isStrictSuperset(type2)) {
+    					result.addMinTypeExprent(param2, VarType.VARTYPE_BYTECHAR);
+    				} 
+    			}
 			}
 		}
 		

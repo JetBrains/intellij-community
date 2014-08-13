@@ -114,7 +114,11 @@ public class VarType {  // TODO: optimize switch
 		v.convinfo = convinfo;
 		return v;
 	}
-	
+
+	public boolean isFalseBoolean() {
+		return (convinfo & VarType.FALSEBOOLEAN) != 0;
+	}
+
 	public boolean isSuperset(VarType val) {
 
 		return this.equals(val) || this.isStrictSuperset(val);
@@ -165,6 +169,10 @@ public class VarType {  // TODO: optimize switch
 	// type1 and type2 must not be null
 	public static VarType getCommonMinType(VarType type1, VarType type2) {
 
+		if(type1.type == CodeConstants.TYPE_BOOLEAN && type2.type == CodeConstants.TYPE_BOOLEAN) { // special case booleans
+			return type1.isFalseBoolean() ? type2 : type1; 
+		}
+		
 		if(type1.isSuperset(type2)) {
 			return type2;
 		} else if(type2.isSuperset(type1)) {
@@ -188,6 +196,10 @@ public class VarType {  // TODO: optimize switch
 	
 	// type1 and type2 must not be null
 	public static VarType getCommonSupertype(VarType type1, VarType type2) {
+		
+		if(type1.type == CodeConstants.TYPE_BOOLEAN && type2.type == CodeConstants.TYPE_BOOLEAN) { // special case booleans
+			return type1.isFalseBoolean() ? type1 : type2; 
+		}
 		
 		if(type1.isSuperset(type2)) {
 			return type1;
@@ -232,12 +244,17 @@ public class VarType {  // TODO: optimize switch
 	}
 	
 	public boolean equals(Object o) {
-    if(o == this) return true;
-    if(o == null || !(o instanceof VarType)) return false;
+		
+		if(o == this) {
+			return true;
+		}
+		
+		if(o == null || !(o instanceof VarType)) {
+			return false;
+		}
 
-		VarType vt = (VarType)o;
-		return type == vt.type && arraydim == vt.arraydim &&
-				InterpreterUtil.equalObjects(value, vt.value);
+		VarType vt = (VarType) o;
+		return type == vt.type && arraydim == vt.arraydim && InterpreterUtil.equalObjects(value, vt.value);
 	}
 
 	private void parseTypeString(String strtype, boolean cltype) {
