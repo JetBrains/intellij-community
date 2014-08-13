@@ -18,7 +18,10 @@ package com.intellij.execution.runners;
 import com.intellij.diagnostic.logging.LogConsoleManagerBase;
 import com.intellij.diagnostic.logging.LogFilesManager;
 import com.intellij.diagnostic.logging.OutputFileUtil;
-import com.intellij.execution.*;
+import com.intellij.execution.DefaultExecutionResult;
+import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.SearchScopeProvider;
@@ -29,7 +32,6 @@ import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ContextHelpAction;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -127,6 +129,7 @@ public class RunContentBuilder extends LogConsoleManagerBase {
     myRunnerActions.add(action);
   }
 
+  @NotNull
   private RunContentDescriptor createDescriptor() {
     if (myExecutionResult == null) {
       throw new IllegalStateException("Missing ExecutionResult");
@@ -137,8 +140,6 @@ public class RunContentBuilder extends LogConsoleManagerBase {
       throw new IllegalStateException("Missing ExecutionEnvironment");
     }
 
-    final RunProfile profile = environment.getRunProfile();
-
     final ExecutionConsole console = myExecutionResult.getExecutionConsole();
     String runnerType = JAVA_RUNNER;
     if (console instanceof ExecutionConsoleEx) {
@@ -147,11 +148,15 @@ public class RunContentBuilder extends LogConsoleManagerBase {
         runnerType = JAVA_RUNNER + "." + id;
       }
     }
+
+    final RunProfile profile = environment.getRunProfile();
     myUi = RunnerLayoutUi.Factory.getInstance(getProject()).create(runnerType, getEnvironment().getExecutor().getId(), profile.getName(), this);
     myUi.getOptions().setMoveToGridActionEnabled(false).setMinimizeActionEnabled(false);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return new MyRunContentDescriptor(profile, myExecutionResult, myUi.getComponent(), this);
+      RunContentDescriptor contentDescriptor = new RunContentDescriptor(profile, myExecutionResult, myUi.getComponent());
+      Disposer.register(contentDescriptor, this);
+      return contentDescriptor;
     }
 
     if (console != null) {
@@ -166,7 +171,8 @@ public class RunContentBuilder extends LogConsoleManagerBase {
         OutputFileUtil.attachDumpListener((RunConfigurationBase)profile, myExecutionResult.getProcessHandler(), console);
       }
     }
-    MyRunContentDescriptor contentDescriptor = new MyRunContentDescriptor(profile, myExecutionResult, myUi.getComponent(), this);
+    RunContentDescriptor contentDescriptor = new RunContentDescriptor(profile, myExecutionResult, myUi.getComponent());
+    Disposer.register(contentDescriptor, this);
     myUi.getOptions().setLeftToolbar(createActionToolbar(contentDescriptor, myUi.getComponent()), ActionPlaces.UNKNOWN);
 
     if (profile instanceof RunConfigurationBase) {
@@ -277,21 +283,6 @@ public class RunContentBuilder extends LogConsoleManagerBase {
   @Override
   protected Icon getDefaultIcon() {
     return AllIcons.Debugger.Console;
-  }
-
-  private static class MyRunContentDescriptor extends RunContentDescriptor {
-    private final Disposable myAdditionalDisposable;
-
-    public MyRunContentDescriptor(final RunProfile profile, final ExecutionResult executionResult, final JComponent component, @NotNull Disposable additionalDisposable) {
-      super(executionResult.getExecutionConsole(), executionResult.getProcessHandler(), component, profile.getName(), profile.getIcon());
-      myAdditionalDisposable = additionalDisposable;
-    }
-
-    @Override
-    public void dispose() {
-      Disposer.dispose(myAdditionalDisposable);
-      super.dispose();
-    }
   }
 
   public static class ConsoleToFrontListener implements ConsoleViewImpl.ChangeListener {

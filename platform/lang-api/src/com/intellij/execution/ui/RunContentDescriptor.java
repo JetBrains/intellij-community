@@ -15,6 +15,8 @@
  */
 package com.intellij.execution.ui;
 
+import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.HelpIdProvider;
@@ -69,6 +71,10 @@ public class RunContentDescriptor implements Disposable, DataProvider {
                               @NotNull JComponent component,
                               String displayName) {
     this(executionConsole, processHandler, component, displayName, null);
+  }
+
+  public RunContentDescriptor(@NotNull RunProfile profile, @NotNull ExecutionResult executionResult, @NotNull JComponent component) {
+    this(executionResult.getExecutionConsole(), executionResult.getProcessHandler(), component, profile.getName(), profile.getIcon());
   }
 
   @Nullable

@@ -515,7 +515,6 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     return content.getUserData(DESCRIPTOR_KEY);
   }
 
-
   @Override
   @Nullable
   public ToolWindow getToolWindowByDescriptor(@NotNull final RunContentDescriptor descriptor) {
