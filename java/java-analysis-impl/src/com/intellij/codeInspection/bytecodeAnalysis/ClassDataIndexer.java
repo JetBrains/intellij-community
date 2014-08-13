@@ -127,7 +127,7 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
         final boolean stable = stableClass || (methodNode.access & STABLE_FLAGS) != 0 || "<init>".equals(methodNode.name);
 
         try {
-          final ControlFlowGraph graph = cfg.buildControlFlowGraph(className, methodNode);
+          final ControlFlowGraph graph = ControlFlowGraph.build(className, methodNode);
           if (graph.transitions.length > 0) {
             final DFSTree dfs = DFSTree.build(graph.transitions, graph.edgeCount);
             boolean complex = !dfs.back.isEmpty();

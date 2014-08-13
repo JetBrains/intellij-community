@@ -15,8 +15,12 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
+import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph.Edge;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.org.objectweb.asm.tree.MethodNode;
+import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -54,7 +58,7 @@ public final class ControlFlowGraph {
   public final boolean[] errors;
   public final Set<Edge> errorTransitions;
 
-  public ControlFlowGraph(String className, MethodNode methodNode, int[][] transitions, int edgeCount, boolean[] errors, Set<Edge> errorTransitions) {
+  ControlFlowGraph(String className, MethodNode methodNode, int[][] transitions, int edgeCount, boolean[] errors, Set<Edge> errorTransitions) {
     this.className = className;
     this.methodNode = methodNode;
     this.transitions = transitions;
@@ -62,4 +66,59 @@ public final class ControlFlowGraph {
     this.errors = errors;
     this.errorTransitions = errorTransitions;
   }
+
+  public static ControlFlowGraph build(String className, MethodNode methodNode) throws AnalyzerException {
+    return new ControlFlowBuilder(className, methodNode).buildCFG();
+  }
 }
+
+final class ControlFlowBuilder extends FramelessAnalyzer {
+  final String className;
+  final MethodNode methodNode;
+  final TIntArrayList[] transitions;
+  final Set<ControlFlowGraph.Edge> errorTransitions;
+  private final boolean[] errors;
+  private int edgeCount;
+
+  ControlFlowBuilder(String className, MethodNode methodNode) {
+    this.className = className;
+    this.methodNode = methodNode;
+    transitions = new TIntArrayList[methodNode.instructions.size()];
+    errors = new boolean[methodNode.instructions.size()];
+    for (int i = 0; i < transitions.length; i++) {
+      transitions[i] = new TIntArrayList();
+    }
+    errorTransitions = new HashSet<Edge>();
+  }
+
+  final ControlFlowGraph buildCFG() throws AnalyzerException {
+    if ((methodNode.access & (ACC_ABSTRACT | ACC_NATIVE)) == 0) {
+      analyze(methodNode);
+    }
+    int[][] resultTransitions = new int[transitions.length][];
+    for (int i = 0; i < resultTransitions.length; i++) {
+      resultTransitions[i] = transitions[i].toNativeArray();
+    }
+    return new ControlFlowGraph(className, methodNode, resultTransitions, edgeCount, errors, errorTransitions);
+  }
+
+  @Override
+  protected final void newControlFlowEdge(int insn, int successor) {
+    if (!transitions[insn].contains(successor)) {
+      transitions[insn].add(successor);
+      edgeCount++;
+    }
+  }
+
+  @Override
+  protected final boolean newControlFlowExceptionEdge(int insn, int successor) {
+    if (!transitions[insn].contains(successor)) {
+      transitions[insn].add(successor);
+      edgeCount++;
+      errorTransitions.add(new Edge(insn, successor));
+      errors[successor] = true;
+    }
+    return true;
+  }
+}
+
