@@ -487,22 +487,24 @@ public class AbstractPopup implements JBPopup {
 
     if (dominantArea != null) {
       final Component focusedComponent = getWndManager().getFocusedComponent(myProject);
-      Window window = SwingUtilities.windowForComponent(focusedComponent);
-      JLayeredPane layeredPane;
-      if (window instanceof JFrame) {
-        layeredPane = ((JFrame)window).getLayeredPane();
-      }
-      else if (window instanceof JDialog) {
-        layeredPane = ((JDialog)window).getLayeredPane();
-      }
-      else if (window instanceof JWindow) {
-        layeredPane = ((JWindow)window).getLayeredPane();
-      }
-      else {
-        throw new IllegalStateException("cannot find parent window: project=" + myProject + "; window=" + window);
-      }
+      if (focusedComponent != null) {
+        Window window = SwingUtilities.windowForComponent(focusedComponent);
+        JLayeredPane layeredPane;
+        if (window instanceof JFrame) {
+          layeredPane = ((JFrame)window).getLayeredPane();
+        }
+        else if (window instanceof JDialog) {
+          layeredPane = ((JDialog)window).getLayeredPane();
+        }
+        else if (window instanceof JWindow) {
+          layeredPane = ((JWindow)window).getLayeredPane();
+        }
+        else {
+          throw new IllegalStateException("cannot find parent window: project=" + myProject + "; window=" + window);
+        }
 
-      return relativePointWithDominantRectangle(layeredPane, dominantArea);
+        return relativePointWithDominantRectangle(layeredPane, dominantArea);
+      }
     }
 
     return JBPopupFactory.getInstance().guessBestPopupLocation(dataContext);
