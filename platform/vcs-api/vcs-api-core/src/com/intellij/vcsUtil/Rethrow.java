@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.history;
+package com.intellij.vcsUtil;
 
 /**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 10/12/12
- * Time: 12:06 PM
+ * @author irengrig
  */
-public interface LongRevisionNumber {
-  long getLongRevisionNumber();
+public class Rethrow {
+  private Rethrow() {
+  }
+
+  public static void reThrowRuntime(final Throwable t) {
+    if (t instanceof Error) {
+      throw (Error) t;
+    }
+    if (t instanceof RuntimeException) {
+      throw (RuntimeException) t;
+    }
+    throw new RuntimeException(t);
+  }
 }
