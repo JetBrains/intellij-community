@@ -1,8 +1,8 @@
 package ru.compscicenter.edide;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.EditorFactory;
@@ -12,6 +12,9 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileAdapter;
+import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -33,6 +36,7 @@ import ru.compscicenter.edide.ui.StudyToolWindowFactory;
 import javax.swing.*;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -137,6 +141,7 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
     });
   }
 
+
   private void addShortcut(@NotNull final String shortcutString, @NotNull final String actionIdString) {
     Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
     Shortcut studyActionShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(shortcutString), null);
@@ -167,6 +172,34 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
   @Override
   public void initComponent() {
     EditorFactory.getInstance().addEditorFactoryListener(new StudyEditorFactoryListener(), myProject);
+    ActionManager.getInstance().addAnActionListener(new AnActionListener() {
+      @Override
+      public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+        AnAction[] newGroupActions = ((ActionGroup)ActionManager.getInstance().getAction("NewGroup")).getChildren(null);
+        for (AnAction newAction : newGroupActions) {
+          if (newAction == action) {
+            myListener =  new FileCreatedListener();
+            VirtualFileManager.getInstance().addVirtualFileListener(myListener);
+            break;
+          }
+        }
+      }
+
+      @Override
+      public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+        AnAction[] newGroupActions = ((ActionGroup)ActionManager.getInstance().getAction("NewGroup")).getChildren(null);
+        for (AnAction newAction : newGroupActions) {
+          if (newAction == action) {
+            VirtualFileManager.getInstance().removeVirtualFileListener(myListener);
+          }
+        }
+      }
+
+      @Override
+      public void beforeEditorTyping(char c, DataContext dataContext) {
+
+      }
+    });
   }
 
   @Override
@@ -185,7 +218,6 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
   }
 
 
-
   @Nullable
   public TaskFile getTaskFile(@NotNull final VirtualFile file) {
     if (myCourse == null) {
@@ -199,13 +231,53 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
         if (lessonDir != null) {
           String lessonDirName = lessonDir.getName();
           int lessonIndex = StudyUtils.getIndex(lessonDirName, Lesson.LESSON_DIR);
-          Lesson lesson = myCourse.getLessons().get(lessonIndex);
+          List<Lesson> lessons = myCourse.getLessons();
+          if (!StudyUtils.indexIsValid(lessonIndex, lessons)) {
+            return null;
+          }
+          Lesson lesson = lessons.get(lessonIndex);
           int taskIndex = StudyUtils.getIndex(taskDirName, Task.TASK_DIR);
-          Task task = lesson.getTaskList().get(taskIndex);
+          List<Task> tasks = lesson.getTaskList();
+          if (!StudyUtils.indexIsValid(taskIndex, tasks)) {
+            return null;
+          }
+          Task task = tasks.get(taskIndex);
           return task.getFile(file.getName());
         }
       }
     }
     return null;
   }
+
+  class FileCreatedListener extends VirtualFileAdapter {
+    @Override
+    public void fileCreated(@NotNull VirtualFileEvent event) {
+      VirtualFile createdFile = event.getFile();
+      VirtualFile taskDir = createdFile.getParent();
+      String taskLogicalName = Task.TASK_DIR;
+      if (taskDir != null && taskDir.getName().contains(taskLogicalName)) {
+        int taskIndex = StudyUtils.getIndex(taskDir.getName(), taskLogicalName);
+        VirtualFile lessonDir = taskDir.getParent();
+        String lessonLogicalName = Lesson.LESSON_DIR;
+        if (lessonDir != null && lessonDir.getName().contains(lessonLogicalName)) {
+          int lessonIndex = StudyUtils.getIndex(lessonDir.getName(), lessonLogicalName);
+          if (myCourse != null) {
+            List<Lesson> lessons = myCourse.getLessons();
+            if (StudyUtils.indexIsValid(lessonIndex, lessons)) {
+              Lesson lesson = lessons.get(lessonIndex);
+              List<Task> tasks = lesson.getTaskList();
+              if (StudyUtils.indexIsValid(taskIndex, tasks)) {
+                Task task = tasks.get(taskIndex);
+                TaskFile taskFile = new TaskFile();
+                taskFile.init(task, false);
+                taskFile.setUserCreated(true);
+                task.getTaskFiles().put(createdFile.getName(), taskFile);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
 }
