@@ -13,6 +13,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.edu.StudyResourceManger;
@@ -60,6 +61,7 @@ public class StudyRunAction extends DumbAwareAction {
             ProcessHandler handler = new OSProcessHandler(p);
 
             RunContentExecutor executor = new RunContentExecutor(project, handler);
+            Disposer.register(project, executor);
             executor.run();
             return;
           }
@@ -69,6 +71,7 @@ public class StudyRunAction extends DumbAwareAction {
             ProcessHandler handler = new OSProcessHandler(p);
 
             RunContentExecutor executor = new RunContentExecutor(project, handler);
+            Disposer.register(project, executor);
             executor.run();
           }
 
