@@ -17,6 +17,7 @@ package org.jetbrains.generate.tostring.velocity;
 
 import org.apache.commons.collections.ExtendedProperties;
 import org.apache.velocity.app.VelocityEngine;
+import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.log.SimpleLog4JLogSystem;
 
 /**
@@ -25,46 +26,41 @@ import org.apache.velocity.runtime.log.SimpleLog4JLogSystem;
  * Creating instances of the VelocityEngine.
  */
 public class VelocityFactory {
+  private static class Holder {
+    private static final VelocityEngine engine = newVeloictyEngine();
+  }
 
-    private static VelocityEngine engine;
+  /**
+   * Privte constructor.
+   */
+  private VelocityFactory() {
+  }
 
-    /**
-     * Privte constructor.
-     */
-    private VelocityFactory() {
-    }
+  /**
+   * Returns a new instance of the VelocityEngine.
+   * <p/>
+   * The engine is initialized and outputs its logging to IDEA logging.
+   *
+   * @return a new velocity engine that is initialized.
+   */
+  private static VelocityEngine newVeloictyEngine() {
+    ExtendedProperties prop = new ExtendedProperties();
+    prop.addProperty(RuntimeConstants.RUNTIME_LOG_LOGSYSTEM_CLASS, SimpleLog4JLogSystem.class.getName());
+    prop.addProperty("runtime.log.logsystem.log4j.category", "GenerateToString");
+    VelocityEngine velocity = new VelocityEngine();
+    velocity.setExtendedProperties(prop);
+    velocity.init();
+    return velocity;
+  }
 
-    /**
-     * Returns a new instance of the VelocityEngine.
-     * <p/>
-     * The engine is initialized and outputs its logging to IDEA logging.
-     *
-     * @return  a new velocity engine that is initialized.
-     * @throws Exception  error creating the VelocityEngine.
-     */
-    public static VelocityEngine newVeloictyEngine() throws Exception {
-        ExtendedProperties prop = new ExtendedProperties();
-        prop.addProperty(VelocityEngine.RUNTIME_LOG_LOGSYSTEM_CLASS, SimpleLog4JLogSystem.class.getName());
-        prop.addProperty("runtime.log.logsystem.log4j.category", "GenerateToString");
-        VelocityEngine velocity = new VelocityEngine();
-        velocity.setExtendedProperties(prop);
-        velocity.init();
-        return velocity;
-    }
-
-    /**
-     * Get's a shared instance of the VelocityEngine.
-     * <p/>
-     * The engine is initialized and outputs its logging to IDEA logging.
-     * @return  a shared instance of the engine that is initialized.
-     * @throws Exception  error creating the VelocityEngine.
-     */
-    public static VelocityEngine getVelocityEngine() throws Exception {
-        if (engine == null) {
-            engine = newVeloictyEngine();
-        }
-
-        return engine;
-    }
-
+  /**
+   * Get's a shared instance of the VelocityEngine.
+   * <p/>
+   * The engine is initialized and outputs its logging to IDEA logging.
+   *
+   * @return a shared instance of the engine that is initialized.
+   */
+  public static VelocityEngine getVelocityEngine() {
+    return Holder.engine;
+  }
 }
