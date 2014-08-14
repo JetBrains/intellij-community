@@ -4,6 +4,4 @@ remote-servers-git
 github
 IntelliLang
 IntelliLang-python
-rest
-python-rest
 learn-python
