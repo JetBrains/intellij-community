@@ -352,12 +352,18 @@ public class JUnit4TestRunnerUtil {
         for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
           Object child = iterator.next();
           try {
+            Class aClass = child.getClass();
             Field f;
             try {
-              f = child.getClass().getDeclaredField("fName");
+              f = aClass.getDeclaredField("fName");
             }
             catch (NoSuchFieldException e) {
-              continue;
+              try {
+                f = aClass.getDeclaredField("name");
+              }
+              catch (NoSuchFieldException e1) {
+                continue;
+              }
             }
             f.setAccessible(true);
             String fName = (String)f.get(child);
