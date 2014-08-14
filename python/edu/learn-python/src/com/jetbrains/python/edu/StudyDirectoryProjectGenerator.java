@@ -310,6 +310,13 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
     File cashFile = new File(myCoursesDir, CACHE_NAME);
     PrintWriter writer = null;
     try {
+      if (!cashFile.exists()) {
+        final boolean created = cashFile.createNewFile();
+        if (!created) {
+          LOG.error("Cannot flush courses cache. Can't create " + CACHE_NAME + " file");
+          return;
+        }
+      }
       writer = new PrintWriter(cashFile);
       for (Map.Entry<CourseInfo, File> course : myCourses.entrySet()) {
         CourseInfo courseInfo = course.getKey();
@@ -320,6 +327,9 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
       }
     }
     catch (FileNotFoundException e) {
+      LOG.error(e);
+    }
+    catch (IOException e) {
       LOG.error(e);
     }
     finally {
