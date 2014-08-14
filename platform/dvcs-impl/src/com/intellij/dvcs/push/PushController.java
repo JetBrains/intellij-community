@@ -48,7 +48,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class PushController implements Disposable {
 
   @NotNull private final Project myProject;
-  @NotNull private final List<PushSupport> myPushSupports;
+  @NotNull private final List<PushSupport<? extends Repository>> myPushSupports;
   @NotNull private final PushLog myPushLog;
   @NotNull private final VcsPushDialog myDialog;
   private boolean mySingleRepoProject;
@@ -118,45 +118,57 @@ public class PushController implements Disposable {
   //return is single repository project or not
   private boolean createTreeModel(@NotNull CheckedTreeNode rootNode, @NotNull List<? extends Repository> preselectedRepositories) {
     if (myPushSupports.isEmpty()) return true;
-
     boolean isSingleRepositoryProject = myPushSupports.size() == 1;
-    for (final PushSupport support : myPushSupports) {
-      RepositoryManager<? extends Repository> repositoryManager = support.getRepositoryManager();
-      List<? extends Repository> repositories = repositoryManager.getRepositories();
-      isSingleRepositoryProject = isSingleRepositoryProject && repositories.size() == 1;
-      for (Repository repository : repositories) {
-        PushTarget target = support.getDefaultTarget(repository);
-        final MyRepoModel model = new MyRepoModel(repository, support, preselectedRepositories.contains(repository),
-                                                  new PushSpec(support.getSource(repository),
-                                                               target),
-                                                  DEFAULT_CHILDREN_PRESENTATION_NUMBER);
-        RepositoryWithBranchPanel repoPanel = new RepositoryWithBranchPanel(myProject, DvcsUtil.getShortRepositoryName(repository),
-                                                                            support.getSource(repository).getPresentation(),
-                                                                            target == null ? "" : target.getPresentation(),
-                                                                            support.getTargetNames(repository));
-        final RepositoryNode repoNode =
-          isSingleRepositoryProject ? new SingleRepositoryNode(repoPanel) : new RepositoryNode(repoPanel);
-        myView2Model.put(repoNode, model);
-        repoNode.setChecked(model.isSelected());
-        repoNode.addRepoNodeListener(new RepositoryNodeListener() {
-          @Override
-          public void onTargetChanged(String newValue) {
-            myView2Model.get(repoNode).setSpec(new PushSpec(model.getSpec().getSource(), support.createTarget(newValue)));
-            myDialog.updateButtons();
-            myPushLog.startLoading(repoNode);
-            loadCommits(model, repoNode, false);
-          }
-
-          @Override
-          public void onSelectionChanged(boolean isSelected) {
-            myView2Model.get(repoNode).setSelected(isSelected);
-            myDialog.updateButtons();
-          }
-        });
-        rootNode.add(repoNode);
-      }
+    for (PushSupport<? extends Repository> support : myPushSupports) {
+      isSingleRepositoryProject = createNodesForVcs(support, rootNode, preselectedRepositories, isSingleRepositoryProject);
     }
     return isSingleRepositoryProject;
+  }
+
+  private <T extends Repository> boolean createNodesForVcs(@NotNull PushSupport<T> pushSupport,
+                                                           @NotNull CheckedTreeNode rootNode,
+                                                           @NotNull List<? extends Repository> preselectedRepositories,
+                                                           boolean isSingleRepositoryProject) {
+    RepositoryManager<T> repositoryManager = pushSupport.getRepositoryManager();
+    List<T> repositories = repositoryManager.getRepositories();
+    isSingleRepositoryProject = isSingleRepositoryProject && repositories.size() == 1;
+    for (T repository : repositories) {
+      createRepoNode(pushSupport, repository, rootNode, preselectedRepositories.contains(repository), isSingleRepositoryProject);
+    }
+    return isSingleRepositoryProject;
+  }
+
+  private <T extends Repository> void createRepoNode(@NotNull final PushSupport<T> support,
+                                                     @NotNull T repository,
+                                                     @NotNull CheckedTreeNode rootNode,
+                                                     boolean isSelected,
+                                                     boolean isSingleRepositoryProject) {
+    PushTarget target = support.getDefaultTarget(repository);
+    final MyRepoModel model = new MyRepoModel(repository, support, isSelected, new PushSpec(support.getSource(repository), target),
+                                              DEFAULT_CHILDREN_PRESENTATION_NUMBER);
+    RepositoryWithBranchPanel repoPanel = new RepositoryWithBranchPanel(myProject, DvcsUtil.getShortRepositoryName(repository),
+                                                                        support.getSource(repository).getPresentation(),
+                                                                        target == null ? "" : target.getPresentation(),
+                                                                        support.getTargetNames(repository));
+    final RepositoryNode repoNode = isSingleRepositoryProject ? new SingleRepositoryNode(repoPanel) : new RepositoryNode(repoPanel);
+    myView2Model.put(repoNode, model);
+    repoNode.setChecked(model.isSelected());
+    repoNode.addRepoNodeListener(new RepositoryNodeListener() {
+      @Override
+      public void onTargetChanged(String newValue) {
+        myView2Model.get(repoNode).setSpec(new PushSpec(model.getSpec().getSource(), support.createTarget(newValue)));
+        myDialog.updateButtons();
+        myPushLog.startLoading(repoNode);
+        loadCommits(model, repoNode, false);
+      }
+
+      @Override
+      public void onSelectionChanged(boolean isSelected) {
+        myView2Model.get(repoNode).setSelected(isSelected);
+        myDialog.updateButtons();
+      }
+    });
+    rootNode.add(repoNode);
   }
 
   private void loadCommits(@NotNull final MyRepoModel model,

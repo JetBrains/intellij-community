@@ -31,7 +31,7 @@ import java.util.Collection;
 
 public abstract class PushSupport<Repo extends Repository> {
 
-  public static final ExtensionPointName<PushSupport> PUSH_SUPPORT_EP = ExtensionPointName.create("com.intellij.pushSupport");
+  public static final ExtensionPointName<PushSupport<? extends Repository>> PUSH_SUPPORT_EP = ExtensionPointName.create("com.intellij.pushSupport");
 
   @NotNull
   public abstract AbstractVcs getVcs();
