@@ -11,12 +11,14 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.jetbrains.python.edu.actions.StudyNextWindowAction;
@@ -105,6 +107,12 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
           @Override
           public void run() {
             if (myCourse != null) {
+              StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
+                @Override
+                public void run() {
+                  ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW).show(null);
+                }
+              });
               UISettings.getInstance().HIDE_TOOL_STRIPES = false;
               UISettings.getInstance().fireUISettingsChanged();
               ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
