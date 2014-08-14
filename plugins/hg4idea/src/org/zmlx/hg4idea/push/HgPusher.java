@@ -33,31 +33,29 @@ public class HgPusher extends Pusher {
   public void push(@NotNull Map<Repository, PushSpec> pushSpecs, @Nullable VcsPushOptionValue vcsPushOptionValue, boolean force) {
     for (Map.Entry<Repository, PushSpec> entry : pushSpecs.entrySet()) {
       Repository repository = entry.getKey();
-      if (repository instanceof HgRepository) {
-        HgRepository hgRepository = (HgRepository)repository;
-        PushSpec hgSpec = entry.getValue();
-        HgTarget destination = (HgTarget)hgSpec.getTarget();
-        if (destination == null) {
-          continue;
-        }
-        HgSource source = (HgSource)hgSpec.getSource();
-        Project project = repository.getProject();
-        final HgPushCommand pushCommand = new HgPushCommand(project, repository.getRoot(), destination.myTarget);
-        pushCommand.setIsNewBranch(true); // set always true, because it just allow mercurial to create a new one if needed
-        pushCommand.setForce(force);
-        if (source.mySource.equals(hgRepository.getCurrentBookmark())) {
-          if (vcsPushOptionValue == HgVcsPushOptionValue.Current) {
-            pushCommand.setBookmarkName(source.mySource);
-          }
-          else {
-            pushCommand.setRevision(source.mySource);
-          }
+      HgRepository hgRepository = (HgRepository)repository;
+      PushSpec hgSpec = entry.getValue();
+      HgTarget destination = (HgTarget)hgSpec.getTarget();
+      if (destination == null) {
+        continue;
+      }
+      HgSource source = (HgSource)hgSpec.getSource();
+      Project project = repository.getProject();
+      final HgPushCommand pushCommand = new HgPushCommand(project, repository.getRoot(), destination.myTarget);
+      pushCommand.setIsNewBranch(true); // set always true, because it just allow mercurial to create a new one if needed
+      pushCommand.setForce(force);
+      if (source.mySource.equals(hgRepository.getCurrentBookmark())) {
+        if (vcsPushOptionValue == HgVcsPushOptionValue.Current) {
+          pushCommand.setBookmarkName(source.mySource);
         }
         else {
-          pushCommand.setBranchName(source.mySource);
+          pushCommand.setRevision(source.mySource);
         }
-        org.zmlx.hg4idea.HgPusher.push(project, pushCommand);
       }
+      else {
+        pushCommand.setBranchName(source.mySource);
+      }
+      org.zmlx.hg4idea.HgPusher.push(project, pushCommand);
     }
   }
 }
