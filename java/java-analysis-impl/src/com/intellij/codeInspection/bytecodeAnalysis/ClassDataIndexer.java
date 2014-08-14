@@ -311,12 +311,12 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
             parameterEqs.add(analyzer.notNullParamEquation(i, stable));
           }
           if (isRefArg && (isReferenceResult || isBooleanResult)) {
-            contractEqs.add(analyzer.nullContractEquation(i, stable));
-            contractEqs.add(analyzer.notNullContractEquation(i, stable));
+            contractEqs.add(analyzer.contractEquation(i, Value.Null, stable));
+            contractEqs.add(analyzer.contractEquation(i, Value.NotNull, stable));
           }
           if (ASMUtils.isBooleanType(argType) && (isReferenceResult || isBooleanResult)) {
-            contractEqs.add(analyzer.trueContractEquation(i, stable));
-            contractEqs.add(analyzer.falseContractEquation(i, stable));
+            contractEqs.add(analyzer.contractEquation(i, Value.True, stable));
+            contractEqs.add(analyzer.contractEquation(i, Value.False, stable));
           }
         }
       }

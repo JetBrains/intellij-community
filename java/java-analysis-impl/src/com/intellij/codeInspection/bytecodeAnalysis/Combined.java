@@ -123,10 +123,10 @@ final class CombinedSingleAnalysis {
     return new Equation<Key, Value>(key, result);
   }
 
-  final Equation<Key, Value> trueContractEquation(int i, boolean stable) {
-    final Key key = new Key(method, new InOut(i, Value.True), stable);
+  final Equation<Key, Value> contractEquation(int i, Value inValue, boolean stable) {
+    final Key key = new Key(method, new InOut(i, inValue), stable);
     final Result<Key, Value> result;
-    if (exception) {
+    if (exception || (inValue == Value.Null && interpreter.dereferenced[i])) {
       result = new Final<Key, Value>(Value.Bot);
     }
     else if (FalseValue == returnValue) {
@@ -142,7 +142,7 @@ final class CombinedSingleAnalysis {
       result = new Final<Key, Value>(Value.NotNull);
     }
     else if (returnValue instanceof NParamValue && ((NParamValue)returnValue).n == i) {
-      result = new Final<Key, Value>(Value.True);
+      result = new Final<Key, Value>(inValue);
     }
     else if (returnValue instanceof CombinedCall) {
       CombinedCall call = (CombinedCall)returnValue;
@@ -152,151 +152,7 @@ final class CombinedSingleAnalysis {
         if (arg instanceof NParamValue) {
           NParamValue npv = (NParamValue)arg;
           if (npv.n == i) {
-            keys.add(new Key(call.method, new InOut(argI, Value.True), call.stableCall));
-          }
-        }
-      }
-      if (ASMUtils.isReferenceType(call.getType())) {
-        keys.add(new Key(call.method, new Out(), call.stableCall));
-      }
-      if (keys.isEmpty()) {
-        result = new Final<Key, Value>(Value.Top);
-      } else {
-        result = new Pending<Key, Value>(new SingletonSet<Product<Key, Value>>(new Product<Key, Value>(Value.Top, keys)));
-      }
-    }
-    else {
-      result = new Final<Key, Value>(Value.Top);
-    }
-    return new Equation<Key, Value>(key, result);
-  }
-
-  final Equation<Key, Value> falseContractEquation(int i, boolean stable) {
-    final Key key = new Key(method, new InOut(i, Value.False), stable);
-    final Result<Key, Value> result;
-    if (exception) {
-      result = new Final<Key, Value>(Value.Bot);
-    }
-    else if (FalseValue == returnValue) {
-      result = new Final<Key, Value>(Value.False);
-    }
-    else if (TrueValue == returnValue) {
-      result = new Final<Key, Value>(Value.True);
-    }
-    else if (NullValue == returnValue) {
-      result = new Final<Key, Value>(Value.Null);
-    }
-    else if (returnValue instanceof NotNullValue) {
-      result = new Final<Key, Value>(Value.NotNull);
-    }
-    else if (returnValue instanceof NParamValue && ((NParamValue)returnValue).n == i) {
-      result = new Final<Key, Value>(Value.False);
-    }
-    else if (returnValue instanceof CombinedCall) {
-      CombinedCall call = (CombinedCall)returnValue;
-      HashSet<Key> keys = new HashSet<Key>();
-      for (int argI = 0; argI < call.args.size(); argI++) {
-        BasicValue arg = call.args.get(argI);
-        if (arg instanceof NParamValue) {
-          NParamValue npv = (NParamValue)arg;
-          if (npv.n == i) {
-            keys.add(new Key(call.method, new InOut(argI, Value.False), call.stableCall));
-          }
-        }
-      }
-      if (ASMUtils.isReferenceType(call.getType())) {
-        keys.add(new Key(call.method, new Out(), call.stableCall));
-      }
-      if (keys.isEmpty()) {
-        result = new Final<Key, Value>(Value.Top);
-      } else {
-        result = new Pending<Key, Value>(new SingletonSet<Product<Key, Value>>(new Product<Key, Value>(Value.Top, keys)));
-      }
-    }
-    else {
-      result = new Final<Key, Value>(Value.Top);
-    }
-    return new Equation<Key, Value>(key, result);
-  }
-
-  final Equation<Key, Value> notNullContractEquation(int i, boolean stable) {
-    final Key key = new Key(method, new InOut(i, Value.NotNull), stable);
-    final Result<Key, Value> result;
-    if (exception) {
-      result = new Final<Key, Value>(Value.Bot);
-    }
-    else if (FalseValue == returnValue) {
-      result = new Final<Key, Value>(Value.False);
-    }
-    else if (TrueValue == returnValue) {
-      result = new Final<Key, Value>(Value.True);
-    }
-    else if (NullValue == returnValue) {
-      result = new Final<Key, Value>(Value.Null);
-    }
-    else if (returnValue instanceof NotNullValue) {
-      result = new Final<Key, Value>(Value.NotNull);
-    }
-    else if (returnValue instanceof NParamValue && ((NParamValue)returnValue).n == i) {
-      result = new Final<Key, Value>(Value.NotNull);
-    }
-    else if (returnValue instanceof CombinedCall) {
-      CombinedCall call = (CombinedCall)returnValue;
-      HashSet<Key> keys = new HashSet<Key>();
-      for (int argI = 0; argI < call.args.size(); argI++) {
-        BasicValue arg = call.args.get(argI);
-        if (arg instanceof NParamValue) {
-          NParamValue npv = (NParamValue)arg;
-          if (npv.n == i) {
-            keys.add(new Key(call.method, new InOut(argI, Value.NotNull), call.stableCall));
-          }
-        }
-      }
-      if (ASMUtils.isReferenceType(call.getType())) {
-        keys.add(new Key(call.method, new Out(), call.stableCall));
-      }
-      if (keys.isEmpty()) {
-        result = new Final<Key, Value>(Value.Top);
-      } else {
-        result = new Pending<Key, Value>(new SingletonSet<Product<Key, Value>>(new Product<Key, Value>(Value.Top, keys)));
-      }
-    }
-    else {
-      result = new Final<Key, Value>(Value.Top);
-    }
-    return new Equation<Key, Value>(key, result);
-  }
-
-  final Equation<Key, Value> nullContractEquation(int i, boolean stable) {
-    final Key key = new Key(method, new InOut(i, Value.Null), stable);
-    final Result<Key, Value> result;
-    if (exception || interpreter.dereferenced[i]) {
-      result = new Final<Key, Value>(Value.Bot);
-    }
-    else if (FalseValue == returnValue) {
-      result = new Final<Key, Value>(Value.False);
-    }
-    else if (TrueValue == returnValue) {
-      result = new Final<Key, Value>(Value.True);
-    }
-    else if (NullValue == returnValue) {
-      result = new Final<Key, Value>(Value.Null);
-    }
-    else if (returnValue instanceof NotNullValue) {
-      result = new Final<Key, Value>(Value.NotNull);
-    }
-    else if (returnValue instanceof NParamValue && ((NParamValue)returnValue).n == i) {
-      result = new Final<Key, Value>(Value.Null);
-    }
-    else if (returnValue instanceof CombinedCall) {
-      CombinedCall call = (CombinedCall)returnValue;
-      HashSet<Key> keys = new HashSet<Key>();
-      for (int argI = 0; argI < call.args.size(); argI++) {
-        BasicValue arg = call.args.get(argI);
-        if (arg instanceof NParamValue) {
-          NParamValue npv = (NParamValue)arg;
-          if (npv.n == i) {
-            keys.add(new Key(call.method, new InOut(argI, Value.Null), call.stableCall));
+            keys.add(new Key(call.method, new InOut(argI, inValue), call.stableCall));
           }
         }
       }
@@ -371,12 +227,10 @@ final class CombinedSingleAnalysis {
 }
 
 final class CombinedInterpreter extends BasicInterpreter {
-  private final int arity;
   final boolean[] dereferenced;
   final Set<Key>[] callDerefs;
 
   CombinedInterpreter(int arity) {
-    this.arity = arity;
     dereferenced = new boolean[arity];
     callDerefs = new Set[arity];
   }
