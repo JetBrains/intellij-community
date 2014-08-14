@@ -545,10 +545,10 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   }
 
   private static void sortNode(ParentNode node, final Comparator<ElementNode> sortComparator) {
-    ArrayList<MemberNode> arrayList = new ArrayList<MemberNode>();
+    ArrayList<ElementNode> arrayList = new ArrayList<ElementNode>();
     Enumeration<TreeNode> children = node.children();
     while (children.hasMoreElements()) {
-      arrayList.add((MemberNode)children.nextElement());
+      arrayList.add((ElementNode)children.nextElement());
     }
 
     Collections.sort(arrayList, sortComparator);
