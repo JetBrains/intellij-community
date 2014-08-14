@@ -16,7 +16,6 @@
     <orderEntry type="module" module-name="python-ide-community" />
     <orderEntry type="module" module-name="python-helpers" scope="RUNTIME" />
     <orderEntry type="library" name="Groovy" level="project" />
-    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
     <orderEntry type="module" module-name="xdebugger-impl" scope="TEST" />
     <orderEntry type="module" module-name="python-pydev" scope="TEST" />
     <orderEntry type="module" module-name="smRunner" scope="TEST" />
