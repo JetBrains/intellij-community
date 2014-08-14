@@ -85,8 +85,7 @@ public class PyCharmEduInitialConfigurator {
                                        FileTypeManager fileTypeManager,
                                        final ProjectManagerEx projectManager,
                                        RecentProjectsManagerBase recentProjectsManager) {
-    //if (!propertiesComponent.getBoolean(CONFIGURED, false)) {
-    if (true) {
+    if (!propertiesComponent.getBoolean(CONFIGURED, false)) {
       propertiesComponent.setValue(CONFIGURED, "true");
       propertiesComponent.setValue("toolwindow.stripes.buttons.info.shown", "true");
       UISettings.getInstance().HIDE_TOOL_STRIPES = false;
