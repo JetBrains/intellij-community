@@ -71,8 +71,8 @@ public class Info extends BaseNodeDescription {
       result =
         new Info(info.getFile(), info.getURL(), info.getRepositoryRootURL(), info.getRevision().getNumber(), NodeKind.from(info.getKind()),
                  info.getRepositoryUUID(), info.getCommittedRevision().getNumber(), toString(info.getCommittedDate()), info.getAuthor(),
-                 info.getSchedule(), info.getCopyFromURL(), info.getCopyFromRevision().getNumber(), getPath(info.getConflictOldFile()),
-                 getPath(info.getConflictNewFile()), getPath(info.getConflictWrkFile()), getPath(info.getPropConflictFile()),
+                 info.getSchedule(), info.getCopyFromURL(), info.getCopyFromRevision().getNumber(), getName(info.getConflictOldFile()),
+                 getName(info.getConflictNewFile()), getName(info.getConflictWrkFile()), getName(info.getPropConflictFile()),
                  Lock.create(info.getLock()), Depth.from(info.getDepth()), TreeConflictDescription.create(info.getTreeConflict()));
     }
 
@@ -91,10 +91,10 @@ public class Info extends BaseNodeDescription {
               String schedule,
               SVNURL copyFromURL,
               long copyFromRevision,
-              @Nullable String conflictOld,
-              @Nullable String conflictNew,
-              @Nullable String conflictWorking,
-              @Nullable String propRejectFile,
+              @Nullable String conflictOldFileName,
+              @Nullable String conflictNewFileName,
+              @Nullable String conflictWorkingFileName,
+              @Nullable String propRejectFileName,
               @Nullable Lock lock,
               Depth depth,
               @Nullable TreeConflictDescription treeConflict) {
@@ -117,10 +117,10 @@ public class Info extends BaseNodeDescription {
     myLock = lock;
     myTreeConflict = treeConflict;
 
-    myConflictOldFile = resolveConflictFile(file, conflictOld);
-    myConflictNewFile = resolveConflictFile(file, conflictNew);
-    myConflictWrkFile = resolveConflictFile(file, conflictWorking);
-    myPropConflictFile = resolveConflictFile(file, propRejectFile);
+    myConflictOldFile = resolveConflictFile(file, conflictOldFileName);
+    myConflictNewFile = resolveConflictFile(file, conflictNewFileName);
+    myConflictWrkFile = resolveConflictFile(file, conflictWorkingFileName);
+    myPropConflictFile = resolveConflictFile(file, propRejectFileName);
 
     myIsRemote = false;
     myDepth = depth;
@@ -262,8 +262,8 @@ public class Info extends BaseNodeDescription {
   }
 
   @Nullable
-  private static String getPath(@Nullable File file) {
-    return file != null ? file.getPath() : null;
+  private static String getName(@Nullable File file) {
+    return file != null ? file.getName() : null;
   }
 
   @Nullable
