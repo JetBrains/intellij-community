@@ -128,7 +128,6 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
               final ToolWindow studyToolWindow = toolWindowManager.getToolWindow(toolWindowId);
               if (studyToolWindow != null) {
                 StudyUtils.updateStudyToolWindow(myProject);
-                studyToolWindow.setIcon(StudyIcons.ShortcutReminder);
                 studyToolWindow.show(null);
               }
               addShortcut(NextWindowAction.SHORTCUT, NextWindowAction.ACTION_ID);

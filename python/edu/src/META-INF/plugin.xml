@@ -60,7 +60,7 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <toolWindow id="StudyToolWindow" anchor="right" factoryClass="com.jetbrains.python.edu.ui.StudyToolWindowFactory" conditionClass="com.jetbrains.python.edu.ui.StudyCondition"/>
+    <toolWindow id="Course Description" anchor="right" factoryClass="com.jetbrains.python.edu.ui.StudyToolWindowFactory" conditionClass="com.jetbrains.python.edu.ui.StudyCondition"/>
     <fileEditorProvider implementation="com.jetbrains.python.edu.editor.StudyFileEditorProvider"/>
     <directoryProjectGenerator implementation="com.jetbrains.python.edu.StudyDirectoryProjectGenerator"/>
     <treeStructureProvider implementation="com.jetbrains.python.edu.projectView.StudyTreeStructureProvider"/>

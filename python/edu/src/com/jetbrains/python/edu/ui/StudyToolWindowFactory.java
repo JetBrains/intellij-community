@@ -23,7 +23,7 @@ import java.awt.*;
  */
 
 public class StudyToolWindowFactory implements ToolWindowFactory, DumbAware {
-  public static final String STUDY_TOOL_WINDOW = "StudyToolWindow";
+  public static final String STUDY_TOOL_WINDOW = "Course Description";
   JPanel contentPanel = new JPanel();
 
   @Override
