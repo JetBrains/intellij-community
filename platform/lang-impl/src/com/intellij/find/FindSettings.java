@@ -128,4 +128,7 @@ public abstract class FindSettings{
 
   public abstract boolean isExceptCommentsAndLiterals();
   public abstract void setExceptCommentsAndLiterals(boolean selected);
+
+  public abstract boolean isShowResultsInSeparateView();
+  public abstract void setShowResultsInSeparateView(boolean selected);
 }
