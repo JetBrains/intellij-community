@@ -652,6 +652,19 @@ class __function(object):
         self.__name__ = ''
 
 
+class __method(object):
+    '''A mock class representing method type.'''
+
+    def __init__(self):
+
+        self.im_class = None
+        self.im_self = None
+        self.im_func = None
+
+        self.__func__ = None
+        self.__self__ = None
+
+
 class __namedtuple(tuple):
     '''A mock base class for named tuples.'''
 
