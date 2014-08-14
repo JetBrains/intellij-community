@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
 
 public class StudyDirectoryProjectGenerator extends PythonProjectGenerator implements DirectoryProjectGenerator {
   private static final Logger LOG = Logger.getInstance(StudyDirectoryProjectGenerator.class.getName());
-  private static final String REPO_URL = "https://github.com/JetBrains/pycharm-courses/master/introduction_course.zip";
+  private static final String REPO_URL = "https://github.com/JetBrains/pycharm-courses/archive/master.zip";
   private static final String USER_NAME = "medvector";
   private static final String COURSE_META_FILE = "course.json";
   private static final String COURSE_NAME_ATTRIBUTE = "name";
