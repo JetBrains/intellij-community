@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 public class GroovySingletonAnnotationInspection extends BaseInspection {
   public static final String SINGLETON = GroovyCommonClassNames.GROOVY_LANG_SINGLETON;
 
+  @NotNull
   @Override
   protected BaseInspectionVisitor buildVisitor() {
     return new Visitor();

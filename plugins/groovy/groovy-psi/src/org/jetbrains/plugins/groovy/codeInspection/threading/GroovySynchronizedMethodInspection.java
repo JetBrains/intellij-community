@@ -46,6 +46,7 @@ public class GroovySynchronizedMethodInspection extends BaseInspection {
 
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();

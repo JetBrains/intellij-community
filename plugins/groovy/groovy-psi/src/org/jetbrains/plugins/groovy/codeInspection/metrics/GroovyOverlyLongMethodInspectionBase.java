@@ -48,6 +48,7 @@ public class GroovyOverlyLongMethodInspectionBase extends GroovyMethodMetricInsp
     return "Method '#ref' is too long ( statement count =" + args[0] + '>' + args[1] + ')';
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();

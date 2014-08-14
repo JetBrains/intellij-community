@@ -53,6 +53,7 @@ public class GroovyUnconditionalWaitInspection extends BaseInspection {
     return "Unconditional call to <code>#ref()</code> #loc";
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new UnconditionalWaitVisitor();

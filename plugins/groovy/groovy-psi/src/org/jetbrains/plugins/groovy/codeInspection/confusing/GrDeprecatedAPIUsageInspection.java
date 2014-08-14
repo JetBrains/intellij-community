@@ -62,6 +62,7 @@ public class GrDeprecatedAPIUsageInspection extends BaseInspection {
     return "GrDeprecatedAPIUsage";
   }
 
+  @NotNull
   @Override
   protected BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {

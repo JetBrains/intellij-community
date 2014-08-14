@@ -53,7 +53,7 @@ public class GroovyConditionalCanBeElvisInspection extends BaseInspection {
   }
 
   @Override
-  public GroovyFix buildFix(PsiElement location) {
+  public GroovyFix buildFix(@NotNull PsiElement location) {
     return new GroovyFix() {
       @Override
       @NotNull
@@ -193,6 +193,7 @@ public class GroovyConditionalCanBeElvisInspection extends BaseInspection {
     return false;
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();

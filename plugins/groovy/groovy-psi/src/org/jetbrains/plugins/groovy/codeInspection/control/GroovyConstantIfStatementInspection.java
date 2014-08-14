@@ -53,13 +53,14 @@ public class GroovyConstantIfStatementInspection extends BaseInspection {
     return "#ref statement can be simplified #loc";
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ConstantIfStatementVisitor();
   }
 
   @Override
-  public GroovyFix buildFix(PsiElement location) {
+  public GroovyFix buildFix(@NotNull PsiElement location) {
     return new ConstantIfStatementFix();
   }
 

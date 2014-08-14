@@ -48,6 +48,7 @@ public class GroovyOverlyComplexMethodInspectionBase extends GroovyMethodMetricI
     return "Method '#ref' is overly complex ( cyclomatic complexity =" + args[0] + '>' + args[1] + ')';
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();

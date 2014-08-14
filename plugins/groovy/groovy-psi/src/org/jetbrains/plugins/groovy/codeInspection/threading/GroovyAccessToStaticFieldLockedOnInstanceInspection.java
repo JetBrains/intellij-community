@@ -56,6 +56,7 @@ public class GroovyAccessToStaticFieldLockedOnInstanceInspection
     return "Access to static field <code>#ref</code> locked on instance data #loc";
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();

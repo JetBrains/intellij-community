@@ -55,6 +55,7 @@ public class GroovyReturnFromClosureCanBeImplicitInspection extends BaseInspecti
 
     }
 
+    @NotNull
     @Override
     public BaseInspectionVisitor buildVisitor() {
         return new Visitor();
@@ -62,7 +63,7 @@ public class GroovyReturnFromClosureCanBeImplicitInspection extends BaseInspecti
 
     @Override
     @Nullable
-    protected GroovyFix buildFix(PsiElement location) {
+    protected GroovyFix buildFix(@NotNull PsiElement location) {
         return new MakeReturnImplicitFix();
     }
 

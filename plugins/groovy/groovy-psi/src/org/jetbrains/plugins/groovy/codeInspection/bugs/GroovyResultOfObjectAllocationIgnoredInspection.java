@@ -57,6 +57,7 @@ public class GroovyResultOfObjectAllocationIgnoredInspection extends BaseInspect
     return true;
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();

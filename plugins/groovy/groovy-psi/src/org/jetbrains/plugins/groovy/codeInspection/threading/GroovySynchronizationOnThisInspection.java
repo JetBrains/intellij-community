@@ -48,6 +48,7 @@ public class GroovySynchronizationOnThisInspection extends BaseInspection {
 
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();

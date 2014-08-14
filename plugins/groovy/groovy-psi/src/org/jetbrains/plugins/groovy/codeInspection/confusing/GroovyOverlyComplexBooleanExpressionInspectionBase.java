@@ -54,6 +54,7 @@ public class GroovyOverlyComplexBooleanExpressionInspectionBase extends BaseInsp
     return "Overly complex boolean expression #loc";
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();

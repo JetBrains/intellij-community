@@ -56,6 +56,7 @@ public class GroovyMultipleReturnPointsPerMethodInspectionBase extends GroovyMet
 
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new MultipleReturnPointsVisitor();

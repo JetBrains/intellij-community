@@ -41,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 public class NewInstanceOfSingletonInspection extends BaseInspection {
   private static final Logger LOG = Logger.getInstance(NewInstanceOfSingletonInspection.class);
 
+  @NotNull
   @Override
   protected BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
@@ -67,7 +68,7 @@ public class NewInstanceOfSingletonInspection extends BaseInspection {
   }
 
   @Override
-  protected GroovyFix buildFix(final PsiElement location) {
+  protected GroovyFix buildFix(@NotNull final PsiElement location) {
     final GrCodeReferenceElement refElement = ((GrNewExpression)location).getReferenceElement();
     LOG.assertTrue(refElement != null);
     final GrTypeDefinition singleton = (GrTypeDefinition)refElement.resolve();

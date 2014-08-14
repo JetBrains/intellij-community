@@ -36,7 +36,7 @@ public class GroovyInstanceMethodNamingConventionInspection extends ConventionIn
   }
 
   @Override
-  protected GroovyFix buildFix(PsiElement location) {
+  protected GroovyFix buildFix(@NotNull PsiElement location) {
     return GroovyQuickFixFactory.getInstance().createRenameFix();
   }
 
@@ -72,6 +72,7 @@ public class GroovyInstanceMethodNamingConventionInspection extends ConventionIn
     return DEFAULT_MAX_LENGTH;
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new NamingConventionsVisitor();

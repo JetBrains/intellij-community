@@ -79,6 +79,7 @@ public class GrPackageInspection extends BaseInspection {
 
   }
 
+  @NotNull
   @Override
   protected BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {

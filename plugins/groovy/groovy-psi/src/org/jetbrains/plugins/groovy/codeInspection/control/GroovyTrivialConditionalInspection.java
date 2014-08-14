@@ -49,6 +49,7 @@ public class GroovyTrivialConditionalInspection extends BaseInspection {
     return true;
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new UnnecessaryConditionalExpressionVisitor();
@@ -73,7 +74,7 @@ public class GroovyTrivialConditionalInspection extends BaseInspection {
   }
 
   @Override
-  public GroovyFix buildFix(PsiElement location) {
+  public GroovyFix buildFix(@NotNull PsiElement location) {
     return new TrivialConditionalFix();
   }
 

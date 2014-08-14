@@ -54,6 +54,7 @@ public class GroovySynchronizationOnVariableInitializedWithLiteralInspection ext
 
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
