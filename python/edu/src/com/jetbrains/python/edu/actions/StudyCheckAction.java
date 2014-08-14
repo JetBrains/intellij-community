@@ -35,9 +35,10 @@ import java.awt.*;
 import java.io.*;
 import java.util.Map;
 
-public class CheckAction extends DumbAwareAction {
+public class StudyCheckAction extends DumbAwareAction {
 
-  private static final Logger LOG = Logger.getInstance(CheckAction.class.getName());
+  private static final Logger LOG = Logger.getInstance(StudyCheckAction.class.getName());
+  public static final String PYTHONPATH = "PYTHONPATH";
 
   static class StudyTestRunner {
     public static final String TEST_OK = "#study_plugin test OK";
@@ -58,7 +59,7 @@ public class CheckAction extends DumbAwareAction {
       final Map<String, String> env = commandLine.getEnvironment();
       final VirtualFile courseDir = project.getBaseDir();
       if (courseDir != null)
-        env.put("PYTHONPATH", courseDir.getPath());
+        env.put(PYTHONPATH, courseDir.getPath());
       if (sdk != null) {
         String pythonPath = sdk.getHomePath();
         if (pythonPath != null) {
@@ -103,9 +104,6 @@ public class CheckAction extends DumbAwareAction {
         CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
           @Override
           public void run() {
-        //CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-        //  @Override
-        //  public void run() {
         final Editor selectedEditor = StudyEditor.getSelectedEditor(project);
         if (selectedEditor != null) {
           final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
@@ -114,7 +112,7 @@ public class CheckAction extends DumbAwareAction {
             StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
             final TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
             if (selectedTaskFile != null) {
-              StudyUtils.flushWindows(selectedEditor.getDocument(), selectedTaskFile, openedFile);
+              VirtualFile windowsDescription = StudyUtils.flushWindows(selectedEditor.getDocument(), selectedTaskFile, openedFile);
               FileDocumentManager.getInstance().saveAllDocuments();
               final VirtualFile taskDir = openedFile.getParent();
               Task currentTask = selectedTaskFile.getTask();
@@ -156,6 +154,12 @@ public class CheckAction extends DumbAwareAction {
                 catch (IOException e) {
                   LOG.error(e);
                 }
+                try {
+                  windowsDescription.delete(this);
+                }
+                catch (IOException e) {
+                  LOG.error("failed to delete windows description", e);
+                }
                 selectedTaskFile.drawAllWindows(selectedEditor);
                 createTestResultPopUp(failedMessage, JBColor.RED, project);
               }
@@ -165,7 +169,6 @@ public class CheckAction extends DumbAwareAction {
 
          }
       });
-        //}, null, null);
       }
     });
   }

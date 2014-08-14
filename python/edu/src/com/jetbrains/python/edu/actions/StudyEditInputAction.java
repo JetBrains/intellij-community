@@ -25,7 +25,7 @@ import com.jetbrains.python.edu.course.Task;
 import com.jetbrains.python.edu.course.TaskFile;
 import com.jetbrains.python.edu.course.UserTest;
 import com.jetbrains.python.edu.editor.StudyEditor;
-import com.jetbrains.python.edu.ui.TestContentPanel;
+import com.jetbrains.python.edu.ui.StudyTestContentPanel;
 import icons.StudyIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,12 +38,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class WatchInputAction extends DumbAwareAction {
+public class StudyEditInputAction extends DumbAwareAction {
 
   public static final String TEST_TAB_NAME = "test";
   public static final String USER_TEST_INPUT = "input";
   public static final String USER_TEST_OUTPUT = "output";
-  private static final Logger LOG = Logger.getInstance(WatchInputAction.class.getName());
+  private static final Logger LOG = Logger.getInstance(StudyEditInputAction.class.getName());
   private JBEditorTabs tabbedPane;
   private Map<TabInfo, UserTest> myEditableTabs = new HashMap<TabInfo, UserTest>();
 
@@ -68,7 +68,7 @@ public class WatchInputAction extends DumbAwareAction {
             assert testsDir != null;
             UserTest userTest = createUserTest(testsDir, currentTask);
             userTest.setEditable(true);
-            TestContentPanel testContentPanel = new TestContentPanel(userTest);
+            StudyTestContentPanel testContentPanel = new StudyTestContentPanel(userTest);
             TabInfo testTab = addTestTab(tabbedPane.getTabCount(), testContentPanel, currentTask, true);
             myEditableTabs.put(testTab, userTest);
             tabbedPane.addTabSilently(testTab, tabCount - 1);
@@ -81,7 +81,7 @@ public class WatchInputAction extends DumbAwareAction {
       for (UserTest userTest : userTests) {
         String inputFileText = StudyUtils.getFileText(null, userTest.getInput(), false);
         String outputFileText = StudyUtils.getFileText(null, userTest.getOutput(), false);
-        TestContentPanel myContentPanel = new TestContentPanel(userTest);
+        StudyTestContentPanel myContentPanel = new StudyTestContentPanel(userTest);
         myContentPanel.addInputContent(inputFileText);
         myContentPanel.addOutputContent(outputFileText);
         TabInfo testTab = addTestTab(i, myContentPanel, currentTask, userTest.isEditable());
@@ -137,12 +137,12 @@ public class WatchInputAction extends DumbAwareAction {
     return userTest;
   }
 
-  private TabInfo addTestTab(int nameIndex, final TestContentPanel contentPanel, @NotNull final Task currentTask, boolean toBeClosable) {
+  private TabInfo addTestTab(int nameIndex, final StudyTestContentPanel contentPanel, @NotNull final Task currentTask, boolean toBeClosable) {
     TabInfo testTab = toBeClosable ? createClosableTab(contentPanel, currentTask) : new TabInfo(contentPanel);
     return testTab.setText(TEST_TAB_NAME + String.valueOf(nameIndex));
   }
 
-  private TabInfo createClosableTab(TestContentPanel contentPanel, Task currentTask) {
+  private TabInfo createClosableTab(StudyTestContentPanel contentPanel, Task currentTask) {
     TabInfo closableTab = new TabInfo(contentPanel);
     final DefaultActionGroup tabActions = new DefaultActionGroup();
     tabActions.add(new CloseTab(closableTab, currentTask));

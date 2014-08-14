@@ -17,12 +17,12 @@ import icons.StudyIcons;
 /**
  * move caret to next task window
  */
-public class NextWindowAction extends DumbAwareAction {
+public class StudyNextWindowAction extends DumbAwareAction {
   public static final String ACTION_ID = "NextWindow";
   public static final String SHORTCUT = "ctrl pressed PERIOD";
   public static final String SHORTCUT2 = "ctrl pressed ENTER";
 
-  public NextWindowAction() {
+  public StudyNextWindowAction() {
     super("NextWindowAction", "Select next window", StudyIcons.Next);
   }
 

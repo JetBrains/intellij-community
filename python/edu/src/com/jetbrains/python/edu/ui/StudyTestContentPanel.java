@@ -10,12 +10,12 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.text.BadLocationException;
 import java.awt.*;
 
-public class TestContentPanel extends JPanel {
+public class StudyTestContentPanel extends JPanel {
   public static final Dimension PREFERRED_SIZE = new Dimension(300, 200);
   private static final Font HEADER_FONT = new Font("Arial", Font.BOLD, 16);
   private final JTextArea myInputArea = new JTextArea();
   private final JTextArea myOutputArea = new JTextArea();
-  public TestContentPanel(UserTest userTest) {
+  public StudyTestContentPanel(UserTest userTest) {
     this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     initContentLabel("input", myInputArea);
     myInputArea.getDocument().addDocumentListener(new BufferUpdater(userTest.getInputBuffer()));

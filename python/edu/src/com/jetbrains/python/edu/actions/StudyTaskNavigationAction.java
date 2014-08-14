@@ -25,7 +25,7 @@ import java.util.Map;
  * author: liana
  * data: 7/21/14.
  */
-abstract public class TaskNavigationAction extends DumbAwareAction {
+abstract public class StudyTaskNavigationAction extends DumbAwareAction {
   public void navigateTask(Project project) {
     Editor selectedEditor = StudyEditor.getSelectedEditor(project);
     FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();

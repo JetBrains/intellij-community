@@ -24,11 +24,11 @@ import icons.StudyIcons;
 
 import java.io.File;
 
-public class ShowHintAction extends DumbAwareAction {
+public class StudyShowHintAction extends DumbAwareAction {
   public static final String ACTION_ID = "ShowHintAction";
   public static final String SHORTCUT = "ctrl pressed 7";
 
-  public ShowHintAction() {
+  public StudyShowHintAction() {
     super("Show hint", "Show hint", StudyIcons.ShowHint);
   }
 

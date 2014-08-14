@@ -121,38 +121,39 @@ public class StudyEditor implements FileEditor {
       watchInputButton.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          WatchInputAction watchInputAction = (WatchInputAction)ActionManager.getInstance().getAction("WatchInputAction");
-          watchInputAction.showInput(project);
+          StudyEditInputAction studyEditInputAction = (StudyEditInputAction)ActionManager.getInstance().getAction("WatchInputAction");
+          studyEditInputAction.showInput(project);
         }
       });
     }
     myCheckButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        CheckAction checkAction = (CheckAction)ActionManager.getInstance().getAction("CheckAction");
-        checkAction.check(project);
+        StudyCheckAction studyCheckAction = (StudyCheckAction)ActionManager.getInstance().getAction("CheckAction");
+        studyCheckAction.check(project);
       }
     });
 
     myNextTaskButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        NextTaskAction nextTaskAction = (NextTaskAction)ActionManager.getInstance().getAction("NextTaskAction");
-        nextTaskAction.navigateTask(project);
+        StudyNextStudyTaskAction studyNextTaskAction = (StudyNextStudyTaskAction)ActionManager.getInstance().getAction("NextTaskAction");
+        studyNextTaskAction.navigateTask(project);
       }
     });
     myPrevTaskButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        PreviousTaskAction prevTaskAction = (PreviousTaskAction)ActionManager.getInstance().getAction("PreviousTaskAction");
+        StudyPreviousStudyTaskAction
+          prevTaskAction = (StudyPreviousStudyTaskAction)ActionManager.getInstance().getAction("PreviousTaskAction");
         prevTaskAction.navigateTask(project);
       }
     });
     myRefreshButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        RefreshTaskAction refreshTaskAction = (RefreshTaskAction)ActionManager.getInstance().getAction("RefreshTaskAction");
-        refreshTaskAction.refresh(project);
+        StudyRefreshTaskAction studyRefreshTaskAction = (StudyRefreshTaskAction)ActionManager.getInstance().getAction("RefreshTaskAction");
+        studyRefreshTaskAction.refresh(project);
       }
     });
   }

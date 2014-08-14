@@ -23,8 +23,8 @@ import com.jetbrains.python.edu.editor.StudyEditor;
 
 import java.io.*;
 
-public class RefreshTaskAction extends DumbAwareAction {
-  private static final Logger LOG = Logger.getInstance(RefreshTaskAction.class.getName());
+public class StudyRefreshTaskAction extends DumbAwareAction {
+  private static final Logger LOG = Logger.getInstance(StudyRefreshTaskAction.class.getName());
 
   public void refresh(final Project project) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
