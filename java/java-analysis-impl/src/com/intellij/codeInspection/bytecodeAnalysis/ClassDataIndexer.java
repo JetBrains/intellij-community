@@ -154,28 +154,7 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
               return;
             }
           }
-
-          // default top equations
-          if (isReferenceResult) {
-            contractEqs.add(new Equation<Key, Value>(new Key(method, new Out(), stable), FINAL_TOP));
-          }
-          for (int i = 0; i < argumentTypes.length; i++) {
-            Type argType = argumentTypes[i];
-            boolean isReferenceArg = ASMUtils.isReferenceType(argType);
-            boolean isBooleanArg = ASMUtils.isBooleanType(argType);
-
-            if (isReferenceArg) {
-              parameterEqs.add(new Equation<Key, Value>(new Key(method, new In(i), stable), FINAL_TOP));
-            }
-            if (isReferenceArg && isInterestingResult) {
-              contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), FINAL_TOP));
-              contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull), stable), FINAL_TOP));
-            }
-            if (isBooleanArg && isInterestingResult) {
-              contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.False), stable), FINAL_TOP));
-              contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.True), stable), FINAL_TOP));
-            }
-          }
+          topEquations(method, argumentTypes, isReferenceResult, isInterestingResult, stable);
         }
         catch (ProcessCanceledException e) {
           throw e;
@@ -327,6 +306,33 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
           if (ASMUtils.isBooleanType(argType) && (isReferenceResult || isBooleanResult)) {
             contractEqs.add(analyzer.trueContractEquation(i, stable));
             contractEqs.add(analyzer.falseContractEquation(i, stable));
+          }
+        }
+      }
+
+      private void topEquations(Method method,
+                                Type[] argumentTypes,
+                                boolean isReferenceResult,
+                                boolean isInterestingResult,
+                                boolean stable) {
+        if (isReferenceResult) {
+          contractEqs.add(new Equation<Key, Value>(new Key(method, new Out(), stable), FINAL_TOP));
+        }
+        for (int i = 0; i < argumentTypes.length; i++) {
+          Type argType = argumentTypes[i];
+          boolean isReferenceArg = ASMUtils.isReferenceType(argType);
+          boolean isBooleanArg = ASMUtils.isBooleanType(argType);
+
+          if (isReferenceArg) {
+            parameterEqs.add(new Equation<Key, Value>(new Key(method, new In(i), stable), FINAL_TOP));
+          }
+          if (isReferenceArg && isInterestingResult) {
+            contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), FINAL_TOP));
+            contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull), stable), FINAL_TOP));
+          }
+          if (isBooleanArg && isInterestingResult) {
+            contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.False), stable), FINAL_TOP));
+            contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.True), stable), FINAL_TOP));
           }
         }
       }
