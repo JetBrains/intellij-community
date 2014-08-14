@@ -205,8 +205,6 @@ public layoutEducational(String classesPath, Set usedJars) {
 
 private layoutPlugins(layouts) {
   dir("plugins") {
-    layouts.layoutPlugin("rest")
-    layouts.layoutPlugin("python-rest")
     layouts.layoutPlugin("learn-python")
   }
 
