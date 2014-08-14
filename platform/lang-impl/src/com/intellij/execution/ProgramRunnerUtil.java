@@ -91,9 +91,7 @@ public class ProgramRunnerUtil {
       if (assignNewId) {
         environment.assignNewExecutionId();
       }
-      ProgramRunner<?> runner = environment.getRunner();
-      assert runner != null;
-      runner.execute(environment);
+      environment.getRunner().execute(environment);
     }
     catch (ExecutionException e) {
       String name = runnerAndConfigurationSettings != null ? runnerAndConfigurationSettings.getName() : null;

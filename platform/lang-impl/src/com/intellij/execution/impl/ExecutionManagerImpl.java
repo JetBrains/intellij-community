@@ -352,7 +352,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
     awaitingTerminationAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
-        if (environment.getRunner() != null && ExecutorRegistry.getInstance().isStarting(environment)) {
+        if (ExecutorRegistry.getInstance().isStarting(environment)) {
           awaitingTerminationAlarm.addRequest(this, 100);
           return;
         }
@@ -370,17 +370,8 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
   }
 
   private static void start(@NotNull ExecutionEnvironment environment) {
-    if (environment.getRunner() == null) {
-      @SuppressWarnings("deprecation")
-      Runnable restarter = environment.getContentToReuse() == null ? null : environment.getContentToReuse().getRestarter();
-      if (restarter != null) {
-        restarter.run();
-      }
-    }
-    else {
-      RunnerAndConfigurationSettings settings = environment.getRunnerAndConfigurationSettings();
-      ProgramRunnerUtil.executeConfiguration(environment, settings != null && settings.isEditBeforeRun(), true);
-    }
+    RunnerAndConfigurationSettings settings = environment.getRunnerAndConfigurationSettings();
+    ProgramRunnerUtil.executeConfiguration(environment, settings != null && settings.isEditBeforeRun(), true);
   }
 
   private static boolean userApprovesStopForSameTypeConfigurations(Project project, String configName, int instancesCount) {
