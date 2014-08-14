@@ -83,9 +83,10 @@ public class BytecodeAnalysisConverter {
    */
   @NotNull
   public static HKey asmKey(@NotNull Key key, @NotNull MessageDigest md) {
-    String signature = key.method.methodName + key.method.methodDesc;
     byte[] classDigest = md.digest(key.method.internalClassName.getBytes());
-    byte[] sigDigest = md.digest(signature.getBytes());
+    md.update(key.method.methodName.getBytes());
+    md.update(key.method.methodDesc.getBytes());
+    byte[] sigDigest = md.digest();
     byte[] digest = new byte[HASH_SIZE];
     System.arraycopy(classDigest, 0, digest, 0, CLASS_HASH_SIZE);
     System.arraycopy(sigDigest, 0, digest, CLASS_HASH_SIZE, SIGNATURE_HASH_SIZE);
