@@ -6,3 +6,4 @@ IntelliLang
 IntelliLang-python
 rest
 python-rest
+learn-python
