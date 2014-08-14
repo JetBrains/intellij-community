@@ -44,7 +44,6 @@ import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
-import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.MessageView;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
@@ -170,10 +169,8 @@ public class ExecutionHelper {
           openMessagesView(errorTreeView, myProject, tabDisplayName);
         }
         catch (NullPointerException e) {
-          final StringBuilder builder = new StringBuilder();
-          builder.append(stdOutTitle).append("\n").append(stdout != null ? stdout : "<empty>").append("\n");
-          builder.append(stderrTitle).append("\n").append(stderr != null ? stderr : "<empty>");
-          Messages.showErrorDialog(builder.toString(), "Process Output");
+          Messages.showErrorDialog(stdOutTitle + "\n" + (stdout != null ? stdout : "<empty>") + "\n" + stderrTitle + "\n"
+                                   + (stderr != null ? stderr : "<empty>"), "Process Output");
           return;
         }
 
@@ -343,21 +340,18 @@ public class ExecutionHelper {
     }
   }
 
-  private static void descriptorToFront(final Project project, final RunContentDescriptor descriptor) {
+  private static void descriptorToFront(@NotNull final Project project, @NotNull final RunContentDescriptor descriptor) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        final ToolWindow toolWindow = ExecutionManager.getInstance(project).getContentManager().getToolWindowByDescriptor(descriptor);
-
+        ToolWindow toolWindow = ExecutionManager.getInstance(project).getContentManager().getToolWindowByDescriptor(descriptor);
         if (toolWindow != null) {
           toolWindow.show(null);
-
-          final ContentManager contentManager = toolWindow.getContentManager();
-
-          contentManager.setSelectedContent(descriptor.getAttachedContent());
+          //noinspection ConstantConditions
+          toolWindow.getContentManager().setSelectedContent(descriptor.getAttachedContent());
         }
       }
-    });
+    }, project.getDisposed());
   }
 
   public static class ErrorViewPanel extends NewErrorTreeViewPanel {
@@ -384,8 +378,6 @@ public class ExecutionHelper {
                                             @NotNull final ExecutionMode mode,
                                             @NotNull final String presentableCmdline) {
     final String title = mode.getTitle() != null ? mode.getTitle() : "Please wait...";
-    assert title != null;
-
     final Runnable process;
     if (mode.cancelable()) {
       process = createCancelableExecutionProcess(processHandler, mode.shouldCancelFun());
@@ -400,7 +392,7 @@ public class ExecutionHelper {
         };
       }
       else {
-        process = createTimelimitedExecutionProcess(processHandler, mode.getTimeout(), presentableCmdline);
+        process = createTimeLimitedExecutionProcess(processHandler, mode.getTimeout(), presentableCmdline);
       }
     }
     if (mode.withModalProgress()) {
@@ -447,7 +439,7 @@ public class ExecutionHelper {
       private final Runnable myCancelListener = new Runnable() {
         @Override
         public void run() {
-          for (; ; ) {
+          while (true) {
             if ((myProgressIndicator != null && (myProgressIndicator.isCanceled()
                                                  || !myProgressIndicator.isRunning()))
                 || (cancelableFun != null && cancelableFun.fun(null).booleanValue())
@@ -493,7 +485,7 @@ public class ExecutionHelper {
     };
   }
 
-  private static Runnable createTimelimitedExecutionProcess(final ProcessHandler processHandler,
+  private static Runnable createTimeLimitedExecutionProcess(final ProcessHandler processHandler,
                                                             final int timeout,
                                                             @NotNull final String presentableCmdline) {
     return new Runnable() {
