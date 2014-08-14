@@ -222,12 +222,13 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
    * Tries to find editor for the given element.
    * <p/>
    * There are at least two approaches to achieve the target. Current method is intended to encapsulate both of them:
-   * <pre>
    * <ul>
    *   <li>target editor works with a real file that remains at file system;</li>
    *   <li>target editor works with a virtual file;</li>
    * </ul>
-   * </pre>
+   * <p/>
+   * Please don't use this method for finding an editor for quick fix.
+   * @see {@link com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement}
    *
    * @param element   target element
    * @return          editor that works with a given element if the one is found; <code>null</code> otherwise
