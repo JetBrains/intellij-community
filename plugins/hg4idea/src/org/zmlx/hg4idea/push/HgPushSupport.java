@@ -15,15 +15,15 @@
  */
 package org.zmlx.hg4idea.push;
 
-import com.intellij.dvcs.push.OutgoingCommitsProvider;
-import com.intellij.dvcs.push.PushSupport;
-import com.intellij.dvcs.push.Pusher;
-import com.intellij.dvcs.push.VcsPushOptionsPanel;
+import com.intellij.dvcs.push.*;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,17 +33,20 @@ import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.Collection;
 
-public class HgPushSupport extends PushSupport {
-  private final Project myProject;
+public class HgPushSupport extends PushSupport<HgRepository> {
 
-  public HgPushSupport(Project project) {
+  @NotNull private final Project myProject;
+  @NotNull private final HgVcs myVcs;
+
+  public HgPushSupport(@NotNull Project project) {
     myProject = project;
+    myVcs = ObjectUtils.assertNotNull(HgVcs.getInstance(myProject));
   }
 
   @NotNull
   @Override
   public AbstractVcs getVcs() {
-    return HgVcs.getInstance(myProject);
+    return myVcs;
   }
 
   @NotNull
@@ -60,31 +63,26 @@ public class HgPushSupport extends PushSupport {
 
   @Nullable
   @Override
-  public HgTarget getDefaultTarget(@NotNull Repository repository) {
-    if (!(repository instanceof HgRepository)) return null;
-    String defaultPushPath = ((HgRepository)repository).getRepositoryConfig().getDefaultPushPath();
+  public HgTarget getDefaultTarget(@NotNull HgRepository repository) {
+    String defaultPushPath = repository.getRepositoryConfig().getDefaultPushPath();
     return defaultPushPath == null ? null : new HgTarget(defaultPushPath);
   }
 
   @NotNull
   @Override
-  public Collection<String> getTargetNames(@NotNull Repository repository) {
-    if (repository instanceof HgRepository) {
-      return ContainerUtil.map(((HgRepository)repository).getRepositoryConfig().getPaths(), new Function<String, String>() {
-        @Override
-        public String fun(String s) {
-          return HgUtil.removePasswordIfNeeded(s);
-        }
-      });
-    }
-    return ContainerUtil.emptyList();
+  public Collection<String> getTargetNames(@NotNull HgRepository repository) {
+    return ContainerUtil.map(repository.getRepositoryConfig().getPaths(), new Function<String, String>() {
+      @Override
+      public String fun(String s) {
+        return HgUtil.removePasswordIfNeeded(s);
+      }
+    });
   }
 
   @NotNull
   @Override
-  public HgSource getSource(@NotNull Repository repository) {
-    String localBranch =
-      repository instanceof HgRepository ? HgUtil.getActiveBranchName((HgRepository)repository) : HgRepository.DEFAULT_BRANCH;
+  public HgSource getSource(@NotNull HgRepository repository) {
+    String localBranch = HgUtil.getActiveBranchName(repository);
     return new HgSource(localBranch);
   }
 
@@ -102,5 +100,13 @@ public class HgPushSupport extends PushSupport {
   @Nullable
   public VcsPushOptionsPanel getVcsPushOptionsPanel() {
     return new HgPushOptionsPanel();
+  }
+
+  @Override
+  @Nullable
+  public ValidationInfo validateSpec(@NotNull Repository repository, @NotNull PushSpec spec) {
+    PushTarget target = spec.getTarget();
+    return (target == null || StringUtil.isEmptyOrSpaces(target.getPresentation())) ? new ValidationInfo(
+      "Please, specify remote push path for selected repos!") : null;
   }
 }

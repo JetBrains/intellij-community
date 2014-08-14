@@ -23,10 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.*;
 import java.util.Collection;
 
-/**
- * author: liana
- * data: 7/15/14.
- */
 public class StudyUtils {
   private static final Logger LOG = Logger.getInstance(StudyUtils.class.getName());
   public static void closeSilently(Closeable stream) {
@@ -53,6 +49,7 @@ public class StudyUtils {
     return index >= 0 && index < size;
   }
 
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static String getFileText(String parentDir, String fileName, boolean wrapHTML) {
 
     File inputFile = parentDir !=null ? new File(parentDir, fileName) : new File(fileName);
@@ -118,16 +115,17 @@ public class StudyUtils {
     return Integer.parseInt(fullName.substring(logicalName.length())) - 1;
   }
 
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static VirtualFile flushWindows(Document document, TaskFile taskFile, VirtualFile file) {
     VirtualFile taskDir = file.getParent();
-    VirtualFile file_windows = null;
+    VirtualFile fileWindows = null;
     if (taskDir != null) {
       String name = file.getNameWithoutExtension() + "_windows";
       PrintWriter printWriter = null;
       try {
 
-        file_windows = taskDir.createChildData(taskFile, name);
-        printWriter = new PrintWriter(new FileOutputStream(file_windows.getPath()));
+        fileWindows = taskDir.createChildData(taskFile, name);
+        printWriter = new PrintWriter(new FileOutputStream(fileWindows.getPath()));
         for (TaskWindow taskWindow : taskFile.getTaskWindows()) {
           if (!taskWindow.isValid(document)) {
             continue;
@@ -138,13 +136,13 @@ public class StudyUtils {
         }
       }
       catch (IOException e) {
-        e.printStackTrace();
+       LOG.error(e);
       }
       finally {
         closeSilently(printWriter);
-        StudyUtils.synchronize();
+        synchronize();
       }
     }
-    return file_windows;
+    return fileWindows;
   }
 }

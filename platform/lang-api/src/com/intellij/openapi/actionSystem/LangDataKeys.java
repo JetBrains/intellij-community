@@ -57,7 +57,7 @@ public class LangDataKeys extends PlatformDataKeys {
   public static final DataKey<PsiElement> PASTE_TARGET_PSI_ELEMENT = DataKey.create("psi.pasteTargetElement");
 
   public static final DataKey<ConsoleView> CONSOLE_VIEW = DataKey.create("consoleView");
-  
+
   public static final DataKey<JBPopup> POSITION_ADJUSTER_POPUP = DataKey.create("chooseByNameDropDown");
   public static final DataKey<JBPopup> PARENT_POPUP = DataKey.create("chooseByNamePopup");
 
@@ -66,5 +66,5 @@ public class LangDataKeys extends PlatformDataKeys {
 
   public static final DataKey<RunProfile> RUN_PROFILE = DataKey.create("runProfile");
   public static final DataKey<ExecutionEnvironment> EXECUTION_ENVIRONMENT = DataKey.create("executionEnvironment");
-  public static final DataKey<RunContentDescriptor> RUN_CONTENT_DESCRIPTOR = DataKey.create("RUN_CONTENT_DESCRIPTORy6gfv");
+  public static final DataKey<RunContentDescriptor> RUN_CONTENT_DESCRIPTOR = DataKey.create("RUN_CONTENT_DESCRIPTOR");
 }

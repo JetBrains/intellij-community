@@ -46,11 +46,6 @@ public class LoggerInitializedWithForeignClassInspectionBase extends BaseInspect
   @SuppressWarnings({"PublicField"})
   public String loggerFactoryMethodName = DEFAULT_FACTORY_METHOD_NAMES;
 
-  public LoggerInitializedWithForeignClassInspectionBase() {
-    parseString(DEFAULT_LOGGER_CLASS_NAMES, loggerFactoryClassNames);
-    parseString(DEFAULT_FACTORY_METHOD_NAMES, loggerFactoryMethodNames);
-  }
-
   @Override
   @NotNull
   public String getDisplayName() {

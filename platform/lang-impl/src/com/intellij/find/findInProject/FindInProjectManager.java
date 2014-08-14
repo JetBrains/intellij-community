@@ -40,7 +40,6 @@ import org.jetbrains.annotations.NotNull;
 
 public class FindInProjectManager {
   private final Project myProject;
-  private boolean myToOpenInNewTab = false;
   private volatile boolean myIsFindInProgress = false;
 
   public static FindInProjectManager getInstance(Project project) {
@@ -60,12 +59,12 @@ public class FindInProjectManager {
       isOpenInNewTabEnabled = false;
     }
     else {
-      toOpenInNewTab[0] = myToOpenInNewTab;
+      toOpenInNewTab[0] = FindSettings.getInstance().isShowResultsInSeparateView();
       isOpenInNewTabEnabled = UsageViewManager.getInstance(myProject).getReusableContentsCount() > 0;
     }
 
     final FindManager findManager = FindManager.getInstance(myProject);
-    final FindModel findModel = (FindModel) findManager.getFindInProjectModel().clone();
+    final FindModel findModel = findManager.getFindInProjectModel().clone();
     findModel.setReplaceState(false);
     findModel.setOpenInNewTabVisible(true);
     findModel.setOpenInNewTabEnabled(isOpenInNewTabEnabled);
@@ -86,7 +85,7 @@ public class FindInProjectManager {
       public void run() {
         findModel.setOpenInNewTabVisible(false);
         if (isOpenInNewTabEnabled) {
-          myToOpenInNewTab = toOpenInNewTab[0] = findModel.isOpenInNewTab();
+          FindSettings.getInstance().setShowResultsInSeparateView(toOpenInNewTab[0] = findModel.isOpenInNewTab());
         }
 
         startFindInProject(findModel);
@@ -107,8 +106,8 @@ public class FindInProjectManager {
     if (manager == null) return;
     final FindManager findManager = FindManager.getInstance(myProject);
     findManager.getFindInProjectModel().copyFrom(findModel);
-    final FindModel findModelCopy = (FindModel)findModel.clone();
-    final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(myToOpenInNewTab, findModelCopy);
+    final FindModel findModelCopy = findModel.clone();
+    final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(FindSettings.getInstance().isShowResultsInSeparateView(), findModelCopy);
     final boolean showPanelIfOnlyOneUsage = !FindSettings.getInstance().isSkipResultsWithOneUsage();
 
     final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);

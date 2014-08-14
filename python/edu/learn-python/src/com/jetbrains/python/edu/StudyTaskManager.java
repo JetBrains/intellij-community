@@ -11,17 +11,19 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.xmlb.XmlSerializer;
-import com.jetbrains.python.edu.actions.NextWindowAction;
-import com.jetbrains.python.edu.actions.PrevWindowAction;
-import com.jetbrains.python.edu.actions.ShowHintAction;
+import com.jetbrains.python.edu.actions.StudyNextWindowAction;
+import com.jetbrains.python.edu.actions.StudyPrevWindowAction;
+import com.jetbrains.python.edu.actions.StudyShowHintAction;
 import com.jetbrains.python.edu.course.Course;
 import com.jetbrains.python.edu.course.Lesson;
 import com.jetbrains.python.edu.course.Task;
@@ -105,6 +107,12 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
           @Override
           public void run() {
             if (myCourse != null) {
+              StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
+                @Override
+                public void run() {
+                  ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW).show(null);
+                }
+              });
               UISettings.getInstance().HIDE_TOOL_STRIPES = false;
               UISettings.getInstance().fireUISettingsChanged();
               ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
@@ -129,10 +137,10 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
                 StudyUtils.updateStudyToolWindow(myProject);
                 studyToolWindow.show(null);
               }
-              addShortcut(NextWindowAction.SHORTCUT, NextWindowAction.ACTION_ID);
-              addShortcut(PrevWindowAction.SHORTCUT, PrevWindowAction.ACTION_ID);
-              addShortcut(ShowHintAction.SHORTCUT, ShowHintAction.ACTION_ID);
-              addShortcut(NextWindowAction.SHORTCUT2, NextWindowAction.ACTION_ID);
+              addShortcut(StudyNextWindowAction.SHORTCUT, StudyNextWindowAction.ACTION_ID);
+              addShortcut(StudyPrevWindowAction.SHORTCUT, StudyPrevWindowAction.ACTION_ID);
+              addShortcut(StudyShowHintAction.SHORTCUT, StudyShowHintAction.ACTION_ID);
+              addShortcut(StudyNextWindowAction.SHORTCUT2, StudyNextWindowAction.ACTION_ID);
             }
           }
         });

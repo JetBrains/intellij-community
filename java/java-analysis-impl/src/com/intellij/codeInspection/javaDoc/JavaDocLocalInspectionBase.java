@@ -65,6 +65,7 @@ public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool
   }
 
   @NonNls private static final String IGNORE_ACCESSORS_ATTR_NAME = "IGNORE_ACCESSORS";
+  @NonNls private static final String IGNORE_DUPLICATED_THROWS_TAGS_ATTR_NAME = "IGNORE_DUPLICATED_THROWS_TAGS";
 
   public static class Options implements JDOMExternalizable {
     @NonNls public String ACCESS_JAVADOC_REQUIRED_FOR = NONE;
@@ -95,7 +96,18 @@ public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool
   @NonNls public Options FIELD_OPTIONS            = new Options("none", "");
   public         boolean IGNORE_DEPRECATED        = false;
   public         boolean IGNORE_JAVADOC_PERIOD    = true;
+  @Deprecated
   public         boolean IGNORE_DUPLICATED_THROWS = false;
+
+  private        boolean myIgnoreDuplicatedThrows = true;
+  public boolean getIgnoreDuplicatedThrows() {
+    return myIgnoreDuplicatedThrows;
+  }
+
+  public void setIgnoreDuplicatedThrows(boolean ignoreDuplicatedThrows) {
+    myIgnoreDuplicatedThrows = ignoreDuplicatedThrows;
+  }
+
   public         boolean IGNORE_POINT_TO_ITSELF   = false;
   public         String  myAdditionalJavadocTags  = "";
 
@@ -126,6 +138,9 @@ public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool
       option.setAttribute("value", String.valueOf(true));
       node.addContent(option);
     }
+    if (!myIgnoreDuplicatedThrows) {
+      node.addContent(new Element(IGNORE_DUPLICATED_THROWS_TAGS_ATTR_NAME).setAttribute("value", String.valueOf(false)));
+    }
     if (!PACKAGE_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR.equals("none") || !PACKAGE_OPTIONS.REQUIRED_TAGS.isEmpty()) {
       PACKAGE_OPTIONS.writeExternal(node);
     }
@@ -137,6 +152,10 @@ public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool
     final Element ignoreAccessorsTag = node.getChild(IGNORE_ACCESSORS_ATTR_NAME);
     if (ignoreAccessorsTag != null) {
       myIgnoreSimpleAccessors = Boolean.parseBoolean(ignoreAccessorsTag.getAttributeValue("value"));
+    }
+    Element ignoreDupThrowsTag = node.getChild(IGNORE_DUPLICATED_THROWS_TAGS_ATTR_NAME);
+    if (ignoreDupThrowsTag != null) {
+      myIgnoreDuplicatedThrows = Boolean.parseBoolean(ignoreDupThrowsTag.getAttributeValue("value"));
     }
     PACKAGE_OPTIONS.readExternal(node);
   }
@@ -1000,7 +1019,7 @@ public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool
           }
         }
       }
-      else if (!IGNORE_DUPLICATED_THROWS && ("throws".equals(tag.getName()) || "exception".equals(tag.getName()))) {
+      else if (!myIgnoreDuplicatedThrows && ("throws".equals(tag.getName()) || "exception".equals(tag.getName()))) {
         PsiDocTagValue value = tag.getValueElement();
         if (value != null) {
           final PsiElement firstChild = value.getFirstChild();

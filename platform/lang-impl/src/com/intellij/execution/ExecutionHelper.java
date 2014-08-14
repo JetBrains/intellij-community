@@ -21,6 +21,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManager;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -45,10 +46,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.MessageView;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
-import com.intellij.util.Function;
-import com.intellij.util.NotNullFunction;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ErrorTreeView;
@@ -264,13 +262,12 @@ public class ExecutionHelper {
     });
   }
 
-  public static Collection<RunContentDescriptor> findRunningConsole(final Project project,
-                                                                    @NotNull final NotNullFunction<RunContentDescriptor, Boolean> descriptorMatcher) {
-    final ExecutionManager executionManager = ExecutionManager.getInstance(project);
-
-    final RunContentDescriptor selectedContent = executionManager.getContentManager().getSelectedContent();
+  public static Collection<RunContentDescriptor> findRunningConsole(@NotNull Project project,
+                                                                    @NotNull NotNullFunction<RunContentDescriptor, Boolean> descriptorMatcher) {
+    RunContentManager contentManager = ExecutionManager.getInstance(project).getContentManager();
+    final RunContentDescriptor selectedContent = contentManager.getSelectedContent();
     if (selectedContent != null) {
-      final ToolWindow toolWindow = ExecutionManager.getInstance(project).getContentManager().getToolWindowByDescriptor(selectedContent);
+      final ToolWindow toolWindow = contentManager.getToolWindowByDescriptor(selectedContent);
       if (toolWindow != null && toolWindow.isVisible()) {
         if (descriptorMatcher.fun(selectedContent)) {
           return Collections.singletonList(selectedContent);
@@ -279,7 +276,7 @@ public class ExecutionHelper {
     }
 
     final ArrayList<RunContentDescriptor> result = ContainerUtil.newArrayList();
-    for (RunContentDescriptor runContentDescriptor : executionManager.getContentManager().getAllDescriptors()) {
+    for (RunContentDescriptor runContentDescriptor : contentManager.getAllDescriptors()) {
       if (descriptorMatcher.fun(runContentDescriptor)) {
         result.add(runContentDescriptor);
       }
@@ -287,11 +284,10 @@ public class ExecutionHelper {
     return result;
   }
 
-  public static List<RunContentDescriptor> collectConsolesByDisplayName(final Project project,
+  public static List<RunContentDescriptor> collectConsolesByDisplayName(@NotNull Project project,
                                                                         @NotNull NotNullFunction<String, Boolean> titleMatcher) {
-    List<RunContentDescriptor> result = ContainerUtil.newArrayList();
-    final ExecutionManager executionManager = ExecutionManager.getInstance(project);
-    for (RunContentDescriptor runContentDescriptor : executionManager.getContentManager().getAllDescriptors()) {
+    List<RunContentDescriptor> result = new SmartList<RunContentDescriptor>();
+    for (RunContentDescriptor runContentDescriptor : ExecutionManager.getInstance(project).getContentManager().getAllDescriptors()) {
       if (titleMatcher.fun(runContentDescriptor.getDisplayName())) {
         result.add(runContentDescriptor);
       }

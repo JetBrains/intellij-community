@@ -31,7 +31,10 @@ public class LoggerInitializedWithForeignClassInspectionTest extends LightInspec
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new LoggerInitializedWithForeignClassInspection();
+    final LoggerInitializedWithForeignClassInspection inspection = new LoggerInitializedWithForeignClassInspection();
+    inspection.loggerFactoryClassNames.add("java.util.logging.Logger");
+    inspection.loggerFactoryMethodNames.add("getLogger");
+    return inspection;
   }
 
   @Override

@@ -80,6 +80,7 @@ public class AnalysisScope {
   private boolean mySearchInLibraries = false;
   @Type protected int myType;
 
+  private Set<VirtualFile> myVFiles;
   protected Set<VirtualFile> myFilesSet;
 
   protected boolean myIncludeTestSource = true;
@@ -145,7 +146,7 @@ public class AnalysisScope {
     myModule = null;
     myModules = null;
     myScope = null;
-    myFilesSet = new HashSet<VirtualFile>(virtualFiles);
+    myVFiles = new HashSet<VirtualFile>(virtualFiles);
     myType = VIRTUAL_FILES;
   }
 
@@ -241,9 +242,9 @@ public class AnalysisScope {
       accept(createFileSearcher());
     }
     else if (myType == VIRTUAL_FILES) {
-      final HashSet<VirtualFile> files = new HashSet<VirtualFile>();
+      myFilesSet = new HashSet<VirtualFile>();
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-      for (Iterator<VirtualFile> iterator = myFilesSet.iterator(); iterator.hasNext(); ) {
+      for (Iterator<VirtualFile> iterator = myVFiles.iterator(); iterator.hasNext(); ) {
         final VirtualFile vFile = iterator.next();
         VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor() {
           @NotNull
@@ -251,7 +252,7 @@ public class AnalysisScope {
           public Result visitFileEx(@NotNull VirtualFile file) {
             boolean ignored = fileIndex.isExcluded(file);
             if (!ignored && !file.isDirectory()) {
-              files.add(file);
+              myFilesSet.add(file);
             }
             return ignored ? SKIP_CHILDREN : CONTINUE;
           }
@@ -261,7 +262,6 @@ public class AnalysisScope {
           iterator.remove();
         }
       }
-      myFilesSet.addAll(files);
     }
   }
 
@@ -592,7 +592,7 @@ public class AnalysisScope {
     if (myType != VIRTUAL_FILES) {
       myFilesSet = null;
     } else {
-      for (Iterator<VirtualFile> i = myFilesSet.iterator(); i.hasNext();) {
+      for (Iterator<VirtualFile> i = myVFiles.iterator(); i.hasNext();) {
         final VirtualFile virtualFile = i.next();
         if (virtualFile == null || !virtualFile.isValid()) {
           i.remove();

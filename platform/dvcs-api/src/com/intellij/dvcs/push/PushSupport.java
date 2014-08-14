@@ -18,6 +18,7 @@ package com.intellij.dvcs.push;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.vcs.AbstractVcs;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,8 +29,9 @@ import java.util.Collection;
  * Base class to provide vcs-specific info
  */
 
-public abstract class PushSupport {
-  public static final ExtensionPointName<PushSupport> PUSH_SUPPORT_EP = ExtensionPointName.create("com.intellij.pushSupport");
+public abstract class PushSupport<Repo extends Repository> {
+
+  public static final ExtensionPointName<PushSupport<? extends Repository>> PUSH_SUPPORT_EP = ExtensionPointName.create("com.intellij.pushSupport");
 
   @NotNull
   public abstract AbstractVcs getVcs();
@@ -44,21 +46,23 @@ public abstract class PushSupport {
    * @return Default push destination
    */
   @Nullable
-  public abstract PushTarget getDefaultTarget(@NotNull Repository repository);
+  public abstract PushTarget getDefaultTarget(@NotNull Repo repository);
 
   /**
    * @return All remembered remote destinations used for completion
    */
   @NotNull
-  public abstract Collection<String> getTargetNames(@NotNull Repository repository);
+  public abstract Collection<String> getTargetNames(@NotNull Repo repository);
 
   /**
    * @return current source(branch) for repository
    */
   @NotNull
-  public abstract PushSource getSource(@NotNull Repository repository);
+  public abstract PushSource getSource(@NotNull Repo repository);
 
-  /** Create destination target from user input string
+  /**
+   * Create destination target from user input string
+   *
    * @return
    */
   @Nullable
@@ -68,10 +72,16 @@ public abstract class PushSupport {
    * @return RepositoryManager for vcs
    */
   @NotNull
-  public abstract RepositoryManager<? extends Repository> getRepositoryManager();
+  public abstract RepositoryManager<Repo> getRepositoryManager();
 
   @Nullable
-  public VcsPushOptionsPanel getVcsPushOptionsPanel(){
+  public VcsPushOptionsPanel getVcsPushOptionsPanel() {
     return null;
   }
+
+  /**
+   * @return null if push spec are valid for selected repository
+   */
+  @Nullable
+  public abstract ValidationInfo validateSpec(@NotNull Repository repository, @NotNull PushSpec spec);
 }

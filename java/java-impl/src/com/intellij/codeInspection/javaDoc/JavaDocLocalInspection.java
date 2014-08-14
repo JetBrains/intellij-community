@@ -184,11 +184,11 @@ public class JavaDocLocalInspection extends JavaDocLocalInspectionBase {
       add(periodCheckBox, gc);
 
       final JCheckBox ignoreDuplicateThrowsCheckBox = new JCheckBox("Ignore duplicate throws tag",
-                                                     IGNORE_DUPLICATED_THROWS);
+                                                                    getIgnoreDuplicatedThrows());
       ignoreDuplicateThrowsCheckBox.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          IGNORE_DUPLICATED_THROWS = ignoreDuplicateThrowsCheckBox.isSelected();
+          setIgnoreDuplicatedThrows(ignoreDuplicateThrowsCheckBox.isSelected());
         }
       });
       add(ignoreDuplicateThrowsCheckBox, gc);

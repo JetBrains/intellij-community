@@ -55,13 +55,9 @@ public class HgOutgoingCommitsProvider extends OutgoingCommitsProvider {
     final HgVersion version = hgvcs.getVersion();
     String[] templates = HgBaseLogParser.constructFullTemplateArgument(true, version);
     HgOutgoingCommand hgOutgoingCommand = new HgOutgoingCommand(project);
-    PushTarget target = pushSpec.getTarget();
-    if (target != null) {
-      assert target instanceof HgTarget : String.format("Wrong Target for Repository %s", repository.getPresentableUrl());
-    }
-    HgTarget hgTarget = (HgTarget)target;
+    HgTarget hgTarget = (HgTarget)pushSpec.getTarget();
     List<VcsError> errors = new ArrayList<VcsError>();
-    if (target == null || StringUtil.isEmptyOrSpaces(hgTarget.myTarget)) {
+    if (hgTarget == null || StringUtil.isEmptyOrSpaces(hgTarget.myTarget)) {
       errors.add(new VcsError("Hg push path could not be empty."));
       return new OutgoingResult(Collections.<VcsFullCommitDetails>emptyList(), errors);
     }

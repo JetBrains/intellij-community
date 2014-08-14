@@ -110,6 +110,7 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
   @SuppressWarnings({"WeakerAccess"}) public boolean REGULAR_EXPRESSIONS = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean LOCAL_REGULAR_EXPRESSIONS = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean WITH_SUBDIRECTORIES = true;
+  @SuppressWarnings({"WeakerAccess"}) public boolean SHOW_RESULTS_IN_SEPARATE_VIEW = false;
 
   @SuppressWarnings({"WeakerAccess"}) public String SEARCH_SCOPE = DEFAULT_SEARCH_SCOPE;
   @SuppressWarnings({"WeakerAccess"}) public String FILE_MASK;
@@ -406,6 +407,16 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
   @Override
   public void setExceptCommentsAndLiterals(boolean selected) {
     EXCEPT_COMMENTS_AND_STRING_LITERALS = selected;
+  }
+
+  @Override
+  public boolean isShowResultsInSeparateView() {
+    return SHOW_RESULTS_IN_SEPARATE_VIEW;
+  }
+
+  @Override
+  public void setShowResultsInSeparateView(boolean optionValue) {
+    SHOW_RESULTS_IN_SEPARATE_VIEW = optionValue;
   }
 
   @Override

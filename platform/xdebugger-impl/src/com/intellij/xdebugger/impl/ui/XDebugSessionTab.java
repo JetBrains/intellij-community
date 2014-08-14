@@ -111,7 +111,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
         XDebugSessionImpl session = mySession;
         if (session != null && content.isSelected() && DebuggerContentInfo.WATCHES_CONTENT.equals(ViewImpl.ID.get(content))) {
           if (myWatchesView.rebuildNeeded()) {
-            myWatchesView.processSessionEvent(XDebugView.SessionEvent.SETTINGS_CHANGED, session);
+            myWatchesView.processSessionEvent(XDebugView.SessionEvent.SETTINGS_CHANGED);
           }
         }
       }
@@ -195,11 +195,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     AppUIUtil.invokeLaterIfProjectAlive(getProject(), new Runnable() {
       @Override
       public void run() {
-        XDebugSessionImpl session = mySession;
-        if (session != null) {
-          for (XDebugView view : myViews) {
-            view.processSessionEvent(XDebugView.SessionEvent.SETTINGS_CHANGED, session);
-          }
+        for (XDebugView view : myViews) {
+          view.processSessionEvent(XDebugView.SessionEvent.SETTINGS_CHANGED);
         }
       }
     });
