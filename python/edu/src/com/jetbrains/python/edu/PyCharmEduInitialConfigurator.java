@@ -125,10 +125,13 @@ public class PyCharmEduInitialConfigurator {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
-              GeneralSettings.getInstance().setShowTipsOnStartup(false);
-              showInitialConfigurationDialog();
-              propertiesComponent.setValue(DISPLAYED_PROPERTY, "true");
-              patchKeymap();
+              if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
+                GeneralSettings.getInstance().setShowTipsOnStartup(false);
+                propertiesComponent.setValue(DISPLAYED_PROPERTY, "true");
+                showInitialConfigurationDialog();
+
+                patchKeymap();
+              }
             }
           });
         }
