@@ -72,7 +72,7 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
     public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
       final AbstractPythonRunConfiguration configuration = ((AbstractPythonRunConfiguration)getPeer());
       return new FailedPythonTestCommandLineStateBase(configuration, env,
-                                                            (PythonTestCommandLineStateBase)configuration.getState(executor, env));
+                                                      (PythonTestCommandLineStateBase)configuration.getState(executor, env));
     }
   }
 

@@ -17,6 +17,7 @@ package com.intellij.execution.runners;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -77,6 +78,11 @@ public final class ExecutionEnvironmentBuilder {
   public static ExecutionEnvironmentBuilder create(@NotNull Executor executor, @NotNull RunnerAndConfigurationSettings settings) throws ExecutionException {
     ExecutionEnvironmentBuilder builder = create(settings.getConfiguration().getProject(), executor, settings.getConfiguration());
     return builder.runnerAndSettings(builder.myRunner, settings);
+  }
+
+  @NotNull
+  public static ExecutionEnvironmentBuilder create(@NotNull Executor executor, @NotNull RunConfiguration configuration) {
+    return new ExecutionEnvironmentBuilder(configuration.getProject(), executor).runProfile(configuration);
   }
 
   @NotNull

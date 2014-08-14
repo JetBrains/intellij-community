@@ -118,28 +118,26 @@ public class PushController implements Disposable {
   //return is single repository project or not
   private boolean createTreeModel(@NotNull CheckedTreeNode rootNode, @NotNull List<? extends Repository> preselectedRepositories) {
     if (myPushSupports.isEmpty()) return true;
-    boolean isSingleRepositoryProject = myPushSupports.size() == 1;
+    int repoCount = 0;
     for (PushSupport<? extends Repository> support : myPushSupports) {
-      isSingleRepositoryProject = createNodesForVcs(support, rootNode, preselectedRepositories, isSingleRepositoryProject);
+      repoCount += createNodesForVcs(support, rootNode, preselectedRepositories);
     }
-    return isSingleRepositoryProject;
+    return repoCount == 1;
   }
 
-  private <T extends Repository> boolean createNodesForVcs(@NotNull PushSupport<T> pushSupport,
-                                                           @NotNull CheckedTreeNode rootNode,
-                                                           @NotNull List<? extends Repository> preselectedRepositories,
-                                                           boolean isSingleRepositoryProject) {
+  private <T extends Repository> int createNodesForVcs(@NotNull PushSupport<T> pushSupport,
+                                                       @NotNull CheckedTreeNode rootNode,
+                                                       @NotNull List<? extends Repository> preselectedRepositories) {
     RepositoryManager<T> repositoryManager = pushSupport.getRepositoryManager();
     List<T> repositories = repositoryManager.getRepositories();
-    isSingleRepositoryProject = isSingleRepositoryProject && repositories.size() == 1;
     for (T repository : repositories) {
-      createRepoNode(pushSupport, repository, rootNode, preselectedRepositories.contains(repository), isSingleRepositoryProject);
+      createRepoNode(pushSupport, repository, rootNode, preselectedRepositories.contains(repository), repositories.size() == 1);
     }
-    return isSingleRepositoryProject;
+    return repositories.size();
   }
 
   private <T extends Repository> void createRepoNode(@NotNull final PushSupport<T> support,
-                                                     @NotNull T repository,
+                                                     @NotNull final T repository,
                                                      @NotNull CheckedTreeNode rootNode,
                                                      boolean isSelected,
                                                      boolean isSingleRepositoryProject) {
@@ -156,7 +154,7 @@ public class PushController implements Disposable {
     repoNode.addRepoNodeListener(new RepositoryNodeListener() {
       @Override
       public void onTargetChanged(String newValue) {
-        myView2Model.get(repoNode).setSpec(new PushSpec(model.getSpec().getSource(), support.createTarget(newValue)));
+        myView2Model.get(repoNode).setSpec(new PushSpec(model.getSpec().getSource(), support.createTarget(repository, newValue)));
         myDialog.updateButtons();
         myPushLog.startLoading(repoNode);
         loadCommits(model, repoNode, false);
