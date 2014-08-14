@@ -417,10 +417,9 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     return outputs;
   }
 
-  private JavaParameters checkCanRun(RunConfiguration configuration) throws ExecutionException {
+  private static JavaParameters checkCanRun(RunConfiguration configuration) throws ExecutionException {
     final RunProfileState state;
-    Executor executor = DefaultRunExecutor.getRunExecutorInstance();
-    state = configuration.getState(executor, new ExecutionEnvironmentBuilder(myProject, executor).runProfile(new MockProfile()).build());
+    state = ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configuration).runProfile(new MockProfile()).build().getState();
     assertNotNull(state);
     assertTrue(state instanceof JavaCommandLine);
     if (state instanceof TestPackage) {
