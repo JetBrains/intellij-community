@@ -106,6 +106,7 @@
 
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.service.GradleInstallationManager"/>
 
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSystemSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleLocalSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.service.project.GradleNotification"/>
