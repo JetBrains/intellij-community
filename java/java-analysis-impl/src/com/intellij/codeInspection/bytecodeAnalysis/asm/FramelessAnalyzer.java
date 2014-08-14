@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Specialized lite version of {@link org.jetbrains.org.objectweb.asm.tree.analysis.Analyzer}.
+ * Specialized version of {@link org.jetbrains.org.objectweb.asm.tree.analysis.Analyzer}.
  * Calculation of fix-point of frames is removed, since frames are not needed to build control flow graph.
  * So, the main point here is handling of subroutines (jsr) and try-catch-finally blocks.
  */
@@ -81,10 +81,10 @@ public class FramelessAnalyzer implements Opcodes {
   private InsnList insns;
   private List<TryCatchBlockNode>[] handlers;
   private Subroutine[] subroutines;
-  private boolean[] wasQueued;
-  private boolean[] queued;
-  private int[] queue;
-  private int top;
+  protected boolean[] wasQueued;
+  protected boolean[] queued;
+  protected int[] queue;
+  protected int top;
 
   public void analyze(final MethodNode m) throws AnalyzerException {
     n = m.instructions.size();
@@ -240,7 +240,7 @@ public class FramelessAnalyzer implements Opcodes {
     }
   }
 
-  private void findSubroutine(int insn, final Subroutine sub,
+  protected void findSubroutine(int insn, final Subroutine sub,
                               final List<AbstractInsnNode> calls) throws AnalyzerException {
     while (true) {
       if (insn < 0 || insn >= n) {
@@ -317,7 +317,7 @@ public class FramelessAnalyzer implements Opcodes {
 
   // -------------------------------------------------------------------------
 
-  private void merge(final int insn, @Nullable final Subroutine subroutine) throws AnalyzerException {
+  protected void merge(final int insn, @Nullable final Subroutine subroutine) throws AnalyzerException {
     Subroutine oldSubroutine = subroutines[insn];
     boolean changes = false;
 
@@ -342,7 +342,7 @@ public class FramelessAnalyzer implements Opcodes {
     }
   }
 
-  private void merge(final int insn, final Subroutine subroutineBeforeJSR, final boolean[] access) throws AnalyzerException {
+  protected void merge(final int insn, final Subroutine subroutineBeforeJSR, final boolean[] access) throws AnalyzerException {
     Subroutine oldSubroutine = subroutines[insn];
     boolean changes = false;
 

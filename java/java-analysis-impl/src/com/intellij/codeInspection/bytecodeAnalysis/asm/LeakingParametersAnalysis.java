@@ -30,8 +30,10 @@ import static org.jetbrains.org.objectweb.asm.Opcodes.*;
  * @author lambdamix
  */
 public class LeakingParametersAnalysis {
-  public static Pair<boolean[], Frame<Value>[]> leakingParameters(String className, MethodNode methodNode) throws AnalyzerException {
-    Frame<ParamsValue>[] frames = new Analyzer<ParamsValue>(new ParametersUsage(methodNode)).analyze(className, methodNode);
+  public static Pair<boolean[], Frame<Value>[]> leakingParameters(String className, MethodNode methodNode, boolean jsr) throws AnalyzerException {
+    Frame<ParamsValue>[] frames = jsr ?
+                                  new Analyzer<ParamsValue>(new ParametersUsage(methodNode)).analyze(className, methodNode) :
+                                  new LiteAnalyzer<ParamsValue>(new ParametersUsage(methodNode)).analyze(className, methodNode);
     InsnList insns = methodNode.instructions;
     LeakingParametersCollector collector = new LeakingParametersCollector(methodNode);
     for (int i = 0; i < frames.length; i++) {
@@ -51,9 +53,11 @@ public class LeakingParametersAnalysis {
     return Pair.create(collector.leaking, (Frame<Value>[])(Frame<?>[])frames);
   }
 
-  public static Pair<boolean[], Frame<Value>[]> fastLeakingParameters(String className, MethodNode methodNode) throws AnalyzerException {
+  public static Pair<boolean[], Frame<Value>[]> fastLeakingParameters(String className, MethodNode methodNode, boolean jsr) throws AnalyzerException {
     IParametersUsage parametersUsage = new IParametersUsage(methodNode);
-    Frame<?>[] frames = new Analyzer<IParamsValue>(parametersUsage).analyze(className, methodNode);
+    Frame<?>[] frames = jsr ?
+                        new Analyzer<IParamsValue>(parametersUsage).analyze(className, methodNode) :
+                        new LiteAnalyzer<IParamsValue>(parametersUsage).analyze(className, methodNode);
     int leakingMask = parametersUsage.leaking;
     boolean[] result = new boolean[parametersUsage.arity];
     for (int i = 0; i < result.length; i++) {

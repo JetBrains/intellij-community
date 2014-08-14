@@ -67,8 +67,8 @@ public final class ControlFlowGraph {
     this.errorTransitions = errorTransitions;
   }
 
-  public static ControlFlowGraph build(String className, MethodNode methodNode) throws AnalyzerException {
-    return new ControlFlowBuilder(className, methodNode).buildCFG();
+  public static ControlFlowGraph build(String className, MethodNode methodNode, boolean jsr) throws AnalyzerException {
+    return jsr ? new ControlFlowBuilder(className, methodNode).buildCFG() : new LiteControlFlowBuilder(className, methodNode).buildCFG();
   }
 }
 
@@ -81,6 +81,56 @@ final class ControlFlowBuilder extends FramelessAnalyzer {
   private int edgeCount;
 
   ControlFlowBuilder(String className, MethodNode methodNode) {
+    this.className = className;
+    this.methodNode = methodNode;
+    transitions = new TIntArrayList[methodNode.instructions.size()];
+    errors = new boolean[methodNode.instructions.size()];
+    for (int i = 0; i < transitions.length; i++) {
+      transitions[i] = new TIntArrayList();
+    }
+    errorTransitions = new HashSet<Edge>();
+  }
+
+  final ControlFlowGraph buildCFG() throws AnalyzerException {
+    if ((methodNode.access & (ACC_ABSTRACT | ACC_NATIVE)) == 0) {
+      analyze(methodNode);
+    }
+    int[][] resultTransitions = new int[transitions.length][];
+    for (int i = 0; i < resultTransitions.length; i++) {
+      resultTransitions[i] = transitions[i].toNativeArray();
+    }
+    return new ControlFlowGraph(className, methodNode, resultTransitions, edgeCount, errors, errorTransitions);
+  }
+
+  @Override
+  protected final void newControlFlowEdge(int insn, int successor) {
+    if (!transitions[insn].contains(successor)) {
+      transitions[insn].add(successor);
+      edgeCount++;
+    }
+  }
+
+  @Override
+  protected final boolean newControlFlowExceptionEdge(int insn, int successor) {
+    if (!transitions[insn].contains(successor)) {
+      transitions[insn].add(successor);
+      edgeCount++;
+      errorTransitions.add(new Edge(insn, successor));
+      errors[successor] = true;
+    }
+    return true;
+  }
+}
+
+final class LiteControlFlowBuilder extends LiteFramelessAnalyzer {
+  final String className;
+  final MethodNode methodNode;
+  final TIntArrayList[] transitions;
+  final Set<ControlFlowGraph.Edge> errorTransitions;
+  private final boolean[] errors;
+  private int edgeCount;
+
+  LiteControlFlowBuilder(String className, MethodNode methodNode) {
     this.className = className;
     this.methodNode = methodNode;
     transitions = new TIntArrayList[methodNode.instructions.size()];

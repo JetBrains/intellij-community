@@ -103,15 +103,25 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
       public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
         final MethodNode node = new MethodNode(Opcodes.ASM5, access, name, desc, signature, exceptions);
         return new MethodVisitor(Opcodes.ASM5, node) {
+          private boolean jsr;
+
+          @Override
+          public void visitJumpInsn(int opcode, Label label) {
+            if (opcode == Opcodes.JSR) {
+              jsr = true;
+            }
+            super.visitJumpInsn(opcode, label);
+          }
+
           @Override
           public void visitEnd() {
             super.visitEnd();
-            processMethod(node);
+            processMethod(node, jsr);
           }
         };
       }
 
-      private void processMethod(final MethodNode methodNode) {
+      private void processMethod(final MethodNode methodNode, boolean jsr) {
         ProgressManager.checkCanceled();
         final Type[] argumentTypes = Type.getArgumentTypes(methodNode.desc);
         final Type resultType = Type.getReturnType(methodNode.desc);
@@ -127,7 +137,7 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
         final boolean stable = stableClass || (methodNode.access & STABLE_FLAGS) != 0 || "<init>".equals(methodNode.name);
 
         try {
-          final ControlFlowGraph graph = ControlFlowGraph.build(className, methodNode);
+          final ControlFlowGraph graph = ControlFlowGraph.build(className, methodNode, jsr);
           if (graph.transitions.length > 0) {
             final DFSTree dfs = DFSTree.build(graph.transitions, graph.edgeCount);
             boolean complex = !dfs.back.isEmpty();
@@ -143,7 +153,7 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
             if (complex) {
               RichControlFlow richControlFlow = new RichControlFlow(graph, dfs);
               if (richControlFlow.reducible()) {
-                processBranchingMethod(method, methodNode, richControlFlow, argumentTypes, isReferenceResult, isInterestingResult, stable);
+                processBranchingMethod(method, methodNode, richControlFlow, argumentTypes, isReferenceResult, isInterestingResult, stable, jsr);
                 return;
               }
               LOG.debug(method + ": CFG is not reducible");
@@ -172,7 +182,8 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
                                           Type[] argumentTypes,
                                           boolean isReferenceResult,
                                           boolean isInterestingResult,
-                                          final boolean stable) throws AnalyzerException {
+                                          final boolean stable,
+                                          boolean jsr) throws AnalyzerException {
 
         boolean maybeLeakingParameter = isInterestingResult;
         for (Type argType : argumentTypes) {
@@ -183,7 +194,7 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
         }
 
         final Pair<boolean[], Frame<org.jetbrains.org.objectweb.asm.tree.analysis.Value>[]> leakingParametersAndFrames =
-          maybeLeakingParameter ? leakingParametersAndFrames(method, methodNode, argumentTypes) : null;
+          maybeLeakingParameter ? leakingParametersAndFrames(method, methodNode, argumentTypes, jsr) : null;
         boolean[] leakingParameters =
           leakingParametersAndFrames != null ? leakingParametersAndFrames.first : null;
 
@@ -339,11 +350,12 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
 
       private Pair<boolean[], Frame<org.jetbrains.org.objectweb.asm.tree.analysis.Value>[]> leakingParametersAndFrames(Method method,
                                                                                                                        MethodNode methodNode,
-                                                                                                                       Type[] argumentTypes)
+                                                                                                                       Type[] argumentTypes,
+                                                                                                                       boolean jsr)
         throws AnalyzerException {
         return argumentTypes.length < 32 ?
-                LeakingParametersAnalysis.fastLeakingParameters(method.internalClassName, methodNode) :
-                LeakingParametersAnalysis.leakingParameters(method.internalClassName, methodNode);
+                LeakingParametersAnalysis.fastLeakingParameters(method.internalClassName, methodNode, jsr) :
+                LeakingParametersAnalysis.leakingParameters(method.internalClassName, methodNode, jsr);
       }
     }, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
