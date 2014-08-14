@@ -577,18 +577,6 @@ public class VcsUtil {
     return files;
   }
 
-  public static boolean caseDiffers(final String s1, final String s2) {
-    String s1Trimmed = s1.trim();
-    String s2Trimmed = s2.trim();
-
-    if (File.separatorChar != '/') {
-      s1Trimmed = s1Trimmed.replace(File.separatorChar, '/');
-      s2Trimmed = s2Trimmed.replace(File.separatorChar, '/');
-    }
-
-    return (! s1Trimmed.equals(s2Trimmed)) && s1Trimmed.equalsIgnoreCase(s2Trimmed);
-  }
-
   private static final String ANNO_ASPECT = "show.vcs.annotation.aspect.";
   //public static boolean isAspectAvailableByDefault(LineAnnotationAspect aspect) {
   //  if (aspect.getId() == null) return aspect.isShowByDefault();

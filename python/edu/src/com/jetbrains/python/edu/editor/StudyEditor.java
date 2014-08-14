@@ -48,12 +48,7 @@ public class StudyEditor implements FileEditor {
   private JButton myNextTaskButton;
   private JButton myPrevTaskButton;
   private JButton myRefreshButton;
-  private JButton myWatchInputButton;
   private static final Map<Document, StudyDocumentListener> myDocumentListeners = new HashMap<Document, StudyDocumentListener>();
-
-  public JButton getWatchInputButton() {
-    return myWatchInputButton;
-  }
 
   public JButton getCheckButton() {
     return myCheckButton;
@@ -63,7 +58,7 @@ public class StudyEditor implements FileEditor {
     return myPrevTaskButton;
   }
 
-  private JButton addButton(@NotNull final JComponent parentComponent, String toolTipText, Icon icon) {
+  private static JButton addButton(@NotNull final JComponent parentComponent, String toolTipText, Icon icon) {
     JButton newButton = new JButton();
     newButton.setToolTipText(toolTipText);
     newButton.setIcon(icon);
@@ -122,8 +117,8 @@ public class StudyEditor implements FileEditor {
           studyRunAction.run(project);
         }
       });
-      myWatchInputButton = addButton(taskActionsPanel, "Watch test input", StudyIcons.WatchInput);
-      myWatchInputButton.addActionListener(new ActionListener() {
+      JButton watchInputButton = addButton(taskActionsPanel, "Watch test input", StudyIcons.WatchInput);
+      watchInputButton.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
           WatchInputAction watchInputAction = (WatchInputAction)ActionManager.getInstance().getAction("WatchInputAction");

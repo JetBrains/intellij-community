@@ -23,33 +23,31 @@ import com.jetbrains.python.edu.editor.StudyEditor;
 
 import java.io.*;
 
-/**
- * author: liana
- * data: 7/8/14.
- */
 public class RefreshTaskAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(RefreshTaskAction.class.getName());
 
   public void refresh(final Project project) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
               @Override
               public void run() {
                 Editor editor = StudyEditor.getSelectedEditor(project);
                 assert editor != null;
-                Document document = editor.getDocument();
+                final Document document = editor.getDocument();
                 StudyDocumentListener listener = StudyEditor.getListener(document);
                 if (listener != null) {
                   document.removeDocumentListener(listener);
                 }
-                int lineCount = document.getLineCount();
+                final int lineCount = document.getLineCount();
                 if (lineCount != 0) {
-                  document.deleteString(0, document.getLineEndOffset(lineCount - 1));
+                  CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+                    @Override
+                    public void run() {
+                      document.deleteString(0, document.getLineEndOffset(lineCount - 1));
+                    }
+                  });
                 }
                 StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
                 Course course = taskManager.getCourse();
@@ -64,68 +62,59 @@ public class RefreshTaskAction extends DumbAwareAction {
                 Task currentTask = selectedTaskFile.getTask();
                 String lessonDir = Lesson.LESSON_DIR + String.valueOf(currentTask.getLesson().getIndex() + 1);
                 String taskDir = Task.TASK_DIR + String.valueOf(currentTask.getIndex() + 1);
-                  File pattern = new File(new File(new File(resourceRoot, lessonDir), taskDir), openedFile.getName());
-                  BufferedReader reader = null;
-                  try {
-                    reader = new BufferedReader(new InputStreamReader(new FileInputStream(pattern)));
-                    String line;
-                    StringBuilder patternText = new StringBuilder();
-                    while ((line = reader.readLine()) != null) {
-                      patternText.append(line);
-                      patternText.append("\n");
-                    }
-                    int patternLength = patternText.length();
-                    if (patternText.charAt(patternLength - 1) == '\n') {
-                      patternText.delete(patternLength - 1, patternLength);
-                    }
-                    document.setText(patternText);
-                    StudyStatus oldStatus = currentTask.getStatus();
-                    LessonInfo lessonInfo = currentTask.getLesson().getLessonInfo();
-                    if (oldStatus == StudyStatus.Failed) {
-                      lessonInfo.setTaskFailed(lessonInfo.getTaskFailed() - 1);
-                    }
-                    if (oldStatus == StudyStatus.Solved) {
-                      lessonInfo.setTaskSolved(lessonInfo.getTaskSolved() - 1);
-                    }
-                    lessonInfo.setTaskUnchecked(lessonInfo.getTaskUnchecked() + 1);
-                    StudyUtils.updateStudyToolWindow(project);
-                    for (TaskWindow taskWindow : selectedTaskFile.getTaskWindows()) {
-                      taskWindow.reset();
-                    }
-                    ProjectView.getInstance(project).refresh();
-                    if (listener != null) {
-                      document.addDocumentListener(listener);
-                    }
-                    selectedTaskFile.drawAllWindows(editor);
-                    BalloonBuilder balloonBuilder =
-                      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder("You can now start again", MessageType.INFO, null);
-                    Balloon balloon = balloonBuilder.createBalloon();
-                    StudyEditor selectedStudyEditor = StudyEditor.getSelectedStudyEditor(project);
-                    assert selectedStudyEditor != null;
-                    balloon.showInCenterOf(selectedStudyEditor.getRefreshButton());
+                File pattern = new File(new File(new File(resourceRoot, lessonDir), taskDir), openedFile.getName());
+                BufferedReader reader = null;
+                try {
+                  reader = new BufferedReader(new InputStreamReader(new FileInputStream(pattern)));
+                  String line;
+                  StringBuilder patternText = new StringBuilder();
+                  while ((line = reader.readLine()) != null) {
+                    patternText.append(line);
+                    patternText.append("\n");
                   }
-                  catch (FileNotFoundException e1) {
-                    LOG.error(e1);
+                  int patternLength = patternText.length();
+                  if (patternText.charAt(patternLength - 1) == '\n') {
+                    patternText.delete(patternLength - 1, patternLength);
                   }
-                  catch (IOException e1) {
-                    LOG.error(e1);
+                  document.setText(patternText);
+                  StudyStatus oldStatus = currentTask.getStatus();
+                  LessonInfo lessonInfo = currentTask.getLesson().getLessonInfo();
+                  if (oldStatus == StudyStatus.Failed) {
+                    lessonInfo.setTaskFailed(lessonInfo.getTaskFailed() - 1);
                   }
-                  finally {
-                    if (reader != null) {
-                      try {
-                        reader.close();
-                      }
-                      catch (IOException e) {
-                        LOG.error(e);
-                      }
-                    }
+                  if (oldStatus == StudyStatus.Solved) {
+                    lessonInfo.setTaskSolved(lessonInfo.getTaskSolved() - 1);
                   }
+                  lessonInfo.setTaskUnchecked(lessonInfo.getTaskUnchecked() + 1);
+                  StudyUtils.updateStudyToolWindow(project);
+                  for (TaskWindow taskWindow : selectedTaskFile.getTaskWindows()) {
+                    taskWindow.reset();
+                  }
+                  ProjectView.getInstance(project).refresh();
+                  if (listener != null) {
+                    document.addDocumentListener(listener);
+                  }
+                  selectedTaskFile.drawAllWindows(editor);
+                  BalloonBuilder balloonBuilder =
+                    JBPopupFactory.getInstance().createHtmlTextBalloonBuilder("You can now start again", MessageType.INFO, null);
+                  Balloon balloon = balloonBuilder.createBalloon();
+                  StudyEditor selectedStudyEditor = StudyEditor.getSelectedStudyEditor(project);
+                  assert selectedStudyEditor != null;
+                  balloon.showInCenterOf(selectedStudyEditor.getRefreshButton());
+                }
+                catch (FileNotFoundException e1) {
+                  LOG.error(e1);
+                }
+                catch (IOException e1) {
+                  LOG.error(e1);
+                }
+                finally {
+                  StudyUtils.closeSilently(reader);
+                }
               }
-            }, null, null);
+            });
           }
         });
-      }
-    });
   }
 
   public void actionPerformed(AnActionEvent e) {

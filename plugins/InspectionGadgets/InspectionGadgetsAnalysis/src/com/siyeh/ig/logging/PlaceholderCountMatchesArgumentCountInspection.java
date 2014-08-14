@@ -45,13 +45,14 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
   protected String buildErrorString(Object... infos) {
     final Integer argumentCount = (Integer)infos[0];
     final Integer placeholderCount = (Integer)infos[1];
+    final Object value = infos[2];
     if (argumentCount.intValue() > placeholderCount.intValue()) {
       return InspectionGadgetsBundle.message("placeholder.count.matches.argument.count.more.problem.descriptor",
-                                             argumentCount, placeholderCount);
+                                             argumentCount, placeholderCount, value);
     }
     else {
       return InspectionGadgetsBundle.message("placeholder.count.matches.argument.count.fewer.problem.descriptor",
-                                             argumentCount, placeholderCount);
+                                             argumentCount, placeholderCount, value);
     }
   }
 
@@ -83,25 +84,24 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
       if (arguments.length == 0) {
         return;
       }
-      final PsiExpression firstArgument = arguments[0];
-      final int placeholderCount;
+      PsiExpression logStringArgument = arguments[0];
       final int argumentCount;
-      if (InheritanceUtil.isInheritor(firstArgument.getType(), "org.slf4j.Marker")) {
+      if (InheritanceUtil.isInheritor(logStringArgument.getType(), "org.slf4j.Marker")) {
         if (arguments.length < 2) {
           return;
         }
-        final PsiExpression secondArgument = arguments[1];
-        placeholderCount = countPlaceholders(secondArgument);
+        logStringArgument = arguments[1];
         argumentCount = countArguments(arguments, 2);
       }
       else {
-        placeholderCount = countPlaceholders(firstArgument);
         argumentCount = countArguments(arguments, 1);
       }
+      final Object value = ExpressionUtils.computeConstantExpression(logStringArgument);
+      final int placeholderCount = countPlaceholders(value);
       if (placeholderCount < 0 || argumentCount < 0 || placeholderCount == argumentCount) {
         return;
       }
-      registerMethodCallError(expression, Integer.valueOf(argumentCount), Integer.valueOf(placeholderCount));
+      registerError(logStringArgument, Integer.valueOf(argumentCount), Integer.valueOf(placeholderCount), value);
     }
 
     private static boolean hasThrowableType(PsiExpression lastArgument) {
@@ -118,8 +118,7 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
       return InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_THROWABLE);
     }
 
-    public static int countPlaceholders(PsiExpression argument) {
-      final Object value = ExpressionUtils.computeConstantExpression(argument);
+    public static int countPlaceholders(Object value) {
       if (!(value instanceof String)) {
         return -1;
       }

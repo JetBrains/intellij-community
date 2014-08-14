@@ -84,7 +84,7 @@ public class RunContentBuilder extends RunTab {
 
   @NotNull
   public static ExecutionEnvironment fix(@NotNull ExecutionEnvironment environment, @Nullable ProgramRunner runner) {
-    if (runner == null || runner.getRunnerId().equals(environment.getRunnerId())) {
+    if (runner == null || runner.equals(environment.getRunner())) {
       return environment;
     }
     else {
@@ -92,6 +92,7 @@ public class RunContentBuilder extends RunTab {
     }
   }
 
+  @SuppressWarnings("UnusedDeclaration")
   @Deprecated
   @NotNull
   /**

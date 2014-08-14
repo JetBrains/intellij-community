@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.controlflow;
-
-import com.intellij.psi.PsiElement;
+package com.intellij.openapi.vcs.history;
 
 /**
- * @author oleg
+ * Created with IntelliJ IDEA.
+ * User: Irina.Chernushina
+ * Date: 10/12/12
+ * Time: 12:06 PM
  */
-public interface ConditionalInstruction extends Instruction {
-  boolean getResult();
-  PsiElement getCondition();
+public interface LongRevisionNumber {
+  long getLongRevisionNumber();
 }

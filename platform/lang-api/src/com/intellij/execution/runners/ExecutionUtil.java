@@ -169,9 +169,4 @@ public class ExecutionUtil {
       return null;
     }
   }
-
-  public static void execute(@NotNull ExecutionEnvironment environment) throws ExecutionException {
-    //noinspection ConstantConditions
-    environment.getRunner().execute(environment);
-  }
 }

@@ -241,11 +241,11 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
 
   private void performAction(ProgramRunner runner, MyRunProfile profile, Executor executor) {
     try {
-      runner.execute(new ExecutionEnvironmentBuilder(myEnvironment)
-                       .runner(runner)
-                       .executor(executor)
-                       .runProfile(profile)
-                       .build());
+      new ExecutionEnvironmentBuilder(myEnvironment)
+        .runner(runner)
+        .executor(executor)
+        .runProfile(profile)
+        .buildAndExecute();
     }
     catch (ExecutionException e1) {
       LOG.error(e1);

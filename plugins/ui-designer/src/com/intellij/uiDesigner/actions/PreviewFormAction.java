@@ -316,7 +316,7 @@ public final class PreviewFormAction extends AnAction{
     try {
       RunProfile profile = new MyRunProfile(module, parameters, tempPath,
                                             UIDesignerBundle.message("progress.preview.started", formFile.getPresentableUrl()));
-      ExecutionUtil.execute(ExecutionEnvironmentBuilder.create(module.getProject(), DefaultRunExecutor.getRunExecutorInstance(), profile).build());
+      ExecutionEnvironmentBuilder.create(module.getProject(), DefaultRunExecutor.getRunExecutorInstance(), profile).buildAndExecute();
     }
     catch (ExecutionException e) {
       Messages.showErrorDialog(

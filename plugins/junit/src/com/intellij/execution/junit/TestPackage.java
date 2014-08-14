@@ -439,7 +439,7 @@ public class TestPackage extends TestObject {
         try {
           Executor executor = myConsoleProperties.isDebug() ? DefaultDebugExecutor.getDebugExecutorInstance()
                                                             : DefaultRunExecutor.getRunExecutorInstance();
-          ExecutionUtil.execute(ExecutionEnvironmentBuilder.create(myProject, executor, myConfiguration).contentToReuse(null).build());
+          ExecutionEnvironmentBuilder.create(myProject, executor, myConfiguration).contentToReuse(null).buildAndExecute();
           Balloon balloon = myToolWindowManager.getToolWindowBalloon(myTestRunDebugId);
           if (balloon != null) {
             balloon.hide();

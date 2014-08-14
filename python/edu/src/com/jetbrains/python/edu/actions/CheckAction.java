@@ -100,66 +100,72 @@ public class CheckAction extends DumbAwareAction {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+        CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
           @Override
           public void run() {
-            final Editor selectedEditor = StudyEditor.getSelectedEditor(project);
-            if (selectedEditor != null) {
-              final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
-              final VirtualFile openedFile = fileDocumentManager.getFile(selectedEditor.getDocument());
-              if (openedFile != null) {
-                StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
-                final TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
-                if (selectedTaskFile != null) {
-                  StudyUtils.flushWindows(selectedEditor.getDocument(),selectedTaskFile, openedFile);
-                  FileDocumentManager.getInstance().saveAllDocuments();
-                  final VirtualFile taskDir = openedFile.getParent();
-                  Task currentTask = selectedTaskFile.getTask();
-                  StudyRunAction runAction = (StudyRunAction)ActionManager.getInstance().getAction(StudyRunAction.ACTION_ID);
-                  if (runAction != null) {
-                    runAction.run(project);
-                  }
-                  final StudyTestRunner testRunner = new StudyTestRunner(currentTask, taskDir);
-                  Process testProcess = null;
-                  try {
-                    testProcess = testRunner.launchTests(project, openedFile.getPath());
-                  }
-                  catch (ExecutionException e) {
-                    LOG.error(e);
-                  }
-                  if (testProcess != null) {
-                    String failedMessage = testRunner.getPassedTests(testProcess);
-                    if (failedMessage.equals(StudyTestRunner.TEST_OK)) {
-                      currentTask.setStatus(StudyStatus.Solved);
-                      StudyUtils.updateStudyToolWindow(project);
-                      selectedTaskFile.drawAllWindows(selectedEditor);
-                      ProjectView.getInstance(project).refresh();
-                      createTestResultPopUp("Congratulations!", JBColor.GREEN, project);
-                      return;
-                    }
-
-                    final TaskFile taskFileCopy = new TaskFile();
-                    final VirtualFile copyWithAnswers = getCopyWithAnswers(taskDir, openedFile, selectedTaskFile, taskFileCopy);
-                    for (final TaskWindow taskWindow : taskFileCopy.getTaskWindows()) {
-                      if (!taskWindow.isValid(selectedEditor.getDocument())) {
-                        continue;
-                      }
-                      check(project, taskWindow, copyWithAnswers, taskFileCopy, selectedTaskFile, selectedEditor.getDocument(), testRunner, openedFile);
-                    }
-                    try {
-                      copyWithAnswers.delete(this);
-                    }
-                    catch (IOException e) {
-                      LOG.error(e);
-                    }
-                    selectedTaskFile.drawAllWindows(selectedEditor);
-                    createTestResultPopUp(failedMessage, JBColor.RED, project);
-                  }
+        //CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+        //  @Override
+        //  public void run() {
+        final Editor selectedEditor = StudyEditor.getSelectedEditor(project);
+        if (selectedEditor != null) {
+          final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+          final VirtualFile openedFile = fileDocumentManager.getFile(selectedEditor.getDocument());
+          if (openedFile != null) {
+            StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
+            final TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
+            if (selectedTaskFile != null) {
+              StudyUtils.flushWindows(selectedEditor.getDocument(), selectedTaskFile, openedFile);
+              FileDocumentManager.getInstance().saveAllDocuments();
+              final VirtualFile taskDir = openedFile.getParent();
+              Task currentTask = selectedTaskFile.getTask();
+              StudyRunAction runAction = (StudyRunAction)ActionManager.getInstance().getAction(StudyRunAction.ACTION_ID);
+              if (runAction != null) {
+                runAction.run(project);
+              }
+              final StudyTestRunner testRunner = new StudyTestRunner(currentTask, taskDir);
+              Process testProcess = null;
+              try {
+                testProcess = testRunner.launchTests(project, openedFile.getPath());
+              }
+              catch (ExecutionException e) {
+                LOG.error(e);
+              }
+              if (testProcess != null) {
+                String failedMessage = testRunner.getPassedTests(testProcess);
+                if (failedMessage.equals(StudyTestRunner.TEST_OK)) {
+                  currentTask.setStatus(StudyStatus.Solved);
+                  StudyUtils.updateStudyToolWindow(project);
+                  selectedTaskFile.drawAllWindows(selectedEditor);
+                  ProjectView.getInstance(project).refresh();
+                  createTestResultPopUp("Congratulations!", JBColor.GREEN, project);
+                  return;
                 }
+
+                final TaskFile taskFileCopy = new TaskFile();
+                final VirtualFile copyWithAnswers = getCopyWithAnswers(taskDir, openedFile, selectedTaskFile, taskFileCopy);
+                for (final TaskWindow taskWindow : taskFileCopy.getTaskWindows()) {
+                  if (!taskWindow.isValid(selectedEditor.getDocument())) {
+                    continue;
+                  }
+                  check(project, taskWindow, copyWithAnswers, taskFileCopy, selectedTaskFile, selectedEditor.getDocument(), testRunner,
+                        openedFile);
+                }
+                try {
+                  copyWithAnswers.delete(this);
+                }
+                catch (IOException e) {
+                  LOG.error(e);
+                }
+                selectedTaskFile.drawAllWindows(selectedEditor);
+                createTestResultPopUp(failedMessage, JBColor.RED, project);
               }
             }
           }
-        }, null, null);
+        }
+
+         }
+      });
+        //}, null, null);
       }
     });
   }
