@@ -184,6 +184,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     Content framesContent = myUi.createContent(DebuggerContentInfo.FRAME_CONTENT, framesView.getMainPanel(),
                                                XDebuggerBundle.message("debugger.session.tab.frames.title"), AllIcons.Debugger.Frame, null);
     framesContent.setCloseable(false);
+    DataManager.registerDataProvider(framesView.getMainPanel(), this);
     return framesContent;
   }
 
