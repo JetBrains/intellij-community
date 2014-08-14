@@ -20,12 +20,10 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupValueFactory;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.PomTarget;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReferenceBase;
-import com.intellij.psi.impl.PomTargetPsiElementImpl;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
@@ -112,15 +110,10 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
     final Converter<T> converter = getConverter();
     if (converter instanceof ResolvingConverter) {
       T value = myGenericValue.getValue();
-      if (value instanceof DomElement && element instanceof PomTargetPsiElementImpl) {
-        PomTarget target = ((PomTargetPsiElementImpl)element).getTarget();
-        if (target instanceof DomTarget) {
-          if (value.equals(((DomTarget)target).getDomElement())) {
-            return true;
-          }
-        }
+      PsiElement resolvedElement = ((ResolvingConverter<T>)converter).getPsiElement(value);
+      if (resolvedElement != null) {
+        return ((ResolvingConverter<T>)converter).isReferenceTo(element, getStringValue(), value, getConvertContext());
       }
-      return ((ResolvingConverter<T>)converter).isReferenceTo(element, getStringValue(), value, getConvertContext());
     }
     return super.isReferenceTo(element);
   }
