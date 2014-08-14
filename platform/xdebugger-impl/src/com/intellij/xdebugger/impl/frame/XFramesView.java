@@ -37,7 +37,6 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -199,12 +198,15 @@ public class XFramesView extends XDebugView {
   }
 
   @Override
-  public void processSessionEvent(@NotNull final SessionEvent event, @NotNull XDebugSession session) {
+  public void processSessionEvent(@NotNull final SessionEvent event) {
     if (event == SessionEvent.BEFORE_RESUME) {
       return;
     }
+
+    XDebugSession session = getSession(getMainPanel());
+
     if (event == SessionEvent.FRAME_CHANGED) {
-      XStackFrame currentStackFrame = session.getCurrentStackFrame();
+      XStackFrame currentStackFrame = session == null ? null : session.getCurrentStackFrame();
       if (currentStackFrame != null) {
         myFramesList.setSelectedValue(currentStackFrame, true);
       }
@@ -217,16 +219,16 @@ public class XFramesView extends XDebugView {
     }
     myBuilders.clear();
     mySelectedStack = null;
-    XSuspendContext suspendContext = session.getSuspendContext();
+    XSuspendContext suspendContext = session == null ? null : session.getSuspendContext();
     if (suspendContext == null) {
-      requestClear(session);
+      requestClear();
       return;
     }
 
     if (event == SessionEvent.PAUSED) {
       // clear immediately
       cancelClear();
-      clear(session);
+      clear();
     }
 
     XExecutionStack[] executionStacks = suspendContext.getExecutionStacks();
@@ -246,7 +248,7 @@ public class XFramesView extends XDebugView {
   }
 
   @Override
-  protected void clear(@Nullable XDebugSession session) {
+  protected void clear() {
     myThreadComboBox.removeAllItems();
     myFramesList.clear();
     myThreadsCalculated = false;
