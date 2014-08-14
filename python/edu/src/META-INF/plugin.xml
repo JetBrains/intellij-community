@@ -35,32 +35,32 @@
   </project-components>
 
   <actions>
-    <action id="CheckAction" class="com.jetbrains.python.edu.actions.CheckAction" text="check"
+    <action id="CheckAction" class="com.jetbrains.python.edu.actions.StudyCheckAction" text="check"
             description="Runs tests for current tasks" icon="/icons/icon.jpg">
     </action>
-    <action id="PrevWindowAction" class="com.jetbrains.python.edu.actions.PrevWindowAction" text="PrevWindowAction" description="prev">
+    <action id="PrevWindowAction" class="com.jetbrains.python.edu.actions.StudyPrevWindowAction" text="PrevWindowAction" description="prev">
       <add-to-group group-id="MainToolBar" anchor="last"/>
     </action>
 
-    <action id="NextWindow" class="com.jetbrains.python.edu.actions.NextWindowAction" text="NextWindowAction" description="next">
+    <action id="NextWindow" class="com.jetbrains.python.edu.actions.StudyNextWindowAction" text="NextWindowAction" description="next">
       <add-to-group group-id="MainToolBar" anchor="last"/>
     </action>
-    <action id="NextTaskAction" class="com.jetbrains.python.edu.actions.NextTaskAction" text="NextTaskAction" description="Next Task"/>
-    <action id="PreviousTaskAction" class="com.jetbrains.python.edu.actions.PreviousTaskAction" text="PreviousTaskAction"
+    <action id="NextTaskAction" class="com.jetbrains.python.edu.actions.StudyNextStudyTaskAction" text="NextTaskAction" description="Next Task"/>
+    <action id="PreviousTaskAction" class="com.jetbrains.python.edu.actions.StudyPreviousStudyTaskAction" text="PreviousTaskAction"
             description="Previous Task"/>
-    <action id="RefreshTaskAction" class="com.jetbrains.python.edu.actions.RefreshTaskAction" text="RefreshTaskAction"
+    <action id="RefreshTaskAction" class="com.jetbrains.python.edu.actions.StudyRefreshTaskAction" text="RefreshTaskAction"
             description="Refresh current task"/>
-    <action id="WatchInputAction" class="com.jetbrains.python.edu.actions.WatchInputAction" text="WatchInputAction"
+    <action id="WatchInputAction" class="com.jetbrains.python.edu.actions.StudyEditInputAction" text="WatchInputAction"
             description="watch input"/>
     <action id="StudyRunAction" class="com.jetbrains.python.edu.actions.StudyRunAction" text="StudyRunAction" description="run your code"/>
-    <action id="ShowHintAction" class="com.jetbrains.python.edu.actions.ShowHintAction" text="Show hint"
+    <action id="ShowHintAction" class="com.jetbrains.python.edu.actions.StudyShowHintAction" text="Show hint"
             description="show hint">
       <add-to-group group-id="MainToolBar" anchor="last"/>
     </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <toolWindow id="StudyToolWindow" anchor="right" factoryClass="com.jetbrains.python.edu.ui.StudyToolWindowFactory" conditionClass="com.jetbrains.python.edu.ui.StudyCondition"/>
+    <toolWindow id="Course Description" anchor="right" factoryClass="com.jetbrains.python.edu.ui.StudyToolWindowFactory" conditionClass="com.jetbrains.python.edu.ui.StudyCondition"/>
     <fileEditorProvider implementation="com.jetbrains.python.edu.editor.StudyFileEditorProvider"/>
     <directoryProjectGenerator implementation="com.jetbrains.python.edu.StudyDirectoryProjectGenerator"/>
     <treeStructureProvider implementation="com.jetbrains.python.edu.projectView.StudyTreeStructureProvider"/>

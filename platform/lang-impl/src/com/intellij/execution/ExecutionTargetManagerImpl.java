@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,11 @@
  */
 package com.intellij.execution;
 
-import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
@@ -29,25 +31,30 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-
-@State(name = "ExecutionTargetManager", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE, scheme = StorageScheme.DEFAULT)})
-public class ExecutionTargetManagerImpl extends ExecutionTargetManager implements ProjectComponent, PersistentStateComponent<Element> {
+@State(name = "ExecutionTargetManager", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)})
+public class ExecutionTargetManagerImpl extends ExecutionTargetManager implements PersistentStateComponent<Element> {
   @NotNull private final Project myProject;
   @NotNull private final Object myActiveTargetLock = new Object();
   @Nullable private ExecutionTarget myActiveTarget;
 
   @Nullable private String mySavedActiveTargetId;
 
-  public ExecutionTargetManagerImpl(@NotNull Project project) {
+  public ExecutionTargetManagerImpl(@NotNull Project project, @NotNull RunManager runManager) {
     myProject = project;
-  }
 
-  @Override
-  public void projectOpened() {
-  }
+    ((RunManagerEx)runManager).addRunManagerListener(new RunManagerAdapter() {
+      @Override
+      public void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings) {
+        if (settings == RunManager.getInstance(myProject).getSelectedConfiguration()) {
+          updateActiveTarget(settings);
+        }
+      }
 
-  @Override
-  public void projectClosed() {
+      @Override
+      public void runConfigurationSelected() {
+        updateActiveTarget();
+      }
+    });
   }
 
   @Override
@@ -68,33 +75,6 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
         mySavedActiveTargetId = state.getAttributeValue("SELECTED_TARGET");
       }
     }
-  }
-
-  @Override
-  public void initComponent() {
-    RunManagerImpl.getInstanceImpl(myProject).addRunManagerListener(new RunManagerAdapter() {
-      @Override
-      public void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings) {
-        if (settings == RunManager.getInstance(myProject).getSelectedConfiguration()) {
-          updateActiveTarget(settings);
-        }
-      }
-
-      @Override
-      public void runConfigurationSelected() {
-        updateActiveTarget();
-      }
-    });
-  }
-
-  @Override
-  public void disposeComponent() {
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return ExecutionTargetManager.class.getName();
   }
 
   @NotNull
@@ -128,7 +108,7 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
   private void updateActiveTarget(@Nullable RunnerAndConfigurationSettings settings, @Nullable ExecutionTarget toSelect) {
     List<ExecutionTarget> suitable = settings == null ? Collections.singletonList(DefaultExecutionTarget.INSTANCE)
                                                       : getTargetsFor(settings);
-    ExecutionTarget toNotify = null;
+    ExecutionTarget toNotify;
     synchronized (myActiveTargetLock) {
       if (toSelect == null) toSelect = myActiveTarget;
 

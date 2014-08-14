@@ -198,6 +198,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/util/util.iml" filepath="$PROJECT_DIR$/platform/util/util.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/util-rt/util-rt.iml" filepath="$PROJECT_DIR$/platform/util-rt/util-rt.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-api/vcs-api.iml" filepath="$PROJECT_DIR$/platform/vcs-api/vcs-api.iml" group="platform" />
+      <module fileurl="file://$PROJECT_DIR$/platform/vcs-api/vcs-api-core/vcs-api-core.iml" filepath="$PROJECT_DIR$/platform/vcs-api/vcs-api-core/vcs-api-core.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-impl/vcs-impl.iml" filepath="$PROJECT_DIR$/platform/vcs-impl/vcs-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-log/api/vcs-log-api.iml" filepath="$PROJECT_DIR$/platform/vcs-log/api/vcs-log-api.iml" group="platform/vcs-log" />
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-log/graph/vcs-log-graph.iml" filepath="$PROJECT_DIR$/platform/vcs-log/graph/vcs-log-graph.iml" group="platform/vcs-log" />

@@ -49,6 +49,16 @@ public interface ProjectFileIndex extends FileIndex {
   Module getModuleForFile(@NotNull VirtualFile file);
 
   /**
+   * Returns module to which the specified file belongs.
+   *
+   * @param file the file for which the module is requested.
+   * @param honorExclusion if {@code false} the containing module will be returned even if the file is located under a folder marked as excluded
+   * @return the module instance or null if the file does not belong to content of any module.
+   */
+  @Nullable
+  Module getModuleForFile(@NotNull VirtualFile file, boolean honorExclusion);
+
+  /**
    * Returns the order entries which contain the specified file (either in CLASSES or SOURCES).
    *
    * @param file the file for which the order entries are requested.
@@ -86,6 +96,16 @@ public interface ProjectFileIndex extends FileIndex {
    */
   @Nullable
   VirtualFile getContentRootForFile(@NotNull VirtualFile file);
+
+  /**
+   * Returns the module content root to which the specified file or directory belongs.
+   *
+   * @param file the file or directory for which the information is requested.
+   * @param honorExclusion if {@code false} the containing content root will be returned even if the file is located under a folder marked as excluded
+   * @return the file for the content root, or null if the file does not belong to this project.
+   */
+  @Nullable
+  VirtualFile getContentRootForFile(@NotNull VirtualFile file, final boolean honorExclusion);
 
   /**
    * Returns the name of the package corresponding to the specified directory.

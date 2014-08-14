@@ -3,6 +3,7 @@ package com.jetbrains.python.edu;
 import com.intellij.ide.SaveAndSyncHandlerImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -13,20 +14,17 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 import com.jetbrains.python.edu.course.TaskFile;
 import com.jetbrains.python.edu.course.TaskWindow;
 import com.jetbrains.python.edu.editor.StudyEditor;
 import com.jetbrains.python.edu.ui.StudyToolWindowFactory;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.Collection;
 
-/**
- * author: liana
- * data: 7/15/14.
- */
 public class StudyUtils {
+  private static final Logger LOG = Logger.getInstance(StudyUtils.class.getName());
   public static void closeSilently(Closeable stream) {
     if (stream != null) {
       try {
@@ -51,6 +49,7 @@ public class StudyUtils {
     return index >= 0 && index < size;
   }
 
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static String getFileText(String parentDir, String fileName, boolean wrapHTML) {
 
     File inputFile = parentDir !=null ? new File(parentDir, fileName) : new File(fileName);
@@ -68,10 +67,10 @@ public class StudyUtils {
       return wrapHTML ? UIUtil.toHtml(taskText.toString()) : taskText.toString();
     }
     catch (IOException e) {
-      e.printStackTrace();
+      LOG.error("Failed to get file text from file " + fileName, e);
     }
     finally {
-      StudyUtils.closeSilently(reader);
+      closeSilently(reader);
     }
     return null;
   }
@@ -116,16 +115,17 @@ public class StudyUtils {
     return Integer.parseInt(fullName.substring(logicalName.length())) - 1;
   }
 
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static VirtualFile flushWindows(Document document, TaskFile taskFile, VirtualFile file) {
     VirtualFile taskDir = file.getParent();
-    VirtualFile file_windows = null;
+    VirtualFile fileWindows = null;
     if (taskDir != null) {
       String name = file.getNameWithoutExtension() + "_windows";
       PrintWriter printWriter = null;
       try {
 
-        file_windows = taskDir.createChildData(taskFile, name);
-        printWriter = new PrintWriter(new FileOutputStream(file_windows.getPath()));
+        fileWindows = taskDir.createChildData(taskFile, name);
+        printWriter = new PrintWriter(new FileOutputStream(fileWindows.getPath()));
         for (TaskWindow taskWindow : taskFile.getTaskWindows()) {
           if (!taskWindow.isValid(document)) {
             continue;
@@ -136,13 +136,13 @@ public class StudyUtils {
         }
       }
       catch (IOException e) {
-        e.printStackTrace();
+       LOG.error(e);
       }
       finally {
         closeSilently(printWriter);
-        StudyUtils.synchronize();
+        synchronize();
       }
     }
-    return file_windows;
+    return fileWindows;
   }
 }

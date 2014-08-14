@@ -41,7 +41,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
     }
     if (valueName.equals(myProject.getName())) {
       data.clearText();
-      data.addText(course.getName(), new SimpleTextAttributes(Font.BOLD, JBColor.BLUE));
+      data.addText(course.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, JBColor.BLUE));
       data.addText(" (" + valueName + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
       return;
     }
@@ -87,7 +87,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
     return name.contains(Course.PLAYGROUND_DIR) ? 0 : 3;
   }
 
-  private void setStudyAttributes(Stateful stateful, PresentationData data, String additionalName) {
+  private static void setStudyAttributes(Stateful stateful, PresentationData data, String additionalName) {
     StudyStatus taskStatus = stateful.getStatus();
     switch (taskStatus) {
       case Unchecked: {
@@ -104,9 +104,9 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
     }
   }
 
-  private void updatePresentation(PresentationData data, String additionalName, JBColor color, Icon icon) {
+  private static void updatePresentation(PresentationData data, String additionalName, JBColor color, Icon icon) {
     data.clearText();
-    data.addText(additionalName, new SimpleTextAttributes(Font.BOLD, color));
+    data.addText(additionalName, new SimpleTextAttributes(Font.PLAIN, color));
     data.setIcon(icon);
   }
 }

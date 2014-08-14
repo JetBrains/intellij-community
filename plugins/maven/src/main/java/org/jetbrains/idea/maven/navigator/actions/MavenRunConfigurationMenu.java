@@ -29,9 +29,7 @@ public class MavenRunConfigurationMenu extends DefaultActionGroup implements Dum
     Executor[] executors = ExecutorRegistry.getInstance().getRegisteredExecutors();
     for (int i = executors.length; --i >= 0; ) {
       final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executors[i].getId(), settings.getConfiguration());
-
       AnAction action = new ExecuteMavenRunConfigurationAction(executors[i], runner != null, project, settings);
-
       addAction(action, Constraints.FIRST);
     }
 

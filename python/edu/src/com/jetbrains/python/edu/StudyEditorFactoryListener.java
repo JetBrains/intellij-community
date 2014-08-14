@@ -12,11 +12,11 @@ import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
 import com.jetbrains.python.edu.course.StudyStatus;
 import com.jetbrains.python.edu.course.TaskFile;
 import com.jetbrains.python.edu.course.TaskWindow;
 import com.jetbrains.python.edu.editor.StudyEditor;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -29,7 +29,7 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
   /**
    * draws selected task window if there is one located in mouse position
    */
-  private class WindowSelectionListener extends EditorMouseAdapter {
+  private static class WindowSelectionListener extends EditorMouseAdapter {
     private final TaskFile myTaskFile;
 
     WindowSelectionListener(TaskFile taskFile) {

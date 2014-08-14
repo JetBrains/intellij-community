@@ -262,6 +262,7 @@ binding.setVariable("platformApiModules", [
   "structure-view-api",
   "usageView",
   "vcs-api",
+  "vcs-api-core",
   "vcs-log-api",
   "vcs-log-graph-api",
   "xdebugger-api",

@@ -8,12 +8,12 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import com.jetbrains.python.edu.StudyTaskManager;
 import com.jetbrains.python.edu.course.Course;
 import com.jetbrains.python.edu.course.Task;
 import com.jetbrains.python.edu.course.TaskFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -64,7 +64,7 @@ public class StudyTreeStructureProvider implements TreeStructureProvider, DumbAw
     return nodes;
   }
 
-  private boolean needModify(AbstractTreeNode parent) {
+  private static boolean needModify(AbstractTreeNode parent) {
     Project project = parent.getProject();
     if (project != null) {
       StudyTaskManager studyTaskManager = StudyTaskManager.getInstance(project);

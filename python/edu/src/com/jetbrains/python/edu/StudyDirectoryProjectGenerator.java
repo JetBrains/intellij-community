@@ -1,10 +1,6 @@
 package com.jetbrains.python.edu;
 
-import com.google.gson.FieldNamingPolicy;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import com.google.gson.stream.JsonReader;
 import com.intellij.facet.ui.FacetEditorValidator;
 import com.intellij.facet.ui.FacetValidatorsManager;
@@ -20,14 +16,14 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.platform.templates.github.GeneratorException;
 import com.intellij.platform.templates.github.ZipUtil;
+import com.jetbrains.python.edu.course.Course;
+import com.jetbrains.python.edu.course.CourseInfo;
+import com.jetbrains.python.edu.ui.StudyNewProjectPanel;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
 import icons.StudyIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.jetbrains.python.edu.course.Course;
-import com.jetbrains.python.edu.course.CourseInfo;
-import com.jetbrains.python.edu.ui.StudyNewProjectPanel;
 
 import javax.swing.*;
 import java.io.*;
@@ -162,7 +158,7 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
       StudyTaskManager.getInstance(project).setCourse(course);
     }
     catch (FileNotFoundException e) {
-      e.printStackTrace();
+      LOG.error(e);
     }
     finally {
       StudyUtils.closeSilently(reader);
@@ -175,7 +171,7 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
    */
 
   public void downloadAndUnzip(boolean needProgressBar) {
-    File outputFile = new File(PathManager.getLibPath(), "courses.zip");
+    File outputFile = new File(PathManager.getConfigPath(), "courses.zip");
     try {
       if (!needProgressBar) {
         GithubDownloadUtil.downloadAtomically(null, REPO_URL,
@@ -205,10 +201,10 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
       }
     }
     catch (IOException e) {
-      e.printStackTrace();
+      LOG.error(e);
     }
     catch (GeneratorException e) {
-      e.printStackTrace();
+      LOG.error(e);
     }
   }
 

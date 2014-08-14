@@ -50,7 +50,7 @@ import java.util.Set;
   }
 )
 public class ProjectRunConfigurationManager implements ProjectComponent, PersistentStateComponent<Element> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.ProjectRunConfigurationManager");
+  private static final Logger LOG = Logger.getInstance(ProjectRunConfigurationManager.class);
 
   private final RunManagerImpl myManager;
   private List<Element> myUnloadedElements = null;
@@ -150,7 +150,7 @@ public class ProjectRunConfigurationManager implements ProjectComponent, Persist
     }
     if (myUnloadedElements != null) {
       for (Element unloadedElement : myUnloadedElements) {
-        element.addContent((Element)unloadedElement.clone());
+        element.addContent(unloadedElement.clone());
       }
     }
   }

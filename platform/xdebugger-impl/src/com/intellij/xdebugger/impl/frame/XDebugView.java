@@ -35,32 +35,26 @@ public abstract class XDebugView implements Disposable {
   private final SingleAlarm myClearAlarm;
   private static final int VIEW_CLEAR_DELAY = 100; //ms
 
-  // used only to implement "clear"
-  private volatile XDebugSession session;
-
   public XDebugView() {
     myClearAlarm = new SingleAlarm(new Runnable() {
       @Override
       public void run() {
-        clear(session);
-        session = null;
+        clear();
       }
     }, VIEW_CLEAR_DELAY, this);
   }
 
-  protected final void requestClear(@NotNull XDebugSession session) {
-    this.session = session;
+  protected final void requestClear() {
     myClearAlarm.cancelAndRequest();
   }
 
   protected final void cancelClear() {
-    session = null;
     myClearAlarm.cancel();
   }
 
-  protected abstract void clear(@Nullable XDebugSession session);
+  protected abstract void clear();
 
-  public abstract void processSessionEvent(@NotNull SessionEvent event, @NotNull XDebugSession session);
+  public abstract void processSessionEvent(@NotNull SessionEvent event);
 
   @Nullable
   protected static XDebugSession getSession(@NotNull EventObject e) {

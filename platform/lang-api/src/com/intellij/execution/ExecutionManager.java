@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,7 @@ public abstract class ExecutionManager {
     Topic.create("configuration executed", ExecutionListener.class, Topic.BroadcastDirection.TO_PARENT);
 
   public static ExecutionManager getInstance(@NotNull Project project) {
-    return project.getComponent(ExecutionManager.class);
+    return ServiceManager.getService(project, ExecutionManager.class);
   }
 
   /**

@@ -10,7 +10,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
@@ -48,12 +48,7 @@ public class StudyEditor implements FileEditor {
   private JButton myNextTaskButton;
   private JButton myPrevTaskButton;
   private JButton myRefreshButton;
-  private JButton myWatchInputButton;
   private static final Map<Document, StudyDocumentListener> myDocumentListeners = new HashMap<Document, StudyDocumentListener>();
-
-  public JButton getWatchInputButton() {
-    return myWatchInputButton;
-  }
 
   public JButton getCheckButton() {
     return myCheckButton;
@@ -63,7 +58,7 @@ public class StudyEditor implements FileEditor {
     return myPrevTaskButton;
   }
 
-  private JButton addButton(@NotNull final JComponent parentComponent, String toolTipText, Icon icon) {
+  private static JButton addButton(@NotNull final JComponent parentComponent, String toolTipText, Icon icon) {
     JButton newButton = new JButton();
     newButton.setToolTipText(toolTipText);
     newButton.setIcon(icon);
@@ -122,42 +117,43 @@ public class StudyEditor implements FileEditor {
           studyRunAction.run(project);
         }
       });
-      myWatchInputButton = addButton(taskActionsPanel, "Watch test input", StudyIcons.WatchInput);
-      myWatchInputButton.addActionListener(new ActionListener() {
+      JButton watchInputButton = addButton(taskActionsPanel, "Watch test input", StudyIcons.WatchInput);
+      watchInputButton.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          WatchInputAction watchInputAction = (WatchInputAction)ActionManager.getInstance().getAction("WatchInputAction");
-          watchInputAction.showInput(project);
+          StudyEditInputAction studyEditInputAction = (StudyEditInputAction)ActionManager.getInstance().getAction("WatchInputAction");
+          studyEditInputAction.showInput(project);
         }
       });
     }
     myCheckButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        CheckAction checkAction = (CheckAction)ActionManager.getInstance().getAction("CheckAction");
-        checkAction.check(project);
+        StudyCheckAction studyCheckAction = (StudyCheckAction)ActionManager.getInstance().getAction("CheckAction");
+        studyCheckAction.check(project);
       }
     });
 
     myNextTaskButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        NextTaskAction nextTaskAction = (NextTaskAction)ActionManager.getInstance().getAction("NextTaskAction");
-        nextTaskAction.navigateTask(project);
+        StudyNextStudyTaskAction studyNextTaskAction = (StudyNextStudyTaskAction)ActionManager.getInstance().getAction("NextTaskAction");
+        studyNextTaskAction.navigateTask(project);
       }
     });
     myPrevTaskButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        PreviousTaskAction prevTaskAction = (PreviousTaskAction)ActionManager.getInstance().getAction("PreviousTaskAction");
+        StudyPreviousStudyTaskAction
+          prevTaskAction = (StudyPreviousStudyTaskAction)ActionManager.getInstance().getAction("PreviousTaskAction");
         prevTaskAction.navigateTask(project);
       }
     });
     myRefreshButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        RefreshTaskAction refreshTaskAction = (RefreshTaskAction)ActionManager.getInstance().getAction("RefreshTaskAction");
-        refreshTaskAction.refresh(project);
+        StudyRefreshTaskAction studyRefreshTaskAction = (StudyRefreshTaskAction)ActionManager.getInstance().getAction("RefreshTaskAction");
+        studyRefreshTaskAction.refresh(project);
       }
     });
   }
@@ -271,9 +267,8 @@ public class StudyEditor implements FileEditor {
   @Nullable
   public static StudyEditor getSelectedStudyEditor(@NotNull final Project project) {
     try {
-      FileEditor fileEditor =
-        FileEditorManagerImpl.getInstanceEx(project).getSplitters().getCurrentWindow().getSelectedEditor().getSelectedEditorWithProvider()
-          .getFirst();
+      FileEditor fileEditor = FileEditorManagerEx.getInstanceEx(project).getSplitters().getCurrentWindow().
+        getSelectedEditor().getSelectedEditorWithProvider().getFirst();
       if (fileEditor instanceof StudyEditor) {
         return (StudyEditor)fileEditor;
       }

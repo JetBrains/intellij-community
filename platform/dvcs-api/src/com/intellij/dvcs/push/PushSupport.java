@@ -28,7 +28,8 @@ import java.util.Collection;
  * Base class to provide vcs-specific info
  */
 
-public abstract class PushSupport {
+public abstract class PushSupport<Repo extends Repository> {
+
   public static final ExtensionPointName<PushSupport> PUSH_SUPPORT_EP = ExtensionPointName.create("com.intellij.pushSupport");
 
   @NotNull
@@ -44,19 +45,19 @@ public abstract class PushSupport {
    * @return Default push destination
    */
   @Nullable
-  public abstract PushTarget getDefaultTarget(@NotNull Repository repository);
+  public abstract PushTarget getDefaultTarget(@NotNull Repo repository);
 
   /**
    * @return All remembered remote destinations used for completion
    */
   @NotNull
-  public abstract Collection<String> getTargetNames(@NotNull Repository repository);
+  public abstract Collection<String> getTargetNames(@NotNull Repo repository);
 
   /**
    * @return current source(branch) for repository
    */
   @NotNull
-  public abstract PushSource getSource(@NotNull Repository repository);
+  public abstract PushSource getSource(@NotNull Repo repository);
 
   /** Create destination target from user input string
    * @return
@@ -68,7 +69,7 @@ public abstract class PushSupport {
    * @return RepositoryManager for vcs
    */
   @NotNull
-  public abstract RepositoryManager<? extends Repository> getRepositoryManager();
+  public abstract RepositoryManager<Repo> getRepositoryManager();
 
   @Nullable
   public VcsPushOptionsPanel getVcsPushOptionsPanel(){

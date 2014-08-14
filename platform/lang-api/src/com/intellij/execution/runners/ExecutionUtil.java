@@ -166,7 +166,6 @@ public class ExecutionUtil {
     }
     catch (ExecutionException e) {
       handleExecutionError(settings.getConfiguration().getProject(), executor.getToolWindowId(), settings.getConfiguration().getName(), e);
-      LOG.info(e);
       return null;
     }
   }
