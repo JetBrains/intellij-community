@@ -12,10 +12,12 @@ import com.jetbrains.python.edu.StudyTaskManager;
 import com.jetbrains.python.edu.course.Course;
 import com.jetbrains.python.edu.course.Lesson;
 import com.jetbrains.python.edu.course.LessonInfo;
+import com.jetbrains.python.edu.course.StudyStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 /**
  * author: liana
@@ -47,18 +49,23 @@ public class StudyToolWindowFactory implements ToolWindowFactory, DumbAware {
 
       int taskNum = 0;
       int taskSolved = 0;
-      //int taskFailed = 0;
-      for (Lesson lesson : course.getLessons()) {
+      int lessonsCompleted = 0;
+      List<Lesson> lessons = course.getLessons();
+      for (Lesson lesson : lessons) {
+        if (lesson.getStatus() == StudyStatus.Solved) {
+          lessonsCompleted++;
+        }
         LessonInfo lessonInfo = lesson.getLessonInfo();
         taskNum += lessonInfo.getTaskNum();
-        //taskFailed += lessonInfo.getTaskFailed();
         taskSolved += lessonInfo.getTaskSolved();
       }
+      String completedLessons = String.format("%d of %d lessons completed", lessonsCompleted, course.getLessons().size());
+      String completedTasks = String.format("%d of %d tasks completed", taskSolved, taskNum);
+      String tasksLeft = String.format("%d of %d tasks left", taskNum - taskSolved, taskNum);
+      addStatistics(completedLessons);
+      addStatistics(completedTasks);
+      addStatistics(tasksLeft);
       double percent = (taskSolved * 100.0) / taskNum;
-      String statistics = UIUtil.toHtml(Math.floor(percent) + "% of course is passed", 5);
-      contentPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-      JLabel statisticLabel = new JLabel(statistics);
-      contentPanel.add(statisticLabel);
       contentPanel.add(Box.createRigidArea(new Dimension(0, 10)));
       StudyProgressBar studyProgressBar = new StudyProgressBar(percent / 100, JBColor.GREEN, 40, 10);
       contentPanel.add(studyProgressBar);
@@ -67,5 +74,12 @@ public class StudyToolWindowFactory implements ToolWindowFactory, DumbAware {
       Content content = contentFactory.createContent(contentPanel, "", true);
       toolWindow.getContentManager().addContent(content);
     }
+  }
+
+  private void addStatistics(String statistics) {
+    String labelText = UIUtil.toHtml(statistics, 5);
+    contentPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+    JLabel statisticLabel = new JLabel(labelText);
+    contentPanel.add(statisticLabel);
   }
 }

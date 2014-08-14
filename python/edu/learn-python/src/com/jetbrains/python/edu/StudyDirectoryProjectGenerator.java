@@ -198,6 +198,8 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
             }
           }
         }
+      } else {
+        LOG.debug("failed to download course");
       }
     }
     catch (IOException e) {
@@ -303,6 +305,7 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
   /**
    * Writes courses to cash file {@link com.jetbrains.python.edu.StudyDirectoryProjectGenerator#CACHE_NAME}
    */
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public void flushCache() {
     File cashFile = new File(myCoursesDir, CACHE_NAME);
     PrintWriter writer = null;
@@ -329,10 +332,12 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
    *
    * @return map of course names and course files
    */
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private static Map<CourseInfo, File> getCoursesFromCache(File cashFile) {
     Map<CourseInfo, File> coursesFromCash = new HashMap<CourseInfo, File>();
+    BufferedReader reader =  null;
     try {
-      BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(cashFile)));
+       reader = new BufferedReader(new InputStreamReader(new FileInputStream(cashFile)));
       String line;
 
       while ((line = reader.readLine()) != null) {
@@ -354,6 +359,9 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
     }
     catch (IOException e) {
       LOG.error(e);
+    }
+    finally {
+      StudyUtils.closeSilently(reader);
     }
     return coursesFromCash;
   }
