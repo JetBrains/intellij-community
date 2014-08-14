@@ -22,7 +22,10 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -31,8 +34,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.MapDataContext;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.ui.EditorTextFieldWithBrowseButton;
 import com.intellij.util.Assertion;
@@ -78,7 +81,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     assertEquals(psiClass.getName(), configuration.getName());
     checkTestObject(JUnitConfiguration.TEST_CLASS, configuration);
     Module module2 = getModule2();
-    CHECK.compareUnordered(new Module[]{module1, module2}, configuration.getValidModules());
+    Assertion.compareUnordered(new Module[]{module1, module2}, configuration.getValidModules());
 
     PsiClass innerTest = findClass(module1, INNER_TEST_NAME);
     configuration = createJUnitConfiguration(innerTest, TestClassConfigurationProducer.class, new MapDataContext());
@@ -100,7 +103,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
   }
 
   public void testModulesSelector() throws ConfigurationException {
-    if (IdeaTestUtil.COVERAGE_ENABLED_BUILD) return;
+    if (PlatformTestUtil.COVERAGE_ENABLED_BUILD) return;
 
     Module module1 = getModule1();
     Module module2 = getModule2();
@@ -164,7 +167,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     JUnitConfiguration configuration = createConfiguration(psiPackage, module1);
     JavaParameters parameters = checkCanRun(configuration);
     List<String> lines = extractAllInPackageTests(parameters, psiPackage);
-    CHECK.compareUnordered(
+    Assertion.compareUnordered(
       new Object[]{"", psiClass.getQualifiedName(), psiClass2.getQualifiedName(), derivedTest.getQualifiedName(), RT_INNER_TEST_NAME,
         testB.getQualifiedName()},
       lines);
@@ -298,7 +301,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
   }
 
   public void testCreatingApplicationConfiguration() throws ConfigurationException {
-    if (IdeaTestUtil.COVERAGE_ENABLED_BUILD) return;
+    if (PlatformTestUtil.COVERAGE_ENABLED_BUILD) return;
 
     ApplicationConfiguration configuration = new ApplicationConfiguration(null, myProject, ApplicationConfigurationType.getInstance());
     ApplicationConfigurable editor = new ApplicationConfigurable(myProject);
@@ -330,7 +333,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
   }
 
   public void testEditJUnitConfiguration() throws ConfigurationException {
-    if (IdeaTestUtil.COVERAGE_ENABLED_BUILD) return;
+    if (PlatformTestUtil.COVERAGE_ENABLED_BUILD) return;
 
     PsiClass testA = findTestA(getModule2());
     JUnitConfiguration configuration = createConfiguration(testA);
@@ -358,11 +361,11 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     }
   }
 
-  public void testRunThridPartyApplication() throws ExecutionException {
+  public void testRunThirdPartyApplication() throws ExecutionException {
     ApplicationConfiguration configuration =
-      new ApplicationConfiguration("Thrid party", myProject, ApplicationConfigurationType.getInstance());
+      new ApplicationConfiguration("Third party", myProject, ApplicationConfigurationType.getInstance());
     configuration.setModule(getModule1());
-    configuration.MAIN_CLASS_NAME = "thrid.party.Main";
+    configuration.MAIN_CLASS_NAME = "third.party.Main";
     checkCanRun(configuration);
   }
 
@@ -408,7 +411,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     return PathUtil.getLocalPath(output);
   }
 
-  private String[] addOutputs(Module module, int index) {
+  private static String[] addOutputs(Module module, int index) {
     String[] outputs = new String[2];
     String prefix = "outputs" + File.separatorChar;
     VirtualFile generalOutput = findFile(prefix + "general " + index);
@@ -441,7 +444,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     return ((JavaCommandLine)state).getJavaParameters();
   }
 
-  private void checkCantRun(RunConfiguration configuration, String reasonBegining) throws ExecutionException {
+  private void checkCantRun(RunConfiguration configuration, String reasonBeginning) throws ExecutionException {
     //MockRunRequest request = new MockRunRequest(myProject);
     //CantRunException rejectReason;
     //try {
@@ -452,16 +455,16 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     //  rejectReason = e;
     //}
     //if (rejectReason == null) fail("Should not run");
-    //rejectReason.getMessage().startsWith(reasonBegining);
+    //rejectReason.getMessage().startsWith(reasonBeginning);
 
     try {
       configuration.checkConfiguration();
     }
     catch (RuntimeConfigurationError e) {
-      assertTrue(e.getLocalizedMessage().startsWith(reasonBegining));
+      assertTrue(e.getLocalizedMessage().startsWith(reasonBeginning));
       return;
     }
-    catch (RuntimeConfigurationException e) {
+    catch (RuntimeConfigurationException ignored) {
 
     }
 
@@ -473,7 +476,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
       ((JavaCommandLine)state).getJavaParameters();
     }
     catch (Throwable e) {
-      assertTrue(e.getLocalizedMessage().startsWith(reasonBegining));
+      assertTrue(e.getLocalizedMessage().startsWith(reasonBeginning));
       return;
     }
 
@@ -538,11 +541,11 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
   }
 
   private static void checkContains(String string, String fragment) {
-    assertTrue(fragment + " in " + string, string.indexOf(fragment) >= 0);
+    assertTrue(fragment + " in " + string, string.contains(fragment));
   }
 
   private static void checkDoesNotContain(String string, String fragment) {
-    assertFalse(fragment + " in " + string, string.indexOf(fragment) >= 0);
+    assertFalse(fragment + " in " + string, string.contains(fragment));
   }
 
   @Override
