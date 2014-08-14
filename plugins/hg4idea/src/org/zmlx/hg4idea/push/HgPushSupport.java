@@ -87,7 +87,7 @@ public class HgPushSupport extends PushSupport<HgRepository> {
   }
 
   @Override
-  public HgTarget createTarget(String targetName) {
+  public HgTarget createTarget(@NotNull HgRepository repository, @NotNull String targetName) {
     return new HgTarget(targetName);
   }
 

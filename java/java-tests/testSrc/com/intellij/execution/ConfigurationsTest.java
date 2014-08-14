@@ -8,7 +8,6 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.junit.*;
 import com.intellij.execution.junit2.configuration.JUnitConfigurable;
 import com.intellij.execution.junit2.configuration.JUnitConfigurationModel;
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.CommonJavaParametersPanel;
@@ -44,11 +43,13 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import junit.framework.TestCase;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.StringTokenizer;
 
 public class ConfigurationsTest extends BaseConfigurationTestCase {
   private final Assertion CHECK = new Assertion();
@@ -417,10 +418,9 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     return outputs;
   }
 
-  private JavaParameters checkCanRun(RunConfiguration configuration) throws ExecutionException {
+  private static JavaParameters checkCanRun(RunConfiguration configuration) throws ExecutionException {
     final RunProfileState state;
-    Executor executor = DefaultRunExecutor.getRunExecutorInstance();
-    state = configuration.getState(executor, new ExecutionEnvironmentBuilder(myProject, executor).runProfile(new MockProfile()).build());
+    state = ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configuration).build().getState();
     assertNotNull(state);
     assertTrue(state instanceof JavaCommandLine);
     if (state instanceof TestPackage) {
@@ -547,22 +547,5 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
   protected void tearDown() throws Exception {
     myJdk = null;
     super.tearDown();
-  }
-
-  private static class MockProfile implements RunProfile {
-    @Override
-    public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
-      return null;
-    }
-
-    @Override
-    public Icon getIcon() {
-      return null;
-    }
-
-    @Override
-    public String getName() {
-      return null;
-    }
   }
 }

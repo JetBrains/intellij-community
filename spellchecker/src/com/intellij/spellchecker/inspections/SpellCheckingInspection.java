@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Set;
-
 
 public class SpellCheckingInspection extends LocalInspectionTool {
   public static final String SPELL_CHECKING_INSPECTION_TOOL_NAME = "SpellCheckingInspection";
@@ -161,14 +160,9 @@ public class SpellCheckingInspection extends LocalInspectionTool {
     tokenizer.tokenize(element, consumer);
   }
 
-
   private static void addBatchDescriptor(PsiElement element, int offset, @NotNull TextRange textRange, @NotNull ProblemsHolder holder) {
-    final SpellcheckingStrategy strategy = getSpellcheckingStrategy(element, element.getLanguage());
-
-    SpellCheckerQuickFix[] fixes = strategy != null
-                                   ? strategy.getBatchFixes(element, offset, textRange)
-                                   : SpellcheckingStrategy.getDefaultBatchFixes();
-    final ProblemDescriptor problemDescriptor = createProblemDescriptor(element, offset, textRange, holder, fixes, false);
+    SpellCheckerQuickFix[] fixes = SpellcheckingStrategy.getDefaultBatchFixes();
+    ProblemDescriptor problemDescriptor = createProblemDescriptor(element, offset, textRange, holder, fixes, false);
     holder.registerProblem(problemDescriptor);
   }
 
@@ -221,7 +215,6 @@ public class SpellCheckingInspection extends LocalInspectionTool {
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(verticalBox, BorderLayout.NORTH);
     return panel;
-
   }
 
   private static class MyTokenConsumer extends TokenConsumer implements Consumer<TextRange> {

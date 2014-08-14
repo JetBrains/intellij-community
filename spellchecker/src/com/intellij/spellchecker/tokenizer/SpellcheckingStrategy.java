@@ -77,10 +77,6 @@ public class SpellcheckingStrategy {
     };
   }
 
-  public SpellCheckerQuickFix[] getBatchFixes(PsiElement element, int offset, @NotNull TextRange textRange) {
-    return getDefaultBatchFixes();
-  }
-
   public static SpellCheckerQuickFix[] getDefaultBatchFixes() {
     return BATCH_FIXES;
   }
