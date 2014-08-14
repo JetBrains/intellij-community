@@ -256,4 +256,9 @@ public final class ExecutionEnvironmentBuilder {
     }
     return environment;
   }
+
+  public void buildAndExecute() throws ExecutionException {
+    ExecutionEnvironment environment = build();
+    myRunner.execute(environment);
+  }
 }

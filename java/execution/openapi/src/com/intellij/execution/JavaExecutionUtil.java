@@ -59,7 +59,7 @@ public class JavaExecutionUtil {
     final DefaultRunProfile profile = new DefaultRunProfile(project, cmdLine, contentName, icon, filters);
     ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.createOrNull(project, DefaultRunExecutor.getRunExecutorInstance(), profile);
     if (builder != null) {
-      ExecutionUtil.execute(builder.build());
+      builder.buildAndExecute();
       return true;
     }
     return false;

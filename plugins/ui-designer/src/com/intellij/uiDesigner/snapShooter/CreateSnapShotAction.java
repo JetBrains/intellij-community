@@ -172,7 +172,7 @@ public class CreateSnapShotAction extends AnAction {
       });
 
       try {
-        ExecutionUtil.execute(ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), snapshotConfiguration).build());
+        ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), snapshotConfiguration).buildAndExecute();
       }
       catch (ExecutionException ex) {
         Messages.showMessageDialog(project, UIDesignerBundle.message("snapshot.run.error", ex.getMessage()),

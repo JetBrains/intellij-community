@@ -80,7 +80,7 @@ public final class JavadocGenerationManager implements PersistentStateComponent<
   public void generateJavadoc(AnalysisScope scope) {
     myConfiguration.setGenerationScope(scope);
     try {
-      ExecutionUtil.execute(ExecutionEnvironmentBuilder.create(myProject, DefaultRunExecutor.getRunExecutorInstance(), myConfiguration).build());
+      ExecutionEnvironmentBuilder.create(myProject, DefaultRunExecutor.getRunExecutorInstance(), myConfiguration).buildAndExecute();
     }
     catch (ExecutionException e) {
       ExecutionErrorDialog.show(e, CommonBundle.getErrorTitle(), myProject);
