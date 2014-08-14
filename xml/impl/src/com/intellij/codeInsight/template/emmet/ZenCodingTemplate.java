@@ -548,6 +548,9 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
           }
         }
       }
+      else if(result.getPrefixMatcher().getPrefix().isEmpty()) {
+        result.restartCompletionOnPrefixChange(StandardPatterns.string().longerThan(0));
+      }
     }
   }
 }
