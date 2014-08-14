@@ -25,6 +25,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -119,12 +120,7 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
       statement = (PsiExpressionStatement)CodeStyleManager.getInstance(project).reformat(statement);
       PsiAssignmentExpression assignment = (PsiAssignmentExpression)statement.getExpression();
       PsiExpression initializer = var.getInitializer();
-      PsiExpression rExpression = initializer;
-      if (initializer instanceof PsiArrayInitializerExpression && var.getType() instanceof PsiArrayType) {
-        rExpression = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createExpressionFromText(
-          "new " + var.getTypeElement().getText() + " " + initializer.getText(), null
-        );
-      }
+      PsiExpression rExpression = RefactoringUtil.convertInitializerToNormalExpression(initializer, var.getType());
 
       assignment.getRExpression().replace(rExpression);
       initializer.delete();

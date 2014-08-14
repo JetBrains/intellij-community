@@ -677,7 +677,7 @@ public class RefactoringUtil {
 
   public static PsiExpression convertInitializerToNormalExpression(PsiExpression expression, PsiType forcedReturnType)
     throws IncorrectOperationException {
-    if (expression instanceof PsiArrayInitializerExpression) {
+    if (expression instanceof PsiArrayInitializerExpression && (forcedReturnType == null || forcedReturnType instanceof PsiArrayType)) {
       return createNewExpressionFromArrayInitializer((PsiArrayInitializerExpression)expression, forcedReturnType);
     }
     return expression;
