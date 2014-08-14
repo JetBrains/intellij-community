@@ -48,6 +48,7 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode 
     return true;
   }
 
+  @Override
   public void render(@NotNull ColoredTreeCellRenderer renderer) {
     String repositoryPath = myRepositoryPanel.getRepositoryName();
     renderer.append(repositoryPath, SimpleTextAttributes.GRAY_ATTRIBUTES);
@@ -55,15 +56,19 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode 
     renderer.append(myRepositoryPanel.getSourceName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     renderer.append(myRepositoryPanel.getArrow(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     EditorTextField textField = myRepositoryPanel.getRemoteTextFiled();
-    String targetName = myRepositoryPanel.getRemoteTargetName();
+    renderTargetName(renderer, textField, myRepositoryPanel.getRemoteTargetName());
+    Insets insets = BorderFactory.createEmptyBorder().getBorderInsets(textField);
+    renderer.setBorder(new EmptyBorder(insets));
+  }
+
+  protected void renderTargetName(@NotNull ColoredTreeCellRenderer renderer, @NotNull EditorTextField textField,
+                                  @NotNull String targetName) {
     if (StringUtil.isEmptyOrSpaces(targetName)) {
       renderer.append(ENTER_REMOTE, SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES, textField);
     }
     else {
       renderer.append(targetName, SimpleTextAttributes.SYNTHETIC_ATTRIBUTES, textField);
     }
-    Insets insets = BorderFactory.createEmptyBorder().getBorderInsets(textField);
-    renderer.setBorder(new EmptyBorder(insets));
   }
 
   @Override

@@ -15,7 +15,6 @@
  */
 package com.intellij.dvcs.push.ui;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.SimpleTextAttributes;
@@ -34,6 +33,7 @@ public class SingleRepositoryNode extends RepositoryNode {
     myRepositoryPanel = repositoryPanel;
   }
 
+  @Override
   public boolean isCheckboxVisible() {
     return false;
   }
@@ -44,13 +44,9 @@ public class SingleRepositoryNode extends RepositoryNode {
     renderer.append(myRepositoryPanel.getArrow(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     EditorTextField textField = myRepositoryPanel.getRemoteTextFiled();
     String targetName = myRepositoryPanel.getRemoteTargetName();
-    if (StringUtil.isEmptyOrSpaces(targetName)) {
-      renderer.append(ENTER_REMOTE, SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES, textField);
-    }
-    else {
-      renderer.append(targetName, SimpleTextAttributes.SYNTHETIC_ATTRIBUTES, textField);
-    }
+    renderTargetName(renderer, textField, targetName);
     Insets insets = BorderFactory.createEmptyBorder().getBorderInsets(textField);
     renderer.setBorder(new EmptyBorder(insets));
   }
+
 }
