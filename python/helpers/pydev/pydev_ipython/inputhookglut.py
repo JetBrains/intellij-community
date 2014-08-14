@@ -29,9 +29,8 @@ GLUT Inputhook support functions
 #-----------------------------------------------------------------------------
 # Imports
 #-----------------------------------------------------------------------------
-import os
 import sys
-import time
+from _pydev_imps import _pydev_time as time
 import signal
 import OpenGL.GLUT as glut
 import OpenGL.platform as platform

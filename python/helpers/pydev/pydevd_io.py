@@ -24,10 +24,10 @@ class IORedirector:
             r.flush()
 
     def __getattr__(self, name):
-            for r in self._redirectTo:
-                if hasattr(r, name):
-                    return r.__getattribute__(name)
-            raise AttributeError(name)
+        for r in self._redirectTo:
+            if hasattr(r, name):
+                return r.__getattribute__(name)
+        raise AttributeError(name)
 
 class IOBuf:
     '''This class works as a replacement for stdio and stderr.

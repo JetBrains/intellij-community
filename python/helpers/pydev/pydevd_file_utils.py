@@ -3,72 +3,91 @@
         - The case of a file will match the actual file in the filesystem (otherwise breakpoints won't be hit).
         - Providing means for the user to make path conversions when doing a remote debugging session in
           one machine and debugging in another.
-    
+
     To do that, the PATHS_FROM_ECLIPSE_TO_PYTHON constant must be filled with the appropriate paths.
-    
-    @note: 
-        in this context, the server is where your python process is running 
+
+    @note:
+        in this context, the server is where your python process is running
         and the client is where eclipse is running.
-    
-    E.g.: 
+
+    E.g.:
         If the server (your python process) has the structure
-            /user/projects/my_project/src/package/module1.py  
-        
-        and the client has: 
-            c:\my_project\src\package\module1.py  
-            
+            /user/projects/my_project/src/package/module1.py
+
+        and the client has:
+            c:\my_project\src\package\module1.py
+
         the PATHS_FROM_ECLIPSE_TO_PYTHON would have to be:
             PATHS_FROM_ECLIPSE_TO_PYTHON = [(r'c:\my_project\src', r'/user/projects/my_project/src')]
-    
+
     @note: DEBUG_CLIENT_SERVER_TRANSLATION can be set to True to debug the result of those translations
-    
+
     @note: the case of the paths is important! Note that this can be tricky to get right when one machine
     uses a case-independent filesystem and the other uses a case-dependent filesystem (if the system being
-    debugged is case-independent, 'normcase()' should be used on the paths defined in PATHS_FROM_ECLIPSE_TO_PYTHON). 
-    
+    debugged is case-independent, 'normcase()' should be used on the paths defined in PATHS_FROM_ECLIPSE_TO_PYTHON).
+
     @note: all the paths with breakpoints must be translated (otherwise they won't be found in the server)
-    
+
     @note: to enable remote debugging in the target machine (pydev extensions in the eclipse installation)
         import pydevd;pydevd.settrace(host, stdoutToServer, stderrToServer, port, suspend)
-        
+
         see parameter docs on pydevd.py
-        
-    @note: for doing a remote debugging session, all the pydevd_ files must be on the server accessible 
-        through the PYTHONPATH (and the PATHS_FROM_ECLIPSE_TO_PYTHON only needs to be set on the target 
+
+    @note: for doing a remote debugging session, all the pydevd_ files must be on the server accessible
+        through the PYTHONPATH (and the PATHS_FROM_ECLIPSE_TO_PYTHON only needs to be set on the target
         machine for the paths that'll actually have breakpoints).
 '''
 
-
-
-
-from pydevd_constants import * #@UnusedWildImport
 import os.path
 import sys
 import traceback
 
-
-
+os_normcase = os.path.normcase
 basename = os.path.basename
 exists = os.path.exists
 join = os.path.join
 
 try:
-    rPath = os.path.realpath #@UndefinedVariable
+    rPath = os.path.realpath  #@UndefinedVariable
 except:
     # jython does not support os.path.realpath
     # realpath is a no-op on systems without islink support
-    rPath = os.path.abspath 
-  
+    rPath = os.path.abspath
+
 #defined as a list of tuples where the 1st element of the tuple is the path in the client machine
 #and the 2nd element is the path in the server machine.
 #see module docstring for more details.
 PATHS_FROM_ECLIPSE_TO_PYTHON = []
 
-
 #example:
 #PATHS_FROM_ECLIPSE_TO_PYTHON = [
-#(normcase(r'd:\temp\temp_workspace_2\test_python\src\yyy\yyy'),
-# normcase(r'd:\temp\temp_workspace_2\test_python\src\hhh\xxx'))]
+#  (r'd:\temp\temp_workspace_2\test_python\src\yyy\yyy',
+#   r'd:\temp\temp_workspace_2\test_python\src\hhh\xxx')
+#]
+
+
+normcase = os_normcase # May be rebound on set_ide_os
+
+def set_ide_os(os):
+    '''
+    We need to set the IDE os because the host where the code is running may be
+    actually different from the client (and the point is that we want the proper
+    paths to translate from the client to the server).
+    '''
+    global normcase
+    if os == 'UNIX':
+        normcase = lambda f:f #Change to no-op if the client side is on unix/mac.
+    else:
+        normcase = os_normcase
+
+    # After setting the ide OS, apply the normcase to the existing paths.
+
+    # Note: not using enumerate nor list comprehension because it may not be available in older python versions...
+    i = 0
+    for path in PATHS_FROM_ECLIPSE_TO_PYTHON[:]:
+        PATHS_FROM_ECLIPSE_TO_PYTHON[i] = (normcase(path[0]), normcase(path[1]))
+        i += 1
+
 
 DEBUG_CLIENT_SERVER_TRANSLATION = False
 
@@ -79,14 +98,6 @@ NORM_FILENAME_TO_SERVER_CONTAINER = {}
 NORM_FILENAME_TO_CLIENT_CONTAINER = {}
 
 
-pycharm_os = None
-
-def normcase(file):
-    global pycharm_os
-    if pycharm_os == 'UNIX':
-        return file
-    else:
-        return os.path.normcase(file)
 
 
 def _NormFile(filename):
@@ -147,7 +158,7 @@ def exists(file):
             return None
     return None
 
-    
+
 #Now, let's do a quick test to see if we're working with a version of python that has no problems
 #related to the names generated...
 try:
@@ -162,11 +173,11 @@ try:
         sys.stderr.write('pydev debugger: Related bug: http://bugs.python.org/issue1666807\n')
         sys.stderr.write('-------------------------------------------------------------------------------\n')
         sys.stderr.flush()
-        
+
         NORM_SEARCH_CACHE = {}
-        
+
         initial_norm_file = _NormFile
-        def _NormFile(filename): #Let's redefine _NormFile to work with paths that may be incorrect
+        def _NormFile(filename):  #Let's redefine _NormFile to work with paths that may be incorrect
             try:
                 return NORM_SEARCH_CACHE[filename]
             except KeyError:
@@ -180,7 +191,7 @@ try:
                     else:
                         sys.stderr.write('pydev debugger: Unable to find real location for: %s\n' % (filename,))
                         ret = filename
-                        
+
                 NORM_SEARCH_CACHE[filename] = ret
                 return ret
 except:
@@ -195,28 +206,28 @@ if PATHS_FROM_ECLIPSE_TO_PYTHON:
     for eclipse_prefix, server_prefix in PATHS_FROM_ECLIPSE_TO_PYTHON:
         if eclipse_sep is not None and python_sep is not None:
             break
-        
+
         if eclipse_sep is None:
             for c in eclipse_prefix:
                 if c in ('/', '\\'):
                     eclipse_sep = c
                     break
-                
+
         if python_sep is None:
             for c in server_prefix:
                 if c in ('/', '\\'):
                     python_sep = c
                     break
-        
+
     #If they're the same or one of them cannot be determined, just make it all None.
     if eclipse_sep == python_sep or eclipse_sep is None or python_sep is None:
         eclipse_sep = python_sep = None
-            
-                
-    #only setup translation functions if absolutely needed! 
+
+
+    #only setup translation functions if absolutely needed!
     def NormFileToServer(filename):
         #Eclipse will send the passed filename to be translated to the python process
-        #So, this would be 'NormFileFromEclipseToPython' 
+        #So, this would be 'NormFileFromEclipseToPython'
         try:
             return NORM_FILENAME_TO_SERVER_CONTAINER[filename]
         except KeyError:
@@ -234,17 +245,17 @@ if PATHS_FROM_ECLIPSE_TO_PYTHON:
                 if DEBUG_CLIENT_SERVER_TRANSLATION:
                     sys.stderr.write('pydev debugger: to server: unable to find matching prefix for: %s in %s\n' % \
                         (translated, [x[0] for x in PATHS_FROM_ECLIPSE_TO_PYTHON]))
-                    
+
             #Note that when going to the server, we do the replace first and only later do the norm file.
             if eclipse_sep is not None:
                 translated = translated.replace(eclipse_sep, python_sep)
             translated = _NormFile(translated)
-                
+
             NORM_FILENAME_TO_SERVER_CONTAINER[filename] = translated
             return translated
-        
-    
-    def NormFileToClient(filename): 
+
+
+    def NormFileToClient(filename):
         #The result of this method will be passed to eclipse
         #So, this would be 'NormFileFromPythonToEclipse'
         try:
@@ -264,15 +275,15 @@ if PATHS_FROM_ECLIPSE_TO_PYTHON:
                 if DEBUG_CLIENT_SERVER_TRANSLATION:
                     sys.stderr.write('pydev debugger: to client: unable to find matching prefix for: %s in %s\n' % \
                         (translated, [x[1] for x in PATHS_FROM_ECLIPSE_TO_PYTHON]))
-                        
+
             if eclipse_sep is not None:
                 translated = translated.replace(python_sep, eclipse_sep)
-            
+
             #The resulting path is not in the python process, so, we cannot do a _NormFile here,
             #only at the beginning of this method.
             NORM_FILENAME_TO_CLIENT_CONTAINER[filename] = translated
             return translated
-        
+
 else:
     #no translation step needed (just inline the calls)
     NormFileToClient = _NormFile
@@ -299,6 +310,3 @@ def GetFilenameAndBase(frame):
             f = f[:-1]
     return GetFileNameAndBaseFromFile(f)
 
-def set_pycharm_os(os):
-    global pycharm_os
-    pycharm_os = os

@@ -1,7 +1,6 @@
 '''
 This module holds the constants used for specifying the states of the debugger.
 '''
-
 STATE_RUN = 1
 STATE_SUSPEND = 2
 
@@ -17,13 +16,13 @@ except:
     setattr(__builtin__, 'False', 0)
 
 class DebugInfoHolder:
-    #we have to put it here because it can be set through the command line (so, the 
+    #we have to put it here because it can be set through the command line (so, the
     #already imported references would not have it).
     DEBUG_RECORD_SOCKET_READS = False
     DEBUG_TRACE_LEVEL = -1
     DEBUG_TRACE_BREAKPOINTS = -1
 
-#Optimize with psyco? This gave a 50% speedup in the debugger in tests 
+#Optimize with psyco? This gave a 50% speedup in the debugger in tests
 USE_PSYCO_OPTIMIZATION = True
 
 #Hold a reference to the original _getframe (because psyco will change that as soon as it's imported)
@@ -111,11 +110,48 @@ except:
             return default
 
 
+if IS_PY3K:
+    def DictKeys(d):
+        return list(d.keys())
+
+    def DictValues(d):
+        return list(d.values())
+
+    DictIterValues = dict.values
+
+    def DictIterItems(d):
+        return d.items()
+
+    def DictItems(d):
+        return list(d.items())
+
+else:
+    DictKeys = dict.keys
+    try:
+        DictIterValues = dict.itervalues
+    except:
+        DictIterValues = dict.values #Older versions don't have the itervalues
+
+    DictValues = dict.values
+
+    def DictIterItems(d):
+        return d.iteritems()
+
+    def DictItems(d):
+        return d.items()
+
+
 try:
-    xrange
+    xrange = xrange
 except:
     #Python 3k does not have it
     xrange = range
+    
+try:
+    import itertools
+    izip = itertools.izip
+except:
+    izip = zip
 
 try:
     object
@@ -128,10 +164,10 @@ try:
 except:
     def enumerate(lst):
         ret = []
-        i=0
+        i = 0
         for element in lst:
             ret.append((i, element))
-            i+=1
+            i += 1
         return ret
 
 #=======================================================================================================================
@@ -174,8 +210,7 @@ def GetThreadId(thread):
                 except AttributeError:
                     try:
                         #Jython does not have it!
-                        import java.lang.management.ManagementFactory #@UnresolvedImport -- just for jython
-
+                        import java.lang.management.ManagementFactory  #@UnresolvedImport -- just for jython
                         pid = java.lang.management.ManagementFactory.getRuntimeMXBean().getName()
                         pid = pid.replace('@', '_')
                     except:
@@ -262,4 +297,4 @@ def call_only_once(func):
 if __name__ == '__main__':
     if Null():
         sys.stdout.write('here\n')
-        
+
