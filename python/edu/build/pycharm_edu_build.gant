@@ -212,7 +212,7 @@ private layoutPlugins(layouts) {
 }
 
 private String appInfoFile() {
-  return "$pythonCommunityHome/resources/idea/PyCharmEduApplicationInfo.xml"
+  return "$pythonEduHome/resources/idea/PyCharmEduApplicationInfo.xml"
 }
 
 private layoutFull(Map args, String target, Set usedJars) {
