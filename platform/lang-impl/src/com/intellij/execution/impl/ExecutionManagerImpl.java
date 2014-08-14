@@ -46,6 +46,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
@@ -87,7 +88,12 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
   public RunContentManager getContentManager() {
     if (myContentManager == null) {
       myContentManager = new RunContentManagerImpl(myProject, DockManager.getInstance(myProject));
-      myContentManager.init();
+      AppUIUtil.invokeOnEdt(new Runnable() {
+        @Override
+        public void run() {
+          myContentManager.init();
+        }
+      }, myProject.getDisposed());
       Disposer.register(myProject, myContentManager);
     }
     return myContentManager;

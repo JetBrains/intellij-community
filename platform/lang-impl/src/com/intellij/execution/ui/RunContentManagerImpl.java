@@ -76,41 +76,35 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     Disposer.register(myProject, containerFactory);
   }
 
+  // must be called on EDT
   public void init() {
     for (Executor executor : ExecutorRegistry.getInstance().getRegisteredExecutors()) {
       registerToolwindow(executor);
     }
 
-    if (ToolWindowManager.getInstance(myProject) == null) return;
+    ToolWindowManagerEx toolWindowManager = ToolWindowManagerEx.getInstanceEx(myProject);
+    if (ToolWindowManager.getInstance(myProject) == null) {
+      return;
+    }
 
-    // To ensure ToolwindowManager had already initialized in its projectOpened.
-    SwingUtilities.invokeLater(new Runnable() {
+    toolWindowManager.addToolWindowManagerListener(new ToolWindowManagerAdapter() {
       @Override
-      public void run() {
+      public void stateChanged() {
         if (myProject.isDisposed()) {
           return;
         }
-        ((ToolWindowManagerEx)ToolWindowManager.getInstance(myProject)).addToolWindowManagerListener(new ToolWindowManagerAdapter() {
-          @Override
-          public void stateChanged() {
-            if (myProject.isDisposed()) {
-              return;
-            }
 
-            ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+        ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+        Set<String> currentWindows = new THashSet<String>();
+        ContainerUtil.addAll(currentWindows, toolWindowManager.getToolWindowIds());
+        myToolwindowIdZBuffer.retainAll(currentWindows);
 
-            Set<String> currentWindows = new THashSet<String>();
-            ContainerUtil.addAll(currentWindows, toolWindowManager.getToolWindowIds());
-            myToolwindowIdZBuffer.retainAll(currentWindows);
-
-            final String activeToolWindowId = toolWindowManager.getActiveToolWindowId();
-            if (activeToolWindowId != null) {
-              if (myToolwindowIdZBuffer.remove(activeToolWindowId)) {
-                myToolwindowIdZBuffer.addFirst(activeToolWindowId);
-              }
-            }
+        final String activeToolWindowId = toolWindowManager.getActiveToolWindowId();
+        if (activeToolWindowId != null) {
+          if (myToolwindowIdZBuffer.remove(activeToolWindowId)) {
+            myToolwindowIdZBuffer.addFirst(activeToolWindowId);
           }
-        });
+        }
       }
     });
   }
