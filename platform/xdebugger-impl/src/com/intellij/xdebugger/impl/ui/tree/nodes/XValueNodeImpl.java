@@ -123,9 +123,10 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
       getValueContainer().computeSourcePosition(new XNavigatable() {
         @Override
         public void setSourcePosition(@Nullable XSourcePosition sourcePosition) {
+          Map<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>> map = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES);
+          if (map == null || sourcePosition == null) return;
           VirtualFile file = sourcePosition.getFile();
           int line = sourcePosition.getLine();
-          Map<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>> map = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES);
           Pair<VirtualFile, Integer> key = Pair.create(file, line);
           Set<XValueNodeImpl> presentations = map.get(key);
           if (presentations == null) {
