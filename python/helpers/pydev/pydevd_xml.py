@@ -1,6 +1,7 @@
 import pydev_log
 import traceback
 import pydevd_resolver
+import sys
 from pydevd_constants import * #@UnusedWildImport
 
 from pydev_imports import quote
@@ -146,9 +147,9 @@ def frameVarsToXML(frame_f_locals):
             pydev_log.error("Unexpected error, recovered safely.\n")
 
     return xml
-    
-    
-def varToXML(val, name, doTrim=True):
+
+
+def varToXML(val, name, doTrim=True, additionalInXml=''):
     """ single variable or dictionary to xml representation """
 
     is_exception_on_eval = isinstance(val, ExceptionOnEvaluate)
@@ -162,19 +163,22 @@ def varToXML(val, name, doTrim=True):
 
     try:
         if hasattr(v, '__class__'):
-            try:
-                cName = str(v.__class__)
-                if cName.find('.') != -1:
-                    cName = cName.split('.')[-1]
+            if v.__class__ == frame_type:
+                value = pydevd_resolver.frameResolver.getFrameName(v)
+            else:
+                try:
+                    cName = str(v.__class__)
+                    if cName.find('.') != -1:
+                        cName = cName.split('.')[-1]
 
-                elif cName.find("'") != -1: #does not have '.' (could be something like <type 'int'>)
-                    cName = cName[cName.index("'") + 1:]
+                    elif cName.find("'") != -1: #does not have '.' (could be something like <type 'int'>)
+                        cName = cName[cName.index("'") + 1:]
 
-                if cName.endswith("'>"):
-                    cName = cName[:-2]
-            except:
-                cName = str(v.__class__)
-            value = '%s: %s' % (cName, v)
+                    if cName.endswith("'>"):
+                        cName = cName[:-2]
+                except:
+                    cName = str(v.__class__)
+                value = '%s: %s' % (cName, v)
         else:
             value = str(v)
     except:
@@ -218,4 +222,13 @@ def varToXML(val, name, doTrim=True):
         else:
             xmlCont = ''
 
-    return ''.join((xml, xmlValue, xmlCont, ' />\n'))
+    return ''.join((xml, xmlValue, xmlCont, additionalInXml, ' />\n'))
+
+if USE_PSYCO_OPTIMIZATION:
+    try:
+        import psyco
+
+        varToXML = psyco.proxy(varToXML)
+    except ImportError:
+        if hasattr(sys, 'exc_clear'): #jython does not have it
+            sys.exc_clear() #don't keep the traceback -- clients don't want to see it

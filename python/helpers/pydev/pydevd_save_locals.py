@@ -2,6 +2,7 @@
 Utility for saving locals.
 """
 import sys
+import pydevd_vars
 
 def is_save_locals_available():
     try:
@@ -12,7 +13,7 @@ def is_save_locals_available():
     except:
         pass
 
-    
+
     try:
         import ctypes
     except:
@@ -22,7 +23,7 @@ def is_save_locals_available():
         func = ctypes.pythonapi.PyFrame_LocalsToFast
     except:
         return False
-    
+
     return True
 
 def save_locals(frame):
@@ -32,6 +33,10 @@ def save_locals(frame):
     Note: the 'save_locals' branch had a different approach wrapping the frame (much more code, but it gives ideas
     on how to save things partially, not the 'whole' locals).
     """
+    if not isinstance(frame, pydevd_vars.frame_type):
+        # Fix exception when changing Django variable (receiving DjangoTemplateFrame)
+        return
+
     try:
         if '__pypy__' in sys.builtin_module_names:
             import __pypy__
@@ -40,7 +45,7 @@ def save_locals(frame):
             return
     except:
         pass
-    
+
 
     try:
         import ctypes

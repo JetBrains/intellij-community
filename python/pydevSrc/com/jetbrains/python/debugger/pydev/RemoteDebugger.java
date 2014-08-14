@@ -5,9 +5,11 @@
  */
 package com.jetbrains.python.debugger.pydev;
 
+import com.google.common.collect.Maps;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.TimeoutUtil;
@@ -53,6 +55,8 @@ public class RemoteDebugger implements ProcessDebugger {
   private final Map<String, PyThreadInfo> myThreads = new ConcurrentHashMap<String, PyThreadInfo>();
   private final Map<Integer, ProtocolFrame> myResponseQueue = new HashMap<Integer, ProtocolFrame>();
   private final TempVarsHolder myTempVars = new TempVarsHolder();
+
+  private Map<Pair<String, Integer>, String> myTempBreakpoints = Maps.newHashMap();
 
 
   private final List<RemoteDebuggerCloseListener> myCloseListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -383,12 +387,18 @@ public class RemoteDebugger implements ProcessDebugger {
     final SetBreakpointCommand command =
       new SetBreakpointCommand(this, type, file, line);
     execute(command);  // set temp. breakpoint
+    myTempBreakpoints.put(Pair.create(file, line), type);
   }
 
   @Override
   public void removeTempBreakpoint(String file, int line) {
-    final RemoveBreakpointCommand command = new RemoveBreakpointCommand(this, "all", file, line);
-    execute(command);  // remove temp. breakpoint
+    String type = myTempBreakpoints.get(Pair.create(file, line));
+    if (type != null) {
+      final RemoveBreakpointCommand command = new RemoveBreakpointCommand(this, type, file, line);
+      execute(command);  // remove temp. breakpoint
+    } else {
+      LOG.error("Temp breakpoint not found for " + file + ":" + line);
+    }
   }
 
   @Override
