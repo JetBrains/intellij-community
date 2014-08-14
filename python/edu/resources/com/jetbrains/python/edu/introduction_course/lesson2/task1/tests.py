@@ -1,5 +1,12 @@
-from test_helper import run_common_tests, failed, passed, import_task_file
+from test_helper import run_common_tests, failed, passed, import_task_file, get_task_windows
 
+
+def test_task_window():
+    window = get_task_windows()[0]
+    if "another value" == window:
+      failed("You should redefine variable 'greetings'")
+    else:
+      passed()
 
 def test_value():
     file = import_task_file()
