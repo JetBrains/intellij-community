@@ -166,7 +166,6 @@ public abstract class AbstractExternalSystemConfigurable<
 
     
     if (!myProjectsModel.isEmpty()) {
-      addTitle(ExternalSystemBundle.message("settings.title.system.settings", myExternalSystemId.getReadableName()));
       myProjectsList.setSelectedIndex(0);
     }
   }
@@ -196,6 +195,7 @@ public abstract class AbstractExternalSystemConfigurable<
   private void prepareSystemSettings(@NotNull SystemSettings s) {
     mySystemSettingsControl = createSystemSettingsControl(s);
     if (mySystemSettingsControl != null) {
+      addTitle(ExternalSystemBundle.message("settings.title.system.settings", myExternalSystemId.getReadableName()));
       mySystemSettingsControl.fillUi(myComponent, 1);
     }
   }
