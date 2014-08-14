@@ -224,8 +224,6 @@ abstract class Analysis<Res> {
     }
   };
 
-  protected static final BasicValue THROWABLE_VALUE = new BasicValue(Type.getType("java/lang/Throwable"));
-
   public static final int STEPS_LIMIT = 30000;
   public static final int EQUATION_SIZE_LIMIT = 30;
   public static final int MERGE_LIMIT = 100000;

@@ -16,11 +16,15 @@
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
 import org.jetbrains.org.objectweb.asm.Type;
+import org.jetbrains.org.objectweb.asm.tree.analysis.BasicValue;
 
 /**
  * @author lambdamix
  */
 public class ASMUtils {
+  public static final Type THROWABLE_TYPE = Type.getType("java/lang/Throwable");
+  public static final BasicValue THROWABLE_VALUE = new BasicValue(THROWABLE_TYPE);
+
   public static boolean isReferenceType(Type tp) {
     int sort = tp.getSort();
     return sort == Type.OBJECT || sort == Type.ARRAY;
