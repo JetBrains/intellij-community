@@ -26,7 +26,8 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 public class SingleRepositoryNode extends RepositoryNode {
-  private RepositoryWithBranchPanel myRepositoryPanel;
+
+  @NotNull private final RepositoryWithBranchPanel myRepositoryPanel;
 
   public SingleRepositoryNode(@NotNull RepositoryWithBranchPanel repositoryPanel) {
     super(repositoryPanel);
@@ -39,10 +40,8 @@ public class SingleRepositoryNode extends RepositoryNode {
 
   @Override
   public void render(@NotNull ColoredTreeCellRenderer renderer) {
-    renderer
-      .append(myRepositoryPanel.getSourceName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    renderer
-      .append(myRepositoryPanel.getArrow(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    renderer.append(myRepositoryPanel.getSourceName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    renderer.append(myRepositoryPanel.getArrow(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     EditorTextField textField = myRepositoryPanel.getRemoteTextFiled();
     String targetName = myRepositoryPanel.getRemoteTargetName();
     if (StringUtil.isEmptyOrSpaces(targetName)) {
