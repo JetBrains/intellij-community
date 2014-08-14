@@ -35,14 +35,14 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.wm.ToolWindowEP;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.platform.DirectoryProjectConfigurator;
 import com.intellij.platform.PlatformProjectViewOpener;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -147,6 +147,29 @@ public class PyCharmEduInitialConfigurator {
         }
 
         patchProjectAreaExtensions(project);
+
+        StartupManager.getInstance(project).runWhenProjectIsInitialized(new DumbAwareRunnable() {
+          @Override
+          public void run() {
+            if (project.isDisposed()) return;
+
+            ToolWindowManager.getInstance(project).invokeLater(new Runnable() {
+              int count = 0;
+
+              public void run() {
+                if (project.isDisposed()) return;
+                if (count++ < 3) { // we need to call this after ToolWindowManagerImpl.registerToolWindowsFromBeans
+                  ToolWindowManager.getInstance(project).invokeLater(this);
+                  return;
+                }
+                ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow("Project");
+                if (toolWindow.getType() != ToolWindowType.SLIDING) {
+                  toolWindow.activate(null);
+                }
+              }
+            });
+          }
+        });
       }
     });
   }
