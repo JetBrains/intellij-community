@@ -261,7 +261,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
       for (RunContentDescriptor descriptor : getContentManager().getAllDescriptors()) {
         if (descriptor.getProcessHandler() == processHandler) {
           builder.contentToReuse(descriptor);
-          return;
+          break;
         }
       }
     }
