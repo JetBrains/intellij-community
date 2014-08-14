@@ -21,8 +21,10 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.OptionAction;
+import com.intellij.openapi.ui.ValidationInfo;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -67,15 +69,6 @@ public class VcsPushDialog extends DialogWrapper {
     return VcsPushDialog.class.getName();
   }
 
-  protected void setOKActionEnabled(boolean isEnabled) {
-    if (myPushAction != null) {
-      myPushAction.setEnabled(isEnabled);
-    }
-    for (Action executorAction : myExecutorActions) {
-      executorAction.setEnabled(isEnabled);
-    }
-  }
-
   @Override
   @NotNull
   protected Action[] createActions() {
@@ -92,12 +85,22 @@ public class VcsPushDialog extends DialogWrapper {
   @NotNull
   @Override
   protected Action getOKAction() {
-    return new DvcsPushAction("&Push", false);
+    return myPushAction;
+  }
+
+  @Nullable
+  @Override
+  protected ValidationInfo doValidate() {
+    return myController.validate();
   }
 
   @Override
   protected String getHelpId() {
     return "reference.mercurial.push.dialog";
+  }
+
+  public void updateButtons() {
+    initValidation();
   }
 
   private class DvcsPushAction extends AbstractAction implements OptionAction {
@@ -107,6 +110,14 @@ public class VcsPushDialog extends DialogWrapper {
     private DvcsPushAction(String title, boolean force) {
       super(title);
       myForce = force;
+    }
+
+    @Override
+    public void setEnabled(boolean isEnabled) {
+      super.setEnabled(isEnabled);
+      for (Action optionAction : myOptions) {
+        optionAction.setEnabled(isEnabled);
+      }
     }
 
     @Override

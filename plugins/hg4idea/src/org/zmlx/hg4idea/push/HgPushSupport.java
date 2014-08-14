@@ -15,12 +15,12 @@
  */
 package org.zmlx.hg4idea.push;
 
-import com.intellij.dvcs.push.OutgoingCommitsProvider;
-import com.intellij.dvcs.push.PushSupport;
-import com.intellij.dvcs.push.Pusher;
-import com.intellij.dvcs.push.VcsPushOptionsPanel;
+import com.intellij.dvcs.push.*;
+import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
@@ -100,5 +100,13 @@ public class HgPushSupport extends PushSupport<HgRepository> {
   @Nullable
   public VcsPushOptionsPanel getVcsPushOptionsPanel() {
     return new HgPushOptionsPanel();
+  }
+
+  @Override
+  @Nullable
+  public ValidationInfo validateSpec(@NotNull Repository repository, @NotNull PushSpec spec) {
+    PushTarget target = spec.getTarget();
+    return (target == null || StringUtil.isEmptyOrSpaces(target.getPresentation())) ? new ValidationInfo(
+      "Please, specify remote push path for selected repos!") : null;
   }
 }

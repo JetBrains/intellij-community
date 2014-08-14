@@ -32,9 +32,11 @@ public class StudyInstructionPainter extends EditorEmptyTextPainter {
     UIUtil.TextPainter painter = new UIUtil.TextPainter().withLineSpacing(1.5f);
     painter.withShadow(true, new JBColor(Gray._200.withAlpha(100), Gray._0.withAlpha(255)));
 
-    painter.appendLine("Welcome to PyCharm Educational Edition").underlined(new JBColor(Gray._150, Gray._180));
+    painter.appendLine("PyCharm Educational Edition").underlined(new JBColor(Gray._150, Gray._180));
     painter.appendLine("Learn Python programming in your favorite IDE").smaller();
-    painter.appendLine("Navigate between windows with alt < >").smaller().withBullet();
+    painter.appendLine("Navigate between tasks with Ctrl + Shift + < and Ctrl + Shift + >").smaller().withBullet();
+    painter.appendLine("Navigate to the next task window with Ctrl + Enter").smaller().withBullet();
+    painter.appendLine("Navigate between task windows with Ctrl + < and Ctrl + >").smaller().withBullet();
     painter.draw(g, new PairFunction<Integer, Integer, Couple<Integer>>() {
       @Override
       public Couple<Integer> fun(Integer width, Integer height) {

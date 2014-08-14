@@ -1,6 +1,6 @@
 <!--suppress XmlUnboundNsPrefix -->
 <idea-plugin version="2">
-  <id>com.jetbrains.python.edu</id>
+  <id>com.jetbrains.python.edu.learn-python</id>
   <name>Educational plugin for PyCharm</name>
   <version>1.0</version>
   <vendor email="support@yourcompany.com" url="http://www.yourcompany.com">YourCompany</vendor>
@@ -14,16 +14,13 @@
       ]]>
   </change-notes>
 
-  <!-- please see http://confluence.jetbrains.net/display/IDEADEV/Build+Number+Ranges for description -->
-  <idea-version since-build="138.1550"/>
-
   <!--depends>com.intellij.modules.python</depends-->
 
   <!-- please see http://confluence.jetbrains.net/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
        on how to target different products -->
 
   <depends>com.intellij.modules.lang</depends>
-  <depends optional="true">com.intellij.modules.python</depends>
+  <depends>com.intellij.modules.python</depends>
   <application-components>
   </application-components>
 

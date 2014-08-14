@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import org.jetbrains.jps.LayoutInfo
-import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
 setProperty("home", getHome())
 includeTargets << new File("$home/community/build/scripts/utils.gant")
@@ -207,6 +207,7 @@ private layoutPlugins(layouts) {
   dir("plugins") {
     layouts.layoutPlugin("rest")
     layouts.layoutPlugin("python-rest")
+    layouts.layoutPlugin("learn-python")
   }
 
   layouts.layoutCommunityPlugins(ch)
