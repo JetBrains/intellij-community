@@ -137,7 +137,7 @@ public class PushController implements Disposable {
   }
 
   private <T extends Repository> void createRepoNode(@NotNull final PushSupport<T> support,
-                                                     @NotNull T repository,
+                                                     @NotNull final T repository,
                                                      @NotNull CheckedTreeNode rootNode,
                                                      boolean isSelected,
                                                      boolean isSingleRepositoryProject) {
@@ -154,7 +154,7 @@ public class PushController implements Disposable {
     repoNode.addRepoNodeListener(new RepositoryNodeListener() {
       @Override
       public void onTargetChanged(String newValue) {
-        myView2Model.get(repoNode).setSpec(new PushSpec(model.getSpec().getSource(), support.createTarget(newValue)));
+        myView2Model.get(repoNode).setSpec(new PushSpec(model.getSpec().getSource(), support.createTarget(repository, newValue)));
         myDialog.updateButtons();
         myPushLog.startLoading(repoNode);
         loadCommits(model, repoNode, false);

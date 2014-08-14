@@ -61,12 +61,12 @@ public abstract class PushSupport<Repo extends Repository> {
   public abstract PushSource getSource(@NotNull Repo repository);
 
   /**
-   * Create destination target from user input string
-   *
-   * @return
+   * Parse user input string, and create the valid target for push,
+   * or return <code><b>null</b></code> if the target name is not valid.
+   * @see #validateSpec(Repository, PushSpec)
    */
   @Nullable
-  public abstract PushTarget createTarget(String targetName);
+  public abstract PushTarget createTarget(@NotNull Repo repository, @NotNull String targetName);
 
   /**
    * @return RepositoryManager for vcs
