@@ -696,6 +696,11 @@
     <action id="PyInvertBooleanAction" class="com.jetbrains.python.refactoring.invertBoolean.PyInvertBooleanAction" text="Invert Boolean">
       <add-to-group group-id="RefactoringMenu" anchor="last" />
     </action>
+
+    <action id="PyDebugger.ViewArray" class="com.jetbrains.python.actions.PyViewArrayAction">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.Tree.EvaluateInConsole"/>
+    </action>
+
   </actions>
 
   <extensions defaultExtensionNs="com.intellij.spellchecker">
