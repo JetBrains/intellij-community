@@ -39,7 +39,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -116,21 +115,26 @@ public class PyCharmEduInitialConfigurator {
       });
       PyCodeInsightSettings.getInstance().SHOW_IMPORT_POPUP = true;
     }
-    bus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
-      @Override
-      public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
-        if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
-          GeneralSettings.getInstance().setShowTipsOnStartup(false);
-          showInitialConfigurationDialog();
-          propertiesComponent.setValue(DISPLAYED_PROPERTY, "true");
-        }
-      }
 
-      @Override
-      public void appStarting(Project projectFromCommandLine) {
-        patchKeymap();
-      }
-    });
+    if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
+
+      bus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
+        @Override
+        public void welcomeScreenDisplayed() {
+
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              GeneralSettings.getInstance().setShowTipsOnStartup(false);
+              showInitialConfigurationDialog();
+              propertiesComponent.setValue(DISPLAYED_PROPERTY, "true");
+              patchKeymap();
+            }
+          });
+        }
+      });
+    }
+
     bus.connect().subscribe(ProjectManager.TOPIC, new ProjectManagerAdapter() {
       @Override
       public void projectOpened(final Project project) {
@@ -140,40 +144,8 @@ public class PyCharmEduInitialConfigurator {
         }
 
         patchProjectAreaExtensions(project);
-
-        //StartupManager.getInstance(project).runWhenProjectIsInitialized(new DumbAwareRunnable() {
-        //  @Override
-        //  public void run() {
-        //    if (project.isDisposed()) return;
-        //
-        //    ToolWindowManager
-        //      .getInstance(project).invokeLater(new Runnable() {
-        //      int count = 0;
-        //      public void run() {
-        //        if (project.isDisposed()) return;
-        //        if (count ++ < 3) {
-        //          ToolWindowManager.getInstance(project).invokeLater(this);
-        //          return;
-        //        }
-        //        if (!propertiesComponent.isValueSet(INIT_DB_DIALOG_DISPLAYED)) {
-        //          ToolWindow toolWindow = DatabaseView.getDatabaseToolWindow(project);
-        //          if (toolWindow.getType() != ToolWindowType.SLIDING) {
-        //            toolWindow.activate(null);
-        //          }
-        //          propertiesComponent.setValue(INIT_DB_DIALOG_DISPLAYED, "true");
-        //          onFirstProjectOpened(project);
-        //        }
-        //      }
-        //    });
-        //  }
-        //});
       }
     });
-  }
-
-  private static void onFirstProjectOpened(@NotNull final Project project) {
-    // show python console
-
   }
 
   private static void patchRootAreaExtensions() {
