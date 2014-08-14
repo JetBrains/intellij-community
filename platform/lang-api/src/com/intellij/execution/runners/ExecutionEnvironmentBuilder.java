@@ -96,8 +96,8 @@ public final class ExecutionEnvironmentBuilder {
     myRunProfile = copySource.getRunProfile();
     myRunnerSettings = copySource.getRunnerSettings();
     myConfigurationSettings = copySource.getConfigurationSettings();
-    myRunnerId = copySource.getRunnerId();
-    myRunner = copySource.myRunner;
+    //noinspection deprecation
+    myRunner = copySource.getRunner();
     myContentToReuse = copySource.getContentToReuse();
     myExecutor = copySource.getExecutor();
   }
@@ -183,6 +183,11 @@ public final class ExecutionEnvironmentBuilder {
     return this;
   }
 
+  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
+  /**
+   * to remove in IDEA 15
+   */
   public ExecutionEnvironmentBuilder setRunProfile(@NotNull RunProfile runProfile) {
     return runProfile(runProfile);
   }
@@ -242,12 +247,21 @@ public final class ExecutionEnvironmentBuilder {
 
   @NotNull
   public ExecutionEnvironment build() {
-    if (myRunner == null && myRunnerId == null) {
-      myRunner = RunnerRegistry.getInstance().getRunner(myExecutor.getId(), myRunProfile);
+    if (myRunner == null) {
+      if (myRunnerId == null) {
+        myRunner = RunnerRegistry.getInstance().getRunner(myExecutor.getId(), myRunProfile);
+      }
+      else {
+        myRunner = RunnerRegistry.getInstance().findRunnerById(myRunnerId);
+      }
+    }
+
+    if (myRunner == null) {
+      throw new IllegalStateException("Runner must be specified");
     }
 
     ExecutionEnvironment environment = new ExecutionEnvironment(myRunProfile, myExecutor, myTarget, myProject, myRunnerSettings, myConfigurationSettings, myContentToReuse,
-                                                                myRunnerAndConfigurationSettings, myRunnerId, myRunner);
+                                                                myRunnerAndConfigurationSettings, myRunner);
     if (myAssignNewId) {
       environment.assignNewExecutionId();
     }

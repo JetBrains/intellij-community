@@ -168,7 +168,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
 
   @NotNull
   private static Trinity<Project, String, String> createExecutionId(String executorId, @NotNull ExecutionEnvironment environment) {
-    return Trinity.create(environment.getProject(), executorId, environment.getRunnerId());
+    return Trinity.create(environment.getProject(), executorId, environment.getRunner().getRunnerId());
   }
 
   @Override
@@ -178,7 +178,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
 
   @Override
   public boolean isStarting(@NotNull ExecutionEnvironment environment) {
-    return isStarting(environment.getProject(), environment.getExecutor().getId(), environment.getRunnerId());
+    return isStarting(environment.getProject(), environment.getExecutor().getId(), environment.getRunner().getRunnerId());
   }
 
   @Override

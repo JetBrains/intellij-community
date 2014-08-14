@@ -128,7 +128,7 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
   private void updateActiveTarget(@Nullable RunnerAndConfigurationSettings settings, @Nullable ExecutionTarget toSelect) {
     List<ExecutionTarget> suitable = settings == null ? Collections.singletonList(DefaultExecutionTarget.INSTANCE)
                                                       : getTargetsFor(settings);
-    ExecutionTarget toNotify = null;
+    ExecutionTarget toNotify;
     synchronized (myActiveTargetLock) {
       if (toSelect == null) toSelect = myActiveTarget;
 

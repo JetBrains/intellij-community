@@ -51,8 +51,7 @@ public class ExecutionEnvironment extends UserDataHolderBase implements Disposab
   @Nullable private ConfigurationPerRunnerSettings myConfigurationSettings;
   @Nullable private final RunnerAndConfigurationSettings myRunnerAndConfigurationSettings;
   @Nullable private RunContentDescriptor myContentToReuse;
-  @Nullable private String myRunnerId;
-  @Nullable final ProgramRunner<?> myRunner;
+  private final ProgramRunner<?> myRunner;
   private long myExecutionId = 0;
   @Nullable private DataContext myDataContext;
 
@@ -77,7 +76,6 @@ public class ExecutionEnvironment extends UserDataHolderBase implements Disposab
          configuration.getConfigurationSettings(runner),
          null,
          null,
-         null,
          runner);
   }
 
@@ -99,7 +97,6 @@ public class ExecutionEnvironment extends UserDataHolderBase implements Disposab
          configuration.getConfigurationSettings(runner),
          null,
          configuration,
-         null,
          runner);
   }
 
@@ -111,22 +108,19 @@ public class ExecutionEnvironment extends UserDataHolderBase implements Disposab
                               @NotNull Executor executor,
                               @NotNull Project project,
                               @Nullable RunnerSettings runnerSettings) {
-    this(runProfile, executor, DefaultExecutionTarget.INSTANCE, project, runnerSettings, null, null, null, null, null);
+    //noinspection ConstantConditions
+    this(runProfile, executor, DefaultExecutionTarget.INSTANCE, project, runnerSettings, null, null, null, RunnerRegistry.getInstance().getRunner(executor.getId(), runProfile));
   }
 
-  /**
-   * Don't use, use {@link com.intellij.execution.runners.ExecutionEnvironmentBuilder} instead
-   */
-  public ExecutionEnvironment(@NotNull RunProfile runProfile,
-                              @NotNull Executor executor,
-                              @NotNull ExecutionTarget target,
-                              @NotNull Project project,
-                              @Nullable RunnerSettings runnerSettings,
-                              @Nullable ConfigurationPerRunnerSettings configurationSettings,
-                              @Nullable RunContentDescriptor contentToReuse,
-                              @Nullable RunnerAndConfigurationSettings settings,
-                              @Nullable String runnerId,
-                              @Nullable ProgramRunner<?> runner) {
+  ExecutionEnvironment(@NotNull RunProfile runProfile,
+                       @NotNull Executor executor,
+                       @NotNull ExecutionTarget target,
+                       @NotNull Project project,
+                       @Nullable RunnerSettings runnerSettings,
+                       @Nullable ConfigurationPerRunnerSettings configurationSettings,
+                       @Nullable RunContentDescriptor contentToReuse,
+                       @Nullable RunnerAndConfigurationSettings settings,
+                       @NotNull ProgramRunner<?> runner) {
     myExecutor = executor;
     myTarget = target;
     myRunProfile = runProfile;
@@ -137,7 +131,6 @@ public class ExecutionEnvironment extends UserDataHolderBase implements Disposab
     myRunnerAndConfigurationSettings = settings;
 
     myRunner = runner;
-    myRunnerId = runner == null ? runnerId : runner.getRunnerId();
   }
 
   @Override
@@ -179,13 +172,18 @@ public class ExecutionEnvironment extends UserDataHolderBase implements Disposab
   }
 
   @Nullable
+  @Deprecated
+  /**
+   * Use {@link #getRunner()} instead
+   * to remove in IDEA 15
+   */
   public String getRunnerId() {
-    return myRunnerId;
+    return myRunner.getRunnerId();
   }
 
-  @Nullable
+  @NotNull
   public ProgramRunner<?> getRunner() {
-    return myRunner == null ? RunnerRegistry.getInstance().findRunnerById(getRunnerId()) : myRunner;
+    return myRunner;
   }
 
   @Nullable
