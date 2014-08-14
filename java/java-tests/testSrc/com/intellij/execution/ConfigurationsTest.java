@@ -56,13 +56,6 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
   private Sdk myJdk;
   private static final String INNER_TEST_NAME = "test1.InnerTest.Inner";
   private static final String RT_INNER_TEST_NAME = "test1.InnerTest$Inner";
-  private static final Executor MOCK_EXECUTOR = new DefaultRunExecutor() {
-    @NotNull
-    @Override
-    public String getId() {
-      return "mock";
-    }
-  };
 
   @Override
   protected void setUp() throws Exception {
@@ -426,10 +419,12 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
 
   private JavaParameters checkCanRun(RunConfiguration configuration) throws ExecutionException {
     final RunProfileState state;
-    state = configuration.getState(MOCK_EXECUTOR, new ExecutionEnvironmentBuilder(myProject, MOCK_EXECUTOR).runProfile(new MockProfile()).build());
+    Executor executor = DefaultRunExecutor.getRunExecutorInstance();
+    state = configuration.getState(executor, new ExecutionEnvironmentBuilder(myProject, executor).runProfile(new MockProfile()).build());
     assertNotNull(state);
     assertTrue(state instanceof JavaCommandLine);
     if (state instanceof TestPackage) {
+      @SuppressWarnings("UnusedDeclaration")
       final JavaParameters parameters = ((TestPackage)state).getJavaParameters();
       ((TestPackage)state).findTests();
     }
@@ -469,8 +464,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
 
     }
 
-    final RunProfileState state = configuration
-      .getState(MOCK_EXECUTOR, new ExecutionEnvironmentBuilder(myProject, MOCK_EXECUTOR).runProfile(new MockProfile()).build());
+    RunProfileState state = configuration.getState(DefaultRunExecutor.getRunExecutorInstance(), new ExecutionEnvironmentBuilder(myProject, DefaultRunExecutor.getRunExecutorInstance()).runProfile(configuration).build());
     assertTrue(state instanceof JavaCommandLine);
 
     try {
