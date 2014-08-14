@@ -28,7 +28,6 @@ import com.jetbrains.python.edu.course.Task;
 import com.jetbrains.python.edu.course.TaskFile;
 import com.jetbrains.python.edu.ui.StudyCondition;
 import com.jetbrains.python.edu.ui.StudyToolWindowFactory;
-import icons.StudyIcons;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

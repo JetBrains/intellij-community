@@ -171,7 +171,7 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
    */
 
   public void downloadAndUnzip(boolean needProgressBar) {
-    File outputFile = new File(PathManager.getLibPath(), "courses.zip");
+    File outputFile = new File(PathManager.getConfigPath(), "courses.zip");
     try {
       if (!needProgressBar) {
         GithubDownloadUtil.downloadAtomically(null, REPO_URL,
