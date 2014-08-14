@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.refactoring.memberPullUp;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -170,9 +171,16 @@ public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
-        final PsiDirectory targetDirectory = superClass.getContainingFile().getContainingDirectory();
-        final PsiPackage targetPackage = targetDirectory != null ? JavaDirectoryService.getInstance().getPackage(targetDirectory) : null;
-        conflicts.putAllValues(GrPullUpConflictsUtil.checkConflicts(infos, mySubclass, superClass, targetPackage, targetDirectory, dialog.getContainmentVerifier()));
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            final PsiDirectory targetDirectory = superClass.getContainingFile().getContainingDirectory();
+            final PsiPackage targetPackage =
+              targetDirectory != null ? JavaDirectoryService.getInstance().getPackage(targetDirectory) : null;
+            conflicts.putAllValues(GrPullUpConflictsUtil.checkConflicts(infos, mySubclass, superClass, targetPackage, targetDirectory,
+                                                                        dialog.getContainmentVerifier()));
+          }
+        });
       }
     }, RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) {
       return false;

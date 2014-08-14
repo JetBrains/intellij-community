@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -178,8 +178,13 @@ public class SliceNullnessAnalyzer {
           node(element, map).add(node(duplicate, map));
         }
         else {
-          SliceUsage sliceUsage = element.getValue();
-          final PsiElement value = sliceUsage.getElement();
+          final SliceUsage sliceUsage = element.getValue();
+          final PsiElement value = ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
+            @Override
+            public PsiElement compute() {
+              return sliceUsage.getElement();
+            }
+          });
           Nullness nullness = ApplicationManager.getApplication().runReadAction(new Computable<Nullness>() {
             @Override
             public Nullness compute() {

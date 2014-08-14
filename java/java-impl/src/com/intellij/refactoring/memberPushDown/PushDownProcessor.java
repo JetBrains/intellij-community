@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.intention.impl.CreateClassDialog;
 import com.intellij.codeInsight.intention.impl.CreateSubclassAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -72,10 +73,12 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
     myJavaDocPolicy = javaDocPolicy;
   }
 
+  @Override
   protected String getCommandName() {
     return JavaPushDownHandler.REFACTORING_NAME;
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new PushDownUsageViewDescriptor(myClass);
@@ -116,6 +119,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
     return data;
   }
 
+  @Override
   @NotNull
   protected UsageInfo[] findUsages() {
     final PsiClass[] inheritors = ClassInheritorsSearch.search(myClass, false).toArray(PsiClass.EMPTY_ARRAY);
@@ -147,6 +151,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
     return false;
   }
 
+  @Override
   protected boolean preprocessUsages(final Ref<UsageInfo[]> refUsages) {
     final UsageInfo[] usagesIn = refUsages.get();
     final PushDownConflicts pushDownConflicts = new PushDownConflicts(myClass, myMemberInfos);
@@ -177,13 +182,19 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
       }
     }
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
-        for (UsageInfo usage : usagesIn) {
-          final PsiElement element = usage.getElement();
-          if (element instanceof PsiClass) {
-            pushDownConflicts.checkTargetClassConflicts((PsiClass)element, usagesIn.length > 1, element);
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            for (UsageInfo usage : usagesIn) {
+              final PsiElement element = usage.getElement();
+              if (element instanceof PsiClass) {
+                pushDownConflicts.checkTargetClassConflicts((PsiClass)element, usagesIn.length > 1, element);
+              }
+            }
           }
-        }
+        });
       }
     };
 
@@ -204,6 +215,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
     return showConflicts(pushDownConflicts.getConflicts(), usagesIn);
   }
 
+  @Override
   protected void refreshElements(PsiElement[] elements) {
     if(elements.length == 1 && elements[0] instanceof PsiClass) {
       myClass = (PsiClass) elements[0];
@@ -213,6 +225,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @Override
   protected void performRefactoring(UsageInfo[] usages) {
     try {
       encodeRefs();
@@ -509,6 +522,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
         decodeRefs(newMember, targetClass);
         //rebind imports first
         Collections.sort(refsToRebind, new Comparator<PsiReference>() {
+          @Override
           public int compare(PsiReference o1, PsiReference o2) {
             return PsiUtil.BY_POSITION.compare(o1.getElement(), o2.getElement());
           }

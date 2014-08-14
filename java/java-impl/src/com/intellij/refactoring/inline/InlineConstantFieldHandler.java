@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.lang.StdLanguages;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -35,10 +36,12 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 public class InlineConstantFieldHandler extends JavaInlineActionHandler {
   private static final String REFACTORING_NAME = RefactoringBundle.message("inline.field.title");
 
+  @Override
   public boolean canInlineElement(PsiElement element) {
     return element instanceof PsiField && StdLanguages.JAVA.equals(element.getLanguage());
   }
 
+  @Override
   public void inlineElement(Project project, Editor editor, PsiElement element) {
     final PsiElement navigationElement = element.getNavigationElement();
     final PsiField field = (PsiField)(navigationElement instanceof PsiField ? navigationElement : element);
@@ -66,13 +69,18 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         @Override
         public void run() {
-          for (PsiReference reference : ReferencesSearch.search(field)) {
-            final PsiElement referenceElement = reference.getElement();
-            if (!(referenceElement instanceof PsiExpression && PsiUtil.isAccessedForReading((PsiExpression)referenceElement))) {
-              hasWriteUsages.set(true);
-              break;
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            @Override
+            public void run() {
+              for (PsiReference reference : ReferencesSearch.search(field)) {
+                final PsiElement referenceElement = reference.getElement();
+                if (!(referenceElement instanceof PsiExpression && PsiUtil.isAccessedForReading((PsiExpression)referenceElement))) {
+                  hasWriteUsages.set(true);
+                  break;
+                }
+              }
             }
-          }
+          });
         }
       }, "Check if inline is possible...", true, project)) {
         return;
