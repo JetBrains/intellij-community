@@ -165,14 +165,23 @@ public class SvnFileRevision implements VcsFileRevision {
   }
 
   public byte[] getContent() throws IOException, VcsException {
-    return ContentRevisionCache.getOrLoadAsBytes(myVCS.getProject(), VcsUtil.getFilePathOnNonLocal(myURL, false), getRevisionNumber(),
-                                                 myVCS.getKeyInstanceMethod(), ContentRevisionCache.UniqueType.REMOTE_CONTENT,
-                                                 new Throwable2Computable<byte[], VcsException, IOException>() {
-                                                   @Override
-                                                   public byte[] compute() throws VcsException, IOException {
-                                                     return loadContent();
-                                                   }
-                                                 });
+    byte[] result;
+
+    if (SVNRevision.HEAD.equals(myRevision)) {
+      result = loadContent();
+    }
+    else {
+      result = ContentRevisionCache.getOrLoadAsBytes(myVCS.getProject(), VcsUtil.getFilePathOnNonLocal(myURL, false), getRevisionNumber(),
+                                                     myVCS.getKeyInstanceMethod(), ContentRevisionCache.UniqueType.REMOTE_CONTENT,
+                                                     new Throwable2Computable<byte[], VcsException, IOException>() {
+                                                       @Override
+                                                       public byte[] compute() throws VcsException, IOException {
+                                                         return loadContent();
+                                                       }
+                                                     });
+    }
+
+    return result;
   }
 
   public String getCopyFromPath() {
