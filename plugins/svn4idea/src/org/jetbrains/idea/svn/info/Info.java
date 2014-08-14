@@ -51,10 +51,10 @@ public class Info extends BaseNodeDescription {
   private final String mySchedule;
   private final SVNURL myCopyFromURL;
   private final SVNRevision myCopyFromRevision;
-  private final File myConflictOldFile;
-  private final File myConflictNewFile;
-  private final File myConflictWrkFile;
-  private final File myPropConflictFile;
+  @Nullable private final File myConflictOldFile;
+  @Nullable private final File myConflictNewFile;
+  @Nullable private final File myConflictWrkFile;
+  @Nullable private final File myPropConflictFile;
   private final Depth myDepth;
   @Nullable private final TreeConflictDescription myTreeConflict;
 
@@ -91,10 +91,10 @@ public class Info extends BaseNodeDescription {
               String schedule,
               SVNURL copyFromURL,
               long copyFromRevision,
-              String conflictOld,
-              String conflictNew,
-              String conflictWorking,
-              String propRejectFile,
+              @Nullable String conflictOld,
+              @Nullable String conflictNew,
+              @Nullable String conflictWorking,
+              @Nullable String propRejectFile,
               @Nullable Lock lock,
               Depth depth,
               @Nullable TreeConflictDescription treeConflict) {
@@ -177,14 +177,17 @@ public class Info extends BaseNodeDescription {
     return myCommittedRevision;
   }
 
+  @Nullable
   public File getConflictNewFile() {
     return myConflictNewFile;
   }
 
+  @Nullable
   public File getConflictOldFile() {
     return myConflictOldFile;
   }
 
+  @Nullable
   public File getConflictWrkFile() {
     return myConflictWrkFile;
   }
@@ -224,6 +227,7 @@ public class Info extends BaseNodeDescription {
     return myPath;
   }
 
+  @Nullable
   public File getPropConflictFile() {
     return myPropConflictFile;
   }
