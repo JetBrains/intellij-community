@@ -85,14 +85,16 @@ public class JavaAnalysisScope extends AnalysisScope {
   }
 
 
-
+  @NotNull
   @Override
   public String getShortenName() {
-    if (myType == PACKAGE)
-       return AnalysisScopeBundle.message("scope.package", ((PsiPackage)myElement).getQualifiedName());
+    if (myType == PACKAGE) {
+      return AnalysisScopeBundle.message("scope.package", ((PsiPackage)myElement).getQualifiedName());
+    }
     return super.getShortenName();
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
     if (myType == PACKAGE) {
@@ -125,7 +127,8 @@ public class JavaAnalysisScope extends AnalysisScope {
       for (PsiDirectory dir : dirs) {
         accept(dir, visitor, needReadAction);
       }
-    } else {
+    }
+    else {
       super.accept(visitor, needReadAction);
     }
   }
