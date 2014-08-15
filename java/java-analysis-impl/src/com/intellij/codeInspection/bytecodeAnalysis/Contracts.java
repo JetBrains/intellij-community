@@ -55,6 +55,7 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
     interpreter = new InOutInterpreter(direction, richControlFlow.controlFlow.methodNode.instructions, resultOrigins);
     inValue = direction instanceof InOut ? ((InOut)direction).inValue : null;
     generalizeShift = (methodNode.access & ACC_STATIC) == 0 ? 1 : 0;
+    internalResult = identity();
   }
 
   @Override
@@ -93,7 +94,6 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
 
   @Override
   void processState(State state) throws AnalyzerException {
-    int stateIndex = state.index;
     Conf preConf = state.conf;
     int insnIndex = preConf.insnIndex;
     boolean loopEnter = dfsTree.loopEnters[insnIndex];
@@ -105,9 +105,9 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
     List<Conf> nextHistory = loopEnter ? append(history, conf) : history;
     Frame<BasicValue> nextFrame = execute(frame, insnNode);
 
+    addComputed(insnIndex, state);
+
     if (interpreter.deReferenced) {
-      results[stateIndex] = new Final<Key, Value>(Value.Bot);
-      addComputed(insnIndex, state);
       return;
     }
 
@@ -120,38 +120,36 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
       case DRETURN:
       case RETURN:
         BasicValue stackTop = popValue(frame);
+        Result<Key, Value> subResult;
         if (FalseValue == stackTop) {
-          results[stateIndex] = new Final<Key, Value>(Value.False);
-          addComputed(insnIndex, state);
+          subResult = new Final<Key, Value>(Value.False);
         }
         else if (TrueValue == stackTop) {
-          results[stateIndex] = new Final<Key, Value>(Value.True);
-          addComputed(insnIndex, state);
+          subResult = new Final<Key, Value>(Value.True);
         }
         else if (NullValue == stackTop) {
-          results[stateIndex] = new Final<Key, Value>(Value.Null);
-          addComputed(insnIndex, state);
+          subResult = new Final<Key, Value>(Value.Null);
         }
         else if (stackTop instanceof NotNullValue) {
-          results[stateIndex] = new Final<Key, Value>(Value.NotNull);
-          addComputed(insnIndex, state);
+          subResult = new Final<Key, Value>(Value.NotNull);
         }
         else if (stackTop instanceof ParamValue) {
-          results[stateIndex] = new Final<Key, Value>(inValue);
-          addComputed(insnIndex, state);
+          subResult = new Final<Key, Value>(inValue);
         }
         else if (stackTop instanceof CallResultValue) {
           Set<Key> keys = ((CallResultValue) stackTop).inters;
-          results[stateIndex] = new Pending<Key, Value>(Collections.singleton(new Product<Key, Value>(Value.Top, keys)));
-          addComputed(insnIndex, state);
+          subResult = new Pending<Key, Value>(Collections.singleton(new Product<Key, Value>(Value.Top, keys)));
         }
         else {
           earlyResult = new Final<Key, Value>(Value.Top);
+          return;
+        }
+        internalResult = resultUtil.join(internalResult, subResult);
+        if (internalResult instanceof Final && ((Final<?, Value>)internalResult).value == Value.Top) {
+          earlyResult = internalResult;
         }
         return;
       case ATHROW:
-        results[stateIndex] = new Final<Key, Value>(Value.Bot);
-        addComputed(insnIndex, state);
         return;
       default:
     }
@@ -159,7 +157,6 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
     if (opcode == IFNONNULL && popValue(frame) instanceof ParamValue) {
       int nextInsnIndex = inValue == Value.Null ? insnIndex + 1 : methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
       State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false);
-      pendingPush(new MakeResult<Result<Key, Value>>(state, myIdentity, new int[]{nextState.index}));
       pendingPush(new ProceedState<Result<Key, Value>>(nextState));
       return;
     }
@@ -167,7 +164,6 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
     if (opcode == IFNULL && popValue(frame) instanceof ParamValue) {
       int nextInsnIndex = inValue == Value.NotNull ? insnIndex + 1 : methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
       State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false);
-      pendingPush(new MakeResult<Result<Key, Value>>(state, myIdentity, new int[]{nextState.index}));
       pendingPush(new ProceedState<Result<Key, Value>>(nextState));
       return;
     }
@@ -175,7 +171,6 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
     if (opcode == IFEQ && popValue(frame) == InstanceOfCheckValue && inValue == Value.Null) {
       int nextInsnIndex = methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
       State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false);
-      pendingPush(new MakeResult<Result<Key, Value>>(state, myIdentity, new int[]{nextState.index}));
       pendingPush(new ProceedState<Result<Key, Value>>(nextState));
       return;
     }
@@ -183,7 +178,6 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
     if (opcode == IFNE && popValue(frame) == InstanceOfCheckValue && inValue == Value.Null) {
       int nextInsnIndex = insnIndex + 1;
       State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false);
-      pendingPush(new MakeResult<Result<Key, Value>>(state, myIdentity, new int[]{nextState.index}));
       pendingPush(new ProceedState<Result<Key, Value>>(nextState));
       return;
     }
@@ -191,7 +185,6 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
     if (opcode == IFEQ && popValue(frame) instanceof ParamValue) {
       int nextInsnIndex = inValue == Value.True ? insnIndex + 1 : methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
       State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false);
-      pendingPush(new MakeResult<Result<Key, Value>>(state, myIdentity, new int[]{nextState.index}));
       pendingPush(new ProceedState<Result<Key, Value>>(nextState));
       return;
     }
@@ -199,7 +192,6 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
     if (opcode == IFNE && popValue(frame) instanceof ParamValue) {
       int nextInsnIndex = inValue == Value.False ? insnIndex + 1 : methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
       State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false);
-      pendingPush(new MakeResult<Result<Key, Value>>(state, myIdentity, new int[]{nextState.index}));
       pendingPush(new ProceedState<Result<Key, Value>>(nextState));
       return;
     }
@@ -210,7 +202,6 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
     for (int i = 0; i < nextInsnIndices.length; i++) {
       subIndices[i] = ++id;
     }
-    pendingPush(new MakeResult<Result<Key, Value>>(state, myIdentity, subIndices));
     for (int i = 0; i < nextInsnIndices.length; i++) {
       int nextInsnIndex = nextInsnIndices[i];
       Frame<BasicValue> nextFrame1 = nextFrame;

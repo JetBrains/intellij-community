@@ -241,6 +241,7 @@ abstract class Analysis<Res> {
   final Key aKey;
 
   Res earlyResult = null;
+  Res internalResult = null;
 
   abstract Res identity();
   abstract Res combineResults(Res delta, int[] subResults) throws AnalyzerException;
@@ -354,6 +355,8 @@ abstract class Analysis<Res> {
     }
     if (earlyResult != null) {
       return mkEquation(earlyResult);
+    } else if (internalResult != null) {
+      return mkEquation(internalResult);
     } else {
       return mkEquation(results[0]);
     }
