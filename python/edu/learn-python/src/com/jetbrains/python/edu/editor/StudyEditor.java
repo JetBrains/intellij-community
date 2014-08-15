@@ -7,6 +7,10 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorLocation;
+import com.intellij.openapi.fileEditor.FileEditorState;
+import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -29,6 +33,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.text.MutableAttributeSet;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -86,15 +93,8 @@ public class StudyEditor implements TextEditor {
     TaskFile taskFile = StudyTaskManager.getInstance(myProject).getTaskFile(file);
     if (taskFile != null) {
       Task currentTask = taskFile.getTask();
-      String taskText = currentTask.getResourceText(myProject, currentTask.getText(), false);
-      final JLabel taskTextLabel = new JLabel(taskText);
-      taskTextLabel.setBorder(new EmptyBorder(15, 20, 0, 100));
-      int fontSize = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize();
-      String fontName = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName();
-      taskTextLabel.setFont(new Font(fontName, Font.PLAIN, fontSize));
-      HideableTitledPanel taskTextPanel = new HideableTitledPanel(TASK_TEXT_HEADER, taskTextLabel, true);
-      taskTextPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
-      studyPanel.add(taskTextPanel);
+      String taskText = currentTask.getResourceText(project, currentTask.getText(), false);
+      initializeTaskText(studyPanel, taskText);
       JPanel studyButtonPanel = new JPanel(new GridLayout(1, 2));
       JPanel taskActionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
       studyButtonPanel.add(taskActionsPanel);
@@ -103,6 +103,33 @@ public class StudyEditor implements TextEditor {
       studyPanel.add(studyButtonPanel);
       myComponent.add(studyPanel, BorderLayout.NORTH);
     }
+  }
+
+  private static void initializeTaskText(JPanel studyPanel, String taskText) {
+    JTextPane taskTextPane = new JTextPane();
+    taskTextPane.setContentType("text/html");
+    taskTextPane.setEditable(false);
+    taskTextPane.setText(taskText);
+    EditorColorsScheme editorColorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
+    int fontSize = editorColorsScheme.getEditorFontSize();
+    String fontName = editorColorsScheme.getEditorFontName();
+    setJTextPaneFont(taskTextPane, new Font(fontName, Font.PLAIN, fontSize), JBColor.BLACK);
+    taskTextPane.setBackground(UIUtil.getPanelBackground());
+    taskTextPane.setBorder(new EmptyBorder(15, 20, 0, 100));
+    HideableTitledPanel taskTextPanel = new HideableTitledPanel(TASK_TEXT_HEADER, taskTextPane, true);
+    taskTextPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+    studyPanel.add(taskTextPanel);
+  }
+
+  private static void setJTextPaneFont(JTextPane jtp, Font font, Color c) {
+    MutableAttributeSet attrs = jtp.getInputAttributes();
+    StyleConstants.setFontFamily(attrs, font.getFamily());
+    StyleConstants.setFontSize(attrs, font.getSize());
+    StyleConstants.setItalic(attrs, (font.getStyle() & Font.ITALIC) != 0);
+    StyleConstants.setBold(attrs, (font.getStyle() & Font.BOLD) != 0);
+    StyleConstants.setForeground(attrs, c);
+    StyledDocument doc = jtp.getStyledDocument();
+    doc.setCharacterAttributes(0, doc.getLength() + 1, attrs, false);
   }
 
   private void initializeButtons(@NotNull final JPanel taskActionsPanel, @NotNull final TaskFile taskFile) {

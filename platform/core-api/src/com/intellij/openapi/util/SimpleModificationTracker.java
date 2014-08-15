@@ -16,6 +16,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.Patches;
+import com.intellij.util.xmlb.annotations.Transient;
 
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
@@ -28,6 +29,8 @@ public class SimpleModificationTracker implements ModificationTracker {
     // fixed in JDK8
     assert Patches.JDK_BUG_ID_7103570;
   }
+  
+  @Transient
   public volatile int myCounter;
 
   @Override
