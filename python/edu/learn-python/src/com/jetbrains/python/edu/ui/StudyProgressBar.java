@@ -1,10 +1,5 @@
 package com.jetbrains.python.edu.ui;
 
-/**
- * author: liana
- * data: 7/29/14.
- */
-
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.ColorUtil;
@@ -33,17 +28,6 @@ public class StudyProgressBar extends JComponent implements DumbAware {
     myColor = color;
     myHeight = height;
     myIndent = indent;
-  }
-
-  public void setFraction(double fraction) {
-    if (Double.isNaN(fraction)) {
-      fraction = 1.0;
-    }
-    boolean changed = myFraction == 0 || getBricksToDraw(myFraction) != getBricksToDraw(fraction);
-    myFraction = fraction;
-    if (changed) {
-      repaint();
-    }
   }
 
   private int getBricksToDraw(double fraction) {
@@ -97,5 +81,12 @@ public class StudyProgressBar extends JComponent implements DumbAware {
       x_offset += BRICK_WIDTH + BRICK_SPACE;
     }
     config.restore();
+  }
+
+  @Override
+  public Dimension getMaximumSize() {
+    Dimension dimension = super.getMaximumSize();
+    dimension.height = myHeight + 10;
+    return dimension;
   }
 }

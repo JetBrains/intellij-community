@@ -19,11 +19,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-/**
- * author: liana
- * data: 7/25/14.
- */
-
 public class StudyToolWindowFactory implements ToolWindowFactory, DumbAware {
   public static final String STUDY_TOOL_WINDOW = "Course Description";
   JPanel contentPanel = new JPanel();
@@ -62,14 +57,15 @@ public class StudyToolWindowFactory implements ToolWindowFactory, DumbAware {
       String completedLessons = String.format("%d of %d lessons completed", lessonsCompleted, course.getLessons().size());
       String completedTasks = String.format("%d of %d tasks completed", taskSolved, taskNum);
       String tasksLeft = String.format("%d of %d tasks left", taskNum - taskSolved, taskNum);
+      contentPanel.add(Box.createVerticalStrut(10));
       addStatistics(completedLessons);
       addStatistics(completedTasks);
-      addStatistics(tasksLeft);
+
       double percent = (taskSolved * 100.0) / taskNum;
       contentPanel.add(Box.createRigidArea(new Dimension(0, 10)));
       StudyProgressBar studyProgressBar = new StudyProgressBar(percent / 100, JBColor.GREEN, 40, 10);
       contentPanel.add(studyProgressBar);
-
+      addStatistics(tasksLeft);
       ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
       Content content = contentFactory.createContent(contentPanel, "", true);
       toolWindow.getContentManager().addContent(content);
