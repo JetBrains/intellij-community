@@ -41,12 +41,10 @@ public class CheckRegExpIntentionAction extends QuickEditAction implements Icona
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    final Pair<PsiElement, TextRange> pair = getRangePair(file, editor);
-    /*super.isAvailable(project, editor, file) && */
+    Pair<PsiElement, TextRange> pair = getRangePair(file, editor);
     if (pair != null && pair.first != null) {
       Language language = pair.first.getLanguage();
-      Language baseLanguage = language.getBaseLanguage();
-      return language == RegExpLanguage.INSTANCE || baseLanguage == RegExpLanguage.INSTANCE;
+      return language.isKindOf(RegExpLanguage.INSTANCE);
     }
     return false;
   }

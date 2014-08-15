@@ -32,13 +32,14 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.resolve.FileContextUtil;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.BalloonImpl;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.regexp.RegExpLanguage;
@@ -62,6 +63,7 @@ public class CheckRegExpForm {
 
   private EditorTextField myRegExp;
   private JPanel myRootPanel;
+  private JBLabel myMessage;
   private Ref<Balloon> myRef;
   private Project myProject;
 
@@ -77,6 +79,7 @@ public class CheckRegExpForm {
     Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
 
     myRegExp = new EditorTextField(document, myProject, RegExpLanguage.INSTANCE.getAssociatedFileType());
+    myRegExp.setPreferredWidth(Math.max(300, myRegExp.getPreferredSize().width));
     final String sampleText = PropertiesComponent.getInstance(myProject).getValue(LAST_EDITED_REGEXP, "Sample Text");
     mySampleText = new EditorTextField(sampleText, myProject, PlainTextFileType.INSTANCE);
     mySampleText.setBorder(
@@ -158,35 +161,23 @@ public class CheckRegExpForm {
 
   private void updateBalloon() {
     boolean correct = false;
-    try {
-      final PsiFile file = myParams.first;
-      //todo: unfortunately there is no way to access host element representing regexp
-      int offset = -1;
-      try {
-        final String name = file.getName();
-        offset = Integer.parseInt(name.substring(name.lastIndexOf(':') + 1, name.lastIndexOf(')')));
-      } catch (Exception ignore) {}
-
-      int flags = 0;
-      if (offset != -1) {
-        final PsiFile host = FileContextUtil.getContextFile(file);
-        if (host != null) {
-          final PsiElement regexpInHost = host.findElementAt(offset);
-          if (regexpInHost != null) {
-            for (RegExpModifierProvider provider : RegExpModifierProvider.EP.getExtensions()) {
-              final int modifiers = provider.getFlags(regexpInHost, file);
-              if (modifiers > 0) {
-                flags = modifiers;
-                break;
-              }
-            }
-          }
-        }
+    PsiFile file = myParams.first;
+    PsiLanguageInjectionHost host = InjectedLanguageUtil.findInjectionHost(file);
+    int flags = 0;
+    if (host != null) {
+      for (RegExpModifierProvider provider : RegExpModifierProvider.EP.getExtensions()) {
+        flags = provider.getFlags(host, file);
+        if (flags > 0) break;
       }
+    }
+    try {
       correct = Pattern.compile(myRegExp.getText(), flags).matcher(mySampleText.getText()).matches();
     } catch (Exception ignore) {}
 
-    mySampleText.setBackground(correct ? new JBColor(new Color(231, 250, 219), new Color(68, 85, 66)) : new JBColor(new Color(255, 177, 160), new Color(110, 43, 40)));
+    JBColor color1 = new JBColor(new Color(231, 250, 219), new Color(68, 85, 66));
+    JBColor color2 = new JBColor(new Color(255, 177, 160), new Color(110, 43, 40));
+    mySampleText.setBackground(correct ? color1 : color2);
+    myMessage.setText(correct ? "Matches!" : "no match");
     BalloonImpl balloon = (BalloonImpl)myRef.get();
     if (balloon != null && balloon.isDisposed()) {
       balloon.revalidate();
