@@ -39,7 +39,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeNode;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
@@ -110,7 +109,6 @@ public class PushController implements Disposable {
   private void loadCommitsFromMap(@NotNull Map<RepositoryNode, MyRepoModel> items) {
     for (Map.Entry<RepositoryNode, MyRepoModel> entry : items.entrySet()) {
       RepositoryNode node = entry.getKey();
-      myPushLog.startLoading(node);
       loadCommits(entry.getValue(), node, true);
     }
   }
@@ -156,7 +154,6 @@ public class PushController implements Disposable {
       public void onTargetChanged(String newValue) {
         myView2Model.get(repoNode).setSpec(new PushSpec(model.getSpec().getSource(), support.createTarget(repository, newValue)));
         myDialog.updateButtons();
-        myPushLog.startLoading(repoNode);
         loadCommits(model, repoNode, false);
       }
 
@@ -173,6 +170,7 @@ public class PushController implements Disposable {
                            @NotNull final RepositoryNode node,
                            final boolean initial) {
     node.stopLoading();
+    myPushLog.startLoading(node);
     final ProgressIndicator indicator = node.startLoading();
     final PushSupport support = model.getSupport();
     final AtomicReference<OutgoingResult> result = new AtomicReference<OutgoingResult>();
@@ -187,10 +185,22 @@ public class PushController implements Disposable {
       public void onSuccess() {
         OutgoingResult outgoing = result.get();
         if (outgoing.hasErrors()) {
+          final CommitLoader loader = new CommitLoader() {
+            @Override
+            public void reloadCommits() {
+              loadCommits(model, node, false);
+            }
+          };
           myPushLog.setChildren(node, ContainerUtil.map(outgoing.getErrors(), new Function<VcsError, DefaultMutableTreeNode>() {
             @Override
-            public DefaultMutableTreeNode fun(VcsError error) {
-              return new TextWithLinkNode(error);
+            public DefaultMutableTreeNode fun(final VcsError error) {
+              VcsLinkedText errorLinkText = new VcsLinkedText(error.getText(), new VcsLinkListener() {
+                @Override
+                public void hyperlinkActivated(@NotNull DefaultMutableTreeNode sourceNode) {
+                  error.handleError(loader);
+                }
+              });
+              return new TextWithLinkNode(errorLinkText);
             }
           }), model.isSelected());
         }
@@ -288,14 +298,10 @@ public class PushController implements Disposable {
     List<DefaultMutableTreeNode> childrenToShown = new ArrayList<DefaultMutableTreeNode>();
     for (int i = 0; i < commits.size(); ++i) {
       if (i >= commitsNum) {
-        final MoreCommitsLink moreCommitsLink = new MoreCommitsLink();
-        moreCommitsLink.addClickListener(new TreeNodeLinkListener() {
+        final VcsLinkedText moreCommitsLink = new VcsLinkedText("<a href='loadMore'>...</a>", new VcsLinkListener() {
           @Override
-          public void onClick(@NotNull DefaultMutableTreeNode source) {
-            TreeNode parentNode = source.getParent();
-            if (parentNode instanceof RepositoryNode) {
-              addMoreCommits((RepositoryNode)parentNode);
-            }
+          public void hyperlinkActivated(@NotNull DefaultMutableTreeNode sourceNode) {
+            addMoreCommits((RepositoryNode)sourceNode);
           }
         });
         childrenToShown.add(new TextWithLinkNode(moreCommitsLink));

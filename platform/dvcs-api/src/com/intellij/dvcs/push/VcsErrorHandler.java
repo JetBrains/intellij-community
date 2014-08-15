@@ -16,28 +16,7 @@
 package com.intellij.dvcs.push;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class VcsError {
-  @NotNull String myErrorText;
-  @Nullable private final VcsErrorHandler myErrorHandleListener;
-
-  public VcsError(@NotNull String text) {
-    this(text, null);
-  }
-
-  public VcsError(@NotNull String text, @Nullable VcsErrorHandler listener) {
-    myErrorText = text;
-    myErrorHandleListener = listener;
-  }
-
-  public String getText() {
-    return myErrorText;
-  }
-
-  public void handleError(@NotNull CommitLoader loader) {
-    if (myErrorHandleListener != null) {
-      myErrorHandleListener.handleError(loader);
-    }
-  }
+public interface VcsErrorHandler {
+  void handleError(@NotNull CommitLoader loader);
 }

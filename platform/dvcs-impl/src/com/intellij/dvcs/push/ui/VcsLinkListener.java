@@ -13,31 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.dvcs.push;
+package com.intellij.dvcs.push.ui;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class VcsError {
-  @NotNull String myErrorText;
-  @Nullable private final VcsErrorHandler myErrorHandleListener;
+import javax.swing.tree.DefaultMutableTreeNode;
 
-  public VcsError(@NotNull String text) {
-    this(text, null);
-  }
-
-  public VcsError(@NotNull String text, @Nullable VcsErrorHandler listener) {
-    myErrorText = text;
-    myErrorHandleListener = listener;
-  }
-
-  public String getText() {
-    return myErrorText;
-  }
-
-  public void handleError(@NotNull CommitLoader loader) {
-    if (myErrorHandleListener != null) {
-      myErrorHandleListener.handleError(loader);
-    }
-  }
+public interface VcsLinkListener {
+  void hyperlinkActivated(@NotNull DefaultMutableTreeNode sourceNode);
 }
