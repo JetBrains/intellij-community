@@ -11,9 +11,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.BalloonBuilder;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.edu.StudyDocumentListener;
 import com.jetbrains.python.edu.StudyTaskManager;
@@ -33,7 +31,7 @@ public class StudyRefreshTaskAction extends DumbAwareAction {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
               @Override
               public void run() {
-                Editor editor = StudyEditor.getSelectedEditor(project);
+                final Editor editor = StudyEditor.getSelectedEditor(project);
                 assert editor != null;
                 final Document document = editor.getDocument();
                 StudyDocumentListener listener = StudyEditor.getListener(document);
@@ -57,7 +55,7 @@ public class StudyRefreshTaskAction extends DumbAwareAction {
                 FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
                 VirtualFile openedFile = fileDocumentManager.getFile(document);
                 assert openedFile != null;
-                TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
+                final TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
                 assert selectedTaskFile != null;
                 Task currentTask = selectedTaskFile.getTask();
                 String lessonDir = Lesson.LESSON_DIR + String.valueOf(currentTask.getLesson().getIndex() + 1);

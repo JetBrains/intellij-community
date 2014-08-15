@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.annotations.Transient;
+import com.jetbrains.python.edu.StudyUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -209,5 +210,16 @@ public class TaskFile implements Stateful{
 
   public boolean isUserCreated() {
     return myUserCreated;
+  }
+
+  public void navigateToFirstTaskWindow(@NotNull final Editor editor) {
+    if (!taskWindows.isEmpty()) {
+      TaskWindow firstTaskWindow = StudyUtils.getFirst(taskWindows);
+      LogicalPosition taskWindowStart = new LogicalPosition(firstTaskWindow.getLine(), firstTaskWindow.getStart());
+      editor.getCaretModel().moveToLogicalPosition(taskWindowStart);
+      int startOffset = firstTaskWindow.getRealStartOffset(editor.getDocument());
+      int endOffset = startOffset + firstTaskWindow.getLength();
+      editor.getSelectionModel().setSelection(startOffset, endOffset);
+    }
   }
 }
