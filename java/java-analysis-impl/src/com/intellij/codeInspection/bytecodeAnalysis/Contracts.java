@@ -48,11 +48,13 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
 
   private final InOutInterpreter interpreter;
   private final Value inValue;
+  private final int generalizeShift;
 
   protected InOutAnalysis(RichControlFlow richControlFlow, Direction direction, boolean[] resultOrigins, boolean stable) {
     super(richControlFlow, direction, stable, ourResults.get());
     interpreter = new InOutInterpreter(direction, richControlFlow.controlFlow.methodNode.instructions, resultOrigins);
     inValue = direction instanceof InOut ? ((InOut)direction).inValue : null;
+    generalizeShift = (methodNode.access & ACC_STATIC) == 0 ? 1 : 0;
   }
 
   @Override
@@ -236,9 +238,9 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
     }
   }
 
-  private static Conf generalize(Conf conf) {
+  private Conf generalize(Conf conf) {
     Frame<BasicValue> frame = new Frame<BasicValue>(conf.frame);
-    for (int i = 0; i < frame.getLocals(); i++) {
+    for (int i = generalizeShift; i < frame.getLocals(); i++) {
       BasicValue value = frame.getLocal(i);
       Class<?> valueClass = value.getClass();
       if (valueClass != BasicValue.class && valueClass != ParamValue.class) {
