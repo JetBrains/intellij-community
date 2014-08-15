@@ -96,7 +96,7 @@ final class GitRepositoryManager extends BaseRepositoryManager {
   }
 
   @Override
-  protected void doAdd(String path) throws Exception {
+  protected void doAdd(@NotNull String path) throws Exception {
     git.add().addFilepattern(path).call();
   }
 

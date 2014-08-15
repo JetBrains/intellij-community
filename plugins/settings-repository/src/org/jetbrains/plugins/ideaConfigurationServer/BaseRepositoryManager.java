@@ -57,9 +57,10 @@ public abstract class BaseRepositoryManager implements RepositoryManager {
 
   @Override
   public void write(@NotNull final String path, @NotNull final byte[] content, final int size, final boolean async) {
+    final File file = new File(dir, path);
     if (!async) {
       try {
-        writeToFile(path, content, size);
+        FileUtil.writeToFile(file, content, 0, size);
       }
       catch (IOException e) {
         LOG.error(e);
@@ -70,21 +71,22 @@ public abstract class BaseRepositoryManager implements RepositoryManager {
       @Override
       public void run() throws Exception {
         if (async) {
-          writeToFile(path, content, size);
+          FileUtil.writeToFile(file, content, 0, size);
         }
-        else if (!new File(path).exists()) {
+        else if (!file.exists()) {
           return;
         }
+
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Add path " + path);
+        }
+
         doAdd(path);
       }
     });
   }
 
-  protected abstract void doAdd(String path) throws Exception;
-
-  private void writeToFile(String path, byte[] content, int size) throws IOException {
-    FileUtil.writeToFile(new File(dir, path), content, 0, size);
-  }
+  protected abstract void doAdd(@NotNull String path) throws Exception;
 
   @NotNull
   @Override
