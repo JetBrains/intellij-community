@@ -36,63 +36,87 @@ import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.*;
 import static org.jetbrains.org.objectweb.asm.Opcodes.*;
 
 class InOutAnalysis extends Analysis<Result<Key, Value>> {
-  private static final ThreadLocal<Result<Key, Value>[]> ourResults = new ThreadLocal<Result<Key, Value>[]>() {
+
+  private static final ThreadLocal<State[]> ourPending = new ThreadLocal<State[]>() {
     @Override
-    protected Result<Key, Value>[] initialValue() {
-      return new Result[Analysis.STEPS_LIMIT];
+    protected State[] initialValue() {
+      return new State[Analysis.STEPS_LIMIT];
     }
   };
 
   static final ResultUtil<Key, Value> resultUtil =
     new ResultUtil<Key, Value>(new ELattice<Value>(Value.Bot, Value.Top));
 
+  final private State[] pending = ourPending.get();
   private final InOutInterpreter interpreter;
   private final Value inValue;
   private final int generalizeShift;
+  private Result<Key, Value> internalResult;
+  private int id = 0;
+  private int pendingTop = 0;
 
   protected InOutAnalysis(RichControlFlow richControlFlow, Direction direction, boolean[] resultOrigins, boolean stable) {
-    super(richControlFlow, direction, stable, ourResults.get());
+    super(richControlFlow, direction, stable);
     interpreter = new InOutInterpreter(direction, richControlFlow.controlFlow.methodNode.instructions, resultOrigins);
     inValue = direction instanceof InOut ? ((InOut)direction).inValue : null;
     generalizeShift = (methodNode.access & ACC_STATIC) == 0 ? 1 : 0;
-    internalResult = identity();
-  }
-
-  @Override
-  Result<Key, Value> identity() {
-    return new Final<Key, Value>(Value.Bot);
-  }
-
-  @Override
-  Result<Key, Value> combineResults(Result<Key, Value> delta, int[] subResults) throws AnalyzerException {
-    Result<Key, Value> result = null;
-    for (int subResult : subResults) {
-      if (result == null) {
-        result = results[subResult];
-      } else {
-        result = resultUtil.join(result, results[subResult]);
-      }
-    }
-    return result;
-  }
-
-  @Override
-  boolean isEarlyResult(Result<Key, Value> res) {
-    if (res instanceof Final) {
-      return ((Final<?, Value>)res).value == Value.Top;
-    }
-    return false;
+    internalResult = new Final<Key, Value>(Value.Bot);
   }
 
   @NotNull
-  @Override
   Equation<Key, Value> mkEquation(Result<Key, Value> res) {
     return new Equation<Key, Value>(aKey, res);
   }
 
-  private int id = 0;
+  @NotNull
+  protected Equation<Key, Value> analyze() throws AnalyzerException {
+    pendingPush(createStartState());
+    int steps = 0;
+    while (pendingTop > 0 && earlyResult == null) {
+      steps ++;
+      if (steps >= STEPS_LIMIT) {
+        throw new AnalyzerException(null, "limit is reached, steps: " + steps + " in method " + method);
+      }
+      State state = pending[--pendingTop];
+      int insnIndex = state.conf.insnIndex;
+      Conf conf = state.conf;
+      List<Conf> history = state.history;
 
-  @Override
+      boolean fold = false;
+      if (dfsTree.loopEnters[insnIndex]) {
+        for (Conf prev : history) {
+          if (AbstractValues.isInstance(conf, prev)) {
+            fold = true;
+            break;
+          }
+        }
+      }
+      if (fold) {
+        addComputed(insnIndex, state);
+      }
+      else {
+        State baseState = null;
+        List<State> thisComputed = computed[insnIndex];
+        if (thisComputed != null) {
+          for (State prevState : thisComputed) {
+            if (stateEquiv(state, prevState)) {
+              baseState = prevState;
+              break;
+            }
+          }
+        }
+        if (baseState == null) {
+          processState(state);
+        }
+      }
+    }
+    if (earlyResult != null) {
+      return mkEquation(earlyResult);
+    } else {
+      return mkEquation(internalResult);
+    }
+  }
+
   void processState(State state) throws AnalyzerException {
     Conf preConf = state.conf;
     int insnIndex = preConf.insnIndex;
@@ -157,62 +181,62 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
     if (opcode == IFNONNULL && popValue(frame) instanceof ParamValue) {
       int nextInsnIndex = inValue == Value.Null ? insnIndex + 1 : methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
       State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false);
-      pendingPush(new ProceedState<Result<Key, Value>>(nextState));
+      pendingPush(nextState);
       return;
     }
 
     if (opcode == IFNULL && popValue(frame) instanceof ParamValue) {
       int nextInsnIndex = inValue == Value.NotNull ? insnIndex + 1 : methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
       State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false);
-      pendingPush(new ProceedState<Result<Key, Value>>(nextState));
+      pendingPush(nextState);
       return;
     }
 
     if (opcode == IFEQ && popValue(frame) == InstanceOfCheckValue && inValue == Value.Null) {
       int nextInsnIndex = methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
       State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false);
-      pendingPush(new ProceedState<Result<Key, Value>>(nextState));
+      pendingPush(nextState);
       return;
     }
 
     if (opcode == IFNE && popValue(frame) == InstanceOfCheckValue && inValue == Value.Null) {
       int nextInsnIndex = insnIndex + 1;
       State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false);
-      pendingPush(new ProceedState<Result<Key, Value>>(nextState));
+      pendingPush(nextState);
       return;
     }
 
     if (opcode == IFEQ && popValue(frame) instanceof ParamValue) {
       int nextInsnIndex = inValue == Value.True ? insnIndex + 1 : methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
       State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false);
-      pendingPush(new ProceedState<Result<Key, Value>>(nextState));
+      pendingPush(nextState);
       return;
     }
 
     if (opcode == IFNE && popValue(frame) instanceof ParamValue) {
       int nextInsnIndex = inValue == Value.False ? insnIndex + 1 : methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
       State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false);
-      pendingPush(new ProceedState<Result<Key, Value>>(nextState));
+      pendingPush(nextState);
       return;
     }
 
     // general case
-    int[] nextInsnIndices = controlFlow.transitions[insnIndex];
-    int[] subIndices = new int[nextInsnIndices.length];
-    for (int i = 0; i < nextInsnIndices.length; i++) {
-      subIndices[i] = ++id;
-    }
-    for (int i = 0; i < nextInsnIndices.length; i++) {
-      int nextInsnIndex = nextInsnIndices[i];
+    for (int nextInsnIndex : controlFlow.transitions[insnIndex]) {
       Frame<BasicValue> nextFrame1 = nextFrame;
       if (controlFlow.errors[nextInsnIndex] && controlFlow.errorTransitions.contains(new Edge(insnIndex, nextInsnIndex))) {
         nextFrame1 = new Frame<BasicValue>(frame);
         nextFrame1.clearStack();
         nextFrame1.push(ASMUtils.THROWABLE_VALUE);
       }
-      pendingPush(new ProceedState<Result<Key, Value>>(
-        new State(subIndices[i], new Conf(nextInsnIndex, nextFrame1), nextHistory, taken, false)));
+      pendingPush(new State(++id, new Conf(nextInsnIndex, nextFrame1), nextHistory, taken, false));
     }
+  }
+
+  private void pendingPush(State st) throws AnalyzerException {
+    if (pendingTop >= STEPS_LIMIT) {
+      throw new AnalyzerException(null, "limit is reached in method " + method);
+    }
+    pending[pendingTop++] = st;
   }
 
   private Frame<BasicValue> execute(Frame<BasicValue> frame, AbstractInsnNode insnNode) throws AnalyzerException {

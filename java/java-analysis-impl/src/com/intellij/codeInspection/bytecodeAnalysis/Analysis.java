@@ -196,71 +196,31 @@ final class State {
   }
 }
 
-interface PendingAction<Res> {}
-class ProceedState<Res> implements PendingAction<Res> {
-  final State state;
-
-  ProceedState(State state) {
-    this.state = state;
-  }
-}
-class MakeResult<Res> implements PendingAction<Res> {
-  final State state;
-  final Res subResult;
-  final int[] indices;
-
-  MakeResult(State state, Res subResult, int[] indices) {
-    this.state = state;
-    this.subResult = subResult;
-    this.indices = indices;
-  }
-}
-
 abstract class Analysis<Res> {
-  private static final ThreadLocal<PendingAction[]> ourPending = new ThreadLocal<PendingAction[]>() {
-    @Override
-    protected PendingAction[] initialValue() {
-      return new PendingAction[Analysis.STEPS_LIMIT];
-    }
-  };
 
   public static final int STEPS_LIMIT = 30000;
   public static final int EQUATION_SIZE_LIMIT = 30;
-  public static final int MERGE_LIMIT = 100000;
   final RichControlFlow richControlFlow;
   final Direction direction;
   final ControlFlowGraph controlFlow;
   final MethodNode methodNode;
   final Method method;
   final DFSTree dfsTree;
-  final Res myIdentity;
 
-  final private PendingAction<Res>[] pending = ourPending.get();
   final protected List<State>[] computed;
-  final protected Res[] results;
   final Key aKey;
 
   Res earlyResult = null;
-  Res internalResult = null;
 
-  abstract Res identity();
-  abstract Res combineResults(Res delta, int[] subResults) throws AnalyzerException;
-  abstract boolean isEarlyResult(Res res);
-  @NotNull
-  abstract Equation<Key, Value> mkEquation(Res result);
-  abstract void processState(State state) throws AnalyzerException;
-
-  protected Analysis(RichControlFlow richControlFlow, Direction direction, boolean stable, Res[] results) {
+  protected Analysis(RichControlFlow richControlFlow, Direction direction, boolean stable) {
     this.richControlFlow = richControlFlow;
     this.direction = direction;
-    this.results = results;
     controlFlow = richControlFlow.controlFlow;
     methodNode = controlFlow.methodNode;
     method = new Method(controlFlow.className, methodNode.name, methodNode.desc);
     dfsTree = richControlFlow.dfsTree;
     aKey = new Key(method, direction, stable);
     computed = (List<State>[]) new List[controlFlow.transitions.length];
-    myIdentity = identity();
   }
 
   final State createStartState() {
@@ -291,76 +251,7 @@ abstract class Analysis<Res> {
   }
 
   @NotNull
-  final Equation<Key, Value> analyze() throws AnalyzerException {
-    pendingPush(new ProceedState<Res>(createStartState()));
-    int steps = 0;
-    while (pendingTop > 0 && earlyResult == null) {
-      steps ++;
-      if (steps >= STEPS_LIMIT) {
-        throw new AnalyzerException(null, "limit is reached, steps: " + steps + " in method " + method);
-      }
-      PendingAction<Res> action = pending[--pendingTop];
-      if (action instanceof MakeResult) {
-        MakeResult<Res> makeResult = (MakeResult<Res>) action;
-        Res result = combineResults(makeResult.subResult, makeResult.indices);
-        if (isEarlyResult(result)) {
-          earlyResult = result;
-        } else {
-          State state = makeResult.state;
-          int insnIndex = state.conf.insnIndex;
-          results[state.index] = result;
-          addComputed(insnIndex, state);
-        }
-      }
-      else if (action instanceof ProceedState) {
-        ProceedState<Res> proceedState = (ProceedState<Res>) action;
-        State state = proceedState.state;
-        int insnIndex = state.conf.insnIndex;
-        Conf conf = state.conf;
-        List<Conf> history = state.history;
-
-        boolean fold = false;
-        if (dfsTree.loopEnters[insnIndex]) {
-          for (Conf prev : history) {
-            if (AbstractValues.isInstance(conf, prev)) {
-              fold = true;
-              break;
-            }
-          }
-        }
-        if (fold) {
-          results[state.index] = myIdentity;
-          addComputed(insnIndex, state);
-        }
-        else {
-          State baseState = null;
-          List<State> thisComputed = computed[insnIndex];
-          if (thisComputed != null) {
-            for (State prevState : thisComputed) {
-              if (stateEquiv(state, prevState)) {
-                baseState = prevState;
-                break;
-              }
-            }
-          }
-          if (baseState != null) {
-            results[state.index] = results[baseState.index];
-          } else {
-            // the main call
-            processState(state);
-          }
-
-        }
-      }
-    }
-    if (earlyResult != null) {
-      return mkEquation(earlyResult);
-    } else if (internalResult != null) {
-      return mkEquation(internalResult);
-    } else {
-      return mkEquation(results[0]);
-    }
-  }
+  protected abstract Equation<Key, Value> analyze() throws AnalyzerException;
 
   final Frame<BasicValue> createStartFrame() {
     Frame<BasicValue> frame = new Frame<BasicValue>(methodNode.maxLocals, methodNode.maxStack);
@@ -393,15 +284,6 @@ abstract class Analysis<Res> {
       frame.setLocal(local++, BasicValue.UNINITIALIZED_VALUE);
     }
     return frame;
-  }
-
-  private int pendingTop = 0;
-
-  protected final void pendingPush(PendingAction<Res> action) throws AnalyzerException {
-    if (pendingTop >= STEPS_LIMIT) {
-        throw new AnalyzerException(null, "limit is reached in method " + method);
-    }
-    pending[pendingTop++] = action;
   }
 
   static BasicValue popValue(Frame<BasicValue> frame) {
