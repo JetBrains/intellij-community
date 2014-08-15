@@ -36,16 +36,24 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation;
 import com.intellij.xdebugger.frame.presentation.XStringValuePresentation;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
+import com.intellij.xdebugger.impl.evaluate.XValueCompactPresentation;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.sun.jdi.ArrayReference;
+import com.sun.jdi.ArrayType;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -157,7 +165,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     });
   }
 
-  private static class JavaValuePresentation extends XValuePresentation {
+  private static class JavaValuePresentation extends XValuePresentation implements XValueCompactPresentation {
     private final String myValue;
     private final String myType;
     private final String myError;
@@ -176,6 +184,12 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
     @Override
     public void renderValue(@NotNull XValueTextRenderer renderer) {
+      renderValue(renderer, null);
+    }
+
+    @Override
+    public void renderValue(@NotNull XValueTextRenderer renderer, @Nullable XValueNodeImpl node) {
+      boolean compact = node != null;
       if (myError != null) {
         if (myValue.endsWith(myError)) {
           renderer.renderValue(myValue.substring(0, myValue.length() - myError.length()));
@@ -183,6 +197,34 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
         renderer.renderError(myError);
       }
       else {
+        if (compact && node.getValueContainer() instanceof JavaValue) {
+          final JavaValue container = (JavaValue)node.getValueContainer();
+
+          if (container.getDescriptor().isArray()) {
+            final ArrayReference value = (ArrayReference)container.getDescriptor().getValue();
+            final ArrayType type = (ArrayType)container.getDescriptor().getType();
+            if (type != null) {
+              final String typeName = type.componentTypeName();
+              if (TypeConversionUtil.isPrimitive(typeName) || CommonClassNames.JAVA_LANG_STRING.equals(typeName)) {
+                int max = CommonClassNames.JAVA_LANG_STRING.equals(typeName) ? 5 : 10;
+                final List<Value> values = value.getValues();
+                int i = 0;
+                final List<String> vals = new ArrayList<String>(max);
+                while (i < values.size() && i <= max) {
+                  vals.add(StringUtil.first(values.get(i).toString(), 15, true));
+                  i++;
+                }
+                String more = "";
+                if (vals.size() < values.size()) {
+                  more = ", + " + (values.size() - vals.size()) + " more";
+                }
+
+                renderer.renderValue("{" + StringUtil.join(vals, ", ") + more + "}");
+                return;
+              }
+            }
+          }
+        }
         renderer.renderValue(myValue);
       }
     }

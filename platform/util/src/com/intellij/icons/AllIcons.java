@@ -76,6 +76,7 @@ public class AllIcons {
     public static final Icon Get = IconLoader.getIcon("/actions/get.png"); // 16x16
     public static final Icon GroupByFile = IconLoader.getIcon("/actions/GroupByFile.png"); // 16x16
     public static final Icon GroupByMethod = IconLoader.getIcon("/actions/groupByMethod.png"); // 16x16
+    public static final Icon GroupByClass = IconLoader.getIcon("/actions/GroupByClass.png"); // 16x16
     public static final Icon GroupByModule = IconLoader.getIcon("/actions/GroupByModule.png"); // 16x16
     public static final Icon GroupByModuleGroup = IconLoader.getIcon("/actions/GroupByModuleGroup.png"); // 16x16
     public static final Icon GroupByPackage = IconLoader.getIcon("/actions/GroupByPackage.png"); // 16x16

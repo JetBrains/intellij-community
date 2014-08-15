@@ -102,13 +102,14 @@ public class GroovyAssignmentCanBeOperatorAssignmentInspection
     return lhs.getText() + ' ' + signText + "= " + rhsRhs.getText();
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ReplaceAssignmentWithOperatorAssignmentVisitor();
   }
 
   @Override
-  public GroovyFix buildFix(PsiElement location) {
+  public GroovyFix buildFix(@NotNull PsiElement location) {
     return new ReplaceAssignmentWithOperatorAssignmentFix(
         (GrAssignmentExpression) location);
   }

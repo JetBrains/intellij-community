@@ -51,7 +51,7 @@ public class GroovyIfStatementWithIdenticalBranchesInspection extends BaseInspec
   }
 
   @Override
-  public GroovyFix buildFix(PsiElement location) {
+  public GroovyFix buildFix(@NotNull PsiElement location) {
     return new CollapseIfFix();
   }
 
@@ -73,6 +73,7 @@ public class GroovyIfStatementWithIdenticalBranchesInspection extends BaseInspec
     }
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new IfStatementWithIdenticalBranchesVisitor();

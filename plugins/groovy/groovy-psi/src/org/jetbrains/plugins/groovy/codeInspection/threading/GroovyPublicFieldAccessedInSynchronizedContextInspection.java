@@ -47,6 +47,7 @@ public class GroovyPublicFieldAccessedInSynchronizedContextInspection
     return "Non-private field <code>#ref</code> accessed in synchronized context  #loc";
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new PublicFieldAccessedInSynchronizedContextVisitor();

@@ -71,6 +71,7 @@ public class GroovyDoubleCheckedLockingInspection extends BaseInspection {
     );
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new DoubleCheckedLockingVisitor();

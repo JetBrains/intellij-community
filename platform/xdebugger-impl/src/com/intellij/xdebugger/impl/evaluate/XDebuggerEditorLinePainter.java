@@ -21,7 +21,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredText;
+import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.frame.XVariablesView;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueTextRendererImpl;
@@ -50,8 +52,14 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
         for (XValueNodeImpl value : values) {
           SimpleColoredText text = new SimpleColoredText();
           XValueTextRendererImpl renderer = new XValueTextRendererImpl(text);
-          value.getValuePresentation().renderValue(renderer);
-          final Color color = new Color(61, 128, 101);
+          final XValuePresentation presentation = value.getValuePresentation();
+          if (presentation == null) continue;
+          if (presentation instanceof XValueCompactPresentation) {
+            ((XValueCompactPresentation)presentation).renderValue(renderer, value);
+          } else {
+            presentation.renderValue(renderer);
+          }
+          final Color color = new JBColor(new Color(61, 128, 101), new Color(61, 128, 101));
           result.add(new LineExtensionInfo("  " + value.getName() + ": ", color, null, null, Font.PLAIN));
           for (String s : text.getTexts()) {
             result.add(new LineExtensionInfo(s, color, null, null, Font.PLAIN));

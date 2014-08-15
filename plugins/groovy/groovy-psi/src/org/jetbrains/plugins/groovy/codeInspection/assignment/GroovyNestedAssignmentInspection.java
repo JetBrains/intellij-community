@@ -45,6 +45,7 @@ public class GroovyNestedAssignmentInspection extends BaseInspection {
     return "Nested assignment expression #loc";
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();

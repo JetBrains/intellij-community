@@ -48,6 +48,7 @@ public class GroovyOverlyNestedMethodInspectionBase extends GroovyMethodMetricIn
     return "Method '#ref' is overly nested ( nesting depth =" + args[0] + '>' + args[1] + ')';
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();

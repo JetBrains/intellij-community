@@ -15,8 +15,11 @@
  */
 package com.intellij.xdebugger.impl.frame;
 
+import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.util.SingleAlarm;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
@@ -64,6 +67,15 @@ public abstract class XDebugView implements Disposable {
 
   @Nullable
   public static XDebugSession getSession(@NotNull Component component) {
-    return XDebugSessionTab.SESSION_KEY.getData(DataManager.getInstance().getDataContext(component));
+    DataContext dataContext = DataManager.getInstance().getDataContext(component);
+    ViewContext viewContext = ViewContext.CONTEXT_KEY.getData(dataContext);
+    ContentManager contentManager = viewContext == null ? null : viewContext.getContentManager();
+    if (contentManager != null) {
+      XDebugSession session = XDebugSessionTab.SESSION_KEY.getData(DataManager.getInstance().getDataContext(contentManager.getComponent()));
+      if (session != null) {
+        return session;
+      }
+    }
+    return XDebugSessionTab.SESSION_KEY.getData(dataContext);
   }
 }

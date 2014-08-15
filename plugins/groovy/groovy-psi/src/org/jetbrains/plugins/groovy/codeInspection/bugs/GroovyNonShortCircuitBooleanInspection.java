@@ -60,7 +60,7 @@ public class GroovyNonShortCircuitBooleanInspection extends BaseInspection {
   }
 
   @Override
-  public GroovyFix buildFix(PsiElement location) {
+  public GroovyFix buildFix(@NotNull PsiElement location) {
     return new NonShortCircuitBooleanFix();
   }
 
@@ -96,6 +96,7 @@ public class GroovyNonShortCircuitBooleanInspection extends BaseInspection {
     }
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();

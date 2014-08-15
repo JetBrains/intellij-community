@@ -32,6 +32,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Computable;
@@ -255,9 +256,10 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     if (virtualFile != null &&
         virtualFile.isValid() &&
         project.isInitialized() &&
-        myProjectFileIndex.isInContent(virtualFile) &&
-        (virtualFile.isDirectory() || virtualFile.getFileType() == StdFileTypes.JAVA || virtualFile.getFileType() == StdFileTypes.XML)) {
-      return true;
+        myProjectFileIndex.isInContent(virtualFile)) {
+      if (virtualFile.isDirectory()) return true;
+      if (virtualFile.getFileType() == StdFileTypes.JAVA) return true;
+      if (virtualFile.getFileType() == StdFileTypes.XML && !ProjectCoreUtil.isProjectOrWorkspaceFile(virtualFile)) return true;
     }
 
     // else mark it as resolved so we will not have to check it again

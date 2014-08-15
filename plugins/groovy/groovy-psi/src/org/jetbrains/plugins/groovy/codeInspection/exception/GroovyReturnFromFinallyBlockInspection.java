@@ -46,6 +46,7 @@ public class GroovyReturnFromFinallyBlockInspection extends BaseInspection {
 
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();

@@ -51,6 +51,7 @@ public class GroovyTrivialIfInspection extends BaseInspection {
     return CONTROL_FLOW;
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new TrivialIfVisitor();
@@ -67,7 +68,7 @@ public class GroovyTrivialIfInspection extends BaseInspection {
   }
 
   @Override
-  public GroovyFix buildFix(PsiElement location) {
+  public GroovyFix buildFix(@NotNull PsiElement location) {
     return new TrivialIfFix();
   }
 

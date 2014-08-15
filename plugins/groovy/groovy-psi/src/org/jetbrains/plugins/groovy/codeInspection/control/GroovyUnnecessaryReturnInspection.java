@@ -59,6 +59,7 @@ public class GroovyUnnecessaryReturnInspection extends BaseInspection {
     return true;
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
@@ -66,7 +67,7 @@ public class GroovyUnnecessaryReturnInspection extends BaseInspection {
 
   @Override
   @Nullable
-  protected GroovyFix buildFix(PsiElement location) {
+  protected GroovyFix buildFix(@NotNull PsiElement location) {
     return new UnnecessaryReturnFix();
 
   }

@@ -23,12 +23,14 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
 public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
+  @Override
   protected String getActionName(final VcsContext dataContext) {
     final String checkinActionName = getCheckinActionName(dataContext);
     return modifyCheckinActionName(dataContext, checkinActionName);
@@ -125,14 +127,16 @@ public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
     return false;
   }
 
-  protected boolean isApplicableRoot(VirtualFile file, FileStatus status, VcsContext dataContext) {
+  protected boolean isApplicableRoot(@NotNull VirtualFile file, @NotNull FileStatus status, @NotNull VcsContext dataContext) {
     return status != FileStatus.UNKNOWN && status != FileStatus.IGNORED;
   }
 
+  @Override
   protected FilePath[] getRoots(final VcsContext context) {
     return context.getSelectedFilePaths();
   }
 
+  @Override
   protected boolean filterRootsBeforeAction() {
     return true;
   }

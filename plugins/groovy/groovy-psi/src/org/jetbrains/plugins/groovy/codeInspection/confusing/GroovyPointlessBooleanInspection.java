@@ -59,6 +59,7 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
     return true;
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new PointlessBooleanExpressionVisitor();
@@ -162,7 +163,7 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
   }
 
   @Override
-  public GroovyFix buildFix(PsiElement location) {
+  public GroovyFix buildFix(@NotNull PsiElement location) {
     return new BooleanLiteralComparisonFix();
   }
 

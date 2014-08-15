@@ -50,6 +50,7 @@ public class GroovyNestedSynchronizedStatementInspection extends BaseInspection 
 
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();

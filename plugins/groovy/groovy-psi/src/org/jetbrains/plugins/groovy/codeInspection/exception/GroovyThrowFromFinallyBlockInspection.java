@@ -45,6 +45,7 @@ public class GroovyThrowFromFinallyBlockInspection extends BaseInspection {
     return "'#ref' inside 'finally' block #loc";
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();

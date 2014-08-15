@@ -24,18 +24,19 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
 
 final class HistoryEntry{
-  static final String TAG = "entry";
+  @NonNls static final String TAG = "entry";
   private static final String FILE_ATTR = "file";
-  private static final String PROVIDER_ELEMENT = "provider";
-  private static final String EDITOR_TYPE_ID_ATTR = "editor-type-id";
-  private static final String SELECTED_ATTR_VALUE = "selected";
-  private static final String STATE_ELEMENT = "state";
+  @NonNls private static final String PROVIDER_ELEMENT = "provider";
+  @NonNls private static final String EDITOR_TYPE_ID_ATTR = "editor-type-id";
+  @NonNls private static final String SELECTED_ATTR_VALUE = "selected";
+  @NonNls private static final String STATE_ELEMENT = "state";
 
   public final VirtualFile myFile;
   /**
@@ -53,7 +54,7 @@ final class HistoryEntry{
     }
   }
 
-  public HistoryEntry(Project project, Element e) throws InvalidDataException {
+  public HistoryEntry(@NotNull Project project, @NotNull Element e) throws InvalidDataException {
     myFile = getVirtualFile(e);
     myProvider2State = new HashMap<FileEditorProvider, FileEditorState>();
 

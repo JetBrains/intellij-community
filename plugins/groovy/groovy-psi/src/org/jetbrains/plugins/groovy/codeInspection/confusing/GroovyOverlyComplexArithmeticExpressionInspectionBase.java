@@ -60,6 +60,7 @@ public class GroovyOverlyComplexArithmeticExpressionInspectionBase extends BaseI
     return "Overly complex arithmetic expression #loc";
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();

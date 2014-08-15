@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,6 +69,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
   private final String mySuperClassName;
   private final List<UsageInfo> myVariablesUsages = new ArrayList<UsageInfo>();
 
+  @Override
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usages = refUsages.get();
     List<UsageInfo> filtered = new ArrayList<UsageInfo>();
@@ -93,8 +94,14 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
       }
 
       Runnable runnable = new Runnable() {
+        @Override
         public void run() {
-          myVariableRenamer.findUsages(myVariablesUsages, false, false);
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            @Override
+            public void run() {
+              myVariableRenamer.findUsages(myVariablesUsages, false, false);
+            }
+          });
         }
       };
 
@@ -338,6 +345,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
       if (substitutor == null) return;
       final LocalSearchScope baseScope = new LocalSearchScope(ownerClass);
       ReferencesSearch.search(typeParameter, baseScope).forEach(new Processor<PsiReference>() {
+        @Override
         public boolean process(final PsiReference ref) {
           final PsiElement element = ref.getElement();
           final PsiElement parent = element.getParent();
@@ -708,6 +716,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
   }
 
   class Colorer implements OneEndFunctor {
+    @Override
     public Mark compute(Mark from, Mark edge, Mark to) {
       VisitMark mark = new VisitMark((VisitMark)to);
 
@@ -737,6 +746,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
     private boolean myVisited;
     private final PsiElement myElement;
 
+    @Override
     public boolean coincidesWith(Mark x) {
       return ((VisitMark)x).myVisited == myVisited;
     }
@@ -773,10 +783,12 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
       myMark = new VisitMark(x);
     }
 
+    @Override
     public Mark getMark() {
       return myMark;
     }
 
+    @Override
     public void setMark(Mark x) {
       myMark = (VisitMark)x;
     }

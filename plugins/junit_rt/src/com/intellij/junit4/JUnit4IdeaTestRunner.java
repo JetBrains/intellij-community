@@ -92,7 +92,13 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
   }
 
   private static Description getFilteredDescription(Request request, Description description) throws NoSuchFieldException, IllegalAccessException {
-    final Field field = FilterRequest.class.getDeclaredField("fFilter");
+    Field field;
+    try {
+      field = FilterRequest.class.getDeclaredField("fFilter");
+    }
+    catch (NoSuchFieldException e) {
+      field = FilterRequest.class.getDeclaredField("filter");
+    }
     field.setAccessible(true);
     final Filter filter = (Filter)field.get(request);
     final String filterDescription = filter.describe();
@@ -125,7 +131,13 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
   }
 
   private static Description getSuiteMethodDescription(Request request, Description description) throws NoSuchFieldException, IllegalAccessException {
-    final Field field = ClassRequest.class.getDeclaredField("fTestClass");
+    Field field;
+    try {
+      field = ClassRequest.class.getDeclaredField("fTestClass");
+    }
+    catch (NoSuchFieldException e) {
+      field = ClassRequest.class.getDeclaredField("testClass");
+    }
     field.setAccessible(true);
     final Description methodDescription = Description.createSuiteDescription((Class)field.get(request));
     for (Iterator iterator = description.getChildren().iterator(); iterator.hasNext();) {
