@@ -394,7 +394,10 @@ abstract class Analysis<Res> {
 
   private int pendingTop = 0;
 
-  protected final void pendingPush(PendingAction<Res> action) {
+  protected final void pendingPush(PendingAction<Res> action) throws AnalyzerException {
+    if (pendingTop >= STEPS_LIMIT) {
+        throw new AnalyzerException(null, "limit is reached in method " + method);
+    }
     pending[pendingTop++] = action;
   }
 
