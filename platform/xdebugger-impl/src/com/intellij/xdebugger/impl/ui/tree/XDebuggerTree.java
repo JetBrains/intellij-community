@@ -28,7 +28,7 @@ import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.util.Alarm;
+import com.intellij.util.SingleAlarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.TransferToEDTQueue;
@@ -63,7 +63,17 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   private final TransferToEDTQueue<Runnable> myLaterInvocator = TransferToEDTQueue.createRunnableMerger("XDebuggerTree later invocator", 100);
 
   private static final DataKey<XDebuggerTree> XDEBUGGER_TREE_KEY = DataKey.create("xdebugger.tree");
-  private final Alarm myAlarm = new Alarm(this);
+  private final SingleAlarm myAlarm = new SingleAlarm(new Runnable() {
+    @Override
+    public void run() {
+      final Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
+      if (editor != null) {
+        editor.getComponent().revalidate();
+        editor.getComponent().repaint();
+      }
+    }
+  }, 100, this);
+
   private static final Convertor<TreePath, String> SPEED_SEARCH_CONVERTER = new Convertor<TreePath, String>() {
     @Override
     public String convert(TreePath o) {
@@ -213,17 +223,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   }
 
   private void updateEditor() {
-    myAlarm.cancelAllRequests();
-    myAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        final Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
-        if (editor != null) {
-          editor.getComponent().revalidate();
-          editor.getComponent().repaint();
-        }
-      }
-    }, 100);
+    myAlarm.cancelAndRequest();
   }
 
   private boolean expandIfEllipsis() {
