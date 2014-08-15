@@ -30,13 +30,15 @@ import org.jetbrains.annotations.NotNull;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * @author lambdamix
  */
-public class BytecodeAnalysisIndex extends FileBasedIndexExtension<HKey, HResult> {
-  public static final ID<HKey, HResult> NAME = ID.create("bytecodeAnalysis");
-  private final HEquationExternalizer myExternalizer = new HEquationExternalizer();
+public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Bytes, HEquations> {
+  public static final ID<Bytes, HEquations> NAME = ID.create("bytecodeAnalysis");
+  private final HEquationsExternalizer myExternalizer = new HEquationsExternalizer();
   private static final ClassDataIndexer INDEXER = new ClassDataIndexer();
   private static final HKeyDescriptor KEY_DESCRIPTOR = new HKeyDescriptor();
 
@@ -50,25 +52,25 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<HKey, HResult
 
   @NotNull
   @Override
-  public ID<HKey, HResult> getName() {
+  public ID<Bytes, HEquations> getName() {
     return NAME;
   }
 
   @NotNull
   @Override
-  public DataIndexer<HKey, HResult, FileContent> getIndexer() {
+  public DataIndexer<Bytes, HEquations, FileContent> getIndexer() {
     return INDEXER;
   }
 
   @NotNull
   @Override
-  public KeyDescriptor<HKey> getKeyDescriptor() {
+  public KeyDescriptor<Bytes> getKeyDescriptor() {
     return KEY_DESCRIPTOR;
   }
 
   @NotNull
   @Override
-  public DataExternalizer<HResult> getValueExternalizer() {
+  public DataExternalizer<HEquations> getValueExternalizer() {
     return myExternalizer;
   }
 
@@ -93,82 +95,100 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<HKey, HResult
     return ourInternalVersion + (ourEnabled ? 0xFF : 0);
   }
 
-  private static class HKeyDescriptor implements KeyDescriptor<HKey>, DifferentSerializableBytesImplyNonEqualityPolicy {
+  private static class HKeyDescriptor implements KeyDescriptor<Bytes>, DifferentSerializableBytesImplyNonEqualityPolicy {
 
     @Override
-    public void save(@NotNull DataOutput out, HKey value) throws IOException {
-      out.write(value.key);
-      DataInputOutputUtil.writeINT(out, value.dirKey);
-      out.writeBoolean(value.stable);
+    public void save(@NotNull DataOutput out, Bytes value) throws IOException {
+      out.write(value.bytes);
     }
 
     @Override
-    public HKey read(@NotNull DataInput in) throws IOException {
+    public Bytes read(@NotNull DataInput in) throws IOException {
       byte[] bytes = new byte[BytecodeAnalysisConverter.HASH_SIZE];
       for (int i = 0; i < bytes.length; i++) {
         bytes[i] = in.readByte();
       }
-      return new HKey(bytes, DataInputOutputUtil.readINT(in), in.readBoolean());
+      return new Bytes(bytes);
     }
 
     @Override
-    public int getHashCode(HKey value) {
-      return value.hashCode();
+    public int getHashCode(Bytes value) {
+      return Arrays.hashCode(value.bytes);
     }
 
     @Override
-    public boolean isEqual(HKey val1, HKey val2) {
-      return val1.equals(val2);
+    public boolean isEqual(Bytes val1, Bytes val2) {
+      return Arrays.equals(val1.bytes, val2.bytes);
     }
   }
 
-  public static class HEquationExternalizer implements DataExternalizer<HResult>, DifferentSerializableBytesImplyNonEqualityPolicy {
+  public static class HEquationsExternalizer implements DataExternalizer<HEquations>, DifferentSerializableBytesImplyNonEqualityPolicy {
     @Override
-    public void save(@NotNull DataOutput out, HResult rhs) throws IOException {
-      if (rhs instanceof HFinal) {
-        HFinal finalResult = (HFinal)rhs;
-        out.writeBoolean(true); // final flag
-        DataInputOutputUtil.writeINT(out, finalResult.value.ordinal());
-      } else {
-        HPending pendResult = (HPending)rhs;
-        out.writeBoolean(false); // pending flag
-        DataInputOutputUtil.writeINT(out, pendResult.delta.length);
+    public void save(@NotNull DataOutput out, HEquations eqs) throws IOException {
+      out.writeBoolean(eqs.stable);
+      DataInputOutputUtil.writeINT(out, eqs.results.size());
+      for (DirectionResultPair pair : eqs.results) {
+        DataInputOutputUtil.writeINT(out, pair.directionKey);
+        HResult rhs = pair.hResult;
+        if (rhs instanceof HFinal) {
+          HFinal finalResult = (HFinal)rhs;
+          out.writeBoolean(true); // final flag
+          DataInputOutputUtil.writeINT(out, finalResult.value.ordinal());
+        }
+        else {
+          HPending pendResult = (HPending)rhs;
+          out.writeBoolean(false); // pending flag
+          DataInputOutputUtil.writeINT(out, pendResult.delta.length);
 
-        for (HComponent component : pendResult.delta) {
-          DataInputOutputUtil.writeINT(out, component.value.ordinal());
-          HKey[] ids = component.ids;
-          DataInputOutputUtil.writeINT(out, ids.length);
-          for (HKey id1 : ids) {
-            KEY_DESCRIPTOR.save(out, id1);
+          for (HComponent component : pendResult.delta) {
+            DataInputOutputUtil.writeINT(out, component.value.ordinal());
+            HKey[] ids = component.ids;
+            DataInputOutputUtil.writeINT(out, ids.length);
+            for (HKey hKey : ids) {
+              out.write(hKey.key);
+              DataInputOutputUtil.writeINT(out, hKey.dirKey);
+              out.writeBoolean(hKey.stable);
+            }
           }
         }
       }
     }
 
     @Override
-    public HResult read(@NotNull DataInput in) throws IOException {
-      boolean isFinal = in.readBoolean(); // flag
-      if (isFinal) {
-        int ordinal = DataInputOutputUtil.readINT(in);
-        Value value = Value.values()[ordinal];
-        return new HFinal(value);
-      } else {
-
-        int sumLength = DataInputOutputUtil.readINT(in);
-        HComponent[] components = new HComponent[sumLength];
-
-        for (int i = 0; i < sumLength; i++) {
+    public HEquations read(@NotNull DataInput in) throws IOException {
+      boolean stable = in.readBoolean();
+      int size = DataInputOutputUtil.readINT(in);
+      ArrayList<DirectionResultPair> results = new ArrayList<DirectionResultPair>(size);
+      for (int k = 0; k < size; k++) {
+        int directionKey = DataInputOutputUtil.readINT(in);
+        boolean isFinal = in.readBoolean(); // flag
+        if (isFinal) {
           int ordinal = DataInputOutputUtil.readINT(in);
           Value value = Value.values()[ordinal];
-          int componentSize = DataInputOutputUtil.readINT(in);
-          HKey[] ids = new HKey[componentSize];
-          for (int j = 0; j < componentSize; j++) {
-            ids[j] = KEY_DESCRIPTOR.read(in);
-          }
-          components[i] = new HComponent(value, ids);
+          results.add(new DirectionResultPair(directionKey, new HFinal(value)));
         }
-        return new HPending(components);
+        else {
+          int sumLength = DataInputOutputUtil.readINT(in);
+          HComponent[] components = new HComponent[sumLength];
+
+          for (int i = 0; i < sumLength; i++) {
+            int ordinal = DataInputOutputUtil.readINT(in);
+            Value value = Value.values()[ordinal];
+            int componentSize = DataInputOutputUtil.readINT(in);
+            HKey[] ids = new HKey[componentSize];
+            for (int j = 0; j < componentSize; j++) {
+              byte[] bytes = new byte[BytecodeAnalysisConverter.HASH_SIZE];
+              for (int bi = 0; bi < bytes.length; bi++) {
+                bytes[bi] = in.readByte();
+              }
+              ids[j] = new HKey(bytes, DataInputOutputUtil.readINT(in), in.readBoolean());
+            }
+            components[i] = new HComponent(value, ids);
+          }
+          results.add(new DirectionResultPair(directionKey, new HPending(components)));
+        }
       }
+      return new HEquations(results, stable);
     }
   }
 }

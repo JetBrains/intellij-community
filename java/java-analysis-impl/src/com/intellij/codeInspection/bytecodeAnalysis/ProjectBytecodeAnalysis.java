@@ -19,19 +19,14 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.Stack;
-import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +35,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 
 /**
  * @author lambdamix
@@ -199,6 +193,7 @@ public class ProjectBytecodeAnalysis {
   }
 
   private void collectEquations(ArrayList<HKey> keys, Solver solver) throws EquationsLimitException {
+    /*
     GlobalSearchScope librariesScope = ProjectScope.getLibrariesScope(myProject);
     HashSet<HKey> queued = new HashSet<HKey>();
     Stack<HKey> queue = new Stack<HKey>();
@@ -241,6 +236,7 @@ public class ProjectBytecodeAnalysis {
         }
       }
     }
+    */
   }
 
   @NotNull

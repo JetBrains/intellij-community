@@ -26,7 +26,8 @@ import com.intellij.util.indexing.FileContent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.tree.MethodNode;
-import org.jetbrains.org.objectweb.asm.tree.analysis.*;
+import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
+import org.jetbrains.org.objectweb.asm.tree.analysis.Frame;
 
 import java.security.MessageDigest;
 import java.util.*;
@@ -36,30 +37,31 @@ import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalys
 /**
  * @author lambdamix
  */
-public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent> {
+public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileContent> {
 
   private static final int STABLE_FLAGS = Opcodes.ACC_FINAL | Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC;
   public static final Final<Key, Value> FINAL_TOP = new Final<Key, Value>(Value.Top);
   public static final Final<Key, Value> FINAL_BOT = new Final<Key, Value>(Value.Bot);
   public static final Final<Key, Value> FINAL_NOT_NULL = new Final<Key, Value>(Value.NotNull);
+  private static final List<Equation<Key, Value>> EMPTY_EQUATIONS = Collections.EMPTY_LIST;
 
   @NotNull
   @Override
-  public Map<HKey, HResult> map(@NotNull FileContent inputData) {
-    HashMap<HKey, HResult> map = new HashMap<HKey, HResult>();
+  public Map<Bytes, HEquations> map(@NotNull FileContent inputData) {
+    HashMap<Bytes, HEquations> map = new HashMap<Bytes, HEquations>();
     try {
       MessageDigest md = BytecodeAnalysisConverter.getMessageDigest();
-      ClassEquations rawEquations = processClass(new ClassReader(inputData.getContent()), inputData.getFile().getPresentableUrl());
-      List<Equation<Key, Value>> rawParameterEquations = rawEquations.parameterEquations;
-      List<Equation<Key, Value>> rawContractEquations = rawEquations.contractEquations;
+      Map<Key, List<Equation<Key, Value>>> rawEquations = processClass(new ClassReader(inputData.getContent()), inputData.getFile().getPresentableUrl());
+      for (Map.Entry<Key, List<Equation<Key, Value>>> entry: rawEquations.entrySet()) {
+        Key primaryKey = entry.getKey();
+        Key serKey = new Key(primaryKey.method, primaryKey.direction, true);
 
-      for (Equation<Key, Value> rawParameterEquation: rawParameterEquations) {
-        HEquation equation = BytecodeAnalysisConverter.convert(rawParameterEquation, md);
-        map.put(equation.key, equation.result);
-      }
-      for (Equation<Key, Value> rawContractEquation: rawContractEquations) {
-        HEquation equation = BytecodeAnalysisConverter.convert(rawContractEquation, md);
-        map.put(equation.key, equation.result);
+        List<Equation<Key, Value>> equations = entry.getValue();
+        List<DirectionResultPair> result = new ArrayList<DirectionResultPair>(equations.size());
+        for (Equation<Key, Value> equation : equations) {
+          result.add(BytecodeAnalysisConverter.convert(equation, md));
+        }
+        map.put(new Bytes(BytecodeAnalysisConverter.asmKey(serKey, md).key), new HEquations(result, primaryKey.stable));
       }
     }
     catch (ProcessCanceledException e) {
@@ -70,23 +72,13 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
       // so here we suppose that exception is due to incorrect bytecode
       LOG.debug("Unexpected Error during indexing of bytecode", e);
     }
+    //return map;
     return map;
   }
 
-  private static class ClassEquations {
-    final List<Equation<Key, Value>> parameterEquations;
-    final List<Equation<Key, Value>> contractEquations;
+  public static Map<Key, List<Equation<Key, Value>>> processClass(final ClassReader classReader, final String presentableUrl) {
 
-    private ClassEquations(List<Equation<Key, Value>> parameterEquations, List<Equation<Key, Value>> contractEquations) {
-      this.parameterEquations = parameterEquations;
-      this.contractEquations = contractEquations;
-    }
-  }
-
-  public static ClassEquations processClass(final ClassReader classReader, final String presentableUrl) {
-
-    final List<Equation<Key, Value>> parameterEqs = new ArrayList<Equation<Key, Value>>();
-    final List<Equation<Key, Value>> contractEqs = new ArrayList<Equation<Key, Value>>();
+    final Map<Key, List<Equation<Key, Value>>> equations = new HashMap<Key, List<Equation<Key, Value>>>();
 
     classReader.accept(new ClassVisitor(Opcodes.ASM5) {
       private String className;
@@ -116,12 +108,13 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
           @Override
           public void visitEnd() {
             super.visitEnd();
-            processMethod(node, jsr);
+            Pair<Key, List<Equation<Key, Value>>> methodEquations = processMethod(node, jsr);
+            equations.put(methodEquations.first, methodEquations.second);
           }
         };
       }
 
-      private void processMethod(final MethodNode methodNode, boolean jsr) {
+      private Pair<Key, List<Equation<Key, Value>>> processMethod(final MethodNode methodNode, boolean jsr) {
         ProgressManager.checkCanceled();
         final Type[] argumentTypes = Type.getArgumentTypes(methodNode.desc);
         final Type resultType = Type.getReturnType(methodNode.desc);
@@ -129,12 +122,14 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
         final boolean isBooleanResult = ASMUtils.isBooleanType(resultType);
         final boolean isInterestingResult = isReferenceResult || isBooleanResult;
 
-        if (argumentTypes.length == 0 && !isInterestingResult) {
-          return;
-        }
-
         final Method method = new Method(className, methodNode.name, methodNode.desc);
         final boolean stable = stableClass || (methodNode.access & STABLE_FLAGS) != 0 || "<init>".equals(methodNode.name);
+
+        Key primaryKey = new Key(method, new Out(), stable);
+        if (argumentTypes.length == 0 && !isInterestingResult) {
+          return Pair.create(primaryKey, EMPTY_EQUATIONS);
+        }
+
 
         try {
           final ControlFlowGraph graph = ControlFlowGraph.build(className, methodNode, jsr);
@@ -153,18 +148,18 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
             if (complex) {
               RichControlFlow richControlFlow = new RichControlFlow(graph, dfs);
               if (richControlFlow.reducible()) {
-                processBranchingMethod(method, methodNode, richControlFlow, argumentTypes, isReferenceResult, isInterestingResult, stable, jsr);
-                return;
+                return Pair.create(primaryKey,
+                                   processBranchingMethod(method, methodNode, richControlFlow, argumentTypes, isReferenceResult, isInterestingResult, stable, jsr));
               }
               LOG.debug(method + ": CFG is not reducible");
             }
             // simple
             else {
-              processNonBranchingMethod(method, argumentTypes, graph, isReferenceResult, isBooleanResult, stable);
-              return;
+              return Pair.create(primaryKey,
+                                 processNonBranchingMethod(method, argumentTypes, graph, isReferenceResult, isBooleanResult, stable));
             }
           }
-          topEquations(method, argumentTypes, isReferenceResult, isInterestingResult, stable);
+          return Pair.create(primaryKey, topEquations(method, argumentTypes, isReferenceResult, isInterestingResult, stable));
         }
         catch (ProcessCanceledException e) {
           throw e;
@@ -173,10 +168,11 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
           // incorrect bytecode may result in Runtime exceptions during analysis
           // so here we suppose that exception is due to incorrect bytecode
           LOG.debug("Unexpected Error during processing of " + method + " in " + presentableUrl, e);
+          return Pair.create(primaryKey, topEquations(method, argumentTypes, isReferenceResult, isInterestingResult, stable));
         }
       }
 
-      private void processBranchingMethod(final Method method,
+      private List<Equation<Key, Value>> processBranchingMethod(final Method method,
                                           final MethodNode methodNode,
                                           final RichControlFlow richControlFlow,
                                           Type[] argumentTypes,
@@ -185,6 +181,7 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
                                           final boolean stable,
                                           boolean jsr) throws AnalyzerException {
 
+        List<Equation<Key, Value>> result = new ArrayList<Equation<Key, Value>>(argumentTypes.length * 3 + 1);
         boolean maybeLeakingParameter = isInterestingResult;
         for (Type argType : argumentTypes) {
           if (ASMUtils.isReferenceType(argType) || (isReferenceResult && ASMUtils.isBooleanType(argType))) {
@@ -227,7 +224,7 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
         };
 
         if (isReferenceResult) {
-          contractEqs.add(outEquation.getValue());
+          result.add(outEquation.getValue());
         }
 
         for (int i = 0; i < argumentTypes.length; i++) {
@@ -238,11 +235,11 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
             if (leakingParameters[i]) {
               Equation<Key, Value> notNullParamEquation = new NonNullInAnalysis(richControlFlow, new In(i), stable).analyze();
               notNullParam = notNullParamEquation.rhs.equals(FINAL_NOT_NULL);
-              parameterEqs.add(notNullParamEquation);
+              result.add(notNullParamEquation);
             }
             else {
               // parameter is not leaking, so it is definitely NOT @NotNull
-              parameterEqs.add(new Equation<Key, Value>(new Key(method, new In(i), stable), FINAL_TOP));
+              result.add(new Equation<Key, Value>(new Key(method, new In(i), stable), FINAL_TOP));
             }
           }
           if (isReferenceArg && isInterestingResult) {
@@ -251,83 +248,87 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
                 // result origins analysis was ok
                 if (!notNullParam) {
                   // may be null on some branch, running "null->..." analysis
-                  contractEqs.add(new InOutAnalysis(richControlFlow, new InOut(i, Value.Null), origins.getValue(), stable).analyze());
+                  result.add(new InOutAnalysis(richControlFlow, new InOut(i, Value.Null), origins.getValue(), stable).analyze());
                 }
                 else {
                   // @NotNull, so "null->fail"
-                  contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), FINAL_BOT));
+                  result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), FINAL_BOT));
                 }
-                contractEqs.add(new InOutAnalysis(richControlFlow, new InOut(i, Value.NotNull), origins.getValue(), stable).analyze());
+                result.add(new InOutAnalysis(richControlFlow, new InOut(i, Value.NotNull), origins.getValue(), stable).analyze());
               }
               else {
                 // result origins  analysis failed, approximating to Top
-                contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), FINAL_TOP));
-                contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull), stable), FINAL_TOP));
+                result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), FINAL_TOP));
+                result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull), stable), FINAL_TOP));
               }
             }
             else {
               // parameter is not leaking, so a contract is the same as for the whole method
-              contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), outEquation.getValue().rhs));
-              contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull), stable), outEquation.getValue().rhs));
+              result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), outEquation.getValue().rhs));
+              result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull), stable), outEquation.getValue().rhs));
             }
           }
           if (ASMUtils.isBooleanType(argumentTypes[i]) && isInterestingResult) {
             if (leakingParameters[i]) {
               if (origins.getValue() != null) {
                 // result origins analysis was ok
-                contractEqs.add(new InOutAnalysis(richControlFlow, new InOut(i, Value.False), origins.getValue(), stable).analyze());
-                contractEqs.add(new InOutAnalysis(richControlFlow, new InOut(i, Value.True), origins.getValue(), stable).analyze());
+                result.add(new InOutAnalysis(richControlFlow, new InOut(i, Value.False), origins.getValue(), stable).analyze());
+                result.add(new InOutAnalysis(richControlFlow, new InOut(i, Value.True), origins.getValue(), stable).analyze());
               }
               else {
                 // result origins  analysis failed, approximating to Top
-                contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.False), stable), FINAL_TOP));
-                contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.True), stable), FINAL_TOP));
+                result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.False), stable), FINAL_TOP));
+                result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.True), stable), FINAL_TOP));
               }
             }
             else {
               // parameter is not leaking, so a contract is the same as for the whole method
-              contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.False), stable), outEquation.getValue().rhs));
-              contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.True), stable), outEquation.getValue().rhs));
+              result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.False), stable), outEquation.getValue().rhs));
+              result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.True), stable), outEquation.getValue().rhs));
             }
           }
         }
+        return result;
       }
 
-      private void processNonBranchingMethod(Method method,
+      private List<Equation<Key, Value>> processNonBranchingMethod(Method method,
                                              Type[] argumentTypes,
                                              ControlFlowGraph graph,
                                              boolean isReferenceResult,
                                              boolean isBooleanResult,
                                              boolean stable) throws AnalyzerException {
+        List<Equation<Key, Value>> result = new ArrayList<Equation<Key, Value>>(argumentTypes.length * 3 + 1);
         CombinedSingleAnalysis analyzer = new CombinedSingleAnalysis(method, graph);
         analyzer.analyze();
         if (isReferenceResult) {
-          contractEqs.add(analyzer.outContractEquation(stable));
+          result.add(analyzer.outContractEquation(stable));
         }
         for (int i = 0; i < argumentTypes.length; i++) {
           Type argType = argumentTypes[i];
           boolean isRefArg = ASMUtils.isReferenceType(argType);
           if (isRefArg) {
-            parameterEqs.add(analyzer.notNullParamEquation(i, stable));
+            result.add(analyzer.notNullParamEquation(i, stable));
           }
           if (isRefArg && (isReferenceResult || isBooleanResult)) {
-            contractEqs.add(analyzer.contractEquation(i, Value.Null, stable));
-            contractEqs.add(analyzer.contractEquation(i, Value.NotNull, stable));
+            result.add(analyzer.contractEquation(i, Value.Null, stable));
+            result.add(analyzer.contractEquation(i, Value.NotNull, stable));
           }
           if (ASMUtils.isBooleanType(argType) && (isReferenceResult || isBooleanResult)) {
-            contractEqs.add(analyzer.contractEquation(i, Value.True, stable));
-            contractEqs.add(analyzer.contractEquation(i, Value.False, stable));
+            result.add(analyzer.contractEquation(i, Value.True, stable));
+            result.add(analyzer.contractEquation(i, Value.False, stable));
           }
         }
+        return result;
       }
 
-      private void topEquations(Method method,
+      private List<Equation<Key, Value>> topEquations(Method method,
                                 Type[] argumentTypes,
                                 boolean isReferenceResult,
                                 boolean isInterestingResult,
                                 boolean stable) {
+        List<Equation<Key, Value>> result = new ArrayList<Equation<Key, Value>>(argumentTypes.length * 3 + 1);
         if (isReferenceResult) {
-          contractEqs.add(new Equation<Key, Value>(new Key(method, new Out(), stable), FINAL_TOP));
+          result.add(new Equation<Key, Value>(new Key(method, new Out(), stable), FINAL_TOP));
         }
         for (int i = 0; i < argumentTypes.length; i++) {
           Type argType = argumentTypes[i];
@@ -335,17 +336,18 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
           boolean isBooleanArg = ASMUtils.isBooleanType(argType);
 
           if (isReferenceArg) {
-            parameterEqs.add(new Equation<Key, Value>(new Key(method, new In(i), stable), FINAL_TOP));
+            result.add(new Equation<Key, Value>(new Key(method, new In(i), stable), FINAL_TOP));
           }
           if (isReferenceArg && isInterestingResult) {
-            contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), FINAL_TOP));
-            contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull), stable), FINAL_TOP));
+            result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), FINAL_TOP));
+            result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull), stable), FINAL_TOP));
           }
           if (isBooleanArg && isInterestingResult) {
-            contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.False), stable), FINAL_TOP));
-            contractEqs.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.True), stable), FINAL_TOP));
+            result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.False), stable), FINAL_TOP));
+            result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.True), stable), FINAL_TOP));
           }
         }
+        return result;
       }
 
       private Pair<boolean[], Frame<org.jetbrains.org.objectweb.asm.tree.analysis.Value>[]> leakingParametersAndFrames(Method method,
@@ -359,6 +361,6 @@ public class ClassDataIndexer implements DataIndexer<HKey, HResult, FileContent>
       }
     }, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
-    return new ClassEquations(parameterEqs, contractEqs);
+    return equations;
   }
 }

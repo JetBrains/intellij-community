@@ -18,6 +18,7 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Small size key, constructed by hashing method signature.
@@ -68,15 +69,6 @@ final class HKey {
 
   HKey updateDirection(int newDirKey) {
     return new HKey(key, newDirKey, stable);
-  }
-
-  @Override
-  public String toString() {
-    return "HKey{" +
-           "key=" + Arrays.toString(key) +
-           ", dirKey=" + dirKey +
-           ", stable=" + stable +
-           '}';
   }
 }
 
@@ -170,9 +162,93 @@ final class HEquation {
     return result1;
   }
 }
+class Bytes {
+  @NotNull
+  final byte[] bytes;
+  Bytes(@NotNull byte[] bytes) {
+    this.bytes = bytes;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    Bytes bytes1 = (Bytes)o;
+
+    if (!Arrays.equals(bytes, bytes1.bytes)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return Arrays.hashCode(bytes);
+  }
+}
+
+class HEquations {
+  @NotNull final List<DirectionResultPair> results;
+  final boolean stable;
+
+  HEquations(@NotNull List<DirectionResultPair> results, boolean stable) {
+    this.results = results;
+    this.stable = stable;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    HEquations that = (HEquations)o;
+
+    if (stable != that.stable) return false;
+    if (!results.equals(that.results)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = results.hashCode();
+    result = 31 * result + (stable ? 1 : 0);
+    return result;
+  }
+}
+
+class DirectionResultPair {
+  final int directionKey;
+  @NotNull
+  final HResult hResult;
+
+  DirectionResultPair(int directionKey, @NotNull HResult hResult) {
+    this.directionKey = directionKey;
+    this.hResult = hResult;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    DirectionResultPair that = (DirectionResultPair)o;
+
+    if (directionKey != that.directionKey) return false;
+    if (!hResult.equals(that.hResult)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = directionKey;
+    result = 31 * result + hResult.hashCode();
+    return result;
+  }
+}
 
 interface HResult {}
-
 final class HFinal implements HResult {
   @NotNull final Value value;
 

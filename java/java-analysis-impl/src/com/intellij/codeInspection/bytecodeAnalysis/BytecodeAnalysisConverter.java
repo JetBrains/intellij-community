@@ -48,7 +48,7 @@ public class BytecodeAnalysisConverter {
    * Converts an equation over asm keys into equation over small hash keys.
    */
   @NotNull
-  static HEquation convert(@NotNull Equation<Key, Value> equation, @NotNull MessageDigest md) {
+  static DirectionResultPair convert(@NotNull Equation<Key, Value> equation, @NotNull MessageDigest md) {
     ProgressManager.checkCanceled();
 
     Result<Key, Value> rhs = equation.rhs;
@@ -73,9 +73,7 @@ public class BytecodeAnalysisConverter {
       }
       result = new HPending(components);
     }
-
-    HKey key = asmKey(equation.id, md);
-    return new HEquation(key, result);
+    return new DirectionResultPair(mkDirectionKey(equation.id.direction), result);
   }
 
   /**
