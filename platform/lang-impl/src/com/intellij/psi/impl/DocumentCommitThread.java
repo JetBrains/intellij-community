@@ -554,4 +554,16 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
   boolean isEnabled() {
     return myEnabled;
   }
+
+  @TestOnly
+  public void waitUntilAllCommitted() throws InterruptedException {
+    if (!myEnabled) {
+      throw new IllegalStateException("DocumentCommitThread is disabled");
+    }
+    synchronized (documentsToCommit) {
+      while(!documentsToCommit.isEmpty()) {
+        documentsToCommit.wait();
+      }
+    }
+  }
 }
