@@ -55,7 +55,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
     }
   }, settings.commitDelay);
 
-  private volatile boolean autoCommitEnabled;
+  private volatile boolean autoCommitEnabled = true;
 
   private static void awaitCallback(@NotNull ProgressIndicator indicator, @NotNull ActionCallback callback, @NotNull String title) {
     while (!callback.isProcessed()) {

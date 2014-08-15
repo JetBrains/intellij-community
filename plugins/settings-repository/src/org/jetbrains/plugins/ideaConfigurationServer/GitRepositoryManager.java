@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
@@ -112,32 +113,64 @@ final class GitRepositoryManager extends BaseRepositoryManager {
       @Override
       public void consume(@NotNull ProgressIndicator indicator) throws Exception {
         IndexDiff index = new IndexDiff(git.getRepository(), Constants.HEAD, new FileTreeIterator(git.getRepository()));
+        boolean changed = index.diff(new JGitProgressMonitor(indicator), ProgressMonitor.UNKNOWN, ProgressMonitor.UNKNOWN, "Commit");
+
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(indexDiffToString(index));
+        }
+
         // don't worry about untracked/modified only in the FS files
-        if (!index.diff() || (index.getAdded().isEmpty() && index.getChanged().isEmpty() && index.getRemoved().isEmpty())) {
+        if (!changed || (index.getAdded().isEmpty() && index.getChanged().isEmpty() && index.getRemoved().isEmpty())) {
           if (index.getModified().isEmpty()) {
-            LOG.debug("skip scheduled commit, nothing to commit");
+            LOG.debug("Skip scheduled commit, nothing to commit");
             return;
           }
 
-          AddCommand addCommand = git.add();
-          boolean added = false;
+          AddCommand addCommand = null;
           for (String path : index.getModified()) {
             // todo is path absolute or relative?
             if (!path.startsWith(IcsUrlBuilder.PROJECTS_DIR_NAME)) {
+              if (addCommand == null) {
+                addCommand = git.add();
+              }
               addCommand.addFilepattern(path);
-              added = true;
             }
           }
-          if (added) {
+          if (addCommand != null) {
             addCommand.call();
           }
         }
 
         PersonIdent author = new PersonIdent(git.getRepository());
         PersonIdent committer = new PersonIdent(ApplicationInfoEx.getInstanceEx().getFullApplicationName(), author.getEmailAddress());
+        LOG.debug("Commit");
         git.commit().setAuthor(author).setCommitter(committer).setMessage("").call();
       }
     }, indicator);
+  }
+
+  @NotNull
+  private static String indexDiffToString(@NotNull IndexDiff diff) {
+    StringBuilder builder = new StringBuilder();
+    builder.append("To commit:");
+    addList("Added", diff.getAdded(), builder);
+    addList("Changed", diff.getChanged(), builder);
+    addList("Removed", diff.getChanged(), builder);
+    addList("Modified on disk relative to the index", diff.getModified(), builder);
+    addList("Untracked files", diff.getUntracked(), builder);
+    addList("Untracked folders", diff.getUntrackedFolders(), builder);
+    return builder.toString();
+  }
+
+  private static void addList(@NotNull String name, @NotNull Collection<String> list, @NotNull StringBuilder builder) {
+    if (list.isEmpty()) {
+      return;
+    }
+
+    builder.append('\t').append(name).append(": ");
+    for (String path : list) {
+      builder.append(", ").append(path);
+    }
   }
 
   @Override
@@ -173,7 +206,7 @@ final class GitRepositoryManager extends BaseRepositoryManager {
         Iterator<TrackingRefUpdate> refUpdates = fetchResult.getTrackingRefUpdates().iterator();
         TrackingRefUpdate refUpdate = refUpdates.hasNext() ? refUpdates.next() : null;
         if (refUpdate == null || refUpdate.getResult() == RefUpdate.Result.NO_CHANGE || refUpdate.getResult() == RefUpdate.Result.FORCED) {
-          // nothing to merge
+          LOG.debug("Nothing to merge");
           return;
         }
 
