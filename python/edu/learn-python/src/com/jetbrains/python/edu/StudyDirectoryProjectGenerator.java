@@ -36,11 +36,11 @@ import java.util.regex.Pattern;
 public class StudyDirectoryProjectGenerator extends PythonProjectGenerator implements DirectoryProjectGenerator {
   private static final Logger LOG = Logger.getInstance(StudyDirectoryProjectGenerator.class.getName());
   private static final String REPO_URL = "https://github.com/JetBrains/pycharm-courses/archive/master.zip";
-  private static final String USER_NAME = "medvector";
+  private static final String USER_NAME = "PyCharm";
   private static final String COURSE_META_FILE = "course.json";
   private static final String COURSE_NAME_ATTRIBUTE = "name";
   private static final Pattern CACHE_PATTERN = Pattern.compile("(name=(.*)) (path=(.*course.json)) (author=(.*)) (description=(.*))");
-  private static final String REPOSITORY_NAME = "initial-python-course";
+  private static final String REPOSITORY_NAME = "pycharm-courses";
   public static final String AUTHOR_ATTRIBUTE = "author";
   private final File myCoursesDir = new File(PathManager.getConfigPath(), "courses");
   private static final String CACHE_NAME = "courseNames.txt";
