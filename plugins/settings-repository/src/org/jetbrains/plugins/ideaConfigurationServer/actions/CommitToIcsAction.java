@@ -68,8 +68,9 @@ class CommitToIcsAction extends CommonCheckinFilesAction {
   }
 
   @Override
-  protected boolean isApplicableRoot(VirtualFile file, FileStatus status, VcsContext dataContext) {
-    return ((ProjectEx)dataContext.getProject()).getStateStore().getStorageScheme() == StorageScheme.DIRECTORY_BASED &&
+  protected boolean isApplicableRoot(@NotNull VirtualFile file, @NotNull FileStatus status, @NotNull VcsContext dataContext) {
+    Project project = dataContext.getProject();
+    return project instanceof ProjectEx && ((ProjectEx)project).getStateStore().getStorageScheme() == StorageScheme.DIRECTORY_BASED &&
            super.isApplicableRoot(file, status, dataContext) &&
            !file.isDirectory() &&
            isProjectConfigFile(file, dataContext.getProject());
