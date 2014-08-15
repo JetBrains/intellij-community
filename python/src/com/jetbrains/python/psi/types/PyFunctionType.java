@@ -18,10 +18,12 @@ package com.jetbrains.python.psi.types;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -116,12 +118,23 @@ public class PyFunctionType implements PyCallableType {
     final PyFunction function = as(getCallable(), PyFunction.class);
     final boolean isNonStaticMethod = function != null && function.getContainingClass() != null && function.getModifier() != STATICMETHOD;
     if (isNonStaticMethod) {
+      // In Python 2 unbound methods have __method fake type
       if (LanguageLevel.forElement(location).isOlderThan(LanguageLevel.PYTHON30)) {
         return true;
       }
+      final PyExpression qualifier;
       if (location.isQualified()) {
+        qualifier = location.getQualifier();
+      }
+      else {
+        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+        final QualifiedResolveResult resolveResult = location.followAssignmentsChain(resolveContext);
+        final List<PyExpression> qualifiers = resolveResult.getQualifiers();
+        qualifier = ContainerUtil.isEmpty(qualifiers) ? null : qualifiers.get(qualifiers.size() - 1);
+      }
+      if (qualifier != null) {
         //noinspection ConstantConditions
-        final PyType qualifierType = PyTypeChecker.toNonWeakType(context.getType(location.getQualifier()), context);
+        final PyType qualifierType = PyTypeChecker.toNonWeakType(context.getType(qualifier), context);
         if (isInstanceType(qualifierType)) {
           return true;
         }

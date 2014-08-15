@@ -694,6 +694,11 @@ public class PythonCompletionTest extends PyTestCase {
     assertUnderscoredFunctionAttributesSuggested();
   }
 
+  // PY-9342
+  public void testReassignedMethodSpecialAttributes() {
+    assertUnderscoredMethodSpecialAttributesSuggested();
+  }
+
   private void assertUnderscoredFunctionAttributesSuggested() {
     myFixture.configureByFile("completion/" + getTestName(true) + ".py");
     myFixture.completeBasic();

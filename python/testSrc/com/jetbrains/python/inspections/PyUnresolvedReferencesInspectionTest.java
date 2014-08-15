@@ -371,6 +371,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doMultiFileTest();
   }
 
+  // PY-9342
+  public void testMethodSpecialAttributes() {
+    doTest();
+  }
+
   // PY-11472
   public void testUnusedImportBeforeStarImport() {
     doMultiFileTest();
