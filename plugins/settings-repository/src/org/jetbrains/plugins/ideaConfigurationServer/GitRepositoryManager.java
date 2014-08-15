@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.ideaConfigurationServer;
 
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.PasswordUtil;
@@ -32,9 +31,7 @@ final class GitRepositoryManager extends BaseRepositoryManager {
   private CredentialsProvider credentialsProvider;
 
   public GitRepositoryManager() throws IOException {
-    FileRepositoryBuilder repositoryBuilder = new FileRepositoryBuilder();
-    repositoryBuilder.setGitDir(new File(dir, Constants.DOT_GIT));
-    Repository repository = repositoryBuilder.build();
+    Repository repository = new FileRepositoryBuilder().setGitDir(new File(dir, Constants.DOT_GIT)).build();
     if (!dir.exists()) {
       repository.create(false);
       disableAutoCrLf(repository);
@@ -110,7 +107,7 @@ final class GitRepositoryManager extends BaseRepositoryManager {
 
   @NotNull
   @Override
-  public ActionCallback commit() {
+  public ActionCallback commit(@NotNull ProgressIndicator indicator) {
     return execute(new ThrowableConsumer<ProgressIndicator, Exception>() {
       @Override
       public void consume(@NotNull ProgressIndicator indicator) throws Exception {
@@ -140,12 +137,11 @@ final class GitRepositoryManager extends BaseRepositoryManager {
         PersonIdent committer = new PersonIdent(ApplicationInfoEx.getInstanceEx().getFullApplicationName(), author.getEmailAddress());
         git.commit().setAuthor(author).setCommitter(committer).setMessage("").call();
       }
-    }, new EmptyProgressIndicator());
+    }, indicator);
   }
 
   @Override
   public void commit(@NotNull List<String> paths) {
-
   }
 
   @Override

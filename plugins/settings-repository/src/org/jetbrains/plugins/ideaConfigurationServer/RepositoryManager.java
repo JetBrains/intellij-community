@@ -33,7 +33,10 @@ public interface RepositoryManager {
   void updateRepository();
 
   @NotNull
-  ActionCallback commit();
+  /**
+   * Not all implementations support progress indicator (will not be updated on progress)
+   */
+  ActionCallback commit(@NotNull ProgressIndicator indicator);
 
   void commit(@NotNull List<String> paths);
 

@@ -39,7 +39,7 @@ public class SyncRepositoriesDialog extends DialogWrapper {
 
     ActionListener actionListener = new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         setOKActionEnabled(syncTypeGroup.getSelection() != null);
       }
     };

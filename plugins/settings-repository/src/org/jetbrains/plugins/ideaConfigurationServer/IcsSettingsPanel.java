@@ -49,7 +49,7 @@ public class IcsSettingsPanel extends DialogWrapper {
     syncButton = new JButton(IcsBundle.message("settings.panel.sync.repositories"));
     syncButton.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         if (saveRemoteRepositoryUrl()) {
           new SyncRepositoriesDialog(panel).show();
         }

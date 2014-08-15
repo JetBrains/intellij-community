@@ -46,10 +46,10 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
   protected final SingleAlarm commitAlarm = new SingleAlarm(new Runnable() {
     @Override
     public void run() {
-      ProgressManager.getInstance().run(new Task.Backgroundable(null, IcsBundle.message("task.push.title")) {
+      ProgressManager.getInstance().run(new Task.Backgroundable(null, IcsBundle.message("task.commit.title")) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          awaitCallback(indicator, repositoryManager.commit(), getTitle());
+          awaitCallback(indicator, repositoryManager.commit(indicator), getTitle());
         }
       });
     }
@@ -77,6 +77,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
     return ApplicationLoadListener.EP_NAME.findExtension(IcsManager.class);
   }
 
+  @NotNull
   public static File getPluginSystemDir() {
     return new File(PathManager.getSystemPath(), "ideaConfigurationServer");
   }
@@ -231,10 +232,10 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
         }, ModalityState.any());
         commitAlarm.cancel();
 
-        repositoryManager.commit().notify(actionCallback);
+        repositoryManager.commit(indicator).notify(actionCallback);
         repositoryManager.pull(indicator).notify(actionCallback);
-        ActionCallback lastActionCallback = repositoryManager.push(indicator).notify(actionCallback);
-        awaitCallback(indicator, lastActionCallback, getTitle());
+        repositoryManager.push(indicator).notify(actionCallback);
+        awaitCallback(indicator, actionCallback, getTitle());
       }
     });
     return actionCallback;
