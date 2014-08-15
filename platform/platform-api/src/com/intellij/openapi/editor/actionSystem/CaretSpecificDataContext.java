@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.actionSystem;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataContextWrapper;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -24,23 +25,22 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CaretSpecificDataContext implements DataContext {
-  private final DataContext myDelegate;
+public class CaretSpecificDataContext extends DataContextWrapper {
   private final Caret myCaret;
 
   public CaretSpecificDataContext(@NotNull DataContext delegate, @NotNull Caret caret) {
-    myDelegate = delegate;
+    super(delegate);
     myCaret = caret;
   }
 
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
-    Project project = CommonDataKeys.PROJECT.getData(myDelegate);
+    Project project = (Project)super.getData(CommonDataKeys.PROJECT.getName());
     if (project == null) {
       return null;
     }
     Object data = FileEditorManager.getInstance(project).getData(dataId, myCaret.getEditor(), myCaret);
-    return data == null ? myDelegate.getData(dataId) : data;
+    return data == null ? super.getData(dataId) : data;
   }
 }

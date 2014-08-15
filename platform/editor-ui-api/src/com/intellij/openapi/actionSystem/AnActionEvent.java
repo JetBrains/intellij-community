@@ -118,13 +118,13 @@ public class AnActionEvent implements PlaceProvider<String> {
   }
 
   public static DataContext getInjectedDataContext(final DataContext context) {
-    return new DataContext() {
-      @Override
+    return new DataContextWrapper(context) {
       @Nullable
+      @Override
       public Object getData(@NonNls String dataId) {
-        Object injected = context.getData(injectedId(dataId));
+        Object injected = super.getData(injectedId(dataId));
         if (injected != null) return injected;
-        return context.getData(dataId);
+        return super.getData(dataId);
       }
     };
   }
