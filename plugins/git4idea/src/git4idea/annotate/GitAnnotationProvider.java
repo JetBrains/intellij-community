@@ -46,45 +46,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Git annotation provider implementation.
- * <p/>
- * Based on the JetBrains SVNAnnotationProvider.
- */
 public class GitAnnotationProvider implements AnnotationProvider, VcsCacheableAnnotationProvider {
-  /**
-   * the context project
-   */
   private final Project myProject;
-  /**
-   * The author key for annotations
-   */
   @NonNls private static final String AUTHOR_KEY = "author";
-  /**
-   * The committer time key for annotations
-   */
   @NonNls private static final String COMMITTER_TIME_KEY = "committer-time";
   private static final Logger LOG = Logger.getInstance(GitAnnotationProvider.class);
 
-  /**
-   * A constructor
-   *
-   * @param project a context project
-   */
   public GitAnnotationProvider(@NotNull Project project) {
     myProject = project;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public FileAnnotation annotate(@NotNull VirtualFile file) throws VcsException {
     return annotate(file, null);
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public FileAnnotation annotate(@NotNull final VirtualFile file, final VcsFileRevision revision) throws VcsException {
     if (file.isDirectory()) {
       throw new VcsException("Cannot annotate a directory");
@@ -119,8 +94,8 @@ public class GitAnnotationProvider implements AnnotationProvider, VcsCacheableAn
       }
     };
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      ProgressManager.getInstance()
-        .runProcessWithProgressSynchronously(command, GitBundle.getString("annotate.action.name"), false, myProject);
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(command, GitBundle.getString("annotate.action.name"), false,
+                                                                        myProject);
     }
     else {
       command.run();
@@ -132,16 +107,6 @@ public class GitAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     return annotation[0];
   }
 
-  /**
-   * Calculate annotations
-   *
-   * @param repositoryFilePath the file path in the repository
-   * @param revision           the revision to checkout
-   * @param revisions          the revision list from history
-   * @param file               a virtual file for the action
-   * @return a file annotation object
-   * @throws VcsException if there is a problem with running git
-   */
   private GitFileAnnotation annotate(final FilePath repositoryFilePath,
                                      final VcsFileRevision revision,
                                      final List<VcsFileRevision> revisions,
@@ -159,7 +124,7 @@ public class GitAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     h.endOptions();
     h.addRelativePaths(repositoryFilePath);
     String output = h.run();
-    GitFileAnnotation annotation = new GitFileAnnotation(myProject, file, revision == null, revision == null ? null : revision.getRevisionNumber());
+    GitFileAnnotation annotation = new GitFileAnnotation(myProject, file, revision == null ? null : revision.getRevisionNumber());
     class CommitInfo {
       Date date;
       String author;
@@ -229,7 +194,7 @@ public class GitAnnotationProvider implements AnnotationProvider, VcsCacheableAn
                                 String annotatedContent,
                                 boolean forCurrentRevision, VcsRevisionNumber revisionNumber) {
     final GitFileAnnotation gitFileAnnotation =
-      new GitFileAnnotation(myProject, vcsAnnotation.getFilePath().getVirtualFile(), forCurrentRevision, revisionNumber);
+      new GitFileAnnotation(myProject, vcsAnnotation.getFilePath().getVirtualFile(), revisionNumber);
     gitFileAnnotation.addLogEntries(session.getRevisionList());
     final VcsLineAnnotationData basicAnnotation = vcsAnnotation.getBasicAnnotation();
     final int size = basicAnnotation.getNumLines();
@@ -252,9 +217,6 @@ public class GitAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     return gitFileAnnotation;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public boolean isAnnotationValid(VcsFileRevision rev) {
     return true;
   }
