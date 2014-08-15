@@ -698,7 +698,7 @@
     </action>
 
     <action id="PyDebugger.ViewArray" class="com.jetbrains.python.actions.PyViewArrayAction">
-      <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.Tree.EvaluateInConsole"/>
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.Tree.AddToWatches"/>
     </action>
 
   </actions>

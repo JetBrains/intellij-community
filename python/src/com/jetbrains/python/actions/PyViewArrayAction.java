@@ -18,11 +18,14 @@ package com.jetbrains.python.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ui.table.JBTable;
+import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.impl.ui.tree.SetValueInplaceEditor;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeInplaceEditor;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -51,7 +54,19 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
 
     @Override
     public Object[][] parseValues(String rawValue) {
-      return new String[][]{{"a", "b", "c"}, {"a", "b", "c"}};
+
+      if (rawValue != null && rawValue.startsWith("[")) {
+        int dimension = 0;
+        while (rawValue.charAt(dimension) == '[') {
+          dimension += 1;
+        }
+
+        if (dimension > 2){
+
+        }
+      }
+
+      return null;
     }
   }
 
@@ -67,12 +82,7 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
 
       myEditor = new SetValueInplaceEditor(node, nodeName);
 
-      myTable = new JTable() {
-        @Override
-        public boolean isCellEditable(int row, int column) {
-          return true;
-        }
-      };
+      myTable = new JBTable();
 
       init();
     }
@@ -80,9 +90,11 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
     public void setValue(XValueNodeImpl node) {
       ArrayValueProvider valueProvider;
 
-      if (node.getValuePresentation().getType().equals("ndarray")) {
+      if (node.getValuePresentation() != null &&
+          node.getValuePresentation().getType() != null &&
+          node.getValuePresentation().getType().equals("ndarray")) {
         valueProvider = new NumpyArrayValueProvider();
-        final Object[][] data = valueProvider.parseValues(node.getRawValue());
+        final Object[][] data = valueProvider.parseValues(evaluateFullValue(node));
         DefaultTableModel model = new DefaultTableModel(data, range(0, data.length));
         myTable.setModel(model);
       }
@@ -91,9 +103,41 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
     private String[] range(int min, int max) {
       String[] array = new String[max - min + 1];
       for (int i = min; i <= max; i++) {
-        array[i] = new Integer(i).toString();
+        array[i] = Integer.toString(i);
       }
       return array;
+    }
+
+    private String evaluateFullValue(XValueNodeImpl node) {
+      final String[] result = new String[0];
+
+      XFullValueEvaluator.XFullValueEvaluationCallback valueEvaluationCallback = new XFullValueEvaluator.XFullValueEvaluationCallback() {
+        @Override
+        public void evaluated(@NotNull String fullValue) {
+          result[0] = fullValue;
+        }
+
+        @Override
+        public void evaluated(@NotNull String fullValue, @Nullable Font font) {
+          result[0] = fullValue;
+        }
+
+        @Override
+        public void errorOccurred(@NotNull String errorMessage) {
+          result[0] = errorMessage;
+        }
+
+        @Override
+        public boolean isObsolete() {
+          return false;
+        }
+      };
+
+      if (node.getFullValueEvaluator() != null) {
+        node.getFullValueEvaluator().startEvaluation(valueEvaluationCallback);
+      }
+
+      return result[0];
     }
 
     @Override
