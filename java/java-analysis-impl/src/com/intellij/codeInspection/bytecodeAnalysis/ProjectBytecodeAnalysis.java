@@ -19,14 +19,19 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.Stack;
+import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +40,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 /**
  * @author lambdamix
@@ -193,7 +199,6 @@ public class ProjectBytecodeAnalysis {
   }
 
   private void collectEquations(ArrayList<HKey> keys, Solver solver) throws EquationsLimitException {
-    /*
     GlobalSearchScope librariesScope = ProjectScope.getLibrariesScope(myProject);
     HashSet<HKey> queued = new HashSet<HKey>();
     Stack<HKey> queue = new Stack<HKey>();
@@ -201,42 +206,48 @@ public class ProjectBytecodeAnalysis {
     for (HKey key : keys) {
       queue.push(key);
       queued.add(key);
-      // stable/unstable
-      HKey nKey = key.negate();
-      queue.push(nKey);
-      queued.add(nKey);
     }
 
+    HashMap<Bytes, List<HEquations>> cache = new HashMap<Bytes, List<HEquations>>();
     FileBasedIndex index = FileBasedIndex.getInstance();
+
     while (!queue.empty()) {
       if (queued.size() > EQUATIONS_LIMIT) {
         throw new EquationsLimitException();
       }
       ProgressManager.checkCanceled();
       HKey hKey = queue.pop();
-      List<HResult> results = index.getValues(BytecodeAnalysisIndex.NAME, hKey, librariesScope);
-      for (HResult result : results) {
-        solver.addEquation(new HEquation(hKey, result));
-        if (result instanceof HPending) {
-          HPending pending = (HPending)result;
-          for (HComponent component : pending.delta) {
-            for (HKey depKey : component.ids) {
-              if (!queued.contains(depKey)) {
-                queue.push(depKey);
-                queued.add(depKey);
-              }
-              // stable/unstable
-              HKey swapped = depKey.negate();
-              if (!queued.contains(swapped)) {
-                queue.push(swapped);
-                queued.add(swapped);
+      Bytes bytes = new Bytes(hKey.key);
+
+      List<HEquations> hEquationss = cache.get(bytes);
+      if (hEquationss == null) {
+        hEquationss = index.getValues(BytecodeAnalysisIndex.NAME, bytes, librariesScope);
+        cache.put(bytes, hEquationss);
+      }
+
+      for (HEquations hEquations : hEquationss) {
+        boolean stable = hEquations.stable;
+        for (DirectionResultPair pair : hEquations.results) {
+          int dirKey = pair.directionKey;
+          if (dirKey == hKey.dirKey) {
+            HResult result = pair.hResult;
+
+            solver.addEquation(new HEquation(new HKey(bytes.bytes, dirKey, stable), result));
+            if (result instanceof HPending) {
+              HPending pending = (HPending)result;
+              for (HComponent component : pending.delta) {
+                for (HKey depKey : component.ids) {
+                  if (!queued.contains(depKey)) {
+                    queue.push(depKey);
+                    queued.add(depKey);
+                  }
+                }
               }
             }
           }
         }
       }
     }
-    */
   }
 
   @NotNull
