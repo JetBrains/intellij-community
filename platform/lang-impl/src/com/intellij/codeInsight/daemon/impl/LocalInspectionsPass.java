@@ -223,7 +223,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     Divider.divideInsideAndOutside(myFile, myStartOffset, myEndOffset, myPriorityRange, inside, new ArrayList<ProperTextRange>(), outside, new ArrayList<ProperTextRange>(),
                                    true, FILE_FILTER);
 
-    MultiMap<LocalInspectionToolWrapper, String> toolToLanguages = getToolsForElements(toolWrappers, checkDumbAwareness, inside, outside);
+    MultiMap<LocalInspectionToolWrapper, String> toolToLanguages = InspectionEngine.getToolsForElements(toolWrappers, checkDumbAwareness, inside, outside);
 
     setProgressLimit(toolToLanguages.size() * 2L);
     final LocalInspectionToolSession session = new LocalInspectionToolSession(myFile, myStartOffset, myEndOffset);
@@ -237,76 +237,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     myInfos = new ArrayList<HighlightInfo>();
     addHighlightsFromResults(myInfos, progress);
-  }
-
-  @NotNull
-  private static MultiMap<LocalInspectionToolWrapper, String> getToolsForElements(@NotNull List<LocalInspectionToolWrapper> toolWrappers,
-                                                                                  boolean checkDumbAwareness,
-                                                                                  @NotNull List<PsiElement> inside,
-                                                                                  @NotNull List<PsiElement> outside) {
-    Set<Language> languages = new SmartHashSet<Language>();
-    Map<String, Language> langIds = new SmartHashMap<String, Language>();
-    Set<String> dialects = new SmartHashSet<String>();
-    calculateDialects(inside, languages, langIds, dialects);
-    calculateDialects(outside, languages, langIds, dialects);
-    MultiMap<LocalInspectionToolWrapper, String> toolToLanguages = new MultiMap<LocalInspectionToolWrapper, String>() {
-      @NotNull
-      @Override
-      protected Collection<String> createCollection() {
-        return new SmartHashSet<String>();
-      }
-
-      @NotNull
-      @Override
-      protected Collection<String> createEmptyCollection() {
-        return Collections.emptySet();
-      }
-    };
-    for (LocalInspectionToolWrapper wrapper : toolWrappers) {
-      ProgressManager.checkCanceled();
-      String language = wrapper.getLanguage();
-      if (language == null) {
-        LocalInspectionTool tool = wrapper.getTool();
-        if (!checkDumbAwareness || tool instanceof DumbAware) {
-          toolToLanguages.put(wrapper, null);
-        }
-        continue;
-      }
-      Language lang = langIds.get(language);
-      if (lang != null) {
-        LocalInspectionTool tool = wrapper.getTool();
-        if (!checkDumbAwareness || tool instanceof DumbAware) {
-          toolToLanguages.putValue(wrapper, language);
-          if (wrapper.applyToDialects()) {
-            for (Language dialect : lang.getDialects()) {
-              toolToLanguages.putValue(wrapper, dialect.getID());
-            }
-          }
-        }
-      }
-      else if (wrapper.applyToDialects() && dialects.contains(language)) {
-        LocalInspectionTool tool = wrapper.getTool();
-        if (!checkDumbAwareness || tool instanceof DumbAware) {
-          toolToLanguages.putValue(wrapper, language);
-        }
-      }
-    }
-    return toolToLanguages;
-  }
-
-  private static void calculateDialects(@NotNull List<PsiElement> inside,
-                                        @NotNull Set<Language> languages,
-                                        @NotNull Map<String, Language> langIds,
-                                        @NotNull Set<String> dialects) {
-    for (PsiElement element : inside) {
-      Language language = element.getLanguage();
-      if (languages.add(language)) {
-        langIds.put(language.getID(), language);
-        for (Language dialect : language.getDialects()) {
-          dialects.add(dialect.getID());
-        }
-      }
-    }
   }
 
   @NotNull
@@ -412,17 +342,16 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       });
     }
     if (injected.isEmpty()) return;
-    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<PsiFile>(injected), indicator,
-                                                                   myFailFastOnAcquireReadAction,
-                                                                   new Processor<PsiFile>() {
-                                                                     @Override
-                                                                     public boolean process(final PsiFile injectedPsi) {
-                                                                       doInspectInjectedPsi(injectedPsi, onTheFly, indicator, iManager,
-                                                                                            inVisibleRange,
-                                                                                            wrappers, checkDumbAwareness);
-                                                                       return true;
-                                                                     }
-                                                                   })) throw new ProcessCanceledException();
+    Processor<PsiFile> processor = new Processor<PsiFile>() {
+      @Override
+      public boolean process(final PsiFile injectedPsi) {
+        doInspectInjectedPsi(injectedPsi, onTheFly, indicator, iManager, inVisibleRange, wrappers, checkDumbAwareness);
+        return true;
+      }
+    };
+    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<PsiFile>(injected), indicator, myFailFastOnAcquireReadAction, processor)) {
+      throw new ProcessCanceledException();
+    }
   }
 
   @Nullable
@@ -740,7 +669,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       return;
     }
     MultiMap<LocalInspectionToolWrapper, String> toolToLanguages =
-      getToolsForElements(wrappers, checkDumbAwareness, elements, Collections.<PsiElement>emptyList());
+      InspectionEngine.getToolsForElements(wrappers, checkDumbAwareness, elements, Collections.<PsiElement>emptyList());
     for (final Map.Entry<LocalInspectionToolWrapper, Collection<String>> pair : toolToLanguages.entrySet()) {
       indicator.checkCanceled();
       final LocalInspectionToolWrapper wrapper = pair.getKey();
