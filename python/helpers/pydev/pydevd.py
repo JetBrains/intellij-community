@@ -319,6 +319,7 @@ class PyDB:
 
         plugin_base = PluginBase(package='pydevd_plugins')
         self.plugin_source = plugin_base.make_plugin_source(searchpath=[os.path.dirname(os.path.realpath(__file__)) + '/pydevd_plugins'])
+        self.load_plugins()
 
         #this is a dict of thread ids pointing to thread ids. Whenever a command is passed to the java end that
         #acknowledges that a thread was created, the thread id should be passed here -- and if at some time we do not
@@ -728,8 +729,7 @@ class PyDB:
                         breakpoint.add(self.breakpoints, file, line, func_name)
                         supported_type = True
                     else:
-                        supported_type = search_for_plugins(self.plugin_source, 'add_line_breakpoint',
-                                                            self, type, file, line, condition, expression, func_name)
+                        supported_type = self.search_for_plugins('add_line_breakpoint', type, file, line, condition, expression, func_name)
 
                     if not supported_type:
                         raise NameError(type)
@@ -754,8 +754,7 @@ class PyDB:
                                 del self.breakpoints[file][line]
                                 specific_type = True
                             else:
-                                specific_type = search_for_plugins(self.plugin_source, 'find_and_remove_line_break',
-                                                                   self, type, file, line)
+                                specific_type = self.search_for_plugins('find_and_remove_line_break', type, file, line)
 
                             if not specific_type:
                                 #remove all
@@ -764,17 +763,8 @@ class PyDB:
                                     found = True
                                 except:
                                     pass
-                                # for plugin in plugin_source.list_plugins():
-                                #     loaded_plugin = plugin_source.load_plugin(plugin)
-                                #     try:
-                                #         loaded_plugin = plugin_source.load_plugin(plugin)
-                                #     except:
-                                #         pydev_log.error("Failed to load plugin %s" % plugin)
-                                #     if hasattr(loaded_plugin, 'remove_line_break'):
-                                #         func = getattr(loaded_plugin, func_name)
-                                #         found = found or func(self, type, file, line)
 
-                                found = found or search_for_plugins(self.plugin_source, 'remove_line_break', self, type, file, line)
+                                found = found or self.search_for_plugins('remove_line_break', type, file, line)
 
                             if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
                                 sys.stderr.write('Removed breakpoint:%s - %s\n' % (file, line))
@@ -830,7 +820,7 @@ class PyDB:
                         supported_type = True
 
                     else:
-                        supported_type = search_for_plugins(self.plugin_source, 'add_exception_breakpoint', self, type, exception)
+                        supported_type = self.search_for_plugins('add_exception_breakpoint', type, exception)
 
                     if not supported_type:
                         raise NameError(type)
@@ -848,7 +838,7 @@ class PyDB:
                         update_exception_hook(self)
                         supported_type = True
                     else:
-                        supported_type = search_for_plugins(self.plugin_source, 'remove_exception_breakpoint', self, type, exception)
+                        supported_type = self.search_for_plugins('remove_exception_breakpoint', type, exception)
 
                     if not supported_type:
                         raise NameError(type)
@@ -1254,19 +1244,34 @@ class PyDB:
         cmd = self.cmdFactory.makeExitMessage()
         self.writer.addCommand(cmd)
 
+    def load_plugins(self):
+        self.plugins = []
+        for plugin in self.plugin_source.list_plugins():
+            loaded_plugin = None
+            try:
+                loaded_plugin = self.plugin_source.load_plugin(plugin)
+            except:
+                pydev_log.error("Failed to load plugin %s" % plugin)
+            if loaded_plugin:
+                self.plugins.append(loaded_plugin)
 
-def search_for_plugins(plugin_source, func_name, *args, **kwargs):
-    result = False
-    for plugin in plugin_source.list_plugins():
-        loaded_plugin = None
-        try:
-            loaded_plugin = plugin_source.load_plugin(plugin)
-        except:
-            pydev_log.error("Failed to load plugin %s" % plugin)
-        if hasattr(loaded_plugin, func_name):
-            func = getattr(loaded_plugin, func_name)
-            result = result or func(*args, **kwargs)
-    return result
+    def search_for_plugins(self, func_name, *args, **kwargs):
+        result = False
+        for loaded_plugin in self.plugins:
+            if hasattr(loaded_plugin, func_name):
+                func = getattr(loaded_plugin, func_name)
+                result = func(self, *args, **kwargs) or result
+        return result
+
+    def first_plugin_result(self, func_name, *args, **kwargs):
+        for loaded_plugin in self.plugins:
+            if hasattr(loaded_plugin, func_name):
+                func = getattr(loaded_plugin, func_name)
+                result_exist, result = func(self, *args, **kwargs)
+                if result_exist:
+                    return result_exist, result
+        return False, None
+
 
 def set_debug(setup):
     setup['DEBUG_RECORD_SOCKET_READS'] = True
