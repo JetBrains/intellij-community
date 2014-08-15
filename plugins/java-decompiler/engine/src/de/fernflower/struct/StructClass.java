@@ -118,6 +118,10 @@ public class StructClass {
 	// public methods
 	// *****************************************************************************
 
+	public boolean hasField(String name, String descriptor) {
+		return getField(name, descriptor) != null;
+	}
+	
 	public StructField getField(String name, String descriptor) {
 		return fields.getWithKey(InterpreterUtil.makeUniqueKey(name, descriptor));
 	}

@@ -208,7 +208,9 @@ public class InitializerProcessor {
 					AssignmentExprent asexpr = (AssignmentExprent)exprent;
 					if(asexpr.getLeft().type == Exprent.EXPRENT_FIELD) {
 						FieldExprent fexpr = (FieldExprent)asexpr.getLeft();
-						if(!fexpr.isStatic() && fexpr.getClassname().equals(cl.qualifiedName)) {
+						if(!fexpr.isStatic() && fexpr.getClassname().equals(cl.qualifiedName) &&
+								cl.hasField(fexpr.getName(), fexpr.getDescriptor().descriptorString)) { // check for the physical existence of the field. Could be defined in a superclass.
+							
 							if(isExprentIndependent(asexpr.getRight(), lstMethWrappers.get(i))) {
 								String fieldKey = InterpreterUtil.makeUniqueKey(fexpr.getName(), fexpr.getDescriptor().descriptorString);
 								if(fieldWithDescr == null) {
