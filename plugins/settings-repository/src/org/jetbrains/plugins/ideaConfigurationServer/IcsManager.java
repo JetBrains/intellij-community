@@ -55,6 +55,8 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
     }
   }, settings.commitDelay);
 
+  private volatile boolean autoCommitEnabled;
+
   private static void awaitCallback(@NotNull ProgressIndicator indicator, @NotNull ActionCallback callback, @NotNull String title) {
     while (!callback.isProcessed()) {
       try {
@@ -93,6 +95,12 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
     }
   }
 
+  private void scheduleCommit() {
+    if (autoCommitEnabled) {
+      commitAlarm.cancelAndRequest();
+    }
+  }
+
   private void registerApplicationLevelProviders(Application application) {
     try {
       settings.load();
@@ -113,7 +121,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
       @Override
       public void deleteFile(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
         repositoryManager.deleteAsync(IcsUrlBuilder.buildPath(fileSpec, roamingType, null));
-        commitAlarm.cancelAndRequest();
+        scheduleCommit();
       }
     };
     StateStorageManager storageManager = ((ApplicationImpl)application).getStateStore().getStateStorageManager();
@@ -209,7 +217,9 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
 
   @NotNull
   public ActionCallback sync(@NotNull SyncType syncType) {
+    autoCommitEnabled = false;
     commitAlarm.cancel();
+
     final ActionCallback actionCallback = new ActionCallback(3);
     ProgressManager.getInstance().run(new Task.Modal(null, IcsBundle.message("task.sync.title"), true) {
       @Override
@@ -221,12 +231,18 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
             ApplicationManager.getApplication().saveSettings();
           }
         }, ModalityState.any());
-        commitAlarm.cancel();
 
         repositoryManager.commit(indicator).notify(actionCallback);
         repositoryManager.pull(indicator).notify(actionCallback);
         repositoryManager.push(indicator).notify(actionCallback);
         awaitCallback(indicator, actionCallback, getTitle());
+      }
+    });
+
+    actionCallback.doWhenProcessed(new Runnable() {
+      @Override
+      public void run() {
+        autoCommitEnabled = true;
       }
     });
     return actionCallback;
@@ -243,7 +259,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
     public final boolean saveContent(@NotNull String fileSpec, @NotNull byte[] content, int size, @NotNull RoamingType roamingType, boolean async) {
       repositoryManager.write(IcsUrlBuilder.buildPath(fileSpec, roamingType, projectId), content, size, async);
       if (isAutoCommit(fileSpec, roamingType)) {
-        commitAlarm.cancelAndRequest();
+        scheduleCommit();
       }
       return false;
     }
