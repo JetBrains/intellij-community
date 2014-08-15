@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HideableTitledPanel;
 import com.intellij.ui.JBColor;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.edu.StudyDocumentListener;
 import com.jetbrains.python.edu.StudyTaskManager;
 import com.jetbrains.python.edu.actions.*;
@@ -110,6 +111,7 @@ public class StudyEditor implements FileEditor {
     int fontSize = editorColorsScheme.getEditorFontSize();
     String fontName = editorColorsScheme.getEditorFontName();
     setJTextPaneFont(taskTextPane, new Font(fontName, Font.PLAIN, fontSize), JBColor.BLACK);
+    taskTextPane.setBackground(UIUtil.getPanelBackground());
     taskTextPane.setBorder(new EmptyBorder(15, 20, 0, 100));
     HideableTitledPanel taskTextPanel = new HideableTitledPanel(TASK_TEXT_HEADER, taskTextPane, true);
     taskTextPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
