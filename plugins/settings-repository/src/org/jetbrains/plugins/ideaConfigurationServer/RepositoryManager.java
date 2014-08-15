@@ -49,4 +49,6 @@ public interface RepositoryManager {
   void initRepository(@NotNull File dir) throws IOException;
 
   boolean has(String path);
+
+  boolean isValidRepository(@NotNull File file);
 }

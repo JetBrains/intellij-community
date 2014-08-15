@@ -400,4 +400,19 @@ final class GitRepositoryManager extends BaseRepositoryManager {
       return true;
     }
   }
+
+  @Override
+  public boolean isValidRepository(@NotNull File file) {
+    if (new File(file, Constants.DOT_GIT).exists()) {
+      return true;
+    }
+    // existing bare repository
+    try {
+      new FileRepositoryBuilder().setGitDir(file).setMustExist(true).build();
+    }
+    catch (IOException e) {
+      return false;
+    }
+    return true;
+  }
 }

@@ -24,7 +24,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
-@SuppressWarnings("DialogTitleCapitalization")
 public class IcsSettingsPanel extends DialogWrapper {
   private JPanel panel;
   private TextFieldWithBrowseButton urlTextField;
@@ -146,6 +145,7 @@ public class IcsSettingsPanel extends DialogWrapper {
     return true;
   }
 
+  @SuppressWarnings("DialogTitleCapitalization")
   private boolean checkFileRepo(@NotNull String url) {
     String suffix = '/' + Constants.DOT_GIT;
     if (url.endsWith(suffix)) {
@@ -158,7 +158,7 @@ public class IcsSettingsPanel extends DialogWrapper {
         Messages.showErrorDialog(getContentPane(), "Specified path is not a directory", "Specified path is invalid");
         return false;
       }
-      else if (new File(file, Constants.DOT_GIT).exists()) {
+      else if (IcsManager.getInstance().getRepositoryManager().isValidRepository(file)) {
         return true;
       }
     }
