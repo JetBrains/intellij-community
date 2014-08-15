@@ -177,26 +177,17 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
     }
   }
 
+  @NotNull
   public IcsSettings getSettings() {
     return settings;
   }
 
+  @NotNull
   public RepositoryManager getRepositoryManager() {
     return repositoryManager;
   }
 
-  public String getStatusText() {
-    switch (status) {
-      case OPEN_FAILED:
-        return "Open repository failed";
-      case UPDATE_FAILED:
-        return "Update repository failed";
-      default:
-        return "Unknown";
-    }
-  }
-
-  private static void updateStoragesFromStreamProvider(final StateStorageManager appStorageManager, final Collection<String> storageFileNames) {
+  private static void updateStoragesFromStreamProvider(@NotNull StateStorageManager appStorageManager, @NotNull Collection<String> storageFileNames) {
     for (String storageFileName : storageFileNames) {
       StateStorage stateStorage = appStorageManager.getFileStateStorage(storageFileName);
       if (stateStorage instanceof FileBasedStorage) {
