@@ -30,6 +30,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.util.*;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author amarch
@@ -51,22 +55,60 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
   }
 
   private class NumpyArrayValueProvider extends ArrayValueProvider {
+    private static final String NUMERIC_VALUE_SEPARATOR = " ";
+    private static final String START_ROW_SEPARATOR = "[";
+    private final Pattern STR_VALUE_SEPARATOR = Pattern.compile("'.*?[^\\\\]'|\".*?[^\\\\]\"");
+    private static final String END_ROW_SEPARATOR = "]";
 
     @Override
-    public Object[][] parseValues(String rawValue) {
+    public Object[][] parseValues(String rawValues) {
 
-      if (rawValue != null && rawValue.startsWith("[")) {
+      if (rawValues != null && rawValues.startsWith(START_ROW_SEPARATOR)) {
         int dimension = 0;
-        while (rawValue.charAt(dimension) == '[') {
+        while (rawValues.charAt(dimension) == START_ROW_SEPARATOR.charAt(0)) {
           dimension += 1;
         }
 
-        if (dimension > 2){
+        String showedValues =
+          dimension > 2 ? rawValues.substring(dimension - 2, rawValues.indexOf(END_ROW_SEPARATOR + END_ROW_SEPARATOR) + 2) : rawValues;
+        //todo: in case of non numeric split by other regex(
+        String[] rows = showedValues.split("\\]\n(\\ )*\\[");
 
+        Object[][] data = null;
+        boolean numeric = isNumeric(showedValues);
+        for (int i = 0; i < rows.length; i++) {
+          Object[] row;
+
+          if (numeric) {
+            String clearedRow = rows[i].replace(START_ROW_SEPARATOR, "").replace(END_ROW_SEPARATOR, "").replace("  ", " ").trim();
+            row = clearedRow.split(NUMERIC_VALUE_SEPARATOR);
+          }
+          else {
+            String clearedRow = rows[i].replace(START_ROW_SEPARATOR, "").replace(END_ROW_SEPARATOR, "").replace("  ", " ").trim();
+            Matcher matcher = STR_VALUE_SEPARATOR.matcher(clearedRow);
+            List<String> matches = new ArrayList<String>();
+            while (matcher.find()) {
+              matches.add(matcher.group());
+            }
+            row = matches.toArray();
+          }
+
+          data = data == null ? new String[rows.length][row.length] : data;
+          for (int j = 0; j < row.length; j++) {
+            data[i][j] = row[j];
+          }
         }
+        return data;
       }
 
       return null;
+    }
+
+    private boolean isNumeric(String value) {
+      if (value.contains("\'") || value.contains("\"")) {
+        return false;
+      }
+      return true;
     }
   }
 
@@ -95,7 +137,7 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
           node.getValuePresentation().getType().equals("ndarray")) {
         valueProvider = new NumpyArrayValueProvider();
         final Object[][] data = valueProvider.parseValues(evaluateFullValue(node));
-        DefaultTableModel model = new DefaultTableModel(data, range(0, data.length));
+        DefaultTableModel model = new DefaultTableModel(data, range(0, data[0].length - 1));
         myTable.setModel(model);
       }
     }
@@ -109,7 +151,7 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
     }
 
     private String evaluateFullValue(XValueNodeImpl node) {
-      final String[] result = new String[0];
+      final String[] result = new String[1];
 
       XFullValueEvaluator.XFullValueEvaluationCallback valueEvaluationCallback = new XFullValueEvaluator.XFullValueEvaluationCallback() {
         @Override
@@ -135,6 +177,9 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
 
       if (node.getFullValueEvaluator() != null) {
         node.getFullValueEvaluator().startEvaluation(valueEvaluationCallback);
+      }
+      else {
+        return node.getRawValue();
       }
 
       return result[0];
