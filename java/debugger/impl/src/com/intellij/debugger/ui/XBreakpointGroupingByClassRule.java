@@ -68,6 +68,6 @@ class XBreakpointGroupingByClassRule<B> extends XBreakpointGroupingRule<B, XBrea
   @Nullable
   @Override
   public Icon getIcon() {
-    return AllIcons.Nodes.Class;
+    return AllIcons.Actions.GroupByClass;
   }
 }
