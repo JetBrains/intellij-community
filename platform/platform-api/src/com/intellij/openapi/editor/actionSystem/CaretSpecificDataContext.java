@@ -40,7 +40,8 @@ public class CaretSpecificDataContext extends DataContextWrapper {
     if (project == null) {
       return null;
     }
-    Object data = FileEditorManager.getInstance(project).getData(dataId, myCaret.getEditor(), myCaret);
+    FileEditorManager fm = FileEditorManager.getInstance(project);
+    Object data = fm == null ? null : fm.getData(dataId, myCaret.getEditor(), myCaret);
     return data == null ? super.getData(dataId) : data;
   }
 }

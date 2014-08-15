@@ -1,6 +1,9 @@
 package com.siyeh.igtest.internationalization.implicit_default_charset_usage;
 
 import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
 import java.util.ArrayList;
 import java.util.Formatter;
 import java.util.Locale;
@@ -36,5 +39,13 @@ class ImplicitDefaultCharsetUsage {
     new Scanner(new FileInputStream("null"), "utf-8");
     new Scanner("string input");
     new ArrayList(10);
+  }
+
+  void charsetEnAndDecoders(InputStream inputStream, OutputStream outputStream) throws IOException {
+    final Charset cs = Charset.forName("UTF-8");
+    CharsetDecoder cd = cs.newDecoder();
+    InputStreamReader is = new InputStreamReader(inputStream, cd);
+    CharsetEncoder ce = cs.newEncoder();
+    final OutputStreamWriter ow = new OutputStreamWriter(outputStream, ce);
   }
 }
