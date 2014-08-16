@@ -43,11 +43,9 @@
             description="Runs tests for current tasks" icon="/icons/icon.jpg">
     </action>
     <action id="PrevWindowAction" class="com.jetbrains.python.edu.actions.StudyPrevWindowAction" text="PrevWindowAction" description="prev">
-      <add-to-group group-id="MainToolBar" anchor="last"/>
     </action>
 
     <action id="NextWindow" class="com.jetbrains.python.edu.actions.StudyNextWindowAction" text="NextWindowAction" description="next">
-      <add-to-group group-id="MainToolBar" anchor="last"/>
     </action>
     <action id="NextTaskAction" class="com.jetbrains.python.edu.actions.StudyNextStudyTaskAction" text="NextTaskAction" description="Next Task"/>
     <action id="PreviousTaskAction" class="com.jetbrains.python.edu.actions.StudyPreviousStudyTaskAction" text="PreviousTaskAction"
