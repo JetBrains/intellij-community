@@ -145,7 +145,7 @@ public abstract class BaseRepositoryManager implements RepositoryManager {
     return new File(dir, path).exists();
   }
 
-  protected abstract static class Task implements ThrowableRunnable<Exception> {
+  public abstract static class Task implements ThrowableRunnable<Exception> {
     private final ActionCallback callback = new ActionCallback();
     protected final ProgressIndicator indicator;
 

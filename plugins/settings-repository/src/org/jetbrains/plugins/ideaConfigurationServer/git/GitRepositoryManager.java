@@ -9,8 +9,6 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.CredentialsProvider;
-import org.eclipse.jgit.transport.FetchResult;
-import org.eclipse.jgit.transport.TrackingRefUpdate;
 import org.eclipse.jgit.treewalk.FileTreeIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,11 +18,10 @@ import org.jetbrains.plugins.ideaConfigurationServer.IcsUrlBuilder;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 public final class GitRepositoryManager extends BaseRepositoryManager {
-  private final Git git;
+  final Git git;
 
   private CredentialsProvider credentialsProvider;
 
@@ -48,7 +45,8 @@ public final class GitRepositoryManager extends BaseRepositoryManager {
     new FileRepositoryBuilder().setBare().setGitDir(dir).build().create(true);
   }
 
-  private CredentialsProvider getCredentialsProvider() {
+  @NotNull
+  CredentialsProvider getCredentialsProvider() {
     if (credentialsProvider == null) {
       credentialsProvider = new JGitCredentialsProvider(this);
     }
@@ -188,108 +186,7 @@ public final class GitRepositoryManager extends BaseRepositoryManager {
   @Override
   @NotNull
   public ActionCallback pull(@NotNull ProgressIndicator indicator) {
-    return execute(new Task(indicator) {
-      @Override
-      protected void execute() throws Exception {
-        JGitProgressMonitor progressMonitor = new JGitProgressMonitor(indicator);
-        FetchResult fetchResult = git.fetch().setRemoveDeletedRefs(true).setProgressMonitor(progressMonitor).setCredentialsProvider(getCredentialsProvider()).call();
-        if (LOG.isDebugEnabled()) {
-          String messages = fetchResult.getMessages();
-          if (!StringUtil.isEmptyOrSpaces(messages)) {
-            LOG.debug(messages);
-          }
-        }
-
-        Iterator<TrackingRefUpdate> refUpdates = fetchResult.getTrackingRefUpdates().iterator();
-        TrackingRefUpdate refUpdate = refUpdates.hasNext() ? refUpdates.next() : null;
-        if (refUpdate == null || refUpdate.getResult() == RefUpdate.Result.NO_CHANGE || refUpdate.getResult() == RefUpdate.Result.FORCED) {
-          LOG.debug("Nothing to merge");
-          return;
-        }
-
-        int attemptCount = 0;
-        do {
-          MergeCommand mergeCommand = git.merge();
-          org.eclipse.jgit.lib.Ref ref = getUpstreamBranchRef();
-          if (ref == null) {
-            throw new AssertionError();
-          }
-          else {
-            mergeCommand.include(ref);
-          }
-
-         MergeResult mergeResult = mergeCommand.setFastForward(MergeCommand.FastForwardMode.FF_ONLY).call();
-          if (LOG.isDebugEnabled()) {
-            LOG.debug(mergeResult.toString());
-          }
-
-          MergeResult.MergeStatus status = mergeResult.getMergeStatus();
-          if (status.isSuccessful()) {
-            rebase(progressMonitor);
-            return;
-          }
-          else if (status != MergeResult.MergeStatus.ABORTED) {
-            break;
-          }
-        }
-        while (++attemptCount < 3);
-      }
-
-      private org.eclipse.jgit.lib.Ref getUpstreamBranchRef() throws IOException {
-        return git.getRepository().getRef(Constants.DEFAULT_REMOTE_NAME + '/' + Constants.MASTER);
-      }
-
-      private void rebase(@NotNull JGitProgressMonitor progressMonitor) throws GitAPIException {
-        RebaseResult result = null;
-        do {
-          if (result == null) {
-            result = git.rebase().setUpstream(Constants.DEFAULT_REMOTE_NAME + '/' + Constants.MASTER).setProgressMonitor(progressMonitor).call();
-          }
-          else if (result.getStatus() == RebaseResult.Status.CONFLICTS) {
-            throw new UnsupportedOperationException();
-          }
-          else if (result.getStatus() == RebaseResult.Status.NOTHING_TO_COMMIT) {
-            result = git.rebase().setOperation(RebaseCommand.Operation.SKIP).call();
-          }
-          else {
-            throw new UnsupportedOperationException();
-          }
-        }
-        while (!result.getStatus().isSuccessful());
-      }
-    });
-  }
-
-  private static class JGitProgressMonitor implements ProgressMonitor {
-    private final ProgressIndicator indicator;
-
-    public JGitProgressMonitor(ProgressIndicator indicator) {
-      this.indicator = indicator;
-    }
-
-    @Override
-    public void start(int totalTasks) {
-    }
-
-    @Override
-    public void beginTask(String title, int totalWork) {
-      indicator.setText2(title);
-    }
-
-    @Override
-    public void update(int completed) {
-      // todo
-    }
-
-    @Override
-    public void endTask() {
-      indicator.setText2("");
-    }
-
-    @Override
-    public boolean isCancelled() {
-      return indicator.isCanceled();
-    }
+    return execute(new PullTask(this, indicator));
   }
 
   @Override
