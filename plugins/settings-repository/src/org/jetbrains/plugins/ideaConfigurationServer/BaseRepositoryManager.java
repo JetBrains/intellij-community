@@ -5,7 +5,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.QueueProcessor;
 import org.jetbrains.annotations.NotNull;
@@ -21,11 +20,11 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class BaseRepositoryManager implements RepositoryManager {
-  protected static final Logger LOG = Logger.getInstance(BaseRepositoryManager.class);
+  public static final Logger LOG = Logger.getInstance(BaseRepositoryManager.class);
 
   protected final File dir;
 
-  protected final QueueProcessor<ThrowableRunnable<Exception>> taskProcessor = new QueueProcessor<ThrowableRunnable<Exception>>(new Consumer<ThrowableRunnable<Exception>>() {
+  private final QueueProcessor<ThrowableRunnable<Exception>> taskProcessor = new QueueProcessor<ThrowableRunnable<Exception>>(new Consumer<ThrowableRunnable<Exception>>() {
     @Override
     public void consume(ThrowableRunnable<Exception> task) {
       try {
@@ -131,26 +130,40 @@ public abstract class BaseRepositoryManager implements RepositoryManager {
 
   protected abstract void doUpdateRepository() throws Exception;
 
-  protected final ActionCallback execute(@NotNull final ThrowableConsumer<ProgressIndicator, Exception> task, @NotNull final ProgressIndicator indicator) {
-    final ActionCallback callback = new ActionCallback();
-    taskProcessor.add(new ThrowableRunnable<Exception>() {
-      @Override
-      public void run() throws Exception {
-        try {
-          task.consume(indicator);
-          callback.setDone();
-        }
-        catch (Throwable e) {
-          callback.reject(e.getMessage());
-          LOG.error(e);
-        }
-      }
-    });
-    return callback;
+  @NotNull
+  protected final ActionCallback execute(@NotNull Task task) {
+    taskProcessor.add(task);
+    return task.callback;
+  }
+
+  public void execute(@NotNull ThrowableRunnable<Exception> task) {
+    taskProcessor.add(task);
   }
 
   @Override
   public boolean has(String path) {
     return new File(dir, path).exists();
+  }
+
+  protected abstract static class Task implements ThrowableRunnable<Exception> {
+    private final ActionCallback callback = new ActionCallback();
+    protected final ProgressIndicator indicator;
+
+    protected Task(@NotNull ProgressIndicator indicator) {
+      this.indicator = indicator;
+    }
+
+    @Override
+    public final void run() throws Exception {
+      try {
+        execute();
+      }
+      catch (Throwable e) {
+        callback.reject(e.getMessage());
+        LOG.error(e);
+      }
+    }
+
+    protected abstract void execute() throws Exception;
   }
 }
