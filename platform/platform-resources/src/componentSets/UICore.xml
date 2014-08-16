@@ -14,10 +14,6 @@
       <headless-implementation-class>com.intellij.idea.CommandLineApplication$MyDataManagerImpl</headless-implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.openapi.actionSystem.AbbreviationManager</interface-class>
-      <implementation-class>com.intellij.openapi.actionSystem.impl.AbbreviationManagerImpl</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.openapi.actionSystem.ActionManager</interface-class>
       <implementation-class>com.intellij.openapi.actionSystem.impl.ActionManagerImpl</implementation-class>
     </component>

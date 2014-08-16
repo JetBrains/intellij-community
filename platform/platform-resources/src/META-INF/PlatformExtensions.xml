@@ -239,6 +239,10 @@
     <applicationService serviceInterface="com.intellij.ui.ColorChooserService"
                         serviceImplementation="com.intellij.ui.ColorChooserServiceImpl"/>
 
+    <applicationService serviceInterface="com.intellij.openapi.actionSystem.AbbreviationManager"
+                        serviceImplementation="com.intellij.openapi.actionSystem.impl.AbbreviationManagerImpl"/>
+    <exportable serviceInterface="com.intellij.openapi.actionSystem.AbbreviationManager"/>
+
     <scopeParserExtension implementation="com.intellij.psi.search.scope.packageSet.FilePackageSetParserExtension"/>
     <applicationService serviceInterface="com.intellij.openapi.ui.popup.StackingPopupDispatcher" serviceImplementation="com.intellij.ui.popup.StackingPopupDispatcherImpl"/>
 

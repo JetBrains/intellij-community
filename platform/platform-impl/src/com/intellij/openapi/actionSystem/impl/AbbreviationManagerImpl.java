@@ -38,26 +38,10 @@ import java.util.*;
     )}
 )
 public class AbbreviationManagerImpl extends AbbreviationManager implements
-                                                                 ExportableApplicationComponent, PersistentStateComponent<Element> {
+                                                                 ExportableComponent, PersistentStateComponent<Element> {
   private final Map<String, List<String>> myAbbreviation2ActionId = new THashMap<String, List<String>>();
   private final Map<String, LinkedHashSet<String>> myActionId2Abbreviations = new THashMap<String, LinkedHashSet<String>>();
   private final Map<String, LinkedHashSet<String>> myPluginsActionId2Abbreviations = new THashMap<String, LinkedHashSet<String>>();
-
-  @Override
-  public void initComponent() {
-
-  }
-
-  @Override
-  public void disposeComponent() {
-
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "AbbreviationManager";
-  }
 
   @Nullable
   @Override
