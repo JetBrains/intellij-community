@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.ideaConfigurationServer;
+package org.jetbrains.plugins.ideaConfigurationServer.git;
 
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -8,13 +8,17 @@ import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
-import org.eclipse.jgit.transport.*;
+import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.FetchResult;
+import org.eclipse.jgit.transport.TrackingRefUpdate;
 import org.eclipse.jgit.treewalk.FileTreeIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.ideaConfigurationServer.git.JGitCredentialsProvider;
+import org.jetbrains.plugins.ideaConfigurationServer.BaseRepositoryManager;
+import org.jetbrains.plugins.ideaConfigurationServer.IcsUrlBuilder;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;

@@ -3,7 +3,7 @@ package org.jetbrains.plugins.ideaConfigurationServer;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.util.SystemInfo;
 
-final class IcsUrlBuilder {
+public final class IcsUrlBuilder {
   public static final String PROJECTS_DIR_NAME = "projects/";
 
   private static String getOsName() {

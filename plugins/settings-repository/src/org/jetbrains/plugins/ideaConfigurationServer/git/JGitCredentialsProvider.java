@@ -13,12 +13,11 @@ import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.URIish;
 import org.jetbrains.plugins.ideaConfigurationServer.AuthDialog;
 import org.jetbrains.plugins.ideaConfigurationServer.BaseRepositoryManager;
-import org.jetbrains.plugins.ideaConfigurationServer.GitRepositoryManager;
 import org.jetbrains.plugins.ideaConfigurationServer.IcsManager;
 
 import java.io.*;
 
-public class JGitCredentialsProvider extends CredentialsProvider {
+class JGitCredentialsProvider extends CredentialsProvider {
   private final GitRepositoryManager manager;
   private String username;
   private String password;

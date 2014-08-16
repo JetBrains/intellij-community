@@ -26,6 +26,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.util.SingleAlarm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ideaConfigurationServer.git.GitRepositoryManager;
 
 import java.io.File;
 import java.io.IOException;
