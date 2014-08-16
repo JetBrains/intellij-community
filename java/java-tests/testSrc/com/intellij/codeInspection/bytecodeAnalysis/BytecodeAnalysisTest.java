@@ -17,7 +17,7 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.InferredAnnotationsManager;
-import com.intellij.codeInspection.bytecodeAnalysis.asm.LeakingParametersAnalysis;
+import com.intellij.codeInspection.bytecodeAnalysis.asm.LeakingParameters;
 import com.intellij.codeInspection.bytecodeAnalysis.data.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -95,7 +95,7 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
           public void visitEnd() {
             super.visitEnd();
             try {
-              map.put(method, LeakingParametersAnalysis.leakingParameters(classReader.getClassName(), node, false).first);
+              map.put(method, LeakingParameters.build(classReader.getClassName(), node, false).parameters);
             }
             catch (AnalyzerException ignore) {}
           }

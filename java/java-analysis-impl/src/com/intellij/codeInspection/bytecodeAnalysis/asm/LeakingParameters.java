@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.tree.*;
@@ -29,8 +28,16 @@ import static org.jetbrains.org.objectweb.asm.Opcodes.*;
 /**
  * @author lambdamix
  */
-public class LeakingParametersAnalysis {
-  public static Pair<boolean[], Frame<Value>[]> leakingParameters(String className, MethodNode methodNode, boolean jsr) throws AnalyzerException {
+public class LeakingParameters {
+  public final Frame<Value>[] frames;
+  public final boolean[] parameters;
+
+  public LeakingParameters(Frame<Value>[] frames, boolean[] parameters) {
+    this.frames = frames;
+    this.parameters = parameters;
+  }
+
+  public static LeakingParameters build(String className, MethodNode methodNode, boolean jsr) throws AnalyzerException {
     Frame<ParamsValue>[] frames = jsr ?
                                   new Analyzer<ParamsValue>(new ParametersUsage(methodNode)).analyze(className, methodNode) :
                                   new LiteAnalyzer<ParamsValue>(new ParametersUsage(methodNode)).analyze(className, methodNode);
@@ -50,10 +57,10 @@ public class LeakingParametersAnalysis {
         }
       }
     }
-    return Pair.create(collector.leaking, (Frame<Value>[])(Frame<?>[])frames);
+    return new LeakingParameters((Frame<Value>[])(Frame<?>[])frames, collector.leaking);
   }
 
-  public static Pair<boolean[], Frame<Value>[]> fastLeakingParameters(String className, MethodNode methodNode, boolean jsr) throws AnalyzerException {
+  public static LeakingParameters buildFast(String className, MethodNode methodNode, boolean jsr) throws AnalyzerException {
     IParametersUsage parametersUsage = new IParametersUsage(methodNode);
     Frame<?>[] frames = jsr ?
                         new Analyzer<IParamsValue>(parametersUsage).analyze(className, methodNode) :
@@ -63,7 +70,7 @@ public class LeakingParametersAnalysis {
     for (int i = 0; i < result.length; i++) {
       result[i] = (leakingMask & (1 << i)) != 0;
     }
-    return Pair.create(result, (Frame<Value>[])frames);
+    return new LeakingParameters((Frame<Value>[])frames, result);
   }
 }
 

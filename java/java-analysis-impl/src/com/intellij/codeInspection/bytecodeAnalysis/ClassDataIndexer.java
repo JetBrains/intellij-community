@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.tree.MethodNode;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
-import org.jetbrains.org.objectweb.asm.tree.analysis.Frame;
 
 import java.security.MessageDigest;
 import java.util.*;
@@ -190,16 +189,16 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
           }
         }
 
-        final Pair<boolean[], Frame<org.jetbrains.org.objectweb.asm.tree.analysis.Value>[]> leakingParametersAndFrames =
+        final LeakingParameters leakingParametersAndFrames =
           maybeLeakingParameter ? leakingParametersAndFrames(method, methodNode, argumentTypes, jsr) : null;
         boolean[] leakingParameters =
-          leakingParametersAndFrames != null ? leakingParametersAndFrames.first : null;
+          leakingParametersAndFrames != null ? leakingParametersAndFrames.parameters : null;
 
         final NullableLazyValue<boolean[]> origins = new NullableLazyValue<boolean[]>() {
           @Override
           protected boolean[] compute() {
             try {
-              return OriginsAnalysis.resultOrigins(leakingParametersAndFrames.second, methodNode.instructions, richControlFlow.controlFlow);
+              return OriginsAnalysis.resultOrigins(leakingParametersAndFrames.frames, methodNode.instructions, richControlFlow.controlFlow);
             }
             catch (AnalyzerException e) {
               LOG.debug("when processing " + method + " in " + presentableUrl, e);
@@ -350,14 +349,11 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
         return result;
       }
 
-      private Pair<boolean[], Frame<org.jetbrains.org.objectweb.asm.tree.analysis.Value>[]> leakingParametersAndFrames(Method method,
-                                                                                                                       MethodNode methodNode,
-                                                                                                                       Type[] argumentTypes,
-                                                                                                                       boolean jsr)
+      private LeakingParameters leakingParametersAndFrames(Method method, MethodNode methodNode, Type[] argumentTypes, boolean jsr)
         throws AnalyzerException {
         return argumentTypes.length < 32 ?
-                LeakingParametersAnalysis.fastLeakingParameters(method.internalClassName, methodNode, jsr) :
-                LeakingParametersAnalysis.leakingParameters(method.internalClassName, methodNode, jsr);
+                LeakingParameters.buildFast(method.internalClassName, methodNode, jsr) :
+                LeakingParameters.build(method.internalClassName, methodNode, jsr);
       }
     }, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
