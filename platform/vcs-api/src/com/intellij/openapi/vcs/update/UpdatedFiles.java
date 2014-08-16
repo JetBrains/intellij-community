@@ -106,6 +106,10 @@ public class UpdatedFiles implements JDOMExternalizable {
     return result;
   }
 
+  /**
+   * @deprecated: remove after IDEA 14
+   */
+  @SuppressWarnings("UnusedDeclaration")
   public void setRevisions(final String path, final AbstractVcs vcs, final VcsRevisionNumber revision) {
     for(FileGroup group: myGroups) {
       group.setRevisions(path, vcs, revision);      

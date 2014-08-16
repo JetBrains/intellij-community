@@ -19,6 +19,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.persistent.SmallMapSerializer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -60,18 +61,6 @@ public class SvnLoadedBranchesStorage {
     }
   }
   
-  public void put(final String url, final Collection<SvnBranchItem> items) {
-    synchronized (myLock) {
-      if (myState == null) return;
-      Map<String, Collection<SvnBranchItem>> map = myState.get("");
-      if (map == null) {
-        map = new HashMap<String, Collection<SvnBranchItem>>();
-        myState.put("", map);
-      }
-      map.put(url, items);
-    }
-  }
-
   public void activate() {
     synchronized (myLock) {
       myState = new SmallMapSerializer<String, Map<String, Collection<SvnBranchItem>>>(myFile, new EnumeratorStringDescriptor(), createExternalizer());
@@ -80,15 +69,19 @@ public class SvnLoadedBranchesStorage {
 
 
   public void deactivate() {
+    Map<String, Collection<SvnBranchItem>> branchLocationToBranchItemsMap = ContainerUtil.newHashMap();
     SvnBranchConfigurationManager manager = SvnBranchConfigurationManager.getInstance(myProject);
     Map<VirtualFile,SvnBranchConfigurationNew> mapCopy = manager.getSvnBranchConfigManager().getMapCopy();
     for (Map.Entry<VirtualFile, SvnBranchConfigurationNew> entry : mapCopy.entrySet()) {
       Map<String,InfoStorage<List<SvnBranchItem>>> branchMap = entry.getValue().getBranchMap();
       for (Map.Entry<String, InfoStorage<List<SvnBranchItem>>> storageEntry : branchMap.entrySet()) {
-          put(storageEntry.getKey(), storageEntry.getValue().getValue());
+        branchLocationToBranchItemsMap.put(storageEntry.getKey(), storageEntry.getValue().getValue());
       }
     }
     synchronized (myLock) {
+      // TODO: Possibly implement optimization - do not perform save if there are no changes in branch locations and branch items
+      // ensure myState.put() is called - so myState will treat itself as dirty and myState.force() will invoke real persisting
+      myState.put("", branchLocationToBranchItemsMap);
       myState.force();
       myState = null;
     }

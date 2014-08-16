@@ -614,7 +614,7 @@ public class SvnHistoryProvider
       final SVNURL url = myRepositoryRoot.appendPath(myLastPath, true);
 //      final SVNURL url = entryPath != null ? myRepositoryRoot.appendPath(entryPath.getPath(), true) :
 //                         myRepositoryRoot.appendPath(myLastPathCorrector.getBefore(), false);
-      return new SvnFileRevision(myVcs, myPegRevision, rev, url.toString(), author, date, message, copyPath, myCharset);
+      return new SvnFileRevision(myVcs, myPegRevision, rev, url.toString(), author, date, message, copyPath);
     }
   }
 
@@ -633,7 +633,7 @@ public class SvnHistoryProvider
       throws SVNException {
       final SVNURL url = entryPath == null ? myRepositoryRoot.appendPath(myLastPathCorrector.getBefore(), false) :
                          myRepositoryRoot.appendPath(entryPath.getPath(), true);
-      return new SvnFileRevision(myVcs, SVNRevision.UNDEFINED, logEntry, url.toString(), copyPath, null);
+      return new SvnFileRevision(myVcs, SVNRevision.UNDEFINED, logEntry, url.toString(), copyPath);
     }
   }
 
