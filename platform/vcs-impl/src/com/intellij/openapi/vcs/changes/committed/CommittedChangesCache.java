@@ -777,8 +777,8 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       public void run() {
         debug("Processing updated files");
         final Collection<ChangesCacheFile> caches = myCachesHolder.getAllCaches();
+        myPendingUpdateCount += caches.size();
         for(final ChangesCacheFile cache: caches) {
-          myPendingUpdateCount++;
           try {
             if (cache.isEmpty()) {
               pendingUpdateProcessed();
