@@ -1,5 +1,8 @@
 package unit.classes;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class TestClassTypes {
 
     public void testBoolean() {
@@ -18,4 +21,16 @@ public class TestClassTypes {
         }
     }
 	
+    
+	public void testAssignmentType(List list) {
+		
+		List a = list;
+	
+		if(a != null) {
+			(a = new ArrayList(a)).add("23");
+		}
+		
+		System.out.println(a.size());
+	}
+   
 }

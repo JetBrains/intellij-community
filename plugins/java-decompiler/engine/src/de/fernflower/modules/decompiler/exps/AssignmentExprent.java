@@ -65,7 +65,7 @@ public class AssignmentExprent extends Exprent {
 	
 	
 	public VarType getExprType() {
-		return right.getExprType();
+		return left.getExprType();
 	}
 	
 
