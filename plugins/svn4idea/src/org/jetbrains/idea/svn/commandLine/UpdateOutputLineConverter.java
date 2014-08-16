@@ -16,6 +16,9 @@
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Stack;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.EventAction;
@@ -70,13 +73,11 @@ public class UpdateOutputLineConverter {
       ourCheckedOutExternal, ourExportComplete};
 
   private final File myBase;
-  private File myCurrentFile;
+  @NotNull private final Stack<File> myRootsUnderProcessing;
 
   public UpdateOutputLineConverter(File base) {
     myBase = base;
-    // checkout output does not have special line like "Updating '.'" on start - so set current file directly
-    // to correctly detect complete event
-    myCurrentFile = base;
+    myRootsUnderProcessing = ContainerUtil.newStack();
   }
 
   public ProgressEvent convert(final String line) {
@@ -87,29 +88,27 @@ public class UpdateOutputLineConverter {
     if (line.startsWith(MERGING) || line.startsWith(RECORDING_MERGE_INFO)) {
       return null;
     } else if (line.startsWith(UPDATING)) {
-      myCurrentFile = parseForPath(line);
-      return new ProgressEvent(myCurrentFile, -1, null, null, EventAction.UPDATE_NONE, null, null);
+      myRootsUnderProcessing.push(parseForPath(line));
+      return new ProgressEvent(myRootsUnderProcessing.peek(), -1, null, null, EventAction.UPDATE_NONE, null, null);
     } else if (line.startsWith(RESTORED)) {
-      myCurrentFile = parseForPath(line);
-      return new ProgressEvent(myCurrentFile, -1, null, null, EventAction.RESTORE, null, null);
+      return new ProgressEvent(parseForPath(line), -1, null, null, EventAction.RESTORE, null, null);
     } else if (line.startsWith(SKIPPED)) {
       // called, for instance, when folder is not working copy
-      myCurrentFile = parseForPath(line);
       final String comment = parseComment(line);
-      return new ProgressEvent(myCurrentFile, -1, null, null, EventAction.SKIP,
+      return new ProgressEvent(parseForPath(line), -1, null, null, EventAction.SKIP,
                                comment == null ? null : SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, comment), null);
     } else if (line.startsWith(FETCHING_EXTERNAL)) {
-      myCurrentFile = parseForPath(line);
-      return new ProgressEvent(myCurrentFile, -1, null, null, EventAction.UPDATE_EXTERNAL, null, null);
+      myRootsUnderProcessing.push(parseForPath(line));
+      return new ProgressEvent(myRootsUnderProcessing.peek(), -1, null, null, EventAction.UPDATE_EXTERNAL, null, null);
     }
 
     for (int i = 0; i < ourCompletePatterns.length; i++) {
       final Pattern pattern = ourCompletePatterns[i];
       final long revision = matchAndGetRevision(pattern, line);
       if (revision != -1) {
-        // TODO: seems that myCurrentFile will not always be correct - complete update message could be right after complete externals update
-        // TODO: check this and use Stack instead
-        return new ProgressEvent(myCurrentFile, revision, null, null, EventAction.UPDATE_COMPLETED, null, null);
+        // checkout output does not have special line like "Updating '.'" on start - so stack could be empty and we should use myBase
+        File currentRoot = myRootsUnderProcessing.size() > 0 ? myRootsUnderProcessing.pop() : myBase;
+        return new ProgressEvent(currentRoot, revision, null, null, EventAction.UPDATE_COMPLETED, null, null);
       }
     }
 
