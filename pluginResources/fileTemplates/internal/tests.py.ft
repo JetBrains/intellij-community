@@ -1,0 +1,17 @@
+from test_helper import run_common_tests, failed, passed, get_task_windows
+
+
+def test_task_windows():
+    windows = get_task_windows()
+    window = windows[0]
+    if window != "":       # TODO: your condition here
+        passed()
+    else:
+        failed()
+
+
+if __name__ == '__main__':
+    run_common_tests()
+    test_task_windows()
+
+
