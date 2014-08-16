@@ -207,7 +207,7 @@ public class StudyEditor implements TextEditor {
   @Nullable
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myComponent;
+    return myDefaultEditor.getPreferredFocusedComponent();
   }
 
   @NotNull

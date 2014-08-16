@@ -20,10 +20,8 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -41,12 +39,10 @@ public class CheckRegExpIntentionAction extends QuickEditAction implements Icona
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    final Pair<PsiElement, TextRange> pair = getRangePair(file, editor);
-    /*super.isAvailable(project, editor, file) && */
+    Pair<PsiElement, TextRange> pair = getRangePair(file, editor);
     if (pair != null && pair.first != null) {
       Language language = pair.first.getLanguage();
-      Language baseLanguage = language.getBaseLanguage();
-      return language == RegExpLanguage.INSTANCE || baseLanguage == RegExpLanguage.INSTANCE;
+      return language.isKindOf(RegExpLanguage.INSTANCE);
     }
     return false;
   }
@@ -57,11 +53,11 @@ public class CheckRegExpIntentionAction extends QuickEditAction implements Icona
   }
 
   @Override
-  protected JComponent createBalloonComponent(PsiFile file, final Ref<Balloon> ref) {
+  protected JComponent createBalloonComponent(@NotNull PsiFile file) {
     final Project project = file.getProject();
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document != null) {
-      return new CheckRegExpForm(Pair.create(file, ref)).getRootPanel();
+      return new CheckRegExpForm(file).getRootPanel();
     }
     return null;
   }

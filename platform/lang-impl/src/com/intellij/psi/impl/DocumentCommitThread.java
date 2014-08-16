@@ -556,13 +556,19 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
   }
 
   @TestOnly
-  public void waitUntilAllCommitted() throws InterruptedException {
+  public void waitUntilAllCommitted(long timeout) throws InterruptedException {
     if (!myEnabled) {
       throw new IllegalStateException("DocumentCommitThread is disabled");
     }
+    int attempts = 0;
+    int delay = 100;
     synchronized (documentsToCommit) {
       while(!documentsToCommit.isEmpty()) {
-        documentsToCommit.wait();
+        documentsToCommit.wait(delay);
+        if (delay * attempts > timeout) {
+          throw new RuntimeException("timeout");
+        }
+        attempts++;
       }
     }
   }

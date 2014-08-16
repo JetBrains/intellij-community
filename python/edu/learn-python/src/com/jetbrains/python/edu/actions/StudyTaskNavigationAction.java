@@ -12,7 +12,6 @@ import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.edu.StudyTaskManager;
-import com.jetbrains.python.edu.StudyUtils;
 import com.jetbrains.python.edu.course.Lesson;
 import com.jetbrains.python.edu.course.Task;
 import com.jetbrains.python.edu.course.TaskFile;
@@ -50,23 +49,28 @@ abstract public class StudyTaskNavigationAction extends DumbAwareAction {
     }
     int nextTaskIndex = nextTask.getIndex();
     int lessonIndex = nextTask.getLesson().getIndex();
-    TaskFile nextFile = nextTask.getTaskFiles().values().iterator().next();
-    if (nextFile != null) {
-      VirtualFile projectDir = project.getBaseDir();
-      String lessonDirName = Lesson.LESSON_DIR + String.valueOf(lessonIndex + 1);
-      if (projectDir != null) {
-        VirtualFile lessonDir = projectDir.findChild(lessonDirName);
-        if (lessonDir != null) {
-          String taskDirName = Task.TASK_DIR + String.valueOf(nextTaskIndex + 1);
-          VirtualFile taskDir = lessonDir.findChild(taskDirName);
-          if (taskDir != null) {
-            Map.Entry<String, TaskFile> taskFile = StudyUtils.getFirst(nextTask.getTaskFiles().entrySet());
-            VirtualFile virtualFile = taskDir.findChild(taskFile.getKey());
-            if (virtualFile != null) {
-              FileEditorManager.getInstance(project).openFile(virtualFile, true);
-            }
-          }
-        }
+    Map<String, TaskFile> nextTaskFiles = nextTask.getTaskFiles();
+    if (nextTaskFiles.isEmpty()) {
+      return;
+    }
+    VirtualFile projectDir = project.getBaseDir();
+    String lessonDirName = Lesson.LESSON_DIR + String.valueOf(lessonIndex + 1);
+    if (projectDir == null) {
+      return;
+    }
+    VirtualFile lessonDir = projectDir.findChild(lessonDirName);
+    if (lessonDir == null) {
+      return;
+    }
+    String taskDirName = Task.TASK_DIR + String.valueOf(nextTaskIndex + 1);
+    VirtualFile taskDir = lessonDir.findChild(taskDirName);
+    if (taskDir == null) {
+      return;
+    }
+    for (String name : nextTaskFiles.keySet()) {
+      VirtualFile vf = taskDir.findChild(name);
+      if (vf != null) {
+        FileEditorManager.getInstance(project).openFile(vf, true);
       }
     }
   }

@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-/**
- * User: lia
- */
 
 class StudyEditorFactoryListener implements EditorFactoryListener {
 
@@ -73,6 +70,7 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
                 StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
                 TaskFile taskFile = taskManager.getTaskFile(openedFile);
                 if (taskFile != null) {
+                  taskFile.navigateToFirstTaskWindow(editor);
                   editor.addEditorMouseListener(new WindowSelectionListener(taskFile));
                   StudyDocumentListener listener = new StudyDocumentListener(taskFile);
                   StudyEditor.addDocumentListener(document, listener);

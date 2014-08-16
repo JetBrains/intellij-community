@@ -63,6 +63,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
   @Nullable
   private XDebugSessionImpl mySession;
+  private XDebugSessionData mySessionData;
 
   @NotNull
   public static XDebugSessionTab create(@NotNull XDebugSessionImpl session,
@@ -126,6 +127,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }
 
     mySession = session;
+    mySessionData = session.getSessionData();
     myConsole = session.getConsoleView();
     myRunContentDescriptor = new RunContentDescriptor(myConsole, session.getDebugProcess().getProcessHandler(), myUi.getComponent(), session.getSessionName(), icon);
   }
@@ -139,6 +141,9 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     else if (TAB_KEY.is(dataId)) {
       return this;
     }
+    else if (XDebugSessionData.DATA_KEY.is(dataId)) {
+      return mySessionData;
+    }
 
     if (mySession != null) {
       if (SESSION_KEY.is(dataId)) {
@@ -146,9 +151,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       }
       else if (LangDataKeys.CONSOLE_VIEW.is(dataId)) {
         return mySession.getConsoleView();
-      }
-      else if (XDebugSessionData.DATA_KEY.is(dataId)) {
-        return mySession.getSessionData();
       }
     }
 
