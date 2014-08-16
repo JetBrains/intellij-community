@@ -46,17 +46,13 @@ public class UpdateOutputLineConverter {
   private final static String RECORDING_MERGE_INFO = "--- Recording mergeinfo";
 
   private final static String UPDATING = "Updating";
-  private final static String AT_REVISION = "At revision (\\d+)\\.";
-  private final static String UPDATED_TO_REVISION = "Updated to revision (\\d+)\\.";
   private final static String SKIPPED = "Skipped";
   private final static String RESTORED = "Restored";
 
   private final static String FETCHING_EXTERNAL = "Fetching external";
-  private final static String EXTERNAL = "External at (\\d+)\\.";
-  private final static String UPDATED_EXTERNAL = "Updated external to revision (\\d+)\\.";
-  
-  private final static Pattern ourAtRevision = Pattern.compile(AT_REVISION);
-  private final static Pattern ourUpdatedToRevision = Pattern.compile(UPDATED_TO_REVISION);
+
+  private final static Pattern ourAtRevision = Pattern.compile("At revision (\\d+)\\.");
+  private final static Pattern ourUpdatedToRevision = Pattern.compile("Updated to revision (\\d+)\\.");
   private final static Pattern ourCheckedOutRevision = Pattern.compile("Checked out revision (\\d+)\\.");
 
   // export from repository
@@ -64,8 +60,8 @@ public class UpdateOutputLineConverter {
   // export from working copy
   private final static Pattern ourExportComplete = Pattern.compile("Export complete\\.");
 
-  private final static Pattern ourExternal = Pattern.compile(EXTERNAL);
-  private final static Pattern ourUpdatedExternal = Pattern.compile(UPDATED_EXTERNAL);
+  private final static Pattern ourExternal = Pattern.compile("External at (\\d+)\\.");
+  private final static Pattern ourUpdatedExternal = Pattern.compile("Updated external to revision (\\d+)\\.");
   private final static Pattern ourCheckedOutExternal = Pattern.compile("Checked out external at revision (\\d+)\\.");
 
   private final static Pattern[] ourCompletePatterns =
@@ -80,6 +76,7 @@ public class UpdateOutputLineConverter {
     myRootsUnderProcessing = ContainerUtil.newStack();
   }
 
+  @Nullable
   public ProgressEvent convert(final String line) {
     // TODO: Add direct processing of "Summary of conflicts" lines at the end of "svn update" output (if there are conflicts).
     // TODO: Now it works ok because parseNormalLine could not determine necessary statuses from that and further lines
@@ -89,30 +86,42 @@ public class UpdateOutputLineConverter {
       return null;
     } else if (line.startsWith(UPDATING)) {
       myRootsUnderProcessing.push(parseForPath(line));
-      return new ProgressEvent(myRootsUnderProcessing.peek(), -1, null, null, EventAction.UPDATE_NONE, null, null);
+      return createEvent(myRootsUnderProcessing.peek(), EventAction.UPDATE_NONE);
     } else if (line.startsWith(RESTORED)) {
-      return new ProgressEvent(parseForPath(line), -1, null, null, EventAction.RESTORE, null, null);
+      return createEvent(parseForPath(line), EventAction.RESTORE);
     } else if (line.startsWith(SKIPPED)) {
       // called, for instance, when folder is not working copy
       final String comment = parseComment(line);
-      return new ProgressEvent(parseForPath(line), -1, null, null, EventAction.SKIP,
-                               comment == null ? null : SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, comment), null);
+      return createEvent(parseForPath(line), -1, EventAction.SKIP,
+                         comment == null ? null : SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, comment));
     } else if (line.startsWith(FETCHING_EXTERNAL)) {
       myRootsUnderProcessing.push(parseForPath(line));
-      return new ProgressEvent(myRootsUnderProcessing.peek(), -1, null, null, EventAction.UPDATE_EXTERNAL, null, null);
+      return createEvent(myRootsUnderProcessing.peek(), EventAction.UPDATE_EXTERNAL);
     }
 
-    for (int i = 0; i < ourCompletePatterns.length; i++) {
-      final Pattern pattern = ourCompletePatterns[i];
+    for (final Pattern pattern : ourCompletePatterns) {
       final long revision = matchAndGetRevision(pattern, line);
       if (revision != -1) {
         // checkout output does not have special line like "Updating '.'" on start - so stack could be empty and we should use myBase
         File currentRoot = myRootsUnderProcessing.size() > 0 ? myRootsUnderProcessing.pop() : myBase;
-        return new ProgressEvent(currentRoot, revision, null, null, EventAction.UPDATE_COMPLETED, null, null);
+        return createEvent(currentRoot, revision, EventAction.UPDATE_COMPLETED, null);
       }
     }
 
     return parseNormalString(line);
+  }
+
+  @NotNull
+  private static ProgressEvent createEvent(File file, @NotNull EventAction action) {
+    return createEvent(file, -1, action, null);
+  }
+
+  @NotNull
+  private static ProgressEvent createEvent(File file,
+                                           long revision,
+                                           @NotNull EventAction action,
+                                           @Nullable SVNErrorMessage error) {
+    return new ProgressEvent(file, revision, null, null, action, error, null);
   }
 
   private final static Set<Character> ourActions = new HashSet<Character>(Arrays.asList(new Character[] {'A', 'D', 'U', 'C', 'G', 'E', 'R'}));
@@ -133,7 +142,7 @@ public class UpdateOutputLineConverter {
 
     final String path = line.substring(4).trim();
     if (StringUtil.isEmptyOrSpaces(path)) return null;
-    final File file = createFile(path);
+    final File file = SvnUtil.resolvePath(myBase, path);
     if (StatusType.STATUS_OBSTRUCTED.equals(contentsStatus)) {
       // obstructed
       return new ProgressEvent(file, -1, contentsStatus, propertiesStatus, EventAction.UPDATE_SKIP_OBSTRUCTION, null, null);
@@ -156,12 +165,7 @@ public class UpdateOutputLineConverter {
     return new ProgressEvent(file, -1, contentsStatus, propertiesStatus, action, null, null);
   }
 
-  private File createFile(String path) {
-    return SvnUtil.resolvePath(myBase, path);
-  }
-
-  @Nullable
-  private long matchAndGetRevision(final Pattern pattern, final String line) {
+  private static long matchAndGetRevision(final Pattern pattern, final String line) {
     final Matcher matcher = pattern.matcher(line);
     if (matcher.matches()) {
       if (pattern == ourExportComplete) {
@@ -180,22 +184,26 @@ public class UpdateOutputLineConverter {
   }
 
   @Nullable
-  private String parseComment(final String line) {
-    final int idx = line.lastIndexOf("--");
-    if (idx != -1 && idx < (line.length() - 2)) {
-      return line.substring(idx + 2).trim();
-    }
-    return null;
+  private static String parseComment(final String line) {
+    int index = line.lastIndexOf("--");
+
+    return index != -1 && index < line.length() - 2 ? line.substring(index + 2).trim() : null;
   }
 
   @Nullable
-  private File parseForPath(final String line) {
-    final int idx1 = line.indexOf('\'');
-    if (idx1 == -1) return null;
-    final int idx2 = line.indexOf('\'', idx1 + 1);
-    if (idx2 == -1) return null;
-    final String substring = line.substring(idx1 + 1, idx2);
-    if (".".equals(substring)) return myBase;
-    return createFile(substring);
+  private File parseForPath(@NotNull String line) {
+    File result = null;
+    int start = line.indexOf('\'');
+
+    if (start != -1) {
+      int end = line.indexOf('\'', start + 1);
+
+      if (end != -1) {
+        String path = line.substring(start + 1, end);
+        result = SvnUtil.resolvePath(myBase, path);
+      }
+    }
+
+    return result;
   }
 }
