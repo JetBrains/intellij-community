@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.commandLine.AuthenticationCallback;
 import org.jetbrains.idea.svn.dialogs.SimpleCredentialsDialog;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
@@ -52,7 +51,8 @@ import java.util.Set;
  * Date: 2/26/13
  * Time: 1:27 PM
  */
-public class AuthenticationService implements AuthenticationCallback {
+public class AuthenticationService {
+
   @NotNull private final SvnVcs myVcs;
   private final boolean myIsActive;
   private static final Logger LOG = Logger.getInstance(AuthenticationService.class);
@@ -82,8 +82,7 @@ public class AuthenticationService implements AuthenticationCallback {
     return myIsActive;
   }
 
-  @Override
-  public boolean authenticateFor(String realm, SVNURL repositoryUrl, boolean previousFailed, boolean passwordRequest) {
+  public boolean authenticateFor(@Nullable String realm, SVNURL repositoryUrl, boolean previousFailed, boolean passwordRequest) {
     if (repositoryUrl == null) {
       return false;
     }
@@ -91,7 +90,6 @@ public class AuthenticationService implements AuthenticationCallback {
   }
 
   @Nullable
-  @Override
   public SVNAuthentication requestCredentials(final SVNURL repositoryUrl, final String type) {
     SVNAuthentication authentication = null;
 
@@ -147,7 +145,6 @@ public class AuthenticationService implements AuthenticationCallback {
     return result;
   }
 
-  @Override
   @Nullable
   public String requestSshCredentials(@NotNull final String realm,
                                       @NotNull final SimpleCredentialsDialog.Mode mode,
@@ -180,7 +177,6 @@ public class AuthenticationService implements AuthenticationCallback {
     });
   }
 
-  @Override
   public boolean acceptSSLServerCertificate(final SVNURL repositoryUrl, final String realm) {
     if (repositoryUrl == null) {
       return false;
@@ -189,7 +185,6 @@ public class AuthenticationService implements AuthenticationCallback {
     return new SSLServerCertificateAuthenticator(this, repositoryUrl, realm).tryAuthenticate();
   }
 
-  @Override
   public void clearPassiveCredentials(String realm, SVNURL repositoryUrl, boolean password) {
     if (repositoryUrl == null) {
       return;
@@ -203,7 +198,6 @@ public class AuthenticationService implements AuthenticationCallback {
     }
   }
 
-  @Override
   public boolean haveDataForTmpConfig() {
     final HttpConfigurable instance = HttpConfigurable.getInstance();
     return SvnConfiguration.getInstance(myVcs.getProject()).isIsUseDefaultProxy() &&
@@ -233,7 +227,6 @@ public class AuthenticationService implements AuthenticationCallback {
     return null;
   }
 
-  @Override
   @Nullable
   public PasswordAuthentication getProxyAuthentication(@NotNull SVNURL repositoryUrl) {
     Proxy proxy = getIdeaDefinedProxy(repositoryUrl);
@@ -302,7 +295,6 @@ public class AuthenticationService implements AuthenticationCallback {
   }
 
   @Nullable
-  @Override
   public File getSpecialConfigDir() {
     return myTempDirectory != null ? myTempDirectory : new File(myConfiguration.getConfigurationDirectory());
   }

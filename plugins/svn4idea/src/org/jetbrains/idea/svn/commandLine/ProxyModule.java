@@ -39,7 +39,7 @@ public class ProxyModule extends BaseCommandRuntimeModule {
 
   @Override
   public void onStart(@NotNull Command command) throws SvnBindException {
-    if (myAuthCallback.haveDataForTmpConfig()) {
+    if (myAuthenticationService.haveDataForTmpConfig()) {
       setupProxy(command);
     }
   }
@@ -68,7 +68,7 @@ public class ProxyModule extends BaseCommandRuntimeModule {
 
   @NotNull
   private String ensureGroupForHost(@NotNull Command command, @NotNull String host) {
-    IdeaSVNConfigFile configFile = new IdeaSVNConfigFile(myAuthCallback.getSpecialConfigDir());
+    IdeaSVNConfigFile configFile = new IdeaSVNConfigFile(myAuthenticationService.getSpecialConfigDir());
     String groupName = SvnAuthenticationManager.getGroupForHost(host, configFile);
 
     if (StringUtil.isEmptyOrSpaces(groupName)) {

@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.commandLine;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.auth.AuthenticationService;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
@@ -40,8 +41,8 @@ public class UsernamePasswordCallback extends AuthCallbackCase {
 
   protected SVNAuthentication myAuthentication;
 
-  UsernamePasswordCallback(@NotNull AuthenticationCallback callback, SVNURL url) {
-    super(callback, url);
+  UsernamePasswordCallback(@NotNull AuthenticationService authenticationService, SVNURL url) {
+    super(authenticationService, url);
   }
 
   @Override
@@ -57,8 +58,7 @@ public class UsernamePasswordCallback extends AuthCallbackCase {
 
   @Override
   boolean getCredentials(String errText) throws SvnBindException {
-    myAuthentication = myAuthenticationCallback.requestCredentials(myUrl != null ? myUrl : parseUrlFromError(errText),
-                                                                   getType());
+    myAuthentication = myAuthenticationService.requestCredentials(myUrl != null ? myUrl : parseUrlFromError(errText), getType());
 
     return myAuthentication != null;
   }
