@@ -47,7 +47,7 @@ public class CredentialsCallback extends AuthCallbackCase {
       myAuthenticationService.clearPassiveCredentials(realm, myUrl, isPassword);
     }
     myTried = true;
-    if (myAuthenticationService.authenticateFor(realm, myUrl, myAuthenticationService.getSpecialConfigDir() != null, isPassword)) {
+    if (myAuthenticationService.authenticateFor(realm, myUrl, isPassword)) {
       return true;
     }
     throw new SvnBindException("Authentication canceled for realm: " + realm);

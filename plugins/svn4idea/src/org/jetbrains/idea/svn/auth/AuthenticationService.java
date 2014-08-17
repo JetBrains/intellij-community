@@ -82,7 +82,7 @@ public class AuthenticationService {
     return myIsActive;
   }
 
-  public boolean authenticateFor(@Nullable String realm, SVNURL repositoryUrl, boolean previousFailed, boolean passwordRequest) {
+  public boolean authenticateFor(@Nullable String realm, SVNURL repositoryUrl, boolean passwordRequest) {
     if (repositoryUrl == null) {
       return false;
     }

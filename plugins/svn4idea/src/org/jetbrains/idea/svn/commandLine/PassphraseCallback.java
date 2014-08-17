@@ -42,7 +42,7 @@ public class PassphraseCallback extends AuthCallbackCase {
       myAuthenticationService.clearPassiveCredentials(null, myBase);
     }*/
     myTried = true;
-    if (myAuthenticationService.authenticateFor(null, myUrl, myAuthenticationService.getSpecialConfigDir() != null, false)) {
+    if (myAuthenticationService.authenticateFor(null, myUrl, false)) {
       return true;
     }
     throw new SvnBindException("Authentication canceled for : " + errText.substring(PASSPHRASE_FOR.length()));
