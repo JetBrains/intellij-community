@@ -45,14 +45,8 @@ import javax.swing.event.HyperlinkEvent;
 import java.util.List;
 
 /**
- * <p>
  * The popup which allows to quickly switch and control Git branches.
- * </p>
- * <p>
- * Use {@link #asListPopup()} to achieve the {@link ListPopup} itself.
- * </p>
- *
- * @author Kirill Likhodedov
+ * <p/>
  */
 class GitBranchPopup {
 
@@ -160,32 +154,28 @@ class GitBranchPopup {
   }
 
   private void notifyAboutSyncedBranches() {
-    VcsNotifier.getInstance(myProject).notifyImportantInfo("Synchronous branch control enabled",
-                                                           "You have several Git roots in the project and they all are checked out at the same branch. " +
-                                                           "We've enabled synchronous branch control for the project. <br/>" +
-                                                           "If you wish to control branches in different roots separately, you may <a href='settings'>disable</a> the setting.",
-                                                           new NotificationListener() {
-                                                             @Override
-                                                             public void hyperlinkUpdate(@NotNull Notification notification,
-                                                                                         @NotNull HyperlinkEvent event) {
-                                                               if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                                                                 ShowSettingsUtil.getInstance().showSettingsDialog(myProject, myVcs
-                                                                   .getConfigurable().getDisplayName());
-                                                                 if (myVcsSettings.getSyncSetting() == GitBranchSyncSetting.DONT) {
-                                                                   notification.expire();
-                                                                 }
-                                                               }
-                                                             }
-                                                           }
-    );
+    String description = "You have several Git roots in the project and they all are checked out at the same branch. " +
+                         "We've enabled synchronous branch control for the project. <br/>" +
+                         "If you wish to control branches in different roots separately, " +
+                         "you may <a href='settings'>disable</a> the setting.";
+    NotificationListener listener = new NotificationListener() {
+      @Override
+      public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          ShowSettingsUtil.getInstance().showSettingsDialog(myProject, myVcs.getConfigurable().getDisplayName());
+          if (myVcsSettings.getSyncSetting() == GitBranchSyncSetting.DONT) {
+            notification.expire();
+          }
+        }
+      }
+    };
+    VcsNotifier.getInstance(myProject).notifyImportantInfo("Synchronous branch control enabled", description, listener);
   }
 
   private ActionGroup createActions() {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
-
     GitRepositoryManager repositoryManager = myRepositoryManager;
     if (repositoryManager.moreThanOneRoot()) {
-
       if (userWantsSyncControl()) {
         fillWithCommonRepositoryActions(popupGroup, repositoryManager);
       }
@@ -196,7 +186,6 @@ class GitBranchPopup {
     else {
       fillPopupWithCurrentRepositoryActions(popupGroup, null);
     }
-
     popupGroup.addSeparator();
     return popupGroup;
   }
