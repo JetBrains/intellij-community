@@ -1,5 +1,7 @@
 package org.jetbrains.idea.svn.api;
 
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -18,16 +20,18 @@ import org.jetbrains.idea.svn.copy.CopyMoveClient;
 import org.jetbrains.idea.svn.delete.DeleteClient;
 import org.jetbrains.idea.svn.diff.DiffClient;
 import org.jetbrains.idea.svn.history.HistoryClient;
+import org.jetbrains.idea.svn.info.InfoClient;
 import org.jetbrains.idea.svn.integrate.MergeClient;
 import org.jetbrains.idea.svn.lock.LockClient;
-import org.jetbrains.idea.svn.info.InfoClient;
-import org.jetbrains.idea.svn.status.StatusClient;
 import org.jetbrains.idea.svn.properties.PropertyClient;
 import org.jetbrains.idea.svn.revert.RevertClient;
+import org.jetbrains.idea.svn.status.StatusClient;
 import org.jetbrains.idea.svn.update.RelocateClient;
 import org.jetbrains.idea.svn.update.UpdateClient;
 import org.jetbrains.idea.svn.upgrade.UpgradeClient;
 import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
+
+import java.util.Map;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -63,12 +67,41 @@ public abstract class ClientFactory {
   protected CheckinClient myCheckinClient;
   protected RepositoryFeaturesClient myRepositoryFeaturesClient;
 
+  @NotNull private final Map<Class, Class> myClientImplementations = ContainerUtil.newHashMap();
+
   protected ClientFactory(@NotNull SvnVcs vcs) {
     myVcs = vcs;
     setup();
   }
 
   protected abstract void setup();
+
+  protected <T extends SvnClient> void put(@NotNull Class<T> type, @NotNull Class<? extends T> implementation) {
+    myClientImplementations.put(type, implementation);
+  }
+
+  @SuppressWarnings("unchecked")
+  @NotNull
+  protected <T extends SvnClient> Class<? extends T> get(@NotNull Class<T> type) {
+    Class<? extends T> implementation = myClientImplementations.get(type);
+
+    if (implementation == null) {
+      throw new IllegalArgumentException("No implementation registered for " + type);
+    }
+
+    return implementation;
+  }
+
+  /**
+   * TODO: Provide more robust way for the default settings here - probably some default Command instance could be used.
+   */
+  @NotNull
+  public <T extends SvnClient> T create(@NotNull Class<T> type, boolean isActive) {
+    T client = prepare(ReflectionUtil.newInstance(get(type)));
+    client.setIsActive(isActive);
+
+    return client;
+  }
 
   @NotNull
   public AddClient createAddClient() {
@@ -209,6 +242,7 @@ public abstract class ClientFactory {
   protected <T extends SvnClient> T prepare(@NotNull T client) {
     client.setVcs(myVcs);
     client.setFactory(this);
+    client.setIsActive(true);
 
     return client;
   }
