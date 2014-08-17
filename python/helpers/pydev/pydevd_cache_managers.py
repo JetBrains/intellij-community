@@ -159,8 +159,6 @@ class CallHierarchyCacheManager(CacheManager): #stores for every function in fil
             cache_for_func_caller[func_call_line_no] = None
             result = True
 
-        self.write_cache()
-
         if result:
             return CallInfo(caller_filename, func_filename, caller_func_name, func_name, str(func_call_line_no))
         else:
