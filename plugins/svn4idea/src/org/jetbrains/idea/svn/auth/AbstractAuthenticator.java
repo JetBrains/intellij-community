@@ -58,7 +58,7 @@ abstract class AbstractAuthenticator {
     final SvnAuthenticationManager active = myVcs.getSvnConfiguration().getAuthenticationManager(myVcs);
 
     try {
-      boolean authenticated = getWithPassive(passive) || getWithActive(active);
+      boolean authenticated = getWithPassive(passive) || (myAuthService.isActive() && getWithActive(active));
       if (!authenticated) return false;
 
       SvnAuthenticationManager manager = myStoreInUsual ? active : createTmpManager();

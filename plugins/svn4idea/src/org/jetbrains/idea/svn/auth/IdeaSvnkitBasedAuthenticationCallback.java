@@ -54,14 +54,16 @@ import java.util.Set;
  */
 public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCallback {
   @NotNull private final SvnVcs myVcs;
+  private final boolean myIsActive;
   private static final Logger LOG = Logger.getInstance(IdeaSvnkitBasedAuthenticationCallback.class);
   private File myTempDirectory;
   private boolean myProxyCredentialsWereReturned;
   private SvnConfiguration myConfiguration;
   private final Set<String> myRequestedCredentials;
 
-  public IdeaSvnkitBasedAuthenticationCallback(@NotNull SvnVcs vcs) {
+  public IdeaSvnkitBasedAuthenticationCallback(@NotNull SvnVcs vcs, boolean isActive) {
     myVcs = vcs;
+    myIsActive = isActive;
     myConfiguration = SvnConfiguration.getInstance(myVcs.getProject());
     myRequestedCredentials = ContainerUtil.newHashSet();
   }
@@ -74,6 +76,10 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
   @Nullable
   public File getTempDirectory() {
     return myTempDirectory;
+  }
+
+  public boolean isActive() {
+    return myIsActive;
   }
 
   @Override
@@ -112,7 +118,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
 
   @Nullable
   private <T> T requestCredentials(@NotNull String realm, @NotNull String type, @NotNull Getter<Pair<T, Boolean>> fromUserProvider) {
-    T result;
+    T result = null;
     // Search for stored credentials not only by key but also by "parent" keys. This is useful when we work just with URLs
     // (not working copy) and can't detect repository url beforehand because authentication is required. If found credentials of "parent"
     // are not correct then current key will already be stored in myRequestedCredentials - thus user will be asked for credentials and
@@ -126,7 +132,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
       result = (T)data;
       myRequestedCredentials.add(key);
     }
-    else {
+    else if (myIsActive) {
       // ask user for credentials
       Pair<T, Boolean> userData = fromUserProvider.get();
       result = userData.first;
