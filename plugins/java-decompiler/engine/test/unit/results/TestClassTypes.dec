@@ -20,6 +20,25 @@ public class TestClassTypes {
 
    }
 
+   public boolean testBit(int var1) {
+      return (var1 & 1) == 1;
+   }
+
+   public void testSwitchConsts(int var1) {
+      switch(var1) {
+      case 88:
+         System.out.println("1");
+         break;
+      case 656:
+         System.out.println("2");
+         break;
+      case 65201:
+      case 65489:
+         System.out.println("3");
+      }
+
+   }
+
    public void testAssignmentType(List var1) {
       Object var2 = var1;
       if(var1 != null) {
