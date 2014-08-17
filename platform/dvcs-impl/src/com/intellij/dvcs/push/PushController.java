@@ -149,7 +149,7 @@ public class PushController implements Disposable {
     final RepositoryNode repoNode = isSingleRepositoryProject ? new SingleRepositoryNode(repoPanel) : new RepositoryNode(repoPanel);
     myView2Model.put(repoNode, model);
     repoNode.setChecked(model.isSelected());
-    repoNode.addRepoNodeListener(new RepositoryNodeListener() {
+    repoPanel.addRepoNodeListener(new RepositoryNodeListener() {
       @Override
       public void onTargetChanged(String newValue) {
         myView2Model.get(repoNode).setSpec(new PushSpec(model.getSpec().getSource(), support.createTarget(repository, newValue)));
@@ -160,6 +160,7 @@ public class PushController implements Disposable {
       @Override
       public void onSelectionChanged(boolean isSelected) {
         myView2Model.get(repoNode).setSelected(isSelected);
+        repoNode.setChecked(isSelected);
         myDialog.updateButtons();
       }
     });

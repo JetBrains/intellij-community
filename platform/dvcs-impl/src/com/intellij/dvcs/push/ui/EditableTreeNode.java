@@ -15,12 +15,10 @@
  */
 package com.intellij.dvcs.push.ui;
 
-import com.intellij.dvcs.push.RepositoryNodeListener;
 import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 
 public interface EditableTreeNode extends CustomRenderedTreeNode {
-  void addRepoNodeListener(@NotNull RepositoryNodeListener listener);
 
   void fireOnChange(@NotNull String value);
 
@@ -28,6 +26,7 @@ public interface EditableTreeNode extends CustomRenderedTreeNode {
 
   void stopLoading();
 
+  @NotNull
   ProgressIndicator startLoading();
 
   String getValue();
