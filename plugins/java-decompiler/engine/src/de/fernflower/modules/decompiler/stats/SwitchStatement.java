@@ -31,6 +31,7 @@ import de.fernflower.modules.decompiler.StatEdge;
 import de.fernflower.modules.decompiler.exps.ConstExprent;
 import de.fernflower.modules.decompiler.exps.Exprent;
 import de.fernflower.modules.decompiler.exps.SwitchExprent;
+import de.fernflower.struct.gen.VarType;
 import de.fernflower.util.InterpreterUtil;
 
 public class SwitchStatement extends Statement {
@@ -126,6 +127,8 @@ public class SwitchStatement extends Statement {
 		
 		buf.append(indstr+headexprent.get(0).toJava(indent)+" {" + new_line_separator);
 		
+		VarType switch_type = headexprent.get(0).getExprType();
+		
 		for(int i=0;i<caseStatements.size();i++) {
 			
 			Statement stat = caseStatements.get(i);
@@ -136,7 +139,10 @@ public class SwitchStatement extends Statement {
 				if(edges.get(j) == default_edge) {
 					buf.append(indstr+"default:" + new_line_separator);
 				} else {
-					buf.append(indstr+"case "+ values.get(j).toJava(indent)+":" + new_line_separator);
+					ConstExprent value = (ConstExprent)values.get(j).copy();
+					value.setConsttype(switch_type);
+					
+					buf.append(indstr+"case "+ value.toJava(indent)+":" + new_line_separator);
 				}
 			}
 			
