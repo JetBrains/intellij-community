@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
-import org.jetbrains.idea.svn.auth.IdeaSvnkitBasedAuthenticationCallback;
+import org.jetbrains.idea.svn.auth.AuthenticationService;
 import org.jetbrains.idea.svn.commandLine.*;
 import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.tmatesoft.svn.core.SVNCancelException;
@@ -106,7 +106,7 @@ public abstract class BaseSvnClient implements SvnClient {
     command.setResultBuilder(listener);
     command.put(parameters);
 
-    CommandRuntime runtime = new CommandRuntime(vcs, new IdeaSvnkitBasedAuthenticationCallback(vcs, myIsActive));
+    CommandRuntime runtime = new CommandRuntime(vcs, new AuthenticationService(vcs, myIsActive));
     return runtime.runWithAuthenticationAttempt(command);
   }
 

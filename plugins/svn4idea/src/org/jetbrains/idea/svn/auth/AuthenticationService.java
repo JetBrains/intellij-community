@@ -52,16 +52,16 @@ import java.util.Set;
  * Date: 2/26/13
  * Time: 1:27 PM
  */
-public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCallback {
+public class AuthenticationService implements AuthenticationCallback {
   @NotNull private final SvnVcs myVcs;
   private final boolean myIsActive;
-  private static final Logger LOG = Logger.getInstance(IdeaSvnkitBasedAuthenticationCallback.class);
+  private static final Logger LOG = Logger.getInstance(AuthenticationService.class);
   private File myTempDirectory;
   private boolean myProxyCredentialsWereReturned;
   private SvnConfiguration myConfiguration;
   private final Set<String> myRequestedCredentials;
 
-  public IdeaSvnkitBasedAuthenticationCallback(@NotNull SvnVcs vcs, boolean isActive) {
+  public AuthenticationService(@NotNull SvnVcs vcs, boolean isActive) {
     myVcs = vcs;
     myIsActive = isActive;
     myConfiguration = SvnConfiguration.getInstance(myVcs.getProject());

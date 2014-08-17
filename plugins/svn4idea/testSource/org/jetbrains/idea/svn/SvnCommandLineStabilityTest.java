@@ -4,7 +4,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.auth.IdeaSvnkitBasedAuthenticationCallback;
+import org.jetbrains.idea.svn.auth.AuthenticationService;
 import org.jetbrains.idea.svn.commandLine.*;
 import org.junit.Test;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -44,7 +44,7 @@ public class SvnCommandLineStabilityTest extends Svn17TestCase {
     command.setWorkingDirectory(workingDirectory);
     command.put("--xml");
 
-    CommandRuntime runtime = new CommandRuntime(vcs, new IdeaSvnkitBasedAuthenticationCallback(vcs, true));
+    CommandRuntime runtime = new CommandRuntime(vcs, new AuthenticationService(vcs, true));
     return runtime.runWithAuthenticationAttempt(command);
   }
 }
