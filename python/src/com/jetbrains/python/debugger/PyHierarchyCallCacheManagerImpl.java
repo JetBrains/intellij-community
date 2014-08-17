@@ -43,10 +43,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
- * HIERARCHY_CALLERS_DATA file attribute contains for every function in file information about its callers and lines
+ * HIERARCHY_CALLERS_DATA file attribute contains for every function, defined in file, information about its callers and lines
  * where this function is called by its callers
  *
- * HIERARCHY_CALLEES_DATA file attribute contains for every function in file information about its callees and lines
+ * HIERARCHY_CALLEES_DATA file attribute contains for every function, defined in file, information about its callees and lines
  * where this function calls its callees
  *
  */
@@ -316,8 +316,8 @@ public class PyHierarchyCallCacheManagerImpl extends PyHierarchyCallCacheManager
         ProjectFileIndex.SERVICE.getInstance(myProject).iterateContent(new ContentIterator() {
           @Override
           public boolean processFile(VirtualFile fileOrDir) {
-            if (readAttributeFromFile(fileOrDir, HIERARCHY_CALLERS_DATA) != null
-                || readAttributeFromFile(fileOrDir, HIERARCHY_CALLEES_DATA) != null) {
+            if (readCallerAttribute(fileOrDir) != null
+                || readCalleeAttribute(fileOrDir) != null) {
               writeCallerAttribute(fileOrDir, "");
               writeCalleeAttribute(fileOrDir, "");
               deleted.set(true);
