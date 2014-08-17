@@ -5,6 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.add.SvnKitAddClient;
 import org.jetbrains.idea.svn.annotate.SvnKitAnnotateClient;
+import org.jetbrains.idea.svn.browse.BrowseClient;
 import org.jetbrains.idea.svn.browse.SvnKitBrowseClient;
 import org.jetbrains.idea.svn.change.SvnKitChangeListClient;
 import org.jetbrains.idea.svn.checkin.SvnKitCheckinClient;
@@ -67,6 +68,8 @@ public class SvnKitClientFactory extends ClientFactory {
     statusClient = new SvnKitStatusClient();
     infoClient = new SvnKitInfoClient();
     myRepositoryFeaturesClient = new SvnKitRepositoryFeaturesClient();
+
+    put(BrowseClient.class, SvnKitBrowseClient.class);
   }
 
   @NotNull

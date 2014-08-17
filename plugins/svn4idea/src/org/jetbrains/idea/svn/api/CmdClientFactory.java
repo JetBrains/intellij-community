@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.add.CmdAddClient;
 import org.jetbrains.idea.svn.annotate.CmdAnnotateClient;
+import org.jetbrains.idea.svn.browse.BrowseClient;
 import org.jetbrains.idea.svn.browse.CmdBrowseClient;
 import org.jetbrains.idea.svn.change.CmdChangeListClient;
 import org.jetbrains.idea.svn.checkin.CmdCheckinClient;
@@ -64,6 +65,8 @@ public class CmdClientFactory extends ClientFactory {
     statusClient = new CmdStatusClient();
     infoClient = new CmdInfoClient();
     myRepositoryFeaturesClient = new CmdRepositoryFeaturesClient();
+
+    put(BrowseClient.class, CmdBrowseClient.class);
   }
 
   @NotNull
