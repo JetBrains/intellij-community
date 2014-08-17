@@ -15,60 +15,74 @@
  */
 package com.jetbrains.python.hierarchy;
 
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.ide.hierarchy.HierarchyBrowserBaseEx;
+import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.Function;
+import com.intellij.testFramework.UsefulTestCase;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.hierarchy.call.PyCalleeFunctionTreeStructure;
 import com.jetbrains.python.hierarchy.call.PyCallerFunctionTreeStructure;
 import com.jetbrains.python.psi.PyFunction;
-import org.jetbrains.annotations.Nullable;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.JDOMException;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
 
 
 public class PyCallHierarchyTest extends PyTestCase {
-
-  private final Function<PsiElement, HierarchyTreeStructure> functionToCallerTreeStructure = new Function<PsiElement, HierarchyTreeStructure>() {
-    @Nullable
-    @Override
-    public HierarchyTreeStructure fun(PsiElement element) {
-      if (!(element instanceof PyFunction)) {
-        return null;
-      }
-      PyFunction function = (PyFunction)element;
-      return new PyCallerFunctionTreeStructure(myFixture.getProject(), function, HierarchyBrowserBaseEx.SCOPE_PROJECT);
-    }
-  };
-
-  private final Function<PsiElement, HierarchyTreeStructure> functionToCalleeTreeStructure = new Function<PsiElement, HierarchyTreeStructure>() {
-    @Nullable
-    @Override
-    public HierarchyTreeStructure fun(PsiElement element) {
-      if (!(element instanceof PyFunction)) {
-        return null;
-      }
-      PyFunction function = (PyFunction)element;
-      return new PyCalleeFunctionTreeStructure(myFixture.getProject(), function, HierarchyBrowserBaseEx.SCOPE_PROJECT);
-    }
-  };
+  private static final String CALLER_VERIFICATION_SUFFIX = "_caller_verification.xml";
+  private static final String CALLEE_VERIFICATION_SUFFIX = "_callee_verification.xml";
 
   private String getBasePath() {
     return "hierarchy/call/" + getTestName(false);
   }
 
-  private void doTestCallHierarchy(String ... fileNames) throws Exception {
+  private void configureByFiles(String ... fileNames) {
     String[] filePaths = new String[fileNames.length];
     int i = 0;
     for (String fileName: fileNames) {
       filePaths[i] = getBasePath() + "/" + fileName;
       i++;
     }
-    String verificationCallerFilePath = getTestDataPath() + "/" + getBasePath() + "/" + getTestName(false) + "_caller_verification.xml";
-    String verificationCalleeFilePath = getTestDataPath() + "/" + getBasePath() + "/" + getTestName(false) + "_callee_verification.xml";
-
     myFixture.configureByFiles(filePaths);
-    myFixture.testCallHierarchy(functionToCallerTreeStructure, verificationCallerFilePath, filePaths);
-    myFixture.testCallHierarchy(functionToCalleeTreeStructure, verificationCalleeFilePath, filePaths);
+  }
+
+  private String getVerificationFilePath(final String suffix) {
+    return getTestDataPath() + "/" + getBasePath() + "/" + getTestName(false) + suffix;
+  }
+
+  private String getVerificationCallerFilePath() {
+    return getVerificationFilePath(CALLER_VERIFICATION_SUFFIX);
+  }
+
+  private String getVerificationCalleeFilePath() {
+    return getVerificationFilePath(CALLEE_VERIFICATION_SUFFIX);
+  }
+
+  private void checkFunctionHierarchyTreeStructure(PyFunction function) throws Exception {
+    HierarchyTreeStructureViewer.checkHierarchyTreeStructure(new PyCallerFunctionTreeStructure(myFixture.getProject(), function, HierarchyBrowserBaseEx.SCOPE_PROJECT),
+                                                             JDOMUtil.loadDocument(new File(getVerificationCallerFilePath())));
+    HierarchyTreeStructureViewer.checkHierarchyTreeStructure(new PyCalleeFunctionTreeStructure(myFixture.getProject(), function, HierarchyBrowserBaseEx.SCOPE_PROJECT),
+                                                             JDOMUtil.loadDocument(new File(getVerificationCalleeFilePath())));
+  }
+
+  private void doTestCallHierarchy(String ... fileNames) throws Exception {
+    configureByFiles(fileNames);
+
+    final PsiElement targetElement = TargetElementUtilBase
+      .findTargetElement(myFixture.getEditor(),
+                         TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
+    assert targetElement != null : "Cannot find referenced element";
+    assert targetElement instanceof PyFunction : "Referenced element is not PyFunction";
+
+    PyFunction function = (PyFunction) targetElement;
+    checkFunctionHierarchyTreeStructure(function);
   }
 
   public void testSimple() throws Exception {
