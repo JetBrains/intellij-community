@@ -15,91 +15,87 @@
  */
 package com.jetbrains.env.python;
 
-
 import com.intellij.ide.hierarchy.HierarchyBrowserBaseEx;
-import com.intellij.ide.hierarchy.HierarchyTreeStructure;
-import com.intellij.psi.PsiElement;
-import com.intellij.util.Function;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.python.debug.PyDebuggerTask;
+import com.jetbrains.env.python.hierarchy.PyCallHierarchyTask;
+import com.jetbrains.python.PythonTestUtil;
+import com.jetbrains.python.hierarchy.HierarchyTreeStructureViewer;
 import com.jetbrains.python.hierarchy.call.PyCalleeFunctionTreeStructure;
 import com.jetbrains.python.hierarchy.call.PyCallerFunctionTreeStructure;
 import com.jetbrains.python.psi.PyFunction;
-import org.jetbrains.annotations.Nullable;
+import com.jetbrains.python.psi.PyRecursiveElementVisitor;
+import org.jdom.Document;
+
+import java.io.File;
+
 
 public class PythonCallHierarchyTest extends PyEnvTestCase {
 
-  @Override
-  protected boolean runInDispatchThread() {
-    return true;
+  private static final String TARGET_FUNCTION_NAME = "target_func";
+  private static final String CALLER_VERIFICATION_SUFFIX = "_caller_verification.xml";
+  private static final String CALLEE_VERIFICATION_SUFFIX = "_callee_verification.xml";
+  private static final String WORKING_FOLDER = "/hierarchy/call/";
+
+  private String getBasePath() {
+    return "/hierarchy/call/" + getTestName(false);
   }
 
-  public void testDynamic() {
-    runPythonTest(new PyDebuggerTask("/hierarchy/call/Dynamic", "main.py") {
+  private static String getTestDataPath() {
+    return PythonTestUtil.getTestDataPath();
+  }
 
-      private final Function<PsiElement, HierarchyTreeStructure> functionToCallerTreeStructure = new Function<PsiElement, HierarchyTreeStructure>() {
-        @Nullable
-        @Override
-        public HierarchyTreeStructure fun(PsiElement element) {
-          if (!(element instanceof PyFunction)) {
-            return null;
-          }
-          PyFunction function = (PyFunction)element;
-          return new PyCallerFunctionTreeStructure(myFixture.getProject(), function, HierarchyBrowserBaseEx.SCOPE_PROJECT);
-        }
-      };
+  private String getVerificationFilePath(final String suffix) {
+    return getTestDataPath() + "/" + getBasePath() + "/" + getTestName(false) + suffix;
+  }
 
-      private final Function<PsiElement, HierarchyTreeStructure> functionToCalleeTreeStructure = new Function<PsiElement, HierarchyTreeStructure>() {
-        @Nullable
-        @Override
-        public HierarchyTreeStructure fun(PsiElement element) {
-          if (!(element instanceof PyFunction)) {
-            return null;
-          }
-          PyFunction function = (PyFunction)element;
-          return new PyCalleeFunctionTreeStructure(myFixture.getProject(), function, HierarchyBrowserBaseEx.SCOPE_PROJECT);
-        }
-      };
+  private String getVerificationCallerFilePath() {
+    return getVerificationFilePath(CALLER_VERIFICATION_SUFFIX);
+  }
 
-      private String getBasePath() {
-        return "hierarchy/call/Dynamic";
-      }
+  private String getVerificationCalleeFilePath() {
+    return getVerificationFilePath(CALLEE_VERIFICATION_SUFFIX);
+  }
 
-      private void doTestCallHierarchy(String ... fileNames) throws Exception {
-        String[] filePaths = new String[fileNames.length];
-        int i = 0;
-        for (String fileName: fileNames) {
-          filePaths[i] = getBasePath() + "/" + fileName;
-          i++;
-        }
-        String verificationCallerFilePath = getTestDataPath() + "/" + getBasePath() + "/" + "Dynamic" + "_caller_verification.xml";
-        String verificationCalleeFilePath = getTestDataPath() + "/" + getBasePath() + "/" + "Dynamic" + "_callee_verification.xml";
+  private void doCallHierarchyTest(String scriptName) throws Exception {
+    final PyDebuggerTask task = new PyDebuggerTask(getBasePath(), scriptName);
+    runPythonTest(task);
 
-        //myFixture.configureByFiles(filePaths);
-        //myFixture.testCallHierarchy(functionToCallerTreeStructure, verificationCallerFilePath, filePaths);
-        //myFixture.testCallHierarchy(functionToCalleeTreeStructure, verificationCalleeFilePath, filePaths);
-      }
-
+    final Project project = task.getProject();
+    final Document callerDocument = JDOMUtil.loadDocument(new File(getVerificationCallerFilePath()));
+    final Document calleeDocument = JDOMUtil.loadDocument(new File(getVerificationCalleeFilePath()));
+    final PyRecursiveElementVisitor visitor = new PyRecursiveElementVisitor() {
       @Override
-      public void before() throws Exception {
-        toggleBreakpoint(getScriptPath(), 29);
-      }
-
-      @Override
-      public void testing() throws Exception {
-        waitForPause();
-        resume();
-      }
-
-      @Override
-      public void after() {
-        try {
-          doTestCallHierarchy("main.py", "file_1.py");
+      public void visitPyFunction(PyFunction function) {
+        if (function != null && function.getName() != null && function.getName().equals(TARGET_FUNCTION_NAME)) {
+          HierarchyTreeStructureViewer.checkHierarchyTreeStructure(new PyCallerFunctionTreeStructure(project, function, HierarchyBrowserBaseEx.SCOPE_PROJECT),
+                                                                   callerDocument);
+          HierarchyTreeStructureViewer.checkHierarchyTreeStructure(new PyCalleeFunctionTreeStructure(project, function, HierarchyBrowserBaseEx.SCOPE_PROJECT),
+                                                                   calleeDocument);
         }
-        catch (Exception e) {
-          e.printStackTrace();
-        }
+      }
+    };
+
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(task.getScriptPath());
+        assert vFile != null;
+        final PsiFile file = PsiManager.getInstance(project).findFile(vFile);
+        assert file != null;
+        visitor.visitFile(file);
       }
     });
+  }
+
+  public void testDynamic() throws Exception {
+    runPythonTest(new PyCallHierarchyTask(getTestName(false), getBasePath(), "main.py"));
   }
 }
