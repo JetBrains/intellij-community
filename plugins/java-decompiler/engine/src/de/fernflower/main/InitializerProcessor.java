@@ -138,12 +138,17 @@ public class InitializerProcessor {
 					AssignmentExprent asexpr = (AssignmentExprent)exprent;
 					if(asexpr.getLeft().type == Exprent.EXPRENT_FIELD) {
 						FieldExprent fexpr = (FieldExprent)asexpr.getLeft();
-						if(fexpr.isStatic() && fexpr.getClassname().equals(cl.qualifiedName)) {
-							String keyField = InterpreterUtil.makeUniqueKey(fexpr.getName(), fexpr.getDescriptor().descriptorString);
-							if(!wrapper.getStaticFieldInitializers().containsKey(keyField)) {
-								wrapper.getStaticFieldInitializers().addWithKey(asexpr.getRight(), keyField);
-								firstdata.getExprents().remove(0);
-								found = true;
+						if(fexpr.isStatic() && fexpr.getClassname().equals(cl.qualifiedName) &&
+										cl.hasField(fexpr.getName(), fexpr.getDescriptor().descriptorString)) {
+							
+							if(isExprentIndependent(asexpr.getRight(), meth)) {
+
+								String keyField = InterpreterUtil.makeUniqueKey(fexpr.getName(), fexpr.getDescriptor().descriptorString);
+								if(!wrapper.getStaticFieldInitializers().containsKey(keyField)) {
+    								wrapper.getStaticFieldInitializers().addWithKey(asexpr.getRight(), keyField);
+    								firstdata.getExprents().remove(0);
+    								found = true;
+    							}
 							}
 						}
 					}
