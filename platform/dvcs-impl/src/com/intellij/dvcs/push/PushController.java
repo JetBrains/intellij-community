@@ -38,6 +38,7 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -76,14 +77,18 @@ public class PushController implements Disposable {
   @Nullable
   public ValidationInfo validate() {
     ValidationInfo validInfo = new ValidationInfo("There are no selected repository to push!");
-    for (MyRepoModel model : myView2Model.values()) {
+    for (Map.Entry<RepositoryNode, MyRepoModel> entry : myView2Model.entrySet()) {
+      MyRepoModel model = entry.getValue();
       if (model.isSelected()) {
         //has one or more selected roots
-        PushSupport support = model.getSupport();
-        validInfo = support.validateSpec(model.getRepository(), model.getSpec());
-        if (validInfo != null) {
-          // return first non valid node
-          return validInfo;
+        validInfo = null;
+        RepositoryNode node = entry.getKey();
+        PushTarget target = model.getSpec().getTarget();
+        //todo add validation for model -> hasErrors, too
+        if (target == null) {
+          JComponent editingComponent = myPushLog.startEditNode(node);
+          return new ValidationInfo("Invalid remote for repository " + DvcsUtil.getShortRepositoryName(model.getRepository()),
+                                    editingComponent);
         }
       }
     }
@@ -91,6 +96,7 @@ public class PushController implements Disposable {
   }
 
   private void startLoadingCommits() {
+    //todo should be reworked
     Map<RepositoryNode, MyRepoModel> priorityLoading = new HashMap<RepositoryNode, MyRepoModel>();
     Map<RepositoryNode, MyRepoModel> others = new HashMap<RepositoryNode, MyRepoModel>();
     for (Map.Entry<RepositoryNode, MyRepoModel> entry : myView2Model.entrySet()) {
@@ -152,9 +158,16 @@ public class PushController implements Disposable {
     repoPanel.addRepoNodeListener(new RepositoryNodeListener() {
       @Override
       public void onTargetChanged(String newValue) {
-        myView2Model.get(repoNode).setSpec(new PushSpec(model.getSpec().getSource(), support.createTarget(repository, newValue)));
+        VcsError validationError = support.validate(model.getRepository(), newValue);
+        if (validationError == null) {
+          myView2Model.get(repoNode).setSpec(new PushSpec(model.getSpec().getSource(), support.createTarget(repository, newValue)));
+          loadCommits(model, repoNode, false);
+        }
+        else {
+          //todo may be should store validation errors in model and get errors during dialog validation
+          myView2Model.get(repoNode).setSpec(new PushSpec(model.getSpec().getSource(), null));
+        }
         myDialog.updateButtons();
-        loadCommits(model, repoNode, false);
       }
 
       @Override

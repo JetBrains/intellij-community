@@ -31,16 +31,14 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
-import javax.swing.tree.TreeSelectionModel;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -57,15 +55,13 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
   private static final String START_EDITING = "startEditing";
   private final ChangesBrowser myChangesBrowser;
   private final CheckboxTree myTree;
-  private final CheckedTreeNode myRootNode;
   private final MyTreeCellRenderer myTreeCellRenderer;
 
   public PushLog(Project project, CheckedTreeNode root) {
-    myRootNode = root;
-    DefaultTreeModel treeModel = new DefaultTreeModel(myRootNode);
-    treeModel.nodeStructureChanged(myRootNode);
+    DefaultTreeModel treeModel = new DefaultTreeModel(root);
+    treeModel.nodeStructureChanged(root);
     myTreeCellRenderer = new MyTreeCellRenderer();
-    myTree = new CheckboxTree(myTreeCellRenderer, myRootNode) {
+    myTree = new CheckboxTree(myTreeCellRenderer, root) {
 
       public boolean isPathEditable(TreePath path) {
         return isEditable() && path.getLastPathComponent() instanceof DefaultMutableTreeNode;
@@ -217,7 +213,10 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
         return tag instanceof EditorTextField;
       }
       //if keyboard event - then anEvent will be null =( See BasicTreeUi
-      Object treeNode = myTree.getAnchorSelectionPath().getLastPathComponent();
+      TreePath treePath = myTree.getAnchorSelectionPath();
+      //there is no selection path if we start editing during initial validation//
+      if (treePath == null) return true;
+      Object treeNode = treePath.getLastPathComponent();
       return treeNode instanceof EditableTreeNode;
     }
 
@@ -276,5 +275,15 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
     finally {
       TREE_CONSTRUCTION_LOCK.writeLock().unlock();
     }
+  }
+
+  @Nullable
+  public JComponent startEditNode(@NotNull TreeNode node) {
+    TreePath path = TreeUtil.getPathFromRoot(node);
+    if (!myTree.isEditing()) {
+      myTree.startEditingAtPath(path);
+    }
+    return (JComponent)myTree.getCellEditor()
+      .getTreeCellEditorComponent(myTree, node, false, false, false, myTree.getRowForPath(path));
   }
 }

@@ -159,6 +159,8 @@ public class RepositoryWithBranchPanel extends NonOpaquePanel implements TreeCel
     if (bounds != null) {
       setPreferredSize(new Dimension(tree.getWidth() - bounds.x, bounds.height));
     }
+    myDestBranchTextField.grabFocus();
+    myDestBranchTextField.requestFocus();
     revalidate();
     return this;
   }

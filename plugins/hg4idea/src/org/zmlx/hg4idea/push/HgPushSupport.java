@@ -19,7 +19,6 @@ import com.intellij.dvcs.push.*;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.util.Function;
@@ -104,9 +103,7 @@ public class HgPushSupport extends PushSupport<HgRepository> {
 
   @Override
   @Nullable
-  public ValidationInfo validateSpec(@NotNull Repository repository, @NotNull PushSpec spec) {
-    PushTarget target = spec.getTarget();
-    return (target == null || StringUtil.isEmptyOrSpaces(target.getPresentation())) ? new ValidationInfo(
-      "Please, specify remote push path for selected repos!") : null;
+  public VcsError validate(@NotNull Repository repository, @Nullable String targetToValidate) {
+    return StringUtil.isEmptyOrSpaces(targetToValidate) ? new VcsError("Please, specify remote push path for repository!") : null;
   }
 }

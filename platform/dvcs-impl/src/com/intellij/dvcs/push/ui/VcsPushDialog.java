@@ -103,6 +103,11 @@ public class VcsPushDialog extends DialogWrapper {
     initValidation();
   }
 
+  @Override
+  protected boolean postponeValidation() {
+    return false;
+  }
+
   private class DvcsPushAction extends AbstractAction implements OptionAction {
     private Action[] myOptions = new Action[0];
     private final boolean myForce;
