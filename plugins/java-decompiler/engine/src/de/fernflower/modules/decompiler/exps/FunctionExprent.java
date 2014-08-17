@@ -369,21 +369,6 @@ public class FunctionExprent extends Exprent {
 		case FUNCTION_AND:
 		case FUNCTION_OR:
 		case FUNCTION_XOR: 
-			{
-    			boolean param1_false_boolean = type1.isFalseBoolean() || (param1.type == Exprent.EXPRENT_CONST && !((ConstExprent)param1).hasBooleanValue()); 
-    			boolean param2_false_boolean = type1.isFalseBoolean() || (param2.type == Exprent.EXPRENT_CONST && !((ConstExprent)param2).hasBooleanValue()); 
-    
-    			if(param1_false_boolean || param2_false_boolean) {
-    				if(type1.type == CodeConstants.TYPE_BOOLEAN) {
-    					result.addMinTypeExprent(param1, VarType.VARTYPE_BYTECHAR);
-    				}
-    				
-    				if(type2.type == CodeConstants.TYPE_BOOLEAN) {
-    					result.addMinTypeExprent(param2, VarType.VARTYPE_BYTECHAR);
-    				}
-    			}
-			}
-			break;
 		case FUNCTION_EQ:
 		case FUNCTION_NE:
 			{
