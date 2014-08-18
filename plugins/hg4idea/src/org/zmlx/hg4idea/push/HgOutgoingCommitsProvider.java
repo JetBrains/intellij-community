@@ -71,7 +71,7 @@ public class HgOutgoingCommitsProvider extends OutgoingCommitsProvider {
         if (HgErrorUtil.isAbortLine(error)) {
           if (HgErrorUtil.isAuthorizationError(error)) {
             VcsError authorizationError =
-              new VcsError(error + "<a href='authentificate'>" + LOGIN_AND_REFRESH_LINK + "</a>", new VcsErrorHandler() {
+              new VcsError(error + "<a href='authenticate'>" + LOGIN_AND_REFRESH_LINK + "</a>", new VcsErrorHandler() {
                 public void handleError(@NotNull CommitLoader commitLoader) {
                   commitLoader.reloadCommits();
                 }
