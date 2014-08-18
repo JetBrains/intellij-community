@@ -42,10 +42,9 @@ public class PythonCallHierarchyTest extends PyEnvTestCase {
   private static final String TARGET_FUNCTION_NAME = "target_func";
   private static final String CALLER_VERIFICATION_SUFFIX = "_caller_verification.xml";
   private static final String CALLEE_VERIFICATION_SUFFIX = "_callee_verification.xml";
-  private static final String WORKING_FOLDER = "/hierarchy/call/";
 
   private String getBasePath() {
-    return "/hierarchy/call/" + getTestName(false);
+    return "/hierarchy/call/Dynamic/" + getTestName(false);
   }
 
   private static String getTestDataPath() {
@@ -95,7 +94,7 @@ public class PythonCallHierarchyTest extends PyEnvTestCase {
     });
   }
 
-  public void testDynamic() throws Exception {
+  public void testSimple() throws Exception {
     runPythonTest(new PyCallHierarchyTask(getTestName(false), getBasePath(), "main.py"));
   }
 }
