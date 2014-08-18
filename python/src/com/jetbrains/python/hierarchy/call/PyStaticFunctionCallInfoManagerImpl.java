@@ -29,9 +29,8 @@ import com.intellij.util.CommonProcessors;
 import com.jetbrains.python.psi.PyArgumentList;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyRecursiveElementVisitor;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -47,8 +46,23 @@ public class PyStaticFunctionCallInfoManagerImpl extends PyStaticFunctionCallInf
 
   @Override
   public Collection<PyFunction> getCallees(@NotNull PyFunction function) {
-    List<PyFunction> callees = Lists.newArrayList();
-    findCallees(function, callees);
+    final List<PyFunction> callees = Lists.newArrayList();
+
+    final PyRecursiveElementVisitor visitor = new PyRecursiveElementVisitor() {
+      @Override
+      public void visitPyFunction(PyFunction innerFunction) {
+      }
+
+      @Override
+      public void visitPyCallExpression(PyCallExpression callExpression) {
+        PsiElement calleeFunction = callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
+        if (calleeFunction instanceof PyFunction) {
+          callees.add((PyFunction)calleeFunction);
+        }
+      }
+    };
+
+    visitor.visitElement(function);
 
     return callees;
   }
@@ -91,7 +105,9 @@ public class PyStaticFunctionCallInfoManagerImpl extends PyStaticFunctionCallInf
   private Collection<UsageInfo> findUsages(@NotNull final PyFunction function) {
     final FindUsagesHandler handler =
       ((FindManagerImpl)FindManager.getInstance(myProject)).getFindUsagesManager().getFindUsagesHandler(function, true);
-
+    if (handler == null) {
+      return Lists.newArrayList();
+    }
     final CommonProcessors.CollectProcessor<UsageInfo> processor = new CommonProcessors.CollectProcessor<UsageInfo>();
     final PsiElement[] psiElements = ArrayUtil.mergeArrays(handler.getPrimaryElements(), handler.getSecondaryElements());
     final FindUsagesOptions options = handler.getFindUsagesOptions(null);
@@ -99,19 +115,5 @@ public class PyStaticFunctionCallInfoManagerImpl extends PyStaticFunctionCallInf
       handler.processElementUsages(psiElement, processor, options);
     }
     return processor.getResults();
-  }
-
-  private static void findCallees(final PsiElement element, List<PyFunction> callees) {
-    final PsiElement[] children = element.getChildren();
-    for (PsiElement child: children) {
-      findCallees(child, callees);
-      if (child instanceof PyCallExpression) {
-        PyCallExpression callExpression = (PyCallExpression)child;
-        PsiElement function = callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
-        if (function instanceof PyFunction) {
-          callees.add((PyFunction)function);
-        }
-      }
-    }
   }
 }
