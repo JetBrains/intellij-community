@@ -699,21 +699,6 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   @Nullable
   @Override
   public String getQualifiedName() {
-    String name = getName();
-    if (name == null) {
-      return null;
-    }
-    PyClass containingClass = getContainingClass();
-    if (containingClass != null) {
-      return containingClass.getQualifiedName() + "." + name;
-    }
-    if (PsiTreeUtil.getStubOrPsiParent(this) instanceof PyFile) {
-      VirtualFile virtualFile = getContainingFile().getVirtualFile();
-      if (virtualFile != null) {
-        final String packageName = QualifiedNameFinder.findShortestImportableName(this, virtualFile);
-        return packageName + "." + name;
-      }
-    }
-    return null;
+    return QualifiedNameFinder.getQualifiedName(this);
   }
 }
