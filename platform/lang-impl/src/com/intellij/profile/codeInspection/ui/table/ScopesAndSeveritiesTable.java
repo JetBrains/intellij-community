@@ -20,11 +20,9 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.ScopeToolState;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -36,7 +34,6 @@ import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionConfigTr
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.table.JBTable;
-import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
@@ -77,8 +74,8 @@ public class ScopesAndSeveritiesTable extends JBTable {
 
     final TableColumn scopeEnabledColumn = columnModel.getColumn(SCOPE_ENABLED_COLUMN);
     scopeEnabledColumn.setMaxWidth(30);
-    scopeEnabledColumn.setCellRenderer(new ThreeStateCheckBoxRenderer(false));
-    scopeEnabledColumn.setCellEditor(new ThreeStateCheckBoxRenderer(true));
+    scopeEnabledColumn.setCellRenderer(new ThreeStateCheckBoxRenderer());
+    scopeEnabledColumn.setCellEditor(new ThreeStateCheckBoxRenderer());
 
     final TableColumn severityColumn = columnModel.getColumn(SEVERITY_COLUMN);
     severityColumn.setCellRenderer(SeverityRenderer.create(tableSettings.getInspectionProfile()));
