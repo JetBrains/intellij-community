@@ -24,10 +24,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.JBListWithHintProvider;
-import com.intellij.ui.JBTableWithHintProvider;
-import com.intellij.ui.JBTreeWithHintProvider;
 
+import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -39,7 +37,6 @@ public abstract class PopupUpdateProcessor extends PopupUpdateProcessorBase {
 
   protected PopupUpdateProcessor(Project project) {
     myProject = project;
-
   }
 
   @Override
@@ -71,14 +68,10 @@ public abstract class PopupUpdateProcessor extends PopupUpdateProcessorBase {
       if (fromQuickSearch) {
         ChooseByNameBase.JPanelProvider panelProvider = (ChooseByNameBase.JPanelProvider)focusedComponent.getParent();
         panelProvider.registerHint(windowEvent.asPopup());
-      } else if (focusedComponent != null) {
-        if (focusedComponent instanceof JBListWithHintProvider) {
-          ((JBListWithHintProvider)focusedComponent).registerHint(windowEvent.asPopup());
-        } else if (focusedComponent instanceof JBTableWithHintProvider) {
-          ((JBTableWithHintProvider)focusedComponent).registerHint(windowEvent.asPopup());
-        } else if (focusedComponent instanceof JBTreeWithHintProvider) {
-          ((JBTreeWithHintProvider)focusedComponent).registerHint(windowEvent.asPopup());
-        }
+      }
+      else if (focusedComponent instanceof JComponent) {
+        HintUpdateSupply supply = HintUpdateSupply.getSupply((JComponent)focusedComponent);
+        if (supply != null) supply.registerHint(windowEvent.asPopup());
       }
     }
   }
