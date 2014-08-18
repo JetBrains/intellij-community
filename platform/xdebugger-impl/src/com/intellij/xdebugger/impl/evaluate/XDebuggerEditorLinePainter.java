@@ -27,6 +27,7 @@ import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.frame.XVariablesView;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueTextRendererImpl;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -39,8 +40,8 @@ import java.util.Set;
  */
 public class XDebuggerEditorLinePainter extends EditorLinePainter {
   @Override
-  public Collection<LineExtensionInfo> getLineExtensions(Project project, VirtualFile file, int lineNumber) {
-    if (!Registry.is("ide.debugger.inline")) {
+  public Collection<LineExtensionInfo> getLineExtensions(@Nullable Project project, @Nullable VirtualFile file, int lineNumber) {
+    if (!Registry.is("ide.debugger.inline") || project == null || file == null) {
       return null;
     }
 
