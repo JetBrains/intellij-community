@@ -221,11 +221,13 @@ public class XFramesView extends XDebugView {
     mySelectedStack = null;
     XSuspendContext suspendContext = session == null ? null : session.getSuspendContext();
     if (suspendContext == null) {
-      clear();
+      requestClear();
       return;
     }
 
     if (event == SessionEvent.PAUSED) {
+      // clear immediately
+      cancelClear();
       clear();
     }
 
