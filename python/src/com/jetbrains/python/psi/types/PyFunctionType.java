@@ -18,10 +18,12 @@ package com.jetbrains.python.psi.types;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +31,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * Type of a particular function that is represented as a {@link Callable} in the PSI tree.
@@ -74,20 +79,79 @@ public class PyFunctionType implements PyCallableType {
                                                           @Nullable PyExpression location,
                                                           @NotNull AccessDirection direction,
                                                           @NotNull PyResolveContext resolveContext) {
-    final PyClassTypeImpl functionType = PyBuiltinCache.getInstance(getCallable()).getObjectType(PyNames.FAKE_FUNCTION);
-    if (functionType == null) {
+    final PyClassType delegate = selectFakeType(location, resolveContext.getTypeEvalContext());
+    if (delegate == null) {
       return Collections.emptyList();
     }
-    return functionType.resolveMember(name, location, direction, resolveContext);
+    return delegate.resolveMember(name, location, direction, resolveContext);
   }
 
   @Override
   public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
-    final PyClassTypeImpl functionType = PyBuiltinCache.getInstance(getCallable()).getObjectType(PyNames.FAKE_FUNCTION);
-    if (functionType == null) {
+    final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(location.getContainingFile());
+    final PyClassType delegate;
+    if (location instanceof PyReferenceExpression) {
+      delegate = selectFakeType(((PyReferenceExpression)location).getQualifier(), typeEvalContext);
+    }
+    else {
+      delegate = PyBuiltinCache.getInstance(getCallable()).getObjectType(PyNames.FAKE_FUNCTION);
+    }
+    if (delegate == null) {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
-    return functionType.getCompletionVariants(completionPrefix, location, context);
+    return delegate.getCompletionVariants(completionPrefix, location, context);
+  }
+
+  /**
+   * Select either {@link PyNames#FAKE_FUNCTION} or {@link PyNames#FAKE_METHOD} fake class depending on concrete reference used and
+   * language level. Will fallback to fake function type.
+   */
+  @Nullable
+  private PyClassTypeImpl selectFakeType(@Nullable PyExpression location, @NotNull TypeEvalContext context) {
+    if (location instanceof PyReferenceExpression && isBoundMethodReference(((PyReferenceExpression)location), context)) {
+      return PyBuiltinCache.getInstance(getCallable()).getObjectType(PyNames.FAKE_METHOD);
+    }
+    return PyBuiltinCache.getInstance(getCallable()).getObjectType(PyNames.FAKE_FUNCTION);
+  }
+
+  private boolean isBoundMethodReference(@NotNull PyReferenceExpression location, @NotNull TypeEvalContext context) {
+    final PyFunction function = as(getCallable(), PyFunction.class);
+    final boolean isNonStaticMethod = function != null && function.getContainingClass() != null && function.getModifier() != STATICMETHOD;
+    if (isNonStaticMethod) {
+      // In Python 2 unbound methods have __method fake type
+      if (LanguageLevel.forElement(location).isOlderThan(LanguageLevel.PYTHON30)) {
+        return true;
+      }
+      final PyExpression qualifier;
+      if (location.isQualified()) {
+        qualifier = location.getQualifier();
+      }
+      else {
+        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+        final QualifiedResolveResult resolveResult = location.followAssignmentsChain(resolveContext);
+        final List<PyExpression> qualifiers = resolveResult.getQualifiers();
+        qualifier = ContainerUtil.isEmpty(qualifiers) ? null : qualifiers.get(qualifiers.size() - 1);
+      }
+      if (qualifier != null) {
+        //noinspection ConstantConditions
+        final PyType qualifierType = PyTypeChecker.toNonWeakType(context.getType(qualifier), context);
+        if (isInstanceType(qualifierType)) {
+          return true;
+        }
+        else if (qualifierType instanceof PyUnionType) {
+          for (PyType type : ((PyUnionType)qualifierType).getMembers()) {
+            if (isInstanceType(type)) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  private static boolean isInstanceType(@Nullable PyType type) {
+    return type instanceof PyClassType && !((PyClassType)type).isDefinition();
   }
 
   @Override

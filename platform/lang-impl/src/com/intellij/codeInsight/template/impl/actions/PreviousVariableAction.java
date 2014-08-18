@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,11 +28,12 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import org.jetbrains.annotations.NotNull;
 
 public class PreviousVariableAction extends EditorAction {
   public PreviousVariableAction() {
@@ -42,16 +43,17 @@ public class PreviousVariableAction extends EditorAction {
 
   private static class Handler extends EditorWriteActionHandler {
     @Override
-    public void executeWriteAction(Editor editor, DataContext dataContext) {
+    public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
       final TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
+      assert templateState != null;
       CommandProcessor.getInstance().setCurrentCommandName(CodeInsightBundle.message("template.previous.variable.command"));
       templateState.previousTab();
     }
-  }
 
-  @Override
-  public void update(Editor editor, Presentation presentation, DataContext dataContext) {
-    final TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
-    presentation.setEnabled(templateState != null && !templateState.isFinished());
+    @Override
+    protected boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
+      final TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
+      return templateState != null && !templateState.isFinished();
+    }
   }
 }

@@ -120,22 +120,26 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     myValuePresentation = valuePresentation;
     myRawValue = XValuePresentationUtil.computeValueText(valuePresentation);
     if (Registry.is("ide.debugger.inline")) {
-      getValueContainer().computeSourcePosition(new XNavigatable() {
-        @Override
-        public void setSourcePosition(@Nullable XSourcePosition sourcePosition) {
-          Map<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>> map = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES);
-          if (map == null || sourcePosition == null) return;
-          VirtualFile file = sourcePosition.getFile();
-          int line = sourcePosition.getLine();
-          Pair<VirtualFile, Integer> key = Pair.create(file, line);
-          Set<XValueNodeImpl> presentations = map.get(key);
-          if (presentations == null) {
-            presentations = new LinkedHashSet<XValueNodeImpl>();
-            map.put(key, presentations);
+      try {
+        getValueContainer().computeSourcePosition(new XNavigatable() {
+          @Override
+          public void setSourcePosition(@Nullable XSourcePosition sourcePosition) {
+            Map<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>> map = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES);
+            if (map == null || sourcePosition == null) return;
+            VirtualFile file = sourcePosition.getFile();
+            int line = sourcePosition.getLine();
+            Pair<VirtualFile, Integer> key = Pair.create(file, line);
+            Set<XValueNodeImpl> presentations = map.get(key);
+            if (presentations == null) {
+              presentations = new LinkedHashSet<XValueNodeImpl>();
+              map.put(key, presentations);
+            }
+            presentations.add(XValueNodeImpl.this);
           }
-          presentations.add(XValueNodeImpl.this);
-        }
-      });
+        });
+      }
+      catch (Exception ignore) {
+      }
     }
     updateText();
     setLeaf(!hasChildren);

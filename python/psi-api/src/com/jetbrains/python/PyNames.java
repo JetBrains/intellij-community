@@ -60,6 +60,7 @@ public class PyNames {
   public static final String FAKE_OLD_BASE = "___Classobj";
   public static final String FAKE_GENERATOR = "__generator";
   public static final String FAKE_FUNCTION = "__function";
+  public static final String FAKE_METHOD = "__method";
   public static final String FAKE_NAMEDTUPLE = "__namedtuple";
 
   public static final String FUTURE_MODULE = "__future__";
@@ -471,4 +472,33 @@ public class PyNames {
   public static boolean isRightOperatorName(@Nullable String name) {
     return name != null && name.matches("__r[a-z]+__");
   }
+
+  /**
+   * Available in Python 3 and Python 2 starting from 2.6.
+   * <p/>
+   * Attributes {@code __doc__}, {@code __dict__} and {@code __module__} should be inherited from object.
+   */
+  public static final ImmutableSet<String> FUNCTION_SPECIAL_ATTRIBUTES = ImmutableSet.of(
+    "__defaults__",
+    "__globals__",
+    "__closure__",
+    "__code__",
+    "__name__"
+  );
+
+  public static final ImmutableSet<String> LEGACY_FUNCTION_SPECIAL_ATTRIBUTES = ImmutableSet.of(
+    "func_defaults",
+    "func_globals",
+    "func_closure",
+    "func_code",
+    "func_name",
+    "func_doc",
+    "func_dict"
+  );
+
+  public static final ImmutableSet<String> PY3_ONLY_FUNCTION_SPECIAL_ATTRIBUTES = ImmutableSet.of("__annotations__", "__kwdefaults__");
+
+  public static final ImmutableSet<String> METHOD_SPECIAL_ATTRIBUTES = ImmutableSet.of("__func__", "__self__");
+
+  public static final ImmutableSet<String> LEGACY_METHOD_SPECIAL_ATTRIBUTES = ImmutableSet.of("im_func", "im_self", "im_class");
 }

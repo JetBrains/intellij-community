@@ -170,6 +170,7 @@ public class XDebugSessionImpl implements XDebugSession {
     myPauseActionSupported = isSupported;
   }
 
+  @NotNull
   public List<AnAction> getRestartActions() {
     return myRestartActions;
   }
@@ -180,6 +181,7 @@ public class XDebugSessionImpl implements XDebugSession {
     }
   }
 
+  @NotNull
   public List<AnAction> getExtraActions() {
     return myExtraActions;
   }
