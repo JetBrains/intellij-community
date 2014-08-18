@@ -30,6 +30,7 @@ import git4idea.commands.*;
 import git4idea.merge.GitConflictResolver;
 import git4idea.update.GitUpdateResult;
 import git4idea.util.GitUIUtil;
+import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
 import git4idea.util.StringScanner;
 import git4idea.util.UntrackedFilesNotifier;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +43,8 @@ import java.io.PrintWriter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.CHECKOUT;
 
 /**
  * @author Kirill Likhodedov
@@ -77,7 +80,9 @@ public class GitRebaser {
     final GitRebaseProblemDetector rebaseConflictDetector = new GitRebaseProblemDetector();
     rebaseHandler.addLineListener(rebaseConflictDetector);
     GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector = new GitUntrackedFilesOverwrittenByOperationDetector(root);
+    GitLocalChangesWouldBeOverwrittenDetector localChangesDetector = new GitLocalChangesWouldBeOverwrittenDetector(root, CHECKOUT);
     rebaseHandler.addLineListener(untrackedFilesDetector);
+    rebaseHandler.addLineListener(localChangesDetector);
 
     String progressTitle = "Rebasing";
     GitTask rebaseTask = new GitTask(myProject, rebaseHandler, progressTitle);
@@ -108,7 +113,7 @@ public class GitRebaser {
       });
 
       if (failure.get()) {
-        updateResult.set(handleRebaseFailure(rebaseHandler, root, rebaseConflictDetector, untrackedFilesDetector));
+        updateResult.set(handleRebaseFailure(rebaseHandler, root, rebaseConflictDetector, untrackedFilesDetector, localChangesDetector));
       }
     }
     finally {
@@ -333,19 +338,27 @@ public class GitRebaser {
   }
 
   @NotNull
-  public GitUpdateResult handleRebaseFailure(@NotNull GitLineHandler handler, @NotNull VirtualFile root,
+  public GitUpdateResult handleRebaseFailure(@NotNull GitLineHandler handler,
+                                             @NotNull VirtualFile root,
                                              @NotNull GitRebaseProblemDetector rebaseConflictDetector,
-                                             @NotNull GitMessageWithFilesDetector untrackedWouldBeOverwrittenDetector) {
+                                             @NotNull GitMessageWithFilesDetector untrackedWouldBeOverwrittenDetector,
+                                             @NotNull GitLocalChangesWouldBeOverwrittenDetector localChangesDetector) {
     if (rebaseConflictDetector.isMergeConflict()) {
       LOG.info("handleRebaseFailure merge conflict");
       final boolean allMerged = new GitRebaser.ConflictResolver(myProject, myGit, root, this).merge();
       return allMerged ? GitUpdateResult.SUCCESS_WITH_RESOLVED_CONFLICTS : GitUpdateResult.INCOMPLETE;
-    } else if (untrackedWouldBeOverwrittenDetector.wasMessageDetected()) {
+    }
+    else if (untrackedWouldBeOverwrittenDetector.wasMessageDetected()) {
       LOG.info("handleRebaseFailure: untracked files would be overwritten by checkout");
       UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, root,
                                                                untrackedWouldBeOverwrittenDetector.getRelativeFilePaths(), "rebase", null);
       return GitUpdateResult.ERROR;
-    } else {
+    }
+    else if (localChangesDetector.wasMessageDetected()) {
+      LocalChangesWouldBeOverwrittenHelper.showErrorNotification(myProject, root, "rebase", localChangesDetector.getRelativeFilePaths());
+      return GitUpdateResult.ERROR;
+    }
+    else {
       LOG.info("handleRebaseFailure error " + handler.errors());
       GitUIUtil.notifyImportantError(myProject, "Rebase error", GitUIUtil.stringifyErrors(handler.errors()));
       return GitUpdateResult.ERROR;

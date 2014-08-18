@@ -28,13 +28,13 @@ public class TaskWindow implements Comparable, Stateful {
   public int myInitialLine = -1;
   public int myInitialStart = -1;
   public int myInitialLength = -1;
-  private StudyStatus myStatus = StudyStatus.Unchecked;
+  public StudyStatus myStatus = StudyStatus.Unchecked;
 
   public StudyStatus getStatus() {
     return myStatus;
   }
 
-  public void setStatus(StudyStatus status) {
+  public void setStatus(StudyStatus status, StudyStatus oldStatus) {
     myStatus = status;
   }
 

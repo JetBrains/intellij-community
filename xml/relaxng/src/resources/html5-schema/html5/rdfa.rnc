@@ -1,5 +1,5 @@
 nonRDFaLite = empty
-# ##################################################################### 
+# #####################################################################
 ##  RELAX NG Schema for HTML 5: RDFa 1.1 and RDFa Lite 1.1            #
 # #####################################################################
 
@@ -9,12 +9,12 @@ nonRDFaLite = empty
 
 common.data.rdfa.safecurie =
 	xsd:string {
-		pattern = "\[(([\i-[:]][\c-[:]]*)?:)?[^\s]+\]"
-		minLength = "3"
+		pattern = "\[(([\i-[:]][\c-[:]]*)?:?)[^\s]*\]"
+		minLength = "2"
 	}
 common.data.rdfa.curie =
 	xsd:string {
-		pattern = "(([\i-[:]][\c-[:]]*)?:)?[^\s]+"
+		pattern = "(([\i-[:]][\c-[:]]*)?:)[^\s]*"
 		minLength = "1"
 	}
 common.data.rdfa.term =
@@ -182,15 +182,11 @@ link.rdfa.attrs.metadata =
 	&	common.attrs.present
 	&	common.attrs.other
 	&	(	(	common.attrs.rdfa.property
-				&	(	link.attrs.rel
-					|	common.attrs.rdfa.rel
-					)?
+			&	link.attrs.rel?
 			)
 			|
 			(	common.attrs.rdfa.property?
-				&	(	link.attrs.rel
-					|	common.attrs.rdfa.rel
-					)
+			&	link.attrs.rel
 			)
 		)
 	&	link.attrs.href
@@ -208,6 +204,11 @@ link.rdfa.attrs.metadata =
 	&	shared-hyperlink.attrs.type?
 	&	link.attrs.sizes?
 	#	link.attrs.title included in common.attrs
+	&	embedded.content.attrs.crossorigin?
+	&	(	common.attrs.aria.role.link
+		|	common.attrs.aria.role.presentation
+		|	common.attrs.aria.role.menuitem
+		)?
 	)
 link.rdfa.attrs.phrasing =
 	(	common.attrs.basic
@@ -215,9 +216,7 @@ link.rdfa.attrs.phrasing =
 	&	common.attrs.present
 	&	common.attrs.other
 	&	common.attrs.rdfa.property
-	&	(	link.attrs.rel
-		|	common.attrs.rdfa.rel
-		)?
+	&	link.attrs.rel?
 	&	(	(	common.attrs.rdfa.resource
 			&	link.attrs.href?
 			)
@@ -239,6 +238,11 @@ link.rdfa.attrs.phrasing =
 	&	shared-hyperlink.attrs.type?
 	&	link.attrs.sizes?
 	#	link.attrs.title included in common.attrs
+	&	embedded.content.attrs.crossorigin?
+	&	(	common.attrs.aria.role.link
+		|	common.attrs.aria.role.presentation
+		|	common.attrs.aria.role.menuitem
+		)?
 	)
 	common.elem.metadata |= link.rdfa.elem.metadata
 	common.elem.phrasing |= link.rdfa.elem.phrasing

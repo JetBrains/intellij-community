@@ -62,8 +62,7 @@ grammar {
          | SVG.Conditional.class
          | SVG.Image.class
          | SVG.Shape.class
-         | SVG.Hyperlink.class
-         | SVG.Extensibility.class)*
+         | SVG.Hyperlink.class)*
     switch = element switch { attlist.switch, SVG.switch.content }
     attlist.switch &=
         SVG.Core.attrib,

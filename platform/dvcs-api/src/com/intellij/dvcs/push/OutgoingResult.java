@@ -38,8 +38,4 @@ public class OutgoingResult {
   public List<? extends VcsFullCommitDetails> getCommits() {
     return myCommits;
   }
-
-  public boolean hasErrors() {
-    return !myErrors.isEmpty();
-  }
 }

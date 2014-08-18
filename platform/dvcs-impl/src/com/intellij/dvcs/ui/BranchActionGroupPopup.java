@@ -34,13 +34,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author Nadya Zabrodina
- */
 public class BranchActionGroupPopup extends PopupFactoryImpl.ActionGroupPopup {
   public BranchActionGroupPopup(@NotNull String title, @NotNull Project project,
                                 @NotNull Condition<AnAction> preselectActionCondition, @NotNull ActionGroup actions) {
-    super(title, actions, SimpleDataContext.getProjectContext(project), false, false, false, false, null, -1,
+    super(title, actions, SimpleDataContext.getProjectContext(project), false, false, true, false, null, -1,
           preselectActionCondition, null);
   }
 

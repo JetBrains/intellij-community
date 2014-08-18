@@ -81,13 +81,8 @@ public class StudyRefreshTaskAction extends DumbAwareAction {
                   document.setText(patternText);
                   StudyStatus oldStatus = currentTask.getStatus();
                   LessonInfo lessonInfo = currentTask.getLesson().getLessonInfo();
-                  if (oldStatus == StudyStatus.Failed) {
-                    lessonInfo.setTaskFailed(lessonInfo.getTaskFailed() - 1);
-                  }
-                  if (oldStatus == StudyStatus.Solved) {
-                    lessonInfo.setTaskSolved(lessonInfo.getTaskSolved() - 1);
-                  }
-                  lessonInfo.setTaskUnchecked(lessonInfo.getTaskUnchecked() + 1);
+                  lessonInfo.update(oldStatus, -1);
+                  lessonInfo.update(StudyStatus.Unchecked, +1);
                   StudyUtils.updateStudyToolWindow(project);
                   for (TaskWindow taskWindow : selectedTaskFile.getTaskWindows()) {
                     taskWindow.reset();

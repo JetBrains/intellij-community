@@ -57,3 +57,14 @@ foreignElement =
          | text
          | foreignElement)*
     }
+SVG.a.content &= SVG.Extensibility.class*
+SVG.defs.content &= SVG.Extensibility.class*
+SVG.glyph.content &= SVG.Extensibility.class*
+SVG.g.content &= SVG.Extensibility.class*
+SVG.marker.content &= SVG.Extensibility.class*
+SVG.mask.content &= SVG.Extensibility.class*
+SVG.missing-glyph.content &= SVG.Extensibility.class*
+SVG.pattern.content &= SVG.Extensibility.class*
+SVG.svg.content &= SVG.Extensibility.class*
+SVG.switch.content &= SVG.Extensibility.class*
+SVG.symbol.content &= SVG.Extensibility.class*

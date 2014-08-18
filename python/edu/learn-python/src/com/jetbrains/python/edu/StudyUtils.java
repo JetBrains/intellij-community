@@ -19,6 +19,7 @@ import com.jetbrains.python.edu.course.TaskWindow;
 import com.jetbrains.python.edu.editor.StudyEditor;
 import com.jetbrains.python.edu.ui.StudyToolWindowFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.Collection;
@@ -50,9 +51,11 @@ public class StudyUtils {
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  @Nullable
   public static String getFileText(String parentDir, String fileName, boolean wrapHTML) {
 
     File inputFile = parentDir !=null ? new File(parentDir, fileName) : new File(fileName);
+    if (!inputFile.exists()) return null;
     StringBuilder taskText = new StringBuilder();
     BufferedReader reader = null;
     try {

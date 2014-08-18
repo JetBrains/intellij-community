@@ -36,10 +36,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- *
- * @author Kirill Likhodedov
- */
 class GitBranchPopupActions {
 
   private final Project myProject;
@@ -123,7 +119,7 @@ class GitBranchPopupActions {
     public void update(AnActionEvent e) {
       if (myRepository.isFresh()) {
         e.getPresentation().setEnabled(false);
-        e.getPresentation().setDescription("Checkout is not possible before the first commit.");
+        e.getPresentation().setDescription("Checkout is not possible before the first commit");
       }
     }
   }
