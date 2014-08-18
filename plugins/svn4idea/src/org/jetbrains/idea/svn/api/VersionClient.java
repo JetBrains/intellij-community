@@ -1,8 +1,8 @@
 package org.jetbrains.idea.svn.api;
 
 import com.intellij.openapi.util.Version;
-import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -10,5 +10,5 @@ import org.jetbrains.annotations.NotNull;
 public interface VersionClient extends SvnClient {
 
   @NotNull
-  Version getVersion() throws VcsException;
+  Version getVersion() throws SvnBindException;
 }
