@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
@@ -48,10 +49,10 @@ public class ModuleVcsPathPresenter extends VcsPathPresenter {
     return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       @Override
       public String compute() {
-        ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject)
-          .getFileIndex();
-        Module module = fileIndex.getModuleForFile(file);
-        VirtualFile contentRoot = fileIndex.getContentRootForFile(file);
+        ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+        boolean hideExcludedFiles = Registry.is("ide.hide.excluded.files");
+        Module module = fileIndex.getModuleForFile(file, hideExcludedFiles);
+        VirtualFile contentRoot = fileIndex.getContentRootForFile(file, hideExcludedFiles);
         if (module == null || contentRoot == null) return file.getPresentableUrl();
         StringBuffer result = new StringBuffer();
         result.append("[");

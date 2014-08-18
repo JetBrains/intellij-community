@@ -61,7 +61,13 @@ public class PropertiesImplUtil extends PropertiesUtil {
   @Nullable
   private static ResourceBundle getResourceBundle(@NotNull final String baseName, @NotNull final PsiDirectory baseDirectory) {
     PropertiesFile defaultPropertiesFile = null;
-    for (final PsiFile psiFile : baseDirectory.getFiles()) {
+    final PsiFile[] files = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile[]>() {
+      @Override
+      public PsiFile[] compute() {
+        return baseDirectory.getFiles();
+      }
+    });
+    for (final PsiFile psiFile : files) {
       if (baseName.equals(getBaseName(psiFile))) {
         final PropertiesFile propertiesFile = getPropertiesFile(psiFile);
         if (propertiesFile != null) {

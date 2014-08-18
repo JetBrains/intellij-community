@@ -1,4 +1,4 @@
-package com.jetbrains.env.community;
+package com.jetbrains.env;
 
 import com.google.common.collect.Lists;
 import com.intellij.openapi.application.ApplicationManager;

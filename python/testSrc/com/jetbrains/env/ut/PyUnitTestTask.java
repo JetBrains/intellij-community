@@ -1,4 +1,4 @@
-package com.jetbrains.env.community.ut;
+package com.jetbrains.env.ut;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.*;
@@ -8,6 +8,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
@@ -21,7 +22,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerTestUtil;
-import com.jetbrains.env.community.PyExecutionFixtureTestTask;
+import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.flavors.JythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -82,6 +83,7 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
   @Override
   public void tearDown() throws Exception {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
       public void run() {
         try {
           if (mySetUp) {
@@ -109,6 +111,7 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
     );
   }
 
+  @Override
   public void runTestOn(String sdkHome) throws Exception {
     final Project project = getProject();
     final ConfigurationFactory factory = PythonTestConfigurationType.getInstance().PY_UNITTEST_FACTORY;
@@ -141,19 +144,16 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
 
     new WriteAction() {
       @Override
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         RunManagerEx.getInstanceEx(project).addConfiguration(settings, false);
         RunManagerEx.getInstanceEx(project).setSelectedConfiguration(settings);
         Assert.assertSame(settings, RunManagerEx.getInstanceEx(project).getSelectedConfiguration());
       }
     }.execute();
 
-    final ProgramRunner runner = ProgramRunnerUtil.getRunner(DefaultRunExecutor.EXECUTOR_ID, settings);
-
-    Assert.assertTrue(runner.canRun(DefaultRunExecutor.EXECUTOR_ID, config));
-
-    final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
-    final ExecutionEnvironment env = new ExecutionEnvironment(executor, runner, settings, project);
+    final ExecutionEnvironment environment = ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), settings).build();
+    //noinspection ConstantConditions
+    Assert.assertTrue(environment.getRunner().canRun(DefaultRunExecutor.EXECUTOR_ID, config));
 
     before();
 
@@ -163,9 +163,10 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
     myOutput = new StringBuilder();
 
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
       public void run() {
         try {
-          runner.execute(env, new ProgramRunner.Callback() {
+          environment.getRunner().execute(environment, new ProgramRunner.Callback() {
             @Override
             public void processStarted(RunContentDescriptor descriptor) {
               myDescriptor = descriptor;

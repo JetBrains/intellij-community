@@ -17,7 +17,6 @@ package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.RunContentBuilder;
@@ -55,17 +54,16 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author spleaner
- */
-public class XDebugSessionTab extends DebuggerSessionTabBase implements DataProvider {
+public class XDebugSessionTab extends DebuggerSessionTabBase {
   private static final DataKey<XDebugSessionTab> TAB_KEY = DataKey.create("XDebugSessionTab");
   public static final DataKey<XDebugSession> SESSION_KEY = DataKey.create("XDebugSessionTab.XDebugSession");
 
   private XWatchesViewImpl myWatchesView;
   private final List<XDebugView> myViews = new ArrayList<XDebugView>();
 
-  private XDebugSessionImpl session;
+  @Nullable
+  private XDebugSessionImpl mySession;
+  private XDebugSessionData mySessionData;
 
   @NotNull
   public static XDebugSessionTab create(@NotNull XDebugSessionImpl session,
@@ -77,34 +75,31 @@ public class XDebugSessionTab extends DebuggerSessionTabBase implements DataProv
       if (component != null) {
         XDebugSessionTab oldTab = TAB_KEY.getData(DataManager.getInstance().getDataContext(component));
         if (oldTab != null) {
-          oldTab.setSession(session, environment, contentToReuse, icon);
-          oldTab.attachToSession();
+          oldTab.setSession(session, environment, icon);
+          oldTab.attachToSession(session);
           return oldTab;
         }
       }
     }
-    return new XDebugSessionTab(session, icon, environment, contentToReuse);
+    return new XDebugSessionTab(session, icon, environment);
   }
 
   private XDebugSessionTab(@NotNull XDebugSessionImpl session,
-                          @Nullable Icon icon,
-                          @Nullable ExecutionEnvironment environment,
-                          @Nullable RunContentDescriptor contentToReuse) {
+                           @Nullable Icon icon,
+                           @Nullable ExecutionEnvironment environment) {
     super(session.getProject(), "Debug", session.getSessionName(), GlobalSearchScope.allScope(session.getProject()));
 
-    setSession(session, environment, contentToReuse, icon);
+    setSession(session, environment, icon);
 
     myUi.addContent(createFramesContent(), 0, PlaceInGrid.left, false);
-    myUi.addContent(createVariablesContent(), 0, PlaceInGrid.center, false);
-    myUi.addContent(createWatchesContent(), 0, PlaceInGrid.right, false);
+    myUi.addContent(createVariablesContent(session), 0, PlaceInGrid.center, false);
+    myUi.addContent(createWatchesContent(session), 0, PlaceInGrid.right, false);
 
     for (XDebugView view : myViews) {
       Disposer.register(this, view);
     }
 
-    attachToSession();
-
-    myUi.getContentManager().addDataProvider(this);
+    attachToSession(session);
 
     DefaultActionGroup focus = new DefaultActionGroup();
     focus.add(ActionManager.getInstance().getAction(XDebuggerActions.FOCUS_ON_BREAKPOINT));
@@ -114,10 +109,10 @@ public class XDebugSessionTab extends DebuggerSessionTabBase implements DataProv
       @Override
       public void selectionChanged(ContentManagerEvent event) {
         Content content = event.getContent();
-        XDebugSessionImpl session = XDebugSessionTab.this.session;
+        XDebugSessionImpl session = mySession;
         if (session != null && content.isSelected() && DebuggerContentInfo.WATCHES_CONTENT.equals(ViewImpl.ID.get(content))) {
           if (myWatchesView.rebuildNeeded()) {
-            myWatchesView.processSessionEvent(XDebugView.SessionEvent.SETTINGS_CHANGED, session);
+            myWatchesView.processSessionEvent(XDebugView.SessionEvent.SETTINGS_CHANGED);
           }
         }
       }
@@ -126,17 +121,15 @@ public class XDebugSessionTab extends DebuggerSessionTabBase implements DataProv
     rebuildViews();
   }
 
-  private void setSession(@NotNull XDebugSessionImpl session, @Nullable ExecutionEnvironment environment, @Nullable RunContentDescriptor contentToReuse, @Nullable Icon icon) {
+  private void setSession(@NotNull XDebugSessionImpl session, @Nullable ExecutionEnvironment environment, @Nullable Icon icon) {
     if (environment != null) {
       setEnvironment(environment);
     }
 
-    this.session = session;
+    mySession = session;
+    mySessionData = session.getSessionData();
     myConsole = session.getConsoleView();
     myRunContentDescriptor = new RunContentDescriptor(myConsole, session.getDebugProcess().getProcessHandler(), myUi.getComponent(), session.getSessionName(), icon);
-    if (contentToReuse != null && contentToReuse.isReuseToolWindowActivation()) {
-      myRunContentDescriptor.setActivateToolWindowWhenAdded(contentToReuse.isActivateToolWindowWhenAdded());
-    }
   }
 
   @Nullable
@@ -148,30 +141,23 @@ public class XDebugSessionTab extends DebuggerSessionTabBase implements DataProv
     else if (TAB_KEY.is(dataId)) {
       return this;
     }
-    else if (LangDataKeys.RUN_PROFILE.is(dataId)) {
-      ExecutionEnvironment environment = getEnvironment();
-      return environment == null ? null : environment.getRunProfile();
-    }
-    else if (LangDataKeys.EXECUTION_ENVIRONMENT.is(dataId)) {
-      return getEnvironment();
+    else if (XDebugSessionData.DATA_KEY.is(dataId)) {
+      return mySessionData;
     }
 
-    if (session != null) {
+    if (mySession != null) {
       if (SESSION_KEY.is(dataId)) {
-        return session;
+        return mySession;
       }
       else if (LangDataKeys.CONSOLE_VIEW.is(dataId)) {
-        return session.getConsoleView();
-      }
-      else if (XDebugSessionData.DATA_KEY.is(dataId)) {
-        return session.getSessionData();
+        return mySession.getConsoleView();
       }
     }
 
-    return null;
+    return super.getData(dataId);
   }
 
-  private Content createVariablesContent() {
+  private Content createVariablesContent(@NotNull XDebugSessionImpl session) {
     final XVariablesView variablesView = new XVariablesView(session);
     myViews.add(variablesView);
     Content result = myUi.createContent(DebuggerContentInfo.VARIABLES_CONTENT, variablesView.getPanel(),
@@ -184,7 +170,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase implements DataProv
     return result;
   }
 
-  private Content createWatchesContent() {
+  private Content createWatchesContent(@NotNull XDebugSessionImpl session) {
     myWatchesView = new XWatchesViewImpl(session);
     myViews.add(myWatchesView);
     Content watchesContent = myUi.createContent(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView.getMainPanel(),
@@ -212,9 +198,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase implements DataProv
       @Override
       public void run() {
         for (XDebugView view : myViews) {
-          if (session != null) {
-            view.processSessionEvent(XDebugView.SessionEvent.SETTINGS_CHANGED, session);
-          }
+          view.processSessionEvent(XDebugView.SessionEvent.SETTINGS_CHANGED);
         }
       }
     });
@@ -224,7 +208,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase implements DataProv
     return myWatchesView;
   }
 
-  private void attachToSession() {
+  private void attachToSession(@NotNull XDebugSessionImpl session) {
     for (XDebugView view : myViews) {
       session.addSessionListener(new XDebugViewSessionListener(view, session), this);
     }
@@ -303,15 +287,13 @@ public class XDebugSessionTab extends DebuggerSessionTabBase implements DataProv
     myUi.getOptions().setTopToolbar(topToolbar, ActionPlaces.DEBUGGER_TOOLBAR);
 
     if (environment != null) {
-      RunProfile runConfiguration = environment.getRunProfile();
-      registerFileMatcher(runConfiguration);
-      initLogConsoles(runConfiguration, myRunContentDescriptor.getProcessHandler(), myConsole);
+      initLogConsoles(environment.getRunProfile(), myRunContentDescriptor.getProcessHandler(), myConsole);
     }
   }
 
   public void detachFromSession() {
-    assert session != null;
-    session = null;
+    assert mySession != null;
+    mySession = null;
   }
 
   @Override

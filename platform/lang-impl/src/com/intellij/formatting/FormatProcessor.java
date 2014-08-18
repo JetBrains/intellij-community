@@ -180,6 +180,7 @@ class FormatProcessor {
   }
 
   private int getRightMargin(Block rootBlock) {
+    Language language = null;
     if (rootBlock instanceof ASTBlock) {
       ASTNode node = ((ASTBlock)rootBlock).getNode();
       if (node != null) {
@@ -187,12 +188,12 @@ class FormatProcessor {
         if (psiElement.isValid()) {
           PsiFile psiFile = psiElement.getContainingFile();
           if (psiFile != null) {
-            return mySettings.getRightMargin(psiFile.getViewProvider().getBaseLanguage());
+            language = psiFile.getViewProvider().getBaseLanguage();
           }
         }
       }
     }
-    return mySettings.RIGHT_MARGIN;
+    return mySettings.getRightMargin(language);
   }
 
   private LeafBlockWrapper getLastBlock() {

@@ -1,4 +1,4 @@
-package com.jetbrains.env.community.python.debug;
+package com.jetbrains.env.python.debug;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationFactory;

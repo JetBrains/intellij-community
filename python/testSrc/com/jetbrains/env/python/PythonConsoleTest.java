@@ -1,8 +1,8 @@
-package com.jetbrains.env.community.python;
+package com.jetbrains.env.python;
 
 import com.google.common.collect.Sets;
-import com.jetbrains.env.community.PyEnvTestCase;
-import com.jetbrains.env.community.python.console.PyConsoleTask;
+import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.env.python.console.PyConsoleTask;
 import org.junit.Assert;
 
 import java.util.Collections;

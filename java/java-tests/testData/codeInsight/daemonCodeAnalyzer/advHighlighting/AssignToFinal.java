@@ -90,5 +90,6 @@ class T1 {
     ++(<error descr="Variable 'i2' might not have been initialized">i2</error>);
     <error descr="Variable 'i3' might not have been initialized">i3</error> += 1;
     (i4) = 1;
+    (<error descr="Expression expected">)</error>++;
   }
 }

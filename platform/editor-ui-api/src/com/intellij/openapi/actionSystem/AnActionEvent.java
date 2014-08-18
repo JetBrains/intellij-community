@@ -117,6 +117,18 @@ public class AnActionEvent implements PlaceProvider<String> {
     return StringUtil.trimStart(dataId, ourInjectedPrefix);
   }
 
+  public static DataContext getInjectedDataContext(final DataContext context) {
+    return new DataContextWrapper(context) {
+      @Nullable
+      @Override
+      public Object getData(@NonNls String dataId) {
+        Object injected = super.getData(injectedId(dataId));
+        if (injected != null) return injected;
+        return super.getData(dataId);
+      }
+    };
+  }
+
   /**
    * Returns the context which allows to retrieve information about the state of IDEA related to
    * the action invocation (active editor, selection and so on).
@@ -125,18 +137,7 @@ public class AnActionEvent implements PlaceProvider<String> {
    */
   @NotNull
   public DataContext getDataContext() {
-    if (!myWorksInInjected) {
-      return myDataContext;
-    }
-    return new DataContext() {
-      @Override
-      @Nullable
-      public Object getData(@NonNls String dataId) {
-        Object injected = myDataContext.getData(injectedId(dataId));
-        if (injected != null) return injected;
-        return myDataContext.getData(dataId);
-      }
-    };
+    return myWorksInInjected ? getInjectedDataContext(myDataContext) : myDataContext;
   }
 
   @Nullable

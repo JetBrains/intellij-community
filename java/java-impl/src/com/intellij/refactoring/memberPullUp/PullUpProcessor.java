@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
   private final DocCommentPolicy myJavaDocPolicy;
   private Set<PsiMember> myMembersAfterMove = null;
   private Set<PsiMember> myMovedMembers = null;
-  private Map<Language, PullUpHelper<MemberInfo>> myProcessors = ContainerUtil.newHashMap();
+  private final Map<Language, PullUpHelper<MemberInfo>> myProcessors = ContainerUtil.newHashMap();
 
   public PullUpProcessor(PsiClass sourceClass, PsiClass targetSuperClass, MemberInfo[] membersToMove, DocCommentPolicy javaDocPolicy) {
     super(sourceClass.getProject());
@@ -78,11 +78,13 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
     myJavaDocPolicy = javaDocPolicy;
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new PullUpUsageViewDescriptor();
   }
 
+  @Override
   @NotNull
   protected UsageInfo[] findUsages() {
     final List<UsageInfo> result = new ArrayList<UsageInfo>();
@@ -125,6 +127,7 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
     return data;
   }
 
+  @Override
   protected void performRefactoring(UsageInfo[] usages) {
     moveMembersToBase();
     moveFieldInitializations();
@@ -148,29 +151,35 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
-        final Query<PsiClass> search = ClassInheritorsSearch.search(myTargetSuperClass);
-        final Set<VirtualFile> hierarchyFiles = new HashSet<VirtualFile>();
-        for (PsiClass aClass : search) {
-          final PsiFile containingFile = aClass.getContainingFile();
-          if (containingFile != null) {
-            final VirtualFile virtualFile = containingFile.getVirtualFile();
-            if (virtualFile != null) {
-              hierarchyFiles.add(virtualFile);
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            final Query<PsiClass> search = ClassInheritorsSearch.search(myTargetSuperClass);
+            final Set<VirtualFile> hierarchyFiles = new HashSet<VirtualFile>();
+            for (PsiClass aClass : search) {
+              final PsiFile containingFile = aClass.getContainingFile();
+              if (containingFile != null) {
+                final VirtualFile virtualFile = containingFile.getVirtualFile();
+                if (virtualFile != null) {
+                  hierarchyFiles.add(virtualFile);
+                }
+              }
             }
-          }
-        }
-        final Set<PsiMember> methodsToSearchDuplicates = new HashSet<PsiMember>();
-        for (PsiMember psiMember : myMembersAfterMove) {
-          if (psiMember instanceof PsiMethod && psiMember.isValid() && ((PsiMethod)psiMember).getBody() != null) {
-            methodsToSearchDuplicates.add(psiMember);
-          }
-        }
+            final Set<PsiMember> methodsToSearchDuplicates = new HashSet<PsiMember>();
+            for (PsiMember psiMember : myMembersAfterMove) {
+              if (psiMember instanceof PsiMethod && psiMember.isValid() && ((PsiMethod)psiMember).getBody() != null) {
+                methodsToSearchDuplicates.add(psiMember);
+              }
+            }
 
-        MethodDuplicatesHandler.invokeOnScope(myProject, methodsToSearchDuplicates, new AnalysisScope(myProject, hierarchyFiles), true);
+            MethodDuplicatesHandler.invokeOnScope(myProject, methodsToSearchDuplicates, new AnalysisScope(myProject, hierarchyFiles), true);
+          }
+        });
       }
     }, MethodDuplicatesHandler.REFACTORING_NAME, true, myProject);
   }
 
+  @Override
   protected String getCommandName() {
     return RefactoringBundle.message("pullUp.command", DescriptiveNameUtil.getDescriptiveName(mySourceClass));
   }
@@ -303,19 +312,23 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
   }
 
   private class PullUpUsageViewDescriptor implements UsageViewDescriptor {
+    @Override
     public String getProcessedElementsHeader() {
       return "Pull up members from";
     }
 
+    @Override
     @NotNull
     public PsiElement[] getElements() {
       return new PsiElement[]{mySourceClass};
     }
 
+    @Override
     public String getCodeReferencesText(int usagesCount, int filesCount) {
       return "Class to pull up members to \"" + RefactoringUIUtil.getDescription(myTargetSuperClass, true) + "\"";
     }
 
+    @Override
     public String getCommentReferencesText(int usagesCount, int filesCount) {
       return null;
     }

@@ -1,13 +1,13 @@
-package com.jetbrains.env.community.python;
+package com.jetbrains.env.python;
 
 import com.google.common.collect.Sets;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.UsefulTestCase;
-import com.jetbrains.env.community.PyEnvTestCase;
-import com.jetbrains.env.community.PyExecutionFixtureTestTask;
-import com.jetbrains.env.community.PyTestTask;
+import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.env.PyExecutionFixtureTestTask;
+import com.jetbrains.env.PyTestTask;
 import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkType;

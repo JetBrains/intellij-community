@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,12 +46,14 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.content.*;
 import com.intellij.ui.docking.DockManager;
+import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.messages.Topic;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,59 +61,59 @@ import javax.swing.*;
 import java.util.*;
 
 public class RunContentManagerImpl implements RunContentManager, Disposable {
-  public static final Topic<RunContentWithExecutorListener> RUN_CONTENT_TOPIC =
-    Topic.create("Run Content", RunContentWithExecutorListener.class);
   public static final Key<Boolean> ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY = Key.create("ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY");
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.ui.RunContentManagerImpl");
-  private static final Key<RunContentDescriptor> DESCRIPTOR_KEY = new Key<RunContentDescriptor>("Descriptor");
+  private static final Logger LOG = Logger.getInstance(RunContentManagerImpl.class);
+  private static final Key<RunContentDescriptor> DESCRIPTOR_KEY = Key.create("Descriptor");
 
   private final Project myProject;
-  private final Map<String, ContentManager> myToolwindowIdToContentManagerMap = new HashMap<String, ContentManager>();
+  private final Map<String, ContentManager> myToolwindowIdToContentManagerMap = new THashMap<String, ContentManager>();
 
-  private final Map<RunContentListener, Disposable> myListeners = new HashMap<RunContentListener, Disposable>();
-  private final LinkedList<String> myToolwindowIdZbuffer = new LinkedList<String>();
+  private final Map<RunContentListener, Disposable> myListeners = new THashMap<RunContentListener, Disposable>();
+  private final LinkedList<String> myToolwindowIdZBuffer = new LinkedList<String>();
 
-  public RunContentManagerImpl(Project project, DockManager dockManager) {
+  public RunContentManagerImpl(@NotNull Project project, @NotNull DockManager dockManager) {
     myProject = project;
     DockableGridContainerFactory containerFactory = new DockableGridContainerFactory();
     dockManager.register(DockableGridContainerFactory.TYPE, containerFactory);
     Disposer.register(myProject, containerFactory);
-  }
 
-  public void init() {
-    final Executor[] executors = ExecutorRegistry.getInstance().getRegisteredExecutors();
-    for (Executor executor : executors) {
-      registerToolwindow(executor);
-    }
-
-    if (ToolWindowManager.getInstance(myProject) == null) return;
-
-    // To ensure ToolwindowManager had already initialized in its projectOpened.
-    SwingUtilities.invokeLater(new Runnable() {
+    AppUIUtil.invokeOnEdt(new Runnable() {
       @Override
       public void run() {
-        if (myProject.isDisposed()) return;
-        ((ToolWindowManagerEx)ToolWindowManager.getInstance(myProject)).addToolWindowManagerListener(new ToolWindowManagerAdapter() {
-          @Override
-          public void stateChanged() {
-            if (myProject.isDisposed()) return;
+        init();
+      }
+    }, myProject.getDisposed());
+  }
 
-            ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+  // must be called on EDT
+  private void init() {
+    ToolWindowManagerEx toolWindowManager = ToolWindowManagerEx.getInstanceEx(myProject);
+    if (toolWindowManager == null) {
+      return;
+    }
 
-            Set<String> currentWindows = new HashSet<String>();
-            String[] toolWindowIds = toolWindowManager.getToolWindowIds();
+    for (Executor executor : ExecutorRegistry.getInstance().getRegisteredExecutors()) {
+      registerToolwindow(executor, toolWindowManager);
+    }
 
-            ContainerUtil.addAll(currentWindows, toolWindowIds);
-            myToolwindowIdZbuffer.retainAll(currentWindows);
+    toolWindowManager.addToolWindowManagerListener(new ToolWindowManagerAdapter() {
+      @Override
+      public void stateChanged() {
+        if (myProject.isDisposed()) {
+          return;
+        }
 
-            final String activeToolWindowId = toolWindowManager.getActiveToolWindowId();
-            if (activeToolWindowId != null) {
-              if (myToolwindowIdZbuffer.remove(activeToolWindowId)) {
-                myToolwindowIdZbuffer.addFirst(activeToolWindowId);
-              }
-            }
+        ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+        Set<String> currentWindows = new THashSet<String>();
+        ContainerUtil.addAll(currentWindows, toolWindowManager.getToolWindowIds());
+        myToolwindowIdZBuffer.retainAll(currentWindows);
+
+        final String activeToolWindowId = toolWindowManager.getActiveToolWindowId();
+        if (activeToolWindowId != null) {
+          if (myToolwindowIdZBuffer.remove(activeToolWindowId)) {
+            myToolwindowIdZBuffer.addFirst(activeToolWindowId);
           }
-        });
+        }
       }
     });
   }
@@ -120,25 +122,15 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   public void dispose() {
   }
 
-  private void unregisterToolwindow(final String id) {
-    final ContentManager manager = myToolwindowIdToContentManagerMap.get(id);
-    manager.removeAllContents(true);
-    myToolwindowIdToContentManagerMap.remove(id);
-    myToolwindowIdZbuffer.remove(id);
-  }
-
-  private void registerToolwindow(@NotNull final Executor executor) {
+  private void registerToolwindow(@NotNull final Executor executor, @NotNull ToolWindowManagerEx toolWindowManager) {
     final String toolWindowId = executor.getToolWindowId();
-    final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-    if (toolWindowManager == null) return; //headless environment
     if (toolWindowManager.getToolWindow(toolWindowId) != null) {
       return;
     }
 
-    final ToolWindow toolWindow = toolWindowManager.registerToolWindow(toolWindowId, true, ToolWindowAnchor.BOTTOM, this, true);
-
+    ToolWindow toolWindow = toolWindowManager.registerToolWindow(toolWindowId, true, ToolWindowAnchor.BOTTOM, this, true);
     final ContentManager contentManager = toolWindow.getContentManager();
-    class MyDataProvider implements DataProvider {
+    contentManager.addDataProvider(new DataProvider() {
       private int myInsideGetData = 0;
 
       @Override
@@ -156,31 +148,30 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
           myInsideGetData--;
         }
       }
-    }
-    contentManager.addDataProvider(new MyDataProvider());
+    });
 
     toolWindow.setIcon(executor.getToolWindowIcon());
     new ContentManagerWatcher(toolWindow, contentManager);
     contentManager.addContentManagerListener(new ContentManagerAdapter() {
       @Override
       public void selectionChanged(final ContentManagerEvent event) {
-        final Content content = event.getContent();
-        final RunContentDescriptor descriptor = content != null ? getRunContentDescriptorByContent(content) : null;
-        getSyncPublisher().contentSelected(descriptor, executor);
+        Content content = event.getContent();
+        getSyncPublisher().contentSelected(content == null ? null : getRunContentDescriptorByContent(content), executor);
       }
     });
     myToolwindowIdToContentManagerMap.put(toolWindowId, contentManager);
     Disposer.register(contentManager, new Disposable() {
       @Override
       public void dispose() {
-        unregisterToolwindow(toolWindowId);
+        myToolwindowIdToContentManagerMap.remove(toolWindowId).removeAllContents(true);
+        myToolwindowIdZBuffer.remove(toolWindowId);
       }
     });
-    myToolwindowIdZbuffer.addLast(toolWindowId);
+    myToolwindowIdZBuffer.addLast(toolWindowId);
   }
 
   private RunContentWithExecutorListener getSyncPublisher() {
-    return myProject.getMessageBus().syncPublisher(RUN_CONTENT_TOPIC);
+    return myProject.getMessageBus().syncPublisher(TOPIC);
   }
 
   @Override
@@ -192,23 +183,19 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     toFrontRunContent(requestor, descriptor);
   }
 
-
   @Override
   public void toFrontRunContent(final Executor requestor, final RunContentDescriptor descriptor) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        final ContentManager contentManager = getContentManagerForRunner(requestor);
-
-        final Content content = getRunContentByDescriptor(contentManager, descriptor);
+        ContentManager contentManager = getContentManagerForRunner(requestor);
+        Content content = getRunContentByDescriptor(contentManager, descriptor);
         if (content != null) {
           contentManager.setSelectedContent(content);
-
-          final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(requestor.getToolWindowId());
-          toolWindow.show(null);
+          ToolWindowManager.getInstance(myProject).getToolWindow(requestor.getToolWindowId()).show(null);
         }
       }
-    });
+    }, myProject.getDisposed());
   }
 
   @Override
@@ -216,15 +203,12 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (!myProject.isDisposed()) {
-          final String toolWindowId = executor.getToolWindowId();
-          final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(toolWindowId);
-          if (toolWindow != null) {
-            toolWindow.hide(null);
-          }
+        ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(executor.getToolWindowId());
+        if (toolWindow != null) {
+          toolWindow.hide(null);
         }
       }
-    });
+    }, myProject.getDisposed());
   }
 
   @Override
@@ -237,7 +221,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   @Override
   @Nullable
   public RunContentDescriptor getSelectedContent() {
-    for (String activeWindow : myToolwindowIdZbuffer) {
+    for (String activeWindow : myToolwindowIdZBuffer) {
       final ContentManager contentManager = myToolwindowIdToContentManagerMap.get(activeWindow);
       if (contentManager == null) {
         continue;
@@ -269,32 +253,30 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   }
 
   @Override
-  public void showRunContent(@NotNull final Executor executor, final RunContentDescriptor descriptor) {
-    showRunContent(executor, descriptor, descriptor != null ? descriptor.getExecutionId() : 0L);
+  public void showRunContent(@NotNull Executor executor, @NotNull RunContentDescriptor descriptor) {
+    showRunContent(executor, descriptor, descriptor.getExecutionId());
   }
 
-  public void showRunContent(@NotNull final Executor executor, final RunContentDescriptor descriptor, long executionId) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+  public void showRunContent(@NotNull final Executor executor, @NotNull final RunContentDescriptor descriptor, long executionId) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
 
     final ContentManager contentManager = getContentManagerForRunner(executor);
-    RunContentDescriptor oldDescriptor =
-      chooseReuseContentForDescriptor(contentManager, descriptor, executionId, descriptor != null ? descriptor.getDisplayName() : null);
-
+    RunContentDescriptor oldDescriptor = chooseReuseContentForDescriptor(contentManager, descriptor, executionId, descriptor.getDisplayName());
     final Content content;
-
-    Content oldAttachedContent = oldDescriptor == null ? null : oldDescriptor.getAttachedContent();
-    if (oldDescriptor != null) {
-      content = oldAttachedContent;
+    if (oldDescriptor == null) {
+      content = createNewContent(contentManager, descriptor, executor);
+      Icon icon = descriptor.getIcon();
+      content.setIcon(icon == null ? executor.getToolWindowIcon() : icon);
+    }
+    else {
+      content = oldDescriptor.getAttachedContent();
+      LOG.assertTrue(content != null);
       getSyncPublisher().contentRemoved(oldDescriptor, executor);
       Disposer.dispose(oldDescriptor); // is of the same category, can be reused
     }
-    else if (oldAttachedContent == null || !oldAttachedContent.isValid() /*|| oldAttachedContent.getUserData(MARKED_TO_BE_REUSED) != null */) {
-      content = createNewContent(contentManager, descriptor, executor);
-      final Icon icon = descriptor.getIcon();
-      content.setIcon(icon == null ? executor.getToolWindowIcon() : icon);
-    } else {
-      content = oldAttachedContent;
-    }
+
     content.setExecutionId(executionId);
     content.setComponent(descriptor.getComponent());
     content.setPreferredFocusedComponent(descriptor.getPreferredFocusComputable());
@@ -342,10 +324,10 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     if (!descriptor.isActivateToolWindowWhenAdded()) {
       return;
     }
+
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (myProject.isDisposed()) return;
         ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(executor.getToolWindowId());
         // let's activate tool window, but don't move focus
         //
@@ -356,14 +338,17 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
         descriptor.getPreferredFocusComputable();
         window.activate(null, descriptor.isAutoFocusContent(), descriptor.isAutoFocusContent());
       }
-    });
+    }, myProject.getDisposed());
   }
 
   @Override
   @Nullable
   @Deprecated
   public RunContentDescriptor getReuseContent(final Executor requestor, DataContext dataContext) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return null;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return null;
+    }
+    //noinspection deprecation
     return getReuseContent(requestor, GenericProgramRunner.CONTENT_TO_REUSE_DATA_KEY.getData(dataContext));
   }
 
@@ -406,14 +391,21 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   }
 
   @Override
-  public void showRunContent(@NotNull Executor info, RunContentDescriptor descriptor, @Nullable RunContentDescriptor contentToReuse) {
+  public void showRunContent(@NotNull Executor info, @NotNull RunContentDescriptor descriptor, @Nullable RunContentDescriptor contentToReuse) {
+    copyContentAndBehavior(descriptor, contentToReuse);
+    showRunContent(info, descriptor, descriptor.getExecutionId());
+  }
+
+  public static void copyContentAndBehavior(@NotNull RunContentDescriptor descriptor, @Nullable RunContentDescriptor contentToReuse) {
     if (contentToReuse != null) {
       Content attachedContent = contentToReuse.getAttachedContent();
-      if (attachedContent.getManager() != null) {
+      if (attachedContent != null && attachedContent.isValid()) {
         descriptor.setAttachedContent(attachedContent);
       }
+      if (contentToReuse.isReuseToolWindowActivation()) {
+        descriptor.setActivateToolWindowWhenAdded(contentToReuse.isActivateToolWindowWhenAdded());
+      }
     }
-    showRunContent(info, descriptor, descriptor != null ? descriptor.getExecutionId(): 0L);
   }
 
   @Nullable
@@ -429,7 +421,9 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       }
       //Stage two: try to get content from descriptor itself
       final Content attachedContent = descriptor.getAttachedContent();
-      if (attachedContent != null && attachedContent.isValid() && contentManager.getIndexOfContent(attachedContent) != -1) content = attachedContent;
+      if (attachedContent != null && attachedContent.isValid() && contentManager.getIndexOfContent(attachedContent) != -1) {
+        content = attachedContent;
+      }
     }
     //Stage three: choose the content with name we prefer
     if (content == null) {
@@ -479,6 +473,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     if (contentManager == null) {
       LOG.error("Runner " + executor.getId() + " is not registered");
     }
+    //noinspection ConstantConditions
     return contentManager;
   }
 
@@ -492,26 +487,20 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     return content;
   }
 
-  private static boolean isTerminated(@NotNull final Content content) {
-    final RunContentDescriptor descriptor = getRunContentDescriptorByContent(content);
-    if (descriptor == null) {
-      return true;
-    }
-    else {
-      final ProcessHandler processHandler = descriptor.getProcessHandler();
-      return processHandler == null || processHandler.isProcessTerminated();
-    }
+  private static boolean isTerminated(@NotNull Content content) {
+    RunContentDescriptor descriptor = getRunContentDescriptorByContent(content);
+    ProcessHandler processHandler = descriptor == null ? null : descriptor.getProcessHandler();
+    return processHandler == null || processHandler.isProcessTerminated();
   }
 
   @Nullable
-  public static RunContentDescriptor getRunContentDescriptorByContent(@NotNull final Content content) {
+  private static RunContentDescriptor getRunContentDescriptorByContent(@NotNull Content content) {
     return content.getUserData(DESCRIPTOR_KEY);
   }
 
-
   @Override
   @Nullable
-  public ToolWindow getToolWindowByDescriptor(@NotNull final RunContentDescriptor descriptor) {
+  public ToolWindow getToolWindowByDescriptor(@NotNull RunContentDescriptor descriptor) {
     for (Map.Entry<String, ContentManager> entry : myToolwindowIdToContentManagerMap.entrySet()) {
       if (getRunContentByDescriptor(entry.getValue(), descriptor) != null) {
         return ToolWindowManager.getInstance(myProject).getToolWindow(entry.getKey());
@@ -521,9 +510,8 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   }
 
   @Nullable
-  private static Content getRunContentByDescriptor(final ContentManager contentManager, final RunContentDescriptor descriptor) {
-    final Content[] contents = contentManager.getContents();
-    for (final Content content : contents) {
+  private static Content getRunContentByDescriptor(@NotNull ContentManager contentManager, @NotNull RunContentDescriptor descriptor) {
+    for (Content content : contentManager.getContents()) {
       if (descriptor.equals(content.getUserData(DESCRIPTOR_KEY))) {
         return content;
       }
@@ -532,18 +520,18 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   }
 
   @Override
-  public void addRunContentListener(final RunContentListener listener, final Executor executor) {
+  public void addRunContentListener(@NotNull final RunContentListener listener, final Executor executor) {
     final Disposable disposable = Disposer.newDisposable();
-    myProject.getMessageBus().connect(disposable).subscribe(RUN_CONTENT_TOPIC, new RunContentWithExecutorListener() {
+    myProject.getMessageBus().connect(disposable).subscribe(TOPIC, new RunContentWithExecutorListener() {
       @Override
-      public void contentSelected(RunContentDescriptor descriptor, @NotNull Executor executor2) {
+      public void contentSelected(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor2) {
         if (executor2.equals(executor)) {
           listener.contentSelected(descriptor);
         }
       }
 
       @Override
-      public void contentRemoved(RunContentDescriptor descriptor, @NotNull Executor executor2) {
+      public void contentRemoved(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor2) {
         if (executor2.equals(executor)) {
           listener.contentRemoved(descriptor);
         }
@@ -553,16 +541,16 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   }
 
   @Override
-  public void addRunContentListener(final RunContentListener listener) {
+  public void addRunContentListener(@NotNull final RunContentListener listener) {
     final Disposable disposable = Disposer.newDisposable();
-    myProject.getMessageBus().connect(disposable).subscribe(RUN_CONTENT_TOPIC, new RunContentWithExecutorListener() {
+    myProject.getMessageBus().connect(disposable).subscribe(TOPIC, new RunContentWithExecutorListener() {
       @Override
-      public void contentSelected(RunContentDescriptor descriptor, @NotNull Executor executor) {
+      public void contentSelected(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
         listener.contentSelected(descriptor);
       }
 
       @Override
-      public void contentRemoved(RunContentDescriptor descriptor, @NotNull Executor executor) {
+      public void contentRemoved(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
         listener.contentRemoved(descriptor);
       }
     });
@@ -575,18 +563,16 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     if (myToolwindowIdToContentManagerMap.isEmpty()) {
       return Collections.emptyList();
     }
-    final String[] ids = myToolwindowIdToContentManagerMap.keySet().toArray(new String[myToolwindowIdToContentManagerMap.size()]);
-    final List<RunContentDescriptor> descriptors = new ArrayList<RunContentDescriptor>();
-    for (String id : ids) {
-      final ContentManager contentManager = myToolwindowIdToContentManagerMap.get(id);
-      for (final Content content : contentManager.getContents()) {
-        final RunContentDescriptor descriptor = getRunContentDescriptorByContent(content);
+
+    List<RunContentDescriptor> descriptors = new SmartList<RunContentDescriptor>();
+    for (String id : myToolwindowIdToContentManagerMap.keySet()) {
+      for (Content content : myToolwindowIdToContentManagerMap.get(id).getContents()) {
+        RunContentDescriptor descriptor = getRunContentDescriptorByContent(content);
         if (descriptor != null) {
           descriptors.add(descriptor);
         }
       }
     }
-
     return descriptors;
   }
 
@@ -600,10 +586,9 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
 
   @Nullable
   private RunContentDescriptor getDescriptorBy(ProcessHandler handler, Executor runnerInfo) {
-    ContentManager contentManager = getContentManagerForRunner(runnerInfo);
-    Content[] contents = contentManager.getContents();
-    for (Content content : contents) {
-      RunContentDescriptor runContentDescriptor = content.getUserData(DESCRIPTOR_KEY);
+    for (Content content : getContentManagerForRunner(runnerInfo).getContents()) {
+      RunContentDescriptor runContentDescriptor = getRunContentDescriptorByContent(content);
+      assert runContentDescriptor != null;
       if (runContentDescriptor.getProcessHandler() == handler) {
         return runContentDescriptor;
       }
@@ -635,12 +620,11 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
 
       final Content content = myContent;
       try {
-        final RunContentDescriptor descriptor = getRunContentDescriptorByContent(content);
-
+        RunContentDescriptor descriptor = getRunContentDescriptorByContent(content);
         getSyncPublisher().contentRemoved(descriptor, myExecutor);
-
-        if (descriptor != null)
+        if (descriptor != null) {
           Disposer.dispose(descriptor);
+        }
       }
       finally {
         content.getManager().removeContentManagerListener(this);
@@ -692,7 +676,6 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
 
     private boolean closeQuery(boolean modal) {
       final RunContentDescriptor descriptor = getRunContentDescriptorByContent(myContent);
-
       if (descriptor == null) {
         return true;
       }
@@ -702,6 +685,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
         return true;
       }
       final boolean destroyProcess;
+      //noinspection deprecation
       if (processHandler.isSilentlyDestroyOnClose() || Boolean.TRUE.equals(processHandler.getUserData(ProcessHandler.SILENTLY_DESTROY_ON_CLOSE))) {
         destroyProcess = true;
       }
@@ -779,7 +763,9 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
                 break;
               }
               try {
+                //noinspection SynchronizeOnThis
                 synchronized (this) {
+                  //noinspection SynchronizeOnThis
                   wait(2000L);
                 }
               }

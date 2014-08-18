@@ -32,6 +32,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -221,12 +222,13 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
    * Tries to find editor for the given element.
    * <p/>
    * There are at least two approaches to achieve the target. Current method is intended to encapsulate both of them:
-   * <pre>
    * <ul>
    *   <li>target editor works with a real file that remains at file system;</li>
    *   <li>target editor works with a virtual file;</li>
    * </ul>
-   * </pre>
+   * <p/>
+   * Please don't use this method for finding an editor for quick fix.
+   * @see {@link com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement}
    *
    * @param element   target element
    * @return          editor that works with a given element if the one is found; <code>null</code> otherwise
@@ -234,30 +236,28 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
   @Nullable
   public static Editor findEditor(@NotNull PsiElement element) {
     PsiFile psiFile = element.getContainingFile();
-    if (psiFile == null) {
-      return null;
-    }
-    VirtualFile virtualFile = psiFile.getOriginalFile().getVirtualFile();
+    VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
     if (virtualFile == null) {
       return null;
     }
 
-    if (virtualFile.isInLocalFileSystem()) {
+    Project project = psiFile.getProject();
+    if (virtualFile.isInLocalFileSystem() || virtualFile.getFileSystem() instanceof NonPhysicalFileSystem) {
       // Try to find editor for the real file.
-      final FileEditor[] editors = FileEditorManager.getInstance(psiFile.getProject()).getEditors(virtualFile);
+      final FileEditor[] editors = FileEditorManager.getInstance(project).getEditors(virtualFile);
       for (FileEditor editor : editors) {
         if (editor instanceof TextEditor) {
           return ((TextEditor)editor).getEditor();
         }
       }
     }
-    else if (SwingUtilities.isEventDispatchThread()) {
+    if (SwingUtilities.isEventDispatchThread()) {
       // We assume that data context from focus-based retrieval should success if performed from EDT.
       AsyncResult<DataContext> asyncResult = DataManager.getInstance().getDataContextFromFocus();
       if (asyncResult.isDone()) {
         Editor editor = CommonDataKeys.EDITOR.getData(asyncResult.getResult());
         if (editor != null) {
-          Document cachedDocument = PsiDocumentManager.getInstance(psiFile.getProject()).getCachedDocument(psiFile);
+          Document cachedDocument = PsiDocumentManager.getInstance(project).getCachedDocument(psiFile);
           // Ensure that target editor is found by checking its document against the one from given PSI element.
           if (cachedDocument == editor.getDocument()) {
             return editor;

@@ -11,7 +11,7 @@ public class Test {
 
         @Override
         void bar() {
-
+            
         }
     }
 }

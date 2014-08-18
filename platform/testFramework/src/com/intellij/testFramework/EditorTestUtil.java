@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -46,7 +45,6 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.junit.Assert;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -73,40 +71,45 @@ public class EditorTestUtil {
   public static void performTypingAction(Editor editor, char c) {
     EditorActionManager actionManager = EditorActionManager.getInstance();
     if (c == BACKSPACE_FAKE_CHAR) {
-      EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE);
-      actionHandler.execute(editor, DataManager.getInstance().getDataContext());
+      executeAction(editor, IdeActions.ACTION_EDITOR_BACKSPACE);
     } else if (c == SMART_ENTER_FAKE_CHAR) {
-      EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_COMPLETE_STATEMENT);
-      actionHandler.execute(editor, DataManager.getInstance().getDataContext());
+      executeAction(editor, IdeActions.ACTION_EDITOR_COMPLETE_STATEMENT);
     } else if (c == SMART_LINE_SPLIT_CHAR) {
-      EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_SPLIT);
-      actionHandler.execute(editor, DataManager.getInstance().getDataContext());
+      executeAction(editor, IdeActions.ACTION_EDITOR_SPLIT);
     }
     else if (c == '\n') {
-      EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_ENTER);
-      actionHandler.execute(editor, DataManager.getInstance().getDataContext());
+      executeAction(editor, IdeActions.ACTION_EDITOR_ENTER);
     }
     else {
       TypedAction action = actionManager.getTypedAction();
-      action.actionPerformed(editor, c, DataManager.getInstance().getDataContext());
+      action.actionPerformed(editor, c, DataManager.getInstance().getDataContext(editor.getContentComponent()));
     }
   }
 
-  public static void performReferenceCopy(DataContext dataContext) {
+  public static void executeAction(Editor editor, String actionId) {
+    executeAction(editor, actionId, false);
+  }
+
+  public static void executeAction(Editor editor, String actionId, boolean assertActionIsEnabled) {
     ActionManager actionManager = ActionManager.getInstance();
-    AnAction action = actionManager.getAction(IdeActions.ACTION_COPY_REFERENCE);
-    AnActionEvent
-      event = new AnActionEvent(null, dataContext, "", action.getTemplatePresentation(),
-                                            ActionManager.getInstance(), 0);
-    action.update(event);
-    Assert.assertTrue(event.getPresentation().isEnabled());
+    AnAction action = actionManager.getAction(actionId);
+    assertNotNull(action);
+    DataContext dataContext = DataManager.getInstance().getDataContext(editor.getContentComponent());
+    AnActionEvent event = new AnActionEvent(null, dataContext, "", action.getTemplatePresentation(), actionManager, 0);
+    action.beforeActionPerformedUpdate(event);
+    if (!event.getPresentation().isEnabled()) {
+      assertFalse("Action " + actionId + " is disabled", assertActionIsEnabled);
+      return;
+    }
     action.actionPerformed(event);
   }
 
+  public static void performReferenceCopy(Editor editor) {
+    executeAction(editor, IdeActions.ACTION_COPY_REFERENCE, true);
+  }
+
   public static void performPaste(Editor editor) {
-    EditorActionManager actionManager = EditorActionManager.getInstance();
-    EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_PASTE);
-    actionHandler.execute(editor, null, DataManager.getInstance().getDataContext());
+    executeAction(editor, IdeActions.ACTION_EDITOR_PASTE, true);
   }
 
   public static List<IElementType> getAllTokens(EditorHighlighter highlighter) {

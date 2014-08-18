@@ -45,6 +45,7 @@ public class GroovyResultOfAssignmentUsedInspection extends BaseInspection {
     return "Result of assignment expression used #loc";
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();

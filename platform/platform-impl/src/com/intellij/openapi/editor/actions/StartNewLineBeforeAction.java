@@ -42,8 +42,8 @@ public class StartNewLineBeforeAction extends EditorAction {
     }
 
     @Override
-    public boolean isEnabled(Editor editor, DataContext dataContext) {
-      return getHandler(IdeActions.ACTION_EDITOR_ENTER).isEnabled(editor, dataContext);
+    public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
+      return getHandler(IdeActions.ACTION_EDITOR_ENTER).isEnabled(editor, caret, dataContext);
     }
 
     @Override

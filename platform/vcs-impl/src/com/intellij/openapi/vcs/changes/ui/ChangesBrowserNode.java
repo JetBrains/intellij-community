@@ -150,7 +150,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
 
   public <T> List<T> getAllObjectsUnder(final Class<T> clazz) {
     List<T> changes = new ArrayList<T>();
-    final Enumeration enumeration = depthFirstEnumeration();
+    final Enumeration enumeration = preorderEnumeration();
     while (enumeration.hasMoreElements()) {
       ChangesBrowserNode child = (ChangesBrowserNode)enumeration.nextElement();
       final Object value = child.getUserObject();

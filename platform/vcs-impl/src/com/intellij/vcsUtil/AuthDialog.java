@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class AuthDialog extends DialogWrapper {
-  private AuthenticationPanel authPanel;
+  private final AuthenticationPanel authPanel;
 
   /**
    * If password if prefilled, it is expected to continue remembering it.
@@ -54,6 +54,7 @@ public class AuthDialog extends DialogWrapper {
     return rememberByDefault;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return authPanel;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.ClassUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -157,7 +157,10 @@ public class LoggerInitializedWithForeignClassInspectionBase extends BaseInspect
       if (expressions.length != 1) {
         return;
       }
-      final PsiClass containingClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+      PsiClass containingClass = ClassUtils.getContainingClass(expression);
+      while (containingClass instanceof PsiAnonymousClass) {
+        containingClass = ClassUtils.getContainingClass(containingClass);
+      }
       if (containingClass == null) {
         return;
       }

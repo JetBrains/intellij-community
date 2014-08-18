@@ -56,6 +56,7 @@ public class GroovyWaitWhileNotSynchronizedInspection extends BaseInspection {
 
     }
 
+    @NotNull
     @Override
     public BaseInspectionVisitor buildVisitor() {
         return new Visitor();

@@ -115,6 +115,25 @@ class __function(object):
 """
     return txt
 
+def create_method():
+    txt = """
+class __method(object):
+    '''A mock class representing method type.'''
+
+    def __init__(self):
+"""
+    if version[0] == 2:
+        txt += """
+        self.im_class = None
+        self.im_self = None
+        self.im_func = None
+"""
+    if version[0] >= 3 or (version[0] == 2 and version[1] >= 6):
+        txt += """
+        self.__func__ = None
+        self.__self__ = None
+"""
+    return txt
 
 def _searchbases(cls, accum):
     # logic copied from inspect.py

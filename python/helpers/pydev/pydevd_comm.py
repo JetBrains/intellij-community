@@ -61,32 +61,14 @@ from pydevd_constants import * #@UnusedWildImport
 
 import sys
 
-if USE_LIB_COPY:
-    import _pydev_time as time
-    import _pydev_threading as threading
-    try:
-        import _pydev_thread as thread
-    except ImportError:
-        import _thread as thread #Py3K changed it.
-    import _pydev_Queue as _queue
-    from _pydev_socket import socket
-    from _pydev_socket import AF_INET, SOCK_STREAM
-    from _pydev_socket import SHUT_RD, SHUT_WR
-else:
-    import time
-    import threading
-    try:
-        import thread
-    except ImportError:
-        import _thread as thread #Py3K changed it.
+from _pydev_imps import _pydev_time as time
 
-    try:
-        import Queue as _queue
-    except ImportError:
-        import queue as _queue
-    from socket import socket
-    from socket import AF_INET, SOCK_STREAM
-    from socket import SHUT_RD, SHUT_WR
+if USE_LIB_COPY:
+    import _pydev_threading as threading
+else:
+    import threading
+from _pydev_imps._pydev_socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR
+from pydev_imports import _queue
 
 try:
     from urllib import quote, quote_plus, unquote, unquote_plus
@@ -103,6 +85,8 @@ import pydev_log
 import _pydev_completer
 
 from pydevd_tracing import GetExceptionTracebackStr
+import pydevd_console
+from pydev_monkey import disable_trace_thread_modules, enable_trace_thread_modules
 
 
 
@@ -126,6 +110,8 @@ CMD_CHANGE_VARIABLE = 117
 CMD_RUN_TO_LINE = 118
 CMD_RELOAD_CODE = 119
 CMD_GET_COMPLETIONS = 120
+
+# Note: renumbered (conflicted on merge)
 CMD_CONSOLE_EXEC = 121
 CMD_ADD_EXCEPTION_BREAK = 122
 CMD_REMOVE_EXCEPTION_BREAK = 123
@@ -136,6 +122,24 @@ CMD_SET_NEXT_STATEMENT = 127
 CMD_SMART_STEP_INTO = 128
 CMD_EXIT = 129
 CMD_SIGNATURE_CALL_TRACE = 130
+
+
+
+CMD_SET_PY_EXCEPTION = 131
+CMD_GET_FILE_CONTENTS = 132
+CMD_SET_PROPERTY_TRACE = 133
+# Pydev debug console commands
+CMD_EVALUATE_CONSOLE_EXPRESSION = 134
+CMD_RUN_CUSTOM_OPERATION = 135
+CMD_GET_BREAKPOINT_EXCEPTION = 136
+CMD_STEP_CAUGHT_EXCEPTION = 137
+CMD_SEND_CURR_EXCEPTION_TRACE = 138
+CMD_SEND_CURR_EXCEPTION_TRACE_PROCEEDED = 139
+CMD_IGNORE_THROWN_EXCEPTION_AT = 140
+CMD_ENABLE_DONT_TRACE = 141
+
+
+
 CMD_VERSION = 501
 CMD_RETURN = 502
 CMD_ERROR = 901
@@ -171,6 +175,19 @@ ID_TO_MEANING = {
     '128':'CMD_SMART_STEP_INTO',
     '129': 'CMD_EXIT',
     '130': 'CMD_SIGNATURE_CALL_TRACE',
+
+    '131': 'CMD_SET_PY_EXCEPTION',
+    '132': 'CMD_GET_FILE_CONTENTS',
+    '133': 'CMD_SET_PROPERTY_TRACE',
+    '134': 'CMD_EVALUATE_CONSOLE_EXPRESSION',
+    '135': 'CMD_RUN_CUSTOM_OPERATION',
+    '136': 'CMD_GET_BREAKPOINT_EXCEPTION',
+    '137': 'CMD_STEP_CAUGHT_EXCEPTION',
+    '138': 'CMD_SEND_CURR_EXCEPTION_TRACE',
+    '139': 'CMD_SEND_CURR_EXCEPTION_TRACE_PROCEEDED',
+    '140': 'CMD_IGNORE_THROWN_EXCEPTION_AT',
+    '141': 'CMD_ENABLE_DONT_TRACE',
+
     '501':'CMD_VERSION',
     '502':'CMD_RETURN',
     '901':'CMD_ERROR',
@@ -274,7 +291,7 @@ class ReaderThread(PyDBDaemonThread):
         #We must close the socket so that it doesn't stay halted there.
         self.killReceived = True
         try:
-            self.sock.shutdown(SHUT_RD) #shotdown the socket for read
+            self.sock.shutdown(SHUT_RD) #shutdown the socket for read
         except:
             #just ignore that
             pass
@@ -564,68 +581,69 @@ class NetCommandFactory:
         except:
             return self.makeErrorMessage(0, GetExceptionTracebackStr())
 
-    def makeThreadSuspendMessage(self, thread_id, frame, stop_reason, message):
-
+    def makeThreadSuspendStr(self, thread_id, frame, stop_reason, message):
         """ <xml>
             <thread id="id" stop_reason="reason">
                     <frame id="id" name="functionName " file="file" line="line">
                     <var variable stuffff....
                 </frame>
             </thread>
-           """
+        """
+        cmdTextList = ["<xml>"]
+
+        if message:
+            message = pydevd_vars.makeValidXmlValue(str(message))
+
+        cmdTextList.append('<thread id="%s" stop_reason="%s" message="%s">' % (thread_id, stop_reason, message))
+
+        curFrame = frame
         try:
-            cmdTextList = ["<xml>"]
+            while curFrame:
+                #print cmdText
+                myId = str(id(curFrame))
+                #print "id is ", myId
 
-            if message:
-                message = pydevd_vars.makeValidXmlValue(str(message))
+                if curFrame.f_code is None:
+                    break #Iron Python sometimes does not have it!
 
-            cmdTextList.append('<thread id="%s" stop_reason="%s" message="%s">' % (thread_id, stop_reason, message))
+                myName = curFrame.f_code.co_name #method name (if in method) or ? if global
+                if myName is None:
+                    break #Iron Python sometimes does not have it!
 
-            curFrame = frame
-            try:
-                while curFrame:
-                    #print cmdText
-                    myId = str(id(curFrame))
-                    #print "id is ", myId
+                #print "name is ", myName
 
-                    if curFrame.f_code is None:
-                        break #Iron Python sometimes does not have it!
+                filename, base = pydevd_file_utils.GetFilenameAndBase(curFrame)
 
-                    myName = curFrame.f_code.co_name #method name (if in method) or ? if global
-                    if myName is None:
-                        break #Iron Python sometimes does not have it!
+                myFile = pydevd_file_utils.NormFileToClient(filename)
+                if file_system_encoding.lower() != "utf-8" and hasattr(myFile, "decode"):
+                    # myFile is a byte string encoded using the file system encoding
+                    # convert it to utf8
+                    myFile = myFile.decode(file_system_encoding).encode("utf-8")
 
-                    #print "name is ", myName
+                #print "file is ", myFile
+                #myFile = inspect.getsourcefile(curFrame) or inspect.getfile(frame)
 
-                    filename, base = pydevd_file_utils.GetFilenameAndBase(curFrame)
+                myLine = str(curFrame.f_lineno)
+                #print "line is ", myLine
 
-                    myFile = pydevd_file_utils.NormFileToClient(filename)
-                    if file_system_encoding.lower() != "utf-8" and hasattr(myFile, "decode"):
-                        # myFile is a byte string encoded using the file system encoding
-                        # convert it to utf8
-                        myFile = myFile.decode(file_system_encoding).encode("utf-8")
+                #the variables are all gotten 'on-demand'
+                #variables = pydevd_vars.frameVarsToXML(curFrame.f_locals)
 
-                    #print "file is ", myFile
-                    #myFile = inspect.getsourcefile(curFrame) or inspect.getfile(frame)
+                variables = ''
+                cmdTextList.append('<frame id="%s" name="%s" ' % (myId , pydevd_vars.makeValidXmlValue(myName)))
+                cmdTextList.append('file="%s" line="%s">"' % (quote(myFile, '/>_= \t'), myLine))
+                cmdTextList.append(variables)
+                cmdTextList.append("</frame>")
+                curFrame = curFrame.f_back
+        except :
+            traceback.print_exc()
 
-                    myLine = str(curFrame.f_lineno)
-                    #print "line is ", myLine
+        cmdTextList.append("</thread></xml>")
+        return ''.join(cmdTextList)
 
-                    #the variables are all gotten 'on-demand'
-                    #variables = pydevd_vars.frameVarsToXML(curFrame.f_locals)
-
-                    variables = ''
-                    cmdTextList.append('<frame id="%s" name="%s" ' % (myId , pydevd_vars.makeValidXmlValue(myName)))
-                    cmdTextList.append('file="%s" line="%s">"' % (quote(myFile, '/>_= \t'), myLine))
-                    cmdTextList.append(variables)
-                    cmdTextList.append("</frame>")
-                    curFrame = curFrame.f_back
-            except :
-                traceback.print_exc()
-
-            cmdTextList.append("</thread></xml>")
-            cmdText = ''.join(cmdTextList)
-            return NetCommand(CMD_THREAD_SUSPEND, 0, cmdText)
+    def makeThreadSuspendMessage(self, thread_id, frame, stop_reason, message):
+        try:
+            return NetCommand(CMD_THREAD_SUSPEND, 0, self.makeThreadSuspendStr(thread_id, frame, stop_reason, message))
         except:
             return self.makeErrorMessage(0, GetExceptionTracebackStr())
 
@@ -657,6 +675,51 @@ class NetCommandFactory:
     def makeGetCompletionsMessage(self, seq, payload):
         try:
             return NetCommand(CMD_GET_COMPLETIONS, seq, payload)
+        except Exception:
+            return self.makeErrorMessage(seq, GetExceptionTracebackStr())
+
+    def makeGetFileContents(self, seq, payload):
+        try:
+            return NetCommand(CMD_GET_FILE_CONTENTS, seq, payload)
+        except Exception:
+            return self.makeErrorMessage(seq, GetExceptionTracebackStr())
+
+    def makeSendBreakpointExceptionMessage(self, seq, payload):
+        try:
+            return NetCommand(CMD_GET_BREAKPOINT_EXCEPTION, seq, payload)
+        except Exception:
+            return self.makeErrorMessage(seq, GetExceptionTracebackStr())
+
+    def makeSendCurrExceptionTraceMessage(self, seq, thread_id, curr_frame_id, exc_type, exc_desc, trace_obj):
+        try:
+            while trace_obj.tb_next is not None:
+                trace_obj = trace_obj.tb_next
+
+            exc_type = pydevd_vars.makeValidXmlValue(str(exc_type)).replace('\t', '  ') or 'exception: type unknown'
+            exc_desc = pydevd_vars.makeValidXmlValue(str(exc_desc)).replace('\t', '  ') or 'exception: no description'
+
+            payload = str(curr_frame_id) + '\t' + exc_type + "\t" + exc_desc + "\t" + \
+                self.makeThreadSuspendStr(thread_id, trace_obj.tb_frame, CMD_SEND_CURR_EXCEPTION_TRACE, '')
+
+            return NetCommand(CMD_SEND_CURR_EXCEPTION_TRACE, seq, payload)
+        except Exception:
+            return self.makeErrorMessage(seq, GetExceptionTracebackStr())
+
+    def makeSendCurrExceptionTraceProceededMessage(self, seq, thread_id):
+        try:
+            return NetCommand(CMD_SEND_CURR_EXCEPTION_TRACE_PROCEEDED, 0, str(thread_id))
+        except:
+            return self.makeErrorMessage(0, GetExceptionTracebackStr())
+
+    def makeSendConsoleMessage(self, seq, payload):
+        try:
+            return NetCommand(CMD_EVALUATE_CONSOLE_EXPRESSION, seq, payload)
+        except Exception:
+            return self.makeErrorMessage(seq, GetExceptionTracebackStr())
+
+    def makeCustomOperationMessage(self, seq, payload):
+        try:
+            return NetCommand(CMD_RUN_CUSTOM_OPERATION, seq, payload)
         except Exception:
             return self.makeErrorMessage(seq, GetExceptionTracebackStr())
 
@@ -698,7 +761,7 @@ class InternalThreadCommand:
     def canBeExecutedBy(self, thread_id):
         '''By default, it must be in the same thread to be executed
         '''
-        return self.thread_id == thread_id
+        return self.thread_id == thread_id or self.thread_id.endswith('|' + thread_id)
 
     def doIt(self, dbg):
         raise NotImplementedError("you have to override doIt")
@@ -929,7 +992,7 @@ class InternalEvaluateExpression(InternalThreadCommand):
         try:
             result = pydevd_vars.evaluateExpression(self.thread_id, self.frame_id, self.expression, self.doExec)
             xml = "<xml>"
-            xml += pydevd_vars.varToXML(result, "", self.doTrim)
+            xml += pydevd_vars.varToXML(result, self.expression, self.doTrim)
             xml += "</xml>"
             cmd = dbg.cmdFactory.makeEvaluateExpressionMessage(self.sequence, xml)
             dbg.writer.addCommand(cmd)
@@ -961,7 +1024,6 @@ class InternalGetCompletions(InternalThreadCommand):
                 frame = pydevd_vars.findFrame(self.thread_id, self.frame_id)
                 if frame is not None:
 
-
                     msg = _pydev_completer.GenerateCompletionsAsXML(frame, self.act_tok)
 
                     cmd = dbg.cmdFactory.makeGetCompletionsMessage(self.sequence, msg)
@@ -981,6 +1043,182 @@ class InternalGetCompletions(InternalThreadCommand):
             cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, "Error evaluating expression " + exc)
             dbg.writer.addCommand(cmd)
 
+#=======================================================================================================================
+# InternalGetBreakpointException
+#=======================================================================================================================
+class InternalGetBreakpointException(InternalThreadCommand):
+    """ Send details of exception raised while evaluating conditional breakpoint """
+    def __init__(self, thread_id, exc_type, stacktrace):
+        self.sequence = 0
+        self.thread_id = thread_id
+        self.stacktrace = stacktrace
+        self.exc_type = exc_type
+
+    def doIt(self, dbg):
+        try:
+            callstack = "<xml>"
+
+            makeValid = pydevd_vars.makeValidXmlValue
+
+            for filename, line, methodname, methodobj in self.stacktrace:
+                if file_system_encoding.lower() != "utf-8" and hasattr(filename, "decode"):
+                    # filename is a byte string encoded using the file system encoding
+                    # convert it to utf8
+                    filename = filename.decode(file_system_encoding).encode("utf-8")
+
+                callstack += '<frame thread_id = "%s" file="%s" line="%s" name="%s" obj="%s" />' \
+                                    % (self.thread_id, makeValid(filename), line, makeValid(methodname), makeValid(methodobj))
+            callstack += "</xml>"
+
+            cmd = dbg.cmdFactory.makeSendBreakpointExceptionMessage(self.sequence, self.exc_type + "\t" + callstack)
+            dbg.writer.addCommand(cmd)
+        except:
+            exc = GetExceptionTracebackStr()
+            sys.stderr.write('%s\n' % (exc,))
+            cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, "Error Sending Exception: " + exc)
+            dbg.writer.addCommand(cmd)
+
+
+#=======================================================================================================================
+# InternalSendCurrExceptionTrace
+#=======================================================================================================================
+class InternalSendCurrExceptionTrace(InternalThreadCommand):
+    """ Send details of the exception that was caught and where we've broken in.
+    """
+    def __init__(self, thread_id, arg, curr_frame_id):
+        '''
+        :param arg: exception type, description, traceback object
+        '''
+        self.sequence = 0
+        self.thread_id = thread_id
+        self.curr_frame_id = curr_frame_id
+        self.arg = arg
+
+    def doIt(self, dbg):
+        try:
+            cmd = dbg.cmdFactory.makeSendCurrExceptionTraceMessage(self.sequence, self.thread_id, self.curr_frame_id, *self.arg)
+            del self.arg
+            dbg.writer.addCommand(cmd)
+        except:
+            exc = GetExceptionTracebackStr()
+            sys.stderr.write('%s\n' % (exc,))
+            cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, "Error Sending Current Exception Trace: " + exc)
+            dbg.writer.addCommand(cmd)
+
+#=======================================================================================================================
+# InternalSendCurrExceptionTraceProceeded
+#=======================================================================================================================
+class InternalSendCurrExceptionTraceProceeded(InternalThreadCommand):
+    """ Send details of the exception that was caught and where we've broken in.
+    """
+    def __init__(self, thread_id):
+        self.sequence = 0
+        self.thread_id = thread_id
+
+    def doIt(self, dbg):
+        try:
+            cmd = dbg.cmdFactory.makeSendCurrExceptionTraceProceededMessage(self.sequence, self.thread_id)
+            dbg.writer.addCommand(cmd)
+        except:
+            exc = GetExceptionTracebackStr()
+            sys.stderr.write('%s\n' % (exc,))
+            cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, "Error Sending Current Exception Trace Proceeded: " + exc)
+            dbg.writer.addCommand(cmd)
+
+
+#=======================================================================================================================
+# InternalEvaluateConsoleExpression
+#=======================================================================================================================
+class InternalEvaluateConsoleExpression(InternalThreadCommand):
+    """ Execute the given command in the debug console """
+
+    def __init__(self, seq, thread_id, frame_id, line):
+        self.sequence = seq
+        self.thread_id = thread_id
+        self.frame_id = frame_id
+        self.line = line
+
+    def doIt(self, dbg):
+        """ Create an XML for console output, error and more (true/false)
+        <xml>
+            <output message=output_message></output>
+            <error message=error_message></error>
+            <more>true/false</more>
+        </xml>
+        """
+        try:
+            frame = pydevd_vars.findFrame(self.thread_id, self.frame_id)
+            if frame is not None:
+                console_message = pydevd_console.execute_console_command(frame, self.thread_id, self.frame_id, self.line)
+                cmd = dbg.cmdFactory.makeSendConsoleMessage(self.sequence, console_message.toXML())
+            else:
+                from pydevd_console import ConsoleMessage
+                console_message = ConsoleMessage()
+                console_message.add_console_message(
+                    pydevd_console.CONSOLE_ERROR, 
+                    "Select the valid frame in the debug view (thread: %s, frame: %s invalid)" % (self.thread_id, self.frame_id), 
+                )
+                cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, console_message.toXML())
+        except:
+            exc = GetExceptionTracebackStr()
+            cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, "Error evaluating expression " + exc)
+        dbg.writer.addCommand(cmd)
+
+
+#=======================================================================================================================
+# InternalRunCustomOperation
+#=======================================================================================================================
+class InternalRunCustomOperation(InternalThreadCommand):
+    """ Run a custom command on an expression
+    """
+    def __init__(self, seq, thread_id, frame_id, scope, attrs, style, encoded_code_or_file, fnname):
+        self.sequence = seq
+        self.thread_id = thread_id
+        self.frame_id = frame_id
+        self.scope = scope
+        self.attrs = attrs
+        self.style = style
+        self.code_or_file = unquote_plus(encoded_code_or_file)
+        self.fnname = fnname
+
+    def doIt(self, dbg):
+        try:
+            res = pydevd_vars.customOperation(self.thread_id, self.frame_id, self.scope, self.attrs,
+                                              self.style, self.code_or_file, self.fnname)
+            resEncoded = quote_plus(res)
+            cmd = dbg.cmdFactory.makeCustomOperationMessage(self.sequence, resEncoded)
+            dbg.writer.addCommand(cmd)
+        except:
+            exc = GetExceptionTracebackStr()
+            cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, "Error in running custom operation" + exc)
+            dbg.writer.addCommand(cmd)
+
+
+#=======================================================================================================================
+# InternalConsoleGetCompletions
+#=======================================================================================================================
+class InternalConsoleGetCompletions(InternalThreadCommand):
+    """ Fetch the completions in the debug console
+    """
+    def __init__(self, seq, thread_id, frame_id, act_tok):
+        self.sequence = seq
+        self.thread_id = thread_id
+        self.frame_id = frame_id
+        self.act_tok = act_tok
+
+    def doIt(self, dbg):
+        """ Get completions and write back to the client
+        """
+        try:
+            frame = pydevd_vars.findFrame(self.thread_id, self.frame_id)
+            completions_xml = pydevd_console.get_completions(frame, self.act_tok)
+            cmd = dbg.cmdFactory.makeSendConsoleMessage(self.sequence, completions_xml)
+            dbg.writer.addCommand(cmd)
+        except:
+            exc = GetExceptionTracebackStr()
+            cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, "Error in fetching completions" + exc)
+            dbg.writer.addCommand(cmd)
+
 
 #=======================================================================================================================
 # InternalConsoleExec
@@ -996,13 +1234,10 @@ class InternalConsoleExec(InternalThreadCommand):
 
     def doIt(self, dbg):
         """ Converts request into python variable """
-        pydev_start_new_thread = None
         try:
             try:
-                pydev_start_new_thread = thread.start_new_thread
-
-                thread.start_new_thread = thread._original_start_new_thread #don't trace new threads created by console command
-                thread.start_new = thread._original_start_new_thread
+                #don't trace new threads created by console command
+                disable_trace_thread_modules()
 
                 result = pydevconsole.consoleExec(self.thread_id, self.frame_id, self.expression)
                 xml = "<xml>"
@@ -1016,8 +1251,8 @@ class InternalConsoleExec(InternalThreadCommand):
                 cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, "Error evaluating console expression " + exc)
                 dbg.writer.addCommand(cmd)
         finally:
-            thread.start_new_thread = pydev_start_new_thread
-            thread.start_new = pydev_start_new_thread
+            enable_trace_thread_modules()
+
             sys.stderr.flush()
             sys.stdout.flush()
 

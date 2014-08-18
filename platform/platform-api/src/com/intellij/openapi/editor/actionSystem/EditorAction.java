@@ -26,13 +26,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.KeyEvent;
 
+import static com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
 
 public abstract class EditorAction extends AnAction implements DumbAware {
   private EditorActionHandler myHandler;
   private boolean myHandlersLoaded;
 
-  public EditorActionHandler getHandler() {
+  public final EditorActionHandler getHandler() {
     ensureHandlersLoaded();
     return myHandler;
   }
@@ -46,6 +47,7 @@ public abstract class EditorAction extends AnAction implements DumbAware {
     ensureHandlersLoaded();
     EditorActionHandler tmp = myHandler;
     myHandler = newHandler;
+    myHandler.setWorksInInjected(isInInjectedContext());
     return tmp;
   }
 
@@ -58,9 +60,19 @@ public abstract class EditorAction extends AnAction implements DumbAware {
         final EditorActionHandlerBean handlerBean = extensions[i];
         if (handlerBean.action.equals(id)) {
           myHandler = handlerBean.getHandler(myHandler);
+          myHandler.setWorksInInjected(isInInjectedContext());
         }
       }
     }
+  }
+
+  @Override
+  public void setInjectedContext(boolean worksInInjected) {
+    super.setInjectedContext(worksInInjected);
+    // we assume that this method is called in constructor at the point
+    // where the chain of handlers is not initialized yet
+    // and it's enough to pass the flag to the default handler only
+    myHandler.setWorksInInjected(isInInjectedContext());
   }
 
   @Override
@@ -72,7 +84,7 @@ public abstract class EditorAction extends AnAction implements DumbAware {
 
   @Nullable
   protected Editor getEditor(@NotNull DataContext dataContext) {
-    return CommonDataKeys.EDITOR.getData(dataContext);
+    return EDITOR.getData(dataContext);
   }
 
   public final void actionPerformed(final Editor editor, @NotNull final DataContext dataContext) {
@@ -102,7 +114,7 @@ public abstract class EditorAction extends AnAction implements DumbAware {
   }
 
   public void update(Editor editor, Presentation presentation, DataContext dataContext) {
-    presentation.setEnabled(getHandler().isEnabled(editor, dataContext));
+    presentation.setEnabled(getHandler().isEnabled(editor, null, dataContext));
   }
 
   public void updateForKeyboardAccess(Editor editor, Presentation presentation, DataContext dataContext) {

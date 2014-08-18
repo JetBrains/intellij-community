@@ -1,4 +1,4 @@
-package com.jetbrains.env.community.ut;
+package com.jetbrains.env.ut;
 
 import com.google.common.collect.ImmutableSet;
 import com.intellij.execution.configurations.ConfigurationFactory;

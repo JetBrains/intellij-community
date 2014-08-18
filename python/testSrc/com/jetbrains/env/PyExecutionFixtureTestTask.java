@@ -1,4 +1,4 @@
-package com.jetbrains.env.community;
+package com.jetbrains.env;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.process.ProcessHandler;
@@ -16,7 +16,7 @@ import com.intellij.testFramework.fixtures.impl.ModuleFixtureBuilderImpl;
 import com.intellij.testFramework.fixtures.impl.ModuleFixtureImpl;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PythonModuleTypeBase;
-import com.jetbrains.python.fixtures.PyProfessionalTestCase;
+import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdkTools.PyTestSdkTools;
 import com.jetbrains.python.sdkTools.SdkCreationType;
@@ -83,7 +83,7 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
   }
 
   protected String getTestDataPath() {
-    return PyProfessionalTestCase.getProfessionalTestDataPath();
+    return PythonTestUtil.getTestDataPath();
   }
 
   protected void initFixtureBuilder() {

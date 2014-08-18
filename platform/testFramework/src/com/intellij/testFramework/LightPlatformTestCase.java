@@ -722,10 +722,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   @Override
   public Object getData(String dataId) {
-    if (CommonDataKeys.PROJECT.is(dataId)) {
-      return ourProject;
-    }
-    return null;
+    return ourProject == null || ourProject.isDisposed() ? null : new TestDataProvider(ourProject).getData(dataId);
   }
 
   protected Sdk getProjectJDK() {

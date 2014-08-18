@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl;
 
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -67,11 +68,13 @@ public class XDebuggerWatchesManager implements PersistentStateComponent<XDebugg
     watches.clear();
     if (state != null) {
       for (ConfigurationState expressionState : state.expressions) {
-        WatchState[] states = expressionState.myExpressionStates;
-        XExpression[] expressions = new XExpression[states.length];
-        for (int i = 0; i < states.length; i++) {
-          expressions[i] = states[i].toXExpression();
-        }
+        XExpression[] expressions = ContainerUtil.mapNotNull(expressionState.myExpressionStates,
+          new Function<WatchState, XExpression>() {
+            @Override
+            public XExpression fun(WatchState state) {
+              return state.toXExpression();
+            }
+          }, new XExpression[0]);
         watches.put(expressionState.myName, expressions);
       }
     }

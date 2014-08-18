@@ -63,6 +63,7 @@ public class GroovyIfStatementWithTooManyBranchesInspectionBase extends BaseInsp
     return "'#ref' statement with too many branches (" + branches + ") #loc";
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();

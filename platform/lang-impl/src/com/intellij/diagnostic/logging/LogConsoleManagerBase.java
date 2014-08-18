@@ -52,7 +52,9 @@ public abstract class LogConsoleManagerBase implements LogConsoleManager, Dispos
 
   /**
    * @deprecated use {@link #LogConsoleManagerBase(com.intellij.openapi.project.Project, com.intellij.psi.search.GlobalSearchScope)}
+   * to remove in IDEA 15
    */
+  @SuppressWarnings("UnusedDeclaration")
   protected LogConsoleManagerBase(@NotNull Project project) {
     this(project, GlobalSearchScope.allScope(project));
   }
@@ -66,8 +68,8 @@ public abstract class LogConsoleManagerBase implements LogConsoleManager, Dispos
     return myProject;
   }
 
-  public void setEnvironment(@NotNull final ExecutionEnvironment env) {
-    myEnvironment = env;
+  public void setEnvironment(@NotNull ExecutionEnvironment environment) {
+    myEnvironment = environment;
   }
 
   protected final ExecutionEnvironment getEnvironment() {

@@ -1,4 +1,4 @@
-package com.jetbrains.env.community.ut;
+package com.jetbrains.env.ut;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.openapi.project.Project;

@@ -251,7 +251,7 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
   }
 
   @Override
-  public void processSessionEvent(@NotNull final SessionEvent event, @NotNull XDebugSession session) {
+  public void processSessionEvent(@NotNull final SessionEvent event) {
     if (getMainPanel().isShowing() || ApplicationManager.getApplication().isUnitTestMode()) {
       myRebuildNeeded = false;
     }
@@ -260,7 +260,6 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
       return;
     }
 
-    XStackFrame stackFrame = session.getCurrentStackFrame();
     XDebuggerTree tree = myTreePanel.getTree();
 
     if (event == SessionEvent.BEFORE_RESUME || event == SessionEvent.SETTINGS_CHANGED) {
@@ -273,6 +272,8 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
       }
     }
 
+    XDebugSession session = getSession(getMainPanel());
+    XStackFrame stackFrame = session == null ? null : session.getCurrentStackFrame();
     if (stackFrame != null) {
       cancelClear();
       tree.setSourcePosition(stackFrame.getSourcePosition());
@@ -282,12 +283,12 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
       }
     }
     else {
-      requestClear(session);
+      requestClear();
     }
   }
 
   @Override
-  protected void clear(@Nullable XDebugSession session) {
+  protected void clear() {
     getTree().setSourcePosition(null);
     myRootNode.updateWatches(null);
   }

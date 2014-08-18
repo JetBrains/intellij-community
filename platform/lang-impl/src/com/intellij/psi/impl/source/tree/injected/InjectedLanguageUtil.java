@@ -24,7 +24,6 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -168,6 +167,13 @@ public class InjectedLanguageUtil {
     return getEditorForInjectedLanguageNoCommit(editor, file, offset);
   }
 
+  public static Editor getEditorForInjectedLanguageNoCommit(@Nullable Editor editor, @Nullable Caret caret, @Nullable PsiFile file) {
+    if (editor == null || file == null || editor instanceof EditorWindow || caret == null) return editor;
+
+    PsiFile injectedFile = findInjectedPsiNoCommit(file, caret.getOffset());
+    return getInjectedEditorForInjectedFile(editor, caret, injectedFile);
+  }
+
   public static Caret getCaretForInjectedLanguageNoCommit(@Nullable Caret caret, @Nullable PsiFile file) {
     if (caret == null || file == null || caret instanceof InjectedCaret) return caret;
 
@@ -218,17 +224,21 @@ public class InjectedLanguageUtil {
 
   @NotNull
   public static Editor getInjectedEditorForInjectedFile(@NotNull Editor hostEditor, @Nullable final PsiFile injectedFile) {
+    return getInjectedEditorForInjectedFile(hostEditor, hostEditor.getCaretModel().getCurrentCaret(), injectedFile);
+  }
+
+  @NotNull
+  public static Editor getInjectedEditorForInjectedFile(@NotNull Editor hostEditor, @NotNull Caret hostCaret, @Nullable final PsiFile injectedFile) {
     if (injectedFile == null || hostEditor instanceof EditorWindow || hostEditor.isDisposed()) return hostEditor;
     Project project = hostEditor.getProject();
     if (project == null) project = injectedFile.getProject();
     Document document = PsiDocumentManager.getInstance(project).getDocument(injectedFile);
     if (!(document instanceof DocumentWindowImpl)) return hostEditor;
     DocumentWindowImpl documentWindow = (DocumentWindowImpl)document;
-    SelectionModel selectionModel = hostEditor.getSelectionModel();
-    if (selectionModel.hasSelection()) {
-      int selstart = selectionModel.getSelectionStart();
+    if (hostCaret.hasSelection()) {
+      int selstart = hostCaret.getSelectionStart();
       if (selstart != -1) {
-        int selend = Math.max(selstart, selectionModel.getSelectionEnd());
+        int selend = Math.max(selstart, hostCaret.getSelectionEnd());
         if (!documentWindow.containsRange(selstart, selend)) {
           // selection spreads out the injected editor range
           return hostEditor;

@@ -1,7 +1,7 @@
-package com.jetbrains.env.community.python;
+package com.jetbrains.env.python;
 
-import com.jetbrains.env.community.PyEnvTestCase;
-import com.jetbrains.env.community.ut.PyUnitTestTask;
+import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.env.ut.PyUnitTestTask;
 import com.jetbrains.python.PythonHelpersLocator;
 
 /**

@@ -10,8 +10,9 @@
     <orderEntry type="module" module-name="util-rt" />
     <orderEntry type="module" module-name="vcs-log-graph-api" exported="" />
     <orderEntry type="module" module-name="core-api" />
-    <orderEntry type="module" module-name="vcs-api" />
     <orderEntry type="library" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="vcs-api-core" />
+    <orderEntry type="module" module-name="editor-ui-api" />
   </component>
 </module>
 

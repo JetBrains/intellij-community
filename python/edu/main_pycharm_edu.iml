@@ -11,11 +11,11 @@
     <orderEntry type="module" module-name="relaxng" />
     <orderEntry type="module" module-name="rest" />
     <orderEntry type="module" module-name="python-helpers" />
-    <orderEntry type="module" module-name="terminal" />
     <orderEntry type="module" module-name="python-ide-community" />
     <orderEntry type="module" module-name="platform-main" />
     <orderEntry type="module" module-name="ShortcutPromoter" />
     <orderEntry type="module" module-name="python-educational" />
+    <orderEntry type="module" module-name="learn-python" />
   </component>
 </module>
 

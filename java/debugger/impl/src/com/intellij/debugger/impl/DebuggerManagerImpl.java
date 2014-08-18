@@ -205,6 +205,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   }
 
   @Override
+  @Nullable
   public DebuggerSession attachVirtualMachine(@NotNull DebugEnvironment environment) throws ExecutionException {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final DebugProcessEvents debugProcess = new DebugProcessEvents(myProject);
@@ -281,7 +282,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     myDispatcher.getMulticaster().sessionCreated(session);
     return session;
   }
-
 
   @Override
   public DebugProcessImpl getDebugProcess(final ProcessHandler processHandler) {

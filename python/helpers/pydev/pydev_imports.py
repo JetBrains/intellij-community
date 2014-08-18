@@ -1,39 +1,51 @@
-from pydevd_constants import USE_LIB_COPY
+from pydevd_constants import USE_LIB_COPY, izip
+
+
 try:
     try:
         if USE_LIB_COPY:
-            import _pydev_xmlrpclib as xmlrpclib
+            from _pydev_imps import _pydev_xmlrpclib as xmlrpclib
         else:
             import xmlrpclib
     except ImportError:
         import xmlrpc.client as xmlrpclib
 except ImportError:
-    import _pydev_xmlrpclib as xmlrpclib
+    from _pydev_imps import _pydev_xmlrpclib as xmlrpclib
+
+
 try:
     try:
         if USE_LIB_COPY:
-            from _pydev_SimpleXMLRPCServer import SimpleXMLRPCServer
+            from _pydev_imps._pydev_SimpleXMLRPCServer import SimpleXMLRPCServer
         else:
             from SimpleXMLRPCServer import SimpleXMLRPCServer
     except ImportError:
         from xmlrpc.server import SimpleXMLRPCServer
 except ImportError:
-    from _pydev_SimpleXMLRPCServer import SimpleXMLRPCServer
+    from _pydev_imps._pydev_SimpleXMLRPCServer import SimpleXMLRPCServer
+
+
+
 try:
     from StringIO import StringIO
 except ImportError:
     from io import StringIO
+
+
 try:
     execfile=execfile #Not in Py3k
 except NameError:
-    from _pydev_execfile import execfile
+    from _pydev_imps._pydev_execfile import execfile
+
+
 try:
     if USE_LIB_COPY:
-        import _pydev_Queue as _queue
+        from _pydev_imps import _pydev_Queue as _queue
     else:
         import Queue as _queue
 except:
     import queue as _queue #@UnresolvedImport
+
 
 try:
     from pydevd_exec import Exec
@@ -80,7 +92,7 @@ except:
             return start
 
         i = 0
-        for start_seg, dest_seg in zip(orig_list, dest_list):
+        for start_seg, dest_seg in izip(orig_list, dest_list):
             if start_seg != os.path.normcase(dest_seg):
                 break
             i += 1

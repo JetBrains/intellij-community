@@ -1,4 +1,4 @@
-package com.jetbrains.env.community.python.debug;
+package com.jetbrains.env.python.debug;
 
 import com.google.common.collect.Sets;
 import com.intellij.openapi.application.Result;
@@ -7,12 +7,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.frame.XValue;
-import com.jetbrains.django.util.VirtualFileUtil;
-import com.jetbrains.env.community.PyExecutionFixtureTestTask;
+import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugValue;
@@ -162,7 +162,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        VirtualFile f = VirtualFileUtil.findFile(file);
+        VirtualFile f = LocalFileSystem.getInstance().findFileByPath(file);
         Assert.assertNotNull(f);
         final VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(f);
         Assert.assertNotNull(jarRoot);
@@ -176,14 +176,14 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   }
 
   public boolean canPutBreakpointAt(Project project, String file, int line) {
-    VirtualFile vFile = VirtualFileUtil.findFile(file);
+    VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(file);
     Assert.assertNotNull(vFile);
     return XDebuggerUtil.getInstance().canPutBreakpointAt(project, vFile, line);
   }
 
   private void doToggleBreakpoint(String file, int line) {
     Assert.assertTrue(canPutBreakpointAt(getProject(), file, line));
-    XDebuggerTestUtil.toggleBreakpoint(getProject(), VirtualFileUtil.findFile(file), line);
+    XDebuggerTestUtil.toggleBreakpoint(getProject(), LocalFileSystem.getInstance().findFileByPath(file), line);
   }
 
   protected Variable eval(String name) throws InterruptedException {

@@ -46,6 +46,7 @@ public class GroovyConstantConditionalInspection extends BaseInspection {
         return true;
     }
 
+    @NotNull
     @Override
     public BaseInspectionVisitor buildVisitor() {
         return new ConstantConditionalExpressionVisitor();
@@ -72,7 +73,7 @@ public class GroovyConstantConditionalInspection extends BaseInspection {
     }
 
     @Override
-    public GroovyFix buildFix(PsiElement location) {
+    public GroovyFix buildFix(@NotNull PsiElement location) {
         return new ConstantConditionalFix();
     }
 

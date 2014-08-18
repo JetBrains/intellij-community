@@ -239,8 +239,6 @@ public class PyPIPackageUtil {
       if (connection instanceof HttpsURLConnection) {
         ((HttpsURLConnection)connection).setSSLSocketFactory(sslContext.getSocketFactory());
       }
-      connection.setConnectTimeout(5000);
-      connection.setReadTimeout(5000);
       InputStream is = connection.getInputStream();
       Reader reader = new InputStreamReader(is);
       try{

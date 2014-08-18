@@ -103,3 +103,19 @@ print '%d %s' % ((42,) + ('spam',))
 print '%d %s' % (('ham',) + ('spam',))
 print '%d %s' % ((42,) + ())
 print '%d' % ((42,) + ('spam',))
+
+# PY-11274
+import collections
+print '%(foo)s' % collections.OrderedDict(foo=None)
+
+class MyDict(collections.Mapping):
+    def __getitem__(self, key):
+        return 'spam'
+
+    def __iter__(self):
+        yield 'spam'
+
+    def __len__(self):
+        return 1
+
+print '%(foo)s' % MyDict()

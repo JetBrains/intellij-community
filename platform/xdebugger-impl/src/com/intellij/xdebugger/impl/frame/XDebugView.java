@@ -15,8 +15,11 @@
  */
 package com.intellij.xdebugger.impl.frame;
 
+import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.util.SingleAlarm;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
@@ -35,32 +38,26 @@ public abstract class XDebugView implements Disposable {
   private final SingleAlarm myClearAlarm;
   private static final int VIEW_CLEAR_DELAY = 100; //ms
 
-  // used only to implement "clear"
-  private volatile XDebugSession session;
-
   public XDebugView() {
     myClearAlarm = new SingleAlarm(new Runnable() {
       @Override
       public void run() {
-        clear(session);
-        session = null;
+        clear();
       }
     }, VIEW_CLEAR_DELAY, this);
   }
 
-  protected final void requestClear(@NotNull XDebugSession session) {
-    this.session = session;
+  protected final void requestClear() {
     myClearAlarm.cancelAndRequest();
   }
 
   protected final void cancelClear() {
-    session = null;
     myClearAlarm.cancel();
   }
 
-  protected abstract void clear(@Nullable XDebugSession session);
+  protected abstract void clear();
 
-  public abstract void processSessionEvent(@NotNull SessionEvent event, @NotNull XDebugSession session);
+  public abstract void processSessionEvent(@NotNull SessionEvent event);
 
   @Nullable
   protected static XDebugSession getSession(@NotNull EventObject e) {
@@ -70,6 +67,15 @@ public abstract class XDebugView implements Disposable {
 
   @Nullable
   public static XDebugSession getSession(@NotNull Component component) {
-    return XDebugSessionTab.SESSION_KEY.getData(DataManager.getInstance().getDataContext(component));
+    DataContext dataContext = DataManager.getInstance().getDataContext(component);
+    ViewContext viewContext = ViewContext.CONTEXT_KEY.getData(dataContext);
+    ContentManager contentManager = viewContext == null ? null : viewContext.getContentManager();
+    if (contentManager != null) {
+      XDebugSession session = XDebugSessionTab.SESSION_KEY.getData(DataManager.getInstance().getDataContext(contentManager.getComponent()));
+      if (session != null) {
+        return session;
+      }
+    }
+    return XDebugSessionTab.SESSION_KEY.getData(dataContext);
   }
 }

@@ -42,7 +42,7 @@ public class MappingsToRoots {
   }
 
   @NotNull
-  public VirtualFile[] getRootsUnderVcs(final AbstractVcs vcs) {
+  public VirtualFile[] getRootsUnderVcs(@NotNull AbstractVcs vcs) {
     List<VirtualFile> result = myMappings.getMappingsAsFilesUnderVcs(vcs);
 
     final AbstractVcs.RootsConvertor convertor = vcs.getCustomConvertor();

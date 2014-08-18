@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
@@ -55,8 +56,9 @@ public class ChangesModuleGroupingPolicy implements ChangesGroupingPolicy {
     if (vFile == null) {
       vFile = LocalFileSystem.getInstance().findFileByIoFile(new File(node.getPath()));
     }
-    if (vFile != null && Comparing.equal(vFile, index.getContentRootForFile(vFile))) {
-      Module module = index.getModuleForFile(vFile);
+    boolean hideExcludedFiles = Registry.is("ide.hide.excluded.files");
+    if (vFile != null && Comparing.equal(vFile, index.getContentRootForFile(vFile, hideExcludedFiles))) {
+      Module module = index.getModuleForFile(vFile, hideExcludedFiles);
       return getNodeForModule(module, rootNode);
     }
     return null;

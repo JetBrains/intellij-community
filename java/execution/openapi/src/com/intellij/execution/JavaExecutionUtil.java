@@ -22,7 +22,7 @@ import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
-import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
@@ -57,12 +57,11 @@ public class JavaExecutionUtil {
   public static boolean executeRun(@NotNull final Project project, String contentName, Icon icon, DataContext dataContext, Filter[] filters) throws ExecutionException {
     final JavaParameters cmdLine = JavaParameters.JAVA_PARAMETERS.getData(dataContext);
     final DefaultRunProfile profile = new DefaultRunProfile(project, cmdLine, contentName, icon, filters);
-    final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, profile);
-    if (runner != null) {
-      runner.execute(new ExecutionEnvironmentBuilder(project, DefaultRunExecutor.getRunExecutorInstance()).runProfile(profile).build());
+    ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.createOrNull(project, DefaultRunExecutor.getRunExecutorInstance(), profile);
+    if (builder != null) {
+      builder.buildAndExecute();
       return true;
     }
-
     return false;
   }
 
@@ -114,7 +113,7 @@ public class JavaExecutionUtil {
     }
 
     @Override
-    public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
+    public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) {
       final JavaCommandLineState state = new JavaCommandLineState(env) {
         @Override
         protected JavaParameters createJavaParameters() {
@@ -146,7 +145,7 @@ public class JavaExecutionUtil {
   }
 
   /**
-   * {@link JavaExecutionUtil#getPresentableClassName(java.lang.String)} 
+   * {@link JavaExecutionUtil#getPresentableClassName(java.lang.String)}
    */
   @Deprecated
   @Nullable

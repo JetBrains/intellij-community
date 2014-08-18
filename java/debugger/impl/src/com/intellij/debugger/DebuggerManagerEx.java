@@ -24,6 +24,7 @@ import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -42,5 +43,6 @@ public abstract class DebuggerManagerEx extends DebuggerManager {
   public abstract void addDebuggerManagerListener(DebuggerManagerListener debuggerManagerListener);
   public abstract void removeDebuggerManagerListener(DebuggerManagerListener debuggerManagerListener);
 
+  @Nullable
   public abstract DebuggerSession attachVirtualMachine(@NotNull DebugEnvironment environment) throws ExecutionException;
 }

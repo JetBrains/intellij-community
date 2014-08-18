@@ -2679,7 +2679,7 @@ public class StringUtil extends StringUtilRt {
         continue;
       }
 
-      if (i > 0 && (ch == '/' || ch == '\\' || ch == '.' || Character.isUpperCase(ch))) {
+      if (i > 0 && (ch == '/' || ch == '\\' || ch == '.' || ch == '-' || Character.isUpperCase(ch))) {
         words.add(builder.toString());
         builder.delete(0, builder.length());
       }

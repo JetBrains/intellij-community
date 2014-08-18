@@ -87,7 +87,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   private Boolean myMultiprocessDebug = null;
 
   public boolean isDebug() {
-    return PyDebugRunner.PY_DEBUG_RUNNER.equals(getEnvironment().getRunnerId());
+    return PyDebugRunner.PY_DEBUG_RUNNER.equals(getEnvironment().getRunner().getRunnerId());
   }
 
   public static ServerSocket createServerSocket() throws ExecutionException {
@@ -171,23 +171,13 @@ public abstract class PythonCommandLineState extends CommandLineState {
    * @throws ExecutionException
    */
   protected ProcessHandler startProcess(CommandLinePatcher... patchers) throws ExecutionException {
-
-
     GeneralCommandLine commandLine = generateCommandLine(patchers);
 
     // Extend command line
-    RunnerSettings runnerSettings = getRunnerSettings();
-    String runnerId = getEnvironment().getRunnerId();
-    if (runnerId != null) {
-      PythonRunConfigurationExtensionsManager.getInstance().patchCommandLine(myConfig, runnerSettings, commandLine, runnerId);
-    }
-
+    PythonRunConfigurationExtensionsManager.getInstance().patchCommandLine(myConfig, getRunnerSettings(), commandLine, getEnvironment().getRunner().getRunnerId());
     Sdk sdk = PythonSdkType.findSdkByPath(myConfig.getInterpreterPath());
-
-
     final ProcessHandler processHandler;
     if (PySdkUtil.isRemote(sdk)) {
-      assert sdk != null;
       processHandler =
         createRemoteProcessStarter().startRemoteProcess(sdk, commandLine, myConfig.getProject(), myConfig.getMappingSettings());
     }

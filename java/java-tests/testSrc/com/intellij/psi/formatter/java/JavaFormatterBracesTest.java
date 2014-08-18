@@ -158,7 +158,7 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
 
   public void testSimpleMethodsInOneLineEvenIfExceedsRightMargin() {
     getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
-    getSettings().getRootSettings().RIGHT_MARGIN = 90;
+    getSettings().RIGHT_MARGIN = 90;
     String text = "public class Repr2 {\n" +
                   "    public void start() { System.out.println(\"kfjsdkfjsdkfjskdjfslkdjfklsdjfklsdjfksjdfkljsdkfjsd!\"); }\n" +
                   "}";
@@ -241,5 +241,52 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
     getSettings().ELSE_ON_NEW_LINE = true;
     doMethodTest(singleLine, multiLine);
     doMethodTest(multiLine, multiLine);
+  }
+
+  public void testMethodBraceOnNextLineIfWrapped() {
+    getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED;
+    getSettings().METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().RIGHT_MARGIN = 50;
+    doClassTest(
+      "public static void main(int state, int column, int width, int rate) {\n" +
+      "}\n",
+      "public static void main(int state, int column,\n" +
+      "                        int width, int rate)\n" +
+      "{\n" +
+      "}\n"
+    );
+  }
+
+  public void testIDEA127110() {
+    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED;
+    doMethodTest(
+      "if (   1 > 2) {\n" +
+      "\n" +
+      "} else {\n" +
+      "\n" +
+      "}\n" +
+      "\n" +
+      "try {\n" +
+      "\n" +
+      "} catch (     Exception e) {\n" +
+      "\n" +
+      "} finally {\n" +
+      "\n" +
+      "}",
+      "if (1 > 2) {\n" +
+      "\n" +
+      "} else {\n" +
+      "\n" +
+      "}\n" +
+      "\n" +
+      "try {\n" +
+      "\n" +
+      "} catch (Exception e) {\n" +
+      "\n" +
+      "} finally {\n" +
+      "\n" +
+      "}"
+    );
   }
 }

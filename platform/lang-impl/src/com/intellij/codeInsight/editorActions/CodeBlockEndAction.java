@@ -26,10 +26,12 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
 public class CodeBlockEndAction extends EditorAction {
   public CodeBlockEndAction() {
@@ -43,7 +45,7 @@ public class CodeBlockEndAction extends EditorAction {
     }
 
     @Override
-    public void execute(Editor editor, DataContext dataContext) {
+    public void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (project != null) {
         CodeBlockUtil.moveCaretToCodeBlockEnd(project, editor, false);

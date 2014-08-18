@@ -47,6 +47,7 @@ public class GroovyBusyWaitInspection extends BaseInspection {
     return "Call to <code>Thread.#ref()</code> in a loop, probably busy-waiting #loc";
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new BusyWaitVisitor();

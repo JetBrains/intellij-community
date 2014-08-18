@@ -45,10 +45,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.ui.EditorComboBoxRenderer;
-import com.intellij.ui.EditorTextField;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.StateRestoringCheckBox;
+import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
@@ -340,6 +337,9 @@ public class FindDialog extends DialogWrapper {
     topOptionsPanel.setLayout(new GridLayout(1, 2, UIUtil.DEFAULT_HGAP, 0));
     topOptionsPanel.add(createFindOptionsPanel());
     optionsPanel.add(topOptionsPanel, gbConstraints);
+    
+    JPanel resultsOptionPanel = null;
+    
     if (myModel.isMultipleFiles()) {
       optionsPanel.add(createGlobalScopePanel(), gbConstraints);
       gbConstraints.weightx = 1;
@@ -350,7 +350,9 @@ public class FindDialog extends DialogWrapper {
       optionsPanel.add(createFilterPanel(),gbConstraints);
 
       myCbToSkipResultsWhenOneUsage = createCheckbox(FindSettings.getInstance().isSkipResultsWithOneUsage(), FindBundle.message("find.options.skip.results.tab.with.one.occurrence.checkbox"));
-      optionsPanel.add(myCbToSkipResultsWhenOneUsage, gbConstraints);
+      resultsOptionPanel = createResultsOptionPanel(optionsPanel, gbConstraints);
+      resultsOptionPanel.add(myCbToSkipResultsWhenOneUsage);
+
       myCbToSkipResultsWhenOneUsage.setVisible(!myModel.isReplaceState());
     }
     else {
@@ -374,16 +376,24 @@ public class FindDialog extends DialogWrapper {
     }
 
     if (myModel.isOpenInNewTabVisible()){
-      JPanel openInNewTabWindowPanel = new JPanel(new BorderLayout());
       myCbToOpenInNewTab = new JCheckBox(FindBundle.message("find.open.in.new.tab.checkbox"));
       myCbToOpenInNewTab.setFocusable(false);
       myCbToOpenInNewTab.setSelected(myModel.isOpenInNewTab());
       myCbToOpenInNewTab.setEnabled(myModel.isOpenInNewTabEnabled());
-      openInNewTabWindowPanel.add(myCbToOpenInNewTab, BorderLayout.EAST);
-      optionsPanel.add(openInNewTabWindowPanel, gbConstraints);
+
+      if (resultsOptionPanel == null) resultsOptionPanel = createResultsOptionPanel(optionsPanel, gbConstraints);
+      resultsOptionPanel.add(myCbToOpenInNewTab);
     }
 
     return optionsPanel;
+  }
+
+  private static JPanel createResultsOptionPanel(JPanel optionsPanel, GridBagConstraints gbConstraints) {
+    JPanel resultsOptionPanel = new JPanel();
+    resultsOptionPanel.setLayout(new BoxLayout(resultsOptionPanel, BoxLayout.Y_AXIS));
+
+    optionsPanel.add(new HideableTitledPanel(FindBundle.message("results.options.group"), resultsOptionPanel, false), gbConstraints);
+    return resultsOptionPanel;
   }
 
   @NotNull
@@ -615,9 +625,11 @@ public class FindDialog extends DialogWrapper {
 
     JLabel searchContextLabel = new JLabel(FindBundle.message("find.context.combo.label"));
     searchContextLabel.setLabelFor(mySearchContext);
-    searchContextPanel.add(searchContextLabel, BorderLayout.WEST);
-
-    searchContextPanel.add(mySearchContext, BorderLayout.CENTER);
+    JPanel panel = new JPanel();
+    panel.setAlignmentX(Component.LEFT_ALIGNMENT);
+    panel.add(searchContextLabel);
+    panel.add(mySearchContext);
+    searchContextPanel.add(panel, BorderLayout.WEST);
 
     if (FindManagerImpl.ourHasSearchInCommentsAndLiterals) {
       findOptionsPanel.add(searchContextPanel);

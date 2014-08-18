@@ -49,6 +49,7 @@ public class GroovyMethodParameterCountInspectionBase extends GroovyMethodMetric
     return "Method '#ref' contains too many parameters (" + args[0] + '>' + args[1] + ')';
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();

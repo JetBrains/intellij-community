@@ -111,7 +111,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myLineSeparatorCombo.addItem(MACINTOSH_STRING);
     addPanelToWatch(myPanel);
 
-    myRightMarginSpinner.setModel(new SpinnerNumberModel(settings.RIGHT_MARGIN, 1, 1000000, 1));
+    myRightMarginSpinner.setModel(new SpinnerNumberModel(settings.getDefaultRightMargin(), 1, 1000000, 1));
 
     myIndentOptionsEditor = new SmartIndentOptionsEditor();
     myDefaultIndentOptionsPanel.add(myIndentOptionsEditor.createPanel(), BorderLayout.CENTER);
@@ -165,7 +165,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   public void apply(CodeStyleSettings settings) {
     settings.LINE_SEPARATOR = getSelectedLineSeparator();
 
-    settings.RIGHT_MARGIN = ((Number) myRightMarginSpinner.getValue()).intValue();
+    settings.setDefaultRightMargin(((Number) myRightMarginSpinner.getValue()).intValue());
     settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = myCbWrapWhenTypingReachesRightMargin.isSelected();
     myIndentOptionsEditor.setEnabled(true);
     myIndentOptionsEditor.apply(settings, settings.OTHER_INDENT_OPTIONS);
@@ -226,7 +226,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       return true;
     }
 
-    if (!Comparing.equal(myRightMarginSpinner.getValue(), settings.RIGHT_MARGIN)) return true;
+    if (!Comparing.equal(myRightMarginSpinner.getValue(), settings.getDefaultRightMargin())) return true;
     myIndentOptionsEditor.setEnabled(true);
 
     if (myEnableFormatterTags.isSelected()) {
@@ -265,7 +265,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       myLineSeparatorCombo.setSelectedItem(SYSTEM_DEPENDANT_STRING);
     }
 
-    myRightMarginSpinner.setValue(settings.RIGHT_MARGIN);
+    myRightMarginSpinner.setValue(settings.getDefaultRightMargin());
     myCbWrapWhenTypingReachesRightMargin.setSelected(settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN);
     myIndentOptionsEditor.reset(settings, settings.OTHER_INDENT_OPTIONS);
     myIndentOptionsEditor.setEnabled(true);

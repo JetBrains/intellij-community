@@ -91,7 +91,7 @@ public class OtherTabsAndIndentsPanel extends CodeStyleAbstractPanel {
     installPreviewPanel(myPreviewPanel);
     addPanelToWatch(myPanel);
 
-    myRightMargin = settings.RIGHT_MARGIN;
+    myRightMargin = settings.getDefaultRightMargin();
 
   }
 

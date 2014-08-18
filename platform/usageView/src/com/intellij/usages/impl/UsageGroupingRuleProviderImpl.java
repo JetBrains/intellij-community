@@ -104,7 +104,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
 
     ArrayList<AnAction> result = ContainerUtil.newArrayList();
 
-    if (view.getPresentation().isCodeUsages()) {
+    if (view.getPresentation().isUsageTypeFilteringAvailable()) {
       GroupByUsageTypeAction groupByUsageTypeAction = new GroupByUsageTypeAction(impl);
       groupByUsageTypeAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK)), component, impl);
       

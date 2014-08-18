@@ -301,6 +301,7 @@ public class FindInProjectUtil {
     }
     presentation.setOpenInNewTab(toOpenInNewTab);
     presentation.setCodeUsages(false);
+    presentation.setUsageTypeFilteringAvailable(true);
 
     return presentation;
   }

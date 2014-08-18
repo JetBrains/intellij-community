@@ -56,6 +56,7 @@ public class GroovyDuplicateSwitchBranchInspection extends BaseInspection {
     return "Duplicate switch case '#ref' #loc";
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();

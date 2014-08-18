@@ -30,26 +30,24 @@ import java.util.Set;
 
 /**
  * Holds shared project-level gradle-related settings (should be kept at the '*.ipr' or under '.idea').
- * 
+ *
  * @author peter
  */
 @State(
-    name = "GradleSettings",
-    storages = {
-      @Storage(file = StoragePathMacros.PROJECT_FILE),
-      @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/gradle.xml", scheme = StorageScheme.DIRECTORY_BASED)
-    }
+  name = "GradleSettings",
+  storages = {
+    @Storage(file = StoragePathMacros.PROJECT_FILE),
+    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/gradle.xml", scheme = StorageScheme.DIRECTORY_BASED)
+  }
 )
 public class GradleSettings extends AbstractExternalSystemSettings<GradleSettings, GradleProjectSettings, GradleSettingsListener>
-  implements PersistentStateComponent<GradleSettings.MyState>
-{
+  implements PersistentStateComponent<GradleSettings.MyState> {
 
-  @Nullable private String myServiceDirectoryPath;
-  @Nullable private String myGradleVmOptions;
-  private boolean myIsOfflineWork;
+  private final GradleSystemSettings mySystemSettings;
 
   public GradleSettings(@NotNull Project project) {
     super(GradleSettingsListener.TOPIC, project);
+    mySystemSettings = GradleSystemSettings.getInstance();
   }
 
   @NotNull
@@ -65,9 +63,6 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
 
   @Override
   protected void copyExtraSettingsFrom(@NotNull GradleSettings settings) {
-    myServiceDirectoryPath = settings.getServiceDirectoryPath();
-    myGradleVmOptions = settings.getGradleVmOptions();
-    myIsOfflineWork = settings.isOfflineWork();
   }
 
   @SuppressWarnings("unchecked")
@@ -76,58 +71,52 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
   public GradleSettings.MyState getState() {
     MyState state = new MyState();
     fillState(state);
-    state.serviceDirectoryPath = myServiceDirectoryPath;
-    state.gradleVmOptions = myGradleVmOptions;
-    state.offlineWork = myIsOfflineWork;
     return state;
   }
 
   @Override
   public void loadState(MyState state) {
     super.loadState(state);
-    myServiceDirectoryPath = state.serviceDirectoryPath;
-    myGradleVmOptions = state.gradleVmOptions;
-    myIsOfflineWork = state.offlineWork;
   }
 
   /**
    * @return service directory path (if defined). 'Service directory' is a directory which is used internally by gradle during
-   *         calls to the tooling api. E.g. it holds downloaded binaries (dependency jars). We allow to define it because there
-   *         is a possible situation when a user wants to configure particular directory to be excluded from anti-virus protection
-   *         in order to increase performance
+   * calls to the tooling api. E.g. it holds downloaded binaries (dependency jars). We allow to define it because there
+   * is a possible situation when a user wants to configure particular directory to be excluded from anti-virus protection
+   * in order to increase performance
    */
   @Nullable
   public String getServiceDirectoryPath() {
-    return myServiceDirectoryPath;
+    return mySystemSettings.getServiceDirectoryPath();
   }
 
   public void setServiceDirectoryPath(@Nullable String newPath) {
+    String myServiceDirectoryPath = mySystemSettings.getServiceDirectoryPath();
     if (!Comparing.equal(myServiceDirectoryPath, newPath)) {
-      String oldPath = myServiceDirectoryPath;
-      myServiceDirectoryPath = newPath;
-      getPublisher().onServiceDirectoryPathChange(oldPath, newPath);
-    } 
+      mySystemSettings.setServiceDirectoryPath(newPath);
+      getPublisher().onServiceDirectoryPathChange(myServiceDirectoryPath, newPath);
+    }
   }
 
   @Nullable
   public String getGradleVmOptions() {
-    return myGradleVmOptions;
+    return mySystemSettings.getGradleVmOptions();
   }
-  
+
   public void setGradleVmOptions(@Nullable String gradleVmOptions) {
+    String myGradleVmOptions = mySystemSettings.getGradleVmOptions();
     if (!Comparing.equal(myGradleVmOptions, gradleVmOptions)) {
-      String old = myGradleVmOptions;
-      myGradleVmOptions = gradleVmOptions;
-      getPublisher().onGradleVmOptionsChange(old, gradleVmOptions);
+      mySystemSettings.setGradleVmOptions(gradleVmOptions);
+      getPublisher().onGradleVmOptionsChange(myGradleVmOptions, gradleVmOptions);
     }
   }
 
   public boolean isOfflineWork() {
-    return myIsOfflineWork;
+    return mySystemSettings.isOfflineWork();
   }
 
   public void setOfflineWork(boolean isOfflineWork) {
-    myIsOfflineWork = isOfflineWork;
+    mySystemSettings.setOfflineWork(isOfflineWork);
   }
 
   @Override
@@ -143,9 +132,6 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
   public static class MyState implements State<GradleProjectSettings> {
 
     private Set<GradleProjectSettings> myProjectSettings = ContainerUtilRt.newTreeSet();
-    public String serviceDirectoryPath;
-    public String gradleVmOptions;
-    public boolean offlineWork;
 
     @AbstractCollection(surroundWithTag = false, elementTypes = {GradleProjectSettings.class})
     public Set<GradleProjectSettings> getLinkedExternalProjectsSettings() {

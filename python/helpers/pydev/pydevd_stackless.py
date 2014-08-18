@@ -7,6 +7,7 @@ from pydevd_comm import GetGlobalDebugger
 import weakref
 from pydevd_file_utils import GetFilenameAndBase
 from pydevd import DONT_TRACE
+from pydevd_constants import DictItems
 
 
 # Used so that we don't loose the id (because we'll remove when it's not alive and would generate a new id for the
@@ -195,7 +196,7 @@ def _schedule_callback(prev, next):
             register_tasklet_info(prev)
 
         try:
-            for tasklet_ref, tasklet_info in list(_weak_tasklet_registered_to_info.items()):  # Make sure it's a copy!
+            for tasklet_ref, tasklet_info in DictItems(_weak_tasklet_registered_to_info):  # Make sure it's a copy!
                 tasklet = tasklet_ref()
                 if tasklet is None or not tasklet.alive:
                     # Garbage-collected already!
@@ -269,7 +270,7 @@ if not hasattr(stackless.tasklet, "trace_function"):
                 register_tasklet_info(prev)
 
             try:
-                for tasklet_ref, tasklet_info in list(_weak_tasklet_registered_to_info.items()):  # Make sure it's a copy!
+                for tasklet_ref, tasklet_info in DictItems(_weak_tasklet_registered_to_info):  # Make sure it's a copy!
                     tasklet = tasklet_ref()
                     if tasklet is None or not tasklet.alive:
                         # Garbage-collected already!
@@ -388,7 +389,7 @@ def patch_stackless():
         _application_set_schedule_callback = callable
         return old
 
-    def get_schedule_callback(callable):
+    def get_schedule_callback():
         global _application_set_schedule_callback
         return _application_set_schedule_callback
 

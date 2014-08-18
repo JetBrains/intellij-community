@@ -589,7 +589,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   @Override
   public void addContentManagerListener(@NotNull ContentManagerListener l) {
-    myListeners.add(l);
+    myListeners.add(0,l);
   }
 
   @Override

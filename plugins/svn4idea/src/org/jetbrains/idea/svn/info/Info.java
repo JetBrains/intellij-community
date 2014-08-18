@@ -35,6 +35,8 @@ import java.util.Date;
  */
 public class Info extends BaseNodeDescription {
 
+  public static final String SCHEDULE_ADD = "add";
+
   private final File myFile;
   private final String myPath;
   private final SVNURL myURL;
@@ -49,10 +51,10 @@ public class Info extends BaseNodeDescription {
   private final String mySchedule;
   private final SVNURL myCopyFromURL;
   private final SVNRevision myCopyFromRevision;
-  private final File myConflictOldFile;
-  private final File myConflictNewFile;
-  private final File myConflictWrkFile;
-  private final File myPropConflictFile;
+  @Nullable private final File myConflictOldFile;
+  @Nullable private final File myConflictNewFile;
+  @Nullable private final File myConflictWrkFile;
+  @Nullable private final File myPropConflictFile;
   private final Depth myDepth;
   @Nullable private final TreeConflictDescription myTreeConflict;
 
@@ -69,8 +71,8 @@ public class Info extends BaseNodeDescription {
       result =
         new Info(info.getFile(), info.getURL(), info.getRepositoryRootURL(), info.getRevision().getNumber(), NodeKind.from(info.getKind()),
                  info.getRepositoryUUID(), info.getCommittedRevision().getNumber(), toString(info.getCommittedDate()), info.getAuthor(),
-                 info.getSchedule(), info.getCopyFromURL(), info.getCopyFromRevision().getNumber(), getPath(info.getConflictOldFile()),
-                 getPath(info.getConflictNewFile()), getPath(info.getConflictWrkFile()), getPath(info.getPropConflictFile()),
+                 info.getSchedule(), info.getCopyFromURL(), info.getCopyFromRevision().getNumber(), getName(info.getConflictOldFile()),
+                 getName(info.getConflictNewFile()), getName(info.getConflictWrkFile()), getName(info.getPropConflictFile()),
                  Lock.create(info.getLock()), Depth.from(info.getDepth()), TreeConflictDescription.create(info.getTreeConflict()));
     }
 
@@ -89,10 +91,10 @@ public class Info extends BaseNodeDescription {
               String schedule,
               SVNURL copyFromURL,
               long copyFromRevision,
-              String conflictOld,
-              String conflictNew,
-              String conflictWorking,
-              String propRejectFile,
+              @Nullable String conflictOldFileName,
+              @Nullable String conflictNewFileName,
+              @Nullable String conflictWorkingFileName,
+              @Nullable String propRejectFileName,
               @Nullable Lock lock,
               Depth depth,
               @Nullable TreeConflictDescription treeConflict) {
@@ -115,10 +117,10 @@ public class Info extends BaseNodeDescription {
     myLock = lock;
     myTreeConflict = treeConflict;
 
-    myConflictOldFile = resolveConflictFile(file, conflictOld);
-    myConflictNewFile = resolveConflictFile(file, conflictNew);
-    myConflictWrkFile = resolveConflictFile(file, conflictWorking);
-    myPropConflictFile = resolveConflictFile(file, propRejectFile);
+    myConflictOldFile = resolveConflictFile(file, conflictOldFileName);
+    myConflictNewFile = resolveConflictFile(file, conflictNewFileName);
+    myConflictWrkFile = resolveConflictFile(file, conflictWorkingFileName);
+    myPropConflictFile = resolveConflictFile(file, propRejectFileName);
 
     myIsRemote = false;
     myDepth = depth;
@@ -175,14 +177,17 @@ public class Info extends BaseNodeDescription {
     return myCommittedRevision;
   }
 
+  @Nullable
   public File getConflictNewFile() {
     return myConflictNewFile;
   }
 
+  @Nullable
   public File getConflictOldFile() {
     return myConflictOldFile;
   }
 
+  @Nullable
   public File getConflictWrkFile() {
     return myConflictWrkFile;
   }
@@ -222,6 +227,7 @@ public class Info extends BaseNodeDescription {
     return myPath;
   }
 
+  @Nullable
   public File getPropConflictFile() {
     return myPropConflictFile;
   }
@@ -256,8 +262,8 @@ public class Info extends BaseNodeDescription {
   }
 
   @Nullable
-  private static String getPath(@Nullable File file) {
-    return file != null ? file.getPath() : null;
+  private static String getName(@Nullable File file) {
+    return file != null ? file.getName() : null;
   }
 
   @Nullable

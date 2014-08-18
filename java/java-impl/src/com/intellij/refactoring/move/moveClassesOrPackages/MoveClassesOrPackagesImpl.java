@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ public class MoveClassesOrPackagesImpl {
       if (element instanceof PsiDirectory) {
         PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)element);
         LOG.assertTrue(aPackage != null);
-        if (aPackage.getQualifiedName().length() == 0) { //is default package
+        if (aPackage.getQualifiedName().isEmpty()) { //is default package
           String message = RefactoringBundle.message("move.package.refactoring.cannot.be.applied.to.default.package");
           CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.title"), message, HelpID.getMoveHelpID(element), project);
           return null;
@@ -167,7 +167,7 @@ public class MoveClassesOrPackagesImpl {
       message.append(RefactoringBundle.message("do.you.wish.to.continue"));
       int ret =
         Messages.showYesNoDialog(project, message.toString(), RefactoringBundle.message("warning.title"), Messages.getWarningIcon());
-      if (ret != 0) {
+      if (ret != Messages.YES) {
         return false;
       }
     }
@@ -323,8 +323,15 @@ public class MoveClassesOrPackagesImpl {
     if (selectedTarget == null) return;
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     final Runnable analyzeConflicts = new Runnable() {
+      @Override
       public void run() {
-        RefactoringConflictsUtil.analyzeModuleConflicts(project, Arrays.asList(directories), UsageInfo.EMPTY_ARRAY, selectedTarget, conflicts);
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            RefactoringConflictsUtil
+              .analyzeModuleConflicts(project, Arrays.asList(directories), UsageInfo.EMPTY_ARRAY, selectedTarget, conflicts);
+          }
+        });
       }
     };
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(analyzeConflicts, "Analyze Module Conflicts...", true, project)) {
@@ -345,8 +352,10 @@ public class MoveClassesOrPackagesImpl {
     final Ref<IncorrectOperationException> ex = Ref.create(null);
     final String commandDescription = RefactoringBundle.message("moving.directories.command");
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             LocalHistoryAction a = LocalHistory.getInstance().startAction(commandDescription);
             try {

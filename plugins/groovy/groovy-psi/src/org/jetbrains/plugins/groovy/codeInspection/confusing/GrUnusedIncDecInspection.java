@@ -51,6 +51,7 @@ import java.util.List;
  */
 public class GrUnusedIncDecInspection extends BaseInspection {
   private static final Logger LOG = Logger.getInstance(GrUnusedIncDecInspection.class);
+  @NotNull
   @Override
   protected BaseInspectionVisitor buildVisitor() {
     return new GrUnusedIncDecInspectionVisitor();

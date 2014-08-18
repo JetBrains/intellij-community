@@ -18,6 +18,7 @@ package com.intellij.psi.impl;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -57,14 +58,39 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
   private volatile boolean isDisposed;
   private CommitTask currentTask; // guarded by documentsToCommit
   private volatile boolean threadFinished;
-  private volatile boolean myEnabled = true; // true if we can do commits. set to false temporarily during the write action.
+  private volatile boolean myEnabled; // true if we can do commits. set to false temporarily during the write action.
 
   public static DocumentCommitThread getInstance() {
     return ServiceManager.getService(DocumentCommitThread.class);
   }
 
-  public DocumentCommitThread(ApplicationEx application) {
+  public DocumentCommitThread(final ApplicationEx application) {
     myApplication = application;
+    // install listener in EDT to avoid missing events in case we are inside write action right now
+    application.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        application.addApplicationListener(new ApplicationAdapter() {
+          private int runningWriteActions;
+
+          @Override
+          public void beforeWriteActionStart(Object action) {
+            if (runningWriteActions++ == 0) {
+              disable("Write action started: " + action);
+            }
+          }
+
+          @Override
+          public void writeActionFinished(Object action) {
+            if (--runningWriteActions == 0) {
+              enable("Write action finished: " + action);
+            }
+          }
+        }, DocumentCommitThread.this);
+
+        enable("Listener installed, started");
+      }
+    });
     log("Starting thread", null, false);
     new Thread(this, "Document commit thread").start();
   }
@@ -89,14 +115,14 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
     }
   }
 
-  public void disable(@NonNls Object reason) {
+  private void disable(@NonNls Object reason) {
     // write action has just started, all commits are useless
     cancel(reason);
     myEnabled = false;
     log("Disabled", null, false, reason);
   }
 
-  public void enable(Object reason) {
+  private void enable(@NonNls Object reason) {
     myEnabled = true;
     wakeUpQueue();
     log("Enabled", null, false, reason);
@@ -194,7 +220,6 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
   public void clearQueue() {
     cancelAll();
     log.setLength(0);
-    disable("end of test");
     wakeUpQueue();
   }
 
@@ -523,5 +548,28 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
       });
     }
     return result[0];
+  }
+
+  @TestOnly
+  boolean isEnabled() {
+    return myEnabled;
+  }
+
+  @TestOnly
+  public void waitUntilAllCommitted(long timeout) throws InterruptedException {
+    if (!myEnabled) {
+      throw new IllegalStateException("DocumentCommitThread is disabled");
+    }
+    int attempts = 0;
+    int delay = 100;
+    synchronized (documentsToCommit) {
+      while(!documentsToCommit.isEmpty() || currentTask != null) {
+        documentsToCommit.wait(delay);
+        if (delay * attempts > timeout) {
+          throw new RuntimeException("timeout");
+        }
+        attempts++;
+      }
+    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.intellij.xdebugger.impl.ui.tree;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -26,10 +28,12 @@ import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.util.SingleAlarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.ui.TextTransferable;
+import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
@@ -41,6 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
@@ -58,6 +63,17 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   private final TransferToEDTQueue<Runnable> myLaterInvocator = TransferToEDTQueue.createRunnableMerger("XDebuggerTree later invocator", 100);
 
   private static final DataKey<XDebuggerTree> XDEBUGGER_TREE_KEY = DataKey.create("xdebugger.tree");
+  private final SingleAlarm myAlarm = new SingleAlarm(new Runnable() {
+    @Override
+    public void run() {
+      final Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
+      if (editor != null) {
+        editor.getComponent().revalidate();
+        editor.getComponent().repaint();
+      }
+    }
+  }, 100, this);
+
   private static final Convertor<TreePath, String> SPEED_SEARCH_CONVERTER = new Convertor<TreePath, String>() {
     @Override
     public String convert(TreePath o) {
@@ -135,6 +151,27 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     myEditorsProvider = editorsProvider;
     mySourcePosition = sourcePosition;
     myTreeModel = new DefaultTreeModel(null);
+    myTreeModel.addTreeModelListener(new TreeModelAdapter() {
+      @Override
+      public void treeNodesChanged(TreeModelEvent e) {
+        updateEditor();
+      }
+
+      @Override
+      public void treeNodesInserted(TreeModelEvent e) {
+        updateEditor();
+      }
+
+      @Override
+      public void treeNodesRemoved(TreeModelEvent e) {
+        updateEditor();
+      }
+
+      @Override
+      public void treeStructureChanged(TreeModelEvent e) {
+        updateEditor();
+      }
+    });
     setModel(myTreeModel);
     setCellRenderer(new XDebuggerTreeRenderer());
     new TreeLinkMouseListener(new XDebuggerTreeRenderer()) {
@@ -183,6 +220,10 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     registerShortcuts();
 
     setTransferHandler(DEFAULT_TRANSFER_HANDLER);
+  }
+
+  private void updateEditor() {
+    myAlarm.cancelAndRequest();
   }
 
   private boolean expandIfEllipsis() {

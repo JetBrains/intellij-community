@@ -52,6 +52,7 @@ public class GroovyUnsynchronizedMethodOverridesSynchronizedMethodInspection ext
 
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();

@@ -25,7 +25,6 @@ import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -34,10 +33,13 @@ import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.ui.PopupHandler;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.StringSelection;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -74,9 +76,17 @@ class ResourceBundleStructureViewComponent extends PropertiesGroupingStructureVi
     } else if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
       return getFileEditor();
     } else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-      final ResourceBundleEditorViewElement selectedElement = ((ResourceBundleEditor)getFileEditor()).getSelectedElement();
-      if (selectedElement != null) {
-        return selectedElement.getPsiElements();
+      final Collection<ResourceBundleEditorViewElement> selectedElements = ((ResourceBundleEditor)getFileEditor()).getSelectedElements();
+      if (selectedElements.isEmpty()) {
+        return null;
+      } else if (selectedElements.size() == 1) {
+        return ContainerUtil.getFirstItem(selectedElements).getPsiElements();
+      } else {
+        final List<PsiElement> psiElements = new ArrayList<PsiElement>();
+        for (ResourceBundleEditorViewElement selectedElement : selectedElements) {
+          Collections.addAll(psiElements, selectedElement.getPsiElements());
+        }
+        return psiElements.toArray(new PsiElement[psiElements.size()]);
       }
     } else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       final PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(this);

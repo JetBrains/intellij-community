@@ -47,6 +47,7 @@ public class GroovyResultOfIncrementOrDecrementUsedInspection extends BaseInspec
     return "Result of increment or decrement expression used #loc";
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();

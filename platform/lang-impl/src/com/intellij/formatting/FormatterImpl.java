@@ -112,26 +112,27 @@ public class FormatterImpl extends FormatterEx
   @Override
   public int getSpacingForBlockAtOffset(FormattingModel model, int offset) {
     Couple<Block> blockWithParent = getBlockAtOffset(null, model.getRootBlock(), offset);
-    if (blockWithParent == null) {
-      return 0;
+    if (blockWithParent != null) {
+      Block parentBlock = blockWithParent.first;
+      Block targetBlock = blockWithParent.second;
+      if (parentBlock != null && targetBlock != null) {
+        Block prevBlock = findPreviousSibling(parentBlock, targetBlock);
+        if (prevBlock != null) {
+          SpacingImpl spacing = (SpacingImpl)parentBlock.getSpacing(prevBlock, targetBlock);
+          if (spacing != null) {
+            int minSpaces = spacing.getMinSpaces();
+            if (minSpaces > 0) {
+              return minSpaces;
+            }
+          }
+        }
+      }
     }
-    Block parentBlock = blockWithParent.first;
-    Block targetBlock = blockWithParent.second;
-    if (parentBlock == null || targetBlock == null) {
-      return 0;
-    }
-    Block prevBlock = findPreviousSibling(parentBlock, targetBlock);
-    if (prevBlock == null) {
-      return 0;
-    }
-    SpacingImpl spacing = (SpacingImpl)parentBlock.getSpacing(prevBlock, targetBlock);
-    if (spacing == null) {
-      return 0;
-    }
-    return Math.max(spacing.getMinSpaces(), 0);
+    return 0;
   }
 
-  private static Couple<Block> getBlockAtOffset(Block parent, Block block, int offset) {
+  @Nullable
+  private static Couple<Block> getBlockAtOffset(@Nullable Block parent, @NotNull Block block, int offset) {
     TextRange textRange = block.getTextRange();
     int startOffset = textRange.getStartOffset();
     int endOffset = textRange.getEndOffset();
@@ -150,7 +151,8 @@ public class FormatterImpl extends FormatterEx
     return null;
   }
 
-  private static Block findPreviousSibling(Block parent, Block block) {
+  @Nullable
+  private static Block findPreviousSibling(@NotNull Block parent, Block block) {
     Block result = null;
     for (Block subBlock : parent.getSubBlocks()) {
       if (subBlock == block) {
@@ -568,6 +570,7 @@ public class FormatterImpl extends FormatterEx
                               final TextRange affectedRange) {
     final FormattingDocumentModel documentModel = model.getDocumentModel();
     final Block block = model.getRootBlock();
+    if (block.getTextRange().isEmpty()) return null; // handing empty document case
     final FormatProcessor processor = buildProcessorAndWrapBlocks(
       documentModel, block, settings, indentOptions, new FormatTextRanges(affectedRange, true), offset
     );

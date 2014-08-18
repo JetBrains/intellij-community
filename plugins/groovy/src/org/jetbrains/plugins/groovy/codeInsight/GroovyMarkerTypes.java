@@ -23,6 +23,7 @@ import com.intellij.codeInsight.daemon.impl.PsiElementListNavigator;
 import com.intellij.codeInsight.navigation.ListBackgroundUpdaterTask;
 import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -159,9 +160,14 @@ public class GroovyMarkerTypes {
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         @Override
         public void run() {
-          for (GrAccessorMethod method : GroovyPropertyUtils.getFieldAccessors(field)) {
-            OverridingMethodsSearch.search(method, true).forEach(collectProcessor);
-          }
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            @Override
+            public void run() {
+              for (GrAccessorMethod method : GroovyPropertyUtils.getFieldAccessors(field)) {
+                OverridingMethodsSearch.search(method, true).forEach(collectProcessor);
+              }
+            }
+          });
         }
       }, "Searching for overriding methods", true, field.getProject(), (JComponent)e.getComponent())) {
         return;
@@ -272,17 +278,22 @@ public class GroovyMarkerTypes {
         if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
           @Override
           public void run() {
-            for (GrMethod m : PsiImplUtil.getMethodOrReflectedMethods(method)) {
-              OverridingMethodsSearch.search(m, true).forEach(new ReadActionProcessor<PsiMethod>() {
-                @Override
-                public boolean processInReadAction(PsiMethod psiMethod) {
-                  if (psiMethod instanceof GrReflectedMethod) {
-                      psiMethod = ((GrReflectedMethod)psiMethod).getBaseMethod();
-                  }
-                  return collectProcessor.execute(psiMethod);
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
+              @Override
+              public void run() {
+                for (GrMethod m : PsiImplUtil.getMethodOrReflectedMethods(method)) {
+                  OverridingMethodsSearch.search(m, true).forEach(new ReadActionProcessor<PsiMethod>() {
+                    @Override
+                    public boolean processInReadAction(PsiMethod psiMethod) {
+                      if (psiMethod instanceof GrReflectedMethod) {
+                        psiMethod = ((GrReflectedMethod)psiMethod).getBaseMethod();
+                      }
+                      return collectProcessor.execute(psiMethod);
+                    }
+                  });
                 }
-              });
-            }
+              }
+            });
           }
         }, MarkerType.SEARCHING_FOR_OVERRIDING_METHODS, true, method.getProject(), (JComponent)e.getComponent())) {
           return;

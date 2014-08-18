@@ -1,4 +1,4 @@
-package com.jetbrains.env.community.python;
+package com.jetbrains.env.python;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
@@ -8,8 +8,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.env.community.PyEnvTestCase;
-import com.jetbrains.env.community.python.console.PyConsoleTask;
+import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.env.python.console.PyConsoleTask;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;

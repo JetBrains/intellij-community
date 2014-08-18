@@ -661,7 +661,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   @NotNull
-  public VirtualFile[] getRootsUnderVcs(AbstractVcs vcs) {
+  public VirtualFile[] getRootsUnderVcs(@NotNull AbstractVcs vcs) {
     return myMappingsToRoots.getRootsUnderVcs(vcs);
   }
 

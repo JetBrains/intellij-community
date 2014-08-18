@@ -174,7 +174,7 @@ public class FoldingUpdate {
           injectedFiles.add(injectedFile);
           final FoldingMap map = new FoldingMap();
           maps.add(map);
-          getFoldingsFor(injectedFile, injectedDocument, map, false);
+          getFoldingsFor(injectedFile, injectedEditor.getDocument(), map, false);
         }
       });
     }

@@ -2363,7 +2363,7 @@
                      implementationClass="com.siyeh.ig.style.UnnecessaryToStringCallInspection"/>
     <localInspection language="JAVA" suppressId="RedundantNoArgConstructor" shortName="UnnecessaryConstructor" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="unnecessary.constructor.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING" cleanupTool="true"
+                     groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.style.UnnecessaryConstructorInspection"/>
     <localInspection language="JAVA" shortName="UnnecessaryEnumModifier" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="unnecessary.enum.modifier.display.name" groupBundle="messages.InspectionsBundle"

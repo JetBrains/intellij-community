@@ -22,12 +22,9 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.ui.ExecutionConsole;
-import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunContentManagerImpl;
-import com.intellij.execution.ui.RunContentWithExecutorListener;
+import com.intellij.execution.runners.RunContentBuilder;
+import com.intellij.execution.ui.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
@@ -120,11 +117,11 @@ public class XDebuggerManagerImpl extends XDebuggerManager
       }
     });
 
-    messageBusConnection.subscribe(RunContentManagerImpl.RUN_CONTENT_TOPIC, new RunContentWithExecutorListener() {
+    messageBusConnection.subscribe(RunContentManager.TOPIC, new RunContentWithExecutorListener() {
       @Override
-      public void contentSelected(RunContentDescriptor descriptor, @NotNull Executor executor) {
-        if (executor.equals(DefaultDebugExecutor.getDebugExecutorInstance())) {
-          final XDebugSessionImpl session = mySessions.get(descriptor.getProcessHandler());
+      public void contentSelected(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
+        if (descriptor != null && executor.equals(DefaultDebugExecutor.getDebugExecutorInstance())) {
+          XDebugSessionImpl session = mySessions.get(descriptor.getProcessHandler());
           if (session != null) {
             session.activateSession();
           }
@@ -135,8 +132,8 @@ public class XDebuggerManagerImpl extends XDebuggerManager
       }
 
       @Override
-      public void contentRemoved(RunContentDescriptor descriptor, @NotNull Executor executor) {
-        if (executor.equals(DefaultDebugExecutor.getDebugExecutorInstance())) {
+      public void contentRemoved(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
+        if (descriptor != null && executor.equals(DefaultDebugExecutor.getDebugExecutorInstance())) {
           mySessions.remove(descriptor.getProcessHandler());
           mySessionData.remove(descriptor);
           XDebugSessionTab tab = mySessionTabs.remove(descriptor);
@@ -174,7 +171,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
                                     @NotNull ExecutionEnvironment environment,
                                     @Nullable RunContentDescriptor contentToReuse,
                                     @NotNull XDebugProcessStarter processStarter) throws ExecutionException {
-    return startSession(contentToReuse, processStarter, new XDebugSessionImpl(ExecutionEnvironmentBuilder.fix(environment, runner), this));
+    return startSession(contentToReuse, processStarter, new XDebugSessionImpl(RunContentBuilder.fix(environment, runner), this));
   }
 
   @Override

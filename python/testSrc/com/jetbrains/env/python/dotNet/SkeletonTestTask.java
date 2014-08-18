@@ -1,4 +1,4 @@
-package com.jetbrains.env.community.python.dotNet;
+package com.jetbrains.env.python.dotNet;
 
 import com.google.common.collect.Sets;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -11,7 +11,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.ui.UIUtil;
-import com.jetbrains.env.community.PyExecutionFixtureTestTask;
+import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.quickfix.GenerateBinaryStubsFix;

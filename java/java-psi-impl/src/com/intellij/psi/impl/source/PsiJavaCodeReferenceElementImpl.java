@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source;
 
+import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -162,7 +163,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         i == JavaDocElementType.DOC_REFERENCE_HOLDER ||
         i == JavaDocElementType.DOC_TYPE_HOLDER) {
       PsiDocComment docComment = PsiTreeUtil.getParentOfType(this, PsiDocComment.class);
-      if (docComment != null && docComment.getOwner() == null && docComment.getParent() instanceof PsiJavaFile) {
+      if (JavaDocUtil.isInsidePackageInfo(docComment)) {
         return CLASS_FQ_OR_PACKAGE_NAME_KIND;
       }
 

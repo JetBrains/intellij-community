@@ -17,7 +17,6 @@ package com.intellij.ide.plugins;
 
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
@@ -39,7 +38,6 @@ import javax.swing.*;
   }
 )
 public class PluginManagerUISettings implements PersistentStateComponent<Element>, PerformInBackgroundOption {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginManagerUISettings");
   private static final SkipDefaultValuesSerializationFilters FILTERS = new SkipDefaultValuesSerializationFilters();
 
   public int AVAILABLE_SORT_COLUMN_ORDER = SortOrder.ASCENDING.ordinal();
@@ -65,6 +63,7 @@ public class PluginManagerUISettings implements PersistentStateComponent<Element
     return ServiceManager.getService(PluginManagerUISettings.class);
   }
 
+  @Override
   public Element getState() {
     Element element = new Element("state");
     XmlSerializer.serializeInto(this, element, FILTERS);
@@ -76,6 +75,7 @@ public class PluginManagerUISettings implements PersistentStateComponent<Element
     return element;
   }
 
+  @Override
   public void loadState(final Element element) {
     XmlSerializer.deserializeInto(this, element);
     XmlSerializer.deserializeInto(mySplitterProportionsData, element);

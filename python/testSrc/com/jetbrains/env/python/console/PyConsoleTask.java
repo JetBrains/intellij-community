@@ -1,4 +1,4 @@
-package com.jetbrains.env.community.python.console;
+package com.jetbrains.env.python.console;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.console.LanguageConsoleView;
@@ -13,7 +13,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.frame.XValueChildrenList;
-import com.jetbrains.env.community.PyExecutionFixtureTestTask;
+import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.python.console.*;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.PyDebugValue;

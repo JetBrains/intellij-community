@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ package com.intellij.tools;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -107,19 +107,24 @@ public class ScanSourceCommentsAction extends AnAction {
     descriptor.addFile(file);
   }
 
-  private void scanCommentsInFile(Project project, final VirtualFile vFile) {
+  private void scanCommentsInFile(final Project project, final VirtualFile vFile) {
     if (!vFile.isDirectory() && vFile.getFileType() instanceof LanguageFileType) {
-      PsiFile psiFile = PsiManager.getInstance(project).findFile(vFile);
-      if (psiFile == null) return;
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
+        public void run() {
+          PsiFile psiFile = PsiManager.getInstance(project).findFile(vFile);
+          if (psiFile == null) return;
 
-      for (PsiFile root : psiFile.getViewProvider().getAllFiles()) {
-        root.accept(new PsiRecursiveElementWalkingVisitor() {
-          @Override
-          public void visitComment(PsiComment comment) {
-            commentFound(vFile, comment.getText());
+          for (PsiFile root : psiFile.getViewProvider().getAllFiles()) {
+            root.accept(new PsiRecursiveElementWalkingVisitor() {
+              @Override
+              public void visitComment(PsiComment comment) {
+                commentFound(vFile, comment.getText());
+              }
+            });
           }
-        });
-      }
+        }
+      });
     }
   }
 

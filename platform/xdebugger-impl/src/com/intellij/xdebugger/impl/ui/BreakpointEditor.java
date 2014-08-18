@@ -19,6 +19,7 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
@@ -79,7 +80,7 @@ public class BreakpointEditor {
       }
     });
 
-    final AnAction doneAction = new AnAction() {
+    final AnAction doneAction = new DumbAwareAction() {
       @Override
       public void update(AnActionEvent e) {
         super.update(e);

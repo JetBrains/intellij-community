@@ -1,13 +1,13 @@
-package com.jetbrains.env.community.python;
+package com.jetbrains.env.python;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.xdebugger.XDebuggerTestUtil;
-import com.jetbrains.env.community.PyEnvTestCase;
-import com.jetbrains.env.community.python.debug.PyDebuggerTask;
-import com.jetbrains.env.community.ut.PyUnitTestTask;
+import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.env.python.debug.PyDebuggerTask;
+import com.jetbrains.env.ut.PyUnitTestTask;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyDebuggerException;

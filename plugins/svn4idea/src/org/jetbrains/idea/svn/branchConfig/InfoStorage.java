@@ -15,9 +15,6 @@
  */
 package org.jetbrains.idea.svn.branchConfig;
 
-import com.intellij.util.PairConsumer;
-import org.jetbrains.annotations.Nullable;
-
 public class InfoStorage<T> {
   public T myT;
   public InfoReliability myInfoReliability;
@@ -27,14 +24,15 @@ public class InfoStorage<T> {
     myInfoReliability = infoReliability;
   }
 
-  public void accept(final InfoStorage<T> infoStorage, @Nullable final PairConsumer<T, T> callbackOnUpdate) {
-    if (infoStorage.myInfoReliability.shouldOverride(myInfoReliability)) {
-      if (callbackOnUpdate != null) {
-        callbackOnUpdate.consume(myT, infoStorage.myT);
-      }
+  public boolean accept(final InfoStorage<T> infoStorage) {
+    boolean override = infoStorage.myInfoReliability.shouldOverride(myInfoReliability);
+
+    if (override) {
       myT = infoStorage.myT;
       myInfoReliability = infoStorage.myInfoReliability;
     }
+
+    return override;
   }
 
   public T getValue() {

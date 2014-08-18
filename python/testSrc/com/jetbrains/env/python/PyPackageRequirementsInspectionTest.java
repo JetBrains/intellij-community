@@ -1,4 +1,4 @@
-package com.jetbrains.env.community.python;
+package com.jetbrains.env.python;
 
 import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.module.Module;
@@ -6,8 +6,8 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
-import com.jetbrains.env.community.PyEnvTestCase;
-import com.jetbrains.env.community.PyExecutionFixtureTestTask;
+import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.inspections.PyPackageRequirementsInspection;
 import com.jetbrains.python.sdkTools.SdkCreationType;

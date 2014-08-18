@@ -1,7 +1,7 @@
-package com.jetbrains.env.community.python.testing;
+package com.jetbrains.env.python.testing;
 
-import com.jetbrains.env.community.PyEnvTestCase;
-import com.jetbrains.env.community.ut.PyTestTestTask;
+import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.env.ut.PyTestTestTask;
 
 /**
  * User : catherine

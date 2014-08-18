@@ -350,8 +350,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
     final URLConnection connection = openConnection(url);
     try {
-      connection.setConnectTimeout(CONNECTION_TIMEOUT);
-      connection.setReadTimeout(CONNECTION_TIMEOUT);
       connection.connect();
       connection.getInputStream();
     }
@@ -386,6 +384,10 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
       if (urlConnection == null && ioe != null) {
         throw ioe;
       }
+    }
+    if (urlConnection != null) {
+      urlConnection.setReadTimeout(CONNECTION_TIMEOUT);
+      urlConnection.setConnectTimeout(CONNECTION_TIMEOUT);
     }
     return urlConnection;
   }

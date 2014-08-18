@@ -155,8 +155,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     return new CloseAction(defaultExecutor, myDescriptor, myProject);
   }
 
-
-  protected void showConsole(Executor defaultExecutor, RunContentDescriptor myDescriptor, final Component toFocus) {
+  protected void showConsole(Executor defaultExecutor, @NotNull RunContentDescriptor myDescriptor, final Component toFocus) {
     // Show in run toolwindow
     ExecutionManager.getInstance(myProject).getContentManager().showRunContent(defaultExecutor, myDescriptor);
 

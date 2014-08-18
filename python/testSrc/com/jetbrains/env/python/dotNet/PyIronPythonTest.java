@@ -1,8 +1,8 @@
-package com.jetbrains.env.community.python.dotNet;
+package com.jetbrains.env.python.dotNet;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
-import com.jetbrains.env.community.PyEnvTestCase;
+import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.python.psi.PyFile;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
