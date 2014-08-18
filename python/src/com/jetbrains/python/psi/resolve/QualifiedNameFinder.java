@@ -172,12 +172,17 @@ public class QualifiedNameFinder {
           return classQName + "." + name;
         }
       }
-      else if (owner instanceof PyFile && !builtinCache.isBuiltin(element)) {
-        final VirtualFile virtualFile = ((PyFile)owner).getVirtualFile();
-        if (virtualFile != null) {
-          final String fileQName = findShortestImportableName(element, virtualFile);
-          if (fileQName != null) {
-            return fileQName + "." + name;
+      else if (owner instanceof PyFile) {
+        if (builtinCache.isBuiltin(element)) {
+          return name;
+        }
+        else {
+          final VirtualFile virtualFile = ((PyFile)owner).getVirtualFile();
+          if (virtualFile != null) {
+            final String fileQName = findShortestImportableName(element, virtualFile);
+            if (fileQName != null) {
+              return fileQName + "." + name;
+            }
           }
         }
       }
