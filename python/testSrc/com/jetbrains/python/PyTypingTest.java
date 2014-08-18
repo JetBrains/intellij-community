@@ -68,6 +68,19 @@ public class PyTypingTest extends PyTestCase {
 
   }
 
+  public void testNoneType() {
+    doTest("None",
+           "def f(expr: None):\n" +
+           "    pass\n");
+  }
+
+  public void testNoneReturnType() {
+    doTest("None",
+           "def f() -> None:\n" +
+           "    return 0\n" +
+           "expr = f()\n");
+  }
+
   private void doTest(@NotNull String expectedType, @NotNull String text) {
     myFixture.copyDirectoryToProject("typing", "");
     myFixture.configureByText(PythonFileType.INSTANCE, text);

@@ -21,6 +21,7 @@ import com.jetbrains.python.psi.PyAnnotation;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.stubs.PyAnnotationStub;
 import com.jetbrains.python.psi.types.PyClassLikeType;
+import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -55,6 +56,9 @@ public class PyAnnotationImpl extends PyBaseElementImpl<PyAnnotationStub> implem
         if (classType.isDefinition()) {
           return classType.toInstance();
         }
+      }
+      else if (type instanceof PyNoneType) {
+        return type;
       }
     }
     return null;
