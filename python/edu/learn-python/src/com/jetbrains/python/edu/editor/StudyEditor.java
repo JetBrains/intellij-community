@@ -5,11 +5,11 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorLocation;
-import com.intellij.openapi.fileEditor.FileEditorState;
-import com.intellij.openapi.fileEditor.FileEditorStateLevel;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
@@ -17,7 +17,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.HideableTitledPanel;
+import com.intellij.ui.JBColor;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.edu.StudyDocumentListener;
 import com.jetbrains.python.edu.StudyTaskManager;
 import com.jetbrains.python.edu.actions.*;
@@ -29,6 +32,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.text.MutableAttributeSet;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -40,7 +46,7 @@ import java.util.Map;
  * Implementation of StudyEditor which has panel with special buttons and task text
  * also @see {@link com.jetbrains.python.edu.editor.StudyFileEditorProvider}
  */
-public class StudyEditor implements FileEditor {
+public class StudyEditor implements TextEditor {
   private static final String TASK_TEXT_HEADER = "Task Text";
   private final FileEditor myDefaultEditor;
   private final JComponent myComponent;
@@ -49,6 +55,7 @@ public class StudyEditor implements FileEditor {
   private JButton myPrevTaskButton;
   private JButton myRefreshButton;
   private static final Map<Document, StudyDocumentListener> myDocumentListeners = new HashMap<Document, StudyDocumentListener>();
+  private Project myProject;
 
   public JButton getCheckButton() {
     return myCheckButton;
@@ -77,33 +84,54 @@ public class StudyEditor implements FileEditor {
   }
 
   public StudyEditor(@NotNull final Project project, @NotNull final VirtualFile file) {
-    myDefaultEditor = TextEditorProvider.getInstance().createEditor(project, file);
+    myProject = project;
+    myDefaultEditor = TextEditorProvider.getInstance().createEditor(myProject, file);
     myComponent = myDefaultEditor.getComponent();
     JPanel studyPanel = new JPanel();
     studyPanel.setLayout(new BoxLayout(studyPanel, BoxLayout.Y_AXIS));
-    TaskFile taskFile = StudyTaskManager.getInstance(project).getTaskFile(file);
+    TaskFile taskFile = StudyTaskManager.getInstance(myProject).getTaskFile(file);
     if (taskFile != null) {
       Task currentTask = taskFile.getTask();
       String taskText = currentTask.getResourceText(project, currentTask.getText(), false);
-      final JLabel taskTextLabel = new JLabel(taskText);
-      taskTextLabel.setBorder(new EmptyBorder(15, 20, 0, 100));
-      int fontSize = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize();
-      String fontName = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName();
-      taskTextLabel.setFont(new Font(fontName, Font.PLAIN, fontSize));
-      HideableTitledPanel taskTextPanel = new HideableTitledPanel(TASK_TEXT_HEADER, taskTextLabel, true);
-      taskTextPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
-      studyPanel.add(taskTextPanel);
+      initializeTaskText(studyPanel, taskText);
       JPanel studyButtonPanel = new JPanel(new GridLayout(1, 2));
       JPanel taskActionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
       studyButtonPanel.add(taskActionsPanel);
       studyButtonPanel.add(new JPanel());
-      initializeButtons(project, taskActionsPanel, taskFile);
+      initializeButtons(taskActionsPanel, taskFile);
       studyPanel.add(studyButtonPanel);
       myComponent.add(studyPanel, BorderLayout.NORTH);
     }
   }
 
-  private void initializeButtons(@NotNull final Project project, @NotNull final JPanel taskActionsPanel, @NotNull final TaskFile taskFile) {
+  private static void initializeTaskText(JPanel studyPanel, String taskText) {
+    JTextPane taskTextPane = new JTextPane();
+    taskTextPane.setContentType("text/html");
+    taskTextPane.setEditable(false);
+    taskTextPane.setText(taskText);
+    EditorColorsScheme editorColorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
+    int fontSize = editorColorsScheme.getEditorFontSize();
+    String fontName = editorColorsScheme.getEditorFontName();
+    setJTextPaneFont(taskTextPane, new Font(fontName, Font.PLAIN, fontSize), JBColor.BLACK);
+    taskTextPane.setBackground(UIUtil.getPanelBackground());
+    taskTextPane.setBorder(new EmptyBorder(15, 20, 0, 100));
+    HideableTitledPanel taskTextPanel = new HideableTitledPanel(TASK_TEXT_HEADER, taskTextPane, true);
+    taskTextPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+    studyPanel.add(taskTextPanel);
+  }
+
+  private static void setJTextPaneFont(JTextPane jtp, Font font, Color c) {
+    MutableAttributeSet attrs = jtp.getInputAttributes();
+    StyleConstants.setFontFamily(attrs, font.getFamily());
+    StyleConstants.setFontSize(attrs, font.getSize());
+    StyleConstants.setItalic(attrs, (font.getStyle() & Font.ITALIC) != 0);
+    StyleConstants.setBold(attrs, (font.getStyle() & Font.BOLD) != 0);
+    StyleConstants.setForeground(attrs, c);
+    StyledDocument doc = jtp.getStyledDocument();
+    doc.setCharacterAttributes(0, doc.getLength() + 1, attrs, false);
+  }
+
+  private void initializeButtons(@NotNull final JPanel taskActionsPanel, @NotNull final TaskFile taskFile) {
     myCheckButton = addButton(taskActionsPanel, "Check task", StudyIcons.Resolve);
     myPrevTaskButton = addButton(taskActionsPanel, "Prev Task", StudyIcons.Prev);
     myNextTaskButton = addButton(taskActionsPanel, "Next Task", StudyIcons.Next);
@@ -114,7 +142,7 @@ public class StudyEditor implements FileEditor {
         @Override
         public void actionPerformed(ActionEvent e) {
           StudyRunAction studyRunAction = (StudyRunAction)ActionManager.getInstance().getAction("StudyRunAction");
-          studyRunAction.run(project);
+          studyRunAction.run(myProject);
         }
       });
       JButton watchInputButton = addButton(taskActionsPanel, "Watch test input", StudyIcons.WatchInput);
@@ -122,7 +150,7 @@ public class StudyEditor implements FileEditor {
         @Override
         public void actionPerformed(ActionEvent e) {
           StudyEditInputAction studyEditInputAction = (StudyEditInputAction)ActionManager.getInstance().getAction("WatchInputAction");
-          studyEditInputAction.showInput(project);
+          studyEditInputAction.showInput(myProject);
         }
       });
     }
@@ -130,7 +158,7 @@ public class StudyEditor implements FileEditor {
       @Override
       public void actionPerformed(ActionEvent e) {
         StudyCheckAction studyCheckAction = (StudyCheckAction)ActionManager.getInstance().getAction("CheckAction");
-        studyCheckAction.check(project);
+        studyCheckAction.check(myProject);
       }
     });
 
@@ -138,7 +166,7 @@ public class StudyEditor implements FileEditor {
       @Override
       public void actionPerformed(ActionEvent e) {
         StudyNextStudyTaskAction studyNextTaskAction = (StudyNextStudyTaskAction)ActionManager.getInstance().getAction("NextTaskAction");
-        studyNextTaskAction.navigateTask(project);
+        studyNextTaskAction.navigateTask(myProject);
       }
     });
     myPrevTaskButton.addActionListener(new ActionListener() {
@@ -146,14 +174,14 @@ public class StudyEditor implements FileEditor {
       public void actionPerformed(ActionEvent e) {
         StudyPreviousStudyTaskAction
           prevTaskAction = (StudyPreviousStudyTaskAction)ActionManager.getInstance().getAction("PreviousTaskAction");
-        prevTaskAction.navigateTask(project);
+        prevTaskAction.navigateTask(myProject);
       }
     });
     myRefreshButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         StudyRefreshTaskAction studyRefreshTaskAction = (StudyRefreshTaskAction)ActionManager.getInstance().getAction("RefreshTaskAction");
-        studyRefreshTaskAction.refresh(project);
+        studyRefreshTaskAction.refresh(myProject);
       }
     });
   }
@@ -179,7 +207,7 @@ public class StudyEditor implements FileEditor {
   @Nullable
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myComponent;
+    return myDefaultEditor.getPreferredFocusedComponent();
   }
 
   @NotNull
@@ -292,5 +320,28 @@ public class StudyEditor implements FileEditor {
 
   public static void removeListener(Document document) {
     myDocumentListeners.remove(document);
+  }
+
+  @NotNull
+  @Override
+  public Editor getEditor() {
+    if (myDefaultEditor instanceof TextEditor)
+      return ((TextEditor)myDefaultEditor).getEditor();
+    return EditorFactory.getInstance().createViewer(new DocumentImpl(""), myProject);
+  }
+
+  @Override
+  public boolean canNavigateTo(@NotNull Navigatable navigatable) {
+    if (myDefaultEditor instanceof TextEditor) {
+      ((TextEditor)myDefaultEditor).canNavigateTo(navigatable);
+    }
+    return false;
+  }
+
+  @Override
+  public void navigateTo(@NotNull Navigatable navigatable) {
+    if (myDefaultEditor instanceof TextEditor) {
+      ((TextEditor)myDefaultEditor).navigateTo(navigatable);
+    }
   }
 }

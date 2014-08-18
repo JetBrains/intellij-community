@@ -37,6 +37,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.options.newEditor.OptionsEditor;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
@@ -231,7 +232,8 @@ public class SeverityEditorDialog extends DialogWrapper {
     final DataContext dataContext = DataManager.getInstance().getDataContext(myPanel);
     final OptionsEditor optionsEditor = OptionsEditor.KEY.getData(dataContext);
     if (optionsEditor != null) {
-      final ColorAndFontOptions colorAndFontOptions = optionsEditor.findConfigurable(ColorAndFontOptions.class);
+      final ColorAndFontOptions colorAndFontOptions =
+        (ColorAndFontOptions)((ConfigurableWrapper)optionsEditor.findConfigurableById(ColorAndFontOptions.ID)).getConfigurable();
       assert colorAndFontOptions != null;
       final SearchableConfigurable javaPage = colorAndFontOptions.findSubConfigurable(InspectionColorSettingsPage.class);
       LOG.assertTrue(javaPage != null);

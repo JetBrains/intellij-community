@@ -150,22 +150,23 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
         if (event.getEditor().getDocument() != myNewDocument) return;
         myEditorCount ++;
         final EditorActionHandler editorEscape = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ESCAPE);
-        new AnAction() {
-          @Override
-          public void update(AnActionEvent e) {
-            Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
-            e.getPresentation().setEnabled(
-              !myAction.isShowInBalloon() &&
-              editor != null && LookupManager.getActiveLookup(editor) == null &&
-              TemplateManager.getInstance(myProject).getActiveTemplate(editor) == null &&
-              (editorEscape == null || !editorEscape.isEnabled(editor, e.getDataContext())));
-          }
+        if (!myAction.isShowInBalloon()) {
+          new AnAction() {
+            @Override
+            public void update(AnActionEvent e) {
+              Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
+              e.getPresentation().setEnabled(
+                editor != null && LookupManager.getActiveLookup(editor) == null &&
+                TemplateManager.getInstance(myProject).getActiveTemplate(editor) == null &&
+                (editorEscape == null || !editorEscape.isEnabled(editor, e.getDataContext())));
+            }
 
-          @Override
-          public void actionPerformed(AnActionEvent e) {
-            closeEditor();
-          }
-        }.registerCustomShortcutSet(CommonShortcuts.ESCAPE, event.getEditor().getContentComponent());
+            @Override
+            public void actionPerformed(AnActionEvent e) {
+              closeEditor();
+            }
+          }.registerCustomShortcutSet(CommonShortcuts.ESCAPE, event.getEditor().getContentComponent());
+        }
       }
 
       @Override
@@ -203,8 +204,7 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
 
   public void navigate(int injectedOffset) {
     if (myAction.isShowInBalloon()) {
-      Ref<Balloon> ref = Ref.create(null);
-      final JComponent component = myAction.createBalloonComponent(myNewFile, ref);
+      final JComponent component = myAction.createBalloonComponent(myNewFile);
       if (component != null) {
         final Balloon balloon = JBPopupFactory.getInstance().createBalloonBuilder(component)
           .setShadow(true)
@@ -214,7 +214,12 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
           .setHideOnAction(false)
           .setFillColor(UIUtil.getControlColor())
           .createBalloon();
-        ref.set(balloon);
+        new AnAction() {
+          @Override
+          public void actionPerformed(AnActionEvent e) {
+            balloon.hide();
+          }
+        }.registerCustomShortcutSet(CommonShortcuts.ESCAPE, component);
         Disposer.register(myNewFile.getProject(), balloon);
         final Balloon.Position position = QuickEditAction.getBalloonPosition(myEditor);
         RelativePoint point = JBPopupFactory.getInstance().guessBestPopupLocation(myEditor);

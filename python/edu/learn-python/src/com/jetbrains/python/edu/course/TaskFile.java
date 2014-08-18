@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.annotations.Transient;
+import com.jetbrains.python.edu.StudyUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,6 +50,7 @@ public class TaskFile implements Stateful{
     return myTask;
   }
 
+  @Nullable
   @Transient
   public TaskWindow getSelectedTaskWindow() {
     return mySelectedTaskWindow;
@@ -111,7 +113,8 @@ public class TaskFile implements Stateful{
     for (TaskWindow tw : taskWindows) {
       if (tw.getLine() <= line) {
         int twStartOffset = tw.getRealStartOffset(document);
-        int twEndOffset = twStartOffset + tw.getLength();
+        final int length = tw.getLength() > 0 ? tw.getLength() : 0;
+        int twEndOffset = twStartOffset + length;
         if (twStartOffset <= offset && offset <= twEndOffset) {
           return tw;
         }
@@ -209,5 +212,17 @@ public class TaskFile implements Stateful{
 
   public boolean isUserCreated() {
     return myUserCreated;
+  }
+
+  public void navigateToFirstTaskWindow(@NotNull final Editor editor) {
+    if (!taskWindows.isEmpty()) {
+      TaskWindow firstTaskWindow = StudyUtils.getFirst(taskWindows);
+      mySelectedTaskWindow = firstTaskWindow;
+      LogicalPosition taskWindowStart = new LogicalPosition(firstTaskWindow.getLine(), firstTaskWindow.getStart());
+      editor.getCaretModel().moveToLogicalPosition(taskWindowStart);
+      int startOffset = firstTaskWindow.getRealStartOffset(editor.getDocument());
+      int endOffset = startOffset + firstTaskWindow.getLength();
+      editor.getSelectionModel().setSelection(startOffset, endOffset);
+    }
   }
 }

@@ -13,10 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.dvcs.push;
+package com.siyeh.ipp.initialization;
 
-public class MoreCommitsLink extends VcsLinkedText {
-  MoreCommitsLink() {
-    super("", "...");
+import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ipp.IPPTestCase;
+
+/**
+ * @see com.siyeh.ipp.initialization.SplitDeclarationAndInitializationIntention
+ * @author Bas Leijdekkers
+ */
+public class SplitDeclarationAndInitializationIntentionTest extends IPPTestCase {
+
+  public void testArrayInitializer() { doTest(); }
+
+  @Override
+  protected String getRelativePath() {
+    return "initialization";
+  }
+
+  @Override
+  protected String getIntentionName() {
+    return IntentionPowerPackBundle.message("split.declaration.and.initialization.intention.name");
   }
 }

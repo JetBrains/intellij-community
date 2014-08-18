@@ -17,7 +17,9 @@
           <grid id="a052" layout-manager="BorderLayout" hgap="0" vgap="0">
             <constraints border-constraint="Center"/>
             <properties/>
-            <border type="none"/>
+            <border type="empty">
+              <size top="5" left="5" bottom="10" right="5"/>
+            </border>
             <children>
               <grid id="b7b2b" layout-manager="BorderLayout" hgap="0" vgap="0">
                 <constraints border-constraint="North"/>
@@ -66,14 +68,14 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="5de69" class="com.intellij.ui.components.JBLabel">
+              <component id="5de69" class="com.intellij.ui.components.JBLabel" binding="myMessage">
                 <constraints>
                   <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <alignmentX value="0.5"/>
                   <componentStyle value="SMALL"/>
-                  <text value="Red means Sample does not match RegExp"/>
+                  <text value="Red means I can't hear you!"/>
                 </properties>
               </component>
               <hspacer id="c8c90">

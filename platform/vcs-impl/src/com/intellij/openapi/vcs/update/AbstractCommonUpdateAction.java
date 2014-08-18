@@ -38,7 +38,6 @@ import com.intellij.openapi.vcs.changes.RemoteRevisionsCache;
 import com.intellij.openapi.vcs.changes.VcsAnnotationRefresher;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl;
-import com.intellij.openapi.vcs.changes.committed.CommittedChangesAdapter;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
@@ -46,6 +45,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.Consumer;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.vcsUtil.VcsUtil;
@@ -550,10 +550,14 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
               }
             }
             else if (! myUpdatedFiles.isEmpty()) {
-              showUpdateTree(continueChainFinal && updateSuccess && noMerged, someSessionWasCancelled);
-
+              final UpdateInfoTree tree = showUpdateTree(continueChainFinal && updateSuccess && noMerged, someSessionWasCancelled);
               final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
-              cache.processUpdatedFiles(myUpdatedFiles);
+              cache.processUpdatedFiles(myUpdatedFiles, new Consumer<List<CommittedChangeList>>() {
+                @Override
+                public void consume(List<CommittedChangeList> incomingChangeLists) {
+                  tree.setChangeLists(incomingChangeLists);
+                }
+              });
 
               if (someSessionWasCancelled) {
                 VcsBalloonProblemNotifier.showOverChangesView(myProject, "VCS Update Incomplete" + prepareNotificationWithUpdateInfo(), MessageType.WARNING);
@@ -592,7 +596,8 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       }
     }
 
-    private void showUpdateTree(final boolean willBeContinued, final boolean wasCanceled) {
+    @NotNull
+    private UpdateInfoTree showUpdateTree(final boolean willBeContinued, final boolean wasCanceled) {
       RestoreUpdateTree restoreUpdateTree = RestoreUpdateTree.getInstance(myProject);
       restoreUpdateTree.registerUpdateInformation(myUpdatedFiles, myActionInfo);
       final String text = getTemplatePresentation().getText() + ((willBeContinued || (myUpdateNumber > 1)) ? ("#" + myUpdateNumber) : "");
@@ -602,13 +607,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       updateInfoTree.setAfter(myAfter);
       
       updateInfoTree.setCanGroupByChangeList(canGroupByChangelist(myVcsToVirtualFiles.keySet()));
-      myProject.getMessageBus().connect(updateInfoTree).subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesAdapter() {
-        public void incomingChangesUpdated(final List<CommittedChangeList> receivedChanges) {
-          if (receivedChanges != null) {
-            updateInfoTree.setChangeLists(receivedChanges);
-          }
-        }
-      });
+      return updateInfoTree;
     }
 
     public void onCancel() {

@@ -350,7 +350,7 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
   public void testChainedMethodCalls_WithChopDownIfLongOption() throws Exception {
     getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
     getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM; // it's equal to "Chop down if long"
-    getSettings().getRootSettings().RIGHT_MARGIN = 50;
+    getSettings().RIGHT_MARGIN = 50;
 
     String before = "a.current.current.getThis().getThis().getThis().getThis().getThis();";
     doMethodTest(
@@ -362,14 +362,14 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
       "                 .getThis();"
     );
 
-    getSettings().getRootSettings().RIGHT_MARGIN = 80;
+    getSettings().RIGHT_MARGIN = 80;
     doMethodTest(before, before);
   }
 
   public void testChainedMethodCalls_WithWrapIfNeededOption() throws Exception {
     getSettings().ALIGN_MULTILINE_CHAINED_METHODS = false;
     getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
-    getSettings().getRootSettings().RIGHT_MARGIN = 50;
+    getSettings().RIGHT_MARGIN = 50;
 
     String before = "a.current.current.getThis().getThis().getThis().getThis();";
 
@@ -387,7 +387,7 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
       "                 .getThis().getThis();"
     );
 
-    getSettings().getRootSettings().RIGHT_MARGIN = 75;
+    getSettings().RIGHT_MARGIN = 75;
     doMethodTest(before, before);
   }
 }

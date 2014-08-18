@@ -25,7 +25,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -138,7 +141,7 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
   }
   
   @Nullable
-  protected JComponent createBalloonComponent(PsiFile file, Ref<Balloon> ref) {
+  protected JComponent createBalloonComponent(@NotNull PsiFile file) {
     return null;
   }
 

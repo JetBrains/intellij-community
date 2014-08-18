@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -143,9 +144,10 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
     }
 
     private static boolean hasCharsetType(PsiVariable variable) {
-      final PsiType lastType = variable.getType();
-      return lastType.equalsToText(CommonClassNames.JAVA_LANG_STRING) ||
-             lastType.equalsToText("java.nio.charset.Charset");
+      return TypeUtils.variableHasTypeOrSubtype(variable, CommonClassNames.JAVA_LANG_STRING,
+                                                "java.nio.charset.Charset",
+                                                "java.nio.charset.CharsetEncoder",
+                                                "java.nio.charset.CharsetDecoder");
     }
   }
 }

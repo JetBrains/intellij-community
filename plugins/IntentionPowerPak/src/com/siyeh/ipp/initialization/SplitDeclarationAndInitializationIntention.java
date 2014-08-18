@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.siyeh.ipp.initialization;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -35,28 +35,14 @@ public class SplitDeclarationAndInitializationIntention extends Intention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
+  public void processIntention(@NotNull PsiElement element) {
     final PsiField field = (PsiField)element.getParent();
     field.normalizeDeclaration();
-    final PsiExpression initializer = field.getInitializer();
+    final PsiExpression initializer = RefactoringUtil.convertInitializerToNormalExpression(field.getInitializer(), field.getType());
     if (initializer == null) {
       return;
     }
-    final String initializerText;
-    if (initializer instanceof PsiArrayInitializerExpression) {
-      final PsiType type = initializer.getType();
-      if (type == null) {
-        initializerText = initializer.getText();
-      }
-      else {
-        initializerText = "new " + type.getCanonicalText() +
-                          initializer.getText();
-      }
-    }
-    else {
-      initializerText = initializer.getText();
-    }
+    final String initializerText = initializer.getText();
     final PsiClass containingClass = field.getContainingClass();
     if (containingClass == null) {
       return;

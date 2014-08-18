@@ -16,13 +16,22 @@
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 
 
 /**
  * @author Bas Leijdekkers
  */
 public class ImplicitDefaultCharsetUsageInspectionTest extends LightInspectionTestCase {
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
+  }
+
   @Override
   protected InspectionProfileEntry getInspection() {
     return new ImplicitDefaultCharsetUsageInspection();

@@ -15,7 +15,6 @@
  */
 package com.intellij.dvcs.push.ui;
 
-import com.intellij.dvcs.push.RepositoryNodeListener;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,18 +22,14 @@ import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.util.List;
 
 public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode {
   protected final static String ENTER_REMOTE = "Enter Remote";
-
-  @NotNull private final List<RepositoryNodeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   @NotNull private final RepositoryWithBranchPanel myRepositoryPanel;
 
   private ProgressIndicator myCurrentIndicator;
@@ -78,22 +73,13 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode 
   }
 
   @Override
-  public void addRepoNodeListener(@NotNull RepositoryNodeListener listener) {
-    myListeners.add(listener);
-  }
-
-  @Override
-  public void fireOnChange(@NotNull String newValue) {
-    for (RepositoryNodeListener listener : myListeners) {
-      listener.onTargetChanged(newValue);
-    }
+  public void fireOnChange(@NotNull String value) {
+    myRepositoryPanel.fireOnChange(value);
   }
 
   @Override
   public void fireOnSelectionChange(boolean isSelected) {
-    for (RepositoryNodeListener listener : myListeners) {
-      listener.onSelectionChanged(isSelected);
-    }
+    myRepositoryPanel.fireOnSelectionChange(isSelected);
   }
 
   @Override
@@ -104,6 +90,7 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode 
   }
 
   @Override
+  @NotNull
   public ProgressIndicator startLoading() {
     return myCurrentIndicator = new EmptyProgressIndicator();
   }
