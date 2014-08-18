@@ -15,8 +15,6 @@
  */
 package com.intellij.dvcs.push;
 
-public class MoreCommitsLink extends VcsLinkedText {
-  MoreCommitsLink() {
-    super("", "...");
-  }
+public interface CommitLoader {
+  void reloadCommits();
 }

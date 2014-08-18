@@ -13,21 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.dvcs.push.ui;
+package com.intellij.dvcs.push;
 
-import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 
-public interface EditableTreeNode extends CustomRenderedTreeNode {
-
-  void fireOnChange(@NotNull String value);
-
-  void fireOnSelectionChange(boolean isSelected);
-
-  void stopLoading();
-
-  @NotNull
-  ProgressIndicator startLoading();
-
-  String getValue();
+public interface VcsErrorHandler {
+  void handleError(@NotNull CommitLoader loader);
 }

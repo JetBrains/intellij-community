@@ -16,10 +16,13 @@
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnFileUrlMapping;
@@ -32,11 +35,12 @@ import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -49,6 +53,10 @@ public class UpdateEventHandler implements ProgressTracker {
   private final SvnVcs myVCS;
   @Nullable private final SvnUpdateContext mySequentialUpdatesContext;
   private final Map<File, SVNURL> myUrlToCheckForSwitch;
+  // pair.first - group id, pair.second - file path
+  // Stack is used to correctly handle cases when updates of externals occur during ordinary update, because these inner updates could have
+  // its own revisions.
+  private final Stack<List<Pair<String, String>>> myFilesWaitingForRevision;
 
   protected String myText;
   protected String myText2;
@@ -60,6 +68,11 @@ public class UpdateEventHandler implements ProgressTracker {
     mySequentialUpdatesContext = sequentialUpdatesContext;
     myExternalsCount = 1;
     myUrlToCheckForSwitch = new HashMap<File, SVNURL>();
+    myFilesWaitingForRevision = ContainerUtil.newStack();
+    // It is more suitable to make this push while handling UPDATE_NONE event - for command line like "svn update <folder>" this event will
+    // be fired when update of <folder> is started. But it's not clear if this event won't be fired in other cases by SVNKit. So currently
+    // first push is made here. If further we want to support commands like "svn update <folder1> <folder2>" this logic should be revised.
+    myFilesWaitingForRevision.push(ContainerUtil.<Pair<String, String>>newArrayList());
   }
 
   public void addToSwitch(final File file, final SVNURL url) {
@@ -153,13 +166,8 @@ public class UpdateEventHandler implements ProgressTracker {
       if (mySequentialUpdatesContext != null) {
         mySequentialUpdatesContext.registerExternalRootBeingUpdated(event.getFile());
       }
+      myFilesWaitingForRevision.push(ContainerUtil.<Pair<String, String>>newArrayList());
       myExternalsCount++;
-      if (myUpdatedFiles.getGroupById(AbstractSvnUpdateIntegrateEnvironment.EXTERNAL_ID) == null) {
-        myUpdatedFiles.registerGroup(new FileGroup(SvnBundle.message("status.group.name.externals"),
-                                                   SvnBundle.message("status.group.name.externals"),
-                                                   false, AbstractSvnUpdateIntegrateEnvironment.EXTERNAL_ID, true));
-      }
-      addFileToGroup(AbstractSvnUpdateIntegrateEnvironment.EXTERNAL_ID, event);
       myText = SvnBundle.message("progress.text.updating.external.location", event.getFile().getAbsolutePath());
     }
     else if (event.getAction() == EventAction.RESTORE) {
@@ -168,6 +176,7 @@ public class UpdateEventHandler implements ProgressTracker {
     }
     else if (event.getAction() == EventAction.UPDATE_COMPLETED && event.getRevision() >= 0) {
       possiblySwitched(event);
+      setRevisionForWaitingFiles(event.getRevision());
       myExternalsCount--;
       myText2 = SvnBundle.message("progres.text2.updated.to.revision", event.getRevision());
       if (myExternalsCount == 0) {
@@ -218,9 +227,19 @@ public class UpdateEventHandler implements ProgressTracker {
   protected void addFileToGroup(final String id, final ProgressEvent event) {
     final FileGroup fileGroup = myUpdatedFiles.getGroupById(id);
     final String path = event.getFile().getAbsolutePath();
-    fileGroup.add(path, SvnVcs.getKey(), new SvnRevisionNumber(SVNRevision.create(event.getRevision())));
+    myFilesWaitingForRevision.peek().add(Pair.create(id, path));
     if (event.getErrorMessage() != null) {
       fileGroup.addError(path, event.getErrorMessage().getMessage());
+    }
+  }
+
+  private void setRevisionForWaitingFiles(long revisionNumber) {
+    SvnRevisionNumber revision = new SvnRevisionNumber(SVNRevision.create(revisionNumber));
+
+    for (Pair<String, String> pair : myFilesWaitingForRevision.pop()) {
+      FileGroup fileGroup = myUpdatedFiles.getGroupById(pair.getFirst());
+
+      fileGroup.add(pair.getSecond(), SvnVcs.getKey(), revision);
     }
   }
 

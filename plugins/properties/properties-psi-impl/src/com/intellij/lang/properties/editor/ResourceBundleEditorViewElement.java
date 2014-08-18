@@ -16,9 +16,7 @@
 package com.intellij.lang.properties.editor;
 
 
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Batkovich

@@ -119,7 +119,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool{
     return alternativeId != null && !alternativeId.equals(toolId) && suppressor.isSuppressedFor(element, alternativeId);
   }
 
-  private static Set<InspectionSuppressor> getSuppressors(@NotNull PsiElement element) {
+  public static Set<InspectionSuppressor> getSuppressors(@NotNull PsiElement element) {
     FileViewProvider viewProvider = element.getContainingFile().getViewProvider();
     if (viewProvider instanceof TemplateLanguageFileViewProvider) {
       LinkedHashSet<InspectionSuppressor> suppressors = new LinkedHashSet<InspectionSuppressor>();
@@ -127,6 +127,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool{
       for (Language language : viewProvider.getLanguages()) {
         ContainerUtil.addIfNotNull(suppressors, LanguageInspectionSuppressors.INSTANCE.forLanguage(language));
       }
+      ContainerUtil.addIfNotNull(suppressors, LanguageInspectionSuppressors.INSTANCE.forLanguage(element.getLanguage()));
       return suppressors;
     }
     return Collections.singleton(LanguageInspectionSuppressors.INSTANCE.forLanguage(element.getLanguage()));

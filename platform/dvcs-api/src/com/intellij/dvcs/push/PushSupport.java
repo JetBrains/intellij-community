@@ -18,7 +18,6 @@ package com.intellij.dvcs.push;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.vcs.AbstractVcs;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +30,8 @@ import java.util.Collection;
 
 public abstract class PushSupport<Repo extends Repository> {
 
-  public static final ExtensionPointName<PushSupport<? extends Repository>> PUSH_SUPPORT_EP = ExtensionPointName.create("com.intellij.pushSupport");
+  public static final ExtensionPointName<PushSupport<? extends Repository>> PUSH_SUPPORT_EP =
+    ExtensionPointName.create("com.intellij.pushSupport");
 
   @NotNull
   public abstract AbstractVcs getVcs();
@@ -63,6 +63,7 @@ public abstract class PushSupport<Repo extends Repository> {
   /**
    * Parse user input string, and create the valid target for push,
    * or return <code><b>null</b></code> if the target name is not valid.
+   *
    * @see #validateSpec(Repository, PushSpec)
    */
   @Nullable
@@ -80,8 +81,8 @@ public abstract class PushSupport<Repo extends Repository> {
   }
 
   /**
-   * @return null if push spec are valid for selected repository
+   * @return null if target is valid for selected repository
    */
   @Nullable
-  public abstract ValidationInfo validateSpec(@NotNull Repository repository, @NotNull PushSpec spec);
+  public abstract VcsError validate(@NotNull Repository repository, @Nullable String targetToValidate);
 }

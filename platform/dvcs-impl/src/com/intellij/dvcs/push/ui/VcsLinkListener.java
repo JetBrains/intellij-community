@@ -15,19 +15,10 @@
  */
 package com.intellij.dvcs.push.ui;
 
-import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 
-public interface EditableTreeNode extends CustomRenderedTreeNode {
+import javax.swing.tree.DefaultMutableTreeNode;
 
-  void fireOnChange(@NotNull String value);
-
-  void fireOnSelectionChange(boolean isSelected);
-
-  void stopLoading();
-
-  @NotNull
-  ProgressIndicator startLoading();
-
-  String getValue();
+public interface VcsLinkListener {
+  void hyperlinkActivated(@NotNull DefaultMutableTreeNode sourceNode);
 }
