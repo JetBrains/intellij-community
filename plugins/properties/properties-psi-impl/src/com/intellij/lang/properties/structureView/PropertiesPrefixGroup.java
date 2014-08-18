@@ -16,11 +16,13 @@
 package com.intellij.lang.properties.structureView;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.smartTree.Group;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.editor.ResourceBundleEditorViewElement;
 import com.intellij.lang.properties.editor.ResourceBundlePropertyStructureViewElement;
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -90,20 +92,14 @@ public class PropertiesPrefixGroup implements Group, ResourceBundleEditorViewEle
     Collection<TreeElement> result = new ArrayList<TreeElement>();
     List<String> prefixWords = StringUtil.split(myPrefix, mySeparator);
     for (TreeElement treeElement : myProperties) {
-      String key;
-      if (treeElement instanceof PropertiesStructureViewElement) {
-        PropertiesStructureViewElement propertiesElement = (PropertiesStructureViewElement)treeElement;
-        IProperty property = propertiesElement.getValue();
-
-        key = property.getUnescapedKey();
-      }
-      else if (treeElement instanceof ResourceBundlePropertyStructureViewElement) {
-        key = ((ResourceBundlePropertyStructureViewElement)treeElement).getValue();
-      }
-      else {
+      if (!(treeElement instanceof StructureViewTreeElement)) {
         continue;
       }
-
+      final Object value = ((StructureViewTreeElement)treeElement).getValue();
+      if (!(value instanceof IProperty)) {
+        continue;
+      }
+      final String key = ((IProperty) value).getUnescapedKey();
       if (key == null || key.equals(myPrefix)) {
         continue;
       }
