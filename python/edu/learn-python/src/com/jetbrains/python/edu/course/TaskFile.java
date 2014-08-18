@@ -50,6 +50,7 @@ public class TaskFile implements Stateful{
     return myTask;
   }
 
+  @Nullable
   @Transient
   public TaskWindow getSelectedTaskWindow() {
     return mySelectedTaskWindow;
@@ -215,6 +216,7 @@ public class TaskFile implements Stateful{
   public void navigateToFirstTaskWindow(@NotNull final Editor editor) {
     if (!taskWindows.isEmpty()) {
       TaskWindow firstTaskWindow = StudyUtils.getFirst(taskWindows);
+      mySelectedTaskWindow = firstTaskWindow;
       LogicalPosition taskWindowStart = new LogicalPosition(firstTaskWindow.getLine(), firstTaskWindow.getStart());
       editor.getCaretModel().moveToLogicalPosition(taskWindowStart);
       int startOffset = firstTaskWindow.getRealStartOffset(editor.getDocument());
