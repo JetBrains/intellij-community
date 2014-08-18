@@ -563,7 +563,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
     int attempts = 0;
     int delay = 100;
     synchronized (documentsToCommit) {
-      while(!documentsToCommit.isEmpty()) {
+      while(!documentsToCommit.isEmpty() || currentTask != null) {
         documentsToCommit.wait(delay);
         if (delay * attempts > timeout) {
           throw new RuntimeException("timeout");
