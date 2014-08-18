@@ -43,6 +43,9 @@ public class Interface8MethodsHighlightingTest extends LightCodeInsightFixtureTe
   public void testDefaultSupersInStaticContext() {
     doTest(false, false);
   }
+  public void testAnnotationTypeExtensionsNotSupported() {
+    doTest(false, false);
+  }
 
   public void testSuperProtectedCalls() throws Exception {
     myFixture.addClass("package p; public class Foo {" +
