@@ -275,7 +275,6 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
     XDebugSession session = getSession(getMainPanel());
     XStackFrame stackFrame = session == null ? null : session.getCurrentStackFrame();
     if (stackFrame != null) {
-      cancelClear();
       tree.setSourcePosition(stackFrame.getSourcePosition());
       myRootNode.updateWatches(stackFrame.getEvaluator());
       if (myTreeState != null) {
@@ -283,7 +282,7 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
       }
     }
     else {
-      requestClear();
+      clear();
     }
   }
 

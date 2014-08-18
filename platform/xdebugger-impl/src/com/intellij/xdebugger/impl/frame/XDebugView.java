@@ -20,7 +20,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.util.SingleAlarm;
+import com.intellij.util.Alarm;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import org.jetbrains.annotations.NotNull;
@@ -35,29 +35,26 @@ import java.util.EventObject;
 public abstract class XDebugView implements Disposable {
   public enum SessionEvent {PAUSED, BEFORE_RESUME, RESUMED, STOPPED, FRAME_CHANGED, SETTINGS_CHANGED}
 
-  private final SingleAlarm myClearAlarm;
-  private static final int VIEW_CLEAR_DELAY = 100; //ms
+  private final Alarm myUpdateAlarm;
+  private static final int VIEW_UPDATE_DELAY = 100; //ms
 
   public XDebugView() {
-    myClearAlarm = new SingleAlarm(new Runnable() {
-      @Override
-      public void run() {
-        clear();
-      }
-    }, VIEW_CLEAR_DELAY, this);
-  }
-
-  protected final void requestClear() {
-    myClearAlarm.cancelAndRequest();
-  }
-
-  protected final void cancelClear() {
-    myClearAlarm.cancel();
+    myUpdateAlarm = new Alarm(this);
   }
 
   protected abstract void clear();
 
-  public abstract void processSessionEvent(@NotNull SessionEvent event);
+  public void onSessionEvent(@NotNull final SessionEvent event) {
+    myUpdateAlarm.cancelAllRequests();
+    myUpdateAlarm.addRequest(new Runnable() {
+      @Override
+      public void run() {
+        processSessionEvent(event);
+      }
+    }, VIEW_UPDATE_DELAY);
+  }
+
+  protected abstract void processSessionEvent(@NotNull SessionEvent event);
 
   @Nullable
   protected static XDebugSession getSession(@NotNull EventObject e) {
