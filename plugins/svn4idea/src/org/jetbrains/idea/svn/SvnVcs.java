@@ -922,13 +922,9 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public boolean isVcsBackgroundOperationsAllowed(@NotNull VirtualFile root) {
-    // TODO: Currently myAuthNotifier.isAuthenticatedFor directly uses SVNKit to check credentials - so assume for now that background
-    // TODO: operations are always allowed for command line. As sometimes this leads to errors - for instance, incoming changes are not
-    // TODO: displayed in "Incoming" tab - incoming changes are collected using command line but not displayed because
-    // TODO: SvnVcs.isVcsBackgroundOperationsAllowed is false.
     ClientFactory factory = getFactory(VfsUtilCore.virtualToIoFile(root));
 
-    return factory == cmdClientFactory || ThreeState.YES.equals(myAuthNotifier.isAuthenticatedFor(root));
+    return ThreeState.YES.equals(myAuthNotifier.isAuthenticatedFor(root, factory == cmdClientFactory ? factory : null));
   }
 
   public SvnBranchPointsCalculator getSvnBranchPointsCalculator() {
