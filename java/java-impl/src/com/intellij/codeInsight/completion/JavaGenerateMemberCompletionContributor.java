@@ -69,7 +69,7 @@ public class JavaGenerateMemberCompletionContributor {
     for (PsiField field : parent.getFields()) {
       if (!(field instanceof PsiEnumConstant)) {
         Collections.addAll(prototypes, GetterSetterPrototypeProvider.generateGetterSetters(field, true));
-        Collections.addAll(prototypes, GetterSetterPrototypeProvider.generateGetterSetters(field, true));
+        Collections.addAll(prototypes, GetterSetterPrototypeProvider.generateGetterSetters(field, false));
       }
     }
     for (final PsiMethod prototype : prototypes) {

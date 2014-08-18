@@ -112,6 +112,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	ol.attrs.reversed?
 		&	ol.attrs.type?
 		&	(	(	common.attrs.aria.role.directory
+				|	common.attrs.aria.role.group
 				|	common.attrs.aria.role.list
 				|	common.attrs.aria.role.listbox
 				|	common.attrs.aria.role.menu

@@ -11,9 +11,9 @@ mkdir temp
 cd temp
 
 echo ">>>>> Preparing validator build"
-hg clone https://bitbucket.org/validator/build build
+git clone https://github.com/validator/build build
 cd build
-hg import "$PATCHES/patch_build.patch" --no-commit
+git apply "$PATCHES/patch_build.patch"
 cd ..
 
 echo

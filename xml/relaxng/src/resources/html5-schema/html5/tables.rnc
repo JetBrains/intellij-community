@@ -50,13 +50,8 @@ datatypes w = "http://whattf.org/datatype-draft"
 		element table { table.inner & table.attrs }
 	table.attrs =
 		(	common.attrs
-		&	table.attrs.border?
 		&	common.attrs.aria?
 		)
-		table.attrs.border  =
-			attribute border {
-				string
-			}
 	table.inner =
 		(	caption.elem?
 		,	common.elem.script-supporting*
@@ -84,9 +79,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		element caption { caption.inner & caption.attrs }
 	caption.attrs =
 		(	common.attrs
-		&	(	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
-			)?
+		&	common.attrs.aria?
 		)
 	caption.inner =
 		( common.inner.flow )
@@ -100,9 +93,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		element colgroup { colgroup.inner & colgroup.attrs }
 	colgroup.attrs =
 		(	common.attrs
-		&	(	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
-			)?
+		&	common.attrs.aria?
 		)
 		colgroup.attrs.span =
 			attribute span {
@@ -122,9 +113,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 	col.attrs =
 		(	common.attrs
 		&	col.attrs.span?
-		&	(	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
-			)?
+		&	common.attrs.aria?
 		)
 		col.attrs.span =
 			attribute span {
@@ -139,9 +128,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		element thead { thead.inner & thead.attrs }
 	thead.attrs =
 		(	common.attrs
-		&	(	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
-			)?
+		&	common.attrs.aria?
 		)
 	thead.inner =
 		(	tr.elem*
@@ -154,9 +141,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		element tfoot { tfoot.inner & tfoot.attrs }
 	tfoot.attrs =
 		(	common.attrs
-		&	(	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
-			)?
+		&	common.attrs.aria?
 		)
 	tfoot.inner =
 		(	tr.elem*
@@ -169,9 +154,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		element tbody { tbody.inner & tbody.attrs }
 	tbody.attrs =
 		(	common.attrs
-		&	(	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
-			)?
+		&	common.attrs.aria?
 		)
 	tbody.inner =
 		(	tr.elem*
@@ -253,7 +236,9 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	tables.attrs.scope?
 		&	tables.attrs.headers?
 #		&	tables.attrs.alignment
-		&	common.attrs.aria?
+		&	(	common.attrs.aria?
+			|	common.attrs.aria.implicit.column-or-row-header
+			)
 		)
 	th.inner =
 		( common.inner.flow )

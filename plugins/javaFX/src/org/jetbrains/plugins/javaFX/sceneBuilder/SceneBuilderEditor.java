@@ -11,11 +11,13 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HyperlinkLabel;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,8 +44,10 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
   private final CardLayout myLayout = new CardLayout();
   private final JPanel myPanel = new JPanel(myLayout);
 
-  private final JPanel myErrorPanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 10, 5, true, false));
+  //private final JPanel myErrorPanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 10, 5, true, false));
+  private final JPanel myErrorPanel = new JPanel(new BorderLayout());
   private final HyperlinkLabel myErrorLabel = new HyperlinkLabel();
+  private JTextArea myErrorStack;
 
   private final Document myDocument;
   private final ExternalChangeListener myChangeListener;
@@ -72,11 +76,19 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
       }
     });
 
-    myErrorPanel.add(myErrorLabel);
+    myErrorStack = new JTextArea(50, 20);
+    myErrorStack.setEditable(false);
+
+    myErrorPanel.add(myErrorLabel, BorderLayout.NORTH);
+    myErrorPanel.add(ScrollPaneFactory.createScrollPane(myErrorStack), BorderLayout.CENTER);
     myPanel.add(myErrorPanel);
   }
 
   private void showErrorPage(State state, Throwable e) {
+    if (e != null) {
+      LOG.info(e);
+    }
+
     removeSceneBuilder();
 
     if (e == null) {
@@ -93,12 +105,21 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
         }
         myErrorLabel.setIcon(Messages.getWarningIcon());
       }
+
+      myErrorStack.setText(null);
+      myErrorStack.setVisible(false);
     }
     else {
-      myErrorLabel.setHyperlinkText("Error: " + e.getMessage(), "", "");
+      String message = e.getMessage();
+      if (message == null) {
+        message = e.getClass().getName();
+      }
+
+      myErrorLabel.setHyperlinkText("Error: " + message, "", "");
       myErrorLabel.setIcon(Messages.getErrorIcon());
 
-      LOG.info(e);
+      myErrorStack.setText(ExceptionUtil.getThrowableText(e));
+      myErrorStack.setVisible(true);
     }
     myLayout.show(myPanel, ERROR_CARD);
   }
@@ -139,8 +160,12 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
   }
 
   @Override
-  public void handleError(Throwable e) {
-    showErrorPage(null, e);
+  public void handleError(final Throwable e) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      public void run() {
+        showErrorPage(null, e);
+      }
+    });
   }
 
   private void initSceneBuilder(boolean choosePathIfEmpty) {

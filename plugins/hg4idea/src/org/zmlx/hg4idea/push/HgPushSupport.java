@@ -80,9 +80,9 @@ public class HgPushSupport extends PushSupport<HgRepository> {
 
   @NotNull
   @Override
-  public HgSource getSource(@NotNull HgRepository repository) {
+  public HgPushSource getSource(@NotNull HgRepository repository) {
     String localBranch = HgUtil.getActiveBranchName(repository);
-    return new HgSource(localBranch);
+    return new HgPushSource(localBranch);
   }
 
   @Override

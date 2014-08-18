@@ -40,4 +40,21 @@ public class LessonInfo {
   public void setTaskUnchecked(int taskUnchecked) {
     myTaskUnchecked = taskUnchecked;
   }
+
+  public void update(StudyStatus status, int delta) {
+    switch (status) {
+      case Solved: {
+        myTaskSolved += delta;
+        break;
+      }
+      case Failed: {
+        myTaskFailed += delta;
+        break;
+      }
+      case Unchecked: {
+        myTaskUnchecked += delta;
+        break;
+      }
+    }
+  }
 }

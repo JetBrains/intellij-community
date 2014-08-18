@@ -326,19 +326,36 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   }
 
   @Override
-  public void computeSourcePosition(@NotNull XNavigatable navigatable) {
-    if (myValueDescriptor instanceof FieldDescriptorImpl) {
-      SourcePosition position = ((FieldDescriptorImpl)myValueDescriptor).getSourcePosition(getProject(), getDebuggerContext());
-      if (position != null) {
-        navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(position));
+  public void computeSourcePosition(@NotNull final XNavigatable navigatable) {
+    if (myEvaluationContext.getSuspendContext().isResumed()) return;
+    myEvaluationContext.getDebugProcess().getManagerThread().schedule(new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
+      @Override
+      public Priority getPriority() {
+        return Priority.NORMAL;
       }
-    }
-    if (myValueDescriptor instanceof LocalVariableDescriptorImpl) {
-      SourcePosition position = ((LocalVariableDescriptorImpl)myValueDescriptor).getSourcePosition(getProject(), getDebuggerContext());
-      if (position != null) {
-        navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(position));
+
+      @Override
+      public void contextAction() throws Exception {
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            if (myValueDescriptor instanceof FieldDescriptorImpl) {
+              SourcePosition position = ((FieldDescriptorImpl)myValueDescriptor).getSourcePosition(getProject(), getDebuggerContext());
+              if (position != null) {
+                navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(position));
+              }
+            }
+            if (myValueDescriptor instanceof LocalVariableDescriptorImpl) {
+              SourcePosition position =
+                ((LocalVariableDescriptorImpl)myValueDescriptor).getSourcePosition(getProject(), getDebuggerContext());
+              if (position != null) {
+                navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(position));
+              }
+            }
+          }
+        });
       }
-    }
+    });
   }
 
   private DebuggerContextImpl getDebuggerContext() {

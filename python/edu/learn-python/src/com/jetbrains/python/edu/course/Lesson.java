@@ -33,9 +33,9 @@ public class Lesson implements Stateful{
   }
 
   @Override
-  public void setStatus(StudyStatus status) {
+  public void setStatus(StudyStatus status, StudyStatus oldStatus) {
     for (Task task : taskList) {
-      task.setStatus(status);
+      task.setStatus(status, oldStatus);
     }
   }
 
