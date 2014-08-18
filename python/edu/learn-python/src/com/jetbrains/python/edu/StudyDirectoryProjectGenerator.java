@@ -257,8 +257,8 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
         courseInfo = new CourseInfo(courseName, courseAuthor, courseDescription);
       }
     }
-    catch (FileNotFoundException e) {
-      LOG.error(e);
+    catch (Exception e) {
+      //error will be shown in UI
     }
     finally {
       StudyUtils.closeSilently(reader);
