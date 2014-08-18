@@ -24,6 +24,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.stubs.PyAnnotationStub;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -37,11 +38,13 @@ public class PyAnnotationImpl extends PyBaseElementImpl<PyAnnotationStub> implem
     super(stub, PyElementTypes.ANNOTATION);
   }
 
+  @Nullable
   @Override
   public PyExpression getValue() {
     return findChildByClass(PyExpression.class);
   }
 
+  @Nullable
   @Override
   public PyClass resolveToClass() {
     PyExpression expr = getValue();
