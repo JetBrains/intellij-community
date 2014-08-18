@@ -55,21 +55,14 @@ public class Task implements Stateful{
     this.name = name;
   }
 
-  public void setStatus(@NotNull final StudyStatus status) {
+  public void setStatus(@NotNull final StudyStatus status, @NotNull final StudyStatus oldStatus) {
     LessonInfo lessonInfo = myLesson.getLessonInfo();
-    StudyStatus oldStatus = getStatus();
     if (status != oldStatus) {
-      if (status == StudyStatus.Failed) {
-        lessonInfo.setTaskFailed(lessonInfo.getTaskFailed() + 1);
-        lessonInfo.setTaskUnchecked(lessonInfo.getTaskUnchecked() - 1);
-      }
-      if (status == StudyStatus.Solved) {
-        lessonInfo.setTaskSolved(lessonInfo.getTaskSolved() + 1);
-        lessonInfo.setTaskUnchecked(lessonInfo.getTaskUnchecked() - 1);
-      }
-      for (TaskFile taskFile : taskFiles.values()) {
-        taskFile.setStatus(status);
-      }
+      lessonInfo.update(oldStatus, -1);
+      lessonInfo.update(status, +1);
+    }
+    for (TaskFile taskFile : taskFiles.values()) {
+      taskFile.setStatus(status, oldStatus);
     }
   }
 

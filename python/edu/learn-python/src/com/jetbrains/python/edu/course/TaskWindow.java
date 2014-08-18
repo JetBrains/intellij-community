@@ -34,7 +34,7 @@ public class TaskWindow implements Comparable, Stateful {
     return myStatus;
   }
 
-  public void setStatus(StudyStatus status) {
+  public void setStatus(StudyStatus status, StudyStatus oldStatus) {
     myStatus = status;
   }
 
