@@ -40,7 +40,7 @@ public class PyCallHierarchyTest extends PyTestCase {
   private static final String CALLEE_VERIFICATION_SUFFIX = "_callee_verification.xml";
 
   private String getBasePath() {
-    return "hierarchy/call/" + getTestName(false);
+    return "hierarchy/call/Static/" + getTestName(false);
   }
 
   private void configureByFiles(String ... fileNames) {
