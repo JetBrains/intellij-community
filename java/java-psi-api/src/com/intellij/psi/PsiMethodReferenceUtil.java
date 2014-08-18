@@ -75,20 +75,22 @@ public class PsiMethodReferenceUtil {
     return null;
   }
 
-  public static boolean isCorrectAssignment(PsiType[] signatureParameterTypes2,
-                                            PsiType[] parameterTypes,
+  public static boolean isCorrectAssignment(PsiType[] parameterTypes,
+                                            PsiType[] argTypes,
                                             boolean varargs,
                                             int offset) {
-    final int min = Math.min(signatureParameterTypes2.length, parameterTypes.length - offset);
+    final int min = Math.min(parameterTypes.length, argTypes.length - offset);
     for (int i = 0; i < min; i++) {
-      final PsiType type1 = parameterTypes[i + offset];
-      final PsiType type2 = signatureParameterTypes2[i];
-      if (varargs && i == signatureParameterTypes2.length - 1) {
-        if (!TypeConversionUtil.isAssignable(type2, type1) && !TypeConversionUtil.isAssignable(((PsiArrayType)type2).getComponentType(), type1)) {
+      final PsiType argType = argTypes[i + offset];
+      PsiType parameterType = parameterTypes[i];
+      parameterType = GenericsUtil.getVariableTypeByExpressionType(parameterType, true);
+      if (varargs && i == parameterTypes.length - 1) {
+        if (!TypeConversionUtil.isAssignable(parameterType, argType) &&
+            !TypeConversionUtil.isAssignable(((PsiArrayType)parameterType).getComponentType(), argType)) {
           return false;
         }
       }
-      else if (!TypeConversionUtil.isAssignable(type2, type1)) {
+      else if (!TypeConversionUtil.isAssignable(parameterType, argType)) {
         return false;
       }
     }
