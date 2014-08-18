@@ -12,7 +12,7 @@
 ; thus ${PRODUCT_WITH_VER} is used for uninstall registry information
 !define PRODUCT_REG_VER "${MUI_PRODUCT}\${VER_BUILD}"
 
-!define INSTALL_OPTION_ELEMENTS 4
+!define INSTALL_OPTION_ELEMENTS 7
 Name "${MUI_PRODUCT}"
 SetCompressor lzma
 ; http://nsis.sourceforge.net/Shortcuts_removal_fails_on_Windows_Vista
@@ -342,7 +342,7 @@ FunctionEnd
 
 !insertmacro MUI_PAGE_WELCOME
 
-Page custom uninstallOldVersionDialog leaveUninstallOldVersionDialog
+Page custom uninstallOldVersionDialog
 
 Var control_fields
 Var max_fields
@@ -367,7 +367,7 @@ Page custom ConfirmDesktopShortcut
 !insertmacro MUI_PAGE_FINISH
 
 !define MUI_UNINSTALLER
-!insertmacro MUI_UNPAGE_CONFIRM
+;!insertmacro MUI_UNPAGE_CONFIRM
 UninstPage custom un.ConfirmDeleteSettings
 !insertmacro MUI_UNPAGE_INSTFILES
 
@@ -473,10 +473,10 @@ remove_previous_installation:
   CopyFiles "$3\bin\${PRODUCT_EXE_FILE}_copy" "$3\bin\${PRODUCT_EXE_FILE}"
   Delete "$3\bin\${PRODUCT_EXE_FILE}_copy"
   IfErrors 0 +3
-  MessageBox MB_YESNOCANCEL|MB_ICONQUESTION|MB_TOPMOST "$(application_running)" IDYES remove_previous_installation IDNO complete
+  MessageBox MB_OKCANCEL|MB_ICONQUESTION|MB_TOPMOST "$(application_running)" IDOK remove_previous_installation IDCANCEL complete
   goto complete
   ; uninstallation mode
-  !insertmacro INSTALLOPTIONS_READ $9 "UninstallOldVersions.ini" "Field 3" "State"
+  !insertmacro INSTALLOPTIONS_READ $9 "UninstallOldVersions.ini" "Field 2" "State"
   ${If} $9 == "1"
     ExecWait '"$3\bin\Uninstall.exe" /S'
   ${else}
@@ -519,13 +519,11 @@ FunctionEnd
 
 Function uninstallOldVersionDialog
   StrCpy $control_fields 2
-  StrCpy $max_fields 11
+  StrCpy $max_fields 13
   StrCpy $0 "HKLM"
   StrCpy $4 0
   ReserveFile "UninstallOldVersions.ini"
   !insertmacro INSTALLOPTIONS_EXTRACT "UninstallOldVersions.ini"
-  !insertmacro MUI_HEADER_TEXT "$(uninstall_previous_installations_title)" "$(uninstall_previous_installations)"
-  !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field 1" "Text" "$(uninstall_previous_installations_prompt)"
   StrCpy $8 $control_fields
 
 get_installation_info:
@@ -564,10 +562,11 @@ ${If} $8 > $control_fields
     StrCpy $2 ""
   !insertmacro MUI_HEADER_TEXT "$(uninstall_previous_installations_title)" "$(uninstall_previous_installations)"
   !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field 1" "Text" "$(uninstall_previous_installations_prompt)"
+  !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field 3" "Flags" "FOCUS"
   !insertmacro INSTALLOPTIONS_DISPLAY "UninstallOldVersions.ini"
   ;uninstall chosen installation(s)
 
-  StrCmp $2 "OK" loop finish
+  ;no disabled controls. StrCmp $2 "OK" loop finish
 loop:
   !insertmacro INSTALLOPTIONS_READ $0 "UninstallOldVersions.ini" "Field $8" "State"
   !insertmacro INSTALLOPTIONS_READ $3 "UninstallOldVersions.ini" "Field $8" "Text"
@@ -580,65 +579,6 @@ loop:
 finish:
 FunctionEnd
 
-
-Function leaveUninstallOldVersionDialog
-  Push $1
-  Push $4
-  !insertmacro INSTALLOPTIONS_READ $2 "UninstallOldVersions.ini" "Settings" "State"
-  StrCmp $2 2 enable_disable
-  Goto done
-
-enable_disable:
-  !insertmacro INSTALLOPTIONS_READ $0 "UninstallOldVersions.ini" "Field 2" "State"
-  StrCmp $0 1 enable disable
-enable:
-  StrCpy $1 ""
-  Goto setFlag
-disable:
-  Call setState
-  StrCpy $1 "DISABLED"
-
-setFlag:
-  Push $1
-  Call setFlags
-done:
-  Pop $4
-  Pop $1
-  StrCmp $2 0 skip_abort
-  Pop $2
-  Abort
-skip_abort:
-  StrCpy $2 "OK"
-FunctionEnd
-
-Function setFlags
-  Pop $1
-  !insertmacro INSTALLOPTIONS_READ $max_fields "UninstallOldVersions.ini" "Settings" "NumFields"
-  StrCpy $4 3
-  ; change flags of fields in according of master checkbox
-loop:
-  !insertmacro INSTALLOPTIONS_READ $1 "UninstallOldVersions.ini" "Field $4" "HWND"
-  EnableWindow $1 $0
-  !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field $4" "Flags" "$1"
-  IntOp $4 $4 + 1
-  ${If} $4 <= $max_fields
-    Goto loop
-  ${EndIf}
-FunctionEnd
-
-Function setState
-  !insertmacro INSTALLOPTIONS_READ $max_fields "UninstallOldVersions.ini" "Settings" "NumFields"
-  StrCpy $4 3
-  ; change state of fields in according of master checkbox
-loop:
-  !insertmacro INSTALLOPTIONS_READ $1 "UninstallOldVersions.ini" "Field $4" "HWND"
-  SendMessage $1 ${BM_SETCHECK} 0 "0"
-  !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field $4" "State" 0
-  IntOp $4 $4 + 1
-  ${If} $4 <= $max_fields
-    Goto loop
-  ${EndIf}
-FunctionEnd
 
 Function getInstallationPath
   Push $1
@@ -773,6 +713,36 @@ Section "IDEA Files" CopyIdeaFiles
 
 ; create shortcuts
 
+  !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 4" "State"
+  StrCmp $R2 1 "" python3
+  StrCpy $R2 "2.7"
+  goto check_python
+python3:  
+  StrCpy $R2 "3.4"
+check_python:  
+  ReadRegStr $1 "HKCU" "Software\Python\PythonCore\$R2\InstallPath" $0
+  StrCmp $1 "" installation_for_all_users
+  goto verefy_python_launcher
+installation_for_all_users:
+  ReadRegStr $1 "HKLM" "Software\Python\PythonCore\$R2\InstallPath" $0
+  StrCmp $1 "" get_python
+verefy_python_launcher:
+  IfFileExists $1\python.exe python_exists get_python
+
+get_python:
+  CreateDirectory "$INSTDIR\python"
+  StrCmp $R2 "2.7" get_python2
+  inetc::get "https://www.python.org/ftp/python/3.4.1/python-3.4.1.amd64.msi" "$INSTDIR\python\python_$R2.msi"
+  goto validate_download
+get_python2:  
+  inetc::get "http://www.python.org/ftp/python/2.7.8/python-2.7.8.msi" "$INSTDIR\python\python_$R2.msi"
+validate_download:  
+  Pop $0
+  ${If} $0 == "OK" 
+    ExecCmd::exec 'msiexec /i "$INSTDIR\python\python_$R2.msi" /quiet /qn /norestart /log "$INSTDIR\python\python_$R2_silent.log"'
+  ${EndIf}
+
+python_exists:  
   !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 1" "State"
   StrCmp $R2 1 "" skip_desktop_shortcut
   CreateShortCut "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk" \
@@ -913,7 +883,7 @@ Function ConfirmDesktopShortcut
     !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Flags" "DISABLED"
   ${EndIf}
   StrCmp "${ASSOCIATION}" "NoAssociation" skip_association
-  StrCpy $R0 3
+  StrCpy $R0 6
   push "${ASSOCIATION}"
 loop:
   call SplitStr
