@@ -57,11 +57,10 @@ public class XVariablesView extends XVariablesViewBase {
 
     tree.markNodesObsolete();
     if (stackFrame != null) {
-      cancelClear();
       buildTreeAndRestoreState(stackFrame);
     }
     else {
-      requestClear();
+      clear();
     }
   }
 

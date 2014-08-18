@@ -198,7 +198,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       @Override
       public void run() {
         for (XDebugView view : myViews) {
-          view.processSessionEvent(XDebugView.SessionEvent.SETTINGS_CHANGED);
+          view.onSessionEvent(XDebugView.SessionEvent.SETTINGS_CHANGED);
         }
       }
     });

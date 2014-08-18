@@ -36,7 +36,7 @@ public class XDebugViewSessionListener extends XDebugSessionAdapter {
     AppUIUtil.invokeLaterIfProjectAlive(session.getProject(), new Runnable() {
       @Override
       public void run() {
-        myDebugView.processSessionEvent(event);
+        myDebugView.onSessionEvent(event);
       }
     });
   }
