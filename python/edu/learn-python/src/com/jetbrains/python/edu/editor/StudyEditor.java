@@ -104,7 +104,7 @@ public class StudyEditor implements TextEditor {
     }
   }
 
-  private static void initializeTaskText(JPanel studyPanel, String taskText) {
+  private static void initializeTaskText(JPanel studyPanel, @Nullable String taskText) {
     JTextPane taskTextPane = new JTextPane();
     taskTextPane.setContentType("text/html");
     taskTextPane.setEditable(false);
