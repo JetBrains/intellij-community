@@ -112,7 +112,8 @@ public class TaskFile implements Stateful{
     for (TaskWindow tw : taskWindows) {
       if (tw.getLine() <= line) {
         int twStartOffset = tw.getRealStartOffset(document);
-        int twEndOffset = twStartOffset + tw.getLength();
+        final int length = tw.getLength() > 0 ? tw.getLength() : 0;
+        int twEndOffset = twStartOffset + length;
         if (twStartOffset <= offset && offset <= twEndOffset) {
           return tw;
         }
