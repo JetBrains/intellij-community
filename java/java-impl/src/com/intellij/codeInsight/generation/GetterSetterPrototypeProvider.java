@@ -30,7 +30,7 @@ import com.intellij.psi.util.PropertyUtil;
 public abstract class GetterSetterPrototypeProvider {
   public static final ExtensionPointName<GetterSetterPrototypeProvider> EP_NAME = ExtensionPointName.create("com.intellij.getterSetterProvider");
   public abstract boolean canGeneratePrototypeFor(PsiField field);
-  public abstract PsiMethod[] generateGetters(PsiField field); 
+  public abstract PsiMethod[] generateGetters(PsiField field);
   public abstract PsiMethod[] generateSetters(PsiField field);
   public PsiMethod[] findGetters(PsiClass psiClass, String propertyName) {
     return null;
@@ -52,7 +52,7 @@ public abstract class GetterSetterPrototypeProvider {
         return generateGetter ? provider.generateGetters(field) : provider.generateSetters(field);
       }
     }
-    return new PsiMethod[] {generateGetter ? PropertyUtil.generateGetterPrototype(field) : PropertyUtil.generateSetterPrototype(field)};
+    return new PsiMethod[]{generateGetter ? GenerateMembersUtil.generateGetterPrototype(field) : GenerateMembersUtil.generateSetterPrototype(field)};
   }
 
   public static boolean isReadOnlyProperty(PsiField field) {
@@ -75,7 +75,7 @@ public abstract class GetterSetterPrototypeProvider {
     if (propertyGetterSetter != null) {
       return new PsiMethod[] {propertyGetterSetter};
     }
-    return null; 
+    return null;
   }
 
   public static String suggestNewGetterName(String oldPropertyName, String newPropertyName, PsiMethod method) {
