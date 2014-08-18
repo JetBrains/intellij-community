@@ -26,6 +26,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -76,5 +77,13 @@ public class ClassMappingNameConverter extends ResolvingConverter.StringConverte
     DomElement parent = context.getInvocationElement().getParent();
     assert parent != null;
     return parent.getXmlElement();
+  }
+
+  @Override
+  public boolean isReferenceTo(@NotNull PsiElement element,
+                               String stringValue,
+                               @Nullable String resolveResult,
+                               ConvertContext context) {
+    return element.getManager().areElementsEquivalent(element, resolve(stringValue, context));
   }
 }

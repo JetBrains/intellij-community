@@ -16,6 +16,7 @@
 package com.intellij.lang.properties.structureView;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.lang.properties.IProperty;
@@ -65,14 +66,14 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
       parentPrefixLength = 0;
     }
     for (TreeElement element : children) {
-      String text = null;
-      if (element instanceof PropertiesStructureViewElement) {
-        IProperty property = ((PropertiesStructureViewElement)element).getValue();
-        text = property.getUnescapedKey();
+      if (!(element instanceof StructureViewTreeElement)) {
+        continue;
       }
-      else if (element instanceof ResourceBundlePropertyStructureViewElement) {
-        text = ((ResourceBundlePropertyStructureViewElement)element).getValue();
+      final Object value = ((StructureViewTreeElement)element).getValue();
+      if (!(value instanceof IProperty)) {
+        continue;
       }
+      final String text = ((IProperty) value).getUnescapedKey();
       if (text == null) continue;
       LOG.assertTrue(text.startsWith(parentPrefix) || text.startsWith(mySeparator));
       List<String> words = StringUtil.split(text, mySeparator);

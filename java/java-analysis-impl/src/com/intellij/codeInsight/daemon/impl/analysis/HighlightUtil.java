@@ -889,6 +889,11 @@ public class HighlightUtil extends HighlightUtilBase {
           PsiModifier.STRICTFP.equals(modifier) || PsiModifier.SYNCHRONIZED.equals(modifier)) {
         isAllowed &= modifierOwnerParent instanceof PsiClass && !((PsiClass)modifierOwnerParent).isInterface();
       }
+
+      if (containingClass != null && containingClass.isAnnotationType()) {
+        isAllowed &= !PsiModifier.STATIC.equals(modifier);
+        isAllowed &= !PsiModifier.DEFAULT.equals(modifier);
+      }
     }
     else if (modifierOwner instanceof PsiField) {
       if (PsiModifier.PRIVATE.equals(modifier) || PsiModifier.PROTECTED.equals(modifier) || PsiModifier.TRANSIENT.equals(modifier) ||
