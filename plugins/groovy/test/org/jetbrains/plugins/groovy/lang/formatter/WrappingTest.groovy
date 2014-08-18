@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.formatter
 
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
+import org.jetbrains.plugins.groovy.GroovyLanguage
 
 /**
  * @author Max Medvedev
@@ -24,7 +25,7 @@ class WrappingTest extends GroovyFormatterTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp()
-    myTempSettings.RIGHT_MARGIN = 10
+    myTempSettings.setRightMargin(GroovyLanguage.INSTANCE, 10);
   }
 
   void testWrapChainedMethodCalls() {
