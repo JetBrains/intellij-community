@@ -233,7 +233,7 @@ public class SeverityEditorDialog extends DialogWrapper {
     final OptionsEditor optionsEditor = OptionsEditor.KEY.getData(dataContext);
     if (optionsEditor != null) {
       final ColorAndFontOptions colorAndFontOptions =
-        (ColorAndFontOptions)((ConfigurableWrapper)optionsEditor.findConfigurableById("reference.settingsdialog.IDE.editor.colors")).getConfigurable();
+        (ColorAndFontOptions)((ConfigurableWrapper)optionsEditor.findConfigurableById(ColorAndFontOptions.ID)).getConfigurable();
       assert colorAndFontOptions != null;
       final SearchableConfigurable javaPage = colorAndFontOptions.findSubConfigurable(InspectionColorSettingsPage.class);
       LOG.assertTrue(javaPage != null);

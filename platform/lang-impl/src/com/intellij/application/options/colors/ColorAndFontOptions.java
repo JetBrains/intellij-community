@@ -81,6 +81,8 @@ import java.util.*;
 import java.util.List;
 
 public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract implements EditorOptionsProvider {
+  public static final String ID = "reference.settingsdialog.IDE.editor.colors";
+
   private HashMap<String,MyColorScheme> mySchemes;
   private MyColorScheme mySelectedScheme;
   public static final String DIFF_GROUP = ApplicationBundle.message("title.diff");
@@ -999,7 +1001,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   @Override
   @NotNull
   public String getHelpTopic() {
-    return "reference.settingsdialog.IDE.editor.colors";
+    return ID;
   }
 
   private static class MyColorScheme extends EditorColorsSchemeImpl {
