@@ -100,12 +100,16 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
     PsiElement prevVisibleLeaf = callback.getContext();
     while (prevVisibleLeaf != null) {
       TextRange textRange = prevVisibleLeaf.getTextRange();
-      if (textRange.getEndOffset() <= startOffset) {
+      final int endOffset = textRange.getEndOffset();
+      if (endOffset > currentOffset) {
+        continue;
+      }
+      if (endOffset <= startOffset) {
         break;
       }
       IElementType prevType = prevVisibleLeaf.getNode().getElementType();
       if (prevType == XmlTokenType.XML_TAG_END || prevType == XmlTokenType.XML_EMPTY_ELEMENT_END) {
-        startOffset = textRange.getEndOffset();
+        startOffset = endOffset;
         break;
       }
       prevVisibleLeaf = PsiTreeUtil.prevVisibleLeaf(prevVisibleLeaf);

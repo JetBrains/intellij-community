@@ -15,9 +15,12 @@
  */
 package com.intellij.dvcs.push;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Source to push from. For example, local branch for git or branch/bookmark for mercurial.
  */
 public interface PushSource {
+  @NotNull
   String getPresentation();
 }

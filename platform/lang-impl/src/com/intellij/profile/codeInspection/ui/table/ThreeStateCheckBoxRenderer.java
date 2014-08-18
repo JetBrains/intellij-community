@@ -27,6 +27,7 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.List;
 
@@ -37,7 +38,7 @@ public class ThreeStateCheckBoxRenderer extends ThreeStateCheckBox implements Ta
 
   private final List<CellEditorListener> myListeners = new SmartList<CellEditorListener>();
 
-  public ThreeStateCheckBoxRenderer(final boolean isEditor) {
+  public ThreeStateCheckBoxRenderer() {
     setThirdStateEnabled(false);
     setHorizontalAlignment(CENTER);
     setVerticalAlignment(CENTER);
@@ -95,7 +96,7 @@ public class ThreeStateCheckBoxRenderer extends ThreeStateCheckBox implements Ta
   @Override
   public boolean stopCellEditing() {
     final ChangeEvent e = new ChangeEvent(this);
-    for (final CellEditorListener listener : myListeners) {
+    for (final CellEditorListener listener : new ArrayList<CellEditorListener>(myListeners)) {
       listener.editingStopped(e);
     }
     return true;
@@ -104,7 +105,7 @@ public class ThreeStateCheckBoxRenderer extends ThreeStateCheckBox implements Ta
   @Override
   public void cancelCellEditing() {
     final ChangeEvent e = new ChangeEvent(this);
-    for (final CellEditorListener listener : myListeners) {
+    for (final CellEditorListener listener : new ArrayList<CellEditorListener>(myListeners)) {
       listener.editingCanceled(e);
     }
   }

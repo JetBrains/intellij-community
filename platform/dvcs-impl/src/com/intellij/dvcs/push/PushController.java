@@ -198,20 +198,20 @@ public class PushController implements Disposable {
       @Override
       public void onSuccess() {
         OutgoingResult outgoing = result.get();
-        if (outgoing.hasErrors()) {
-          final CommitLoader loader = new CommitLoader() {
-            @Override
-            public void reloadCommits() {
-              loadCommits(model, node, false);
-            }
-          };
-          myPushLog.setChildren(node, ContainerUtil.map(outgoing.getErrors(), new Function<VcsError, DefaultMutableTreeNode>() {
+        List<VcsError> errors = outgoing.getErrors();
+        if (!errors.isEmpty()) {
+          myPushLog.setChildren(node, ContainerUtil.map(errors, new Function<VcsError, DefaultMutableTreeNode>() {
             @Override
             public DefaultMutableTreeNode fun(final VcsError error) {
               VcsLinkedText errorLinkText = new VcsLinkedText(error.getText(), new VcsLinkListener() {
                 @Override
                 public void hyperlinkActivated(@NotNull DefaultMutableTreeNode sourceNode) {
-                  error.handleError(loader);
+                  error.handleError(new CommitLoader() {
+                    @Override
+                    public void reloadCommits() {
+                      loadCommits(model, node, false);
+                    }
+                  });
                 }
               });
               return new TextWithLinkNode(errorLinkText);
@@ -347,13 +347,13 @@ public class PushController implements Disposable {
     return additionalPanels;
   }
 
-  private boolean hasRepoForPushSupport(@NotNull PushSupport support) {
-    for (MyRepoModel model : myView2Model.values()) {
-      if (support.equals(model.getSupport())) {
-        return true;
+  private boolean hasRepoForPushSupport(@NotNull final PushSupport support) {
+    return ContainerUtil.exists(myView2Model.values(), new Condition<MyRepoModel>() {
+      @Override
+      public boolean value(MyRepoModel model) {
+        return support.equals(model.getSupport());
       }
-    }
-    return false;
+    });
   }
 
   private static class MyRepoModel {

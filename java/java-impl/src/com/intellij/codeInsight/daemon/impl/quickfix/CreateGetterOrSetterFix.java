@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
+import com.intellij.codeInsight.generation.GetterSetterPrototypeProvider;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.openapi.editor.Editor;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -115,10 +117,10 @@ public class CreateGetterOrSetterFix implements IntentionAction, LowPriorityActi
     PsiClass aClass = myField.getContainingClass();
     final List<PsiMethod> methods = new ArrayList<PsiMethod>();
     if (myCreateGetter) {
-      methods.add(GenerateMembersUtil.generateGetterPrototype(myField));
+      Collections.addAll(methods, GetterSetterPrototypeProvider.generateGetterSetters(myField, true));
     }
     if (myCreateSetter) {
-      methods.add(GenerateMembersUtil.generateSetterPrototype(myField));
+      Collections.addAll(methods, GetterSetterPrototypeProvider.generateGetterSetters(myField, false));
     }
     for (PsiMethod method : methods) {
       aClass.add(method);

@@ -81,7 +81,7 @@ public class OverrideImplementTest extends LightCodeInsightTestCase {
     CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject()).clone();
     try {
       CommonCodeStyleSettings javaSettings = codeStyleSettings.getCommonSettings(JavaLanguage.INSTANCE);
-      codeStyleSettings.RIGHT_MARGIN = 80;
+      javaSettings.RIGHT_MARGIN = 80;
       javaSettings.KEEP_LINE_BREAKS = true;
       codeStyleSettings.GENERATE_FINAL_PARAMETERS = true;
       javaSettings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
@@ -97,7 +97,7 @@ public class OverrideImplementTest extends LightCodeInsightTestCase {
     CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject()).clone();
     try {
       CommonCodeStyleSettings javaSettings = codeStyleSettings.getCommonSettings(JavaLanguage.INSTANCE);
-      codeStyleSettings.RIGHT_MARGIN = 80;
+      javaSettings.RIGHT_MARGIN = 80;
       javaSettings.KEEP_LINE_BREAKS = false;
       codeStyleSettings.GENERATE_FINAL_PARAMETERS = false;
       javaSettings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;

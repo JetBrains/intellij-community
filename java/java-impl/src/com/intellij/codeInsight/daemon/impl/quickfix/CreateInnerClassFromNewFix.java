@@ -67,9 +67,8 @@ public class CreateInnerClassFromNewFix extends CreateClassFromNewFix {
     }
     created = (PsiClass)targetClass.add(created);
 
-    setupClassFromNewExpression(created, newExpression);
-
     setupGenericParameters(created, ref);
+    setupClassFromNewExpression(created, newExpression);
   }
 
   private static boolean isInThisOrSuperCall(PsiNewExpression newExpression) {

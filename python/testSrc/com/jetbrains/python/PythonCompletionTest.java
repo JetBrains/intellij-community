@@ -626,23 +626,85 @@ public class PythonCompletionTest extends PyTestCase {
   }
 
   // PY-4073
-  public void testSpecialFunctionAttributes() throws Exception {
-    setLanguageLevel(LanguageLevel.PYTHON27);
-    try {
-      List<String> suggested = doTestByText("def func(): pass; func.func_<caret>");
-      assertNotNull(suggested);
-      assertContainsElements(suggested,
-                             "func_defaults", "func_globals", "func_closure",
-                             "func_code", "func_name", "func_doc", "func_dict");
+  public void testFunctionSpecialAttributes() {
+    runWithLanguageLevel(LanguageLevel.PYTHON27, new Runnable() {
+      @Override
+      public void run() {
+        List<String> suggested = doTestByText("def func(): pass; func.func_<caret>");
+        assertNotNull(suggested);
+        assertContainsElements(suggested, PyNames.LEGACY_FUNCTION_SPECIAL_ATTRIBUTES);
 
-      suggested = doTestByText("def func(): pass; func.__<caret>");
-      assertNotNull(suggested);
-      assertContainsElements(suggested, "__defaults__", "__globals__", "__closure__",
-                             "__code__", "__name__", "__doc__", "__dict__", "__module__");
-      assertDoesntContain(suggested, "__annotations__", "__kwdefaults__");
-    }
-    finally {
-      setLanguageLevel(null);
-    }
+        suggested = doTestByText("def func(): pass; func.__<caret>");
+        assertNotNull(suggested);
+        assertContainsElements(suggested, PyNames.FUNCTION_SPECIAL_ATTRIBUTES);
+        assertDoesntContain(suggested, PyNames.PY3_ONLY_FUNCTION_SPECIAL_ATTRIBUTES);
+      }
+    });
+  }
+
+  // PY-9342
+  public void testBoundMethodSpecialAttributes() {
+    List<String>  suggested = doTestByText("{}.update.im_<caret>");
+    assertNotNull(suggested);
+    assertContainsElements(suggested, PyNames.LEGACY_METHOD_SPECIAL_ATTRIBUTES);
+
+    suggested = doTestByText("{}.update.__<caret>");
+    assertNotNull(suggested);
+    assertContainsElements(suggested, PyNames.METHOD_SPECIAL_ATTRIBUTES);
+    assertDoesntContain(suggested, PyNames.FUNCTION_SPECIAL_ATTRIBUTES);
+  }
+
+  // PY-9342
+  public void testWeakQualifierBoundMethodAttributes() {
+    assertUnderscoredMethodSpecialAttributesSuggested();
+  }
+
+  private void assertUnderscoredMethodSpecialAttributesSuggested() {
+    myFixture.configureByFile("completion/" + getTestName(true) + ".py");
+    myFixture.completeBasic();
+    final List<String> suggested = myFixture.getLookupElementStrings();
+    assertNotNull(suggested);
+    assertContainsElements(suggested, PyNames.METHOD_SPECIAL_ATTRIBUTES);
+    assertDoesntContain(suggested, PyNames.FUNCTION_SPECIAL_ATTRIBUTES);
+  }
+
+  // PY-9342
+  public void testUnboundMethodSpecialAttributes() {
+    runWithLanguageLevel(LanguageLevel.PYTHON27, new Runnable() {
+      @Override
+      public void run() {
+        assertUnderscoredMethodSpecialAttributesSuggested();
+      }
+    });
+    runWithLanguageLevel(LanguageLevel.PYTHON32, new Runnable() {
+      @Override
+      public void run() {
+        assertUnderscoredFunctionAttributesSuggested();
+      }
+    });
+  }
+
+  // PY-9342
+  public void testStaticMethodSpecialAttributes() {
+    assertUnderscoredFunctionAttributesSuggested();
+  }
+
+  // PY-9342
+  public void testLambdaSpecialAttributes() {
+    assertUnderscoredFunctionAttributesSuggested();
+  }
+
+  // PY-9342
+  public void testReassignedMethodSpecialAttributes() {
+    assertUnderscoredMethodSpecialAttributesSuggested();
+  }
+
+  private void assertUnderscoredFunctionAttributesSuggested() {
+    myFixture.configureByFile("completion/" + getTestName(true) + ".py");
+    myFixture.completeBasic();
+    final List<String> suggested = myFixture.getLookupElementStrings();
+    assertNotNull(suggested);
+    assertContainsElements(suggested, PyNames.FUNCTION_SPECIAL_ATTRIBUTES);
+    assertDoesntContain(suggested, PyNames.METHOD_SPECIAL_ATTRIBUTES);
   }
 }

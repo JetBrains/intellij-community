@@ -165,6 +165,10 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
 
     int fingerprint = getDependenciesFingerprint();
 
+    for (JavaSourceRootDescriptor root : pd.getBuildRootIndex().getTargetRoots(this, null)) {
+      fingerprint += FileUtil.fileHashCode(root.getRootFile());
+    }
+    
     final LanguageLevel level = JpsJavaExtensionService.getInstance().getLanguageLevel(module);
     if (level != null) {
       fingerprint += level.name().hashCode();

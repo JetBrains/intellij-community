@@ -49,6 +49,7 @@ import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.treeStructure.SimpleNode;
+import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -87,6 +88,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   private final History myHistory = new History(this);
 
   private final OptionsTree myTree;
+  private final SettingsTreeView myTreeView;
   private final MySearchField mySearch;
   private final Splitter myMainSplitter;
   //[back/forward] JComponent myToolbarComponent;
@@ -126,7 +128,12 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     mySearch = new MySearchField() {
       @Override
       protected void onTextKeyEvent(final KeyEvent e) {
-        myTree.processTextEvent(e);
+        if (myTreeView != null) {
+          myTreeView.myTree.processKeyEvent(e);
+        }
+        else {
+          myTree.processTextEvent(e);
+        }
       }
     };
 
@@ -144,12 +151,12 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       }
     });
 
-    myTree = new OptionsTree(myProject, groups, getContext()) {
+    final KeyListener listener = new KeyListener() {
       @Override
-      protected void onTreeKeyEvent(final KeyEvent e) {
+      public void keyTyped(KeyEvent event) {
         myFilterDocumentWasChanged = false;
         try {
-          mySearch.keyEventToTextField(e);
+          mySearch.keyEventToTextField(event);
         }
         finally {
           if (myFilterDocumentWasChanged && !isFilterFieldVisible()) {
@@ -157,10 +164,33 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
           }
         }
       }
-    };
 
-    getContext().addColleague(myTree);
-    Disposer.register(this, myTree);
+      @Override
+      public void keyPressed(KeyEvent event) {
+        keyTyped(event);
+      }
+
+      @Override
+      public void keyReleased(KeyEvent event) {
+        keyTyped(event);
+      }
+    };
+    if (Registry.is("ide.file.settings.tree.new")) {
+      myTreeView = new SettingsTreeView(listener, getContext(), groups);
+      myTree = null;
+    }
+    else {
+      myTreeView = null;
+      myTree = new OptionsTree(myProject, groups, getContext()) {
+        @Override
+        protected void onTreeKeyEvent(final KeyEvent e) {
+          listener.keyTyped(e);
+        }
+      };
+    }
+
+    getContext().addColleague(myTreeView != null ? myTreeView : myTree);
+    Disposer.register(this, myTreeView != null ? myTreeView : myTree);
     mySearch.addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
@@ -198,7 +228,8 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       @Override
       public Dimension getMinimumSize() {
         Dimension dimension = super.getMinimumSize();
-        dimension.width = Math.max(myTree.getMinimumSize().width, mySearchWrapper.getPreferredSize().width);
+        JComponent component = myTreeView != null ? myTreeView : myTree;
+        dimension.width = Math.max(component.getMinimumSize().width, mySearchWrapper.getPreferredSize().width);
         return dimension;
       }
     };
@@ -211,7 +242,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     */
 
     myLeftSide.add(mySearchWrapper, BorderLayout.NORTH);
-    myLeftSide.add(myTree, BorderLayout.CENTER);
+    myLeftSide.add(myTreeView != null ? myTreeView : myTree, BorderLayout.CENTER);
 
     setLayout(new BorderLayout());
 
@@ -233,9 +264,19 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     mySpotlightUpdate = new MergingUpdateQueue("OptionsSpotlight", 200, false, this, this, this);
 
     if (preselectedConfigurable != null) {
-      myTree.select(preselectedConfigurable);
+      if (myTreeView != null) {
+        myTreeView.select(preselectedConfigurable);
+      }
+      else {
+        myTree.select(preselectedConfigurable);
+      }
     } else {
-      myTree.selectFirst();
+      if (myTreeView != null) {
+        myTreeView.selectFirst();
+      }
+      else {
+        myTree.selectFirst();
+      }
     }
 
     Toolkit.getDefaultToolkit().addAWTEventListener(this,
@@ -295,12 +336,16 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   @Deprecated
   @Nullable
   public <T extends Configurable> T findConfigurable(Class<T> configurableClass) {
-    return myTree.findConfigurable(configurableClass);
+    return myTreeView != null
+           ? myTreeView.findConfigurable(configurableClass)
+           : myTree.findConfigurable(configurableClass);
   }
 
   @Nullable
   public SearchableConfigurable findConfigurableById(@NotNull String configurableId) {
-    return myTree.findConfigurableById(configurableId);
+    return myTreeView != null
+           ? myTreeView.findConfigurableById(configurableId)
+           : myTree.findConfigurableById(configurableId);
   }
 
   public ActionCallback clearSearchAndSelect(Configurable configurable) {
@@ -318,7 +363,9 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
   public ActionCallback select(Configurable configurable, final String text) {
     myFilter.refilterFor(text, false, true);
-    return myTree.select(configurable);
+    return myTreeView != null
+           ? myTreeView.select(configurable)
+           : myTree.select(configurable);
   }
 
   private float readProportion(final float defaultValue, final String propertyName) {
@@ -367,7 +414,10 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
           myOwnDetails.setContent(myContentWrapper);
           myOwnDetails.setBannerMinHeight(mySearchWrapper.getHeight());
           myOwnDetails.setText(getBannerText(configurable));
-          if (Registry.is("ide.file.settings.order.new")) {
+          if (myTreeView != null) {
+            myOwnDetails.forProject(myTreeView.findConfigurableProject(configurable));
+          }
+          else if (Registry.is("ide.file.settings.order.new")) {
             myOwnDetails.forProject(myTree.getConfigurableProject(configurable));
           }
 
@@ -385,7 +435,8 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
           checkModified(oldConfigurable);
           checkModified(configurable);
 
-          if (myTree.myBuilder.getSelectedElements().size() == 0) {
+          FilteringTreeBuilder builder = myTreeView != null ? myTreeView.myBuilder : myTree.myBuilder;
+          if (builder.getSelectedElements().size() == 0) {
             select(configurable).notify(result);
           } else {
             result.setDone();
@@ -507,6 +558,9 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   }
 
   private String[] getBannerText(Configurable configurable) {
+    if (myTreeView != null) {
+      return myTreeView.getPathNames(configurable);
+    }
     final List<Configurable> list = myTree.getPathToRoot(configurable);
     final String[] result = new String[list.size()];
     int add = 0;
@@ -795,7 +849,12 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     getContext().fireErrorsChanged(errors, null);
 
     if (!errors.isEmpty()) {
-      myTree.select(errors.keySet().iterator().next());
+      if (myTreeView != null) {
+        myTreeView.select(errors.keySet().iterator().next());
+      }
+      else {
+        myTree.select(errors.keySet().iterator().next());
+      }
     }
   }
 
@@ -835,7 +894,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
         return myFiltered.contains(node.getConfigurable()) || isChildOfNameHit(node);
       }
 
-      return true;
+      return SettingsTreeView.isFiltered(myFiltered, myHits, value);
     }
 
     private boolean isChildOfNameHit(OptionsTree.EditorNode node) {
@@ -929,7 +988,8 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
         myLastSelected = current;
       }
 
-      final ActionCallback callback = fireUpdate(adjustSelection ? myTree.findNodeFor(toSelect) : null, adjustSelection, now);
+      SimpleNode node = !adjustSelection ? null : myTreeView != null ? myTreeView.findNode(toSelect) : myTree.findNodeFor(toSelect);
+      final ActionCallback callback = fireUpdate(node, adjustSelection, now);
 
       myFilterDocumentWasChanged = true;
 
@@ -965,7 +1025,12 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     myFilter.refilterFor(filter, false, true).doWhenDone(new Runnable() {
       @Override
       public void run() {
-        myTree.select(config).notifyWhenDone(result);
+        if (myTreeView != null) {
+          myTreeView.select(config).notifyWhenDone(result);
+        }
+        else {
+          myTree.select(config).notifyWhenDone(result);
+        }
       }
     });
 

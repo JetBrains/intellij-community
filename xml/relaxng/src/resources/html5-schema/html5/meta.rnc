@@ -164,6 +164,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	shared-hyperlink.attrs.type?
 		&	link.attrs.sizes?
 		#	link.attrs.title included in common.attrs
+		&	embedded.content.attrs.crossorigin?
 		&	(	common.attrs.aria.role.link
 			|	common.attrs.aria.role.presentation
 			|	common.attrs.aria.role.menuitem

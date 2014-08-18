@@ -613,13 +613,23 @@ class __function(object):
         self.__dict__ = ''
         self.__module__ = ''
 
-        self.__annotations__ = {}
         self.__defaults__ = {}
         self.__globals__ = {}
-        self.__kwdefaults__ = {}
         self.__closure__ = None
         self.__code__ = None
         self.__name__ = ''
+
+        self.__annotations__ = {}
+        self.__kwdefaults__ = {}
+
+
+class __method(object):
+    '''A mock class representing method type.'''
+
+    def __init__(self):
+
+        self.__func__ = None
+        self.__self__ = None
 
 
 class __namedtuple(tuple):
