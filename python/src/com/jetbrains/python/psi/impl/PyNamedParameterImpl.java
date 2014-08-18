@@ -181,11 +181,11 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
       PyParameterList parameterList = (PyParameterList)parent;
       PyFunction func = parameterList.getContainingFunction();
       if (func != null) {
-        PyAnnotation anno = getAnnotation();
-        if (anno != null) {
-          final PyClass pyClass = anno.resolveToClass();
-          if (pyClass != null) {
-            return new PyClassTypeImpl(pyClass, false);
+        final PyAnnotation annotation = getAnnotation();
+        if (annotation != null) {
+          final PyType type = context.getType(annotation);
+          if (type != null) {
+            return type;
           }
         }
         StructuredDocString docString = func.getStructuredDocString();

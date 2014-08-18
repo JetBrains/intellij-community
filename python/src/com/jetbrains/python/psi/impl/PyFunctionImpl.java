@@ -184,11 +184,11 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       }
     }
     if (context.maySwitchToAST(this) && LanguageLevel.forElement(this).isAtLeast(LanguageLevel.PYTHON30)) {
-      PyAnnotation anno = getAnnotation();
-      if (anno != null) {
-        PyClass pyClass = anno.resolveToClass();
-        if (pyClass != null) {
-          return new PyClassTypeImpl(pyClass, false);
+      final PyAnnotation annotation = getAnnotation();
+      if (annotation != null) {
+        final PyType type = context.getType(annotation);
+        if (type != null) {
+          return type;
         }
       }
     }
