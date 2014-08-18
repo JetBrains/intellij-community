@@ -24,6 +24,7 @@ import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesHighlighter;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -69,8 +70,8 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
   }
 
   @Override
-  public String getValue() {
-    return myProperty.getName();
+  public Property getValue() {
+    return (Property)myProperty.getPsiElement();
   }
 
   @Override
