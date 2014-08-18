@@ -47,8 +47,15 @@ public class ShowReferringObjectsAction extends XDebuggerTreeActionBase {
 
   @Override
   protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
-    if (node.getValueContainer() instanceof JavaValue) {
-      JavaValue javaValue = ((JavaValue)node.getValueContainer());
+    XValue container = node.getValueContainer();
+    JavaValue javaValue = null;
+    if (container instanceof ReferringObjectsValue) {
+      javaValue = ((ReferringObjectsValue)container).myJavaValue;
+    }
+    else if (container instanceof JavaValue) {
+      javaValue = ((JavaValue)container);
+    }
+    if (javaValue != null) {
       XDebuggerTree tree = XDebuggerTree.getTree(e.getDataContext());
       XInspectDialog dialog = new XInspectDialog(tree.getProject(),
                                                  tree.getEditorsProvider(),
