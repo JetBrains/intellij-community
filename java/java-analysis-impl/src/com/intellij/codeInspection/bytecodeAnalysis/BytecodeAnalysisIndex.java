@@ -42,7 +42,7 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Bytes, HEquat
   private static final ClassDataIndexer INDEXER = new ClassDataIndexer();
   private static final HKeyDescriptor KEY_DESCRIPTOR = new HKeyDescriptor();
 
-  private static final int ourInternalVersion = 3;
+  private static final int ourInternalVersion = 0;
   private static boolean ourEnabled = SystemProperties.getBooleanProperty("idea.enable.bytecode.contract.inference", isEnabledByDefault());
 
   private static boolean isEnabledByDefault() {
