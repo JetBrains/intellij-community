@@ -104,4 +104,8 @@ public class PyCallHierarchyTest extends PyTestCase {
   public void testInnerFunction() throws Exception {
     doTestCallHierarchy("main.py");
   }
+
+  public void testConstructor() throws Exception {
+    doTestCallHierarchy("main.py");
+  }
 }
