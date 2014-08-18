@@ -15,12 +15,15 @@ namespace local = ""
 	img.attrs =
 		(	common.attrs
 		&	img.attrs.src
+		&	img.attrs.srcset?
+		&	img.attrs.sizes?
 		&	img.attrs.alt? # ARIA: if alt empty, only allowed role value is "presentation"; check in assertions
 		&	img.attrs.height?
 		&	img.attrs.width?
 		&	img.attrs.usemap?
 		&	img.attrs.ismap?
 		&	img.attrs.border? # obsolete
+		&	embedded.content.attrs.crossorigin?
 		&	(	common.attrs.aria.implicit.img
 			|	common.attrs.aria
 			)?
@@ -29,6 +32,14 @@ namespace local = ""
 			attribute src {
 				common.data.uri.non-empty
 			}
+		img.attrs.srcset =
+			attribute srcset {
+				string
+			} & v5only
+		img.attrs.sizes =
+			attribute sizes {
+				common.data.source.size.list
+			} & v5only
 		img.attrs.alt =
 			attribute alt {
 				text
@@ -58,6 +69,54 @@ namespace local = ""
 
 	common.elem.phrasing |= img.elem
 
+## Image with multiple sources: <picture>
+
+	picture.elem =
+		element picture { picture.inner & picture.attrs }
+		& v5only
+	picture.attrs =
+		( common.attrs )
+	picture.inner =
+		(	(	source.picture.elem*
+			&	common.elem.script-supporting*
+			),
+			(	img.elem
+			&	common.elem.script-supporting*
+			)
+		)
+
+	common.elem.phrasing |= picture.elem
+
+## Picture source: <source srcset>
+
+	source.picture.elem =
+		element source { source.picture.inner & source.picture.attrs }
+	source.picture.attrs =
+		(	common.attrs
+		&	source.picture.attrs.media?
+		&	source.picture.attrs.srcset
+		&	source.picture.attrs.sizes?
+		&	source.picture.attrs.type?
+		)
+		source.picture.attrs.media =
+			attribute media {
+				common.data.mediaquery
+			}
+		source.picture.attrs.srcset =
+			attribute srcset {
+				string
+			}
+		source.picture.attrs.sizes =
+			attribute sizes {
+				common.data.source.size.list
+			}
+		source.picture.attrs.type =
+			attribute type {
+				common.data.mimetype
+			}
+	source.picture.inner =
+		( empty )
+
 ## Plug-ins: <embed>
 
 	embed.elem =
@@ -72,6 +131,7 @@ namespace local = ""
 		&	(	common.attrs.aria.landmark.application
 			|	common.attrs.aria.landmark.document
 			|	common.attrs.aria.role.img
+			|	common.attrs.aria.role.presentation
 			)?
 		)
 		embed.attrs.src =
@@ -292,6 +352,7 @@ namespace local = ""
 		&	(	common.attrs.aria.landmark.application
 			|	common.attrs.aria.landmark.document
 			|	common.attrs.aria.role.img
+			|	common.attrs.aria.role.presentation
 			)?
 		)
 		object.attrs.data =
@@ -370,6 +431,7 @@ namespace local = ""
 		&	(	common.attrs.aria.landmark.application
 			|	common.attrs.aria.landmark.document
 			|	common.attrs.aria.role.img
+			|	common.attrs.aria.role.presentation
 			)?
 		)
 		iframe.attrs.src =
@@ -548,7 +610,7 @@ namespace local = ""
 				w:string "allowfullscreen" | w:string ""
 			} & v5only
 	iframe.inner =
-		( text )
+		( ( text & HTMLonly ) | empty )
 
 	common.elem.phrasing |= iframe.elem
 
@@ -655,3 +717,10 @@ namespace local = ""
 		( empty )
 
 	common.elem.phrasing |= area.elem
+
+## Attributes Common to Embedded Content
+
+		embedded.content.attrs.crossorigin =
+			attribute crossorigin {
+				w:string "anonymous" | w:string "use-credentials" | w:string ""
+			} & v5only

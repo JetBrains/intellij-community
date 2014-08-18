@@ -812,6 +812,12 @@ datatypes w = "http://whattf.org/datatype-draft"
 		}
 	object.attrs &= object.attrs.border?
 
+	table.attrs.border  =
+		attribute border {
+			string
+		}
+	table.attrs &= table.attrs.border?
+
 ## cellpadding attribute
 
 	table.attrs.cellpadding =
