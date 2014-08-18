@@ -68,7 +68,7 @@ public class StudyCheckAction extends DumbAwareAction {
           final Course course = StudyTaskManager.getInstance(project).getCourse();
           assert course != null;
           commandLine.addParameter(new File(course.getResourcePath()).getParent());
-          commandLine.addParameter(executablePath);
+          commandLine.addParameter(FileUtil.toSystemDependentName(executablePath));
           return commandLine.createProcess();
         }
       }

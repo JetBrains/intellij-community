@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.jetbrains.python.edu.StudyDocumentListener;
 import com.jetbrains.python.edu.StudyTaskManager;
 import com.jetbrains.python.edu.StudyUtils;
@@ -31,9 +32,10 @@ public class StudyRefreshTaskAction extends DumbAwareAction {
           @Override
           public void run() {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
               @Override
               public void run() {
-                Editor editor = StudyEditor.getSelectedEditor(project);
+                final Editor editor = StudyEditor.getSelectedEditor(project);
                 assert editor != null;
                 final Document document = editor.getDocument();
                 StudyDocumentListener listener = StudyEditor.getListener(document);
@@ -57,7 +59,7 @@ public class StudyRefreshTaskAction extends DumbAwareAction {
                 FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
                 VirtualFile openedFile = fileDocumentManager.getFile(document);
                 assert openedFile != null;
-                TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
+                final TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
                 assert selectedTaskFile != null;
                 Task currentTask = selectedTaskFile.getTask();
                 String lessonDir = Lesson.LESSON_DIR + String.valueOf(currentTask.getLesson().getIndex() + 1);
@@ -95,6 +97,8 @@ public class StudyRefreshTaskAction extends DumbAwareAction {
                     document.addDocumentListener(listener);
                   }
                   selectedTaskFile.drawAllWindows(editor);
+                  IdeFocusManager.getInstance(project).requestFocus(editor.getContentComponent(), true);
+                  selectedTaskFile.navigateToFirstTaskWindow(editor);
                   BalloonBuilder balloonBuilder =
                     JBPopupFactory.getInstance().createHtmlTextBalloonBuilder("You can now start again", MessageType.INFO, null);
                   Balloon balloon = balloonBuilder.createBalloon();

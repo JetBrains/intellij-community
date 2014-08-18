@@ -38,8 +38,8 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeNode;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
@@ -77,14 +77,18 @@ public class PushController implements Disposable {
   @Nullable
   public ValidationInfo validate() {
     ValidationInfo validInfo = new ValidationInfo("There are no selected repository to push!");
-    for (MyRepoModel model : myView2Model.values()) {
+    for (Map.Entry<RepositoryNode, MyRepoModel> entry : myView2Model.entrySet()) {
+      MyRepoModel model = entry.getValue();
       if (model.isSelected()) {
         //has one or more selected roots
-        PushSupport support = model.getSupport();
-        validInfo = support.validateSpec(model.getRepository(), model.getSpec());
-        if (validInfo != null) {
-          // return first non valid node
-          return validInfo;
+        validInfo = null;
+        RepositoryNode node = entry.getKey();
+        PushTarget target = model.getSpec().getTarget();
+        //todo add validation for model -> hasErrors, too
+        if (target == null) {
+          JComponent editingComponent = myPushLog.startEditNode(node);
+          return new ValidationInfo("Invalid remote for repository " + DvcsUtil.getShortRepositoryName(model.getRepository()),
+                                    editingComponent);
         }
       }
     }
@@ -92,6 +96,7 @@ public class PushController implements Disposable {
   }
 
   private void startLoadingCommits() {
+    //todo should be reworked
     Map<RepositoryNode, MyRepoModel> priorityLoading = new HashMap<RepositoryNode, MyRepoModel>();
     Map<RepositoryNode, MyRepoModel> others = new HashMap<RepositoryNode, MyRepoModel>();
     for (Map.Entry<RepositoryNode, MyRepoModel> entry : myView2Model.entrySet()) {
@@ -110,7 +115,6 @@ public class PushController implements Disposable {
   private void loadCommitsFromMap(@NotNull Map<RepositoryNode, MyRepoModel> items) {
     for (Map.Entry<RepositoryNode, MyRepoModel> entry : items.entrySet()) {
       RepositoryNode node = entry.getKey();
-      myPushLog.startLoading(node);
       loadCommits(entry.getValue(), node, true);
     }
   }
@@ -151,18 +155,25 @@ public class PushController implements Disposable {
     final RepositoryNode repoNode = isSingleRepositoryProject ? new SingleRepositoryNode(repoPanel) : new RepositoryNode(repoPanel);
     myView2Model.put(repoNode, model);
     repoNode.setChecked(model.isSelected());
-    repoNode.addRepoNodeListener(new RepositoryNodeListener() {
+    repoPanel.addRepoNodeListener(new RepositoryNodeListener() {
       @Override
       public void onTargetChanged(String newValue) {
-        myView2Model.get(repoNode).setSpec(new PushSpec(model.getSpec().getSource(), support.createTarget(repository, newValue)));
+        VcsError validationError = support.validate(model.getRepository(), newValue);
+        if (validationError == null) {
+          myView2Model.get(repoNode).setSpec(new PushSpec(model.getSpec().getSource(), support.createTarget(repository, newValue)));
+          loadCommits(model, repoNode, false);
+        }
+        else {
+          //todo may be should store validation errors in model and get errors during dialog validation
+          myView2Model.get(repoNode).setSpec(new PushSpec(model.getSpec().getSource(), null));
+        }
         myDialog.updateButtons();
-        myPushLog.startLoading(repoNode);
-        loadCommits(model, repoNode, false);
       }
 
       @Override
       public void onSelectionChanged(boolean isSelected) {
         myView2Model.get(repoNode).setSelected(isSelected);
+        repoNode.setChecked(isSelected);
         myDialog.updateButtons();
       }
     });
@@ -173,6 +184,7 @@ public class PushController implements Disposable {
                            @NotNull final RepositoryNode node,
                            final boolean initial) {
     node.stopLoading();
+    myPushLog.startLoading(node);
     final ProgressIndicator indicator = node.startLoading();
     final PushSupport support = model.getSupport();
     final AtomicReference<OutgoingResult> result = new AtomicReference<OutgoingResult>();
@@ -187,10 +199,22 @@ public class PushController implements Disposable {
       public void onSuccess() {
         OutgoingResult outgoing = result.get();
         if (outgoing.hasErrors()) {
+          final CommitLoader loader = new CommitLoader() {
+            @Override
+            public void reloadCommits() {
+              loadCommits(model, node, false);
+            }
+          };
           myPushLog.setChildren(node, ContainerUtil.map(outgoing.getErrors(), new Function<VcsError, DefaultMutableTreeNode>() {
             @Override
-            public DefaultMutableTreeNode fun(VcsError error) {
-              return new TextWithLinkNode(error);
+            public DefaultMutableTreeNode fun(final VcsError error) {
+              VcsLinkedText errorLinkText = new VcsLinkedText(error.getText(), new VcsLinkListener() {
+                @Override
+                public void hyperlinkActivated(@NotNull DefaultMutableTreeNode sourceNode) {
+                  error.handleError(loader);
+                }
+              });
+              return new TextWithLinkNode(errorLinkText);
             }
           }), model.isSelected());
         }
@@ -288,14 +312,10 @@ public class PushController implements Disposable {
     List<DefaultMutableTreeNode> childrenToShown = new ArrayList<DefaultMutableTreeNode>();
     for (int i = 0; i < commits.size(); ++i) {
       if (i >= commitsNum) {
-        final MoreCommitsLink moreCommitsLink = new MoreCommitsLink();
-        moreCommitsLink.addClickListener(new TreeNodeLinkListener() {
+        final VcsLinkedText moreCommitsLink = new VcsLinkedText("<a href='loadMore'>...</a>", new VcsLinkListener() {
           @Override
-          public void onClick(@NotNull DefaultMutableTreeNode source) {
-            TreeNode parentNode = source.getParent();
-            if (parentNode instanceof RepositoryNode) {
-              addMoreCommits((RepositoryNode)parentNode);
-            }
+          public void hyperlinkActivated(@NotNull DefaultMutableTreeNode sourceNode) {
+            addMoreCommits((RepositoryNode)sourceNode);
           }
         });
         childrenToShown.add(new TextWithLinkNode(moreCommitsLink));

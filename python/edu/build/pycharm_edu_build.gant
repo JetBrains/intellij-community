@@ -132,6 +132,8 @@ target('default': "Build artifacts") {
     exclude(name: "intentionDescriptions")
     exclude(name: "tips/**/*")
     exclude(name: "tips")
+    exclude(name: "courses")
+    exclude(name: "courses/*")
   }
 
   zipSources(home, paths.artifacts)
@@ -205,7 +207,11 @@ public layoutEducational(String classesPath, Set usedJars) {
 
 private layoutPlugins(layouts) {
   dir("plugins") {
-    layouts.layoutPlugin("learn-python")
+    layouts.layoutPlugin("learn-python") {
+      dir("courses") {
+        fileset(dir: "$pythonEduHome/learn-python/resources/courses")
+      }
+    }
   }
 
   layouts.layoutCommunityPlugins(ch)

@@ -60,7 +60,7 @@ class NewPropertyAction extends AnAction {
       prefix = null;
       separator = null;
     } else {
-      final ResourceBundleEditorViewElement selectedElement = resourceBundleEditor.getSelectedElement();
+      final ResourceBundleEditorViewElement selectedElement = resourceBundleEditor.getSelectedElementIfOnlyOne();
       if (selectedElement == null) {
         return;
       }

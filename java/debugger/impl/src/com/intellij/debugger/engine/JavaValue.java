@@ -83,7 +83,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     return new JavaValue(parent, valueDescriptor, evaluationContext, nodeManager);
   }
 
-  static JavaValue create(@NotNull ValueDescriptorImpl valueDescriptor,
+  public static JavaValue create(@NotNull ValueDescriptorImpl valueDescriptor,
                           EvaluationContextImpl evaluationContext,
                           NodeManagerImpl nodeManager) {
     return create(null, valueDescriptor, evaluationContext, nodeManager, true);

@@ -22,10 +22,10 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -37,7 +37,6 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -55,7 +54,6 @@ public class SvnFileRevision implements VcsFileRevision {
   private final SVNRevision myRevision;
   private final String myCopyFromPath;
   private final List<SvnFileRevision> myMergeSources;
-  private final Charset myCharset;
 
   public SvnFileRevision(SvnVcs vcs,
                          SVNRevision pegRevision,
@@ -64,8 +62,7 @@ public class SvnFileRevision implements VcsFileRevision {
                          String author,
                          Date date,
                          String commitMessage,
-                         String copyFromPath, Charset charset) {
-    myCharset = charset;
+                         String copyFromPath) {
     myRevisionNumber = new SvnRevisionNumber(revision);
     myPegRevision = pegRevision;
     myRevision = revision;
@@ -82,8 +79,7 @@ public class SvnFileRevision implements VcsFileRevision {
                          SVNRevision pegRevision,
                          LogEntry logEntry,
                          String url,
-                         String copyFromPath, Charset charset) {
-    myCharset = charset;
+                         String copyFromPath) {
     final SVNRevision revision = SVNRevision.create(logEntry.getRevision());
     myRevisionNumber = new SvnRevisionNumber(revision);
     myPegRevision = pegRevision;
@@ -155,30 +151,37 @@ public class SvnFileRevision implements VcsFileRevision {
     else {
       loader.run();
     }
-    if (loader.getException() == null) {
+
+    VcsException exception = loader.getException();
+    if (exception == null) {
       final byte[] contents = loader.getContents();
       ContentRevisionCache.checkContentsSize(myURL, contents.length);
       return contents;
     }
     else {
-      final VcsException vcsException = loader.getException();
-      LOG.info("Failed to load file '" + myURL + "' content at revision: " + myRevision + "\n" + vcsException.getMessage(), vcsException);
-      throw vcsException;
+      LOG.info("Failed to load file '" + myURL + "' content at revision: " + myRevision + "\n" + exception.getMessage(), exception);
+      throw exception;
     }
   }
 
   public byte[] getContent() throws IOException, VcsException {
-    return ContentRevisionCache.getOrLoadAsBytes(myVCS.getProject(), VcsContextFactory.SERVICE.getInstance()
-                                                   .createFilePathOnNonLocal(myURL, false),
-                                                 getRevisionNumber(), myVCS.getKeyInstanceMethod(), ContentRevisionCache.UniqueType.REMOTE_CONTENT,
-                                                 new Throwable2Computable<byte[], VcsException, IOException>() {
-                                                   @Override
-                                                   public byte[] compute() throws VcsException, IOException {
-                                                     byte[] bytes = loadContent();
-                                                     return bytes;
-                                                     //return SvnUtil.decode(myCharset, bytes);
-                                                   }
-                                                 });
+    byte[] result;
+
+    if (SVNRevision.HEAD.equals(myRevision)) {
+      result = loadContent();
+    }
+    else {
+      result = ContentRevisionCache.getOrLoadAsBytes(myVCS.getProject(), VcsUtil.getFilePathOnNonLocal(myURL, false), getRevisionNumber(),
+                                                     myVCS.getKeyInstanceMethod(), ContentRevisionCache.UniqueType.REMOTE_CONTENT,
+                                                     new Throwable2Computable<byte[], VcsException, IOException>() {
+                                                       @Override
+                                                       public byte[] compute() throws VcsException, IOException {
+                                                         return loadContent();
+                                                       }
+                                                     });
+    }
+
+    return result;
   }
 
   public String getCopyFromPath() {

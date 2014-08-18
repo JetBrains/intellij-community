@@ -162,6 +162,9 @@
       <action id="Debugger.ViewText" class="com.intellij.debugger.actions.ViewTextAction">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
       </action>
+      <action id="Debugger.ShowReferring" internal="true" class="com.intellij.debugger.actions.ShowReferringObjectsAction">
+        <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
+      </action>
       <action id="Debugger.CopyValue" class="com.intellij.debugger.actions.CopyValueAction"/>
       <action id="Debugger.CompareValueWithClipboard" class="com.intellij.debugger.actions.CompareValueWithClipboardAction"/>
       <action id="Debugger.CustomizeThreadsView" class="com.intellij.debugger.actions.CustomizeThreadsViewAction">

@@ -6,6 +6,8 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAware;
@@ -16,10 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.jetbrains.python.edu.actions.StudyNextWindowAction;
 import com.jetbrains.python.edu.actions.StudyPrevWindowAction;
@@ -111,6 +110,13 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
                 @Override
                 public void run() {
                   ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW).show(null);
+                  FileEditor[] editors = FileEditorManager.getInstance(myProject).getSelectedEditors();
+                  if (editors.length > 0) {
+                    JComponent focusedComponent = editors[0].getPreferredFocusedComponent();
+                    if (focusedComponent != null) {
+                      IdeFocusManager.getInstance(myProject).requestFocus(focusedComponent, true);
+                    }
+                  }
                 }
               });
               UISettings.getInstance().HIDE_TOOL_STRIPES = false;

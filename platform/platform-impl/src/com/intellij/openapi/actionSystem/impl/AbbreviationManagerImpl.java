@@ -38,40 +38,33 @@ import java.util.*;
     )}
 )
 public class AbbreviationManagerImpl extends AbbreviationManager implements
-                                                                 ExportableApplicationComponent, PersistentStateComponent<Element> {
+                                                                 ExportableComponent, PersistentStateComponent<Element> {
   private final Map<String, List<String>> myAbbreviation2ActionId = new THashMap<String, List<String>>();
   private final Map<String, LinkedHashSet<String>> myActionId2Abbreviations = new THashMap<String, LinkedHashSet<String>>();
   private final Map<String, LinkedHashSet<String>> myPluginsActionId2Abbreviations = new THashMap<String, LinkedHashSet<String>>();
-
-  @Override
-  public void initComponent() {
-
-  }
-
-  @Override
-  public void disposeComponent() {
-
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "AbbreviationManager";
-  }
 
   @Nullable
   @Override
   public Element getState() {
     final Element actions = new Element("actions");
-    final Element abbreviations = new Element("abbreviations");
-    actions.addContent(abbreviations);
+    if (myActionId2Abbreviations.isEmpty()) {
+      return actions;
+    }
+
+    Element abbreviations = null;
     for (String key : myActionId2Abbreviations.keySet()) {
       final LinkedHashSet<String> abbrs = myActionId2Abbreviations.get(key);
       final LinkedHashSet<String> pluginAbbrs = myPluginsActionId2Abbreviations.get(key);
       if (abbrs == pluginAbbrs || (abbrs != null && abbrs.equals(pluginAbbrs))) {
         continue;
       }
+
       if (abbrs != null) {
+        if (abbreviations == null) {
+          abbreviations = new Element("abbreviations");
+          actions.addContent(abbreviations);
+        }
+
         final Element action = new Element("action");
         action.setAttribute("id", key);
         abbreviations.addContent(action);

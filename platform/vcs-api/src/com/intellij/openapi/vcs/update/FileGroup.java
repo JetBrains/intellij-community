@@ -254,6 +254,9 @@ public class FileGroup implements JDOMExternalizable {
     return null;
   }
 
+  /**
+   * @deprecated: remove after IDEA 14
+   */
   public void setRevisions(final String path, final AbstractVcs vcs, final VcsRevisionNumber revision) {
     for (UpdatedFile file : myFiles) {
       if (file.getPath().startsWith(path)) {
