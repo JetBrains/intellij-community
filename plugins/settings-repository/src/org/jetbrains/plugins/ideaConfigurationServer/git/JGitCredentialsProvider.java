@@ -1,10 +1,10 @@
 package org.jetbrains.plugins.ideaConfigurationServer.git;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.ui.UIUtil;
 import org.eclipse.jgit.errors.UnsupportedCredentialItem;
@@ -18,12 +18,10 @@ import org.jetbrains.plugins.ideaConfigurationServer.IcsManager;
 import java.io.*;
 
 class JGitCredentialsProvider extends CredentialsProvider {
-  private final GitRepositoryManager manager;
   private String username;
   private String password;
 
-  public JGitCredentialsProvider(GitRepositoryManager manager) {
-    this.manager = manager;
+  public JGitCredentialsProvider() {
     File loginDataFile = getPasswordStorageFile();
     if (loginDataFile.exists()) {
       try {
@@ -136,18 +134,23 @@ class JGitCredentialsProvider extends CredentialsProvider {
         password = p;
         username = u;
 
-        manager.execute(new ThrowableRunnable<Exception>() {
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           @Override
-          public void run() throws Exception {
-            File loginDataFile = getPasswordStorageFile();
-            FileUtil.createParentDirs(loginDataFile);
-            DataOutputStream out = new DataOutputStream(new FileOutputStream(loginDataFile));
+          public void run() {
             try {
-              IOUtil.writeString(PasswordUtil.encodePassword(username), out);
-              IOUtil.writeString(PasswordUtil.encodePassword(password), out);
+              File loginDataFile = getPasswordStorageFile();
+              FileUtil.createParentDirs(loginDataFile);
+              DataOutputStream out = new DataOutputStream(new FileOutputStream(loginDataFile));
+              try {
+                IOUtil.writeString(PasswordUtil.encodePassword(username), out);
+                IOUtil.writeString(PasswordUtil.encodePassword(password), out);
+              }
+              finally {
+                out.close();
+              }
             }
-            finally {
-              out.close();
+            catch (IOException e) {
+              BaseRepositoryManager.LOG.error(e);
             }
           }
         });

@@ -136,10 +136,6 @@ public abstract class BaseRepositoryManager implements RepositoryManager {
     return task.callback;
   }
 
-  public void execute(@NotNull ThrowableRunnable<Exception> task) {
-    taskProcessor.add(task);
-  }
-
   @Override
   public boolean has(String path) {
     return new File(dir, path).exists();
@@ -154,14 +150,17 @@ public abstract class BaseRepositoryManager implements RepositoryManager {
     }
 
     @Override
-    public final void run() throws Exception {
+    public final void run() {
       try {
         execute();
       }
       catch (Throwable e) {
         callback.reject(e.getMessage());
         LOG.error(e);
+        return;
       }
+
+      callback.setDone();
     }
 
     protected abstract void execute() throws Exception;

@@ -1,6 +1,6 @@
 <idea-plugin version="2">
-  <name>Settings Server</name>
-  <id>org.jetbrains.plugins.ideaConfigurationServer</id>
+  <name>Settings Repository</name>
+  <id>org.jetbrains.plugins.settingsRepository</id>
   <description>Supports sharing settings between installations of IntelliJ Platform based products used by the same developer (or team) on different computers</description>
   <version>2.0</version>
   <idea-version since-build="132.397"/>

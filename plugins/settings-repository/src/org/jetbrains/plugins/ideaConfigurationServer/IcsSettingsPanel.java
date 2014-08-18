@@ -27,17 +27,17 @@ import java.util.concurrent.Callable;
 public class IcsSettingsPanel extends DialogWrapper {
   private JPanel panel;
   private TextFieldWithBrowseButton urlTextField;
-  private JCheckBox updateRepositoryFromRemoteCheckBox;
+  private JCheckBox updateOnStartCheckBox;
   private JCheckBox shareProjectWorkspaceCheckBox;
   private final JButton syncButton;
 
-  public IcsSettingsPanel(@Nullable final Project project) {
+  public IcsSettingsPanel(@Nullable Project project) {
     super(project, true);
 
     IcsManager icsManager = IcsManager.getInstance();
     IcsSettings settings = icsManager.getSettings();
 
-    updateRepositoryFromRemoteCheckBox.setSelected(settings.updateOnStart);
+    updateOnStartCheckBox.setSelected(settings.updateOnStart);
     shareProjectWorkspaceCheckBox.setSelected(settings.shareProjectWorkspace);
     urlTextField.setText(icsManager.getRepositoryManager().getRemoteRepositoryUrl());
     urlTextField.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFolderDescriptor()));
@@ -93,8 +93,9 @@ public class IcsSettingsPanel extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    apply();
-    super.doOKAction();
+    if (apply()) {
+      super.doOKAction();
+    }
   }
 
   @Nullable
@@ -106,22 +107,39 @@ public class IcsSettingsPanel extends DialogWrapper {
     return southPanel;
   }
 
-  private void apply() {
+  private boolean apply() {
     IcsSettings settings = IcsManager.getInstance().getSettings();
-    settings.updateOnStart = updateRepositoryFromRemoteCheckBox.isSelected();
-    settings.shareProjectWorkspace = shareProjectWorkspaceCheckBox.isSelected();
-    saveRemoteRepositoryUrl();
+    boolean settingsModified = false;
+    boolean updateOnStart = updateOnStartCheckBox.isSelected();
+    if (updateOnStart != settings.updateOnStart) {
+      settings.updateOnStart = updateOnStart;
+      settingsModified = true;
+    }
+    boolean shareProjectWorkspace = shareProjectWorkspaceCheckBox.isSelected();
+    if (shareProjectWorkspace != settings.shareProjectWorkspace) {
+      settings.shareProjectWorkspace = shareProjectWorkspace;
+      settingsModified = true;
+    }
 
-    ApplicationManager.getApplication().executeOnPooledThread(new Callable<Object>() {
-      @Override
-      public Object call() throws Exception {
-        IcsManager.getInstance().getSettings().save();
-        return null;
-      }
-    });
+    if (!saveRemoteRepositoryUrl()) {
+      return false;
+    }
+
+    if (settingsModified) {
+      ApplicationManager.getApplication().executeOnPooledThread(new Callable<Object>() {
+        @Override
+        public Object call() throws Exception {
+          IcsManager.getInstance().getSettings().save();
+          return null;
+        }
+      });
+    }
+
+    return true;
   }
 
   private boolean saveRemoteRepositoryUrl() {
+    RepositoryManager repositoryManager = IcsManager.getInstance().getRepositoryManager();
     String url = StringUtil.nullize(urlTextField.getText());
     if (url != null) {
       boolean isFile;
@@ -137,16 +155,22 @@ public class IcsSettingsPanel extends DialogWrapper {
         isFile = !URLUtil.containsScheme(url);
       }
 
-      if (isFile && !checkFileRepo(url)) {
+      if (isFile && !checkFileRepo(url, repositoryManager)) {
         return false;
       }
     }
-    IcsManager.getInstance().getRepositoryManager().setRemoteRepositoryUrl(url);
-    return true;
+
+    try {
+      repositoryManager.setRemoteRepositoryUrl(url);
+      return true;
+    }
+    catch (Exception e) {
+      Messages.showErrorDialog(getContentPane(), IcsBundle.message("set.upstream.failed.message", e.getMessage()), IcsBundle.message("set.upstream.failed.title"));
+      return false;
+    }
   }
 
-  @SuppressWarnings("DialogTitleCapitalization")
-  private boolean checkFileRepo(@NotNull String url) {
+  private boolean checkFileRepo(@NotNull String url, @NotNull RepositoryManager repositoryManager) {
     String suffix = '/' + Constants.DOT_GIT;
     if (url.endsWith(suffix)) {
       url = url.substring(0, url.length() - suffix.length());
@@ -155,17 +179,18 @@ public class IcsSettingsPanel extends DialogWrapper {
     File file = new File(url);
     if (file.exists()) {
       if (!file.isDirectory()) {
-        Messages.showErrorDialog(getContentPane(), "Specified path is not a directory", "Specified path is invalid");
+        //noinspection DialogTitleCapitalization
+        Messages.showErrorDialog(getContentPane(), "Specified path is not a directory", "Specified Path is Invalid");
         return false;
       }
-      else if (IcsManager.getInstance().getRepositoryManager().isValidRepository(file)) {
+      else if (repositoryManager.isValidRepository(file)) {
         return true;
       }
     }
 
     if (Messages.showYesNoDialog(getContentPane(), IcsBundle.message("init.dialog.message"), IcsBundle.message("init.dialog.title"), Messages.getQuestionIcon()) == Messages.YES) {
       try {
-        IcsManager.getInstance().getRepositoryManager().initRepository(file);
+        repositoryManager.initRepository(file);
         return true;
       }
       catch (IOException e) {

@@ -15,7 +15,11 @@ public interface RepositoryManager {
   @Nullable
   String getRemoteRepositoryUrl();
 
-  void setRemoteRepositoryUrl(@Nullable String url);
+  @Nullable
+  /**
+   * Return error message if failed
+   */
+  void setRemoteRepositoryUrl(@Nullable String url) throws Exception;
 
   @Nullable
   InputStream read(@NotNull String path) throws IOException;

@@ -58,7 +58,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
 
   private volatile boolean autoCommitEnabled = true;
 
-  private static void awaitCallback(@NotNull ProgressIndicator indicator, @NotNull ActionCallback callback, @NotNull String title) {
+  public static void awaitCallback(@NotNull ProgressIndicator indicator, @NotNull ActionCallback callback, @NotNull String title) {
     while (!callback.isProcessed()) {
       try {
         //noinspection BusyWait
@@ -82,7 +82,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
 
   @NotNull
   public static File getPluginSystemDir() {
-    return new File(PathManager.getSystemPath(), "ideaConfigurationServer");
+    return new File(PathManager.getSystemPath(), "settingsRepository");
   }
 
   public IcsStatus getStatus() {
@@ -218,8 +218,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
 
   @NotNull
   public ActionCallback sync(@NotNull SyncType syncType) {
-    autoCommitEnabled = false;
-    commitAlarm.cancel();
+    cancelAndDisableAutoCommit();
 
     final ActionCallback actionCallback = new ActionCallback(3);
     ProgressManager.getInstance().run(new Task.Modal(null, IcsBundle.message("task.sync.title"), true) {
@@ -247,6 +246,21 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
       }
     });
     return actionCallback;
+  }
+
+  private void cancelAndDisableAutoCommit() {
+    autoCommitEnabled = false;
+    commitAlarm.cancel();
+  }
+
+  public void runInAutoCommitDisabledMode(@NotNull Runnable runnable) {
+    cancelAndDisableAutoCommit();
+    try {
+      runnable.run();
+    }
+    finally {
+      autoCommitEnabled = true;
+    }
   }
 
   private class IcsStreamProvider extends StreamProvider {
