@@ -40,7 +40,7 @@ public class FilterGraphWithHiddenNodes implements LinearGraphWithHiddenNodes {
   private final Flags myVisibleNodes;
 
   @NotNull
-  private final MultiMap<Integer, Integer> myDottedEdges;
+  private final DottedEdges myDottedEdges;
 
   @NotNull
   private final SetListenerController<UpdateListener> myListenerController = new SetListenerController<UpdateListener>();
@@ -51,7 +51,10 @@ public class FilterGraphWithHiddenNodes implements LinearGraphWithHiddenNodes {
     for (int i = 0; i < delegateGraph.nodesCount(); i++) {
       myVisibleNodes.set(i, delegateGraph.nodeIsVisible(i) && isVisibleNode.value(i)); // todo: think about it: may be drop myVisibleNodes
     }
-    myDottedEdges = DottedEdgesComputer.compute(myDelegateGraph, myVisibleNodes);
+
+    MultiMap<Integer, Integer> edges = DottedEdgesComputer.compute(myDelegateGraph, myVisibleNodes);
+    myDottedEdges = DottedEdges.newInstance(edges);
+
     addUpdateListener();
   }
 
@@ -83,7 +86,7 @@ public class FilterGraphWithHiddenNodes implements LinearGraphWithHiddenNodes {
   @NotNull
   @Override
   public GraphEdge.Type getEdgeType(int upNodeIndex, int downNodeIndex) {
-    if (myDottedEdges.get(upNodeIndex).contains(downNodeIndex))
+    if (myDottedEdges.getAdjacentNodes(upNodeIndex).contains(downNodeIndex))
       return GraphEdge.Type.HIDE;
     else
       return GraphEdge.Type.USUAL;
@@ -108,7 +111,7 @@ public class FilterGraphWithHiddenNodes implements LinearGraphWithHiddenNodes {
       if (nodeIsVisible(upNode))
         upNodes.add(upNode);
     }
-    for (int adjNode : myDottedEdges.get(nodeIndex)) {
+    for (int adjNode : myDottedEdges.getAdjacentNodes(nodeIndex)) {
       if (adjNode < nodeIndex)
         upNodes.add(adjNode);
     }
@@ -123,7 +126,7 @@ public class FilterGraphWithHiddenNodes implements LinearGraphWithHiddenNodes {
       if (downNode != LinearGraph.NOT_LOAD_COMMIT && nodeIsVisible(downNode))
         downNodes.add(downNode);
     }
-    for (int adjNode : myDottedEdges.get(nodeIndex)) {
+    for (int adjNode : myDottedEdges.getAdjacentNodes(nodeIndex)) {
       if (adjNode > nodeIndex)
         downNodes.add(adjNode);
     }
