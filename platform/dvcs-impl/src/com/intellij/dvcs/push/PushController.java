@@ -200,19 +200,18 @@ public class PushController implements Disposable {
         OutgoingResult outgoing = result.get();
         List<VcsError> errors = outgoing.getErrors();
         if (!errors.isEmpty()) {
-          final CommitLoader loader = new CommitLoader() {
-            @Override
-            public void reloadCommits() {
-              loadCommits(model, node, false);
-            }
-          };
           myPushLog.setChildren(node, ContainerUtil.map(errors, new Function<VcsError, DefaultMutableTreeNode>() {
             @Override
             public DefaultMutableTreeNode fun(final VcsError error) {
               VcsLinkedText errorLinkText = new VcsLinkedText(error.getText(), new VcsLinkListener() {
                 @Override
                 public void hyperlinkActivated(@NotNull DefaultMutableTreeNode sourceNode) {
-                  error.handleError(loader);
+                  error.handleError(new CommitLoader() {
+                    @Override
+                    public void reloadCommits() {
+                      loadCommits(model, node, false);
+                    }
+                  });
                 }
               });
               return new TextWithLinkNode(errorLinkText);

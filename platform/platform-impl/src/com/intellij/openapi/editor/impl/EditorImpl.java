@@ -2767,16 +2767,19 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (collapsedFolderAt == null) {
           int i = drawStringWithSoftWraps(g, chars, start, lEnd - lIterator.getSeparatorLength(), position, clip, effectColor,
                                                 effectType, fontType, currentColor, logicalPosition);
-          for (EditorLinePainter painter : EditorLinePainter.EP_NAME.getExtensions()) {
-            Collection<LineExtensionInfo> extensions = painter.getLineExtensions(myProject, getVirtualFile(), lIterator.getLineNumber());
-            if (extensions != null && !extensions.isEmpty()) {
-              for (LineExtensionInfo info : extensions) {
-                drawStringWithSoftWraps(g, info.getText(), 0, info.getText().length(), position, clip,
-                                        info.getEffectColor() == null ? effectColor : info.getEffectColor(),
-                                        info.getEffectType() == null ? effectType : info.getEffectType(),
-                                        info.getFontType(),
-                                        info.getColor() == null ? currentColor : info.getColor(),
-                                        logicalPosition);
+          final VirtualFile file = getVirtualFile();
+          if (myProject != null && file != null && !isOneLineMode()) {
+            for (EditorLinePainter painter : EditorLinePainter.EP_NAME.getExtensions()) {
+              Collection<LineExtensionInfo> extensions = painter.getLineExtensions(myProject, file, lIterator.getLineNumber());
+              if (extensions != null && !extensions.isEmpty()) {
+                for (LineExtensionInfo info : extensions) {
+                  drawStringWithSoftWraps(g, info.getText(), 0, info.getText().length(), position, clip,
+                                          info.getEffectColor() == null ? effectColor : info.getEffectColor(),
+                                          info.getEffectType() == null ? effectType : info.getEffectType(),
+                                          info.getFontType(),
+                                          info.getColor() == null ? currentColor : info.getColor(),
+                                          logicalPosition);
+                }
               }
             }
           }
