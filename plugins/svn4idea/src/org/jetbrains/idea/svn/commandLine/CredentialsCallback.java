@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.auth.AuthenticationService;
 import org.tmatesoft.svn.core.SVNURL;
 
 /**
@@ -26,8 +27,8 @@ public class CredentialsCallback extends AuthCallbackCase {
 
   private static final String AUTHENTICATION_REALM = "Authentication realm:";
 
-  CredentialsCallback(@NotNull AuthenticationCallback callback, SVNURL url) {
-    super(callback, url);
+  CredentialsCallback(@NotNull AuthenticationService authenticationService, SVNURL url) {
+    super(authenticationService, url);
   }
 
   @Override
@@ -43,10 +44,10 @@ public class CredentialsCallback extends AuthCallbackCase {
       : null;
     final boolean isPassword = StringUtil.containsIgnoreCase(errText, "password");
     if (myTried) {
-      myAuthenticationCallback.clearPassiveCredentials(realm, myUrl, isPassword);
+      myAuthenticationService.clearPassiveCredentials(realm, myUrl, isPassword);
     }
     myTried = true;
-    if (myAuthenticationCallback.authenticateFor(realm, myUrl, myAuthenticationCallback.getSpecialConfigDir() != null, isPassword)) {
+    if (myAuthenticationService.authenticateFor(realm, myUrl, isPassword)) {
       return true;
     }
     throw new SvnBindException("Authentication canceled for realm: " + realm);

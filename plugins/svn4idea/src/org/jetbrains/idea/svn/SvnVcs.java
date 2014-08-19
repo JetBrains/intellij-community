@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.*;
@@ -63,10 +64,7 @@ import org.jetbrains.idea.svn.actions.CleanupWorker;
 import org.jetbrains.idea.svn.actions.ShowPropertiesDiffWithLocalAction;
 import org.jetbrains.idea.svn.actions.SvnMergeProvider;
 import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
-import org.jetbrains.idea.svn.api.ClientFactory;
-import org.jetbrains.idea.svn.api.CmdClientFactory;
-import org.jetbrains.idea.svn.api.Depth;
-import org.jetbrains.idea.svn.api.SvnKitClientFactory;
+import org.jetbrains.idea.svn.api.*;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationNotifier;
 import org.jetbrains.idea.svn.branchConfig.SvnLoadedBranchesStorage;
 import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
@@ -264,13 +262,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   public boolean checkCommandLineVersion() {
-    boolean isValid = true;
-
-    if (!isProject16() && (myConfiguration.isCommandLine() || isProject18OrGreater())) {
-      isValid = myChecker.checkExecutableAndNotifyIfNeeded();
-    }
-
-    return isValid;
+    return getFactory() != cmdClientFactory || myChecker.checkExecutableAndNotifyIfNeeded();
   }
 
   public void invokeRefreshSvnRoots() {
@@ -922,13 +914,9 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public boolean isVcsBackgroundOperationsAllowed(@NotNull VirtualFile root) {
-    // TODO: Currently myAuthNotifier.isAuthenticatedFor directly uses SVNKit to check credentials - so assume for now that background
-    // TODO: operations are always allowed for command line. As sometimes this leads to errors - for instance, incoming changes are not
-    // TODO: displayed in "Incoming" tab - incoming changes are collected using command line but not displayed because
-    // TODO: SvnVcs.isVcsBackgroundOperationsAllowed is false.
     ClientFactory factory = getFactory(VfsUtilCore.virtualToIoFile(root));
 
-    return factory == cmdClientFactory || ThreeState.YES.equals(myAuthNotifier.isAuthenticatedFor(root));
+    return ThreeState.YES.equals(myAuthNotifier.isAuthenticatedFor(root, factory == cmdClientFactory ? factory : null));
   }
 
   public SvnBranchPointsCalculator getSvnBranchPointsCalculator() {
@@ -951,14 +939,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   @NotNull
   public SvnKitManager getSvnKitManager() {
     return svnKitManager;
-  }
-
-  public boolean isProject18OrGreater() {
-    return getProjectRootFormat().isOrGreater(WorkingCopyFormat.ONE_DOT_EIGHT);
-  }
-
-  public boolean isProject16() {
-    return WorkingCopyFormat.ONE_DOT_SIX.equals(getProjectRootFormat());
   }
 
   @NotNull
@@ -1000,12 +980,13 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   @NotNull
   private ClientFactory getFactory(@NotNull WorkingCopyFormat format, boolean useProjectRootForUnknown) {
     boolean is18OrGreater = format.isOrGreater(WorkingCopyFormat.ONE_DOT_EIGHT);
-    boolean is16 = WorkingCopyFormat.ONE_DOT_SIX.equals(format);
     boolean isUnknown = WorkingCopyFormat.UNKNOWN.equals(format);
 
     return is18OrGreater
            ? cmdClientFactory
-           : (is16 ? svnKitClientFactory : (useProjectRootForUnknown && isUnknown ? getFactory() : getFactoryFromSettings()));
+           : (!isUnknown && !isSupportedByCommandLine(format)
+              ? svnKitClientFactory
+              : (useProjectRootForUnknown && isUnknown ? getFactory() : getFactoryFromSettings()));
   }
 
   @NotNull
@@ -1036,5 +1017,27 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   @NotNull
   public ClientFactory getSvnKitFactory() {
     return svnKitClientFactory;
+  }
+
+  @NotNull
+  public WorkingCopyFormat getLowestSupportedFormatForCommandLine() {
+    WorkingCopyFormat result;
+
+    try {
+      result = WorkingCopyFormat.from(CmdVersionClient.parseVersion(Registry.stringValue("svn.lowest.supported.format.for.command.line")));
+    }
+    catch (SvnBindException ignore) {
+      result = WorkingCopyFormat.ONE_DOT_SEVEN;
+    }
+
+    return result;
+  }
+
+  public boolean isSupportedByCommandLine(@NotNull WorkingCopyFormat format) {
+    return format.isOrGreater(getLowestSupportedFormatForCommandLine());
+  }
+
+  public boolean is16SupportedByCommandLine() {
+    return isSupportedByCommandLine(WorkingCopyFormat.ONE_DOT_SIX);
   }
 }

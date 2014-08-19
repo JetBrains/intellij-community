@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.WaitForProgressToShow;
@@ -32,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.commandLine.AuthenticationCallback;
 import org.jetbrains.idea.svn.dialogs.SimpleCredentialsDialog;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
@@ -52,16 +50,19 @@ import java.util.Set;
  * Date: 2/26/13
  * Time: 1:27 PM
  */
-public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCallback {
+public class AuthenticationService {
+
   @NotNull private final SvnVcs myVcs;
-  private static final Logger LOG = Logger.getInstance(IdeaSvnkitBasedAuthenticationCallback.class);
+  private final boolean myIsActive;
+  private static final Logger LOG = Logger.getInstance(AuthenticationService.class);
   private File myTempDirectory;
   private boolean myProxyCredentialsWereReturned;
   private SvnConfiguration myConfiguration;
   private final Set<String> myRequestedCredentials;
 
-  public IdeaSvnkitBasedAuthenticationCallback(@NotNull SvnVcs vcs) {
+  public AuthenticationService(@NotNull SvnVcs vcs, boolean isActive) {
     myVcs = vcs;
+    myIsActive = isActive;
     myConfiguration = SvnConfiguration.getInstance(myVcs.getProject());
     myRequestedCredentials = ContainerUtil.newHashSet();
   }
@@ -76,8 +77,11 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     return myTempDirectory;
   }
 
-  @Override
-  public boolean authenticateFor(String realm, SVNURL repositoryUrl, boolean previousFailed, boolean passwordRequest) {
+  public boolean isActive() {
+    return myIsActive;
+  }
+
+  public boolean authenticateFor(@Nullable String realm, SVNURL repositoryUrl, boolean passwordRequest) {
     if (repositoryUrl == null) {
       return false;
     }
@@ -85,20 +89,17 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
   }
 
   @Nullable
-  @Override
   public SVNAuthentication requestCredentials(final SVNURL repositoryUrl, final String type) {
     SVNAuthentication authentication = null;
 
     if (repositoryUrl != null) {
       final String realm = repositoryUrl.toDecodedString();
 
-      authentication = requestCredentials(realm, type, new Getter<Pair<SVNAuthentication, Boolean>>() {
+      authentication = requestCredentials(realm, type, new Getter<SVNAuthentication>() {
         @Override
-        public Pair<SVNAuthentication, Boolean> get() {
-          SVNAuthentication result = myVcs.getSvnConfiguration().getInteractiveManager(myVcs).getInnerProvider()
+        public SVNAuthentication get() {
+          return myVcs.getSvnConfiguration().getInteractiveManager(myVcs).getInnerProvider()
             .requestClientAuthentication(type, repositoryUrl, realm, null, null, true);
-
-          return new Pair<SVNAuthentication, Boolean>(result, true);
         }
       });
     }
@@ -111,8 +112,8 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
   }
 
   @Nullable
-  private <T> T requestCredentials(@NotNull String realm, @NotNull String type, @NotNull Getter<Pair<T, Boolean>> fromUserProvider) {
-    T result;
+  private <T> T requestCredentials(@NotNull String realm, @NotNull String type, @NotNull Getter<T> fromUserProvider) {
+    T result = null;
     // Search for stored credentials not only by key but also by "parent" keys. This is useful when we work just with URLs
     // (not working copy) and can't detect repository url beforehand because authentication is required. If found credentials of "parent"
     // are not correct then current key will already be stored in myRequestedCredentials - thus user will be asked for credentials and
@@ -126,12 +127,10 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
       result = (T)data;
       myRequestedCredentials.add(key);
     }
-    else {
+    else if (myIsActive) {
       // ask user for credentials
-      Pair<T, Boolean> userData = fromUserProvider.get();
-      result = userData.first;
-
-      if (result != null && userData.second) {
+      result = fromUserProvider.get();
+      if (result != null) {
         // save user credentials to memory cache
         myVcs.getSvnConfiguration().acknowledge(type, realm, result);
         myRequestedCredentials.add(key);
@@ -141,14 +140,13 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     return result;
   }
 
-  @Override
   @Nullable
   public String requestSshCredentials(@NotNull final String realm,
                                       @NotNull final SimpleCredentialsDialog.Mode mode,
                                       @NotNull final String key) {
-    return requestCredentials(realm, ISVNAuthenticationManager.SSH, new Getter<Pair<String, Boolean>>() {
+    return requestCredentials(realm, ISVNAuthenticationManager.SSH, new Getter<String>() {
       @Override
-      public Pair<String, Boolean> get() {
+      public String get() {
         final Ref<String> answer = new Ref<String>();
 
         Runnable command = new Runnable() {
@@ -169,12 +167,11 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
         // the thread that started progress
         WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(command, ModalityState.any());
 
-        return new Pair<String, Boolean>(answer.get(), true);
+        return answer.get();
       }
     });
   }
 
-  @Override
   public boolean acceptSSLServerCertificate(final SVNURL repositoryUrl, final String realm) {
     if (repositoryUrl == null) {
       return false;
@@ -183,7 +180,6 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     return new SSLServerCertificateAuthenticator(this, repositoryUrl, realm).tryAuthenticate();
   }
 
-  @Override
   public void clearPassiveCredentials(String realm, SVNURL repositoryUrl, boolean password) {
     if (repositoryUrl == null) {
       return;
@@ -197,7 +193,6 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     }
   }
 
-  @Override
   public boolean haveDataForTmpConfig() {
     final HttpConfigurable instance = HttpConfigurable.getInstance();
     return SvnConfiguration.getInstance(myVcs.getProject()).isIsUseDefaultProxy() &&
@@ -227,7 +222,6 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     return null;
   }
 
-  @Override
   @Nullable
   public PasswordAuthentication getProxyAuthentication(@NotNull SVNURL repositoryUrl) {
     Proxy proxy = getIdeaDefinedProxy(repositoryUrl);
@@ -296,7 +290,6 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
   }
 
   @Nullable
-  @Override
   public File getSpecialConfigDir() {
     return myTempDirectory != null ? myTempDirectory : new File(myConfiguration.getConfigurationDirectory());
   }

@@ -790,7 +790,9 @@ public class SvnUtil {
            e.contains(SVNErrorCode.UNVERSIONED_RESOURCE) ||
            e.contains(SVNErrorCode.WC_NOT_WORKING_COPY) ||
            // thrown when getting info from repository for non-existent item - like HEAD revision for deleted file
-           e.contains(SVNErrorCode.ILLEGAL_TARGET);
+           e.contains(SVNErrorCode.ILLEGAL_TARGET) ||
+           // for svn 1.6
+           StringUtil.containsIgnoreCase(e.getMessage(), "(not a versioned resource)");
   }
 
   // TODO: Create custom Target class and implement append there

@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.commandLine;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.auth.AuthenticationService;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 
@@ -25,10 +26,10 @@ import org.tmatesoft.svn.core.SVNURL;
 public abstract class AuthCallbackCase {
   protected final SVNURL myUrl;
   protected boolean myTried = false;
-  @NotNull protected final AuthenticationCallback myAuthenticationCallback;
+  @NotNull protected final AuthenticationService myAuthenticationService;
 
-  AuthCallbackCase(@NotNull AuthenticationCallback callback, SVNURL url) {
-    myAuthenticationCallback = callback;
+  AuthCallbackCase(@NotNull AuthenticationService authenticationService, SVNURL url) {
+    myAuthenticationService = authenticationService;
     myUrl = url;
   }
 
