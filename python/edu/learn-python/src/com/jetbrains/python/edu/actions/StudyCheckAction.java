@@ -11,6 +11,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -33,7 +35,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 
 public class StudyCheckAction extends DumbAwareAction {
 
@@ -111,13 +114,26 @@ public class StudyCheckAction extends DumbAwareAction {
           if (openedFile != null) {
             StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
             final TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
+            List<VirtualFile> filesToDelete = new ArrayList<VirtualFile>();
             if (selectedTaskFile != null) {
-              VirtualFile windowsDescription = StudyUtils.flushWindows(selectedEditor.getDocument(), selectedTaskFile, openedFile);
-              FileDocumentManager.getInstance().saveAllDocuments();
               final VirtualFile taskDir = openedFile.getParent();
               Task currentTask = selectedTaskFile.getTask();
+              StudyStatus oldStatus = currentTask.getStatus();
+              Map<String, TaskFile> taskFiles = selectedTaskFile.getTask().getTaskFiles();
+              for (Map.Entry<String, TaskFile> entry : taskFiles.entrySet()) {
+                String name = entry.getKey();
+                TaskFile taskFile = entry.getValue();
+                VirtualFile virtualFile = taskDir.findChild(name);
+                if (virtualFile == null) {
+                  continue;
+                }
+                VirtualFile windowFile = StudyUtils.flushWindows(FileDocumentManager.getInstance().getDocument(virtualFile), taskFile, virtualFile);
+                filesToDelete.add(windowFile);
+                FileDocumentManager.getInstance().saveAllDocuments();
+              }
+
               StudyRunAction runAction = (StudyRunAction)ActionManager.getInstance().getAction(StudyRunAction.ACTION_ID);
-              if (runAction != null) {
+              if (runAction != null && currentTask.getTaskFiles().size() == 1) {
                 runAction.run(project);
               }
               final StudyTestRunner testRunner = new StudyTestRunner(currentTask, taskDir);
@@ -131,36 +147,68 @@ public class StudyCheckAction extends DumbAwareAction {
               if (testProcess != null) {
                 String failedMessage = testRunner.getPassedTests(testProcess);
                 if (failedMessage.equals(StudyTestRunner.TEST_OK)) {
-                  currentTask.setStatus(StudyStatus.Solved);
+                  currentTask.setStatus(StudyStatus.Solved, oldStatus);
                   StudyUtils.updateStudyToolWindow(project);
                   selectedTaskFile.drawAllWindows(selectedEditor);
                   ProjectView.getInstance(project).refresh();
+                  for (VirtualFile file:filesToDelete) {
+                    try {
+                      file.delete(this);
+                    }
+                    catch (IOException e) {
+                      LOG.error(e);
+                    }
+                  }
                   createTestResultPopUp("Congratulations!", JBColor.GREEN, project);
                   return;
                 }
-
-                final TaskFile taskFileCopy = new TaskFile();
-                final VirtualFile copyWithAnswers = getCopyWithAnswers(taskDir, openedFile, selectedTaskFile, taskFileCopy);
-                for (final TaskWindow taskWindow : taskFileCopy.getTaskWindows()) {
-                  if (!taskWindow.isValid(selectedEditor.getDocument())) {
+                currentTask.setStatus(StudyStatus.Failed, oldStatus);
+                for (Map.Entry<String, TaskFile> entry : taskFiles.entrySet()) {
+                  String name = entry.getKey();
+                  TaskFile taskFile = entry.getValue();
+                  TaskFile answerTaskFile = new TaskFile();
+                  VirtualFile virtualFile = taskDir.findChild(name);
+                  if (virtualFile == null) {
                     continue;
                   }
-                  check(project, taskWindow, copyWithAnswers, taskFileCopy, selectedTaskFile, selectedEditor.getDocument(), testRunner,
-                        openedFile);
+                  VirtualFile answerFile = getCopyWithAnswers(taskDir, virtualFile, taskFile, answerTaskFile);
+                  for (TaskWindow taskWindow : answerTaskFile.getTaskWindows()) {
+                    Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+                    if (document == null) {
+                      continue;
+                    }
+                    if (!taskWindow.isValid(document)) {
+                      continue;
+                    }
+                    check(project, taskWindow, answerFile, answerTaskFile, taskFile, document, testRunner, virtualFile);
+                  }
+                  FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(virtualFile);
+                  Editor editor = null;
+                  if (fileEditor instanceof StudyEditor) {
+                    StudyEditor studyEditor = (StudyEditor) fileEditor;
+                    editor = studyEditor.getEditor();
+                  }
+
+                  if (editor != null) {
+                    taskFile.drawAllWindows(editor);
+                    StudyUtils.synchronize();
+                  }
+                  try {
+                    answerFile.delete(this);
+                  }
+                  catch (IOException e) {
+                    LOG.error(e);
+                  }
                 }
-                try {
-                  copyWithAnswers.delete(this);
+                for (VirtualFile file:filesToDelete) {
+                  try {
+                    file.delete(this);
+                  }
+                  catch (IOException e) {
+                    LOG.error(e);
+                  }
                 }
-                catch (IOException e) {
-                  LOG.error(e);
-                }
-                try {
-                  windowsDescription.delete(this);
-                }
-                catch (IOException e) {
-                  LOG.error("failed to delete windows description", e);
-                }
-                selectedTaskFile.drawAllWindows(selectedEditor);
+                StudyUtils.updateStudyToolWindow(project);
                 createTestResultPopUp(failedMessage, JBColor.RED, project);
               }
             }
@@ -183,7 +231,7 @@ public class StudyCheckAction extends DumbAwareAction {
                      VirtualFile openedFile) {
 
     try {
-      VirtualFile windowCopy = answerFile.copy(this, answerFile.getParent(), "window" + taskWindow.getIndex() + ".py");
+       VirtualFile windowCopy = answerFile.copy(this, answerFile.getParent(), answerFile.getNameWithoutExtension() + "_window" + taskWindow.getIndex() + ".py");
       final FileDocumentManager documentManager = FileDocumentManager.getInstance();
       final Document windowDocument = documentManager.getDocument(windowCopy);
       if (windowDocument != null) {
@@ -216,7 +264,7 @@ public class StudyCheckAction extends DumbAwareAction {
         VirtualFile fileWindows = StudyUtils.flushWindows(windowDocument, windowTaskFile, windowCopy);
         Process smartTestProcess = testRunner.launchTests(project, windowCopy.getPath());
         boolean res = testRunner.getPassedTests(smartTestProcess).equals(StudyTestRunner.TEST_OK);
-        userTaskWindow.setStatus(res ? StudyStatus.Solved : StudyStatus.Failed);
+        userTaskWindow.setStatus(res ? StudyStatus.Solved : StudyStatus.Failed, StudyStatus.Unchecked);
         windowCopy.delete(this);
         fileWindows.delete(this);
         if (!resourceFile.delete()) {
@@ -240,7 +288,7 @@ public class StudyCheckAction extends DumbAwareAction {
     VirtualFile copy = null;
     try {
 
-      copy = file.copy(this, taskDir, "answers.py");
+      copy = file.copy(this, taskDir, file.getNameWithoutExtension() +"_answers.py");
       final FileDocumentManager documentManager = FileDocumentManager.getInstance();
       final Document document = documentManager.getDocument(copy);
       if (document != null) {

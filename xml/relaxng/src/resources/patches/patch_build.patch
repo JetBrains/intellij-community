@@ -1,7 +1,8 @@
-diff -r dd84d714a0da build.py
---- a/build.py	Fri Oct 25 13:00:39 2013 +0900
-+++ b/build.py	Fri Jan 24 13:53:06 2014 +0400
-@@ -147,8 +147,8 @@
+diff --git a/build.py b/build.py
+index ac7ecb3..db7de9c 100755
+--- a/build.py
++++ b/build.py
+@@ -153,13 +153,13 @@ dependencyJars = runDependencyJars + buildOnlyDependencyJars
  
  moduleNames = [
    "syntax",
@@ -10,9 +11,18 @@ diff -r dd84d714a0da build.py
 +  # "util",
 +  # "xmlparser",
    "validator",
+-  "jing-trang",
+-  "htmlparser",
+-  "nu-validator-site",
+-  "tests",
++  # "jing-trang",
++  # "htmlparser",
++  # "nu-validator-site",
++  # "tests",
  ]
  
-@@ -875,19 +875,19 @@
+ javaSafeNamePat = re.compile(r'[^a-zA-Z0-9]')
+@@ -926,19 +926,19 @@ def downloadDependencies():
      downloadDependency(url, md5sum)
  
  def buildAll():
@@ -42,36 +52,5 @@ diff -r dd84d714a0da build.py
 +  # buildXmlParser()
 +  # buildValidator()
  
- def hgCloneOrUpdate(mod, baseUrl):
+ def gitCloneOrUpdate(mod, baseUrl):
    if os.path.exists(mod):
-@@ -925,18 +925,18 @@
-   # XXX root dir
-   for mod in moduleNames:
-     hgCloneOrUpdate(mod, hgRoot)
--  gitCloneOrUpdate("nu-validator-site", gitRoot)
--  runCmd('"%s" co http://jing-trang.googlecode.com/svn/branches/validator-nu jing-trang' % (svnCmd))
--  hgCloneOrUpdate("htmlparser", parserHgRoot)
--  testsRemote = "https://github.com/validator/tests.git"
--  testsBranch = "master"
--  testsDir = "tests"
--  if os.path.exists(testsDir):
--    os.chdir(testsDir)
--    runCmd('"%s" pull %s %s' % (gitCmd, testsRemote, testsBranch))
--    os.chdir("..")
--  else:
--    runCmd('"%s" clone %s %s' % (gitCmd, testsRemote, testsDir))
-+  # gitCloneOrUpdate("nu-validator-site", gitRoot)
-+  # runCmd('"%s" co http://jing-trang.googlecode.com/svn/branches/validator-nu jing-trang' % (svnCmd))
-+  # hgCloneOrUpdate("htmlparser", parserHgRoot)
-+  # testsRemote = "https://github.com/validator/tests.git"
-+  # testsBranch = "master"
-+  # testsDir = "tests"
-+  # if os.path.exists(testsDir):
-+  #   os.chdir(testsDir)
-+  #   runCmd('"%s" pull %s %s' % (gitCmd, testsRemote, testsBranch))
-+  #   os.chdir("..")
-+  # else:
-+  #   runCmd('"%s" clone %s %s' % (gitCmd, testsRemote, testsDir))
- 
- def selfUpdate():
-   hgCloneOrUpdate("build", hgRoot)

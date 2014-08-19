@@ -161,19 +161,22 @@
     </annotation>
   </item>
   <item name="org.apache.commons.lang.text.StrBuilder org.apache.commons.lang.text.StrBuilder appendAll(java.lang.Object[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;null-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.text.StrBuilder org.apache.commons.lang.text.StrBuilder appendAll(java.util.Collection)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;null-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.text.StrBuilder org.apache.commons.lang.text.StrBuilder appendAll(java.util.Iterator)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;null-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.text.StrBuilder org.apache.commons.lang.text.StrBuilder appendFixedWidthPadLeft(java.lang.Object, int, char)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.text.StrBuilder org.apache.commons.lang.text.StrBuilder appendFixedWidthPadRight(java.lang.Object, int, char)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.text.StrBuilder org.apache.commons.lang.text.StrBuilder appendPadding(int, char)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.text.StrBuilder org.apache.commons.lang.text.StrBuilder appendSeparator(char)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -188,19 +191,13 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.text.StrBuilder org.apache.commons.lang.text.StrBuilder appendWithSeparators(java.lang.Object[], java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;null,_-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.text.StrBuilder org.apache.commons.lang.text.StrBuilder appendWithSeparators(java.util.Collection, java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;null,_-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.text.StrBuilder org.apache.commons.lang.text.StrBuilder appendWithSeparators(java.util.Iterator, java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;null,_-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.text.StrBuilder org.apache.commons.lang.text.StrBuilder clear()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -208,7 +205,16 @@
   <item name="org.apache.commons.lang.text.StrBuilder org.apache.commons.lang.text.StrBuilder delete(int, int)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.text.StrBuilder org.apache.commons.lang.text.StrBuilder deleteAll(char)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.text.StrBuilder org.apache.commons.lang.text.StrBuilder deleteAll(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
   <item name="org.apache.commons.lang.text.StrBuilder org.apache.commons.lang.text.StrBuilder deleteCharAt(int)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.text.StrBuilder org.apache.commons.lang.text.StrBuilder deleteFirst(char)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.text.StrBuilder org.apache.commons.lang.text.StrBuilder deleteFirst(java.lang.String)">
@@ -243,25 +249,39 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.text.StrBuilder org.apache.commons.lang.text.StrBuilder replace(org.apache.commons.lang.text.StrMatcher, java.lang.String, int, int, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;null,_,_,_,_-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.text.StrBuilder org.apache.commons.lang.text.StrBuilder replaceAll(char, char)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.text.StrBuilder org.apache.commons.lang.text.StrBuilder replaceAll(java.lang.String, java.lang.String)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.text.StrBuilder org.apache.commons.lang.text.StrBuilder replaceFirst(char, char)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.text.StrBuilder org.apache.commons.lang.text.StrBuilder replaceFirst(java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.text.StrBuilder org.apache.commons.lang.text.StrBuilder replaceImpl(org.apache.commons.lang.text.StrMatcher, java.lang.String, int, int, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;null,_,_,_,_-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.text.StrBuilder org.apache.commons.lang.text.StrBuilder reverse()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.text.StrBuilder org.apache.commons.lang.text.StrBuilder setCharAt(int, char)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.text.StrBuilder org.apache.commons.lang.text.StrBuilder setLength(int)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.text.StrBuilder org.apache.commons.lang.text.StrBuilder setNewLineText(java.lang.String)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.text.StrBuilder org.apache.commons.lang.text.StrBuilder setNullText(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.text.StrBuilder org.apache.commons.lang.text.StrBuilder trim()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.text.StrBuilder org.apache.commons.lang.text.StrTokenizer asTokenizer()">

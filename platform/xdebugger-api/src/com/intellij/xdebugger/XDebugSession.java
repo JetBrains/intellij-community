@@ -21,6 +21,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -45,6 +46,7 @@ import javax.swing.event.HyperlinkListener;
  * @author nik
  */
 public interface XDebugSession extends AbstractDebuggerSession {
+  DataKey<XDebugSession> DATA_KEY = DataKey.create("XDebugSessionTab.XDebugSession");
 
   @NotNull
   Project getProject();

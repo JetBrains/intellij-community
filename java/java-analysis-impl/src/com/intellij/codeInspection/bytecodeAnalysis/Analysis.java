@@ -15,7 +15,10 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
-import gnu.trove.TIntObjectHashMap;
+import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph;
+import com.intellij.codeInspection.bytecodeAnalysis.asm.DFSTree;
+import com.intellij.codeInspection.bytecodeAnalysis.asm.RichControlFlow;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.tree.MethodNode;
@@ -70,6 +73,12 @@ class AbstractValues {
       this.inters = inters;
     }
   }
+
+  static final BasicValue CLASS_VALUE = new NotNullValue(Type.getObjectType("java/lang/Class"));
+  static final BasicValue METHOD_VALUE = new NotNullValue(Type.getObjectType("java/lang/invoke/MethodType"));
+  static final BasicValue STRING_VALUE = new NotNullValue(Type.getObjectType("java/lang/String"));
+  static final BasicValue METHOD_HANDLE_VALUE = new NotNullValue(Type.getObjectType("java/lang/invoke/MethodHandle"));
+
 
   static boolean isInstance(Conf curr, Conf prev) {
     if (curr.insnIndex != prev.insnIndex) {
@@ -187,27 +196,8 @@ final class State {
   }
 }
 
-interface PendingAction<Res> {}
-class ProceedState<Res> implements PendingAction<Res> {
-  final State state;
-
-  ProceedState(State state) {
-    this.state = state;
-  }
-}
-class MakeResult<Res> implements PendingAction<Res> {
-  final State state;
-  final Res subResult;
-  final int[] indices;
-
-  MakeResult(State state, Res subResult, int[] indices) {
-    this.state = state;
-    this.subResult = subResult;
-    this.indices = indices;
-  }
-}
-
 abstract class Analysis<Res> {
+
   public static final int STEPS_LIMIT = 30000;
   public static final int EQUATION_SIZE_LIMIT = 30;
   final RichControlFlow richControlFlow;
@@ -216,20 +206,11 @@ abstract class Analysis<Res> {
   final MethodNode methodNode;
   final Method method;
   final DFSTree dfsTree;
-  final Res myIdentity;
 
-  final Deque<PendingAction<Res>> pending = new LinkedList<PendingAction<Res>>();
-  final TIntObjectHashMap<List<State>> computed = new TIntObjectHashMap<List<State>>();
-  final TIntObjectHashMap<Res> results = new TIntObjectHashMap<Res>();
+  final protected List<State>[] computed;
   final Key aKey;
 
   Res earlyResult = null;
-
-  abstract Res identity();
-  abstract Res combineResults(Res delta, List<Res> subResults) throws AnalyzerException;
-  abstract boolean isEarlyResult(Res res);
-  abstract Equation<Key, Value> mkEquation(Res result);
-  abstract void processState(State state) throws AnalyzerException;
 
   protected Analysis(RichControlFlow richControlFlow, Direction direction, boolean stable) {
     this.richControlFlow = richControlFlow;
@@ -239,7 +220,7 @@ abstract class Analysis<Res> {
     method = new Method(controlFlow.className, methodNode.name, methodNode.desc);
     dfsTree = richControlFlow.dfsTree;
     aKey = new Key(method, direction, stable);
-    myIdentity = identity();
+    computed = (List<State>[]) new List[controlFlow.transitions.length];
   }
 
   final State createStartState() {
@@ -269,87 +250,8 @@ abstract class Analysis<Res> {
     return true;
   }
 
-  final Equation<Key, Value> analyze() throws AnalyzerException {
-    pending.push(new ProceedState<Res>(createStartState()));
-    int steps = 0;
-    while (!pending.isEmpty() && earlyResult == null) {
-      steps ++;
-      if (steps >= STEPS_LIMIT) {
-        throw new AnalyzerException(null, "limit is reached, steps: " + steps + " in method " + method);
-      }
-      PendingAction<Res> action = pending.pop();
-      if (action instanceof MakeResult) {
-        MakeResult<Res> makeResult = (MakeResult<Res>) action;
-        ArrayList<Res> subResults = new ArrayList<Res>();
-        for (int index : makeResult.indices) {
-          subResults.add(results.get(index));
-        }
-        Res result = combineResults(makeResult.subResult, subResults);
-        if (isEarlyResult(result)) {
-          earlyResult = result;
-        } else {
-          State state = makeResult.state;
-          int insnIndex = state.conf.insnIndex;
-          results.put(state.index, result);
-          List<State> thisComputed = computed.get(insnIndex);
-          if (thisComputed == null) {
-            thisComputed = new ArrayList<State>();
-            computed.put(insnIndex, thisComputed);
-          }
-          thisComputed.add(state);
-        }
-      }
-      else if (action instanceof ProceedState) {
-        ProceedState<Res> proceedState = (ProceedState<Res>) action;
-        State state = proceedState.state;
-        int insnIndex = state.conf.insnIndex;
-        Conf conf = state.conf;
-        List<Conf> history = state.history;
-
-        boolean fold = false;
-        if (dfsTree.loopEnters.contains(insnIndex)) {
-          for (Conf prev : history) {
-            if (AbstractValues.isInstance(conf, prev)) {
-              fold = true;
-            }
-          }
-        }
-        if (fold) {
-          results.put(state.index, myIdentity);
-          List<State> thisComputed = computed.get(insnIndex);
-          if (thisComputed == null) {
-            thisComputed = new ArrayList<State>();
-            computed.put(insnIndex, thisComputed);
-          }
-          thisComputed.add(state);
-        }
-        else {
-          State baseState = null;
-          List<State> thisComputed = computed.get(insnIndex);
-          if (thisComputed != null) {
-            for (State prevState : thisComputed) {
-              if (stateEquiv(state, prevState)) {
-                baseState = prevState;
-                break;
-              }
-            }
-          }
-          if (baseState != null) {
-            results.put(state.index, results.get(baseState.index));
-          } else {
-            // the main call
-            processState(state);
-          }
-
-        }
-      }
-    }
-    if (earlyResult != null) {
-      return mkEquation(earlyResult);
-    } else {
-      return mkEquation(results.get(0));
-    }
-  }
+  @NotNull
+  protected abstract Equation<Key, Value> analyze() throws AnalyzerException;
 
   final Frame<BasicValue> createStartFrame() {
     Frame<BasicValue> frame = new Frame<BasicValue>(methodNode.maxLocals, methodNode.maxStack);
@@ -395,5 +297,14 @@ abstract class Analysis<Res> {
     }
     result.add(x);
     return result;
+  }
+
+  protected void addComputed(int i, State s) {
+    List<State> states = computed[i];
+    if (states == null) {
+      states = new ArrayList<State>();
+      computed[i] = states;
+    }
+    states.add(s);
   }
 }

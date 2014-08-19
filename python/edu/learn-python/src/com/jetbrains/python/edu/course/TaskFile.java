@@ -200,9 +200,9 @@ public class TaskFile implements Stateful{
     this.taskWindows = taskWindows;
   }
 
-  public void setStatus(@NotNull final StudyStatus status) {
+  public void setStatus(@NotNull final StudyStatus status, @NotNull final StudyStatus oldStatus) {
     for (TaskWindow taskWindow : taskWindows) {
-      taskWindow.setStatus(status);
+      taskWindow.setStatus(status, oldStatus);
     }
   }
 

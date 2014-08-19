@@ -27,6 +27,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
@@ -92,10 +93,8 @@ public class NavBarPopup extends LightweightHint implements Disposable{
   protected void onPopupCancel() {
     final JComponent component = getComponent();
     if (component != null) {
-      final Object o = component.getClientProperty(JBLIST_KEY);
-      if (o instanceof JBListWithHintProvider) {
-        ((JBListWithHintProvider)o).hideHint();
-      }
+      Object o = component.getClientProperty(JBLIST_KEY);
+      if (o instanceof JComponent) HintUpdateSupply.hideHint((JComponent)o);
     }
     //noinspection unchecked
     for (Disposable disposable : ((List<Disposable>)getList().getClientProperty(DISPOSED_OBJECTS))) {

@@ -114,8 +114,7 @@ public class HighlightInfo implements Segment {
     String description = this.description;
     if (toolTip == null || description == null || !toolTip.contains(DESCRIPTION_PLACEHOLDER)) return toolTip;
     String decoded = StringUtil.replace(toolTip, DESCRIPTION_PLACEHOLDER, XmlStringUtil.escapeString(description));
-    String niceTooltip = XmlStringUtil.wrapInHtml(decoded);
-    return niceTooltip;
+    return XmlStringUtil.wrapInHtml(decoded);
   }
 
   private static String encodeTooltip(String toolTip, String description) {
@@ -177,10 +176,7 @@ public class HighlightInfo implements Segment {
       return forcedTextAttributes;
     }
 
-    final EditorColorsScheme colorsScheme = getColorsScheme(editorColorsScheme);
-    if (colorsScheme == null) {
-      return null;
-    }
+    EditorColorsScheme colorsScheme = getColorsScheme(editorColorsScheme);
 
     if (forcedTextAttributesKey != null) {
       return colorsScheme.getAttributes(forcedTextAttributesKey);
@@ -208,10 +204,7 @@ public class HighlightInfo implements Segment {
     if (forcedTextAttributes != null && forcedTextAttributes.getErrorStripeColor() != null) {
       return forcedTextAttributes.getErrorStripeColor();
     }
-    final EditorColorsScheme scheme = getColorsScheme(colorsScheme);
-    if (scheme == null) {
-      return null;
-    }
+    EditorColorsScheme scheme = getColorsScheme(colorsScheme);
     if (forcedTextAttributesKey != null) {
       TextAttributes forcedTextAttributes = scheme.getAttributes(forcedTextAttributesKey);
       if (forcedTextAttributes != null) {
@@ -244,7 +237,7 @@ public class HighlightInfo implements Segment {
 
   }
 
-  @Nullable
+  @NotNull
   private static EditorColorsScheme getColorsScheme(@Nullable final EditorColorsScheme customScheme) {
     if (customScheme != null) {
       return customScheme;
@@ -325,6 +318,7 @@ public class HighlightInfo implements Segment {
     return true;
   }
 
+  @Override
   public boolean equals(Object obj) {
     if (obj == this) return true;
     if (!(obj instanceof HighlightInfo)) return false;
@@ -340,7 +334,7 @@ public class HighlightInfo implements Segment {
            Comparing.strEqual(info.getDescription(), getDescription());
   }
 
-  public boolean equalsByActualOffset(HighlightInfo info) {
+  public boolean equalsByActualOffset(@NotNull HighlightInfo info) {
     if (info == this) return true;
 
     return info.getSeverity() == getSeverity() &&
@@ -353,10 +347,12 @@ public class HighlightInfo implements Segment {
            Comparing.strEqual(info.getDescription(), getDescription());
   }
 
+  @Override
   public int hashCode() {
     return startOffset;
   }
 
+  @Override
   @NonNls
   public String toString() {
     return getDescription() != null ? getDescription() : "";
@@ -658,7 +654,7 @@ public class HighlightInfo implements Segment {
 
   public static final String ANNOTATOR_INSPECTION_SHORT_NAME = "Annotator";
 
-  private static void appendFixes(@Nullable TextRange fixedRange, @NotNull HighlightInfo info, List<Annotation.QuickFixInfo> fixes) {
+  private static void appendFixes(@Nullable TextRange fixedRange, @NotNull HighlightInfo info, @Nullable List<Annotation.QuickFixInfo> fixes) {
     if (fixes != null) {
       for (final Annotation.QuickFixInfo quickFixInfo : fixes) {
         TextRange range = fixedRange != null ? fixedRange : quickFixInfo.textRange;
@@ -670,6 +666,7 @@ public class HighlightInfo implements Segment {
     }
   }
 
+  @NotNull
   public static HighlightInfoType convertType(@NotNull Annotation annotation) {
     ProblemHighlightType type = annotation.getHighlightType();
     if (type == ProblemHighlightType.LIKE_UNUSED_SYMBOL) return HighlightInfoType.UNUSED_SYMBOL;
@@ -688,6 +685,7 @@ public class HighlightInfo implements Segment {
            HighlightInfoType.INFORMATION;
   }
 
+  @NotNull
   public static ProblemHighlightType convertType(HighlightInfoType infoType) {
     if (infoType == HighlightInfoType.ERROR || infoType == HighlightInfoType.WRONG_REF) return ProblemHighlightType.ERROR;
     if (infoType == HighlightInfoType.WARNING) return ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
@@ -695,6 +693,7 @@ public class HighlightInfo implements Segment {
     return ProblemHighlightType.WEAK_WARNING;
   }
 
+  @NotNull
   public static ProblemHighlightType convertSeverityToProblemHighlight(HighlightSeverity severity) {
     return severity == HighlightSeverity.ERROR ? ProblemHighlightType.ERROR :
            severity == HighlightSeverity.WARNING ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING :
@@ -763,7 +762,7 @@ public class HighlightInfo implements Segment {
       return myAction;
     }
 
-    public boolean canCleanup(PsiElement element) {
+    public boolean canCleanup(@NotNull PsiElement element) {
       if (myCanCleanup == null) {
         InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile();
         final HighlightDisplayKey key = myKey;
@@ -868,6 +867,7 @@ public class HighlightInfo implements Segment {
       return myDisplayName;
     }
 
+    @Override
     @NonNls
     public String toString() {
       String text = getAction().getText();

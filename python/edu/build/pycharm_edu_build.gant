@@ -144,8 +144,8 @@ target('default': "Build artifacts") {
 
 
   def extraArgs = ["build.code": "pycharm${buildName}", "build.number": "PE-$buildNumber", "artifacts.path": "${paths.artifacts}"]
-  signMacZip("pycharm", extraArgs)
-  buildDmg("pycharm", "${pythonEduHome}/build/DMG_background.png", extraArgs)
+  signMacZip("pycharm", extraArgs + ["sitFileName": "pycharm${buildName}-jdk-bundled", "jdk_archive_name": "jdk_mac_redist_for_${buildNumber}.tar"])
+  buildDmg("pycharm", "${pythonEduHome}/build/DMG_background.png", extraArgs + ["sitFileName": "pycharm${buildName}-jdk-bundled", "jdk_archive_name": "jdk_mac_redist_for_${buildNumber}.tar"])
 
 }
 
@@ -203,6 +203,8 @@ public layoutEducational(String classesPath, Set usedJars) {
 
   String macAppRoot = isEap() ? "PyCharm PE ${p("component.version.major")}.${p("component.version.minor")} EAP.app/Contents" : "PyCharm PE.app/Contents"
   buildMacZip(macAppRoot, "${paths.artifacts}/pycharm${buildName}.sit", [paths.distAll], paths.distMac)
+  ant.copy(file: "${paths.artifacts}/pycharm${buildName}.sit", tofile: "${paths.artifacts}/pycharm${buildName}-jdk-bundled.sit")
+  ant.delete(file: "${paths.artifacts}/pycharm${buildName}.sit")
 }
 
 private layoutPlugins(layouts) {

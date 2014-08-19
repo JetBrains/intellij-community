@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,18 +49,17 @@ public class HelpManagerImpl extends HelpManager {
   private Object myFXHelpBrowser = null;
 
   public void invokeHelp(@Nullable String id) {
-
     if (myHelpSet == null) {
       myHelpSet = createHelpSet();
+    }
+
+    if (MacHelpUtil.isApplicable() && MacHelpUtil.invokeHelp(id)) {
+      return;
     }
 
     if (SystemInfo.isJavaVersionAtLeast("1.7.0.40") && Registry.is("ide.help.fxbrowser")) {
       showHelpInFXBrowser(id);
       return;
-    }
-
-    if (MacHelpUtil.isApplicable()) {
-      if (MacHelpUtil.invokeHelp(id)) return;
     }
 
     if (myHelpSet == null) {

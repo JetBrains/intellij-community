@@ -30,15 +30,16 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.LongStack;
+import com.intellij.util.containers.Stack;
 import com.intellij.util.indexing.FileBasedIndex;
-import gnu.trove.TLongArrayList;
-import gnu.trove.TLongHashSet;
-import gnu.trove.TLongObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -94,11 +95,12 @@ public class ProjectBytecodeAnalysis {
   @NotNull
   private PsiAnnotation[] collectInferredAnnotations(PsiModifierListOwner listOwner) {
     try {
-      long ownerKey = getKey(listOwner);
-      if (ownerKey == -1) {
+      MessageDigest md = BytecodeAnalysisConverter.getMessageDigest();
+      HKey ownerKey = getKey(listOwner, md);
+      if (ownerKey == null) {
         return PsiAnnotation.EMPTY_ARRAY;
       }
-      TLongArrayList allKeys = contractKeys(listOwner, ownerKey);
+      ArrayList<HKey> allKeys = contractKeys(listOwner, ownerKey);
       Annotations annotations = loadAnnotations(listOwner, ownerKey, allKeys);
       boolean notNull = annotations.notNulls.contains(ownerKey);
       String contractValue = annotations.contracts.get(ownerKey);
@@ -123,13 +125,13 @@ public class ProjectBytecodeAnalysis {
         return PsiAnnotation.EMPTY_ARRAY;
       }
     }
-    catch (IOException e) {
-      LOG.debug(e);
-      return PsiAnnotation.EMPTY_ARRAY;
-    }
     catch (EquationsLimitException e) {
       String externalName = PsiFormatUtil.getExternalName(listOwner, false, Integer.MAX_VALUE);
       LOG.info("Too many equations for " + externalName);
+      return PsiAnnotation.EMPTY_ARRAY;
+    }
+    catch (NoSuchAlgorithmException e) {
+      LOG.error(e);
       return PsiAnnotation.EMPTY_ARRAY;
     }
   }
@@ -148,10 +150,11 @@ public class ProjectBytecodeAnalysis {
     return createAnnotationFromText("@org.jetbrains.annotations.Contract(" + contractValue + ")");
   }
 
-  public static long getKey(@NotNull PsiModifierListOwner owner) throws IOException {
+  @Nullable
+  public static HKey getKey(@NotNull PsiModifierListOwner owner, MessageDigest md) {
     LOG.assertTrue(owner instanceof PsiCompiledElement, owner);
     if (owner instanceof PsiMethod) {
-      return BytecodeAnalysisConverter.getInstance().mkPsiKey((PsiMethod)owner, new Out());
+      return BytecodeAnalysisConverter.psiKey((PsiMethod)owner, new Out(), md);
     }
     if (owner instanceof PsiParameter) {
       PsiElement parent = owner.getParent();
@@ -159,80 +162,86 @@ public class ProjectBytecodeAnalysis {
         PsiElement gParent = parent.getParent();
         if (gParent instanceof PsiMethod) {
           final int index = ((PsiParameterList)parent).getParameterIndex((PsiParameter)owner);
-          return BytecodeAnalysisConverter.getInstance().mkPsiKey((PsiMethod)gParent, new In(index));
+          return BytecodeAnalysisConverter.psiKey((PsiMethod)gParent, new In(index), md);
         }
       }
     }
-
-    return -1;
+    return null;
   }
 
-  public static TLongArrayList contractKeys(@NotNull PsiModifierListOwner owner, long primaryKey) throws IOException {
+  public static ArrayList<HKey> contractKeys(@NotNull PsiModifierListOwner owner, HKey primaryKey) {
     if (owner instanceof PsiMethod) {
-      TLongArrayList result = BytecodeAnalysisConverter.getInstance().mkInOutKeys((PsiMethod)owner, primaryKey);
+      ArrayList<HKey> result = BytecodeAnalysisConverter.mkInOutKeys((PsiMethod)owner, primaryKey);
       result.add(primaryKey);
       return result;
     }
-    TLongArrayList result = new TLongArrayList(1);
+    ArrayList<HKey> result = new ArrayList<HKey>(1);
     result.add(primaryKey);
     return result;
   }
 
-  private Annotations loadAnnotations(@NotNull PsiModifierListOwner owner, long key, TLongArrayList allKeys)
-    throws IOException, EquationsLimitException {
+  private Annotations loadAnnotations(@NotNull PsiModifierListOwner owner, @NotNull HKey key, ArrayList<HKey> allKeys)
+    throws EquationsLimitException {
     Annotations result = new Annotations();
     if (owner instanceof PsiParameter) {
       final Solver solver = new Solver(new ELattice<Value>(Value.NotNull, Value.Top));
       collectEquations(allKeys, solver);
-      TLongObjectHashMap<Value> solutions = solver.solve();
-      BytecodeAnalysisConverter.getInstance().addParameterAnnotations(solutions, result);
+      HashMap<HKey, Value> solutions = solver.solve();
+      BytecodeAnalysisConverter.addParameterAnnotations(solutions, result);
     } else if (owner instanceof PsiMethod) {
       final Solver solver = new Solver(new ELattice<Value>(Value.Bot, Value.Top));
       collectEquations(allKeys, solver);
-      TLongObjectHashMap<Value> solutions = solver.solve();
-      BytecodeAnalysisConverter.getInstance().addMethodAnnotations(solutions, result, key,
-                                                                   ((PsiMethod)owner).getParameterList().getParameters().length);
+      HashMap<HKey, Value> solutions = solver.solve();
+      int arity = ((PsiMethod)owner).getParameterList().getParameters().length;
+      BytecodeAnalysisConverter.addMethodAnnotations(solutions, result, key, arity);
     }
     return result;
   }
 
-  private void collectEquations(TLongArrayList keys, Solver solver) throws EquationsLimitException {
+  private void collectEquations(ArrayList<HKey> keys, Solver solver) throws EquationsLimitException {
     GlobalSearchScope librariesScope = ProjectScope.getLibrariesScope(myProject);
-    TLongHashSet queued = new TLongHashSet();
-    LongStack queue = new LongStack();
+    HashSet<HKey> queued = new HashSet<HKey>();
+    Stack<HKey> queue = new Stack<HKey>();
 
-    for (int i = 0; i < keys.size(); i++) {
-      long key = keys.get(i);
+    for (HKey key : keys) {
       queue.push(key);
       queued.add(key);
-      // stable/unstable
-      queue.push(-key);
-      queued.add(-key);
     }
 
+    HashMap<Bytes, List<HEquations>> cache = new HashMap<Bytes, List<HEquations>>();
     FileBasedIndex index = FileBasedIndex.getInstance();
+
     while (!queue.empty()) {
       if (queued.size() > EQUATIONS_LIMIT) {
         throw new EquationsLimitException();
       }
       ProgressManager.checkCanceled();
-      List<IdEquation> equations = index.getValues(BytecodeAnalysisIndex.NAME, queue.pop(), librariesScope);
-      for (IdEquation equation : equations) {
-        IdResult rhs = equation.rhs;
-        solver.addEquation(equation);
-        if (rhs instanceof IdPending) {
-          IdPending intIdPending = (IdPending)rhs;
-          for (IntIdComponent component : intIdPending.delta) {
-            for (long depKey : component.ids) {
-              if (!queued.contains(depKey)) {
-                queue.push(depKey);
-                queued.add(depKey);
-              }
-              // stable/unstable
-              long swapped = -depKey;
-              if (!queued.contains(swapped)) {
-                queue.push(swapped);
-                queued.add(swapped);
+      HKey hKey = queue.pop();
+      Bytes bytes = new Bytes(hKey.key);
+
+      List<HEquations> hEquationss = cache.get(bytes);
+      if (hEquationss == null) {
+        hEquationss = index.getValues(BytecodeAnalysisIndex.NAME, bytes, librariesScope);
+        cache.put(bytes, hEquationss);
+      }
+
+      for (HEquations hEquations : hEquationss) {
+        boolean stable = hEquations.stable;
+        for (DirectionResultPair pair : hEquations.results) {
+          int dirKey = pair.directionKey;
+          if (dirKey == hKey.dirKey) {
+            HResult result = pair.hResult;
+
+            solver.addEquation(new HEquation(new HKey(bytes.bytes, dirKey, stable), result));
+            if (result instanceof HPending) {
+              HPending pending = (HPending)result;
+              for (HComponent component : pending.delta) {
+                for (HKey depKey : component.ids) {
+                  if (!queued.contains(depKey)) {
+                    queue.push(depKey);
+                    queued.add(depKey);
+                  }
+                }
               }
             }
           }
@@ -251,9 +260,9 @@ public class ProjectBytecodeAnalysis {
 
 class Annotations {
   // @NotNull keys
-  final TLongHashSet notNulls = new TLongHashSet();
+  final HashSet<HKey> notNulls = new HashSet<HKey>();
   // @Contracts
-  final TLongObjectHashMap<String> contracts = new TLongObjectHashMap<String>();
+  final HashMap<HKey, String> contracts = new HashMap<HKey, String>();
 }
 
 class EquationsLimitException extends Exception {}

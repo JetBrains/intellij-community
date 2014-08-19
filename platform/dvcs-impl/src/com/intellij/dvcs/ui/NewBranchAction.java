@@ -25,9 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author Nadya Zabrodina
- */
 public abstract class NewBranchAction<T extends Repository> extends DumbAwareAction {
   protected final List<T> myRepositories;
   protected Project myProject;
@@ -43,7 +40,7 @@ public abstract class NewBranchAction<T extends Repository> extends DumbAwareAct
   public void update(AnActionEvent e) {
     if (DvcsUtil.anyRepositoryIsFresh(myRepositories)) {
       e.getPresentation().setEnabled(false);
-      e.getPresentation().setDescription("Checkout of a new branch is not possible before the first commit.");
+      e.getPresentation().setDescription("Checkout of a new branch is not possible before the first commit");
     }
   }
 

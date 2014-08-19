@@ -19,6 +19,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeMigrationReplacementUtil;
 import com.intellij.refactoring.typeMigration.rules.AtomicConversionRule;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
@@ -180,9 +181,14 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
         }
       }
 
-      final PsiExpression initializer = psiVariable.getInitializer();
+      PsiExpression initializer = psiVariable.getInitializer();
       if (initializer != null) {
-        final TypeConversionDescriptor directConversion = AtomicConversionRule.wrapWithNewExpression(toType, fromType, null, element);
+        if (initializer instanceof PsiArrayInitializerExpression) {
+          PsiExpression normalizedExpr =
+            RefactoringUtil.createNewExpressionFromArrayInitializer((PsiArrayInitializerExpression)initializer, psiVariable.getType());
+          initializer = (PsiExpression)initializer.replace(normalizedExpr);
+        }
+        final TypeConversionDescriptor directConversion = AtomicConversionRule.wrapWithNewExpression(toType, fromType, initializer, element);
         if (directConversion != null) {
           TypeMigrationReplacementUtil.replaceExpression(initializer, project, directConversion);
         }

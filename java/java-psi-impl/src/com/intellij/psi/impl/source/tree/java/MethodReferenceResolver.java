@@ -231,8 +231,8 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
       checkSameSignatures(conflicts);
       checkAccessStaticLevels(conflicts, true);
 
-      final PsiType[] parameterTypes = mySignature.getParameterTypes();
-      boolean hasReceiver = PsiMethodReferenceUtil.hasReceiver(parameterTypes, myQualifierResolveResult, myReferenceExpression);
+      final PsiType[] argTypes = mySignature.getParameterTypes();
+      boolean hasReceiver = PsiMethodReferenceUtil.hasReceiver(argTypes, myQualifierResolveResult, myReferenceExpression);
 
       final List<CandidateInfo> firstCandidates = new ArrayList<CandidateInfo>();
       final List<CandidateInfo> secondCandidates = new ArrayList<CandidateInfo>();
@@ -242,19 +242,19 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
         final PsiMethod psiMethod = ((MethodCandidateInfo)conflict).getElement();
 
         final PsiSubstitutor substitutor = conflict.getSubstitutor();
-        final PsiType[] signatureParameterTypes2 = psiMethod.getSignature(substitutor).getParameterTypes();
+        final PsiType[] parameterTypes = psiMethod.getSignature(substitutor).getParameterTypes();
 
         final boolean varargs = ((MethodCandidateInfo)conflict).isVarargs();
         if (varargs && (!psiMethod.isVarArgs() || myFunctionalMethodVarArgs)) continue;
 
-        if ((varargs || parameterTypes.length == signatureParameterTypes2.length) &&
-            PsiMethodReferenceUtil.isCorrectAssignment(signatureParameterTypes2, parameterTypes, varargs, 0)) {
+        if ((varargs || argTypes.length == parameterTypes.length) &&
+            PsiMethodReferenceUtil.isCorrectAssignment(parameterTypes, argTypes, varargs, 0)) {
           firstCandidates.add(conflict);
         }
 
         if (hasReceiver &&
-            (varargs || parameterTypes.length == signatureParameterTypes2.length + 1) &&
-            PsiMethodReferenceUtil.isCorrectAssignment(signatureParameterTypes2, parameterTypes, varargs, 1)) {
+            (varargs || argTypes.length == parameterTypes.length + 1) &&
+            PsiMethodReferenceUtil.isCorrectAssignment(parameterTypes, argTypes, varargs, 1)) {
           secondCandidates.add(conflict);
         }
       }
