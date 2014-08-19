@@ -205,6 +205,11 @@ public class PyCharmEduInitialConfigurator {
 
   private static void showInitialConfigurationDialog() {
     final JFrame frame = WindowManager.getInstance().findVisibleFrame();
-    new InitialConfigurationDialog(frame, "Python").show();
+    new InitialConfigurationDialog(frame, "Python") {
+      @Override
+      protected boolean canCreateLauncherScript() {
+        return false;
+      }
+    }.show();
   }
 }
