@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,8 +80,8 @@ public class AnalysisScope {
   private boolean mySearchInLibraries = false;
   @Type protected int myType;
 
-  private Set<VirtualFile> myVFiles;
-  protected Set<VirtualFile> myFilesSet;
+  private final Set<VirtualFile> myVFiles;  // initial files and directories the scope is configured on
+  protected Set<VirtualFile> myFilesSet;    // set of files (not directories) this scope consists of. calculated in initFilesSet()
 
   protected boolean myIncludeTestSource = true;
 
@@ -92,6 +92,7 @@ public class AnalysisScope {
     myModule = null;
     myScope = null;
     myType = PROJECT;
+    myVFiles = null;
   }
 
   public AnalysisScope(@NotNull Module module) {
@@ -101,6 +102,7 @@ public class AnalysisScope {
     myScope = null;
     myModule = module;
     myType = MODULE;
+    myVFiles = null;
   }
 
   public AnalysisScope(@NotNull Module[] modules) {
@@ -110,6 +112,7 @@ public class AnalysisScope {
     myElement = null;
     myScope = null;
     myType = MODULES;
+    myVFiles = null;
   }
 
   public AnalysisScope(@NotNull PsiDirectory psiDirectory) {
@@ -119,6 +122,7 @@ public class AnalysisScope {
     myScope = null;
     myElement = psiDirectory;
     myType = DIRECTORY;
+    myVFiles = null;
   }
 
   public AnalysisScope(@NotNull PsiFile psiFile) {
@@ -128,6 +132,7 @@ public class AnalysisScope {
     myModules = null;
     myScope = null;
     myType = FILE;
+    myVFiles = null;
   }
 
   public AnalysisScope(@NotNull SearchScope scope, @NotNull Project project) {
@@ -138,6 +143,7 @@ public class AnalysisScope {
     myScope = scope;
     myType = CUSTOM;
     mySearchInLibraries = scope instanceof GlobalSearchScope && ((GlobalSearchScope)scope).isSearchInLibraries();
+    myVFiles = null;
   }
 
   public AnalysisScope(@NotNull Project project, @NotNull Collection<VirtualFile> virtualFiles) {
@@ -215,7 +221,7 @@ public class AnalysisScope {
     return contains(psiElement.getContainingFile().getVirtualFile());
   }
 
-  public boolean contains(VirtualFile file) {
+  public boolean contains(@NotNull VirtualFile file) {
     if (myFilesSet == null) {
       if (myType == CUSTOM) {
         // optimization
@@ -424,7 +430,7 @@ public class AnalysisScope {
     return indicator == null || !indicator.isCanceled();
   }
 
-  protected static boolean shouldHighlightFile(PsiFile file) {
+  protected static boolean shouldHighlightFile(@NotNull PsiFile file) {
     return ProblemHighlightFilter.shouldProcessFileInBatch(file);
   }
 
@@ -481,6 +487,7 @@ public class AnalysisScope {
     return myType;
   }
 
+  @NotNull
   public String getDisplayName() {
     switch (myType) {
       case CUSTOM:
@@ -515,12 +522,14 @@ public class AnalysisScope {
     return "";
   }
 
+  @NotNull
   private static String getPresentableUrl(@NotNull final PsiFileSystemItem element) {
     final VirtualFile virtualFile = element.getVirtualFile();
     assert virtualFile != null : element;
     return virtualFile.getPresentableUrl();
   }
 
+  @NotNull
   public String getShortenName(){
     switch (myType) {
       case CUSTOM:
@@ -589,15 +598,16 @@ public class AnalysisScope {
   }
 
   public void invalidate(){
-    if (myType != VIRTUAL_FILES) {
-      myFilesSet = null;
-    } else {
+    if (myType == VIRTUAL_FILES) {
       for (Iterator<VirtualFile> i = myVFiles.iterator(); i.hasNext();) {
         final VirtualFile virtualFile = i.next();
         if (virtualFile == null || !virtualFile.isValid()) {
           i.remove();
         }
       }
+    }
+    else {
+      myFilesSet = null;
     }
   }
 

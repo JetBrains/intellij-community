@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,16 +25,21 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,29 +83,30 @@ public class InspectionEngine {
   }
 
   @NotNull
-  public static List<ProblemDescriptor> inspect(@NotNull final List<LocalInspectionTool> tools,
+  public static List<ProblemDescriptor> inspect(@NotNull final List<LocalInspectionToolWrapper> toolWrappers,
                                                 @NotNull final PsiFile file,
                                                 @NotNull final InspectionManager iManager,
                                                 final boolean isOnTheFly,
                                                 boolean failFastOnAcquireReadAction,
                                                 @NotNull final ProgressIndicator indicator) {
-    final Map<String, List<ProblemDescriptor>> problemDescriptors = inspectEx(tools, file, iManager, isOnTheFly, failFastOnAcquireReadAction, indicator);
+    final Map<String, List<ProblemDescriptor>> problemDescriptors = inspectEx(toolWrappers, file, iManager, isOnTheFly, failFastOnAcquireReadAction, indicator);
 
     final List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>();
-    for (List<ProblemDescriptor> group : problemDescriptors.values())
+    for (List<ProblemDescriptor> group : problemDescriptors.values()) {
       result.addAll(group);
+    }
     return result;
   }
 
   // public accessibility for Upsource
   @NotNull
-  public static Map<String, List<ProblemDescriptor>> inspectEx(@NotNull final List<LocalInspectionTool> tools,
+  public static Map<String, List<ProblemDescriptor>> inspectEx(@NotNull final List<LocalInspectionToolWrapper> toolWrappers,
                                                                @NotNull final PsiFile file,
                                                                @NotNull final InspectionManager iManager,
                                                                final boolean isOnTheFly,
                                                                boolean failFastOnAcquireReadAction,
                                                                @NotNull final ProgressIndicator indicator) {
-    if (tools.isEmpty()) return Collections.emptyMap();
+    if (toolWrappers.isEmpty()) return Collections.emptyMap();
     final Map<String, List<ProblemDescriptor>> resultDescriptors = new ConcurrentHashMap<String, List<ProblemDescriptor>>();
     final List<PsiElement> elements = new ArrayList<PsiElement>();
 
@@ -109,32 +115,32 @@ public class InspectionEngine {
     Divider.divideInsideAndOutside(file, range.getStartOffset(), range.getEndOffset(), range, elements, new ArrayList<ProperTextRange>(),
                                    Collections.<PsiElement>emptyList(), Collections.<ProperTextRange>emptyList(), true, Condition.TRUE);
 
-    boolean result = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
-      tools, indicator, failFastOnAcquireReadAction,
-      new Processor<LocalInspectionTool>() {
-        @Override
-        public boolean process(final LocalInspectionTool tool) {
-          ProblemsHolder holder = new ProblemsHolder(iManager, file, isOnTheFly);
-          createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements, null);
+    MultiMap<LocalInspectionToolWrapper, String> toolToLanguages = getToolsForElements(toolWrappers, DumbService.isDumb(file.getProject()), elements, Collections.<PsiElement>emptyList());
+    List<Map.Entry<LocalInspectionToolWrapper, Collection<String>>> entries = new ArrayList<Map.Entry<LocalInspectionToolWrapper, Collection<String>>>(toolToLanguages.entrySet());
+    Processor<Map.Entry<LocalInspectionToolWrapper, Collection<String>>> processor = new Processor<Map.Entry<LocalInspectionToolWrapper, Collection<String>>>() {
+      @Override
+      public boolean process(final Map.Entry<LocalInspectionToolWrapper, Collection<String>> entry) {
+        ProblemsHolder holder = new ProblemsHolder(iManager, file, isOnTheFly);
+        final LocalInspectionTool tool = entry.getKey().getTool();
+        Collection<String> languages = entry.getValue();
+        createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements, languages);
 
-          tool.inspectionFinished(session, holder);
+        tool.inspectionFinished(session, holder);
 
-          if (holder.hasResults()) {
-            resultDescriptors.put(tool.getShortName(), ContainerUtil.filter(holder.getResults(), new Condition<ProblemDescriptor>() {
-              @Override
-              public boolean value(ProblemDescriptor descriptor) {
-                PsiElement element = descriptor.getPsiElement();
-                if (element != null) {
-                  return !SuppressionUtil.inspectionResultSuppressed(element, tool);
-                }
-                return true;
-              }
-            }));
-          }
-
-          return true;
+        if (holder.hasResults()) {
+          resultDescriptors.put(tool.getShortName(), ContainerUtil.filter(holder.getResults(), new Condition<ProblemDescriptor>() {
+            @Override
+            public boolean value(ProblemDescriptor descriptor) {
+              PsiElement element = descriptor.getPsiElement();
+              return element == null || !SuppressionUtil.inspectionResultSuppressed(element, tool);
+            }
+          }));
         }
-      });
+
+        return true;
+      }
+    };
+    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(entries, indicator, failFastOnAcquireReadAction, processor);
 
     return resultDescriptors;
   }
@@ -149,8 +155,7 @@ public class InspectionEngine {
     refManager.inspectionReadActionStarted();
     try {
       if (toolWrapper instanceof LocalInspectionToolWrapper) {
-        LocalInspectionTool localTool = ((LocalInspectionToolWrapper)toolWrapper).getTool();
-        return inspect(Collections.singletonList(localTool), file, inspectionManager, false, false, new EmptyProgressIndicator());
+        return inspect(Collections.singletonList((LocalInspectionToolWrapper)toolWrapper), file, inspectionManager, false, false, new EmptyProgressIndicator());
       }
       if (toolWrapper instanceof GlobalInspectionToolWrapper) {
         final GlobalInspectionTool globalTool = ((GlobalInspectionToolWrapper)toolWrapper).getTool();
@@ -223,6 +228,76 @@ public class InspectionEngine {
           new ProblemDescriptorBase(element, element, common.getDescriptionTemplate(), (LocalQuickFix[])common.getFixes(),
                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false, null, false, false);
         descriptors.add(base);
+      }
+    }
+  }
+
+  @NotNull
+  public static <T extends InspectionToolWrapper> MultiMap<T, String> getToolsForElements(@NotNull List<T> toolWrappers,
+                                                                                          boolean checkDumbAwareness,
+                                                                                          @NotNull List<PsiElement> inside,
+                                                                                          @NotNull List<PsiElement> outside) {
+    Set<Language> languages = new SmartHashSet<Language>();
+    Map<String, Language> langIds = new SmartHashMap<String, Language>();
+    Set<String> dialects = new SmartHashSet<String>();
+    calculateDialects(inside, languages, langIds, dialects);
+    calculateDialects(outside, languages, langIds, dialects);
+    MultiMap<T, String> toolToLanguages = new MultiMap<T, String>() {
+      @NotNull
+      @Override
+      protected Collection<String> createCollection() {
+        return new SmartHashSet<String>();
+      }
+
+      @NotNull
+      @Override
+      protected Collection<String> createEmptyCollection() {
+        return Collections.emptySet();
+      }
+    };
+    for (T wrapper : toolWrappers) {
+      ProgressManager.checkCanceled();
+      String language = wrapper.getLanguage();
+      if (language == null) {
+        InspectionProfileEntry tool = wrapper.getTool();
+        if (!checkDumbAwareness || tool instanceof DumbAware) {
+          toolToLanguages.put(wrapper, null);
+        }
+        continue;
+      }
+      Language lang = langIds.get(language);
+      if (lang != null) {
+        InspectionProfileEntry tool = wrapper.getTool();
+        if (!checkDumbAwareness || tool instanceof DumbAware) {
+          toolToLanguages.putValue(wrapper, language);
+          if (wrapper.applyToDialects()) {
+            for (Language dialect : lang.getDialects()) {
+              toolToLanguages.putValue(wrapper, dialect.getID());
+            }
+          }
+        }
+      }
+      else if (wrapper.applyToDialects() && dialects.contains(language)) {
+        InspectionProfileEntry tool = wrapper.getTool();
+        if (!checkDumbAwareness || tool instanceof DumbAware) {
+          toolToLanguages.putValue(wrapper, language);
+        }
+      }
+    }
+    return toolToLanguages;
+  }
+
+  private static void calculateDialects(@NotNull List<PsiElement> inside,
+                                        @NotNull Set<Language> languages,
+                                        @NotNull Map<String, Language> langIds,
+                                        @NotNull Set<String> dialects) {
+    for (PsiElement element : inside) {
+      Language language = element.getLanguage();
+      if (languages.add(language)) {
+        langIds.put(language.getID(), language);
+        for (Language dialect : language.getDialects()) {
+          dialects.add(dialect.getID());
+        }
       }
     }
   }
