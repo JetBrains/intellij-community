@@ -10,8 +10,6 @@ common.elem.phrasing |= math
 
 SVG.foreignObject.content |=
 	(	math
-	|	html.elem
-	|	body.elem
 	|	common.inner.flow
 	)
 

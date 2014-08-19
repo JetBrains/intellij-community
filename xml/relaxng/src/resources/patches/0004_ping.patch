@@ -7,7 +7,7 @@
 -  shared-hyperlink.attrs.ping =
 -    attribute ping {
 -      common.data.uris
--    } & v5only & nonW3C
+-    } & v5only
  
  ## Emphatic Stress: <em>
  

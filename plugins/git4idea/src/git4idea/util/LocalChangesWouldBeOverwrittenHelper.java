@@ -35,12 +35,12 @@ import java.util.List;
 public class LocalChangesWouldBeOverwrittenHelper {
 
   @NotNull
-  public static String getErrorNotificationDescription() {
+  private static String getErrorNotificationDescription() {
     return getErrorDescription(true);
   }
 
   @NotNull
-  public static String getErrorDialogDescription() {
+  private static String getErrorDialogDescription() {
     return getErrorDescription(false);
   }
 
@@ -56,7 +56,7 @@ public class LocalChangesWouldBeOverwrittenHelper {
     }
   }
 
-  public static void showErrorNotification(@NotNull final Project project, @NotNull VirtualFile root, @NotNull final String operationName,
+  public static void showErrorNotification(@NotNull final Project project, @NotNull final VirtualFile root, @NotNull final String operationName,
                                            @NotNull final Collection<String> relativeFilePaths) {
     final Collection<String> absolutePaths = GitUtil.toAbsolute(root, relativeFilePaths);
     final List<Change> changes = GitUtil.findLocalChangesForPaths(project, root, absolutePaths, false);
@@ -66,20 +66,33 @@ public class LocalChangesWouldBeOverwrittenHelper {
        @Override
        protected void hyperlinkActivated(@NotNull Notification notification,
                                          @NotNull HyperlinkEvent e) {
-         String title = "Local Changes Prevent from " + StringUtil.capitalize(operationName);
-         String description = getErrorDialogDescription();
-         if (changes.isEmpty()) {
-           GitUtil.showPathsInDialog(project, absolutePaths, title, description);
-         }
-         else {
-           DialogBuilder builder = new DialogBuilder(project);
-           builder.setNorthPanel(new MultiLineLabel(description));
-           builder.setCenterPanel(new ChangesBrowserWithRollback(project, changes));
-           builder.addOkAction();
-           builder.setTitle(title);
-           builder.show();
-         }
+         showErrorDialog(project, operationName, changes, absolutePaths);
        }
       });
   }
+
+  public static void showErrorDialog(@NotNull Project project, @NotNull VirtualFile root, @NotNull String operationName,
+                                     @NotNull Collection<String> relativeFilePaths) {
+    Collection<String> absolutePaths = GitUtil.toAbsolute(root, relativeFilePaths);
+    List<Change> changes = GitUtil.findLocalChangesForPaths(project, root, absolutePaths, false);
+    showErrorDialog(project, operationName, changes, absolutePaths);
+  }
+
+  private static void showErrorDialog(@NotNull Project project, @NotNull String operationName, @NotNull List<Change> changes,
+                                      @NotNull Collection<String> absolutePaths) {
+    String title = "Local Changes Prevent from " + StringUtil.capitalize(operationName);
+    String description = getErrorDialogDescription();
+    if (changes.isEmpty()) {
+      GitUtil.showPathsInDialog(project, absolutePaths, title, description);
+    }
+    else {
+      DialogBuilder builder = new DialogBuilder(project);
+      builder.setNorthPanel(new MultiLineLabel(description));
+      builder.setCenterPanel(new ChangesBrowserWithRollback(project, changes));
+      builder.addOkAction();
+      builder.setTitle(title);
+      builder.show();
+    }
+  }
+
 }

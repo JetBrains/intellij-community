@@ -8,7 +8,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.PairFunction;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
-import com.jetbrains.python.edu.ui.StudyCondition;
 
 import java.awt.*;
 
@@ -19,10 +18,6 @@ import java.awt.*;
 public class StudyInstructionPainter extends EditorEmptyTextPainter {
   @Override
   public void paintEmptyText(final EditorsSplitters splitters, Graphics g) {
-    if (!StudyCondition.VALUE) {
-      super.paintEmptyText(splitters, g);
-      return;
-    }
     boolean isDarkBackground = UIUtil.isUnderDarcula();
     UIUtil.applyRenderingHints(g);
     GraphicsUtil.setupAntialiasing(g, true, false);
@@ -34,6 +29,7 @@ public class StudyInstructionPainter extends EditorEmptyTextPainter {
     painter.appendLine("PyCharm Educational Edition").underlined(new JBColor(Gray._150, Gray._180));
     painter.appendLine("Navigate to the next task window with Ctrl + Enter").smaller().withBullet();
     painter.appendLine("Navigate between task windows with Ctrl + < and Ctrl + >").smaller().withBullet();
+    painter.appendLine("Get hint for the task window using Ctrl + 7").smaller().withBullet();
     painter.appendLine("To see your progress open the 'Course Description' panel").smaller().withBullet();
                        painter.draw(g, new PairFunction<Integer, Integer, Couple<Integer>>() {
                          @Override

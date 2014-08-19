@@ -3,73 +3,55 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.CompareToBuilder org.apache.commons.lang.builder.CompareToBuilder append(boolean[], boolean[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,null-&gt;!null;null,_-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.CompareToBuilder org.apache.commons.lang.builder.CompareToBuilder append(byte, byte)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.CompareToBuilder org.apache.commons.lang.builder.CompareToBuilder append(byte[], byte[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,null-&gt;!null;null,_-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.CompareToBuilder org.apache.commons.lang.builder.CompareToBuilder append(char, char)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.CompareToBuilder org.apache.commons.lang.builder.CompareToBuilder append(char[], char[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,null-&gt;!null;null,_-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.CompareToBuilder org.apache.commons.lang.builder.CompareToBuilder append(double, double)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.CompareToBuilder org.apache.commons.lang.builder.CompareToBuilder append(double[], double[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,null-&gt;!null;null,_-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.CompareToBuilder org.apache.commons.lang.builder.CompareToBuilder append(float, float)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.CompareToBuilder org.apache.commons.lang.builder.CompareToBuilder append(float[], float[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,null-&gt;!null;null,_-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.CompareToBuilder org.apache.commons.lang.builder.CompareToBuilder append(int, int)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.CompareToBuilder org.apache.commons.lang.builder.CompareToBuilder append(int[], int[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,null-&gt;!null;null,_-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.CompareToBuilder org.apache.commons.lang.builder.CompareToBuilder append(java.lang.Object, java.lang.Object, java.util.Comparator)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.CompareToBuilder org.apache.commons.lang.builder.CompareToBuilder append(java.lang.Object[], java.lang.Object[], java.util.Comparator)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,null,_-&gt;!null;null,_,_-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.CompareToBuilder org.apache.commons.lang.builder.CompareToBuilder append(long, long)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.CompareToBuilder org.apache.commons.lang.builder.CompareToBuilder append(long[], long[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,null-&gt;!null;null,_-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.CompareToBuilder org.apache.commons.lang.builder.CompareToBuilder append(short, short)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.CompareToBuilder org.apache.commons.lang.builder.CompareToBuilder append(short[], short[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,null-&gt;!null;null,_-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.CompareToBuilder org.apache.commons.lang.builder.CompareToBuilder appendSuper(int)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -81,67 +63,49 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.EqualsBuilder org.apache.commons.lang.builder.EqualsBuilder append(boolean[], boolean[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,null-&gt;!null;null,_-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.EqualsBuilder org.apache.commons.lang.builder.EqualsBuilder append(byte, byte)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.EqualsBuilder org.apache.commons.lang.builder.EqualsBuilder append(byte[], byte[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,null-&gt;!null;null,_-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.EqualsBuilder org.apache.commons.lang.builder.EqualsBuilder append(char, char)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.EqualsBuilder org.apache.commons.lang.builder.EqualsBuilder append(char[], char[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,null-&gt;!null;null,_-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.EqualsBuilder org.apache.commons.lang.builder.EqualsBuilder append(double[], double[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,null-&gt;!null;null,_-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.EqualsBuilder org.apache.commons.lang.builder.EqualsBuilder append(float[], float[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,null-&gt;!null;null,_-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.EqualsBuilder org.apache.commons.lang.builder.EqualsBuilder append(int, int)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.EqualsBuilder org.apache.commons.lang.builder.EqualsBuilder append(int[], int[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,null-&gt;!null;null,_-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.EqualsBuilder org.apache.commons.lang.builder.EqualsBuilder append(java.lang.Object, java.lang.Object)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.EqualsBuilder org.apache.commons.lang.builder.EqualsBuilder append(java.lang.Object[], java.lang.Object[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,null-&gt;!null;null,_-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.EqualsBuilder org.apache.commons.lang.builder.EqualsBuilder append(long, long)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.EqualsBuilder org.apache.commons.lang.builder.EqualsBuilder append(long[], long[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,null-&gt;!null;null,_-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.EqualsBuilder org.apache.commons.lang.builder.EqualsBuilder append(short, short)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.EqualsBuilder org.apache.commons.lang.builder.EqualsBuilder append(short[], short[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,null-&gt;!null;null,_-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.EqualsBuilder org.apache.commons.lang.builder.EqualsBuilder appendSuper(boolean)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -180,70 +144,52 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.HashCodeBuilder org.apache.commons.lang.builder.HashCodeBuilder append(boolean[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;null-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.HashCodeBuilder org.apache.commons.lang.builder.HashCodeBuilder append(byte)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.HashCodeBuilder org.apache.commons.lang.builder.HashCodeBuilder append(byte[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;null-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.HashCodeBuilder org.apache.commons.lang.builder.HashCodeBuilder append(char)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.HashCodeBuilder org.apache.commons.lang.builder.HashCodeBuilder append(char[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;null-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.HashCodeBuilder org.apache.commons.lang.builder.HashCodeBuilder append(double[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;null-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.HashCodeBuilder org.apache.commons.lang.builder.HashCodeBuilder append(float)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.HashCodeBuilder org.apache.commons.lang.builder.HashCodeBuilder append(float[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;null-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.HashCodeBuilder org.apache.commons.lang.builder.HashCodeBuilder append(int)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.HashCodeBuilder org.apache.commons.lang.builder.HashCodeBuilder append(int[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;null-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.HashCodeBuilder org.apache.commons.lang.builder.HashCodeBuilder append(java.lang.Object)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.HashCodeBuilder org.apache.commons.lang.builder.HashCodeBuilder append(java.lang.Object[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;null-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.HashCodeBuilder org.apache.commons.lang.builder.HashCodeBuilder append(long)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.HashCodeBuilder org.apache.commons.lang.builder.HashCodeBuilder append(long[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;null-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.HashCodeBuilder org.apache.commons.lang.builder.HashCodeBuilder append(short)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.HashCodeBuilder org.apache.commons.lang.builder.HashCodeBuilder append(short[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;null-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.HashCodeBuilder org.apache.commons.lang.builder.HashCodeBuilder appendSuper(int)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -423,9 +369,7 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.ToStringStyle java.lang.String getShortClassName(java.lang.Class)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;null-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.builder.ToStringStyle void appendContentEnd(java.lang.StringBuffer) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>

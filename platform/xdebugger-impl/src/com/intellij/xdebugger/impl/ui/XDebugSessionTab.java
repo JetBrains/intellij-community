@@ -56,7 +56,6 @@ import java.util.List;
 
 public class XDebugSessionTab extends DebuggerSessionTabBase {
   private static final DataKey<XDebugSessionTab> TAB_KEY = DataKey.create("XDebugSessionTab");
-  public static final DataKey<XDebugSession> SESSION_KEY = DataKey.create("XDebugSessionTab.XDebugSession");
 
   private XWatchesViewImpl myWatchesView;
   private final List<XDebugView> myViews = new ArrayList<XDebugView>();
@@ -146,7 +145,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }
 
     if (mySession != null) {
-      if (SESSION_KEY.is(dataId)) {
+      if (XDebugSession.DATA_KEY.is(dataId)) {
         return mySession;
       }
       else if (LangDataKeys.CONSOLE_VIEW.is(dataId)) {

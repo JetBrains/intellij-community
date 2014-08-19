@@ -229,8 +229,14 @@ class Intf {
     edt {
       sdkRun = ourRun.containingClass.interfaces[0].methods[0]
     }
-    assert getPopupElements(new GotoSymbolModel2(project), 'run ', true) == [sdkRun]
-    assert getPopupElements(new GotoSymbolModel2(project), 'run ', false) == [ourRun]
+
+    def withLibs = getPopupElements(new GotoSymbolModel2(project), 'run ', true)
+    assert withLibs[0] == sdkRun
+    assert !(ourRun in withLibs)
+
+    def noLibs = getPopupElements(new GotoSymbolModel2(project), 'run ', false)
+    assert noLibs[0] == ourRun
+    assert !(sdkRun in noLibs)
   }
 
   private List<Object> getPopupElements(ChooseByNameModel model, String text, boolean checkboxState = false) {

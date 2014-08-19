@@ -67,7 +67,7 @@
   </item>
   <item name="org.apache.velocity.util.StringUtils java.lang.String nullTrim(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;null-&gt;null&quot;"/>
+      <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
   </item>
   <item name="org.apache.velocity.util.StringUtils java.lang.String removeAndHump(java.lang.String)">

@@ -17,66 +17,53 @@ package com.intellij.ui;
 
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.popup.PopupUpdateProcessor;
+import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.ObjectUtils;
 
-import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
+import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 
+/**
+ * @deprecated
+ * @see com.intellij.ui.popup.HintUpdateSupply
+ */
 public abstract class JBTableWithHintProvider extends JBTable {
-  private JBPopup myHint;
+
+  {
+    new HintUpdateSupply(this) {
+      @Override
+      protected PsiElement getPsiElementForHint(Object selectedValue) {
+        return JBTableWithHintProvider.this.getPsiElementForHint(selectedValue);
+      }
+    };
+  }
 
   public JBTableWithHintProvider() {
-    addSelectionListener();
   }
 
   protected JBTableWithHintProvider(TableModel model) {
     super(model);
   }
 
-  private void addSelectionListener() {
-    getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(final ListSelectionEvent e) {
-        if (getClientProperty(ListUtil.SELECTED_BY_MOUSE_EVENT) != Boolean.TRUE) {
-
-          final int selected = ((ListSelectionModel)e.getSource()).getLeadSelectionIndex();
-          int rowCount = getRowCount();
-          if (selected == -1 || rowCount == 0) return;
-
-          PsiElement element = getPsiElementForHint(getValueAt(Math.min(selected, rowCount -1), 0));
-          if (element != null && element.isValid()) {
-            updateHint(element);
-          }
-        }
-      }
-    });
+  public JBTableWithHintProvider(TableModel model, TableColumnModel columnModel) {
+    super(model, columnModel);
   }
 
   protected abstract PsiElement getPsiElementForHint(final Object selectedValue);
 
-  public void registerHint(final JBPopup hint) {
-    hideHint();
-    myHint = hint;
+  @Deprecated
+  public void registerHint(JBPopup hint) {
+    ObjectUtils.assertNotNull(HintUpdateSupply.getSupply(this)).registerHint(hint);
   }
-  
+
+  @Deprecated
   public void hideHint() {
-    if (myHint != null && myHint.isVisible()) {
-      myHint.cancel();
-    }
-
-    myHint = null;
+    ObjectUtils.assertNotNull(HintUpdateSupply.getSupply(this)).hideHint();
   }
-  
+
+  @Deprecated
   public void updateHint(PsiElement element) {
-    if (myHint == null || !myHint.isVisible()) return;
-
-    final PopupUpdateProcessor updateProcessor = myHint.getUserData(PopupUpdateProcessor.class);
-    if (updateProcessor != null) {
-      updateProcessor.updatePopup(element);
-    }
+    ObjectUtils.assertNotNull(HintUpdateSupply.getSupply(this)).updateHint(element);
   }
-  
 }

@@ -18,6 +18,7 @@ package com.intellij.openapi.editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
@@ -27,5 +28,5 @@ import java.util.Collection;
 public abstract class EditorLinePainter {
   public static final ExtensionPointName<EditorLinePainter> EP_NAME = ExtensionPointName.create("com.intellij.editor.linePainter");
 
-  public abstract Collection<LineExtensionInfo> getLineExtensions(Project project, VirtualFile file, int lineNumber);
+  public abstract Collection<LineExtensionInfo> getLineExtensions(@NotNull Project project, @NotNull VirtualFile file, int lineNumber);
 }

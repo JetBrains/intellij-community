@@ -70,4 +70,7 @@
     <applicationService serviceInterface="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter"
         serviceImplementation="com.jetbrains.python.edu.StudyInstructionPainter" overrides="true"/>
   </extensions>
+  <extensions defaultExtensionNs="Pythonid">
+    <visitorFilter language="Python" implementationClass="com.jetbrains.python.edu.highlighting.StudyVisitorFilter"/>
+  </extensions>
 </idea-plugin>

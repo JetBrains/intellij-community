@@ -20,6 +20,7 @@ import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.psi.PsiExpression;
@@ -41,14 +42,10 @@ public class ShowReferringObjectsAction extends XDebuggerTreeActionBase {
   private static final long MAX_REFERRING = 100;
 
   @Override
-  public void update(AnActionEvent e) {
-    super.update(e);
-  }
-
-  @Override
   protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
-    if (node.getValueContainer() instanceof JavaValue) {
-      JavaValue javaValue = ((JavaValue)node.getValueContainer());
+    XValue container = node.getValueContainer();
+    if (container instanceof JavaValue) {
+      JavaValue javaValue = ((JavaValue)container);
       XDebuggerTree tree = XDebuggerTree.getTree(e.getDataContext());
       XInspectDialog dialog = new XInspectDialog(tree.getProject(),
                                                  tree.getEditorsProvider(),
@@ -61,22 +58,27 @@ public class ShowReferringObjectsAction extends XDebuggerTreeActionBase {
     }
   }
 
-  private static class ReferringObjectsValue extends XValue {
-    private final JavaValue myJavaValue;
+  private static class ReferringObjectsValue extends JavaValue {
+    private ReferringObjectsValue(JavaValue parent,
+                                 @NotNull ValueDescriptorImpl valueDescriptor,
+                                 @NotNull EvaluationContextImpl evaluationContext,
+                                 NodeManagerImpl nodeManager) {
+      super(parent, valueDescriptor, evaluationContext, nodeManager);
+    }
 
     public ReferringObjectsValue(JavaValue javaValue) {
-      myJavaValue = javaValue;
+      super(null, javaValue.getDescriptor(), javaValue.getEvaluationContext(), null);
     }
 
     @Override
-    public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
-      myJavaValue.computePresentation(node, place);
+    public boolean canNavigateToSource() {
+      return false;
     }
 
     @Override
     public void computeChildren(@NotNull final XCompositeNode node) {
-      myJavaValue.getEvaluationContext().getDebugProcess().getManagerThread().schedule(
-        new SuspendContextCommandImpl(myJavaValue.getEvaluationContext().getSuspendContext()) {
+      getEvaluationContext().getDebugProcess().getManagerThread().schedule(
+        new SuspendContextCommandImpl(getEvaluationContext().getSuspendContext()) {
           @Override
           public Priority getPriority() {
             return Priority.NORMAL;
@@ -86,11 +88,11 @@ public class ShowReferringObjectsAction extends XDebuggerTreeActionBase {
           public void contextAction() throws Exception {
             final XValueChildrenList children = new XValueChildrenList();
 
-            Value value = myJavaValue.getDescriptor().getValue();
+            Value value = getDescriptor().getValue();
             List<ObjectReference> references = ((ObjectReference)value).referringObjects(MAX_REFERRING);
             int i = 1;
             for (final ObjectReference reference : references) {
-              ValueDescriptorImpl descriptor = new ValueDescriptorImpl(myJavaValue.getProject(), reference) {
+              ValueDescriptorImpl descriptor = new ValueDescriptorImpl(getProject(), reference) {
                 @Override
                 public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
                   return reference;
@@ -111,8 +113,7 @@ public class ShowReferringObjectsAction extends XDebuggerTreeActionBase {
                   return null;
                 }
               };
-              JavaValue jValue = JavaValue.create(descriptor, myJavaValue.getEvaluationContext(), null);
-              children.add("Referrer " + i++ ,new ReferringObjectsValue(jValue));
+              children.add("Referrer " + i++ , new ReferringObjectsValue(null, descriptor, getEvaluationContext(), null));
             }
 
             node.addChildren(children, true);

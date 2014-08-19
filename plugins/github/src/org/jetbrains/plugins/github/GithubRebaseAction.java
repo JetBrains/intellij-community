@@ -48,6 +48,7 @@ import org.jetbrains.plugins.github.util.*;
 import java.io.IOException;
 import java.util.Collections;
 
+import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.CHECKOUT;
 import static org.jetbrains.plugins.github.util.GithubUtil.setVisibleEnabled;
 
 /**
@@ -256,7 +257,9 @@ public class GithubRebaseAction extends DumbAwareAction {
 
     final GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector =
       new GitUntrackedFilesOverwrittenByOperationDetector(root);
+    final GitLocalChangesWouldBeOverwrittenDetector localChangesDetector = new GitLocalChangesWouldBeOverwrittenDetector(root, CHECKOUT);
     handler.addLineListener(untrackedFilesDetector);
+    handler.addLineListener(localChangesDetector);
 
     GitTask pullTask = new GitTask(project, handler, "Rebasing from upstream/master");
     pullTask.setProgressIndicator(indicator);
@@ -271,7 +274,8 @@ public class GithubRebaseAction extends DumbAwareAction {
 
       @Override
       protected void onFailure() {
-        GitUpdateResult result = rebaser.handleRebaseFailure(handler, root, rebaseConflictDetector, untrackedFilesDetector);
+        GitUpdateResult result = rebaser.handleRebaseFailure(handler, root, rebaseConflictDetector,
+                                                             untrackedFilesDetector, localChangesDetector);
         repositoryManager.updateRepository(root);
         if (result == GitUpdateResult.NOTHING_TO_UPDATE ||
             result == GitUpdateResult.SUCCESS ||

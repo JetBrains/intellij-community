@@ -473,19 +473,26 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.ClassUtils java.lang.String getShortCanonicalName(java.lang.Class)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.ClassUtils java.lang.String getShortCanonicalName(java.lang.Object, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;null-&gt;!null&quot;"/>
+      <val val="&quot;!null,_-&gt;!null;_,!null-&gt;!null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.ClassUtils java.lang.String getShortCanonicalName(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
   <item name="org.apache.commons.lang.ClassUtils java.lang.String getShortClassName(java.lang.Class)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.ClassUtils java.lang.String getShortClassName(java.lang.Object, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;null-&gt;!null&quot;"/>
+      <val val="&quot;!null,_-&gt;!null;_,!null-&gt;!null&quot;"/>
     </annotation>
   </item>
   <item name="org.apache.commons.lang.ClassUtils java.lang.String getShortClassName(java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;null-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.ClassUtils java.lang.String toCanonicalName(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -734,6 +741,9 @@
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.StringEscapeUtils java.lang.String hex(char)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
   <item name="org.apache.commons.lang.StringEscapeUtils java.lang.String unescapeCsv(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
@@ -960,9 +970,7 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String clean(java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;null-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String concatenate(java.lang.Object[])">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -1096,7 +1104,7 @@
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String lowerCase(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;null-&gt;null&quot;"/>
+      <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String mid(java.lang.String, int, int)">
@@ -1179,7 +1187,7 @@
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String replaceChars(java.lang.String, char, char)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;null,_,_-&gt;null&quot;"/>
+      <val val="&quot;!null,_,_-&gt;!null;null,_,_-&gt;null&quot;"/>
     </annotation>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String replaceChars(java.lang.String, java.lang.String, java.lang.String)">
@@ -1309,13 +1317,11 @@
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String trim(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;null-&gt;null&quot;"/>
+      <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String trimToEmpty(java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;null-&gt;!null&quot;"/>
-    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String trimToNull(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -1334,7 +1340,7 @@
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String upperCase(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;null-&gt;null&quot;"/>
+      <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String[] split(java.lang.String)">
