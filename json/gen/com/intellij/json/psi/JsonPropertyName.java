@@ -8,6 +8,6 @@ import com.intellij.psi.PsiElement;
 public interface JsonPropertyName extends PsiElement {
 
   @NotNull
-  JsonStringLiteral getStringLiteral();
+  PsiElement getString();
 
 }

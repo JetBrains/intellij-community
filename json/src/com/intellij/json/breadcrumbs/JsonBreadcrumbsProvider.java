@@ -1,7 +1,7 @@
 package com.intellij.json.breadcrumbs;
 
 import com.intellij.json.JsonLanguage;
-import com.intellij.json.psi.JsonPropertyValue;
+import com.intellij.json.psi.JsonValue;
 import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
 import com.intellij.xml.breadcrumbs.BreadcrumbsInfoProvider;
@@ -35,7 +35,7 @@ public class JsonBreadcrumbsProvider extends BreadcrumbsInfoProvider {
       return ((JsonProperty)e).getName();
     }
     else if (isArrayElement(e)) {
-      List<JsonPropertyValue> elements = ((JsonArray)e.getParent()).getPropertyValueList();
+      List<JsonValue> elements = ((JsonArray)e.getParent()).getValueList();
       for (int i = 0; i < elements.size(); i++) {
         if (e == elements.get(i)) {
           return String.valueOf(i);
@@ -56,6 +56,6 @@ public class JsonBreadcrumbsProvider extends BreadcrumbsInfoProvider {
   }
 
   private static boolean isArrayElement(PsiElement element) {
-    return element instanceof JsonPropertyValue && element.getParent() instanceof JsonArray;
+    return element instanceof JsonValue && element.getParent() instanceof JsonArray;
   }
 }

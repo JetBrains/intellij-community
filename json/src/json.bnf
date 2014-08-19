@@ -37,33 +37,37 @@
         TEXT='regexp:\w+'
     ]
 
-    extends("object|array|literal")=property_value
+    extends("object|array|literal")=value
     extends("string_literal|number_literal|boolean_literal|null_literal")=literal
 }
 
 json ::= object | array
 
-object ::= L_CURLY [properties] R_CURLY {
+object ::= '{' [properties] '}' {
   pin=1
   methods=[
     findProperty
   ]
 }
-private properties ::= property (COMMA property)* { pin(".*")=1 }
-property ::= property_name COLON property_value {
+
+private properties ::= property (',' property)* { pin(".*")=1 }
+property ::= property_name ':' value {
   pin = 1
-  methods=[ getName ]
-  recoverWhile = brace_or_comma
+  methods=[
+    getName
+    NameElement="property_name"
+  ]
+  recoverWhile = not_brace_or_comma
 }
+property_name ::= STRING
 
-array ::= L_BRACKET [array_elements] R_BRACKET { pin=1 }
-private array_elements ::= array_element (COMMA array_element)* { pin(".*")=1 }
-private array_element ::= property_value {
-  recoverWhile = bracket_or_comma
+array ::= '[' [array_elements] ']' {
+  pin=1
 }
-
-property_name ::= string_literal
-property_value ::= object | array | literal
+private array_elements ::= array_element (',' array_element)* { pin(".*")=1 }
+private array_element ::= value {
+  recoverWhile = not_bracket_or_comma
+}
 
 string_literal ::= STRING
 number_literal ::= NUMBER
@@ -74,6 +78,8 @@ literal ::= string_literal | number_literal | boolean_literal | null_literal {
   methods=[isQuotedString]
   mixin="com.intellij.json.psi.impl.JsonLiteralMixin"
 }
+value ::= object | array | literal
 
-private bracket_or_comma ::= !(R_BRACKET|COMMA)
-private brace_or_comma ::= !(R_CURLY|COMMA)
+// Recoveries
+private not_bracket_or_comma ::= !(']'|',')
+private not_brace_or_comma ::= !('}'|',')

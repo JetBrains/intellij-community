@@ -7,13 +7,13 @@ import com.intellij.psi.PsiElement;
 
 public interface JsonProperty extends PsiElement {
 
-  @NotNull
-  JsonPropertyName getPropertyName();
-
   @Nullable
-  JsonPropertyValue getPropertyValue();
+  JsonValue getValue();
 
   @NotNull
   String getName();
+
+  @NotNull
+  JsonPropertyName getNameElement();
 
 }

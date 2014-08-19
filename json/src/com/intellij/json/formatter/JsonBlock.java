@@ -2,7 +2,7 @@ package com.intellij.json.formatter;
 
 import com.intellij.formatting.*;
 import com.intellij.json.JsonParserDefinition;
-import com.intellij.json.psi.JsonPropertyValue;
+import com.intellij.json.psi.JsonValue;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -100,7 +100,7 @@ public class JsonBlock implements ASTBlock {
       alignment = myChildAlignment;
       indent = Indent.getNormalIndent();
     }
-    if (myNode.getElementType() == PROPERTY && childPsiElement instanceof JsonPropertyValue) {
+    if (myNode.getElementType() == PROPERTY && childPsiElement instanceof JsonValue) {
       wrap = Wrap.createWrap(WrapType.NORMAL, true);
       indent = Indent.getNormalIndent();
     }
@@ -163,7 +163,7 @@ public class JsonBlock implements ASTBlock {
       return lastChildNode != null && lastChildNode.getElementType() == R_BRACKET;
     }
     else if (myPsiElement instanceof JsonProperty) {
-      return ((JsonProperty)myPsiElement).getPropertyValue() != null;
+      return ((JsonProperty)myPsiElement).getValue() != null;
     }
     return false;
   }

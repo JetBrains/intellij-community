@@ -5,9 +5,9 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface JsonArray extends JsonPropertyValue {
+public interface JsonArray extends JsonValue {
 
   @NotNull
-  List<JsonPropertyValue> getPropertyValueList();
+  List<JsonValue> getValueList();
 
 }

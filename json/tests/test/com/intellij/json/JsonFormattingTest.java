@@ -26,7 +26,7 @@ public class JsonFormattingTest extends FormatterTestCase {
   // Why the heck do I specify path to testData in each kind of test differently?
   @Override
   protected String getTestDataPath() {
-    return PlatformTestUtil.getCommunityPath() + "/plugins/json-tests/testData/";
+    return PlatformTestUtil.getCommunityPath() + "/json/tests/testData/";
   }
 
   @Override

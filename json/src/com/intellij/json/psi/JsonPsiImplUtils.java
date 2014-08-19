@@ -12,7 +12,7 @@ import java.util.Collection;
 public class JsonPsiImplUtils {
   @NotNull
   public static String getName(@NotNull JsonProperty property) {
-    return StringUtil.unquoteString(property.getPropertyName().getText());
+    return StringUtil.unquoteString(property.getNameElement().getText());
   }
 
   public static boolean isQuotedString(@NotNull JsonLiteral literal) {

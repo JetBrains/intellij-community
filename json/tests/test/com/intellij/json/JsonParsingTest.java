@@ -33,6 +33,6 @@ public class JsonParsingTest extends ParsingTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return PlatformTestUtil.getCommunityPath() + "/plugins/json-tests/testData";
+    return PlatformTestUtil.getCommunityPath() + "/json/tests/testData";
   }
 }

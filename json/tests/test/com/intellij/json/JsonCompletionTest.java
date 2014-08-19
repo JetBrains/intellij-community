@@ -18,7 +18,7 @@ public class JsonCompletionTest extends CodeInsightFixtureTestCase {
   }
   @Override
   protected String getBasePath() {
-    return "/plugins/json-tests/testData/completion";
+    return "/json/tests/testData/completion";
   }
 
 

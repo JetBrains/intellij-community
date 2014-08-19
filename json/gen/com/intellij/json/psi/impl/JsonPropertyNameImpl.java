@@ -24,8 +24,8 @@ public class JsonPropertyNameImpl extends ASTWrapperPsiElement implements JsonPr
 
   @Override
   @NotNull
-  public JsonStringLiteral getStringLiteral() {
-    return findNotNullChildByClass(JsonStringLiteral.class);
+  public PsiElement getString() {
+    return findNotNullChildByType(STRING);
   }
 
 }

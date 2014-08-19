@@ -44,11 +44,11 @@ public class JsonParser implements PsiParser {
     else if (root_ == PROPERTY_NAME) {
       result_ = property_name(builder_, 0);
     }
-    else if (root_ == PROPERTY_VALUE) {
-      result_ = property_value(builder_, 0);
-    }
     else if (root_ == STRING_LITERAL) {
       result_ = string_literal(builder_, 0);
+    }
+    else if (root_ == VALUE) {
+      result_ = value(builder_, 0);
     }
     else {
       result_ = parse_root_(root_, builder_, 0);
@@ -65,11 +65,11 @@ public class JsonParser implements PsiParser {
     create_token_set_(BOOLEAN_LITERAL, LITERAL, NULL_LITERAL, NUMBER_LITERAL,
       STRING_LITERAL),
     create_token_set_(ARRAY, BOOLEAN_LITERAL, LITERAL, NULL_LITERAL,
-      NUMBER_LITERAL, OBJECT, PROPERTY_VALUE, STRING_LITERAL),
+      NUMBER_LITERAL, OBJECT, STRING_LITERAL, VALUE),
   };
 
   /* ********************************************************** */
-  // L_BRACKET [array_elements] R_BRACKET
+  // '[' [array_elements] ']'
   public static boolean array(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "array")) return false;
     if (!nextTokenIs(builder_, L_BRACKET)) return false;
@@ -92,18 +92,18 @@ public class JsonParser implements PsiParser {
   }
 
   /* ********************************************************** */
-  // property_value
+  // value
   static boolean array_element(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "array_element")) return false;
     boolean result_;
     Marker marker_ = enter_section_(builder_, level_, _NONE_, null);
-    result_ = property_value(builder_, level_ + 1);
-    exit_section_(builder_, level_, marker_, null, result_, false, bracket_or_comma_parser_);
+    result_ = value(builder_, level_ + 1);
+    exit_section_(builder_, level_, marker_, null, result_, false, not_bracket_or_comma_parser_);
     return result_;
   }
 
   /* ********************************************************** */
-  // array_element (COMMA array_element)*
+  // array_element (',' array_element)*
   static boolean array_elements(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "array_elements")) return false;
     boolean result_;
@@ -116,7 +116,7 @@ public class JsonParser implements PsiParser {
     return result_ || pinned_;
   }
 
-  // (COMMA array_element)*
+  // (',' array_element)*
   private static boolean array_elements_1(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "array_elements_1")) return false;
     int pos_ = current_position_(builder_);
@@ -128,7 +128,7 @@ public class JsonParser implements PsiParser {
     return true;
   }
 
-  // COMMA array_element
+  // ',' array_element
   private static boolean array_elements_1_0(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "array_elements_1_0")) return false;
     boolean result_;
@@ -151,50 +151,6 @@ public class JsonParser implements PsiParser {
     result_ = consumeToken(builder_, TRUE);
     if (!result_) result_ = consumeToken(builder_, FALSE);
     exit_section_(builder_, level_, marker_, BOOLEAN_LITERAL, result_, false, null);
-    return result_;
-  }
-
-  /* ********************************************************** */
-  // !(R_CURLY|COMMA)
-  static boolean brace_or_comma(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "brace_or_comma")) return false;
-    boolean result_;
-    Marker marker_ = enter_section_(builder_, level_, _NOT_, null);
-    result_ = !brace_or_comma_0(builder_, level_ + 1);
-    exit_section_(builder_, level_, marker_, null, result_, false, null);
-    return result_;
-  }
-
-  // R_CURLY|COMMA
-  private static boolean brace_or_comma_0(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "brace_or_comma_0")) return false;
-    boolean result_;
-    Marker marker_ = enter_section_(builder_);
-    result_ = consumeToken(builder_, R_CURLY);
-    if (!result_) result_ = consumeToken(builder_, COMMA);
-    exit_section_(builder_, marker_, null, result_);
-    return result_;
-  }
-
-  /* ********************************************************** */
-  // !(R_BRACKET|COMMA)
-  static boolean bracket_or_comma(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "bracket_or_comma")) return false;
-    boolean result_;
-    Marker marker_ = enter_section_(builder_, level_, _NOT_, null);
-    result_ = !bracket_or_comma_0(builder_, level_ + 1);
-    exit_section_(builder_, level_, marker_, null, result_, false, null);
-    return result_;
-  }
-
-  // R_BRACKET|COMMA
-  private static boolean bracket_or_comma_0(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "bracket_or_comma_0")) return false;
-    boolean result_;
-    Marker marker_ = enter_section_(builder_);
-    result_ = consumeToken(builder_, R_BRACKET);
-    if (!result_) result_ = consumeToken(builder_, COMMA);
-    exit_section_(builder_, marker_, null, result_);
     return result_;
   }
 
@@ -226,6 +182,50 @@ public class JsonParser implements PsiParser {
   }
 
   /* ********************************************************** */
+  // !('}'|',')
+  static boolean not_brace_or_comma(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "not_brace_or_comma")) return false;
+    boolean result_;
+    Marker marker_ = enter_section_(builder_, level_, _NOT_, null);
+    result_ = !not_brace_or_comma_0(builder_, level_ + 1);
+    exit_section_(builder_, level_, marker_, null, result_, false, null);
+    return result_;
+  }
+
+  // '}'|','
+  private static boolean not_brace_or_comma_0(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "not_brace_or_comma_0")) return false;
+    boolean result_;
+    Marker marker_ = enter_section_(builder_);
+    result_ = consumeToken(builder_, R_CURLY);
+    if (!result_) result_ = consumeToken(builder_, COMMA);
+    exit_section_(builder_, marker_, null, result_);
+    return result_;
+  }
+
+  /* ********************************************************** */
+  // !(']'|',')
+  static boolean not_bracket_or_comma(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "not_bracket_or_comma")) return false;
+    boolean result_;
+    Marker marker_ = enter_section_(builder_, level_, _NOT_, null);
+    result_ = !not_bracket_or_comma_0(builder_, level_ + 1);
+    exit_section_(builder_, level_, marker_, null, result_, false, null);
+    return result_;
+  }
+
+  // ']'|','
+  private static boolean not_bracket_or_comma_0(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "not_bracket_or_comma_0")) return false;
+    boolean result_;
+    Marker marker_ = enter_section_(builder_);
+    result_ = consumeToken(builder_, R_BRACKET);
+    if (!result_) result_ = consumeToken(builder_, COMMA);
+    exit_section_(builder_, marker_, null, result_);
+    return result_;
+  }
+
+  /* ********************************************************** */
   // NULL
   public static boolean null_literal(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "null_literal")) return false;
@@ -250,7 +250,7 @@ public class JsonParser implements PsiParser {
   }
 
   /* ********************************************************** */
-  // L_CURLY [properties] R_CURLY
+  // '{' [properties] '}'
   public static boolean object(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "object")) return false;
     if (!nextTokenIs(builder_, L_CURLY)) return false;
@@ -273,7 +273,7 @@ public class JsonParser implements PsiParser {
   }
 
   /* ********************************************************** */
-  // property (COMMA property)*
+  // property (',' property)*
   static boolean properties(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "properties")) return false;
     if (!nextTokenIs(builder_, STRING)) return false;
@@ -287,7 +287,7 @@ public class JsonParser implements PsiParser {
     return result_ || pinned_;
   }
 
-  // (COMMA property)*
+  // (',' property)*
   private static boolean properties_1(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "properties_1")) return false;
     int pos_ = current_position_(builder_);
@@ -299,7 +299,7 @@ public class JsonParser implements PsiParser {
     return true;
   }
 
-  // COMMA property
+  // ',' property
   private static boolean properties_1_0(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "properties_1_0")) return false;
     boolean result_;
@@ -313,7 +313,7 @@ public class JsonParser implements PsiParser {
   }
 
   /* ********************************************************** */
-  // property_name COLON property_value
+  // property_name ':' value
   public static boolean property(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "property")) return false;
     boolean result_;
@@ -322,33 +322,20 @@ public class JsonParser implements PsiParser {
     result_ = property_name(builder_, level_ + 1);
     pinned_ = result_; // pin = 1
     result_ = result_ && report_error_(builder_, consumeToken(builder_, COLON));
-    result_ = pinned_ && property_value(builder_, level_ + 1) && result_;
-    exit_section_(builder_, level_, marker_, PROPERTY, result_, pinned_, brace_or_comma_parser_);
+    result_ = pinned_ && value(builder_, level_ + 1) && result_;
+    exit_section_(builder_, level_, marker_, PROPERTY, result_, pinned_, not_brace_or_comma_parser_);
     return result_ || pinned_;
   }
 
   /* ********************************************************** */
-  // string_literal
+  // STRING
   public static boolean property_name(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "property_name")) return false;
     if (!nextTokenIs(builder_, STRING)) return false;
     boolean result_;
     Marker marker_ = enter_section_(builder_);
-    result_ = string_literal(builder_, level_ + 1);
+    result_ = consumeToken(builder_, STRING);
     exit_section_(builder_, marker_, PROPERTY_NAME, result_);
-    return result_;
-  }
-
-  /* ********************************************************** */
-  // object | array | literal
-  public static boolean property_value(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "property_value")) return false;
-    boolean result_;
-    Marker marker_ = enter_section_(builder_, level_, _COLLAPSE_, "<property value>");
-    result_ = object(builder_, level_ + 1);
-    if (!result_) result_ = array(builder_, level_ + 1);
-    if (!result_) result_ = literal(builder_, level_ + 1);
-    exit_section_(builder_, level_, marker_, PROPERTY_VALUE, result_, false, null);
     return result_;
   }
 
@@ -364,14 +351,27 @@ public class JsonParser implements PsiParser {
     return result_;
   }
 
-  final static Parser brace_or_comma_parser_ = new Parser() {
+  /* ********************************************************** */
+  // object | array | literal
+  public static boolean value(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "value")) return false;
+    boolean result_;
+    Marker marker_ = enter_section_(builder_, level_, _COLLAPSE_, "<value>");
+    result_ = object(builder_, level_ + 1);
+    if (!result_) result_ = array(builder_, level_ + 1);
+    if (!result_) result_ = literal(builder_, level_ + 1);
+    exit_section_(builder_, level_, marker_, VALUE, result_, false, null);
+    return result_;
+  }
+
+  final static Parser not_brace_or_comma_parser_ = new Parser() {
     public boolean parse(PsiBuilder builder_, int level_) {
-      return brace_or_comma(builder_, level_ + 1);
+      return not_brace_or_comma(builder_, level_ + 1);
     }
   };
-  final static Parser bracket_or_comma_parser_ = new Parser() {
+  final static Parser not_bracket_or_comma_parser_ = new Parser() {
     public boolean parse(PsiBuilder builder_, int level_) {
-      return bracket_or_comma(builder_, level_ + 1);
+      return not_bracket_or_comma(builder_, level_ + 1);
     }
   };
 }

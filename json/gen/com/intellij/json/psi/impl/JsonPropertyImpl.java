@@ -23,20 +23,20 @@ public class JsonPropertyImpl extends ASTWrapperPsiElement implements JsonProper
   }
 
   @Override
-  @NotNull
-  public JsonPropertyName getPropertyName() {
-    return findNotNullChildByClass(JsonPropertyName.class);
-  }
-
-  @Override
   @Nullable
-  public JsonPropertyValue getPropertyValue() {
-    return findChildByClass(JsonPropertyValue.class);
+  public JsonValue getValue() {
+    return findChildByClass(JsonValue.class);
   }
 
   @NotNull
   public String getName() {
     return JsonPsiImplUtils.getName(this);
+  }
+
+  @Override
+  @NotNull
+  public JsonPropertyName getNameElement() {
+    return findNotNullChildByClass(JsonPropertyName.class);
   }
 
 }
