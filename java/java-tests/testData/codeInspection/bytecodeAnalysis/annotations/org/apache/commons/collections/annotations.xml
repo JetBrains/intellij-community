@@ -37,4 +37,7 @@
   <item name="org.apache.commons.collections.ExtendedProperties void combine(org.apache.commons.collections.ExtendedProperties) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.collections.ExtendedProperties.PropertiesTokenizer java.lang.String nextToken()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
 </root>

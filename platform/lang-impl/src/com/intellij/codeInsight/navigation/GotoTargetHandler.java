@@ -42,6 +42,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.JBListWithHintProvider;
 import com.intellij.ui.popup.AbstractPopup;
+import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.usages.UsageView;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -179,7 +180,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       setCancelCallback(new Computable<Boolean>() {
         @Override
         public Boolean compute() {
-          list.hideHint();
+          HintUpdateSupply.hideHint(list);
           return true;
         }
       }).

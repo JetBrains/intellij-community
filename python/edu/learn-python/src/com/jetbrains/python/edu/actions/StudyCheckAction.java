@@ -162,6 +162,7 @@ public class StudyCheckAction extends DumbAwareAction {
                   createTestResultPopUp("Congratulations!", JBColor.GREEN, project);
                   return;
                 }
+                currentTask.setStatus(StudyStatus.Failed, oldStatus);
                 for (Map.Entry<String, TaskFile> entry : taskFiles.entrySet()) {
                   String name = entry.getKey();
                   TaskFile taskFile = entry.getValue();
@@ -207,7 +208,6 @@ public class StudyCheckAction extends DumbAwareAction {
                     LOG.error(e);
                   }
                 }
-                currentTask.setStatus(StudyStatus.Failed, oldStatus);
                 StudyUtils.updateStudyToolWindow(project);
                 createTestResultPopUp(failedMessage, JBColor.RED, project);
               }
