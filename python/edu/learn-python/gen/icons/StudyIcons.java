@@ -15,6 +15,7 @@ public class StudyIcons {
 
   public static final Icon EducationalProjectType = load("/icons/com/jetbrains/python/edu/EducationalProjectType.png"); // 32x32
   public static final Icon Lesson = load("/icons/com/jetbrains/python/edu/Lesson.png"); // 16x16
+  public static final Icon LessonCompl = load("/icons/com/jetbrains/python/edu/LessonCompl.png"); // 16x16
   public static final Icon Playground = load("/icons/com/jetbrains/python/edu/Playground.png"); // 16x16
   public static final Icon Prev = load("/icons/com/jetbrains/python/edu/prev.png"); // 16x16
   public static final Icon Resolve = load("/icons/com/jetbrains/python/edu/resolve.png"); // 16x16
