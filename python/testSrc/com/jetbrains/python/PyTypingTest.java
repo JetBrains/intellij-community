@@ -26,6 +26,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Tests for a type system based on mypy's typing module.
+ *
  * @author vlan
  */
 public class PyTypingTest extends PyTestCase {
@@ -81,13 +83,27 @@ public class PyTypingTest extends PyTestCase {
            "expr = f()\n");
   }
 
+  public void testUnionType() {
+    doTest("int | str",
+           "from typing import Union\n" +
+           "\n" +
+           "def f(expr: Union[int, str]):\n" +
+           "    pass\n");
+  }
+
   private void doTest(@NotNull String expectedType, @NotNull String text) {
     myFixture.copyDirectoryToProject("typing", "");
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
-    final TypeEvalContext context = TypeEvalContext.userInitiated(expr.getContainingFile()).withTracing();
-    PyType actual = context.getType(expr);
+    final TypeEvalContext codeAnalysis = TypeEvalContext.codeAnalysis(expr.getContainingFile());
+    final TypeEvalContext userInitiated = TypeEvalContext.userInitiated(expr.getContainingFile()).withTracing();
+    assertType(expectedType, expr, codeAnalysis, "code analysis");
+    assertType(expectedType, expr, userInitiated, "user initiated");
+  }
+
+  private static void assertType(String expectedType, PyExpression expr, TypeEvalContext context, String contextName) {
+    final PyType actual = context.getType(expr);
     final String actualType = PythonDocumentationProvider.getTypeName(actual, context);
-    assertEquals(expectedType, actualType);
+    assertEquals("Failed in " + contextName + " context", expectedType, actualType);
   }
 }
