@@ -62,7 +62,7 @@ import java.util.Set;
  */
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "UtilityClassWithPublicConstructor"})
 public class PyCharmEduInitialConfigurator {
-  @NonNls private static final String DISPLAYED_PROPERTY = "PyCharm.initialConfigurationShown";
+  @NonNls private static final String DISPLAYED_PROPERTY = "PyCharmEDU.initialConfigurationShown";
 
   @NonNls private static final String CONFIGURED = "PyCharmEDU.InitialConfiguration";
 
