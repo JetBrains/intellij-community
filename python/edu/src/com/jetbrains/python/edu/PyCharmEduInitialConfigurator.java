@@ -41,6 +41,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.platform.DirectoryProjectConfigurator;
@@ -92,6 +93,8 @@ public class PyCharmEduInitialConfigurator {
       uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES = true;
       uiSettings.SHOW_MAIN_TOOLBAR = false;
       codeInsightSettings.REFORMAT_ON_PASTE = CodeInsightSettings.NO_REFORMAT;
+
+      Registry.get("ide.file.settings.order.new").setValue(true);
 
       GeneralSettings.getInstance().setShowTipsOnStartup(false);
 
