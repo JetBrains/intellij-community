@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.javaFX.codeInsight;
 
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.GetterSetterPrototypeProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -42,7 +43,7 @@ public class JavaFxGetterSetterPrototypeProvider extends GetterSetterPrototypePr
   public PsiMethod[] generateGetters(PsiField field) {
     final Project project = field.getProject();
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    final PsiMethod getter = PropertyUtil.generateGetterPrototype(field);
+    final PsiMethod getter = GenerateMembersUtil.generateGetterPrototype(field);
 
     final PsiType wrappedType = JavaFxPsiUtil.getWrappedPropertyType(field, project, JavaFxCommonClassNames.ourReadOnlyMap);
 
@@ -56,12 +57,12 @@ public class JavaFxGetterSetterPrototypeProvider extends GetterSetterPrototypePr
 
     final PsiMethod propertyGetter = PropertyUtil.generateGetterPrototype(field);
     propertyGetter.setName(JavaCodeStyleManager.getInstance(project).variableNameToPropertyName(field.getName(), VariableKind.FIELD) + "Property");
-    return new PsiMethod[] {getter, propertyGetter};
+    return new PsiMethod[] {getter, GenerateMembersUtil.annotateOnOverrideImplement(field.getContainingClass(), propertyGetter)};
   }
 
   @Override
   public PsiMethod[] generateSetters(PsiField field) {
-    final PsiMethod setter = PropertyUtil.generateSetterPrototype(field);
+    final PsiMethod setter = GenerateMembersUtil.generateSetterPrototype(field);
     final Project project = field.getProject();
 
     final PsiType wrappedType = JavaFxPsiUtil.getWrappedPropertyType(field, project, JavaFxCommonClassNames.ourWritableMap);
