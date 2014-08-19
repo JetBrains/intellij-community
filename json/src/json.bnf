@@ -67,7 +67,10 @@ number_literal ::= NUMBER
 boolean_literal ::= TRUE | FALSE
 null_literal ::= NULL
 
-literal ::= string_literal | number_literal | boolean_literal | null_literal
+literal ::= string_literal | number_literal | boolean_literal | null_literal {
+  methods=[isQuotedString]
+  mixin="com.intellij.json.psi.impl.JsonLiteralMixin"
+}
 
 private bracket_or_comma ::= !(R_BRACKET|COMMA)
 private brace_or_comma ::= !(R_CURLY|COMMA)

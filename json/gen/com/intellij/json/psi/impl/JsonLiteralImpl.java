@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.json.JsonElementTypes.*;
 import com.intellij.json.psi.*;
 
-public class JsonLiteralImpl extends JsonValueImpl implements JsonLiteral {
+public class JsonLiteralImpl extends JsonLiteralMixin implements JsonLiteral {
 
   public JsonLiteralImpl(ASTNode node) {
     super(node);
@@ -19,6 +19,10 @@ public class JsonLiteralImpl extends JsonValueImpl implements JsonLiteral {
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JsonVisitor) ((JsonVisitor)visitor).visitLiteral(this);
     else super.accept(visitor);
+  }
+
+  public void isQuotedString() {
+    JsonPsiImplUtils.isQuotedString(this);
   }
 
 }
