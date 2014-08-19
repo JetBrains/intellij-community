@@ -42,6 +42,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public PyType getParameterType(@NotNull PyNamedParameter param, @NotNull PyFunction func, @NotNull TypeEvalContext context) {
     final PyAnnotation annotation = param.getAnnotation();
     if (annotation != null) {
+      // XXX: Requires switching from stub to AST
       final PyExpression value = annotation.getValue();
       if (value != null) {
         return getTypingType(value, context);
@@ -57,6 +58,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final PyFunction function = (PyFunction)callable;
       final PyAnnotation annotation = function.getAnnotation();
       if (annotation != null) {
+        // XXX: Requires switching from stub to AST
         final PyExpression value = annotation.getValue();
         if (value != null) {
           return getTypingType(value, context);
@@ -68,7 +70,6 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   private static PyType getTypingType(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
-    // TODO: Put the annotation text into stubs and parse it to avoid switching from stubs to AST
     if (expression instanceof PySubscriptionExpression) {
       final PySubscriptionExpression subscriptionExpr = (PySubscriptionExpression)expression;
       final PyExpression operand = subscriptionExpr.getOperand();
