@@ -15,6 +15,7 @@
  */
 package com.intellij.find.impl.livePreview;
 
+import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +36,7 @@ public class ReplacementView extends JPanel {
       textToShow = MALFORMED_REPLACEMENT_STRING;
     }
     JLabel jLabel = new JLabel(textToShow);
-    jLabel.setForeground(replacement != null ? Color.WHITE : JBColor.RED);
+    jLabel.setForeground(replacement != null ? new JBColor(Gray._240, Gray._200) : JBColor.RED);
     add(jLabel);
   }
 }
