@@ -64,7 +64,7 @@ import java.util.Set;
 public class PyCharmEduInitialConfigurator {
   @NonNls private static final String DISPLAYED_PROPERTY = "PyCharm.initialConfigurationShown";
 
-  @NonNls private static final String CONFIGURED = "PyCharm.InitialConfiguration";
+  @NonNls private static final String CONFIGURED = "PyCharmEDU.InitialConfiguration";
 
 
   public static class First {
