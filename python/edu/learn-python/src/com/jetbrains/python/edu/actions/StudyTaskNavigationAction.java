@@ -11,6 +11,8 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.jetbrains.python.edu.StudyTaskManager;
 import com.jetbrains.python.edu.course.Lesson;
 import com.jetbrains.python.edu.course.Task;
@@ -82,6 +84,7 @@ abstract public class StudyTaskNavigationAction extends DumbAwareAction {
     if (shouldBeActive != null) {
       FileEditorManager.getInstance(project).openFile(shouldBeActive, true);
     }
+    ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.RUN).hide(null);
   }
 
   protected abstract JButton getButton(StudyEditor selectedStudyEditor);
