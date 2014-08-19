@@ -24,10 +24,12 @@ import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 
 public class CodeCleanupCheckinHandlerFactory extends CheckinHandlerFactory  {
@@ -75,7 +77,8 @@ public class CodeCleanupCheckinHandlerFactory extends CheckinHandlerFactory  {
     public void runCheckinHandlers(Runnable runnable) {
       if (VcsConfiguration.getInstance(myProject).CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT  && !DumbService.isDumb(myProject)) {
 
-        GlobalInspectionContextBase.codeCleanup(myProject, new AnalysisScope(myProject, myPanel.getVirtualFiles()), runnable);
+        List<VirtualFile> filesToProcess = CheckinHandlerUtil.filterOutGeneratedAndExcludedFiles(myPanel.getVirtualFiles(), myProject);
+        GlobalInspectionContextBase.codeCleanup(myProject, new AnalysisScope(myProject, filesToProcess), runnable);
 
       } else {
         runnable.run();
