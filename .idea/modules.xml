@@ -109,8 +109,8 @@
       <module fileurl="file://$PROJECT_DIR$/jps/plugin-system/jps-plugin-system.iml" filepath="$PROJECT_DIR$/jps/plugin-system/jps-plugin-system.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/jps/model-serialization/jps-serialization-tests.iml" filepath="$PROJECT_DIR$/jps/model-serialization/jps-serialization-tests.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/jps/standalone-builder/jps-standalone-builder.iml" filepath="$PROJECT_DIR$/jps/standalone-builder/jps-standalone-builder.iml" group="jps" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/json/json.iml" filepath="$PROJECT_DIR$/plugins/json/json.iml" group="plugins" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/json-tests/json-tests.iml" filepath="$PROJECT_DIR$/plugins/json-tests/json-tests.iml" group="plugins" />
+      <module fileurl="file://$PROJECT_DIR$/json/json.iml" filepath="$PROJECT_DIR$/json/json.iml" group="json" />
+      <module fileurl="file://$PROJECT_DIR$/json/tests/json-tests.iml" filepath="$PROJECT_DIR$/json/tests/json-tests.iml" group="json" />
       <module fileurl="file://$PROJECT_DIR$/java/jsp-base-openapi/jsp-base-openapi.iml" filepath="$PROJECT_DIR$/java/jsp-base-openapi/jsp-base-openapi.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/jsp-openapi/jsp-openapi.iml" filepath="$PROJECT_DIR$/java/jsp-openapi/jsp-openapi.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/jsp-spi/jsp-spi.iml" filepath="$PROJECT_DIR$/java/jsp-spi/jsp-spi.iml" group="java" />
