@@ -25,7 +25,7 @@
   <extensions defaultExtensionNs="com.intellij">
       <directoryProjectGenerator implementation="org.jetbrains.plugins.coursecreator.CCProjectGenerator"/>
       <projectService serviceImplementation="org.jetbrains.plugins.coursecreator.CCProjectService"/>
-      <codeInsight.lineMarkerProvider language="Python" implementationClass="org.jetbrains.plugins.coursecreator.CCTaskLineMarkerProvider"/>
+      <codeInsight.lineMarkerProvider language="Python" implementationClass="org.jetbrains.plugins.coursecreator.highlighting.CCTaskLineMarkerProvider"/>
   </extensions>
 
   <application-components>

@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.coursecreator;
+package org.jetbrains.plugins.coursecreator.highlighting;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
@@ -15,8 +15,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.coursecreator.CCProjectService;
 import org.jetbrains.plugins.coursecreator.format.*;
-import org.jetbrains.plugins.coursecreator.highlighting.TaskTextGutter;
 
 import java.util.Collection;
 import java.util.List;
