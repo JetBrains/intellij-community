@@ -388,7 +388,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         final Content content = myToolWindow.getContentManager().getSelectedContent();
         if (content != null) {
           final DocumentationComponent component = (DocumentationComponent)content.getComponent();
-          if (component.getElement() != element) {
+          if (!element.getManager().areElementsEquivalent(component.getElement(), element)) {
             content.setDisplayName(getTitle(element, true));
             fetchDocInfo(getDefaultCollector(element, originalElement), component, true);
           }
@@ -666,11 +666,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   private ActionCallback doFetchDocInfo(final DocumentationComponent component, final DocumentationCollector provider, final boolean cancelRequests, final boolean clearHistory) {
     final ActionCallback callback = new ActionCallback();
+    boolean wasEmpty = component.isEmpty();
     component.startWait();
     if (cancelRequests) {
       myUpdateDocAlarm.cancelAllRequests();
     }
-    if (component.isEmpty()) {
+    if (wasEmpty) {
       component.setText(CodeInsightBundle.message("javadoc.fetching.progress"), null, clearHistory);
       final AbstractPopup jbPopup = (AbstractPopup)getDocInfoHint();
       if (jbPopup != null) {
