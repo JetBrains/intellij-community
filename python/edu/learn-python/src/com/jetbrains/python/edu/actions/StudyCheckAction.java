@@ -17,13 +17,13 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.JBColor;
 import com.jetbrains.python.edu.StudyDocumentListener;
 import com.jetbrains.python.edu.StudyTaskManager;
 import com.jetbrains.python.edu.StudyUtils;
@@ -35,8 +35,9 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class StudyCheckAction extends DumbAwareAction {
 
@@ -159,7 +160,7 @@ public class StudyCheckAction extends DumbAwareAction {
                       LOG.error(e);
                     }
                   }
-                  createTestResultPopUp("Congratulations!", JBColor.GREEN, project);
+                  createTestResultPopUp("Congratulations!", MessageType.INFO.getPopupBackground(), project);
                   return;
                 }
                 currentTask.setStatus(StudyStatus.Failed, oldStatus);
@@ -209,7 +210,7 @@ public class StudyCheckAction extends DumbAwareAction {
                   }
                 }
                 StudyUtils.updateStudyToolWindow(project);
-                createTestResultPopUp(failedMessage, JBColor.RED, project);
+                createTestResultPopUp(failedMessage, MessageType.ERROR.getPopupBackground(), project);
               }
             }
           }
