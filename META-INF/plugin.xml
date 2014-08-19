@@ -26,6 +26,7 @@
       <directoryProjectGenerator implementation="org.jetbrains.plugins.coursecreator.CCProjectGenerator"/>
       <projectService serviceImplementation="org.jetbrains.plugins.coursecreator.CCProjectService"/>
       <codeInsight.lineMarkerProvider language="Python" implementationClass="org.jetbrains.plugins.coursecreator.highlighting.CCTaskLineMarkerProvider"/>
+      <treeStructureProvider implementation="org.jetbrains.plugins.coursecreator.projectView.CCTreeStructureProvider"/>
   </extensions>
 
   <application-components>
