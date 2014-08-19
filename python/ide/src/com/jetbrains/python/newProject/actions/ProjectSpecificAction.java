@@ -29,7 +29,13 @@ public class ProjectSpecificAction extends DefaultActionGroup implements DumbAwa
 
   public ProjectSpecificAction(@NotNull final NullableConsumer<AbstractProjectSettingsStep> callback,
                                @NotNull final DirectoryProjectGenerator projectGenerator) {
-    super(projectGenerator.getName(), true);
+    this(callback, projectGenerator, projectGenerator.getName());
+  }
+
+  public ProjectSpecificAction(@NotNull final NullableConsumer<AbstractProjectSettingsStep> callback,
+                               @NotNull final DirectoryProjectGenerator projectGenerator,
+                               @NotNull final String name) {
+    super(name, true);
     getTemplatePresentation().setIcon(projectGenerator.getLogo());
     mySettings = new ProjectSpecificSettingsStep(projectGenerator, callback);
     add(mySettings);

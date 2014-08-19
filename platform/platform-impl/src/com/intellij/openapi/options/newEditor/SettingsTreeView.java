@@ -435,20 +435,21 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
       myConfigurable = configurable;
       String name = configurable.getDisplayName();
       myDisplayName = name != null ? name.replace("\n", " ") : "{ " + configurable.getClass().getSimpleName() + " }";
-
-      myConfigurableToNodeMap.put(configurable, this);
     }
 
     private MyNode(CachingSimpleNode parent, ConfigurableGroup group) {
       super(parent);
       myComposite = group;
-      myConfigurable = null;
+      myConfigurable = group instanceof Configurable ? (Configurable)group : null;
       String name = group.getDisplayName();
       myDisplayName = name != null ? name.replace("\n", " ") : "{ " + group.getClass().getSimpleName() + " }";
     }
 
     @Override
     protected SimpleNode[] buildChildren() {
+      if (myConfigurable != null) {
+        myConfigurableToNodeMap.put(myConfigurable, this);
+      }
       if (myComposite == null) {
         return NO_CHILDREN;
       }
