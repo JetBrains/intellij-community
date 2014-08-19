@@ -25,6 +25,7 @@ import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.refactoring.typeMigration.TypeMigrationReplacementUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.refactoring.typeMigration.rules.ThreadLocalConversionRule;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
@@ -116,8 +117,13 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
         }
       }
 
-      final PsiExpression initializer = psiField.getInitializer();
+      PsiExpression initializer = psiField.getInitializer();
       if (initializer != null) {
+        if (initializer instanceof PsiArrayInitializerExpression) {
+          PsiExpression normalizedExpr =
+            RefactoringUtil.createNewExpressionFromArrayInitializer((PsiArrayInitializerExpression)initializer, psiField.getType());
+          initializer = (PsiExpression)initializer.replace(normalizedExpr);
+        }
         final TypeConversionDescriptor conversion = ThreadLocalConversionRule.wrapWithNewExpression(toType, fromType, initializer);
         TypeMigrationReplacementUtil.replaceExpression(initializer, project, conversion);
         CodeStyleManager.getInstance(project).reformat(psiField);
