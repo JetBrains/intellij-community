@@ -7,9 +7,6 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -19,7 +16,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.plugins.coursecreator.CCProjectService;
 import org.jetbrains.plugins.coursecreator.format.*;
-import org.jetbrains.plugins.coursecreator.highlighting.TaskTextGutter;
 
 public class AddTaskWindow extends AnAction implements DumbAware {
   public AddTaskWindow() {
@@ -58,10 +54,8 @@ public class AddTaskWindow extends AnAction implements DumbAware {
 
     final String taskText = Messages.showMultilineInputDialog(project, "Add window task text", "Task Window Text", "", null, null);
 
-    final RangeHighlighter rangeHighlighter = editor.getMarkupModel().addLineHighlighter(lineNumber, HighlighterLayer.FIRST, TextAttributes.ERASE_MARKER);
     final TaskWindow taskWindow = new TaskWindow(lineNumber, realStart, length);
     taskWindow.setTaskText(StringUtil.notNullize(taskText));
-    rangeHighlighter.setGutterIconRenderer(new TaskTextGutter(taskWindow));
 
     taskFile.addTaskWindow(taskWindow);
   }

@@ -25,7 +25,7 @@
   <extensions defaultExtensionNs="com.intellij">
       <directoryProjectGenerator implementation="org.jetbrains.plugins.coursecreator.CCProjectGenerator"/>
       <projectService serviceImplementation="org.jetbrains.plugins.coursecreator.CCProjectService"/>
-      <postStartupActivity implementation="org.jetbrains.plugins.coursecreator.CCTaskWindowsUpdater"/>
+      <codeInsight.lineMarkerProvider language="Python" implementationClass="org.jetbrains.plugins.coursecreator.CCTaskWindowsUpdater"/>
   </extensions>
 
   <application-components>

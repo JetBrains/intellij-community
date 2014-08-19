@@ -1,60 +1,72 @@
 package org.jetbrains.plugins.coursecreator;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeInsight.daemon.LineMarkerInfo;
+import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.coursecreator.format.*;
 import org.jetbrains.plugins.coursecreator.highlighting.TaskTextGutter;
 
-import java.util.Map;
+import java.util.Collection;
+import java.util.List;
 
-public class CCTaskWindowsUpdater implements StartupActivity {
+public class CCTaskWindowsUpdater implements LineMarkerProvider {
   private static final Logger LOG = Logger.getInstance(CCTaskWindowsUpdater.class.getName());
 
+  @Nullable
   @Override
-  public void runActivity(@NotNull final Project project) {
-    final Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode()) {
-      return;
-    }
-    final Course course = CCProjectService.getInstance(project).getCourse();
-    final VirtualFile baseDir = project.getBaseDir();
-    if (course != null) {
-      final Map<String, Lesson> lessonsMap = course.getLessonsMap();
-      for (Map.Entry<String, Lesson> nameLessonEntry : lessonsMap.entrySet()) {
-        final VirtualFile lessonDir = baseDir.findChild(nameLessonEntry.getKey());
+  public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
+    return null;
+  }
+
+  @Override
+  public void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull final Collection<LineMarkerInfo> result) {
+    for (PsiElement element : elements) {
+      if (element instanceof PsiFile) {
+        final Project project = element.getProject();
+        final Course course = CCProjectService.getInstance(project).getCourse();
+        final String taskFileName = ((PsiFile) element).getName();
+        final PsiDirectory taskDir = ((PsiFile) element).getParent();
+        if (taskDir == null) continue;
+        final String taskDirName = taskDir.getName();
+        final PsiDirectory lessonDir = taskDir.getParentDirectory();
         if (lessonDir == null) continue;
-        final Map<String, Task> tasksMap = nameLessonEntry.getValue().myTasksMap;
-        for (Map.Entry<String, Task> nameTaskEntry : tasksMap.entrySet()) {
-          final VirtualFile taskDir = lessonDir.findChild(nameTaskEntry.getKey());
-          if (taskDir == null) continue;
-          final Map<String, TaskFile> taskFiles = nameTaskEntry.getValue().taskFiles;
-          for (Map.Entry<String, TaskFile> nameTaskFileEntry : taskFiles.entrySet()) {
-            final VirtualFile taskFile = taskDir.findChild(nameTaskFileEntry.getKey());
-            if (taskFile == null) continue;
-
-            final FileEditor fileEditor = FileEditorManager.getInstance(project).getEditors(taskFile)[0];
-            if (fileEditor instanceof TextEditor) {
-              final Editor editor = ((TextEditor)fileEditor).getEditor();
-              final TaskFile value = nameTaskFileEntry.getValue();
-              for (TaskWindow taskWindow : value.getTaskWindows()) {
-                final RangeHighlighter rangeHighlighter = editor.getMarkupModel().addLineHighlighter(taskWindow.line, HighlighterLayer.FIRST, TextAttributes.ERASE_MARKER);
-                rangeHighlighter.setGutterIconRenderer(new TaskTextGutter(taskWindow));
-              }
-
+        final String lessonDirName = lessonDir.getName();
+        final Lesson lesson = course.getLesson(lessonDirName);
+        if (lesson == null) continue;
+        final Task task = lesson.getTask(taskDirName);
+        final TaskFile taskFile = task.getTaskFile(taskFileName);
+        if (taskFile == null) continue;
+        final Document document = PsiDocumentManager.getInstance(project).getDocument((PsiFile) element);
+        if (document == null) continue;
+        for (final TaskWindow taskWindow : taskFile.getTaskWindows()) {
+          if (taskWindow.line > document.getLineCount()) continue;
+          final int lineStartOffset = document.getLineStartOffset(taskWindow.line);
+          final int offset = lineStartOffset + taskWindow.start;
+          if (offset >= document.getTextLength()) continue;
+          final TextRange textRange = TextRange.create(offset, offset + taskWindow.length);
+          @SuppressWarnings("unchecked")
+          final LineMarkerInfo info = new LineMarkerInfo(element, textRange,
+              IconLoader.getIcon("/icons/gutter.png"), Pass.UPDATE_OVERRIDEN_MARKERS,
+              null, null, GutterIconRenderer.Alignment.CENTER) {
+            @Nullable
+            @Override
+            public GutterIconRenderer createGutterRenderer() {
+              return new TaskTextGutter(taskWindow, this);
             }
-          }
+          };
+          result.add(info);
         }
       }
     }

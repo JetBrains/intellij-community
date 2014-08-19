@@ -1,20 +1,24 @@
 package org.jetbrains.plugins.coursecreator.highlighting;
 
+import com.intellij.codeInsight.daemon.LineMarkerInfo;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.coursecreator.actions.DeleteTaskWindowAction;
 import org.jetbrains.plugins.coursecreator.actions.ShowTaskWindowText;
 import org.jetbrains.plugins.coursecreator.format.TaskWindow;
 
 import javax.swing.*;
 
-public class TaskTextGutter extends GutterIconRenderer {
+public class TaskTextGutter extends LineMarkerInfo.LineMarkerGutterIconRenderer {
   @NotNull
   private final TaskWindow myTaskWindow;
 
-  public TaskTextGutter(@NotNull final TaskWindow taskWindow) {
+  public TaskTextGutter(@NotNull final TaskWindow taskWindow, LineMarkerInfo lineMarkerInfo) {
+    super(lineMarkerInfo);
     myTaskWindow = taskWindow;
   }
 
@@ -44,5 +48,13 @@ public class TaskTextGutter extends GutterIconRenderer {
   @Override
   public AnAction getClickAction() {
     return new ShowTaskWindowText(myTaskWindow);
+  }
+
+  @Nullable
+  @Override
+  public ActionGroup getPopupMenuActions() {
+    DefaultActionGroup group = new DefaultActionGroup();
+    group.add(new DeleteTaskWindowAction(myTaskWindow));
+    return group;
   }
 }
