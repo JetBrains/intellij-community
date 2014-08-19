@@ -8,7 +8,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.PairFunction;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
-import com.jetbrains.python.edu.ui.StudyCondition;
 
 import java.awt.*;
 
@@ -19,10 +18,6 @@ import java.awt.*;
 public class StudyInstructionPainter extends EditorEmptyTextPainter {
   @Override
   public void paintEmptyText(final EditorsSplitters splitters, Graphics g) {
-    if (!StudyCondition.VALUE) {
-      super.paintEmptyText(splitters, g);
-      return;
-    }
     boolean isDarkBackground = UIUtil.isUnderDarcula();
     UIUtil.applyRenderingHints(g);
     GraphicsUtil.setupAntialiasing(g, true, false);
