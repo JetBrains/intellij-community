@@ -165,7 +165,7 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   @NotNull
   @Override
   public DebuggerActionHandler getAddToWatchesActionHandler() {
-    return myAddToWatchedActionHandler;
+    return DISABLED;
   }
 
 

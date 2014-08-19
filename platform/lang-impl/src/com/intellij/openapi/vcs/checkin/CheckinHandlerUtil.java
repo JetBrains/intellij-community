@@ -20,6 +20,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -34,11 +35,22 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author oleg
  */
 public class CheckinHandlerUtil {
+  public static List<VirtualFile> filterOutGeneratedAndExcludedFiles(@NotNull Collection<VirtualFile> files, @NotNull Project project) {
+    ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(project);
+    List<VirtualFile> result = new ArrayList<VirtualFile>(files.size());
+    for (VirtualFile file : files) {
+      if (!fileIndex.isExcluded(file) && !GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, project)) {
+        result.add(file);
+      }
+    }
+    return result;
+  }
 
   public static PsiFile[] getPsiFiles(final Project project, final Collection<VirtualFile> selectedFiles) {
     ArrayList<PsiFile> result = new ArrayList<PsiFile>();

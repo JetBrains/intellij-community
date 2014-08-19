@@ -108,10 +108,14 @@ public class PyFunctionType implements PyCallableType {
    */
   @Nullable
   private PyClassTypeImpl selectFakeType(@Nullable PyExpression location, @NotNull TypeEvalContext context) {
-    if (location instanceof PyReferenceExpression && isBoundMethodReference(((PyReferenceExpression)location), context)) {
-      return PyBuiltinCache.getInstance(getCallable()).getObjectType(PyNames.FAKE_METHOD);
+    final String fakeClassName;
+    if (location instanceof PyReferenceExpression && isBoundMethodReference((PyReferenceExpression)location, context)) {
+      fakeClassName = PyNames.FAKE_METHOD;
     }
-    return PyBuiltinCache.getInstance(getCallable()).getObjectType(PyNames.FAKE_FUNCTION);
+    else {
+      fakeClassName = PyNames.FAKE_FUNCTION;
+    }
+    return PyBuiltinCache.getInstance(getCallable()).getObjectType(fakeClassName);
   }
 
   private boolean isBoundMethodReference(@NotNull PyReferenceExpression location, @NotNull TypeEvalContext context) {

@@ -18,6 +18,7 @@ package com.intellij.vcs.log.graph.impl.print;
 
 import com.intellij.vcs.log.graph.GraphColorManager;
 import com.intellij.vcs.log.graph.api.LinearGraphWithCommitInfo;
+import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,5 +35,10 @@ public class FilterPrintElementsManager<CommitId> extends AbstractPrintElementsM
   @Override
   protected Set<Integer> getSelectedNodes(@NotNull GraphElement graphElement) {
     return Collections.emptySet();
+  }
+
+  @Override
+  protected boolean allowSelectCollapsedEdge(@NotNull GraphEdge graphEdge) {
+    return false;
   }
 }
