@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.*;
@@ -63,10 +64,7 @@ import org.jetbrains.idea.svn.actions.CleanupWorker;
 import org.jetbrains.idea.svn.actions.ShowPropertiesDiffWithLocalAction;
 import org.jetbrains.idea.svn.actions.SvnMergeProvider;
 import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
-import org.jetbrains.idea.svn.api.ClientFactory;
-import org.jetbrains.idea.svn.api.CmdClientFactory;
-import org.jetbrains.idea.svn.api.Depth;
-import org.jetbrains.idea.svn.api.SvnKitClientFactory;
+import org.jetbrains.idea.svn.api.*;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationNotifier;
 import org.jetbrains.idea.svn.branchConfig.SvnLoadedBranchesStorage;
 import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
@@ -1023,7 +1021,16 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   @NotNull
   public WorkingCopyFormat getLowestSupportedFormatForCommandLine() {
-    return WorkingCopyFormat.ONE_DOT_SEVEN;
+    WorkingCopyFormat result;
+
+    try {
+      result = WorkingCopyFormat.from(CmdVersionClient.parseVersion(Registry.stringValue("svn.lowest.supported.format.for.command.line")));
+    }
+    catch (SvnBindException ignore) {
+      result = WorkingCopyFormat.ONE_DOT_SEVEN;
+    }
+
+    return result;
   }
 
   public boolean isSupportedByCommandLine(@NotNull WorkingCopyFormat format) {
