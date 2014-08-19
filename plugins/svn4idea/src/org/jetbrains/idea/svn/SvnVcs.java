@@ -1036,4 +1036,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   public boolean isSupportedByCommandLine(@NotNull WorkingCopyFormat format) {
     return format.isOrGreater(getLowestSupportedFormatForCommandLine());
   }
+
+  public boolean is16SupportedByCommandLine() {
+    return isSupportedByCommandLine(WorkingCopyFormat.ONE_DOT_SIX);
+  }
 }
