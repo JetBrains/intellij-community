@@ -640,6 +640,13 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return true;
     }
 
+    if (dfaLeft == dfaRight) {
+      if (dfaLeft instanceof DfaVariableValue && ((DfaVariableValue)dfaLeft).containsCalls()) {
+        return true;
+      }
+      return !isNegated;
+    }
+
     if (isNull(dfaLeft) && isNotNull(dfaRight) || isNull(dfaRight) && isNotNull(dfaLeft)) {
       return isNegated;
     }
