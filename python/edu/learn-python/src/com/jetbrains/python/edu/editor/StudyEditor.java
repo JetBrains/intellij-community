@@ -51,6 +51,7 @@ public class StudyEditor implements TextEditor {
   private static final String TASK_TEXT_HEADER = "Task Text";
   private final FileEditor myDefaultEditor;
   private final JComponent myComponent;
+  private final TaskFile myTaskFile;
   private JButton myCheckButton;
   private JButton myNextTaskButton;
   private JButton myPrevTaskButton;
@@ -64,6 +65,10 @@ public class StudyEditor implements TextEditor {
 
   public JButton getPrevTaskButton() {
     return myPrevTaskButton;
+  }
+
+  public TaskFile getTaskFile() {
+    return myTaskFile;
   }
 
   private static JButton addButton(@NotNull final JComponent parentComponent, String toolTipText, Icon icon) {
@@ -90,16 +95,16 @@ public class StudyEditor implements TextEditor {
     myComponent = myDefaultEditor.getComponent();
     JPanel studyPanel = new JPanel();
     studyPanel.setLayout(new BoxLayout(studyPanel, BoxLayout.Y_AXIS));
-    TaskFile taskFile = StudyTaskManager.getInstance(myProject).getTaskFile(file);
-    if (taskFile != null) {
-      Task currentTask = taskFile.getTask();
+    myTaskFile = StudyTaskManager.getInstance(myProject).getTaskFile(file);
+    if (myTaskFile != null) {
+      Task currentTask = myTaskFile.getTask();
       String taskText = currentTask.getResourceText(project, currentTask.getText(), false);
       initializeTaskText(studyPanel, taskText);
       JPanel studyButtonPanel = new JPanel(new GridLayout(1, 2));
       JPanel taskActionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
       studyButtonPanel.add(taskActionsPanel);
       studyButtonPanel.add(new JPanel());
-      initializeButtons(taskActionsPanel, taskFile);
+      initializeButtons(taskActionsPanel, myTaskFile);
       studyPanel.add(studyButtonPanel);
       myComponent.add(studyPanel, BorderLayout.NORTH);
     }
