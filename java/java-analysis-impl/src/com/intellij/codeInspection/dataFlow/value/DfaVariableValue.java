@@ -221,4 +221,8 @@ public class DfaVariableValue extends DfaValue {
     return true;
   }
 
+  public boolean containsCalls() {
+    return myVariable instanceof PsiMethod || myQualifier != null && myQualifier.containsCalls();
+  }
+
 }
