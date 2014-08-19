@@ -66,7 +66,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
                new ProjectConfigurablesGroup(project),
                new IdeConfigurablesGroup()};
 
-    return Registry.is("ide.file.settings.order.new")
+    return Registry.is("ide.new.settings.dialog")
            ? MixedConfigurableGroup.getGroups(getConfigurables(groups, true))
            : groups;
   }

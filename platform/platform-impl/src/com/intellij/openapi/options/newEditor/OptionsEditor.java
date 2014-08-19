@@ -419,7 +419,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
           if (myTreeView != null) {
             myOwnDetails.forProject(myTreeView.findConfigurableProject(configurable));
           }
-          else if (Registry.is("ide.file.settings.order.new")) {
+          else if (Registry.is("ide.new.settings.dialog")) {
             myOwnDetails.forProject(myTree.getConfigurableProject(configurable));
           }
 

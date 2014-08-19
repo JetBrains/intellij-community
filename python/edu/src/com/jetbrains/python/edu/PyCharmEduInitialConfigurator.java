@@ -94,7 +94,7 @@ public class PyCharmEduInitialConfigurator {
       uiSettings.SHOW_MAIN_TOOLBAR = false;
       codeInsightSettings.REFORMAT_ON_PASTE = CodeInsightSettings.NO_REFORMAT;
 
-      Registry.get("ide.file.settings.order.new").setValue(true);
+      Registry.get("ide.new.settings.dialog").setValue(true);
 
       GeneralSettings.getInstance().setShowTipsOnStartup(false);
 
