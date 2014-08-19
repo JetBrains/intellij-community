@@ -1,6 +1,7 @@
 package com.jetbrains.python.edu.editor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.editor.Document;
@@ -134,10 +135,10 @@ public class StudyEditor implements TextEditor {
   private void initializeButtons(@NotNull final JPanel taskActionsPanel, @NotNull final TaskFile taskFile) {
     myCheckButton = addButton(taskActionsPanel, "Check task", StudyIcons.Resolve);
     myPrevTaskButton = addButton(taskActionsPanel, "Prev Task", StudyIcons.Prev);
-    myNextTaskButton = addButton(taskActionsPanel, "Next Task", StudyIcons.Next);
-    myRefreshButton = addButton(taskActionsPanel, "Start task again", StudyIcons.Refresh24);
+    myNextTaskButton = addButton(taskActionsPanel, "Next Task", AllIcons.Actions.Forward);
+    myRefreshButton = addButton(taskActionsPanel, "Start task again", AllIcons.Actions.Refresh);
     if (!taskFile.getTask().getUserTests().isEmpty()) {
-      JButton runButton = addButton(taskActionsPanel, "Run", StudyIcons.Run);
+      JButton runButton = addButton(taskActionsPanel, "Run", AllIcons.General.Run);
       runButton.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {

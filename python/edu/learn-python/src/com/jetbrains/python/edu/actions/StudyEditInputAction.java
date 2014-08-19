@@ -19,6 +19,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
+import com.intellij.util.PlatformIcons;
 import com.jetbrains.python.edu.StudyTaskManager;
 import com.jetbrains.python.edu.StudyUtils;
 import com.jetbrains.python.edu.course.Task;
@@ -26,7 +27,6 @@ import com.jetbrains.python.edu.course.TaskFile;
 import com.jetbrains.python.edu.course.UserTest;
 import com.jetbrains.python.edu.editor.StudyEditor;
 import com.jetbrains.python.edu.ui.StudyTestContentPanel;
-import icons.StudyIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -92,7 +92,7 @@ public class StudyEditInputAction extends DumbAwareAction {
         i++;
       }
       TabInfo plusTab = new TabInfo(new JPanel());
-      plusTab.setIcon(StudyIcons.Add);
+      plusTab.setIcon(PlatformIcons.ADD_ICON);
       tabbedPane.addTabSilently(plusTab, tabbedPane.getTabCount());
       final JBPopup hint =
         JBPopupFactory.getInstance().createComponentPopupBuilder(tabbedPane.getComponent(), tabbedPane.getComponent())
