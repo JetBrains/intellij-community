@@ -17,6 +17,7 @@ package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.SearchableConfigurable;
 
@@ -24,8 +25,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
+import javax.swing.JComponent;
 
-public final class MixedConfigurableGroup implements ConfigurableGroup {
+public final class MixedConfigurableGroup implements Configurable, ConfigurableGroup {
   private final String myGroupId;
   private Configurable[] myConfigurables;
 
@@ -38,6 +40,34 @@ public final class MixedConfigurableGroup implements ConfigurableGroup {
 
   private MixedConfigurableGroup(String groupId, HashMap<String, ArrayList<Configurable>> configurables) {
     this(groupId, configurables.remove(groupId));
+  }
+
+  @Override
+  public JComponent createComponent() {
+    return null;
+  }
+
+  @Override
+  public boolean isModified() {
+    return false;
+  }
+
+  @Override
+  public void apply() throws ConfigurationException {
+  }
+
+  @Override
+  public void reset() {
+  }
+
+  @Override
+  public void disposeUIResources() {
+    myConfigurables = null;
+  }
+
+  @Override
+  public String getHelpTopic() {
+    return "configurable.group." + myGroupId + ".help.topic";
   }
 
   @Override
