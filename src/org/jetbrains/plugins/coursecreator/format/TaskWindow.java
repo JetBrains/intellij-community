@@ -10,11 +10,20 @@ public class TaskWindow {
   @Expose public String hint = "";
   @Expose public String possible_answer = "";
   @Expose public int length = 0;
+  public String myTaskText = "";
 
   public TaskWindow() {}
 
   public TaskWindow(int line, int start, int length) {
 
+  }
+
+  public void setTaskText(@NotNull final String taskText) {
+    myTaskText = taskText;
+  }
+
+  public String getTaskText() {
+    return myTaskText;
   }
 
   public TaskWindow(int line, int start, @NotNull final String hint, @NotNull final String possible_answer, int length) {

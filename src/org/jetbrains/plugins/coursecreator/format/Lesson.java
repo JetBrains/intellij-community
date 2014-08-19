@@ -13,7 +13,7 @@ public class Lesson {
   @Expose public String name;
   @Expose public List<Task> task_list = new ArrayList<Task>();
 
-  private Map<String, Task> myTasksMap = new HashMap<String, Task>();
+  public Map<String, Task> myTasksMap = new HashMap<String, Task>();
 
   public Lesson() {}
 
