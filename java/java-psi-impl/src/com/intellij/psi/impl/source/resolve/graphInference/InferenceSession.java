@@ -299,18 +299,20 @@ public class InferenceSession {
           return callExpression.resolveMethodGenerics();
         }
       };
-      final JavaResolveResult result = expression == null
+      MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(argumentList);
+      final JavaResolveResult result = properties != null ? null :
+                                       expression == null
                                        ? computableResolve.compute()
                                        : PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, false, computableResolve);
-      if (result instanceof MethodCandidateInfo) {
-        final PsiMethod method = ((MethodCandidateInfo)result).getElement();
-        //need to get type parameters for 2 level nested expressions (they won't be covered by expression constraints on this level?!) 
-        initBounds(method.getTypeParameters());
+      final PsiMethod method = result instanceof MethodCandidateInfo ? ((MethodCandidateInfo)result).getElement() : properties != null ? properties.getMethod() : null;
+      if (method != null) {
+        //need to get type parameters for 2 level nested expressions (they won't be covered by expression constraints on this level?!)
+        initBounds(callExpression, method.getTypeParameters());
         final PsiExpression[] newArgs = argumentList.getExpressions();
         final PsiParameter[] newParams = method.getParameterList().getParameters();
         if (newParams.length > 0) {
-          collectAdditionalConstraints(newParams, newArgs, method, ((MethodCandidateInfo)result).getSiteSubstitutor(), 
-                                       additionalConstraints, ((MethodCandidateInfo)result).isVarargs(), false);
+          collectAdditionalConstraints(newParams, newArgs, method, result != null ? ((MethodCandidateInfo)result).getSiteSubstitutor() : properties.getSubstitutor(),
+                                       additionalConstraints, result != null ?  ((MethodCandidateInfo)result).isVarargs() : properties.isVarargs(), false);
         }
       }
     }

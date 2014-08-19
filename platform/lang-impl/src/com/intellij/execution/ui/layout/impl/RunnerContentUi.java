@@ -518,13 +518,15 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   @Override
   public void closeAll() {
     final Content[] contents = myManager.getContents();
-    for (Content content : contents) {
-      getStateFor(content).setWindow(0);
-    }
     if (myOriginal != null) {
       for (Content content : contents) {
+        getStateFor(content).setWindow(0);
         myOriginal.myManager.addContent(content);
-        myOriginal.findCellFor(content).minimize(content);
+        GridCell cell = myOriginal.findCellFor(content);
+        if (cell != null) {
+          myOriginal.restoreContent(content.getUserData(ViewImpl.ID));
+          cell.minimize(content);
+        }
       }
     }
     myManager.removeAllContents(false);

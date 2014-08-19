@@ -843,8 +843,8 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
               FoldingGroup group = FoldingGroup.newGroup("lambda");
               final String prettySpace = oneLine ? " " : "";
               foldElements.add(new NamedFoldingDescriptor(expression, closureStart, rangeStart, group, lambdas + prettySpace));
-              if (rbrace != null && rangeEnd + 1 < closureEnd) {
-                foldElements.add(new NamedFoldingDescriptor(rbrace, rangeEnd, closureEnd, group, prettySpace + "}"));
+              if (classRBrace != null && rangeEnd + 1 < closureEnd) {
+                foldElements.add(new NamedFoldingDescriptor(classRBrace, rangeEnd, closureEnd, group, prettySpace + "}"));
               }
 
               addCodeBlockFolds(body, foldElements, processedComments, document, quick);

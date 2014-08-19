@@ -28,7 +28,6 @@ import com.intellij.compiler.ModuleCompilerUtil;
 import com.intellij.compiler.ProblemsView;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.compiler.server.BuildManager;
-import com.intellij.compiler.server.CustomBuilderMessageHandler;
 import com.intellij.compiler.server.DefaultMessageHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
@@ -339,13 +338,6 @@ public class CompileDriver {
               }
             }
             compileContext.putUserDataIfAbsent(COMPILE_SERVER_BUILD_STATUS, status);
-            break;
-          case CUSTOM_BUILDER_MESSAGE:
-            if (event.hasCustomBuilderMessage()) {
-              CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage message = event.getCustomBuilderMessage();
-              messageBus.syncPublisher(CustomBuilderMessageHandler.TOPIC).messageReceived(message.getBuilderId(), message.getMessageType(),
-                                                                                          message.getMessageText());
-            }
             break;
         }
       }

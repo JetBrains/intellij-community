@@ -17,6 +17,7 @@ package com.intellij.execution.process;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,11 +60,13 @@ public class AnsiEscapeDecoder {
       if (escSeqEndInd < 0) {
         break;
       }
-      String escSeq = text.substring(escSeqBeginInd, escSeqEndInd);
-      // this is a simple fix for RUBY-8996:
-      // we replace several consecutive escape sequences with one which contains all these sequences
-      String colorAttribute = INNER_PATTERN.matcher(escSeq).replaceAll(";");
-      myCurrentTextAttributes = ColoredOutputTypeRegistry.getInstance().getOutputKey(colorAttribute);
+      if (text.charAt(escSeqEndInd - 1) == 'm') {
+        String escSeq = text.substring(escSeqBeginInd, escSeqEndInd);
+        // this is a simple fix for RUBY-8996:
+        // we replace several consecutive escape sequences with one which contains all these sequences
+        String colorAttribute = INNER_PATTERN.matcher(escSeq).replaceAll(";");
+        myCurrentTextAttributes = ColoredOutputTypeRegistry.getInstance().getOutputKey(colorAttribute);
+      }
       pos = escSeqEndInd;
     }
     if (pos < text.length()) {
@@ -78,16 +81,41 @@ public class AnsiEscapeDecoder {
    * Selects all consecutive escape sequences and returns escape sequence end index (exclusive).
    * If the escape sequence isn't finished, returns -1.
    */
-  private static int findEscSeqEndIndex(@NotNull String text, int escSeqBeginInd) {
-    escSeqBeginInd = text.indexOf('m', escSeqBeginInd);
-    while (escSeqBeginInd >= 0) {
-      escSeqBeginInd++;
-      if (!text.regionMatches(escSeqBeginInd, CSI, 0, CSI.length())) {
+  private static int findEscSeqEndIndex(@NotNull String text, final int escSeqBeginInd) {
+    int beginInd = escSeqBeginInd;
+    while (true) {
+      int letterInd = findEscSeqLetterIndex(text, beginInd);
+      if (letterInd == -1) {
+        return beginInd == escSeqBeginInd ? -1 : beginInd;
+      }
+      if (text.charAt(letterInd) != 'm') {
+        return beginInd == escSeqBeginInd ? letterInd + 1 : beginInd;
+      }
+      beginInd = letterInd + 1;
+    }
+  }
+
+  private static int findEscSeqLetterIndex(@NotNull String text, int escSeqBeginInd) {
+    if (!text.regionMatches(escSeqBeginInd, CSI, 0, CSI.length())) {
+      return -1;
+    }
+    int parameterEndInd = escSeqBeginInd + 2;
+    while (parameterEndInd < text.length()) {
+      char ch = text.charAt(parameterEndInd);
+      if (Character.isDigit(ch) || ch == ';') {
+        parameterEndInd++;
+      }
+      else {
         break;
       }
-      escSeqBeginInd = text.indexOf('m', escSeqBeginInd);
     }
-    return escSeqBeginInd;
+    if (parameterEndInd < text.length()) {
+      char letter = text.charAt(parameterEndInd);
+      if (StringUtil.containsChar("ABCDEFGHJKSTfmisu", letter)) {
+        return parameterEndInd;
+      }
+    }
+    return -1;
   }
 
   @Nullable
