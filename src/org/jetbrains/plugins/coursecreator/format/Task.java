@@ -1,13 +1,14 @@
 package org.jetbrains.plugins.coursecreator.format;
 
+import com.google.gson.annotations.Expose;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class Task {
-  public String name;
-  public Map<String, TaskFile> taskFiles = new HashMap<String, TaskFile>();
+  @Expose public String name;
+  @Expose public Map<String, TaskFile> taskFiles = new HashMap<String, TaskFile>();
 
   public Task() {}
 

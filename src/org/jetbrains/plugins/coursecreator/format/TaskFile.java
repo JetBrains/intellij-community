@@ -1,12 +1,13 @@
 package org.jetbrains.plugins.coursecreator.format;
 
+import com.google.gson.annotations.Expose;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class TaskFile {
-  public List<TaskWindow> task_windows = new ArrayList<TaskWindow>();
+  @Expose public List<TaskWindow> task_windows = new ArrayList<TaskWindow>();
 
   public TaskFile() {}
 

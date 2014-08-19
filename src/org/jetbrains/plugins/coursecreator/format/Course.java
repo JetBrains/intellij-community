@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.coursecreator.format;
 
+import com.google.gson.annotations.Expose;
 import com.intellij.psi.PsiDirectory;
 import org.jetbrains.annotations.NotNull;
 
@@ -9,10 +10,12 @@ import java.util.List;
 import java.util.Map;
 
 public class Course {
-  public List<Lesson> lessons = new ArrayList<Lesson>();
-  public String description;
-  public String name;
-  public String author;
+  @Expose public List<Lesson> lessons = new ArrayList<Lesson>();
+  @Expose public String description;
+
+  @Expose public String name;
+  @Expose public String author;
+
   public Map<String, Lesson> myLessonsMap = new HashMap<String, Lesson>();
 
   public Map<String, Lesson> getLessonsMap() {

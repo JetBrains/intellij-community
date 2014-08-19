@@ -1,14 +1,15 @@
 package org.jetbrains.plugins.coursecreator.format;
 
+import com.google.gson.annotations.Expose;
 import org.jetbrains.annotations.NotNull;
 
 public class TaskWindow {
 
-  public int line = 0;
-  public int start = 0;
-  public String hint = "";
-  public String possible_answer = "";
-  public int length = 0;
+  @Expose public int line = 0;
+  @Expose public int start = 0;
+  @Expose public String hint = "";
+  @Expose public String possible_answer = "";
+  @Expose public int length = 0;
 
   public TaskWindow() {}
 

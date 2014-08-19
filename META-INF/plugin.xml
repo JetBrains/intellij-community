@@ -46,6 +46,8 @@
       <action id="AddTaskWindow" class="org.jetbrains.plugins.coursecreator.actions.AddTaskWindow">
           <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="CopyReference"/>
       </action>
+      <action id="GenerateJson" class="org.jetbrains.plugins.coursecreator.actions.GenerateJson">
+      </action>
   </actions>
 
 </idea-plugin>
