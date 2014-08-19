@@ -474,7 +474,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   public void replaceText(String text, PsiElement element) {
-    if (element == null || getElement() != element) return;
+    PsiElement current = getElement();
+    if (current == null || !current.getManager().areElementsEquivalent(current, element)) return;
     setText(text, element, false);
     if (!myBackStack.empty()) myBackStack.pop();
   }
