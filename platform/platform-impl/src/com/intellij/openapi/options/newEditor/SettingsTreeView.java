@@ -277,19 +277,21 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
   public void paint(Graphics g) {
     super.paint(g);
 
+    if (0 == myTree.getY()) {
+      return; // separator is not needed without scrolling
+    }
     if (mySeparator == null) {
       mySeparator = new JLabel();
       mySeparator.setFont(UIUtil.getLabelFont());
       mySeparator.setFont(getFont().deriveFont(Font.BOLD));
     }
-    ConfigurableGroup group = findConfigurableGroupAt(0, 5 + mySeparator.getFont().getSize());
-    if (group != null && group == findConfigurableGroupAt(0, -5)) {
-      int offset = UIUtil.isUnderNativeMacLookAndFeel() ? 1 : 3;
-      mySeparator.setBorder(BorderFactory.createEmptyBorder(offset, 18, offset, 3));
+    int height = mySeparator.getPreferredSize().height;
+    ConfigurableGroup group = findConfigurableGroupAt(0, height);
+    if (group != null && group == findConfigurableGroupAt(0, -myRenderer.getSeparatorHeight())) {
+      mySeparator.setBorder(BorderFactory.createEmptyBorder(0, 18, 0, 0));
       mySeparator.setText(group.getDisplayName());
 
       Rectangle bounds = myScroller.getViewport().getBounds();
-      int height = mySeparator.getPreferredSize().height;
       if (bounds.height > height) {
         bounds.height = height;
       }
@@ -605,6 +607,9 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
       return result;
     }
 
+    int getSeparatorHeight() {
+      return mySeparatorComponent.getPreferredSize().height;
+    }
 
     public boolean isUnderHandle(Point point) {
       Point handlePoint = SwingUtilities.convertPoint(myRendererComponent, point, myNodeIcon);
