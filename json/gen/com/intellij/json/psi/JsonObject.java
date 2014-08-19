@@ -5,9 +5,12 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface JsonObject extends JsonValue {
+public interface JsonObject extends JsonPropertyValue {
 
   @NotNull
   List<JsonProperty> getPropertyList();
+
+  @Nullable
+  JsonProperty findProperty(String name);
 
 }

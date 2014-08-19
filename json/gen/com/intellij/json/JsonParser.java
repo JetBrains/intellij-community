@@ -44,11 +44,11 @@ public class JsonParser implements PsiParser {
     else if (root_ == PROPERTY_NAME) {
       result_ = property_name(builder_, 0);
     }
+    else if (root_ == PROPERTY_VALUE) {
+      result_ = property_value(builder_, 0);
+    }
     else if (root_ == STRING_LITERAL) {
       result_ = string_literal(builder_, 0);
-    }
-    else if (root_ == VALUE) {
-      result_ = value(builder_, 0);
     }
     else {
       result_ = parse_root_(root_, builder_, 0);
@@ -65,7 +65,7 @@ public class JsonParser implements PsiParser {
     create_token_set_(BOOLEAN_LITERAL, LITERAL, NULL_LITERAL, NUMBER_LITERAL,
       STRING_LITERAL),
     create_token_set_(ARRAY, BOOLEAN_LITERAL, LITERAL, NULL_LITERAL,
-      NUMBER_LITERAL, OBJECT, STRING_LITERAL, VALUE),
+      NUMBER_LITERAL, OBJECT, PROPERTY_VALUE, STRING_LITERAL),
   };
 
   /* ********************************************************** */
@@ -92,12 +92,12 @@ public class JsonParser implements PsiParser {
   }
 
   /* ********************************************************** */
-  // value
+  // property_value
   static boolean array_element(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "array_element")) return false;
     boolean result_;
     Marker marker_ = enter_section_(builder_, level_, _NONE_, null);
-    result_ = value(builder_, level_ + 1);
+    result_ = property_value(builder_, level_ + 1);
     exit_section_(builder_, level_, marker_, null, result_, false, bracket_or_comma_parser_);
     return result_;
   }
@@ -313,7 +313,7 @@ public class JsonParser implements PsiParser {
   }
 
   /* ********************************************************** */
-  // property_name COLON value
+  // property_name COLON property_value
   public static boolean property(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "property")) return false;
     boolean result_;
@@ -322,7 +322,7 @@ public class JsonParser implements PsiParser {
     result_ = property_name(builder_, level_ + 1);
     pinned_ = result_; // pin = 1
     result_ = result_ && report_error_(builder_, consumeToken(builder_, COLON));
-    result_ = pinned_ && value(builder_, level_ + 1) && result_;
+    result_ = pinned_ && property_value(builder_, level_ + 1) && result_;
     exit_section_(builder_, level_, marker_, PROPERTY, result_, pinned_, brace_or_comma_parser_);
     return result_ || pinned_;
   }
@@ -340,6 +340,19 @@ public class JsonParser implements PsiParser {
   }
 
   /* ********************************************************** */
+  // object | array | literal
+  public static boolean property_value(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "property_value")) return false;
+    boolean result_;
+    Marker marker_ = enter_section_(builder_, level_, _COLLAPSE_, "<property value>");
+    result_ = object(builder_, level_ + 1);
+    if (!result_) result_ = array(builder_, level_ + 1);
+    if (!result_) result_ = literal(builder_, level_ + 1);
+    exit_section_(builder_, level_, marker_, PROPERTY_VALUE, result_, false, null);
+    return result_;
+  }
+
+  /* ********************************************************** */
   // STRING
   public static boolean string_literal(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "string_literal")) return false;
@@ -348,19 +361,6 @@ public class JsonParser implements PsiParser {
     Marker marker_ = enter_section_(builder_);
     result_ = consumeToken(builder_, STRING);
     exit_section_(builder_, marker_, STRING_LITERAL, result_);
-    return result_;
-  }
-
-  /* ********************************************************** */
-  // object | array | literal
-  public static boolean value(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "value")) return false;
-    boolean result_;
-    Marker marker_ = enter_section_(builder_, level_, _COLLAPSE_, "<value>");
-    result_ = object(builder_, level_ + 1);
-    if (!result_) result_ = array(builder_, level_ + 1);
-    if (!result_) result_ = literal(builder_, level_ + 1);
-    exit_section_(builder_, level_, marker_, VALUE, result_, false, null);
     return result_;
   }
 

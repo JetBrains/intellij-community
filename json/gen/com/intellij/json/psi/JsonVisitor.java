@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement;
 public class JsonVisitor extends PsiElementVisitor {
 
   public void visitArray(@NotNull JsonArray o) {
-    visitValue(o);
+    visitPropertyValue(o);
   }
 
   public void visitBooleanLiteral(@NotNull JsonBooleanLiteral o) {
@@ -16,7 +16,7 @@ public class JsonVisitor extends PsiElementVisitor {
   }
 
   public void visitLiteral(@NotNull JsonLiteral o) {
-    visitValue(o);
+    visitPropertyValue(o);
   }
 
   public void visitNullLiteral(@NotNull JsonNullLiteral o) {
@@ -28,7 +28,7 @@ public class JsonVisitor extends PsiElementVisitor {
   }
 
   public void visitObject(@NotNull JsonObject o) {
-    visitValue(o);
+    visitPropertyValue(o);
   }
 
   public void visitProperty(@NotNull JsonProperty o) {
@@ -39,12 +39,12 @@ public class JsonVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
-  public void visitStringLiteral(@NotNull JsonStringLiteral o) {
-    visitLiteral(o);
+  public void visitPropertyValue(@NotNull JsonPropertyValue o) {
+    visitPsiElement(o);
   }
 
-  public void visitValue(@NotNull JsonValue o) {
-    visitPsiElement(o);
+  public void visitStringLiteral(@NotNull JsonStringLiteral o) {
+    visitLiteral(o);
   }
 
   public void visitPsiElement(@NotNull PsiElement o) {

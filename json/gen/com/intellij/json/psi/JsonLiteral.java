@@ -5,6 +5,8 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface JsonLiteral extends JsonValue {
+public interface JsonLiteral extends JsonPropertyValue {
+
+  boolean isQuotedString();
 
 }

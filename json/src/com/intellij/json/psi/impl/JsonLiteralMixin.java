@@ -6,7 +6,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import org.jetbrains.annotations.NotNull;
 
-abstract class JsonLiteralMixin extends JsonValueImpl implements JsonLiteral {
+abstract class JsonLiteralMixin extends JsonPropertyImpl implements JsonLiteral {
   private final Object myRefLock = new Object();
   private volatile PsiReference[] myRefs;
   private volatile long myModCount = -1;

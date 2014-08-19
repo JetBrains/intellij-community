@@ -40,5 +40,10 @@
     <completion.contributor language="JSON" implementationClass="com.intellij.json.codeinsight.JsonCompletionContributor"/>
     <annotator language="JSON" implementationClass="com.intellij.json.codeinsight.JsonStringLiteralAnnotator"/>
 
+    <!-- Imported from appcode-json -->
+    <lang.elementManipulator forClass="com.intellij.json.psi.JsonLiteral"
+                             implementationClass="com.intellij.json.psi.JsonLiteralManipulator"/>
+
+
   </extensions>
 </idea-plugin>

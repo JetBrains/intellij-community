@@ -37,7 +37,7 @@
         TEXT='regexp:\w+'
     ]
 
-    extends("object|array|literal")=value
+    extends("object|array|literal")=property_value
     extends("string_literal|number_literal|boolean_literal|null_literal")=literal
 }
 
@@ -45,9 +45,12 @@ json ::= object | array
 
 object ::= L_CURLY [properties] R_CURLY {
   pin=1
+  methods=[
+    findProperty
+  ]
 }
 private properties ::= property (COMMA property)* { pin(".*")=1 }
-property ::= property_name COLON value {
+property ::= property_name COLON property_value {
   pin = 1
   methods=[ getName ]
   recoverWhile = brace_or_comma
@@ -55,12 +58,12 @@ property ::= property_name COLON value {
 
 array ::= L_BRACKET [array_elements] R_BRACKET { pin=1 }
 private array_elements ::= array_element (COMMA array_element)* { pin(".*")=1 }
-private array_element ::= value {
+private array_element ::= property_value {
   recoverWhile = bracket_or_comma
 }
 
 property_name ::= string_literal
-value ::= object | array | literal
+property_value ::= object | array | literal
 
 string_literal ::= STRING
 number_literal ::= NUMBER

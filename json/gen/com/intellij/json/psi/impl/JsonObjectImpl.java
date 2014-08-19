@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.json.JsonElementTypes.*;
 import com.intellij.json.psi.*;
 
-public class JsonObjectImpl extends JsonValueImpl implements JsonObject {
+public class JsonObjectImpl extends JsonPropertyValueImpl implements JsonObject {
 
   public JsonObjectImpl(ASTNode node) {
     super(node);
@@ -25,6 +25,11 @@ public class JsonObjectImpl extends JsonValueImpl implements JsonObject {
   @NotNull
   public List<JsonProperty> getPropertyList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, JsonProperty.class);
+  }
+
+  @Nullable
+  public JsonProperty findProperty(String name) {
+    return JsonPsiImplUtils.findProperty(this, name);
   }
 
 }

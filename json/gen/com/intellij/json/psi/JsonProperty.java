@@ -11,7 +11,7 @@ public interface JsonProperty extends PsiElement {
   JsonPropertyName getPropertyName();
 
   @Nullable
-  JsonValue getValue();
+  JsonPropertyValue getPropertyValue();
 
   @NotNull
   String getName();

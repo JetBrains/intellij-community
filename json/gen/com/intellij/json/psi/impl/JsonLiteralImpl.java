@@ -21,8 +21,8 @@ public class JsonLiteralImpl extends JsonLiteralMixin implements JsonLiteral {
     else super.accept(visitor);
   }
 
-  public void isQuotedString() {
-    JsonPsiImplUtils.isQuotedString(this);
+  public boolean isQuotedString() {
+    return JsonPsiImplUtils.isQuotedString(this);
   }
 
 }

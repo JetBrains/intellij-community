@@ -11,14 +11,14 @@ import static com.intellij.json.JsonElementTypes.*;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.json.psi.*;
 
-public class JsonValueImpl extends ASTWrapperPsiElement implements JsonValue {
+public class JsonPropertyValueImpl extends ASTWrapperPsiElement implements JsonPropertyValue {
 
-  public JsonValueImpl(ASTNode node) {
+  public JsonPropertyValueImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof JsonVisitor) ((JsonVisitor)visitor).visitValue(this);
+    if (visitor instanceof JsonVisitor) ((JsonVisitor)visitor).visitPropertyValue(this);
     else super.accept(visitor);
   }
 
