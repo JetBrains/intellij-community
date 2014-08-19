@@ -474,7 +474,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   public void replaceText(String text, PsiElement element) {
-    if (element == null || getElement() != element) return;
+    PsiElement current = getElement();
+    if (current == null || !current.getManager().areElementsEquivalent(current, element)) return;
     setText(text, element, false);
     if (!myBackStack.empty()) myBackStack.pop();
   }
@@ -680,8 +681,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         final PsiElement originalElement = DocumentationManager.getOriginalElement(element);
         boolean processed = false;
         if (provider instanceof CompositeDocumentationProvider) {
-          for (final DocumentationProvider documentationProvider : ((CompositeDocumentationProvider)provider).getProviders()) {
-            if (documentationProvider instanceof ExternalDocumentationHandler && ((ExternalDocumentationHandler)documentationProvider).handleExternal(element, originalElement)) {
+          for (DocumentationProvider p : ((CompositeDocumentationProvider)provider).getAllProviders()) {
+            if (p instanceof ExternalDocumentationHandler && ((ExternalDocumentationHandler)p).handleExternal(element, originalElement)) {
               processed = true;
               break;
             }

@@ -855,33 +855,33 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       final DocumentationProvider provider = getProviderFromElement(psiElement);
       boolean processed = false;
       if (provider instanceof CompositeDocumentationProvider) {
-        for (DocumentationProvider documentationProvider : ((CompositeDocumentationProvider)provider).getProviders()) {
-          if (documentationProvider instanceof ExternalDocumentationHandler) {
-            final ExternalDocumentationHandler externalDocumentationHandler = (ExternalDocumentationHandler)documentationProvider;
-            if (externalDocumentationHandler.canFetchDocumentationLink(url)) {
-              fetchDocInfo(new DocumentationCollector() {
-                @Override
-                public String getDocumentation() throws Exception {
-                  return externalDocumentationHandler.fetchExternalDocumentation(url, psiElement);
-                }
+        for (DocumentationProvider p : ((CompositeDocumentationProvider)provider).getAllProviders()) {
+          if (!(p instanceof ExternalDocumentationHandler)) continue;
 
-                @Override
-                public PsiElement getElement() {
-                  return psiElement;
-                }
+          final ExternalDocumentationHandler externalHandler = (ExternalDocumentationHandler)p;
+          if (externalHandler.canFetchDocumentationLink(url)) {
+            fetchDocInfo(new DocumentationCollector() {
+              @Override
+              public String getDocumentation() throws Exception {
+                return externalHandler.fetchExternalDocumentation(url, psiElement);
+              }
 
-                @Nullable
-                @Override
-                public String getEffectiveExternalUrl() {
-                  return url;
-                }
-              }, component);
-              processed = true;
-            }
-            else if (externalDocumentationHandler.handleExternalLink(manager, url, psiElement)) {
-              processed = true;
-              break;
-            }
+              @Override
+              public PsiElement getElement() {
+                return psiElement;
+              }
+
+              @Nullable
+              @Override
+              public String getEffectiveExternalUrl() {
+                return url;
+              }
+            }, component);
+            processed = true;
+          }
+          else if (externalHandler.handleExternalLink(manager, url, psiElement)) {
+            processed = true;
+            break;
           }
         }
       }
