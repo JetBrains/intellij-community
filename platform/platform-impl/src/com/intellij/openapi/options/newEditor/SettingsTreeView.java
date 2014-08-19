@@ -38,10 +38,6 @@ import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
-import java.util.List;
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
@@ -52,6 +48,10 @@ import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author Sergey.Malenkov
@@ -494,7 +494,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
       myNodeIcon = new JLabel(" ", SwingConstants.RIGHT);
       myProjectIcon = new JLabel(" ", SwingConstants.LEFT);
       myProjectIcon.setOpaque(true);
-      myRendererComponent.add(BorderLayout.NORTH, mySeparatorComponent);
+      //myRendererComponent.add(BorderLayout.NORTH, mySeparatorComponent);
       myRendererComponent.add(BorderLayout.CENTER, myComponent);
       myRendererComponent.add(BorderLayout.WEST, myNodeIcon);
       myRendererComponent.add(BorderLayout.EAST, myProjectIcon);
