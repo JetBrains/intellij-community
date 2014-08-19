@@ -5,7 +5,7 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface JsonPropertyName extends PsiElement {
+public interface JsonPropertyName extends JsonElement {
 
   @NotNull
   PsiElement getString();

@@ -1,19 +1,19 @@
 FILE
-  JsonArrayImpl(ARRAY)
+  JsonArray
     PsiElement([)('[')
-    JsonNumberLiteralImpl(NUMBER_LITERAL)
+    JsonNumberLiteral
       PsiElement(NUMBER)('1')
     PsiElement(,)(',')
     PsiWhiteSpace(' ')
-    JsonArrayImpl(ARRAY)
+    JsonArray
       PsiElement([)('[')
-      JsonStringLiteralImpl(STRING_LITERAL)
+      JsonStringLiteral
         PsiElement(STRING)('"foo"')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
-      JsonArrayImpl(ARRAY)
+      JsonArray
         PsiElement([)('[')
-        JsonNullLiteralImpl(NULL_LITERAL)
+        JsonNullLiteral
           PsiElement(null)('null')
         PsiElement(])(']')
       PsiElement(])(']')

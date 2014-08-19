@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.TokenType;
-import com.intellij.json.JsonFile;
 import org.jetbrains.annotations.NotNull;
 
 public class JsonPsiChangeUtils {

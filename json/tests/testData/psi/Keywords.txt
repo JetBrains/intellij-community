@@ -1,14 +1,14 @@
 FILE
-  JsonArrayImpl(ARRAY)
+  JsonArray
     PsiElement([)('[')
-    JsonBooleanLiteralImpl(BOOLEAN_LITERAL)
+    JsonBooleanLiteral
       PsiElement(true)('true')
     PsiElement(,)(',')
     PsiWhiteSpace(' ')
-    JsonBooleanLiteralImpl(BOOLEAN_LITERAL)
+    JsonBooleanLiteral
       PsiElement(false)('false')
     PsiElement(,)(',')
     PsiWhiteSpace(' ')
-    JsonNullLiteralImpl(NULL_LITERAL)
+    JsonNullLiteral
       PsiElement(null)('null')
     PsiElement(])(']')

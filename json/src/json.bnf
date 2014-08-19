@@ -1,15 +1,18 @@
 {
-  parserClass='com.intellij.json.JsonParser'
-  parserUtilClass="com.intellij.json.JsonParserUtil"
-  psiPackage='com.intellij.json.psi'
-  psiImplPackage='com.intellij.json.psi.impl'
+  parserClass = 'com.intellij.json.JsonParser'
+  parserUtilClass = "com.intellij.json.JsonParserUtil"
+  psiPackage = 'com.intellij.json.psi'
+  psiImplPackage = 'com.intellij.json.psi.impl'
 
-  elementTypeHolderClass='com.intellij.json.JsonElementTypes'
-  elementTypeClass='com.intellij.json.JsonElementType'
-  psiClassPrefix="Json"
+  elementTypeHolderClass = 'com.intellij.json.JsonElementTypes'
+  elementTypeClass = 'com.intellij.json.JsonElementType'
+  psiClassPrefix = "Json"
 
-  psiImplUtilClass='com.intellij.json.psi.JsonPsiImplUtils'
-  tokenTypeClass='com.intellij.json.JsonTokenType'
+  psiImplUtilClass = 'com.intellij.json.psi.JsonPsiImplUtils'
+  tokenTypeClass = 'com.intellij.json.JsonTokenType'
+
+  implements = "com.intellij.json.psi.JsonElement"
+  extends = "com.intellij.json.psi.impl.JsonElementImpl"
 
     tokens = [
         L_CURLY='{'

@@ -1,5 +1,6 @@
 package com.intellij.json;
 
+import com.intellij.json.psi.JsonFile;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;

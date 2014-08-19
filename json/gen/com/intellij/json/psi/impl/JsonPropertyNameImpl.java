@@ -8,10 +8,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.json.JsonElementTypes.*;
-import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.json.psi.*;
 
-public class JsonPropertyNameImpl extends ASTWrapperPsiElement implements JsonPropertyName {
+public class JsonPropertyNameImpl extends JsonElementImpl implements JsonPropertyName {
 
   public JsonPropertyNameImpl(ASTNode node) {
     super(node);

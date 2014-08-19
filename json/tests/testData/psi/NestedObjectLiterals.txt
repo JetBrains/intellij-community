@@ -1,28 +1,28 @@
 FILE
-  JsonObjectImpl(OBJECT)
+  JsonObject
     PsiElement({)('{')
     PsiWhiteSpace(' ')
-    JsonPropertyImpl(PROPERTY)
-      JsonPropertyNameImpl(PROPERTY_NAME)
+    JsonProperty
+      JsonPropertyName
         PsiElement(STRING)('"foo"')
       PsiElement(:)(':')
       PsiWhiteSpace(' ')
-      JsonObjectImpl(OBJECT)
+      JsonObject
         PsiElement({)('{')
         PsiWhiteSpace(' ')
-        JsonPropertyImpl(PROPERTY)
-          JsonPropertyNameImpl(PROPERTY_NAME)
+        JsonProperty
+          JsonPropertyName
             PsiElement(STRING)('"bar"')
           PsiElement(:)(':')
           PsiWhiteSpace(' ')
-          JsonObjectImpl(OBJECT)
+          JsonObject
             PsiElement({)('{')
-            JsonPropertyImpl(PROPERTY)
-              JsonPropertyNameImpl(PROPERTY_NAME)
+            JsonProperty
+              JsonPropertyName
                 PsiElement(STRING)('"baz"')
               PsiElement(:)(':')
               PsiWhiteSpace(' ')
-              JsonNullLiteralImpl(NULL_LITERAL)
+              JsonNullLiteral
                 PsiElement(null)('null')
             PsiElement(})('}')
         PsiWhiteSpace(' ')
