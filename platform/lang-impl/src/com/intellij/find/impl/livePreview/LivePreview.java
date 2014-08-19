@@ -21,7 +21,9 @@ import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
@@ -46,7 +48,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.io.*;
+import java.io.PrintStream;
 import java.util.*;
 import java.util.List;
 
@@ -400,7 +402,7 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
       return;
     }
 
-    ReplacementView replacementView = new ReplacementView(replacementPreviewText, cursor);
+    ReplacementView replacementView = new ReplacementView(replacementPreviewText);
 
     BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(replacementView);
     balloonBuilder.setFadeoutTime(0);
