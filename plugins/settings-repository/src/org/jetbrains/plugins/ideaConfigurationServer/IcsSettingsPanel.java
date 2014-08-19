@@ -31,7 +31,7 @@ public class IcsSettingsPanel extends DialogWrapper {
   private JCheckBox shareProjectWorkspaceCheckBox;
   private final JButton syncButton;
 
-  public IcsSettingsPanel(@Nullable Project project) {
+  public IcsSettingsPanel(@Nullable final Project project) {
     super(project, true);
 
     IcsManager icsManager = IcsManager.getInstance();
@@ -50,7 +50,7 @@ public class IcsSettingsPanel extends DialogWrapper {
       @Override
       public void actionPerformed(@NotNull ActionEvent e) {
         if (saveRemoteRepositoryUrl()) {
-          new SyncRepositoriesDialog(panel).show();
+          new SyncRepositoriesDialog(panel, project).show();
         }
       }
     });
@@ -161,7 +161,7 @@ public class IcsSettingsPanel extends DialogWrapper {
     }
 
     try {
-      repositoryManager.setRemoteRepositoryUrl(url);
+      repositoryManager.setUpstream(url);
       return true;
     }
     catch (Exception e) {

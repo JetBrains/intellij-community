@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.ideaConfigurationServer;
 
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,11 +14,12 @@ public interface RepositoryManager {
   @Nullable
   String getRemoteRepositoryUrl();
 
-  @Nullable
+  boolean hasUpstream();
+
   /**
    * Return error message if failed
    */
-  void setRemoteRepositoryUrl(@Nullable String url) throws Exception;
+  void setUpstream(@Nullable String url) throws Exception;
 
   @Nullable
   InputStream read(@NotNull String path) throws IOException;
@@ -29,30 +29,27 @@ public interface RepositoryManager {
    */
   void write(@NotNull String path, @NotNull byte[] content, int size, boolean async);
 
-  void deleteAsync(@NotNull String path);
+  void delete(@NotNull String path);
 
   @NotNull
   Collection<String> listSubFileNames(@NotNull String path);
 
-  void updateRepository();
+  void updateRepository(@NotNull ProgressIndicator indicator) throws Exception;
 
-  @NotNull
   /**
    * Not all implementations support progress indicator (will not be updated on progress)
    */
-  ActionCallback commit(@NotNull ProgressIndicator indicator);
+  void commit(@NotNull ProgressIndicator indicator) throws Exception;
 
   void commit(@NotNull List<String> paths);
 
-  @NotNull
-  ActionCallback push(@NotNull ProgressIndicator indicator);
+  void push(@NotNull ProgressIndicator indicator) throws Exception;
 
-  @NotNull
-  ActionCallback pull(@NotNull ProgressIndicator indicator);
+  void pull(@NotNull ProgressIndicator indicator) throws Exception;
 
   void initRepository(@NotNull File dir) throws IOException;
 
-  boolean has(String path);
+  boolean has(@NotNull String path);
 
   boolean isValidRepository(@NotNull File file);
 }

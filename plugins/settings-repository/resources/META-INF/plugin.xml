@@ -6,6 +6,9 @@
   <idea-version since-build="132.397"/>
   <!--<vendor>JetBrains</vendor>-->
 
+  <!-- otherwise plugin will be not loaded -->
+  <depends>com.intellij.modules.xml</depends>
+
   <extensions defaultExtensionNs="com.intellij">
     <ApplicationLoadListener implementation="org.jetbrains.plugins.ideaConfigurationServer.IcsManager"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>

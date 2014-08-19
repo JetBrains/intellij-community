@@ -1,10 +1,10 @@
 package org.jetbrains.plugins.ideaConfigurationServer;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +16,7 @@ import java.util.Enumeration;
 @SuppressWarnings("DialogTitleCapitalization")
 public class SyncRepositoriesDialog extends DialogWrapper {
   private final JComponent parent;
+  private final Project project;
 
   private JRadioButton mergeRadioButton;
   private JRadioButton resetToTheirsRadioButton;
@@ -23,10 +24,11 @@ public class SyncRepositoriesDialog extends DialogWrapper {
   private JPanel panel;
   private ButtonGroup syncTypeGroup;
 
-  public SyncRepositoriesDialog(@NotNull JComponent parent) {
+  public SyncRepositoriesDialog(@NotNull JComponent parent, @Nullable Project project) {
     super(parent, true);
 
     this.parent = parent;
+    this.project = project;
 
     setTitle(IcsBundle.message("sync.repositories.panel.title"));
     setResizable(false);
@@ -79,18 +81,15 @@ public class SyncRepositoriesDialog extends DialogWrapper {
     super.doOKAction();
 
     if (syncType != null) {
-      IcsManager.getInstance().sync(syncType).doWhenDone(new Runnable() {
-        @Override
-        public void run() {
-          Messages.showInfoMessage(parent, IcsBundle.message("sync.done.message"), IcsBundle.message("sync.done.title"));
-        }
-      }).doWhenRejected(new Consumer<String>() {
-        @Override
-        public void consume(String error) {
-          Messages.showErrorDialog(parent, IcsBundle.message("sync.rejected.message", StringUtil.notNullize(error, "Internal error")),
-                                   IcsBundle.message("sync.rejected.title"));
-        }
-      });
+      try {
+        IcsManager.getInstance().sync(syncType, project);
+      }
+      catch (Exception e) {
+        Messages.showErrorDialog(parent, IcsBundle.message("sync.rejected.message", StringUtil.notNullize(e.getMessage(), "Internal error")),
+                                 IcsBundle.message("sync.rejected.title"));
+      }
+
+      Messages.showInfoMessage(parent, IcsBundle.message("sync.done.message"), IcsBundle.message("sync.done.title"));
     }
   }
 }

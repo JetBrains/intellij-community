@@ -4,7 +4,6 @@ import com.intellij.ide.ApplicationLoadListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.RoamingType;
@@ -16,16 +15,18 @@ import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.components.impl.stores.StreamProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SchemesManagerFactory;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
-import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SingleAlarm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.ideaConfigurationServer.git.GitRepositoryManager;
 
 import java.io.File;
@@ -50,31 +51,19 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
       ProgressManager.getInstance().run(new Task.Backgroundable(null, IcsBundle.message("task.commit.title")) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          awaitCallback(indicator, repositoryManager.commit(indicator), getTitle());
+          try {
+            repositoryManager.commit(indicator);
+          }
+          catch (Exception e) {
+            LOG.error(e);
+          }
         }
       });
     }
   }, settings.commitDelay);
 
   private volatile boolean autoCommitEnabled = true;
-
-  public static void awaitCallback(@NotNull ProgressIndicator indicator, @NotNull ActionCallback callback, @NotNull String title) {
-    while (!callback.isProcessed()) {
-      try {
-        //noinspection BusyWait
-        Thread.sleep(100);
-      }
-      catch (InterruptedException ignored) {
-        break;
-      }
-      if (indicator.isCanceled()) {
-        String message = title + " canceled";
-        LOG.warn(message);
-        callback.reject(message);
-        break;
-      }
-    }
-  }
+  private volatile boolean writeAndDeleteProhibited;
 
   public static IcsManager getInstance() {
     return ApplicationLoadListener.EP_NAME.findExtension(IcsManager.class);
@@ -82,27 +71,39 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
 
   @NotNull
   public static File getPluginSystemDir() {
-    return new File(PathManager.getSystemPath(), "settingsRepository");
+    String customPath = System.getProperty("ics.settingsRepository");
+    if (customPath == null) {
+      return new File(PathManager.getSystemPath(), "settingsRepository");
+    }
+    else {
+      return new File(FileUtil.expandUserHome(customPath));
+    }
   }
 
+  @NotNull
   public IcsStatus getStatus() {
     return status;
   }
 
-  public void setStatus(@NotNull IcsStatus value) {
+  private void setStatus(@NotNull IcsStatus value) {
     if (status != value) {
       status = value;
       ApplicationManager.getApplication().getMessageBus().syncPublisher(StatusListener.TOPIC).statusChanged(value);
     }
   }
 
+  @TestOnly
+  void setRepositoryManager(@NotNull RepositoryManager repositoryManager) {
+    this.repositoryManager = repositoryManager;
+  }
+
   private void scheduleCommit() {
-    if (autoCommitEnabled) {
+    if (autoCommitEnabled && !ApplicationManager.getApplication().isUnitTestMode()) {
       commitAlarm.cancelAndRequest();
     }
   }
 
-  private void registerApplicationLevelProviders(Application application) {
+  private void registerApplicationLevelProviders(@NotNull Application application) {
     try {
       settings.load();
     }
@@ -110,7 +111,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
       LOG.error(e);
     }
 
-    connectAndUpdateRepository();
+    connectAndUpdateRepository(application);
 
     IcsStreamProvider streamProvider = new IcsStreamProvider(null) {
       @NotNull
@@ -121,7 +122,11 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
 
       @Override
       public void deleteFile(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
-        repositoryManager.deleteAsync(IcsUrlBuilder.buildPath(fileSpec, roamingType, null));
+        if (writeAndDeleteProhibited) {
+          throw new IllegalStateException("Delete is prohibited now");
+        }
+
+        repositoryManager.delete(IcsUrlBuilder.buildPath(fileSpec, roamingType, null));
         scheduleCommit();
       }
     };
@@ -168,15 +173,19 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
     updateStoragesFromStreamProvider(storageManager, storageManager.getStorageFileNames());
   }
 
-  private void connectAndUpdateRepository() {
+  @SuppressWarnings("SSBasedInspection")
+  private void connectAndUpdateRepository(@NotNull Application application) {
     try {
-      repositoryManager = new GitRepositoryManager();
-      setStatus(IcsStatus.OPENED);
-      if (settings.updateOnStart) {
-        repositoryManager.updateRepository();
+      if (!application.isUnitTestMode()) {
+        repositoryManager = new GitRepositoryManager();
+        setStatus(IcsStatus.OPENED);
+        if (settings.updateOnStart && repositoryManager.hasUpstream()) {
+          // todo progress
+          repositoryManager.updateRepository(new EmptyProgressIndicator());
+        }
       }
     }
-    catch (IOException e) {
+    catch (Exception e) {
       try {
         LOG.error(e);
       }
@@ -216,36 +225,38 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
   public void dispose() {
   }
 
-  @NotNull
-  public ActionCallback sync(@NotNull SyncType syncType) {
+  public void sync(@NotNull final SyncType syncType, @Nullable Project project) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
     cancelAndDisableAutoCommit();
+    try {
+      ApplicationManager.getApplication().saveSettings();
+      writeAndDeleteProhibited = true;
+      ProgressManager.getInstance().run(new Task.Modal(project, IcsBundle.message("task.sync.title"), true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          indicator.setIndeterminate(true);
 
-    final ActionCallback actionCallback = new ActionCallback(3);
-    ProgressManager.getInstance().run(new Task.Modal(null, IcsBundle.message("task.sync.title"), true) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        indicator.setIndeterminate(true);
-        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            ApplicationManager.getApplication().saveSettings();
+          try {
+            repositoryManager.commit(indicator);
+            if (syncType == SyncType.MERGE) {
+              repositoryManager.pull(indicator);
+              repositoryManager.push(indicator);
+            }
+            else {
+              throw new UnsupportedOperationException(syncType.toString());
+            }
           }
-        }, ModalityState.any());
-
-        repositoryManager.commit(indicator).notify(actionCallback);
-        repositoryManager.pull(indicator).notify(actionCallback);
-        repositoryManager.push(indicator).notify(actionCallback);
-        awaitCallback(indicator, actionCallback, getTitle());
-      }
-    });
-
-    actionCallback.doWhenProcessed(new Runnable() {
-      @Override
-      public void run() {
-        autoCommitEnabled = true;
-      }
-    });
-    return actionCallback;
+          catch (Exception e) {
+            LOG.error(e);
+          }
+        }
+      });
+    }
+    finally {
+      autoCommitEnabled = true;
+      writeAndDeleteProhibited = false;
+    }
   }
 
   private void cancelAndDisableAutoCommit() {
@@ -272,6 +283,10 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
 
     @Override
     public final boolean saveContent(@NotNull String fileSpec, @NotNull byte[] content, int size, @NotNull RoamingType roamingType, boolean async) {
+      if (writeAndDeleteProhibited) {
+        throw new IllegalStateException("Save is prohibited now");
+      }
+
       repositoryManager.write(IcsUrlBuilder.buildPath(fileSpec, roamingType, projectId), content, size, async);
       if (isAutoCommit(fileSpec, roamingType)) {
         scheduleCommit();
@@ -301,20 +316,16 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
 
   @Override
   public void beforeApplicationLoaded(Application application) {
-    if (application.isUnitTestMode()) {
-      return;
-    }
-
     registerApplicationLevelProviders(application);
 
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectLifecycleListener.TOPIC,
-                                                                            new ProjectLifecycleListener.Adapter() {
-                                                                              @Override
-                                                                              public void beforeProjectLoaded(@NotNull Project project) {
-                                                                                if (!project.isDefault()) {
-                                                                                  getInstance().registerProjectLevelProviders(project);
-                                                                                }
-                                                                              }
-                                                                            });
+    application.getMessageBus().connect().subscribe(ProjectLifecycleListener.TOPIC,
+                                                    new ProjectLifecycleListener.Adapter() {
+                                                      @Override
+                                                      public void beforeProjectLoaded(@NotNull Project project) {
+                                                        if (!project.isDefault()) {
+                                                          getInstance().registerProjectLevelProviders(project);
+                                                        }
+                                                      }
+                                                    });
   }
 }

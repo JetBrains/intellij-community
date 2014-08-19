@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Consumer;
 import org.jetbrains.plugins.ideaConfigurationServer.IcsBundle;
 import org.jetbrains.plugins.ideaConfigurationServer.IcsManager;
 import org.jetbrains.plugins.ideaConfigurationServer.SyncType;
@@ -20,20 +19,17 @@ class SyncAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getProject();
-    IcsManager.getInstance().sync(SyncType.MERGE).doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        NOTIFICATION_GROUP.createNotification(IcsBundle.message("sync.done.message"), NotificationType.INFORMATION)
-          .notify(project == null || project.isDisposed() ? null : project);
-      }
-    }).doWhenRejected(new Consumer<String>() {
-      @Override
-      public void consume(String error) {
-        NOTIFICATION_GROUP.createNotification(IcsBundle.message("sync.rejected.message", StringUtil.notNullize(error, "Internal error")), NotificationType.ERROR)
-          .notify(project == null || project.isDisposed() ? null : project);
-      }
-    });
+  public void actionPerformed(AnActionEvent event) {
+    Project project = event.getProject();
+    try {
+      IcsManager.getInstance().sync(SyncType.MERGE, project);
+    }
+    catch (Exception e) {
+      NOTIFICATION_GROUP.createNotification(IcsBundle.message("sync.rejected.message", StringUtil.notNullize(e.getMessage(), "Internal error")), NotificationType.ERROR)
+        .notify(project == null || project.isDisposed() ? null : project);
+    }
+
+    NOTIFICATION_GROUP.createNotification(IcsBundle.message("sync.done.message"), NotificationType.INFORMATION)
+      .notify(project == null || project.isDisposed() ? null : project);
   }
 }

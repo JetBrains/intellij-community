@@ -2,27 +2,17 @@ package org.jetbrains.plugins.ideaConfigurationServer.git;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import org.eclipse.jgit.api.AddCommand;
-import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.IndexDiff;
 import org.eclipse.jgit.lib.ProgressMonitor;
-import org.eclipse.jgit.treewalk.FileTreeIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ideaConfigurationServer.BaseRepositoryManager;
 import org.jetbrains.plugins.ideaConfigurationServer.IcsUrlBuilder;
 
 import java.util.Collection;
 
-class CommitTask extends BaseRepositoryManager.Task {
-  private final GitRepositoryManager manager;
-
-  public CommitTask(@NotNull GitRepositoryManager manager, @NotNull ProgressIndicator indicator) {
-    super(indicator);
-    this.manager = manager;
-  }
-
-  @Override
-  protected void execute() throws Exception {
-    IndexDiff index = new IndexDiff(manager.git.getRepository(), Constants.HEAD, new FileTreeIterator(manager.git.getRepository()));
+class CommitTask {
+  public static void execute(@NotNull GitRepositoryManager manager, @NotNull ProgressIndicator indicator) throws Exception {
+    IndexDiff index = manager.git.computeIndexDiff();
     boolean changed = index.diff(new JGitProgressMonitor(indicator), ProgressMonitor.UNKNOWN, ProgressMonitor.UNKNOWN, "Commit");
 
     if (BaseRepositoryManager.LOG.isDebugEnabled()) {
@@ -61,7 +51,7 @@ class CommitTask extends BaseRepositoryManager.Task {
     builder.append("To commit:");
     addList("Added", diff.getAdded(), builder);
     addList("Changed", diff.getChanged(), builder);
-    addList("Removed", diff.getChanged(), builder);
+    addList("Removed", diff.getRemoved(), builder);
     addList("Modified on disk relative to the index", diff.getModified(), builder);
     addList("Untracked files", diff.getUntracked(), builder);
     addList("Untracked folders", diff.getUntrackedFolders(), builder);
