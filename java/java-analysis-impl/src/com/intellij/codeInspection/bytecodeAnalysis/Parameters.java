@@ -107,6 +107,18 @@ abstract class PResults {
     }
   }
 
+  static PResult combineNullable(PResult r1, PResult r2) throws AnalyzerException {
+    if (Identity == r1) return r2;
+    if (Identity == r2) return r1;
+    if (Return == r1) return r2;
+    if (Return == r2) return r1;
+    if (NPE == r1) return NPE;
+    if (NPE == r2) return NPE;
+    ConditionalNPE cnpe1 = (ConditionalNPE) r1;
+    ConditionalNPE cnpe2 = (ConditionalNPE) r2;
+    return new ConditionalNPE(meet(cnpe1.sop, cnpe2.sop));
+  }
+
   static PResult join(PResult r1, PResult r2) throws AnalyzerException {
     if (Identity == r1) return r2;
     if (Identity == r2) return r1;
@@ -399,6 +411,199 @@ class NonNullInAnalysis extends Analysis<PResult> {
   }
 }
 
+class NullableInAnalysis extends Analysis<PResult> {
+  final private State[] pending = ourPendingStates.get();
+
+  private final NullableInterpreter interpreter = new NullableInterpreter();
+
+  protected NullableInAnalysis(RichControlFlow richControlFlow, Direction direction, boolean stable) {
+    super(richControlFlow, direction, stable);
+  }
+
+  @NotNull
+  Equation<Key, Value> mkEquation(PResult result) {
+    if (NPE == result) {
+      return new Equation<Key, Value>(aKey, new Final<Key, Value>(Value.Top));
+    }
+    if (Identity == result || Return == result) {
+      return new Equation<Key, Value>(aKey, new Final<Key, Value>(Value.Null));
+    }
+    else {
+      ConditionalNPE condNpe = (ConditionalNPE) result;
+      Set<Product<Key, Value>> components = new HashSet<Product<Key, Value>>();
+      for (Set<Key> prod : condNpe.sop) {
+        components.add(new Product<Key, Value>(Value.Top, prod));
+      }
+      return new Equation<Key, Value>(aKey, new Pending<Key, Value>(components));
+    }
+  }
+
+  private int id = 0;
+  private Frame<BasicValue> nextFrame = null;
+  private PResult myResult = Identity;
+  private PResult subResult = Identity;
+  private boolean top = false;
+
+  @NotNull
+  protected Equation<Key, Value> analyze() throws AnalyzerException {
+    pendingPush(createStartState());
+    int steps = 0;
+    while (pendingTop > 0 && earlyResult == null) {
+      steps ++;
+      if (steps >= STEPS_LIMIT) {
+        throw new AnalyzerException(null, "limit is reached, steps: " + steps + " in method " + method);
+      }
+      State state = pending[--pendingTop];
+      int insnIndex = state.conf.insnIndex;
+      Conf conf = state.conf;
+      List<Conf> history = state.history;
+
+      boolean fold = false;
+      if (dfsTree.loopEnters[insnIndex]) {
+        for (Conf prev : history) {
+          if (AbstractValues.isInstance(conf, prev)) {
+            fold = true;
+            break;
+          }
+        }
+      }
+      if (fold) {
+        addComputed(insnIndex, state);
+      }
+      else {
+        State baseState = null;
+        List<State> thisComputed = computed[insnIndex];
+        if (thisComputed != null) {
+          for (State prevState : thisComputed) {
+            if (stateEquiv(state, prevState)) {
+              baseState = prevState;
+              break;
+            }
+          }
+        }
+        if (baseState != null) {
+          addComputed(insnIndex, state);
+        } else {
+          // the main call
+          processState(state);
+        }
+
+      }
+    }
+    if (earlyResult != null) {
+      return mkEquation(earlyResult);
+    } else {
+      return mkEquation(myResult);
+    }
+  }
+
+  private void processState(State state) throws AnalyzerException {
+    Conf conf = state.conf;
+    int insnIndex = conf.insnIndex;
+    List<Conf> history = state.history;
+    boolean taken = state.taken;
+    Frame<BasicValue> frame = conf.frame;
+    AbstractInsnNode insnNode = methodNode.instructions.get(insnIndex);
+    List<Conf> nextHistory = dfsTree.loopEnters[insnIndex] ? append(history, conf) : history;
+    execute(frame, insnNode);
+
+    if (subResult == NPE || top) {
+      earlyResult = NPE;
+      return;
+    }
+
+    if (subResult instanceof ConditionalNPE) {
+      myResult = combineNullable(myResult, subResult);
+    }
+
+    int opcode = insnNode.getOpcode();
+    switch (opcode) {
+      case ARETURN:
+        if (popValue(frame) instanceof ParamValue) {
+          earlyResult = NPE;
+        }
+        return;
+      case IRETURN:
+      case LRETURN:
+      case FRETURN:
+      case DRETURN:
+      case RETURN:
+        return;
+      default:
+    }
+
+    if (opcode == ATHROW) {
+      if (taken) {
+        earlyResult = NPE;
+      }
+      return;
+    }
+
+    if (opcode == IFNONNULL && popValue(frame) instanceof ParamValue) {
+      int nextInsnIndex = insnIndex + 1;
+      pendingPush(new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false));
+      return;
+    }
+
+    if (opcode == IFNULL && popValue(frame) instanceof ParamValue) {
+      int nextInsnIndex = methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
+      pendingPush(new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false));
+      return;
+    }
+
+    if (opcode == IFEQ && popValue(frame) == InstanceOfCheckValue) {
+      int nextInsnIndex = methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
+      pendingPush(new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false));
+      return;
+    }
+
+    if (opcode == IFNE && popValue(frame) == InstanceOfCheckValue) {
+      int nextInsnIndex = insnIndex + 1;
+      pendingPush(new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false));
+      return;
+    }
+
+    // general case
+    for (int nextInsnIndex : controlFlow.transitions[insnIndex]) {
+      Frame<BasicValue> nextFrame1 = nextFrame;
+      if (controlFlow.errors[nextInsnIndex] && controlFlow.errorTransitions.contains(new Edge(insnIndex, nextInsnIndex))) {
+        nextFrame1 = new Frame<BasicValue>(frame);
+        nextFrame1.clearStack();
+        nextFrame1.push(ASMUtils.THROWABLE_VALUE);
+      }
+      pendingPush(new State(++id, new Conf(nextInsnIndex, nextFrame1), nextHistory, taken, false));
+    }
+
+  }
+
+  private int pendingTop = 0;
+
+  private void pendingPush(State state) throws AnalyzerException {
+    if (pendingTop >= STEPS_LIMIT) {
+      throw new AnalyzerException(null, "limit is reached in method " + method);
+    }
+    pending[pendingTop++] = state;
+  }
+
+  private void execute(Frame<BasicValue> frame, AbstractInsnNode insnNode) throws AnalyzerException {
+    switch (insnNode.getType()) {
+      case AbstractInsnNode.LABEL:
+      case AbstractInsnNode.LINE:
+      case AbstractInsnNode.FRAME:
+        nextFrame = frame;
+        subResult = Identity;
+        top = false;
+        break;
+      default:
+        nextFrame = new Frame<BasicValue>(frame);
+        interpreter.reset();
+        nextFrame.execute(insnNode, interpreter);
+        subResult = interpreter.getSubResult();
+        top = interpreter.top;
+    }
+  }
+}
+
 abstract class NullityInterpreter extends BasicInterpreter {
   boolean top = false;
   final boolean nullableAnalysis;
@@ -526,7 +731,7 @@ abstract class NullityInterpreter extends BasicInterpreter {
         Method method = new Method(methodNode.owner, methodNode.name, methodNode.desc);
         for (int i = shift; i < values.size(); i++) {
           if (values.get(i) instanceof ParamValue) {
-            subResult = meet(subResult, new ConditionalNPE(new Key(method, new In(i - shift), stable)));
+            subResult = combine(subResult, new ConditionalNPE(new Key(method, new In(i - shift), stable)));
           }
         }
         break;
@@ -550,7 +755,7 @@ class NotNullInterpreter extends NullityInterpreter {
 
 class NullableInterpreter extends NullityInterpreter {
 
-  NullableInterpreter(boolean nullableAnalysis) {
+  NullableInterpreter() {
     super(true);
   }
 
