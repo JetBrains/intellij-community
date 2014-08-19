@@ -367,22 +367,6 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
     myErrorLabel.setForeground(MessageType.WARNING.getTitleForeground());
   }
 
-  public void selectCompatiblePython() {
-    //DirectoryProjectGenerator generator = getProjectGenerator();
-    //if (generator instanceof PyFrameworkProjectGenerator && !((PyFrameworkProjectGenerator)generator).supportsPython3()) {
-    //  Sdk sdk = getSdk();
-    //  if (sdk != null && PythonSdkType.getLanguageLevelForSdk(sdk).isPy3K()) {
-    //    Sdk python2Sdk = PythonSdkType.findPython2Sdk(null);
-    //    if (python2Sdk != null) {
-    //      mySdkCombo.getComboBox().setSelectedItem(python2Sdk);
-    //      mySdkCombo.getComboBox().revalidate();
-    //      mySdkCombo.getComboBox().repaint();
-    //
-    //    }
-    //  }
-    //}
-  }
-
   private static boolean acceptsRemoteSdk(DirectoryProjectGenerator generator) {
     if (generator instanceof PyFrameworkProjectGenerator) {
       return ((PyFrameworkProjectGenerator)generator).acceptsRemoteSdk();
