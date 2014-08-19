@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.HideableTitledPanel;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
@@ -110,6 +111,7 @@ public class StudyEditor implements TextEditor {
     taskTextPane.setContentType("text/html");
     taskTextPane.setEditable(false);
     taskTextPane.setText(taskText);
+    taskTextPane.addHyperlinkListener(new BrowserHyperlinkListener());
     EditorColorsScheme editorColorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
     int fontSize = editorColorsScheme.getEditorFontSize();
     String fontName = editorColorsScheme.getEditorFontName();
