@@ -125,4 +125,6 @@ class Expanded {{
   long h = <warning descr="'9L * 0L' can be replaced with '0L'">9L * 0L</warning>;
   int a = 8 * 0 * 8 *<error descr="Expression expected"> </error>; // don't warn
   int minus = 2 - 1 - 1;
+  int div = 3 / 2 / 2;
+  int mod = 3 % 2 % 2;
 }}
