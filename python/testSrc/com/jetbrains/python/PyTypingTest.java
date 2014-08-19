@@ -91,6 +91,54 @@ public class PyTypingTest extends PyTestCase {
            "    pass\n");
   }
 
+  public void testBuiltinList() {
+    doTest("list",
+           "from typing import List\n" +
+           "\n" +
+           "def f(expr: List):\n" +
+           "    pass\n");
+  }
+
+  public void testBuiltinListWithParameter() {
+    doTest("list[int]",
+           "from typing import List\n" +
+           "\n" +
+           "def f(expr: List[int]):\n" +
+           "    pass\n");
+  }
+
+  public void testBuiltinDictWithParameters() {
+    doTest("dict[str, int]",
+           "from typing import Dict\n" +
+           "\n" +
+           "def f(expr: Dict[str, int]):\n" +
+           "    pass\n");
+  }
+
+  public void testBuiltinTuple() {
+    doTest("tuple",
+           "from typing import Tuple\n" +
+           "\n" +
+           "def f(expr: Tuple):\n" +
+           "    pass\n");
+  }
+
+  public void testBuiltinTupleWithParameters() {
+    doTest("(int, str)",
+           "from typing import Tuple\n" +
+           "\n" +
+           "def f(expr: Tuple[int, str]):\n" +
+           "    pass\n");
+  }
+
+  public void testAnyType() {
+    doTest("unknown",
+           "from typing import Any\n" +
+           "\n" +
+           "def f(expr: Any):\n" +
+           "    pass\n");
+  }
+
   private void doTest(@NotNull String expectedType, @NotNull String text) {
     myFixture.copyDirectoryToProject("typing", "");
     myFixture.configureByText(PythonFileType.INSTANCE, text);

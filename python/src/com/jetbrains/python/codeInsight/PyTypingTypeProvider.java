@@ -15,8 +15,10 @@
  */
 package com.jetbrains.python.codeInsight;
 
+import com.google.common.collect.ImmutableMap;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.*;
@@ -30,7 +32,13 @@ import java.util.List;
  * @author vlan
  */
 public class PyTypingTypeProvider extends PyTypeProviderBase {
-  @Override
+  private static ImmutableMap<String, String> BUILTIN_COLLECTIONS = ImmutableMap.<String, String>builder()
+    .put("typing.List", "list")
+    .put("typing.Dict", "dict")
+    .put("typing.Set", PyNames.SET)
+    .put("typing.Tuple", PyNames.TUPLE)
+    .build();
+
   public PyType getParameterType(@NotNull PyNamedParameter param, @NotNull PyFunction func, @NotNull TypeEvalContext context) {
     final PyAnnotation annotation = param.getAnnotation();
     if (annotation != null) {
@@ -64,24 +72,58 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     if (expression instanceof PySubscriptionExpression) {
       final PySubscriptionExpression subscriptionExpr = (PySubscriptionExpression)expression;
       final PyExpression operand = subscriptionExpr.getOperand();
+      final PyExpression indexExpr = subscriptionExpr.getIndexExpression();
       final String operandName = resolveToQualifiedName(operand, context);
       if ("typing.Union".equals(operandName)) {
-        final PyExpression indexExpr = subscriptionExpr.getIndexExpression();
-        if (indexExpr instanceof PyTupleExpression) {
-          final PyTupleExpression tupleExpr = (PyTupleExpression)indexExpr;
-          final List<PyType> types = new ArrayList<PyType>();
-          for (PyExpression expr : tupleExpr.getElements()) {
-            types.add(getType(expr, context));
+        return PyUnionType.union(getIndexTypes(subscriptionExpr, context));
+      }
+      else {
+        final PyType operandType = getType(operand, context);
+        if (operandType instanceof PyClassType) {
+          final PyClass cls = ((PyClassType)operandType).getPyClass();
+          if (PyNames.TUPLE.equals(cls.getQualifiedName())) {
+            final List<PyType> indexTypes = getIndexTypes(subscriptionExpr, context);
+            return PyTupleType.create(expression, indexTypes.toArray(new PyType[indexTypes.size()]));
           }
-          return PyUnionType.union(types);
+          else if (indexExpr != null) {
+            final PyType indexType = context.getType(indexExpr);
+            return new PyCollectionTypeImpl(cls, false, indexType);
+          }
         }
+      }
+    }
+    else {
+      final PyType builtinCollection = getBuiltinCollection(expression, context);
+      if (builtinCollection != null) {
+        return builtinCollection;
       }
     }
     return null;
   }
 
+  @NotNull
+  private static List<PyType> getIndexTypes(@NotNull PySubscriptionExpression expression, @NotNull TypeEvalContext context) {
+    final List<PyType> types = new ArrayList<PyType>();
+    final PyExpression indexExpr = expression.getIndexExpression();
+    if (indexExpr instanceof PyTupleExpression) {
+      final PyTupleExpression tupleExpr = (PyTupleExpression)indexExpr;
+      for (PyExpression expr : tupleExpr.getElements()) {
+        types.add(getType(expr, context));
+      }
+    }
+    return types;
+  }
+
+  @Nullable
+  private static PyType getBuiltinCollection(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+    final String collectionName = resolveToQualifiedName(expression, context);
+    final String builtinName = BUILTIN_COLLECTIONS.get(collectionName);
+    return builtinName != null ? PyTypeParser.getTypeByName(expression, builtinName) : null;
+  }
+
   @Nullable
   private static PyType getType(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+    // It is possible to replace PyAnnotation.getType() with this implementation
     final PyType typingType = getTypingType(expression, context);
     if (typingType != null) {
       return typingType;
