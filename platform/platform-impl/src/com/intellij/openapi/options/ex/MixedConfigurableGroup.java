@@ -27,7 +27,7 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import javax.swing.JComponent;
 
-public final class MixedConfigurableGroup implements Configurable, ConfigurableGroup {
+public final class MixedConfigurableGroup implements SearchableConfigurable, ConfigurableGroup {
   private final String myGroupId;
   private Configurable[] myConfigurables;
 
@@ -63,6 +63,16 @@ public final class MixedConfigurableGroup implements Configurable, ConfigurableG
   @Override
   public void disposeUIResources() {
     myConfigurables = null;
+  }
+
+  @Override
+  public Runnable enableSearch(String option) {
+    return null;
+  }
+
+  @Override
+  public String getId() {
+    return "configurable.group." + myGroupId;
   }
 
   @Override
