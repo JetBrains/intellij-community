@@ -44,8 +44,8 @@ public class HgPusher extends Pusher {
   private static Pattern PUSH_COMMITS_PATTERN = Pattern.compile(".*(?:added|pushed) (\\d+|" + ONE + ") changeset.*");
   // hg push command has definite exit values for some cases:
   // mercurial returns 0 if push was successful, 1 if nothing to push. see hg push --help
-  private static int PUSH_SUCCEEDED_EXIT_VALUE = 0;
-  private static int NOTHING_TO_PUSH_EXIT_VALUE = 1;
+  static int PUSH_SUCCEEDED_EXIT_VALUE = 0;
+  static int NOTHING_TO_PUSH_EXIT_VALUE = 1;
 
   @Override
   public void push(@NotNull Map<Repository, PushSpec> pushSpecs, @Nullable VcsPushOptionValue vcsPushOptionValue, boolean force) {
@@ -105,7 +105,7 @@ public class HgPusher extends Pusher {
     });
   }
 
-  private static int getNumberOfPushedCommits(@NotNull HgCommandResult result) {
+  static int getNumberOfPushedCommits(@NotNull HgCommandResult result) {
     int numberOfCommitsInAllSubrepos = 0;
     final List<String> outputLines = result.getOutputLines();
     for (String outputLine : outputLines) {
