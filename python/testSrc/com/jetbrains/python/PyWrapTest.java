@@ -17,6 +17,7 @@ package com.jetbrains.python;
 
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
 
 /**
@@ -30,17 +31,19 @@ public class PyWrapTest extends PyTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(myFixture.getProject()).getCurrentSettings();
+    final CommonCodeStyleSettings pythonSettings = settings.getCommonSettings(PythonLanguage.getInstance());
     myOldWrap = settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN;
-    myOldMargin = settings.RIGHT_MARGIN;
+    myOldMargin = pythonSettings.RIGHT_MARGIN;
     settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = true;
-    settings.RIGHT_MARGIN = 80;
+    pythonSettings.RIGHT_MARGIN = 80;
   }
 
   @Override
   protected void tearDown() throws Exception {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(myFixture.getProject()).getCurrentSettings();
+    final CommonCodeStyleSettings pythonSettings = settings.getCommonSettings(PythonLanguage.getInstance());
     settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = myOldWrap;
-    settings.RIGHT_MARGIN = myOldMargin;
+    pythonSettings.RIGHT_MARGIN = myOldMargin;
     super.tearDown();
   }
 
@@ -71,9 +74,10 @@ public class PyWrapTest extends PyTestCase {
 
   public void testWrapRightMargin() {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(myFixture.getProject()).getCurrentSettings();
-    int oldValue = settings.RIGHT_MARGIN;
+    final CommonCodeStyleSettings pythonSettings = settings.getCommonSettings(PythonLanguage.getInstance());
+    int oldValue = pythonSettings.RIGHT_MARGIN;
     boolean oldMarginValue = settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN;
-    settings.RIGHT_MARGIN = 100;
+    pythonSettings.RIGHT_MARGIN = 100;
     settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = true;
     try {
       final String testName = "wrap/" + getTestName(true);
@@ -84,7 +88,7 @@ public class PyWrapTest extends PyTestCase {
       myFixture.checkResultByFile(testName + ".after.py");
     }
     finally {
-      settings.RIGHT_MARGIN = oldValue;
+      pythonSettings.RIGHT_MARGIN = oldValue;
       settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = oldMarginValue;
     }
   }
