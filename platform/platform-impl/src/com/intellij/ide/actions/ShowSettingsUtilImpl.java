@@ -20,14 +20,9 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
-import com.intellij.openapi.options.ex.IdeConfigurablesGroup;
-import com.intellij.openapi.options.ex.MixedConfigurableGroup;
-import com.intellij.openapi.options.ex.ProjectConfigurablesGroup;
-import com.intellij.openapi.options.ex.SingleConfigurableEditor;
+import com.intellij.openapi.options.ex.*;
 import com.intellij.openapi.options.newEditor.OptionsEditor;
 import com.intellij.openapi.options.newEditor.OptionsEditorDialog;
-import com.intellij.openapi.options.newEditor.PreferencesDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -58,9 +53,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   private static DialogWrapper getDialog(@Nullable Project project, @NotNull ConfigurableGroup[] groups, @Nullable Configurable toSelect) {
     return Registry.is("ide.perProjectModality")
            ? new OptionsEditorDialog(getProject(project), filterEmptyGroups(groups), toSelect, true)
-           : Registry.is("ide.new.preferences")
-             ? new PreferencesDialog(getProject(project), filterEmptyGroups(groups))
-             : new OptionsEditorDialog(getProject(project), filterEmptyGroups(groups), toSelect);
+           : new OptionsEditorDialog(getProject(project), filterEmptyGroups(groups), toSelect);
   }
 
   @NotNull
