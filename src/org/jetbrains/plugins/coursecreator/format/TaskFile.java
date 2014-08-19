@@ -14,4 +14,8 @@ public class TaskFile {
   public void addTaskWindow(@NotNull final TaskWindow taskWindow) {
     task_windows.add(taskWindow);
   }
+
+  public List<TaskWindow> getTaskWindows() {
+    return task_windows;
+  }
 }
