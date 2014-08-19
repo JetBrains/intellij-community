@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
@@ -87,7 +88,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
   private final ApplicationEx myApplication;
   private volatile boolean myDisposed;
   private volatile boolean upToDate;
-  private volatile boolean enabled = true;
+  private final AtomicInteger enableVetoes = new AtomicInteger();  // number of disable() calls. To enable the service, there should be at least corresponding number of enable() calls.
   private final FileWriter log;
   private final ProjectFileIndex myProjectFileIndex;
 
@@ -203,6 +204,17 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
       @Override
       public void exitDumbMode() {
         enable();
+      }
+    });
+    messageBus.connect().subscribe(PowerSaveMode.TOPIC, new PowerSaveMode.Listener() {
+      @Override
+      public void powerSaveStateChanged() {
+        if (PowerSaveMode.isEnabled()) {
+          enable();
+        }
+        else {
+          disable();
+        }
       }
     });
     myApplication.addApplicationListener(new ApplicationAdapter() {
@@ -375,7 +387,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
       synchronized (filesToResolve) {
         isEmpty = filesToResolve.isEmpty();
       }
-      if (!enabled || isEmpty) {
+      if (enableVetoes.get() > 0 || isEmpty) {
         try {
           waitForQueue();
         }
@@ -528,12 +540,17 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
   }
 
   private void enable() {
-    enabled = true;
+    // decrement but only if it's positive
+    int vetoes;
+    do {
+      vetoes = enableVetoes.get();
+      if (vetoes == 0) break;
+    } while(!enableVetoes.compareAndSet(vetoes, vetoes-1));
     wakeUp();
   }
 
   private void disable() {
-    enabled = false;
+    enableVetoes.incrementAndGet();
     wakeUp();
   }
 
