@@ -21,8 +21,8 @@ import org.jetbrains.plugins.coursecreator.highlighting.TaskTextGutter;
 import java.util.Collection;
 import java.util.List;
 
-public class CCTaskWindowsUpdater implements LineMarkerProvider {
-  private static final Logger LOG = Logger.getInstance(CCTaskWindowsUpdater.class.getName());
+public class CCTaskLineMarkerProvider implements LineMarkerProvider {
+  private static final Logger LOG = Logger.getInstance(CCTaskLineMarkerProvider.class.getName());
 
   @Nullable
   @Override
@@ -54,7 +54,7 @@ public class CCTaskWindowsUpdater implements LineMarkerProvider {
           if (taskWindow.line > document.getLineCount()) continue;
           final int lineStartOffset = document.getLineStartOffset(taskWindow.line);
           final int offset = lineStartOffset + taskWindow.start;
-          if (offset >= document.getTextLength()) continue;
+          if (offset > document.getTextLength()) continue;
           final TextRange textRange = TextRange.create(offset, offset + taskWindow.length);
           @SuppressWarnings("unchecked")
           final LineMarkerInfo info = new LineMarkerInfo(element, textRange,
