@@ -69,7 +69,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
           final String name = value.getName();
           result.add(new LineExtensionInfo("  " + name + ": ", color, null, null, Font.PLAIN));
 
-          Variable var = new Variable(name, value.hashCode(), lineNumber);
+          Variable var = new Variable(name, lineNumber);
           VariableValue variableValue = oldValues.get(var);
           if (variableValue == null) {
             variableValue = new VariableValue(text.toString(), null, value.hashCode());
@@ -102,7 +102,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
     private int lineNumber;
     private String name;
 
-    public Variable(String name, int nodeHashCode, int lineNumber) {
+    public Variable(String name, int lineNumber) {
       this.lineNumber = lineNumber;
       this.name = name;
     }
