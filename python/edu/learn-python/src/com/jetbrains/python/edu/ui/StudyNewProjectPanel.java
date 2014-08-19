@@ -32,6 +32,7 @@ public class StudyNewProjectPanel{
   private JPanel myContentPanel;
   private JLabel myAuthorLabel;
   private JLabel myDescriptionLabel;
+  private JLabel myLabel;
   private final StudyDirectoryProjectGenerator myGenerator;
   private static final String CONNECTION_ERROR = "<html>Failed to download courses.<br>Check your Internet connection.</html>";
   private static final String INVALID_COURSE = "Selected course is invalid";
@@ -57,6 +58,8 @@ public class StudyNewProjectPanel{
     initListeners();
     myRefreshButton.setVisible(true);
     myRefreshButton.setIcon(AllIcons.Actions.Refresh);
+
+    myLabel.setPreferredSize(new JLabel("Project name").getPreferredSize());
   }
 
   private void initListeners() {
