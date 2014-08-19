@@ -1,0 +1,44 @@
+<idea-plugin version="2">
+  <id>com.intellij.json</id>
+  <name>JSON Support</name>
+  <version>1.0</version>
+  <vendor>JetBrains</vendor>
+
+  <depends>com.intellij.modules.xml</depends>
+
+  <description><![CDATA[
+      Provides highlighting and formatting for JSON files.
+  ]]></description>
+
+  <application-components>
+    <!-- Add your application components here -->
+  </application-components>
+
+  <project-components>
+    <!-- Add your project components here -->
+  </project-components>
+
+  <actions>
+    <!--<action class="com.jetbrains.json.actions.RestartHighlightingAction" id="json.restart.highlighting" text="Restart Highlighting"/>-->
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileTypeFactory implementation="com.intellij.json.JsonFileTypeFactory"/>
+    <lang.parserDefinition language="JSON" implementationClass="com.intellij.json.JsonParserDefinition"/>
+    <lang.syntaxHighlighterFactory key="JSON" implementationClass="com.intellij.json.JsonSyntaxHighlighterFactory"/>
+
+    <!-- Code style and formatting -->
+    <codeStyleSettingsProvider implementation="com.intellij.json.formatter.JsonCodeStyleSettingsProvider"/>
+    <langCodeStyleSettingsProvider implementation="com.intellij.json.formatter.JsonLanguageCodeStyleSettingsProvider"/>
+    <lang.formatter language="JSON" implementationClass="com.intellij.json.formatter.JsonFormattingBuilderModel"/>
+    <lang.braceMatcher language="JSON" implementationClass="com.intellij.json.JsonBraceMatcher"/>
+    <quoteHandler fileType="JSON" className="com.intellij.json.JsonQuoteHandler"/>
+    <enterHandlerDelegate implementation="com.intellij.json.formatter.JsonEnterBetweenBracesHandler"/>
+
+    <!-- Codeinsight -->
+    <breadcrumbsInfoProvider implementation="com.intellij.json.breadcrumbs.JsonBreadcrumbsProvider"/>
+    <completion.contributor language="JSON" implementationClass="com.intellij.json.codeinsight.JsonCompletionContributor"/>
+    <annotator language="JSON" implementationClass="com.intellij.json.codeinsight.JsonStringLiteralAnnotator"/>
+
+  </extensions>
+</idea-plugin>

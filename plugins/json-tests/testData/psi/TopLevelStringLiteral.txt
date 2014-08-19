@@ -1,0 +1,3 @@
+FILE
+  PsiErrorElement:'[' or '{' expected, got '"should not be here"'
+    PsiElement(STRING)('"should not be here"')
