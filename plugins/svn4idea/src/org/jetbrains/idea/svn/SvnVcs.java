@@ -264,13 +264,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   public boolean checkCommandLineVersion() {
-    boolean isValid = true;
-
-    if (!isProject16() && (myConfiguration.isCommandLine() || isProject18OrGreater())) {
-      isValid = myChecker.checkExecutableAndNotifyIfNeeded();
-    }
-
-    return isValid;
+    return getFactory() != cmdClientFactory || myChecker.checkExecutableAndNotifyIfNeeded();
   }
 
   public void invokeRefreshSvnRoots() {
@@ -949,14 +943,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return svnKitManager;
   }
 
-  public boolean isProject18OrGreater() {
-    return getProjectRootFormat().isOrGreater(WorkingCopyFormat.ONE_DOT_EIGHT);
-  }
-
-  public boolean isProject16() {
-    return WorkingCopyFormat.ONE_DOT_SIX.equals(getProjectRootFormat());
-  }
-
   @NotNull
   private WorkingCopyFormat getProjectRootFormat() {
     return !getProject().isDefault() ? getWorkingCopyFormat(new File(getProject().getBaseDir().getPath())) : WorkingCopyFormat.UNKNOWN;
@@ -996,12 +982,13 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   @NotNull
   private ClientFactory getFactory(@NotNull WorkingCopyFormat format, boolean useProjectRootForUnknown) {
     boolean is18OrGreater = format.isOrGreater(WorkingCopyFormat.ONE_DOT_EIGHT);
-    boolean is16 = WorkingCopyFormat.ONE_DOT_SIX.equals(format);
     boolean isUnknown = WorkingCopyFormat.UNKNOWN.equals(format);
 
     return is18OrGreater
            ? cmdClientFactory
-           : (is16 ? svnKitClientFactory : (useProjectRootForUnknown && isUnknown ? getFactory() : getFactoryFromSettings()));
+           : (!isUnknown && !isSupportedByCommandLine(format)
+              ? svnKitClientFactory
+              : (useProjectRootForUnknown && isUnknown ? getFactory() : getFactoryFromSettings()));
   }
 
   @NotNull
@@ -1032,5 +1019,14 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   @NotNull
   public ClientFactory getSvnKitFactory() {
     return svnKitClientFactory;
+  }
+
+  @NotNull
+  public WorkingCopyFormat getLowestSupportedFormatForCommandLine() {
+    return WorkingCopyFormat.ONE_DOT_SEVEN;
+  }
+
+  public boolean isSupportedByCommandLine(@NotNull WorkingCopyFormat format) {
+    return format.isOrGreater(getLowestSupportedFormatForCommandLine());
   }
 }
