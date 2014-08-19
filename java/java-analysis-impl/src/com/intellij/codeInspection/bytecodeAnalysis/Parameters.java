@@ -169,7 +169,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
 
   final private PendingAction[] pending = ourPending.get();
 
-  private final NonNullInInterpreter interpreter = new NonNullInInterpreter();
+  private final NotNullInterpreter interpreter = new NotNullInterpreter();
   private PResult[] results;
 
   protected NonNullInAnalysis(RichControlFlow richControlFlow, Direction direction, boolean stable) {
@@ -399,13 +399,23 @@ class NonNullInAnalysis extends Analysis<PResult> {
   }
 }
 
-class NonNullInInterpreter extends BasicInterpreter {
+abstract class NullityInterpreter extends BasicInterpreter {
+  boolean top = false;
+  final boolean nullableAnalysis;
   private PResult subResult = Identity;
+
+  NullityInterpreter(boolean nullableAnalysis) {
+    this.nullableAnalysis = nullableAnalysis;
+  }
+
+  abstract PResult combine(PResult res1, PResult res2) throws AnalyzerException;
+
   public PResult getSubResult() {
     return subResult;
   }
   void reset() {
     subResult = Identity;
+    top = false;
   }
 
   @Override
@@ -445,8 +455,15 @@ class NonNullInInterpreter extends BasicInterpreter {
       case BALOAD:
       case CALOAD:
       case SALOAD:
+        if (value1 instanceof ParamValue) {
+          subResult = NPE;
+        }
+        break;
       case PUTFIELD:
         if (value1 instanceof ParamValue) {
+          subResult = NPE;
+        }
+        if (nullableAnalysis && value2 instanceof ParamValue) {
           subResult = NPE;
         }
         break;
@@ -462,13 +479,21 @@ class NonNullInInterpreter extends BasicInterpreter {
       case LASTORE:
       case FASTORE:
       case DASTORE:
-      case AASTORE:
       case BASTORE:
       case CASTORE:
       case SASTORE:
         if (value1 instanceof ParamValue) {
           subResult = NPE;
         }
+        break;
+      case AASTORE:
+        if (value1 instanceof ParamValue) {
+          subResult = NPE;
+        }
+        if (nullableAnalysis && value3 instanceof ParamValue) {
+          subResult = NPE;
+        }
+        break;
       default:
     }
     return super.ternaryOperation(insn, value1, value2, value3);
@@ -483,19 +508,54 @@ class NonNullInInterpreter extends BasicInterpreter {
       subResult = NPE;
     }
     switch (opcode) {
+      case INVOKEINTERFACE:
+        if (nullableAnalysis) {
+          for (int i = shift; i < values.size(); i++) {
+            if (values.get(i) instanceof ParamValue) {
+                top = true;
+                return super.naryOperation(insn, values);
+            }
+          }
+        }
+        break;
       case INVOKESTATIC:
       case INVOKESPECIAL:
       case INVOKEVIRTUAL:
         boolean stable = opcode == INVOKESTATIC || opcode == INVOKESPECIAL;
         MethodInsnNode methodNode = (MethodInsnNode) insn;
+        Method method = new Method(methodNode.owner, methodNode.name, methodNode.desc);
         for (int i = shift; i < values.size(); i++) {
           if (values.get(i) instanceof ParamValue) {
-            Method method = new Method(methodNode.owner, methodNode.name, methodNode.desc);
             subResult = meet(subResult, new ConditionalNPE(new Key(method, new In(i - shift), stable)));
           }
         }
+        break;
       default:
     }
     return super.naryOperation(insn, values);
+  }
+}
+
+class NotNullInterpreter extends NullityInterpreter {
+
+  NotNullInterpreter() {
+    super(false);
+  }
+
+  @Override
+  PResult combine(PResult res1, PResult res2) throws AnalyzerException {
+    return meet(res1, res2);
+  }
+}
+
+class NullableInterpreter extends NullityInterpreter {
+
+  NullableInterpreter(boolean nullableAnalysis) {
+    super(true);
+  }
+
+  @Override
+  PResult combine(PResult res1, PResult res2) throws AnalyzerException {
+    return join(res1, res2);
   }
 }
