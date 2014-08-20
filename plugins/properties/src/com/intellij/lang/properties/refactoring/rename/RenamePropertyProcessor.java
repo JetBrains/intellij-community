@@ -46,7 +46,7 @@ public class RenamePropertyProcessor extends RenamePsiElementProcessor {
     allRenames.clear();
     for (final Map.Entry<PsiElement, String> e : allRenamesCopy.entrySet()) {
       final IProperty property = (IProperty) e.getKey();
-      final List<IProperty> properties = PropertiesUtil.findAllProperties(project, resourceBundle, property.getUnescapedKey());
+      final List<IProperty> properties = PropertiesUtil.findAllProperties(resourceBundle, property.getUnescapedKey());
       for (final IProperty toRename : properties) {
         allRenames.put(toRename.getPsiElement(), e.getValue());
       }

@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.properties;
 
+import com.intellij.lang.HtmlScriptContentProvider;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertyKeyIndex;
 import com.intellij.lang.properties.xml.XmlPropertiesFileImpl;
@@ -48,7 +49,23 @@ public class PropertiesImplUtil extends PropertiesUtil {
     if (!containingFile.isValid()) {
       return EmptyResourceBundle.getInstance();
     }
-    final String baseName = getBaseName(containingFile);
+    final ResourceBundleManager manager = ResourceBundleManager.getInstance(representative.getProject());
+    final CustomResourceBundle customResourceBundle =
+      manager.getCustomResourceBundle(representative);
+    if (customResourceBundle != null) {
+      return customResourceBundle;
+    }
+
+    final VirtualFile virtualFile = representative.getVirtualFile();
+    if (virtualFile == null) {
+      return EmptyResourceBundle.getInstance();
+    }
+    if (manager.isDefaultDissociated(virtualFile)) {
+      return new ResourceBundleImpl(representative);
+    }
+
+
+    final String baseName = manager.getBaseName(containingFile);
     final PsiDirectory directory = ApplicationManager.getApplication().runReadAction(new Computable<PsiDirectory>() {
       @Nullable
       public PsiDirectory compute() {
@@ -61,14 +78,9 @@ public class PropertiesImplUtil extends PropertiesUtil {
   @Nullable
   private static ResourceBundle getResourceBundle(@NotNull final String baseName, @NotNull final PsiDirectory baseDirectory) {
     PropertiesFile defaultPropertiesFile = null;
-    final PsiFile[] files = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile[]>() {
-      @Override
-      public PsiFile[] compute() {
-        return baseDirectory.getFiles();
-      }
-    });
-    for (final PsiFile psiFile : files) {
-      if (baseName.equals(getBaseName(psiFile))) {
+    final ResourceBundleManager bundleBaseNameManager = ResourceBundleManager.getInstance(baseDirectory.getProject());
+    for (final PsiFile psiFile : baseDirectory.getFiles()) {
+      if (baseName.equals(bundleBaseNameManager.getBaseName(psiFile))) {
         final PropertiesFile propertiesFile = getPropertiesFile(psiFile);
         if (propertiesFile != null) {
           if (defaultPropertiesFile == null || defaultPropertiesFile.getName().compareTo(propertiesFile.getName()) > 0) {

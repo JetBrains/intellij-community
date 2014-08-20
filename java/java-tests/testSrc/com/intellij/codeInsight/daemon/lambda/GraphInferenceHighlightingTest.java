@@ -47,12 +47,12 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
-  @Bombed(day = 20, month = Calendar.AUGUST)
+  @Bombed(day = 30, month = Calendar.AUGUST)
   public void testInferenceFromSiblings() throws Exception {
     doTest();
   }
 
-  @Bombed(day = 20, month = Calendar.AUGUST)
+  @Bombed(day = 30, month = Calendar.AUGUST)
   public void testChainedInferenceTypeParamsOrderIndependent() throws Exception {
     doTest();
   }

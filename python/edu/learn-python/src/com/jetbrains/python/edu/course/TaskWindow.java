@@ -1,5 +1,8 @@
 package com.jetbrains.python.edu.course;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -8,8 +11,18 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
+import com.jetbrains.python.edu.StudyDocumentListener;
+import com.jetbrains.python.edu.StudyTestRunner;
+import com.jetbrains.python.edu.StudyUtils;
 import org.jetbrains.annotations.NotNull;
+
+import java.io.File;
+import java.io.IOException;
 
 /**
  * Implementation of windows which user should type in
@@ -17,7 +30,8 @@ import org.jetbrains.annotations.NotNull;
 
 
 public class TaskWindow implements Comparable, Stateful {
-
+  private static final String WINDOW_POSTFIX = "_window.py";
+  private static final Logger LOG = Logger.getInstance(TaskWindow.class);
   public int line = 0;
   public int start = 0;
   public String hint = "";
@@ -173,5 +187,56 @@ public class TaskWindow implements Comparable, Stateful {
 
   public int getIndex() {
     return myIndex;
+  }
+
+  public void smartCheck(@NotNull final Project project,
+                         @NotNull final VirtualFile answerFile,
+                         @NotNull final TaskFile answerTaskFile,
+                         @NotNull final TaskFile usersTaskFile,
+                         @NotNull final StudyTestRunner testRunner,
+                         @NotNull final VirtualFile virtualFile,
+                         @NotNull final Document usersDocument) {
+
+    try {
+      VirtualFile windowCopy =
+        answerFile.copy(this, answerFile.getParent(), answerFile.getNameWithoutExtension() + WINDOW_POSTFIX);
+      final FileDocumentManager documentManager = FileDocumentManager.getInstance();
+      final Document windowDocument = documentManager.getDocument(windowCopy);
+      if (windowDocument != null) {
+        File resourceFile = StudyUtils.copyResourceFile(virtualFile.getName(), windowCopy.getName(), project, usersTaskFile.getTask());
+        TaskFile windowTaskFile = new TaskFile();
+        TaskFile.copy(answerTaskFile, windowTaskFile);
+        StudyDocumentListener listener = new StudyDocumentListener(windowTaskFile);
+        windowDocument.addDocumentListener(listener);
+        int start = getRealStartOffset(windowDocument);
+        int end = start + getLength();
+        TaskWindow userTaskWindow = usersTaskFile.getTaskWindows().get(getIndex());
+        int userStart = userTaskWindow.getRealStartOffset(usersDocument);
+        int userEnd = userStart + userTaskWindow.getLength();
+        String text = usersDocument.getText(new TextRange(userStart, userEnd));
+        windowDocument.replaceString(start, end, text);
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            documentManager.saveDocument(windowDocument);
+          }
+        });
+        VirtualFile fileWindows = StudyUtils.flushWindows(windowTaskFile, windowCopy);
+        Process smartTestProcess = testRunner.launchTests(project, windowCopy.getPath());
+        boolean res = testRunner.getPassedTests(smartTestProcess).equals(StudyTestRunner.TEST_OK);
+        userTaskWindow.setStatus(res ? StudyStatus.Solved : StudyStatus.Failed, StudyStatus.Unchecked);
+        StudyUtils.deleteFile(windowCopy);
+        StudyUtils.deleteFile(fileWindows);
+        if (!resourceFile.delete()) {
+          LOG.error("failed to delete", resourceFile.getPath());
+        }
+      }
+    }
+    catch (ExecutionException e) {
+      LOG.error(e);
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
   }
 }

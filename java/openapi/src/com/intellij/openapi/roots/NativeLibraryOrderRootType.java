@@ -24,7 +24,7 @@ public class NativeLibraryOrderRootType extends PersistentOrderRootType {
   }
 
   public NativeLibraryOrderRootType() {
-    super("NATIVE", "native", null, null);
+    super("NATIVE", null, null, null);
   }
 
   @Override

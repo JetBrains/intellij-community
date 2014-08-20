@@ -41,10 +41,8 @@ class SSLServerCertificateAuthenticator extends AbstractAuthenticator {
   private int myResult;
   private SVNAuthentication myAuthentication;
 
-  SSLServerCertificateAuthenticator(@NotNull IdeaSvnkitBasedAuthenticationCallback authService,
-                                    @NotNull SVNURL url,
-                                    String realm) {
-    super(authService, url, realm);
+  SSLServerCertificateAuthenticator(@NotNull AuthenticationService authenticationService, @NotNull SVNURL url, String realm) {
+    super(authenticationService, url, realm);
   }
 
   @Override
@@ -102,7 +100,7 @@ class SSLServerCertificateAuthenticator extends AbstractAuthenticator {
       myCertificate = createCertificate(stored);
       myCertificateRealm = myRealm;
     }
-    if (myAuthService.getTempDirectory() != null && myCertificate != null) {
+    if (myAuthenticationService.getTempDirectory() != null && myCertificate != null) {
       storeServerCertificate();
 
       if (myAuthentication != null) {
@@ -142,7 +140,7 @@ class SSLServerCertificateAuthenticator extends AbstractAuthenticator {
     }
 
     int failures = SVNSSLUtil.getServerCertificateFailures(x509Certificate, myUrl.getHost());
-    storeServerCertificate(myAuthService.getTempDirectory(), myCertificateRealm, stored, failures);
+    storeServerCertificate(myAuthenticationService.getTempDirectory(), myCertificateRealm, stored, failures);
   }
 
   private void storeServerCertificate(final File configDir, String realm, String data, int failures) throws SVNException {

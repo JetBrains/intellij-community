@@ -23,6 +23,7 @@ import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -38,7 +39,7 @@ public class SvnKitBrowseClient extends BaseSvnClient implements BrowseClient {
                    @Nullable DirectoryEntryConsumer handler) throws VcsException {
     assertUrl(target);
 
-    SVNLogClient client = myVcs.getSvnKitManager().createLogClient();
+    SVNLogClient client = getLogClient();
     ISVNDirEntryHandler wrappedHandler = wrapHandler(handler);
 
     try {
@@ -67,6 +68,15 @@ public class SvnKitBrowseClient extends BaseSvnClient implements BrowseClient {
     catch (SVNException e) {
       throw new SvnBindException(e);
     }
+  }
+
+  @NotNull
+  private SVNLogClient getLogClient() {
+    ISVNAuthenticationManager authManager = myIsActive
+                                            ? myVcs.getSvnConfiguration().getInteractiveManager(myVcs)
+                                            : myVcs.getSvnConfiguration().getPassiveAuthenticationManager(myVcs.getProject());
+
+    return myVcs.getSvnKitManager().createLogClient(authManager);
   }
 
   @Nullable

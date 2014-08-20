@@ -15,6 +15,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 /**
  * @author Konstantin Bulenkov
@@ -29,7 +30,7 @@ import java.util.HashMap;
 )
 public class ShortcutPromoterManager implements ApplicationComponent, AnActionListener, ExportableApplicationComponent,
                                                 PersistentStateComponent<Element> {
-  private final HashMap<String, PromoterState> myState = new HashMap<String, PromoterState>();
+  private final HashMap<String, PromoterState> myState = new LinkedHashMap<String, PromoterState>();
   private final HashMap<String, ShortcutPromoterEP> myExtensions = new HashMap<String, ShortcutPromoterEP>();
 
   @Override
@@ -96,6 +97,10 @@ public class ShortcutPromoterManager implements ApplicationComponent, AnActionLi
   @Nullable
   @Override
   public Element getState() {
+    if (myState.isEmpty()) {
+      return null;
+    }
+
     final Element actions = new Element("actions");
     for (String id : myState.keySet()) {
       final Element action = new Element("action");

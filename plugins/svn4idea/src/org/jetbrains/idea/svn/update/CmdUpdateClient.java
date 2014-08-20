@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.update;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.EventAction;
 import org.jetbrains.idea.svn.api.ProgressEvent;
@@ -26,7 +27,10 @@ import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.jetbrains.idea.svn.info.Info;
-import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -163,7 +167,10 @@ public class CmdUpdateClient extends SvnKitUpdateClient {
     CommandUtil.put(parameters, SvnTarget.fromURL(url, pegRevision));
     CommandUtil.put(parameters, path, false);
     fillParameters(parameters, revision, depth, depthIsSticky, allowUnversionedObstructions);
-    parameters.add("--ignore-ancestry");
+    if (!myVcs.is16SupportedByCommandLine() ||
+        WorkingCopyFormat.from(myFactory.createVersionClient().getVersion()).isOrGreater(WorkingCopyFormat.ONE_DOT_SEVEN)) {
+      parameters.add("--ignore-ancestry");
+    }
 
     long[] revisions = run(path, parameters, SvnCommandName.switchCopy);
 

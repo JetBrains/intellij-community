@@ -18,6 +18,7 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -111,8 +112,8 @@ public class OrderRootType {
     List<PersistentOrderRootType> allTypes = new ArrayList<PersistentOrderRootType>();
     Collections.addAll(allTypes, getAllPersistentTypes());
     Collections.sort(allTypes, new Comparator<PersistentOrderRootType>() {
-      public int compare(final PersistentOrderRootType o1, final PersistentOrderRootType o2) {
-        return o1.getSdkRootName().compareTo(o2.getSdkRootName());
+      public int compare(@NotNull final PersistentOrderRootType o1, @NotNull final PersistentOrderRootType o2) {
+        return o1.name().compareToIgnoreCase(o2.name());
       }
     });
     return allTypes;

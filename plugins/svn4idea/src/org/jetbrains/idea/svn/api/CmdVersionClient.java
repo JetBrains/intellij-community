@@ -2,7 +2,6 @@ package org.jetbrains.idea.svn.api;
 
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.util.Version;
-import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnApplicationSettings;
 import org.jetbrains.idea.svn.commandLine.Command;
@@ -22,7 +21,7 @@ public class CmdVersionClient extends BaseSvnClient implements VersionClient {
 
   @NotNull
   @Override
-  public Version getVersion() throws VcsException {
+  public Version getVersion() throws SvnBindException {
     return parseVersion(runCommand());
   }
 
@@ -38,9 +37,9 @@ public class CmdVersionClient extends BaseSvnClient implements VersionClient {
   }
 
   @NotNull
-  private static Version parseVersion(@NotNull ProcessOutput output) throws VcsException {
+  private static Version parseVersion(@NotNull ProcessOutput output) throws SvnBindException {
     if (output.isTimeout() || (output.getExitCode() != 0) || !output.getStderr().isEmpty()) {
-      throw new VcsException(
+      throw new SvnBindException(
         String.format("Exit code: %d, Error: %s, Timeout: %b", output.getExitCode(), output.getStderr(), output.isTimeout()));
     }
 
@@ -48,7 +47,7 @@ public class CmdVersionClient extends BaseSvnClient implements VersionClient {
   }
 
   @NotNull
-  public static Version parseVersion(@NotNull String versionText) throws VcsException {
+  public static Version parseVersion(@NotNull String versionText) throws SvnBindException {
     Version result = null;
     Exception cause = null;
 
@@ -65,7 +64,7 @@ public class CmdVersionClient extends BaseSvnClient implements VersionClient {
     }
 
     if (!found || cause != null) {
-      throw new VcsException(String.format("Could not parse svn version: %s", versionText), cause);
+      throw new SvnBindException(String.format("Could not parse svn version: %s", versionText), cause);
     }
 
     return result;

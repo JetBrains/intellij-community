@@ -260,9 +260,10 @@ public class PointlessArithmeticExpressionInspection
 
     private boolean divideExpressionIsPointless(PsiExpression[] expressions) {
       PsiExpression previousExpression = null;
-      for (PsiExpression expression : expressions) {
+      for (int i = 0; i < expressions.length; i++) {
+        final PsiExpression expression = expressions[i];
         if (previousExpression != null &&
-            (isOne(expression) || EquivalenceChecker.expressionsAreEquivalent(previousExpression, expression))) {
+            (isOne(expression) || i == 1 && EquivalenceChecker.expressionsAreEquivalent(previousExpression, expression))) {
           return true;
         }
         previousExpression = expression;
@@ -272,9 +273,10 @@ public class PointlessArithmeticExpressionInspection
 
     private boolean modExpressionIsPointless(PsiExpression[] expressions) {
       PsiExpression previousExpression = null;
-      for (PsiExpression expression : expressions) {
+      for (int i = 0; i < expressions.length; i++) {
+        final PsiExpression expression = expressions[i];
         if (previousExpression != null &&
-            (isOne(expression) || EquivalenceChecker.expressionsAreEquivalent(previousExpression, expression))) {
+            (isOne(expression) || i == 1 && EquivalenceChecker.expressionsAreEquivalent(previousExpression, expression))) {
           return true;
         }
         previousExpression = expression;

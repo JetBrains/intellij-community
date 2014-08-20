@@ -47,6 +47,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollPane;
@@ -92,7 +93,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private final Stack<Context> myBackStack = new Stack<Context>();
   private final Stack<Context> myForwardStack = new Stack<Context>();
   private final ActionToolbar myToolBar;
-  private boolean myIsEmpty;
+  private volatile boolean myIsEmpty;
   private boolean myIsShown;
   private final JLabel myElementLabel;
   private Style myFontSizeStyle;
@@ -378,7 +379,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myFontSizeSlider.setSnapToTicks(true);
     UIUtil.setSliderIsFilled(myFontSizeSlider, true);
     result.add(myFontSizeSlider);
-    result.setBorder(BorderFactory.createLineBorder(UIUtil.getBorderColor(), 1));
+    result.setBorder(BorderFactory.createLineBorder(JBColor.border(), 1));
 
     myFontSizeSlider.addChangeListener(new ChangeListener() {
       @Override
@@ -418,11 +419,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  public synchronized boolean isEmpty() {
+  public boolean isEmpty() {
     return myIsEmpty;
   }
 
-  public synchronized void startWait() {
+  public void startWait() {
     myIsEmpty = true;
   }
 
@@ -473,7 +474,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   public void replaceText(String text, PsiElement element) {
-    if (element == null || getElement() != element) return;
+    PsiElement current = getElement();
+    if (current == null || !current.getManager().areElementsEquivalent(current, element)) return;
     setText(text, element, false);
     if (!myBackStack.empty()) myBackStack.pop();
   }
@@ -530,6 +532,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       myText = text;
     }
 
+    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
@@ -678,8 +681,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         final PsiElement originalElement = DocumentationManager.getOriginalElement(element);
         boolean processed = false;
         if (provider instanceof CompositeDocumentationProvider) {
-          for (final DocumentationProvider documentationProvider : ((CompositeDocumentationProvider)provider).getProviders()) {
-            if (documentationProvider instanceof ExternalDocumentationHandler && ((ExternalDocumentationHandler)documentationProvider).handleExternal(element, originalElement)) {
+          for (DocumentationProvider p : ((CompositeDocumentationProvider)provider).getAllProviders()) {
+            if (p instanceof ExternalDocumentationHandler && ((ExternalDocumentationHandler)p).handleExternal(element, originalElement)) {
               processed = true;
               break;
             }

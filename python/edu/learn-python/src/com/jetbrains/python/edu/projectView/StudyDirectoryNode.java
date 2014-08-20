@@ -96,7 +96,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
       }
       case Solved: {
         updatePresentation(data, additionalName, new JBColor(new Color(0, 134, 0), new Color(98, 150, 85)),
-                           stateful instanceof Lesson ? StudyIcons.Lesson : StudyIcons.TaskCompl);
+                           stateful instanceof Lesson ? StudyIcons.LessonCompl : StudyIcons.TaskCompl);
         break;
       }
       case Failed: {

@@ -52,6 +52,7 @@ import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.AssertionFailedError;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -749,6 +750,18 @@ public class PlatformTestUtil {
   public static void assertElementsEqual(final Element expected, final Element actual) throws IOException {
     if (!JDOMUtil.areElementsEqual(expected, actual)) {
       assertEquals(printElement(expected), printElement(actual));
+    }
+  }
+
+  public static void assertElementEquals(final String expected, final Element actual) {
+    try {
+      assertElementsEqual(JDOMUtil.loadDocument(expected).getRootElement(), actual);
+    }
+    catch (IOException e) {
+      throw new AssertionError(e);
+    }
+    catch (JDOMException e) {
+      throw new AssertionError(e);
     }
   }
 

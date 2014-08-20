@@ -54,6 +54,7 @@ public class RepositoryWithBranchPanel extends NonOpaquePanel implements TreeCel
     super();
     setLayout(new BorderLayout());
     myRepositoryCheckbox = new JBCheckBox();
+    myRepositoryCheckbox.setFocusable(false);
     myRepositoryCheckbox.setOpaque(false);
     myRepositoryCheckbox.addActionListener(new ActionListener() {
       @Override
@@ -77,15 +78,17 @@ public class RepositoryWithBranchPanel extends NonOpaquePanel implements TreeCel
       protected void updateBorder(@NotNull final EditorEx editor) {
       }
     };
-    myDestBranchTextField.setBorder(UIUtil.getTableFocusCellHighlightBorder());//getTextFieldBorder());
+    myDestBranchTextField.setBorder(UIUtil.getTableFocusCellHighlightBorder());
     myDestBranchTextField.setOneLineMode(true);
     myDestBranchTextField.setOpaque(true);
-    myDestBranchTextField.addFocusListener(new FocusAdapter() {
+    FocusAdapter focusListener = new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
         myDestBranchTextField.selectAll();
       }
-    });
+    };
+    myDestBranchTextField.addFocusListener(focusListener);
+    addFocusListener(focusListener);
 
     myTextRenderer = new ColoredTreeCellRenderer() {
       public void customizeCellRenderer(@NotNull JTree tree,
