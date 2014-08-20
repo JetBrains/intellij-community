@@ -1341,8 +1341,6 @@
 
     <elementDescriptionProvider implementation="com.intellij.ide.util.JavaDeleteTypeDescriptionProvider"/>
 
-    <!-- <fileTypeIndentOptionsProvider implementation="com.intellij.application.options.JavaIndentOptionsProvider"/>-->
-
     <referenceImporter implementation="com.intellij.codeInsight.daemon.impl.JavaReferenceImporter"/>
 
     <elementLookupRenderer implementation="com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer"/>

@@ -17,8 +17,8 @@ package com.intellij.lang.properties.xml;
 
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesImplUtil;
-import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.ResourceBundleManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.project.Project;
@@ -107,7 +107,7 @@ public class XmlPropertiesFileImpl extends XmlPropertiesFile {
   @NotNull
   @Override
   public Locale getLocale() {
-    return PropertiesUtil.getLocale(getVirtualFile());
+    return ResourceBundleManager.getInstance(getProject()).getLocale(getVirtualFile());
   }
 
   @NotNull

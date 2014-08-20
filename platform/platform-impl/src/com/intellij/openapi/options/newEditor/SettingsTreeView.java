@@ -16,7 +16,6 @@
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.ui.search.ConfigurableHit;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.*;
@@ -60,18 +59,19 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
   final SimpleTree myTree;
   final FilteringTreeBuilder myBuilder;
 
-  private final OptionsEditorContext myContext;
+  private final SettingsFilter myFilter;
   private final MyRoot myRoot;
   private final JScrollPane myScroller;
   private JLabel mySeparator;
   private final MyRenderer myRenderer = new MyRenderer();
   private final IdentityHashMap<Configurable, MyNode> myConfigurableToNodeMap = new IdentityHashMap<Configurable, MyNode>();
-  private final MergingUpdateQueue myQueue = new MergingUpdateQueue("OptionsTree", 150, false, this, this, this).setRestartTimerOnAdd(true);
+  private final MergingUpdateQueue myQueue = new MergingUpdateQueue("SettingsTreeView", 150, false, this, this, this)
+    .setRestartTimerOnAdd(true);
 
   private Configurable myQueuedConfigurable;
 
-  SettingsTreeView(final KeyListener listener, OptionsEditorContext context, ConfigurableGroup... groups) {
-    myContext = context;
+  SettingsTreeView(SettingsFilter filter, ConfigurableGroup... groups) {
+    myFilter = filter;
     myRoot = new MyRoot(groups);
 
     myTree = new MyTree();
@@ -116,29 +116,6 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
       }
     });
 
-    myTree.addKeyListener(new KeyListener() {
-      public void keyTyped(KeyEvent event) {
-        if (listener != null && isValid(event)) {
-          listener.keyTyped(event);
-        }
-      }
-
-      public void keyPressed(KeyEvent event) {
-        if (listener != null && isValid(event)) {
-          listener.keyPressed(event);
-        }
-      }
-
-      public void keyReleased(KeyEvent event) {
-        if (listener != null && isValid(event)) {
-          listener.keyReleased(event);
-        }
-      }
-
-      private boolean isValid(KeyEvent event) {
-        return null == myTree.getInputMap().get(KeyStroke.getKeyStrokeForEvent(event));
-      }
-    });
     myBuilder = new MyBuilder(new SimpleTreeStructure.Impl(myRoot));
     myBuilder.setFilteringMerge(300, null);
     Disposer.register(this, myBuilder);
@@ -158,9 +135,15 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     return ArrayUtil.toStringArray(path);
   }
 
+  static Configurable getConfigurable(SimpleNode node) {
+    return node instanceof MyNode
+           ? ((MyNode)node).myConfigurable
+           : null;
+  }
+
   @Nullable
-  SimpleNode findNode(Configurable toSelect) {
-    return myConfigurableToNodeMap.get(toSelect);
+  SimpleNode findNode(Configurable configurable) {
+    return myConfigurableToNodeMap.get(configurable);
   }
 
   @Nullable
@@ -248,24 +231,6 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     return object instanceof MyNode
            ? (MyNode)object
            : null;
-  }
-
-  static boolean isFiltered(Set<Configurable> configurables, ConfigurableHit hits, SimpleNode value) {
-    if (value instanceof MyNode && !configurables.contains(((MyNode)value).myConfigurable)) {
-      if (hits != null) {
-        configurables = hits.getNameFullHits();
-        while (value != null) {
-          if (value instanceof MyNode) {
-            if (configurables.contains(((MyNode)value).myConfigurable)) {
-              return true;
-            }
-          }
-          value = value.getParent();
-        }
-      }
-      return false;
-    }
-    return true;
   }
 
   @Override
@@ -375,7 +340,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
   }
 
   private void fireSelected(Configurable configurable, ActionCallback callback) {
-    myContext.fireSelected(configurable, this).doWhenProcessed(callback.createSetDoneRunnable());
+    myFilter.myContext.fireSelected(configurable, this).doWhenProcessed(callback.createSetDoneRunnable());
   }
 
   @Override
@@ -463,7 +428,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
       for (int i = 0; i < configurables.length; i++) {
         result[i] = new MyNode(this, configurables[i]);
         if (myConfigurable != null) {
-          myContext.registerKid(myConfigurable, configurables[i]);
+          myFilter.myContext.registerKid(myConfigurable, configurables[i]);
         }
       }
       return result;
@@ -553,10 +518,10 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
       if (!selected && node != null) {
         Configurable configurable = node.myConfigurable;
         if (configurable != null) {
-          if (myContext.getErrors().containsKey(configurable)) {
+          if (myFilter.myContext.getErrors().containsKey(configurable)) {
             myTextLabel.setForeground(JBColor.RED);
           }
-          else if (myContext.getModified().contains(configurable)) {
+          else if (myFilter.myContext.getModified().contains(configurable)) {
             myTextLabel.setForeground(JBColor.BLUE);
           }
         }
@@ -608,7 +573,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     }
 
     int getSeparatorHeight() {
-      return mySeparatorComponent.getPreferredSize().height;
+      return mySeparatorComponent.getParent() == null ? 0 : mySeparatorComponent.getPreferredSize().height;
     }
 
     public boolean isUnderHandle(Point point) {
@@ -779,7 +744,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     boolean myWasHoldingFilter;
 
     public MyBuilder(SimpleTreeStructure structure) {
-      super(myTree, myContext.getFilter(), structure, new WeightBasedComparator(false));
+      super(myTree, myFilter, structure, new WeightBasedComparator(false));
       myTree.addTreeExpansionListener(new TreeExpansionListener() {
         public void treeExpanded(TreeExpansionEvent event) {
           invalidateExpansions();
@@ -804,7 +769,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
 
     @Override
     public boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
-      return myContext.isHoldingFilter();
+      return myFilter.myContext.isHoldingFilter();
     }
 
     @Override
@@ -815,22 +780,22 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     @Override
     protected ActionCallback refilterNow(Object preferredSelection, boolean adjustSelection) {
       final List<Object> toRestore = new ArrayList<Object>();
-      if (myContext.isHoldingFilter() && !myWasHoldingFilter && myToExpandOnResetFilter == null) {
+      if (myFilter.myContext.isHoldingFilter() && !myWasHoldingFilter && myToExpandOnResetFilter == null) {
         myToExpandOnResetFilter = myBuilder.getUi().getExpandedElements();
       }
-      else if (!myContext.isHoldingFilter() && myWasHoldingFilter && myToExpandOnResetFilter != null) {
+      else if (!myFilter.myContext.isHoldingFilter() && myWasHoldingFilter && myToExpandOnResetFilter != null) {
         toRestore.addAll(myToExpandOnResetFilter);
         myToExpandOnResetFilter = null;
       }
 
-      myWasHoldingFilter = myContext.isHoldingFilter();
+      myWasHoldingFilter = myFilter.myContext.isHoldingFilter();
 
       ActionCallback result = super.refilterNow(preferredSelection, adjustSelection);
       myRefilteringNow = true;
       return result.doWhenDone(new Runnable() {
         public void run() {
           myRefilteringNow = false;
-          if (!myContext.isHoldingFilter() && getSelectedElements().isEmpty()) {
+          if (!myFilter.myContext.isHoldingFilter() && getSelectedElements().isEmpty()) {
             restoreExpandedState(toRestore);
           }
         }

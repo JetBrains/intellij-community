@@ -22,7 +22,7 @@ includeTargets << new File("$home/community/build/scripts/libLicenses.gant")
 includeTargets << new File("$home/build/scripts/ultimate_utils.gant")
 
 requireProperty("buildNumber", requireProperty("build.number", snapshot))
-setProperty("buildName", "PE-$buildNumber")
+setProperty("buildName", "EDU-$buildNumber")
 setProperty("ch", "$home/community")
 setProperty("pythonCommunityHome", "$ch/python")
 setProperty("pythonEduHome", "$ch/python/edu")
@@ -32,7 +32,7 @@ ant.copy(file: "${home}/build/jdk/${jdk_bundled_version}", tofile: "${home}/buil
 
 // load ApplicationInfo.xml properties
 ant.xmlproperty(file: "$pythonEduHome/resources/idea/PyCharmEduApplicationInfo.xml", collapseAttributes: "true")
-setProperty("system_selector", "PyCharm${p("component.version.major")}0")
+setProperty("system_selector", "PyCharmEdu${p("component.version.major")}0")
 setProperty("dryRun", false)
 setProperty("jdk16", guessJdk())
 
@@ -92,7 +92,6 @@ class Paths {
 }
 
 setProperty("paths", new Paths(home))
-setProperty("buildName", "PE-$buildNumber")
 
 target('default': "Build artifacts") {
 
@@ -199,12 +198,12 @@ public layoutEducational(String classesPath, Set usedJars) {
 
   buildNSIS([paths.distAll, paths.distWin],
             "$pythonEduHome/build/strings.nsi", "$pythonEduHome/build/paths.nsi",
-            "pycharmPE-", false, true, ".py", system_selector)
+            "pycharmEDU-", false, true, ".py", system_selector)
 
-  String tarRoot = isEap() ? "pycharm-pe-$buildNumber" : "pycharm-pe-${p("component.version.major")}.${p("component.version.minor")}"
+  String tarRoot = isEap() ? "pycharm-edu-$buildNumber" : "pycharm-edu-${p("component.version.major")}.${p("component.version.minor")}"
   buildTarGz(tarRoot, "$paths.artifacts/pycharm${buildName}.tar", [paths.distAll, paths.distUnix])
 
-  String macAppRoot = isEap() ? "PyCharm PE ${p("component.version.major")}.${p("component.version.minor")} EAP.app/Contents" : "PyCharm PE.app/Contents"
+  String macAppRoot = isEap() ? "PyCharm Educational ${p("component.version.major")}.${p("component.version.minor")} EAP.app/Contents" : "PyCharm Educational.app/Contents"
   buildMacZip(macAppRoot, "${paths.artifacts}/pycharm${buildName}.sit", [paths.distAll], paths.distMac)
   ant.copy(file: "${paths.artifacts}/pycharm${buildName}.sit", tofile: "${paths.artifacts}/pycharm${buildName}-jdk-bundled.sit")
   ant.delete(file: "${paths.artifacts}/pycharm${buildName}.sit")

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,6 @@ public class MavenConstants {
 
   public static final String SCOPE_COMPILE = "compile";
   public static final String SCOPE_PROVIDED = "provided";
-  /* @deprecated to remove in IDEA 14 */
-  @SuppressWarnings({"UnusedDeclaration", "SpellCheckingInspection"}) public static final String SCOPE_PROVIDEED = SCOPE_PROVIDED;
   public static final String SCOPE_RUNTIME = "runtime";
   public static final String SCOPE_TEST = "test";
   public static final String SCOPE_SYSTEM = "system";
