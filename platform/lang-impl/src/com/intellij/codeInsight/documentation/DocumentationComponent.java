@@ -634,15 +634,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private class EditDocumentationSourceAction extends BaseNavigateToSourceAction {
 
-    protected EditDocumentationSourceAction() {
+    EditDocumentationSourceAction() {
       super(true);
-    }
-
-    @Override
-    public void update(AnActionEvent event) {
-      super.update(event);
-      event.getPresentation().setIcon(AllIcons.Actions.EditSource);
-      event.getPresentation().setText("Edit Source");
+      getTemplatePresentation().setIcon(AllIcons.Actions.EditSource);
+      getTemplatePresentation().setText("Edit Source");
     }
 
     @Override
