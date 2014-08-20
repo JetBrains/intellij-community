@@ -74,9 +74,9 @@ public class AllIcons {
     public static final Icon Forward = IconLoader.getIcon("/actions/forward.png"); // 16x16
     public static final Icon GC = IconLoader.getIcon("/actions/gc.png"); // 16x16
     public static final Icon Get = IconLoader.getIcon("/actions/get.png"); // 16x16
+    public static final Icon GroupByClass = IconLoader.getIcon("/actions/GroupByClass.png"); // 16x16
     public static final Icon GroupByFile = IconLoader.getIcon("/actions/GroupByFile.png"); // 16x16
     public static final Icon GroupByMethod = IconLoader.getIcon("/actions/groupByMethod.png"); // 16x16
-    public static final Icon GroupByClass = IconLoader.getIcon("/actions/GroupByClass.png"); // 16x16
     public static final Icon GroupByModule = IconLoader.getIcon("/actions/GroupByModule.png"); // 16x16
     public static final Icon GroupByModuleGroup = IconLoader.getIcon("/actions/GroupByModuleGroup.png"); // 16x16
     public static final Icon GroupByPackage = IconLoader.getIcon("/actions/GroupByPackage.png"); // 16x16
@@ -833,6 +833,7 @@ public class AllIcons {
     public static final Icon Method = IconLoader.getIcon("/nodes/method.png"); // 16x16
     public static final Icon Module = IconLoader.getIcon("/nodes/Module.png"); // 16x16
     public static final Icon ModuleGroup = IconLoader.getIcon("/nodes/moduleGroup.png"); // 16x16
+    public static final Icon NativeLibrariesFolder = IconLoader.getIcon("/nodes/nativeLibrariesFolder.png"); // 16x16
     public static final Icon NewException = IconLoader.getIcon("/nodes/newException.png"); // 14x14
     public static final Icon NewFolder = IconLoader.getIcon("/nodes/newFolder.png"); // 16x16
     public static final Icon NewParameter = IconLoader.getIcon("/nodes/newParameter.png"); // 14x14
