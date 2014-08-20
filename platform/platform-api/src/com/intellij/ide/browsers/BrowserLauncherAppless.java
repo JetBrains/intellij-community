@@ -127,6 +127,7 @@ public class BrowserLauncherAppless extends BrowserLauncher {
 
     GeneralSettings settings = getGeneralSettingsInstance();
     if (settings.isUseDefaultBrowser()) {
+      boolean tryToUseCli = true;
       if (isDesktopActionSupported(Desktop.Action.BROWSE)) {
         try {
           Desktop.getDesktop().browse(uri);
@@ -135,13 +136,17 @@ public class BrowserLauncherAppless extends BrowserLauncher {
         }
         catch (Exception e) {
           LOG.warn("Error while using Desktop API, fallback to CLI", e);
+          // if "No application knows how to open", then we must not try to use OS open
+          tryToUseCli = !e.getMessage().contains("Error code: -10814");
         }
       }
 
-      List<String> command = getDefaultBrowserCommand();
-      if (command != null) {
-        doLaunch(uri.toString(), command, null, project, ArrayUtil.EMPTY_STRING_ARRAY, null);
-        return;
+      if (tryToUseCli) {
+        List<String> command = getDefaultBrowserCommand();
+        if (command != null) {
+          doLaunch(uri.toString(), command, null, project, ArrayUtil.EMPTY_STRING_ARRAY, null);
+          return;
+        }
       }
     }
 
@@ -192,7 +197,7 @@ public class BrowserLauncherAppless extends BrowserLauncher {
       doShowError(IdeBundle.message("error.malformed.url", url), null, project, null, null);
     }
     else {
-      browse(uri);
+      browse(uri, project);
     }
   }
 
