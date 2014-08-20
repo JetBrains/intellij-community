@@ -213,7 +213,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   public void showJavaDocInfo(@NotNull final PsiElement element, final PsiElement original) {
-    showJavaDocInfo(element, original, false, null);
+    showJavaDocInfo(element, original, true, null);
   }
 
   /**
