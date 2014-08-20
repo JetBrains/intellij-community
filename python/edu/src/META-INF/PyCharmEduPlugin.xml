@@ -42,10 +42,10 @@
     <action overrides="true" class="com.intellij.openapi.actionSystem.EmptyAction" id="NewHtmlFile"/>
 
 
-    <group id="PhpRunMenu">
-      <action id="runCurrentFile" class="com.jetbrains.python.edu.PyRunCurrentFileAction"/>
-      <add-to-group group-id="RunMenu" anchor="first"/>
-    </group>
+    <!--<group id="PyRunMenu">-->
+      <!--<action id="runCurrentFile" class="com.jetbrains.python.edu.PyRunCurrentFileAction"/>-->
+      <!--<add-to-group group-id="RunMenu" anchor="first"/>-->
+    <!--</group>-->
 
 
   </actions>
