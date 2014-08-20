@@ -26,8 +26,8 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -38,26 +38,34 @@ public abstract class ResourceBundle {
   public abstract List<PropertiesFile> getPropertiesFiles();
 
   /**
-   * @deprecated, use getPropertiesFiles() instead this method
+   * @deprecated use getPropertiesFiles() instead this method
    */
   @Deprecated
   @NotNull
-  public abstract List<PropertiesFile> getPropertiesFiles(final Project project);
+  public List<PropertiesFile> getPropertiesFiles(final Project project) {
+    return getPropertiesFiles();
+  }
 
   @NotNull
   public abstract PropertiesFile getDefaultPropertiesFile();
 
   /**
-   * @deprecated, use getDefaultPropertiesFile() instead this method
+   * @deprecated use getDefaultPropertiesFile() instead this method
    */
   @Deprecated
   @NotNull
-  public abstract PropertiesFile getDefaultPropertiesFile(final Project project);
+  public PropertiesFile getDefaultPropertiesFile(final Project project) {
+    return getDefaultPropertiesFile();
+  }
 
   @NotNull
   public abstract String getBaseName();
 
-  @NotNull
+  /**
+   * @return null if resource bundle is not default ( == instance of ResourceBundleImpl)
+   */
+  @Deprecated
+  @Nullable
   public abstract VirtualFile getBaseDirectory();
 
   @NotNull
