@@ -232,13 +232,13 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
 
           if (isReferenceArg) {
             if (leakingParameters[i]) {
-              Equation<Key, Value> notNullParamEquation = new NonNullInAnalysis(richControlFlow, new In(i), stable).analyze();
+              Equation<Key, Value> notNullParamEquation = new NonNullInAnalysis(richControlFlow, new In(i, In.NOT_NULL), stable).analyze();
               notNullParam = notNullParamEquation.rhs.equals(FINAL_NOT_NULL);
               result.add(notNullParamEquation);
             }
             else {
               // parameter is not leaking, so it is definitely NOT @NotNull
-              result.add(new Equation<Key, Value>(new Key(method, new In(i), stable), FINAL_TOP));
+              result.add(new Equation<Key, Value>(new Key(method, new In(i, In.NOT_NULL), stable), FINAL_TOP));
             }
           }
           if (isReferenceArg && isInterestingResult) {
@@ -335,7 +335,7 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
           boolean isBooleanArg = ASMUtils.isBooleanType(argType);
 
           if (isReferenceArg) {
-            result.add(new Equation<Key, Value>(new Key(method, new In(i), stable), FINAL_TOP));
+            result.add(new Equation<Key, Value>(new Key(method, new In(i, In.NOT_NULL), stable), FINAL_TOP));
           }
           if (isReferenceArg && isInterestingResult) {
             result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), FINAL_TOP));

@@ -106,7 +106,7 @@ final class CombinedSingleAnalysis {
   }
 
   final Equation<Key, Value> notNullParamEquation(int i, boolean stable) {
-    final Key key = new Key(method, new In(i), stable);
+    final Key key = new Key(method, new In(i, In.NOT_NULL), stable);
     final Result<Key, Value> result;
     if (interpreter.dereferenced[i]) {
       result = new Final<Key, Value>(Value.NotNull);
@@ -367,7 +367,7 @@ final class CombinedInterpreter extends BasicInterpreter {
                 npKeys = new HashSet<Key>();
                 callDerefs[n] = npKeys;
               }
-              npKeys.add(new Key(method, new In(i - shift), stable));
+              npKeys.add(new Key(method, new In(i - shift, In.NOT_NULL), stable));
             }
           }
         }

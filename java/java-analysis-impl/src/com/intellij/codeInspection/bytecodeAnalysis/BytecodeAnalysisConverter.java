@@ -277,10 +277,11 @@ public class BytecodeAnalysisConverter {
       return 0;
     } else if (dir instanceof In) {
       In in = (In)dir;
-      return 8 * in.paramId() + 1;
+      // nullity mask is 0/1
+      return 8 * in.paramId() + 1 + in.nullityMask;
     } else {
       InOut inOut = (InOut)dir;
-      return 8 * inOut.paramId() + 2 + inOut.valueId();
+      return 8 * inOut.paramId() + 3 + inOut.valueId();
     }
   }
 
@@ -292,11 +293,11 @@ public class BytecodeAnalysisConverter {
     else {
       int paramId = directionKey / 8;
       int subDirection = directionKey % 8;
-      if (subDirection == 1) {
-        return new In(paramId);
+      if (subDirection <= 2) {
+        return new In(paramId, subDirection - 1);
       }
       else {
-        return new InOut(paramId, Value.values()[subDirection - 2]);
+        return new InOut(paramId, Value.values()[subDirection - 3]);
       }
     }
   }

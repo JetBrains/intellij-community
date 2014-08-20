@@ -607,10 +607,12 @@ class NullableInAnalysis extends Analysis<PResult> {
 abstract class NullityInterpreter extends BasicInterpreter {
   boolean top = false;
   final boolean nullableAnalysis;
+  final int nullityMask;
   private PResult subResult = Identity;
 
-  NullityInterpreter(boolean nullableAnalysis) {
+  NullityInterpreter(boolean nullableAnalysis, int nullityMask) {
     this.nullableAnalysis = nullableAnalysis;
+    this.nullityMask = nullityMask;
   }
 
   abstract PResult combine(PResult res1, PResult res2) throws AnalyzerException;
@@ -731,7 +733,7 @@ abstract class NullityInterpreter extends BasicInterpreter {
         Method method = new Method(methodNode.owner, methodNode.name, methodNode.desc);
         for (int i = shift; i < values.size(); i++) {
           if (values.get(i) instanceof ParamValue) {
-            subResult = combine(subResult, new ConditionalNPE(new Key(method, new In(i - shift), stable)));
+            subResult = combine(subResult, new ConditionalNPE(new Key(method, new In(i - shift, nullityMask), stable)));
           }
         }
         break;
@@ -744,7 +746,7 @@ abstract class NullityInterpreter extends BasicInterpreter {
 class NotNullInterpreter extends NullityInterpreter {
 
   NotNullInterpreter() {
-    super(false);
+    super(false, In.NOT_NULL);
   }
 
   @Override
@@ -756,7 +758,7 @@ class NotNullInterpreter extends NullityInterpreter {
 class NullableInterpreter extends NullityInterpreter {
 
   NullableInterpreter() {
-    super(true);
+    super(true, In.NULLABLE);
   }
 
   @Override

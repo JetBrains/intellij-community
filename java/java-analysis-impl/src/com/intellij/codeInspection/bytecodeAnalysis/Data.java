@@ -52,20 +52,17 @@ enum Value {
   Bot, NotNull, Null, True, False, Top
 }
 
-interface Direction {
-  static final int OUT_DIRECTION = 0;
-  static final int IN_DIRECTION = 1;
-  static final int INOUT_DIRECTION = 2;
-  int directionId();
-  int paramId();
-  int valueId();
-}
+interface Direction {}
 
 final class In implements Direction {
+  static final int NOT_NULL = 0;
+  static final int NULLABLE = 1;
   final int paramIndex;
+  final int nullityMask;
 
-  In(int paramIndex) {
+  In(int paramIndex, int nullityMask) {
     this.paramIndex = paramIndex;
+    this.nullityMask = nullityMask;
   }
 
   @Override
@@ -79,28 +76,19 @@ final class In implements Direction {
     if (o == null || getClass() != o.getClass()) return false;
     In in = (In) o;
     if (paramIndex != in.paramIndex) return false;
+    if (nullityMask != in.nullityMask) return false;
     return true;
   }
 
   @Override
   public int hashCode() {
-    return paramIndex;
+    return 31*paramIndex + nullityMask;
   }
 
-  @Override
-  public int directionId() {
-    return IN_DIRECTION;
-  }
-
-  @Override
   public int paramId() {
     return paramIndex;
   }
 
-  @Override
-  public int valueId() {
-    return 0;
-  }
 }
 
 final class InOut implements Direction {
@@ -137,17 +125,10 @@ final class InOut implements Direction {
     return "InOut " + paramIndex + " " + inValue.toString();
   }
 
-  @Override
-  public int directionId() {
-    return INOUT_DIRECTION;
-  }
-
-  @Override
   public int paramId() {
     return paramIndex;
   }
 
-  @Override
   public int valueId() {
     return inValue.ordinal();
   }
@@ -167,21 +148,6 @@ final class Out implements Direction {
   @Override
   public boolean equals(Object obj) {
     return obj instanceof Out;
-  }
-
-  @Override
-  public int directionId() {
-    return OUT_DIRECTION;
-  }
-
-  @Override
-  public int paramId() {
-    return 0;
-  }
-
-  @Override
-  public int valueId() {
-    return 0;
   }
 }
 
@@ -219,10 +185,6 @@ final class Key {
 
   @Override
   public String toString() {
-    return "" + method + ' ' + direction + ' ' + stable;
+    return method + " " + direction + " " + stable;
   }
-}
-
-class LimitReachedException extends RuntimeException {
-
 }
