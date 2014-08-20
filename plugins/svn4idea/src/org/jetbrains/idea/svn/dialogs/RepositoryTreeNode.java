@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.dialogs;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -37,7 +38,7 @@ import java.util.List;
 public class RepositoryTreeNode implements TreeNode, Disposable {
 
   private TreeNode myParentNode;
-  private List<TreeNode> myChildren;
+  @NotNull private final List<TreeNode> myChildren;
   private final RepositoryTreeModel myModel;
   private final SVNURL myURL;
   private final Object myUserObject;
@@ -54,6 +55,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
     myUserObject = userObject;
 
     myLoadState = state;
+    myChildren = ContainerUtil.newArrayList();
     myChildrenLoadState = NodeLoadState.EMPTY;
   }
 
@@ -116,7 +118,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
   public void reload(final Expander expander, final boolean removeCurrentChildren) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    if (removeCurrentChildren || (myChildren == null)) {
+    if (removeCurrentChildren || NodeLoadState.EMPTY.equals(myChildrenLoadState)) {
       initChildren();
     }
     
@@ -124,15 +126,15 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
   }
 
   private void initChildren() {
-    myChildren = new ArrayList<TreeNode>();
+    myChildren.clear();
     myChildren.add(new DefaultMutableTreeNode("Loading"));
     myChildrenLoadState = NodeLoadState.LOADING;
   }
 
   private List getChildren() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    
-    if (myChildren == null) {
+
+    if (NodeLoadState.EMPTY.equals(myChildrenLoadState)) {
       initChildren();
       myModel.getCacheLoader().load(this, myModel.getLazyLoadingExpander());
     }
@@ -164,28 +166,22 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
 
   @NotNull
   public List<TreeNode> getAllAlreadyLoadedChildren() {
-    if (myChildren != null) {
-      final List<TreeNode> result = new ArrayList<TreeNode>(myChildren.size());
-      for (TreeNode child : myChildren) {
-        result.add(child);
-      }
-      return result;
+    final List<TreeNode> result = new ArrayList<TreeNode>(myChildren.size());
+    for (TreeNode child : myChildren) {
+      result.add(child);
     }
-    return Collections.emptyList();
+    return result;
   }
 
   @NotNull
   public List<RepositoryTreeNode> getAlreadyLoadedChildren() {
-    if (myChildren != null) {
-      final List<RepositoryTreeNode> result = new ArrayList<RepositoryTreeNode>(myChildren.size());
-      for (TreeNode child : myChildren) {
-        if (child instanceof RepositoryTreeNode) {
-          result.add((RepositoryTreeNode) child);
-        }
+    final List<RepositoryTreeNode> result = new ArrayList<RepositoryTreeNode>(myChildren.size());
+    for (TreeNode child : myChildren) {
+      if (child instanceof RepositoryTreeNode) {
+        result.add((RepositoryTreeNode)child);
       }
-      return result;
     }
-    return Collections.emptyList();
+    return result;
   }
 
   public boolean isDisposed() {
@@ -213,11 +209,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
   }
 
   public void setAlienChildren(final List<TreeNode> children, final NodeLoadState oldState) {
-    if (myChildren == null) {
-      myChildren = new ArrayList<TreeNode>();
-    } else {
-      myChildren.clear();
-    }
+    myChildren.clear();
 
     for (TreeNode child : children) {
       if (child instanceof RepositoryTreeNode) {
@@ -234,9 +226,6 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
   }
 
   public void setErrorNode(final String text, final NodeLoadState state) {
-    if (myChildren == null) {
-      myChildren = new ArrayList<TreeNode>();
-    }
     myChildren.clear();
     myChildren.add(new DefaultMutableTreeNode(text));
 
