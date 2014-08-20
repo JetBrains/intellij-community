@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FilteringIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -43,11 +44,11 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
   private final SVNURL myURL;
   private final Object myUserObject;
 
-  private final NodeLoadState myLoadState;
+  @NotNull private final NodeLoadState myLoadState;
   private NodeLoadState myChildrenLoadState;
 
   public RepositoryTreeNode(RepositoryTreeModel model, TreeNode parentNode,
-                            @NotNull SVNURL url, Object userObject, final NodeLoadState state) {
+                            @NotNull SVNURL url, Object userObject, @NotNull NodeLoadState state) {
     myParentNode = parentNode;
 
     myURL = url;
@@ -147,10 +148,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
 
   @Nullable
   public DirectoryEntry getSVNDirEntry() {
-    if (myUserObject instanceof DirectoryEntry) {
-      return (DirectoryEntry) myUserObject;
-    }
-    return null;
+    return myUserObject instanceof DirectoryEntry ? (DirectoryEntry)myUserObject : null;
   }
 
   public void dispose() {
@@ -166,29 +164,19 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
 
   @NotNull
   public List<TreeNode> getAllAlreadyLoadedChildren() {
-    final List<TreeNode> result = new ArrayList<TreeNode>(myChildren.size());
-    for (TreeNode child : myChildren) {
-      result.add(child);
-    }
-    return result;
+    return ContainerUtil.newArrayList(myChildren);
   }
 
   @NotNull
   public List<RepositoryTreeNode> getAlreadyLoadedChildren() {
-    final List<RepositoryTreeNode> result = new ArrayList<RepositoryTreeNode>(myChildren.size());
-    for (TreeNode child : myChildren) {
-      if (child instanceof RepositoryTreeNode) {
-        result.add((RepositoryTreeNode)child);
-      }
-    }
-    return result;
+    return ContainerUtil.collect(myChildren.iterator(), FilteringIterator.instanceOf(RepositoryTreeNode.class));
   }
 
   public boolean isDisposed() {
     return myModel.isDisposed();
   }
 
-  public void setChildren(final List<DirectoryEntry> children, final NodeLoadState state) {
+  public void setChildren(@NotNull List<DirectoryEntry> children, @NotNull NodeLoadState state) {
     final List<TreeNode> nodes = new ArrayList<TreeNode>();
     for (final DirectoryEntry entry : children) {
       if (!myModel.isShowFiles() && !entry.isDirectory()) {
@@ -225,7 +213,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
     myModel.reload(this);
   }
 
-  public void setErrorNode(final String text, final NodeLoadState state) {
+  public void setErrorNode(final String text) {
     myChildren.clear();
     myChildren.add(new DefaultMutableTreeNode(text));
 
@@ -246,24 +234,20 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
     return myModel.findByUrl(this);
   }
 
-  public RepositoryTreeModel getModel() {
-    return myModel;
-  }
-
   public NodeLoadState getChildrenLoadState() {
     return myChildrenLoadState;
   }
 
-  public void doOnSubtree(final NotNullFunction<RepositoryTreeNode, Object> function) {
-    final SubTreeWalker walker = new SubTreeWalker(this, function);
-    walker.execute();
+  public void doOnSubtree(@NotNull NotNullFunction<RepositoryTreeNode, Object> function) {
+    new SubTreeWalker(this, function).execute();
   }
 
   private static class SubTreeWalker {
-    private final RepositoryTreeNode myNode;
-    private final NotNullFunction<RepositoryTreeNode, Object> myFunction;
 
-    private SubTreeWalker(final RepositoryTreeNode node, final NotNullFunction<RepositoryTreeNode, Object> function) {
+    @NotNull private final RepositoryTreeNode myNode;
+    @NotNull private final NotNullFunction<RepositoryTreeNode, Object> myFunction;
+
+    private SubTreeWalker(@NotNull RepositoryTreeNode node, @NotNull NotNullFunction<RepositoryTreeNode, Object> function) {
       myNode = node;
       myFunction = function;
     }

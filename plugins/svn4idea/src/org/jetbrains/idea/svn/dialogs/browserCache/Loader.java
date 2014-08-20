@@ -43,7 +43,7 @@ public abstract class Loader {
       return;
     }
 
-    existingNode.setErrorNode(text, getNodeLoadState());
+    existingNode.setErrorNode(text);
   }
 
   protected void refreshNode(final RepositoryTreeNode node, final List<DirectoryEntry> data, final Expander expander) {
