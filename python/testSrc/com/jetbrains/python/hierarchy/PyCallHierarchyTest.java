@@ -17,22 +17,14 @@ package com.jetbrains.python.hierarchy;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.ide.hierarchy.HierarchyBrowserBaseEx;
-import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
-import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.UsefulTestCase;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.hierarchy.call.PyCalleeFunctionTreeStructure;
 import com.jetbrains.python.hierarchy.call.PyCallerFunctionTreeStructure;
 import com.jetbrains.python.psi.PyFunction;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.JDOMException;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.*;
 
 
 public class PyCallHierarchyTest extends PyTestCase {
@@ -93,6 +85,18 @@ public class PyCallHierarchyTest extends PyTestCase {
     doTestCallHierarchy("main.py", "file_1.py");
   }
 
+  public void testDefaultValue() throws Exception {
+    doTestCallHierarchy("main.py");
+  }
+
+  public void testLambda() throws Exception {
+    doTestCallHierarchy("main.py", "file_1.py");
+  }
+
+  public void testNestedCall() throws Exception {
+    doTestCallHierarchy("main.py", "file_1.py");
+  }
+
   public void testInheritance() throws Exception {
     doTestCallHierarchy("main.py");
   }
@@ -107,5 +111,9 @@ public class PyCallHierarchyTest extends PyTestCase {
 
   public void testConstructor() throws Exception {
     doTestCallHierarchy("main.py");
+  }
+
+  public void testParentheses() throws Exception {
+    doTestCallHierarchy("main.py", "file_1.py");
   }
 }
