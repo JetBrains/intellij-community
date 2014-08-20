@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -69,7 +70,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
           } catch (Exception e) {
             continue;
           }
-          final Color color = new JBColor(new Color(61, 128, 101), new Color(61, 128, 101));
+          final Color color = getForeground();
           final String name = value.getName();
           result.add(new LineExtensionInfo("  " + name + ": ", color, null, null, Font.PLAIN));
 
@@ -90,9 +91,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
               result.add(new LineExtensionInfo(s, color, null, null, Font.PLAIN));
             }
           } else {
-            for (String s : text.getTexts()) {
-              result.add(new LineExtensionInfo(s, new JBColor(new Color(202, 128, 33), new Color(116, 114, 4)), null, null, Font.BOLD));
-            }
+            variableValue.produceChangedParts(result);
           }
         }
         return result;
@@ -100,6 +99,14 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
     }
 
     return null;
+  }
+
+  public static JBColor getForeground() {
+    return new JBColor(new Color(61, 128, 101), new Color(61, 128, 101));
+  }
+
+  public static JBColor getChangedForeground() {
+    return new JBColor(new Color(202, 128, 33), new Color(161, 131, 10));
   }
 
   static class Variable {
@@ -145,6 +152,36 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
 
     public boolean isChanged() {
       return old != null && !StringUtil.equals(actual, old);
+    }
+
+    public void produceChangedParts(List<LineExtensionInfo> result) {
+      if (isArray(actual) && isArray(old)) {
+        List<String> actualParts = getArrayParts(actual);
+        List<String> oldParts = getArrayParts(old);
+        result.add(new LineExtensionInfo("{", getForeground(), null, null, Font.PLAIN));
+        for (int i = 0; i < actualParts.size(); i++) {
+          if (i < oldParts.size() && StringUtil.equals(actualParts.get(i), oldParts.get(i))) {
+            result.add(new LineExtensionInfo(actualParts.get(i), getForeground(), null, null, Font.PLAIN));
+          } else {
+            result.add(new LineExtensionInfo(actualParts.get(i), getChangedForeground(), null, null, Font.BOLD));
+          }
+          if (i != actualParts.size() - 1) {
+            result.add(new LineExtensionInfo(", ", getForeground(), null, null, Font.PLAIN));
+          }
+        }
+        result.add(new LineExtensionInfo("}", getForeground(), null, null, Font.PLAIN));
+        return;
+      }
+
+      result.add(new LineExtensionInfo(actual, getChangedForeground(), null, null, Font.BOLD));
+    }
+
+    private static boolean isArray(String s) {
+      return s != null && s.startsWith("{") && s.endsWith("}");
+    }
+
+    private static List<String> getArrayParts(String array) {
+      return StringUtil.split(array.substring(1, array.length() - 1), ", ");
     }
   }
 }
