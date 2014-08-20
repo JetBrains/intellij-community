@@ -199,12 +199,12 @@ public layoutEducational(String classesPath, Set usedJars) {
 
   buildNSIS([paths.distAll, paths.distWin],
             "$pythonEduHome/build/strings.nsi", "$pythonEduHome/build/paths.nsi",
-            "pycharmPE-", false, true, ".py", system_selector)
+            "pycharmEDU-", false, true, ".py", system_selector)
 
   String tarRoot = isEap() ? "pycharm-pe-$buildNumber" : "pycharm-pe-${p("component.version.major")}.${p("component.version.minor")}"
   buildTarGz(tarRoot, "$paths.artifacts/pycharm${buildName}.tar", [paths.distAll, paths.distUnix])
 
-  String macAppRoot = isEap() ? "PyCharm PE ${p("component.version.major")}.${p("component.version.minor")} EAP.app/Contents" : "PyCharm PE.app/Contents"
+  String macAppRoot = isEap() ? "PyCharm EDU ${p("component.version.major")}.${p("component.version.minor")} EAP.app/Contents" : "PyCharm EDU.app/Contents"
   buildMacZip(macAppRoot, "${paths.artifacts}/pycharm${buildName}.sit", [paths.distAll], paths.distMac)
   ant.copy(file: "${paths.artifacts}/pycharm${buildName}.sit", tofile: "${paths.artifacts}/pycharm${buildName}-jdk-bundled.sit")
   ant.delete(file: "${paths.artifacts}/pycharm${buildName}.sit")
