@@ -122,10 +122,12 @@ public class RepositoryTreeModel extends DefaultTreeModel implements Disposable 
     return myCacheLoader;
   }
 
+  @NotNull
   public Expander getLazyLoadingExpander() {
     return myDefaultExpanderFactory.fun(myBrowser);
   }
 
+  @NotNull
   public Expander getSelectionKeepingExpander() {
     return new KeepingSelectionExpander(myBrowser);
   }

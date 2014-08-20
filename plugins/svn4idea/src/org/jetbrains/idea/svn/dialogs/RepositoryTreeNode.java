@@ -116,7 +116,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
     return SVNPathUtil.tail(myURL.getPath());
   }
 
-  public void reload(final Expander expander, final boolean removeCurrentChildren) {
+  public void reload(@NotNull Expander expander, boolean removeCurrentChildren) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     if (removeCurrentChildren || NodeLoadState.EMPTY.equals(myChildrenLoadState)) {
@@ -213,7 +213,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
     myModel.reload(this);
   }
 
-  public void setErrorNode(final String text) {
+  public void setErrorNode(@NotNull String text) {
     myChildren.clear();
     myChildren.add(new DefaultMutableTreeNode(text));
 
