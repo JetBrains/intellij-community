@@ -1,14 +1,6 @@
 <idea-plugin version="2">
-  <id>com.intellij.json</id>
-  <name>JSON Support</name>
-  <version>1.0</version>
-  <vendor>JetBrains</vendor>
 
-  <depends>com.intellij.modules.xml</depends>
-
-  <description><![CDATA[
-      Provides highlighting and formatting for JSON files.
-  ]]></description>
+  <module value="com.intellij.modules.json"/>
 
   <application-components>
     <!-- Add your application components here -->
@@ -19,7 +11,7 @@
   </project-components>
 
   <actions>
-    <!--<action class="com.jetbrains.json.actions.RestartHighlightingAction" id="json.restart.highlighting" text="Restart Highlighting"/>-->
+    <!-- Add your actions here -->
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
