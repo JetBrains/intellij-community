@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.dvcs.test;
+package git4idea.test;
 
 import com.intellij.mock.MockVirtualFileSystem;
 import com.intellij.openapi.fileTypes.FileType;
@@ -34,8 +34,6 @@ import java.io.OutputStream;
  * VirtualFile implementation for tests based on {@link java.io.File}.
  * Not reusing {@link com.intellij.mock.MockVirtualFile}, because the latter holds everything in memory, which is fast, but requires
  * synchronization with the real file system.
- *
- * @author Kirill Likhodedov
  */
 public class MockVirtualFile extends VirtualFile {
 
