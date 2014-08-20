@@ -111,7 +111,12 @@ public class PathEnvironmentVariableUtil {
    */
   @NotNull
   public static List<File> findAllExeFilesInPath(@NotNull String fileBaseName) {
-    return findExeFilesInPath(fileBaseName, false, false, null);
+    return findAllExeFilesInPath(fileBaseName, null);
+  }
+
+  @NotNull
+  public static List<File> findAllExeFilesInPath(@NotNull String fileBaseName, @Nullable FileFilter filter) {
+    return findExeFilesInPath(fileBaseName, false, false, filter);
   }
 
   @NotNull

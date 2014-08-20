@@ -18,6 +18,7 @@ package com.intellij.lang.properties.projectView;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.lang.properties.CustomResourceBundle;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -83,6 +84,10 @@ public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
               ResourceBundle bundle = propertiesFile.getResourceBundle();
               if (childBundles.get(bundle).size() != 1) {
                 continue;
+              } else if (bundle instanceof CustomResourceBundle) {
+                final CustomResourceBundlePropertiesFileNode node =
+                  new CustomResourceBundlePropertiesFileNode(myProject, (PsiFile)f, settings);
+                result.add(node);
               }
             }
           }

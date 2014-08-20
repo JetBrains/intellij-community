@@ -344,8 +344,21 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
+  private static boolean ourAppIsLoaded = false;
+
+  private static boolean appIsLoaded() {
+    if (ourAppIsLoaded) return true;
+    boolean loaded = IdeaApplication.isLoaded();
+    if (loaded) ourAppIsLoaded = true;
+    return loaded;
+  }
+
   @Override
   public void dispatchEvent(AWTEvent e) {
+    if (!appIsLoaded()) {
+      super.dispatchEvent(e);
+      return;
+    }
 
     fixNonEnglishKeyboardLayouts(e);
 
@@ -760,7 +773,7 @@ public class IdeEventQueue extends EventQueue {
   }
 
   private static boolean typeAheadDispatchToFocusManager(AWTEvent e) {
-    if (e instanceof KeyEvent && appIsLoaded()) {
+    if (e instanceof KeyEvent) {
       final KeyEvent event = (KeyEvent)e;
       if (!event.isConsumed()) {
         final IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(event.getComponent());
@@ -769,15 +782,6 @@ public class IdeEventQueue extends EventQueue {
     }
 
     return false;
-  }
-
-  private static boolean ourAppIsLoaded = false;
-
-  private static boolean appIsLoaded() {
-    if (ourAppIsLoaded) return true;
-    boolean loaded = IdeaApplication.isLoaded();
-    if (loaded) ourAppIsLoaded = true;
-    return loaded;
   }
 
   public void flushQueue() {

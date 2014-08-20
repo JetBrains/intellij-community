@@ -17,6 +17,7 @@ package org.jetbrains.io;
 
 import com.intellij.ide.XmlRpcServer;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
@@ -91,6 +92,10 @@ public class BuiltInServer implements Disposable {
   }
 
   private void bindCustomPorts(int firstPort, int port, NioEventLoopGroup eventLoopGroup) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
+
     for (CustomPortServerManager customPortServerManager : CustomPortServerManager.EP_NAME.getExtensions()) {
       try {
         int customPortServerManagerPort = customPortServerManager.getPort();

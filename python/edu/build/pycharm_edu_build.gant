@@ -32,7 +32,7 @@ ant.copy(file: "${home}/build/jdk/${jdk_bundled_version}", tofile: "${home}/buil
 
 // load ApplicationInfo.xml properties
 ant.xmlproperty(file: "$pythonEduHome/resources/idea/PyCharmEduApplicationInfo.xml", collapseAttributes: "true")
-setProperty("system_selector", "PyCharm${p("component.version.major")}0")
+setProperty("system_selector", "PyCharmEdu${p("component.version.major")}0")
 setProperty("dryRun", false)
 setProperty("jdk16", guessJdk())
 
@@ -92,7 +92,6 @@ class Paths {
 }
 
 setProperty("paths", new Paths(home))
-setProperty("buildName", "EDU-$buildNumber")
 
 target('default': "Build artifacts") {
 
@@ -146,7 +145,7 @@ target('default': "Build artifacts") {
   layoutEducational("${paths.sandbox}/classes/production", usedJars)
 
 
-  def extraArgs = ["build.code": "pycharm${buildName}", "build.number": ${buildName}, "artifacts.path": "${paths.artifacts}"]
+  def extraArgs = ["build.code": "pycharm${buildName}", "build.number": "PE-$buildNumber", "artifacts.path": "${paths.artifacts}"]
   signMacZip("pycharm", extraArgs + ["sitFileName": "pycharm${buildName}-jdk-bundled", "jdk_archive_name": "jdk_mac_redist_for_${buildNumber}.tar"])
   buildDmg("pycharm", "${pythonEduHome}/build/DMG_background.png", extraArgs + ["sitFileName": "pycharm${buildName}-jdk-bundled", "jdk_archive_name": "jdk_mac_redist_for_${buildNumber}.tar"])
 
@@ -168,11 +167,11 @@ public layoutEducational(String classesPath, Set usedJars) {
   }, "-Didea.platform.prefix=PyCharmEdu -Didea.no.jre.check=true")
 
   if (!dryRun) {
-    wireBuildDate("EDU-${buildNumber}", appInfo)
+    wireBuildDate("PE-${buildNumber}", appInfo)
   }
 
   Map args = [
-    buildNumber: "EDU-${buildNumber}",
+    buildNumber: "PE-${buildNumber}",
     system_selector: system_selector,
     ide_jvm_args: "-Didea.platform.prefix=PyCharmEdu -Didea.no.jre.check=true"]
 
@@ -183,7 +182,7 @@ public layoutEducational(String classesPath, Set usedJars) {
   layoutUnix(args, paths.distUnix)
   layoutMac(args, paths.distMac)
 
-  ant.echo(message: "EDU-${buildNumber}", file: "${paths.distAll}/build.txt")
+  ant.echo(message: "PE-${buildNumber}", file: "${paths.distAll}/build.txt")
 
   def launcher = "${paths.distWin}/bin/pycharm.exe"
   List resourcePaths = ["$ch/community-resources/src",
@@ -199,12 +198,12 @@ public layoutEducational(String classesPath, Set usedJars) {
 
   buildNSIS([paths.distAll, paths.distWin],
             "$pythonEduHome/build/strings.nsi", "$pythonEduHome/build/paths.nsi",
-            "pycharmEDU-", false, true, ".py", system_selector)
+            "pycharmPE-", false, true, ".py", system_selector)
 
   String tarRoot = isEap() ? "pycharm-edu-$buildNumber" : "pycharm-edu-${p("component.version.major")}.${p("component.version.minor")}"
   buildTarGz(tarRoot, "$paths.artifacts/pycharm${buildName}.tar", [paths.distAll, paths.distUnix])
 
-  String macAppRoot = isEap() ? "PyCharm EDU ${p("component.version.major")}.${p("component.version.minor")} EAP.app/Contents" : "PyCharm EDU.app/Contents"
+  String macAppRoot = isEap() ? "PyCharm Educational ${p("component.version.major")}.${p("component.version.minor")} EAP.app/Contents" : "PyCharm Educational.app/Contents"
   buildMacZip(macAppRoot, "${paths.artifacts}/pycharm${buildName}.sit", [paths.distAll], paths.distMac)
   ant.copy(file: "${paths.artifacts}/pycharm${buildName}.sit", tofile: "${paths.artifacts}/pycharm${buildName}-jdk-bundled.sit")
   ant.delete(file: "${paths.artifacts}/pycharm${buildName}.sit")

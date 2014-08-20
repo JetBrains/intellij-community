@@ -34,6 +34,7 @@
                              implementationClass="com.intellij.lang.properties.PropertyManipulator"/>
     <projectService serviceInterface="com.intellij.lang.properties.structureView.PropertiesSeparatorManager"
                         serviceImplementation="com.intellij.lang.properties.structureView.PropertiesSeparatorManager"/>
+    <projectService serviceImplementation="com.intellij.lang.properties.ResourceBundleManager"/>
     <codeInsight.wordCompletionFilter language="Properties"
                                       implementationClass="com.intellij.lang.properties.PropertiesWordCompletionFilter"/>
     <lang.psiStructureViewFactory language="Properties"
@@ -98,6 +99,12 @@
   </project-components>
 
   <actions>
+    <action id="DissociateResourceBundleAction" class="com.intellij.lang.properties.customizeActions.DissociateResourceBundleAction">
+      <add-to-group group-id="ProjectViewPopupMenu"/>
+    </action>
+    <action id="CombinePropertiesFilesAction" class="com.intellij.lang.properties.customizeActions.CombinePropertiesFilesAction">
+      <add-to-group group-id="ProjectViewPopupMenu"/>
+    </action>
     <action id="ChooseNextSubsequentPropertyValueEditorAction"
             class="com.intellij.lang.properties.editor.ChooseSubsequentPropertyValueEditorAction$Next"
             text="Choose Next Property Value Editor"

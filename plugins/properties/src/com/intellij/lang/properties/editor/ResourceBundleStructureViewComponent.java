@@ -72,7 +72,7 @@ class ResourceBundleStructureViewComponent extends PropertiesGroupingStructureVi
 
   public Object getData(final String dataId) {
     if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-      return ResourceBundleAsVirtualFile.fromResourceBundle(myResourceBundle);
+      return new ResourceBundleAsVirtualFile(myResourceBundle);
     } else if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
       return getFileEditor();
     } else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {

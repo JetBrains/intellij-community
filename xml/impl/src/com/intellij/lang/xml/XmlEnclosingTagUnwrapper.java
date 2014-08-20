@@ -16,18 +16,19 @@
 package com.intellij.lang.xml;
 
 import com.intellij.codeInsight.unwrap.Unwrapper;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.xml.XmlChildRole;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.xml.XmlBundle;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
+import com.intellij.psi.xml.XmlChildRole;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.ASTNode;
+import com.intellij.xml.XmlBundle;
 
-import java.util.Set;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Collections;
+import java.util.Set;
 
 public class XmlEnclosingTagUnwrapper implements Unwrapper {
   @Override
@@ -45,23 +46,34 @@ public class XmlEnclosingTagUnwrapper implements Unwrapper {
   }
 
   @Override
-  public PsiElement collectAffectedElements(PsiElement e, List<PsiElement> toExtract) {
-    return e;
-  }
-
-  @Override
-  public List<PsiElement> unwrap(Editor editor, PsiElement element) throws IncorrectOperationException {
+  public PsiElement collectAffectedElements(PsiElement element, List<PsiElement> toExtract) {
     final TextRange range = element.getTextRange();
     final ASTNode startTagNameEnd = XmlChildRole.START_TAG_END_FINDER.findChild(element.getNode());
     final ASTNode endTagNameStart = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(element.getNode());
 
-    if (endTagNameStart != null) {
-      editor.getDocument().replaceString(endTagNameStart.getTextRange().getStartOffset(), range.getEndOffset(), "");
-      editor.getDocument().replaceString(range.getStartOffset(), startTagNameEnd.getTextRange().getEndOffset(), "");
+    int start = startTagNameEnd != null ? startTagNameEnd.getTextRange().getEndOffset() : range.getStartOffset();
+    int end = endTagNameStart != null ? endTagNameStart.getTextRange().getStartOffset() : range.getEndOffset();
+
+    for (PsiElement child : element.getChildren()) {
+      final TextRange childRange = child.getTextRange();
+      if (childRange.getStartOffset() >= start && childRange.getEndOffset() <= end) {
+        toExtract.add(child);
+      }
     }
-    else {
-      editor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), "");
+    return element;
+  }
+
+  @Override
+  public List<PsiElement> unwrap(Editor editor, PsiElement element) throws IncorrectOperationException {
+    final ArrayList<PsiElement> toExtract = new ArrayList<PsiElement>();
+    collectAffectedElements(element, toExtract);
+    for (int i = 0; i < toExtract.size(); i++) {
+      PsiElement psiElement = toExtract.get(i);
+      psiElement = element.getParent().addBefore(psiElement, element);
+      CodeEditUtil.markToReformat(psiElement.getNode(), true);
+      toExtract.set(i, psiElement);
     }
-    return Collections.emptyList();
+    element.delete();
+    return toExtract;
   }
 }

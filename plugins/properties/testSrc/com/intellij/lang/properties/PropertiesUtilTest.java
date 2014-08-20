@@ -15,12 +15,7 @@
  */
 package com.intellij.lang.properties;
 
-import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
-import junit.framework.TestCase;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Batkovich
@@ -59,18 +54,8 @@ public class PropertiesUtilTest extends LightPlatformCodeInsightFixtureTestCase 
     assertBaseNameEquals("Base_Properties.utf8.properties", "Base_Properties.utf8");
   }
 
-  public void _test1() {
-    assertBaseNameEquals("Base_Page_fr.utf8.properties", "Base_Page.utf8");
-  }
-  public void _test2() {
-    assertBaseNameEquals("Base_Page_en.utf8.properties", "Base_Page.utf8");
-  }
-  public void _test3() {
-    assertBaseNameEquals("Base_Page.utf8.properties", "Base_Page.utf8");
-  }
-
   private void assertBaseNameEquals(final String propertyFileName, final String expectedBaseName) {
-    final String actualBaseName = PropertiesUtil.getBaseName(myFixture.configureByText(propertyFileName, ""));
+    final String actualBaseName = ResourceBundleManager.getInstance(getProject()).getBaseName(myFixture.configureByText(propertyFileName, ""));
     assertEquals(expectedBaseName, actualBaseName);
   }
 }

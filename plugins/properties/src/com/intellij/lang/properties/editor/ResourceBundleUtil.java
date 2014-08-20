@@ -56,7 +56,7 @@ public class ResourceBundleUtil {
     }
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (virtualFile instanceof ResourceBundleAsVirtualFile && project != null) {
-      return ((ResourceBundleAsVirtualFile)virtualFile).getResourceBundle(project);
+      return ((ResourceBundleAsVirtualFile)virtualFile).getResourceBundle();
     }
     if (project != null) {
       final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);

@@ -20,6 +20,7 @@ import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.ResourceBundleManager;
 import com.intellij.lang.properties.parsing.PropertiesElementTypes;
 import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -120,7 +121,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   @Override
   @NotNull
   public Locale getLocale() {
-    return PropertiesUtil.getLocale(getVirtualFile());
+    return ResourceBundleManager.getInstance(getProject()).getLocale(getVirtualFile());
   }
 
   @Override

@@ -368,6 +368,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     if (!(renderer instanceof JComponent)) return null;
 
     myKeyItemBounds = rendererAndBounds.second;
+    myKeyItemBounds.width = Math.min(myKeyItemBounds.width, myComponent.getToolkit().getScreenSize().width);
 
     Rectangle cellBounds = myKeyItemBounds;
     Rectangle visibleRect = getVisibleRect(key);
