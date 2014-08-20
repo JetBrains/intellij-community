@@ -137,7 +137,7 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
   @Nullable
   @Override
   public Icon getLogo() {
-    return StudyIcons.Playground;
+    return StudyIcons.EducationalProjectType;
   }
 
 

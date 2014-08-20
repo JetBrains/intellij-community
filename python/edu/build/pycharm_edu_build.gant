@@ -366,7 +366,7 @@ private layoutWin(Map args, String target) {
   winScripts(target, ch, "pycharm.bat", args)
   winVMOptions(target, null, "pycharm.exe")
 
-  ant.copy(file: "$home/python/help/pycharm-eduhelp.jar ", todir: "$target/help", failonerror: false)
+  ant.copy(file: "$home/python/help/pycharm-eduhelp.jar", todir: "$target/help", failonerror: false)
 }
 
 private layoutUnix(Map args, String target) {
@@ -383,7 +383,7 @@ private layoutUnix(Map args, String target) {
   unixScripts(target, ch, "pycharm.sh", args)
   unixVMOptions(target, "pycharm")
 
-  ant.copy(file: "$home/python/help/pycharm-eduhelp.jar ", todir: "$target/help", failonerror: false)
+  ant.copy(file: "$home/python/help/pycharm-eduhelp.jar", todir: "$target/help", failonerror: false)
 }
 
 private layoutMac(Map _args, String target) {

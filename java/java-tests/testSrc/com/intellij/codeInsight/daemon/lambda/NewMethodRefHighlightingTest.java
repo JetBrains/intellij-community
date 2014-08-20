@@ -288,7 +288,7 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
-  @Bombed(day = 20, month = Calendar.AUGUST)
+  @Bombed(day = 30, month = Calendar.AUGUST)
   public void testIDEA127275_() throws Exception {
     doTest();
   }

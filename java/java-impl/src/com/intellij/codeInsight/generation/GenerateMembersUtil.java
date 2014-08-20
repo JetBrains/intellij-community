@@ -607,7 +607,7 @@ public class GenerateMembersUtil {
   }
 
   @Nullable
-  private static PsiMethod annotateOnOverrideImplement(@Nullable PsiClass targetClass, @Nullable PsiMethod generated) {
+  public static PsiMethod annotateOnOverrideImplement(@Nullable PsiClass targetClass, @Nullable PsiMethod generated) {
     if (generated == null || targetClass == null) return generated;
 
     if (CodeStyleSettingsManager.getSettings(targetClass.getProject()).INSERT_OVERRIDE_ANNOTATION) {

@@ -1,6 +1,7 @@
 package com.jetbrains.python.edu.editor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.editor.Document;
@@ -18,6 +19,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.HideableTitledPanel;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
@@ -50,6 +52,7 @@ public class StudyEditor implements TextEditor {
   private static final String TASK_TEXT_HEADER = "Task Text";
   private final FileEditor myDefaultEditor;
   private final JComponent myComponent;
+  private final TaskFile myTaskFile;
   private JButton myCheckButton;
   private JButton myNextTaskButton;
   private JButton myPrevTaskButton;
@@ -63,6 +66,10 @@ public class StudyEditor implements TextEditor {
 
   public JButton getPrevTaskButton() {
     return myPrevTaskButton;
+  }
+
+  public TaskFile getTaskFile() {
+    return myTaskFile;
   }
 
   private static JButton addButton(@NotNull final JComponent parentComponent, String toolTipText, Icon icon) {
@@ -89,16 +96,16 @@ public class StudyEditor implements TextEditor {
     myComponent = myDefaultEditor.getComponent();
     JPanel studyPanel = new JPanel();
     studyPanel.setLayout(new BoxLayout(studyPanel, BoxLayout.Y_AXIS));
-    TaskFile taskFile = StudyTaskManager.getInstance(myProject).getTaskFile(file);
-    if (taskFile != null) {
-      Task currentTask = taskFile.getTask();
+    myTaskFile = StudyTaskManager.getInstance(myProject).getTaskFile(file);
+    if (myTaskFile != null) {
+      Task currentTask = myTaskFile.getTask();
       String taskText = currentTask.getResourceText(project, currentTask.getText(), false);
       initializeTaskText(studyPanel, taskText);
       JPanel studyButtonPanel = new JPanel(new GridLayout(1, 2));
       JPanel taskActionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
       studyButtonPanel.add(taskActionsPanel);
       studyButtonPanel.add(new JPanel());
-      initializeButtons(taskActionsPanel, taskFile);
+      initializeButtons(taskActionsPanel, myTaskFile);
       studyPanel.add(studyButtonPanel);
       myComponent.add(studyPanel, BorderLayout.NORTH);
     }
@@ -109,6 +116,7 @@ public class StudyEditor implements TextEditor {
     taskTextPane.setContentType("text/html");
     taskTextPane.setEditable(false);
     taskTextPane.setText(taskText);
+    taskTextPane.addHyperlinkListener(new BrowserHyperlinkListener());
     EditorColorsScheme editorColorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
     int fontSize = editorColorsScheme.getEditorFontSize();
     String fontName = editorColorsScheme.getEditorFontName();
@@ -134,10 +142,10 @@ public class StudyEditor implements TextEditor {
   private void initializeButtons(@NotNull final JPanel taskActionsPanel, @NotNull final TaskFile taskFile) {
     myCheckButton = addButton(taskActionsPanel, "Check task", StudyIcons.Resolve);
     myPrevTaskButton = addButton(taskActionsPanel, "Prev Task", StudyIcons.Prev);
-    myNextTaskButton = addButton(taskActionsPanel, "Next Task", StudyIcons.Next);
-    myRefreshButton = addButton(taskActionsPanel, "Start task again", StudyIcons.Refresh24);
+    myNextTaskButton = addButton(taskActionsPanel, "Next Task", AllIcons.Actions.Forward);
+    myRefreshButton = addButton(taskActionsPanel, "Start task again", AllIcons.Actions.Refresh);
     if (!taskFile.getTask().getUserTests().isEmpty()) {
-      JButton runButton = addButton(taskActionsPanel, "Run", StudyIcons.Run);
+      JButton runButton = addButton(taskActionsPanel, "Run", AllIcons.General.Run);
       runButton.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
