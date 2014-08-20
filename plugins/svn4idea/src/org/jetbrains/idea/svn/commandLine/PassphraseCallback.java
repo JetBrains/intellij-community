@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.commandLine;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.auth.AuthenticationService;
 import org.tmatesoft.svn.core.SVNURL;
 
 /**
@@ -25,8 +26,8 @@ public class PassphraseCallback extends AuthCallbackCase {
 
   private static final String PASSPHRASE_FOR = "Passphrase for";
 
-  PassphraseCallback(@NotNull AuthenticationCallback callback, SVNURL url) {
-    super(callback, url);
+  PassphraseCallback(@NotNull AuthenticationService authenticationService, SVNURL url) {
+    super(authenticationService, url);
   }
 
   @Override
@@ -38,10 +39,10 @@ public class PassphraseCallback extends AuthCallbackCase {
   boolean getCredentials(String errText) throws SvnBindException {
     // try to get from file
     /*if (myTried) {
-      myAuthenticationCallback.clearPassiveCredentials(null, myBase);
+      myAuthenticationService.clearPassiveCredentials(null, myBase);
     }*/
     myTried = true;
-    if (myAuthenticationCallback.authenticateFor(null, myUrl, myAuthenticationCallback.getSpecialConfigDir() != null, false)) {
+    if (myAuthenticationService.authenticateFor(null, myUrl, false)) {
       return true;
     }
     throw new SvnBindException("Authentication canceled for : " + errText.substring(PASSPHRASE_FOR.length()));

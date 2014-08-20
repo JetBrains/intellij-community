@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnApplicationSettings;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.WorkingCopyFormat;
 
 /**
  * Created with IntelliJ IDEA.
@@ -82,7 +83,7 @@ public class SvnExecutableChecker extends ExecutableValidator {
   }
 
   private boolean validateVersion(@NotNull Version version) {
-    if (version.lessThan(1, 7)) {
+    if (!getVcs().isSupportedByCommandLine(WorkingCopyFormat.from(version))) {
       setNotificationErrorDescription(getOldExecutableMessage(version));
       return false;
     }

@@ -39,16 +39,16 @@ abstract class AbstractAuthenticator {
 
   private static final Logger LOG = Logger.getInstance(AbstractAuthenticator.class);
 
-  @NotNull protected final IdeaSvnkitBasedAuthenticationCallback myAuthService;
+  @NotNull protected final AuthenticationService myAuthenticationService;
   @NotNull protected final SvnVcs myVcs;
   @NotNull protected final SVNURL myUrl;
   protected final String myRealm;
   protected boolean myStoreInUsual;
   protected SvnAuthenticationManager myTmpDirManager;
 
-  AbstractAuthenticator(@NotNull IdeaSvnkitBasedAuthenticationCallback authService, @NotNull SVNURL url, String realm) {
-    myAuthService = authService;
-    myVcs = myAuthService.getVcs();
+  AbstractAuthenticator(@NotNull AuthenticationService authenticationService, @NotNull SVNURL url, String realm) {
+    myAuthenticationService = authenticationService;
+    myVcs = myAuthenticationService.getVcs();
     myUrl = url;
     myRealm = realm;
   }
@@ -58,7 +58,7 @@ abstract class AbstractAuthenticator {
     final SvnAuthenticationManager active = myVcs.getSvnConfiguration().getAuthenticationManager(myVcs);
 
     try {
-      boolean authenticated = getWithPassive(passive) || getWithActive(active);
+      boolean authenticated = getWithPassive(passive) || (myAuthenticationService.isActive() && getWithActive(active));
       if (!authenticated) return false;
 
       SvnAuthenticationManager manager = myStoreInUsual ? active : createTmpManager();
@@ -80,8 +80,8 @@ abstract class AbstractAuthenticator {
   @NotNull
   protected SvnAuthenticationManager createTmpManager() throws IOException {
     if (myTmpDirManager == null) {
-      myAuthService.initTmpDir(myVcs.getSvnConfiguration());
-      myTmpDirManager = new SvnAuthenticationManager(myVcs.getProject(), myAuthService.getTempDirectory());
+      myAuthenticationService.initTmpDir(myVcs.getSvnConfiguration());
+      myTmpDirManager = new SvnAuthenticationManager(myVcs.getProject(), myAuthenticationService.getTempDirectory());
       myTmpDirManager.setRuntimeStorage(SvnConfiguration.RUNTIME_AUTH_CACHE);
       myTmpDirManager.setAuthenticationProvider(new SvnInteractiveAuthenticationProvider(myVcs, myTmpDirManager));
     }

@@ -24,6 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.auth.AuthenticationService;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
 import org.tmatesoft.svn.core.SVNURL;
 
@@ -37,14 +38,14 @@ public class CommandRuntime {
 
   private static final Logger LOG = Logger.getInstance(CommandRuntime.class);
 
-  @NotNull private final AuthenticationCallback myAuthCallback;
+  @NotNull private final AuthenticationService myAuthenticationService;
   @NotNull private final SvnVcs myVcs;
   @NotNull private final List<CommandRuntimeModule> myModules;
   private final String exePath;
 
-  public CommandRuntime(@NotNull SvnVcs vcs, @NotNull AuthenticationCallback authCallback) {
+  public CommandRuntime(@NotNull SvnVcs vcs, @NotNull AuthenticationService authenticationService) {
     myVcs = vcs;
-    myAuthCallback = authCallback;
+    myAuthenticationService = authenticationService;
     exePath = SvnApplicationSettings.getInstance().getCommandLinePath();
 
     myModules = ContainerUtil.newArrayList();
@@ -130,8 +131,8 @@ public class CommandRuntime {
     // "infinite" times despite it was cancelled.
     if (!executor.checkCancelled() && callback != null) {
       if (callback.getCredentials(errText)) {
-        if (myAuthCallback.getSpecialConfigDir() != null) {
-          command.setConfigDir(myAuthCallback.getSpecialConfigDir());
+        if (myAuthenticationService.getSpecialConfigDir() != null) {
+          command.setConfigDir(myAuthenticationService.getSpecialConfigDir());
         }
         callback.updateParameters(command);
         return true;
@@ -153,7 +154,7 @@ public class CommandRuntime {
   }
 
   private void onFinish() {
-    myAuthCallback.reset();
+    myAuthenticationService.reset();
   }
 
   private static void logNullExitCode(@NotNull CommandExecutor executor, @Nullable Integer exitCode) {
@@ -166,12 +167,12 @@ public class CommandRuntime {
   private AuthCallbackCase createCallback(@NotNull final String errText, @Nullable final SVNURL url) {
     List<AuthCallbackCase> authCases = ContainerUtil.newArrayList();
 
-    authCases.add(new CertificateCallbackCase(myAuthCallback, url));
-    authCases.add(new CredentialsCallback(myAuthCallback, url));
-    authCases.add(new PassphraseCallback(myAuthCallback, url));
-    authCases.add(new ProxyCallback(myAuthCallback, url));
-    authCases.add(new TwoWaySslCallback(myAuthCallback, url));
-    authCases.add(new UsernamePasswordCallback(myAuthCallback, url));
+    authCases.add(new CertificateCallbackCase(myAuthenticationService, url));
+    authCases.add(new CredentialsCallback(myAuthenticationService, url));
+    authCases.add(new PassphraseCallback(myAuthenticationService, url));
+    authCases.add(new ProxyCallback(myAuthenticationService, url));
+    authCases.add(new TwoWaySslCallback(myAuthenticationService, url));
+    authCases.add(new UsernamePasswordCallback(myAuthenticationService, url));
 
     return ContainerUtil.find(authCases, new Condition<AuthCallbackCase>() {
       @Override
@@ -242,8 +243,8 @@ public class CommandRuntime {
   }
 
   @NotNull
-  public AuthenticationCallback getAuthCallback() {
-    return myAuthCallback;
+  public AuthenticationService getAuthenticationService() {
+    return myAuthenticationService;
   }
 
   @NotNull

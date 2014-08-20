@@ -1610,7 +1610,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     return null;
   }
 
-  public void runChange(FileEditorManagerChange change, EditorsSplitters splitters) {
+  /**
+   * @param splitters - taken getAllSplitters() value if parameter is null
+   */
+  public void runChange(@NotNull FileEditorManagerChange change, @Nullable EditorsSplitters splitters) {
     Set<EditorsSplitters> target = new HashSet<EditorsSplitters>();
     if (splitters == null) {
       target.addAll(getAllSplitters());

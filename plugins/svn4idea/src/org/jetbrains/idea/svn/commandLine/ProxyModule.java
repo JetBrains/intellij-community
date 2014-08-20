@@ -19,8 +19,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.IdeaSVNConfigFile;
+import org.jetbrains.idea.svn.auth.AuthenticationService;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
-import org.jetbrains.idea.svn.auth.IdeaSvnkitBasedAuthenticationCallback;
 import org.tmatesoft.svn.core.SVNURL;
 
 import java.net.InetSocketAddress;
@@ -39,7 +39,7 @@ public class ProxyModule extends BaseCommandRuntimeModule {
 
   @Override
   public void onStart(@NotNull Command command) throws SvnBindException {
-    if (myAuthCallback.haveDataForTmpConfig()) {
+    if (myAuthenticationService.haveDataForTmpConfig()) {
       setupProxy(command);
     }
   }
@@ -50,7 +50,7 @@ public class ProxyModule extends BaseCommandRuntimeModule {
     SVNURL repositoryUrl = command.getRepositoryUrl();
 
     if (repositoryUrl != null) {
-      Proxy proxy = IdeaSvnkitBasedAuthenticationCallback.getIdeaDefinedProxy(repositoryUrl);
+      Proxy proxy = AuthenticationService.getIdeaDefinedProxy(repositoryUrl);
 
       if (proxy != null) {
         String hostGroup = ensureGroupForHost(command, repositoryUrl.getHost());
@@ -68,7 +68,7 @@ public class ProxyModule extends BaseCommandRuntimeModule {
 
   @NotNull
   private String ensureGroupForHost(@NotNull Command command, @NotNull String host) {
-    IdeaSVNConfigFile configFile = new IdeaSVNConfigFile(myAuthCallback.getSpecialConfigDir());
+    IdeaSVNConfigFile configFile = new IdeaSVNConfigFile(myAuthenticationService.getSpecialConfigDir());
     String groupName = SvnAuthenticationManager.getGroupForHost(host, configFile);
 
     if (StringUtil.isEmptyOrSpaces(groupName)) {

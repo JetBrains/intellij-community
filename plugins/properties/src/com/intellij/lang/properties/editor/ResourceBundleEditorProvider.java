@@ -50,7 +50,7 @@ public class ResourceBundleEditorProvider extends FileTypeFactory implements Fil
   public FileEditor createEditor(@NotNull Project project, @NotNull final VirtualFile file){
     ResourceBundle resourceBundle;
     if (file instanceof ResourceBundleAsVirtualFile) {
-      resourceBundle = ((ResourceBundleAsVirtualFile)file).getResourceBundle(project);
+      resourceBundle = ((ResourceBundleAsVirtualFile)file).getResourceBundle();
     }
     else {
       PsiFile psiFile = PsiManager.getInstance(project).findFile(file);

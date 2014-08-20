@@ -25,6 +25,7 @@ import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.lang.folding.LanguageFolding;
 import com.intellij.lang.properties.*;
+import com.intellij.lang.properties.ResourceBundleManager;
 import com.intellij.lang.properties.editor.PropertiesFoldingBuilder;
 import com.intellij.lang.properties.findUsages.PropertiesFindUsagesProvider;
 import com.intellij.lang.properties.parsing.PropertiesElementTypes;
@@ -87,6 +88,7 @@ public class PropertiesCoreEnvironment {
     public ProjectEnvironment(CoreProjectEnvironment projectEnvironment) {
       projectEnvironment.getProject().registerService(PropertiesReferenceManager.class);
       projectEnvironment.getProject().registerService(PropertiesSeparatorManager.class);
+      projectEnvironment.getProject().registerService(ResourceBundleManager.class);
     }
   }
 }

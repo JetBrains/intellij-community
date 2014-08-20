@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.util.Collections;
 import java.util.List;
 
@@ -51,6 +52,19 @@ public class PathEnvironmentVariableUtil {
 
   /**
    * Finds an executable file with the specified base name, that is located in a directory
+   * listed in PATH environment variable and is accepted by filter.
+   *
+   * @param fileBaseName file base name
+   * @param filter exe file filter
+   * @return {@code File} instance or null if not found
+   */
+  @Nullable
+  public static File findInPath(@NotNull String fileBaseName, @Nullable FileFilter filter) {
+    return findInPath(fileBaseName, false, filter);
+  }
+
+  /**
+   * Finds an executable file with the specified base name, that is located in a directory
    * listed in PATH environment variable.
    *
    * @param fileBaseName file base name
@@ -59,7 +73,12 @@ public class PathEnvironmentVariableUtil {
    */
   @Nullable
   public static File findInPath(@NotNull String fileBaseName, boolean logDetails) {
-    List<File> exeFiles = findExeFilesInPath(fileBaseName, true, logDetails);
+    return findInPath(fileBaseName, logDetails, null);
+  }
+
+  @Nullable
+  private static File findInPath(@NotNull String fileBaseName, boolean logDetails, @Nullable FileFilter filter) {
+    List<File> exeFiles = findExeFilesInPath(fileBaseName, true, logDetails, filter);
     return exeFiles.size() > 0 ? exeFiles.get(0) : null;
   }
 
@@ -79,7 +98,7 @@ public class PathEnvironmentVariableUtil {
     else {
       originalPath = EnvironmentUtil.getValue(PATH_ENV_VAR_NAME);
     }
-    List<File> exeFiles = doFindExeFilesInPath(originalPath, fileBaseName, true, false);
+    List<File> exeFiles = doFindExeFilesInPath(originalPath, fileBaseName, true, false, null);
     return exeFiles.size() > 0 ? exeFiles.get(0) : null;
   }
 
@@ -92,22 +111,29 @@ public class PathEnvironmentVariableUtil {
    */
   @NotNull
   public static List<File> findAllExeFilesInPath(@NotNull String fileBaseName) {
-    return findExeFilesInPath(fileBaseName, false, false);
+    return findAllExeFilesInPath(fileBaseName, null);
+  }
+
+  @NotNull
+  public static List<File> findAllExeFilesInPath(@NotNull String fileBaseName, @Nullable FileFilter filter) {
+    return findExeFilesInPath(fileBaseName, false, false, filter);
   }
 
   @NotNull
   private static List<File> findExeFilesInPath(@NotNull String fileBaseName,
                                                boolean stopAfterFirstMatch,
-                                               boolean logDetails) {
+                                               boolean logDetails,
+                                               @Nullable FileFilter filter) {
     String systemPath = EnvironmentUtil.getValue(PATH_ENV_VAR_NAME);
-    return doFindExeFilesInPath(systemPath, fileBaseName, stopAfterFirstMatch, logDetails);
+    return doFindExeFilesInPath(systemPath, fileBaseName, stopAfterFirstMatch, logDetails, filter);
   }
 
   @NotNull
   private static List<File> doFindExeFilesInPath(@Nullable String pathEnvVarValue,
                                                  @NotNull String fileBaseName,
                                                  boolean stopAfterFirstMatch,
-                                                 boolean logDetails) {
+                                                 boolean logDetails,
+                                                 @Nullable FileFilter filter) {
     if (logDetails) {
       LOG.info("Finding files in PATH (base name=" + fileBaseName + ", PATH=" + StringUtil.notNullize(pathEnvVarValue) + ").");
     }
@@ -124,11 +150,13 @@ public class PathEnvironmentVariableUtil {
                  + ", file.isFile:" + file.isFile() + ", file.canExecute:" + file.canExecute());
       }
       if (dir.isAbsolute() && dir.isDirectory()) {
-        File file = new File(dir, fileBaseName);
-        if (file.isFile() && file.canExecute()) {
-          result.add(file);
-          if (stopAfterFirstMatch) {
-            return result;
+        File exeFile = new File(dir, fileBaseName);
+        if (exeFile.isFile() && exeFile.canExecute()) {
+          if (filter == null || filter.accept(exeFile)) {
+            result.add(exeFile);
+            if (stopAfterFirstMatch) {
+              return result;
+            }
           }
         }
       }

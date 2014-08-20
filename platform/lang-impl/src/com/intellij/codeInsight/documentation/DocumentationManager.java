@@ -213,7 +213,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   public void showJavaDocInfo(@NotNull final PsiElement element, final PsiElement original) {
-    showJavaDocInfo(element, original, false, null);
+    showJavaDocInfo(element, original, true, null);
   }
 
   /**
@@ -388,7 +388,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         final Content content = myToolWindow.getContentManager().getSelectedContent();
         if (content != null) {
           final DocumentationComponent component = (DocumentationComponent)content.getComponent();
-          if (component.getElement() != element) {
+          if (!element.getManager().areElementsEquivalent(component.getElement(), element)) {
             content.setDisplayName(getTitle(element, true));
             fetchDocInfo(getDefaultCollector(element, originalElement), component, true);
           }
@@ -666,11 +666,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   private ActionCallback doFetchDocInfo(final DocumentationComponent component, final DocumentationCollector provider, final boolean cancelRequests, final boolean clearHistory) {
     final ActionCallback callback = new ActionCallback();
+    boolean wasEmpty = component.isEmpty();
     component.startWait();
     if (cancelRequests) {
       myUpdateDocAlarm.cancelAllRequests();
     }
-    if (component.isEmpty()) {
+    if (wasEmpty) {
       component.setText(CodeInsightBundle.message("javadoc.fetching.progress"), null, clearHistory);
       final AbstractPopup jbPopup = (AbstractPopup)getDocInfoHint();
       if (jbPopup != null) {
@@ -854,33 +855,33 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       final DocumentationProvider provider = getProviderFromElement(psiElement);
       boolean processed = false;
       if (provider instanceof CompositeDocumentationProvider) {
-        for (DocumentationProvider documentationProvider : ((CompositeDocumentationProvider)provider).getProviders()) {
-          if (documentationProvider instanceof ExternalDocumentationHandler) {
-            final ExternalDocumentationHandler externalDocumentationHandler = (ExternalDocumentationHandler)documentationProvider;
-            if (externalDocumentationHandler.canFetchDocumentationLink(url)) {
-              fetchDocInfo(new DocumentationCollector() {
-                @Override
-                public String getDocumentation() throws Exception {
-                  return externalDocumentationHandler.fetchExternalDocumentation(url, psiElement);
-                }
+        for (DocumentationProvider p : ((CompositeDocumentationProvider)provider).getAllProviders()) {
+          if (!(p instanceof ExternalDocumentationHandler)) continue;
 
-                @Override
-                public PsiElement getElement() {
-                  return psiElement;
-                }
+          final ExternalDocumentationHandler externalHandler = (ExternalDocumentationHandler)p;
+          if (externalHandler.canFetchDocumentationLink(url)) {
+            fetchDocInfo(new DocumentationCollector() {
+              @Override
+              public String getDocumentation() throws Exception {
+                return externalHandler.fetchExternalDocumentation(url, psiElement);
+              }
 
-                @Nullable
-                @Override
-                public String getEffectiveExternalUrl() {
-                  return url;
-                }
-              }, component);
-              processed = true;
-            }
-            else if (externalDocumentationHandler.handleExternalLink(manager, url, psiElement)) {
-              processed = true;
-              break;
-            }
+              @Override
+              public PsiElement getElement() {
+                return psiElement;
+              }
+
+              @Nullable
+              @Override
+              public String getEffectiveExternalUrl() {
+                return url;
+              }
+            }, component);
+            processed = true;
+          }
+          else if (externalHandler.handleExternalLink(manager, url, psiElement)) {
+            processed = true;
+            break;
           }
         }
       }

@@ -63,7 +63,7 @@ import java.util.Set;
  */
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "UtilityClassWithPublicConstructor"})
 public class PyCharmEduInitialConfigurator {
-  @NonNls private static final String DISPLAYED_PROPERTY = "PyCharm.initialConfigurationShown";
+  @NonNls private static final String DISPLAYED_PROPERTY = "PyCharmEDU.initialConfigurationShown";
 
   @NonNls private static final String CONFIGURED = "PyCharmEDU.InitialConfiguration";
 
@@ -94,7 +94,7 @@ public class PyCharmEduInitialConfigurator {
       uiSettings.SHOW_MAIN_TOOLBAR = false;
       codeInsightSettings.REFORMAT_ON_PASTE = CodeInsightSettings.NO_REFORMAT;
 
-      Registry.get("ide.file.settings.order.new").setValue(true);
+      Registry.get("ide.new.settings.dialog").setValue(true);
 
       GeneralSettings.getInstance().setShowTipsOnStartup(false);
 
@@ -231,6 +231,11 @@ public class PyCharmEduInitialConfigurator {
 
   private static void showInitialConfigurationDialog() {
     final JFrame frame = WindowManager.getInstance().findVisibleFrame();
-    new InitialConfigurationDialog(frame, "Python").show();
+    new InitialConfigurationDialog(frame, "Python") {
+      @Override
+      protected boolean canCreateLauncherScript() {
+        return false;
+      }
+    }.show();
   }
 }

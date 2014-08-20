@@ -86,7 +86,7 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle>{
   }
 
   public void navigate(final boolean requestFocus) {
-    OpenFileDescriptor descriptor = new OpenFileDescriptor(getProject(), ResourceBundleAsVirtualFile.fromResourceBundle(getValue()));
+    OpenFileDescriptor descriptor = new OpenFileDescriptor(getProject(), new ResourceBundleAsVirtualFile(getValue()));
     FileEditorManager.getInstance(getProject()).openTextEditor(descriptor, requestFocus);
   }
 

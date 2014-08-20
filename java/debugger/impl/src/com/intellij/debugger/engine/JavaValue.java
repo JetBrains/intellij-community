@@ -128,7 +128,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
             else {
               EvaluateException exception = myValueDescriptor.getEvaluateException();
               if (myValueDescriptor.getLastRenderer() instanceof ToStringRenderer && exception == null) {
-                presentation = new XRegularValuePresentation(StringUtil.wrapWithDoubleQuote(value), type);
+                presentation = new XRegularValuePresentation(StringUtil.wrapWithDoubleQuote(value.substring(0,Math.min(value.length(), XValueNode.MAX_VALUE_LENGTH))), type);
               }
               else {
                 presentation = new JavaValuePresentation(value, type, exception != null ? exception.getMessage() : null);

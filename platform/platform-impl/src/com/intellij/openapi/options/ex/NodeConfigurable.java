@@ -48,13 +48,13 @@ public final class NodeConfigurable extends SearchableConfigurable.Parent.Abstra
   @NotNull
   @Override
   public String getId() {
-    return myId;
+    return "node.configurable." + myId;
   }
 
   @Nullable
   @Override
   public String getHelpTopic() {
-    return myId;
+    return "node.configurable." + myId + ".help.topic";
   }
 
   @Nls
