@@ -206,10 +206,6 @@ public class PyHierarchyCallCacheManagerImpl extends PyHierarchyCallCacheManager
     }
     String attrString = StringUtil.join(lines, "\n");
     writeCallerAttribute(calleeFile, attrString);
-
-    //System.out.println("data before call: \n" + data);
-    //System.out.println("call info: \n" + callInfo);
-    //System.out.println("data to write: \n" + attrString + "\n");
   }
 
   private void recordHierarchyCalleeData(VirtualFile callerFile, PyHierarchyCallInfo callInfo) {
