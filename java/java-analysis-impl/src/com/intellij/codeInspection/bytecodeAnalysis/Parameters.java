@@ -116,7 +116,7 @@ abstract class PResults {
     if (NPE == r2) return NPE;
     ConditionalNPE cnpe1 = (ConditionalNPE) r1;
     ConditionalNPE cnpe2 = (ConditionalNPE) r2;
-    return new ConditionalNPE(meet(cnpe1.sop, cnpe2.sop));
+    return new ConditionalNPE(join(cnpe1.sop, cnpe2.sop));
   }
 
   static PResult join(PResult r1, PResult r2) throws AnalyzerException {
@@ -183,6 +183,9 @@ class NonNullInAnalysis extends Analysis<PResult> {
 
   private final NotNullInterpreter interpreter = new NotNullInterpreter();
   private PResult[] results;
+
+  // Flag saying that at some branch NPE was found. Used later as an evidence that this param is *NOT* @Nullable (optimization).
+  boolean possibleNPE;
 
   protected NonNullInAnalysis(RichControlFlow richControlFlow, Direction direction, boolean stable) {
     super(richControlFlow, direction, stable);
@@ -301,6 +304,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
 
     if (subResult == NPE) {
       results[stateIndex] = NPE;
+      possibleNPE = true;
       addComputed(insnIndex, state);
       return;
     }
@@ -326,6 +330,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
     if (opcode == ATHROW) {
       if (taken) {
         results[stateIndex] = NPE;
+        possibleNPE = true;
       } else {
         results[stateIndex] = Identity;
       }
@@ -481,13 +486,9 @@ class NullableInAnalysis extends Analysis<PResult> {
             }
           }
         }
-        if (baseState != null) {
-          addComputed(insnIndex, state);
-        } else {
-          // the main call
+        if (baseState == null) {
           processState(state);
         }
-
       }
     }
     if (earlyResult != null) {
@@ -505,6 +506,8 @@ class NullableInAnalysis extends Analysis<PResult> {
     Frame<BasicValue> frame = conf.frame;
     AbstractInsnNode insnNode = methodNode.instructions.get(insnIndex);
     List<Conf> nextHistory = dfsTree.loopEnters[insnIndex] ? append(history, conf) : history;
+
+    addComputed(insnIndex, state);
     execute(frame, insnNode);
 
     if (subResult == NPE || top) {

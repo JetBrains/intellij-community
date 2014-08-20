@@ -42,6 +42,7 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
   public static final Final<Key, Value> FINAL_TOP = new Final<Key, Value>(Value.Top);
   public static final Final<Key, Value> FINAL_BOT = new Final<Key, Value>(Value.Bot);
   public static final Final<Key, Value> FINAL_NOT_NULL = new Final<Key, Value>(Value.NotNull);
+  public static final Final<Key, Value> FINAL_NULL = new Final<Key, Value>(Value.Null);
   private static final List<Equation<Key, Value>> EMPTY_EQUATIONS = Collections.EMPTY_LIST;
 
   @NotNull
@@ -129,22 +130,21 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
           return Pair.create(primaryKey, EMPTY_EQUATIONS);
         }
 
-
         try {
           final ControlFlowGraph graph = ControlFlowGraph.build(className, methodNode, jsr);
           if (graph.transitions.length > 0) {
             final DFSTree dfs = DFSTree.build(graph.transitions, graph.edgeCount);
-            boolean complex = !dfs.back.isEmpty();
-            if (!complex) {
+            boolean branching = !dfs.back.isEmpty();
+            if (!branching) {
               for (int[] transition : graph.transitions) {
                 if (transition != null && transition.length > 1) {
-                  complex = true;
+                  branching = true;
                   break;
                 }
               }
             }
 
-            if (complex) {
+            if (branching) {
               RichControlFlow richControlFlow = new RichControlFlow(graph, dfs);
               if (richControlFlow.reducible()) {
                 return Pair.create(primaryKey,
@@ -180,7 +180,7 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
                                           final boolean stable,
                                           boolean jsr) throws AnalyzerException {
 
-        List<Equation<Key, Value>> result = new ArrayList<Equation<Key, Value>>(argumentTypes.length * 3 + 1);
+        List<Equation<Key, Value>> result = new ArrayList<Equation<Key, Value>>(argumentTypes.length * 4 + 1);
         boolean maybeLeakingParameter = isInterestingResult;
         for (Type argType : argumentTypes) {
           if (ASMUtils.isReferenceType(argType) || (isReferenceResult && ASMUtils.isBooleanType(argType))) {
@@ -193,6 +193,8 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
           maybeLeakingParameter ? leakingParametersAndFrames(method, methodNode, argumentTypes, jsr) : null;
         boolean[] leakingParameters =
           leakingParametersAndFrames != null ? leakingParametersAndFrames.parameters : null;
+        boolean[] leakingNullableParameters =
+          leakingParametersAndFrames != null ? leakingParametersAndFrames.nullableParameters : null;
 
         final NullableLazyValue<boolean[]> origins = new NullableLazyValue<boolean[]>() {
           @Override
@@ -231,14 +233,28 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
           boolean notNullParam = false;
 
           if (isReferenceArg) {
+            boolean possibleNPE = false;
             if (leakingParameters[i]) {
-              Equation<Key, Value> notNullParamEquation = new NonNullInAnalysis(richControlFlow, new In(i, In.NOT_NULL), stable).analyze();
+              NonNullInAnalysis notNullInAnalysis = new NonNullInAnalysis(richControlFlow, new In(i, In.NOT_NULL), stable);
+              Equation<Key, Value> notNullParamEquation = notNullInAnalysis.analyze();
+              possibleNPE = notNullInAnalysis.possibleNPE;
               notNullParam = notNullParamEquation.rhs.equals(FINAL_NOT_NULL);
               result.add(notNullParamEquation);
             }
             else {
               // parameter is not leaking, so it is definitely NOT @NotNull
               result.add(new Equation<Key, Value>(new Key(method, new In(i, In.NOT_NULL), stable), FINAL_TOP));
+            }
+            if (leakingNullableParameters[i]) {
+              if (notNullParam || possibleNPE) {
+                result.add(new Equation<Key, Value>(new Key(method, new In(i, In.NULLABLE), stable), FINAL_TOP));
+              }
+              else {
+                result.add(new NullableInAnalysis(richControlFlow, new In(i, In.NULLABLE), stable).analyze());
+              }
+            }
+            else {
+              result.add(new Equation<Key, Value>(new Key(method, new In(i, In.NULLABLE), stable), FINAL_NULL));
             }
           }
           if (isReferenceArg && isInterestingResult) {
@@ -296,7 +312,7 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
                                              boolean isReferenceResult,
                                              boolean isBooleanResult,
                                              boolean stable) throws AnalyzerException {
-        List<Equation<Key, Value>> result = new ArrayList<Equation<Key, Value>>(argumentTypes.length * 3 + 1);
+        List<Equation<Key, Value>> result = new ArrayList<Equation<Key, Value>>(argumentTypes.length * 4 + 1);
         CombinedSingleAnalysis analyzer = new CombinedSingleAnalysis(method, graph);
         analyzer.analyze();
         if (isReferenceResult) {
@@ -307,6 +323,7 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
           boolean isRefArg = ASMUtils.isReferenceType(argType);
           if (isRefArg) {
             result.add(analyzer.notNullParamEquation(i, stable));
+            result.add(analyzer.nullableParamEquation(i, stable));
           }
           if (isRefArg && (isReferenceResult || isBooleanResult)) {
             result.add(analyzer.contractEquation(i, Value.Null, stable));
@@ -336,6 +353,7 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
 
           if (isReferenceArg) {
             result.add(new Equation<Key, Value>(new Key(method, new In(i, In.NOT_NULL), stable), FINAL_TOP));
+            result.add(new Equation<Key, Value>(new Key(method, new In(i, In.NULLABLE), stable), FINAL_TOP));
           }
           if (isReferenceArg && isInterestingResult) {
             result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), FINAL_TOP));

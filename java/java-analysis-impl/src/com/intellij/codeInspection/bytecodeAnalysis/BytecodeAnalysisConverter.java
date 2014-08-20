@@ -329,14 +329,14 @@ public class BytecodeAnalysisConverter {
    * Given `solution` of all dependencies of a method with the `methodKey`, converts this solution into annotations.
    *
    * @param solution solution of equations
-   * @param annotations annotations to which corresponding solutions should be added
+   * @param methodAnnotations annotations to which corresponding solutions should be added
    * @param methodKey a primary key of a method being analyzed
    * @param arity arity of this method (hint for constructing @Contract annotations)
    */
-  public static void addMethodAnnotations(@NotNull HashMap<HKey, Value> solution, @NotNull Annotations annotations, @NotNull HKey methodKey, int arity) {
+  public static void addMethodAnnotations(@NotNull HashMap<HKey, Value> solution, @NotNull MethodAnnotations methodAnnotations, @NotNull HKey methodKey, int arity) {
     List<String> clauses = new ArrayList<String>();
-    HashSet<HKey> notNulls = annotations.notNulls;
-    HashMap<HKey, String> contracts = annotations.contracts;
+    HashSet<HKey> notNulls = methodAnnotations.notNulls;
+    HashMap<HKey, String> contracts = methodAnnotations.contracts;
     for (Map.Entry<HKey, Value> entry : solution.entrySet()) {
       HKey key = entry.getKey().mkStable();
       Value value = entry.getValue();
@@ -361,27 +361,6 @@ public class BytecodeAnalysisConverter {
       StringUtil.join(clauses, ";", sb);
       sb.append('"');
       contracts.put(methodKey, sb.toString().intern());
-    }
-  }
-
-  /**
-   * Converts solutions for equations over parameters into annotations.
-   *
-   * @param solution
-   * @param annotations
-   */
-  public static void addParameterAnnotations(@NotNull HashMap<HKey, Value> solution, @NotNull Annotations annotations) {
-    HashSet<HKey> notNulls = annotations.notNulls;
-    for (Map.Entry<HKey, Value> entry : solution.entrySet()) {
-      HKey key = entry.getKey().mkStable();
-      Value value = entry.getValue();
-      if (value == Value.Top || value == Value.Bot) {
-        continue;
-      }
-      Direction direction = extractDirection(key.dirKey);
-      if (value == Value.NotNull && (direction instanceof In || direction instanceof Out)) {
-        notNulls.add(key);
-      }
     }
   }
 
