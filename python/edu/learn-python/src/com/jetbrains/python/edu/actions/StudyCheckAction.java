@@ -177,7 +177,14 @@ public class StudyCheckAction extends DumbAwareAction {
       }
     }
     FileEditorManager.getInstance(project).openFile(fileToNavigate, true);
-    IdeFocusManager.getInstance(project).requestFocus(editor.getContentComponent(), true);
+    final Editor editorToNavigate = editor;
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        IdeFocusManager.getInstance(project).requestFocus(editorToNavigate.getContentComponent(), true);
+      }
+    });
+
     taskFileToNavigate.navigateToFirstFailedTaskWindow(editor);
   }
 

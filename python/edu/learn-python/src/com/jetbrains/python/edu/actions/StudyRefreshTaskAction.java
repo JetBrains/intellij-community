@@ -92,7 +92,12 @@ public class StudyRefreshTaskAction extends DumbAwareAction {
                     document.addDocumentListener(listener);
                   }
                   selectedTaskFile.drawAllWindows(editor);
-                  IdeFocusManager.getInstance(project).requestFocus(editor.getContentComponent(), true);
+                  ApplicationManager.getApplication().invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                      IdeFocusManager.getInstance(project).requestFocus(editor.getContentComponent(), true);
+                    }
+                  });
                   selectedTaskFile.navigateToFirstTaskWindow(editor);
                   BalloonBuilder balloonBuilder =
                     JBPopupFactory.getInstance().createHtmlTextBalloonBuilder("You can now start again", MessageType.INFO, null);
