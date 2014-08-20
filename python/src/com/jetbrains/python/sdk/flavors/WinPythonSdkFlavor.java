@@ -59,6 +59,7 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
 
   public static void findInPath(Collection<String> candidates, String exeName) {
     final String path = System.getenv("PATH");
+    if (path == null) return;
     for (String pathEntry : StringUtil.split(path, ";")) {
       if (pathEntry.startsWith("\"") && pathEntry.endsWith("\"")) {
         if (pathEntry.length() < 2) continue;
