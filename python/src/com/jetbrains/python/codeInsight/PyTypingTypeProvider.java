@@ -143,16 +143,22 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private static String resolveToQualifiedName(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+  private static PsiElement resolve(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
     if (expression instanceof PyReferenceOwner) {
       final PyReferenceOwner referenceOwner = (PyReferenceOwner)expression;
       final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
       final PsiPolyVariantReference reference = referenceOwner.getReference(resolveContext);
-      final PsiElement element = reference.resolve();
-      if (element instanceof PyQualifiedNameOwner) {
-        final PyQualifiedNameOwner qualifiedNameOwner = (PyQualifiedNameOwner)element;
-        return qualifiedNameOwner.getQualifiedName();
-      }
+      return reference.resolve();
+    }
+    return null;
+  }
+
+  @Nullable
+  private static String resolveToQualifiedName(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+    final PsiElement element = resolve(expression, context);
+    if (element instanceof PyQualifiedNameOwner) {
+      final PyQualifiedNameOwner qualifiedNameOwner = (PyQualifiedNameOwner)element;
+      return qualifiedNameOwner.getQualifiedName();
     }
     return null;
   }
