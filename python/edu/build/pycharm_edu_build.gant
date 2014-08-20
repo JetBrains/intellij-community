@@ -22,7 +22,7 @@ includeTargets << new File("$home/community/build/scripts/libLicenses.gant")
 includeTargets << new File("$home/build/scripts/ultimate_utils.gant")
 
 requireProperty("buildNumber", requireProperty("build.number", snapshot))
-setProperty("buildName", "PE-$buildNumber")
+setProperty("buildName", "EDU-$buildNumber")
 setProperty("ch", "$home/community")
 setProperty("pythonCommunityHome", "$ch/python")
 setProperty("pythonEduHome", "$ch/python/edu")
@@ -92,7 +92,7 @@ class Paths {
 }
 
 setProperty("paths", new Paths(home))
-setProperty("buildName", "PE-$buildNumber")
+setProperty("buildName", "EDU-$buildNumber")
 
 target('default': "Build artifacts") {
 
@@ -146,7 +146,7 @@ target('default': "Build artifacts") {
   layoutEducational("${paths.sandbox}/classes/production", usedJars)
 
 
-  def extraArgs = ["build.code": "pycharm${buildName}", "build.number": "PE-$buildNumber", "artifacts.path": "${paths.artifacts}"]
+  def extraArgs = ["build.code": "pycharm${buildName}", "build.number": ${buildName}, "artifacts.path": "${paths.artifacts}"]
   signMacZip("pycharm", extraArgs + ["sitFileName": "pycharm${buildName}-jdk-bundled", "jdk_archive_name": "jdk_mac_redist_for_${buildNumber}.tar"])
   buildDmg("pycharm", "${pythonEduHome}/build/DMG_background.png", extraArgs + ["sitFileName": "pycharm${buildName}-jdk-bundled", "jdk_archive_name": "jdk_mac_redist_for_${buildNumber}.tar"])
 
@@ -168,11 +168,11 @@ public layoutEducational(String classesPath, Set usedJars) {
   }, "-Didea.platform.prefix=PyCharmEdu -Didea.no.jre.check=true")
 
   if (!dryRun) {
-    wireBuildDate("PE-${buildNumber}", appInfo)
+    wireBuildDate("EDU-${buildNumber}", appInfo)
   }
 
   Map args = [
-    buildNumber: "PE-${buildNumber}",
+    buildNumber: "EDU-${buildNumber}",
     system_selector: system_selector,
     ide_jvm_args: "-Didea.platform.prefix=PyCharmEdu -Didea.no.jre.check=true"]
 
@@ -183,7 +183,7 @@ public layoutEducational(String classesPath, Set usedJars) {
   layoutUnix(args, paths.distUnix)
   layoutMac(args, paths.distMac)
 
-  ant.echo(message: "PE-${buildNumber}", file: "${paths.distAll}/build.txt")
+  ant.echo(message: "EDU-${buildNumber}", file: "${paths.distAll}/build.txt")
 
   def launcher = "${paths.distWin}/bin/pycharm.exe"
   List resourcePaths = ["$ch/community-resources/src",
@@ -201,7 +201,7 @@ public layoutEducational(String classesPath, Set usedJars) {
             "$pythonEduHome/build/strings.nsi", "$pythonEduHome/build/paths.nsi",
             "pycharmEDU-", false, true, ".py", system_selector)
 
-  String tarRoot = isEap() ? "pycharm-pe-$buildNumber" : "pycharm-pe-${p("component.version.major")}.${p("component.version.minor")}"
+  String tarRoot = isEap() ? "pycharm-edu-$buildNumber" : "pycharm-edu-${p("component.version.major")}.${p("component.version.minor")}"
   buildTarGz(tarRoot, "$paths.artifacts/pycharm${buildName}.tar", [paths.distAll, paths.distUnix])
 
   String macAppRoot = isEap() ? "PyCharm EDU ${p("component.version.major")}.${p("component.version.minor")} EAP.app/Contents" : "PyCharm EDU.app/Contents"
