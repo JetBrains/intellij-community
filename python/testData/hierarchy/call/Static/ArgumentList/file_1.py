@@ -1,5 +1,8 @@
-def func1(f):
-    f(1)
-
-def target_func(x):
+def target_func():
     pass
+
+def func1(f):
+    f()
+
+def func2(f):
+    return f
