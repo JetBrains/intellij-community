@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -42,7 +43,7 @@ public class CustomResourceBundle extends ResourceBundle {
   private CustomResourceBundle(final List<PropertiesFile> files, final @NotNull String baseName) {
     LOG.assertTrue(!files.isEmpty());
     myFiles = new ArrayList<PropertiesFile>(files);
-    myFiles.sort(new Comparator<PropertiesFile>() {
+    Collections.sort(myFiles, new Comparator<PropertiesFile>() {
       @Override
       public int compare(PropertiesFile f1, PropertiesFile f2) {
         return f1.getName().compareTo(f2.getName());
