@@ -37,7 +37,7 @@ public interface BundleNameEvaluator {
         if (qName.length() > 0) {
           qName.append(".");
         }
-        qName.append(PropertiesUtil.getBaseName(psiFile));
+        qName.append(ResourceBundleManager.getInstance(psiFile.getProject()).getBaseName(psiFile));
         return qName.toString();
       }
       return null;

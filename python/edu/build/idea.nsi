@@ -23,6 +23,7 @@ RequestExecutionLevel user
 ;------------------------------------------------------------------------------
 !include "MUI2.nsh"
 !include "FileFunc.nsh"
+!include "TextFunc.nsh"
 !include UAC.nsh
 !include "InstallOptions.nsh"
 !include StrFunc.nsh
@@ -32,6 +33,7 @@ ${UnStrStr}
 ${UnStrLoc}
 ${UnStrRep}
 ${StrRep}
+${StrTok}
 
 ReserveFile "desktop.ini"
 ReserveFile "DeleteSettings.ini"
@@ -700,49 +702,69 @@ command_exists:
     '$INSTDIR\bin\${PRODUCT_EXE_FILE} "%1"'
 FunctionEnd
 
+Function getPythonInfo
+  ClearErrors
+  FileOpen $3 $INSTDIR\python\python.txt r
+  IfErrors cantOpenFile ;file can not be open.  
+  ;get python2 info
+  FileRead $3 $4
+  ${StrTok} $0 $4 " " "1" "1"
+  ${StrTok} $1 $4 " " "2" "1"
+  ;get python3 info
+  FileRead $3 $4
+  ${StrTok} $R0 $4 " " "1" "1"
+  ${StrTok} $R1 $4 " " "2" "1"
+  goto Done
+cantOpenFile:
+  MessageBox MB_OK|MB_ICONEXCLAMATION "python.txt is not exist. Python will not be downloaded."
+  StrCpy $0 "Error"
+Done:
+FunctionEnd
+
+
 ;------------------------------------------------------------------------------
 ; Installer sections
 ;------------------------------------------------------------------------------
 Section "IDEA Files" CopyIdeaFiles
-;  StrCpy $baseRegKey "HKCU"
-;  !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 3" "State"
-;  StrCmp $R2 1 continue_for_current_user
-;  SetShellVarContext all
-;  StrCpy $baseRegKey "HKLM"
-;  continue_for_current_user:
-
-; create shortcuts
-
+  ${LineSum} "$INSTDIR\python\python.txt" $R0
+  IfErrors cantOpenFile
+  StrCmp $R0 "2" getPythonInfo ;info about 2 and 3 version of python
+cantOpenFile:  
+  MessageBox MB_OK|MB_ICONEXCLAMATION "python.txt is invalid. Python will not be downloaded."
+  goto skip_python_download
+getPythonInfo:  
+  Call getPythonInfo
+  StrCmp $0 "Error" skip_python_download
   !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 4" "State"
   StrCmp $R2 1 "" python3
-  StrCpy $R2 "2.7"
+  StrCpy $R2 $0
+  StrCpy $R3 $1
   goto check_python
 python3:  
-  StrCpy $R2 "3.4"
+  StrCpy $R2 $R0
+  StrCpy $R3 $R1
 check_python:  
-  ReadRegStr $1 "HKCU" "Software\Python\PythonCore\$R2\InstallPath" $0
+  ReadRegStr $1 "HKCU" "Software\Python\PythonCore\$R2\InstallPath" ""
   StrCmp $1 "" installation_for_all_users
   goto verefy_python_launcher
 installation_for_all_users:
-  ReadRegStr $1 "HKLM" "Software\Python\PythonCore\$R2\InstallPath" $0
+  ReadRegStr $1 "HKLM" "Software\Python\PythonCore\$R2\InstallPath" ""
   StrCmp $1 "" get_python
 verefy_python_launcher:
   IfFileExists $1\python.exe python_exists get_python
-
-get_python:
-  CreateDirectory "$INSTDIR\python"
-  StrCmp $R2 "2.7" get_python2
-  inetc::get "https://www.python.org/ftp/python/3.4.1/python-3.4.1.amd64.msi" "$INSTDIR\python\python_$R2.msi"
+get_python:  
+  inetc::get "$R3" "$INSTDIR\python\python_$R2.msi"
   goto validate_download
-get_python2:  
-  inetc::get "http://www.python.org/ftp/python/2.7.8/python-2.7.8.msi" "$INSTDIR\python\python_$R2.msi"
-validate_download:  
+validate_download:
   Pop $0
   ${If} $0 == "OK" 
-    ExecCmd::exec 'msiexec /i "$INSTDIR\python\python_$R2.msi" /quiet /qn /norestart /log "$INSTDIR\python\python_$R2_silent.log"'
+    ExecCmd::exec 'msiexec /i "$INSTDIR\python\python_$R2.msi" /quiet /qn /norestart'
+  ${Else}
+    MessageBox MB_OK|MB_ICONEXCLAMATION "The download is failed"
   ${EndIf}
-
 python_exists:  
+skip_python_download:  
+; create shortcuts
   !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 1" "State"
   StrCmp $R2 1 "" skip_desktop_shortcut
   CreateShortCut "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk" \
@@ -882,6 +904,21 @@ Function ConfirmDesktopShortcut
   ${If} $0 == "1"
     !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Flags" "DISABLED"
   ${EndIf}
+  CreateDirectory "$INSTDIR\python"
+  inetc::get "http://www.jetbrains.com/updates/python.txt" "$INSTDIR\python\python.txt"
+  ${LineSum} "$INSTDIR\python\python.txt" $R0
+  IfErrors cantOpenFile
+  StrCmp $R0 "2" getPythonInfo
+cantOpenFile:  
+  MessageBox MB_OK|MB_ICONEXCLAMATION "python.txt is not exist. Python will not be downloaded."
+  goto association
+getPythonInfo:  
+  Call getPythonInfo
+  StrCmp $0 "Error" association
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 4" "Text" "Python $0"
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 5" "Text" "Python $R0"
+
+association:
   StrCmp "${ASSOCIATION}" "NoAssociation" skip_association
   StrCpy $R0 6
   push "${ASSOCIATION}"

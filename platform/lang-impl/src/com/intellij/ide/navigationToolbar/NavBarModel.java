@@ -222,9 +222,8 @@ public class NavBarModel {
     psiElement = getOriginalElement(psiElement);
     PsiElement resultElement = psiElement;
 
-    for (final NavBarModelExtension modelExtension : Extensions.getExtensions(NavBarModelExtension.EP_NAME)) {
-      resultElement = modelExtension.adjustElement(resultElement);
-    }
+    resultElement = normalize(resultElement);
+    if (resultElement == null) return;
 
     boolean foundByExtension = false;
     for (final NavBarModelExtension modelExtension : Extensions.getExtensions(NavBarModelExtension.EP_NAME)) {
@@ -326,7 +325,7 @@ public class NavBarModel {
   }
 
   @Nullable
-  private static PsiElement normalize(PsiElement child) {
+  private static PsiElement normalize(@Nullable PsiElement child) {
     if (child == null) return null;
     for (NavBarModelExtension modelExtension : Extensions.getExtensions(NavBarModelExtension.EP_NAME)) {
       child = modelExtension.adjustElement(child);

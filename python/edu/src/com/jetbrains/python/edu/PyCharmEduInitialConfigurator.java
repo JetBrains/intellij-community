@@ -35,14 +35,15 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.wm.ToolWindowEP;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.platform.DirectoryProjectConfigurator;
 import com.intellij.platform.PlatformProjectViewOpener;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -64,7 +65,7 @@ import java.util.Set;
 public class PyCharmEduInitialConfigurator {
   @NonNls private static final String DISPLAYED_PROPERTY = "PyCharm.initialConfigurationShown";
 
-  @NonNls private static final String CONFIGURED = "PyCharm.InitialConfiguration";
+  @NonNls private static final String CONFIGURED = "PyCharmEDU.InitialConfiguration";
 
 
   public static class First {
@@ -92,6 +93,8 @@ public class PyCharmEduInitialConfigurator {
       uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES = true;
       uiSettings.SHOW_MAIN_TOOLBAR = false;
       codeInsightSettings.REFORMAT_ON_PASTE = CodeInsightSettings.NO_REFORMAT;
+
+      Registry.get("ide.new.settings.dialog").setValue(true);
 
       GeneralSettings.getInstance().setShowTipsOnStartup(false);
 
@@ -147,6 +150,29 @@ public class PyCharmEduInitialConfigurator {
         }
 
         patchProjectAreaExtensions(project);
+
+        StartupManager.getInstance(project).runWhenProjectIsInitialized(new DumbAwareRunnable() {
+          @Override
+          public void run() {
+            if (project.isDisposed()) return;
+
+            ToolWindowManager.getInstance(project).invokeLater(new Runnable() {
+              int count = 0;
+
+              public void run() {
+                if (project.isDisposed()) return;
+                if (count++ < 3) { // we need to call this after ToolWindowManagerImpl.registerToolWindowsFromBeans
+                  ToolWindowManager.getInstance(project).invokeLater(this);
+                  return;
+                }
+                ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow("Project");
+                if (toolWindow.getType() != ToolWindowType.SLIDING) {
+                  toolWindow.activate(null);
+                }
+              }
+            });
+          }
+        });
       }
     });
   }

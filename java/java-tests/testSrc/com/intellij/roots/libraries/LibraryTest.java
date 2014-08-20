@@ -1,16 +1,21 @@
 package com.intellij.roots.libraries;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.roots.NativeLibraryOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.roots.ModuleRootManagerTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import org.jdom.Element;
-import org.jdom.output.XMLOutputter;
+
+import java.util.Collections;
 
 /**
  *  @author dsl
@@ -40,17 +45,74 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     commit(model2);
     assertFalse(listenerNotifiedOnChange[0]);
 
-    final Element element = new Element("root");
-    library.writeExternal(element);
-    assertEquals("<root><library name=\"library\"><CLASSES><root url=\"file://x.jar\" /></CLASSES><JAVADOC /><SOURCES><root url=\"file://x-src.jar\" /></SOURCES></library></root>",
-            new XMLOutputter().outputString(element));
-
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
         libraryTable.removeLibrary(library);
       }
     });
+  }
+
+  public void testLibrarySerialization() {
+    Library library = PsiTestUtil.addProjectLibrary(myModule, "junit", Collections.singletonList(getJDomJar()),
+                                                    Collections.singletonList(getJDomSources()));
+    Element element = serialize(library);
+    String classesUrl = getJDomJar().getUrl();
+    String sourcesUrl = getJDomSources().getUrl();
+    PlatformTestUtil.assertElementEquals(
+      "<root><library name=\"junit\"><CLASSES><root url=\"" + classesUrl + "\" /></CLASSES>" +
+      "<JAVADOC /><SOURCES><root url=\"" + sourcesUrl + "\" /></SOURCES></library></root>",
+      element);
+  }
+
+  public void testNativePathSerialization() {
+    LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
+    Library library = table.createLibrary("native");
+    Library.ModifiableModel model = library.getModifiableModel();
+    model.addRoot("file://native", NativeLibraryOrderRootType.getInstance());
+    commit(model);
+
+    Element element = serialize(library);
+    PlatformTestUtil.assertElementEquals(
+      "<root><library name=\"native\"><CLASSES /><JAVADOC />" +
+      "<NATIVE><root url=\"file://native\" /></NATIVE>" +
+      "<SOURCES /></library></root>",
+      element);
+  }
+
+  public void testJarDirectoriesSerialization() {
+    LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
+    Library library = table.createLibrary("jarDirs");
+    Library.ModifiableModel model = library.getModifiableModel();
+    model.addJarDirectory("file://jar-dir", false, OrderRootType.CLASSES);
+    model.addJarDirectory("file://jar-dir-src", false, OrderRootType.SOURCES);
+    commit(model);
+
+    Element element = serialize(library);
+    PlatformTestUtil.assertElementEquals("<root>\n" +
+                                         "  <library name=\"jarDirs\">\n" +
+                                         "    <CLASSES>\n" +
+                                         "      <root url=\"file://jar-dir\" />\n" +
+                                         "    </CLASSES>\n" +
+                                         "    <JAVADOC />\n" +
+                                         "    <SOURCES>\n" +
+                                         "      <root url=\"file://jar-dir-src\" />\n" +
+                                         "    </SOURCES>\n" +
+                                         "    <jarDirectory url=\"file://jar-dir\" recursive=\"false\" />\n" +
+                                         "    <jarDirectory url=\"file://jar-dir-src\" recursive=\"false\" type=\"SOURCES\" />\n" +
+                                         "  </library>\n" +
+                                         "</root>" , element);
+  }
+
+  private static Element serialize(Library library) {
+    try {
+      Element element = new Element("root");
+      library.writeExternal(element);
+      return element;
+    }
+    catch (WriteExternalException e) {
+      throw new AssertionError(e);
+    }
   }
 
   public void testAddRemoveExcludedRoot() {

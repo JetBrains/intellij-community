@@ -33,6 +33,7 @@ import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.JBListWithHintProvider;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
+import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.usages.UsageView;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
@@ -147,8 +148,7 @@ public class PsiElementListNavigator {
       setCancelCallback(new Computable<Boolean>() {
         @Override
         public Boolean compute() {
-          list.hideHint();
-
+          HintUpdateSupply.hideHint(list);
           return true;
         }
       });

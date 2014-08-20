@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -52,24 +53,35 @@ public class SvnBindException extends VcsException {
     errors.putValue(code.getCode(), getMessage());
   }
 
-  public SvnBindException(String message) {
-    super(message);
-
-    if (!StringUtil.isEmpty(message)) {
-      parse(message, SvnUtil.ERROR_PATTERN, errors);
-      parse(message, SvnUtil.WARNING_PATTERN, warnings);
-    }
+  public SvnBindException(@Nullable String message) {
+    this(message, null);
   }
 
-  public SvnBindException(Throwable throwable) {
-    super(throwable);
+  public SvnBindException(@Nullable Throwable cause) {
+    this(null, cause);
+  }
 
+  public SvnBindException(@Nullable String message, @Nullable Throwable cause) {
+    super(message, cause);
+
+    init(message);
+    init(cause);
+  }
+
+  private void init(@Nullable Throwable throwable) {
     if (throwable instanceof SVNException) {
       SVNException e = (SVNException)throwable;
       int code = e.getErrorMessage().getErrorCode().getCode();
       int type = e.getErrorMessage().getType();
 
       (type == SVNErrorMessage.TYPE_ERROR ? errors : warnings).putValue(code, e.getMessage());
+    }
+  }
+
+  private void init(@Nullable String message) {
+    if (!StringUtil.isEmpty(message)) {
+      parse(message, SvnUtil.ERROR_PATTERN, errors);
+      parse(message, SvnUtil.WARNING_PATTERN, warnings);
     }
   }
 

@@ -18,6 +18,7 @@ package com.intellij.execution.configurations;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -25,6 +26,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.PathsList;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +34,8 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.charset.Charset;
 
 public class JavaParameters extends SimpleJavaParameters {
+  private static final Logger LOG = Logger.getInstance(JavaParameters.class);
+  private static final String JAVA_LIBRARY_PATH_PROPERTY = "java.library.path";
   public static final DataKey<JavaParameters> JAVA_PARAMETERS = DataKey.create("javaParameters");
 
   public String getJdkPath() throws CantRunException {
@@ -70,6 +74,21 @@ public class JavaParameters extends SimpleJavaParameters {
 
     setDefaultCharset(module.getProject());
     configureEnumerator(OrderEnumerator.orderEntries(module).runtimeOnly().recursively(), classPathType, jdk).collectPaths(getClassPath());
+    configureJavaLibraryPath(OrderEnumerator.orderEntries(module).recursively());
+  }
+
+  private void configureJavaLibraryPath(OrderEnumerator enumerator) {
+    PathsList pathsList = new PathsList();
+    enumerator.runtimeOnly().withoutSdk().roots(NativeLibraryOrderRootType.getInstance()).collectPaths(pathsList);
+    if (!pathsList.getPathList().isEmpty()) {
+      ParametersList vmParameters = getVMParametersList();
+      if (vmParameters.hasProperty(JAVA_LIBRARY_PATH_PROPERTY)) {
+        LOG.info(JAVA_LIBRARY_PATH_PROPERTY + " property is already specified, native library paths from dependencies (" + pathsList.getPathsString() + ") won't be added");
+      }
+      else {
+        vmParameters.addProperty(JAVA_LIBRARY_PATH_PROPERTY, pathsList.getPathsString());
+      }
+    }
   }
 
   @Nullable
@@ -123,6 +142,7 @@ public class JavaParameters extends SimpleJavaParameters {
     }
     setDefaultCharset(project);
     configureEnumerator(OrderEnumerator.orderEntries(project).runtimeOnly(), classPathType, jdk).collectPaths(getClassPath());
+    configureJavaLibraryPath(OrderEnumerator.orderEntries(project));
   }
 
   private static OrderRootsEnumerator configureEnumerator(OrderEnumerator enumerator, @MagicConstant(valuesFromClass = JavaParameters.class) int classPathType, Sdk jdk) {

@@ -223,4 +223,6 @@ final class Key {
   }
 }
 
+class LimitReachedException extends RuntimeException {
 
+}

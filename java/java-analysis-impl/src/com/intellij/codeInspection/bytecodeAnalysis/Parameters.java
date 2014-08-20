@@ -15,6 +15,10 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
+import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
+import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph.Edge;
+import com.intellij.codeInspection.bytecodeAnalysis.asm.RichControlFlow;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.tree.AbstractInsnNode;
 import org.jetbrains.org.objectweb.asm.tree.JumpInsnNode;
@@ -25,7 +29,9 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.BasicInterpreter;
 import org.jetbrains.org.objectweb.asm.tree.analysis.BasicValue;
 import org.jetbrains.org.objectweb.asm.tree.analysis.Frame;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.InstanceOfCheckValue;
 import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.ParamValue;
@@ -127,34 +133,59 @@ abstract class PResults {
 
 }
 
+interface PendingAction {}
+class ProceedState implements PendingAction {
+  final State state;
+
+  ProceedState(State state) {
+    this.state = state;
+  }
+}
+class MakeResult implements PendingAction {
+  final State state;
+  final PResult subResult;
+  final int[] indices;
+
+  MakeResult(State state, PResult subResult, int[] indices) {
+    this.state = state;
+    this.subResult = subResult;
+    this.indices = indices;
+  }
+}
+
 class NonNullInAnalysis extends Analysis<PResult> {
+  private static final ThreadLocal<PendingAction[]> ourPending = new ThreadLocal<PendingAction[]>() {
+    @Override
+    protected PendingAction[] initialValue() {
+      return new PendingAction[Analysis.STEPS_LIMIT];
+    }
+  };
+  private static final ThreadLocal<PResult[]> ourResults = new ThreadLocal<PResult[]>() {
+    @Override
+    protected PResult[] initialValue() {
+      return new PResult[Analysis.STEPS_LIMIT];
+    }
+  };
+
+  final private PendingAction[] pending = ourPending.get();
 
   private final NonNullInInterpreter interpreter = new NonNullInInterpreter();
+  private PResult[] results;
 
   protected NonNullInAnalysis(RichControlFlow richControlFlow, Direction direction, boolean stable) {
     super(richControlFlow, direction, stable);
+    results = ourResults.get();
   }
 
-  @Override
-  PResult identity() {
-    return Identity;
-  }
-
-  @Override
-  PResult combineResults(PResult delta, List<PResult> subResults) throws AnalyzerException {
-    PResult subResult = Identity;
-    for (PResult sr : subResults) {
-      subResult = join(subResult, sr);
+  PResult combineResults(PResult delta, int[] subResults) throws AnalyzerException {
+    PResult result = Identity;
+    for (int subResult : subResults) {
+      result = join(result, results[subResult]);
     }
-    return meet(delta, subResult);
+    return meet(delta, result);
   }
 
-  @Override
-  boolean isEarlyResult(PResult result) {
-    return false;
-  }
-
-  @Override
+  @NotNull
   Equation<Key, Value> mkEquation(PResult result) {
     if (Identity == result || Return == result) {
       return new Equation<Key, Value>(aKey, new Final<Key, Value>(Value.Top));
@@ -176,8 +207,73 @@ class NonNullInAnalysis extends Analysis<PResult> {
   private Frame<BasicValue> nextFrame = null;
   private PResult subResult = null;
 
-  @Override
-  void processState(State state) throws AnalyzerException {
+  @NotNull
+  protected Equation<Key, Value> analyze() throws AnalyzerException {
+    pendingPush(new ProceedState(createStartState()));
+    int steps = 0;
+    while (pendingTop > 0 && earlyResult == null) {
+      steps ++;
+      if (steps >= STEPS_LIMIT) {
+        throw new AnalyzerException(null, "limit is reached, steps: " + steps + " in method " + method);
+      }
+      PendingAction action = pending[--pendingTop];
+      if (action instanceof MakeResult) {
+        MakeResult makeResult = (MakeResult) action;
+        PResult result = combineResults(makeResult.subResult, makeResult.indices);
+        State state = makeResult.state;
+        int insnIndex = state.conf.insnIndex;
+        results[state.index] = result;
+        addComputed(insnIndex, state);
+      }
+      else if (action instanceof ProceedState) {
+        ProceedState proceedState = (ProceedState) action;
+        State state = proceedState.state;
+        int insnIndex = state.conf.insnIndex;
+        Conf conf = state.conf;
+        List<Conf> history = state.history;
+
+        boolean fold = false;
+        if (dfsTree.loopEnters[insnIndex]) {
+          for (Conf prev : history) {
+            if (AbstractValues.isInstance(conf, prev)) {
+              fold = true;
+              break;
+            }
+          }
+        }
+        if (fold) {
+          results[state.index] = Identity;
+          addComputed(insnIndex, state);
+        }
+        else {
+          State baseState = null;
+          List<State> thisComputed = computed[insnIndex];
+          if (thisComputed != null) {
+            for (State prevState : thisComputed) {
+              if (stateEquiv(state, prevState)) {
+                baseState = prevState;
+                break;
+              }
+            }
+          }
+          if (baseState != null) {
+            results[state.index] = results[baseState.index];
+          } else {
+            // the main call
+            processState(state);
+          }
+
+        }
+      }
+    }
+    if (earlyResult != null) {
+      return mkEquation(earlyResult);
+    } else {
+      return mkEquation(results[0]);
+    }
+  }
+
+  private void processState(State state) throws AnalyzerException {
     int stateIndex = state.index;
     Conf conf = state.conf;
     int insnIndex = conf.insnIndex;
@@ -185,15 +281,15 @@ class NonNullInAnalysis extends Analysis<PResult> {
     boolean taken = state.taken;
     Frame<BasicValue> frame = conf.frame;
     AbstractInsnNode insnNode = methodNode.instructions.get(insnIndex);
-    List<Conf> nextHistory = dfsTree.loopEnters.contains(insnIndex) ? append(history, conf) : history;
+    List<Conf> nextHistory = dfsTree.loopEnters[insnIndex] ? append(history, conf) : history;
     boolean hasCompanions = state.hasCompanions;
     execute(frame, insnNode);
 
     boolean notEmptySubResult = subResult != Identity;
 
     if (subResult == NPE) {
-      results.put(stateIndex, NPE);
-      computed.put(insnIndex, append(computed.get(insnIndex), state));
+      results[stateIndex] = NPE;
+      addComputed(insnIndex, state);
       return;
     }
 
@@ -208,8 +304,8 @@ class NonNullInAnalysis extends Analysis<PResult> {
         if (!hasCompanions) {
           earlyResult = Return;
         } else {
-          results.put(stateIndex, Return);
-          computed.put(insnIndex, append(computed.get(insnIndex), state));
+          results[stateIndex] = Return;
+          addComputed(insnIndex, state);
         }
         return;
       default:
@@ -217,68 +313,73 @@ class NonNullInAnalysis extends Analysis<PResult> {
 
     if (opcode == ATHROW) {
       if (taken) {
-        results.put(stateIndex, NPE);
+        results[stateIndex] = NPE;
       } else {
-        results.put(stateIndex, Identity);
+        results[stateIndex] = Identity;
       }
-      computed.put(insnIndex, append(computed.get(insnIndex), state));
+      addComputed(insnIndex, state);
       return;
     }
 
     if (opcode == IFNONNULL && popValue(frame) instanceof ParamValue) {
       int nextInsnIndex = insnIndex + 1;
       State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, hasCompanions || notEmptySubResult);
-      pending.push(new MakeResult<PResult>(state, subResult, new int[]{nextState.index}));
-      pending.push(new ProceedState<PResult>(nextState));
+      pendingPush(new MakeResult(state, subResult, new int[]{nextState.index}));
+      pendingPush(new ProceedState(nextState));
       return;
     }
 
     if (opcode == IFNULL && popValue(frame) instanceof ParamValue) {
       int nextInsnIndex = methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
       State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, hasCompanions || notEmptySubResult);
-      pending.push(new MakeResult<PResult>(state, subResult, new int[]{nextState.index}));
-      pending.push(new ProceedState<PResult>(nextState));
+      pendingPush(new MakeResult(state, subResult, new int[]{nextState.index}));
+      pendingPush(new ProceedState(nextState));
       return;
     }
 
     if (opcode == IFEQ && popValue(frame) == InstanceOfCheckValue) {
       int nextInsnIndex = methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
       State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, hasCompanions || notEmptySubResult);
-      pending.push(new MakeResult<PResult>(state, subResult, new int[]{nextState.index}));
-      pending.push(new ProceedState<PResult>(nextState));
+      pendingPush(new MakeResult(state, subResult, new int[]{nextState.index}));
+      pendingPush(new ProceedState(nextState));
       return;
     }
 
     if (opcode == IFNE && popValue(frame) == InstanceOfCheckValue) {
       int nextInsnIndex = insnIndex + 1;
       State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, hasCompanions || notEmptySubResult);
-      pending.push(new MakeResult<PResult>(state, subResult, new int[]{nextState.index}));
-      pending.push(new ProceedState<PResult>(nextState));
+      pendingPush(new MakeResult(state, subResult, new int[]{nextState.index}));
+      pendingPush(new ProceedState(nextState));
       return;
     }
 
     // general case
     int[] nextInsnIndices = controlFlow.transitions[insnIndex];
-    List<State> nextStates = new ArrayList<State>(nextInsnIndices.length);
     int[] subIndices = new int[nextInsnIndices.length];
-
+    for (int i = 0; i < nextInsnIndices.length; i++) {
+      subIndices[i] = ++id;
+    }
+    pendingPush(new MakeResult(state, subResult, subIndices));
     for (int i = 0; i < nextInsnIndices.length; i++) {
       int nextInsnIndex = nextInsnIndices[i];
       Frame<BasicValue> nextFrame1 = nextFrame;
-      if (controlFlow.errorTransitions.contains(new Edge(insnIndex, nextInsnIndex))) {
+      if (controlFlow.errors[nextInsnIndex] && controlFlow.errorTransitions.contains(new Edge(insnIndex, nextInsnIndex))) {
         nextFrame1 = new Frame<BasicValue>(frame);
         nextFrame1.clearStack();
-        nextFrame1.push(new BasicValue(Type.getType("java/lang/Throwable")));
+        nextFrame1.push(ASMUtils.THROWABLE_VALUE);
       }
-      nextStates.add(new State(++id, new Conf(nextInsnIndex, nextFrame1), nextHistory, taken, hasCompanions || notEmptySubResult));
-      subIndices[i] = (id);
+      pendingPush(new ProceedState(new State(subIndices[i], new Conf(nextInsnIndex, nextFrame1), nextHistory, taken, hasCompanions || notEmptySubResult)));
     }
 
-    pending.push(new MakeResult<PResult>(state, subResult, subIndices));
-    for (State nextState : nextStates) {
-      pending.push(new ProceedState<PResult>(nextState));
-    }
+  }
 
+  private int pendingTop = 0;
+
+  private void pendingPush(PendingAction action) throws AnalyzerException {
+    if (pendingTop >= STEPS_LIMIT) {
+      throw new AnalyzerException(null, "limit is reached in method " + method);
+    }
+    pending[pendingTop++] = action;
   }
 
   private void execute(Frame<BasicValue> frame, AbstractInsnNode insnNode) throws AnalyzerException {
@@ -385,7 +486,6 @@ class NonNullInInterpreter extends BasicInterpreter {
       case INVOKESTATIC:
       case INVOKESPECIAL:
       case INVOKEVIRTUAL:
-      case INVOKEINTERFACE:
         boolean stable = opcode == INVOKESTATIC || opcode == INVOKESPECIAL;
         MethodInsnNode methodNode = (MethodInsnNode) insn;
         for (int i = shift; i < values.size(); i++) {

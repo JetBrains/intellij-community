@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
   public JComponent createComponent() {
     myModel = ensureModel();
 
-    if (Registry.is("ide.file.settings.order.new")) {
+    if (Registry.is("ide.new.settings.dialog")) {
       return myPanels == null || myPanels.isEmpty() ? null : myPanels.get(0).createComponent();
     }
     return myRootSchemesPanel.getPanel();
@@ -236,7 +236,7 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
       }
     }
 
-    if (Registry.is("ide.file.settings.order.new")) {
+    if (Registry.is("ide.new.settings.dialog")) {
       int size = myPanels.size();
       Configurable[] result = new Configurable[size > 0 ? size - 1 : 0];
       for (int i = 0; i < result.length; i++) {

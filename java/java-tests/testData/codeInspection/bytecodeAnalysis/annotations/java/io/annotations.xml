@@ -109,6 +109,11 @@
   <item name="java.io.File java.lang.String slashify(java.lang.String, boolean) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.io.File java.lang.String slashify(java.lang.String, boolean)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null,_-&gt;!null&quot;"/>
+    </annotation>
+  </item>
   <item name="java.io.File java.net.URI toURI()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -333,6 +338,12 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.io.PrintStream java.io.PrintStream append(java.lang.CharSequence, int, int)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.io.PrintStream java.io.PrintStream format(java.lang.String, java.lang.Object...)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.io.PrintStream java.io.PrintStream format(java.util.Locale, java.lang.String, java.lang.Object...)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.io.PrintStream void init(java.io.OutputStreamWriter) 0">

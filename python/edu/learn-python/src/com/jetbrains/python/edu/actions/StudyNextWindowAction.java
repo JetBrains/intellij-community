@@ -1,8 +1,8 @@
 package com.jetbrains.python.edu.actions;
 
+import com.intellij.icons.AllIcons;
 import com.jetbrains.python.edu.StudyUtils;
 import com.jetbrains.python.edu.course.TaskWindow;
-import icons.StudyIcons;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -16,7 +16,7 @@ public class StudyNextWindowAction extends StudyWindowNavigationAction {
   public static final String SHORTCUT2 = "ctrl pressed ENTER";
 
   public StudyNextWindowAction() {
-    super("NextWindowAction", "Select next window", StudyIcons.Next);
+    super("NextWindowAction", "Select next window", AllIcons.Actions.Forward);
   }
 
   @Override

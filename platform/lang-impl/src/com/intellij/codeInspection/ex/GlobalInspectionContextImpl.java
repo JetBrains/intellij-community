@@ -641,6 +641,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
                        final Project project,
                        final Runnable postRunnable,
                        final String commandName) {
+    final int fileCount = scope.getFileCount();
+    final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     final List<LocalInspectionToolWrapper> lTools = new ArrayList<LocalInspectionToolWrapper>();
 
     final LinkedHashMap<PsiFile, List<HighlightInfo>> results = new LinkedHashMap<PsiFile, List<HighlightInfo>>();
@@ -655,8 +657,12 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       range = null;
     }
     scope.accept(new PsiElementVisitor() {
+      private int myCount = 0;
       @Override
       public void visitFile(PsiFile file) {
+        if (progressIndicator != null) {
+          progressIndicator.setFraction(((double)++ myCount)/fileCount);
+        }
         if (isBinary(file)) return;
         for (final Tools tools : profile.getAllEnabledInspectionTools(project)) {
           if (tools.getTool().getTool() instanceof CleanupLocalInspectionTool) {

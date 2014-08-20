@@ -108,8 +108,8 @@ public abstract class AbstractPrintElementsManager<CommitId> implements PrintEle
 
     if (printElement != null) {
       GraphEdge graphEdge = containedCollapsedEdge(printElement.getGraphElement(), myPrintedLinearGraph);
-      if (graphEdge != null) {
-        mySelectedNodes = ContainerUtil.set(graphEdge.getUpNodeIndex(), graphEdge.getDownNodeIndex());
+      if (graphEdge != null && allowSelectCollapsedEdge(graphEdge)) {
+          mySelectedNodes = ContainerUtil.set(graphEdge.getUpNodeIndex(), graphEdge.getDownNodeIndex());
       } else {
         mySelectedNodes = getSelectedNodes(printElement.getGraphElement());
       }
@@ -150,4 +150,8 @@ public abstract class AbstractPrintElementsManager<CommitId> implements PrintEle
 
   @NotNull
   protected abstract Set<Integer> getSelectedNodes(@NotNull GraphElement graphElement);
+
+  protected boolean allowSelectCollapsedEdge(@NotNull GraphEdge graphEdge) {
+    return true;
+  }
 }

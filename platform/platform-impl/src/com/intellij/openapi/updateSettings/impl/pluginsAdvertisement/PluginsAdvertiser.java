@@ -198,7 +198,7 @@ public class PluginsAdvertiser implements StartupActivity {
   }
 
   public static void openDownloadPage() {
-    BrowserUtil.open(ApplicationInfo.getInstance().getCompanyURL());
+    BrowserUtil.browse(ApplicationInfo.getInstance().getCompanyURL());
   }
 
   static void enablePlugins(Project project, final Collection<IdeaPluginDescriptor> disabledPlugins) {

@@ -131,6 +131,7 @@ public interface HighlightInfoType {
       return myAttributesKey;
     }
 
+    @Override
     @SuppressWarnings({"HardCodedStringLiteral"})
     public String toString() {
       return "HighlightInfoTypeImpl[severity=" + mySeverity + ", key=" + myAttributesKey + "]";
@@ -141,6 +142,7 @@ public interface HighlightInfoType {
       myAttributesKey.writeExternal(element);
     }
 
+    @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -153,6 +155,7 @@ public interface HighlightInfoType {
       return true;
     }
 
+    @Override
     public int hashCode() {
       int result = mySeverity.hashCode();
       result = 29 * result + myAttributesKey.hashCode();
@@ -187,6 +190,7 @@ public interface HighlightInfoType {
       return myAttributesKey;
     }
 
+    @Override
     @SuppressWarnings({"HardCodedStringLiteral"})
     public String toString() {
       return "HighlightInfoTypeSeverityByKey[severity=" + myToolKey + ", key=" + myAttributesKey + "]";

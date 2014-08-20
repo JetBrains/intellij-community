@@ -67,7 +67,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   private final EvaluationContextImpl myEvaluationContext;
   private final NodeManagerImpl myNodeManager;
 
-  private JavaValue(JavaValue parent,
+  protected JavaValue(JavaValue parent,
                     @NotNull ValueDescriptorImpl valueDescriptor,
                     @NotNull EvaluationContextImpl evaluationContext,
                     NodeManagerImpl nodeManager) {
@@ -83,7 +83,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     return new JavaValue(parent, valueDescriptor, evaluationContext, nodeManager);
   }
 
-  public static JavaValue create(@NotNull ValueDescriptorImpl valueDescriptor,
+  static JavaValue create(@NotNull ValueDescriptorImpl valueDescriptor,
                           EvaluationContextImpl evaluationContext,
                           NodeManagerImpl nodeManager) {
     return create(null, valueDescriptor, evaluationContext, nodeManager, true);
@@ -128,7 +128,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
             else {
               EvaluateException exception = myValueDescriptor.getEvaluateException();
               if (myValueDescriptor.getLastRenderer() instanceof ToStringRenderer && exception == null) {
-                presentation = new XRegularValuePresentation(StringUtil.wrapWithDoubleQuote(value), type);
+                presentation = new XRegularValuePresentation(StringUtil.wrapWithDoubleQuote(value.substring(0,Math.min(value.length(), XValueNode.MAX_VALUE_LENGTH))), type);
               }
               else {
                 presentation = new JavaValuePresentation(value, type, exception != null ? exception.getMessage() : null);

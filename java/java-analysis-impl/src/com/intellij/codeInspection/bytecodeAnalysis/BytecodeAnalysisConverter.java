@@ -15,97 +15,264 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import gnu.trove.TLongArrayList;
-import gnu.trove.TLongHashSet;
-import gnu.trove.TLongObjectHashMap;
-import gnu.trove.TLongObjectIterator;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.org.objectweb.asm.Type;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.*;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
 
 /**
  * @author lambdamix
  */
-public abstract class BytecodeAnalysisConverter implements ApplicationComponent {
+public class BytecodeAnalysisConverter {
 
-  public static final int SHIFT = 4096;
+  // how many bytes are taken from class fqn digest
+  public static final int CLASS_HASH_SIZE = 10;
+  // how many bytes are taken from signature digest
+  public static final int SIGNATURE_HASH_SIZE = 4;
+  public static final int HASH_SIZE = CLASS_HASH_SIZE + SIGNATURE_HASH_SIZE;
 
-  public static BytecodeAnalysisConverter getInstance() {
-    return ApplicationManager.getApplication().getComponent(BytecodeAnalysisConverter.class);
+  public static MessageDigest getMessageDigest() throws NoSuchAlgorithmException {
+    return MessageDigest.getInstance("MD5");
   }
 
+  /**
+   * Converts an equation over asm keys into equation over small hash keys.
+   */
   @NotNull
-  @Override
-  public String getComponentName() {
-    return "BytecodeAnalysisConverter";
-  }
-
-  public abstract int getVersion();
-
-  protected abstract int enumerateString(@NotNull String s) throws IOException;
-
-  protected abstract int enumerateCompoundKey(@NotNull int[] key) throws IOException;
-
-  IdEquation convert(Equation<Key, Value> equation) throws IOException {
+  static DirectionResultPair convert(@NotNull Equation<Key, Value> equation, @NotNull MessageDigest md) {
     ProgressManager.checkCanceled();
 
     Result<Key, Value> rhs = equation.rhs;
-    IdResult result;
+    HResult result;
     if (rhs instanceof Final) {
-      result = new IdFinal(((Final<Key, Value>)rhs).value);
+      result = new HFinal(((Final<Key, Value>)rhs).value);
     } else {
       Pending<Key, Value> pending = (Pending<Key, Value>)rhs;
       Set<Product<Key, Value>> sumOrigin = pending.sum;
-      IntIdComponent[] components = new IntIdComponent[sumOrigin.size()];
+      HComponent[] components = new HComponent[sumOrigin.size()];
       int componentI = 0;
       for (Product<Key, Value> prod : sumOrigin) {
-        long[] intProd = new long[prod.ids.size()];
+        HKey[] intProd = new HKey[prod.ids.size()];
         int idI = 0;
         for (Key id : prod.ids) {
-          long rawId = mkAsmKey(id);
-          if (rawId <= 0) {
-            LOG.error("raw key should be positive. rawId = " + rawId);
-          }
-          intProd[idI] = id.stable ? rawId : -rawId;
+          intProd[idI] = asmKey(id, md);
           idI++;
         }
-        IntIdComponent intIdComponent = new IntIdComponent(prod.value, intProd);
+        HComponent intIdComponent = new HComponent(prod.value, intProd);
         components[componentI] = intIdComponent;
         componentI++;
       }
-      result = new IdPending(components);
+      result = new HPending(components);
     }
-
-    long rawKey = mkAsmKey(equation.id);
-    if (rawKey <= 0) {
-      LOG.error("raw key should be positive. rawKey = " + rawKey);
-    }
-
-    long key = equation.id.stable ? rawKey : -rawKey;
-    return new IdEquation(key, result);
+    return new DirectionResultPair(mkDirectionKey(equation.id.direction), result);
   }
 
-  public long mkAsmKey(@NotNull Key key) throws IOException {
-    long baseKey = mkAsmSignatureKey(key.method);
-    long directionKey = mkDirectionKey(key.direction);
-    return baseKey * SHIFT + directionKey;
+  /**
+   * Converts an asm method key to a small hash key (HKey)
+   */
+  @NotNull
+  public static HKey asmKey(@NotNull Key key, @NotNull MessageDigest md) {
+    byte[] classDigest = md.digest(key.method.internalClassName.getBytes());
+    md.update(key.method.methodName.getBytes());
+    md.update(key.method.methodDesc.getBytes());
+    byte[] sigDigest = md.digest();
+    byte[] digest = new byte[HASH_SIZE];
+    System.arraycopy(classDigest, 0, digest, 0, CLASS_HASH_SIZE);
+    System.arraycopy(sigDigest, 0, digest, CLASS_HASH_SIZE, SIGNATURE_HASH_SIZE);
+    return new HKey(digest, mkDirectionKey(key.direction), key.stable);
   }
 
-  private static int mkDirectionKey(Direction dir) throws IOException {
+  /**
+   * Converts a Psi method to a small hash key (HKey).
+   * Returns null if conversion is impossible (something is not resolvable).
+   */
+  @Nullable
+  public static HKey psiKey(@NotNull PsiMethod psiMethod, @NotNull Direction direction, @NotNull MessageDigest md) {
+    final PsiClass psiClass = PsiTreeUtil.getParentOfType(psiMethod, PsiClass.class, false);
+    if (psiClass == null) {
+      return null;
+    }
+    byte[] classDigest = psiClassDigest(psiClass, md);
+    if (classDigest == null) {
+      return null;
+    }
+    byte[] sigDigest = methodDigest(psiMethod, md);
+    if (sigDigest == null) {
+      return null;
+    }
+    byte[] digest = new byte[HASH_SIZE];
+    System.arraycopy(classDigest, 0, digest, 0, CLASS_HASH_SIZE);
+    System.arraycopy(sigDigest, 0, digest, CLASS_HASH_SIZE, SIGNATURE_HASH_SIZE);
+    return new HKey(digest, mkDirectionKey(direction), true);
+  }
+
+  @Nullable
+  private static byte[] psiClassDigest(@NotNull PsiClass psiClass, @NotNull MessageDigest md) {
+    String descriptor = descriptor(psiClass, 0, false);
+    if (descriptor == null) {
+      return null;
+    }
+    return md.digest(descriptor.getBytes());
+  }
+
+  @Nullable
+  private static byte[] methodDigest(@NotNull PsiMethod psiMethod, @NotNull MessageDigest md) {
+    String descriptor = descriptor(psiMethod);
+    if (descriptor == null) {
+      return null;
+    }
+    return md.digest(descriptor.getBytes());
+  }
+
+  @Nullable
+  private static String descriptor(@NotNull PsiMethod psiMethod) {
+    StringBuilder sb = new StringBuilder();
+    final PsiClass psiClass = PsiTreeUtil.getParentOfType(psiMethod, PsiClass.class, false);
+    if (psiClass == null) {
+      return null;
+    }
+    PsiClass outerClass = psiClass.getContainingClass();
+    boolean isInnerClassConstructor = psiMethod.isConstructor() && (outerClass != null) && !psiClass.hasModifierProperty(PsiModifier.STATIC);
+    PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+    PsiType returnType = psiMethod.getReturnType();
+
+    sb.append(returnType == null ? "<init>" : psiMethod.getName());
+    sb.append('(');
+
+    String desc;
+
+    if (isInnerClassConstructor) {
+      desc = descriptor(outerClass, 0, true);
+      if (desc == null) {
+        return null;
+      }
+      sb.append(desc);
+    }
+    for (PsiParameter parameter : parameters) {
+      desc = descriptor(parameter.getType());
+      if (desc == null) {
+        return null;
+      }
+      sb.append(desc);
+    }
+    sb.append(')');
+    if (returnType == null) {
+      sb.append('V');
+    } else {
+      desc = descriptor(returnType);
+      if (desc == null) {
+        return null;
+      } else {
+        sb.append(desc);
+      }
+    }
+    return sb.toString();
+  }
+
+  @Nullable
+  private static String descriptor(@NotNull PsiClass psiClass, int dimensions, boolean full) {
+    PsiFile containingFile = psiClass.getContainingFile();
+    if (!(containingFile instanceof PsiClassOwner)) {
+      LOG.debug("containingFile was not resolved for " + psiClass.getQualifiedName());
+      return null;
+    }
+    PsiClassOwner psiFile = (PsiClassOwner)containingFile;
+    String packageName = psiFile.getPackageName();
+    String qname = psiClass.getQualifiedName();
+    if (qname == null) {
+      return null;
+    }
+    String className;
+    if (packageName.length() > 0) {
+      className = qname.substring(packageName.length() + 1).replace('.', '$');
+    } else {
+      className = qname.replace('.', '$');
+    }
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < dimensions; i++) {
+      sb.append('[');
+    }
+    if (full) {
+      sb.append('L');
+    }
+    if (packageName.length() > 0) {
+      sb.append(packageName.replace('.', '/'));
+      sb.append('/');
+    }
+    sb.append(className);
+    if (full) {
+      sb.append(';');
+    }
+    return sb.toString();
+  }
+
+  @Nullable
+  private static String descriptor(@NotNull PsiType psiType) {
+    int dimensions = 0;
+    psiType = TypeConversionUtil.erasure(psiType);
+    if (psiType instanceof PsiArrayType) {
+      PsiArrayType arrayType = (PsiArrayType)psiType;
+      psiType = arrayType.getDeepComponentType();
+      dimensions = arrayType.getArrayDimensions();
+    }
+
+    if (psiType instanceof PsiClassType) {
+      PsiClass psiClass = ((PsiClassType)psiType).resolve();
+      if (psiClass != null) {
+        return descriptor(psiClass, dimensions, true);
+      }
+      else {
+        LOG.debug("resolve was null for " + ((PsiClassType)psiType).getClassName());
+        return null;
+      }
+    }
+    else if (psiType instanceof PsiPrimitiveType) {
+      StringBuilder sb = new StringBuilder();
+      for (int i = 0; i < dimensions; i++) {
+         sb.append('[');
+      }
+      if (PsiType.VOID.equals(psiType)) {
+        sb.append('V');
+      }
+      else if (PsiType.BOOLEAN.equals(psiType)) {
+        sb.append('Z');
+      }
+      else if (PsiType.CHAR.equals(psiType)) {
+        sb.append('C');
+      }
+      else if (PsiType.BYTE.equals(psiType)) {
+        sb.append('B');
+      }
+      else if (PsiType.SHORT.equals(psiType)) {
+        sb.append('S');
+      }
+      else if (PsiType.INT.equals(psiType)) {
+        sb.append('I');
+      }
+      else if (PsiType.FLOAT.equals(psiType)) {
+        sb.append('F');
+      }
+      else if (PsiType.LONG.equals(psiType)) {
+        sb.append('J');
+      }
+      else if (PsiType.DOUBLE.equals(psiType)) {
+        sb.append('D');
+      }
+      return sb.toString();
+    }
+    return null;
+  }
+
+  private static int mkDirectionKey(Direction dir) {
     if (dir instanceof Out) {
       return 0;
     } else if (dir instanceof In) {
@@ -134,211 +301,54 @@ public abstract class BytecodeAnalysisConverter implements ApplicationComponent 
     }
   }
 
-  // class + short signature
-  private int mkAsmSignatureKey(@NotNull Method method) throws IOException {
-    int[] sigKey = new int[2];
-    sigKey[0] = mkAsmTypeKey(Type.getObjectType(method.internalClassName));
-    sigKey[1] = mkAsmShortSignatureKey(method);
-    return enumerateCompoundKey(sigKey);
-  }
-
-  private int mkAsmShortSignatureKey(@NotNull Method method) throws IOException {
-    Type[] argTypes = Type.getArgumentTypes(method.methodDesc);
-    int arity = argTypes.length;
-    int[] sigKey = new int[2 + arity];
-    sigKey[0] = mkAsmTypeKey(Type.getReturnType(method.methodDesc));
-    sigKey[1] = enumerateString(method.methodName);
-    for (int i = 0; i < argTypes.length; i++) {
-      sigKey[2 + i] = mkAsmTypeKey(argTypes[i]);
-    }
-    return enumerateCompoundKey(sigKey);
-  }
-
-  private int mkAsmTypeKey(Type type) throws IOException {
-    String className = type.getClassName();
-    int dotIndex = className.lastIndexOf('.');
-    String packageName;
-    String simpleName;
-    if (dotIndex > 0) {
-      packageName = className.substring(0, dotIndex);
-      simpleName = className.substring(dotIndex + 1);
-    } else {
-      packageName = "";
-      simpleName = className;
-    }
-    int[] classKey = new int[]{enumerateString(packageName), enumerateString(simpleName)};
-    return enumerateCompoundKey(classKey);
-  }
-
-  public long mkPsiKey(@NotNull PsiMethod psiMethod, Direction direction) throws IOException {
-    final PsiClass psiClass = PsiTreeUtil.getParentOfType(psiMethod, PsiClass.class, false);
-    if (psiClass == null) {
-      LOG.debug("PsiClass was null for " + psiMethod.getName());
-      return -1;
-    }
-    long sigKey = mkPsiSignatureKey(psiMethod);
-    if (sigKey == -1) {
-      return -1;
-    }
-    long directionKey = mkDirectionKey(direction);
-    return sigKey * SHIFT + directionKey;
-  }
-
-  private int mkPsiSignatureKey(@NotNull PsiMethod psiMethod) throws IOException {
-    final PsiClass psiClass = PsiTreeUtil.getParentOfType(psiMethod, PsiClass.class, false);
-    if (psiClass == null) {
-      LOG.debug("PsiClass was null for " + psiMethod.getName());
-      return -1;
-    }
-    PsiClass outerClass = psiClass.getContainingClass();
-    boolean isInnerClassConstructor = psiMethod.isConstructor() && (outerClass != null) && !psiClass.hasModifierProperty(PsiModifier.STATIC);
+  /**
+   * Given a PSI method and its primary HKey enumerate all contract keys for it.
+   */
+  @NotNull
+  public static ArrayList<HKey> mkInOutKeys(@NotNull PsiMethod psiMethod, @NotNull HKey primaryKey) {
     PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-    PsiType returnType = psiMethod.getReturnType();
-
-    final int shift = isInnerClassConstructor ? 1 : 0;
-    final int arity = parameters.length + shift;
-    int[] shortSigKey = new int[2 + arity];
-    if (returnType == null) {
-      shortSigKey[0] = mkPsiTypeKey(PsiType.VOID);
-      shortSigKey[1] = enumerateString("<init>");
-    } else {
-      shortSigKey[0] = mkPsiTypeKey(returnType);
-      shortSigKey[1] = enumerateString(psiMethod.getName());
-    }
-    if (isInnerClassConstructor) {
-      shortSigKey[2] = mkPsiClassKey(outerClass, 0);
-    }
-    for (int i = 0; i < parameters.length; i++) {
-      PsiParameter parameter = parameters[i];
-      shortSigKey[2 + i + shift] = mkPsiTypeKey(parameter.getType());
-    }
-    for (int aShortSigKey : shortSigKey) {
-      if (aShortSigKey == -1) {
-        return -1;
-      }
-    }
-
-    int[] sigKey = new int[2];
-    int classKey = mkPsiClassKey(psiClass, 0);
-    if (classKey == -1) {
-      return -1;
-    }
-    sigKey[0] = classKey;
-    sigKey[1] = enumerateCompoundKey(shortSigKey);
-
-    return enumerateCompoundKey(sigKey);
-  }
-
-  public TLongArrayList mkInOutKeys(@NotNull PsiMethod psiMethod, long primaryKey) throws IOException {
-    PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-    TLongArrayList keys = new TLongArrayList(parameters.length * 2 + 1);
+    ArrayList<HKey> keys = new ArrayList<HKey>(parameters.length * 2 + 1);
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
       PsiType parameterType = parameter.getType();
       if (parameterType instanceof PsiPrimitiveType) {
         if (PsiType.BOOLEAN.equals(parameterType)) {
-          keys.add(primaryKey + mkDirectionKey(new InOut(i, Value.False)));
-          keys.add(primaryKey + mkDirectionKey(new InOut(i, Value.True)));
+          keys.add(primaryKey.updateDirection(mkDirectionKey(new InOut(i, Value.False))));
+          keys.add(primaryKey.updateDirection(mkDirectionKey(new InOut(i, Value.True))));
         }
       } else {
-        keys.add(primaryKey + mkDirectionKey(new InOut(i, Value.NotNull)));
-        keys.add(primaryKey + mkDirectionKey(new InOut(i, Value.Null)));
+        keys.add(primaryKey.updateDirection(mkDirectionKey(new InOut(i, Value.NotNull))));
+        keys.add(primaryKey.updateDirection(mkDirectionKey(new InOut(i, Value.Null))));
       }
     }
     return keys;
   }
 
-
-  private int mkPsiClassKey(PsiClass psiClass, int dimensions) throws IOException {
-    PsiFile containingFile = psiClass.getContainingFile();
-    if (!(containingFile instanceof PsiClassOwner)) {
-      LOG.debug("containingFile was not resolved for " + psiClass.getQualifiedName());
-      return -1;
-    }
-    PsiClassOwner psiFile = (PsiClassOwner)containingFile;
-    String packageName = psiFile.getPackageName();
-    String qname = psiClass.getQualifiedName();
-    if (qname == null) {
-      return -1;
-    }
-    String className = qname;
-    if (packageName.length() > 0) {
-      className = qname.substring(packageName.length() + 1).replace('.', '$');
-    }
-    int[] classKey = new int[2];
-    classKey[0] = enumerateString(packageName);
-    if (dimensions == 0) {
-      classKey[1] = enumerateString(className);
-    } else {
-      StringBuilder sb = new StringBuilder(className);
-      for (int j = 0; j < dimensions; j++) {
-        sb.append("[]");
-      }
-      classKey[1] = enumerateString(sb.toString());
-    }
-    return enumerateCompoundKey(classKey);
-  }
-
-  private int mkPsiTypeKey(PsiType psiType) throws IOException {
-    int dimensions = 0;
-    psiType = TypeConversionUtil.erasure(psiType);
-    if (psiType instanceof PsiArrayType) {
-      PsiArrayType arrayType = (PsiArrayType)psiType;
-      psiType = arrayType.getDeepComponentType();
-      dimensions = arrayType.getArrayDimensions();
-    }
-
-    if (psiType instanceof PsiClassType) {
-      // no resolve() -> no package/class split
-      PsiClass psiClass = ((PsiClassType)psiType).resolve();
-      if (psiClass != null) {
-        return mkPsiClassKey(psiClass, dimensions);
-      }
-      else {
-        LOG.debug("resolve was null for " + ((PsiClassType)psiType).getClassName());
-        return -1;
-      }
-    }
-    else if (psiType instanceof PsiPrimitiveType) {
-      String packageName = "";
-      String className = psiType.getPresentableText();
-      int[] classKey = new int[2];
-      classKey[0] = enumerateString(packageName);
-      if (dimensions == 0) {
-        classKey[1] = enumerateString(className);
-      } else {
-        StringBuilder sb = new StringBuilder(className);
-        for (int j = 0; j < dimensions; j++) {
-          sb.append("[]");
-        }
-        classKey[1] = enumerateString(sb.toString());
-      }
-      return enumerateCompoundKey(classKey);
-    }
-    return -1;
-  }
-
-  public void addMethodAnnotations(TLongObjectHashMap<Value> internalIdSolutions, Annotations annotations, long methodKey, int arity) {
-
+  /**
+   * Given `solution` of all dependencies of a method with the `methodKey`, converts this solution into annotations.
+   *
+   * @param solution solution of equations
+   * @param annotations annotations to which corresponding solutions should be added
+   * @param methodKey a primary key of a method being analyzed
+   * @param arity arity of this method (hint for constructing @Contract annotations)
+   */
+  public static void addMethodAnnotations(@NotNull HashMap<HKey, Value> solution, @NotNull Annotations annotations, @NotNull HKey methodKey, int arity) {
     List<String> clauses = new ArrayList<String>();
-    TLongObjectIterator<Value> solutionsIterator = internalIdSolutions.iterator();
-
-    TLongHashSet notNulls = annotations.notNulls;
-    TLongObjectHashMap<String> contracts = annotations.contracts;
-    for (int i = internalIdSolutions.size(); i-- > 0;) {
-      solutionsIterator.advance();
-      long key = Math.abs(solutionsIterator.key());
-      Value value = solutionsIterator.value();
+    HashSet<HKey> notNulls = annotations.notNulls;
+    HashMap<HKey, String> contracts = annotations.contracts;
+    for (Map.Entry<HKey, Value> entry : solution.entrySet()) {
+      HKey key = entry.getKey().mkStable();
+      Value value = entry.getValue();
       if (value == Value.Top || value == Value.Bot) {
         continue;
       }
-      Direction direction = extractDirection((int)(key % SHIFT));
-      if (value == Value.NotNull && direction instanceof Out && key == methodKey) {
+      Direction direction = extractDirection(key.dirKey);
+      if (value == Value.NotNull && direction instanceof Out && methodKey.equals(key)) {
         notNulls.add(key);
       }
       else if (direction instanceof InOut) {
-        long baseKey = key - (key % SHIFT);
-        if (baseKey == methodKey) {
+        HKey baseKey = key.mkBase();
+        if (methodKey.equals(baseKey)) {
           clauses.add(contractElement(arity, (InOut)direction, value));
         }
       }
@@ -353,24 +363,28 @@ public abstract class BytecodeAnalysisConverter implements ApplicationComponent 
     }
   }
 
-  public void addParameterAnnotations(TLongObjectHashMap<Value> internalIdSolutions, Annotations annotations) {
-    TLongObjectIterator<Value> solutionsIterator = internalIdSolutions.iterator();
-    TLongHashSet notNulls = annotations.notNulls;
-    for (int i = internalIdSolutions.size(); i-- > 0;) {
-      solutionsIterator.advance();
-      long key = Math.abs(solutionsIterator.key());
-      Value value = solutionsIterator.value();
+  /**
+   * Converts solutions for equations over parameters into annotations.
+   *
+   * @param solution
+   * @param annotations
+   */
+  public static void addParameterAnnotations(@NotNull HashMap<HKey, Value> solution, @NotNull Annotations annotations) {
+    HashSet<HKey> notNulls = annotations.notNulls;
+    for (Map.Entry<HKey, Value> entry : solution.entrySet()) {
+      HKey key = entry.getKey().mkStable();
+      Value value = entry.getValue();
       if (value == Value.Top || value == Value.Bot) {
         continue;
       }
-      Direction direction = extractDirection((int)(key % SHIFT));
+      Direction direction = extractDirection(key.dirKey);
       if (value == Value.NotNull && (direction instanceof In || direction instanceof Out)) {
         notNulls.add(key);
       }
     }
   }
 
-  static String contractValueString(Value v) {
+  private static String contractValueString(@NotNull Value v) {
     switch (v) {
       case False: return "false";
       case True: return "true";
@@ -380,7 +394,7 @@ public abstract class BytecodeAnalysisConverter implements ApplicationComponent 
     }
   }
 
-  static String contractElement(int arity, InOut inOut, Value value) {
+  private static String contractElement(int arity, InOut inOut, Value value) {
     StringBuilder sb = new StringBuilder();
     for (int i = 0; i < arity; i++) {
       Value currentValue = Value.Top;

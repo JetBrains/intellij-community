@@ -422,7 +422,10 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       return false;
     }
 
-    if (e instanceof KeyEvent && UIUtil.isReallyTypedEvent((KeyEvent)e)) {
+    if (e instanceof KeyEvent) {
+      // do not start editing in autoStartsEdit mode on Ctrl-Z and other non-typed events
+      if (!UIUtil.isReallyTypedEvent((KeyEvent)e) || ((KeyEvent)e).getKeyChar() == KeyEvent.CHAR_UNDEFINED) return false;
+
       SpeedSearchSupply supply = SpeedSearchSupply.getSupply(this);
       if (supply != null && supply.isPopupActive()) {
         return false;

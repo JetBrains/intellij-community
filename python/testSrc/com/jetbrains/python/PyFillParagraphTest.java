@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
 
 /**
@@ -62,7 +63,8 @@ public class PyFillParagraphTest extends PyTestCase {
   }
 
   public void testEnter() {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(myFixture.getProject()).getCurrentSettings();
+    final CommonCodeStyleSettings settings =
+      CodeStyleSettingsManager.getInstance(myFixture.getProject()).getCurrentSettings().getCommonSettings(PythonLanguage.getInstance());
     int oldValue = settings.RIGHT_MARGIN;
     settings.RIGHT_MARGIN = 80;
     try {

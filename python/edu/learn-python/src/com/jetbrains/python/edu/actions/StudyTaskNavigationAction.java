@@ -1,8 +1,6 @@
 package com.jetbrains.python.edu.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -11,37 +9,34 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.python.edu.StudyTaskManager;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.jetbrains.python.edu.StudyState;
 import com.jetbrains.python.edu.course.Lesson;
 import com.jetbrains.python.edu.course.Task;
 import com.jetbrains.python.edu.course.TaskFile;
 import com.jetbrains.python.edu.editor.StudyEditor;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Map;
 
-/**
- * author: liana
- * data: 7/21/14.
- */
+
 abstract public class StudyTaskNavigationAction extends DumbAwareAction {
-  public void navigateTask(Project project) {
-    Editor selectedEditor = StudyEditor.getSelectedEditor(project);
-    FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
-    assert selectedEditor != null;
-    VirtualFile openedFile = fileDocumentManager.getFile(selectedEditor.getDocument());
-    StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
-    assert openedFile != null;
-    TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
-    assert selectedTaskFile != null;
-    Task currentTask = selectedTaskFile.getTask();
-    Task nextTask = getTargetTask(currentTask);
+  public void navigateTask(@NotNull final Project project) {
+    StudyEditor studyEditor = StudyEditor.getSelectedStudyEditor(project);
+    StudyState studyState = new StudyState(studyEditor);
+    if (!studyState.isValid()) {
+      return;
+    }
+    Task nextTask = getTargetTask(studyState.getTask());
     if (nextTask == null) {
       BalloonBuilder balloonBuilder =
         JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(getNavigationFinishedMessage(), MessageType.INFO, null);
       Balloon balloon = balloonBuilder.createBalloon();
-      StudyEditor selectedStudyEditor = StudyEditor.getSelectedStudyEditor(project);
-      balloon.showInCenterOf(getButton(selectedStudyEditor));
+      assert studyEditor != null;
+      balloon.showInCenterOf(getButton(studyEditor));
       return;
     }
     for (VirtualFile file : FileEditorManager.getInstance(project).getOpenFiles()) {
@@ -82,16 +77,24 @@ abstract public class StudyTaskNavigationAction extends DumbAwareAction {
     if (shouldBeActive != null) {
       FileEditorManager.getInstance(project).openFile(shouldBeActive, true);
     }
+    ToolWindow runToolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.RUN);
+    if (runToolWindow != null) {
+      runToolWindow.hide(null);
+    }
   }
 
-  protected abstract JButton getButton(StudyEditor selectedStudyEditor);
+  protected abstract JButton getButton(@NotNull final StudyEditor selectedStudyEditor);
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    navigateTask(e.getProject());
+    Project project = e.getProject();
+    if (project == null) {
+      return;
+    }
+    navigateTask(project);
   }
 
   protected abstract String getNavigationFinishedMessage();
 
-  protected abstract Task getTargetTask(Task sourceTask);
+  protected abstract Task getTargetTask(@NotNull final Task sourceTask);
 }

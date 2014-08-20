@@ -101,18 +101,17 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
     while (prevVisibleLeaf != null) {
       TextRange textRange = prevVisibleLeaf.getTextRange();
       final int endOffset = textRange.getEndOffset();
-      if (endOffset > currentOffset) {
-        continue;
+      if (endOffset <= currentOffset) {
+        if (endOffset <= startOffset) {
+          break;
+        }
+        IElementType prevType = prevVisibleLeaf.getNode().getElementType();
+        if (prevType == XmlTokenType.XML_TAG_END || prevType == XmlTokenType.XML_EMPTY_ELEMENT_END) {
+          startOffset = endOffset;
+          break;
+        }
       }
-      if (endOffset <= startOffset) {
-        break;
-      }
-      IElementType prevType = prevVisibleLeaf.getNode().getElementType();
-      if (prevType == XmlTokenType.XML_TAG_END || prevType == XmlTokenType.XML_EMPTY_ELEMENT_END) {
-        startOffset = endOffset;
-        break;
-      }
-      prevVisibleLeaf = PsiTreeUtil.prevVisibleLeaf(prevVisibleLeaf);
+      prevVisibleLeaf = PsiTreeUtil.prevVisibleLeaf(prevVisibleLeaf); 
     }
 
     if (startOffset < 0 || currentOffset > documentText.length() || currentOffset < startOffset) {

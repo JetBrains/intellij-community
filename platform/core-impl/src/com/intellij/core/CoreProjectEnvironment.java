@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public class CoreProjectEnvironment {
   protected final MockProject myProject;
   protected final MessageBus myMessageBus;
 
-  public CoreProjectEnvironment(Disposable parentDisposable, CoreApplicationEnvironment applicationEnvironment) {
+  public CoreProjectEnvironment(@NotNull Disposable parentDisposable, @NotNull CoreApplicationEnvironment applicationEnvironment) {
     myParentDisposable = parentDisposable;
     myEnvironment = applicationEnvironment;
     myProject = createProject(myEnvironment.getApplication().getPicoContainer(), myParentDisposable);
@@ -87,10 +87,13 @@ public class CoreProjectEnvironment {
     myProject.registerService(DumbService.class, new MockDumbService(myProject));
   }
 
-  protected MockProject createProject(PicoContainer parent, @NotNull Disposable parentDisposable) {
+  @SuppressWarnings("MethodMayBeStatic")
+  @NotNull
+  protected MockProject createProject(@NotNull PicoContainer parent, @NotNull Disposable parentDisposable) {
     return new MockProject(parent, parentDisposable);
   }
 
+  @NotNull
   protected ProjectScopeBuilder createProjectScopeBuilder() {
     return new CoreProjectScopeBuilder(myProject, myFileIndexFacade);
   }
@@ -99,20 +102,23 @@ public class CoreProjectEnvironment {
 
   }
 
+  @NotNull
   protected FileIndexFacade createFileIndexFacade() {
     return new MockFileIndexFacade(myProject);
   }
 
-  protected ResolveScopeManager createResolveScopeManager(PsiManager psiManager) {
-    return new MockResolveScopeManager(myProject);
+  @SuppressWarnings("MethodMayBeStatic")
+  @NotNull
+  protected ResolveScopeManager createResolveScopeManager(@NotNull PsiManager psiManager) {
+    return new MockResolveScopeManager(psiManager.getProject());
   }
 
-  public <T> void registerProjectExtensionPoint(final ExtensionPointName<T> extensionPointName,
-                                                final Class<? extends T> aClass) {
+  public <T> void registerProjectExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName,
+                                                @NotNull Class<? extends T> aClass) {
     CoreApplicationEnvironment.registerExtensionPoint(Extensions.getArea(myProject), extensionPointName, aClass);
   }
 
-  public <T> void addProjectExtension(final ExtensionPointName<T> name, final T extension) {
+  public <T> void addProjectExtension(@NotNull ExtensionPointName<T> name, @NotNull final T extension) {
     final ExtensionPoint<T> extensionPoint = Extensions.getArea(myProject).getExtensionPoint(name);
     extensionPoint.registerExtension(extension);
     Disposer.register(myParentDisposable, new Disposable() {
@@ -124,18 +130,21 @@ public class CoreProjectEnvironment {
   }
 
 
-  public <T> void registerProjectComponent(final Class<T> interfaceClass, final T implementation) {
+  public <T> void registerProjectComponent(@NotNull Class<T> interfaceClass, @NotNull T implementation) {
     CoreApplicationEnvironment.registerComponentInstance(myProject.getPicoContainer(), interfaceClass, implementation);
   }
 
+  @NotNull
   public Disposable getParentDisposable() {
     return myParentDisposable;
   }
 
+  @NotNull
   public CoreApplicationEnvironment getEnvironment() {
     return myEnvironment;
   }
 
+  @NotNull
   public MockProject getProject() {
     return myProject;
   }

@@ -97,14 +97,14 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement> implem
     if (!(element instanceof PropertiesFile)) {
       throw new IncorrectOperationException();
     }
-    final String name = PropertiesUtil.getFullName((PropertiesFile)element);
+    final String name = ResourceBundleManager.getInstance(element.getProject()).getFullName((PropertiesFile)element);
     return super.handleElementRename(name);
   }
 
 
   public boolean isReferenceTo(PsiElement element) {
     if (element instanceof PropertiesFile) {
-      final String name = PropertiesUtil.getFullName((PropertiesFile)element);
+      final String name = ResourceBundleManager.getInstance(element.getProject()).getFullName((PropertiesFile)element);
       if (name != null && name.equals(myBundleName)) {
         return true;
       }
