@@ -56,7 +56,7 @@ public class PyDebuggerOptionsProvider implements PersistentStateComponent<PyDeb
 
   public static class State {
     public boolean myAttachToSubprocess = true;
-    public boolean mySaveCallSignatures = true;
+    public boolean mySaveCallSignatures = false;
     public boolean mySupportGeventDebugging = false;
   }
 
