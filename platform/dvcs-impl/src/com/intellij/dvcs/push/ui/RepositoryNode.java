@@ -33,6 +33,7 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode 
   @NotNull private final RepositoryWithBranchPanel myRepositoryPanel;
 
   private ProgressIndicator myCurrentIndicator;
+  protected boolean myTargetIsValid = true;
 
   public RepositoryNode(@NotNull RepositoryWithBranchPanel repositoryPanel) {
     super(repositoryPanel);
@@ -60,6 +61,9 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode 
                                   @NotNull String targetName) {
     if (StringUtil.isEmptyOrSpaces(targetName)) {
       renderer.append(ENTER_REMOTE, SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES, textField);
+    }
+    else if (!myTargetIsValid) {
+      renderer.append(targetName, SimpleTextAttributes.ERROR_ATTRIBUTES, textField);
     }
     else {
       renderer.append(targetName, SimpleTextAttributes.SYNTHETIC_ATTRIBUTES, textField);
@@ -93,5 +97,9 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode 
   @NotNull
   public ProgressIndicator startLoading() {
     return myCurrentIndicator = new EmptyProgressIndicator();
+  }
+
+  public void markTargetValid(boolean isValid) {
+    myTargetIsValid = isValid;
   }
 }
