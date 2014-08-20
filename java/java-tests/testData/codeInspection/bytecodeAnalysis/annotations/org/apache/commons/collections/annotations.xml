@@ -5,6 +5,9 @@
   <item name="org.apache.commons.collections.ExtendedProperties ExtendedProperties(java.lang.String, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.collections.ExtendedProperties ExtendedProperties(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.collections.ExtendedProperties boolean access$000(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -16,6 +19,9 @@
   </item>
   <item name="org.apache.commons.collections.ExtendedProperties java.lang.String escape(java.lang.String)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.ExtendedProperties java.lang.String interpolateHelper(java.lang.String, java.util.List) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.collections.ExtendedProperties java.lang.String interpolateHelper(java.lang.String, java.util.List)">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -36,6 +42,15 @@
   </item>
   <item name="org.apache.commons.collections.ExtendedProperties void combine(org.apache.commons.collections.ExtendedProperties) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.collections.ExtendedProperties void save(java.io.OutputStream, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.collections.ExtendedProperties void save(java.io.OutputStream, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.collections.ExtendedProperties void setInclude(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.collections.ExtendedProperties.PropertiesTokenizer java.lang.String nextToken()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
