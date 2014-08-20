@@ -87,3 +87,5 @@
 
 application/x-chrome-extension crx
 application/dart dart
+
+text/xml rng
