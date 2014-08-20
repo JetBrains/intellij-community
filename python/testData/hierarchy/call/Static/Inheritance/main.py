@@ -13,18 +13,24 @@ class C(object):
         a.target_func()
 
 
-def foo(b):
+def foo1(b):
     f = b.target_func
 
 
-def fuu(b):
+def foo2(b):
     b.target_func()
 
 
-def bar(f):
-    f()
+def bar1(*args):
+    pass
+
+
+def bar2(*args):
+    pass
 
 
 b = B()
-foo(b)
-bar(b.target_<caret>func)
+foo1(b)
+foo2(b)
+bar1(b.target_<caret>func)
+bar2(b.target_func())
