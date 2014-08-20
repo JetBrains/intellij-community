@@ -63,37 +63,6 @@ public class PythonCallHierarchyTest extends PyEnvTestCase {
     return getVerificationFilePath(CALLEE_VERIFICATION_SUFFIX);
   }
 
-  private void doCallHierarchyTest(String scriptName) throws Exception {
-    final PyDebuggerTask task = new PyDebuggerTask(getBasePath(), scriptName);
-    runPythonTest(task);
-
-    final Project project = task.getProject();
-    final Document callerDocument = JDOMUtil.loadDocument(new File(getVerificationCallerFilePath()));
-    final Document calleeDocument = JDOMUtil.loadDocument(new File(getVerificationCalleeFilePath()));
-    final PyRecursiveElementVisitor visitor = new PyRecursiveElementVisitor() {
-      @Override
-      public void visitPyFunction(PyFunction function) {
-        if (function != null && function.getName() != null && function.getName().equals(TARGET_FUNCTION_NAME)) {
-          HierarchyTreeStructureViewer.checkHierarchyTreeStructure(new PyCallerFunctionTreeStructure(project, function, HierarchyBrowserBaseEx.SCOPE_PROJECT),
-                                                                   callerDocument);
-          HierarchyTreeStructureViewer.checkHierarchyTreeStructure(new PyCalleeFunctionTreeStructure(project, function, HierarchyBrowserBaseEx.SCOPE_PROJECT),
-                                                                   calleeDocument);
-        }
-      }
-    };
-
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(task.getScriptPath());
-        assert vFile != null;
-        final PsiFile file = PsiManager.getInstance(project).findFile(vFile);
-        assert file != null;
-        visitor.visitFile(file);
-      }
-    });
-  }
-
   public void testSimple() throws Exception {
     runPythonTest(new PyCallHierarchyTask(getTestName(false), getBasePath(), "main.py"));
   }
