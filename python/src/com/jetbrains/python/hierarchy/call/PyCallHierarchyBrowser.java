@@ -103,5 +103,6 @@ public class PyCallHierarchyBrowser extends CallHierarchyBrowserBase {
     return PyHierarchyUtils.getComparator(myProject);
   }
 
-  public static final class BaseOnThisFunctionAction extends CallHierarchyBrowserBase.BaseOnThisMethodAction {}
+  public static final class BaseOnThisFunctionAction extends CallHierarchyBrowserBase.BaseOnThisMethodAction {
+  }
 }

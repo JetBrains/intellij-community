@@ -659,8 +659,28 @@
       <reference ref="CompareFileWithEditor"/>
     </group>
 
-
     <group id="PyCallHierarchyPopupMenu">
+      <action id="CallHierarchy.BaseOnThisType" text="Base On This Function" class="com.jetbrains.python.hierarchy.call.PyCallHierarchyBrowser$BaseOnThisFunctionAction" description="Show call hierarchy for selected method"/>
+      <reference ref="EditSource"/>
+      <separator/>
+      <reference ref="FindUsages"/>
+      <reference ref="RefactoringMenu"/>
+      <separator/>
+      <reference ref="AddToFavorites"/>
+      <separator/>
+      <reference ref="RunContextPopupGroup"/>
+      <separator/>
+
+      <reference ref="ReformatCode"/>
+      <reference ref="OptimizeImports"/>
+      <separator/>
+      <reference ref="VersionControlsGroup"/>
+
+      <separator/>
+      <reference ref="ExternalToolsGroup"/>
+      <separator/>
+      <reference ref="CompareTwoFiles"/>
+      <reference ref="CompareFileWithEditor"/>
     </group>
 
     <action id="com.jetbrains.python.console.RunPythonConsoleAction"
