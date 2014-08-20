@@ -323,7 +323,9 @@ public class PsiMethodReferenceUtil {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
     final MethodSignature signature = interfaceMethod != null ? interfaceMethod.getSignature(LambdaUtil.getSubstitutor(interfaceMethod, resolveResult)) : null;
-    LOG.assertTrue(signature != null);
+    if (signature == null) {
+      return false;
+    }
     final PsiType[] parameterTypes = signature.getParameterTypes();
     final QualifierResolveResult qualifierResolveResult = getQualifierResolveResult(methodRef);
     return (method.getParameterList().getParametersCount() + 1 == parameterTypes.length ||

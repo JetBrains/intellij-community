@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.options.newEditor;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.search.ConfigurableHit;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
@@ -43,6 +44,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SearchTextField;
+import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.navigation.History;
@@ -417,7 +419,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
           if (myTreeView != null) {
             myOwnDetails.forProject(myTreeView.findConfigurableProject(configurable));
           }
-          else if (Registry.is("ide.file.settings.order.new")) {
+          else if (Registry.is("ide.new.settings.dialog")) {
             myOwnDetails.forProject(myTree.getConfigurableProject(configurable));
           }
 
@@ -1366,6 +1368,36 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     abstract void setText(final String[] bannerText);
   }
 
+  /**
+   * Returns default view for the specified configurable.
+   * It uses the configurable identifier to retrieve description.
+   *
+   * @param searchable the configurable that does not have any view
+   * @return default view for the specified configurable
+   */
+  private JComponent createDefaultComponent(SearchableConfigurable searchable) {
+    Box box = Box.createVerticalBox();
+    try {
+      box.add(new JLabel(OptionsBundle.message(searchable.getId() + ".settings.description")));
+    }
+    catch (AssertionError error) {
+      return null; // description is not set
+    }
+    if (searchable instanceof Configurable.Composite) {
+      box.add(Box.createVerticalStrut(10));
+      Configurable.Composite composite = (Configurable.Composite)searchable;
+      for (final Configurable configurable : composite.getConfigurables()) {
+        box.add(new LinkLabel(configurable.getDisplayName(), AllIcons.Ide.Link) {
+          @Override
+          public void doClick() {
+            select(configurable, null);
+          }
+        });
+      }
+    }
+    return box;
+  }
+
   private class Simple extends ConfigurableContent {
     JComponent myComponent;
     Configurable myConfigurable;
@@ -1373,7 +1405,9 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     Simple(final Configurable configurable) {
       myConfigurable = configurable;
       myComponent = configurable.createComponent();
-
+      if (myComponent == null && configurable instanceof SearchableConfigurable) {
+        myComponent = createDefaultComponent((SearchableConfigurable)configurable);
+      }
       if (myComponent != null) {
         final Object clientProperty = myComponent.getClientProperty(NOT_A_NEW_COMPONENT);
         if (clientProperty != null && ApplicationManager.getApplication().isInternal()) {

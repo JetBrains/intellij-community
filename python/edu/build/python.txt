@@ -1,0 +1,2 @@
+python2 2.7 https://www.python.org/ftp/python/2.7.8/python-2.7.8.amd64.msi
+python3 3.4 https://www.python.org/ftp/python/3.4.1/python-3.4.1.amd64.msi

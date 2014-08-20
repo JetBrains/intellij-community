@@ -19,6 +19,7 @@ package com.intellij.vcs.log.graph.impl.visible;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.LinearGraphWithHiddenNodes;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
@@ -39,6 +40,9 @@ public class FilterGraphWithHiddenNodes implements LinearGraphWithHiddenNodes {
   private final Flags myVisibleNodes;
 
   @NotNull
+  private final DottedEdges myDottedEdges;
+
+  @NotNull
   private final SetListenerController<UpdateListener> myListenerController = new SetListenerController<UpdateListener>();
 
   public FilterGraphWithHiddenNodes(@NotNull LinearGraphWithHiddenNodes delegateGraph, @NotNull Condition<Integer> isVisibleNode) {
@@ -47,6 +51,10 @@ public class FilterGraphWithHiddenNodes implements LinearGraphWithHiddenNodes {
     for (int i = 0; i < delegateGraph.nodesCount(); i++) {
       myVisibleNodes.set(i, delegateGraph.nodeIsVisible(i) && isVisibleNode.value(i)); // todo: think about it: may be drop myVisibleNodes
     }
+
+    MultiMap<Integer, Integer> edges = DottedEdgesComputer.compute(myDelegateGraph, myVisibleNodes);
+    myDottedEdges = DottedEdges.newInstance(edges);
+
     addUpdateListener();
   }
 
@@ -78,7 +86,10 @@ public class FilterGraphWithHiddenNodes implements LinearGraphWithHiddenNodes {
   @NotNull
   @Override
   public GraphEdge.Type getEdgeType(int upNodeIndex, int downNodeIndex) {
-    return GraphEdge.Type.USUAL;
+    if (myDottedEdges.getAdjacentNodes(upNodeIndex).contains(downNodeIndex))
+      return GraphEdge.Type.HIDE;
+    else
+      return GraphEdge.Type.USUAL;
   }
 
   @NotNull
@@ -100,6 +111,10 @@ public class FilterGraphWithHiddenNodes implements LinearGraphWithHiddenNodes {
       if (nodeIsVisible(upNode))
         upNodes.add(upNode);
     }
+    for (int adjNode : myDottedEdges.getAdjacentNodes(nodeIndex)) {
+      if (adjNode < nodeIndex)
+        upNodes.add(adjNode);
+    }
     return upNodes;
   }
 
@@ -110,6 +125,10 @@ public class FilterGraphWithHiddenNodes implements LinearGraphWithHiddenNodes {
     for (int downNode : myDelegateGraph.getDownNodes(nodeIndex)) {
       if (downNode != LinearGraph.NOT_LOAD_COMMIT && nodeIsVisible(downNode))
         downNodes.add(downNode);
+    }
+    for (int adjNode : myDottedEdges.getAdjacentNodes(nodeIndex)) {
+      if (adjNode > nodeIndex)
+        downNodes.add(adjNode);
     }
     return downNodes;
   }

@@ -2,6 +2,7 @@ package com.jetbrains.python.edu.ui;
 
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.facet.ui.ValidationResult;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -9,7 +10,6 @@ import com.intellij.util.Consumer;
 import com.jetbrains.python.edu.StudyDirectoryProjectGenerator;
 import com.jetbrains.python.edu.StudyUtils;
 import com.jetbrains.python.edu.course.CourseInfo;
-import icons.StudyIcons;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -32,6 +32,7 @@ public class StudyNewProjectPanel{
   private JPanel myContentPanel;
   private JLabel myAuthorLabel;
   private JLabel myDescriptionLabel;
+  private JLabel myLabel;
   private final StudyDirectoryProjectGenerator myGenerator;
   private static final String CONNECTION_ERROR = "<html>Failed to download courses.<br>Check your Internet connection.</html>";
   private static final String INVALID_COURSE = "Selected course is invalid";
@@ -56,7 +57,9 @@ public class StudyNewProjectPanel{
     }
     initListeners();
     myRefreshButton.setVisible(true);
-    myRefreshButton.setIcon(StudyIcons.Refresh);
+    myRefreshButton.setIcon(AllIcons.Actions.Refresh);
+
+    myLabel.setPreferredSize(new JLabel("Project name").getPreferredSize());
   }
 
   private void initListeners() {

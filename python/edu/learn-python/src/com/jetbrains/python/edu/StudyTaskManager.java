@@ -112,9 +112,14 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
                   ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW).show(null);
                   FileEditor[] editors = FileEditorManager.getInstance(myProject).getSelectedEditors();
                   if (editors.length > 0) {
-                    JComponent focusedComponent = editors[0].getPreferredFocusedComponent();
+                    final JComponent focusedComponent = editors[0].getPreferredFocusedComponent();
                     if (focusedComponent != null) {
-                      IdeFocusManager.getInstance(myProject).requestFocus(focusedComponent, true);
+                      ApplicationManager.getApplication().invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                          IdeFocusManager.getInstance(myProject).requestFocus(focusedComponent, true);
+                        }
+                      });
                     }
                   }
                 }
@@ -123,7 +128,6 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
               UISettings.getInstance().fireUISettingsChanged();
               ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
               String toolWindowId = StudyToolWindowFactory.STUDY_TOOL_WINDOW;
-              //TODO:decide smth with tool window position
               try {
                 Method method = toolWindowManager.getClass().getDeclaredMethod("registerToolWindow", String.class,
                                                                                JComponent.class,

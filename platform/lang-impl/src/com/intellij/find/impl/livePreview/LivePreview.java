@@ -21,7 +21,10 @@ import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
@@ -46,7 +49,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.io.*;
+import java.io.PrintStream;
 import java.util.*;
 import java.util.List;
 
@@ -95,11 +98,8 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
   private RangeHighlighter myCursorHighlighter;
   private final List<VisibleAreaListener> myVisibleAreaListenersToRemove = new ArrayList<VisibleAreaListener>();
 
-  private static TextAttributes strikout(TextAttributes attributes) {
-    TextAttributes textAttributes = attributes.clone();
-    textAttributes.setEffectColor(Color.BLACK);
-    textAttributes.setEffectType(EffectType.STRIKEOUT);
-    return textAttributes;
+  private static TextAttributes strikout() {
+    return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.DEPRECATED_ATTRIBUTES).clone();
   }
 
   private Delegate myDelegate;
@@ -161,7 +161,7 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
     ranges.add(new Pair<Integer, Character>(editor.getDocument().getTextLength()+1, '\n'));
     ContainerUtil.sort(ranges, new Comparator<Pair<Integer, Character>>() {
       @Override
-      public int compare(Pair<Integer, Character> pair, Pair<Integer, Character> pair2) {
+      public int compare(@NotNull Pair<Integer, Character> pair, @NotNull Pair<Integer, Character> pair2) {
         int res = pair.first - pair2.first;
         if (res == 0) {
 
@@ -210,7 +210,7 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
     }
     myHighlighters.removeAll(unused);
     Project project = mySearchResults.getProject();
-    if (!project.isDisposed()) {
+    if (project != null && !project.isDisposed()) {
       for (RangeHighlighter highlighter : unused) {
         HighlightManager.getInstance(project).removeSegmentHighlighter(mySearchResults.getEditor(), highlighter);
       }
@@ -240,7 +240,8 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
     Editor editor = mySearchResults.getEditor();
     if (cursor != null) {
       Set<RangeHighlighter> dummy = new HashSet<RangeHighlighter>();
-      highlightRange(cursor, new TextAttributes(null, null, Color.BLACK, EffectType.ROUNDED_BOX, 0), dummy);
+      Color color = editor.getColorsScheme().getColor(EditorColors.CARET_COLOR);
+      highlightRange(cursor, new TextAttributes(null, null, color, EffectType.ROUNDED_BOX, 0), dummy);
       if (!dummy.isEmpty()) {
         myCursorHighlighter = dummy.iterator().next();
       }
@@ -322,7 +323,7 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
         attributes.setEffectColor(attributes.getBackgroundColor());
       }
       if (mySearchResults.isExcluded(range)) {
-        highlightRange(range, strikout(attributes), myHighlighters);
+        highlightRange(range, strikout(), myHighlighters);
       } else {
         highlightRange(range, attributes, myHighlighters);
       }
@@ -389,18 +390,18 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
       final FindModel findModel = mySearchResults.getFindModel();
       if (findModel.isRegularExpressions() && findModel.isReplaceState()) {
 
-        showBalloon(cursor, editor, replacementPreviewText);
+        showBalloon(editor, replacementPreviewText);
       }
     }
   }
 
-  private void showBalloon(FindResult cursor, Editor editor, String replacementPreviewText) {
+  private void showBalloon(Editor editor, String replacementPreviewText) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       myReplacementPreviewText = replacementPreviewText;
       return;
     }
 
-    ReplacementView replacementView = new ReplacementView(replacementPreviewText, cursor);
+    ReplacementView replacementView = new ReplacementView(replacementPreviewText);
 
     BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(replacementView);
     balloonBuilder.setFadeoutTime(0);
@@ -546,7 +547,7 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
     }
   }
 
-  private void requestBalloonHiding(final Balloon object) {
+  private static void requestBalloonHiding(final Balloon object) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {

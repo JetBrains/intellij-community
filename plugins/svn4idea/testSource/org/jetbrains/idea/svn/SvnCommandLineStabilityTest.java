@@ -1,16 +1,15 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import junit.framework.Assert;
-import org.jetbrains.idea.svn.api.BaseSvnClient;
-import org.jetbrains.idea.svn.commandLine.CommandExecutor;
-import org.jetbrains.idea.svn.commandLine.SvnCommandName;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.auth.AuthenticationService;
+import org.jetbrains.idea.svn.commandLine.*;
 import org.junit.Test;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -30,15 +29,22 @@ public class SvnCommandLineStabilityTest extends Svn17TestCase {
   }
 
   private void call() throws VcsException {
-    List<String> parameters = new ArrayList<String>();
-    parameters.add("--xml");
-
-    SvnVcs vcs = SvnVcs.getInstance(myProject);
-    File workingDirectory = new File(myWorkingCopyDir.getPath());
-    CommandExecutor command =
-      BaseSvnClient.execute(vcs, SvnTarget.fromFile(workingDirectory), workingDirectory, SvnCommandName.info, parameters, null);
-    final String result = command.getOutput();
+    String result = runInfo().getOutput();
     System.out.println(result);
     Assert.assertNotNull(result);
+  }
+
+  @NotNull
+  private CommandExecutor runInfo() throws SvnBindException {
+    SvnVcs vcs = SvnVcs.getInstance(myProject);
+    File workingDirectory = VfsUtilCore.virtualToIoFile(myWorkingCopyDir);
+    Command command = new Command(SvnCommandName.info);
+
+    command.setTarget(SvnTarget.fromFile(workingDirectory));
+    command.setWorkingDirectory(workingDirectory);
+    command.put("--xml");
+
+    CommandRuntime runtime = new CommandRuntime(vcs, new AuthenticationService(vcs, true));
+    return runtime.runWithAuthenticationAttempt(command);
   }
 }

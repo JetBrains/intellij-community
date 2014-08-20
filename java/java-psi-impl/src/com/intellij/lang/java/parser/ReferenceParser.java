@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public class ReferenceParser {
     final TypeInfo typeInfo = parseTypeInfo(builder, flags, false);
 
     if (typeInfo != null) {
-      assert notSet(flags, DISJUNCTIONS|CONJUNCTIONS) : "don't not set both flags simultaneously";
+      assert notSet(flags, DISJUNCTIONS|CONJUNCTIONS) : "don't set both flags simultaneously";
       final IElementType operator = isSet(flags, DISJUNCTIONS) ? JavaTokenType.OR : isSet(flags, CONJUNCTIONS) ? JavaTokenType.AND : null;
 
       if (operator != null && builder.getTokenType() == operator) {

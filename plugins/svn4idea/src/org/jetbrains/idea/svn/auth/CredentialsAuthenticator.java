@@ -37,14 +37,12 @@ class CredentialsAuthenticator extends AbstractAuthenticator {
   private String myRealm2;
   private SVNAuthentication myAuthentication;
 
-  CredentialsAuthenticator(@NotNull IdeaSvnkitBasedAuthenticationCallback authService,
-                           @NotNull SVNURL url,
-                           @Nullable String realm) {
-    super(authService, url, realm == null ? url.getHost() : realm);
+  CredentialsAuthenticator(@NotNull AuthenticationService authenticationService, @NotNull SVNURL url, @Nullable String realm) {
+    super(authenticationService, url, realm == null ? url.getHost() : realm);
   }
 
   public boolean tryAuthenticate(boolean passwordRequest) {
-    final List<String> kinds = IdeaSvnkitBasedAuthenticationCallback.getKinds(myUrl, passwordRequest);
+    final List<String> kinds = AuthenticationService.getKinds(myUrl, passwordRequest);
     for (String kind : kinds) {
       myKind = kind;
       if (!tryAuthenticate()) {
@@ -58,8 +56,8 @@ class CredentialsAuthenticator extends AbstractAuthenticator {
   protected boolean getWithPassive(SvnAuthenticationManager passive) throws SVNException {
     myAuthentication = getWithPassiveImpl(passive);
     if (myAuthentication != null && !checkAuthOk(myAuthentication)) {
-      myAuthService.clearPassiveCredentials(myRealm, myUrl,
-                                            myAuthentication instanceof SVNPasswordAuthentication);  //clear passive also take into acconut ssl filepath
+      //clear passive also take into account ssl file path
+      myAuthenticationService.clearPassiveCredentials(myRealm, myUrl, myAuthentication instanceof SVNPasswordAuthentication);
       myAuthentication = null;
     }
     return myAuthentication != null;
@@ -88,7 +86,7 @@ class CredentialsAuthenticator extends AbstractAuthenticator {
       if (super.getWithActive(active)) return true;
     }
     myAuthentication = active.getProvider().requestClientAuthentication(myKind, myUrl, myRealm, null, null, true);
-    myStoreInUsual = myAuthService.getTempDirectory() == null && myAuthentication != null && myAuthentication.isStorageAllowed();
+    myStoreInUsual = myAuthenticationService.getTempDirectory() == null && myAuthentication != null && myAuthentication.isStorageAllowed();
 
     return myAuthentication != null;
   }

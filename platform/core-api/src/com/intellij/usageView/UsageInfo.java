@@ -246,6 +246,15 @@ public class UsageInfo {
     return result;
   }
 
+  @Override
+  public String toString() {
+    PsiReference reference = getReference();
+    if (reference == null) {
+      return super.toString();
+    }
+    return reference.getCanonicalText() + " (" + reference.getClass() + ")";
+  }
+
   @Nullable
   public PsiFile getFile() {
     return mySmartPointer.getContainingFile();

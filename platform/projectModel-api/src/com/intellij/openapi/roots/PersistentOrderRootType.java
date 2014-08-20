@@ -18,6 +18,7 @@ package com.intellij.openapi.roots;
 
 import org.jetbrains.annotations.NonNls;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -27,7 +28,7 @@ public class PersistentOrderRootType extends OrderRootType {
   private final String myModulePathsName;
   private final String myOldSdkRootName;
 
-  protected PersistentOrderRootType(@NonNls String name, @NonNls String sdkRootName, @NonNls String modulePathsName, @NonNls final String oldSdkRootName) {
+  protected PersistentOrderRootType(@NonNls String name, @NonNls @Nullable String sdkRootName, @NonNls @Nullable String modulePathsName, @NonNls final @Nullable String oldSdkRootName) {
     super(name);
     mySdkRootName = sdkRootName;
     myModulePathsName = modulePathsName;
@@ -37,12 +38,14 @@ public class PersistentOrderRootType extends OrderRootType {
   }
 
   /**
-   * @return Element name used for storing roots of this type in JDK and library definitions.
+   * @return Element name used for storing roots of this type in JDK definitions.
    */
+  @Nullable
   public String getSdkRootName() {
     return mySdkRootName;
   }
 
+  @Nullable
   public String getOldSdkRootName() {
     return myOldSdkRootName;
   }
@@ -50,6 +53,7 @@ public class PersistentOrderRootType extends OrderRootType {
   /**
    * @return Element name used for storing roots of this type in module definitions.
    */
+  @Nullable
   public String getModulePathsName() {
     return myModulePathsName;
   }

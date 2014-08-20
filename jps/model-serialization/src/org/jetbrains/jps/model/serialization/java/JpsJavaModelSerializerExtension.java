@@ -126,7 +126,8 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
   @Override
   public List<JpsLibraryRootTypeSerializer> getLibraryRootTypeSerializers() {
     return Arrays.asList(new JpsLibraryRootTypeSerializer("JAVADOC", JpsOrderRootType.DOCUMENTATION, true),
-                         new JpsLibraryRootTypeSerializer("ANNOTATIONS", JpsAnnotationRootType.INSTANCE, false));
+                         new JpsLibraryRootTypeSerializer("ANNOTATIONS", JpsAnnotationRootType.INSTANCE, false),
+                         new JpsLibraryRootTypeSerializer("NATIVE", JpsNativeLibraryRootType.INSTANCE, false));
   }
 
   @NotNull
