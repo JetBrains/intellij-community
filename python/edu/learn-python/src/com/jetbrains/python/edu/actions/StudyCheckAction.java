@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.jetbrains.python.edu.StudyDocumentListener;
@@ -257,6 +258,7 @@ public class StudyCheckAction extends DumbAwareAction {
     assert studyEditor != null;
     JButton checkButton = studyEditor.getCheckButton();
     balloon.showInCenterOf(checkButton);
+    Disposer.dispose(balloon);
   }
 
   @Override

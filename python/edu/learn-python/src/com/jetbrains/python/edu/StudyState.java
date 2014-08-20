@@ -15,17 +15,13 @@ public class StudyState {
   private final Task myTask;
   private final VirtualFile myTaskDir;
 
-  public StudyState(StudyEditor studyEditor) {
+  public StudyState(final StudyEditor studyEditor) {
     myStudyEditor = studyEditor;
     myEditor = studyEditor != null ? studyEditor.getEditor() : null;
     myTaskFile = studyEditor != null ? studyEditor.getTaskFile() : null;
     myVirtualFile = myEditor != null ? FileDocumentManager.getInstance().getFile(myEditor.getDocument()) : null;
     myTaskDir = myVirtualFile != null ? myVirtualFile.getParent() : null;
     myTask = myTaskFile != null ? myTaskFile.getTask() : null;
-  }
-
-  public StudyEditor getStudyEditor() {
-    return myStudyEditor;
   }
 
   public Editor getEditor() {
