@@ -22,7 +22,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.PersistentOrderRootType;
 import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.roots.impl.RootProviderBaseImpl;
@@ -320,21 +319,11 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     List<OrderRootType> allTypes = new ArrayList<OrderRootType>(rootTypes);
     Collections.sort(allTypes, new Comparator<OrderRootType>() {
       @Override
-      public int compare(final OrderRootType o1, final OrderRootType o2) {
-        return getSortKey(o1).compareTo(getSortKey(o2));
+      public int compare(@NotNull final OrderRootType o1, @NotNull final OrderRootType o2) {
+        return o1.name().compareToIgnoreCase(o2.name());
       }
     });
     return allTypes;
-  }
-
-  private static String getSortKey(OrderRootType orderRootType) {
-    if (orderRootType instanceof PersistentOrderRootType) {
-      return ((PersistentOrderRootType)orderRootType).getSdkRootName();
-    }
-    if (orderRootType instanceof OrderRootType.DocumentationRootType) {
-      return ((OrderRootType.DocumentationRootType)orderRootType).getSdkRootName();
-    }
-    return "";
   }
 
   @Override
