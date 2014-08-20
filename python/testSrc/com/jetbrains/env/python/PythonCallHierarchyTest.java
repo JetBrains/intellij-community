@@ -66,4 +66,8 @@ public class PythonCallHierarchyTest extends PyEnvTestCase {
   public void testSimple() throws Exception {
     runPythonTest(new PyCallHierarchyTask(getTestName(false), getBasePath(), "main.py"));
   }
+
+  public void testAnotherSimple() throws Exception {
+    runPythonTest(new PyCallHierarchyTask(getTestName(false), getBasePath(), "main.py"));
+  }
 }
