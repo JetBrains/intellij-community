@@ -25,5 +25,3 @@ def func2():
 
 func1()
 func2()
-
-x = 1
