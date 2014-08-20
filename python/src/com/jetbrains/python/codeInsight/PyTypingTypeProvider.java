@@ -72,37 +72,33 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   private static PyType getTypingType(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+    final PyType unionType = getUnionType(expression, context);
+    if (unionType != null) {
+      return unionType;
+    }
+    final PyType parameterizedType = getParameterizedType(expression, context);
+    if (parameterizedType != null) {
+      return parameterizedType;
+    }
+    final PyType builtinCollection = getBuiltinCollection(expression, context);
+    if (builtinCollection != null) {
+      return builtinCollection;
+    }
+    final PyType genericType = getGenericType(expression, context);
+    if (genericType != null) {
+      return genericType;
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyType getUnionType(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
     if (expression instanceof PySubscriptionExpression) {
       final PySubscriptionExpression subscriptionExpr = (PySubscriptionExpression)expression;
       final PyExpression operand = subscriptionExpr.getOperand();
-      final PyExpression indexExpr = subscriptionExpr.getIndexExpression();
       final String operandName = resolveToQualifiedName(operand, context);
       if ("typing.Union".equals(operandName)) {
         return PyUnionType.union(getIndexTypes(subscriptionExpr, context));
-      }
-      else {
-        final PyType operandType = getType(operand, context);
-        if (operandType instanceof PyClassType) {
-          final PyClass cls = ((PyClassType)operandType).getPyClass();
-          if (PyNames.TUPLE.equals(cls.getQualifiedName())) {
-            final List<PyType> indexTypes = getIndexTypes(subscriptionExpr, context);
-            return PyTupleType.create(expression, indexTypes.toArray(new PyType[indexTypes.size()]));
-          }
-          else if (indexExpr != null) {
-            final PyType indexType = context.getType(indexExpr);
-            return new PyCollectionTypeImpl(cls, false, indexType);
-          }
-        }
-      }
-    }
-    else {
-      final PyType builtinCollection = getBuiltinCollection(expression, context);
-      if (builtinCollection != null) {
-        return builtinCollection;
-      }
-      final PyType genericType = getGenericType(expression, context);
-      if (genericType != null) {
-        return genericType;
       }
     }
     return null;
@@ -172,6 +168,28 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       }
     }
     return types;
+  }
+
+  @Nullable
+  private static PyType getParameterizedType(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+    if (expression instanceof PySubscriptionExpression) {
+      final PySubscriptionExpression subscriptionExpr = (PySubscriptionExpression)expression;
+      final PyExpression operand = subscriptionExpr.getOperand();
+      final PyExpression indexExpr = subscriptionExpr.getIndexExpression();
+      final PyType operandType = getType(operand, context);
+      if (operandType instanceof PyClassType) {
+        final PyClass cls = ((PyClassType)operandType).getPyClass();
+        if (PyNames.TUPLE.equals(cls.getQualifiedName())) {
+          final List<PyType> indexTypes = getIndexTypes(subscriptionExpr, context);
+          return PyTupleType.create(expression, indexTypes.toArray(new PyType[indexTypes.size()]));
+        }
+        else if (indexExpr != null) {
+          final PyType indexType = context.getType(indexExpr);
+          return new PyCollectionTypeImpl(cls, false, indexType);
+        }
+      }
+    }
+    return null;
   }
 
   @Nullable
