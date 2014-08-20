@@ -50,7 +50,11 @@ final class BrowserLauncherImpl extends BrowserLauncherAppless {
   }
 
   @Override
-  protected void doShowError(@Nullable final String error, @Nullable final WebBrowser browser, @Nullable final Project project, final String title, @Nullable final Runnable launchTask) {
+  protected void showError(@Nullable final String error,
+                           @Nullable final WebBrowser browser,
+                           @Nullable final Project project,
+                           final String title,
+                           @Nullable final Runnable launchTask) {
     AppUIUtil.invokeOnEdt(new Runnable() {
       @Override
       public void run() {
@@ -85,7 +89,7 @@ final class BrowserLauncherImpl extends BrowserLauncherAppless {
         public void run() {
           try {
             if (process.waitFor() == 1) {
-              doShowError(ExecUtil.readFirstLine(process.getErrorStream(), null), browser, project, null, launchTask);
+              showError(ExecUtil.readFirstLine(process.getErrorStream(), null), browser, project, null, launchTask);
             }
           }
           catch (InterruptedException ignored) {

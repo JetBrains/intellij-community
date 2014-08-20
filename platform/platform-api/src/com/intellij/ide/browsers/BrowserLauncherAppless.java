@@ -176,7 +176,7 @@ public class BrowserLauncherAppless extends BrowserLauncher {
       File file = new File(url);
       if (!browse && isDesktopActionSupported(Desktop.Action.OPEN)) {
         if (!file.exists()) {
-          doShowError(IdeBundle.message("error.file.does.not.exist", file.getPath()), null, null, null, null);
+          showError(IdeBundle.message("error.file.does.not.exist", file.getPath()), null, null, null, null);
           return;
         }
 
@@ -194,7 +194,7 @@ public class BrowserLauncherAppless extends BrowserLauncher {
     }
 
     if (uri == null) {
-      doShowError(IdeBundle.message("error.malformed.url", url), null, project, null, null);
+      showError(IdeBundle.message("error.malformed.url", url), null, project, null, null);
     }
     else {
       browse(uri, project);
@@ -443,7 +443,7 @@ public class BrowserLauncherAppless extends BrowserLauncher {
 
     String message = browser != null ? browser.getBrowserNotFoundMessage() :
                      IdeBundle.message("error.please.specify.path.to.web.browser", CommonBundle.settingsActionPath());
-    doShowError(message, browser, project, IdeBundle.message("title.browser.not.found"), launchTask);
+    showError(message, browser, project, IdeBundle.message("title.browser.not.found"), launchTask);
     return false;
   }
 
@@ -480,7 +480,7 @@ public class BrowserLauncherAppless extends BrowserLauncher {
       return true;
     }
     catch (ExecutionException e) {
-      doShowError(e.getMessage(), browser, project, null, null);
+      showError(e.getMessage(), browser, project, null, null);
       return false;
     }
   }
@@ -492,7 +492,7 @@ public class BrowserLauncherAppless extends BrowserLauncher {
                                      @Nullable Runnable launchTask) {
   }
 
-  protected void doShowError(@Nullable String error, @Nullable WebBrowser browser, @Nullable Project project, String title, @Nullable Runnable launchTask) {
+  protected void showError(@Nullable String error, @Nullable WebBrowser browser, @Nullable Project project, String title, @Nullable Runnable launchTask) {
     // Not started yet. Not able to show message up. (Could happen in License panel under Linux).
     LOG.warn(error);
   }
