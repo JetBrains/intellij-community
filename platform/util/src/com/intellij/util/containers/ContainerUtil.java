@@ -1073,7 +1073,8 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   public static <T, U extends T> U findInstance(@NotNull Iterator<T> iterator, @NotNull Class<U> aClass) {
-    @SuppressWarnings("unchecked") U u = (U)find(iterator, new FilteringIterator.InstanceOf<U>(aClass));
+    //noinspection unchecked
+    U u = (U)find(iterator, FilteringIterator.instanceOf(aClass));
     return u;
   }
 

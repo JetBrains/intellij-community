@@ -17,7 +17,6 @@ package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
@@ -30,7 +29,7 @@ import java.util.NoSuchElementException;
  */
 public class FilteringIterator<Dom, E extends Dom> implements Iterator<E> {
   private final Iterator<Dom> myBaseIterator;
-  private final Condition<Dom> myFilter;
+  private final Condition<? super Dom> myFilter;
   private boolean myNextObtained = false;
   private boolean myCurrentIsValid = false;
   private Dom myCurrent;
@@ -42,7 +41,7 @@ public class FilteringIterator<Dom, E extends Dom> implements Iterator<E> {
     }
   };
 
-  public FilteringIterator(@NotNull Iterator<Dom> baseIterator, @NotNull Condition<Dom> filter) {
+  public FilteringIterator(@NotNull Iterator<Dom> baseIterator, @NotNull Condition<? super Dom> filter) {
     myBaseIterator = baseIterator;
     myFilter = filter;
   }
@@ -103,7 +102,7 @@ public class FilteringIterator<Dom, E extends Dom> implements Iterator<E> {
     return create(iterator, NOT_NULL);
   }
 
-  public static <Dom, T extends Dom> Iterator<T> create(Iterator<Dom> iterator, Condition<Dom> condition) {
+  public static <Dom, T extends Dom> Iterator<T> create(Iterator<Dom> iterator, Condition<? super Dom> condition) {
     return new FilteringIterator<Dom, T>(iterator, condition);
   }
 
@@ -119,7 +118,7 @@ public class FilteringIterator<Dom, E extends Dom> implements Iterator<E> {
     return create((Iterator<T>)iterator, instanceOf(aClass));
   }
 
-  public static class InstanceOf<T> implements Condition {
+  public static class InstanceOf<T> implements Condition<Object> {
     private final Class<T> myInstancesClass;
 
     public InstanceOf(Class<T> instancesClass) {
@@ -129,14 +128,6 @@ public class FilteringIterator<Dom, E extends Dom> implements Iterator<E> {
     @Override
     public boolean value(Object object) {
       return myInstancesClass.isInstance(object);
-    }
-
-    public boolean isClassAcceptable(Class hintClass) {
-      return ReflectionUtil.isAssignable(myInstancesClass, hintClass);
-    }
-
-    public T cast(Object object) {
-      return (T)object;
     }
   }
 }
