@@ -19,6 +19,10 @@
     </component>
   </application-components>
 
+  <extensions defaultExtensionNs="com.intellij">
+      <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.edu.PyExecuteFileLineMarkerProvider"/>
+  </extensions>
+
   <actions>
     <group overrides="true" class="com.intellij.openapi.actionSystem.EmptyActionGroup" id="ToolsMenu"/>
 

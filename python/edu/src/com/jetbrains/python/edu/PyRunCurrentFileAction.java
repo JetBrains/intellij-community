@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.jetbrains.python.PythonFileType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author traff
@@ -35,6 +36,10 @@ public class PyRunCurrentFileAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final ConfigurationContext context = ConfigurationContext.getFromContext(e.getDataContext());
 
+    run(context);
+  }
+
+  public static void run(@NotNull ConfigurationContext context) {
     RunnerAndConfigurationSettings configuration = context.findExisting();
     final RunManagerEx runManager = (RunManagerEx)context.getRunManager();
     if (configuration == null) {
