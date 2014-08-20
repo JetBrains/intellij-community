@@ -8,7 +8,7 @@ import java.util.Map;
 
 public class Task {
   @Expose public String name;
-  @Expose public Map<String, TaskFile> taskFiles = new HashMap<String, TaskFile>();
+  @Expose public Map<String, TaskFile> task_files = new HashMap<String, TaskFile>();
 
   public Task() {}
 
@@ -17,10 +17,10 @@ public class Task {
   }
 
   public void addTaskFile(@NotNull final String name) {
-    taskFiles.put(name, new TaskFile());
+    task_files.put(name, new TaskFile());
   }
 
   public TaskFile getTaskFile(@NotNull final String name) {
-    return taskFiles.get(name);
+    return task_files.get(name);
   }
 }

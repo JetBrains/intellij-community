@@ -11,21 +11,27 @@ public class TaskWindow {
   @Expose public String possible_answer;
   @Expose public int length;
   public String myTaskText;
+  public int myReplacementLength;
 
   public TaskWindow() {}
 
-  public TaskWindow(int line, int start, int length) {
+  public TaskWindow(int line, int start, int length, String selectedText) {
     this.line = line;
     this.start = start;
-    this.length = length;
+    myReplacementLength = length;
+    this.possible_answer = selectedText;
   }
 
   public void setTaskText(@NotNull final String taskText) {
     myTaskText = taskText;
+    length = myTaskText.length();
   }
 
   public String getTaskText() {
     return myTaskText;
   }
 
+  public int getReplacementLength() {
+    return myReplacementLength;
+  }
 }

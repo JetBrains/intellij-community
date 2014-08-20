@@ -55,7 +55,7 @@ public class CCTaskLineMarkerProvider implements LineMarkerProvider {
           final int lineStartOffset = document.getLineStartOffset(taskWindow.line);
           final int offset = lineStartOffset + taskWindow.start;
           if (offset > document.getTextLength()) continue;
-          final TextRange textRange = TextRange.create(offset, offset + taskWindow.length);
+          final TextRange textRange = TextRange.create(offset, offset + taskWindow.getReplacementLength());
           @SuppressWarnings("unchecked")
           final LineMarkerInfo info = new LineMarkerInfo(element, textRange,
               IconLoader.getIcon("/icons/gutter.png"), Pass.UPDATE_OVERRIDEN_MARKERS,

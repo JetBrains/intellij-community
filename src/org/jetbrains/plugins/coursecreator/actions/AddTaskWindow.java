@@ -55,7 +55,7 @@ public class AddTaskWindow extends AnAction implements DumbAware {
 
     final String taskText = Messages.showMultilineInputDialog(project, "Add window task text", "Task Window Text", "", null, null);
 
-    final TaskWindow taskWindow = new TaskWindow(lineNumber, realStart, length);
+    final TaskWindow taskWindow = new TaskWindow(lineNumber, realStart, length, model.getSelectedText());
     taskWindow.setTaskText(StringUtil.notNullize(taskText));
 
     taskFile.addTaskWindow(taskWindow);

@@ -49,6 +49,8 @@
       </action>
       <action id="GenerateJson" class="org.jetbrains.plugins.coursecreator.actions.GenerateJson">
       </action>
+      <action id="PackCourse" class="org.jetbrains.plugins.coursecreator.actions.PackCourse">
+      </action>
   </actions>
 
 </idea-plugin>
