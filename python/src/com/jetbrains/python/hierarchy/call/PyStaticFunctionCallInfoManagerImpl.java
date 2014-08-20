@@ -26,11 +26,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
-import com.jetbrains.python.psi.PyArgumentList;
-import com.jetbrains.python.psi.PyCallExpression;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyRecursiveElementVisitor;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.findUsages.PyFunctionFindUsagesHandler;
+import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -50,11 +51,26 @@ public class PyStaticFunctionCallInfoManagerImpl extends PyStaticFunctionCallInf
 
     final PyRecursiveElementVisitor visitor = new PyRecursiveElementVisitor() {
       @Override
+      public void visitPyParameterList(PyParameterList node) {
+      }
+
+      @Override
+      public void visitPyLambdaExpression(PyLambdaExpression node) {
+      }
+
+      @Override
       public void visitPyFunction(PyFunction innerFunction) {
+        for (PyParameter parameter: innerFunction.getParameterList().getParameters()) {
+          PsiElement defaultValue = parameter.getDefaultValue();
+          if (defaultValue != null) {
+            defaultValue.accept(this);
+          }
+        }
       }
 
       @Override
       public void visitPyCallExpression(PyCallExpression callExpression) {
+        super.visitPyCallExpression(callExpression);
         PsiElement calleeFunction = callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
         if (calleeFunction instanceof PyFunction) {
           callees.add((PyFunction)calleeFunction);
@@ -70,44 +86,39 @@ public class PyStaticFunctionCallInfoManagerImpl extends PyStaticFunctionCallInf
   @Override
   public Collection<PyFunction> getCallers(@NotNull PyFunction function) {
     final Collection<PyFunction> callers = Lists.newArrayList();
-
     final Collection<UsageInfo> usages = findUsages(function);
+
     for (UsageInfo usage: usages) {
       PsiElement element = usage.getElement();
-      if (element != null) {
+      if (element == null) {
+        continue;
+      }
+
+      element = element.getParent();
+      while (element instanceof PyParenthesizedExpression) {
         element = element.getParent();
       }
 
-      if (element instanceof PyArgumentList) {
-        PyCallExpression callExpression = (PyCallExpression)element.getParent();
-        PsiElement caller = callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
+      if (element instanceof PyCallExpression) {
+        PsiElement caller = PsiTreeUtil.getParentOfType(element, PyParameterList.class, PyFunction.class);
         if (caller instanceof PyFunction) {
           callers.add((PyFunction)caller);
         }
-      }
-
-      if (element instanceof PyCallExpression) {
-        PsiElement caller = PsiTreeUtil.getParentOfType(element, PyFunction.class);
-        if (caller != null) {
-          callers.add((PyFunction)caller);
+        else if (caller instanceof PyParameterList) {
+          PsiElement innerFunction = PsiTreeUtil.getParentOfType(caller, PyFunction.class);
+          PsiElement outerFunction = PsiTreeUtil.getParentOfType(innerFunction, PyFunction.class);
+          if (innerFunction != null && outerFunction != null) {
+            callers.add((PyFunction)outerFunction);
+          }
         }
-      }
-
-      PsiElement caller = PsiTreeUtil.getParentOfType(element, PyFunction.class, false);
-      if (caller != null) {
-        callers.add((PyFunction)caller);
       }
     }
 
     return callers;
   }
 
-  private Collection<UsageInfo> findUsages(@NotNull final PyFunction function) {
-    final FindUsagesHandler handler =
-      ((FindManagerImpl)FindManager.getInstance(myProject)).getFindUsagesManager().getFindUsagesHandler(function, true);
-    if (handler == null) {
-      return Lists.newArrayList();
-    }
+  private static Collection<UsageInfo> findUsages(@NotNull final PyFunction function) {
+    final FindUsagesHandler handler = createFindUsageHandler(function);
     final CommonProcessors.CollectProcessor<UsageInfo> processor = new CommonProcessors.CollectProcessor<UsageInfo>();
     final PsiElement[] psiElements = ArrayUtil.mergeArrays(handler.getPrimaryElements(), handler.getSecondaryElements());
     final FindUsagesOptions options = handler.getFindUsagesOptions(null);
@@ -115,5 +126,36 @@ public class PyStaticFunctionCallInfoManagerImpl extends PyStaticFunctionCallInf
       handler.processElementUsages(psiElement, processor, options);
     }
     return processor.getResults();
+  }
+
+  /**
+   * @see {@link com.jetbrains.python.findUsages.PyFindUsagesHandlerFactory#createFindUsagesHandler(com.intellij.psi.PsiElement, boolean) createFindUsagesHandler}
+   */
+  private static FindUsagesHandler createFindUsageHandler(@NotNull final PyFunction function) {
+    final Collection<PsiElement> superMethods = PySuperMethodsSearch.search(function, true).findAll();
+    if (superMethods.size() > 0) {
+      final PsiElement next = superMethods.iterator().next();
+      if (next instanceof PyFunction && !isInObject((PyFunction)next)) {
+        List<PsiElement> allMethods = Lists.newArrayList();
+        allMethods.add(function);
+        allMethods.addAll(superMethods);
+
+        return new PyFunctionFindUsagesHandler(function, allMethods);
+      }
+    }
+
+    return new PyFunctionFindUsagesHandler(function);
+  }
+
+  /**
+   * @see {@link com.jetbrains.python.findUsages.PyFindUsagesHandlerFactory#isInObject(com.jetbrains.python.psi.PyFunction) isInObject}
+   */
+  private static boolean isInObject(PyFunction fun) {
+    final PyClass containingClass = fun.getContainingClass();
+    if (containingClass == null) {
+      return false;
+    }
+    return (PyNames.FAKE_OLD_BASE.equals(containingClass.getName()) ||
+            (PyNames.OBJECT.equals(containingClass.getName()) && PyBuiltinCache.getInstance(fun).isBuiltin(containingClass)));
   }
 }
