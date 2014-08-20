@@ -85,6 +85,8 @@ public abstract class AbstractVisibleGraph<CommitId> implements VisibleGraph<Com
   @NotNull
   @Override
   public RowInfo<CommitId> getRowInfo(final int visibleRow) {
+    if (visibleRow < 0 || visibleRow >= getVisibleCommitCount())
+      throw new IndexOutOfBoundsException("VisibleCommitCount is: " + getVisibleCommitCount() + ", but visibleRow: " + visibleRow);
     return new RowInfo<CommitId>() {
       @NotNull
       @Override
