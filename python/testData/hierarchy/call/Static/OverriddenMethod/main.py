@@ -1,30 +1,29 @@
 from file_1 import A
 
+
 class B(A):
     def target_func(self, p):
         p.another_func()
 
 
 class C(object):
-    def func(self, a):
+    def func1(self, a):
         a.target_func(A())
 
-def foo(b):
-    f = b.target_func
-    b.target_func
+    def func2(self):
+        a = A()
+        b = B()
+        a.target_func(b)
 
 
-def fuu(b):
-    b.target_func(A())
+def bar1(a):
+    a.target_func(a)
 
 
-def bar(f):
-    f(A())
+def bar2(a, b):
+    atf, btf = a.target_func, b.target_func
 
 
-a = A()
-b = B()
-foo(b)
-fuu(b)
-bar(a.target_func)
-b.target_<caret>func(A())
+bar1(A())
+bar2(A(), B())
+B().target_<caret>func(A())

@@ -4,6 +4,5 @@ class A(object):
         pass
 
     def another_func(self):
-        self.target_func()
         pass
 
