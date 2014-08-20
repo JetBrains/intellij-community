@@ -204,9 +204,7 @@ public class JDOMUtil {
 
   @NotNull
   private static String intern(@NotNull final StringInterner interner, @NotNull final String s) {
-    synchronized (interner) {
-      return interner.intern(s);
-    }
+    return interner.intern(s);
   }
 
   @NotNull
