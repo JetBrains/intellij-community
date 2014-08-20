@@ -15,7 +15,9 @@
  */
 package com.jetbrains.python.sdk.flavors;
 
+import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.WindowsRegistryUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,15 +25,16 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.jetbrains.python.PythonHelpersLocator;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * @author yole
  */
 public class WinPythonSdkFlavor extends CPythonSdkFlavor {
   public static WinPythonSdkFlavor INSTANCE = new WinPythonSdkFlavor();
+  private static Map<String, String> ourRegistryMap =
+    ImmutableMap.of("HKEY_LOCAL_MACHINE\\SOFTWARE\\Python\\PythonCore", "python.exe",
+                    "HKEY_LOCAL_MACHINE\\SOFTWARE\\IronPython", "ipy.exe");
 
   private WinPythonSdkFlavor() {
   }
@@ -48,6 +51,7 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
     for (String name : exe_names) {
       findInstallations(candidates, name, "C:\\", "C:\\Program Files\\");
       findInPath(candidates, name);
+      findInRegistry(candidates);
     }
   }
 
@@ -68,6 +72,25 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
       File f = new File(pathEntry, exeName);
       if (f.exists()) {
         candidates.add(FileUtil.toSystemDependentName(f.getPath()));
+      }
+    }
+  }
+
+  public static void findInRegistry(Collection<String> candidates) {
+    for (Map.Entry<String, String> entry : ourRegistryMap.entrySet()) {
+      final String prefix = entry.getKey();
+      final String exePath = entry.getValue();
+      List<String> strings = WindowsRegistryUtil.readRegistryBranch(prefix);
+      for (String string : strings) {
+        final String path =
+          WindowsRegistryUtil.readRegistryDefault(prefix + "\\" + string +
+                                                  "\\InstallPath");
+        if (path != null) {
+          File f = new File(path, exePath);
+          if (f.exists()) {
+            candidates.add(FileUtil.toSystemDependentName(f.getPath()));
+          }
+        }
       }
     }
   }
