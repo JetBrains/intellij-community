@@ -139,6 +139,27 @@ public class PyTypingTest extends PyTestCase {
            "    pass\n");
   }
 
+  public void testGenericType() {
+    doTest("A",
+           "from typing import typevar" +
+           "\n" +
+           "T = typevar('A')\n" +
+           "\n" +
+           "def f(expr: T):\n" +
+           "    pass\n");
+  }
+
+  public void testGenericBoundedType() {
+    doTest("T <= int | str",
+           "from typing import typevar" +
+           "\n" +
+           "T = typevar('T', values=(int, str))\n" +
+           "\n" +
+           "def f(expr: T):\n" +
+           "    pass\n");
+
+  }
+
   private void doTest(@NotNull String expectedType, @NotNull String text) {
     myFixture.copyDirectoryToProject("typing", "");
     myFixture.configureByText(PythonFileType.INSTANCE, text);

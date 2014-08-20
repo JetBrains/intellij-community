@@ -18,8 +18,10 @@ package com.jetbrains.python.codeInsight;
 import com.google.common.collect.ImmutableMap;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
@@ -98,8 +100,65 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (builtinCollection != null) {
         return builtinCollection;
       }
+      final PyType genericType = getGenericType(expression, context);
+      if (genericType != null) {
+        return genericType;
+      }
     }
     return null;
+  }
+
+  @Nullable
+  private static PyType getGenericType(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+    final PsiElement resolved = resolve(expression, context);
+    if (resolved instanceof PyTargetExpression) {
+      final PyTargetExpression targetExpr = (PyTargetExpression)resolved;
+      final QualifiedName calleeName = targetExpr.getCalleeName();
+      if (calleeName != null && "typevar".equals(calleeName.toString())) {
+        // XXX: Requires switching from stub to AST
+        final PyExpression assigned = targetExpr.findAssignedValue();
+        if (assigned instanceof PyCallExpression) {
+          final PyCallExpression assignedCall = (PyCallExpression)assigned;
+          final PyExpression callee = assignedCall.getCallee();
+          if (callee != null) {
+            final String calleeQName = resolveToQualifiedName(callee, context);
+            if ("typing.typevar".equals(calleeQName)) {
+              final PyExpression[] arguments = assignedCall.getArguments();
+              if (arguments.length > 0) {
+                final PyExpression firstArgument = arguments[0];
+                if (firstArgument instanceof PyStringLiteralExpression) {
+                  final String name = ((PyStringLiteralExpression)firstArgument).getStringValue();
+                  if (name != null) {
+                    return new PyGenericType(name, getGenericTypeBound(arguments, context));
+                  }
+                }
+              }
+            }
+
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyType getGenericTypeBound(@NotNull PyExpression[] typeVarArguments, @NotNull TypeEvalContext context) {
+    final List<PyType> types = new ArrayList<PyType>();
+    if (typeVarArguments.length > 1) {
+      final PyExpression secondArgument = typeVarArguments[1];
+      if (secondArgument instanceof PyKeywordArgument) {
+        final PyKeywordArgument valuesArgument = (PyKeywordArgument)secondArgument;
+        final PyExpression valueExpr = PyPsiUtils.flattenParens(valuesArgument.getValueExpression());
+        if (valueExpr instanceof PyTupleExpression) {
+          final PyTupleExpression tupleExpr = (PyTupleExpression)valueExpr;
+          for (PyExpression expr : tupleExpr.getElements()) {
+            types.add(getType(expr, context));
+          }
+        }
+      }
+    }
+    return PyUnionType.union(types);
   }
 
   @NotNull
@@ -148,7 +207,17 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final PyReferenceOwner referenceOwner = (PyReferenceOwner)expression;
       final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
       final PsiPolyVariantReference reference = referenceOwner.getReference(resolveContext);
-      return reference.resolve();
+      final PsiElement element = reference.resolve();
+      if (element instanceof PyFunction) {
+        final PyFunction function = (PyFunction)element;
+        if (PyUtil.isInit(function)) {
+          final PyClass cls = function.getContainingClass();
+          if (cls != null) {
+            return cls;
+          }
+        }
+      }
+      return element;
     }
     return null;
   }
