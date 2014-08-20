@@ -214,6 +214,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testNoConfusionWithAnonymousConstantInitializer() { doTest(); }
   public void testForeachOverWildcards() { doTest(); }
   public void testFinalGetter() { doTest(); }
+  public void testGetterResultsNotSame() { doTest(); }
 
   public void testByteBufferGetter() {
     myFixture.addClass("package java.nio; public class MappedByteBuffer { public int getInt() {} }");

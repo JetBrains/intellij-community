@@ -16,10 +16,12 @@
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Text;
 import com.intellij.xdebugger.XExpression;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
 * @author egor
@@ -65,8 +67,13 @@ public class XExpressionState {
     }
   }
 
+  @Nullable
   public XExpression toXExpression() {
     checkConverted();
+    // old versions may have empty expressions serialized
+    if (StringUtil.isEmptyOrSpaces(myExpression)) {
+      return null;
+    }
     return new XExpressionImpl(myExpression, Language.findLanguageByID(myLanguage), myCustomInfo);
   }
 }

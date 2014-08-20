@@ -19,13 +19,13 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NotNull;
 
-public class EditBreakpointAction extends XDebuggerActionBase {
+public class EditBreakpointAction extends XDebuggerActionBase implements DumbAware {
 
   public static class ContextAction extends AnAction {
     private final GutterIconRenderer myRenderer;

@@ -273,19 +273,19 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testWrapDefinitionWithLongLine() { // IDEA-92081
-    settings().RIGHT_MARGIN = 30;
+    settings().setRightMargin(PythonLanguage.getInstance(), 30);
     settings().WRAP_LONG_LINES = true;
     doTest();
   }
 
   public void testWrapAssignment() {  // PY-8572
-    settings().RIGHT_MARGIN = 120;
+    settings().setRightMargin(PythonLanguage.getInstance(), 120);
     settings().WRAP_LONG_LINES = false;
     doTest();
   }
 
   public void testIndentInSlice() {  // PY-8572
-    settings().RIGHT_MARGIN = 120;
+    settings().setRightMargin(PythonLanguage.getInstance(), 120);
     settings().WRAP_LONG_LINES = false;
     doTest();
   }
@@ -352,7 +352,7 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testWrapInBinaryExpression() {  // PY-9032
-    settings().RIGHT_MARGIN = 80;
+    settings().setRightMargin(PythonLanguage.getInstance(), 80);
     doTest(true);
   }
 
@@ -370,7 +370,7 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testWrapImports() {  // PY-9163
-    settings().RIGHT_MARGIN = 80;
+    settings().setRightMargin(PythonLanguage.getInstance(), 80);
     doTest();
   }
 

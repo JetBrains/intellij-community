@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -35,9 +36,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeNode;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
@@ -46,8 +48,9 @@ import java.util.concurrent.atomic.AtomicReference;
 public class PushController implements Disposable {
 
   @NotNull private final Project myProject;
-  @NotNull private final List<PushSupport> myPushSupports;
+  @NotNull private final List<PushSupport<? extends Repository>> myPushSupports;
   @NotNull private final PushLog myPushLog;
+  @NotNull private final VcsPushDialog myDialog;
   private boolean mySingleRepoProject;
   private static final int DEFAULT_CHILDREN_PRESENTATION_NUMBER = 20;
   private final Map<PushSupport, MyPushOptionValueModel> myAdditionalValuesMap;
@@ -65,11 +68,35 @@ public class PushController implements Disposable {
     mySingleRepoProject = createTreeModel(rootNode, preselectedRepositories);
     myPushLog = new PushLog(myProject, rootNode);
     myAdditionalValuesMap = new HashMap<PushSupport, MyPushOptionValueModel>();
+    myDialog = dialog;
+    myDialog.updateButtons();
     startLoadingCommits();
     Disposer.register(dialog.getDisposable(), this);
   }
 
+  @Nullable
+  public ValidationInfo validate() {
+    ValidationInfo validInfo = new ValidationInfo("There are no selected repository to push!");
+    for (Map.Entry<RepositoryNode, MyRepoModel> entry : myView2Model.entrySet()) {
+      MyRepoModel model = entry.getValue();
+      if (model.isSelected()) {
+        //has one or more selected roots
+        validInfo = null;
+        RepositoryNode node = entry.getKey();
+        PushTarget target = model.getSpec().getTarget();
+        //todo add validation for model -> hasErrors, too
+        if (target == null) {
+          JComponent editingComponent = myPushLog.startEditNode(node);
+          return new ValidationInfo("Invalid remote for repository " + DvcsUtil.getShortRepositoryName(model.getRepository()),
+                                    editingComponent);
+        }
+      }
+    }
+    return validInfo;
+  }
+
   private void startLoadingCommits() {
+    //todo should be reworked
     Map<RepositoryNode, MyRepoModel> priorityLoading = new HashMap<RepositoryNode, MyRepoModel>();
     Map<RepositoryNode, MyRepoModel> others = new HashMap<RepositoryNode, MyRepoModel>();
     for (Map.Entry<RepositoryNode, MyRepoModel> entry : myView2Model.entrySet()) {
@@ -88,7 +115,6 @@ public class PushController implements Disposable {
   private void loadCommitsFromMap(@NotNull Map<RepositoryNode, MyRepoModel> items) {
     for (Map.Entry<RepositoryNode, MyRepoModel> entry : items.entrySet()) {
       RepositoryNode node = entry.getKey();
-      myPushLog.startLoading(node);
       loadCommits(entry.getValue(), node, true);
     }
   }
@@ -96,49 +122,69 @@ public class PushController implements Disposable {
   //return is single repository project or not
   private boolean createTreeModel(@NotNull CheckedTreeNode rootNode, @NotNull List<? extends Repository> preselectedRepositories) {
     if (myPushSupports.isEmpty()) return true;
-
-    boolean isSingleRepositoryProject = myPushSupports.size() == 1;
-    for (final PushSupport support : myPushSupports) {
-      RepositoryManager<? extends Repository> repositoryManager = support.getRepositoryManager();
-      List<? extends Repository> repositories = repositoryManager.getRepositories();
-      isSingleRepositoryProject = isSingleRepositoryProject && repositories.size() == 1;
-      for (Repository repository : repositories) {
-        PushTarget target = support.getDefaultTarget(repository);
-        final MyRepoModel model = new MyRepoModel(repository, support, preselectedRepositories.contains(repository),
-                                                  new PushSpec(support.getSource(repository),
-                                                               target),
-                                                  DEFAULT_CHILDREN_PRESENTATION_NUMBER);
-        RepositoryWithBranchPanel repoPanel = new RepositoryWithBranchPanel(myProject, DvcsUtil.getShortRepositoryName(repository),
-                                                                            support.getSource(repository).getPresentation(),
-                                                                            target == null ? "" : target.getPresentation(),
-                                                                            support.getTargetNames(repository));
-        final RepositoryNode repoNode =
-          isSingleRepositoryProject ? new SingleRepositoryNode(repoPanel) : new RepositoryNode(repoPanel);
-        myView2Model.put(repoNode, model);
-        repoNode.setChecked(model.isSelected());
-        repoNode.addRepoNodeListener(new RepositoryNodeListener() {
-          @Override
-          public void onTargetChanged(String newValue) {
-            myView2Model.get(repoNode).setSpec(new PushSpec(model.getSpec().getSource(), support.createTarget(newValue)));
-            myPushLog.startLoading(repoNode);
-            loadCommits(model, repoNode, false);
-          }
-
-          @Override
-          public void onSelectionChanged(boolean isSelected) {
-            myView2Model.get(repoNode).setSelected(isSelected);
-          }
-        });
-        rootNode.add(repoNode);
-      }
+    int repoCount = 0;
+    for (PushSupport<? extends Repository> support : myPushSupports) {
+      repoCount += createNodesForVcs(support, rootNode, preselectedRepositories);
     }
-    return isSingleRepositoryProject;
+    return repoCount == 1;
+  }
+
+  private <T extends Repository> int createNodesForVcs(@NotNull PushSupport<T> pushSupport,
+                                                       @NotNull CheckedTreeNode rootNode,
+                                                       @NotNull List<? extends Repository> preselectedRepositories) {
+    RepositoryManager<T> repositoryManager = pushSupport.getRepositoryManager();
+    List<T> repositories = repositoryManager.getRepositories();
+    for (T repository : repositories) {
+      createRepoNode(pushSupport, repository, rootNode, preselectedRepositories.contains(repository), repositories.size() == 1);
+    }
+    return repositories.size();
+  }
+
+  private <T extends Repository> void createRepoNode(@NotNull final PushSupport<T> support,
+                                                     @NotNull final T repository,
+                                                     @NotNull CheckedTreeNode rootNode,
+                                                     boolean isSelected,
+                                                     boolean isSingleRepositoryProject) {
+    PushTarget target = support.getDefaultTarget(repository);
+    final MyRepoModel model = new MyRepoModel(repository, support, isSelected, new PushSpec(support.getSource(repository), target),
+                                              DEFAULT_CHILDREN_PRESENTATION_NUMBER);
+    RepositoryWithBranchPanel repoPanel = new RepositoryWithBranchPanel(myProject, DvcsUtil.getShortRepositoryName(repository),
+                                                                        support.getSource(repository).getPresentation(),
+                                                                        target == null ? "" : target.getPresentation(),
+                                                                        support.getTargetNames(repository));
+    final RepositoryNode repoNode = isSingleRepositoryProject ? new SingleRepositoryNode(repoPanel) : new RepositoryNode(repoPanel);
+    myView2Model.put(repoNode, model);
+    repoNode.setChecked(model.isSelected());
+    repoPanel.addRepoNodeListener(new RepositoryNodeListener() {
+      @Override
+      public void onTargetChanged(String newValue) {
+        VcsError validationError = support.validate(model.getRepository(), newValue);
+        if (validationError == null) {
+          myView2Model.get(repoNode).setSpec(new PushSpec(model.getSpec().getSource(), support.createTarget(repository, newValue)));
+          loadCommits(model, repoNode, false);
+        }
+        else {
+          //todo may be should store validation errors in model and get errors during dialog validation
+          myView2Model.get(repoNode).setSpec(new PushSpec(model.getSpec().getSource(), null));
+        }
+        myDialog.updateButtons();
+      }
+
+      @Override
+      public void onSelectionChanged(boolean isSelected) {
+        myView2Model.get(repoNode).setSelected(isSelected);
+        repoNode.setChecked(isSelected);
+        myDialog.updateButtons();
+      }
+    });
+    rootNode.add(repoNode);
   }
 
   private void loadCommits(@NotNull final MyRepoModel model,
                            @NotNull final RepositoryNode node,
                            final boolean initial) {
     node.stopLoading();
+    myPushLog.startLoading(node);
     final ProgressIndicator indicator = node.startLoading();
     final PushSupport support = model.getSupport();
     final AtomicReference<OutgoingResult> result = new AtomicReference<OutgoingResult>();
@@ -152,11 +198,23 @@ public class PushController implements Disposable {
       @Override
       public void onSuccess() {
         OutgoingResult outgoing = result.get();
-        if (outgoing.hasErrors()) {
-          myPushLog.setChildren(node, ContainerUtil.map(outgoing.getErrors(), new Function<VcsError, DefaultMutableTreeNode>() {
+        List<VcsError> errors = outgoing.getErrors();
+        if (!errors.isEmpty()) {
+          myPushLog.setChildren(node, ContainerUtil.map(errors, new Function<VcsError, DefaultMutableTreeNode>() {
             @Override
-            public DefaultMutableTreeNode fun(VcsError error) {
-              return new TextWithLinkNode(error);
+            public DefaultMutableTreeNode fun(final VcsError error) {
+              VcsLinkedText errorLinkText = new VcsLinkedText(error.getText(), new VcsLinkListener() {
+                @Override
+                public void hyperlinkActivated(@NotNull DefaultMutableTreeNode sourceNode) {
+                  error.handleError(new CommitLoader() {
+                    @Override
+                    public void reloadCommits() {
+                      loadCommits(model, node, false);
+                    }
+                  });
+                }
+              });
+              return new TextWithLinkNode(errorLinkText);
             }
           }), model.isSelected());
         }
@@ -182,11 +240,6 @@ public class PushController implements Disposable {
 
   public PushLog getPushPanelInfo() {
     return myPushLog;
-  }
-
-  public boolean isValid() {
-    //todo implement
-    return false;
   }
 
   public void push(final boolean force) {
@@ -259,14 +312,10 @@ public class PushController implements Disposable {
     List<DefaultMutableTreeNode> childrenToShown = new ArrayList<DefaultMutableTreeNode>();
     for (int i = 0; i < commits.size(); ++i) {
       if (i >= commitsNum) {
-        final MoreCommitsLink moreCommitsLink = new MoreCommitsLink();
-        moreCommitsLink.addClickListener(new TreeNodeLinkListener() {
+        final VcsLinkedText moreCommitsLink = new VcsLinkedText("<a href='loadMore'>...</a>", new VcsLinkListener() {
           @Override
-          public void onClick(@NotNull DefaultMutableTreeNode source) {
-            TreeNode parentNode = source.getParent();
-            if (parentNode instanceof RepositoryNode) {
-              addMoreCommits((RepositoryNode)parentNode);
-            }
+          public void hyperlinkActivated(@NotNull DefaultMutableTreeNode sourceNode) {
+            addMoreCommits((RepositoryNode)sourceNode);
           }
         });
         childrenToShown.add(new TextWithLinkNode(moreCommitsLink));
@@ -298,26 +347,30 @@ public class PushController implements Disposable {
     return additionalPanels;
   }
 
-  private boolean hasRepoForPushSupport(@NotNull PushSupport support) {
-    for (MyRepoModel model : myView2Model.values()) {
-      if (support.equals(model.getSupport())) {
-        return true;
+  private boolean hasRepoForPushSupport(@NotNull final PushSupport support) {
+    return ContainerUtil.exists(myView2Model.values(), new Condition<MyRepoModel>() {
+      @Override
+      public boolean value(MyRepoModel model) {
+        return support.equals(model.getSupport());
       }
-    }
-    return false;
+    });
   }
 
   private static class MyRepoModel {
-    final Repository myRepository;
-    private PushSupport mySupport;
+    @NotNull final Repository myRepository;
+    @NotNull private PushSupport mySupport;
 
-    PushSpec mySpec;
+    @NotNull PushSpec mySpec;
     int myNumberOfShownCommits;
 
     List<? extends VcsFullCommitDetails> myLoadedCommits;
     boolean myIsSelected;
 
-    public MyRepoModel(Repository repository, PushSupport supportForRepo, boolean isSelected, PushSpec spec, int num) {
+    public MyRepoModel(@NotNull Repository repository,
+                       @NotNull PushSupport supportForRepo,
+                       boolean isSelected,
+                       @NotNull PushSpec spec,
+                       int num) {
       myRepository = repository;
       mySupport = supportForRepo;
       myIsSelected = isSelected;
@@ -325,10 +378,12 @@ public class PushController implements Disposable {
       myNumberOfShownCommits = num;
     }
 
+    @NotNull
     public Repository getRepository() {
       return myRepository;
     }
 
+    @NotNull
     public PushSupport getSupport() {
       return mySupport;
     }
@@ -341,11 +396,12 @@ public class PushController implements Disposable {
       return myRepository.getVcs();
     }
 
+    @NotNull
     public PushSpec getSpec() {
       return mySpec;
     }
 
-    public void setSpec(PushSpec spec) {
+    public void setSpec(@NotNull PushSpec spec) {
       mySpec = spec;
     }
 

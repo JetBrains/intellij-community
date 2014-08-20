@@ -16,7 +16,6 @@
 package org.zmlx.hg4idea.push;
 
 import com.intellij.dvcs.push.*;
-import com.intellij.dvcs.push.ui.RepositoryNode;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -32,8 +31,6 @@ import org.zmlx.hg4idea.util.HgChangesetUtil;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgVersion;
 
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -55,13 +52,9 @@ public class HgOutgoingCommitsProvider extends OutgoingCommitsProvider {
     final HgVersion version = hgvcs.getVersion();
     String[] templates = HgBaseLogParser.constructFullTemplateArgument(true, version);
     HgOutgoingCommand hgOutgoingCommand = new HgOutgoingCommand(project);
-    PushTarget target = pushSpec.getTarget();
-    if (target != null) {
-      assert target instanceof HgTarget : String.format("Wrong Target for Repository %s", repository.getPresentableUrl());
-    }
-    HgTarget hgTarget = (HgTarget)target;
+    HgTarget hgTarget = (HgTarget)pushSpec.getTarget();
     List<VcsError> errors = new ArrayList<VcsError>();
-    if (target == null || StringUtil.isEmptyOrSpaces(hgTarget.myTarget)) {
+    if (hgTarget == null || StringUtil.isEmptyOrSpaces(hgTarget.myTarget)) {
       errors.add(new VcsError("Hg push path could not be empty."));
       return new OutgoingResult(Collections.<VcsFullCommitDetails>emptyList(), errors);
     }
@@ -77,18 +70,12 @@ public class HgOutgoingCommitsProvider extends OutgoingCommitsProvider {
       for (String error : resultErrors) {
         if (HgErrorUtil.isAbortLine(error)) {
           if (HgErrorUtil.isAuthorizationError(error)) {
-            VcsError authorizationError = new VcsError(error, LOGIN_AND_REFRESH_LINK);
-            authorizationError.addClickListener(new TreeNodeLinkListener() {
-                                                  @Override
-                                                  public void onClick(@NotNull DefaultMutableTreeNode source) {
-                                                    TreeNode parent = source.getParent();
-                                                    if (parent instanceof RepositoryNode) {
-                                                      //todo change value to something special, or create force refreshNode method
-                                                      ((RepositoryNode)parent).fireOnChange(((RepositoryNode)parent).getValue());
-                                                    }
-                                                  }
-                                                }
-            );
+            VcsError authorizationError =
+              new VcsError(error + "<a href='authenticate'>" + LOGIN_AND_REFRESH_LINK + "</a>", new VcsErrorHandler() {
+                public void handleError(@NotNull CommitLoader commitLoader) {
+                  commitLoader.reloadCommits();
+                }
+              });
             errors.add(authorizationError);
           }
           else {

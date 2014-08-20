@@ -58,13 +58,14 @@ public class GroovyMapGetCanBeKeyedAccessInspection extends BaseInspection {
     return "Call to '#ref' can be keyed access #loc";
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   @Override
-  public GroovyFix buildFix(PsiElement location) {
+  public GroovyFix buildFix(@NotNull PsiElement location) {
     return new ReplaceWithPropertyAccessFix();
   }
 

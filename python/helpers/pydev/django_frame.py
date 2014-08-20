@@ -1,11 +1,14 @@
 from pydevd_file_utils import GetFileNameAndBaseFromFile
 import pydev_log
 import traceback
+from pydevd_constants import DictContains
 
 def read_file(filename):
     f = open(filename, "r")
-    s = f.read()
-    f.close()
+    try:
+        s = f.read()
+    finally:
+        f.close()
     return s
 
 
@@ -34,7 +37,9 @@ def get_source(frame):
         if hasattr(node, 'source'):
             return node.source
         else:
-            pydev_log.error_once("WARNING: Template path is not available. Please set TEMPLATE_DEBUG=True in your settings.py to make django template breakpoints working")
+            pydev_log.error_once(
+                "WARNING: Template path is not available. Please set TEMPLATE_DEBUG=True "
+                "in your settings.py to make django template breakpoints working")
             return None
 
     except:
@@ -61,41 +66,50 @@ def get_template_file_name(frame):
         return None
 
 
-def get_template_line(frame):
+def get_template_line(frame, template_frame_file):
     source = get_source(frame)
-    file_name = get_template_file_name(frame)
     try:
-        return offset_to_line_number(read_file(file_name), source[1][0])
+        return offset_to_line_number(read_file(template_frame_file), source[1][0])
     except:
         return None
 
 
 class DjangoTemplateFrame:
-    def __init__(self, frame):
-        file_name = get_template_file_name(frame)
+    def __init__(
+        self,
+        frame,
+        template_frame_file=None,
+        template_frame_line=None):
+
+        if template_frame_file is None:
+            template_frame_file = get_template_file_name(frame)
+
         self.back_context = frame.f_locals['context']
-        self.f_code = FCode('Django Template', file_name)
-        self.f_lineno = get_template_line(frame)
+        self.f_code = FCode('Django Template', template_frame_file)
+
+        if template_frame_line is None:
+            template_frame_line = get_template_line(frame, template_frame_file)
+        self.f_lineno = template_frame_line
+
         self.f_back = frame
         self.f_globals = {}
-        self.f_locals = self.collect_context(self.back_context)
+        self.f_locals = self.collect_context()
         self.f_trace = None
 
-    def collect_context(self, context):
+    def collect_context(self):
         res = {}
         try:
-            for d in context.dicts:
-                for k, v in d.items():
-                    res[k] = v
-        except  AttributeError:
+            for d in self.back_context.dicts:
+                res.update(d)
+        except AttributeError:
             pass
         return res
 
     def changeVariable(self, name, value):
         for d in self.back_context.dicts:
-            for k, v in d.items():
-                if k == name:
-                    d[k] = value
+            if DictContains(d, name):
+                d[name] = value
+        self.f_locals[name] = value
 
 
 class FCode:
@@ -106,10 +120,9 @@ class FCode:
 
 def is_django_exception_break_context(frame):
     try:
-        name = frame.f_code.co_name
+        return frame.f_code.co_name in ['_resolve_lookup', 'find_template']
     except:
-        name = None
-    return name in ['_resolve_lookup', 'find_template']
+        return False
 
 
 def just_raised(trace):

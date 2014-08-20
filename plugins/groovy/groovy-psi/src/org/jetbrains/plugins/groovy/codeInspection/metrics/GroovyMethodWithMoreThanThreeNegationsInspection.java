@@ -40,6 +40,7 @@ public class GroovyMethodWithMoreThanThreeNegationsInspection extends BaseInspec
     return "Method '#ref' has too many negations (" + args[0] + " > 3)";
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();

@@ -2,14 +2,10 @@
 
 import sys as _sys
 
-try:
-    import _pydev_thread as thread
-except ImportError:
-    import thread
-
+from _pydev_imps import _pydev_thread as thread
 import warnings
 
-from _pydev_time import time as _time, sleep as _sleep
+from _pydev_imps._pydev_time import time as _time, sleep as _sleep
 from traceback import format_exc as _format_exc
 
 # Note regarding PEP 8 compliant aliases
@@ -854,7 +850,7 @@ _shutdown = _MainThread()._exitfunc
 # module, or from the python fallback
 
 try:
-    from _pydev_thread import _local as local
+    from _pydev_imps._pydev_thread import _local as local
 except ImportError:
     from _threading_local import local
 

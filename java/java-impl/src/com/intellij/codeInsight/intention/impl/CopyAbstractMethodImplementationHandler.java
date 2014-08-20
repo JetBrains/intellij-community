@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.ide.util.MethodCellRenderer;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,6 +39,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.*;
@@ -66,7 +68,12 @@ public class CopyAbstractMethodImplementationHandler {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
-        searchExistingImplementations();
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            searchExistingImplementations();
+          }
+        });
       }
     }, CodeInsightBundle.message("searching.for.implementations"), false, myProject);
     if (mySourceMethods.isEmpty()) {
@@ -152,7 +159,7 @@ public class CopyAbstractMethodImplementationHandler {
     final List<PsiMethod> generatedMethods = new ArrayList<PsiMethod>();
     new WriteCommandAction(myProject, getTargetFiles()) {
       @Override
-      protected void run(final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) throws Throwable {
         for (PsiEnumConstant enumConstant : myTargetEnumConstants) {
           PsiClass initializingClass = enumConstant.getOrCreateInitializingClass();
           myTargetClasses.add(initializingClass);
@@ -186,7 +193,7 @@ public class CopyAbstractMethodImplementationHandler {
         }
       }
     }.execute();
-    if (generatedMethods.size() > 0) {
+    if (!generatedMethods.isEmpty()) {
       PsiMethod target = generatedMethods.get(0);
       PsiFile psiFile = target.getContainingFile();
       FileEditorManager fileEditorManager = FileEditorManager.getInstance(psiFile.getProject());

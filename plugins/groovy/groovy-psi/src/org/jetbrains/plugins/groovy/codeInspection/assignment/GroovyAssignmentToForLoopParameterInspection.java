@@ -53,6 +53,7 @@ public class GroovyAssignmentToForLoopParameterInspection extends BaseInspection
 
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();

@@ -15,6 +15,7 @@
  */
 package com.intellij.dvcs.push.ui;
 
+import com.intellij.dvcs.push.RepositoryNodeListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -24,15 +25,19 @@ import com.intellij.ui.TextFieldWithAutoCompletionListProvider;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.Collection;
+import java.util.List;
 
 public class RepositoryWithBranchPanel extends NonOpaquePanel implements TreeCellRenderer {
 
@@ -42,14 +47,21 @@ public class RepositoryWithBranchPanel extends NonOpaquePanel implements TreeCel
   private final JLabel myArrowLabel;
   private final JLabel myRepositoryLabel;
   private final ColoredTreeCellRenderer myTextRenderer;
+  @NotNull private final List<RepositoryNodeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public RepositoryWithBranchPanel(Project project, @NotNull String repoName,
                                    @NotNull String sourceName, String targetName, @NotNull Collection<String> targetVariants) {
     super();
     setLayout(new BorderLayout());
     myRepositoryCheckbox = new JBCheckBox();
+    myRepositoryCheckbox.setFocusable(false);
     myRepositoryCheckbox.setOpaque(false);
-    myRepositoryCheckbox.setEnabled(false);    //may be  return editor depends on focus
+    myRepositoryCheckbox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        fireOnSelectionChange(myRepositoryCheckbox.isSelected());
+      }
+    });
     myRepositoryLabel = new JLabel(repoName);
     myLocalBranch = new JBLabel(sourceName);
     myArrowLabel = new JLabel(" -> ");
@@ -66,15 +78,17 @@ public class RepositoryWithBranchPanel extends NonOpaquePanel implements TreeCel
       protected void updateBorder(@NotNull final EditorEx editor) {
       }
     };
-    myDestBranchTextField.setBorder(UIUtil.getTableFocusCellHighlightBorder());//getTextFieldBorder());
+    myDestBranchTextField.setBorder(UIUtil.getTableFocusCellHighlightBorder());
     myDestBranchTextField.setOneLineMode(true);
     myDestBranchTextField.setOpaque(true);
-    myDestBranchTextField.addFocusListener(new FocusAdapter() {
+    FocusAdapter focusListener = new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
         myDestBranchTextField.selectAll();
       }
-    });
+    };
+    myDestBranchTextField.addFocusListener(focusListener);
+    addFocusListener(focusListener);
 
     myTextRenderer = new ColoredTreeCellRenderer() {
       public void customizeCellRenderer(@NotNull JTree tree,
@@ -112,7 +126,7 @@ public class RepositoryWithBranchPanel extends NonOpaquePanel implements TreeCel
     return myArrowLabel.getText();
   }
 
-  public TextFieldWithAutoCompletion<String> getRemoteTextFiled() {
+  public TextFieldWithAutoCompletion getRemoteTextFiled() {
     return myDestBranchTextField;
   }
 
@@ -148,8 +162,26 @@ public class RepositoryWithBranchPanel extends NonOpaquePanel implements TreeCel
     if (bounds != null) {
       setPreferredSize(new Dimension(tree.getWidth() - bounds.x, bounds.height));
     }
+    myDestBranchTextField.grabFocus();
+    myDestBranchTextField.requestFocus();
     revalidate();
     return this;
+  }
+
+  public void addRepoNodeListener(@NotNull RepositoryNodeListener listener) {
+    myListeners.add(listener);
+  }
+
+  public void fireOnChange(@NotNull String newValue) {
+    for (RepositoryNodeListener listener : myListeners) {
+      listener.onTargetChanged(newValue);
+    }
+  }
+
+  public void fireOnSelectionChange(boolean isSelected) {
+    for (RepositoryNodeListener listener : myListeners) {
+      listener.onSelectionChanged(isSelected);
+    }
   }
 }
 

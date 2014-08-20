@@ -70,6 +70,7 @@ public class GridCellImpl implements GridCell {
     myPlaceInGrid = placeInGrid;
     myPlaceholder = placeholder;
     myTabs = new JBTabsImpl(myContext.getProject(), myContext.getActionManager(), myContext.getFocusManager(), container) {
+      @SuppressWarnings("UseJBColor")
       @Override
       protected Color getFocusedTopFillColor() {
         return  UIUtil.isUnderDarcula() ? ColorUtil.toAlpha(new Color(0x1E2533), 100)  : new Color(202, 211, 227);
@@ -88,11 +89,13 @@ public class GridCellImpl implements GridCell {
         super.paintBorder(g2d, shape, borderColor);
       }
 
+      @SuppressWarnings("UseJBColor")
       @Override
       protected Color getFocusedBottomFillColor() {
         return UIUtil.isUnderDarcula() ? new Color(0x1E2533)  : new Color(0xc2cbdb);
       }
 
+      @SuppressWarnings("UseJBColor")
       @Override
       public Color getBackground() {
         return UIUtil.isUnderDarcula() ? new Color(0x27292A) : super.getBackground();
@@ -239,8 +242,6 @@ public class GridCellImpl implements GridCell {
   }
 
   private TabInfo createTabInfoFor(Content content) {
-    final JComponent c = content.getComponent();
-
     final TabInfo tabInfo = updatePresentation(new TabInfo(new ProviderWrapper(content, myContext)), content)
       .setObject(content)
       .setPreferredFocusableComponent(content.getPreferredFocusableComponent())
@@ -257,7 +258,10 @@ public class GridCellImpl implements GridCell {
 
   @Nullable
   private static TabInfo updatePresentation(TabInfo info, Content content) {
-    if (info == null) return info;
+    if (info == null) {
+      return null;
+    }
+
     return info.
       setIcon(content.getIcon()).
       setText(content.getDisplayName()).
@@ -309,7 +313,6 @@ public class GridCellImpl implements GridCell {
   }
 
   private static class ProviderWrapper extends NonOpaquePanel implements DataProvider {
-
     Content myContent;
     ViewContext myContext;
 

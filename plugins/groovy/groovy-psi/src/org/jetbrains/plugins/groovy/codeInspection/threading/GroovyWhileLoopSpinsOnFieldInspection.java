@@ -69,6 +69,7 @@ public class GroovyWhileLoopSpinsOnFieldInspection extends BaseInspection {
         this, "ignoreNonEmtpyLoops");
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new WhileLoopSpinsOnFieldVisitor();

@@ -113,9 +113,7 @@ common.attrs =
 	)
 
 common.attrs.basic =
-	(	(	common.attrs.id
-		|	common.attrs.xml-id
-		)? # REVISIT assuming only either one is allowed
+	(	common.attrs.id?
 	&	common.attrs.class?
 	&	common.attrs.title?
 	&	common.attrs.base?
@@ -125,10 +123,6 @@ common.attrs.basic =
 		attribute id {
 			common.data.id
 		}
-	common.attrs.xml-id =
-		attribute xml:id {
-			xsd:NCName
-		} & XMLonly
 	common.attrs.class =
 		attribute class {
 			common.data.tokens
@@ -387,6 +381,10 @@ common.attrs.other =
 	common.data.keylabellist =
 		w:keylabellist
 
+## List of Source Sizes
+	common.data.source.size.list =
+		w:source-size-list
+
 ## Microdata Properties
   common.data.microdata-properties =
     list { w:microdata-property+ }
@@ -466,7 +464,7 @@ common.attrs.aria.implicit.article = ( notAllowed )
 common.attrs.aria.implicit.banner = ( notAllowed )
 common.attrs.aria.implicit.button = ( notAllowed )
 common.attrs.aria.implicit.checkbox = ( notAllowed )
-common.attrs.aria.implicit.columnheader = ( notAllowed )
+common.attrs.aria.implicit.column-or-row-header = ( notAllowed )
 common.attrs.aria.implicit.combobox = ( notAllowed )
 common.attrs.aria.implicit.complementary = ( notAllowed )
 common.attrs.aria.implicit.contentinfo = ( notAllowed )
@@ -486,7 +484,6 @@ common.attrs.aria.implicit.option = ( notAllowed )
 common.attrs.aria.implicit.progressbar = ( notAllowed )
 common.attrs.aria.implicit.radio = ( notAllowed )
 common.attrs.aria.implicit.region = ( notAllowed )
-common.attrs.aria.implicit.rowheader = ( notAllowed )
 common.attrs.aria.implicit.section = ( notAllowed )
 common.attrs.aria.implicit.select = ( notAllowed )
 common.attrs.aria.implicit.slider = ( notAllowed )

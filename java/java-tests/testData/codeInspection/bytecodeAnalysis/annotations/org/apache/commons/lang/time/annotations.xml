@@ -296,6 +296,9 @@
   <item name="org.apache.commons.lang.time.DurationFormatUtils java.lang.String formatDurationISO(long)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.time.DurationFormatUtils java.lang.String formatDurationWords(long, boolean, boolean)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
   <item name="org.apache.commons.lang.time.DurationFormatUtils java.lang.String formatPeriod(long, long, java.lang.String) 2">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>

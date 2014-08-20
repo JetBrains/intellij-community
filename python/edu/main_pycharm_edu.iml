@@ -15,6 +15,7 @@
     <orderEntry type="module" module-name="platform-main" />
     <orderEntry type="module" module-name="ShortcutPromoter" />
     <orderEntry type="module" module-name="python-educational" />
+    <orderEntry type="module" module-name="learn-python" />
   </component>
 </module>
 

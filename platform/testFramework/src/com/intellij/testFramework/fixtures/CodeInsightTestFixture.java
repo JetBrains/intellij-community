@@ -350,7 +350,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * hint text. Throws an assertion if no such intentions are found or if multiple intentions match the hint text.
    *
    * @param hint the text that the intention text should begin with.
-   * @return the list of matching intentions
+   * @return the matching intention
+   * @throws java.lang.AssertionError if no intentions are found or if multiple intentions match the hint text. 
    */
   IntentionAction findSingleIntention(@NotNull String hint);
 

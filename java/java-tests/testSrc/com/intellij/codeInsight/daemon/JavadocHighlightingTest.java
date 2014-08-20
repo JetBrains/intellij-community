@@ -21,8 +21,10 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
+    JavaDocLocalInspection localInspection = new JavaDocLocalInspection();
+    localInspection.setIgnoreDuplicatedThrows(false);
     return new LocalInspectionTool[]{
-      new JavaDocLocalInspection(),
+      localInspection,
       new JavaDocReferenceInspection()
     };
   }

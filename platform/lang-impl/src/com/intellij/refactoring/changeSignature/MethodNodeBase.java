@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.changeSignature;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
@@ -88,7 +89,12 @@ public abstract class MethodNodeBase<M extends PsiElement> extends CheckedTreeNo
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
-        callers.set(computeCallers());
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            callers.set(computeCallers());
+          }
+        });
       }
     }, RefactoringBundle.message("caller.chooser.looking.for.callers"), true, myProject)) {
       myCancelCallback.run();

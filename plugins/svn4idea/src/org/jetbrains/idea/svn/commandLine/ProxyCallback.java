@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.auth.AuthenticationService;
 import org.tmatesoft.svn.core.SVNURL;
 
 import java.net.PasswordAuthentication;
@@ -36,8 +37,8 @@ public class ProxyCallback extends AuthCallbackCase {
 
   private PasswordAuthentication myProxyAuthentication;
 
-  ProxyCallback(@NotNull AuthenticationCallback callback, SVNURL url) {
-    super(callback, url);
+  ProxyCallback(@NotNull AuthenticationService authenticationService, SVNURL url) {
+    super(authenticationService, url);
   }
 
   @Override
@@ -61,8 +62,8 @@ public class ProxyCallback extends AuthCallbackCase {
       result = true;
       // explicit check if proxies are configured in IDEA is used here not to perform "proxy authentication" for proxies manually
       // specified by users in svn "servers" file
-    } else if (myAuthenticationCallback.haveDataForTmpConfig()) {
-      myProxyAuthentication = myAuthenticationCallback.getProxyAuthentication(myUrl);
+    } else if (myAuthenticationService.haveDataForTmpConfig()) {
+      myProxyAuthentication = myAuthenticationService.getProxyAuthentication(myUrl);
       result = myProxyAuthentication != null;
     }
 

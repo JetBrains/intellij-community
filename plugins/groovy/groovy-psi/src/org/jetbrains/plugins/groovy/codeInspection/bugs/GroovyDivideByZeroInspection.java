@@ -55,6 +55,7 @@ public class GroovyDivideByZeroInspection extends BaseInspection {
     return true;
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();

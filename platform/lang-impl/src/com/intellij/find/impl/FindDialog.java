@@ -21,7 +21,6 @@ import com.intellij.find.FindBundle;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindSettings;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -46,10 +45,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.ui.EditorComboBoxRenderer;
-import com.intellij.ui.EditorTextField;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.StateRestoringCheckBox;
+import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
@@ -343,7 +339,6 @@ public class FindDialog extends DialogWrapper {
     optionsPanel.add(topOptionsPanel, gbConstraints);
     
     JPanel resultsOptionPanel = null;
-    final boolean alignedMode = ApplicationManager.getApplication().isInternal(); // todo
     
     if (myModel.isMultipleFiles()) {
       optionsPanel.add(createGlobalScopePanel(), gbConstraints);
@@ -355,12 +350,9 @@ public class FindDialog extends DialogWrapper {
       optionsPanel.add(createFilterPanel(),gbConstraints);
 
       myCbToSkipResultsWhenOneUsage = createCheckbox(FindSettings.getInstance().isSkipResultsWithOneUsage(), FindBundle.message("find.options.skip.results.tab.with.one.occurrence.checkbox"));
-      if (alignedMode) {
-        resultsOptionPanel = createResultsOptionPanel(optionsPanel, gbConstraints);
-        resultsOptionPanel.add(myCbToSkipResultsWhenOneUsage);
-      } else {
-        optionsPanel.add(myCbToSkipResultsWhenOneUsage, gbConstraints);
-      }
+      resultsOptionPanel = createResultsOptionPanel(optionsPanel, gbConstraints);
+      resultsOptionPanel.add(myCbToSkipResultsWhenOneUsage);
+
       myCbToSkipResultsWhenOneUsage.setVisible(!myModel.isReplaceState());
     }
     else {
@@ -388,15 +380,9 @@ public class FindDialog extends DialogWrapper {
       myCbToOpenInNewTab.setFocusable(false);
       myCbToOpenInNewTab.setSelected(myModel.isOpenInNewTab());
       myCbToOpenInNewTab.setEnabled(myModel.isOpenInNewTabEnabled());
-      
-      if (alignedMode) {
-        if (resultsOptionPanel == null) resultsOptionPanel = createResultsOptionPanel(optionsPanel, gbConstraints);
-        resultsOptionPanel.add(myCbToOpenInNewTab);
-      } else {
-        JPanel openInNewTabWindowPanel = new JPanel(new BorderLayout());
-        openInNewTabWindowPanel.add(myCbToOpenInNewTab, BorderLayout.EAST);
-        optionsPanel.add(openInNewTabWindowPanel, gbConstraints);
-      }
+
+      if (resultsOptionPanel == null) resultsOptionPanel = createResultsOptionPanel(optionsPanel, gbConstraints);
+      resultsOptionPanel.add(myCbToOpenInNewTab);
     }
 
     return optionsPanel;
@@ -404,10 +390,9 @@ public class FindDialog extends DialogWrapper {
 
   private static JPanel createResultsOptionPanel(JPanel optionsPanel, GridBagConstraints gbConstraints) {
     JPanel resultsOptionPanel = new JPanel();
-    resultsOptionPanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("results.options.group"), true));
     resultsOptionPanel.setLayout(new BoxLayout(resultsOptionPanel, BoxLayout.Y_AXIS));
 
-    optionsPanel.add(resultsOptionPanel, gbConstraints);
+    optionsPanel.add(new HideableTitledPanel(FindBundle.message("results.options.group"), resultsOptionPanel, false), gbConstraints);
     return resultsOptionPanel;
   }
 

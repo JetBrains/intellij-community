@@ -45,6 +45,7 @@ public class GroovyContinueInspection extends BaseInspection {
 
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();

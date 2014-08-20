@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,11 +41,11 @@ public interface ComponentWithActions {
   boolean isContentBuiltIn();
 
   class Impl implements ComponentWithActions {
-    private ActionGroup myToolbar;
-    private String myToolbarPlace;
-    private JComponent myToolbarContext;
-    private JComponent mySearchComponent;
-    private JComponent myComponent;
+    private final ActionGroup myToolbar;
+    private final String myToolbarPlace;
+    private final JComponent myToolbarContext;
+    private final JComponent mySearchComponent;
+    private final JComponent myComponent;
 
     public Impl(final ActionGroup toolbar, final String toolbarPlace, final JComponent toolbarContext,
                 final JComponent searchComponent,
@@ -57,6 +57,7 @@ public interface ComponentWithActions {
       myComponent = component;
     }
 
+    @Override
     public boolean isContentBuiltIn() {
       return false;
     }
@@ -65,22 +66,27 @@ public interface ComponentWithActions {
       this(null, null, null, null, component);
     }
 
+    @Override
     public ActionGroup getToolbarActions() {
       return myToolbar;
     }
 
+    @Override
     public JComponent getSearchComponent() {
       return mySearchComponent;
     }
 
+    @Override
     public String getToolbarPlace() {
       return myToolbarPlace;
     }
 
+    @Override
     public JComponent getToolbarContextComponent() {
       return myToolbarContext;
     }
 
+    @Override
     @NotNull
     public JComponent getComponent() {
       return myComponent;

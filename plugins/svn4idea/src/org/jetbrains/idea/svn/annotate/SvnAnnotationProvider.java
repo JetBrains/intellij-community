@@ -70,7 +70,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     if (! svnRevision.isValid()) {
       throw new VcsException("Can not get last changed revision for file: " + file.getPath() + "\nPlease run svn info for this file and file an issue.");
     }
-    return annotate(file, new SvnFileRevision(myVcs, currentRevision, currentRevision, null, null, null, null, null, file.getCharset()),
+    return annotate(file, new SvnFileRevision(myVcs, currentRevision, currentRevision, null, null, null, null, null),
                     lastChangedRevision.getRevisionNumber(), true);
   }
 
@@ -438,7 +438,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
                            myProgress.checkCanceled();
                            myProgress.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
                          }
-                         myResult.setRevision(logEntry.getRevision(), new SvnFileRevision(myVcs, SVNRevision.UNDEFINED, logEntry, myUrl, "", myCharset));
+                         myResult.setRevision(logEntry.getRevision(), new SvnFileRevision(myVcs, SVNRevision.UNDEFINED, logEntry, myUrl, ""));
                        }
                      });
     }

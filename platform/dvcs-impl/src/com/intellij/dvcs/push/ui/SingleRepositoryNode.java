@@ -15,7 +15,6 @@
  */
 package com.intellij.dvcs.push.ui;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.SimpleTextAttributes;
@@ -26,32 +25,28 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 public class SingleRepositoryNode extends RepositoryNode {
-  private RepositoryWithBranchPanel myRepositoryPanel;
+
+  @NotNull private final RepositoryWithBranchPanel myRepositoryPanel;
 
   public SingleRepositoryNode(@NotNull RepositoryWithBranchPanel repositoryPanel) {
     super(repositoryPanel);
     myRepositoryPanel = repositoryPanel;
   }
 
+  @Override
   public boolean isCheckboxVisible() {
     return false;
   }
 
   @Override
   public void render(@NotNull ColoredTreeCellRenderer renderer) {
-    renderer
-      .append(myRepositoryPanel.getSourceName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    renderer
-      .append(myRepositoryPanel.getArrow(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    renderer.append(myRepositoryPanel.getSourceName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    renderer.append(myRepositoryPanel.getArrow(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     EditorTextField textField = myRepositoryPanel.getRemoteTextFiled();
     String targetName = myRepositoryPanel.getRemoteTargetName();
-    if (StringUtil.isEmptyOrSpaces(targetName)) {
-      renderer.append(ENTER_REMOTE, SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES, textField);
-    }
-    else {
-      renderer.append(targetName, SimpleTextAttributes.SYNTHETIC_ATTRIBUTES, textField);
-    }
+    renderTargetName(renderer, textField, targetName);
     Insets insets = BorderFactory.createEmptyBorder().getBorderInsets(textField);
     renderer.setBorder(new EmptyBorder(insets));
   }
+
 }

@@ -41,6 +41,8 @@ public class AnnotationsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testDuplicateTarget() { doTest(false); }
   public void testPingPongAnnotationTypesDependencies() { doTest(false);}
   public void testClashMethods() { doTest(false);}
+  public void testDupMethods() { doTest(false);}
+  public void testPrivateInaccessibleConstant() { doTest(false);}
 
   public void testInvalidPackageAnnotationTarget() { doTest(BASE_PATH + "/" + getTestName(true) + "/package-info.java", false, false); }
   public void testPackageAnnotationNotInPackageInfo() { doTest(BASE_PATH + "/" + getTestName(true) + "/notPackageInfo.java", false, false); }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,7 +91,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
         });
       }
     }, "Searching for class \"" + element.getQualifiedName() + "\" inheritors ...", true, element.getProject())) return false;
-    return inheritors.size() == 0;
+    return inheritors.isEmpty();
   }
 
   @Override
@@ -124,7 +124,12 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable(){
       @Override
       public void run() {
-        errorMessage.set(getCannotInlineMessage(psiClass));
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            errorMessage.set(getCannotInlineMessage(psiClass));
+          }
+        });
       }
     }, "Check if inline is possible...", true, project)) return;
     if (errorMessage.get() != null) {

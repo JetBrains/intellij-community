@@ -20,7 +20,6 @@ import com.google.common.collect.Lists;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.execution.ExecutionException;
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,6 +34,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -58,7 +58,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.io.*;
 import java.util.*;
@@ -164,18 +163,27 @@ public class PySkeletonRefresher {
       else {
         message = PyBundle.message("sdk.errorlog.$0.mods.fail.in.$1.sdks", module_errors, errors.size());
       }
-      Notifications.Bus.notify(
-        new Notification(
-          PythonSdkType.SKELETONS_TOPIC, PyBundle.message("sdk.some.skeletons.failed"), message,
-          NotificationType.WARNING,
-          new NotificationListener() {
-            @Override
-            public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-              new SkeletonErrorsDialog(errors, failedSdks).setVisible(true);
-            }
-          }
-        )
-      );
+      logErrors(errors, failedSdks, message);
+    }
+  }
+
+  private static void logErrors(@NotNull final Map<String, List<String>> errors, @NotNull final List<String> failedSdks,
+                                @NotNull final String message) {
+    LOG.warn(PyBundle.message("sdk.some.skeletons.failed"));
+    LOG.warn(message);
+
+    if (failedSdks.size() > 0) {
+      LOG.warn(PyBundle.message("sdk.error.dialog.failed.sdks"));
+      LOG.warn(StringUtil.join(failedSdks, ", "));
+    }
+
+    if (errors.size() > 0) {
+      LOG.warn(PyBundle.message("sdk.error.dialog.failed.modules"));
+      for (String sdkName : errors.keySet()) {
+        for (String moduleName : errors.get(sdkName)) {
+          LOG.warn(moduleName);
+        }
+      }
     }
   }
 

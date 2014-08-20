@@ -27,6 +27,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 public class ResourceBundleImpl extends ResourceBundle {
@@ -39,12 +40,15 @@ public class ResourceBundleImpl extends ResourceBundle {
   @NotNull
   @Override
   public List<PropertiesFile> getPropertiesFiles() {
+    if (ResourceBundleManager.getInstance(getProject()).isDefaultDissociated(myDefaultPropertiesFile.getVirtualFile())) {
+      return Collections.singletonList(myDefaultPropertiesFile);
+    }
     PsiFile[] children = myDefaultPropertiesFile.getParent().getFiles();
     final String baseName = getBaseName();
     List<PropertiesFile> result = new SmartList<PropertiesFile>();
     for (PsiFile file : children) {
       if (!file.isValid() || file.getVirtualFile().getExtension() == null) continue;
-      if (Comparing.strEqual(PropertiesUtil.getBaseName(file), baseName)) {
+      if (Comparing.strEqual(PropertiesUtil.getDefaultBaseName(file.getVirtualFile()), baseName)) {
         PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(file);
         if (propertiesFile != null) {
           result.add(propertiesFile);
@@ -56,26 +60,14 @@ public class ResourceBundleImpl extends ResourceBundle {
 
   @NotNull
   @Override
-  public List<PropertiesFile> getPropertiesFiles(final Project project) {
-    return getPropertiesFiles();
-  }
-
-  @NotNull
-  @Override
   public PropertiesFile getDefaultPropertiesFile() {
     return myDefaultPropertiesFile;
   }
 
   @NotNull
   @Override
-  public PropertiesFile getDefaultPropertiesFile(final Project project) {
-    return getDefaultPropertiesFile();
-  }
-
-  @NotNull
-  @Override
   public String getBaseName() {
-    return PropertiesUtil.getBaseName(myDefaultPropertiesFile.getContainingFile());
+    return ResourceBundleManager.getInstance(getProject()).getBaseName(myDefaultPropertiesFile.getContainingFile());
   }
 
   @NotNull

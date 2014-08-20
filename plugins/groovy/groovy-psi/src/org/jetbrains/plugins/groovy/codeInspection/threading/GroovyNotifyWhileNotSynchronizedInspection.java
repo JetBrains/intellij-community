@@ -55,6 +55,7 @@ public class GroovyNotifyWhileNotSynchronizedInspection extends BaseInspection {
 
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();

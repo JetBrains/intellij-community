@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,7 +96,7 @@ public class ReplaceImplementsWithStaticImportAction extends BaseIntentionAction
         JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(project));
       if (objectClass == null) return false;
       methods.removeAll(Arrays.asList(objectClass.getMethods()));
-      if (methods.size() > 0) return false;
+      if (!methods.isEmpty()) return false;
     }
     else if (targetClass.getMethods().length > 0) {
       return false;
@@ -122,7 +122,7 @@ public class ReplaceImplementsWithStaticImportAction extends BaseIntentionAction
       final PsiClass targetClass = (PsiClass)target;
       new WriteCommandAction(project, getText()) {
         @Override
-        protected void run(Result result) throws Throwable {
+        protected void run(@NotNull Result result) throws Throwable {
           for (PsiField constField : targetClass.getAllFields()) {
             final String fieldName = constField.getName();
             final PsiClass containingClass = constField.getContainingClass();
@@ -159,30 +159,35 @@ public class ReplaceImplementsWithStaticImportAction extends BaseIntentionAction
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         @Override
         public void run() {
-          for (PsiField field : targetClass.getAllFields()) {
-            final PsiClass containingClass = field.getContainingClass();
-            for (PsiReference reference : ReferencesSearch.search(field)) {
-              if (reference == null) {
-                continue;
-              }
-              final PsiElement refElement = reference.getElement();
-              if (encodeQualifier(containingClass, reference, targetClass)) continue;
-              final PsiFile psiFile = refElement.getContainingFile();
-              if (psiFile instanceof PsiJavaFile) {
-                Map<PsiField, Set<PsiReference>> references = refs.get(psiFile);
-                if (references == null) {
-                  references = new HashMap<PsiField, Set<PsiReference>>();
-                  refs.put(psiFile, references);
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            @Override
+            public void run() {
+              for (PsiField field : targetClass.getAllFields()) {
+                final PsiClass containingClass = field.getContainingClass();
+                for (PsiReference reference : ReferencesSearch.search(field)) {
+                  if (reference == null) {
+                    continue;
+                  }
+                  final PsiElement refElement = reference.getElement();
+                  if (encodeQualifier(containingClass, reference, targetClass)) continue;
+                  final PsiFile psiFile = refElement.getContainingFile();
+                  if (psiFile instanceof PsiJavaFile) {
+                    Map<PsiField, Set<PsiReference>> references = refs.get(psiFile);
+                    if (references == null) {
+                      references = new HashMap<PsiField, Set<PsiReference>>();
+                      refs.put(psiFile, references);
+                    }
+                    Set<PsiReference> fieldsRefs = references.get(field);
+                    if (fieldsRefs == null) {
+                      fieldsRefs = new HashSet<PsiReference>();
+                      references.put(field, fieldsRefs);
+                    }
+                    fieldsRefs.add(reference);
+                  }
                 }
-                Set<PsiReference> fieldsRefs = references.get(field);
-                if (fieldsRefs == null) {
-                  fieldsRefs = new HashSet<PsiReference>();
-                  references.put(field, fieldsRefs);
-                }
-                fieldsRefs.add(reference);
               }
             }
-          }
+          });
         }
       }, FIND_CONSTANT_FIELD_USAGES, true, project)) {
         return;
@@ -192,14 +197,19 @@ public class ReplaceImplementsWithStaticImportAction extends BaseIntentionAction
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         @Override
         public void run() {
-          for (PsiClass psiClass : DirectClassInheritorsSearch.search(targetClass)) {
-            PsiFile containingFile = psiClass.getContainingFile();
-            if (!refs.containsKey(containingFile)) {
-              refs.put(containingFile, new HashMap<PsiField, Set<PsiReference>>());
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            @Override
+            public void run() {
+              for (PsiClass psiClass : DirectClassInheritorsSearch.search(targetClass)) {
+                PsiFile containingFile = psiClass.getContainingFile();
+                if (!refs.containsKey(containingFile)) {
+                  refs.put(containingFile, new HashMap<PsiField, Set<PsiReference>>());
+                }
+                if (collectExtendsImplements(targetClass, psiClass.getExtendsList(), refs2Unimplement)) continue;
+                collectExtendsImplements(targetClass, psiClass.getImplementsList(), refs2Unimplement);
+              }
             }
-            if (collectExtendsImplements(targetClass, psiClass.getExtendsList(), refs2Unimplement)) continue;
-            collectExtendsImplements(targetClass, psiClass.getImplementsList(), refs2Unimplement);
-          }
+          });
         }
       }, "Find references in implement/extends lists...", true, project)) {
         return;
@@ -232,14 +242,19 @@ public class ReplaceImplementsWithStaticImportAction extends BaseIntentionAction
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable(){
         @Override
         public void run() {
-          for (PsiFile psiFile : refs.keySet()) {
-            final Collection<PsiImportStatementBase> red = codeStyleManager.findRedundantImports((PsiJavaFile)psiFile);
-            if (red != null) {
-              for (PsiImportStatementBase statementBase : red) {
-                redundant.add(pointerManager.createSmartPsiElementPointer(statementBase));
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            @Override
+            public void run() {
+              for (PsiFile psiFile : refs.keySet()) {
+                final Collection<PsiImportStatementBase> red = codeStyleManager.findRedundantImports((PsiJavaFile)psiFile);
+                if (red != null) {
+                  for (PsiImportStatementBase statementBase : red) {
+                    redundant.add(pointerManager.createSmartPsiElementPointer(statementBase));
+                  }
+                }
               }
             }
-          }
+          });
         }
       }, "Collect redundant imports...", true, project)) return;
       ApplicationManager.getApplication().runWriteAction(new Runnable() {

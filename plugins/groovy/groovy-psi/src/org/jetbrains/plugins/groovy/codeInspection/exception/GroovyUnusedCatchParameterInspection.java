@@ -47,6 +47,7 @@ public class GroovyUnusedCatchParameterInspection extends BaseInspection {
     return "Unused catch parameter";
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();

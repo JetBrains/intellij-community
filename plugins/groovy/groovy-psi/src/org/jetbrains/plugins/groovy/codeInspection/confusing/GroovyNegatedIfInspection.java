@@ -47,6 +47,7 @@ public class GroovyNegatedIfInspection extends BaseInspection {
 
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();

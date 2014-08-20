@@ -57,7 +57,10 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.UIUtil;
@@ -129,7 +132,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       @Override
       public void valueChanged(TreeSelectionEvent e) {
         // filter out temp unselect/select events
-        if (getSelectedProperty() == null) return;
+        if (Comparing.equal(e.getNewLeadSelectionPath(), e.getOldLeadSelectionPath()) || getSelectedProperty() == null) return;
         if (!arePropertiesEquivalent(selectedProperty, getSelectedProperty()) ||
             !Comparing.equal(selectedPropertiesFile, getSelectedPropertiesFile())) {
 
@@ -167,7 +170,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     TreeElement[] children = myStructureViewComponent.getTreeModel().getRoot().getChildren();
     if (children.length != 0) {
       TreeElement child = children[0];
-      String propName = ((ResourceBundlePropertyStructureViewElement)child).getValue();
+      String propName = ((ResourceBundlePropertyStructureViewElement)child).getValue().getUnescapedKey();
       setState(new ResourceBundleEditorState(propName));
     }
     myDataProviderPanel = new DataProviderPanel(splitPanel);
@@ -245,7 +248,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       DefaultMutableTreeNode node = toCheck.pop();
       final ResourceBundleEditorViewElement element = getSelectedElement(node);
       String value = element instanceof ResourceBundlePropertyStructureViewElement
-                     ? ((ResourceBundlePropertyStructureViewElement)element).getValue()
+                     ? ((ResourceBundlePropertyStructureViewElement)element).getValue().getUnescapedKey()
                      : null;
       if (propertyName.equals(value)) {
         nodeToSelect = node;
@@ -570,13 +573,21 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     document.replaceString(0, document.getTextLength(), text);
   }
 
-  @Nullable
-  private DefaultMutableTreeNode getSelectedNode() {
+  @NotNull
+  private Collection<DefaultMutableTreeNode> getSelectedNodes() {
+    if (!isValid()) {
+      return Collections.emptyList();
+    }
     JTree tree = myStructureViewComponent.getTree();
-    if (tree == null) return null;
-    TreePath selected = tree.getSelectionModel().getSelectionPath();
-    if (selected == null) return null;
-    return (DefaultMutableTreeNode)selected.getLastPathComponent();
+    if (tree == null) return Collections.emptyList();
+    TreePath[] selected = tree.getSelectionModel().getSelectionPaths();
+    if (selected == null || selected.length == 0) return Collections.emptyList();
+    return ContainerUtil.map(selected, new Function<TreePath, DefaultMutableTreeNode>() {
+      @Override
+      public DefaultMutableTreeNode fun(TreePath treePath) {
+        return (DefaultMutableTreeNode)treePath.getLastPathComponent();
+      }
+    });
   }
 
   @Nullable
@@ -587,25 +598,34 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
   @Nullable
   private IProperty getSelectedProperty() {
-    final DefaultMutableTreeNode selectedNode = getSelectedNode();
-    if (selectedNode == null) {
+    final Collection<DefaultMutableTreeNode> selectedNode = getSelectedNodes();
+    if (selectedNode.isEmpty()) {
       return null;
     }
-    final ResourceBundleEditorViewElement element = getSelectedElement(selectedNode);
+    final ResourceBundleEditorViewElement element = getSelectedElement(ContainerUtil.getFirstItem(selectedNode));
     return element instanceof ResourceBundlePropertyStructureViewElement ? ((ResourceBundlePropertyStructureViewElement)element).getProperty()
                                                                        : null;
   }
 
+  @NotNull
+  public Collection<ResourceBundleEditorViewElement> getSelectedElements() {
+    final Collection<DefaultMutableTreeNode> selectedNodes = getSelectedNodes();
+    return ContainerUtil.mapNotNull(selectedNodes, new NullableFunction<DefaultMutableTreeNode, ResourceBundleEditorViewElement>() {
+      @Nullable
+      @Override
+      public ResourceBundleEditorViewElement fun(DefaultMutableTreeNode selectedNode) {
+        Object userObject = selectedNode.getUserObject();
+        if (!(userObject instanceof AbstractTreeNode)) return null;
+        Object value = ((AbstractTreeNode)userObject).getValue();
+        return value instanceof ResourceBundleEditorViewElement ? (ResourceBundleEditorViewElement) value : null;
+      }
+    });
+  }
+
   @Nullable
-  public ResourceBundleEditorViewElement getSelectedElement() {
-    final DefaultMutableTreeNode selectedNode = getSelectedNode();
-    if (selectedNode == null) {
-      return null;
-    }
-    Object userObject = selectedNode.getUserObject();
-    if (!(userObject instanceof AbstractTreeNode)) return null;
-    Object value = ((AbstractTreeNode)userObject).getValue();
-    return value instanceof ResourceBundleEditorViewElement ? (ResourceBundleEditorViewElement) value : null;
+  public ResourceBundleEditorViewElement getSelectedElementIfOnlyOne() {
+    final Collection<ResourceBundleEditorViewElement> selectedElements = getSelectedElements();
+    return selectedElements.size() == 1 ? ContainerUtil.getFirstItem(selectedElements) : null;
   }
 
   @Override

@@ -56,7 +56,7 @@ public class GroovyDoubleNegationInspection extends BaseInspection {
 
   @Override
   @Nullable
-  protected GroovyFix buildFix(PsiElement location) {
+  protected GroovyFix buildFix(@NotNull PsiElement location) {
     return new DoubleNegationFix();
   }
 
@@ -105,6 +105,7 @@ public class GroovyDoubleNegationInspection extends BaseInspection {
     }
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new DoubleNegationVisitor();

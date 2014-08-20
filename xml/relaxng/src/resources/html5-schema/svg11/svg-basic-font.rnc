@@ -97,7 +97,7 @@ grammar {
         attribute overline-thickness { Number.datatype }?
     a:documentation [ "\x{a}" ~ "    glyph: Glyph Element\x{a}" ~ "  " ]
     SVG.glyph.class = notAllowed
-    SVG.glyph.content = SVG.Description.class*, SVG.glyph.class*
+    SVG.glyph.content = SVG.Description.class* | SVG.glyph.class*
     glyph = element glyph { attlist.glyph, SVG.glyph.content }
     attlist.glyph &=
         SVG.Core.attrib,
@@ -120,7 +120,7 @@ grammar {
     ]
     SVG.missing-glyph.class = notAllowed
     SVG.missing-glyph.content =
-        SVG.Description.class*, SVG.missing-glyph.class*
+        SVG.Description.class* | SVG.missing-glyph.class*
     missing-glyph =
         element missing-glyph {
             attlist.missing-glyph, SVG.missing-glyph.content

@@ -257,8 +257,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
 
     myHolder.add(AnnotationsHighlightUtil.checkValidAnnotationType(method.getReturnTypeElement()));
-    myHolder.add(AnnotationsHighlightUtil.checkCyclicMemberType(method.getReturnTypeElement(), method.getContainingClass()));
+    final PsiClass aClass = method.getContainingClass();
+    myHolder.add(AnnotationsHighlightUtil.checkCyclicMemberType(method.getReturnTypeElement(), aClass));
     myHolder.add(AnnotationsHighlightUtil.checkClashesWithSuperMethods(method));
+
+    if (!myHolder.hasErrorResults() && aClass != null) {
+      myHolder.add(HighlightMethodUtil.checkDuplicateMethod(aClass, method, getDuplicateMethods(aClass)));
+    }
   }
 
   @Override

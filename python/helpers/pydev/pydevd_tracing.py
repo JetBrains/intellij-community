@@ -65,7 +65,7 @@ def _InternalSetTrace(tracing_func):
                     sys.stderr.flush()
 
     if TracingFunctionHolder._original_tracing:
-            TracingFunctionHolder._original_tracing(tracing_func)
+        TracingFunctionHolder._original_tracing(tracing_func)
 
 def SetTrace(tracing_func):
     if TracingFunctionHolder._original_tracing is None:

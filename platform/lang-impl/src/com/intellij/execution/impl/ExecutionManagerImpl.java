@@ -95,6 +95,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
   @NotNull
   @Override
   public ProcessHandler[] getRunningProcesses() {
+    if (myContentManager == null) return EMPTY_PROCESS_HANDLERS;
     List<ProcessHandler> handlers = null;
     for (RunContentDescriptor descriptor : getContentManager().getAllDescriptors()) {
       ProcessHandler processHandler = descriptor.getProcessHandler();

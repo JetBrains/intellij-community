@@ -16,13 +16,28 @@
 package com.intellij.dvcs.push;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class VcsError extends VcsLinkedText {
+public class VcsError {
+  @NotNull String myErrorText;
+  @Nullable private final VcsErrorHandler myErrorHandleListener;
+
   public VcsError(@NotNull String text) {
-    super(text, "");
+    this(text, null);
   }
 
-  public VcsError(@NotNull String text, @NotNull String link) {
-    super(text, link);
+  public VcsError(@NotNull String text, @Nullable VcsErrorHandler listener) {
+    myErrorText = text;
+    myErrorHandleListener = listener;
+  }
+
+  public String getText() {
+    return myErrorText;
+  }
+
+  public void handleError(@NotNull CommitLoader loader) {
+    if (myErrorHandleListener != null) {
+      myErrorHandleListener.handleError(loader);
+    }
   }
 }

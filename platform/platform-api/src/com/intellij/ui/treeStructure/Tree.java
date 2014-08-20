@@ -283,7 +283,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
     if (myBusyIcon != null) {
       if (myBusy) {
-        if (hasFocus()) {
+        if (shouldShowBusyIconIfNeeded()) {
           myBusyIcon.resume();
           myBusyIcon.setToolTipText("Update is in progress. Click to cancel");
         }
@@ -303,6 +303,11 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       }
       updateBusyIconLocation();
     }
+  }
+
+  protected boolean shouldShowBusyIconIfNeeded() {
+    // http://youtrack.jetbrains.com/issue/IDEA-101422 "Rotating wait symbol in Project list whenever typing"
+    return hasFocus();
   }
 
   protected boolean paintNodes() {

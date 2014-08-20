@@ -16,8 +16,6 @@
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.*;
@@ -30,46 +28,42 @@ import org.jetbrains.annotations.NotNull;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * @author lambdamix
  */
-public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Long, IdEquation> {
-  public static final ID<Long, IdEquation> NAME = ID.create("bytecodeAnalysis");
-  private final EquationExternalizer myExternalizer = new EquationExternalizer();
-  private static final DataIndexer<Long, IdEquation, FileContent> INDEXER =
-    new ClassDataIndexer(BytecodeAnalysisConverter.getInstance());
-  private static final SmartLongKeyDescriptor KEY_DESCRIPTOR = new SmartLongKeyDescriptor();
+public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Bytes, HEquations> {
+  public static final ID<Bytes, HEquations> NAME = ID.create("bytecodeAnalysis");
+  private final HEquationsExternalizer myExternalizer = new HEquationsExternalizer();
+  private static final ClassDataIndexer INDEXER = new ClassDataIndexer();
+  private static final HKeyDescriptor KEY_DESCRIPTOR = new HKeyDescriptor();
 
-  private static final int ourInternalVersion = 3;
-  private static boolean ourEnabled = SystemProperties.getBooleanProperty("idea.enable.bytecode.contract.inference", isEnabledByDefault());
-
-  private static boolean isEnabledByDefault() {
-    Application application = ApplicationManager.getApplication();
-    return application.isInternal() || application.isUnitTestMode();
-  }
+  private static final int ourInternalVersion = 0;
+  private static boolean ourEnabled = SystemProperties.getBooleanProperty("idea.enable.bytecode.contract.inference", true);
 
   @NotNull
   @Override
-  public ID<Long, IdEquation> getName() {
+  public ID<Bytes, HEquations> getName() {
     return NAME;
   }
 
   @NotNull
   @Override
-  public DataIndexer<Long, IdEquation, FileContent> getIndexer() {
+  public DataIndexer<Bytes, HEquations, FileContent> getIndexer() {
     return INDEXER;
   }
 
   @NotNull
   @Override
-  public KeyDescriptor<Long> getKeyDescriptor() {
+  public KeyDescriptor<Bytes> getKeyDescriptor() {
     return KEY_DESCRIPTOR;
   }
 
   @NotNull
   @Override
-  public DataExternalizer<IdEquation> getValueExternalizer() {
+  public DataExternalizer<HEquations> getValueExternalizer() {
     return myExternalizer;
   }
 
@@ -91,111 +85,103 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Long, IdEquat
 
   @Override
   public int getVersion() {
-    return ourInternalVersion + BytecodeAnalysisConverter.getInstance().getVersion() + (ourEnabled ? 0xFF : 0);
+    return ourInternalVersion + (ourEnabled ? 0xFF : 0);
   }
 
-  public static class EquationExternalizer implements DataExternalizer<IdEquation>, DifferentSerializableBytesImplyNonEqualityPolicy {
-    @Override
-    public void save(@NotNull DataOutput out, IdEquation equation) throws IOException {
-      long id = equation.id;
-      int sign = id > 0 ? 1 : -1;
-      id = Math.abs(id);
-      int primaryId = (int)(id / BytecodeAnalysisConverter.SHIFT);
-      int secondaryId = (int)(id % BytecodeAnalysisConverter.SHIFT);
-      out.writeInt(sign * primaryId);
-      DataInputOutputUtil.writeINT(out, secondaryId);
-      IdResult rhs = equation.rhs;
-      if (rhs instanceof IdFinal) {
-        IdFinal finalResult = (IdFinal)rhs;
-        out.writeBoolean(true); // final flag
-        DataInputOutputUtil.writeINT(out, finalResult.value.ordinal());
-      } else {
-        IdPending pendResult = (IdPending)rhs;
-        out.writeBoolean(false); // pending flag
-        DataInputOutputUtil.writeINT(out, pendResult.delta.length);
+  private static class HKeyDescriptor implements KeyDescriptor<Bytes>, DifferentSerializableBytesImplyNonEqualityPolicy {
 
-        for (IntIdComponent component : pendResult.delta) {
-          DataInputOutputUtil.writeINT(out, component.value.ordinal());
-          long[] ids = component.ids;
-          DataInputOutputUtil.writeINT(out, ids.length);
-          for (long id1 : ids) {
-            sign = id1 > 0 ? 1 : -1;
-            id = Math.abs(id1);
-            primaryId = (int)(id / BytecodeAnalysisConverter.SHIFT);
-            secondaryId = (int)(id % BytecodeAnalysisConverter.SHIFT);
-            out.writeInt(sign * primaryId);
-            DataInputOutputUtil.writeINT(out, secondaryId);
+    @Override
+    public void save(@NotNull DataOutput out, Bytes value) throws IOException {
+      out.write(value.bytes);
+    }
+
+    @Override
+    public Bytes read(@NotNull DataInput in) throws IOException {
+      byte[] bytes = new byte[BytecodeAnalysisConverter.HASH_SIZE];
+      for (int i = 0; i < bytes.length; i++) {
+        bytes[i] = in.readByte();
+      }
+      return new Bytes(bytes);
+    }
+
+    @Override
+    public int getHashCode(Bytes value) {
+      return Arrays.hashCode(value.bytes);
+    }
+
+    @Override
+    public boolean isEqual(Bytes val1, Bytes val2) {
+      return Arrays.equals(val1.bytes, val2.bytes);
+    }
+  }
+
+  public static class HEquationsExternalizer implements DataExternalizer<HEquations>, DifferentSerializableBytesImplyNonEqualityPolicy {
+    @Override
+    public void save(@NotNull DataOutput out, HEquations eqs) throws IOException {
+      out.writeBoolean(eqs.stable);
+      DataInputOutputUtil.writeINT(out, eqs.results.size());
+      for (DirectionResultPair pair : eqs.results) {
+        DataInputOutputUtil.writeINT(out, pair.directionKey);
+        HResult rhs = pair.hResult;
+        if (rhs instanceof HFinal) {
+          HFinal finalResult = (HFinal)rhs;
+          out.writeBoolean(true); // final flag
+          DataInputOutputUtil.writeINT(out, finalResult.value.ordinal());
+        }
+        else {
+          HPending pendResult = (HPending)rhs;
+          out.writeBoolean(false); // pending flag
+          DataInputOutputUtil.writeINT(out, pendResult.delta.length);
+
+          for (HComponent component : pendResult.delta) {
+            DataInputOutputUtil.writeINT(out, component.value.ordinal());
+            HKey[] ids = component.ids;
+            DataInputOutputUtil.writeINT(out, ids.length);
+            for (HKey hKey : ids) {
+              out.write(hKey.key);
+              DataInputOutputUtil.writeINT(out, hKey.dirKey);
+              out.writeBoolean(hKey.stable);
+            }
           }
         }
       }
     }
 
     @Override
-    public IdEquation read(@NotNull DataInput in) throws IOException {
-      long primaryId = in.readInt();
-      int sign = primaryId > 0 ? 1 : -1;
-      primaryId = Math.abs(primaryId);
-      int secondaryId = DataInputOutputUtil.readINT(in);
-      long equationId = sign * (primaryId * BytecodeAnalysisConverter.SHIFT + secondaryId);
-      boolean isFinal = in.readBoolean(); // flag
-      if (isFinal) {
-        int ordinal = DataInputOutputUtil.readINT(in);
-        Value value = Value.values()[ordinal];
-        return new IdEquation(equationId, new IdFinal(value));
-      } else {
-
-        int sumLength = DataInputOutputUtil.readINT(in);
-        IntIdComponent[] components = new IntIdComponent[sumLength];
-
-        for (int i = 0; i < sumLength; i++) {
+    public HEquations read(@NotNull DataInput in) throws IOException {
+      boolean stable = in.readBoolean();
+      int size = DataInputOutputUtil.readINT(in);
+      ArrayList<DirectionResultPair> results = new ArrayList<DirectionResultPair>(size);
+      for (int k = 0; k < size; k++) {
+        int directionKey = DataInputOutputUtil.readINT(in);
+        boolean isFinal = in.readBoolean(); // flag
+        if (isFinal) {
           int ordinal = DataInputOutputUtil.readINT(in);
           Value value = Value.values()[ordinal];
-          int componentSize = DataInputOutputUtil.readINT(in);
-          long[] ids = new long[componentSize];
-          for (int j = 0; j < componentSize; j++) {
-            primaryId = in.readInt();
-            sign = primaryId > 0 ? 1 : -1;
-            primaryId = Math.abs(primaryId);
-            secondaryId = DataInputOutputUtil.readINT(in);
-            long id = sign * (primaryId * BytecodeAnalysisConverter.SHIFT + secondaryId);
-            ids[j] = id;
-          }
-          components[i] = new IntIdComponent(value, ids);
+          results.add(new DirectionResultPair(directionKey, new HFinal(value)));
         }
-        return new IdEquation(equationId, new IdPending(components));
+        else {
+          int sumLength = DataInputOutputUtil.readINT(in);
+          HComponent[] components = new HComponent[sumLength];
+
+          for (int i = 0; i < sumLength; i++) {
+            int ordinal = DataInputOutputUtil.readINT(in);
+            Value value = Value.values()[ordinal];
+            int componentSize = DataInputOutputUtil.readINT(in);
+            HKey[] ids = new HKey[componentSize];
+            for (int j = 0; j < componentSize; j++) {
+              byte[] bytes = new byte[BytecodeAnalysisConverter.HASH_SIZE];
+              for (int bi = 0; bi < bytes.length; bi++) {
+                bytes[bi] = in.readByte();
+              }
+              ids[j] = new HKey(bytes, DataInputOutputUtil.readINT(in), in.readBoolean());
+            }
+            components[i] = new HComponent(value, ids);
+          }
+          results.add(new DirectionResultPair(directionKey, new HPending(components)));
+        }
       }
-    }
-  }
-
-  private static class SmartLongKeyDescriptor implements KeyDescriptor<Long>, DifferentSerializableBytesImplyNonEqualityPolicy {
-    @Override
-    public void save(@NotNull DataOutput out, Long value) throws IOException {
-      long id = value.longValue();
-      int sign = id > 0 ? 1 : -1;
-      id = Math.abs(id);
-      int primaryId = (int)(id / BytecodeAnalysisConverter.SHIFT);
-      int secondaryId = (int)(id % BytecodeAnalysisConverter.SHIFT);
-      out.writeInt(primaryId * sign);
-      DataInputOutputUtil.writeINT(out, secondaryId);
-    }
-
-    @Override
-    public Long read(@NotNull DataInput in) throws IOException {
-      long primaryId = in.readInt();
-      int sign = primaryId > 0 ? 1 : -1;
-      primaryId = Math.abs(primaryId);
-      int secondaryId = DataInputOutputUtil.readINT(in);
-      return sign * (primaryId * BytecodeAnalysisConverter.SHIFT + secondaryId);
-    }
-
-    @Override
-    public int getHashCode(Long value) {
-      return value.hashCode();
-    }
-
-    @Override
-    public boolean isEqual(Long val1, Long val2) {
-      return val1.longValue() == val2.longValue();
+      return new HEquations(results, stable);
     }
   }
 }

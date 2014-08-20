@@ -49,6 +49,7 @@ public class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
     return true;
   }
 
+  @NotNull
   @Override
   protected BaseInspectionVisitor buildVisitor() {
     return new MyVisitor();

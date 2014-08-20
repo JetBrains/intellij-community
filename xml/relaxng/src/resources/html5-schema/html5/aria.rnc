@@ -133,15 +133,7 @@ common.attrs.aria.implicit.toolbar |=
 	&	aria.prop.activedescendant?
 	)
 
-common.attrs.aria.implicit.columnheader |=
-	(	aria.prop.sort?
-	&	aria.prop.readonly?
-	&	aria.prop.required?
-	&	aria.state.selected?
-	&	aria.state.expanded?
-	)
-
-common.attrs.aria.implicit.rowheader |=
+common.attrs.aria.implicit.column-or-row-header |=
 	(	aria.prop.sort?
 	&	aria.prop.readonly?
 	&	aria.prop.required?

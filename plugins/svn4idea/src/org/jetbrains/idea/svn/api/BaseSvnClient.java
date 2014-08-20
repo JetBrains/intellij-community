@@ -6,13 +6,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
-import org.jetbrains.idea.svn.auth.IdeaSvnkitBasedAuthenticationCallback;
+import org.jetbrains.idea.svn.auth.AuthenticationService;
 import org.jetbrains.idea.svn.commandLine.*;
 import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.SVNDiffOptions;
+import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
@@ -25,6 +28,7 @@ import java.util.List;
 public abstract class BaseSvnClient implements SvnClient {
   protected SvnVcs myVcs;
   protected ClientFactory myFactory;
+  protected boolean myIsActive;
 
   @NotNull
   @Override
@@ -46,6 +50,11 @@ public abstract class BaseSvnClient implements SvnClient {
   @Override
   public void setFactory(@NotNull ClientFactory factory) {
     myFactory = factory;
+  }
+
+  @Override
+  public void setIsActive(boolean isActive) {
+    myIsActive = isActive;
   }
 
   protected void assertUrl(@NotNull SvnTarget target) {
@@ -74,31 +83,22 @@ public abstract class BaseSvnClient implements SvnClient {
     }
   }
 
-  /**
-   * Utility method for running commands.
-   * // TODO: Should be replaced with non-static analogue.
-   *
-   * @param vcs
-   * @param target
-   * @param name
-   * @param parameters
-   * @param listener
-   * @throws com.intellij.openapi.vcs.VcsException
-   */
-  public static CommandExecutor execute(@NotNull SvnVcs vcs,
-                                        @NotNull SvnTarget target,
-                                        @NotNull SvnCommandName name,
-                                        @NotNull List<String> parameters,
-                                        @Nullable LineCommandListener listener) throws SvnBindException {
+  @NotNull
+  public CommandExecutor execute(@NotNull SvnVcs vcs,
+                                 @NotNull SvnTarget target,
+                                 @NotNull SvnCommandName name,
+                                 @NotNull List<String> parameters,
+                                 @Nullable LineCommandListener listener) throws SvnBindException {
     return execute(vcs, target, null, name, parameters, listener);
   }
 
-  public static CommandExecutor execute(@NotNull SvnVcs vcs,
-                                        @NotNull SvnTarget target,
-                                        @Nullable File workingDirectory,
-                                        @NotNull SvnCommandName name,
-                                        @NotNull List<String> parameters,
-                                        @Nullable LineCommandListener listener) throws SvnBindException {
+  @NotNull
+  public CommandExecutor execute(@NotNull SvnVcs vcs,
+                                 @NotNull SvnTarget target,
+                                 @Nullable File workingDirectory,
+                                 @NotNull SvnCommandName name,
+                                 @NotNull List<String> parameters,
+                                 @Nullable LineCommandListener listener) throws SvnBindException {
     Command command = new Command(name);
 
     command.setTarget(target);
@@ -106,7 +106,7 @@ public abstract class BaseSvnClient implements SvnClient {
     command.setResultBuilder(listener);
     command.put(parameters);
 
-    CommandRuntime runtime = new CommandRuntime(vcs, new IdeaSvnkitBasedAuthenticationCallback(vcs));
+    CommandRuntime runtime = new CommandRuntime(vcs, new AuthenticationService(vcs, myIsActive));
     return runtime.runWithAuthenticationAttempt(command);
   }
 

@@ -239,7 +239,7 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
 
       docManager.commitDocument(doc);
       try {
-        CodeStyleManager.getInstance(project).reformatText(psiFile, start + 1, end);
+        CodeStyleManager.getInstance(project).reformatRange(psiFile, start + 1, end, true);
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);

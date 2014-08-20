@@ -37,8 +37,12 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
@@ -48,8 +52,11 @@ import com.intellij.util.indexing.FileBasedIndexProjectHandler;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -86,33 +93,39 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
           }
         });
 
-        myConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new VirtualFileAdapter() {
+        myConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
           @Override
-          public void fileCreated(@NotNull final VirtualFileEvent event) {
-            final VirtualFile file = event.getFile();
-            final FilePropertyPusher[] pushers = file.isDirectory() ? myPushers : myFilePushers;
-            if (!event.isFromRefresh() || !file.isDirectory()) {
-              // push synchronously to avoid entering dumb mode in the middle of a meaningful write action
-              // avoid dumb mode for just one file
-              doPushRecursively(file, pushers, ProjectRootManager.getInstance(myProject).getFileIndex());
-            }
-            else {
-              schedulePushRecursively(file, pushers);
-            }
-          }
+          public void after(@NotNull List<? extends VFileEvent> events) {
+            List<Runnable> delayedTasks = ContainerUtil.newArrayList();
+            for (VFileEvent event : events) {
+              final VirtualFile file = event.getFile();
+              if (file == null) continue;
 
-          @Override
-          public void fileMoved(@NotNull final VirtualFileMoveEvent event) {
-            final VirtualFile file = event.getFile();
-            final FilePropertyPusher[] pushers = file.isDirectory() ? myPushers : myFilePushers;
-            if (pushers.length == 0) return;
-            for (FilePropertyPusher pusher : pushers) {
-              file.putUserData(pusher.getFileDataKey(), null);
+              final FilePropertyPusher[] pushers = file.isDirectory() ? myPushers : myFilePushers;
+              if (pushers.length == 0) continue;
+
+              if (event instanceof VFileCreateEvent) {
+                if (!event.isFromRefresh() || !file.isDirectory()) {
+                  // push synchronously to avoid entering dumb mode in the middle of a meaningful write action
+                  // avoid dumb mode for just one file
+                  doPushRecursively(file, pushers, ProjectRootManager.getInstance(myProject).getFileIndex());
+                }
+                else {
+                  ContainerUtil.addIfNotNull(delayedTasks, createRecursivePushTask(file, pushers));
+                }
+              } else if (event instanceof VFileMoveEvent) {
+                for (FilePropertyPusher pusher : pushers) {
+                  file.putUserData(pusher.getFileDataKey(), null);
+                }
+                // push synchronously to avoid entering dumb mode in the middle of a meaningful write action
+                doPushRecursively(file, pushers, ProjectRootManager.getInstance(myProject).getFileIndex());
+              }
             }
-            // push synchronously to avoid entering dumb mode in the middle of a meaningful write action
-            doPushRecursively(file, pushers, ProjectRootManager.getInstance(myProject).getFileIndex());
+            if (!delayedTasks.isEmpty()) {
+              queueTasks(delayedTasks);
+            }
           }
-        }));
+        });
       }
     });
   }
@@ -128,7 +141,7 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
 
         @Override
         public void pushRecursively(VirtualFile file, Project project) {
-          PushedFilePropertiesUpdaterImpl.this.schedulePushRecursively(file, pusher);
+          queueTasks(ContainerUtil.createMaybeSingletonList(createRecursivePushTask(file, new FilePropertyPusher[]{pusher})));
         }
       });
     }
@@ -140,16 +153,17 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
     doPushAll(myPushers);
   }
 
-  private void schedulePushRecursively(final VirtualFile dir, final FilePropertyPusher... pushers) {
-    if (pushers.length == 0) return;
+  @Nullable
+  private Runnable createRecursivePushTask(final VirtualFile dir, final FilePropertyPusher[] pushers) {
+    if (pushers.length == 0) return null;
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    if (!fileIndex.isInContent(dir)) return;
-    queueTask(new Runnable() {
+    if (!fileIndex.isInContent(dir)) return null;
+    return new Runnable() {
       @Override
       public void run() {
         doPushRecursively(dir, pushers, fileIndex);
       }
-    });
+    };
   }
 
   private void doPushRecursively(VirtualFile dir, final FilePropertyPusher[] pushers, ProjectFileIndex fileIndex) {
@@ -162,8 +176,10 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
     });
   }
 
-  private void queueTask(Runnable action) {
-    myTasks.offer(action);
+  private void queueTasks(List<? extends Runnable> actions) {
+    for (Runnable action : actions) {
+      myTasks.offer(action);
+    }
     final DumbModeTask task = new DumbModeTask() {
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
@@ -221,12 +237,12 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
 
   @Override
   public void pushAll(final FilePropertyPusher... pushers) {
-    queueTask(new Runnable() {
+    queueTasks(Arrays.asList(new Runnable() {
       @Override
       public void run() {
         doPushAll(pushers);
       }
-    });
+    }));
   }
 
   private void doPushAll(final FilePropertyPusher[] pushers) {

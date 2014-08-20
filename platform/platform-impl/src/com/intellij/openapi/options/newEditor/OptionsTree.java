@@ -297,7 +297,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       myRendererComponent.setOpaqueActive(false);
 
       mySeparator = new GroupSeparator();
-      myRendererComponent.add(Registry.is("ide.file.settings.order.new") ? mySeparator : mySeparatorComponent, BorderLayout.NORTH);
+      myRendererComponent.add(Registry.is("ide.new.settings.dialog") ? mySeparator : mySeparatorComponent, BorderLayout.NORTH);
 
       final NonOpaquePanel content = new NonOpaquePanel(new BorderLayout());
       myHandle = new JLabel("", SwingConstants.CENTER);
@@ -401,12 +401,12 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       myTextLabel.setForeground(selected ? UIUtil.getTreeSelectionForeground() : fg);
 
       myTextLabel.setOpaque(selected);
-      if (Registry.is("ide.file.settings.order.new")) {
+      if (Registry.is("ide.new.settings.dialog")) {
         myTextLabel.setBorder(new EmptyBorder(1,2,1,0));
       }
 
       Project project = null;
-      if (base != null && Registry.is("ide.file.settings.order.new")) {
+      if (base != null && Registry.is("ide.new.settings.dialog")) {
         SimpleNode parent = base.getParent();
         if (parent == myRoot) {
           project = getConfigurableProject(base); // show icon for top-level nodes
@@ -968,7 +968,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     public void paint(Graphics g) {
       super.paint(g);
 
-      if (Registry.is("ide.file.settings.order.new")) {
+      if (Registry.is("ide.new.settings.dialog")) {
         ConfigurableGroup group = getGroup(GroupSeparator.SPACE + mySeparator.getFont().getSize());
         if (group != null && group == getGroup(-GroupSeparator.SPACE)) {
           mySeparator.configure(group, false);

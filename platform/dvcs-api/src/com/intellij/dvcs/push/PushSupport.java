@@ -28,8 +28,10 @@ import java.util.Collection;
  * Base class to provide vcs-specific info
  */
 
-public abstract class PushSupport {
-  public static final ExtensionPointName<PushSupport> PUSH_SUPPORT_EP = ExtensionPointName.create("com.intellij.pushSupport");
+public abstract class PushSupport<Repo extends Repository> {
+
+  public static final ExtensionPointName<PushSupport<? extends Repository>> PUSH_SUPPORT_EP =
+    ExtensionPointName.create("com.intellij.pushSupport");
 
   @NotNull
   public abstract AbstractVcs getVcs();
@@ -44,34 +46,43 @@ public abstract class PushSupport {
    * @return Default push destination
    */
   @Nullable
-  public abstract PushTarget getDefaultTarget(@NotNull Repository repository);
+  public abstract PushTarget getDefaultTarget(@NotNull Repo repository);
 
   /**
    * @return All remembered remote destinations used for completion
    */
   @NotNull
-  public abstract Collection<String> getTargetNames(@NotNull Repository repository);
+  public abstract Collection<String> getTargetNames(@NotNull Repo repository);
 
   /**
    * @return current source(branch) for repository
    */
   @NotNull
-  public abstract PushSource getSource(@NotNull Repository repository);
+  public abstract PushSource getSource(@NotNull Repo repository);
 
-  /** Create destination target from user input string
-   * @return
+  /**
+   * Parse user input string, and create the valid target for push,
+   * or return <code><b>null</b></code> if the target name is not valid.
+   *
+   * @see #validateSpec(Repository, PushSpec)
    */
   @Nullable
-  public abstract PushTarget createTarget(String targetName);
+  public abstract PushTarget createTarget(@NotNull Repo repository, @NotNull String targetName);
 
   /**
    * @return RepositoryManager for vcs
    */
   @NotNull
-  public abstract RepositoryManager<? extends Repository> getRepositoryManager();
+  public abstract RepositoryManager<Repo> getRepositoryManager();
 
   @Nullable
-  public VcsPushOptionsPanel getVcsPushOptionsPanel(){
+  public VcsPushOptionsPanel getVcsPushOptionsPanel() {
     return null;
   }
+
+  /**
+   * @return null if target is valid for selected repository
+   */
+  @Nullable
+  public abstract VcsError validate(@NotNull Repository repository, @Nullable String targetToValidate);
 }

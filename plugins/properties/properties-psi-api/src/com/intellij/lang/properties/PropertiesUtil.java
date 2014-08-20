@@ -16,16 +16,14 @@
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,8 +36,8 @@ import java.util.regex.Pattern;
  * @author cdr
  */
 public class PropertiesUtil {
-  private final static Pattern LOCALE_PATTERN = Pattern.compile("(_[a-zA-Z]{2,8}(_[a-zA-Z]{2}|[0-9]{3})?(_[\\w\\-]+)?)\\.[^_]+$");
-  private final static Locale DEFAULT_LOCALE = new Locale("", "", "");
+  public final static Pattern LOCALE_PATTERN = Pattern.compile("(_[a-zA-Z]{2,8}(_[a-zA-Z]{2}|[0-9]{3})?(_[\\w\\-]+)?)\\.[^_]+$");
+  public static final Set<Character> BASE_NAME_BORDER_CHAR = ContainerUtil.newHashSet('-', '_', '.');
 
 
   /**
@@ -59,12 +57,28 @@ public class PropertiesUtil {
   }
 
   @NotNull
-  public static String getBaseName(@NotNull PsiFile file) {
-    return getBaseName(file.getContainingFile().getVirtualFile());
+  public static String getDefaultBaseName(final Collection<PropertiesFile> files) {
+    String commonPrefix = null;
+    for (PropertiesFile file : files) {
+      final String baseName = file.getVirtualFile().getNameWithoutExtension();
+      if (commonPrefix == null) {
+        commonPrefix = baseName;
+      } else {
+        commonPrefix = StringUtil.commonPrefix(commonPrefix, baseName);
+        if (commonPrefix.isEmpty()) {
+          break;
+        }
+      }
+    }
+    assert commonPrefix != null;
+    if (!commonPrefix.isEmpty() && BASE_NAME_BORDER_CHAR.contains(commonPrefix.charAt(commonPrefix.length() - 1))) {
+      commonPrefix = commonPrefix.substring(0, commonPrefix.length() - 1);
+    }
+    return commonPrefix;
   }
 
   @NotNull
-  public static String getBaseName(@NotNull VirtualFile file) {
+  public static String getDefaultBaseName(@NotNull final VirtualFile file) {
     final String name = file.getName();
     final Matcher matcher = LOCALE_PATTERN.matcher(name);
     final String baseNameWithExtension;
@@ -105,44 +119,21 @@ public class PropertiesUtil {
     return null;
   }
 
-  @Nullable
-  public static String getFullName(final PropertiesFile propertiesFile) {
-    return ApplicationManager.getApplication().runReadAction(new NullableComputable<String>() {
-      public String compute() {
-        PsiDirectory directory = propertiesFile.getParent();
-        String packageQualifiedName = getPackageQualifiedName(directory);
-        if (packageQualifiedName == null) {
-          return null;
-        }
-        StringBuilder qName = new StringBuilder(packageQualifiedName);
-          if (qName.length() > 0) {
-            qName.append(".");
-          }
-        qName.append(getBaseName(propertiesFile.getContainingFile()));
-        return qName.toString();
-      }
-    });
-  }
-
+  /**
+   * @deprecated use PropertiesUtil.findAllProperties(ResourceBundle resourceBundle, String key)
+   */
   @NotNull
-  public static Locale getLocale(final VirtualFile propertiesFile) {
-    String name = propertiesFile.getName();
-    final Matcher matcher = LOCALE_PATTERN.matcher(name);
-    if (matcher.find()) {
-      String rawLocale = matcher.group(1);
-      String[] splittedRawLocale = rawLocale.split("_");
-      if (splittedRawLocale.length > 1 && splittedRawLocale[1].length() == 2) {
-        final String language = splittedRawLocale[1];
-        final String country = splittedRawLocale.length > 2 ? splittedRawLocale[2] : "";
-        final String variant = splittedRawLocale.length > 3 ? splittedRawLocale[3] : "";
-        return new Locale(language, country, variant);
-      }
-    }
-    return DEFAULT_LOCALE;
-  }
-
-  @NotNull
+  @Deprecated
   public static List<IProperty> findAllProperties(Project project, @NotNull ResourceBundle resourceBundle, String key) {
+    List<IProperty> result = new SmartList<IProperty>();
+    List<PropertiesFile> propertiesFiles = resourceBundle.getPropertiesFiles();
+    for (PropertiesFile propertiesFile : propertiesFiles) {
+      result.addAll(propertiesFile.findPropertiesByKey(key));
+    }
+    return result;
+  }
+
+  public static List<IProperty> findAllProperties(@NotNull ResourceBundle resourceBundle, String key) {
     List<IProperty> result = new SmartList<IProperty>();
     List<PropertiesFile> propertiesFiles = resourceBundle.getPropertiesFiles();
     for (PropertiesFile propertiesFile : propertiesFiles) {

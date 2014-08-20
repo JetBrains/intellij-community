@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.auth.AuthenticationService;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 
@@ -31,8 +32,8 @@ public class CertificateCallbackCase extends AuthCallbackCase {
 
   private boolean accepted;
 
-  CertificateCallbackCase(@NotNull AuthenticationCallback callback, SVNURL url) {
-    super(callback, url);
+  CertificateCallbackCase(@NotNull AuthenticationService authenticationService, SVNURL url) {
+    super(authenticationService, url);
   }
 
   @Override
@@ -55,7 +56,7 @@ public class CertificateCallbackCase extends AuthCallbackCase {
       realm = serverUrl != null ? serverUrl.toString() : realm;
     }
 
-    if (!myTried && myAuthenticationCallback.acceptSSLServerCertificate(myUrl, realm)) {
+    if (!myTried && myAuthenticationService.acceptSSLServerCertificate(myUrl, realm)) {
       accepted = true;
       myTried = true;
       return true;

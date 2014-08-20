@@ -32,7 +32,7 @@ import java.util.Calendar;
 public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
   @SuppressWarnings("SpellCheckingInspection")
   public void testWrappingAnnotationArrayParameters() {
-    getSettings().getRootSettings().RIGHT_MARGIN = 80;
+    getSettings().RIGHT_MARGIN = 80;
     getSettings().ARRAY_INITIALIZER_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     doTextTest(
       "@AttributeOverrides( { @AttributeOverride(name = \"id\", column = @Column(name = \"recovery_id\"))," +
@@ -64,7 +64,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
 
   public void testAnnotationParamValueExceedingRightMargin() {
     // Inspired by IDEA-18051
-    getSettings().getRootSettings().RIGHT_MARGIN = 80;
+    getSettings().RIGHT_MARGIN = 80;
     doTextTest(
       "package formatting;\n" +
       "\n" +
@@ -128,7 +128,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
   public void testEnumConstantsWrapping() {
     // Inspired by IDEA-54667
     getSettings().ENUM_CONSTANTS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
-    getSettings().getRootSettings().RIGHT_MARGIN = 80;
+    getSettings().RIGHT_MARGIN = 80;
 
     // Don't expect the constants to be placed on new line.
     doTextTest(
@@ -177,8 +177,8 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
 
   public void testWrapCompoundStringLiteralThatEndsAtRightMargin() {
     // Inspired by IDEA-82398
-    getSettings().getRootSettings().RIGHT_MARGIN = 30;
-    getSettings().getRootSettings().getCommonSettings(JavaLanguage.INSTANCE).WRAP_LONG_LINES = true;
+    getSettings().RIGHT_MARGIN = 30;
+    getSettings().WRAP_LONG_LINES = true;
 
     final String text = "class Test {\n" +
                         "    String s = \"first line \" +\n" +
@@ -189,8 +189,8 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
 
   public void testWrapLongLine() {
     // Inspired by IDEA-55782
-    getSettings().getRootSettings().RIGHT_MARGIN = 50;
-    getSettings().getRootSettings().getCommonSettings(JavaLanguage.INSTANCE).WRAP_LONG_LINES = true;
+    getSettings().RIGHT_MARGIN = 50;
+    getSettings().WRAP_LONG_LINES = true;
 
     doTextTest(
       "class TestClass {\n" +
@@ -218,8 +218,8 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
 
   public void testWrapLongLineWithTabs() {
     // Inspired by IDEA-55782
-    getSettings().getRootSettings().RIGHT_MARGIN = 20;
-    getSettings().getRootSettings().getCommonSettings(JavaLanguage.INSTANCE).WRAP_LONG_LINES = true;
+    getSettings().RIGHT_MARGIN = 20;
+    getSettings().WRAP_LONG_LINES = true;
     getIndentOptions().USE_TAB_CHARACTER = true;
     getIndentOptions().TAB_SIZE = 4;
 
@@ -236,8 +236,8 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
 
   public void testWrapLongLineWithSelection() {
     // Inspired by IDEA-55782
-    getSettings().getRootSettings().RIGHT_MARGIN = 20;
-    getSettings().getRootSettings().getCommonSettings(JavaLanguage.INSTANCE).WRAP_LONG_LINES = true;
+    getSettings().RIGHT_MARGIN = 20;
+    getSettings().WRAP_LONG_LINES = true;
 
     String initial =
       "class TestClass {\n" +
@@ -264,7 +264,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
   @Bombed(user = "Roman Shevchenko", year = 2014, month = Calendar.MARCH, day = 14)
   public void testWrapMethodAnnotationBeforeParams() {
     // Inspired by IDEA-59536
-    getSettings().getRootSettings().RIGHT_MARGIN = 90;
+    getSettings().RIGHT_MARGIN = 90;
     getSettings().METHOD_ANNOTATION_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
 
@@ -304,7 +304,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
 
   public void testResourceListWrap() {
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
-    getSettings().getRootSettings().RIGHT_MARGIN = 40;
+    getSettings().RIGHT_MARGIN = 40;
     getSettings().RESOURCE_LIST_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     doMethodTest("try (MyResource r1 = null; MyResource r2 = null) { }",
                  "try (MyResource r1 = null;\n" +
@@ -323,7 +323,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
   public void testLineLongEnoughToExceedAfterFirstWrapping() {
     // Inspired by IDEA-103624
     getSettings().WRAP_LONG_LINES = true;
-    getSettings().getRootSettings().RIGHT_MARGIN = 40;
+    getSettings().RIGHT_MARGIN = 40;
     getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doMethodTest(
       "test(1,\n" +
@@ -344,7 +344,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
   public void testNoUnnecessaryWrappingIsPerformedForLongLine() {
     // Inspired by IDEA-103624
     getSettings().WRAP_LONG_LINES = true;
-    getSettings().getRootSettings().RIGHT_MARGIN = 40;
+    getSettings().RIGHT_MARGIN = 40;
     getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     String text =
       "test(1,\n" +
@@ -359,7 +359,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
 
   public void testEnforceIndentMethodCallParamWrap() {
     getSettings().WRAP_LONG_LINES = true;
-    getSettings().getRootSettings().RIGHT_MARGIN = 140;
+    getSettings().RIGHT_MARGIN = 140;
     getSettings().PREFER_PARAMETERS_WRAP = true;
     getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
 
@@ -402,7 +402,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
   @SuppressWarnings("SpellCheckingInspection")
   public void testDoNotWrapMethodsWithMethodCallAsParameters() {
     getSettings().WRAP_LONG_LINES = true;
-    getSettings().getRootSettings().RIGHT_MARGIN = 140;
+    getSettings().RIGHT_MARGIN = 140;
     getSettings().PREFER_PARAMETERS_WRAP = true;
     getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
     getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true;

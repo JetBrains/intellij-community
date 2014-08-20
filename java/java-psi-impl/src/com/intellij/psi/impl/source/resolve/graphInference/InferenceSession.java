@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -298,18 +299,20 @@ public class InferenceSession {
           return callExpression.resolveMethodGenerics();
         }
       };
-      final JavaResolveResult result = expression == null
+      MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(argumentList);
+      final JavaResolveResult result = properties != null ? null :
+                                       expression == null
                                        ? computableResolve.compute()
                                        : PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, false, computableResolve);
-      if (result instanceof MethodCandidateInfo) {
-        final PsiMethod method = ((MethodCandidateInfo)result).getElement();
-        //need to get type parameters for 2 level nested expressions (they won't be covered by expression constraints on this level?!) 
-        initBounds(method.getTypeParameters());
+      final PsiMethod method = result instanceof MethodCandidateInfo ? ((MethodCandidateInfo)result).getElement() : properties != null ? properties.getMethod() : null;
+      if (method != null) {
+        //need to get type parameters for 2 level nested expressions (they won't be covered by expression constraints on this level?!)
+        initBounds(callExpression, method.getTypeParameters());
         final PsiExpression[] newArgs = argumentList.getExpressions();
         final PsiParameter[] newParams = method.getParameterList().getParameters();
         if (newParams.length > 0) {
-          collectAdditionalConstraints(newParams, newArgs, method, ((MethodCandidateInfo)result).getSiteSubstitutor(), 
-                                       additionalConstraints, ((MethodCandidateInfo)result).isVarargs(), false);
+          collectAdditionalConstraints(newParams, newArgs, method, result != null ? ((MethodCandidateInfo)result).getSiteSubstitutor() : properties.getSubstitutor(),
+                                       additionalConstraints, result != null ?  ((MethodCandidateInfo)result).isVarargs() : properties.isVarargs(), false);
         }
       }
     }
@@ -784,6 +787,7 @@ public class InferenceSession {
                                PsiSubstitutor substitutor) {
     final List<PsiType> lowerBounds = variable.getBounds(boundType);
     PsiType lub = PsiType.NULL;
+    List<PsiType> dTypes = new ArrayList<PsiType>();
     for (PsiType lowerBound : lowerBounds) {
       lowerBound = substituteNonProperBound(lowerBound, substitutor);
       final HashSet<InferenceVariable> dependencies = new HashSet<InferenceVariable>();
@@ -970,7 +974,8 @@ public class InferenceSession {
 
       for (int i = 0; i < functionalMethodParameters.length; i++) {
         final PsiType pType = signature.getParameterTypes()[i];
-        addConstraint(new TypeCompatibilityConstraint(getParameterType(parameters, i, PsiSubstitutor.EMPTY, varargs), pType));
+        addConstraint(new TypeCompatibilityConstraint(getParameterType(parameters, i, PsiSubstitutor.EMPTY, varargs),
+                                                      PsiImplUtil.normalizeWildcardTypeByPosition(pType, reference)));
       }
     }
     else if (parameters.length + 1 == functionalMethodParameters.length && !varargs || 
@@ -1004,7 +1009,8 @@ public class InferenceSession {
 
       for (int i = 0; i < signature.getParameterTypes().length - 1; i++) {
         final PsiType interfaceParamType = signature.getParameterTypes()[i + 1];
-        addConstraint(new TypeCompatibilityConstraint(getParameterType(parameters, i, PsiSubstitutor.EMPTY, varargs), interfaceParamType));
+        addConstraint(new TypeCompatibilityConstraint(getParameterType(parameters, i, PsiSubstitutor.EMPTY, varargs),
+                                                      PsiImplUtil.normalizeWildcardTypeByPosition(interfaceParamType, reference)));
       }
     }
 

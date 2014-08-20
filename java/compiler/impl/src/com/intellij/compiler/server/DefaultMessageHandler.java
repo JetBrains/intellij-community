@@ -66,7 +66,16 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
     //noinspection EnumSwitchStatementWhichMissesCases
     switch (msg.getType()) {
       case BUILD_EVENT:
-        handleBuildEvent(sessionId, msg.getBuildEvent());
+        final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent event = msg.getBuildEvent();
+        if (event.getEventType() == CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Type.CUSTOM_BUILDER_MESSAGE && event.hasCustomBuilderMessage()) {
+          final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage message = event.getCustomBuilderMessage();
+          if (!myProject.isDisposed()) {
+            myProject.getMessageBus().syncPublisher(CustomBuilderMessageHandler.TOPIC).messageReceived(
+              message.getBuilderId(), message.getMessageType(), message.getMessageText()
+            );
+          }
+        }
+        handleBuildEvent(sessionId, event);
         break;
       case COMPILE_MESSAGE:
         handleCompileMessage(sessionId, msg.getCompileMessage());

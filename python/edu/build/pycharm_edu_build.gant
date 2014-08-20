@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import org.jetbrains.jps.LayoutInfo
-import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
 setProperty("home", getHome())
 includeTargets << new File("$home/community/build/scripts/utils.gant")
@@ -26,9 +26,12 @@ setProperty("buildName", "PE-$buildNumber")
 setProperty("ch", "$home/community")
 setProperty("pythonCommunityHome", "$ch/python")
 setProperty("pythonEduHome", "$ch/python/edu")
+requireProperty("jdk_bundled_mac", "1.7")
+def jdk_bundled_version = p("jdk_bundled_mac") == "1.8" ? "jdk8_mac_redist.tar" : "jdk_mac_redist.tar"
+ant.copy(file: "${home}/build/jdk/${jdk_bundled_version}", tofile: "${home}/build/jdk/jdk_mac_redist_for_${buildNumber}.tar")
 
 // load ApplicationInfo.xml properties
-ant.xmlproperty(file: "$pythonCommunityHome/resources/idea/PyCharmEduApplicationInfo.xml", collapseAttributes: "true")
+ant.xmlproperty(file: "$pythonEduHome/resources/idea/PyCharmEduApplicationInfo.xml", collapseAttributes: "true")
 setProperty("system_selector", "PyCharm${p("component.version.major")}0")
 setProperty("dryRun", false)
 setProperty("jdk16", guessJdk())
@@ -132,6 +135,8 @@ target('default': "Build artifacts") {
     exclude(name: "intentionDescriptions")
     exclude(name: "tips/**/*")
     exclude(name: "tips")
+    exclude(name: "courses")
+    exclude(name: "courses/*")
   }
 
   zipSources(home, paths.artifacts)
@@ -142,8 +147,8 @@ target('default': "Build artifacts") {
 
 
   def extraArgs = ["build.code": "pycharm${buildName}", "build.number": "PE-$buildNumber", "artifacts.path": "${paths.artifacts}"]
-  signMacZip("pycharm", extraArgs)
-  buildDmg("pycharm", "${pythonEduHome}/build/DMG_background.png", extraArgs)
+  signMacZip("pycharm", extraArgs + ["sitFileName": "pycharm${buildName}-jdk-bundled", "jdk_archive_name": "jdk_mac_redist_for_${buildNumber}.tar"])
+  buildDmg("pycharm", "${pythonEduHome}/build/DMG_background.png", extraArgs + ["sitFileName": "pycharm${buildName}-jdk-bundled", "jdk_archive_name": "jdk_mac_redist_for_${buildNumber}.tar"])
 
 }
 
@@ -201,19 +206,24 @@ public layoutEducational(String classesPath, Set usedJars) {
 
   String macAppRoot = isEap() ? "PyCharm PE ${p("component.version.major")}.${p("component.version.minor")} EAP.app/Contents" : "PyCharm PE.app/Contents"
   buildMacZip(macAppRoot, "${paths.artifacts}/pycharm${buildName}.sit", [paths.distAll], paths.distMac)
+  ant.copy(file: "${paths.artifacts}/pycharm${buildName}.sit", tofile: "${paths.artifacts}/pycharm${buildName}-jdk-bundled.sit")
+  ant.delete(file: "${paths.artifacts}/pycharm${buildName}.sit")
 }
 
 private layoutPlugins(layouts) {
   dir("plugins") {
-    layouts.layoutPlugin("rest")
-    layouts.layoutPlugin("python-rest")
+    layouts.layoutPlugin("learn-python") {
+      dir("courses") {
+        fileset(dir: "$pythonEduHome/learn-python/resources/courses")
+      }
+    }
   }
 
   layouts.layoutCommunityPlugins(ch)
 }
 
 private String appInfoFile() {
-  return "$pythonCommunityHome/resources/idea/PyCharmEduApplicationInfo.xml"
+  return "$pythonEduHome/resources/idea/PyCharmEduApplicationInfo.xml"
 }
 
 private layoutFull(Map args, String target, Set usedJars) {
@@ -356,7 +366,7 @@ private layoutWin(Map args, String target) {
   winScripts(target, ch, "pycharm.bat", args)
   winVMOptions(target, null, "pycharm.exe")
 
-  ant.copy(file: "$home/python/help/pycharmhelp.jar", todir: "$target/help", failonerror: false)
+  ant.copy(file: "$home/python/help/pycharm-eduhelp.jar", todir: "$target/help", failonerror: false)
 }
 
 private layoutUnix(Map args, String target) {
@@ -373,7 +383,7 @@ private layoutUnix(Map args, String target) {
   unixScripts(target, ch, "pycharm.sh", args)
   unixVMOptions(target, "pycharm")
 
-  ant.copy(file: "$home/python/help/pycharmhelp.jar", todir: "$target/help", failonerror: false)
+  ant.copy(file: "$home/python/help/pycharm-eduhelp.jar", todir: "$target/help", failonerror: false)
 }
 
 private layoutMac(Map _args, String target) {

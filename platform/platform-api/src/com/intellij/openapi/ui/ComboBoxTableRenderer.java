@@ -117,7 +117,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   public Component getTableCellEditorComponent(JTable table, final Object value, boolean isSelected, final int row, final int column) {
     @SuppressWarnings("unchecked") final T t = (T)value;
     myValue = t;
-    customizeComponent(t, table, isSelected);
+    customizeComponent(t, table, true);
 
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {

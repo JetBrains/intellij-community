@@ -30,14 +30,12 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -139,7 +137,8 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
 
       try {
         final List<CodeSmellInfo> codeSmells =
-          CodeSmellDetector.getInstance(myProject).findCodeSmells(new ArrayList<VirtualFile>(myCheckinPanel.getVirtualFiles()));
+          CodeSmellDetector.getInstance(myProject)
+            .findCodeSmells(CheckinHandlerUtil.filterOutGeneratedAndExcludedFiles(myCheckinPanel.getVirtualFiles(), myProject));
         if (!codeSmells.isEmpty()) {
           return processFoundCodeSmells(codeSmells, executor);
         }

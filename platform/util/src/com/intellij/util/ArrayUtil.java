@@ -190,7 +190,7 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   @NotNull
-  public static int[] toIntArray(@NotNull List<Integer> list) {
+  public static int[] toIntArray(@NotNull Collection<Integer> list) {
     int[] ret = newIntArray(list.size());
     int i = 0;
     for (Integer e : list) {

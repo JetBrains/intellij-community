@@ -56,12 +56,13 @@ import java.util.List;
 
 public class XDebugSessionTab extends DebuggerSessionTabBase {
   private static final DataKey<XDebugSessionTab> TAB_KEY = DataKey.create("XDebugSessionTab");
-  public static final DataKey<XDebugSession> SESSION_KEY = DataKey.create("XDebugSessionTab.XDebugSession");
 
   private XWatchesViewImpl myWatchesView;
   private final List<XDebugView> myViews = new ArrayList<XDebugView>();
 
-  private XDebugSessionImpl session;
+  @Nullable
+  private XDebugSessionImpl mySession;
+  private XDebugSessionData mySessionData;
 
   @NotNull
   public static XDebugSessionTab create(@NotNull XDebugSessionImpl session,
@@ -74,7 +75,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
         XDebugSessionTab oldTab = TAB_KEY.getData(DataManager.getInstance().getDataContext(component));
         if (oldTab != null) {
           oldTab.setSession(session, environment, icon);
-          oldTab.attachToSession();
+          oldTab.attachToSession(session);
           return oldTab;
         }
       }
@@ -90,14 +91,14 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     setSession(session, environment, icon);
 
     myUi.addContent(createFramesContent(), 0, PlaceInGrid.left, false);
-    myUi.addContent(createVariablesContent(), 0, PlaceInGrid.center, false);
-    myUi.addContent(createWatchesContent(), 0, PlaceInGrid.right, false);
+    myUi.addContent(createVariablesContent(session), 0, PlaceInGrid.center, false);
+    myUi.addContent(createWatchesContent(session), 0, PlaceInGrid.right, false);
 
     for (XDebugView view : myViews) {
       Disposer.register(this, view);
     }
 
-    attachToSession();
+    attachToSession(session);
 
     DefaultActionGroup focus = new DefaultActionGroup();
     focus.add(ActionManager.getInstance().getAction(XDebuggerActions.FOCUS_ON_BREAKPOINT));
@@ -107,10 +108,10 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       @Override
       public void selectionChanged(ContentManagerEvent event) {
         Content content = event.getContent();
-        XDebugSessionImpl session = XDebugSessionTab.this.session;
+        XDebugSessionImpl session = mySession;
         if (session != null && content.isSelected() && DebuggerContentInfo.WATCHES_CONTENT.equals(ViewImpl.ID.get(content))) {
           if (myWatchesView.rebuildNeeded()) {
-            myWatchesView.processSessionEvent(XDebugView.SessionEvent.SETTINGS_CHANGED, session);
+            myWatchesView.processSessionEvent(XDebugView.SessionEvent.SETTINGS_CHANGED);
           }
         }
       }
@@ -124,7 +125,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       setEnvironment(environment);
     }
 
-    this.session = session;
+    mySession = session;
+    mySessionData = session.getSessionData();
     myConsole = session.getConsoleView();
     myRunContentDescriptor = new RunContentDescriptor(myConsole, session.getDebugProcess().getProcessHandler(), myUi.getComponent(), session.getSessionName(), icon);
   }
@@ -138,23 +140,23 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     else if (TAB_KEY.is(dataId)) {
       return this;
     }
+    else if (XDebugSessionData.DATA_KEY.is(dataId)) {
+      return mySessionData;
+    }
 
-    if (session != null) {
-      if (SESSION_KEY.is(dataId)) {
-        return session;
+    if (mySession != null) {
+      if (XDebugSession.DATA_KEY.is(dataId)) {
+        return mySession;
       }
       else if (LangDataKeys.CONSOLE_VIEW.is(dataId)) {
-        return session.getConsoleView();
-      }
-      else if (XDebugSessionData.DATA_KEY.is(dataId)) {
-        return session.getSessionData();
+        return mySession.getConsoleView();
       }
     }
 
     return super.getData(dataId);
   }
 
-  private Content createVariablesContent() {
+  private Content createVariablesContent(@NotNull XDebugSessionImpl session) {
     final XVariablesView variablesView = new XVariablesView(session);
     myViews.add(variablesView);
     Content result = myUi.createContent(DebuggerContentInfo.VARIABLES_CONTENT, variablesView.getPanel(),
@@ -167,7 +169,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     return result;
   }
 
-  private Content createWatchesContent() {
+  private Content createWatchesContent(@NotNull XDebugSessionImpl session) {
     myWatchesView = new XWatchesViewImpl(session);
     myViews.add(myWatchesView);
     Content watchesContent = myUi.createContent(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView.getMainPanel(),
@@ -195,9 +197,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       @Override
       public void run() {
         for (XDebugView view : myViews) {
-          if (session != null) {
-            view.processSessionEvent(XDebugView.SessionEvent.SETTINGS_CHANGED, session);
-          }
+          view.processSessionEvent(XDebugView.SessionEvent.SETTINGS_CHANGED);
         }
       }
     });
@@ -207,7 +207,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     return myWatchesView;
   }
 
-  private void attachToSession() {
+  private void attachToSession(@NotNull XDebugSessionImpl session) {
     for (XDebugView view : myViews) {
       session.addSessionListener(new XDebugViewSessionListener(view, session), this);
     }
@@ -291,8 +291,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   }
 
   public void detachFromSession() {
-    assert session != null;
-    session = null;
+    assert mySession != null;
+    mySession = null;
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -126,9 +127,7 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIn
     final PsiExpressionStatement statement = (PsiExpressionStatement)factory.createStatementFromText(field.getName() + " = y;", codeBlock);
 
     PsiExpression initializer = field.getInitializer();
-    if (initializer instanceof PsiArrayInitializerExpression) {
-      initializer = arrayInitializerToNewExpression((PsiArrayInitializerExpression)initializer, factory, codeBlock);
-    }
+    initializer = RefactoringUtil.convertInitializerToNormalExpression(initializer, field.getType());
 
     final PsiAssignmentExpression expression = (PsiAssignmentExpression)statement.getExpression();
     expression.getRExpression().replace(initializer);
@@ -156,15 +155,6 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIn
       }
     }
     return false;
-  }
-
-  private static PsiExpression arrayInitializerToNewExpression(@NotNull PsiArrayInitializerExpression initializer,
-                                                               @NotNull PsiElementFactory factory,
-                                                               @NotNull PsiElement context) {
-    final PsiType type = initializer.getType();
-    final PsiNewExpression newExpression = (PsiNewExpression)factory.createExpressionFromText("new " + type.getCanonicalText() + "{}", context);
-    newExpression.getArrayInitializer().replace(initializer);
-    return newExpression;
   }
 
   private static boolean containsReference(final @NotNull PsiElement element,

@@ -59,6 +59,7 @@ public class GroovyDocCheckInspection extends BaseInspection {
     return true;
   }
 
+  @NotNull
   @Override
   protected BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {

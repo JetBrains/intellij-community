@@ -1832,7 +1832,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testRightMargin_2() throws Exception {
-    getSettings().getRootSettings().RIGHT_MARGIN = 65;
+    getSettings().RIGHT_MARGIN = 65;
     getSettings().ASSIGNMENT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE = true;
     getSettings().KEEP_LINE_BREAKS = false;

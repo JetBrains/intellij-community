@@ -45,6 +45,7 @@ public class GroovyOctalIntegerInspection extends BaseInspection {
     return "Octal integer #ref #loc";
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {

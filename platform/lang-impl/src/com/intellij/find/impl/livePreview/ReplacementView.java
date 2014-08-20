@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,30 +15,28 @@
  */
 package com.intellij.find.impl.livePreview;
 
-import com.intellij.find.FindResult;
+import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class ReplacementView extends JPanel {
-
   private static final String MALFORMED_REPLACEMENT_STRING = "Malformed replacement string";
-  private final String myReplacement;
 
   @Override
-  protected void paintComponent(Graphics graphics) {
-
+  protected void paintComponent(@NotNull Graphics graphics) {
   }
 
-  public ReplacementView(final String replacement, final FindResult occurrence) {
-    myReplacement = replacement;
-    String textToShow = myReplacement;
-    if (myReplacement == null) {
+  public ReplacementView(@Nullable String replacement) {
+    String textToShow = replacement;
+    if (replacement == null) {
       textToShow = MALFORMED_REPLACEMENT_STRING;
     }
     JLabel jLabel = new JLabel(textToShow);
-    jLabel.setForeground(myReplacement != null ? Color.WHITE : JBColor.RED);
+    jLabel.setForeground(replacement != null ? new JBColor(Gray._240, Gray._200) : JBColor.RED);
     add(jLabel);
   }
 }

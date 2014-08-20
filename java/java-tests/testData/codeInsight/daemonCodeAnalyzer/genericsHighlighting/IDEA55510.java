@@ -34,3 +34,20 @@ class Records {
     }
   }
 }
+//---------------------------------------------
+class Parent<T extends Parent.NestedParent>
+{
+  protected static interface NestedParent
+  {
+  }
+}
+
+class Test
+{
+  public final static class Child extends Parent<<error descr="NestedChild is not accessible in current context">Child.NestedChild</error>>
+  {
+    private static interface NestedChild extends NestedParent
+    {
+    }
+  }
+}

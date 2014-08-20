@@ -55,6 +55,7 @@ public class GroovySynchronizationOnNonFinalFieldInspection extends BaseInspecti
 
   }
 
+  @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
