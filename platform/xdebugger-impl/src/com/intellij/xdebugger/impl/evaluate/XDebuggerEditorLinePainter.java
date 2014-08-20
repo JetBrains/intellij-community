@@ -60,10 +60,14 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
           XValueTextRendererImpl renderer = new XValueTextRendererImpl(text);
           final XValuePresentation presentation = value.getValuePresentation();
           if (presentation == null) continue;
-          if (presentation instanceof XValueCompactPresentation) {
-            ((XValueCompactPresentation)presentation).renderValue(renderer, value);
-          } else {
-            presentation.renderValue(renderer);
+          try {
+            if (presentation instanceof XValueCompactPresentation) {
+              ((XValueCompactPresentation)presentation).renderValue(renderer, value);
+            } else {
+              presentation.renderValue(renderer);
+            }
+          } catch (Exception e) {
+            continue;
           }
           final Color color = new JBColor(new Color(61, 128, 101), new Color(61, 128, 101));
           final String name = value.getName();
