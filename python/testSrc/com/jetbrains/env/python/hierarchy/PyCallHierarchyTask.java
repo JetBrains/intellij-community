@@ -23,12 +23,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.env.python.debug.PyDebuggerTask;
-import com.jetbrains.python.debugger.PyHierarchyCallCacheManager;
+import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import com.jetbrains.python.hierarchy.HierarchyTreeStructureViewer;
 import com.jetbrains.python.hierarchy.call.PyCalleeFunctionTreeStructure;
 import com.jetbrains.python.hierarchy.call.PyCallerFunctionTreeStructure;
+import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyRecursiveElementVisitor;
 import org.jdom.Document;
 
 import java.io.File;
@@ -60,33 +60,43 @@ public class PyCallHierarchyTask extends PyDebuggerTask {
   }
 
   @Override
+  public void setUp(String testName) throws Exception {
+    super.setUp(testName);
+    PyDebuggerOptionsProvider debuggerOptions = PyDebuggerOptionsProvider.getInstance(getProject());
+    debuggerOptions.setSaveCallSignatures(true);
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    PyDebuggerOptionsProvider debuggerOptions = PyDebuggerOptionsProvider.getInstance(getProject());
+    debuggerOptions.setSaveCallSignatures(false);
+    super.tearDown();
+  }
+
+  @Override
   public void runTestOn(String sdkHome) throws Exception {
     super.runTestOn(sdkHome);
-
     final Document callerDocument = JDOMUtil.loadDocument(new File(getVerificationCallerFilePath()));
     final Document calleeDocument = JDOMUtil.loadDocument(new File(getVerificationCalleeFilePath()));
-    final PyRecursiveElementVisitor visitor = new PyRecursiveElementVisitor() {
-      @Override
-      public void visitPyFunction(PyFunction function) {
-        if (function != null && function.getName() != null && function.getName().equals(TARGET_FUNCTION_NAME)) {
-          HierarchyTreeStructureViewer
-            .checkHierarchyTreeStructure(new PyCallerFunctionTreeStructure(myFixture.getProject(), function, HierarchyBrowserBaseEx.SCOPE_PROJECT),
-                                         callerDocument);
-          HierarchyTreeStructureViewer.checkHierarchyTreeStructure(new PyCalleeFunctionTreeStructure(myFixture.getProject(), function, HierarchyBrowserBaseEx.SCOPE_PROJECT),
-                                                                   calleeDocument);
-        }
-      }
-    };
-
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(getScriptPath());
-        assert vFile != null;
-        final PsiFile file = PsiManager.getInstance(myFixture.getProject()).findFile(vFile);
-        assert file != null;
-        visitor.visitFile(file);
+        checkHierarchyTreeStructure(callerDocument, calleeDocument);
       }
     });
+  }
+
+  private void checkHierarchyTreeStructure(Document callerDocument, Document calleeDocument) {
+    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(getScriptPath());
+    assert vFile != null;
+    final PsiFile file = PsiManager.getInstance(myFixture.getProject()).findFile(vFile);
+    assert file instanceof PyFile;
+    PyFunction function = ((PyFile)file).findTopLevelFunction(TARGET_FUNCTION_NAME);
+    assert function != null : "Cannot find target function";
+    HierarchyTreeStructureViewer
+      .checkHierarchyTreeStructure(new PyCallerFunctionTreeStructure(myFixture.getProject(), function, HierarchyBrowserBaseEx.SCOPE_PROJECT),
+                                   callerDocument);
+    HierarchyTreeStructureViewer.checkHierarchyTreeStructure(new PyCalleeFunctionTreeStructure(myFixture.getProject(), function, HierarchyBrowserBaseEx.SCOPE_PROJECT),
+                                                             calleeDocument);
   }
 }
