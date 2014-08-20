@@ -360,7 +360,7 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
 
   private void commitToOriginal() {
     if (!isValid()) return;
-    VirtualFile origVirtualFile = PsiUtilCore.getVirtualFile(ObjectUtils.assertNotNull(myNewFile.getContext()));
+    VirtualFile origVirtualFile = PsiUtilCore.getVirtualFile(myNewFile.getContext());
     myCommittingToOriginal = true;
     try {
       if (origVirtualFile == null || !ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(origVirtualFile).hasReadonlyFiles()) {
