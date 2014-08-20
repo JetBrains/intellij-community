@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.ArrayUtil;
@@ -38,7 +39,7 @@ final class BrowserLauncherImpl extends BrowserLauncherAppless {
   @Override
   protected void browseUsingNotSystemDefaultBrowserPolicy(@NotNull URI uri, @NotNull GeneralSettings settings, @Nullable Project project) {
     WebBrowserManager browserManager = WebBrowserManager.getInstance();
-    if (browserManager.getDefaultBrowserPolicy() == DefaultBrowserPolicy.FIRST) {
+    if (browserManager.getDefaultBrowserPolicy() == DefaultBrowserPolicy.FIRST || (SystemInfo.isMac && "open".equals(settings.getBrowserPath()))) {
       WebBrowser browser = browserManager.getFirstActiveBrowser();
       if (browser != null) {
         browseUsingPath(uri.toString(), null, browser, project, ArrayUtil.EMPTY_STRING_ARRAY);
