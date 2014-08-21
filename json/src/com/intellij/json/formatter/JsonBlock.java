@@ -2,6 +2,7 @@ package com.intellij.json.formatter;
 
 import com.intellij.formatting.*;
 import com.intellij.json.JsonParserDefinition;
+import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonValue;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
@@ -12,7 +13,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.json.psi.JsonProperty;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -178,7 +178,7 @@ public class JsonBlock implements ASTBlock {
   }
 
   private boolean isContainer() {
-    return JsonParserDefinition.CONTAINERS.contains(myNode.getElementType());
+    return JsonParserDefinition.JSON_CONTAINERS.contains(myNode.getElementType());
   }
 
 }

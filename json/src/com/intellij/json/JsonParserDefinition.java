@@ -14,11 +14,20 @@ import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.json.JsonElementTypes.*;
+
 public class JsonParserDefinition implements ParserDefinition {
   public static final TokenSet WHITE_SPACES = TokenSet.create(TokenType.WHITE_SPACE);
   public static final TokenSet STRING_LITERALS = TokenSet.create(JsonElementTypes.STRING);
+
   public static final IFileElementType FILE = new IFileElementType(JsonLanguage.INSTANCE);
-  public static final TokenSet CONTAINERS = TokenSet.create(JsonElementTypes.ARRAY, JsonElementTypes.OBJECT);
+
+  public static final TokenSet JSON_BRACES = TokenSet.create(L_CURLY, R_CURLY);
+  public static final TokenSet JSON_BRACKETS = TokenSet.create(L_BRACKET, R_BRACKET);
+  public static final TokenSet JSON_CONTAINERS = TokenSet.create(OBJECT, ARRAY);
+  public static final TokenSet JSON_BOOLEANS = TokenSet.create(TRUE, FALSE);
+  public static final TokenSet JSON_LITERALS = TokenSet.create(STRING_LITERAL, NUMBER_LITERAL, NULL_LITERAL, TRUE, FALSE);
+  public static final TokenSet JSON_VALUES = TokenSet.orSet(JSON_CONTAINERS, JSON_LITERALS);
 
 
   @NotNull

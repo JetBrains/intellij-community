@@ -8,7 +8,7 @@
   elementTypeClass = 'com.intellij.json.JsonElementType'
   psiClassPrefix = "Json"
 
-  psiImplUtilClass = 'com.intellij.json.psi.JsonPsiImplUtils'
+  psiImplUtilClass = 'com.intellij.json.psi.impl.JsonPsiImplUtils'
   tokenTypeClass = 'com.intellij.json.JsonTokenType'
 
   implements = "com.intellij.json.psi.JsonElement"

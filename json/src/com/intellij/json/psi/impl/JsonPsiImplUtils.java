@@ -1,9 +1,9 @@
-package com.intellij.json.psi;
+package com.intellij.json.psi.impl;
 
 import com.intellij.json.JsonElementTypes;
+import com.intellij.json.psi.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,11 +23,7 @@ public class JsonPsiImplUtils {
 
   @Nullable
   public static JsonValue getValue(@NotNull JsonProperty property) {
-    final PsiElement[] children = property.getChildren();
-    if (children.length > 2) {
-      return (JsonValue)property.getLastChild();
-    }
-    return null;
+    return PsiTreeUtil.getNextSiblingOfType(getNameElement(property), JsonValue.class);
   }
 
   public static boolean isQuotedString(@NotNull JsonLiteral literal) {
