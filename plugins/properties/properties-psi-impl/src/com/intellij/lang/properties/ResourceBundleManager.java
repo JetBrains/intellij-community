@@ -15,8 +15,6 @@
  */
 package com.intellij.lang.properties;
 
-import com.intellij.lang.properties.CustomResourceBundle;
-import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
@@ -39,7 +37,10 @@ import java.util.regex.Matcher;
  */
 @State(
   name = "ResourceBundleManager",
-  storages = {@Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/resourceBundles.xml")})
+  storages = {
+    @Storage(file = StoragePathMacros.PROJECT_FILE),
+    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/resourceBundles.xml")
+  })
 public class ResourceBundleManager implements PersistentStateComponent<ResourceBundleManagerState> {
   private final static Logger LOG = Logger.getInstance(ResourceBundleManager.class);
   private final static Locale DEFAULT_LOCALE = new Locale("", "", "");
