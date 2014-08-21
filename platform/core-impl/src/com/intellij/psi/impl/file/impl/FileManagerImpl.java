@@ -71,13 +71,6 @@ public class FileManagerImpl implements FileManager {
 
   private final FileDocumentManager myFileDocumentManager;
   private final MessageBusConnection myConnection;
-  @SuppressWarnings("UnusedDeclaration")
-  private final LowMemoryWatcher myLowMemoryWatcher = LowMemoryWatcher.register(new Runnable() {
-    @Override
-    public void run() {
-      processQueue();
-    }
-  });
 
   public FileManagerImpl(PsiManagerImpl manager, FileDocumentManager fileDocumentManager, FileIndexFacade fileIndex) {
     myManager = manager;
@@ -98,6 +91,12 @@ public class FileManagerImpl implements FileManager {
       }
     });
     Disposer.register(manager.getProject(), this);
+    LowMemoryWatcher.register(new Runnable() {
+      @Override
+      public void run() {
+        processQueue();
+      }
+    }, this);
   }
 
   private static final VirtualFile NULL = new LightVirtualFile();

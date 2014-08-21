@@ -20,7 +20,9 @@ import org.jetbrains.annotations.NotNull;
 
 public interface EditableTreeNode extends CustomRenderedTreeNode {
 
-  void fireOnChange(@NotNull String value);
+  void fireOnChange();
+
+  void fireOnCancel();
 
   void fireOnSelectionChange(boolean isSelected);
 

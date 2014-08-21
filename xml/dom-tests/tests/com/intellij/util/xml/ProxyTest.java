@@ -107,6 +107,8 @@ public class ProxyTest extends TestCase {
 
     public abstract String getBar();
 
+    @Override
+    public abstract String foo();
   }
 
   public void testAddInterfaces() throws Throwable {
