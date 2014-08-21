@@ -22,20 +22,19 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.Clock;
-import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.LightPlatformLangTestCase;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
-public class ModifierKeyDoubleClickHandlerTest extends LightPlatformTestCase {
+public class ModifierKeyDoubleClickHandlerTest extends LightPlatformLangTestCase {
   private static final String MY_SHIFT_SHIFT_ACTION = "ModifierKeyDoubleClickHandlerTest.action1";
   private static final String MY_SHIFT_KEY_ACTION = "ModifierKeyDoubleClickHandlerTest.action2";
   private static final String MY_SHIFT_SHIFT_KEY_ACTION = "ModifierKeyDoubleClickHandlerTest.action3";
 
-  public static final KeyboardShortcut SHIFT_KEY_SHORTCUT = new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE,
-                                                                                                        InputEvent.SHIFT_MASK),
-                                                                                 null);
+  private static final KeyboardShortcut SHIFT_KEY_SHORTCUT =
+    new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, InputEvent.SHIFT_MASK), null);
 
   private final JComponent myComponent = new JPanel();
 
