@@ -134,7 +134,7 @@ public class VcsPushDialog extends DialogWrapper {
     @Override
     public void actionPerformed(ActionEvent e) {
       if (myForce) {
-        int answer = Messages.showOkCancelDialog(myProject, "Would you like to <b>force push</b> to all selected repositories?",
+        int answer = Messages.showOkCancelDialog(myProject, getConfirmationMessage(),
                                                  "Force Push",
                                                  "&Force Push", CommonBundle.getCancelButtonText(), Messages.getWarningIcon());
         if (answer != OK) return;
@@ -152,5 +152,10 @@ public class VcsPushDialog extends DialogWrapper {
     public void setOptions(Action[] actions) {
       myOptions = actions;
     }
+  }
+
+  @NotNull
+  private static String getConfirmationMessage() {
+    return "You're going to force push. It will overwrite commits at the remote. Are you sure you want to proceed?";
   }
 }
