@@ -155,7 +155,7 @@ public class DfaExpressionFactory {
   @Nullable
   private PsiVariable getArrayIndexVariable(@Nullable PsiExpression indexExpression) {
     Object constant = JavaConstantExpressionEvaluator.computeConstantExpression(indexExpression, false);
-    if (constant instanceof Integer) {
+    if (constant instanceof Integer && ((Integer)constant).intValue() >= 0) {
       PsiVariable mockVar = myMockIndices.get(constant);
       if (mockVar == null) {
         mockVar = JavaPsiFacade.getElementFactory(indexExpression.getProject()).createField("$array$index$" + constant, PsiType.INT);
