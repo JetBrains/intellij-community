@@ -56,7 +56,6 @@ public final class IpnbConnectionManager implements ProjectComponent {
           @Override
           public void onOutput(@NotNull IpnbConnection connection, @NotNull String parentMessageId, @NotNull Map<String, String> outputs) {
             if (!myUpdateMap.containsKey(parentMessageId)) return;
-            if (!outputs.containsKey("text/plain") && !outputs.containsKey("error")) return;
             final CodePanel cell = myUpdateMap.remove(parentMessageId);
             cell.updatePanel(outputs);
           }

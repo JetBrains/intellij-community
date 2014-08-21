@@ -133,8 +133,6 @@ public class CodePanel extends IpnbEditablePanel<JComponent, CodeCell> {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        final String output = outputMap.get("text/plain");
-        final String errorOutput = outputMap.get("error");
         myCell.removeCellOutputs();
 
         myViewPanel.removeAll();
@@ -145,21 +143,16 @@ public class CodePanel extends IpnbEditablePanel<JComponent, CodeCell> {
         c.gridwidth = 1;
 
         addPromptPanel(myViewPanel, myCell.getPromptNumber(), IpnbEditorUtil.PromptType.In, myCodeSourcePanel, c);
-        if (output != null) {
+
+        for (Map.Entry<String, String> entry : outputMap.entrySet()) {
+          final String type = entry.getKey();
+          final String output = entry.getValue();
           myCell.addCellOutput(new CellOutput(new String[]{output}));
           c.gridx = 0;
           c.gridy += 1;
 
-          addPromptPanel(myViewPanel, myCell.getPromptNumber(), IpnbEditorUtil.PromptType.Out,
-                         new CodeOutputPanel(output), c);
-        }
-        if (errorOutput != null) {
-          c.gridx = 0;
-          c.gridy += 1;
-
-          myCell.addCellOutput(new CellOutput(new String[]{errorOutput}));
-          addPromptPanel(myViewPanel, myCell.getPromptNumber(), IpnbEditorUtil.PromptType.None,
-                         new CodeOutputPanel(errorOutput), c);
+          addPromptPanel(myViewPanel, myCell.getPromptNumber(), "text/plain".equals(type) ? IpnbEditorUtil.PromptType.Out :
+                                                                IpnbEditorUtil.PromptType.None, new CodeOutputPanel(output), c);
         }
         revalidate();
         repaint();

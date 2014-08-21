@@ -15,10 +15,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.*;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
 * @author vlan
@@ -76,6 +73,8 @@ public class IpnbConnection {
     myShellThread.start();
 
     myIOPubClient = new WebSocketClient(getIOPubURI(), draft) {
+      private LinkedHashMap<String, String> myOutput = new LinkedHashMap<String, String>();
+
       @Override
       public void onOpen(ServerHandshake handshakeData) {
         send(authMessage);
@@ -92,11 +91,23 @@ public class IpnbConnection {
         final String messageType = header.getMessageType();
         if ("pyout".equals(messageType)) {
           final PyOutContent content = gson.fromJson(msg.getContent(), PyOutContent.class);
-          myListener.onOutput(IpnbConnection.this, parentHeader.getMessageId(), content.getData());
+          myOutput.putAll(content.getData());
         }
         else if ("pyerr".equals(messageType)) {
           final PyErrContent content = gson.fromJson(msg.getContent(), PyErrContent.class);
-          myListener.onOutput(IpnbConnection.this, parentHeader.getMessageId(), ImmutableMap.of("error", content.getEvalue()));
+          myOutput.putAll(ImmutableMap.of("error", content.getEvalue()));
+        }
+        else if ("stream".equals(messageType)) {
+          final PyStreamContent content = gson.fromJson(msg.getContent(), PyStreamContent.class);
+          myOutput.putAll(ImmutableMap.of("stream", content.getData()));
+        }
+        else if ("status".equals(messageType)) {
+          final PyStatusContent content = gson.fromJson(msg.getContent(), PyStatusContent.class);
+          if (content.getExecutionState().equals("idle")) {
+            //noinspection unchecked
+            myListener.onOutput(IpnbConnection.this, parentHeader.getMessageId(), (Map<String, String>)myOutput.clone());
+            myOutput.clear();
+          }
         }
       }
 
@@ -329,6 +340,29 @@ public class IpnbConnection {
 
     public List<String> getTraceback() {
       return traceback;
+    }
+  }
+
+  @SuppressWarnings("UnusedDeclaration")
+  private static class PyStreamContent {
+    private String data;
+    private String name;
+
+    public String getData() {
+      return data;
+    }
+
+    public String getName() {
+      return name;
+    }
+  }
+
+  @SuppressWarnings("UnusedDeclaration")
+  private static class PyStatusContent {
+    private String execution_state;
+
+    public String getExecutionState() {
+      return execution_state;
     }
   }
 
