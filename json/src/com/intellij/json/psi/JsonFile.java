@@ -1,21 +1,17 @@
 package com.intellij.json.psi;
 
-import com.intellij.extapi.psi.PsiFileBase;
-import com.intellij.json.JsonFileType;
-import com.intellij.json.JsonLanguage;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.psi.FileViewProvider;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Nullable;
 
-public class JsonFile extends PsiFileBase {
-
-  public JsonFile(FileViewProvider fileViewProvider) {
-    super(fileViewProvider, JsonLanguage.INSTANCE);
-  }
-
-  @NotNull
-  @Override
-  public FileType getFileType() {
-    return JsonFileType.INSTANCE;
-  }
+/**
+ * @author Mikhail Golubev
+ */
+public interface JsonFile extends JsonElement, PsiFile {
+  /**
+   * Returns {@link JsonArray} or {@link JsonObject} value according to JSON standard.
+   *
+   * @return top-level JSON element if any or {@code null} otherwise
+   */
+  @Nullable
+  JsonValue getTopLevelValue();
 }

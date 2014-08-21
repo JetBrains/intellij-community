@@ -1,6 +1,6 @@
 package com.intellij.json;
 
-import com.intellij.json.psi.JsonFile;
+import com.intellij.json.psi.impl.JsonFileImpl;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
@@ -63,7 +63,7 @@ public class JsonParserDefinition implements ParserDefinition {
 
   @Override
   public PsiFile createFile(FileViewProvider fileViewProvider) {
-    return new JsonFile(fileViewProvider);
+    return new JsonFileImpl(fileViewProvider);
   }
 
   @Override
