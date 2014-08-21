@@ -130,9 +130,9 @@ public class IdeEventQueue extends EventQueue {
 
 
   private final Set<EventDispatcher> myDispatchers = new LinkedHashSet<EventDispatcher>();
-  private final Set<EventDispatcher> myPostprocessors = new LinkedHashSet<EventDispatcher>();
-
+  private final Set<EventDispatcher> myPostProcessors = new LinkedHashSet<EventDispatcher>();
   private final Set<Runnable> myReady = new HashSet<Runnable>();
+
   private boolean myKeyboardBusy;
   private boolean myDispatchingFocusEvent;
 
@@ -148,16 +148,14 @@ public class IdeEventQueue extends EventQueue {
 
   private IdeEventQueue() {
     addIdleTimeCounterRequest();
-    final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
 
-    //noinspection HardCodedStringLiteral
+    final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     keyboardFocusManager.addPropertyChangeListener("permanentFocusOwner", new PropertyChangeListener() {
 
       @Override
       public void propertyChange(final PropertyChangeEvent e) {
         final Application application = ApplicationManager.getApplication();
         if (application == null) {
-
           // We can get focus event before application is initialized
           return;
         }
@@ -295,11 +293,11 @@ public class IdeEventQueue extends EventQueue {
   }
 
   public void addPostprocessor(EventDispatcher dispatcher, @Nullable Disposable parent) {
-    _addProcessor(dispatcher, parent, myPostprocessors);
+    _addProcessor(dispatcher, parent, myPostProcessors);
   }
 
   public void removePostprocessor(EventDispatcher dispatcher) {
-    myPostprocessors.remove(dispatcher);
+    myPostProcessors.remove(dispatcher);
   }
 
   private static void _addProcessor(final EventDispatcher dispatcher, Disposable parent, final Set<EventDispatcher> set) {
@@ -389,7 +387,7 @@ public class IdeEventQueue extends EventQueue {
       myIsInInputEvent = wasInputEvent;
       myCurrentEvent = oldEvent;
 
-      for (EventDispatcher each : myPostprocessors) {
+      for (EventDispatcher each : myPostProcessors) {
         each.dispatch(e);
       }
 
