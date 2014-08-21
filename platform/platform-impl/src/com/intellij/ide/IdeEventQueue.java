@@ -360,7 +360,12 @@ public class IdeEventQueue extends EventQueue {
   @Override
   public void dispatchEvent(AWTEvent e) {
     if (!appIsLoaded()) {
-      super.dispatchEvent(e);
+      try {
+        super.dispatchEvent(e);
+      }
+      catch (Throwable t) {
+        processException(t);
+      }
       return;
     }
 
@@ -379,9 +384,7 @@ public class IdeEventQueue extends EventQueue {
       _dispatchEvent(e, false);
     }
     catch (Throwable t) {
-      if (!myToolkitBugsProcessor.process(t)) {
-        PluginManager.processException(t);
-      }
+      processException(t);
     }
     finally {
       myIsInInputEvent = wasInputEvent;
@@ -394,6 +397,12 @@ public class IdeEventQueue extends EventQueue {
       if (e instanceof KeyEvent) {
         maybeReady();
       }
+    }
+  }
+
+  private void processException(Throwable t) {
+    if (!myToolkitBugsProcessor.process(t)) {
+      PluginManager.processException(t);
     }
   }
 
@@ -739,9 +748,7 @@ public class IdeEventQueue extends EventQueue {
       super.dispatchEvent(e);
     }
     catch (Throwable t) {
-      if (!myToolkitBugsProcessor.process(t)) {
-        PluginManager.processException(t);
-      }
+      processException(t);
     }
     finally {
       myDispatchingFocusEvent = false;
