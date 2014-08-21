@@ -11,9 +11,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.BalloonBuilder;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.jetbrains.python.edu.StudyDocumentListener;
@@ -101,10 +100,16 @@ public class StudyRefreshTaskAction extends DumbAwareAction {
                   selectedTaskFile.navigateToFirstTaskWindow(editor);
                   BalloonBuilder balloonBuilder =
                     JBPopupFactory.getInstance().createHtmlTextBalloonBuilder("You can now start again", MessageType.INFO, null);
-                  Balloon balloon = balloonBuilder.createBalloon();
+                  final Balloon balloon = balloonBuilder.createBalloon();
                   StudyEditor selectedStudyEditor = StudyEditor.getSelectedStudyEditor(project);
                   assert selectedStudyEditor != null;
                   balloon.showInCenterOf(selectedStudyEditor.getRefreshButton());
+                  balloon.addListener(new JBPopupAdapter() {
+                    @Override
+                    public void onClosed(LightweightWindowEvent event) {
+                      Disposer.dispose(balloon);
+                    }
+                  });
                 }
                 catch (FileNotFoundException e1) {
                   LOG.error(e1);
