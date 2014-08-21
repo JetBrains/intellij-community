@@ -28,7 +28,9 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -401,18 +403,25 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          new Task.Backgroundable(myProject, "Resolving files...", true) {
+          final Set<VirtualFile> files = countFilesToResolve();
+          Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, "Resolving files...", true) {
             @Override
             public void run(@NotNull final ProgressIndicator indicator) {
               if (ApplicationManager.getApplication().isDisposed()) return;
               try {
-                processBatch(indicator);
+                processBatch(indicator, files);
               }
               finally {
                 batchProcessedLatch.countDown();
               }
             }
-          }.queue();
+          };
+          if (files.size() > 1) {
+            backgroundable.queue(); //show progress
+          }
+          else {
+            ProgressManager.getInstance().runProcessWithProgressAsynchronously(backgroundable, new MyProgress());
+          }
         }
       }, myProject.getDisposed());
 
@@ -431,27 +440,10 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     }
   }
 
-  private void processBatch(@NotNull final ProgressIndicator indicator) {
-    Set<VirtualFile> set;
-    int queuedSize;
-    synchronized (filesToResolve) {
-      queuedSize = filesToResolve.size();
-      set = new THashSet<VirtualFile>(queuedSize);
-      // someone might have cleared this bit to mark file as processed
-      for (VirtualFile file : filesToResolve) {
-        if (fileIsInQueue.clear(getAbsId(file))) {
-          set.add(file);
-        }
-      }
-      filesToResolve.clear();
-    }
-    final ConcurrentIntObjectMap<int[]> fileToForwardIds = new StripedLockIntObjectConcurrentHashMap<int[]>();
-    Set<VirtualFile> files = countAndMarkUnresolved(set, false);
-    if (files.isEmpty()) return;
+  private void processBatch(@NotNull final ProgressIndicator indicator, @NotNull Set<VirtualFile> files) {
     final int size = files.size();
+    final ConcurrentIntObjectMap<int[]> fileToForwardIds = new StripedLockIntObjectConcurrentHashMap<int[]>();
     final Set<VirtualFile> toProcess = Collections.synchronizedSet(files);
-    log("Started to resolve "+ size + " files (was queued "+queuedSize+")");
-
     indicator.setIndeterminate(false);
     ProgressIndicatorUtils.forceWriteActionPriority(indicator, (Disposable)indicator);
     long start = System.currentTimeMillis();
@@ -493,6 +485,26 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
       long end = System.currentTimeMillis();
       log("Resolved batch of " + (size - toProcess.size()) + " from " + size + " files in " + ((end - start) / 1000) + "sec. (Gap: " + storage.gap+")");
     }
+  }
+
+  private Set<VirtualFile> countFilesToResolve() {
+    Set<VirtualFile> set;
+    int queuedSize;
+    synchronized (filesToResolve) {
+      queuedSize = filesToResolve.size();
+      set = new THashSet<VirtualFile>(queuedSize);
+      // someone might have cleared this bit to mark file as processed
+      for (VirtualFile file : filesToResolve) {
+        if (fileIsInQueue.clear(getAbsId(file))) {
+          set.add(file);
+        }
+      }
+      filesToResolve.clear();
+    }
+    Set<VirtualFile> files = countAndMarkUnresolved(set, false);
+    if (files.isEmpty()) return null;
+    log("Started to resolve "+ files.size() + " files (was queued "+queuedSize+")");
+    return files;
   }
 
   private static int getAbsId(@NotNull VirtualFile file) {
@@ -661,7 +673,8 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
             psiFile.accept(new JavaRecursiveElementWalkingVisitor() {
               @Override
               public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-                resolveReference(reference, indicator, resolved);
+                indicator.checkCanceled();
+                resolveReference(reference, resolved);
 
                 super.visitReferenceElement(reference);
               }
@@ -672,7 +685,8 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
               @Override
               public void visitXmlElement(XmlElement element) {
                 for (PsiReference reference : element.getReferences()) {
-                  resolveReference(reference, indicator, resolved);
+                  indicator.checkCanceled();
+                  resolveReference(reference, resolved);
                 }
                 super.visitXmlElement(element);
               }
@@ -692,8 +706,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     return forward;
   }
 
-  private void resolveReference(@NotNull PsiReference reference, @NotNull ProgressIndicator indicator, @NotNull Set<PsiElement> resolved) {
-    indicator.checkCanceled();
+  private void resolveReference(@NotNull PsiReference reference, @NotNull Set<PsiElement> resolved) {
     PsiElement element = reference.resolve();
     if (element != null) {
       resolved.add(element);
@@ -786,5 +799,11 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
       flushLog();
     }
     return queued;
+  }
+
+  private static class MyProgress extends ProgressIndicatorBase implements Disposable{
+    @Override
+    public void dispose() {
+    }
   }
 }
