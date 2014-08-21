@@ -71,7 +71,7 @@ public class XDebuggerMultilineEditor extends XDebuggerEditorBase {
 
   @Override
   public XExpression getExpression() {
-    return XExpressionImpl.fromText(myEditorTextField.getText(), EvaluationMode.CODE_FRAGMENT);
+    return getEditorsProvider().createExpression(getProject(), myEditorTextField.getDocument(), myExpression.getLanguage(), EvaluationMode.CODE_FRAGMENT);
   }
 
   @Override

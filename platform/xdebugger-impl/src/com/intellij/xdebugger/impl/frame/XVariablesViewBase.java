@@ -56,6 +56,7 @@ public abstract class XVariablesViewBase extends XDebugView {
     tree.setSourcePosition(stackFrame.getSourcePosition());
     tree.setRoot(new XStackFrameNode(tree, stackFrame), false);
     tree.getProject().putUserData(XVariablesView.DEBUG_VARIABLES, new HashMap<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>>());
+    tree.getProject().putUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS, new HashMap<VirtualFile, Long>());
     Object newEqualityObject = stackFrame.getEqualityObject();
     if (myFrameEqualityObject != null && newEqualityObject != null && myFrameEqualityObject.equals(newEqualityObject)
         && myTreeState != null) {
