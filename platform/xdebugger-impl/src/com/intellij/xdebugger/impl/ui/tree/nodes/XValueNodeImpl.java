@@ -16,6 +16,8 @@
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -120,31 +122,39 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     myValuePresentation = valuePresentation;
     myRawValue = XValuePresentationUtil.computeValueText(valuePresentation);
     if (Registry.is("ide.debugger.inline")) {
-      try {
-        getValueContainer().computeSourcePosition(new XNavigatable() {
-          @Override
-          public void setSourcePosition(@Nullable XSourcePosition sourcePosition) {
-            Map<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>> map = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES);
-            if (map == null || sourcePosition == null) return;
-            VirtualFile file = sourcePosition.getFile();
-            int line = sourcePosition.getLine();
-            Pair<VirtualFile, Integer> key = Pair.create(file, line);
-            Set<XValueNodeImpl> presentations = map.get(key);
-            if (presentations == null) {
-              presentations = new LinkedHashSet<XValueNodeImpl>();
-              map.put(key, presentations);
-            }
-            presentations.add(XValueNodeImpl.this);
-          }
-        });
-      }
-      catch (Exception ignore) {
-      }
+      updateInlineDebuggerData();
     }
     updateText();
     setLeaf(!hasChildren);
     fireNodeChanged();
     myTree.nodeLoaded(this, myName);
+  }
+
+  public void updateInlineDebuggerData() {
+    try {
+      getValueContainer().computeSourcePosition(new XNavigatable() {
+        @Override
+        public void setSourcePosition(@Nullable XSourcePosition sourcePosition) {
+          final Map<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>> map = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES);
+          final Map<VirtualFile, Long> timestamps = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS);
+          if (map == null || timestamps == null || sourcePosition == null) return;
+          VirtualFile file = sourcePosition.getFile();
+          final Document doc = FileDocumentManager.getInstance().getDocument(file);
+          if (doc == null) return;
+          int line = sourcePosition.getLine();
+          Pair<VirtualFile, Integer> key = Pair.create(file, line);
+          Set<XValueNodeImpl> presentations = map.get(key);
+          if (presentations == null) {
+            presentations = new LinkedHashSet<XValueNodeImpl>();
+            map.put(key, presentations);
+            timestamps.put(file, doc.getModificationStamp());
+          }
+          presentations.add(XValueNodeImpl.this);
+        }
+      });
+    }
+    catch (Exception ignore) {
+    }
   }
 
   @Override
