@@ -53,6 +53,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 import com.intellij.testFramework.EditorTestUtil
@@ -974,8 +975,15 @@ class Foo {
             return ((PsiJavaFile)myFixture.file).getClasses()[0];
           }
     });
-    def foo = cls.methods[0]
-    def goo = cls.methods[2]
+
+    PsiMethod[] methods = ApplicationManager.getApplication().runReadAction(new Computable<PsiMethod[]>() {
+              @Override
+              public PsiMethod[] compute() {
+                return cls.methods;
+              }
+        })
+    def foo = methods[0]
+    def goo = methods[2]
     type('x')
     assertContains 'x__foo', 'x__goo'
     edt {
