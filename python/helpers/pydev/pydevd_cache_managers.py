@@ -26,7 +26,8 @@ class CacheManager(object):
             open(self.log, 'w').write(str(cache_size))
 
     def write_cache(self):
-        open(self.log, "w+").write(self.print_cache())
+        if self.log is not None:
+            open(self.log, "w+").write(self.print_cache())
 
 
 class CallSignatureCacheManager(CacheManager):
@@ -133,25 +134,21 @@ class CallHierarchyCacheManager(CacheManager): #stores for every function in fil
 
         if not func_filename in self.cache:
             self.cache[func_filename] = {}
-            result = True
 
         cache_for_file = self.cache[func_filename]
 
         if not func_name in cache_for_file:
             cache_for_file[func_name] = {}
-            result = True
 
         cache_for_func = cache_for_file[func_name]
 
         if not caller_filename in cache_for_func:
             cache_for_func[caller_filename] = {}
-            result = True
 
         cache_for_caller_file = cache_for_func[caller_filename]
 
         if not caller_func_name in cache_for_caller_file:
             cache_for_caller_file[caller_func_name] = {}
-            result = True
 
         cache_for_func_caller = cache_for_caller_file[caller_func_name]
 
