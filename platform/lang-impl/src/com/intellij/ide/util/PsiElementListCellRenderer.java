@@ -102,7 +102,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       setPaintFocusBorder(hasFocus && UIUtil.isToUseDottedCellBorder() && myFocusBorderEnabled);
       if (value instanceof PsiElement) {
         T element = (T)value;
-        String name = getElementText(element);
+        String name = element.isValid() ? getElementText(element) : "INVALID";
         PsiFile psiFile = element.isValid() ? element.getContainingFile() : null;
         boolean isProblemFile = false;
 
