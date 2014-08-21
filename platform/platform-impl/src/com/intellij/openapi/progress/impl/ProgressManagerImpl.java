@@ -83,7 +83,7 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable {
           ourLockedCheckCounter++;
           if (ourLockedCheckCounter > 10) {
             ourLockedCheckCounter = 0;
-            ourNeedToCheckCancel = true;
+            canceled();
           }
         }
         else {
@@ -92,10 +92,6 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable {
         }
       }
     }
-  }
-
-  public static void canceled() {
-    ourNeedToCheckCancel = true;
   }
 
   private static class NonCancelableIndicator extends EmptyProgressIndicator implements NonCancelableSection {
