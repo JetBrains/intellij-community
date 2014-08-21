@@ -1,0 +1,40 @@
+FILE
+  JsonObject
+    PsiElement({)('{')
+    PsiWhiteSpace(' ')
+    JsonProperty
+      JsonPropertyName
+        PsiElement(STRING)('"x"')
+      PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      JsonStringLiteral
+        PsiElement(STRING)('"x value"')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    JsonProperty
+      JsonPropertyName
+        PsiElement(STRING)('"y"')
+      PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      JsonStringLiteral
+        PsiElement(STRING)('"y value"')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    JsonProperty
+      JsonPropertyName
+        PsiElement(STRING)('"z"')
+      PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      JsonStringLiteral
+        PsiElement(STRING)('"z value"')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    JsonProperty
+      JsonPropertyName
+        PsiElement(STRING)('"z2"')
+      PsiElement(:)(':')
+      JsonArray
+        PsiElement([)('[')
+        PsiElement(])(']')
+    PsiWhiteSpace(' ')
+    PsiElement(})('}')

@@ -1,0 +1,38 @@
+FILE
+  JsonArray
+    PsiElement([)('[')
+    PsiWhiteSpace(' ')
+    JsonStringLiteral
+      PsiElement(STRING)('"x"')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('555')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    JsonNullLiteral
+      PsiElement(null)('null')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    JsonBooleanLiteral
+      PsiElement(true)('true')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    JsonBooleanLiteral
+      PsiElement(false)('false')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    JsonStringLiteral
+      PsiElement(STRING)('"z value"')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    JsonStringLiteral
+      PsiElement(STRING)('"z2"')
+    PsiElement(,)(',')
+    JsonArray
+      PsiElement([)('[')
+      PsiElement(])(']')
+    PsiWhiteSpace(' ')
+    PsiElement(])(']')
+  PsiErrorElement:',' unexpected
+    PsiElement(,)(',')

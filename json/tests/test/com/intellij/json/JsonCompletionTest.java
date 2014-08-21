@@ -1,27 +1,13 @@
 package com.intellij.json;
 
-import com.intellij.testFramework.IdeaTestCase;
-import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtil;
 
 /**
  * @author Mikhail Golubev
  */
-public class JsonCompletionTest extends CodeInsightFixtureTestCase {
+public class JsonCompletionTest extends JsonTestCase {
   private static final String[] KEYWORDS = new String[]{"true", "false", "null"};
   private static final String[] NOTHING = ArrayUtil.EMPTY_STRING_ARRAY;
-
-  @Override
-  public void setUp() throws Exception {
-    IdeaTestCase.initPlatformPrefix();
-    super.setUp();
-  }
-  @Override
-  protected String getBasePath() {
-    return "/json/tests/testData/completion";
-  }
-
-
 
   @Override
   protected boolean isCommunity() {
@@ -49,6 +35,6 @@ public class JsonCompletionTest extends CodeInsightFixtureTestCase {
   }
 
   private void doTest(String... variants) {
-    myFixture.testCompletionVariants(getTestName(false) + ".json", variants);
+    myFixture.testCompletionVariants("completion/" + getTestName(false) + ".json", variants);
   }
 }

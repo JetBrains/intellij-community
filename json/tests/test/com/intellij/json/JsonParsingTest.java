@@ -27,6 +27,31 @@ public class JsonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testSimple1() {
+    doTest();
+  }
+
+  public void testSimple2() {
+    doTest();
+  }
+
+  public void testSimple4() {
+    doTest();
+  }
+
+  // TODO: ask about these tests
+  //public void testSimple3() {
+  //  doTest();
+  //}
+  //
+  //public void testReal1() {
+  //  doTest();
+  //}
+  //
+  //public void testReal2() {
+  //  doTest();
+  //}
+
   private void doTest() {
     doTest(true);
   }

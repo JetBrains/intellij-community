@@ -2,6 +2,7 @@ package com.intellij.json;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterTestCase;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -23,7 +24,6 @@ public class JsonFormattingTest extends FormatterTestCase {
     return "formatting";
   }
 
-  // Why the heck do I specify path to testData in each kind of test differently?
   @Override
   protected String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath() + "/json/tests/testData/";
@@ -48,9 +48,7 @@ public class JsonFormattingTest extends FormatterTestCase {
 
   public void testWrapping() throws Exception {
     CodeStyleSettings settings = getSettings();
-    int indentSize = settings.getCommonSettings(JsonLanguage.INSTANCE).getIndentOptions().INDENT_SIZE;
-//    LOG.debug("Intend size for JSON: " + indentSize);
-    settings.RIGHT_MARGIN = 20;
+    settings.setRightMargin(JsonLanguage.INSTANCE, 20);
     doTest();
   }
 

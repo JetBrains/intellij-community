@@ -1,0 +1,3 @@
+FILE
+  PsiErrorElement:'[' or '{' expected, got 'true'
+    PsiElement(true)('true')
