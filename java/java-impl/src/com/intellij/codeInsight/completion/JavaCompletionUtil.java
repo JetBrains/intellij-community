@@ -836,13 +836,16 @@ public class JavaCompletionUtil {
 
   //need to shorten references in type argument list
   public static void shortenReference(final PsiFile file, final int offset) throws IncorrectOperationException {
-    final PsiDocumentManager manager = PsiDocumentManager.getInstance(file.getProject());
-    manager.commitDocument(manager.getDocument(file));
+    Project project = file.getProject();
+    final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
+    Document document = manager.getDocument(file);
+    manager.commitDocument(document);
     final PsiReference ref = file.findReferenceAt(offset);
     if (ref != null) {
       PsiElement element = ref.getElement();
       if (element != null) {
-        JavaCodeStyleManager.getInstance(file.getProject()).shortenClassReferences(element);
+        JavaCodeStyleManager.getInstance(project).shortenClassReferences(element);
+        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
       }
     }
   }
