@@ -15,12 +15,14 @@
  */
 package com.intellij.vcs.log.data;
 
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -272,22 +274,23 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
       Map<VirtualFile, Collection<VcsRef>> currentRefs = myCurrentDataPack.getRefsModel().getAllRefsByRoot();
       try {
         if (permanentGraph != null) {
-          loadLogAndRefs(roots, currentRefs, myRecentCommitCount);
-          List<? extends GraphCommit<Integer>> compoundLog = compound(ContainerUtil.map(myLoadedInfos.values(),
-            new Function<LogAndRefs, List<? extends GraphCommit<Integer>>>() {
-              @Override
-              public List<? extends GraphCommit<Integer>> fun(
-                LogAndRefs refs) {
-                return refs.log;
-              }
-            }));
-          Map<VirtualFile, Collection<VcsRef>> allNewRefs = getAllNewRefs(myLoadedInfos, currentRefs);
-          List<GraphCommit<Integer>> joinedFullLog = join(compoundLog, permanentGraph.getAllCommits(), currentRefs, allNewRefs);
-          if (joinedFullLog != null) {
-            return DataPack.build(joinedFullLog, new RefsModel(allNewRefs, myHashMap.asIndexGetter()),
-                                  myHashMap.asIndexGetter(), myHashMap.asHashGetter(), myProviders, true);
+          int commitCount = myRecentCommitCount;
+          for (int attempt = 0; attempt <= 1; attempt++) {
+            loadLogAndRefs(roots, currentRefs, commitCount);
+            List<? extends GraphCommit<Integer>> compoundLog = compoundLoadedLogs(myLoadedInfos.values());
+            Map<VirtualFile, Collection<VcsRef>> allNewRefs = getAllNewRefs(myLoadedInfos, currentRefs);
+            List<GraphCommit<Integer>> joinedFullLog = join(compoundLog, permanentGraph.getAllCommits(), currentRefs, allNewRefs);
+            if (joinedFullLog == null) {
+              commitCount *= 5;
+            }
+            else {
+              return DataPack.build(joinedFullLog, new RefsModel(allNewRefs, myHashMap.asIndexGetter()),
+                                    myHashMap.asIndexGetter(), myHashMap.asHashGetter(), myProviders, true);
+            }
           }
-          // couldn't join => need to reload everything; this shouldn't happen often, the error is logged in join().
+          // couldn't join => need to reload everything; if 5000 commits is still not enough, it's worth reporting:
+          LOG.error("Couldn't join " + commitCount + " recent commits to the log (" + permanentGraph.getAllCommits().size() + " commits)",
+                    new Attachment("recent_commits", toLogString(myLoadedInfos)));
         }
 
         Pair<PermanentGraph<Integer>, Map<VirtualFile, Collection<VcsRef>>> fullLogAndRefs = loadFullLog();
@@ -300,6 +303,38 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
       finally {
         sw.report();
       }
+    }
+
+    private String toLogString(Map<VirtualFile, LogAndRefs> infos) {
+      StringBuilder sb = new StringBuilder();
+      for (Map.Entry<VirtualFile, LogAndRefs> entry : infos.entrySet()) {
+        sb.append(entry.getKey().getName());
+        sb.append(" LOG:\n");
+        sb.append(StringUtil.join(entry.getValue().log, new Function<GraphCommit<Integer>, String>() {
+          @Override
+          public String fun(GraphCommit<Integer> commit) {
+            return commit.getId() + "<-" + StringUtil.join(commit.getParents(), ",");
+          }
+        }, "\n"));
+        sb.append("\nREFS:\n");
+        sb.append(StringUtil.join(entry.getValue().refs, new Function<VcsRef, String>() {
+          @Override
+          public String fun(VcsRef ref) {
+            return ref.getName() + "(" + myHashMap.getCommitIndex(ref.getCommitHash()) + ")";
+          }
+        }, ","));
+      }
+      return sb.toString();
+    }
+
+    @NotNull
+    private List<? extends GraphCommit<Integer>> compoundLoadedLogs(@NotNull Collection<LogAndRefs> logsAndRefs) {
+      return compound(ContainerUtil.map(logsAndRefs, new Function<LogAndRefs, List<? extends GraphCommit<Integer>>>() {
+        @Override
+        public List<? extends GraphCommit<Integer>> fun(LogAndRefs refs) {
+          return refs.log;
+        }
+      }));
     }
 
     @NotNull
@@ -374,7 +409,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
         return commits;
       }
       catch (VcsLogRefreshNotEnoughDataException e) {
-        LOG.error(e); // collecting information : how often this situation happens, do we need to try to load more or can safely reload all
+        LOG.info(e);
       }
       catch (IllegalStateException e) {
         LOG.error(e);

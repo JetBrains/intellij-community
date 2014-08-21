@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
-import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
@@ -151,9 +150,6 @@ public class ProgressIndicatorBase extends AbstractProgressIndicatorBase impleme
   @Override
   public void cancel() {
     super.cancel();
-
-    ProgressManagerImpl.canceled();
-
     delegateRunningChange(CANCEL_ACTION);
   }
 

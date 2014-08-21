@@ -743,12 +743,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myGutterComponent.repaint(0, y, myGutterComponent.getWidth(), myGutterComponent.getHeight() - y);
     }
     // make sure carets won't appear at invalid positions (e.g. on Tab width change)
-    getCaretModel().runForEachCaret(new CaretAction() {
-      @Override
-      public void perform(Caret caret) {
-        caret.moveToOffset(caret.getOffset());
-      }
-    });
+    for (Caret caret : getCaretModel().getAllCarets()) {
+      caret.moveToOffset(caret.getOffset());
+    }
   }
 
   private void initTabPainter() {

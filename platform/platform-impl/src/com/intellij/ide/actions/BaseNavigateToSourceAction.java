@@ -17,7 +17,6 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableWithText;
 import com.intellij.pom.PomTargetPsiElement;
@@ -56,7 +55,7 @@ public abstract class BaseNavigateToSourceAction extends AnAction implements Dum
     event.getPresentation().setVisible(target == null || myFocusEditor);
     String navigateActionText = myFocusEditor && target instanceof NavigatableWithText?
                                 ((NavigatableWithText)target).getNavigateActionText(true) : null;
-    event.getPresentation().setText(StringUtil.notNullize(navigateActionText, getTemplatePresentation().getText()));
+    event.getPresentation().setText(navigateActionText == null ? getTemplatePresentation().getText() : navigateActionText);
   }
 
   @Nullable

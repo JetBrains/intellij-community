@@ -45,9 +45,4 @@ public class VcsLogSettingsImpl implements VcsLogSettings, PersistentStateCompon
   public void setShowBranchesPanel(boolean show) {
     myState.SHOW_BRANCHES_PANEL = show;
   }
-
-  public void setRecentCommitsBlockSize(int commitCount) {
-    myState.RECENT_COMMITS_COUNT = commitCount;
-  }
-
 }

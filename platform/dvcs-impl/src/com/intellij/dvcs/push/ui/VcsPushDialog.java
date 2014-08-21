@@ -20,6 +20,7 @@ import com.intellij.dvcs.push.VcsPushOptionsPanel;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.ui.ValidationInfo;
 import net.miginfocom.swing.MigLayout;
@@ -32,8 +33,11 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.openapi.ui.Messages.CANCEL;
+
 public class VcsPushDialog extends DialogWrapper {
 
+  @NotNull private final Project myProject;
   private final PushLog myListPanel;
   private final PushController myController;
   private final Action[] myExecutorActions = {new DvcsPushAction("&Force Push", true)};
@@ -43,6 +47,7 @@ public class VcsPushDialog extends DialogWrapper {
 
   public VcsPushDialog(@NotNull Project project, @NotNull List<? extends Repository> selectedRepositories) {
     super(project);
+    myProject = project;
     myController = new PushController(project, this, selectedRepositories);
     myListPanel = myController.getPushPanelInfo();
     myAdditionalOptionsFromVcsPanel = new JPanel(new MigLayout("ins 0 0, flowx"));
@@ -127,6 +132,12 @@ public class VcsPushDialog extends DialogWrapper {
 
     @Override
     public void actionPerformed(ActionEvent e) {
+      if (myForce) {
+        int answer = Messages.showOkCancelDialog(myProject, "Would you like to <b>force push</b> in all selected repositories?",
+                                                 "Force Push Confirmation Dialog",
+                                                 "&Force Push", "&Cancel", Messages.getWarningIcon());
+        if (answer == CANCEL) return;
+      }
       myController.push(myForce);
       close(OK_EXIT_CODE);
     }

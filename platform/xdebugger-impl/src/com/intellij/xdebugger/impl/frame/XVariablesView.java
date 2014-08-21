@@ -36,7 +36,8 @@ import static com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode.createIn
  * @author nik
  */
 public class XVariablesView extends XVariablesViewBase {
-  public static final Key<Map<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>>> DEBUG_VARIABLES = Key.create("debug.frame");
+  public static final Key<Map<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>>> DEBUG_VARIABLES = Key.create("debug.variables");
+  public static final Key<Map<VirtualFile, Long>> DEBUG_VARIABLES_TIMESTAMPS = Key.create("debug.variables.timestamps");
 
   public XVariablesView(@NotNull XDebugSessionImpl session) {
     super(session.getProject(), session.getDebugProcess().getEditorsProvider(), session.getValueMarkers());
@@ -69,6 +70,7 @@ public class XVariablesView extends XVariablesViewBase {
   protected void clear() {
     XDebuggerTree tree = getTree();
     tree.getProject().putUserData(DEBUG_VARIABLES, null);
+    tree.getProject().putUserData(DEBUG_VARIABLES_TIMESTAMPS, null);
     tree.setSourcePosition(null);
 
     XDebuggerTreeNode node;
