@@ -80,14 +80,14 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
   }
 
   private boolean containsInMap(PsiTypeParameter typeParameter) {
-    if (typeParameter instanceof LightTypeParameter) {
+    if (typeParameter instanceof LightTypeParameter && ((LightTypeParameter)typeParameter).useDelegateToSubstitute()) {
       typeParameter = ((LightTypeParameter)typeParameter).getDelegate();
     }
     return mySubstitutionMap.containsKey(typeParameter);
   }
 
   private PsiType getFromMap(@NotNull PsiTypeParameter typeParameter) {
-    if (typeParameter instanceof LightTypeParameter) {
+    if (typeParameter instanceof LightTypeParameter && ((LightTypeParameter)typeParameter).useDelegateToSubstitute()) {
       typeParameter = ((LightTypeParameter)typeParameter).getDelegate();
     }
     return mySubstitutionMap.get(typeParameter);
