@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -91,7 +92,13 @@ class StaticInheritanceFix extends InspectionGadgetsFix {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         for (final PsiField field : allFields) {
-          final Query<PsiReference> search = ReferencesSearch.search(field, implementingClass.getUseScope(), false);
+          SearchScope scope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
+                      @Override
+                      public SearchScope compute() {
+                        return implementingClass.getUseScope();
+                      }
+                    });
+          final Query<PsiReference> search = ReferencesSearch.search(field, scope, false);
           for (PsiReference reference : search) {
             if (!(reference instanceof PsiReferenceExpression)) {
               continue;
