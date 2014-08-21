@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,13 +107,7 @@ public class SvnCachingRepositoryPoolTest extends FileBasedTest {
         }
       }
     };
-    final EmptyProgressIndicator indicator = new EmptyProgressIndicator() {
-      @Override
-      public void cancel() {
-        super.cancel();
-        ProgressManagerImpl.canceled();
-      }
-    };
+    final EmptyProgressIndicator indicator = new EmptyProgressIndicator();
     Thread thread = new Thread(new Runnable() {
       @Override
       public void run() {
