@@ -18,6 +18,7 @@ package com.jetbrains.python.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.impl.ui.tree.SetValueInplaceEditor;
@@ -30,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -71,7 +72,6 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
 
         String showedValues =
           dimension > 2 ? rawValues.substring(dimension - 2, rawValues.indexOf(END_ROW_SEPARATOR + END_ROW_SEPARATOR) + 2) : rawValues;
-        //todo: in case of non numeric split by other regex(
         String[] rows = showedValues.split("\\]\n(\\ )*\\[");
 
         Object[][] data = null;
@@ -113,8 +113,10 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
   }
 
   private class MyDialog extends DialogWrapper {
-    private JTable myTable;
+    public JTable myTable;
     private XDebuggerTreeInplaceEditor myEditor;
+
+    private MyComponent myComponent;
 
     private MyDialog(Project project, XValueNodeImpl node, @NotNull String nodeName) {
       super(project, false);
@@ -124,7 +126,8 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
 
       myEditor = new SetValueInplaceEditor(node, nodeName);
 
-      myTable = new JBTable();
+      myComponent = new MyComponent();
+      myTable = myComponent.getTable();
 
       init();
     }
@@ -138,7 +141,20 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
         valueProvider = new NumpyArrayValueProvider();
         final Object[][] data = valueProvider.parseValues(evaluateFullValue(node));
         DefaultTableModel model = new DefaultTableModel(data, range(0, data[0].length - 1));
+
         myTable.setModel(model);
+
+        //for (int i = 0; i < myTable.getColumnModel().getColumnCount(); i++) {
+        //  TableColumn column = myTable.getColumnModel().getColumn(i);
+        //  column.setPreferredWidth(25);
+        //  int width = 0;
+        //  for (int row = 0; row < myTable.getRowCount(); row++) {
+        //    TableCellRenderer renderer = myTable.getCellRenderer(row, i);
+        //    Component comp = myTable.prepareRenderer(renderer, row, i);
+        //    width = Math.max (comp.getPreferredSize().width, width);
+        //  }
+        //  column.setWidth(width);
+        //}
       }
     }
 
@@ -198,11 +214,51 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
 
     @Override
     protected JComponent createCenterPanel() {
-      final JPanel panel = new JPanel(new BorderLayout());
-      panel.add(myTable, BorderLayout.CENTER);
-      //panel.add(myEditor.getEditorComponent());
-      panel.setPreferredSize(new Dimension(450, 300));
-      return panel;
+      return myComponent;
+    }
+  }
+
+  private class MyComponent extends JPanel {
+    private JScrollPane myScrollPane;
+    private JTextField myTextField;
+    private JBTable myTable;
+    private JCheckBox myCheckBox;
+
+    public MyComponent() {
+      super(new GridBagLayout());
+
+      myTextField = new JTextField();
+      myTextField.setToolTipText("Format");
+
+      myTable = new JBTable() {
+        public boolean getScrollableTracksViewportWidth() {
+          return getPreferredSize().width < getParent().getWidth();
+        }
+      };
+      myTable.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
+
+      myCheckBox = new JCheckBox();
+      myCheckBox.setText("Colored");
+      myCheckBox.setSelected(true);
+
+      myScrollPane = new JBScrollPane(myTable);
+      myScrollPane.setHorizontalScrollBarPolicy(JBScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+      myScrollPane.setVerticalScrollBarPolicy(JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+
+      add(myScrollPane,
+          new GridBagConstraints(0, 0, 2, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+      add(myTextField,
+          new GridBagConstraints(0, 1, 1, 1, 1, 0, GridBagConstraints.SOUTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+      add(myCheckBox,
+          new GridBagConstraints(1, 1, 1, 1, 1, 0, GridBagConstraints.SOUTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    }
+
+    public JTextField getTextField() {
+      return myTextField;
+    }
+
+    public JBTable getTable() {
+      return myTable;
     }
   }
 }
