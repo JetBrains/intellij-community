@@ -9,9 +9,13 @@ import pydev_log
 from pydevd_comm import CMD_ADD_EXCEPTION_BREAK
 from pydevd_breakpoints import get_exception_name
 
-def has_line_breaks(mainDebugger):
-    return hasattr(mainDebugger, 'django_breakpoints') and mainDebugger.django_breakpoints
-
+def can_not_skip(mainDebugger, frame, info):
+    if hasattr(mainDebugger, 'django_breakpoints') and mainDebugger.django_breakpoints and is_django_render_call(frame):
+        filename = get_template_file_name(frame)
+        django_breakpoints_for_file = mainDebugger.django_breakpoints.get(filename)
+        if django_breakpoints_for_file:
+            return True
+    return False
 
 def has_exception_breaks(mainDebugger):
     return hasattr(mainDebugger, 'django_exception_break') and mainDebugger.django_exception_break

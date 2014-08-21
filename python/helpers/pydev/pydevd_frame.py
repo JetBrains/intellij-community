@@ -105,8 +105,9 @@ class PyDBFrame:
                     can_skip = (info.pydev_step_cmd is None and info.pydev_step_stop is None)\
                     or (info.pydev_step_cmd in (CMD_STEP_RETURN, CMD_STEP_OVER) and info.pydev_step_stop is not frame)
 
-                can_skip = can_skip and not mainDebugger.search_for_plugins('has_line_breaks')
-                can_skip = can_skip and not mainDebugger.search_for_plugins('can_skip', info)
+                #can_skip = can_skip and not mainDebugger.search_for_plugins('has_line_breaks')
+                if can_skip:
+                    can_skip = not mainDebugger.search_for_plugins('can_not_skip', frame, info)
 
                 # Let's check to see if we are in a function that has a breakpoint. If we don't have a breakpoint,
                 # we will return nothing for the next trace
