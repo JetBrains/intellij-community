@@ -26,6 +26,7 @@ import org.objectweb.asm.Type;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.*;
 
 /**
@@ -61,6 +62,7 @@ import java.util.*;
  * <code>java.lang.reflect.Proxy</code>, see the {@link Proxy} class.
  */
 
+@SuppressWarnings("StaticFieldReferencedViaSubclass")
 public class AdvancedEnhancer extends AbstractClassGenerator
 {
   private static final CallbackFilter ALL_ZERO = new CallbackFilter(){
@@ -520,6 +522,9 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     }
     final Map<Method, MethodInfo> methodInfoMap = new HashMap<Method, MethodInfo>();
     for (Method method : actualMethods) {
+      if (isJdk8DefaultMethod(method)) {
+        continue;
+      }
       int modifiers =
         Constants.ACC_FINAL | (method.getModifiers() & ~Constants.ACC_ABSTRACT & ~Constants.ACC_NATIVE & ~Constants.ACC_SYNCHRONIZED);
       if (forcePublic.contains(MethodWrapper.create(method))) {
@@ -549,6 +554,11 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     }
 
     e.end_class();
+  }
+
+  private static boolean isJdk8DefaultMethod(Method method) {
+    return ((method.getModifiers() & (Modifier.ABSTRACT | Modifier.PUBLIC | Modifier.STATIC)) ==
+         Modifier.PUBLIC) && method.getDeclaringClass().isInterface();
   }
 
   private static void removeAllCovariantMethods(final List<Method> actualMethods, final Method method, final Map<Method, Method> covariantMethods) {

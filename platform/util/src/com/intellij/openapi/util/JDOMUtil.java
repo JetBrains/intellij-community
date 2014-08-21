@@ -204,34 +204,28 @@ public class JDOMUtil {
 
   @NotNull
   private static String intern(@NotNull final StringInterner interner, @NotNull final String s) {
-    synchronized (interner) {
-      return interner.intern(s);
-    }
+    return interner.intern(s);
   }
 
   @NotNull
   public static String legalizeText(@NotNull final String str) {
-    StringReader reader = new StringReader(str);
-    StringBuilder result = new StringBuilder();
-
-    while(true) {
-      try {
-        int each = reader.read();
-        if (each == -1) break;
-
-        if (Verifier.isXMLCharacter(each)) {
-          result.append((char)each);
-        } else {
-          result.append("0x").append(StringUtil.toUpperCase(Long.toHexString(each)));
-        }
-      }
-      catch (IOException ignored) {
-      }
+    StringBuilder result = new StringBuilder(str.length());
+    for (int i = 0, len = str.length(); i < len; i ++) {
+      result.append(str.charAt(i));
+      legalizeChar(result, result.length() - 1);
     }
-
-    return result.toString().replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+    return result.toString();
   }
 
+  public static void legalizeChar(@NotNull StringBuilder sb, int pos) {
+    char each = sb.charAt(pos);
+    if (each == '<' || each == '>') {
+      sb.replace(pos, pos + 1, each == '<' ? "&lt;" : "&gt;");
+    }
+    else if (!Verifier.isXMLCharacter(each)) {
+      sb.replace(pos, pos + 1, "0x").insert(pos + 2, StringUtil.toUpperCase(Long.toHexString(each)));
+    }
+  }
 
   private static class EmptyTextFilter implements Filter {
     @Override
