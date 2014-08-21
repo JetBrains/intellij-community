@@ -1,9 +1,9 @@
 package com.intellij.json.formatter;
 
 import com.intellij.formatting.*;
+import com.intellij.json.JsonElementTypes;
 import com.intellij.json.JsonParserDefinition;
 import com.intellij.json.psi.JsonProperty;
-import com.intellij.json.psi.JsonValue;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -18,14 +18,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.intellij.json.JsonElementTypes.*;
-
 /**
+ * Mostly based on PyBlock implementation.
+ *
  * @author Mikhail Golubev
  */
 public class JsonBlock implements ASTBlock {
-  private static final TokenSet OPEN_BRACES = TokenSet.create(L_BRACKET, L_CURLY);
-  private static final TokenSet CLOSE_BRACES = TokenSet.create(R_BRACKET, R_CURLY);
+  private static final TokenSet OPEN_BRACES = TokenSet.create(JsonElementTypes.L_BRACKET, JsonElementTypes.L_CURLY);
+  private static final TokenSet CLOSE_BRACES = TokenSet.create(JsonElementTypes.R_BRACKET, JsonElementTypes.R_CURLY);
   private static final TokenSet BRACES = TokenSet.orSet(OPEN_BRACES, CLOSE_BRACES);
 
   private JsonBlock myParent;
@@ -87,7 +87,7 @@ public class JsonBlock implements ASTBlock {
     return mySubBlocks;
   }
 
-  private Block makeSubBlock(ASTNode childNode) {
+  private Block makeSubBlock(@NotNull ASTNode childNode) {
     IElementType childNodeType = childNode.getElementType();
     PsiElement childPsiElement = childNode.getPsi();
 
@@ -95,12 +95,12 @@ public class JsonBlock implements ASTBlock {
     Alignment alignment = null;
     Wrap wrap = null;
 
-    if (isContainer() && childNodeType != COMMA && !BRACES.contains(childNodeType)) {
+    if (isContainer() && childNodeType != JsonElementTypes.COMMA && !BRACES.contains(childNodeType)) {
       wrap = Wrap.createWrap(WrapType.NORMAL, true);
       alignment = myChildAlignment;
       indent = Indent.getNormalIndent();
     }
-    if (myNode.getElementType() == PROPERTY && childPsiElement instanceof JsonValue) {
+    if (myPsiElement instanceof JsonProperty && childPsiElement == ((JsonProperty)myPsiElement).getValue()) {
       wrap = Wrap.createWrap(WrapType.NORMAL, true);
       indent = Indent.getNormalIndent();
     }
@@ -141,7 +141,7 @@ public class JsonBlock implements ASTBlock {
     }
     if (isContainer() && prevChildNode != null) {
       // correctly indent first element after opening brace
-      if (OPEN_BRACES.contains(prevChildNode.getElementType()) || prevChildNode.getElementType() == COMMA) {
+      if (OPEN_BRACES.contains(prevChildNode.getElementType()) || prevChildNode.getElementType() == JsonElementTypes.COMMA) {
         return new ChildAttributes(Indent.getNormalIndent(), myChildAlignment);
       }
     }
@@ -156,11 +156,11 @@ public class JsonBlock implements ASTBlock {
   public boolean isIncomplete() {
     IElementType nodeType = myNode.getElementType();
     ASTNode lastChildNode = myNode.getLastChildNode();
-    if (nodeType == OBJECT) {
-      return lastChildNode != null && lastChildNode.getElementType() == R_CURLY;
+    if (nodeType == JsonElementTypes.OBJECT) {
+      return lastChildNode != null && lastChildNode.getElementType() == JsonElementTypes.R_CURLY;
     }
-    else if (nodeType == ARRAY) {
-      return lastChildNode != null && lastChildNode.getElementType() == R_BRACKET;
+    else if (nodeType == JsonElementTypes.ARRAY) {
+      return lastChildNode != null && lastChildNode.getElementType() == JsonElementTypes.R_BRACKET;
     }
     else if (myPsiElement instanceof JsonProperty) {
       return ((JsonProperty)myPsiElement).getValue() != null;
