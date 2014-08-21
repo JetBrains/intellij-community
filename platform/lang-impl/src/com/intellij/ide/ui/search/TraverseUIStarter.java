@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationStarter;
+import com.intellij.openapi.application.ApplicationStarterEx;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -50,7 +50,7 @@ import java.util.TreeSet;
  * Pass corresponding -Didea.platform.prefix=YOUR_IDE_PREFIX to vm options and choose main_YOUR_IDE module
  */
 @SuppressWarnings({"CallToPrintStackTrace", "SynchronizeOnThis"})
-public class TraverseUIStarter implements ApplicationStarter {
+public class TraverseUIStarter extends ApplicationStarterEx {
   private String OUTPUT_PATH;
   @NonNls private static final String OPTIONS = "options";
   @NonNls private static final String CONFIGURABLE = "configurable";
@@ -62,11 +62,15 @@ public class TraverseUIStarter implements ApplicationStarter {
   @NonNls private static final String HIT = "hit";
 
   @Override
+  public boolean isHeadless() {
+    return false;
+  }
+
+  @Override
   @NonNls
   public String getCommandName() {
     return "traverseUI";
   }
-
 
   @Override
   public void premain(String[] args) {

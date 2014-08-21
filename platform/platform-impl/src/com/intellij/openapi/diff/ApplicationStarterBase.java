@@ -37,7 +37,7 @@ import java.util.Arrays;
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
-public abstract class ApplicationStarterBase implements ApplicationStarterEx {
+public abstract class ApplicationStarterBase extends ApplicationStarterEx {
   private final String myCommandName;
   private final int[] myArgsCount;
 
@@ -49,6 +49,11 @@ public abstract class ApplicationStarterBase implements ApplicationStarterEx {
   @Override
   public String getCommandName() {
     return myCommandName;
+  }
+
+  @Override
+  public boolean isHeadless() {
+    return false;
   }
 
   @Override

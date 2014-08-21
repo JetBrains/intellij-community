@@ -17,10 +17,16 @@ package com.intellij.openapi.application;
 
 /**
  * Implementers of the interface declared via {@link com.intellij.ExtensionPoints#APPLICATION_STARTER}
- * are also capable of processing an external command line within a running IntelliJ Platform instance.
+ * may be capable of processing an external command line within a running IntelliJ Platform instance.
  *
  * @author yole
  */
-public interface ApplicationStarterEx extends ApplicationStarter {
-  void processExternalCommandLine(String[] args);
+public abstract class ApplicationStarterEx implements ApplicationStarter {
+  public abstract boolean isHeadless();
+
+  public boolean canProcessExternalCommandLine() {
+    return false;
+  }
+
+  public void processExternalCommandLine(String[] args) { }
 }
