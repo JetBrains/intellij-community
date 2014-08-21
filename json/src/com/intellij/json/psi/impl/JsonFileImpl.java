@@ -8,8 +8,9 @@ import com.intellij.json.psi.JsonFile;
 import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonValue;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,12 +29,12 @@ public class JsonFileImpl extends PsiFileBase implements JsonFile {
   @Nullable
   @Override
   public JsonValue getTopLevelValue() {
-    final PsiElement[] children = getChildren();
-    for (PsiElement child : children) {
-      if (child instanceof JsonObject || child instanceof JsonArray) {
-        return (JsonValue) child;
-      }
-    }
-    return null;
+    return PsiTreeUtil.getChildOfAnyType(this, JsonObject.class, JsonArray.class);
+  }
+
+  @Override
+  public String toString() {
+    final VirtualFile virtualFile = getVirtualFile();
+    return String.format("JsonFile: " + (virtualFile != null? virtualFile.getName() : "<unknown>"));
   }
 }

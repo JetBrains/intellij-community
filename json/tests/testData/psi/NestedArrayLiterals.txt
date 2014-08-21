@@ -1,4 +1,4 @@
-FILE
+JsonFile: NestedArrayLiterals.json
   JsonArray
     PsiElement([)('[')
     JsonNumberLiteral

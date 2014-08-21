@@ -1,4 +1,4 @@
-FILE
+JsonFile: Simple2.json
   JsonArray
     PsiElement([)('[')
     PsiWhiteSpace(' ')

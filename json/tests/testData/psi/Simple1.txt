@@ -1,4 +1,4 @@
-FILE
+JsonFile: Simple1.json
   JsonObject
     PsiElement({)('{')
     PsiWhiteSpace(' ')
