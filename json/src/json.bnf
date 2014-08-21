@@ -42,6 +42,7 @@
 
     extends("object|array|literal")=value
     extends("string_literal|number_literal|boolean_literal|null_literal")=literal
+    implements("property")="com.intellij.psi.PsiNamedElement"
 }
 
 json ::= object | array
@@ -54,15 +55,16 @@ object ::= '{' [properties] '}' {
 }
 
 private properties ::= property (',' property)* { pin(".*")=1 }
-property ::= property_name ':' value {
-  pin = 1
+property ::= string_literal ':' value {
+  pin = 2
   methods=[
     getName
-    NameElement="property_name"
+    getNameElement
+    getValue
   ]
+  mixin="com.intellij.json.psi.impl.JsonPropertyMixin"
   recoverWhile = not_brace_or_comma
 }
-property_name ::= STRING
 
 array ::= '[' [array_elements] ']' {
   pin=1

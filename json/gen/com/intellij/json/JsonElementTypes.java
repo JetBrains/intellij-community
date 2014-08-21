@@ -15,7 +15,6 @@ public interface JsonElementTypes {
   IElementType NUMBER_LITERAL = new JsonElementType("NUMBER_LITERAL");
   IElementType OBJECT = new JsonElementType("OBJECT");
   IElementType PROPERTY = new JsonElementType("PROPERTY");
-  IElementType PROPERTY_NAME = new JsonElementType("PROPERTY_NAME");
   IElementType STRING_LITERAL = new JsonElementType("STRING_LITERAL");
   IElementType VALUE = new JsonElementType("VALUE");
 
@@ -55,9 +54,6 @@ public interface JsonElementTypes {
       }
       else if (type == PROPERTY) {
         return new JsonPropertyImpl(node);
-      }
-      else if (type == PROPERTY_NAME) {
-        return new JsonPropertyNameImpl(node);
       }
       else if (type == STRING_LITERAL) {
         return new JsonStringLiteralImpl(node);

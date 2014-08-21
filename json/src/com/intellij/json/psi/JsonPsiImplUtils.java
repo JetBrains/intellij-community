@@ -3,6 +3,7 @@ package com.intellij.json.psi;
 import com.intellij.json.JsonElementTypes;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,6 +14,20 @@ public class JsonPsiImplUtils {
   @NotNull
   public static String getName(@NotNull JsonProperty property) {
     return StringUtil.unquoteString(property.getNameElement().getText());
+  }
+
+  @NotNull
+  public static JsonStringLiteral getNameElement(@NotNull JsonProperty property) {
+    return (JsonStringLiteral)property.getFirstChild();
+  }
+
+  @Nullable
+  public static JsonValue getValue(@NotNull JsonProperty property) {
+    final PsiElement[] children = property.getChildren();
+    if (children.length > 2) {
+      return (JsonValue)property.getLastChild();
+    }
+    return null;
   }
 
   public static boolean isQuotedString(@NotNull JsonLiteral literal) {
@@ -26,7 +41,7 @@ public class JsonPsiImplUtils {
 
   @Nullable
   public static JsonProperty findProperty(@NotNull JsonObject object, @NotNull String name) {
-    Collection<JsonProperty> properties = PsiTreeUtil.findChildrenOfType(object, JsonProperty.class);
+    final Collection<JsonProperty> properties = PsiTreeUtil.findChildrenOfType(object, JsonProperty.class);
     for (JsonProperty property : properties) {
       if (property.getName().equals(name)) {
         return property;

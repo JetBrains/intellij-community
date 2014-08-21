@@ -41,9 +41,6 @@ public class JsonParser implements PsiParser {
     else if (root_ == PROPERTY) {
       result_ = property(builder_, 0);
     }
-    else if (root_ == PROPERTY_NAME) {
-      result_ = property_name(builder_, 0);
-    }
     else if (root_ == STRING_LITERAL) {
       result_ = string_literal(builder_, 0);
     }
@@ -313,30 +310,18 @@ public class JsonParser implements PsiParser {
   }
 
   /* ********************************************************** */
-  // property_name ':' value
+  // string_literal ':' value
   public static boolean property(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "property")) return false;
     boolean result_;
     boolean pinned_;
     Marker marker_ = enter_section_(builder_, level_, _NONE_, "<property>");
-    result_ = property_name(builder_, level_ + 1);
-    pinned_ = result_; // pin = 1
-    result_ = result_ && report_error_(builder_, consumeToken(builder_, COLON));
-    result_ = pinned_ && value(builder_, level_ + 1) && result_;
+    result_ = string_literal(builder_, level_ + 1);
+    result_ = result_ && consumeToken(builder_, COLON);
+    pinned_ = result_; // pin = 2
+    result_ = result_ && value(builder_, level_ + 1);
     exit_section_(builder_, level_, marker_, PROPERTY, result_, pinned_, not_brace_or_comma_parser_);
     return result_ || pinned_;
-  }
-
-  /* ********************************************************** */
-  // STRING
-  public static boolean property_name(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "property_name")) return false;
-    if (!nextTokenIs(builder_, STRING)) return false;
-    boolean result_;
-    Marker marker_ = enter_section_(builder_);
-    result_ = consumeToken(builder_, STRING);
-    exit_section_(builder_, marker_, PROPERTY_NAME, result_);
-    return result_;
   }
 
   /* ********************************************************** */

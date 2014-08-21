@@ -27,7 +27,7 @@ public class JsonFormattingBuilderModel implements FormattingModelBuilder {
     if (LOG.isDebugEnabled()) {
       LOG.debug("PSI Tree:\n" + DebugUtil.psiToString(element, false));
     }
-    LOG.debug("Right margin: " + settings.RIGHT_MARGIN);
+    LOG.debug("Right margin: " + settings.getRightMargin(JsonLanguage.INSTANCE));
     JsonBlock block = new JsonBlock(null, element.getNode(), settings, null, Indent.getNoneIndent(), null);
     if (LOG.isDebugEnabled()) {
       StringBuilder builder = new StringBuilder();

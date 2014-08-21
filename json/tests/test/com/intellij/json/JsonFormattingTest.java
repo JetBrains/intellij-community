@@ -2,15 +2,19 @@ package com.intellij.json;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterTestCase;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.TestLoggerFactory;
 
 /**
  * @author Mikhail Golubev
  */
 public class JsonFormattingTest extends FormatterTestCase {
+  static {
+    Logger.setFactory(TestLoggerFactory.class);
+  }
+
   private static final Logger LOG = Logger.getInstance(JsonFormattingTest.class);
 
   @Override
@@ -35,6 +39,8 @@ public class JsonFormattingTest extends FormatterTestCase {
   }
 
   public void testContainerElementsAlignment() throws Exception {
+    final int indentSize = getSettings(JsonLanguage.INSTANCE).getIndentOptions().INDENT_SIZE;
+    LOG.debug("Intent size: " + indentSize);
     doTest();
   }
 

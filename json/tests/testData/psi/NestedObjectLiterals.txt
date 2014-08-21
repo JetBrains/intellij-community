@@ -3,7 +3,7 @@ FILE
     PsiElement({)('{')
     PsiWhiteSpace(' ')
     JsonProperty
-      JsonPropertyName
+      JsonStringLiteral
         PsiElement(STRING)('"foo"')
       PsiElement(:)(':')
       PsiWhiteSpace(' ')
@@ -11,14 +11,14 @@ FILE
         PsiElement({)('{')
         PsiWhiteSpace(' ')
         JsonProperty
-          JsonPropertyName
+          JsonStringLiteral
             PsiElement(STRING)('"bar"')
           PsiElement(:)(':')
           PsiWhiteSpace(' ')
           JsonObject
             PsiElement({)('{')
             JsonProperty
-              JsonPropertyName
+              JsonStringLiteral
                 PsiElement(STRING)('"baz"')
               PsiElement(:)(':')
               PsiWhiteSpace(' ')

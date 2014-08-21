@@ -4,16 +4,20 @@ package com.intellij.json.psi;
 import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 
-public interface JsonProperty extends JsonElement {
+public interface JsonProperty extends PsiNamedElement {
 
-  @Nullable
-  JsonValue getValue();
+  @NotNull
+  List<JsonValue> getValueList();
 
   @NotNull
   String getName();
 
   @NotNull
-  JsonPropertyName getNameElement();
+  JsonStringLiteral getNameElement();
+
+  @Nullable
+  JsonValue getValue();
 
 }

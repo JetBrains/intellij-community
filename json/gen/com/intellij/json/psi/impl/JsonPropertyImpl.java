@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.json.JsonElementTypes.*;
 import com.intellij.json.psi.*;
 
-public class JsonPropertyImpl extends JsonElementImpl implements JsonProperty {
+public class JsonPropertyImpl extends JsonPropertyMixin implements JsonProperty {
 
   public JsonPropertyImpl(ASTNode node) {
     super(node);
@@ -22,9 +22,9 @@ public class JsonPropertyImpl extends JsonElementImpl implements JsonProperty {
   }
 
   @Override
-  @Nullable
-  public JsonValue getValue() {
-    return findChildByClass(JsonValue.class);
+  @NotNull
+  public List<JsonValue> getValueList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, JsonValue.class);
   }
 
   @NotNull
@@ -32,10 +32,14 @@ public class JsonPropertyImpl extends JsonElementImpl implements JsonProperty {
     return JsonPsiImplUtils.getName(this);
   }
 
-  @Override
   @NotNull
-  public JsonPropertyName getNameElement() {
-    return findNotNullChildByClass(JsonPropertyName.class);
+  public JsonStringLiteral getNameElement() {
+    return JsonPsiImplUtils.getNameElement(this);
+  }
+
+  @Nullable
+  public JsonValue getValue() {
+    return JsonPsiImplUtils.getValue(this);
   }
 
 }
