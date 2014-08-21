@@ -38,7 +38,6 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -82,13 +81,10 @@ public class PushController implements Disposable {
       if (model.isSelected()) {
         //has one or more selected roots
         validInfo = null;
-        RepositoryNode node = entry.getKey();
         PushTarget target = model.getSpec().getTarget();
         //todo add validation for model -> hasErrors, too
         if (target == null) {
-          JComponent editingComponent = myPushLog.startEditNode(node);
-          return new ValidationInfo("Invalid remote for repository " + DvcsUtil.getShortRepositoryName(model.getRepository()),
-                                    editingComponent);
+          return new ValidationInfo("Invalid remote for repository " + DvcsUtil.getShortRepositoryName(model.getRepository()));
         }
       }
     }
@@ -160,11 +156,13 @@ public class PushController implements Disposable {
       public void onTargetChanged(String newValue) {
         VcsError validationError = support.validate(model.getRepository(), newValue);
         if (validationError == null) {
+          repoNode.markTargetValid(true);
           myView2Model.get(repoNode).setSpec(new PushSpec(model.getSpec().getSource(), support.createTarget(repository, newValue)));
           loadCommits(model, repoNode, false);
         }
         else {
           //todo may be should store validation errors in model and get errors during dialog validation
+          repoNode.markTargetValid(false);
           myView2Model.get(repoNode).setSpec(new PushSpec(model.getSpec().getSource(), null));
         }
         myDialog.updateButtons();

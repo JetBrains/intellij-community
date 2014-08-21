@@ -407,7 +407,7 @@ public final class EditorUtil {
     IterationState state = new IterationState(editorImpl, start, end, false);
     int fontType = state.getMergedAttributes().getFontType();
     int column = currentColumn[0];
-    int spaceSize = getSpaceWidth(fontType, editorImpl);
+    int plainSpaceSize = getSpaceWidth(Font.PLAIN, editorImpl);
     for (; column < columnNumber && offset < end; offset++) {
       if (offset >= state.getEndOffset()) {
         state.advance();
@@ -417,7 +417,7 @@ public final class EditorUtil {
       char c = text.charAt(offset);
       if (c == '\t') {
         final int newX = nextTabStop(x, editorImpl);
-        final int columns = columnsNumber(newX - x, spaceSize);
+        final int columns = columnsNumber(newX - x, plainSpaceSize);
         if (debugBuffer != null) {
           debugBuffer.append(String.format(
             "Processing tabulation at the offset %d. Current X: %d, new X: %d, current column: %d, new column: %d%n",
@@ -556,11 +556,11 @@ public final class EditorUtil {
     return nextTabStop(x, getSpaceWidth(Font.PLAIN, editor), tabSize);
   }
 
-  public static int nextTabStop(int x, int spaceWidth, int tabSize) {
+  public static int nextTabStop(int x, int plainSpaceWidth, int tabSize) {
     if (tabSize <= 0) {
-      return x + spaceWidth;
+      return x + plainSpaceWidth;
     }
-    tabSize *= spaceWidth;
+    tabSize *= plainSpaceWidth;
 
     int nTabs = x / tabSize;
     return (nTabs + 1) * tabSize;
@@ -617,15 +617,15 @@ public final class EditorUtil {
    * @param c           target char
    * @param x           <code>'x'</code> coordinate of the line where given char is represented that indicates char end location
    * @param prevX       <code>'x'</code> coordinate of the line where given char is represented that indicates char start location
-   * @param spaceSize   <code>'space'</code> symbol width
+   * @param plainSpaceSize   <code>'space'</code> symbol width (in plain font style)
    * @return            number of columns necessary for representation of the given char on a screen.
    */
-  public static int columnsNumber(char c, int x, int prevX, int spaceSize) {
+  public static int columnsNumber(char c, int x, int prevX, int plainSpaceSize) {
     if (c != '\t') {
       return 1;
     }
-    int result = (x - prevX) / spaceSize;
-    if ((x - prevX) % spaceSize > 0) {
+    int result = (x - prevX) / plainSpaceSize;
+    if ((x - prevX) % plainSpaceSize > 0) {
       result++;
     }
     return result;
@@ -635,12 +635,12 @@ public final class EditorUtil {
    * Allows to answer how many visual columns are occupied by the given width.
    *
    * @param width       target width
-   * @param spaceSize   width of the single space symbol within the target editor
+   * @param plainSpaceSize   width of the single space symbol within the target editor (in plain font style)
    * @return            number of visual columns are occupied by the given width
    */
-  public static int columnsNumber(int width, int spaceSize) {
-    int result = width / spaceSize;
-    if (width % spaceSize > 0) {
+  public static int columnsNumber(int width, int plainSpaceSize) {
+    int result = width / plainSpaceSize;
+    if (width % plainSpaceSize > 0) {
       result++;
     }
     return result;

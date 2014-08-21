@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.WeakList;
@@ -93,8 +94,27 @@ public class LowMemoryWatcher {
     }, null, null);
   }
 
+  /**
+   * Registers a runnable to run on low memory events
+   * @return a LowMemoryWatcher instance holding the runnable. This instance should be kept in memory while the
+   * low memory notification functionality is needed. As soon as it's garbage-collected, the runnable won't receive any further notifications.
+   */
   public static LowMemoryWatcher register(Runnable runnable) {
     return new LowMemoryWatcher(runnable);
+  }
+
+  /**
+   * Registers a runnable to run on low memory events. The notifications will be issued until parentDisposable is disposed.
+   */
+  public static void register(Runnable runnable, Disposable parentDisposable) {
+    final Ref<LowMemoryWatcher> watcher = Ref.create(new LowMemoryWatcher(runnable));
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        watcher.get().stop();
+        watcher.set(null);
+      }
+    });
   }
 
   private LowMemoryWatcher(Runnable runnable) {

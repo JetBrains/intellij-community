@@ -17,8 +17,6 @@ package com.intellij.semantic;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
@@ -83,7 +81,7 @@ public class SemServiceImpl extends SemService{
     });
 
 
-    final LowMemoryWatcher watcher = LowMemoryWatcher.register(new Runnable() {
+    LowMemoryWatcher.register(new Runnable() {
       @Override
       public void run() {
         if (myCreatingSem.get() == 0) {
@@ -91,13 +89,7 @@ public class SemServiceImpl extends SemService{
         }
         //System.out.println("SemService cache flushed");
       }
-    });
-    ProjectManager.getInstance().addProjectManagerListener(project, new ProjectManagerAdapter() {
-      @Override
-      public void projectClosing(Project project) {
-        watcher.stop();
-      }
-    });
+    }, project);
   }
 
   private static MultiMap<SemKey, SemKey> cacheKeyHierarchy(Collection<SemKey> allKeys) {

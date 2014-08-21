@@ -270,8 +270,9 @@ public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
     EditorPosition position = new EditorPosition(logical, start, myEditor);
     position.x = point.x;
     int spaceWidth = EditorUtil.getSpaceWidth(myContext.fontType, myEditor);
+    int plainSpaceWidth = EditorUtil.getSpaceWidth(Font.PLAIN, myEditor);
 
-    myContext.logicalLineData.update(logical.line, spaceWidth, myEditor);
+    myContext.logicalLineData.update(logical.line, spaceWidth, plainSpaceWidth);
 
     myContext.currentPosition = position;
     myContext.lineStartPosition = position.clone();
@@ -363,8 +364,7 @@ public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
       revertListeners(softWrap.getStart(), myContext.currentPosition.visualLine);
       for (int j = foldRegion.getStartOffset() - 1; j >= softWrap.getStart(); j--) {
         int pixelsDiff = myOffset2widthInPixels.data[j - myOffset2widthInPixels.anchor];
-        int tmpFontType = myOffset2fontType.get(j);
-        int columnsDiff = calculateWidthInColumns(myContext.text.charAt(j), pixelsDiff, myContext.getSpaceWidth(tmpFontType));
+        int columnsDiff = calculateWidthInColumns(myContext.text.charAt(j), pixelsDiff, myContext.getPlainSpaceWidth());
         myContext.currentPosition.offset--;
         myContext.currentPosition.logicalColumn -= columnsDiff;
         myContext.currentPosition.visualColumn -= columnsDiff;
@@ -582,8 +582,7 @@ public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
         revertListeners(actualSoftWrapOffset, myContext.currentPosition.visualLine);
         for (int j = offset - 1; j >= actualSoftWrapOffset; j--) {
           int pixelsDiff = myOffset2widthInPixels.data[j - myOffset2widthInPixels.anchor];
-          int tmpFontType = myOffset2fontType.get(j);
-          int columnsDiff = calculateWidthInColumns(myContext.text.charAt(j), pixelsDiff, myContext.getSpaceWidth(tmpFontType));
+          int columnsDiff = calculateWidthInColumns(myContext.text.charAt(j), pixelsDiff, myContext.getPlainSpaceWidth());
           myContext.currentPosition.offset--;
           myContext.currentPosition.logicalColumn -= columnsDiff;
           myContext.currentPosition.visualColumn -= columnsDiff;
@@ -630,12 +629,12 @@ public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
     return Math.max(start, end);
   }
 
-  private static int calculateWidthInColumns(char c, int widthInPixels, int spaceWithInPixels) {
+  private static int calculateWidthInColumns(char c, int widthInPixels, int plainSpaceWithInPixels) {
     if (c != '\t') {
       return 1;
     }
-    int result = widthInPixels / spaceWithInPixels;
-    if (widthInPixels % spaceWithInPixels > 0) {
+    int result = widthInPixels / plainSpaceWithInPixels;
+    if (widthInPixels % plainSpaceWithInPixels > 0) {
       result++;
     }
     return result;
@@ -869,7 +868,7 @@ public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
       }
     }
     updateLastTopLeftCornerOffset();
-    return result;
+    return true;
   }
 
   private void updateLastTopLeftCornerOffset() {
@@ -1035,7 +1034,7 @@ public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
     public int endLineOffset;
     public int nonWhiteSpaceSymbolOffset;
 
-    public void update(int logicalLine, int spaceWidth, Editor editor) {
+    public void update(int logicalLine, int spaceWidth, int plainSpaceWidth) {
       Document document = myEditor.getDocument();
       int startLineOffset;
       if (logicalLine >= document.getLineCount()) {
@@ -1055,8 +1054,8 @@ public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
         switch (c) {
           case ' ': indentInColumns += 1; indentInPixels += spaceWidth; break;
           case '\t':
-            int x = EditorUtil.nextTabStop(indentInPixels, editor);
-            indentInColumns += calculateWidthInColumns(c, x - indentInPixels, spaceWidth);
+            int x = EditorUtil.nextTabStop(indentInPixels, myEditor);
+            indentInColumns += calculateWidthInColumns(c, x - indentInPixels, plainSpaceWidth);
             indentInPixels = x;
             break;
           default: nonWhiteSpaceSymbolOffset = i; return;
@@ -1270,8 +1269,12 @@ public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
     public int getSpaceWidth() {
       return getSpaceWidth(fontType);
     }
-    
-    public int getSpaceWidth(@JdkConstants.FontStyle int fontType) {
+
+    public int getPlainSpaceWidth() {
+      return getSpaceWidth(Font.PLAIN);
+    }
+
+    private int getSpaceWidth(@JdkConstants.FontStyle int fontType) {
       int result = fontType2spaceWidth.get(fontType);
       if (result <= 0) {
         result = EditorUtil.getSpaceWidth(fontType, myEditor);
@@ -1280,7 +1283,7 @@ public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
       assert result > 0;
       return result;
     }
-    
+
     /**
      * Asks current context to update its state assuming that it begins to point to the line next to its current position.
      */
@@ -1293,7 +1296,7 @@ public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
       lastFoldEndPosition = null;
       lastFold = null;
       lineStartPosition.from(currentPosition);
-      logicalLineData.update(currentPosition.logicalLine, getSpaceWidth(), myEditor);
+      logicalLineData.update(currentPosition.logicalLine, getSpaceWidth(), getPlainSpaceWidth());
       fontType = myOffset2fontType.get(currentPosition.offset);
 
       myOffset2fontType.clear();
@@ -1330,7 +1333,7 @@ public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
       myOffset2widthInPixels.data[currentPosition.offset - myOffset2widthInPixels.anchor] = widthInPixels;
       myOffset2widthInPixels.end++;
       
-      int widthInColumns = calculateWidthInColumns(c, widthInPixels, myContext.getSpaceWidth());
+      int widthInColumns = calculateWidthInColumns(c, widthInPixels, myContext.getPlainSpaceWidth());
       if (c == '\t') {
         notifyListenersOnVisualLineStart(myContext.lineStartPosition);
         notifyListenersOnTabulation(widthInColumns);

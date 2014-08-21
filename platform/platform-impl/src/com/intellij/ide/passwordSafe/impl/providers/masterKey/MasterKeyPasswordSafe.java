@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.passwordSafe.impl.providers.masterKey;
 
+import com.intellij.concurrency.AsyncFutureFactory;
+import com.intellij.concurrency.AsyncFutureResult;
 import com.intellij.ide.passwordSafe.MasterPasswordUnavailableException;
 import com.intellij.ide.passwordSafe.PasswordSafeException;
 import com.intellij.ide.passwordSafe.impl.PasswordSafeTimed;
@@ -23,14 +25,11 @@ import com.intellij.ide.passwordSafe.impl.providers.ByteArrayWrapper;
 import com.intellij.ide.passwordSafe.impl.providers.EncryptionUtil;
 import com.intellij.ide.passwordSafe.impl.providers.masterKey.windows.WindowsCryptUtils;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 /**
  * The password safe that stores information in configuration file encrypted by master password
@@ -200,35 +200,41 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
   }
 
   private static final Object ourEDTLock = new Object();
-  public <T, E extends Throwable> T invokeAndWait(@NotNull final ThrowableComputable<T, E> computable, @NotNull final Condition expired) throws E {
+  public <T, E extends Throwable> T invokeAndWait(@NotNull final ThrowableComputable<T, E> computable, @NotNull final Condition<?> expired) throws E {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       return computable.compute();
     }
-    final Ref<Throwable> exRef = Ref.create();
-    final Ref<T> ref = Ref.create();
+
+    final AsyncFutureResult<Object> future = AsyncFutureFactory.getInstance().createAsyncFutureResult();
     synchronized (ourEDTLock) {
-      if (expired.value(null)) {
-        throw new ProcessCanceledException();
-      }
-      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(new ExpirableRunnable() {
+        @Override
+        public boolean isExpired() {
+          boolean b = expired.value(null);
+          if (b) future.setException(new ProcessCanceledException());
+          return b;
+        }
+
         @Override
         public void run() {
-          if (expired.value(null)) {
-            exRef.set(new ProcessCanceledException());
-            return;
-          }
-
           try {
-            ref.set(computable.compute());
+            future.set(computable.compute());
           }
           catch (Throwable e) {
-            exRef.set(e);
+            future.setException(e);
           }
         }
-      }, ModalityState.any());
+      });
     }
-    if (!exRef.isNull()) throw (E)exRef.get();
-    return ref.get();
+    try {
+      return (T)future.get();
+    }
+    catch (InterruptedException e) {
+      throw new ProcessCanceledException(e);
+    }
+    catch (ExecutionException e) {
+      throw (E) e.getCause();
+    }
   }
 
   @Override
