@@ -123,7 +123,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
             String type = strings[0];
             XValuePresentation presentation;
             if (myValueDescriptor.isString()) {
-              presentation = new TypedStringValuePresentation(StringUtil.unquoteString(value), type);
+              presentation = new TypedStringValuePresentation(value, type);
             }
             else {
               EvaluateException exception = myValueDescriptor.getEvaluateException();
