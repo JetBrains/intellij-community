@@ -15,9 +15,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.BalloonBuilder;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -185,7 +183,6 @@ public class StudyCheckAction extends DumbAwareAction {
         IdeFocusManager.getInstance(project).requestFocus(editorToNavigate.getContentComponent(), true);
       }
     });
-
     taskFileToNavigate.navigateToFirstFailedTaskWindow(editor);
   }
 
@@ -253,12 +250,17 @@ public class StudyCheckAction extends DumbAwareAction {
   private static void createTestResultPopUp(final String text, Color color, @NotNull final Project project) {
     BalloonBuilder balloonBuilder =
       JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(text, null, color, null);
-    Balloon balloon = balloonBuilder.createBalloon();
+    final Balloon balloon = balloonBuilder.createBalloon();
     StudyEditor studyEditor = StudyEditor.getSelectedStudyEditor(project);
     assert studyEditor != null;
     JButton checkButton = studyEditor.getCheckButton();
     balloon.showInCenterOf(checkButton);
-    Disposer.dispose(balloon);
+    balloon.addListener(new JBPopupAdapter() {
+      @Override
+      public void onClosed(LightweightWindowEvent event) {
+        Disposer.dispose(balloon);
+      }
+    });
   }
 
   @Override
