@@ -21,6 +21,7 @@ import com.intellij.conversion.ConversionService;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.Disposable;
@@ -354,7 +355,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
             myDefaultProjectRootElement = null;
           }
           catch (Throwable t) {
-            LOG.error(t);
+            PluginManager.processException(t);
           }
         }
       });
