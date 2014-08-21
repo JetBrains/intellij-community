@@ -43,6 +43,7 @@
     extends("object|array|literal")=value
     extends("string_literal|number_literal|boolean_literal|null_literal")=literal
     implements("property")="com.intellij.psi.PsiNamedElement"
+    implements("property")="com.intellij.json.psi.JsonElement"
 }
 
 json ::= object | array

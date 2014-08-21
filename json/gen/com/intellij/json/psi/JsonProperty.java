@@ -6,7 +6,7 @@ import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 
-public interface JsonProperty extends PsiNamedElement {
+public interface JsonProperty extends JsonElement, PsiNamedElement {
 
   @NotNull
   List<JsonValue> getValueList();

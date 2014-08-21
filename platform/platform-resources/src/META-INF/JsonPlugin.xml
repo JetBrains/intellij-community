@@ -31,6 +31,7 @@
     <breadcrumbsInfoProvider implementation="com.intellij.json.breadcrumbs.JsonBreadcrumbsProvider"/>
     <completion.contributor language="JSON" implementationClass="com.intellij.json.codeinsight.JsonCompletionContributor"/>
     <annotator language="JSON" implementationClass="com.intellij.json.codeinsight.JsonStringLiteralAnnotator"/>
+    <lang.psiStructureViewFactory language="JSON" implementationClass="com.intellij.json.structureView.JsonStructureViewFactory"/>
 
     <!-- Imported from appcode-json -->
     <lang.elementManipulator forClass="com.intellij.json.psi.JsonLiteral"
