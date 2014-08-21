@@ -69,13 +69,13 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
     Library library = table.createLibrary("native");
     Library.ModifiableModel model = library.getModifiableModel();
-    model.addRoot("file://native", NativeLibraryOrderRootType.getInstance());
+    model.addRoot("file://native-lib-root", NativeLibraryOrderRootType.getInstance());
     commit(model);
 
     Element element = serialize(library);
     PlatformTestUtil.assertElementEquals(
       "<root><library name=\"native\"><CLASSES /><JAVADOC />" +
-      "<NATIVE><root url=\"file://native\" /></NATIVE>" +
+      "<NATIVE><root url=\"file://native-lib-root\" /></NATIVE>" +
       "<SOURCES /></library></root>",
       element);
   }
