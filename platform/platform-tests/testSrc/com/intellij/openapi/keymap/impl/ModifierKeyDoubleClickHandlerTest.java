@@ -33,9 +33,8 @@ public class ModifierKeyDoubleClickHandlerTest extends LightPlatformTestCase {
   private static final String MY_SHIFT_KEY_ACTION = "ModifierKeyDoubleClickHandlerTest.action2";
   private static final String MY_SHIFT_SHIFT_KEY_ACTION = "ModifierKeyDoubleClickHandlerTest.action3";
 
-  public static final KeyboardShortcut SHIFT_KEY_SHORTCUT = new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE,
-                                                                                                        InputEvent.SHIFT_MASK),
-                                                                                 null);
+  private static final KeyboardShortcut SHIFT_KEY_SHORTCUT =
+    new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, InputEvent.SHIFT_MASK), null);
 
   private final JComponent myComponent = new JPanel();
 
