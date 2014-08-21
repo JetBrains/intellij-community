@@ -186,6 +186,11 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
         }
       }
     }
+    // Heuristic: unfold Foo[Bar] to Foo for subscription expressions for superclasses
+    else if (expression instanceof PySubscriptionExpression) {
+      final PySubscriptionExpression subscriptionExpr = (PySubscriptionExpression)expression;
+      return subscriptionExpr.getOperand();
+    }
     return expression;
   }
 
