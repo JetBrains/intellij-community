@@ -17,9 +17,21 @@
 package com.intellij.ide.actions;
 
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 
 public class ViewSourceAction extends BaseNavigateToSourceAction {
   public ViewSourceAction() {
     super(false);
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    if (CommonDataKeys.EDITOR.getData(e.getDataContext()) != null) {
+      e.getPresentation().setEnabledAndVisible(false);
+    }
+    else {
+      super.update(e);
+    }
   }
 }

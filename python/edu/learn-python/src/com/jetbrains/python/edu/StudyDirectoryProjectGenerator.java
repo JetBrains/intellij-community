@@ -53,7 +53,7 @@ public class StudyDirectoryProjectGenerator extends PythonProjectGenerator imple
   @NotNull
   @Override
   public String getName() {
-    return "Study project";
+    return "Learn Python";
   }
 
 

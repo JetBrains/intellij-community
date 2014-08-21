@@ -59,23 +59,20 @@ import java.util.*;
 import java.util.List;
 
 public class OptionsTree extends JPanel implements Disposable, OptionsEditorColleague {
-  Project myProject;
+  private final SettingsFilter myFilter;
   final SimpleTree myTree;
   List<ConfigurableGroup> myGroups;
   FilteringTreeBuilder myBuilder;
   Root myRoot;
-  OptionsEditorContext myContext;
 
   Map<Configurable, EditorNode> myConfigurable2Node = new HashMap<Configurable, EditorNode>();
 
   MergingUpdateQueue mySelection;
   private final OptionsTree.Renderer myRenderer;
 
-  public OptionsTree(Project project, ConfigurableGroup[] groups, OptionsEditorContext context) {
-    myProject = project;
+  public OptionsTree(SettingsFilter filter, ConfigurableGroup... groups) {
+    myFilter = filter;
     myGroups = Arrays.asList(groups);
-    myContext = context;
-
 
     myRoot = new Root();
     final SimpleTreeStructure structure = new SimpleTreeStructure() {
@@ -132,34 +129,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
         }
       }
     });
-    myTree.addKeyListener(new KeyListener() {
-      public void keyTyped(final KeyEvent e) {
-        _onTreeKeyEvent(e);
-      }
-
-      public void keyPressed(final KeyEvent e) {
-        _onTreeKeyEvent(e);
-      }
-
-      public void keyReleased(final KeyEvent e) {
-        _onTreeKeyEvent(e);
-      }
-    });
   }
-
-  protected void _onTreeKeyEvent(KeyEvent e) {
-    final KeyStroke stroke = KeyStroke.getKeyStrokeForEvent(e);
-
-    final Object action = myTree.getInputMap().get(stroke);
-    if (action == null) {
-      onTreeKeyEvent(e);
-    }
-  }
-
-  protected void onTreeKeyEvent(KeyEvent e) {
-
-  }
-
 
   ActionCallback select(@Nullable Configurable configurable) {
     return queueSelection(configurable);
@@ -191,7 +161,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
         if (configurable == null) {
           myTree.getSelectionModel().clearSelection();
-          myContext.fireSelected(null, OptionsTree.this);
+          myFilter.myContext.fireSelected(null, OptionsTree.this);
         }
         else {
           myBuilder.getReady(this).doWhenDone(new Runnable() {
@@ -232,7 +202,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
   }
 
   private void fireSelected(Configurable configurable, final ActionCallback callback) {
-    myContext.fireSelected(configurable, this).doWhenProcessed(callback.createSetDoneRunnable());
+    myFilter.myContext.fireSelected(configurable, this).doWhenProcessed(callback.createSetDoneRunnable());
   }
 
 
@@ -538,7 +508,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       final List<EditorNode> result = new ArrayList<EditorNode>(kids.length);
       for (Configurable child : kids) {
         result.add(new EditorNode(parent, child, group));
-        myContext.registerKid(configurable, child);
+        myFilter.myContext.registerKid(configurable, child);
       }
       return result; // TODO: DECIDE IF INNERS SHOULD BE SORTED: sort(result);
     }
@@ -602,12 +572,12 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
     @Override
     boolean isModified() {
-      return myContext.getModified().contains(myConfigurable);
+      return myFilter.myContext.getModified().contains(myConfigurable);
     }
 
     @Override
     boolean isError() {
-      return myContext.getErrors().containsKey(myConfigurable);
+      return myFilter.myContext.getErrors().containsKey(myConfigurable);
     }
   }
 
@@ -810,7 +780,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     boolean myWasHoldingFilter;
 
     public MyBuilder(SimpleTreeStructure structure) {
-      super(OptionsTree.this.myTree, myContext.getFilter(), structure, new WeightBasedComparator(false));
+      super(myTree, myFilter, structure, new WeightBasedComparator(false));
       myTree.addTreeExpansionListener(new TreeExpansionListener() {
         public void treeExpanded(TreeExpansionEvent event) {
           invalidateExpansions();
@@ -835,7 +805,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
     @Override
     public boolean isAutoExpandNode(final NodeDescriptor nodeDescriptor) {
-      return myContext.isHoldingFilter();
+      return myFilter.myContext.isHoldingFilter();
     }
 
     @Override
@@ -846,21 +816,21 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     @Override
     protected ActionCallback refilterNow(Object preferredSelection, boolean adjustSelection) {
       final List<Object> toRestore = new ArrayList<Object>();
-      if (myContext.isHoldingFilter() && !myWasHoldingFilter && myToExpandOnResetFilter == null) {
+      if (myFilter.myContext.isHoldingFilter() && !myWasHoldingFilter && myToExpandOnResetFilter == null) {
         myToExpandOnResetFilter = myBuilder.getUi().getExpandedElements();
-      } else if (!myContext.isHoldingFilter() && myWasHoldingFilter && myToExpandOnResetFilter != null) {
+      } else if (!myFilter.myContext.isHoldingFilter() && myWasHoldingFilter && myToExpandOnResetFilter != null) {
         toRestore.addAll(myToExpandOnResetFilter);
         myToExpandOnResetFilter = null;
       }
 
-      myWasHoldingFilter = myContext.isHoldingFilter();
+      myWasHoldingFilter = myFilter.myContext.isHoldingFilter();
 
       ActionCallback result = super.refilterNow(preferredSelection, adjustSelection);
       myRefilteringNow = true;
       return result.doWhenDone(new Runnable() {
         public void run() {
           myRefilteringNow = false;
-          if (!myContext.isHoldingFilter() && getSelectedElements().isEmpty()) {
+          if (!myFilter.myContext.isHoldingFilter() && getSelectedElements().isEmpty()) {
             restoreExpandedState(toRestore);
           }
         }
