@@ -69,12 +69,14 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     void syncDocument(@NotNull Document document, @NotNull PsiTreeChangeEventImpl event);
   }
 
-  private void checkPsiModificationAllowed(@NotNull final PsiTreeChangeEvent event, boolean force) {
+  private void checkPsiModificationAllowed(@NotNull final PsiTreeChangeEvent event) {
     if (!toProcessPsiEvent()) return;
     final PsiFile psiFile = event.getFile();
     if (psiFile == null || psiFile.getNode() == null) return;
 
-    final Document document = myPsiDocumentManager.getCachedDocument(psiFile);
+    boolean forceDocument = !psiFile.getViewProvider().isPhysical();
+    final Document document = forceDocument ? myPsiDocumentManager.getDocument(psiFile)
+                                            : myPsiDocumentManager.getCachedDocument(psiFile);
     if (document != null && myPsiDocumentManager.isUncommited(document)) {
       throw new IllegalStateException("Attempt to modify PSI for non-committed Document!");
     }
@@ -132,22 +134,22 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
 
   @Override
   public void beforeChildAddition(@NotNull PsiTreeChangeEvent event) {
-    checkPsiModificationAllowed(event, false);
+    checkPsiModificationAllowed(event);
   }
 
   @Override
   public void beforeChildRemoval(@NotNull PsiTreeChangeEvent event) {
-    checkPsiModificationAllowed(event, false);
+    checkPsiModificationAllowed(event);
   }
 
   @Override
   public void beforeChildReplacement(@NotNull PsiTreeChangeEvent event) {
-    checkPsiModificationAllowed(event, false);
+    checkPsiModificationAllowed(event);
   }
 
   @Override
   public void beforeChildrenChange(@NotNull PsiTreeChangeEvent event) {
-    checkPsiModificationAllowed(event, false);
+    checkPsiModificationAllowed(event);
   }
 
   @Override
@@ -255,7 +257,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       final PsiTreeChangeEventImpl fakeEvent = new PsiTreeChangeEventImpl(changeScope.getManager());
       fakeEvent.setParent(changeScope);
       fakeEvent.setFile(changeScope.getContainingFile());
-      checkPsiModificationAllowed(fakeEvent, true);
+      checkPsiModificationAllowed(fakeEvent);
       doSync(fakeEvent, true, new DocSyncAction() {
         @Override
         public void syncDocument(@NotNull Document document, @NotNull PsiTreeChangeEventImpl event) {

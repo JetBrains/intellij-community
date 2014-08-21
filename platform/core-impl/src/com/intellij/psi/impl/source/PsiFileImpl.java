@@ -188,11 +188,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
     Document cachedDocument = FileDocumentManager.getInstance().getCachedDocument(getViewProvider().getVirtualFile());
 
-    final Document document = viewProvider.isEventSystemEnabled() ? viewProvider.getDocument() : null;
     FileElement treeElement = createFileElement(viewProvider.getContents());
-    if (document != null) {
-      treeElement.putUserData(HARD_REFERENCE_TO_DOCUMENT, document);
-    }
     treeElement.setPsi(this);
 
     List<Pair<StubBasedPsiElementBase, CompositeElement>> bindings = calcStubAstBindings(treeElement, cachedDocument);
