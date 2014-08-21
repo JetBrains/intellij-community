@@ -47,6 +47,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class ProgressManagerImpl extends ProgressManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.impl.ProgressManagerImpl");
+  public static final int CHECK_CANCELED_DELAY_MILLIS = 10;
   private final AtomicInteger myCurrentUnsafeProgressCount = new AtomicInteger(0);
   private final AtomicInteger myCurrentModalProgressCount = new AtomicInteger(0);
 
@@ -64,7 +65,7 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable {
         public void run() {
           ourNeedToCheckCancel = true;
         }
-      }, 0, 10, TimeUnit.MILLISECONDS);
+      }, 0, CHECK_CANCELED_DELAY_MILLIS, TimeUnit.MILLISECONDS);
     }
   }
 
