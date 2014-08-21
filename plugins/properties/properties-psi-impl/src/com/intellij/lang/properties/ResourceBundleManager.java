@@ -39,7 +39,7 @@ import java.util.regex.Matcher;
   name = "ResourceBundleManager",
   storages = {
     @Storage(file = StoragePathMacros.PROJECT_FILE),
-    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/resourceBundles.xml")
+    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/resourceBundles.xml", scheme = StorageScheme.DIRECTORY_BASED)
   })
 public class ResourceBundleManager implements PersistentStateComponent<ResourceBundleManagerState> {
   private final static Logger LOG = Logger.getInstance(ResourceBundleManager.class);
