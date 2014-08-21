@@ -28,7 +28,6 @@ class CommitTask {
 
       AddCommand addCommand = null;
       for (String path : index.getModified()) {
-        // todo is path absolute or relative?
         if (!path.startsWith(IcsUrlBuilder.PROJECTS_DIR_NAME)) {
           if (addCommand == null) {
             addCommand = manager.git.add();

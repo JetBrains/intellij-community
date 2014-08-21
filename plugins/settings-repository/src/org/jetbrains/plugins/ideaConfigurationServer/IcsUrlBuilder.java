@@ -2,38 +2,41 @@ package org.jetbrains.plugins.ideaConfigurationServer;
 
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class IcsUrlBuilder {
-  public static final String PROJECTS_DIR_NAME = "projects/";
+  public static final String PROJECTS_DIR_NAME = "_projects/";
 
-  private static String getOsName() {
+  private static String getOsFolderName() {
     if (SystemInfo.isWindows) {
-      return "windows";
+      return "_windows";
     }
     else if (SystemInfo.isMac) {
-      return "mac";
+      return "_mac";
     }
     else if (SystemInfo.isLinux) {
-      return "linux";
+      return "_linux";
     }
     else if (SystemInfo.isFreeBSD) {
-      return "freebsd";
+      return "_freebsd";
     }
     else if (SystemInfo.isUnix) {
-      return "unix";
+      return "_unix";
     }
-    return "unknown";
+    return "_unknown";
   }
 
-  static String buildPath(String filePath, RoamingType roamingType, String projectKey) {
-    StringBuilder result = new StringBuilder();
+  @NotNull
+  static String buildPath(@NotNull String filePath, @NotNull RoamingType roamingType, @Nullable String projectKey) {
     if (projectKey != null) {
-      result.append(PROJECTS_DIR_NAME).append(projectKey).append('/');
+      return PROJECTS_DIR_NAME + projectKey + '/' + filePath;
     }
     else if (roamingType == RoamingType.PER_PLATFORM) {
-      result.append("os/").append(getOsName()).append('/');
+      return getOsFolderName() + '/' + filePath;
     }
-    result.append(filePath);
-    return result.toString();
+    else {
+      return filePath;
+    }
   }
 }

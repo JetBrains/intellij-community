@@ -73,12 +73,12 @@ public class GitEx extends Git {
     }
   }
 
-  public void remove(@NotNull File file, @NotNull String path) throws IOException {
+  public void remove(@NotNull String path, boolean isFile) throws IOException {
     Repository repository = getRepository();
     DirCache dirCache = repository.lockDirCache();
     try {
       DirCacheEditor editor = dirCache.editor();
-      editor.add(file.isFile() ? new DirCacheEditor.DeletePath(path) : new DirCacheEditor.DeleteTree(path));
+      editor.add(isFile ? new DirCacheEditor.DeletePath(path) : new DirCacheEditor.DeleteTree(path));
       editor.commit();
     }
     finally {

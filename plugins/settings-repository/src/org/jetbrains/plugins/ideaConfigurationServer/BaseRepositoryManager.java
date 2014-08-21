@@ -50,8 +50,8 @@ public abstract class BaseRepositoryManager implements RepositoryManager {
     }
 
     try {
-      File file = new File(dir, path);
       synchronized (lock) {
+        File file = new File(dir, path);
         FileUtil.writeToFile(file, content, 0, size);
         addToIndex(file, path);
       }
@@ -73,15 +73,20 @@ public abstract class BaseRepositoryManager implements RepositoryManager {
     }
 
     try {
-      File file = new File(dir, path);
-      File parent = file;
       synchronized (lock) {
-        //noinspection FileEqualsUsage
-        while (parent != null && !parent.equals(dir) && parent.delete()) {
-          parent = parent.getParentFile();
+        File file = new File(dir, path);
+        boolean isFile = file.isFile();
+        FileUtil.delete(file);
+        if (isFile) {
+          // remove empty directories
+          File parent = file.getParentFile();
+          //noinspection FileEqualsUsage
+          while (parent != null && !parent.equals(dir) && parent.delete()) {
+            parent = parent.getParentFile();
+          }
         }
 
-        deleteFromIndex(file, path);
+        deleteFromIndex(path, isFile);
       }
     }
     catch (Exception e) {
@@ -89,7 +94,7 @@ public abstract class BaseRepositoryManager implements RepositoryManager {
     }
   }
 
-  protected abstract void deleteFromIndex(@NotNull File file, @NotNull String path) throws Exception;
+  protected abstract void deleteFromIndex(@NotNull String path, boolean isFile) throws Exception;
 
   @Override
   public final void updateRepository(@NotNull ProgressIndicator indicator) throws Exception {

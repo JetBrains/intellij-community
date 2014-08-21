@@ -84,8 +84,8 @@ public final class GitRepositoryManager extends BaseRepositoryManager {
   }
 
   @Override
-  protected void deleteFromIndex(@NotNull File file, @NotNull String path) throws IOException {
-    git.remove(file, path);
+  protected void deleteFromIndex(@NotNull String path, boolean isFile) throws IOException {
+    git.remove(path, isFile);
   }
 
   @Override

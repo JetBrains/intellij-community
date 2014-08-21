@@ -121,7 +121,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
       }
 
       @Override
-      public void deleteFile(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
+      public void delete(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
         if (writeAndDeleteProhibited) {
           throw new IllegalStateException("Delete is prohibited now");
         }
@@ -310,7 +310,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
     }
 
     @Override
-    public void deleteFile(@NotNull final String fileSpec, @NotNull final RoamingType roamingType) {
+    public void delete(@NotNull final String fileSpec, @NotNull final RoamingType roamingType) {
     }
   }
 

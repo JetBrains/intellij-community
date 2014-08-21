@@ -3,7 +3,7 @@
   <id>org.jetbrains.plugins.settingsRepository</id>
   <description>Supports sharing settings between installations of IntelliJ Platform based products used by the same developer (or team) on different computers</description>
   <version>2.0</version>
-  <idea-version since-build="132.397"/>
+  <idea-version since-build="138.1738"/>
   <!--<vendor>JetBrains</vendor>-->
 
   <!-- otherwise plugin will be not loaded -->

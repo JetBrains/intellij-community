@@ -131,12 +131,16 @@ public class GitTest {
   }
 
   @Test
-  public void remove() throws IOException {
+  public void delete() throws IOException {
     byte[] data = FileUtil.loadFileBytes(new File(getTestDataPath(), "encoding.xml"));
+    delete(data, false);
+    delete(data, true);
+  }
+
+  private static void delete(byte[] data, boolean directory) throws IOException {
     String addedFile = "$APP_CONFIG$/encoding.xml";
     getProvider().saveContent(addedFile, data, data.length, RoamingType.GLOBAL, true);
-
-    getProvider().deleteFile(addedFile, RoamingType.GLOBAL);
+    getProvider().delete(directory ? "$APP_CONFIG$" : addedFile, RoamingType.GLOBAL);
 
     GitEx git = getRepositoryManager().getGit();
     IndexDiff diff = git.computeIndexDiff();
