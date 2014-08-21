@@ -1121,31 +1121,31 @@ public class BuildManager implements ApplicationComponent{
         private final Set<String> myRootsToRefresh = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
         @Override
         public void compilationFinished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
+          final String[] roots;
           synchronized (myRootsToRefresh) {
-            final String[] roots = ArrayUtil.toStringArray(myRootsToRefresh);
+            roots = ArrayUtil.toStringArray(myRootsToRefresh);
             myRootsToRefresh.clear();
-            ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-              @Override
-              public void run() {
-                if (project.isDisposed()) {
-                  return;
-                }
-                final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-                final LocalFileSystem lfs = LocalFileSystem.getInstance();
-                final Set<VirtualFile> filesToRefresh = new HashSet<VirtualFile>();
-                for (String root : roots) {
-                  final VirtualFile rootFile = lfs.refreshAndFindFileByPath(root);
-                  if (rootFile != null && fileIndex.isInSourceContent(rootFile)) {
-                    filesToRefresh.add(rootFile);
-                  }
-                }
-                if (!filesToRefresh.isEmpty()) {
-                  lfs.refreshFiles(filesToRefresh, true, true, null);
+          }
+          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+            @Override
+            public void run() {
+              if (project.isDisposed()) {
+                return;
+              }
+              final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+              final LocalFileSystem lfs = LocalFileSystem.getInstance();
+              final Set<VirtualFile> filesToRefresh = new HashSet<VirtualFile>();
+              for (String root : roots) {
+                final VirtualFile rootFile = lfs.refreshAndFindFileByPath(root);
+                if (rootFile != null && fileIndex.isInSourceContent(rootFile)) {
+                  filesToRefresh.add(rootFile);
                 }
               }
-            });
-          }
-          
+              if (!filesToRefresh.isEmpty()) {
+                lfs.refreshFiles(filesToRefresh, true, true, null);
+              }
+            }
+          });
         }
 
         @Override
