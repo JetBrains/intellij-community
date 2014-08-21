@@ -203,6 +203,27 @@ public class PyTypingTest extends PyTestCase {
            "expr = C(10).foo()\n");
   }
 
+  public void testAnyStrUnification() {
+    doTest("bytes",
+           "from typing import AnyStr\n" +
+           "\n" +
+           "def foo(x: AnyStr) -> AnyStr:\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = foo(b'bar')\n");
+  }
+
+  public void testAnyStrForUnknown() {
+    doTest("str | bytes",
+           "from typing import AnyStr\n" +
+           "\n" +
+           "def foo(x: AnyStr) -> AnyStr:\n" +
+           "    pass\n" +
+           "\n" +
+           "def bar(x):\n" +
+           "    expr = foo(x)\n");
+  }
+
   private void doTest(@NotNull String expectedType, @NotNull String text) {
     myFixture.copyDirectoryToProject("typing", "");
     myFixture.configureByText(PythonFileType.INSTANCE, text);
