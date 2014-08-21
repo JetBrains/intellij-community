@@ -154,6 +154,40 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     if (genericType != null) {
       return genericType;
     }
+    final PyType functionType = getFunctionType(expression, context);
+    if (functionType != null) {
+      return functionType;
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyType getFunctionType(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+    if (expression instanceof PySubscriptionExpression) {
+      final PySubscriptionExpression subscriptionExpr = (PySubscriptionExpression)expression;
+      final PyExpression operand = subscriptionExpr.getOperand();
+      final String operandName = resolveToQualifiedName(operand, context);
+      if ("typing.Function".equals(operandName)) {
+        final PyExpression indexExpr = subscriptionExpr.getIndexExpression();
+        if (indexExpr instanceof PyTupleExpression) {
+          final PyTupleExpression tupleExpr = (PyTupleExpression)indexExpr;
+          final PyExpression[] elements = tupleExpr.getElements();
+          if (elements.length == 2) {
+            final PyExpression parametersExpr = elements[0];
+            if (parametersExpr instanceof PyListLiteralExpression) {
+              final List<PyCallableParameter> parameters = new ArrayList<PyCallableParameter>();
+              final PyListLiteralExpression listExpr = (PyListLiteralExpression)parametersExpr;
+              for (PyExpression argExpr : listExpr.getElements()) {
+                parameters.add(new PyCallableParameterImpl(null, getType(argExpr, context)));
+              }
+              final PyExpression returnTypeExpr = elements[1];
+              final PyType returnType = getType(returnTypeExpr, context);
+              return new PyCallableTypeImpl(parameters, returnType);
+            }
+          }
+        }
+      }
+    }
     return null;
   }
 

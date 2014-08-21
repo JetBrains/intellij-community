@@ -224,6 +224,14 @@ public class PyTypingTest extends PyTestCase {
            "    expr = foo(x)\n");
   }
 
+  public void testFunctionType() {
+    doTest("(int, str) -> str",
+           "from typing import Function\n" +
+           "\n" +
+           "def foo(expr: Function[[int, str], str]):\n" +
+           "    pass\n");
+  }
+
   private void doTest(@NotNull String expectedType, @NotNull String text) {
     myFixture.copyDirectoryToProject("typing", "");
     myFixture.configureByText(PythonFileType.INSTANCE, text);
