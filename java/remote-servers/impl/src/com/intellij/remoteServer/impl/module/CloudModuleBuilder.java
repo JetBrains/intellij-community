@@ -171,4 +171,9 @@ public class CloudModuleBuilder extends JavaModuleBuilder {
     }
     return myFrameworkSupportModel;
   }
+
+  @Override
+  protected boolean isAvailable() {
+    return CloudModuleBuilderContributionFactory.EP_NAME.getExtensions().length > 0;
+  }
 }
