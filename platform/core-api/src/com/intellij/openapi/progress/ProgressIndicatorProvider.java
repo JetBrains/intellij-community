@@ -54,4 +54,8 @@ public abstract class ProgressIndicatorProvider {
       ourInstance.doCheckCanceled();
     }
   }
+
+  public static void canceled() {
+    ourNeedToCheckCancel = true;
+  }
 }

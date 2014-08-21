@@ -76,6 +76,7 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA122616() { doTest(); }
   public void testIDEA122700() { doTest(); }
   public void testIDEA122406() { doTest(); }
+  @Bombed(day = 30, month = Calendar.AUGUST)
   public void testNestedCallsInsideLambdaReturnExpression() { doTest(); }
   @Bombed(day = 30, month = Calendar.AUGUST)
   public void testIDEA123731() { doTest(); }

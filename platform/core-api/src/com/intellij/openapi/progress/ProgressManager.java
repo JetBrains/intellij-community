@@ -184,7 +184,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
     throws ProcessCanceledException {
     ProgressIndicator oldIndicator = null;
 
-    boolean set = progress != null && progress != (oldIndicator = myThreadIndicator.get());
+    boolean set = progress != null && progress != (oldIndicator = getProgressIndicator());
     if (set) {
       myThreadIndicator.set(progress);
     }

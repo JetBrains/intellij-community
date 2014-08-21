@@ -71,7 +71,7 @@ public class StudyUtils {
       return wrapHTML ? UIUtil.toHtml(taskText.toString()) : taskText.toString();
     }
     catch (IOException e) {
-      LOG.error("Failed to get file text from file " + fileName, e);
+      LOG.info("Failed to get file text from file " + fileName, e);
     }
     finally {
       closeSilently(reader);

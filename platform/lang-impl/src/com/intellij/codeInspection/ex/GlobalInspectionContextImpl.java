@@ -710,7 +710,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
           @Override
           public void run() {
-            CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
+            if (commandName != null) {
+              CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
+            }
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
               @Override
               public void run() {
