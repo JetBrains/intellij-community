@@ -571,7 +571,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
 
   @Override
   public PyAnnotation getAnnotation() {
-    return findChildByClass(PyAnnotation.class);
+    return getStubOrPsiChild(PyElementTypes.ANNOTATION);
   }
 
   @NotNull
