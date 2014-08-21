@@ -47,5 +47,8 @@ public abstract class StreamProvider {
     return Collections.emptyList();
   }
 
-  public abstract void deleteFile(@NotNull String fileSpec, @NotNull RoamingType roamingType);
+  /**
+   * Delete file or directory
+   */
+  public abstract void delete(@NotNull String fileSpec, @NotNull RoamingType roamingType);
 }
