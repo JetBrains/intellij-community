@@ -51,7 +51,9 @@ import com.intellij.remote.RemoteProcessHandlerBase;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.console.PyConsoleType;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
+import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import com.jetbrains.python.facet.LibraryContributingFacet;
@@ -119,12 +121,23 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   public ExecutionResult execute(Executor executor, CommandLinePatcher... patchers) throws ExecutionException {
-    final ProcessHandler processHandler = startProcess(patchers);
-    final ConsoleView console = createAndAttachConsole(myConfig.getProject(), processHandler, executor);
+    if (myConfig.showCommandLineAfterwards()) {
+      PydevConsoleRunner runner =
+        new PydevConsoleRunner(myConfig.getProject(), myConfig.getSdk(), PyConsoleType.PYTHON, myConfig.getWorkingDirectory(),
+                               myConfig.getEnvs());
 
-    List<AnAction> actions = Lists.newArrayList(createActions(console, processHandler));
+      runner.run();
 
-    return new DefaultExecutionResult(console, processHandler, actions.toArray(new AnAction[actions.size()]));
+      return new DefaultExecutionResult(runner.getConsoleView(), runner.getProcessHandler());
+    }
+    else {
+      final ProcessHandler processHandler = startProcess(patchers);
+      final ConsoleView console = createAndAttachConsole(myConfig.getProject(), processHandler, executor);
+
+      List<AnAction> actions = Lists.newArrayList(createActions(console, processHandler));
+
+      return new DefaultExecutionResult(console, processHandler, actions.toArray(new AnAction[actions.size()]));
+    }
   }
 
   @NotNull
@@ -141,7 +154,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
   protected void addTracebackFilter(Project project, ConsoleView consoleView, ProcessHandler processHandler) {
     if (PySdkUtil.isRemote(myConfig.getSdk())) {
       assert processHandler instanceof RemoteProcessHandlerBase;
-      consoleView.addMessageFilter(new PyRemoteTracebackFilter(project, myConfig.getWorkingDirectory(), (RemoteProcessHandlerBase) processHandler));
+      consoleView
+        .addMessageFilter(new PyRemoteTracebackFilter(project, myConfig.getWorkingDirectory(), (RemoteProcessHandlerBase)processHandler));
     }
     else {
       consoleView.addMessageFilter(new PythonTracebackFilter(project, myConfig.getWorkingDirectory()));
@@ -174,7 +188,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
     GeneralCommandLine commandLine = generateCommandLine(patchers);
 
     // Extend command line
-    PythonRunConfigurationExtensionsManager.getInstance().patchCommandLine(myConfig, getRunnerSettings(), commandLine, getEnvironment().getRunner().getRunnerId());
+    PythonRunConfigurationExtensionsManager.getInstance()
+      .patchCommandLine(myConfig, getRunnerSettings(), commandLine, getEnvironment().getRunner().getRunnerId());
     Sdk sdk = PythonSdkType.findSdkByPath(myConfig.getInterpreterPath());
     final ProcessHandler processHandler;
     if (PySdkUtil.isRemote(sdk)) {

@@ -37,10 +37,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.PathMappingSettings;
 import com.intellij.util.PlatformUtils;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonModuleTypeBase;
-import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -64,6 +64,8 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
   private boolean myUseModuleSdk;
   private boolean myAddContentRoots = true;
   private boolean myAddSourceRoots = true;
+  private boolean myShowCommandLineAfterwards = false;
+
   protected PathMappingSettings myMappingSettings;
 
   public AbstractPythonRunConfiguration(Project project, final ConfigurationFactory factory) {
@@ -228,6 +230,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
     final String addSourceRoots = JDOMExternalizerUtil.readField(element, "ADD_SOURCE_ROOTS");
     myAddSourceRoots = addSourceRoots == null|| Boolean.parseBoolean(addSourceRoots);
     getConfigurationModule().readExternal(element);
+    myShowCommandLineAfterwards = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "SHOW_COMMAND_LINE", "false"));
 
     setMappingSettings(PathMappingSettings.readExternal(element));
     // extension settings:
@@ -251,6 +254,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
     JDOMExternalizerUtil.writeField(element, "IS_MODULE_SDK", Boolean.toString(myUseModuleSdk));
     JDOMExternalizerUtil.writeField(element, "ADD_CONTENT_ROOTS", Boolean.toString(myAddContentRoots));
     JDOMExternalizerUtil.writeField(element, "ADD_SOURCE_ROOTS", Boolean.toString(myAddSourceRoots));
+    JDOMExternalizerUtil.writeField(element, "SHOW_COMMAND_LINE", Boolean.toString(myShowCommandLineAfterwards));
     getConfigurationModule().writeExternal(element);
 
     // extension settings:
@@ -327,6 +331,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
     target.setMappingSettings(source.getMappingSettings());
     target.addContentRoots(source.addContentRoots());
     target.addSourceRoots(source.addSourceRoots());
+    target.setShowCommandLineAfterwards(source.showCommandLineAfterwards());
   }
 
   /**
@@ -418,5 +423,13 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
       return path;
     }
     return null;
+  }
+
+  public boolean showCommandLineAfterwards() {
+    return myShowCommandLineAfterwards;
+  }
+
+  public void setShowCommandLineAfterwards(boolean showCommandLineAfterwards) {
+    myShowCommandLineAfterwards = showCommandLineAfterwards;
   }
 }
