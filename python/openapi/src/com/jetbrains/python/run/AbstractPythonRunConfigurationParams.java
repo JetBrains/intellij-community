@@ -64,7 +64,4 @@ public interface AbstractPythonRunConfigurationParams {
   boolean addSourceRoots();
   void addContentRoots(boolean add);
   void addSourceRoots(boolean add);
-
-  boolean showCommandLineAfterwards();
-  void setShowCommandLineAfterwards(boolean showCommandLineAfterwards);
 }

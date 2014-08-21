@@ -28,5 +28,8 @@ public interface PythonRunConfigurationParams {
   String getScriptParameters();
 
   void setScriptParameters(String scriptParameters);
+
+  boolean showCommandLineAfterwards();
+  void setShowCommandLineAfterwards(boolean showCommandLineAfterwards);
 }
 

@@ -47,8 +47,10 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
   public static final String SCRIPT_NAME = "SCRIPT_NAME";
   public static final String PARAMETERS = "PARAMETERS";
   public static final String MULTIPROCESS = "MULTIPROCESS";
+  public static final String SHOW_COMMAND_LINE = "SHOW_COMMAND_LINE";
   private String myScriptName;
   private String myScriptParameters;
+  private boolean myShowCommandLineAfterwards = false;
 
   protected PythonRunConfiguration(Project project, ConfigurationFactory configurationFactory) {
     super(project, configurationFactory);
@@ -98,17 +100,27 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     myScriptParameters = scriptParameters;
   }
 
+  public boolean showCommandLineAfterwards() {
+    return myShowCommandLineAfterwards;
+  }
+
+  public void setShowCommandLineAfterwards(boolean showCommandLineAfterwards) {
+    myShowCommandLineAfterwards = showCommandLineAfterwards;
+  }
+
   public void readExternal(Element element) throws InvalidDataException {
     PathMacroManager.getInstance(getProject()).expandPaths(element);
     super.readExternal(element);
     myScriptName = JDOMExternalizerUtil.readField(element, SCRIPT_NAME);
     myScriptParameters = JDOMExternalizerUtil.readField(element, PARAMETERS);
+    myShowCommandLineAfterwards = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, SHOW_COMMAND_LINE, "false"));
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
     JDOMExternalizerUtil.writeField(element, SCRIPT_NAME, myScriptName);
     JDOMExternalizerUtil.writeField(element, PARAMETERS, myScriptParameters);
+    JDOMExternalizerUtil.writeField(element, SHOW_COMMAND_LINE, Boolean.toString(myShowCommandLineAfterwards));
     PathMacroManager.getInstance(getProject()).collapsePathsRecursively(element);
   }
 
@@ -120,6 +132,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     AbstractPythonRunConfiguration.copyParams(source.getBaseParams(), target.getBaseParams());
     target.setScriptName(source.getScriptName());
     target.setScriptParameters(source.getScriptParameters());
+    target.setShowCommandLineAfterwards(source.showCommandLineAfterwards());
   }
 
   @Override

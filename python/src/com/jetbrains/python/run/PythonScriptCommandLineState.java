@@ -15,11 +15,18 @@
  */
 package com.jetbrains.python.run;
 
+import com.intellij.execution.DefaultExecutionResult;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.python.console.PyConsoleType;
+import com.jetbrains.python.console.PydevConsoleRunner;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -30,6 +37,23 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
   public PythonScriptCommandLineState(PythonRunConfiguration runConfiguration, ExecutionEnvironment env) {
     super(runConfiguration, env);
     myConfig = runConfiguration;
+  }
+
+  @NotNull
+  @Override
+  public ExecutionResult execute(Executor executor, CommandLinePatcher... patchers) throws ExecutionException {
+    if (myConfig.showCommandLineAfterwards()) {
+      PydevConsoleRunner runner =
+        new PydevConsoleRunner(myConfig.getProject(), myConfig.getSdk(), PyConsoleType.PYTHON, myConfig.getWorkingDirectory(),
+                               myConfig.getEnvs());
+
+      runner.run();
+
+      return new DefaultExecutionResult(runner.getConsoleView(), runner.getProcessHandler());
+    }
+    else {
+      return super.execute(executor, patchers);
+    }
   }
 
   @Override
@@ -52,5 +76,4 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       commandLine.setWorkDirectory(myConfig.getWorkingDirectory());
     }
   }
-
 }

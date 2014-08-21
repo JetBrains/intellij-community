@@ -71,7 +71,6 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   private JPanel myHideablePanel;
   private JBCheckBox myAddContentRootsCheckbox;
   private JBCheckBox myAddSourceRootsCheckbox;
-  private JBCheckBox myShowCommandLineCheckbox;
 
   private JComponent labelAnchor;
   private final Project myProject;
@@ -294,16 +293,6 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   @Override
   public void addSourceRoots(boolean add) {
     myAddSourceRootsCheckbox.setSelected(add);
-  }
-
-  @Override
-  public boolean showCommandLineAfterwards() {
-    return myShowCommandLineCheckbox.isSelected();
-  }
-
-  @Override
-  public void setShowCommandLineAfterwards(boolean showCommandLineAfterwards) {
-    myShowCommandLineCheckbox.setSelected(showCommandLineAfterwards);
   }
 
   private void createUIComponents() {

@@ -51,9 +51,7 @@ import com.intellij.remote.RemoteProcessHandlerBase;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PythonHelpersLocator;
-import com.jetbrains.python.console.PyConsoleType;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
-import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import com.jetbrains.python.facet.LibraryContributingFacet;
@@ -121,23 +119,12 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   public ExecutionResult execute(Executor executor, CommandLinePatcher... patchers) throws ExecutionException {
-    if (myConfig.showCommandLineAfterwards()) {
-      PydevConsoleRunner runner =
-        new PydevConsoleRunner(myConfig.getProject(), myConfig.getSdk(), PyConsoleType.PYTHON, myConfig.getWorkingDirectory(),
-                               myConfig.getEnvs());
+    final ProcessHandler processHandler = startProcess(patchers);
+    final ConsoleView console = createAndAttachConsole(myConfig.getProject(), processHandler, executor);
 
-      runner.run();
+    List<AnAction> actions = Lists.newArrayList(createActions(console, processHandler));
 
-      return new DefaultExecutionResult(runner.getConsoleView(), runner.getProcessHandler());
-    }
-    else {
-      final ProcessHandler processHandler = startProcess(patchers);
-      final ConsoleView console = createAndAttachConsole(myConfig.getProject(), processHandler, executor);
-
-      List<AnAction> actions = Lists.newArrayList(createActions(console, processHandler));
-
-      return new DefaultExecutionResult(console, processHandler, actions.toArray(new AnAction[actions.size()]));
-    }
+    return new DefaultExecutionResult(console, processHandler, actions.toArray(new AnAction[actions.size()]));
   }
 
   @NotNull
