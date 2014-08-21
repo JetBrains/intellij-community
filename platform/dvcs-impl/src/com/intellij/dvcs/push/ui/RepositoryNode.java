@@ -71,14 +71,24 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode 
   }
 
   @Override
+  public Object getUserObject() {
+    return myRepositoryPanel;
+  }
+
+  @Override
   @NotNull
   public String getValue() {
     return myRepositoryPanel.getRemoteTargetName();
   }
 
   @Override
-  public void fireOnChange(@NotNull String value) {
-    myRepositoryPanel.fireOnChange(value);
+  public void fireOnChange() {
+    myRepositoryPanel.fireOnChange();
+  }
+
+  @Override
+  public void fireOnCancel() {
+    myRepositoryPanel.fireOnCancel();
   }
 
   @Override
