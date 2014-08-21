@@ -28,6 +28,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -80,14 +81,20 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
     try {
       final EvaluationContextImpl thisEvaluationContext = getEvaluationContext(evaluationContext);
 
-      final ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject, new EvaluatingComputable<ExpressionEvaluator>() {
-        public ExpressionEvaluator compute() throws EvaluateException {
-          final PsiElement psiContext = PositionUtil.getContextElement(evaluationContext);
-          return getEffectiveCodeFragmentFactory(psiContext).getEvaluatorBuilder().build(getEvaluationCode(thisEvaluationContext),
-                                                            ContextUtil.getSourcePosition(thisEvaluationContext));
-        }
-      });
-
+      final ExpressionEvaluator evaluator;
+      if (Registry.is("debugger.compiling.evaluator")) {
+        evaluator = new CompilingEvaluator(getEvaluationText());
+      }
+      else {
+        evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject, new EvaluatingComputable<ExpressionEvaluator>() {
+          public ExpressionEvaluator compute() throws EvaluateException {
+            final PsiElement psiContext = PositionUtil.getContextElement(evaluationContext);
+            return getEffectiveCodeFragmentFactory(psiContext).getEvaluatorBuilder().build(getEvaluationCode(thisEvaluationContext),
+                                                                                           ContextUtil
+                                                                                             .getSourcePosition(thisEvaluationContext));
+          }
+        });
+      }
 
       if (!thisEvaluationContext.getDebugProcess().isAttached()) {
         throw EvaluateExceptionUtil.PROCESS_EXITED;
