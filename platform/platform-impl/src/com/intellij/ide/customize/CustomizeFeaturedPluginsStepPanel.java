@@ -107,11 +107,11 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
       JPanel progressPanel = new JPanel(new VerticalFlowLayout(true, false));
       progressPanel.add(progressBar);
       final LinkLabel cancelLink = new LinkLabel("Cancel", AllIcons.Actions.Cancel);
-      JPanel linkWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER));
+      JPanel linkWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
       linkWrapper.add(cancelLink);
       progressPanel.add(linkWrapper);
 
-      JPanel buttonPanel = new JPanel(new VerticalFlowLayout());
+      JPanel buttonPanel = new JPanel(new VerticalFlowLayout(0, 0));
       buttonPanel.add(installButton);
 
       buttonWrapper.add(buttonPanel, "button");
@@ -238,7 +238,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
           protected Color getColor() {
             return ColorUtil.withAlpha(JBColor.foreground(), .2);
           }
-        }, BorderFactory.createEmptyBorder(GAP, GAP, 0, GAP)));
+        }, BorderFactory.createEmptyBorder(0, GAP / 2, 0, GAP / 2)));
       cursor++;
     }
 

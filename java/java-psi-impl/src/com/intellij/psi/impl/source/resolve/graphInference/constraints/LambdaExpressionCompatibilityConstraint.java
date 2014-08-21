@@ -45,7 +45,7 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
       constraints.add(new StrictSubtypingConstraint(myT, groundTargetType));
     } else {
       for (PsiParameter parameter : parameters) {
-        if (!session.isProperType(substitutor.substitute(parameter.getType()))) {
+        if (!session.isProperType(session.substituteWithInferenceVariables(substitutor.substitute(parameter.getType())))) {
           return false;
         }
       }
@@ -62,7 +62,7 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
         if (returnExpressions.isEmpty() && !myExpression.isValueCompatible()) {  //not value-compatible
           return false;
         }
-        returnType = substitutor.substitute(returnType);
+        returnType = session.substituteWithInferenceVariables(substitutor.substitute(returnType));
         if (!session.isProperType(returnType)) {
           for (PsiExpression returnExpression : returnExpressions) {
             constraints.add(new ExpressionCompatibilityConstraint(returnExpression, returnType));

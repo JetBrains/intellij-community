@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.plugins;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.ClassUtilCore;
 import com.intellij.ide.IdeBundle;
 import com.intellij.idea.IdeaApplication;
@@ -100,31 +101,44 @@ public class PluginManager extends PluginManagerCore {
 
   public static void processException(Throwable t) {
     if (!IdeaApplication.isLoaded()) {
-      @SuppressWarnings("ThrowableResultOfMethodCallIgnored") StartupAbortedException se = findCause(t);
+      @SuppressWarnings("ThrowableResultOfMethodCallIgnored") StartupAbortedException se = findCause(t, StartupAbortedException.class);
       if (se == null) se = new StartupAbortedException(t);
+      @SuppressWarnings("ThrowableResultOfMethodCallIgnored") PluginException pe = findCause(t, PluginException.class);
+      PluginId pluginId = pe != null ? pe.getPluginId() : null;
 
-      if (se.logError()) {
+      if (Logger.isInitialized() && !(t instanceof ProcessCanceledException)) {
         try {
-          if (Logger.isInitialized() && !(t instanceof ProcessCanceledException)) {
-            getLogger().error(t);
-          }
+          getLogger().error(t);
         }
         catch (Throwable ignore) { }
-
-        Main.showMessage("Start Failed", t);
       }
 
-      System.exit(se.exitCode());
+      if (pluginId != null && !CORE_PLUGIN_ID.equals(pluginId.getIdString())) {
+        disablePlugin(pluginId.getIdString());
+
+        StringWriter message = new StringWriter();
+        message.append("Plugin '").append(pluginId.getIdString()).append("' failed to initialize and will be disabled. ");
+        message.append(" Please restart ").append(ApplicationNamesInfo.getInstance().getFullProductName()).append('.');
+        message.append("\n\n");
+        pe.getCause().printStackTrace(new PrintWriter(message));
+
+        Main.showMessage("Plugin Error", message.toString(), false);
+        System.exit(Main.PLUGIN_ERROR);
+      }
+      else {
+        Main.showMessage("Start Failed", t);
+        System.exit(se.exitCode());
+      }
     }
     else if (!(t instanceof ProcessCanceledException)) {
       getLogger().error(t);
     }
   }
 
-  private static StartupAbortedException findCause(Throwable t) {
+  private static <T extends Throwable> T findCause(Throwable t, Class<T> clazz) {
     while (t != null) {
-      if (t instanceof StartupAbortedException) {
-        return (StartupAbortedException)t;
+      if (clazz.isInstance(t)) {
+        return clazz.cast(t);
       }
       t = t.getCause();
     }
@@ -229,18 +243,7 @@ public class PluginManager extends PluginManagerCore {
     }
 
     if (pluginId != null && !CORE_PLUGIN_ID.equals(pluginId.getIdString())) {
-      getLogger().warn(t);
-
-      disablePlugin(pluginId.getIdString());
-
-      StringWriter message = new StringWriter();
-      message.append("Plugin '").append(pluginId.getIdString()).append("' failed to initialize and will be disabled. ");
-      message.append(" Please restart ").append(ApplicationNamesInfo.getInstance().getFullProductName()).append('.');
-      message.append("\n\n");
-      t.printStackTrace(new PrintWriter(message));
-      Main.showMessage("Plugin Error", message.toString(), false);
-
-      throw new StartupAbortedException(t).exitCode(Main.PLUGIN_ERROR).logError(false);
+      throw new StartupAbortedException(new PluginException(t, pluginId));
     }
     else {
       throw new StartupAbortedException("Fatal error initializing '" + componentClassName + "'", t);
@@ -249,7 +252,6 @@ public class PluginManager extends PluginManagerCore {
 
   private static class StartupAbortedException extends RuntimeException {
     private int exitCode = Main.STARTUP_EXCEPTION;
-    private boolean logError = true;
 
     public StartupAbortedException(Throwable cause) {
       super(cause);
@@ -265,15 +267,6 @@ public class PluginManager extends PluginManagerCore {
 
     public StartupAbortedException exitCode(int exitCode) {
       this.exitCode = exitCode;
-      return this;
-    }
-
-    public boolean logError() {
-      return logError;
-    }
-
-    public StartupAbortedException logError(boolean logError) {
-      this.logError = logError;
       return this;
     }
   }

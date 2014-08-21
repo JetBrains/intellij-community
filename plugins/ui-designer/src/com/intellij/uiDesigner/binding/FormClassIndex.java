@@ -127,15 +127,15 @@ public class FormClassIndex extends ScalarIndexExtension<String> {
     });
   }
 
-  public static List<PsiFile> findFormsBoundToClass(@NotNull PsiClass psiClass) {
+  public static List<PsiFile> findFormsBoundToClass(Project project, @NotNull PsiClass psiClass) {
     String qName = FormReferencesSearcher.getQualifiedName(psiClass);
     if (qName == null) return Collections.emptyList();
-    return findFormsBoundToClass(psiClass.getProject(), qName);
+    return findFormsBoundToClass(project, qName);
   }
 
-  public static List<PsiFile> findFormsBoundToClass(PsiClass psiClass, GlobalSearchScope scope) {
+  public static List<PsiFile> findFormsBoundToClass(Project project, PsiClass psiClass, GlobalSearchScope scope) {
     String qName = FormReferencesSearcher.getQualifiedName(psiClass);
     if (qName == null) return Collections.emptyList();
-    return findFormsBoundToClass(psiClass.getProject(), qName, scope);
+    return findFormsBoundToClass(project, qName, scope);
   }
 }

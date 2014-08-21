@@ -17,7 +17,11 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -25,8 +29,15 @@ import com.intellij.util.containers.MultiMap;
  */
 public abstract class VcsTaskHandler {
 
-  public static VcsTaskHandler[] getAllHandlers(Project project) {
-    return EXTENSION_POINT_NAME.getExtensions(project);
+  public static VcsTaskHandler[] getAllHandlers(final Project project) {
+    VcsTaskHandler[] extensions = EXTENSION_POINT_NAME.getExtensions(project);
+    List<VcsTaskHandler> handlers = ContainerUtil.filter(extensions, new Condition<VcsTaskHandler>() {
+      @Override
+      public boolean value(VcsTaskHandler handler) {
+        return handler.isEnabled(project);
+      }
+    });
+    return handlers.toArray(new VcsTaskHandler[handlers.size()]);
   }
 
   public static class TaskInfo {
@@ -48,6 +59,8 @@ public abstract class VcsTaskHandler {
   }
 
   private static final ExtensionPointName<VcsTaskHandler> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.vcs.taskHandler");
+
+  public abstract boolean isEnabled(Project project);
 
   public abstract TaskInfo startNewTask(String taskName);
 

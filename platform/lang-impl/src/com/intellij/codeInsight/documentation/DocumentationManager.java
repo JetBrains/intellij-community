@@ -426,6 +426,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       @Override
       public boolean process(JBPopup popup) {
         createToolWindow(element, originalElement);
+        myToolWindow.setAutoHide(false);
         popup.cancel();
         return false;
       }

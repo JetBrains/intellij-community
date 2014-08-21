@@ -222,6 +222,9 @@ public class TaskFile implements Stateful {
   }
 
   private void navigateToTaskWindow(@NotNull final Editor editor, @NotNull final TaskWindow firstTaskWindow) {
+    if (!firstTaskWindow.isValid(editor.getDocument())) {
+      return;
+    }
     mySelectedTaskWindow = firstTaskWindow;
     LogicalPosition taskWindowStart = new LogicalPosition(firstTaskWindow.getLine(), firstTaskWindow.getStart());
     editor.getCaretModel().moveToLogicalPosition(taskWindowStart);

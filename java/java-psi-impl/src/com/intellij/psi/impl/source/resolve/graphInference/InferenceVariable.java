@@ -15,9 +15,7 @@
  */
 package com.intellij.psi.impl.source.resolve.graphInference;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightTypeParameter;
 
 import java.util.*;
@@ -136,6 +134,11 @@ public class InferenceVariable extends LightTypeParameter {
   @Override
   public boolean isEquivalentTo(PsiElement another) {
     return this == another || getDelegate() == another;
+  }
+
+  @Override
+  public boolean useDelegateToSubstitute() {
+    return false;
   }
 
   @Override
