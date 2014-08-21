@@ -50,6 +50,7 @@ public class CodeSourcePanel extends IpnbPanel implements EditorPanel {
   }
 
   @Override
+  @NotNull
   public Editor getEditor() {
     return myEditor;
   }

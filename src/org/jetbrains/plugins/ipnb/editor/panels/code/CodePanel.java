@@ -3,9 +3,11 @@ package org.jetbrains.plugins.ipnb.editor.panels.code;
 import com.google.common.collect.Lists;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -120,6 +122,9 @@ public class CodePanel extends IpnbEditablePanel<JComponent, CodeCell> {
   @Override
   public void runCell() {
     super.runCell();
+    final Document document = myCodeSourcePanel.getEditor().getDocument();
+    final String text = document.getText();
+    myCell.setSource(StringUtil.splitByLines(text));
     final IpnbConnectionManager connectionManager = IpnbConnectionManager.getInstance(myProject);
     connectionManager.executeCell(this);
   }
