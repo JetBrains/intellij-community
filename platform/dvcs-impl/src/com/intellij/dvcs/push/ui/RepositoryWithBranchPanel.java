@@ -48,6 +48,7 @@ public class RepositoryWithBranchPanel extends NonOpaquePanel implements TreeCel
   private final JLabel myRepositoryLabel;
   private final ColoredTreeCellRenderer myTextRenderer;
   @NotNull private final List<RepositoryNodeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private String myOldDestination;
 
   public RepositoryWithBranchPanel(Project project, @NotNull String repoName,
                                    @NotNull String sourceName, String targetName, @NotNull Collection<String> targetVariants) {
@@ -65,6 +66,7 @@ public class RepositoryWithBranchPanel extends NonOpaquePanel implements TreeCel
     myRepositoryLabel = new JLabel(repoName);
     myLocalBranch = new JBLabel(sourceName);
     myArrowLabel = new JLabel(" -> ");
+    myOldDestination = targetName;
     TextFieldWithAutoCompletionListProvider<String> provider =
       new TextFieldWithAutoCompletion.StringsCompletionProvider(targetVariants, null);
     myDestBranchTextField = new TextFieldWithAutoCompletion<String>(project, provider, true, targetName) {
@@ -172,9 +174,10 @@ public class RepositoryWithBranchPanel extends NonOpaquePanel implements TreeCel
     myListeners.add(listener);
   }
 
-  public void fireOnChange(@NotNull String newValue) {
+  public void fireOnChange() {
+    myOldDestination = myDestBranchTextField.getText();
     for (RepositoryNodeListener listener : myListeners) {
-      listener.onTargetChanged(newValue);
+      listener.onTargetChanged(myOldDestination);
     }
   }
 
@@ -182,6 +185,10 @@ public class RepositoryWithBranchPanel extends NonOpaquePanel implements TreeCel
     for (RepositoryNodeListener listener : myListeners) {
       listener.onSelectionChanged(isSelected);
     }
+  }
+
+  public void fireOnCancel() {
+    myDestBranchTextField.setText(myOldDestination);
   }
 }
 

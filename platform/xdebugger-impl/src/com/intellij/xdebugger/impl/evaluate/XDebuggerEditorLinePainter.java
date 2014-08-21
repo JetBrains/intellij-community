@@ -15,8 +15,10 @@
  */
 package com.intellij.xdebugger.impl.evaluate;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorLinePainter;
 import com.intellij.openapi.editor.LineExtensionInfo;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -39,63 +41,72 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class XDebuggerEditorLinePainter extends EditorLinePainter {
-  public static final Key<Map<Variable, VariableValue>> CACHE = Key.create("debug.frame");
+  public static final Key<Map<Variable, VariableValue>> CACHE = Key.create("debug.inline.variables.cache");
   @Override
   public Collection<LineExtensionInfo> getLineExtensions(@NotNull Project project, @NotNull VirtualFile file, int lineNumber) {
     if (!Registry.is("ide.debugger.inline")) {
       return null;
     }
 
-    Map<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>> map = project.getUserData(XVariablesView.DEBUG_VARIABLES);
+    final Map<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>> map = project.getUserData(XVariablesView.DEBUG_VARIABLES);
+    final Map<VirtualFile, Long> timestamps = project.getUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS);
+    final Document doc = FileDocumentManager.getInstance().getDocument(file);
+
+    if (map == null || timestamps == null || doc == null) {
+      return null;
+    }
+
     Map<Variable, VariableValue> oldValues = project.getUserData(CACHE);
     if (oldValues == null) {
       oldValues = new HashMap<Variable, VariableValue>();
       project.putUserData(CACHE, oldValues);
     }
-    if (map != null) {
-      Set<XValueNodeImpl> values = map.get(Pair.create(file, lineNumber));
-      if (values != null && !values.isEmpty()) {
-        ArrayList<LineExtensionInfo> result = new ArrayList<LineExtensionInfo>();
-        for (XValueNodeImpl value : values) {
-          SimpleColoredText text = new SimpleColoredText();
-          XValueTextRendererImpl renderer = new XValueTextRendererImpl(text);
-          final XValuePresentation presentation = value.getValuePresentation();
-          if (presentation == null) continue;
-          try {
-            if (presentation instanceof XValueCompactPresentation) {
-              ((XValueCompactPresentation)presentation).renderValue(renderer, value);
-            } else {
-              presentation.renderValue(renderer);
-            }
-          } catch (Exception e) {
-            continue;
-          }
-          final Color color = getForeground();
-          final String name = value.getName();
-          result.add(new LineExtensionInfo("  " + name + ": ", color, null, null, Font.PLAIN));
-
-          Variable var = new Variable(name, lineNumber);
-          VariableValue variableValue = oldValues.get(var);
-          if (variableValue == null) {
-            variableValue = new VariableValue(text.toString(), null, value.hashCode());
-            oldValues.put(var, variableValue);
-          }
-          if (variableValue.valueNodeHashCode != value.hashCode()) {
-            variableValue.old = variableValue.actual;
-            variableValue.actual = text.toString();
-            variableValue.valueNodeHashCode = value.hashCode();
-          }
-
-          if (!variableValue.isChanged()) {
-            for (String s : text.getTexts()) {
-              result.add(new LineExtensionInfo(s, color, null, null, Font.PLAIN));
-            }
+    final Long timestamp = timestamps.get(file);
+    if (timestamp == null || timestamp < doc.getModificationStamp()) {
+      return null;
+    }
+    Set<XValueNodeImpl> values = map.get(Pair.create(file, lineNumber));
+    if (values != null && !values.isEmpty()) {
+      ArrayList<LineExtensionInfo> result = new ArrayList<LineExtensionInfo>();
+      for (XValueNodeImpl value : values) {
+        SimpleColoredText text = new SimpleColoredText();
+        XValueTextRendererImpl renderer = new XValueTextRendererImpl(text);
+        final XValuePresentation presentation = value.getValuePresentation();
+        if (presentation == null) continue;
+        try {
+          if (presentation instanceof XValueCompactPresentation) {
+            ((XValueCompactPresentation)presentation).renderValue(renderer, value);
           } else {
-            variableValue.produceChangedParts(result);
+            presentation.renderValue(renderer);
           }
+        } catch (Exception e) {
+          continue;
         }
-        return result;
+        final Color color = getForeground();
+        final String name = value.getName();
+        result.add(new LineExtensionInfo("  " + name + ": ", color, null, null, Font.PLAIN));
+
+        Variable var = new Variable(name, lineNumber);
+        VariableValue variableValue = oldValues.get(var);
+        if (variableValue == null) {
+          variableValue = new VariableValue(text.toString(), null, value.hashCode());
+          oldValues.put(var, variableValue);
+        }
+        if (variableValue.valueNodeHashCode != value.hashCode()) {
+          variableValue.old = variableValue.actual;
+          variableValue.actual = text.toString();
+          variableValue.valueNodeHashCode = value.hashCode();
+        }
+
+        if (!variableValue.isChanged()) {
+          for (String s : text.getTexts()) {
+            result.add(new LineExtensionInfo(s, color, null, null, Font.PLAIN));
+          }
+        } else {
+          variableValue.produceChangedParts(result);
+        }
       }
+      return result;
     }
 
     return null;

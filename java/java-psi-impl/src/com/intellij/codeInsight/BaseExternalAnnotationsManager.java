@@ -49,21 +49,20 @@ import java.util.concurrent.ConcurrentMap;
 
 public abstract class BaseExternalAnnotationsManager extends ExternalAnnotationsManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.BaseExternalAnnotationsManager");
+  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   @NotNull private static final List<PsiFile> NULL_LIST = new ArrayList<PsiFile>(0);
   @NotNull
   private final ConcurrentMap<VirtualFile, List<PsiFile>> myExternalAnnotations = new ConcurrentSoftValueHashMap<VirtualFile, List<PsiFile>>(10, 0.75f, 2);
   protected final PsiManager myPsiManager;
 
-  @SuppressWarnings("UnusedDeclaration")
-  private final LowMemoryWatcher myLowMemoryWatcher = LowMemoryWatcher.register(new Runnable() {
-    @Override
-    public void run() {
-      dropCache();
-    }
-  });
-
   public BaseExternalAnnotationsManager(final PsiManager psiManager) {
     myPsiManager = psiManager;
+    LowMemoryWatcher.register(new Runnable() {
+      @Override
+      public void run() {
+        dropCache();
+      }
+    }, psiManager.getProject());
   }
 
   @Nullable
