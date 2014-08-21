@@ -171,6 +171,12 @@ public class IdeEventQueue extends EventQueue {
     });
 
     addDispatcher(new WindowsAltSupressor(), null);
+
+    Application app = ApplicationManager.getApplication();
+    if (app != null && app.isUnitTestMode()) {
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
+      ourAppIsLoaded = true;
+    }
   }
 
 
