@@ -62,6 +62,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
   protected ContributorsBasedGotoByModel(@NotNull Project project, @NotNull ChooseByNameContributor[] contributors) {
     myProject = project;
     myContributors = contributors;
+    assert !Arrays.asList(contributors).contains(null);
   }
 
   @Override
@@ -95,7 +96,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     Processor<ChooseByNameContributor> processor = new ReadActionProcessor<ChooseByNameContributor>() {
       @Override
-      public boolean processInReadAction(ChooseByNameContributor contributor) {
+      public boolean processInReadAction(@NotNull ChooseByNameContributor contributor) {
         try {
           if (!myProject.isDisposed()) {
             long contributorStarted = System.currentTimeMillis();
@@ -185,13 +186,15 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
   }
 
   @NotNull
-  public Object[] getElementsByName(final String name, final FindSymbolParameters parameters, @NotNull final ProgressIndicator canceled) {
+  public Object[] getElementsByName(@NotNull final String name,
+                                    @NotNull final FindSymbolParameters parameters,
+                                    @NotNull final ProgressIndicator canceled) {
     long elementByNameStarted = System.currentTimeMillis();
     final List<NavigationItem> items = Collections.synchronizedList(new ArrayList<NavigationItem>());
 
     Processor<ChooseByNameContributor> processor = new Processor<ChooseByNameContributor>() {
       @Override
-      public boolean process(ChooseByNameContributor contributor) {
+      public boolean process(@NotNull ChooseByNameContributor contributor) {
         if (myProject.isDisposed()) {
           return true;
         }
