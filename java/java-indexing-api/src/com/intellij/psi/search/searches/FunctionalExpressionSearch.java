@@ -25,6 +25,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.EmptyQuery;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
@@ -59,7 +60,7 @@ public class FunctionalExpressionSearch extends ExtensibleQueryFactory<PsiFuncti
   }
 
   public static Query<PsiFunctionalExpression> search(@NotNull final PsiMethod psiMethod) {
-    return search(psiMethod, GlobalSearchScope.allScope(psiMethod.getProject()));
+    return search(psiMethod, GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(psiMethod)));
   }
 
   public static Query<PsiFunctionalExpression> search(@NotNull final PsiMethod psiMethod, @NotNull final SearchScope scope) {
@@ -76,6 +77,6 @@ public class FunctionalExpressionSearch extends ExtensibleQueryFactory<PsiFuncti
   }
 
   public static Query<PsiFunctionalExpression> search(@NotNull final PsiClass aClass) {
-    return search(aClass, GlobalSearchScope.allScope(aClass.getProject()));
+    return search(aClass, GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(aClass)));
   }
 }

@@ -576,6 +576,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public void launchAction(@NotNull final IntentionAction action) {
     ShowIntentionActionsHandler.chooseActionAndInvoke(getFile(), getEditor(), action, action.getText());
+    UIUtil.dispatchAllInvocationEvents();
   }
 
   @Override
