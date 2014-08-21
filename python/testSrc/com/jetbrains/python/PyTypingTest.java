@@ -159,6 +159,50 @@ public class PyTypingTest extends PyTestCase {
            "    pass\n");
   }
 
+  public void testParameterizedClass() {
+    doTest("C[int]",
+           "from typing import Generic, typevar\n" +
+           "\n" +
+           "T = typevar('T')\n" +
+           "\n" +
+           "class C(Generic[T]):\n" +
+           "    def __init__(self, x: T):\n" +
+           "        pass\n" +
+           "\n" +
+           "expr = C(10)\n");
+  }
+
+  public void testParameterizedClassMethod() {
+    doTest("int",
+           "from typing import Generic, typevar\n" +
+           "\n" +
+           "T = typevar('T')\n" +
+           "\n" +
+           "class C(Generic[T]):\n" +
+           "    def __init__(self, x: T):\n" +
+           "        pass\n" +
+           "    def foo(self) -> T:\n" +
+           "        pass\n" +
+           "\n" +
+           "expr = C(10).foo()\n");
+  }
+
+  public void testParameterizedClassInheritance() {
+    doTest("int",
+           "from typing import Generic, typevar\n" +
+           "\n" +
+           "T = typevar('T')\n" +
+           "\n" +
+           "class B(Generic[T]):\n" +
+           "    def foo(self) -> T:\n" +
+           "        pass\n" +
+           "class C(B[T]):\n" +
+           "    def __init__(self, x: T):\n" +
+           "        pass\n" +
+           "\n" +
+           "expr = C(10).foo()\n");
+  }
+
   private void doTest(@NotNull String expectedType, @NotNull String text) {
     myFixture.copyDirectoryToProject("typing", "");
     myFixture.configureByText(PythonFileType.INSTANCE, text);

@@ -16,6 +16,7 @@
 package com.jetbrains.python.codeInsight;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.QualifiedName;
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -39,6 +41,12 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     .put("typing.Dict", "dict")
     .put("typing.Set", PyNames.SET)
     .put("typing.Tuple", PyNames.TUPLE)
+    .build();
+
+  private static ImmutableSet<String> GENERIC_CLASSES = ImmutableSet.<String>builder()
+    .add("typing.Generic")
+    .add("typing.AbstractGeneric")
+    .add("typing.Protocol")
     .build();
 
   public PyType getParameterType(@NotNull PyNamedParameter param, @NotNull PyFunction func, @NotNull TypeEvalContext context) {
@@ -66,8 +74,66 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
           return getTypingType(value, context);
         }
       }
+      final PyType constructorType = getGenericConstructorType(function, context);
+      if (constructorType != null) {
+        return constructorType;
+      }
     }
     return null;
+  }
+
+  @Nullable
+  private static PyType getGenericConstructorType(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
+    if (PyUtil.isInit(function)) {
+      final PyClass cls = function.getContainingClass();
+      if (cls != null) {
+        final List<PyGenericType> genericTypes = collectGenericTypes(cls, context);
+
+        final PyType elementType;
+        if (genericTypes.size() == 1) {
+          elementType = genericTypes.get(0);
+        }
+        else if (genericTypes.size() > 1) {
+          elementType = PyTupleType.create(cls, genericTypes.toArray(new PyType[genericTypes.size()]));
+        }
+        else {
+          elementType = null;
+        }
+
+        if (elementType != null) {
+          return new PyCollectionTypeImpl(cls, false, elementType);
+        }
+      }
+    }
+    return null;
+  }
+
+  @NotNull
+  private static List<PyGenericType> collectGenericTypes(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+    boolean isGeneric = false;
+    for (PyClass ancestor : cls.getAncestorClasses(context)) {
+      if (GENERIC_CLASSES.contains(ancestor.getQualifiedName())) {
+        isGeneric = true;
+        break;
+      }
+    }
+    if (isGeneric) {
+      final ArrayList<PyGenericType> results = new ArrayList<PyGenericType>();
+      // XXX: Requires switching from stub to AST
+      for (PyExpression expr : cls.getSuperClassExpressions()) {
+        if (expr instanceof PySubscriptionExpression) {
+          final PyExpression indexExpr = ((PySubscriptionExpression)expr).getIndexExpression();
+          if (indexExpr != null) {
+            final PyGenericType genericType = getGenericType(indexExpr, context);
+            if (genericType != null) {
+              results.add(genericType);
+            }
+          }
+        }
+      }
+      return results;
+    }
+    return Collections.emptyList();
   }
 
   @Nullable
@@ -105,7 +171,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private static PyType getGenericType(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+  private static PyGenericType getGenericType(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
     final PsiElement resolved = resolve(expression, context);
     if (resolved instanceof PyTargetExpression) {
       final PyTargetExpression targetExpr = (PyTargetExpression)resolved;
