@@ -360,7 +360,7 @@ public class InferenceSession {
       for (PsiType classType : extendsListTypes) {
         classType = substituteWithInferenceVariables(mySiteSubstitutor.substitute(classType));
         HashSet<InferenceVariable> dependencies = new HashSet<InferenceVariable>();
-        collectDependencies(classType, dependencies);
+        collectDependencies(classType, dependencies);//todo isProperType
         if (dependencies.isEmpty() || dependencies.size() == 1 && dependencies.contains(variable)) {
           added = true;
         }
