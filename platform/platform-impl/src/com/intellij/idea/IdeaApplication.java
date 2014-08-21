@@ -24,10 +24,7 @@ import com.intellij.ide.IdeRepaintManager;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.internal.statistic.UsageTrigger;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationStarter;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -107,6 +104,12 @@ public class IdeaApplication {
     if (myStarter == null) {
       myStarter = getStarter();
     }
+
+    if (headless && myStarter instanceof ApplicationStarterEx && !((ApplicationStarterEx)myStarter).isHeadless()) {
+      Main.showMessage("Startup Error", "Application cannot start in headless mode", true);
+      System.exit(Main.STARTUP_IMPOSSIBLE);
+    }
+
     myStarter.premain(args);
   }
 
@@ -178,8 +181,13 @@ public class IdeaApplication {
     catch (ClassNotFoundException ignored) { }
   }
 
-  protected class IdeStarter implements ApplicationStarter {
+  protected class IdeStarter extends ApplicationStarterEx {
     private Splash mySplash;
+
+    @Override
+    public boolean isHeadless() {
+      return false;
+    }
 
     @Override
     public String getCommandName() {

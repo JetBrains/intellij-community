@@ -20,13 +20,12 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlBundle;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -65,15 +64,17 @@ public class XmlEnclosingTagUnwrapper implements Unwrapper {
 
   @Override
   public List<PsiElement> unwrap(Editor editor, PsiElement element) throws IncorrectOperationException {
-    final ArrayList<PsiElement> toExtract = new ArrayList<PsiElement>();
-    collectAffectedElements(element, toExtract);
-    for (int i = 0; i < toExtract.size(); i++) {
-      PsiElement psiElement = toExtract.get(i);
-      psiElement = element.getParent().addBefore(psiElement, element);
-      CodeEditUtil.markToReformat(psiElement.getNode(), true);
-      toExtract.set(i, psiElement);
+    final TextRange range = element.getTextRange();
+    final ASTNode startTagNameEnd = XmlChildRole.START_TAG_END_FINDER.findChild(element.getNode());
+    final ASTNode endTagNameStart = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(element.getNode());
+
+    if (endTagNameStart != null) {
+      editor.getDocument().replaceString(endTagNameStart.getTextRange().getStartOffset(), range.getEndOffset(), "");
+      editor.getDocument().replaceString(range.getStartOffset(), startTagNameEnd.getTextRange().getEndOffset(), "");
     }
-    element.delete();
-    return toExtract;
+    else {
+      editor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), "");
+    }
+    return Collections.emptyList();
   }
 }

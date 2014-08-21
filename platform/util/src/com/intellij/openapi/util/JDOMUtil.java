@@ -208,22 +208,28 @@ public class JDOMUtil {
   }
 
   @NotNull
-  public static String legalizeText(@NotNull final String str) {
-    StringBuilder result = new StringBuilder(str.length());
-    for (int i = 0, len = str.length(); i < len; i ++) {
-      result.append(str.charAt(i));
-      legalizeChar(result, result.length() - 1);
-    }
-    return result.toString();
+  public static String legalizeText(@NotNull String str) {
+    return legalizeChars(str).toString();
   }
 
-  public static void legalizeChar(@NotNull StringBuilder sb, int pos) {
-    char each = sb.charAt(pos);
+  @NotNull
+  public static CharSequence legalizeChars(@NotNull CharSequence str) {
+    StringBuilder result = new StringBuilder(str.length());
+    for (int i = 0, len = str.length(); i < len; i ++) {
+      appendLegalized(result, str.charAt(i));
+    }
+    return result;
+  }
+
+  public static void appendLegalized(@NotNull StringBuilder sb, char each) {
     if (each == '<' || each == '>') {
-      sb.replace(pos, pos + 1, each == '<' ? "&lt;" : "&gt;");
+      sb.append(each == '<' ? "&lt;" : "&gt;");
     }
     else if (!Verifier.isXMLCharacter(each)) {
-      sb.replace(pos, pos + 1, "0x").insert(pos + 2, StringUtil.toUpperCase(Long.toHexString(each)));
+      sb.append("0x").append(StringUtil.toUpperCase(Long.toHexString(each)));
+    }
+    else {
+      sb.append(each);
     }
   }
 

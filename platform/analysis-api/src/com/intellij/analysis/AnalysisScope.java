@@ -218,7 +218,8 @@ public class AnalysisScope {
   }
 
   public boolean contains(@NotNull PsiElement psiElement) {
-    return contains(psiElement.getContainingFile().getVirtualFile());
+    VirtualFile file = psiElement.getContainingFile().getVirtualFile();
+    return file != null && contains(file);
   }
 
   public boolean contains(@NotNull VirtualFile file) {

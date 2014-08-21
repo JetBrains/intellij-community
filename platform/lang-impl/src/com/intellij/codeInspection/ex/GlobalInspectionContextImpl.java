@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.content.*;
 import com.intellij.util.Processor;
 import com.intellij.util.SequentialModalProgressTask;
@@ -710,7 +709,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
           @Override
           public void run() {
-            CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
+            if (commandName != null) {
+              CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
+            }
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
               @Override
               public void run() {
@@ -724,7 +725,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         }, commandName, null);
       }
     };
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
       runnable.run();
     } else {
       ApplicationManager.getApplication().invokeLater(runnable);

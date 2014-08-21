@@ -431,8 +431,14 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       final Runnable prepareHelpersRunnable = new Runnable() {
         @Override
         public void run() {
-          for (RefactoringHelper helper : Extensions.getExtensions(RefactoringHelper.EP_NAME)) {
-            preparedData.put(helper, helper.prepareOperation(writableUsageInfos));
+          for (final RefactoringHelper helper : Extensions.getExtensions(RefactoringHelper.EP_NAME)) {
+            Object operation = ApplicationManager.getApplication().runReadAction(new Computable<Object>() {
+              @Override
+              public Object compute() {
+                return helper.prepareOperation(writableUsageInfos);
+              }
+            });
+            preparedData.put(helper, operation);
           }
         }
       };

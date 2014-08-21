@@ -235,8 +235,7 @@ public class PushController implements Disposable {
     ProgressManagerImpl.runProcessWithProgressAsynchronously(task, indicator, null, ModalityState.any());
   }
 
-
-  public PushLog getPushPanelInfo() {
+  public PushLog getPushPanelLog() {
     return myPushLog;
   }
 

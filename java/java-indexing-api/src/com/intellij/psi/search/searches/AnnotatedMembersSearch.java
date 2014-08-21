@@ -19,6 +19,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,6 +35,6 @@ public class AnnotatedMembersSearch {
   }
 
   public static Query<PsiMember> search(@NotNull PsiClass annotationClass) {
-    return search(annotationClass, GlobalSearchScope.allScope(annotationClass.getProject()));
+    return search(annotationClass, GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(annotationClass)));
   }
 }

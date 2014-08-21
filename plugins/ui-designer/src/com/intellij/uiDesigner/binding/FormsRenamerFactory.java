@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import java.util.List;
 public class FormsRenamerFactory implements AutomaticRenamerFactory {
   public boolean isApplicable(final PsiElement element) {
     if (!(element instanceof PsiClass)) return false;
-    List<PsiFile> forms = FormClassIndex.findFormsBoundToClass((PsiClass) element);
+    List<PsiFile> forms = FormClassIndex.findFormsBoundToClass(element.getProject(), (PsiClass)element);
     return forms.size() > 0;
   }
 

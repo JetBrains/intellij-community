@@ -513,7 +513,9 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
           if (!addElementUsages(methods[i], processor, options)) return false;
         }
         else {
-          boolean success = MethodReferencesSearch.search(new MethodReferencesSearch.SearchParameters(method, options.searchScope, true, options.fastTrack))
+          MethodReferencesSearch.SearchParameters parameters =
+            new MethodReferencesSearch.SearchParameters(method, options.searchScope, true, options.fastTrack);
+          boolean success = MethodReferencesSearch.search(parameters)
             .forEach(new PsiReferenceProcessorAdapter(new PsiReferenceProcessor() {
               @Override
               public boolean execute(PsiReference reference) {
@@ -663,16 +665,18 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
                                           @NotNull final Processor<UsageInfo> processor,
                                           @NotNull final FindUsagesOptions options) {
     final SearchScope searchScope = options.searchScope;
+    final PsiClass[] parentClass = new PsiClass[1];
     if (element instanceof PsiMethod && ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
-        return ((PsiMethod)element).isConstructor();
+        PsiMethod method = (PsiMethod)element;
+        parentClass[0] = method.getContainingClass();
+        return method.isConstructor();
       }
     })) {
       PsiMethod method = (PsiMethod)element;
-      final PsiClass parentClass = method.getContainingClass();
 
-      if (parentClass != null) {
+      if (parentClass[0] != null) {
         boolean strictSignatureSearch =
           !(options instanceof JavaMethodFindUsagesOptions) || !((JavaMethodFindUsagesOptions)options).isIncludeOverloadUsages;
         return MethodReferencesSearch

@@ -15,7 +15,9 @@
  */
 package com.intellij.psi.search.searches;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFunctionalExpression;
 import com.intellij.psi.PsiMethod;
@@ -23,6 +25,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.EmptyQuery;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
@@ -36,7 +39,7 @@ public class FunctionalExpressionSearch extends ExtensibleQueryFactory<PsiFuncti
     private final PsiClass myElementToSearch;
     private final SearchScope myScope;
 
-    public SearchParameters(PsiClass aClass, SearchScope scope) {
+    public SearchParameters(@NotNull PsiClass aClass, @NotNull SearchScope scope) {
       myElementToSearch = aClass;
       myScope = scope;
     }
@@ -52,23 +55,28 @@ public class FunctionalExpressionSearch extends ExtensibleQueryFactory<PsiFuncti
     }
   }
 
-  public static Query<PsiFunctionalExpression> search(final PsiClass aClass, SearchScope scope) {
+  public static Query<PsiFunctionalExpression> search(@NotNull final PsiClass aClass, @NotNull SearchScope scope) {
     return INSTANCE.createUniqueResultsQuery(new SearchParameters(aClass, scope));
   }
 
-  public static Query<PsiFunctionalExpression> search(final PsiMethod psiMethod) {
-    return search(psiMethod, GlobalSearchScope.allScope(psiMethod.getProject()));
+  public static Query<PsiFunctionalExpression> search(@NotNull final PsiMethod psiMethod) {
+    return search(psiMethod, GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(psiMethod)));
   }
 
-  public static Query<PsiFunctionalExpression> search(final PsiMethod psiMethod, SearchScope scope) {
-    if (!psiMethod.hasModifierProperty(PsiModifier.STATIC) && !psiMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
-      return INSTANCE.createUniqueResultsQuery(new SearchParameters(psiMethod.getContainingClass(), scope));
-    }
+  public static Query<PsiFunctionalExpression> search(@NotNull final PsiMethod psiMethod, @NotNull final SearchScope scope) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Query<PsiFunctionalExpression>>() {
+      @Override
+      public Query<PsiFunctionalExpression> compute() {
+        if (!psiMethod.hasModifierProperty(PsiModifier.STATIC) && !psiMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
+          return INSTANCE.createUniqueResultsQuery(new SearchParameters(psiMethod.getContainingClass(), scope));
+        }
 
-    return EmptyQuery.getEmptyQuery();
+        return EmptyQuery.getEmptyQuery();
+      }
+    });
   }
 
-  public static Query<PsiFunctionalExpression> search(final PsiClass aClass) {
-    return search(aClass, GlobalSearchScope.allScope(aClass.getProject()));
+  public static Query<PsiFunctionalExpression> search(@NotNull final PsiClass aClass) {
+    return search(aClass, GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(aClass)));
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ import java.util.Arrays;
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
-public abstract class ApplicationStarterBase implements ApplicationStarterEx {
+public abstract class ApplicationStarterBase extends ApplicationStarterEx {
   private final String myCommandName;
   private final int[] myArgsCount;
 
@@ -49,6 +49,11 @@ public abstract class ApplicationStarterBase implements ApplicationStarterEx {
   @Override
   public String getCommandName() {
     return myCommandName;
+  }
+
+  @Override
+  public boolean isHeadless() {
+    return false;
   }
 
   @Override

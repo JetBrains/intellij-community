@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ public class FormsRenamer extends AutomaticRenamer {
 
   public FormsRenamer(PsiClass aClass, String newClassName) {
     if (aClass.getQualifiedName() != null) {
-      List<PsiFile> forms = FormClassIndex.findFormsBoundToClass(aClass);
+      List<PsiFile> forms = FormClassIndex.findFormsBoundToClass(aClass.getProject(), aClass);
       myElements.addAll(forms);
       suggestAllNames(aClass.getName(), newClassName);
     }

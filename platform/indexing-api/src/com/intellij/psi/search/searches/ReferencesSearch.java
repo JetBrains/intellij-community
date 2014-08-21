@@ -15,7 +15,10 @@
  */
 package com.intellij.psi.search.searches;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.*;
@@ -112,7 +115,13 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
 
     final PsiElement element = parameters.getElementToSearch();
 
-    return uniqueResults(new MergeQuery<PsiReference>(result, new SearchRequestQuery(element.getProject(), requests)));
+    return uniqueResults(new MergeQuery<PsiReference>(result, new SearchRequestQuery(
+          ApplicationManager.getApplication().runReadAction(new Computable<Project>() {
+            @Override
+            public Project compute() {
+              return element.getProject();
+            }
+          }), requests)));
   }
 
   @NotNull
