@@ -1,13 +1,17 @@
 package org.jetbrains.plugins.ipnb.editor.panels.code;
 
+import com.google.common.collect.Lists;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ipnb.configuration.IpnbConnectionManager;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
+import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbEditablePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbPanel;
 import org.jetbrains.plugins.ipnb.format.cells.CodeCell;
@@ -18,11 +22,14 @@ import org.jetbrains.plugins.ipnb.format.cells.output.LatexCellOutput;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Map;
+import java.util.List;
 
 public class CodePanel extends IpnbEditablePanel<JComponent, CodeCell> {
   private final Project myProject;
   private final Disposable myParent;
   private CodeSourcePanel myCodeSourcePanel;
+  private final List<IpnbPanel> myOutputPanels = Lists.newArrayList();
 
   public CodePanel(@NotNull final Project project, @Nullable final Disposable parent, @NotNull final CodeCell cell) {
     super(cell);
@@ -34,7 +41,12 @@ public class CodePanel extends IpnbEditablePanel<JComponent, CodeCell> {
     add(myViewPanel);
   }
 
-  public void addPromptPanel(@NotNull final JPanel parent, int promptNumber,
+  public IpnbFileEditor getFileEditor() {
+    assert myParent instanceof IpnbFileEditor;
+    return (IpnbFileEditor)myParent;
+  }
+
+  public void addPromptPanel(@NotNull final JComponent parent, int promptNumber,
                              @NotNull final IpnbEditorUtil.PromptType promptType,
                              IpnbPanel component,
                              GridBagConstraints c) {
@@ -49,7 +61,7 @@ public class CodePanel extends IpnbEditablePanel<JComponent, CodeCell> {
     c.weightx = 1;
     c.anchor = GridBagConstraints.CENTER;
     parent.add(component, c);
-
+    myOutputPanels.add(component);
   }
 
   @Override
@@ -103,5 +115,50 @@ public class CodePanel extends IpnbEditablePanel<JComponent, CodeCell> {
     setEditing(true);
     getParent().repaint();
     UIUtil.requestFocus(myCodeSourcePanel.getEditor().getContentComponent());
+  }
+
+  @Override
+  public void runCell() {
+    super.runCell();
+    final IpnbConnectionManager connectionManager = IpnbConnectionManager.getInstance(myProject);
+    connectionManager.executeCell(this);
+  }
+
+  public void updatePanel(@NotNull final Map<String, String> outputMap) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        final String output = outputMap.get("text/plain");
+        final String errorOutput = outputMap.get("error");
+        myCell.removeCellOutputs();
+
+        myViewPanel.removeAll();
+        final GridBagConstraints c = new GridBagConstraints();
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridx = 0;
+        c.gridy = 0;
+        c.gridwidth = 1;
+
+        addPromptPanel(myViewPanel, myCell.getPromptNumber(), IpnbEditorUtil.PromptType.In, myCodeSourcePanel, c);
+        if (output != null) {
+          myCell.addCellOutput(new CellOutput(new String[]{output}));
+          c.gridx = 0;
+          c.gridy += 1;
+
+          addPromptPanel(myViewPanel, myCell.getPromptNumber(), IpnbEditorUtil.PromptType.Out,
+                         new CodeOutputPanel(output), c);
+        }
+        if (errorOutput != null) {
+          c.gridx = 0;
+          c.gridy += 1;
+
+          myCell.addCellOutput(new CellOutput(new String[]{errorOutput}));
+          addPromptPanel(myViewPanel, myCell.getPromptNumber(), IpnbEditorUtil.PromptType.None,
+                         new CodeOutputPanel(errorOutput), c);
+        }
+        revalidate();
+        repaint();
+      }
+    });
   }
 }

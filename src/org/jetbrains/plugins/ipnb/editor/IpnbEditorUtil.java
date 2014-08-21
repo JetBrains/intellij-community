@@ -40,7 +40,7 @@ import java.util.List;
  * @author traff
  */
 public class IpnbEditorUtil {
-  public enum PromptType { In, Out }
+  public enum PromptType { In, Out, None }
 
   public static Dimension PROMPT_SIZE = new Dimension(80, 30);
   public static int PANEL_WIDTH = 900;
@@ -104,7 +104,9 @@ public class IpnbEditorUtil {
   protected static String prompt(int promptNumber, @NotNull final PromptType type) {
     if (type == PromptType.In)
       return promptNumber == -1 ? type + "[ ]:" : String.format(type + " [%d]:", promptNumber);
-    return promptNumber == -1 ? type + "[ ]:" : String.format(type + "[%d]:", promptNumber);
+    else if (type == PromptType.Out)
+      return promptNumber == -1 ? type + "[ ]:" : String.format(type + "[%d]:", promptNumber);
+    return "";
   }
 
 

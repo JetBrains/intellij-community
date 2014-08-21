@@ -63,6 +63,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
   private static final String rawNBCellType = "Raw NBConvert";
   private final static String[] ourCellTypes = new String[]{codeCellType, markdownCellType, /*rawNBCellType, */headingCellType + "1",
     headingCellType + "2", headingCellType + "3", headingCellType + "4", headingCellType + "5", headingCellType + "6"};
+  private JButton myRunCellButton;
 
 
   public IpnbFileEditor(Project project, VirtualFile vFile) {
@@ -87,18 +88,18 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
   private JPanel createControlPanel() {
     final JPanel controlPanel = new JPanel();
     controlPanel.setBackground(IpnbEditorUtil.getBackground());
-    final JButton button = new JButton();
-    button.setBackground(IpnbEditorUtil.getBackground());
-    button.setPreferredSize(new Dimension(30, 30));
-    button.setIcon(AllIcons.General.Run);
-    button.addActionListener(new ActionListener() {
+    myRunCellButton = new JButton();
+    myRunCellButton.setBackground(IpnbEditorUtil.getBackground());
+    myRunCellButton.setPreferredSize(new Dimension(30, 30));
+    myRunCellButton.setIcon(AllIcons.General.Run);
+    myRunCellButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         final IpnbRunCellAction action = (IpnbRunCellAction)ActionManager.getInstance().getAction("IpnbRunCellAction");
         action.runCell(myIpnbFilePanel);
       }
     });
-    controlPanel.add(button);
+    controlPanel.add(myRunCellButton);
 
     myCellTypeCombo = new ComboBox(ourCellTypes);
 
@@ -118,6 +119,10 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
     final MatteBorder border = BorderFactory.createMatteBorder(0, 0, 1, 0, JBColor.GRAY);
     controlPanel.setBorder(border);
     return controlPanel;
+  }
+
+  public JButton getRunCellButton() {
+    return myRunCellButton;
   }
 
   private void updateCellType(@NotNull final String selectedItem, @NotNull final IpnbPanel selectedCell) {

@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.ipnb.protocol;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -15,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.*;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -88,9 +90,13 @@ public class IpnbConnection {
         final Header header = msg.getHeader();
         final Header parentHeader = gson.fromJson(msg.getParentHeader(), Header.class);
         final String messageType = header.getMessageType();
-        if (messageType.equals("pyout")) {
+        if ("pyout".equals(messageType)) {
           final PyOutContent content = gson.fromJson(msg.getContent(), PyOutContent.class);
           myListener.onOutput(IpnbConnection.this, parentHeader.getMessageId(), content.getData());
+        }
+        else if ("pyerr".equals(messageType)) {
+          final PyErrContent content = gson.fromJson(msg.getContent(), PyErrContent.class);
+          myListener.onOutput(IpnbConnection.this, parentHeader.getMessageId(), ImmutableMap.of("error", content.getEvalue()));
         }
       }
 
@@ -304,6 +310,25 @@ public class IpnbConnection {
 
     public JsonObject getMetadata() {
       return metadata;
+    }
+  }
+
+  @SuppressWarnings("UnusedDeclaration")
+  private static class PyErrContent {
+    private String ename;
+    private String evalue;
+    private List<String> traceback;
+
+    public String getEname() {
+      return ename;
+    }
+
+    public String getEvalue() {
+      return evalue;
+    }
+
+    public List<String> getTraceback() {
+      return traceback;
     }
   }
 

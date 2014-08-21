@@ -30,4 +30,12 @@ public class CodeCell extends SourceCell {
   public List<CellOutput> getCellOutputs() {
     return myCellOutputs;
   }
+
+  public void removeCellOutputs() {
+    myCellOutputs.clear();
+  }
+
+  public void addCellOutput(@NotNull final CellOutput cellOutput) {
+    myCellOutputs.add(cellOutput);
+  }
 }

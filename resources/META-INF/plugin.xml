@@ -8,11 +8,23 @@
   <depends optional="true">Pythonid</depends>
   <depends optional="true">com.intellij.modules.python</depends>
 
+  <project-components>
+    <component>
+      <implementation-class>org.jetbrains.plugins.ipnb.configuration.IpnbConnectionManager</implementation-class>
+    </component>
+  </project-components>
   <extensions defaultExtensionNs="com.intellij">
     <fileEditorProvider implementation="org.jetbrains.plugins.ipnb.editor.IpnbEditorProvider"/>
     <fileTypeFactory implementation="org.jetbrains.plugins.ipnb.IpnbFileTypeFactory"/>
 
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+
+    <projectConfigurable groupId="tools" instance="org.jetbrains.plugins.ipnb.configuration.IpnbConfigurable"
+                         id="org.jetbrains.plugins.ipnb.configuration.IpnbConfigurable" displayName="IPython Notebook"
+                         nonDefaultProject="true"/>
+    <projectService serviceInterface="org.jetbrains.plugins.ipnb.configuration.IpnbSettings"
+                   serviceImplementation="org.jetbrains.plugins.ipnb.configuration.IpnbSettings"/>
+
   </extensions>
   <actions>
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellAction" id="IpnbRunCellAction" text="Run cell">
