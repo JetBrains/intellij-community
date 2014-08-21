@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -43,7 +44,12 @@ public class JavaFxControllerFieldSearcher implements QueryExecutor<PsiReference
     final PsiElement elementToSearch = queryParameters.getElementToSearch();
     if (elementToSearch instanceof PsiField) {
       final PsiField field = (PsiField)elementToSearch;
-      final PsiClass containingClass = field.getContainingClass();
+      final PsiClass containingClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+        @Override
+        public PsiClass compute() {
+          return field.getContainingClass();
+        }
+      });
       if (containingClass != null) {
         final String qualifiedName = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
           @Override
@@ -52,8 +58,14 @@ public class JavaFxControllerFieldSearcher implements QueryExecutor<PsiReference
           }
         });
         if (qualifiedName != null) {
-          final List<PsiFile> fxmlWithController = 
-            JavaFxControllerClassIndex.findFxmlWithController(containingClass.getProject(), qualifiedName);
+          Project project = ApplicationManager.getApplication().runReadAction(new Computable<Project>() {
+            @Override
+            public Project compute() {
+              return containingClass.getProject();
+            }
+          });
+          final List<PsiFile> fxmlWithController =
+            JavaFxControllerClassIndex.findFxmlWithController(project, qualifiedName);
           for (final PsiFile file : fxmlWithController) {
             ApplicationManager.getApplication().runReadAction(new Runnable() {
               @Override
