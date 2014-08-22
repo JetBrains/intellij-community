@@ -61,10 +61,32 @@ from pydevd_constants import * #@UnusedWildImport
 
 import sys
 
-from _pydev_imps import _pydev_time as time, _pydev_thread
-import _pydev_threading as threading
-from _pydev_imps._pydev_socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR
-from pydev_imports import _queue
+if USE_LIB_COPY:
+    import _pydev_time as time
+    import _pydev_threading as threading
+    try:
+        import _pydev_thread as thread
+    except ImportError:
+        import _thread as thread #Py3K changed it.
+    import _pydev_Queue as _queue
+    from _pydev_socket import socket
+    from _pydev_socket import AF_INET, SOCK_STREAM
+    from _pydev_socket import SHUT_RD, SHUT_WR
+else:
+    import time
+    import threading
+    try:
+        import thread
+    except ImportError:
+        import _thread as thread #Py3K changed it.
+
+    try:
+        import Queue as _queue
+    except ImportError:
+        import queue as _queue
+    from socket import socket
+    from socket import AF_INET, SOCK_STREAM
+    from socket import SHUT_RD, SHUT_WR
 
 try:
     from urllib import quote, quote_plus, unquote, unquote_plus
@@ -81,8 +103,6 @@ import pydev_log
 import _pydev_completer
 
 from pydevd_tracing import GetExceptionTracebackStr
-import pydevd_console
-from pydev_monkey import disable_trace_thread_modules, enable_trace_thread_modules
 
 
 
@@ -242,42 +262,22 @@ def SetGlobalDebugger(dbg):
 #=======================================================================================================================
 # PyDBDaemonThread
 #=======================================================================================================================
-class PyDBDaemonThread:
-    
-    created_pydb_daemon_threads = {}
+class PyDBDaemonThread(threading.Thread):
 
     def __init__(self):
-        # Note: subclasses are always daemon threads.
+        threading.Thread.__init__(self)
+        self.setDaemon(True)
         self.killReceived = False
         self.dontTraceMe = True
 
-    def setName(self, name):
-        self.name = name
-
-    def start(self):
-        import pydev_monkey
-        start_new_thread = pydev_monkey.get_original_start_new_thread(_pydev_thread)
-        start_new_thread(self.run, ())
-
     def run(self):
-        created_pydb_daemon = self.created_pydb_daemon_threads
-        created_pydb_daemon[self] = 1
-        dummy_thread = threading.currentThread()
-        dummy_thread.is_pydev_daemon_thread = True
-        try:
-            try:
-                if IS_JYTHON:
-                    import org.python.core as PyCore #@UnresolvedImport
-                    ss = PyCore.PySystemState()
-                    # Note: Py.setSystemState() affects only the current thread.
-                    PyCore.Py.setSystemState(ss)
-        
-                self.OnRun()
-            except:
-                if sys is not None and traceback is not None:
-                    traceback.print_exc()
-        finally:
-            del created_pydb_daemon[self]
+        if sys.platform.startswith("java"):
+            import org.python.core as PyCore #@UnresolvedImport
+            ss = PyCore.PySystemState()
+            # Note: Py.setSystemState() affects only the current thread.
+            PyCore.Py.setSystemState(ss)
+
+        self.OnRun()
 
     def OnRun(self):
         raise NotImplementedError('Should be reimplemented by: %s' % self.__class__)
@@ -288,18 +288,7 @@ class PyDBDaemonThread:
 
     def stopTrace(self):
         if self.dontTraceMe:
-            
-            disable_tracing = True
-    
-            if pydevd_vm_type.GetVmType() == pydevd_vm_type.PydevdVmType.JYTHON and sys.hexversion <= 0x020201f0:
-                # don't run untraced threads if we're in jython 2.2.1 or lower
-                # jython bug: if we start a thread and another thread changes the tracing facility
-                # it affects other threads (it's not set only for the thread but globally)
-                # Bug: http://sourceforge.net/tracker/index.php?func=detail&aid=1870039&group_id=12867&atid=112867
-                disable_tracing = False
-    
-            if disable_tracing:
-                pydevd_tracing.SetTrace(None)  # no debugging on this thread
+            pydevd_tracing.SetTrace(None) # no debugging on this thread
 
 
 #=======================================================================================================================
@@ -382,6 +371,7 @@ class WriterThread(PyDBDaemonThread):
     """ writer thread writes out the commands in an infinite loop """
     def __init__(self, sock):
         PyDBDaemonThread.__init__(self)
+        self.setDaemon(False)  #writer isn't daemon to be able to deliver all messages after main thread terminated
         self.sock = sock
         self.setName("pydevd.Writer")
         self.cmdQueue = _queue.Queue()
@@ -399,16 +389,11 @@ class WriterThread(PyDBDaemonThread):
         """ just loop and write responses """
 
         self.stopTrace()
-        get_has_timeout = sys.hexversion >= 0x02030000 # 2.3 onwards have it.
         try:
             while True:
                 try:
                     try:
-                        if get_has_timeout:
-                            cmd = self.cmdQueue.get(1, 0.1)
-                        else:
-                            time.sleep(.01)
-                            cmd = self.cmdQueue.get(0)
+                        cmd = self.cmdQueue.get(1, 0.1)
                     except _queue.Empty:
                         if self.killReceived:
                             try:
@@ -805,7 +790,7 @@ class ReloadCodeCommand(InternalThreadCommand):
         self.thread_id = thread_id
         self.module_name = module_name
         self.executed = False
-        self.lock = _pydev_thread.allocate_lock()
+        self.lock = threading.Lock()
 
 
     def canBeExecutedBy(self, thread_id):
@@ -1023,7 +1008,7 @@ class InternalEvaluateExpression(InternalThreadCommand):
         try:
             result = pydevd_vars.evaluateExpression(self.thread_id, self.frame_id, self.expression, self.doExec)
             xml = "<xml>"
-            xml += pydevd_vars.varToXML(result, self.expression, self.doTrim)
+            xml += pydevd_vars.varToXML(result, "", self.doTrim)
             xml += "</xml>"
             cmd = dbg.cmdFactory.makeEvaluateExpressionMessage(self.sequence, xml)
             dbg.writer.addCommand(cmd)
@@ -1183,12 +1168,7 @@ class InternalEvaluateConsoleExpression(InternalThreadCommand):
                 console_message = pydevd_console.execute_console_command(frame, self.thread_id, self.frame_id, self.line)
                 cmd = dbg.cmdFactory.makeSendConsoleMessage(self.sequence, console_message.toXML())
             else:
-                from pydevd_console import ConsoleMessage
-                console_message = ConsoleMessage()
-                console_message.add_console_message(
-                    pydevd_console.CONSOLE_ERROR,
-                    "Select the valid frame in the debug view (thread: %s, frame: %s invalid)" % (self.thread_id, self.frame_id),
-                )
+                console_message.add_console_message(pydevd_console.CONSOLE_ERROR, "Select the valid frame in the debug view")
                 cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, console_message.toXML())
         except:
             exc = GetExceptionTracebackStr()
@@ -1265,10 +1245,13 @@ class InternalConsoleExec(InternalThreadCommand):
 
     def doIt(self, dbg):
         """ Converts request into python variable """
+        pydev_start_new_thread = None
         try:
             try:
-                #don't trace new threads created by console command
-                disable_trace_thread_modules()
+                pydev_start_new_thread = thread.start_new_thread
+
+                thread.start_new_thread = thread._original_start_new_thread #don't trace new threads created by console command
+                thread.start_new = thread._original_start_new_thread
 
                 result = pydevconsole.consoleExec(self.thread_id, self.frame_id, self.expression)
                 xml = "<xml>"
@@ -1282,8 +1265,8 @@ class InternalConsoleExec(InternalThreadCommand):
                 cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, "Error evaluating console expression " + exc)
                 dbg.writer.addCommand(cmd)
         finally:
-            enable_trace_thread_modules()
-
+            thread.start_new_thread = pydev_start_new_thread
+            thread.start_new = pydev_start_new_thread
             sys.stderr.flush()
             sys.stdout.flush()
 

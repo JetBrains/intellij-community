@@ -16,7 +16,7 @@ fallback token code OP, but the parser needs the actual token code.
 import pickle
 
 # Local imports
-from . import token
+from . import token, tokenize
 
 
 class Grammar(object):

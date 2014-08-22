@@ -3,7 +3,6 @@
 '''
 import sys
 import os
-from _pydev_imps._pydev_thread import start_new_thread
 
 #make it as if we were executing from the directory above this one (so that we can use pycompletionserver
 #without the need for it being in the pythonpath)
@@ -13,13 +12,6 @@ sys.path.insert(1, os.path.join(os.path.dirname(sys.argv[0])))
 
 IS_PYTHON_3K = 0
 if sys.platform.find('java') == -1:
-    
-    try:
-        import __builtin__ #@UnusedImport
-        BUILTIN_MOD = '__builtin__'
-    except ImportError:
-        BUILTIN_MOD = 'builtins'
-
     
     
     try:
@@ -49,7 +41,7 @@ if sys.platform.find('java') == -1:
             unittest.TestCase.tearDown(self)
         
         def testMessage(self):
-            t = pycompletionserver.CompletionServer(0)
+            t = pycompletionserver.T(0)
             
             l = []
             l.append(('Def', 'description'  , 'args'))
@@ -70,13 +62,13 @@ if sys.platform.find('java') == -1:
             '''
             Creates the connections needed for testing.
             '''
+            t = pycompletionserver.T(p1)
+            
+            t.start()
+    
             server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             server.bind((pycompletionserver.HOST, p1))
             server.listen(1)  #socket to receive messages.
-    
-            t = pycompletionserver.CompletionServer(p1)
-            t.exit_process_on_kill = False
-            start_new_thread(t.run, ())
     
             s, addr = server.accept()
     
@@ -114,8 +106,6 @@ if sys.platform.find('java') == -1:
                 #math is a builtin and because of that, it starts with None as a file
                 start = '@@COMPLETIONS(None,(__doc__,'
                 start_2 = '@@COMPLETIONS(None,(__name__,'
-                if '/math.so,' in completions or '/math.cpython-33m.so,' in completions or '/math.cpython-34m.so,' in completions:
-                    return
                 self.assert_(completions.startswith(start) or completions.startswith(start_2), '%s DOESNT START WITH %s' % (completions, (start, start_2)))
         
                 self.assert_('@@COMPLETIONS' in completions)
@@ -123,7 +113,7 @@ if sys.platform.find('java') == -1:
     
     
                 #now, test i
-                msg = quote_plus('%s.list' % BUILTIN_MOD)
+                msg = quote_plus('__builtin__.list')
                 send(socket, "@@IMPORTS:%s\nEND@@" % msg)
                 found = self.readMsg()
                 self.assert_('sort' in found, 'Could not find sort in: %s' % (found,))

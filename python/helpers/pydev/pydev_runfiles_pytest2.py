@@ -1,7 +1,4 @@
-import pickle
-import zlib
-import base64
-import os
+import pickle, zlib, base64, os
 import py
 from py._code import code  # @UnresolvedImport
 import pydev_runfiles_xml_rpc
@@ -9,7 +6,6 @@ from pydevd_file_utils import _NormFile
 import pytest
 import sys
 import time
-
 
 
 #===================================================================================================

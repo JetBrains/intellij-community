@@ -1,5 +1,3 @@
-from _pydev_imps._pydev_thread import start_new_thread
-
 try:
     from code import InteractiveConsole
 except ImportError:
@@ -11,7 +9,13 @@ from code import InteractiveInterpreter
 import os
 import sys
 
-import _pydev_threading as threading
+from pydevd_constants import USE_LIB_COPY
+from pydevd_constants import IS_JYTHON
+
+if USE_LIB_COPY:
+    import _pydev_threading as threading
+else:
+    import threading
 
 import traceback
 import fix_getpass
@@ -19,7 +23,15 @@ fix_getpass.fixGetpass()
 
 import pydevd_vars
 
-from pydev_imports import Exec, _queue
+from pydev_imports import Exec
+
+try:
+    if USE_LIB_COPY:
+        import _pydev_Queue as _queue
+    else:
+        import Queue as _queue
+except:
+    import queue as _queue
 
 try:
     import __builtin__
@@ -47,6 +59,17 @@ except:
     #That's OK, not all versions of python have sys.version_info
     pass
 
+try:
+    try:
+        if USE_LIB_COPY:
+            import _pydev_xmlrpclib as xmlrpclib
+        else:
+            import xmlrpclib
+    except ImportError:
+        import xmlrpc.client as xmlrpclib
+except ImportError:
+    import _pydev_xmlrpclib as xmlrpclib
+
 
 class Command:
     def __init__(self, interpreter, code_fragment):
@@ -58,14 +81,13 @@ class Command:
         self.code_fragment = code_fragment
         self.more = None
 
-    
+    @staticmethod
     def symbol_for_fragment(code_fragment):
         if code_fragment.is_single_line:
             symbol = 'single'
         else:
             symbol = 'exec' # Jython doesn't support this
         return symbol
-    symbol_for_fragment = staticmethod(symbol_for_fragment) 
 
     def run(self):
         text = self.code_fragment.text
@@ -290,6 +312,7 @@ def start_server(host, port, interpreter):
     sys.stderr.write(interpreter.get_greeting_msg())
     sys.stderr.flush()
 
+    interpreter.server = server
     server.serve_forever()
 
     return server
@@ -302,7 +325,11 @@ def StartServer(host, port, client_port):
 
     interpreter = InterpreterInterface(host, client_port, threading.currentThread())
 
-    start_new_thread(start_server,(host, port, interpreter))
+    server_thread = threading.Thread(target=start_server,
+                                     name='ServerThread',
+                                     args=(host, port, interpreter))
+    server_thread.setDaemon(True)
+    server_thread.start()
 
     process_exec_queue(interpreter)
 

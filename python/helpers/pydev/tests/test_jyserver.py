@@ -36,15 +36,10 @@ class Test(unittest.TestCase):
         unittest.TestCase.tearDown(self)
     
     def testIt(self):
-        if not IS_JYTHON:
-            return
         dbg('ok')
         
     def testMessage(self):
-        if not IS_JYTHON:
-            return
         t = jycompletionserver.T(0)
-        t.exit_process_on_kill = False
         
         l = []
         l.append(('Def', 'description'  , 'args'))
@@ -70,8 +65,6 @@ class Test(unittest.TestCase):
 
 
     def testCompletionSocketsAndMessages(self):
-        if not IS_JYTHON:
-            return
         dbg('testCompletionSocketsAndMessages')
         t, socket = self.createConnections()
         self.socket = socket
@@ -128,7 +121,6 @@ class Test(unittest.TestCase):
         Creates the connections needed for testing.
         '''
         t = jycompletionserver.T(p1)
-        t.exit_process_on_kill = False
         
         t.start()
 

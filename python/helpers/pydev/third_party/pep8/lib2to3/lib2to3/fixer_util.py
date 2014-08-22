@@ -1,6 +1,8 @@
 """Utility functions, node construction macros, etc."""
 # Author: Collin Winter
 
+from itertools import islice
+
 # Local imports
 from .pgen2 import token
 from .pytree import Leaf, Node

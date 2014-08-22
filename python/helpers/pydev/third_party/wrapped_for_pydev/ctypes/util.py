@@ -1,6 +1,6 @@
 #@PydevCodeAnalysisIgnore
-import sys
-import os
+import sys, os
+import ctypes
 
 # find_library(name) returns the pathname of a library, or None.
 if os.name == "nt":

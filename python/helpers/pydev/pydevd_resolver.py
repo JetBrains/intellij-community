@@ -13,13 +13,9 @@ except:
     setattr(__builtin__, 'False', 0)
 
 import pydevd_constants
-from pydevd_constants import DictIterItems, xrange
 
 
-# Note: 300 is already a lot to see in the outline (after that the user should really use the shell to get things)
-# and this also means we'll pass less information to the client side (which makes debugging faster).
-MAX_ITEMS_TO_HANDLE = 300 
-
+MAX_ITEMS_TO_HANDLE = 500
 TOO_LARGE_MSG = 'Too large to show contents. Max items to show: ' + str(MAX_ITEMS_TO_HANDLE)
 TOO_LARGE_ATTR = 'Unable to handle:'
 
@@ -62,7 +58,7 @@ except:
 class AbstractResolver:
     '''
         This class exists only for documentation purposes to explain how to create a resolver.
-
+        
         Some examples on how to resolve things:
         - list: getDictionary could return a dict with index->item and use the index to resolve it later
         - set: getDictionary could return a dict with id(object)->object and reiterate in that array to resolve it later
@@ -73,7 +69,7 @@ class AbstractResolver:
         '''
             In this method, we'll resolve some child item given the string representation of the item in the key
             representing the previously asked dictionary.
-
+            
             @param var: this is the actual variable to be resolved.
             @param attribute: this is the string representation of a key previously returned in getDictionary.
         '''
@@ -82,7 +78,7 @@ class AbstractResolver:
     def getDictionary(self, var):
         '''
             @param var: this is the variable that should have its children gotten.
-
+            
             @return: a dictionary where each pair key, value should be shown to the user as children items
             in the variables view for the given var.
         '''
@@ -132,12 +128,12 @@ class DefaultResolver:
 
                 declaredMethods = obj.getDeclaredMethods()
                 declaredFields = obj.getDeclaredFields()
-                for i in xrange(len(declaredMethods)):
+                for i in range(len(declaredMethods)):
                     name = declaredMethods[i].getName()
                     ret[name] = declaredMethods[i].toString()
                     found.put(name, 1)
 
-                for i in xrange(len(declaredFields)):
+                for i in range(len(declaredFields)):
                     name = declaredFields[i].getName()
                     found.put(name, 1)
                     #if declaredFields[i].isAccessible():
@@ -149,7 +145,7 @@ class DefaultResolver:
                         ret[name] = declaredFields[i].toString()
 
         #this simple dir does not always get all the info, that's why we have the part before
-        #(e.g.: if we do a dir on String, some methods that are from other interfaces such as
+        #(e.g.: if we do a dir on String, some methods that are from other interfaces such as 
         #charAt don't appear)
         try:
             d = dir(original)
@@ -173,8 +169,8 @@ class DefaultResolver:
             names = var.__members__
         d = {}
 
-        #Be aware that the order in which the filters are applied attempts to
-        #optimize the operation by removing as many items as possible in the
+        #Be aware that the order in which the filters are applied attempts to 
+        #optimize the operation by removing as many items as possible in the 
         #first filters, leaving fewer items for later filters
 
         if filterBuiltIn or filterFunction:
@@ -216,18 +212,18 @@ class DefaultResolver:
 class DictResolver:
 
     def resolve(self, dict, key):
-        if key in ('__len__', TOO_LARGE_ATTR):
+        if key == '__len__':
             return None
 
         if '(' not in key:
             #we have to treat that because the dict resolver is also used to directly resolve the global and local
-            #scopes (which already have the items directly)
+            #scopes (which already have the items directly) 
             return dict[key]
 
         #ok, we have to iterate over the items to find the one that matches the id, because that's the only way
         #to actually find the reference from the string we have before.
         expected_id = int(key.split('(')[-1][:-1])
-        for key, val in DictIterItems(dict):
+        for key, val in dict.items():
             if id(key) == expected_id:
                 return val
 
@@ -245,15 +241,10 @@ class DictResolver:
     def getDictionary(self, dict):
         ret = {}
 
-        i = 0
-        for key, val in DictIterItems(dict):
-            i += 1
+        for key, val in dict.items():
             #we need to add the id because otherwise we cannot find the real object to get its contents later on.
             key = '%s (%s)' % (self.keyStr(key), id(key))
             ret[key] = val
-            if i > MAX_ITEMS_TO_HANDLE:
-                ret[TOO_LARGE_ATTR] = TOO_LARGE_MSG
-                break
 
         ret['__len__'] = len(dict)
         return ret
@@ -270,25 +261,24 @@ class TupleResolver: #to enumerate tuples and lists
             @param var: that's the original attribute
             @param attribute: that's the key passed in the dict (as a string)
         '''
-        if attribute in ('__len__', TOO_LARGE_ATTR):
+        if attribute == '__len__' or attribute == TOO_LARGE_ATTR:
             return None
         return var[int(attribute)]
 
     def getDictionary(self, var):
+        #return dict( [ (i, x) for i, x in enumerate(var) ] )
+        # modified 'cause jython does not have enumerate support
         l = len(var)
         d = {}
-
-        format_str = '%0' + str(int(len(str(l)))) + 'd'
-
-        i = 0
-        for item in var:
-            d[format_str % i] = item
-            i += 1
+        
+        if l < MAX_ITEMS_TO_HANDLE:
+            format = '%0' + str(int(len(str(l)))) + 'd'
             
-            if i > MAX_ITEMS_TO_HANDLE:
-                d[TOO_LARGE_ATTR] = TOO_LARGE_MSG
-                break
-                
+            
+            for i, item in zip(range(l), var):
+                d[ format % i ] = item
+        else:
+            d[TOO_LARGE_ATTR] = TOO_LARGE_MSG
         d['__len__'] = len(var)
         return d
 
@@ -303,7 +293,7 @@ class SetResolver:
     '''
 
     def resolve(self, var, attribute):
-        if attribute in ('__len__', TOO_LARGE_ATTR):
+        if attribute == '__len__':
             return None
 
         attribute = int(attribute)
@@ -315,16 +305,8 @@ class SetResolver:
 
     def getDictionary(self, var):
         d = {}
-        i = 0
         for item in var:
-            i+= 1
-            d[id(item)] = item
-            
-            if i > MAX_ITEMS_TO_HANDLE:
-                d[TOO_LARGE_ATTR] = TOO_LARGE_MSG
-                break
-
-            
+            d[ id(item) ] = item
         d['__len__'] = len(var)
         return d
 
@@ -343,7 +325,7 @@ class InstanceResolver:
         ret = {}
 
         declaredFields = obj.__class__.getDeclaredFields()
-        for i in xrange(len(declaredFields)):
+        for i in range(len(declaredFields)):
             name = declaredFields[i].getName()
             try:
                 declaredFields[i].setAccessible(True)
@@ -370,7 +352,7 @@ class JyArrayResolver:
     def getDictionary(self, obj):
         ret = {}
 
-        for i in xrange(len(obj)):
+        for i in range(len(obj)):
             ret[ i ] = obj[i]
 
         ret['__len__'] = len(obj)
@@ -385,24 +367,13 @@ class NdArrayResolver:
         This resolves a numpy ndarray returning some metadata about the NDArray
     '''
 
-    def is_numeric(self, obj):
-        if not hasattr(obj, 'dtype'):
-            return False
-        return obj.dtype.kind in 'biufc'
-
     def resolve(self, obj, attribute):
         if attribute == '__internals__':
             return defaultResolver.getDictionary(obj)
         if attribute == 'min':
-            if self.is_numeric(obj):
-                return obj.min()
-            else:
-                return None
+            return obj.min()
         if attribute == 'max':
-            if self.is_numeric(obj):
-                return obj.max()
-            else:
-                return None
+            return obj.max()
         if attribute == 'shape':
             return obj.shape
         if attribute == 'dtype':
@@ -418,12 +389,8 @@ class NdArrayResolver:
             ret['min'] = 'ndarray too big, calculating min would slow down debugging'
             ret['max'] = 'ndarray too big, calculating max would slow down debugging'
         else:
-            if self.is_numeric(obj):
-                ret['min'] = obj.min()
-                ret['max'] = obj.max()
-            else:
-                ret['min'] = 'not a numeric object'
-                ret['max'] = 'not a numeric object'
+            ret['min'] = obj.min()
+            ret['max'] = obj.max()
         ret['shape'] = obj.shape
         ret['dtype'] = obj.dtype
         ret['size'] = obj.size

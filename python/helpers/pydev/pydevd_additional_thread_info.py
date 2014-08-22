@@ -1,6 +1,9 @@
 import sys
 from pydevd_constants import * #@UnusedWildImport
-from _pydev_imps import _pydev_thread
+if USE_LIB_COPY:
+    import _pydev_threading as threading
+else:
+    import threading
 from pydevd_frame import PyDBFrame
 import weakref
 
@@ -59,7 +62,7 @@ class PyDBAdditionalThreadInfoWithoutCurrentFramesSupport(AbstractPyDBAdditional
         #Or if the user compiled threadframe (from http://www.majid.info/mylos/stories/2004/06/10/threadframe.html)
 
         #NOT RLock!! (could deadlock if it was)
-        self.lock = _pydev_thread.allocate_lock()
+        self.lock = threading.Lock()
         self._acquire_lock = self.lock.acquire
         self._release_lock = self.lock.release
 

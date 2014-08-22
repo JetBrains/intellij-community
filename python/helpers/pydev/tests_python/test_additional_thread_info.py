@@ -1,21 +1,10 @@
 import sys
 import os
-import pydev_monkey
 sys.path.insert(0, os.path.split(os.path.split(__file__)[0])[0])
 
 from pydevd_constants import Null
 import unittest
 
-try:
-    import thread
-except:
-    import _thread as thread
-
-try:
-    xrange
-except:
-    xrange = range
-    
 #=======================================================================================================================
 # TestCase
 #=======================================================================================================================
@@ -51,7 +40,10 @@ class TestCase(unittest.TestCase):
             
             
     def testStartNewThread(self):
-        pydev_monkey.patch_thread_modules()
+        import pydevd
+        import thread
+        original = thread.start_new_thread
+        thread.start_new_thread = pydevd.pydev_start_new_thread
         try:
             found = {}
             def function(a, b, *args, **kwargs):
@@ -70,11 +62,15 @@ class TestCase(unittest.TestCase):
             
             self.assertEqual({'a': 1, 'b': 2, 'args': (3, 4), 'kwargs': {'e': 2, 'd': 1}}, found)
         finally:
-            pydev_monkey.undo_patch_thread_modules()
+            thread.start_new_thread = original
             
             
     def testStartNewThread2(self):
-        pydev_monkey.patch_thread_modules()
+        import pydevd
+        import thread
+        
+        original = thread.start_new_thread
+        thread.start_new_thread = pydevd.pydev_start_new_thread
         try:
             found = {}
             
@@ -105,7 +101,7 @@ class TestCase(unittest.TestCase):
             
             self.assertEqual({'a': 1, 'b': 2, 'args': (3, 4), 'kwargs': {'e': 2, 'd': 1}}, found)
         finally:
-            pydev_monkey.undo_patch_thread_modules()
+            thread.start_new_thread = original
         
 
 #=======================================================================================================================

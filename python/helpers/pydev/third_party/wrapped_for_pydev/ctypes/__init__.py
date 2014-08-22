@@ -1,8 +1,8 @@
 #@PydevCodeAnalysisIgnore
 """create and manipulate C data types in Python"""
 
-import os as _os
-import sys as _sys
+import os as _os, sys as _sys
+from itertools import chain as _chain
 
 # special developer support to use ctypes from the CVS sandbox,
 # without installing it
@@ -14,10 +14,12 @@ del _magicfile
 
 __version__ = "0.9.9.6"
 
+from _ctypes import Union, Structure, Array
 from _ctypes import _Pointer
 from _ctypes import CFuncPtr as _CFuncPtr
 from _ctypes import __version__ as _ctypes_version
-from _ctypes import RTLD_LOCAL
+from _ctypes import RTLD_LOCAL, RTLD_GLOBAL
+from _ctypes import ArgumentError
 
 from struct import calcsize as _calcsize
 
@@ -118,7 +120,7 @@ if _os.name in ("nt", "ce"):
 elif _os.name == "posix":
     from _ctypes import dlopen as _dlopen #@UnresolvedImport
 
-from _ctypes import sizeof
+from _ctypes import sizeof, byref, addressof, alignment
 from _ctypes import _SimpleCData
 
 class py_object(_SimpleCData):
@@ -499,6 +501,8 @@ if _os.name == "nt": # COM stuff
         except AttributeError:
             pass
         return result
+
+from ctypes._endian import BigEndianStructure, LittleEndianStructure
 
 # Fill in specifically-sized types
 c_int8 = c_byte

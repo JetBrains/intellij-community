@@ -29,12 +29,11 @@ __author__ = 'Ka-Ping Yee <ping@lfw.org>'
 __credits__ = \
     'GvR, ESR, Tim Peters, Thomas Wouters, Fred Drake, Skip Montanaro'
 
-import string
-import re
+import string, re
 from codecs import BOM_UTF8, lookup
 from lib2to3.pgen2.token import *
-from . import token
 
+from . import token
 __all__ = [x for x in dir(token) if x[0] != '_'] + ["tokenize",
            "generate_tokens", "untokenize"]
 del token

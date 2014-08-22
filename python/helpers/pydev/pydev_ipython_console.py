@@ -1,5 +1,6 @@
 import sys
 from pydev_console_utils import BaseInterpreterInterface
+import re
 
 import os
 
@@ -9,7 +10,7 @@ os.environ['TERM'] = 'emacs' #to use proper page_more() for paging
 # Uncomment to force PyDev standard shell.
 # raise ImportError()
 
-from pydev_ipython_console_011 import get_pydev_frontend
+from pydev_ipython_console_011 import PyDevFrontEnd
 
 #=======================================================================================================================
 # InterpreterInterface
@@ -23,7 +24,7 @@ class InterpreterInterface(BaseInterpreterInterface):
         BaseInterpreterInterface.__init__(self, mainThread)
         self.client_port = client_port
         self.host = host
-        self.interpreter = get_pydev_frontend(host, client_port)
+        self.interpreter = PyDevFrontEnd(host, client_port)
         self._input_error_printed = False
         self.notification_succeeded = False
         self.notification_tries = 0

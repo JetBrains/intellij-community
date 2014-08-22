@@ -1,5 +1,4 @@
 from pydevd_constants import * #@UnusedWildImport
-from _pydev_imps import _pydev_thread
 
 try:
     import cStringIO as StringIO #may not always be available @UnusedImport
@@ -9,6 +8,10 @@ except:
     except:
         import io as StringIO
 
+if USE_LIB_COPY:
+    import _pydev_threading as threading
+else:
+    import threading
 
 import sys #@Reimport
 import traceback
@@ -18,7 +21,7 @@ class TracingFunctionHolder:
     '''
     _original_tracing = None
     _warn = True
-    _lock = _pydev_thread.allocate_lock()
+    _lock = threading.Lock()
     _traceback_limit = 1
     _warnings_shown = {}
  
