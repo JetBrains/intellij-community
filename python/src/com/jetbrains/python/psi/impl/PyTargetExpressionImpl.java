@@ -43,6 +43,7 @@ import com.jetbrains.python.psi.impl.references.PyQualifiedReference;
 import com.jetbrains.python.psi.impl.references.PyTargetReference;
 import com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStub;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
@@ -706,5 +707,11 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   public void subtreeChanged() {
     super.subtreeChanged();
     myQualifiedName = null;
+  }
+
+  @Nullable
+  @Override
+  public String getQualifiedName() {
+    return QualifiedNameFinder.getQualifiedName(this);
   }
 }

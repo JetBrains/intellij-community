@@ -20,7 +20,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.LocalSearchScope;
@@ -187,6 +186,11 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
         }
       }
     }
+    // Heuristic: unfold Foo[Bar] to Foo for subscription expressions for superclasses
+    else if (expression instanceof PySubscriptionExpression) {
+      final PySubscriptionExpression subscriptionExpr = (PySubscriptionExpression)expression;
+      return subscriptionExpr.getOperand();
+    }
     return expression;
   }
 
@@ -237,27 +241,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   @Nullable
   public String getQualifiedName() {
-    String name = getName();
-    final PyClassStub stub = getStub();
-    PsiElement ancestor = stub != null ? stub.getParentStub().getPsi() : getParent();
-    while (!(ancestor instanceof PsiFile)) {
-      if (ancestor == null) return name;    // can this happen?
-      if (ancestor instanceof PyClass) {
-        name = ((PyClass)ancestor).getName() + "." + name;
-      }
-      ancestor = stub != null ? ((StubBasedPsiElement)ancestor).getStub().getParentStub().getPsi() : ancestor.getParent();
-    }
-
-    PsiFile psiFile = ((PsiFile)ancestor).getOriginalFile();
-    final PyFile builtins = PyBuiltinCache.getInstance(this).getBuiltinsFile();
-    if (!psiFile.equals(builtins)) {
-      VirtualFile vFile = psiFile.getVirtualFile();
-      if (vFile != null) {
-        final String packageName = QualifiedNameFinder.findShortestImportableName(this, vFile);
-        return packageName + "." + name;
-      }
-    }
-    return name;
+    return QualifiedNameFinder.getQualifiedName(this);
   }
 
   @Override

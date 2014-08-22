@@ -589,6 +589,9 @@
     <pyClassMembersProvider implementation="com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsClassMembersProvider"/>
     <typeProvider implementation="com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsTypeProvider"/>
 
+    <!-- typing -->
+    <typeProvider implementation="com.jetbrains.python.codeInsight.PyTypingTypeProvider"/>
+
     <typeProvider implementation="com.jetbrains.python.debugger.PyCallSignatureTypeProvider"/>
     <pyReferenceResolveProvider implementation="com.jetbrains.python.psi.resolve.PythonBuiltinReferenceResolveProvider"/>
 

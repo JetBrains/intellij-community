@@ -24,10 +24,14 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -154,6 +158,36 @@ public class QualifiedNameFinder {
       }
     }
     return qname;
+  }
+
+  @Nullable
+  public static String getQualifiedName(@NotNull PyElement element) {
+    final String name = element.getName();
+    if (name != null) {
+      final ScopeOwner owner = ScopeUtil.getScopeOwner(element);
+      final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(element);
+      if (owner instanceof PyClass) {
+        final String classQName = ((PyClass)owner).getQualifiedName();
+        if (classQName != null) {
+          return classQName + "." + name;
+        }
+      }
+      else if (owner instanceof PyFile) {
+        if (builtinCache.isBuiltin(element)) {
+          return name;
+        }
+        else {
+          final VirtualFile virtualFile = ((PyFile)owner).getVirtualFile();
+          if (virtualFile != null) {
+            final String fileQName = findShortestImportableName(element, virtualFile);
+            if (fileQName != null) {
+              return fileQName + "." + name;
+            }
+          }
+        }
+      }
+    }
+    return null;
   }
 
   /**
