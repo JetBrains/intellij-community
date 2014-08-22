@@ -51,7 +51,6 @@ import java.util.TreeSet;
  */
 @SuppressWarnings({"CallToPrintStackTrace", "SynchronizeOnThis"})
 public class TraverseUIStarter extends ApplicationStarterEx {
-  private String OUTPUT_PATH;
   @NonNls private static final String OPTIONS = "options";
   @NonNls private static final String CONFIGURABLE = "configurable";
   @NonNls private static final String ID = "id";
@@ -61,9 +60,11 @@ public class TraverseUIStarter extends ApplicationStarterEx {
   @NonNls private static final String PATH = "path";
   @NonNls private static final String HIT = "hit";
 
+  private String OUTPUT_PATH;
+
   @Override
   public boolean isHeadless() {
-    return false;
+    return true;
   }
 
   @Override
