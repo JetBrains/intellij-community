@@ -245,6 +245,7 @@ public class StorageUtil {
     }
   }
 
+  @NotNull
   public static BufferExposingByteArrayOutputStream documentToBytes(@NotNull Document document, boolean useSystemLineSeparator) throws IOException {
     BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream(512);
     OutputStreamWriter writer = new OutputStreamWriter(out, CharsetToolkit.UTF8_CHARSET);
@@ -271,9 +272,9 @@ public class StorageUtil {
     }
   }
 
-  public static void deleteContent(@NotNull StreamProvider provider, @NotNull String fileSpec, @NotNull RoamingType type) {
+  public static void delete(@NotNull StreamProvider provider, @NotNull String fileSpec, @NotNull RoamingType type) {
     if (provider.isApplicable(fileSpec, type)) {
-      provider.deleteFile(fileSpec, type);
+      provider.delete(fileSpec, type);
     }
   }
 

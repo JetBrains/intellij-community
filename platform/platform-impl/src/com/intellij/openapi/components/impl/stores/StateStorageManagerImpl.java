@@ -615,11 +615,11 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
 
     @Override
-    public void deleteFile(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
+    public void delete(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
       for (StreamProvider streamProvider : myStreamProviders) {
         try {
           if (streamProvider.isEnabled() && streamProvider.isApplicable(fileSpec, roamingType)) {
-            streamProvider.deleteFile(fileSpec, roamingType);
+            streamProvider.delete(fileSpec, roamingType);
           }
         }
         catch (Exception e) {

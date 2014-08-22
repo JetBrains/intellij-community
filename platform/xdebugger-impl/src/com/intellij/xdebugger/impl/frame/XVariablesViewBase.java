@@ -97,7 +97,8 @@ public abstract class XVariablesViewBase extends XDebugView {
           public void selectionChanged(SelectionEvent e) {
             final String text = editor.getDocument().getText(e.getNewRange());
             final XDebuggerEvaluator evaluator = stackFrame.getEvaluator();
-            if (evaluator != null && !StringUtil.isEmpty(text)) {
+            if (evaluator != null && !StringUtil.isEmpty(text)
+                && !(text.contains("exec(") || text.contains("++") || text.contains("--") || text.contains("="))) {
               evaluator.evaluate(text, new XEvaluationCallbackBase() {
                 @Override
                 public void evaluated(@NotNull XValue result) {
@@ -111,7 +112,8 @@ public abstract class XVariablesViewBase extends XDebugView {
                       SimpleColoredComponent component = HintUtil.createInformationComponent();
                       text.appendToComponent(component);
                       String str = text.toString();
-                      if ("undefined".equals(str) || str.startsWith("Cannot find local variable") || str.startsWith("Invalid expression")) {
+                      if ("undefined".equals(str) || str.startsWith("Cannot find local variable")
+                          || str.startsWith("Invalid expression")) {
                         return; //todo[kb] this is temporary solution
                       }
                       HintManager.getInstance().hideAllHints();

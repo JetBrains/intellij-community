@@ -150,7 +150,7 @@ public class CompoundShelfFileProcessor {
       if (stream != null) {
         File file = new File(myShelfPath + "/" + newName);
         copyFileToStream(stream, file);
-        serverStreamProvider.deleteFile(oldFilePath, RoamingType.PER_USER);
+        serverStreamProvider.delete(oldFilePath, RoamingType.PER_USER);
         copyFileContentToProviders(newFilePath, serverStreamProvider, file);
       }
     }
@@ -221,7 +221,7 @@ public class CompoundShelfFileProcessor {
   public void delete(final String name) {
     FileUtil.delete(new File(getBaseIODir(), name));
     if (myServerStreamProvider != null && myServerStreamProvider.isEnabled()) {
-      StorageUtil.deleteContent(myServerStreamProvider, FILE_SPEC + name, RoamingType.PER_USER);
+      StorageUtil.delete(myServerStreamProvider, FILE_SPEC + name, RoamingType.PER_USER);
     }
   }
 }
