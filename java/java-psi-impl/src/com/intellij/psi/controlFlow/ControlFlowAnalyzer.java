@@ -204,7 +204,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       ProgressIndicatorProvider.checkCanceled();
       ControlFlowSubRange subRange = entry.getValue();
       PsiElement element = entry.getKey();
-      myControlFlowFactory.registerSubRange(element, subRange, myEvaluateConstantIfCondition, myPolicy);
+      myControlFlowFactory.registerSubRange(element, subRange, myEvaluateConstantIfCondition, myEnabledShortCircuit, myPolicy);
     }
   }
 
