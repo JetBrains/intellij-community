@@ -29,4 +29,9 @@ public abstract class JsonTestCase extends CodeInsightFixtureTestCase {
   public String getBasePath() {
     return "/json/tests/testData";
   }
+
+  @Override
+  protected boolean isCommunity() {
+    return true;
+  }
 }

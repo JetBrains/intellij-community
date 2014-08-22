@@ -9,11 +9,6 @@ public class JsonCompletionTest extends JsonTestCase {
   private static final String[] KEYWORDS = new String[]{"true", "false", "null"};
   private static final String[] NOTHING = ArrayUtil.EMPTY_STRING_ARRAY;
 
-  @Override
-  protected boolean isCommunity() {
-    return true;
-  }
-
   public void testInsideArrayElement1() throws Exception {
     doTest(KEYWORDS);
   }

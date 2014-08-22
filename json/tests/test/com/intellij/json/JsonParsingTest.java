@@ -2,10 +2,12 @@ package com.intellij.json;
 
 import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.TestDataPath;
 
 /**
  * @author Mikhail Golubev
  */
+@TestDataPath("$CONTENT_ROOT/testData/psi/")
 public class JsonParsingTest extends ParsingTestCase {
   public JsonParsingTest() {
     super("psi", "json", new JsonParserDefinition());
