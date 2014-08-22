@@ -317,8 +317,9 @@ class PyDB:
         self.signature_factory = None
         self.SetTrace = pydevd_tracing.SetTrace
         # we call this functions very often, so we need cache for them
-        self.can_not_skip_cache = []
-        self.has_exception_breaks_cache = []
+        self.can_not_skip_cache = None
+        self.has_exception_breaks_cache = None
+        self.usable_plugin = None
 
         plugin_base = PluginBase(package='pydevd_plugins')
         self.plugin_source = plugin_base.make_plugin_source(searchpath=[os.path.dirname(os.path.realpath(__file__)) + '/pydevd_plugins'])
@@ -732,7 +733,8 @@ class PyDB:
                         breakpoint.add(self.breakpoints, file, line, func_name)
                         supported_type = True
                     else:
-                        supported_type = self.search_for_plugins('add_line_breakpoint', type, file, line, condition, expression, func_name)
+                        #supported_type = self.search_for_plugins('add_line_breakpoint', type, file, line, condition, expression, func_name)
+                        supported_type = self.add_plugin_breakpoint('add_line_breakpoint', type, file, line, condition, expression, func_name)
 
                     if not supported_type:
                         raise NameError(type)
@@ -823,7 +825,8 @@ class PyDB:
                         supported_type = True
 
                     else:
-                        supported_type = self.search_for_plugins('add_exception_breakpoint', type, exception)
+                        #supported_type = self.search_for_plugins('add_exception_breakpoint', type, exception)
+                        supported_type = self.add_plugin_breakpoint('add_exception_breakpoint', type, exception)
 
                     if not supported_type:
                         raise NameError(type)
@@ -1256,42 +1259,76 @@ class PyDB:
             except:
                 pydev_log.error("Failed to load plugin %s" % plugin)
             if loaded_plugin:
-                can_not_skip_fun = getattr(loaded_plugin, 'can_not_skip', None)
-                if can_not_skip_fun:
-                    self.can_not_skip_cache.append(can_not_skip_fun)
-                can_skip_fun = getattr(loaded_plugin, 'has_exception_breaks', None)
-                if can_skip_fun:
-                    self.has_exception_breaks_cache.append(can_skip_fun)
+                #can_not_skip_fun = getattr(loaded_plugin, 'can_not_skip', None)
+                #if can_not_skip_fun:
+                #    self.can_not_skip_cache.append(can_not_skip_fun)
+                #can_skip_fun = getattr(loaded_plugin, 'has_exception_breaks', None)
+                #if can_skip_fun:
+                #    self.has_exception_breaks_cache.append(can_skip_fun)
 
                 self.plugins.append(loaded_plugin)
 
+    def add_plugin_breakpoint(self, func_name, *args, **kwargs):
+        for loaded_plugin in self.plugins:
+            if hasattr(loaded_plugin, func_name):
+                func = getattr(loaded_plugin, func_name)
+                func_res = func(self, *args, **kwargs)
+                if func_res:
+                    self.usable_plugin = loaded_plugin
+                    return True
+        return False
+
     def can_not_skip_from_plugins(self, *args, **kwargs):
-        for func in self.can_not_skip_cache:
-            if func(self, *args, **kwargs):
-                return True
+        if not self.usable_plugin:
+            return False
+        if not self.can_not_skip_cache:
+            loaded_plugin = self.usable_plugin
+            can_not_skip_fun = getattr(loaded_plugin, 'can_not_skip', None)
+            if can_not_skip_fun:
+                self.can_not_skip_cache = can_not_skip_fun
+            else:
+                pydev_log.error("Implementation for function 'can_not_skip' is necessary in plugin %s" % loaded_plugin)
+                return False
+        func = self.can_not_skip_cache
+        if func(self, *args, **kwargs):
+            return True
         return False
 
     def has_exception_breaks_from_plugins(self, *args, **kwargs):
-        for func in self.has_exception_breaks_cache:
+        if not self.usable_plugin:
+            return False
+        if not self.has_exception_breaks_cache:
+            loaded_plugin = self.usable_plugin
+            has_exc_b_fun = getattr(loaded_plugin, 'has_exception_breaks', None)
+            if has_exc_b_fun:
+                self.has_exception_breaks_cache = has_exc_b_fun
+            else:
+                pydev_log.error("Implementation for function 'has_exception_breaks' is necessary in plugin %s" % loaded_plugin)
+                return False
+        func = self.has_exception_breaks_cache
+        if func(self, *args, **kwargs):
+            return True
+        return False
+
+    def search_for_plugins(self, func_name, *args, **kwargs):
+        if not self.usable_plugin:
+            return False
+        loaded_plugin = self.usable_plugin
+        if hasattr(loaded_plugin, func_name):
+            func = getattr(loaded_plugin, func_name)
             if func(self, *args, **kwargs):
                 return True
         return False
 
-    def search_for_plugins(self, func_name, *args, **kwargs):
-        result = False
-        for loaded_plugin in self.plugins:
-            if hasattr(loaded_plugin, func_name):
-                func = getattr(loaded_plugin, func_name)
-                result = func(self, *args, **kwargs) or result
-        return result
-
     def first_plugin_result(self, func_name, *args, **kwargs):
-        for loaded_plugin in self.plugins:
-            if hasattr(loaded_plugin, func_name):
-                func = getattr(loaded_plugin, func_name)
-                result_exist, result = func(self, *args, **kwargs)
-                if result_exist:
-                    return result_exist, result
+        if not self.usable_plugin:
+            return False, None
+        loaded_plugin = self.usable_plugin
+        if hasattr(loaded_plugin, func_name):
+            func = getattr(loaded_plugin, func_name)
+            result_exist, result = func(self, *args, **kwargs)
+            if result_exist:
+                return result_exist, result
         return False, None
 
 
