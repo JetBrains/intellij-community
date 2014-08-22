@@ -232,6 +232,23 @@ public class PyTypingTest extends PyTestCase {
            "    pass\n");
   }
 
+  public void testTypeInStringLiteral() {
+    doTest("C",
+           "class C:\n" +
+           "    def foo(self, expr: 'C'):\n" +
+           "        pass\n");
+  }
+
+  public void testQualifiedTypeInStringLiteral() {
+    doTest("str",
+           "import typing\n" +
+           "\n" +
+           "def foo(x: 'typing.AnyStr') -> typing.AnyStr:\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = foo('bar')\n");
+  }
+
   private void doTest(@NotNull String expectedType, @NotNull String text) {
     myFixture.copyDirectoryToProject("typing", "");
     myFixture.configureByText(PythonFileType.INSTANCE, text);

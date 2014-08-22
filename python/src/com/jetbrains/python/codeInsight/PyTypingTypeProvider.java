@@ -17,11 +17,13 @@ package com.jetbrains.python.codeInsight;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.*;
@@ -157,6 +159,27 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     final PyType functionType = getFunctionType(expression, context);
     if (functionType != null) {
       return functionType;
+    }
+    final PyType stringBasedType = getStringBasedType(expression, context);
+    if (stringBasedType != null) {
+      return stringBasedType;
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyType getStringBasedType(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+    if (expression instanceof PyStringLiteralExpression) {
+      // XXX: Requires switching from stub to AST
+      final String contents = ((PyStringLiteralExpression)expression).getStringValue();
+      final Project project = expression.getProject();
+      final PyExpressionCodeFragmentImpl codeFragment = new PyExpressionCodeFragmentImpl(project, "dummy.py", contents, false);
+      codeFragment.setContext(expression.getContainingFile());
+      final PsiElement element = codeFragment.getFirstChild();
+      if (element instanceof PyExpressionStatement) {
+        final PyExpression dummyExpr = ((PyExpressionStatement)element).getExpression();
+        return getType(dummyExpr, context);
+      }
     }
     return null;
   }
