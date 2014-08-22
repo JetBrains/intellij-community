@@ -1,8 +1,8 @@
 # Configuration
 
-Use File -> Settings Server... to configure settings server.
+Use File -> Settings Repository... to configure.
 
-Specify URL of Git repository. Please note — ssh is not yet supported. Please use HTTP/HTTPS. File URL is supported, you will be prompted to init repository if specified path is not exists or repository is not created.
+Specify URL of upstream Git repository. Please note — ssh is not yet supported. Please use HTTP/HTTPS. File URL is supported, you will be prompted to init repository if specified path is not exists or repository is not created.
 [GitHub](www.github.com) could be used to store settings.
 
 Check "Update repository from remote on start" if you want automatically update your configuration on IDE start. Otherwise you can use Vcs -> Sync Settings...
