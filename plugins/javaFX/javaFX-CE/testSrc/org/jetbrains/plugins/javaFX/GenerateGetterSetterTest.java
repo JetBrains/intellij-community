@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,6 +56,7 @@ public class GenerateGetterSetterTest extends DaemonAnalyzerTestCase {
         return members;
       }
     }.invoke(getProject(), getEditor(), getFile());
+    UIUtil.dispatchAllInvocationEvents();
     checkResultByFile("/generateGetterSetter/after" + getTestName(false) + ".java");
   }
   
