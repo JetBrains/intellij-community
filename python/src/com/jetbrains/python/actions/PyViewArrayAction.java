@@ -16,21 +16,29 @@
 package com.jetbrains.python.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
-import com.intellij.xdebugger.impl.ui.tree.SetValueInplaceEditor;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeInplaceEditor;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.jetbrains.python.PythonFileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+import javax.swing.table.*;
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -72,7 +80,7 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
 
         String showedValues =
           dimension > 2 ? rawValues.substring(dimension - 2, rawValues.indexOf(END_ROW_SEPARATOR + END_ROW_SEPARATOR) + 2) : rawValues;
-        String[] rows = showedValues.split("\\]\n(\\ )*\\[");
+        String[] rows = showedValues.split("\\]\n( )*\\[");
 
         Object[][] data = null;
         boolean numeric = isNumeric(showedValues);
@@ -94,9 +102,7 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
           }
 
           data = data == null ? new String[rows.length][row.length] : data;
-          for (int j = 0; j < row.length; j++) {
-            data[i][j] = row[j];
-          }
+          System.arraycopy(row, 0, data[i], 0, row.length);
         }
         return data;
       }
@@ -114,7 +120,9 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
 
   private class MyDialog extends DialogWrapper {
     public JTable myTable;
-    private XDebuggerTreeInplaceEditor myEditor;
+    private XValueNodeImpl myNode;
+    private String myNodeName;
+    private Project myProject;
 
     private MyComponent myComponent;
 
@@ -124,7 +132,9 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
       setCancelButtonText("Close");
       setCrossClosesWindow(true);
 
-      myEditor = new SetValueInplaceEditor(node, nodeName);
+      myNode = node;
+      myNodeName = nodeName;
+      myProject = project;
 
       myComponent = new MyComponent();
       myTable = myComponent.getTable();
@@ -143,18 +153,7 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
         DefaultTableModel model = new DefaultTableModel(data, range(0, data[0].length - 1));
 
         myTable.setModel(model);
-
-        //for (int i = 0; i < myTable.getColumnModel().getColumnCount(); i++) {
-        //  TableColumn column = myTable.getColumnModel().getColumn(i);
-        //  column.setPreferredWidth(25);
-        //  int width = 0;
-        //  for (int row = 0; row < myTable.getRowCount(); row++) {
-        //    TableCellRenderer renderer = myTable.getCellRenderer(row, i);
-        //    Component comp = myTable.prepareRenderer(renderer, row, i);
-        //    width = Math.max (comp.getPreferredSize().width, width);
-        //  }
-        //  column.setWidth(width);
-        //}
+        myTable.setDefaultEditor(myTable.getColumnClass(0), new MyTableCellEditor(myProject));
       }
     }
 
@@ -245,6 +244,11 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
       myScrollPane.setHorizontalScrollBarPolicy(JBScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
       myScrollPane.setVerticalScrollBarPolicy(JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 
+      JTable rowTable = new RowNumberTable(myTable);
+      myScrollPane.setRowHeaderView(rowTable);
+      myScrollPane.setCorner(JScrollPane.UPPER_LEFT_CORNER,
+                             rowTable.getTableHeader());
+
       add(myScrollPane,
           new GridBagConstraints(0, 0, 2, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
       add(myTextField,
@@ -259,6 +263,183 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
 
     public JBTable getTable() {
       return myTable;
+    }
+  }
+
+
+  class MyTableCellEditor extends AbstractCellEditor implements TableCellEditor {
+    Editor myEditor;
+    Project myProject;
+
+    public MyTableCellEditor(Project project) {
+      super();
+      myProject = project;
+    }
+
+    public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected,
+                                                 int rowIndex, int vColIndex) {
+      myEditor = EditorFactoryImpl.getInstance().createEditor(new DocumentImpl(value.toString()), myProject, PythonFileType.INSTANCE, false);
+      return myEditor.getContentComponent();
+    }
+
+    public Object getCellEditorValue() {
+      return myEditor.getDocument().getText();
+    }
+  }
+
+  /*
+ *	Use a JTable as a renderer for row numbers of a given main table.
+ *  This table must be added to the row header of the scrollpane that
+ *  contains the main table.
+ */
+  public class RowNumberTable extends JTable
+    implements ChangeListener, PropertyChangeListener, TableModelListener {
+    private JTable main;
+
+    public RowNumberTable(JTable table) {
+      main = table;
+      main.addPropertyChangeListener(this);
+      main.getModel().addTableModelListener(this);
+
+      setFocusable(false);
+      setAutoCreateColumnsFromModel(false);
+      setSelectionModel(main.getSelectionModel());
+
+
+      TableColumn column = new TableColumn();
+      column.setHeaderValue(" ");
+      addColumn(column);
+      column.setCellRenderer(new RowNumberRenderer());
+
+      getColumnModel().getColumn(0).setPreferredWidth(50);
+      setPreferredScrollableViewportSize(getPreferredSize());
+    }
+
+    @Override
+    public void addNotify() {
+      super.addNotify();
+
+      Component c = getParent();
+
+      //  Keep scrolling of the row table in sync with the main table.
+
+      if (c instanceof JViewport) {
+        JViewport viewport = (JViewport)c;
+        viewport.addChangeListener(this);
+      }
+    }
+
+    /*
+     *  Delegate method to main table
+     */
+    @Override
+    public int getRowCount() {
+      return main.getRowCount();
+    }
+
+    @Override
+    public int getRowHeight(int row) {
+      int rowHeight = main.getRowHeight(row);
+
+      if (rowHeight != super.getRowHeight(row)) {
+        super.setRowHeight(row, rowHeight);
+      }
+
+      return rowHeight;
+    }
+
+    /*
+     *  No model is being used for this table so just use the row number
+     *  as the value of the cell.
+     */
+    @Override
+    public Object getValueAt(int row, int column) {
+      return Integer.toString(row + 1);
+    }
+
+    /*
+     *  Don't edit data in the main TableModel by mistake
+     */
+    @Override
+    public boolean isCellEditable(int row, int column) {
+      return false;
+    }
+
+    /*
+     *  Do nothing since the table ignores the model
+     */
+    @Override
+    public void setValueAt(Object value, int row, int column) {
+    }
+
+    //
+    //  Implement the ChangeListener
+    //
+    public void stateChanged(ChangeEvent e) {
+      //  Keep the scrolling of the row table in sync with main table
+
+      JViewport viewport = (JViewport)e.getSource();
+      JScrollPane scrollPane = (JScrollPane)viewport.getParent();
+      scrollPane.getVerticalScrollBar().setValue(viewport.getViewPosition().y);
+    }
+
+    //
+    //  Implement the PropertyChangeListener
+    //
+    public void propertyChange(PropertyChangeEvent e) {
+      //  Keep the row table in sync with the main table
+
+      if ("selectionModel".equals(e.getPropertyName())) {
+        setSelectionModel(main.getSelectionModel());
+      }
+
+      if ("rowHeight".equals(e.getPropertyName())) {
+        repaint();
+      }
+
+      if ("model".equals(e.getPropertyName())) {
+        main.getModel().addTableModelListener(this);
+        revalidate();
+      }
+    }
+
+    //
+    //  Implement the TableModelListener
+    //
+    @Override
+    public void tableChanged(TableModelEvent e) {
+      revalidate();
+    }
+
+    /*
+     *  Attempt to mimic the table header renderer
+     */
+    private class RowNumberRenderer extends DefaultTableCellRenderer {
+      public RowNumberRenderer() {
+        setHorizontalAlignment(JLabel.CENTER);
+      }
+
+      public Component getTableCellRendererComponent(
+        JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        if (table != null) {
+          JTableHeader header = table.getTableHeader();
+
+          if (header != null) {
+            setForeground(header.getForeground());
+            setBackground(header.getBackground());
+            setFont(header.getFont());
+          }
+        }
+
+        if (isSelected) {
+          setFont(getFont().deriveFont(Font.BOLD));
+        }
+
+        setText((value == null) ? "" : value.toString());
+        setBorder(UIManager.getBorder("TableHeader.cellBorder"));
+
+        return this;
+      }
     }
   }
 }
