@@ -20,6 +20,7 @@ import com.intellij.execution.util.EnvVariablesTable;
 import com.intellij.execution.util.EnvironmentVariable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,7 @@ import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
-public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWithBrowseButton {
+public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWithBrowseButton implements UserActivityProviderComponent {
 
   private final Map<String, String> myEnvs = new THashMap<String, String>();
   private boolean myPassParentEnvs;
@@ -89,10 +90,12 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     }
   }
 
+  @Override
   public void addChangeListener(ChangeListener changeListener) {
     myListeners.add(changeListener);
   }
 
+  @Override
   public void removeChangeListener(ChangeListener changeListener) {
     myListeners.remove(changeListener);
   }
