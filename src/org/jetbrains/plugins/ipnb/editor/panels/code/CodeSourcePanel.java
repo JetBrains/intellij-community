@@ -29,6 +29,8 @@ import org.jetbrains.plugins.ipnb.editor.panels.IpnbPanel;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -64,8 +66,20 @@ public class CodeSourcePanel extends IpnbPanel implements EditorPanel {
       myEditor = IpnbEditorUtil.createPlainCodeEditor(myProject, mySource);
     else
       myEditor = IpnbEditorUtil.createPythonCodeEditor(myProject, mySource);
-    final JComponent component = myEditor.getContentComponent();
-    component.addMouseListener(new MouseAdapter() {
+    
+    final JComponent contentComponent = myEditor.getContentComponent();
+    contentComponent.addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyReleased(KeyEvent e) {
+        final int keyCode = e.getKeyCode();
+        if (keyCode == KeyEvent.VK_ENTER || keyCode == KeyEvent.VK_BACK_SPACE ||
+            keyCode == KeyEvent.VK_DELETE)
+        panel.revalidate();
+        panel.repaint();
+      }
+    });
+
+    contentComponent.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
         final Container ipnbFilePanel = myParent.getParent();
@@ -73,12 +87,13 @@ public class CodeSourcePanel extends IpnbPanel implements EditorPanel {
           ((IpnbFilePanel)ipnbFilePanel).setSelectedCell(myParent);
           myParent.switchToEditing();
         }
-        UIUtil.requestFocus(component);
+        UIUtil.requestFocus(contentComponent);
       }
     });
-    final JComponent comp = myEditor.getComponent();
-    panel.add(comp);
-    comp.setPreferredSize(new Dimension(IpnbEditorUtil.PANEL_WIDTH, panel.getPreferredSize().height));
+
+    final JComponent component = myEditor.getComponent();
+    panel.add(component);
+    contentComponent.setPreferredSize(new Dimension(IpnbEditorUtil.PANEL_WIDTH, panel.getPreferredSize().height));
     setBorder(BorderFactory.createLineBorder(JBColor.lightGray, 1, true));
     return panel;
   }
