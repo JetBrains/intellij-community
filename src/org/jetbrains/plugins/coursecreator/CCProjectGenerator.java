@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.coursecreator.format.Course;
+import org.jetbrains.plugins.coursecreator.ui.CCNewProjectPanel;
 
 import javax.swing.*;
 

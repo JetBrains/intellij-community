@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.coursecreator;
+package org.jetbrains.plugins.coursecreator.ui;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;

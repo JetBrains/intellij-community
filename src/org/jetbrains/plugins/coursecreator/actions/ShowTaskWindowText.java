@@ -4,10 +4,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.coursecreator.format.TaskWindow;
+import org.jetbrains.plugins.coursecreator.ui.CreateTaskWindowDialog;
 
 @SuppressWarnings("ComponentNotRegistered")
 public class ShowTaskWindowText extends DumbAwareAction {
@@ -23,9 +22,8 @@ public class ShowTaskWindowText extends DumbAwareAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) return;
-    final String taskText = Messages.showMultilineInputDialog(project, "Task window text", "Task Window Text",
-        myTaskWindow.getTaskText(), null, null);
-    myTaskWindow.setTaskText(StringUtil.notNullize(taskText));
+    //TODO: copy task window and return if modification canceled
+    CreateTaskWindowDialog dlg = new CreateTaskWindowDialog(project, myTaskWindow);
+    dlg.show();
   }
-
 }

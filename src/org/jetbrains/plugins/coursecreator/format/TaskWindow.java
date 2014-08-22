@@ -12,6 +12,7 @@ public class TaskWindow {
   @Expose public int length;
   public String myTaskText;
   public int myReplacementLength;
+  public String myHint;
 
   public TaskWindow() {}
 
@@ -33,5 +34,13 @@ public class TaskWindow {
 
   public int getReplacementLength() {
     return myReplacementLength;
+  }
+
+  public void setHint(String hint) {
+    myHint = hint;
+  }
+
+  public String getHintName() {
+    return myHint;
   }
 }

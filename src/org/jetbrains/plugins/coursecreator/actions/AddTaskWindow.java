@@ -9,13 +9,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.plugins.coursecreator.CCProjectService;
 import org.jetbrains.plugins.coursecreator.format.*;
+import org.jetbrains.plugins.coursecreator.ui.CreateTaskWindowDialog;
 
 public class AddTaskWindow extends DumbAwareAction {
   public AddTaskWindow() {
@@ -51,12 +51,12 @@ public class AddTaskWindow extends DumbAwareAction {
     final Lesson lesson = course.getLesson(lessonDir.getName());
     final Task task = lesson.getTask(taskDir.getName());
     final TaskFile taskFile = task.getTaskFile(file.getName());
-
-    final String taskText = Messages.showMultilineInputDialog(project, "Add window task text", "Task Window Text", "", null, null);
-
     final TaskWindow taskWindow = new TaskWindow(lineNumber, realStart, length, model.getSelectedText());
-    taskWindow.setTaskText(StringUtil.notNullize(taskText));
-
+    CreateTaskWindowDialog dlg = new CreateTaskWindowDialog(project, taskWindow);
+    dlg.show();
+    if (dlg.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
+      return;
+    }
     taskFile.addTaskWindow(taskWindow);
     DaemonCodeAnalyzerImpl.getInstance(project).restart(file);
   }
