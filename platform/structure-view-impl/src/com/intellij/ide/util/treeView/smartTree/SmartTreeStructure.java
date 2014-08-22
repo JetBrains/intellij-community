@@ -36,6 +36,12 @@ public class SmartTreeStructure extends AbstractTreeStructure {
 
   @Override
   public void commit() {
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+  }
+
+  @Override
+  public boolean hasSomethingToCommit() {
+    return PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments();
   }
 
   @Override
@@ -69,11 +75,6 @@ public class SmartTreeStructure extends AbstractTreeStructure {
   @Override
   public boolean isAlwaysLeaf(Object element) {
     return ((AbstractTreeNode)element).isAlwaysLeaf();
-  }
-
-  @Override
-  public boolean hasSomethingToCommit() {
-    return PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments();
   }
 
   public void rebuildTree() {
