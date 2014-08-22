@@ -1,14 +1,13 @@
 package org.jetbrains.plugins.coursecreator.actions;
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
@@ -18,7 +17,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.plugins.coursecreator.CCProjectService;
 import org.jetbrains.plugins.coursecreator.format.*;
 
-public class AddTaskWindow extends AnAction implements DumbAware {
+public class AddTaskWindow extends DumbAwareAction {
   public AddTaskWindow() {
     super("Add task window","Add task window", null);
   }

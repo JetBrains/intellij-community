@@ -1,12 +1,11 @@
 package org.jetbrains.plugins.coursecreator.actions;
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
@@ -18,7 +17,7 @@ import org.jetbrains.plugins.coursecreator.format.*;
 import java.util.List;
 
 @SuppressWarnings("ComponentNotRegistered")
-public class DeleteTaskWindowAction extends AnAction implements DumbAware {
+public class DeleteTaskWindowAction extends DumbAwareAction {
   @NotNull
   private final TaskWindow myTaskWindow;
 

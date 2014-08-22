@@ -7,9 +7,12 @@ import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.ide.util.DirectoryUtil;
 import com.intellij.ide.util.EditorHelper;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDirectory;
@@ -20,7 +23,7 @@ import org.jetbrains.plugins.coursecreator.format.Course;
 import org.jetbrains.plugins.coursecreator.format.Lesson;
 import org.jetbrains.plugins.coursecreator.format.Task;
 
-public class CreateTask extends AnAction implements DumbAware {
+public class CreateTask extends DumbAwareAction {
   public CreateTask() {
     super("Task", "Create new Task", PlatformIcons.DIRECTORY_CLOSED_ICON);
   }

@@ -2,12 +2,11 @@ package org.jetbrains.plugins.coursecreator.actions;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.plugins.coursecreator.CCProjectService;
 import org.jetbrains.plugins.coursecreator.format.Course;
@@ -16,7 +15,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-public class GenerateJson extends AnAction implements DumbAware {
+public class GenerateJson extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(GenerateJson.class.getName());
   public GenerateJson() {
     super("Generate course Json","Generate course Json", null);

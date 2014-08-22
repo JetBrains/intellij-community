@@ -1,9 +1,8 @@
 package org.jetbrains.plugins.coursecreator.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
@@ -11,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.coursecreator.format.TaskWindow;
 
 @SuppressWarnings("ComponentNotRegistered")
-public class ShowTaskWindowText extends AnAction implements DumbAware {
+public class ShowTaskWindowText extends DumbAwareAction {
   @NotNull
   private final TaskWindow myTaskWindow;
 
