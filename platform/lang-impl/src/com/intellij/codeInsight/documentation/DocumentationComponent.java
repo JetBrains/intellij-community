@@ -68,10 +68,9 @@ import javax.swing.event.HyperlinkListener;
 import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Collections;
+import java.net.URL;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Stack;
 
 public class DocumentationComponent extends JPanel implements Disposable, DataProvider {
 
@@ -103,6 +102,13 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private final MyShowSettingsButton myShowSettingsButton;
   private boolean myIgnoreFontSizeSliderChange;
   private String myEffectiveExternalUrl;
+  private final MyDictionary<String, Image> myImageProvider = new MyDictionary<String, Image>() {
+    @Override
+    public Image get(Object key) {
+      PsiElement element = getElement();
+      return element == null ? null : myManager.getElementImage(element, ((URL)key).toExternalForm());
+    }
+  };
 
   private static class Context {
     final SmartPsiElementPointer element;
@@ -179,6 +185,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       protected void paintComponent(Graphics g) {
         GraphicsUtil.setupAntialiasing(g);
         super.paintComponent(g);
+      }
+
+      @Override
+      public void setDocument(Document doc) {
+        super.setDocument(doc);
+        if (doc instanceof StyledDocument) {
+          doc.putProperty("imageCache", myImageProvider);
+        }
       }
     };
     DataProvider helpDataProvider = new DataProvider() {
@@ -878,6 +892,38 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       EditorColorsScheme scheme = colorsManager.getGlobalScheme();
       setFontSizeSliderSize(scheme.getQuickDocFontSize());
       mySettingsPanel.setVisible(true);
+    }
+  }
+
+  private static abstract class MyDictionary<K, V> extends Dictionary<K, V> {
+    @Override
+    public int size() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean isEmpty() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Enumeration<K> keys() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Enumeration<V> elements() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public V put(K key, V value) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public V remove(Object key) {
+      throw new UnsupportedOperationException();
     }
   }
 }
