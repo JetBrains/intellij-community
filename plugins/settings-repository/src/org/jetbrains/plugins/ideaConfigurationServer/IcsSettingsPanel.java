@@ -161,7 +161,7 @@ public class IcsSettingsPanel extends DialogWrapper {
     }
 
     try {
-      repositoryManager.setUpstream(url);
+      repositoryManager.setUpstream(url, null);
       return true;
     }
     catch (Exception e) {

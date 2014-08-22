@@ -36,23 +36,31 @@ public class GitEx extends Git {
     config.save();
   }
 
-  public void setUpstream(@Nullable String url) throws IOException {
+  public void setUpstream(@Nullable String url, @Nullable String branchName) throws IOException {
+    // our local branch named 'master' in any case
+    String localBranchName = Constants.MASTER;
+
     StoredConfig config = getRepository().getConfig();
+    String remoteName = Constants.DEFAULT_REMOTE_NAME;
     if (StringUtil.isEmptyOrSpaces(url)) {
       LOG.debug("Unset remote");
-      config.unset(ConfigConstants.CONFIG_REMOTE_SECTION, Constants.DEFAULT_REMOTE_NAME, ConfigConstants.CONFIG_KEY_URL);
-      config.unset(ConfigConstants.CONFIG_REMOTE_SECTION, Constants.DEFAULT_REMOTE_NAME, "fetch");
-
-      config.unset(ConfigConstants.CONFIG_BRANCH_SECTION, Constants.MASTER, ConfigConstants.CONFIG_KEY_REMOTE);
-      config.unset(ConfigConstants.CONFIG_BRANCH_SECTION, Constants.MASTER, ConfigConstants.CONFIG_KEY_MERGE);
+      config.unsetSection(ConfigConstants.CONFIG_REMOTE_SECTION, remoteName);
+      config.unsetSection(ConfigConstants.CONFIG_BRANCH_SECTION, localBranchName);
     }
     else {
-      LOG.debug("Set remote " + url);
-      config.setString(ConfigConstants.CONFIG_REMOTE_SECTION, Constants.DEFAULT_REMOTE_NAME, ConfigConstants.CONFIG_KEY_URL, url);
-      config.setString(ConfigConstants.CONFIG_REMOTE_SECTION, Constants.DEFAULT_REMOTE_NAME, "fetch", "+refs/heads/*:refs/remotes/origin/*");
+      if (branchName == null) {
+        branchName = Constants.MASTER;
+      }
 
-      config.setString(ConfigConstants.CONFIG_BRANCH_SECTION, Constants.MASTER, ConfigConstants.CONFIG_KEY_REMOTE, Constants.DEFAULT_REMOTE_NAME);
-      config.setString(ConfigConstants.CONFIG_BRANCH_SECTION, Constants.MASTER, ConfigConstants.CONFIG_KEY_MERGE, Constants.R_HEADS + Constants.MASTER);
+      LOG.debug("Set remote " + url);
+      config.setString(ConfigConstants.CONFIG_REMOTE_SECTION, remoteName, ConfigConstants.CONFIG_KEY_URL, url);
+      // http://git-scm.com/book/en/Git-Internals-The-Refspec
+      config.setString(ConfigConstants.CONFIG_REMOTE_SECTION, remoteName, ConfigConstants.CONFIG_FETCH_SECTION, '+' + Constants.R_HEADS + branchName + ':' + Constants.R_REMOTES + remoteName + '/' + branchName);
+      // todo should we set it if fetch specified (kirill.likhodedov suggestion)
+      //config.setString(ConfigConstants.CONFIG_REMOTE_SECTION, remoteName, "push", Constants.R_HEADS + localBranchName + ':' + Constants.R_HEADS + branchName);
+
+      config.setString(ConfigConstants.CONFIG_BRANCH_SECTION, localBranchName, ConfigConstants.CONFIG_KEY_REMOTE, remoteName);
+      config.setString(ConfigConstants.CONFIG_BRANCH_SECTION, localBranchName, ConfigConstants.CONFIG_KEY_MERGE, Constants.R_HEADS + branchName);
     }
     config.save();
   }

@@ -19,7 +19,7 @@ public interface RepositoryManager {
   /**
    * Return error message if failed
    */
-  void setUpstream(@Nullable String url) throws Exception;
+  void setUpstream(@Nullable String url, @Nullable String branch) throws Exception;
 
   @Nullable
   InputStream read(@NotNull String path) throws IOException;

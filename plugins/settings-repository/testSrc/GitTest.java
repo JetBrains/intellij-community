@@ -19,6 +19,7 @@ import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.IndexDiff;
 import org.eclipse.jgit.lib.Repository;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ideaConfigurationServer.git.GitEx;
 import org.jetbrains.plugins.ideaConfigurationServer.git.GitRepositoryManager;
 import org.junit.*;
@@ -163,26 +164,33 @@ public class GitTest {
   @Test
   public void setUpstream() throws Exception {
     String url = "https://github.com/user/repo.git";
-    getRepositoryManager().setUpstream(url);
+    getRepositoryManager().setUpstream(url, null);
     assertThat(getRepositoryManager().getRemoteRepositoryUrl(), equalTo(url));
   }
 
   @Test
   public void pullToRepositoryWithoutCommits() throws Exception {
+    doPullToRepositoryWithoutCommits(null);
+  }
+
+  @Test
+  public void pullToRepositoryWithoutCommitsAndCustomRemoteBranchName() throws Exception {
+    doPullToRepositoryWithoutCommits("customRemoteBranchName");
+  }
+
+  private void doPullToRepositoryWithoutCommits(@Nullable String remoteBranchName) throws Exception {
     BaseRepositoryManager repositoryManager = getRepositoryManager();
-    File remoteRepository = createRemoteRepository();
-    repositoryManager.setUpstream(remoteRepository.getAbsolutePath());
-
+    File remoteRepository = createRemoteRepository(remoteBranchName);
+    repositoryManager.setUpstream(remoteRepository.getAbsolutePath(), remoteBranchName);
     repositoryManager.pull(new EmptyProgressIndicator());
-
     compareFiles(getRepository().getWorkTree(), remoteRepository);
   }
 
   @Test
   public void pullToRepositoryWithCommits() throws Exception {
     BaseRepositoryManager repositoryManager = getRepositoryManager();
-    File remoteRepository = createRemoteRepository();
-    repositoryManager.setUpstream(remoteRepository.getAbsolutePath());
+    File remoteRepository = createRemoteRepository(null);
+    repositoryManager.setUpstream(remoteRepository.getAbsolutePath(), null);
 
     byte[] data = FileUtil.loadFileBytes(new File(getTestDataPath(), "crucibleConnector.xml"));
     String addedFile = "$APP_CONFIG$/crucibleConnector.xml";
@@ -190,11 +198,8 @@ public class GitTest {
 
     EmptyProgressIndicator progressIndicator = new EmptyProgressIndicator();
     repositoryManager.commit(progressIndicator);
-
     repositoryManager.pull(progressIndicator);
-
     assertThat(FileUtil.loadFile(new File(getRepository().getWorkTree(), addedFile)), equalTo(new String(data, CharsetToolkit.UTF8_CHARSET)));
-
     compareFiles(getRepository().getWorkTree(), remoteRepository, "crucibleConnector.xml");
   }
 
@@ -237,8 +242,16 @@ public class GitTest {
   }
 
   @NotNull
-  private File createRemoteRepository() throws IOException, GitAPIException {
+  private File createRemoteRepository(@Nullable String branchName) throws IOException, GitAPIException {
     GitEx git = new GitEx(testWatcher.getRepository(ICS_DIR));
+
+    if (branchName != null) {
+      // jgit cannot checkout&create branch if no HEAD (no commits in our empty repository), so we create initial empty commit
+      git.commit().setMessage("").call();
+
+      git.checkout().setCreateBranch(true).setName(branchName).call();
+    }
+
     String addedFile = "$APP_CONFIG$/encoding.xml";
     File workTree = git.getRepository().getWorkTree();
     FileUtil.copy(new File(getTestDataPath(), "encoding.xml"), new File(workTree, addedFile));

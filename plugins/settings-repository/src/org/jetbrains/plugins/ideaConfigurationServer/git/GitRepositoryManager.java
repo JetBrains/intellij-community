@@ -62,8 +62,8 @@ public final class GitRepositoryManager extends BaseRepositoryManager {
   }
 
   @Override
-  public void setUpstream(@Nullable String url) throws Exception {
-    git.setUpstream(url);
+  public void setUpstream(@Nullable String url, @Nullable String branch) throws Exception {
+    git.setUpstream(url, branch);
   }
 
   @NotNull
