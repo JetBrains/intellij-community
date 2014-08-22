@@ -1,16 +1,17 @@
 package org.jetbrains.plugins.ipnb.format.cells;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.format.cells.output.CellOutput;
 
 import java.util.List;
 
 public class CodeCell extends SourceCell {
   @NotNull private final String myLanguage;
-  private final int myPromptNumber;
+  @Nullable private final Integer myPromptNumber;
   @NotNull private final List<CellOutput> myCellOutputs;
 
-  public CodeCell(@NotNull final String language, @NotNull final String[] input, int number, @NotNull final List<CellOutput> cellOutputs) {
+  public CodeCell(@NotNull final String language, @NotNull final String[] input, Integer number, @NotNull final List<CellOutput> cellOutputs) {
     super(input);
     myLanguage = language;
     myPromptNumber = number;
@@ -22,7 +23,8 @@ public class CodeCell extends SourceCell {
     return myLanguage;
   }
 
-  public int getPromptNumber() {
+  @Nullable
+  public Integer getPromptNumber() {
     return myPromptNumber;
   }
 

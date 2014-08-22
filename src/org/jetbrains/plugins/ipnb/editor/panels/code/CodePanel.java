@@ -17,10 +17,7 @@ import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbEditablePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbPanel;
 import org.jetbrains.plugins.ipnb.format.cells.CodeCell;
-import org.jetbrains.plugins.ipnb.format.cells.output.CellOutput;
-import org.jetbrains.plugins.ipnb.format.cells.output.HtmlCellOutput;
-import org.jetbrains.plugins.ipnb.format.cells.output.ImageCellOutput;
-import org.jetbrains.plugins.ipnb.format.cells.output.LatexCellOutput;
+import org.jetbrains.plugins.ipnb.format.cells.output.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -48,7 +45,7 @@ public class CodePanel extends IpnbEditablePanel<JComponent, CodeCell> {
     return (IpnbFileEditor)myParent;
   }
 
-  public void addPromptPanel(@NotNull final JComponent parent, int promptNumber,
+  public void addPromptPanel(@NotNull final JComponent parent, Integer promptNumber,
                              @NotNull final IpnbEditorUtil.PromptType promptType,
                              IpnbPanel component,
                              GridBagConstraints c) {
@@ -103,6 +100,14 @@ public class CodePanel extends IpnbEditablePanel<JComponent, CodeCell> {
       else if (cellOutput instanceof LatexCellOutput) {
         addPromptPanel(panel, myCell.getPromptNumber(), IpnbEditorUtil.PromptType.Out,
                        new LatexPanel((LatexCellOutput)cellOutput), c);
+      }
+      else if (cellOutput instanceof ErrorCellOutput) {
+        addPromptPanel(panel, myCell.getPromptNumber(), IpnbEditorUtil.PromptType.Out,
+                       new ErrorPanel((ErrorCellOutput)cellOutput), c);
+      }
+      else if (cellOutput instanceof StreamCellOutput) {
+        addPromptPanel(panel, myCell.getPromptNumber(), IpnbEditorUtil.PromptType.Out,
+                       new StreamPanel((StreamCellOutput)cellOutput), c);
       }
       else if (cellOutput.getSourceAsString() != null) {
         addPromptPanel(panel, myCell.getPromptNumber(), IpnbEditorUtil.PromptType.Out,

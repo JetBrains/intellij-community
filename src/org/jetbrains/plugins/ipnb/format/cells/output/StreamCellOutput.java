@@ -3,15 +3,15 @@ package org.jetbrains.plugins.ipnb.format.cells.output;
 import org.jetbrains.annotations.NotNull;
 
 public class StreamCellOutput extends CellOutput {
-  @NotNull private final String myLatex;
+  @NotNull private final String myStream;
 
-  public StreamCellOutput(@NotNull final String latex, String[] text) {
+  public StreamCellOutput(@NotNull final String stream, String[] text) {
     super(text);
-    myLatex = latex;
+    myStream = stream;
   }
 
   @NotNull
-  public String getLatex() {
-    return myLatex;
+  public String getStream() {
+    return myStream;
   }
 }

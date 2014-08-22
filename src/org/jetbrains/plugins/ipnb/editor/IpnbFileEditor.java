@@ -14,7 +14,6 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.JBColor;
@@ -24,6 +23,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellAction;
+import org.jetbrains.plugins.ipnb.editor.actions.IpnbSaveAction;
 import org.jetbrains.plugins.ipnb.editor.panels.HeadingPanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbPanel;
@@ -32,6 +32,7 @@ import org.jetbrains.plugins.ipnb.editor.panels.code.CodePanel;
 import org.jetbrains.plugins.ipnb.format.IpnbParser;
 import org.jetbrains.plugins.ipnb.format.cells.CodeCell;
 import org.jetbrains.plugins.ipnb.format.cells.HeadingCell;
+import org.jetbrains.plugins.ipnb.format.cells.IpnbCell;
 import org.jetbrains.plugins.ipnb.format.cells.MarkdownCell;
 import org.jetbrains.plugins.ipnb.format.cells.output.CellOutput;
 
@@ -42,6 +43,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * @author traff
@@ -88,6 +90,19 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
   private JPanel createControlPanel() {
     final JPanel controlPanel = new JPanel();
     controlPanel.setBackground(IpnbEditorUtil.getBackground());
+    final JButton saveButton = new JButton();
+    saveButton.setBackground(IpnbEditorUtil.getBackground());
+    saveButton.setPreferredSize(new Dimension(30, 30));
+    saveButton.setIcon(AllIcons.Actions.Menu_saveall);
+    saveButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final IpnbSaveAction action = (IpnbSaveAction)ActionManager.getInstance().getAction("IpnbSaveAction");
+        action.saveAndCheckpoint(myIpnbFilePanel.getIpnbFile());
+      }
+    });
+    controlPanel.add(saveButton);
+
     myRunCellButton = new JButton();
     myRunCellButton.setBackground(IpnbEditorUtil.getBackground());
     myRunCellButton.setPreferredSize(new Dimension(30, 30));
@@ -137,10 +152,21 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
         }
       }
       else if (selectedItem.equals(markdownCellType)) {
-        myIpnbFilePanel.replaceComponent(selectedCell, new MarkdownCell(cell.getSource()));
+        final List<IpnbCell> cells = myIpnbFilePanel.getIpnbFile().getCells();
+        final int index = cells.indexOf(((HeadingPanel)selectedCell).getCell());
+        final MarkdownCell markdownCell = new MarkdownCell(cell.getSource());
+        if (index >= 0)
+          cells.set(index, markdownCell);
+        myIpnbFilePanel.replaceComponent(selectedCell, markdownCell);
       }
       else if (selectedItem.equals(codeCellType)) {
-        myIpnbFilePanel.replaceComponent(selectedCell, new CodeCell("python", cell.getSource(), -1, Lists.<CellOutput>newArrayList()));
+        final List<IpnbCell> cells = myIpnbFilePanel.getIpnbFile().getCells();
+        final int index = cells.indexOf(((HeadingPanel)selectedCell).getCell());
+        final CodeCell codeCell = new CodeCell("python", cell.getSource(), null, Lists.<CellOutput>newArrayList());
+        if (index >= 0)
+          cells.set(index, codeCell);
+
+        myIpnbFilePanel.replaceComponent(selectedCell, codeCell);
       }
     }
     else if (selectedCell instanceof MarkdownPanel) {
@@ -148,10 +174,22 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
       if (selectedItem.startsWith(headingCellType)) {
         final char c = selectedItem.charAt(selectedItem.length() - 1);
         final int level = Character.getNumericValue(c);
-        myIpnbFilePanel.replaceComponent(selectedCell, new HeadingCell(cell.getSource(), level));
+        final List<IpnbCell> cells = myIpnbFilePanel.getIpnbFile().getCells();
+        final int index = cells.indexOf(((MarkdownPanel)selectedCell).getCell());
+        final HeadingCell headingCell = new HeadingCell(cell.getSource(), level);
+        if (index >= 0)
+          cells.set(index, headingCell);
+
+        myIpnbFilePanel.replaceComponent(selectedCell, headingCell);
       }
       else if (selectedItem.equals(codeCellType)) {
-        myIpnbFilePanel.replaceComponent(selectedCell, new CodeCell("python", cell.getSource(), -1, Lists.<CellOutput>newArrayList()));
+        final List<IpnbCell> cells = myIpnbFilePanel.getIpnbFile().getCells();
+        final int index = cells.indexOf(((MarkdownPanel)selectedCell).getCell());
+        final CodeCell codeCell = new CodeCell("python", cell.getSource(), null, Lists.<CellOutput>newArrayList());
+        if (index >= 0)
+          cells.set(index, codeCell);
+
+        myIpnbFilePanel.replaceComponent(selectedCell, codeCell);
       }
     }
     else if (selectedCell instanceof CodePanel) {
@@ -159,10 +197,21 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
       if (selectedItem.startsWith(headingCellType)) {
         final char c = selectedItem.charAt(selectedItem.length() - 1);
         final int level = Character.getNumericValue(c);
-        myIpnbFilePanel.replaceComponent(selectedCell, new HeadingCell(cell.getSource(), level));
+        final List<IpnbCell> cells = myIpnbFilePanel.getIpnbFile().getCells();
+        final int index = cells.indexOf(((CodePanel)selectedCell).getCell());
+        final HeadingCell headingCell = new HeadingCell(cell.getSource(), level);
+        if (index >= 0)
+          cells.set(index, headingCell);
+        myIpnbFilePanel.replaceComponent(selectedCell, headingCell);
       }
       else if(selectedItem.equals(markdownCellType)) {
-        myIpnbFilePanel.replaceComponent(selectedCell, new MarkdownCell(cell.getSource()));
+        final List<IpnbCell> cells = myIpnbFilePanel.getIpnbFile().getCells();
+        final int index = cells.indexOf(((CodePanel)selectedCell).getCell());
+        final MarkdownCell markdownCell = new MarkdownCell(cell.getSource());
+        if (index >= 0)
+          cells.set(index, markdownCell);
+
+        myIpnbFilePanel.replaceComponent(selectedCell, markdownCell);
       }
     }
   }
@@ -170,7 +219,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
   @NotNull
   private IpnbFilePanel createIpnbEditorPanel(Project project, VirtualFile vFile, Disposable parent) {
     try {
-      return new IpnbFilePanel(project, parent, IpnbParser.parseIpnbFile(new String(vFile.contentsToByteArray(), CharsetToolkit.UTF8)),
+      return new IpnbFilePanel(project, parent, IpnbParser.parseIpnbFile(vFile),
                                new CellSelectionListener() {
                                  @Override
                                  public void selectionChanged(@NotNull IpnbPanel ipnbPanel) {

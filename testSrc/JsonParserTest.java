@@ -19,7 +19,7 @@ public class JsonParserTest extends TestCase {
   public void testFile() throws IOException {
     final String fileName = "testData/SymPy.ipynb";
     final String fileText = getFileText(fileName);
-    final IpnbFile ipnbFile = IpnbParser.parseIpnbFile(fileText);
+    final IpnbFile ipnbFile = IpnbParser.parseIpnbFile(fileText, fileName);
     assertNotNull(ipnbFile);
     assertEquals(31, ipnbFile.getCells().size());
   }
@@ -27,7 +27,7 @@ public class JsonParserTest extends TestCase {
   public void testMarkdownCells() throws IOException {
     final String fileName = "testData/SymPy.ipynb";
     final String fileText = getFileText(fileName);
-    final IpnbFile ipnbFile = IpnbParser.parseIpnbFile(fileText);
+    final IpnbFile ipnbFile = IpnbParser.parseIpnbFile(fileText,fileName);
     assertNotNull(ipnbFile);
     final List<IpnbCell> cells = ipnbFile.getCells();
     Iterables.removeIf(cells, new Predicate<IpnbCell>() {
@@ -42,7 +42,7 @@ public class JsonParserTest extends TestCase {
   public void testMarkdownCell() throws IOException {
     final String fileName = "testData/markdown.ipynb";
     final String fileText = getFileText(fileName);
-    final IpnbFile ipnbFile = IpnbParser.parseIpnbFile(fileText);
+    final IpnbFile ipnbFile = IpnbParser.parseIpnbFile(fileText, fileName);
     assertNotNull(ipnbFile);
     final List<IpnbCell> cells = ipnbFile.getCells();
     assertEquals(1, cells.size());
@@ -56,7 +56,7 @@ public class JsonParserTest extends TestCase {
   public void testCodeCell() throws IOException {
     final String fileName = "testData/code.ipynb";
     final String fileText = getFileText(fileName);
-    final IpnbFile ipnbFile = IpnbParser.parseIpnbFile(fileText);
+    final IpnbFile ipnbFile = IpnbParser.parseIpnbFile(fileText, fileName);
     assertNotNull(ipnbFile);
     final List<IpnbCell> cells = ipnbFile.getCells();
     assertEquals(1, cells.size());
@@ -76,7 +76,7 @@ public class JsonParserTest extends TestCase {
   public void testOutputs() throws IOException {
     final String fileName = "testData/outputs.ipynb";
     final String fileText = getFileText(fileName);
-    final IpnbFile ipnbFile = IpnbParser.parseIpnbFile(fileText);
+    final IpnbFile ipnbFile = IpnbParser.parseIpnbFile(fileText, fileName);
     assertNotNull(ipnbFile);
     final List<IpnbCell> cells = ipnbFile.getCells();
     assertEquals(1, cells.size());

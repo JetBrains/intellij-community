@@ -89,7 +89,7 @@ public class IpnbEditorUtil {
     return PsiDocumentManager.getInstance(project).getDocument(fragment);
   }
 
-  public static JComponent createPromptComponent(int promptNumber, @NotNull final PromptType type) {
+  public static JComponent createPromptComponent(Integer promptNumber, @NotNull final PromptType type) {
     final String promptText = prompt(promptNumber, type);
     JLabel promptLabel = new JLabel(promptText);
     promptLabel.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -101,11 +101,11 @@ public class IpnbEditorUtil {
     return promptLabel;
   }
 
-  protected static String prompt(int promptNumber, @NotNull final PromptType type) {
+  protected static String prompt(Integer promptNumber, @NotNull final PromptType type) {
     if (type == PromptType.In)
-      return promptNumber == -1 ? type + "[ ]:" : String.format(type + " [%d]:", promptNumber);
+      return promptNumber == null ? type + "[ ]:" : String.format(type + " [%d]:", promptNumber);
     else if (type == PromptType.Out)
-      return promptNumber == -1 ? type + "[ ]:" : String.format(type + "[%d]:", promptNumber);
+      return promptNumber == null ? type + "[ ]:" : String.format(type + "[%d]:", promptNumber);
     return "";
   }
 

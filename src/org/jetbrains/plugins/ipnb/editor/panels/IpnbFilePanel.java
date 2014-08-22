@@ -230,4 +230,8 @@ public class IpnbFilePanel extends JPanel {
     }
     return null;
   }
+
+  public IpnbFile getIpnbFile() {
+    return myIpnbFile;
+  }
 }

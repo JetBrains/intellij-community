@@ -66,16 +66,19 @@ public class CodeSourcePanel extends IpnbPanel implements EditorPanel {
       myEditor = IpnbEditorUtil.createPlainCodeEditor(myProject, mySource);
     else
       myEditor = IpnbEditorUtil.createPythonCodeEditor(myProject, mySource);
-    
+
+    final JComponent component = myEditor.getComponent();
     final JComponent contentComponent = myEditor.getContentComponent();
     contentComponent.addKeyListener(new KeyAdapter() {
       @Override
       public void keyReleased(KeyEvent e) {
         final int keyCode = e.getKeyCode();
         if (keyCode == KeyEvent.VK_ENTER || keyCode == KeyEvent.VK_BACK_SPACE ||
-            keyCode == KeyEvent.VK_DELETE)
-        panel.revalidate();
-        panel.repaint();
+            keyCode == KeyEvent.VK_DELETE) {
+          final int height = myEditor.getLineHeight() * Math.max(myEditor.getDocument().getLineCount(), 1);
+          component.setPreferredSize(new Dimension(IpnbEditorUtil.PANEL_WIDTH, height));
+          panel.revalidate();
+        }
       }
     });
 
@@ -91,9 +94,9 @@ public class CodeSourcePanel extends IpnbPanel implements EditorPanel {
       }
     });
 
-    final JComponent component = myEditor.getComponent();
     panel.add(component);
-    contentComponent.setPreferredSize(new Dimension(IpnbEditorUtil.PANEL_WIDTH, panel.getPreferredSize().height));
+
+    component.setPreferredSize(new Dimension(IpnbEditorUtil.PANEL_WIDTH, component.getPreferredSize().height));
     setBorder(BorderFactory.createLineBorder(JBColor.lightGray, 1, true));
     return panel;
   }
