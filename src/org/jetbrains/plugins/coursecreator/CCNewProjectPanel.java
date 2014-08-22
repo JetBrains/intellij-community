@@ -14,8 +14,9 @@ public class CCNewProjectPanel {
 
   public CCNewProjectPanel() {
     final String userName = System.getProperty("user.name");
-    if (userName != null)
-    myAuthorField.setText(userName);
+    if (userName != null) {
+      myAuthorField.setText(userName);
+    }
   }
 
   public JPanel getMainPanel() {
