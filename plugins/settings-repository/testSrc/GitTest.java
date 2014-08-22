@@ -106,7 +106,7 @@ public class GitTest {
 
   @NotNull
   private static String getTestDataPath() {
-    return PathManager.getHomePath() + "/idea-configuration-server/testData";
+    return PathManager.getHomePath() + "/settings-repository/testData";
   }
 
   @NotNull
@@ -188,9 +188,18 @@ public class GitTest {
 
   @Test
   public void pullToRepositoryWithCommits() throws Exception {
+    doPullToRepositoryWithCommits(null);
+  }
+
+  @Test
+  public void pullToRepositoryWithCommitsAndCustomRemoteBranchName() throws Exception {
+    doPullToRepositoryWithCommits("customRemoteBranchName");
+  }
+
+  private void doPullToRepositoryWithCommits(@Nullable String remoteBranchName) throws Exception {
     BaseRepositoryManager repositoryManager = getRepositoryManager();
-    File remoteRepository = createRemoteRepository(null);
-    repositoryManager.setUpstream(remoteRepository.getAbsolutePath(), null);
+    File remoteRepository = createRemoteRepository(remoteBranchName);
+    repositoryManager.setUpstream(remoteRepository.getAbsolutePath(), remoteBranchName);
 
     byte[] data = FileUtil.loadFileBytes(new File(getTestDataPath(), "crucibleConnector.xml"));
     String addedFile = "$APP_CONFIG$/crucibleConnector.xml";
