@@ -98,7 +98,14 @@ public final class SourceMapDecoder {
         if (reader.hasNext()) {
           names = new ArrayList<String>();
           do {
-            names.add(reader.nextString(true));
+            if (reader.peek() == JsonToken.BEGIN_OBJECT) {
+              // polymer map
+              reader.skipValue();
+              names.add("POLYMER UNKNOWN NAME");
+            }
+            else {
+              names.add(reader.nextString(true));
+            }
           }
           while (reader.hasNext());
         }
