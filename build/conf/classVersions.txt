@@ -36,4 +36,6 @@
 1.5 => plugins/Groovy/lib/groovy_rt.jar
 1.5 => lib/annotations.jar
 
+1.5 => plugins/gradle/lib/gradle-jps-plugin.jar
+
 1.3 => plugins/junit/lib/junit-rt.jar
