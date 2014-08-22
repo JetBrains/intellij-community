@@ -687,7 +687,7 @@ public class AbstractTreeUi {
       wasCleanedUp = true;
     }
 
-    if (myRootNodeWasQueuedToInitialize) return wasCleanedUp;
+    if (myRootNodeWasQueuedToInitialize) return true;
 
     myRootNodeWasQueuedToInitialize = true;
 
@@ -3778,7 +3778,7 @@ public class AbstractTreeUi {
 
     final boolean oldCanProcessDeferredSelection = myCanProcessDeferredSelections;
 
-    if (!deferred && wasRootNodeInitialized() && willAffectSelection) {
+    if (!deferred && wasRootNodeInitialized()) {
       _getReady().doWhenDone(new Runnable() {
         @Override
         public void run() {
@@ -4357,12 +4357,13 @@ public class AbstractTreeUi {
       Object eachElement = element;
       DefaultMutableTreeNode firstVisible = null;
       while (true) {
-        if (!isValid(eachElement) || eachElement == null) break;
+        if (eachElement == null || !isValid(eachElement)) break;
 
         final int preselected = getRowIfUnderSelection(eachElement);
         if (preselected >= 0) {
           firstVisible = (DefaultMutableTreeNode)getTree().getPathForRow(preselected).getLastPathComponent();
-        } else {
+        }
+        else {
           firstVisible = getNodeForElement(eachElement, true);
         }
 
@@ -4371,15 +4372,20 @@ public class AbstractTreeUi {
           kidsToExpand.add(eachElement);
         }
         if (firstVisible != null) break;
-        eachElement = eachElement != null ? getTreeStructure().getParentElement(eachElement) : null;
+        eachElement = getTreeStructure().getParentElement(eachElement);
         if (eachElement == null) {
           firstVisible = null;
           break;
         }
 
-        if (kidsToExpand.contains(eachElement)) {
+        int i = kidsToExpand.indexOf(eachElement);
+        if (i != -1) {
           try {
-            LOG.error("Tree path contains equal elements at different levels: element=" + eachElement + " class=" + eachElement.getClass() + " path=" + kidsToExpand + " tree structure=" + myTreeStructure);
+            Object existing = kidsToExpand.get(i);
+            LOG.error("Tree path contains equal elements at different levels:\n" +
+                      " element: '" + eachElement + "'; " + eachElement.getClass() + " ("+System.identityHashCode(eachElement)+");\n" +
+                      "existing: '" + existing + "'; " + existing.getClass()+ " ("+System.identityHashCode(existing)+"); " +
+                      "path='" + kidsToExpand + "'; tree structure=" + myTreeStructure);
           }
           catch (AssertionError ignored) {
           }
@@ -5044,6 +5050,7 @@ public class AbstractTreeUi {
       return myUpdateChildren;
     }
 
+    @Override
     @NotNull
     @NonNls
     public synchronized String toString() {
