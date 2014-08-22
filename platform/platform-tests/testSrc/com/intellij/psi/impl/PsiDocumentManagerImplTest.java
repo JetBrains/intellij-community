@@ -25,11 +25,13 @@ import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightVirtualFile;
@@ -40,6 +42,7 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class PsiDocumentManagerImplTest extends PlatformLangTestCase {
@@ -393,5 +396,64 @@ public class PsiDocumentManagerImplTest extends PlatformLangTestCase {
       }
     });
     assertTrue(commitThread.isEnabled());
+  }
+
+  public void testFileChangesToText() throws IOException {
+    VirtualFile vFile = getVirtualFile(createTempFile("a.txt", "abc"));
+    PsiFile psiFile = getPsiManager().findFile(vFile);
+    Document document = getPsiDocumentManager().getDocument(psiFile);
+
+    rename(vFile, "a.xml");
+    assertFalse(psiFile.isValid());
+    assertNotSame(psiFile, getPsiManager().findFile(vFile));
+    psiFile = getPsiManager().findFile(vFile);
+
+    assertSame(document, FileDocumentManager.getInstance().getDocument(vFile));
+    assertSame(document, getPsiDocumentManager().getDocument(psiFile));
+  }
+
+  public void testFileChangesToBinary() throws IOException {
+    VirtualFile vFile = getVirtualFile(createTempFile("a.txt", "abc"));
+    PsiFile psiFile = getPsiManager().findFile(vFile);
+    Document document = getPsiDocumentManager().getDocument(psiFile);
+
+    rename(vFile, "a.zip");
+    assertFalse(psiFile.isValid());
+    psiFile = getPsiManager().findFile(vFile);
+    assertInstanceOf(psiFile, PsiBinaryFile.class);
+
+    assertNoFileDocumentMapping(vFile, psiFile, document);
+    assertEquals("abc", document.getText());
+  }
+
+  public void testFileBecomesTooLarge() throws Exception {
+    VirtualFile vFile = getVirtualFile(createTempFile("a.txt", "abc"));
+    PsiFile psiFile = getPsiManager().findFile(vFile);
+    Document document = getPsiDocumentManager().getDocument(psiFile);
+
+    makeFileTooLarge(vFile);
+    assertFalse(psiFile.isValid());
+    psiFile = getPsiManager().findFile(vFile);
+    assertInstanceOf(psiFile, PsiLargeFile.class);
+
+    assertNoFileDocumentMapping(vFile, psiFile, document);
+    assertEquals("abc", document.getText());
+  }
+
+  private void assertNoFileDocumentMapping(VirtualFile vFile, PsiFile psiFile, Document document) {
+    assertNull(FileDocumentManager.getInstance().getDocument(vFile));
+    assertNull(FileDocumentManager.getInstance().getFile(document));
+    assertNull(getPsiDocumentManager().getPsiFile(document));
+    assertNull(getPsiDocumentManager().getDocument(psiFile));
+  }
+
+  private void makeFileTooLarge(final VirtualFile vFile) throws Exception {
+    WriteCommandAction.runWriteCommandAction(myProject, new ThrowableComputable<Object, Exception>() {
+      @Override
+      public Object compute() throws Exception {
+        VfsUtil.saveText(vFile, StringUtil.repeat("a", FileUtil.LARGE_FOR_CONTENT_LOADING + 1));
+        return null;
+      }
+    });
   }
 }

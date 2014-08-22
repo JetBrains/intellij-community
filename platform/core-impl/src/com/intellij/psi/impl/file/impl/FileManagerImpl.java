@@ -537,7 +537,13 @@ public class FileManagerImpl implements FileManager {
     if (document != null && !ignoreDocument){
       fileDocumentManager.reloadFromDisk(document);
     }
-    else{
+    else {
+      FileViewProvider latestProvider = createFileViewProvider(vFile, false);
+      if (latestProvider.getPsi(latestProvider.getBaseLanguage()) instanceof PsiBinaryFile) {
+        forceReload(vFile);
+        return;
+      }
+
       PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(myManager);
       event.setParent(file);
       event.setFile(file);
