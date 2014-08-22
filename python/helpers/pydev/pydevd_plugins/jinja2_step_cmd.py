@@ -7,15 +7,13 @@ from pydevd_comm import CMD_STEP_OVER, CMD_ADD_EXCEPTION_BREAK
 from pydevd_breakpoints import get_exception_name
 
 
-#def has_line_breaks(mainDebugger):
-#    return hasattr(mainDebugger, 'jinja2_breakpoints') and mainDebugger.jinja2_breakpoints
-
 def has_exception_breaks(mainDebugger):
     return hasattr(mainDebugger, 'jinja2_exception_break') and mainDebugger.jinja2_exception_break
 
 def can_not_skip(mainDebugger, frame, info):
-    check = hasattr(mainDebugger, 'jinja2_breakpoints') and mainDebugger.jinja2_breakpoints and is_jinja2_render_call(frame) or \
-         is_jinja2_render_call(frame) and info.pydev_call_inside_jinja2 is not None #when we come from python function to jinja2 template
+    is_render = is_jinja2_render_call(frame)
+    check = hasattr(mainDebugger, 'jinja2_breakpoints') and mainDebugger.jinja2_breakpoints and is_render or \
+         is_render and info.pydev_call_inside_jinja2 is not None #when we come from python function to jinja2 template
     return check
 
 def prepare_for_cmds(mainDebugger, info):

@@ -316,7 +316,9 @@ class PyDB:
         self.force_post_mortem_stop = 0
         self.signature_factory = None
         self.SetTrace = pydevd_tracing.SetTrace
-        self.can_skip_cache = []
+        # we call this functions very often, so we need cache for them
+        self.can_not_skip_cache = []
+        self.has_exception_breaks_cache = []
 
         plugin_base = PluginBase(package='pydevd_plugins')
         self.plugin_source = plugin_base.make_plugin_source(searchpath=[os.path.dirname(os.path.realpath(__file__)) + '/pydevd_plugins'])
@@ -1254,17 +1256,29 @@ class PyDB:
             except:
                 pydev_log.error("Failed to load plugin %s" % plugin)
             if loaded_plugin:
-                can_skip_fun = getattr(loaded_plugin, 'can_not_skip', None)
+                can_not_skip_fun = getattr(loaded_plugin, 'can_not_skip', None)
+                if can_not_skip_fun:
+                    self.can_not_skip_cache.append(can_not_skip_fun)
+                can_skip_fun = getattr(loaded_plugin, 'has_exception_breaks', None)
                 if can_skip_fun:
-                    self.can_skip_cache.append(can_skip_fun)
+                    self.has_exception_breaks_cache.append(can_skip_fun)
+
                 self.plugins.append(loaded_plugin)
+
+    def can_not_skip_from_plugins(self, *args, **kwargs):
+        for func in self.can_not_skip_cache:
+            if func(self, *args, **kwargs):
+                return True
+        return False
+
+    def has_exception_breaks_from_plugins(self, *args, **kwargs):
+        for func in self.has_exception_breaks_cache:
+            if func(self, *args, **kwargs):
+                return True
+        return False
 
     def search_for_plugins(self, func_name, *args, **kwargs):
         result = False
-        if func_name == 'can_not_skip':
-            for func in self.can_skip_cache:
-                result = result or func(self, *args, **kwargs)
-            return result
         for loaded_plugin in self.plugins:
             if hasattr(loaded_plugin, func_name):
                 func = getattr(loaded_plugin, func_name)
