@@ -18,6 +18,7 @@ package com.siyeh.ig.junit;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.siyeh.InspectionGadgetsBundle;
@@ -41,7 +42,16 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends JUnit4Annot
       fixes.add(new RemoveIgnoreAndRename(method));
     }
     if (TestUtils.isJUnit4TestMethod(method)) {
-      fixes.add(new RemoveTestAnnotationFix());
+      String methodName = method.getName();
+      String newMethodName;
+      if (methodName.startsWith("test")) {
+        newMethodName = null;
+      }
+      else {
+        boolean lowCaseStyle = methodName.contains("_");
+        newMethodName = "test" + (lowCaseStyle ? "_" + methodName : StringUtil.capitalize(methodName));
+      }
+      fixes.add(new RemoveTestAnnotationFix(newMethodName));
     }
     final PsiClass aClass = (PsiClass)infos[0];
     final String className = aClass.getName();
@@ -233,22 +243,33 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends JUnit4Annot
     }
   }
 
-  private static class RemoveTestAnnotationFix extends InspectionGadgetsFix {
+  private static class RemoveTestAnnotationFix extends RenameFix {
+    private final String myNewName;
+
+    public RemoveTestAnnotationFix(String newName) {
+      super(newName);
+      myNewName = newName;
+    }
+
     @Override
     @NotNull
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("remove.junit4.test.annotation.quickfix");
     }
 
     @Override
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message("remove.junit4.test.annotation.quickfix");
+      return myNewName == null ? getFamilyName()
+                               : InspectionGadgetsBundle.message("remove.junit4.test.annotation.and.rename.quickfix", myNewName);
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       deleteAnnotation(descriptor, "org.junit.Test");
+      if (myNewName != null) {
+        super.doFix(project, descriptor);
+      }
     }
   }
 }
