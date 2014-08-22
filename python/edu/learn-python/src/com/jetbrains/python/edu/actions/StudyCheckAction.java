@@ -15,7 +15,9 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.BalloonBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -93,7 +95,7 @@ public class StudyCheckAction extends DumbAwareAction {
           @Override
           public void run() {
             final StudyEditor selectedEditor = StudyEditor.getSelectedStudyEditor(project);
-            StudyState studyState = new StudyState(selectedEditor);
+            final StudyState studyState = new StudyState(selectedEditor);
             if (!studyState.isValid()) {
               LOG.error("StudyCheckAction was invokes outside study editor");
               return;
@@ -107,6 +109,12 @@ public class StudyCheckAction extends DumbAwareAction {
             if (runAction != null && taskFiles.size() == 1) {
               runAction.run(project);
             }
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                IdeFocusManager.getInstance(project).requestFocus(studyState.getEditor().getComponent(), true);
+              }
+            });
             final StudyTestRunner testRunner = new StudyTestRunner(task, taskDir);
             Process testProcess = null;
             try {
@@ -255,12 +263,7 @@ public class StudyCheckAction extends DumbAwareAction {
     assert studyEditor != null;
     JButton checkButton = studyEditor.getCheckButton();
     balloon.showInCenterOf(checkButton);
-    balloon.addListener(new JBPopupAdapter() {
-      @Override
-      public void onClosed(LightweightWindowEvent event) {
-        Disposer.dispose(balloon);
-      }
-    });
+    Disposer.register(project, balloon);
   }
 
   @Override

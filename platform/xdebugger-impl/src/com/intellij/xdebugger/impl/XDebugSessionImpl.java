@@ -810,6 +810,7 @@ public class XDebugSessionImpl implements XDebugSession {
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
+        if (myProject.isDisposed()) return;
         Editor editor = XDebuggerUtilImpl.createEditor(new OpenFileDescriptor(myProject, position.getFile()));
         if (editor != null) {
           JComponent component = editor.getComponent();
