@@ -97,7 +97,8 @@ public abstract class XVariablesViewBase extends XDebugView {
           public void selectionChanged(SelectionEvent e) {
             final String text = editor.getDocument().getText(e.getNewRange());
             final XDebuggerEvaluator evaluator = stackFrame.getEvaluator();
-            if (evaluator != null && !StringUtil.isEmpty(text) &&  !text.contains("exec(")) {
+            if (evaluator != null && !StringUtil.isEmpty(text)
+                && !(text.contains("exec(") || text.contains("++") || text.contains("--") || text.contains("="))) {
               evaluator.evaluate(text, new XEvaluationCallbackBase() {
                 @Override
                 public void evaluated(@NotNull XValue result) {
