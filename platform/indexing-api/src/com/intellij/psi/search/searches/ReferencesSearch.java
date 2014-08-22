@@ -15,13 +15,11 @@
  */
 package com.intellij.psi.search.searches;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.*;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -91,7 +89,7 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
 
   @NotNull
   public static Query<PsiReference> search(@NotNull PsiElement element) {
-    return search(element, GlobalSearchScope.allScope(element.getProject()), false);
+    return search(element, GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(element)), false);
   }
 
   @NotNull
@@ -115,13 +113,7 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
 
     final PsiElement element = parameters.getElementToSearch();
 
-    return uniqueResults(new MergeQuery<PsiReference>(result, new SearchRequestQuery(
-          ApplicationManager.getApplication().runReadAction(new Computable<Project>() {
-            @Override
-            public Project compute() {
-              return element.getProject();
-            }
-          }), requests)));
+    return uniqueResults(new MergeQuery<PsiReference>(result, new SearchRequestQuery(PsiUtilCore.getProjectInReadAction(element), requests)));
   }
 
   @NotNull
