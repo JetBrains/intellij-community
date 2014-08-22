@@ -35,13 +35,25 @@ Done in the merge (started from the PyCharm version and bringing in things from 
 
 - When the code is interrupted, the buffer in the python side is cleared.
 
-- GEvent debugging: for remote debugging, one has to import pydevd before doing the gevent patching -- even if
-    pydevd.settrace will only be done later.
-
+- GEvent debugging: improved PyDev not to use the threading module (uses the thread
+    primitives directly), so, gevent debugging can work even if pydevd is used for
+    remote debugging.
+    
     Also, the gevent debugging should probably be closer to the stackless debugging,
     where we actually show the live stackless threads -- so, we should show the live
-    gevent greenlets -- which the current version doesn't do.
+    gevent greenlets -- which the current version doesn't do (future work).
+    
+- Supporting Jython 2.2 onwards (note: CPython only tested with 2.7/3.3)
 
+- When there are big sets/tuples/lists/dicts, the items won't be all shown so that the
+    debugger speed doesn't suffer (the user should use the console if he wants to see
+    those items in this case). The limit was set to show up to 300 items (pydevd_resolver.MAX_ITEMS_TO_HANDLE)
+
+- Monkey-patching qt (QThread/QRunnable) to enable the debugger to work. 
+    Notes:
+        - It must be imported before the user actually runs its code (as the definitions of QThread/QRunnable
+        are monkey-patched), so, for the remote debugger to work, pydevd must be imported at the start of
+        the program, even if pydevd.settrace will only be used later on. 
 
 Things to be fixed in PyCharm:
 --------------------------------

@@ -1,4 +1,3 @@
-
 from _pydev_imps import _pydev_socket as socket
 
 _cache = None

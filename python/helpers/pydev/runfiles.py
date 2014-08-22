@@ -75,7 +75,7 @@ def main():
 
     if test_framework == 0:
 
-        pydev_runfiles.main(configuration)
+        return pydev_runfiles.main(configuration) #Note: still doesn't return a proper value.
 
     else:
         #We'll convert the parameters to what nose or py.test expects.
@@ -144,7 +144,8 @@ def main():
             import pydev_runfiles_nose
             PYDEV_NOSE_PLUGIN_SINGLETON = pydev_runfiles_nose.StartPydevNosePluginSingleton(configuration)
             argv.append('--with-pydevplugin')
-            nose.run(argv=argv, addplugins=[PYDEV_NOSE_PLUGIN_SINGLETON])
+            # Return 'not' because it will return 'success' (so, exit == 0 if success)
+            return not nose.run(argv=argv, addplugins=[PYDEV_NOSE_PLUGIN_SINGLETON])
 
         elif test_framework == PY_TEST_FRAMEWORK:
             if DEBUG:
@@ -189,7 +190,7 @@ def main():
 
             argv.append('-p')
             argv.append('pydev_runfiles_pytest2')
-            pytest.main(argv)
+            return pytest.main(argv)
 
         else:
             raise AssertionError('Cannot handle test framework: %s at this point.' % (test_framework,))

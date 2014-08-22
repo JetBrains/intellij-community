@@ -1,6 +1,7 @@
 """A multi-producer, multi-consumer queue."""
 
 from _pydev_imps._pydev_time import time as _time
+from _pydev_imps import _pydev_thread
 try:
     import _pydev_threading as _threading
 except ImportError:
@@ -30,7 +31,7 @@ class Queue:
         # that acquire mutex must release it before returning.  mutex
         # is shared between the three conditions, so acquiring and
         # releasing the conditions also acquires and releases mutex.
-        self.mutex = _threading.Lock()
+        self.mutex = _pydev_thread.allocate_lock()
         # Notify not_empty whenever an item is added to the queue; a
         # thread waiting to get is notified then.
         self.not_empty = _threading.Condition(self.mutex)
