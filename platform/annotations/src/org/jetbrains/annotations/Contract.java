@@ -54,7 +54,13 @@ public @interface Contract {
   String value() default "";
 
   /**
-   * Specifies if this method is pure, i.e. has no visible side effects. This may be used for more precise data flow analysis, and 
+   * Specifies that the annotated method has no visible side effects, in the following sense.
+   * If its return value is not used, removing its invocation won't
+   * affect program state and change the semantics. Such methods shouldn't throw exceptions by design, as exceptions affect semantics.<br><br>
+   *
+   * "Invisible" side effects (such as logging) that don't affect the "important" program semantics are allowed.<br><br>
+   *
+   * This annotation may be used for more precise data flow analysis, and
    * to check that the method's return value is actually used in the call place.
    */
   boolean pure() default false;

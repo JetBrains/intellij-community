@@ -105,6 +105,7 @@
     <orderEntry type="module" module-name="structuralsearch-java" />
     <orderEntry type="module" module-name="structuralsearch-tests" scope="TEST" />
     <orderEntry type="module" module-name="structuralsearch-groovy" />
+    <orderEntry type="module" module-name="typeMigration" />
   </component>
 </module>
 

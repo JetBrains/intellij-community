@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleColoredText;
@@ -96,7 +97,8 @@ public abstract class XVariablesViewBase extends XDebugView {
           public void selectionChanged(SelectionEvent e) {
             final String text = editor.getDocument().getText(e.getNewRange());
             final XDebuggerEvaluator evaluator = stackFrame.getEvaluator();
-            if (evaluator != null) {
+            if (evaluator != null && !StringUtil.isEmpty(text)
+                && !(text.contains("exec(") || text.contains("++") || text.contains("--") || text.contains("="))) {
               evaluator.evaluate(text, new XEvaluationCallbackBase() {
                 @Override
                 public void evaluated(@NotNull XValue result) {
@@ -109,6 +111,11 @@ public abstract class XVariablesViewBase extends XDebugView {
                       XValueNodeImpl.buildText(valuePresenter, text, false);
                       SimpleColoredComponent component = HintUtil.createInformationComponent();
                       text.appendToComponent(component);
+                      String str = text.toString();
+                      if ("undefined".equals(str) || str.startsWith("Cannot find local variable")
+                          || str.startsWith("Invalid expression")) {
+                        return; //todo[kb] this is temporary solution
+                      }
                       HintManager.getInstance().hideAllHints();
                       HintManager.getInstance().showInformationHint(editor, component);
                     }

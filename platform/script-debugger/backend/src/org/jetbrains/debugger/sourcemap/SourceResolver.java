@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Url;
 import com.intellij.util.UrlImpl;
 import com.intellij.util.Urls;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ObjectIntHashMap;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
@@ -20,6 +21,7 @@ import java.util.List;
 
 public class SourceResolver {
   private final List<String> rawSources;
+  @Nullable private final List<String> sourcesContent;
 
   final Url[] canonicalizedSources;
   private final ObjectIntHashMap<Url> canonicalizedSourcesMap;
@@ -28,14 +30,15 @@ public class SourceResolver {
   // absoluteLocalPathToSourceIndex contains canonical paths too, but this map contains only used (specified in the source map) path
   private String[] sourceIndexToAbsoluteLocalPath;
 
-  public SourceResolver(@NotNull List<String> sources, boolean trimFileScheme, @Nullable Url baseFileUrl) {
-    rawSources = sources;
-    canonicalizedSources = new Url[sources.size()];
+  public SourceResolver(@NotNull List<String> sourcesUrl, boolean trimFileScheme, @Nullable Url baseFileUrl, @Nullable List<String> sourcesContent) {
+    rawSources = sourcesUrl;
+    this.sourcesContent = sourcesContent;
+    canonicalizedSources = new Url[sourcesUrl.size()];
     canonicalizedSourcesMap = SystemInfo.isFileSystemCaseSensitive
                               ? new ObjectIntHashMap<Url>(canonicalizedSources.length)
                               : new ObjectIntHashMap<Url>(canonicalizedSources.length, Urls.getCaseInsensitiveUrlHashingStrategy());
-    for (int i = 0; i < sources.size(); i++) {
-      String rawSource = sources.get(i);
+    for (int i = 0; i < sourcesUrl.size(); i++) {
+      String rawSource = sourcesUrl.get(i);
       Url url = canonicalizeUrl(rawSource, baseFileUrl, trimFileScheme, i);
       canonicalizedSources[i] = url;
       canonicalizedSourcesMap.put(url, i);
@@ -108,6 +111,16 @@ public class SourceResolver {
   public Url getSource(@NotNull MappingEntry entry) {
     int index = entry.getSource();
     return index < 0 ? null : canonicalizedSources[index];
+  }
+
+  @Nullable
+  public String getSourceContent(@NotNull MappingEntry entry) {
+    if (ContainerUtil.isEmpty(sourcesContent)) {
+      return null;
+    }
+
+    int index = entry.getSource();
+    return index < 0 || index >= sourcesContent.size() ? null : sourcesContent.get(index);
   }
 
   @Nullable

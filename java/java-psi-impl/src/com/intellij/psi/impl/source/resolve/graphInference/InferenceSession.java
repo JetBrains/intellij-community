@@ -81,7 +81,7 @@ public class InferenceSession {
     for (int i = 0; i < leftTypes.length; i++) {
       final PsiType rightType = mySiteSubstitutor.substitute(rightTypes[i]);
       if (rightType != null) {
-        addConstraint(new TypeCompatibilityConstraint(leftTypes[i], substituteWithInferenceVariables(rightType)));
+        addConstraint(new TypeCompatibilityConstraint(substituteWithInferenceVariables(leftTypes[i]), substituteWithInferenceVariables(rightType)));
       }
     }
   }

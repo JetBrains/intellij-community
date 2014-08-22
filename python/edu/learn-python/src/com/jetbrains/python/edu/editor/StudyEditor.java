@@ -241,8 +241,8 @@ public class StudyEditor implements TextEditor {
     myRefreshButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        StudyRefreshTaskAction studyRefreshTaskAction =
-          (StudyRefreshTaskAction)ActionManager.getInstance().getAction("RefreshTaskAction");
+        StudyRefreshTaskFileAction studyRefreshTaskAction =
+          (StudyRefreshTaskFileAction)ActionManager.getInstance().getAction("RefreshTaskAction");
         studyRefreshTaskAction.refresh(myProject);
       }
     });

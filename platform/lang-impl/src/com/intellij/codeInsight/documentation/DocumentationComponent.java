@@ -32,6 +32,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
@@ -547,7 +548,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       return;
     }
 
-    StyledDocument styledDocument = (StyledDocument)document;
+    final StyledDocument styledDocument = (StyledDocument)document;
     if (myFontSizeStyle == null) {
       myFontSizeStyle = styledDocument.addStyle("active", null);
     }
@@ -558,7 +559,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     if (Registry.is("documentation.component.editor.font")) {
       StyleConstants.setFontFamily(myFontSizeStyle, scheme.getEditorFontName());
     }
-    styledDocument.setCharacterAttributes(0, document.getLength(), myFontSizeStyle, false);
+
+    final Style sizeStyle = myFontSizeStyle;
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        styledDocument.setCharacterAttributes(0, styledDocument.getLength(), sizeStyle, false);
+      }
+    });
   }
 
   private void goBack() {

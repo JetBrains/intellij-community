@@ -550,12 +550,16 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       if (document != null) {
         // a file is linked to a document - chances are it is an "unknown text file" now
         if (isBinaryWithoutDecompiler(file)) {
-          myDocuments.remove(file);
-          file.putUserData(HARD_REF_TO_DOCUMENT_KEY, null);
-          document.putUserData(FILE_KEY, null);
+          unbindFileFromDocument(file, document);
         }
       }
     }
+  }
+
+  private void unbindFileFromDocument(@NotNull VirtualFile file, @NotNull Document document) {
+    myDocuments.remove(file);
+    file.putUserData(HARD_REF_TO_DOCUMENT_KEY, null);
+    document.putUserData(FILE_KEY, null);
   }
 
   private static boolean isBinaryWithDecompiler(@NotNull VirtualFile file) {
@@ -606,6 +610,13 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     assert file != null;
 
     if (!fireBeforeFileContentReload(file, document)) {
+      return;
+    }
+
+    if (file.getLength() > FileUtilRt.LARGE_FOR_CONTENT_LOADING) {
+      unbindFileFromDocument(file, document);
+      myUnsavedDocuments.remove(document);
+      myMultiCaster.fileWithNoDocumentChanged(file);
       return;
     }
 

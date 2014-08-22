@@ -2,7 +2,7 @@ package org.jetbrains.debugger.sourcemap;
 
 import com.google.gson.stream.JsonToken;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.text.CharSequenceSubSequence;
@@ -24,7 +24,7 @@ public final class SourceMapDecoder {
 
   private static final Comparator<MappingEntry> MAPPING_COMPARATOR_BY_SOURCE_POSITION = new Comparator<MappingEntry>() {
     @Override
-    public int compare(MappingEntry o1, MappingEntry o2) {
+    public int compare(@NotNull MappingEntry o1, @NotNull MappingEntry o2) {
       if (o1.getSourceLine() == o2.getSourceLine()) {
         return o1.getSourceColumn() - o2.getSourceColumn();
       }
@@ -36,7 +36,7 @@ public final class SourceMapDecoder {
 
   public static final Comparator<MappingEntry> MAPPING_COMPARATOR_BY_GENERATED_POSITION = new Comparator<MappingEntry>() {
     @Override
-    public int compare(MappingEntry o1, MappingEntry o2) {
+    public int compare(@NotNull MappingEntry o1, @NotNull MappingEntry o2) {
       if (o1.getGeneratedLine() == o2.getGeneratedLine()) {
         return o1.getGeneratedColumn() - o2.getGeneratedColumn();
       }
@@ -46,7 +46,12 @@ public final class SourceMapDecoder {
     }
   };
 
-  public static SourceMap decode(@NotNull String contents, @NotNull Function<List<String>, SourceResolver> sourceResolverFactory) throws IOException {
+  public interface SourceResolverFactory {
+    @NotNull
+    SourceResolver create(@NotNull List<String> sourcesUrl, @Nullable List<String> sourcesContent);
+  }
+
+  public static SourceMap decode(@NotNull String contents, @NotNull SourceResolverFactory sourceResolverFactory) throws IOException {
     if (contents.isEmpty()) {
       throw new IOException("source map contents cannot be empty");
     }
@@ -59,7 +64,7 @@ public final class SourceMapDecoder {
   }
 
   @Nullable
-  public static SourceMap decode(@NotNull CharSequence in, @NotNull Function<List<String>, SourceResolver> sourceResolverFactory) throws IOException {
+  public static SourceMap decode(@NotNull CharSequence in, @NotNull SourceResolverFactory sourceResolverFactory) throws IOException {
     JsonReaderEx reader = new JsonReaderEx(in);
     List<MappingEntry> mappings = new ArrayList<MappingEntry>();
     return parseMap(reader, 0, 0, mappings, sourceResolverFactory);
@@ -70,7 +75,7 @@ public final class SourceMapDecoder {
                                     int line,
                                     int column,
                                     List<MappingEntry> mappings,
-                                    @NotNull Function<List<String>, SourceResolver> sourceResolverFactory) throws IOException {
+                                    @NotNull SourceResolverFactory sourceResolverFactory) throws IOException {
     reader.beginObject();
     String sourceRoot = null;
     JsonReaderEx sourcesReader = null;
@@ -78,6 +83,7 @@ public final class SourceMapDecoder {
     String encodedMappings = null;
     String file = null;
     int version = -1;
+    List<String> sourcesContent = null;
     while (reader.hasNext()) {
       String propertyName = reader.nextName();
       if (propertyName.equals("sections")) {
@@ -98,7 +104,14 @@ public final class SourceMapDecoder {
         if (reader.hasNext()) {
           names = new ArrayList<String>();
           do {
-            names.add(reader.nextString(true));
+            if (reader.peek() == JsonToken.BEGIN_OBJECT) {
+              // polymer map
+              reader.skipValue();
+              names.add("POLYMER UNKNOWN NAME");
+            }
+            else {
+              names.add(reader.nextString(true));
+            }
           }
           while (reader.hasNext());
         }
@@ -112,6 +125,17 @@ public final class SourceMapDecoder {
       }
       else if (propertyName.equals("file")) {
         file = reader.nextString();
+      }
+      else if (propertyName.equals("sourcesContent")) {
+        reader.beginArray();
+        if (reader.peek() != JsonToken.END_ARRAY) {
+          sourcesContent = new SmartList<String>();
+          do {
+            sourcesContent.add(StringUtilRt.convertLineSeparators(reader.nextString()));
+          }
+          while (reader.hasNext());
+        }
+        reader.endArray();
       }
       else {
         // skip file or extensions
@@ -152,7 +176,7 @@ public final class SourceMapDecoder {
         sourceToEntries[i] = new SourceMappingList(entries);
       }
     }
-    return new SourceMap(file, new GeneratedMappingList(mappings), sourceToEntries, sourceResolverFactory.fun(sources));
+    return new SourceMap(file, new GeneratedMappingList(mappings), sourceToEntries, sourceResolverFactory.create(sources, sourcesContent));
   }
 
   @Nullable

@@ -55,7 +55,7 @@ final class OldStreamProviderAdapter extends StreamProvider implements CurrentUs
   }
 
   @Override
-  public void deleteFile(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
+  public void delete(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
     if (myRoamingType == roamingType) {
       myProvider.deleteFile(fileSpec, roamingType);
     }
