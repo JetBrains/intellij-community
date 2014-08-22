@@ -39,7 +39,7 @@ public class GenerateJson extends AnAction implements DumbAware {
       writer = new FileWriter(courseJson);
       writer.write(json);
     } catch (IOException e1) {
-      LOG.error(e);
+      LOG.error(e1);
     }
     finally {
       try {
