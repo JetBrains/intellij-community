@@ -109,4 +109,9 @@ def find_jinja2_render_frame(frame):
 
     return frame
 
+def change_variable(mainDebugger, frame, attr, expression):
+    if isinstance(frame, Jinja2TemplateFrame):
+        result = eval(expression, frame.f_globals, frame.f_locals)
+        frame.changeVariable(attr, result)
+
 

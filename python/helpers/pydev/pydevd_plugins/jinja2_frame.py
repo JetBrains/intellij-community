@@ -32,6 +32,11 @@ class Jinja2TemplateFrame:
                 res[k[2:]] = v
         return res
 
+    def changeVariable(self, name, value):
+        for k, v in self.back_context.items():
+            if k == name:
+                self.back_context.vars[k] = value
+
 def is_missing(item):
     if item.__class__.__name__ is 'MissingType':
         return True

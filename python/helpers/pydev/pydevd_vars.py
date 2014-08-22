@@ -2,7 +2,6 @@
     resolution/conversion to XML.
 """
 import pickle
-from pydevd_plugins.django_frame import DjangoTemplateFrame
 from pydevd_constants import * #@UnusedWildImport
 from types import * #@UnusedWildImport
 
@@ -271,7 +270,7 @@ def evaluateExpression(thread_id, frame_id, expression, doExec):
         del updated_globals
         del frame
 
-def changeAttrExpression(thread_id, frame_id, attr, expression):
+def changeAttrExpression(thread_id, frame_id, attr, expression, mainDebugger):
     '''Changes some attribute in a given frame.
     @note: it will not (currently) work if we're not in the topmost frame (that's a python
     deficiency -- and it appears that there is no way of making it currently work --
@@ -281,9 +280,7 @@ def changeAttrExpression(thread_id, frame_id, attr, expression):
     if frame is None:
         return
 
-    if isinstance(frame, DjangoTemplateFrame):
-        result = eval(expression, frame.f_globals, frame.f_locals)
-        frame.changeVariable(attr, result)
+    mainDebugger.search_for_plugins('change_variable', frame, attr, expression)
 
     try:
         expression = expression.replace('@LINE@', '\n')

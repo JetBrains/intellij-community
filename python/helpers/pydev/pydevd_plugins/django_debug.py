@@ -168,6 +168,11 @@ def find_django_render_frame(frame):
 
     return frame
 
+def change_variable(mainDebugger, frame, attr, expression):
+    if isinstance(frame, DjangoTemplateFrame):
+        result = eval(expression, frame.f_globals, frame.f_locals)
+        frame.changeVariable(attr, result)
+
 
 
 
