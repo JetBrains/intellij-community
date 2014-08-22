@@ -36,7 +36,12 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.*;
+import javax.swing.tree.TreeNode;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -88,7 +93,8 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
           Object[] row;
 
           if (numeric) {
-            String clearedRow = rows[i].replace(START_ROW_SEPARATOR, "").replace(END_ROW_SEPARATOR, "").replace("  ", " ").trim();
+            String clearedRow =
+              rows[i].replace(START_ROW_SEPARATOR, "").replace(END_ROW_SEPARATOR, "").replace("  ", " ").replace("  ", " ").trim();
             row = clearedRow.split(NUMERIC_VALUE_SEPARATOR);
           }
           else {
@@ -115,6 +121,20 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
         return false;
       }
       return true;
+    }
+
+    public int[] getShape(XValueNodeImpl node) {
+
+      node.getValueContainer().computeChildren(node);
+
+      if (node.getChildCount() > 0) {
+        node.getValueContainer().computeChildren(node);
+        List<? extends TreeNode> children = node.getChildren();
+        for (TreeNode treeNode : children) {
+          int x = 1;
+        }
+      }
+      return new int[0];
     }
   }
 
@@ -149,11 +169,36 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
           node.getValuePresentation().getType() != null &&
           node.getValuePresentation().getType().equals("ndarray")) {
         valueProvider = new NumpyArrayValueProvider();
+        int[] shape = ((NumpyArrayValueProvider)valueProvider).getShape(node);
         final Object[][] data = valueProvider.parseValues(evaluateFullValue(node));
+
+        double min = Double.MAX_VALUE;
+        double max = Double.MIN_VALUE;
+        if (data.length > 0) {
+          try {
+            for (int i = 0; i < data.length; i++) {
+              for (int j = 0; j < data[0].length; j++) {
+                double d = Double.parseDouble(data[i][j].toString());
+                min = min > d ? d : min;
+                max = max < d ? d : max;
+              }
+            }
+          }
+          catch (NumberFormatException e) {
+            min = 0;
+            max = 0;
+          }
+        }
+        else {
+          min = 0;
+          max = 0;
+        }
+
         DefaultTableModel model = new DefaultTableModel(data, range(0, data[0].length - 1));
 
         myTable.setModel(model);
         myTable.setDefaultEditor(myTable.getColumnClass(0), new MyTableCellEditor(myProject));
+        myTable.setDefaultRenderer(myTable.getColumnClass(0), new MyTableCellRenderer(min, max));
       }
     }
 
@@ -239,6 +284,23 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
       myCheckBox = new JCheckBox();
       myCheckBox.setText("Colored");
       myCheckBox.setSelected(true);
+      myCheckBox.addItemListener(new ItemListener() {
+        @Override
+        public void itemStateChanged(ItemEvent e) {
+          if (e.getSource() == myCheckBox) {
+            if (myTable.getCellRenderer(0, 0) instanceof MyTableCellRenderer) {
+              MyTableCellRenderer renderer = (MyTableCellRenderer)myTable.getCellRenderer(0, 0);
+              if (myCheckBox.isSelected()) {
+                renderer.setColored(true);
+              }
+              else {
+                renderer.setColored(false);
+              }
+            }
+            myScrollPane.repaint();
+          }
+        }
+      });
 
       myScrollPane = new JBScrollPane(myTable);
       myScrollPane.setHorizontalScrollBarPolicy(JBScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -267,6 +329,66 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
   }
 
 
+  class MyTableCellRenderer extends DefaultTableCellRenderer {
+
+    double min;
+    double max;
+    Color minColor;
+    Color maxColor;
+    boolean colored = true;
+
+    public MyTableCellRenderer(double min, double max) {
+      this.min = min;
+      this.max = max;
+      minColor = new Color(80, 0, 0);
+      maxColor = new Color(150, 0, 0);
+    }
+
+    public void setColored(boolean colored) {
+      this.colored = colored;
+    }
+
+    public Component getTableCellRendererComponent(JTable table, Object value,
+                                                   boolean isSelected, boolean hasFocus, int rowIndex, int vColIndex) {
+      // 'value' is value contained in the cell located at
+      // (rowIndex, vColIndex)
+
+      if (isSelected) {
+        // cell (and perhaps other cells) are selected
+      }
+
+      if (hasFocus) {
+        // this cell is the anchor and the table has the focus
+      }
+
+      // Configure the component with the specified value
+      setText(value.toString());
+
+      // Set tool tip if desired
+      setToolTipText((String)value);
+
+
+      if (max != min) {
+        if (colored) {
+          try {
+            double med = Double.parseDouble(value.toString());
+            int r = (int)(minColor.getRed() + Math.round((maxColor.getRed() - minColor.getRed()) / (max - min) * (med - min)));
+            this.setBackground(new Color(r % 255, 0, 0));
+          }
+          catch (NumberFormatException e) {
+          }
+        }
+        else {
+          this.setBackground(new Color(255, 255, 255));
+        }
+      }
+
+
+      return this;
+    }
+  }
+
+
   class MyTableCellEditor extends AbstractCellEditor implements TableCellEditor {
     Editor myEditor;
     Project myProject;
@@ -278,12 +400,51 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
 
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected,
                                                  int rowIndex, int vColIndex) {
-      myEditor = EditorFactoryImpl.getInstance().createEditor(new DocumentImpl(value.toString()), myProject, PythonFileType.INSTANCE, false);
-      return myEditor.getContentComponent();
+
+
+      //PyExpressionCodeFragmentImpl fragment = new PyExpressionCodeFragmentImpl(myProject, "array_view.py", value.toString(), true);
+      //
+      //myEditor = EditorFactoryImpl.getInstance().
+      //  createEditor(PsiDocumentManager.getInstance(myProject).getDocument(fragment), myProject);
+
+
+      myEditor =
+        EditorFactoryImpl.getInstance().createEditor(new DocumentImpl(value.toString()), myProject, PythonFileType.INSTANCE, false);
+
+
+      JComponent editorComponent = myEditor.getContentComponent();
+
+      editorComponent.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+        .put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "enterStroke");
+      editorComponent.getActionMap().put("enterStroke", new AbstractAction() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          doOKAction();
+        }
+      });
+      editorComponent.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+        .put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "escapeStroke");
+      editorComponent.getActionMap().put("escapeStroke", new AbstractAction() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          cancelEditing();
+        }
+      });
+
+      return editorComponent;
     }
 
     public Object getCellEditorValue() {
       return myEditor.getDocument().getText();
+    }
+
+    public void doOKAction() {
+      //todo: not performed
+      System.out.println("ok");
+    }
+
+    public void cancelEditing() {
+      System.out.println("esc");
     }
   }
 
