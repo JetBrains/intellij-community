@@ -11,7 +11,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.BalloonBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -23,8 +25,8 @@ import com.jetbrains.python.edu.editor.StudyEditor;
 
 import java.io.*;
 
-public class StudyRefreshTaskAction extends DumbAwareAction {
-  private static final Logger LOG = Logger.getInstance(StudyRefreshTaskAction.class.getName());
+public class StudyRefreshTaskFileAction extends DumbAwareAction {
+  private static final Logger LOG = Logger.getInstance(StudyRefreshTaskFileAction.class.getName());
 
   public void refresh(final Project project) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -104,12 +106,7 @@ public class StudyRefreshTaskAction extends DumbAwareAction {
                   StudyEditor selectedStudyEditor = StudyEditor.getSelectedStudyEditor(project);
                   assert selectedStudyEditor != null;
                   balloon.showInCenterOf(selectedStudyEditor.getRefreshButton());
-                  balloon.addListener(new JBPopupAdapter() {
-                    @Override
-                    public void onClosed(LightweightWindowEvent event) {
-                      Disposer.dispose(balloon);
-                    }
-                  });
+                  Disposer.register(project, balloon);
                 }
                 catch (FileNotFoundException e1) {
                   LOG.error(e1);

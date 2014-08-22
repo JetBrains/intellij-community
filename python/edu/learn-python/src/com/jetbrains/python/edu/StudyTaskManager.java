@@ -109,19 +109,23 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
               StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
                 @Override
                 public void run() {
-                  ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW).show(null);
-                  FileEditor[] editors = FileEditorManager.getInstance(myProject).getSelectedEditors();
-                  if (editors.length > 0) {
-                    final JComponent focusedComponent = editors[0].getPreferredFocusedComponent();
-                    if (focusedComponent != null) {
-                      ApplicationManager.getApplication().invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                          IdeFocusManager.getInstance(myProject).requestFocus(focusedComponent, true);
+                  ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW).show(new Runnable() {
+                    @Override
+                    public void run() {
+                      FileEditor[] editors = FileEditorManager.getInstance(myProject).getSelectedEditors();
+                      if (editors.length > 0) {
+                        final JComponent focusedComponent = editors[0].getPreferredFocusedComponent();
+                        if (focusedComponent != null) {
+                          ApplicationManager.getApplication().invokeLater(new Runnable() {
+                            @Override
+                            public void run() {
+                              IdeFocusManager.getInstance(myProject).requestFocus(focusedComponent, true);
+                            }
+                          });
                         }
-                      });
+                      }
                     }
-                  }
+                  });
                 }
               });
               UISettings.getInstance().HIDE_TOOL_STRIPES = false;
