@@ -38,8 +38,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.LayeredIcon;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,12 +66,8 @@ public class PyCallHierarchyNodeDescriptor extends HierarchyNodeDescriptor imple
     return (PyFunction)myElement;
   }
 
-  public final PyFunction getEnclosingElement(){
-    return myElement == null ? null : getEnclosingElement(myElement);
-  }
-
-  public static PyFunction getEnclosingElement(final PsiElement element){
-    return PsiTreeUtil.getNonStrictParentOfType(element, PyFunction.class);
+  public final PsiElement getEnclosingElement(){
+    return PsiTreeUtil.getNonStrictParentOfType(myElement, PyFunction.class, PyClass.class, PyFile.class, PyLambdaExpression.class);
   }
 
   public final PsiElement getTargetElement() {
@@ -115,24 +110,42 @@ public class PyCallHierarchyNodeDescriptor extends HierarchyNodeDescriptor imple
     setIcon(newIcon);
 
     myHighlightedText = new CompositeAppearance();
-    TextAttributes mainTextAttributes = null;
-    if (myColor != null) {
-      mainTextAttributes = new TextAttributes(myColor, null, null, null, Font.PLAIN);
-    }
+    final TextAttributes mainTextAttributes = myColor != null ? null : new TextAttributes(myColor, null, null, null, Font.PLAIN);
 
-    if (element instanceof PyFunction) {
-      final PyFunction function = (PyFunction)element;
-      final StringBuilder buffer = new StringBuilder();
-      final PyClass pyClass = function.getContainingClass();
-      if (pyClass != null) {
-        buffer.append(pyClass.getName());
-        buffer.append('.');
+    PyElementVisitor visitor = new PyElementVisitor() {
+      @Override
+      public void visitPyClass(PyClass pyClass) {
+        myHighlightedText.getEnding().addText(pyClass.getName(), mainTextAttributes);
+        myHighlightedText.getEnding().addText("(" + pyClass.getContainingFile().getName() + ")",
+                                              HierarchyNodeDescriptor.getPackageNameAttributes());
       }
-      buffer.append(function.getName());
 
-      myHighlightedText.getEnding().addText(buffer.toString(), mainTextAttributes);
-      myHighlightedText.getEnding().addText("(" + function.getContainingFile().getName() + ")", HierarchyNodeDescriptor.getPackageNameAttributes());
-    }
+      @Override
+      public void visitPyFunction(PyFunction function) {
+        final StringBuilder buffer = new StringBuilder();
+        final PyClass pyClass = function.getContainingClass();
+        if (pyClass != null) {
+          buffer.append(pyClass.getName());
+          buffer.append('.');
+        }
+        buffer.append(function.getName());
+
+        myHighlightedText.getEnding().addText(buffer.toString(), mainTextAttributes);
+        myHighlightedText.getEnding().addText("(" + function.getContainingFile().getName() + ")",
+                                              HierarchyNodeDescriptor.getPackageNameAttributes());
+      }
+
+      @Override
+      public void visitPyLambdaExpression(PyLambdaExpression node) {
+      }
+
+      @Override
+      public void visitPyFile(PyFile pyFile) {
+        myHighlightedText.getEnding().addText(pyFile.getName(), mainTextAttributes);
+      }
+    };
+
+    element.accept(visitor);
 
     if (myUsageCount > 1) {
       myHighlightedText.getEnding().addText(IdeBundle.message("node.call.hierarchy.N.usages", myUsageCount), HierarchyNodeDescriptor.getUsageCountPrefixAttributes());

@@ -62,7 +62,7 @@ public class PyCallHierarchyProvider implements HierarchyProvider {
   @NotNull
   @Override
   public HierarchyBrowser createHierarchyBrowser(PsiElement target) {
-    return new PyCallHierarchyBrowser((PyFunction)target);
+    return new PyCallHierarchyBrowser(target);
   }
 
   @Override

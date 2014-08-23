@@ -21,6 +21,7 @@ import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
+import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,26 +41,27 @@ public class PyCalleeFunctionTreeStructure extends HierarchyTreeStructure {
   @NotNull
   @Override
   protected Object[] buildChildren(@NotNull HierarchyNodeDescriptor descriptor) {
-    final PyFunction function = ((PyCallHierarchyNodeDescriptor)descriptor).getEnclosingElement();
+    final PsiElement enclosingElement = ((PyCallHierarchyNodeDescriptor)descriptor).getEnclosingElement();
+    final PyFunction function = enclosingElement instanceof PyFunction ? (PyFunction)enclosingElement : null;
     HierarchyNodeDescriptor nodeDescriptor = getBaseDescriptor();
     if (function == null || nodeDescriptor == null) {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
-    final List<PyFunction> callees = Lists.newArrayList();
-    PyFunctionCallInfoManager[] functionManagers = {
-      PyStaticFunctionCallInfoManager.getInstance(myProject),
-      PyDynamicFunctionCallInfoManager.getInstance(myProject)
+    final List<PsiElement> callees = Lists.newArrayList();
+    PyCallDataManager[] functionManagers = {
+      PyStaticCallDataManager.getInstance(myProject),
+      PyDynamicCallDataManager.getInstance(myProject)
     };
-    for (PyFunctionCallInfoManager functionManager: functionManagers) {
+    for (PyCallDataManager functionManager: functionManagers) {
       callees.addAll(functionManager.getCallees(function));
     }
 
-    final Map<PyFunction, PyCallHierarchyNodeDescriptor> calleeToDescriptorMap = new HashMap<PyFunction, PyCallHierarchyNodeDescriptor>();
+    final Map<PsiElement, PyCallHierarchyNodeDescriptor> calleeToDescriptorMap = new HashMap<PsiElement, PyCallHierarchyNodeDescriptor>();
     final List<PyCallHierarchyNodeDescriptor> descriptors = Lists.newArrayList();
     PsiElement baseClass = function.getContainingClass();
 
-    for (PyFunction callee: callees) {
+    for (PsiElement callee: callees) {
       if (baseClass != null && !isInScope(baseClass, callee, myScopeType)) continue;
 
       PyCallHierarchyNodeDescriptor calleeDescriptor = calleeToDescriptorMap.get(callee);
@@ -76,5 +78,9 @@ public class PyCalleeFunctionTreeStructure extends HierarchyTreeStructure {
   @Override
   public boolean isAlwaysShowPlus() {
     return true;
+  }
+
+  private void fgh(PyElement element) {
+
   }
 }

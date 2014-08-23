@@ -39,26 +39,27 @@ public class PyCallerFunctionTreeStructure extends HierarchyTreeStructure {
   @NotNull
   @Override
   protected Object[] buildChildren(@NotNull HierarchyNodeDescriptor descriptor) {
-    final PyFunction function = ((PyCallHierarchyNodeDescriptor)descriptor).getEnclosingElement();
+    final PsiElement enclosingElement = ((PyCallHierarchyNodeDescriptor)descriptor).getEnclosingElement();
+    final PyFunction function = enclosingElement instanceof PyFunction ? (PyFunction)enclosingElement : null;
     HierarchyNodeDescriptor nodeDescriptor = getBaseDescriptor();
     if (function == null || nodeDescriptor == null) {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
-    final List<PyFunction> callers = Lists.newArrayList();
-    PyFunctionCallInfoManager[] functionManagers = {
-      PyStaticFunctionCallInfoManager.getInstance(myProject),
-      PyDynamicFunctionCallInfoManager.getInstance(myProject)
+    final List<PsiElement> callers = Lists.newArrayList();
+    PyCallDataManager[] functionManagers = {
+      PyStaticCallDataManager.getInstance(myProject),
+      PyDynamicCallDataManager.getInstance(myProject)
     };
-    for (PyFunctionCallInfoManager functionManager: functionManagers) {
+    for (PyCallDataManager functionManager: functionManagers) {
       callers.addAll(functionManager.getCallers(function));
     }
 
-    final HashMap<PyFunction, PyCallHierarchyNodeDescriptor> callerToDescriptorMap = new HashMap<PyFunction, PyCallHierarchyNodeDescriptor>();
+    final HashMap<PsiElement, PyCallHierarchyNodeDescriptor> callerToDescriptorMap = new HashMap<PsiElement, PyCallHierarchyNodeDescriptor>();
     final List<PyCallHierarchyNodeDescriptor> descriptors = Lists.newArrayList();
     PsiElement baseClass = function.getContainingClass();
 
-    for (PyFunction caller: callers) {
+    for (PsiElement caller: callers) {
       if (baseClass != null && !isInScope(baseClass, caller, myScopeType)) continue;
 
       PyCallHierarchyNodeDescriptor callerDescriptor = callerToDescriptorMap.get(caller);
