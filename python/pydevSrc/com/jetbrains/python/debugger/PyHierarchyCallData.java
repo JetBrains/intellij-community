@@ -16,21 +16,35 @@
 package com.jetbrains.python.debugger;
 
 
+import com.google.common.collect.Sets;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+
+import java.util.Set;
+
 public class PyHierarchyCallData {
   private final String myCallerFile;
-  private final String myCallerName;
-  private final int myCallerLine;
+  private String myCallerName;
+  private final int myCallerDefLine;
   private final String myCalleeFile;
-  private final String myCalleeName;
-  private final int myCalleeLine;
+  private String myCalleeName;
+  private final int myCalleeDefLine;
+  private final Set<Integer> myCalleeCallLines = Sets.newHashSet();
 
-  public PyHierarchyCallData(String callerFile, String callerName, int callerLine, String calleeFile, String calleeName, int calleeLine) {
+  public PyHierarchyCallData(String callerFile, String callerName, int callerDefLine, String calleeFile, String calleeName, int calleeDefLine) {
     myCallerFile = callerFile;
     myCallerName = callerName;
-    myCallerLine = callerLine;
+    myCallerDefLine = callerDefLine;
     myCalleeFile = calleeFile;
     myCalleeName = calleeName;
-    myCalleeLine = calleeLine;
+    myCalleeDefLine = calleeDefLine;
   }
 
   public String getCallerFile() {
@@ -41,8 +55,12 @@ public class PyHierarchyCallData {
     return myCallerName;
   }
 
-  public int getCallerLine() {
-    return myCallerLine;
+  public void setCallerName(String callerName) {
+    myCallerName = callerName;
+  }
+
+  public int getCallerDefLine() {
+    return myCallerDefLine;
   }
 
   public String getCalleeFile() {
@@ -53,30 +71,35 @@ public class PyHierarchyCallData {
     return myCalleeName;
   }
 
-  public int getCalleeLine() {
-    return myCalleeLine;
+  public void setCalleeName(String calleeName) {
+    myCalleeName = calleeName;
   }
 
-  public PyHierarchyCallerData toPyHierarchyCallerData() {
-    PyHierarchyCallerData data = new PyHierarchyCallerData(myCallerFile, myCalleeFile, myCallerName, myCalleeName);
-    data.addCallerLine(myCallerLine);
-
-    return data;
-  }
-
-  public PyHierarchyCalleeData toPyHierarchyCalleeData() {
-    PyHierarchyCalleeData data = new PyHierarchyCalleeData(myCallerFile, myCalleeFile, myCallerName, myCalleeName);
-    data.addCalleeLine(myCallerLine);
-
-    return data;
+  public int getCalleeDefLine() {
+    return myCalleeDefLine;
   }
 
   public String toString() {
     return "Call info: \n"
            + "caller file: " + getCallerFile() + "\n"
-           + "callee file: " + getCalleeFile() + "\n"
            + "caller name: " + getCallerName() + "\n"
+           + "caller def line: " + getCallerDefLine() + "\n"
+           + "callee file: " + getCalleeFile() + "\n"
            + "callee name: " + getCalleeName() + "\n"
-           + "caller line: " + getCallerLine();
+           + "callee def line: " + getCalleeDefLine() + "\n";
+  }
+
+  public void addCalleeCallLine(int i) {
+    myCalleeCallLines.add(i);
+  }
+
+  public PyHierarchyCallData addAllCalleeCallLines(PyHierarchyCallData callData) {
+    myCalleeCallLines.addAll(callData.getCalleeCallLines());
+
+    return this;
+  }
+
+  public Set<Integer> getCalleeCallLines() {
+    return myCalleeCallLines;
   }
 }
