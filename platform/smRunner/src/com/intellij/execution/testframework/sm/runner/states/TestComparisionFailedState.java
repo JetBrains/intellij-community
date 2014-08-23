@@ -15,9 +15,11 @@
  */
 package com.intellij.execution.testframework.sm.runner.states;
 
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.CompositePrintable;
 import com.intellij.execution.testframework.Printer;
+import com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.project.Project;
@@ -41,10 +43,8 @@ public class TestComparisionFailedState extends TestFailedState implements Abstr
     super(localizedMessage, stackTrace);
     myHyperlink = new DiffHyperlink(expectedText, actualText, null);
 
-    myErrorMsgPresentation = StringUtil.isEmptyOrSpaces(localizedMessage) ? ""
-                                                                          : localizedMessage;
-    myStacktracePresentation = StringUtil.isEmptyOrSpaces(stackTrace) ? ""
-                                                                      : stackTrace;
+    myErrorMsgPresentation = StringUtil.isEmptyOrSpaces(localizedMessage) ? "" : localizedMessage;
+    myStacktracePresentation = StringUtil.isEmptyOrSpaces(stackTrace) ? "" : stackTrace;
   }
 
   @Override
@@ -53,20 +53,15 @@ public class TestComparisionFailedState extends TestFailedState implements Abstr
     printer.mark();
 
     // Error msg
-    if (myErrorMsgPresentation != null) {
-      printer.print(myErrorMsgPresentation, ConsoleViewContentType.ERROR_OUTPUT);
-    }
+    TestsPresentationUtil.printWithAnsiColoring(printer, myErrorMsgPresentation, ProcessOutputTypes.STDERR);
 
     // Diff link
     myHyperlink.printOn(printer);
 
     // Stacktrace
-    if (myStacktracePresentation != null) {
-      printer.print(CompositePrintable.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
-
-      printer.print(myStacktracePresentation, ConsoleViewContentType.ERROR_OUTPUT);
-      printer.print(CompositePrintable.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
-    }
+    printer.print(CompositePrintable.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
+    TestsPresentationUtil.printWithAnsiColoring(printer, myStacktracePresentation, ProcessOutputTypes.STDERR);
+    printer.print(CompositePrintable.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
   }
 
   public void openDiff(final Project project) {

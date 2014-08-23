@@ -15,14 +15,19 @@
  */
 package com.intellij.execution.testframework.sm.runner.ui;
 
+import com.intellij.execution.process.AnsiEscapeDecoder;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.PoolOfTestIcons;
+import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.execution.testframework.sm.SMTestsRunnerBundle;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -447,5 +452,19 @@ public class TestsPresentationUtil {
         renderer.append(title, TERMINATED_ATTRIBUTES);
         break;
     }
+  }
+
+  public static void printWithAnsiColoring(@NotNull final Printer printer, @NotNull String text, @NotNull final Key processOutputType) {
+    AnsiEscapeDecoder decoder = new AnsiEscapeDecoder();
+    decoder.escapeText(text, ProcessOutputTypes.STDOUT, new AnsiEscapeDecoder.ColoredTextAcceptor() {
+      @Override
+      public void coloredTextAvailable(String text, Key attributes) {
+        ConsoleViewContentType contentType = ConsoleViewContentType.getConsoleViewType(attributes);
+        if (contentType == null || contentType == ConsoleViewContentType.NORMAL_OUTPUT) {
+          contentType = ConsoleViewContentType.getConsoleViewType(processOutputType);
+        }
+        printer.print(text, contentType);
+      }
+    });
   }
 }
