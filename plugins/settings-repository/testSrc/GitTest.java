@@ -180,7 +180,7 @@ public class GitTest {
 
   private void doPullToRepositoryWithoutCommits(@Nullable String remoteBranchName) throws Exception {
     BaseRepositoryManager repositoryManager = getRepositoryManager();
-    File remoteRepository = createRemoteRepository(remoteBranchName);
+    File remoteRepository = createFileRemote(remoteBranchName);
     repositoryManager.setUpstream(remoteRepository.getAbsolutePath(), remoteBranchName);
     repositoryManager.pull(new EmptyProgressIndicator());
     compareFiles(getRepository().getWorkTree(), remoteRepository);
@@ -198,7 +198,7 @@ public class GitTest {
 
   private void doPullToRepositoryWithCommits(@Nullable String remoteBranchName) throws Exception {
     BaseRepositoryManager repositoryManager = getRepositoryManager();
-    File remoteRepository = createRemoteRepository(remoteBranchName);
+    File remoteRepository = createFileRemote(remoteBranchName);
     repositoryManager.setUpstream(remoteRepository.getAbsolutePath(), remoteBranchName);
 
     byte[] data = FileUtil.loadFileBytes(new File(getTestDataPath(), "crucibleConnector.xml"));
@@ -251,7 +251,7 @@ public class GitTest {
   }
 
   @NotNull
-  private File createRemoteRepository(@Nullable String branchName) throws IOException, GitAPIException {
+  private File createFileRemote(@Nullable String branchName) throws IOException, GitAPIException {
     GitEx git = new GitEx(testWatcher.getRepository(ICS_DIR));
 
     if (branchName != null) {
