@@ -116,9 +116,23 @@ public class ReplaceInProjectManager {
   }
 
   public void replaceInProject(@NotNull DataContext dataContext) {
+    final boolean isOpenInNewTabEnabled;
+    final boolean toOpenInNewTab;
+    final Content selectedContent = com.intellij.usageView.UsageViewManager.getInstance(myProject).getSelectedContent(true);
+    if (selectedContent != null && selectedContent.isPinned()) {
+      toOpenInNewTab = true;
+      isOpenInNewTabEnabled = false;
+    }
+    else {
+      toOpenInNewTab = FindSettings.getInstance().isShowResultsInSeparateView();
+      isOpenInNewTabEnabled = com.intellij.usageView.UsageViewManager.getInstance(myProject).getReusableContentsCount() > 0;
+    }
     final FindManager findManager = FindManager.getInstance(myProject);
-    final FindModel findModel = (FindModel)findManager.getFindInProjectModel().clone();
+    final FindModel findModel = findManager.getFindInProjectModel().clone();
     findModel.setReplaceState(true);
+    findModel.setOpenInNewTabVisible(true);
+    findModel.setOpenInNewTabEnabled(isOpenInNewTabEnabled);
+    findModel.setOpenInNewTab(toOpenInNewTab);
     FindInProjectUtil.setDirectoryName(findModel, dataContext);
 
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
@@ -139,9 +153,9 @@ public class ReplaceInProjectManager {
 
         if (manager == null) return;
         findManager.getFindInProjectModel().copyFrom(findModel);
-        final FindModel findModelCopy = (FindModel)findModel.clone();
+        final FindModel findModelCopy = findModel.clone();
 
-        final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(true, findModelCopy);
+        final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(findModel.isOpenInNewTab(), findModelCopy);
         final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, true, presentation);
 
         UsageSearcherFactory factory = new UsageSearcherFactory(findModelCopy, psiDirectory, processPresentation);
