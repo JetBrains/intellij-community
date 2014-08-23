@@ -145,7 +145,8 @@ public class PushController implements Disposable {
                                                      boolean isSelected,
                                                      boolean isSingleRepositoryProject) {
     PushTarget target = support.getDefaultTarget(repository);
-    final MyRepoModel model = new MyRepoModel(repository, support, isSelected, new PushSpec(support.getSource(repository), target),
+    final MyRepoModel model = new MyRepoModel(repository, support, isSingleRepositoryProject || isSelected,
+                                              new PushSpec(support.getSource(repository), target),
                                               DEFAULT_CHILDREN_PRESENTATION_NUMBER);
     RepositoryWithBranchPanel repoPanel = new RepositoryWithBranchPanel(myProject, DvcsUtil.getShortRepositoryName(repository),
                                                                         support.getSource(repository).getPresentation(),
