@@ -121,6 +121,7 @@ def create_signature_message(signature):
 
     cmdTextList.append("</call_signature></xml>")
     cmdText = ''.join(cmdTextList)
+
     return NetCommand(CMD_SIGNATURE_CALL_TRACE, 0, cmdText)
 
 
@@ -138,15 +139,17 @@ def create_return_signature_message(signature, return_info):
     return NetCommand(CMD_SIGNATURE_RETURN_TRACE, 0, cmdText)
 
 
-def create_hierarchy_call_message(call_info):
+def create_hierarchy_call_message(hierarchy_call_data):
     cmdTextList = ["<xml><hierarchy_call>"]
 
-    cmdTextList.append('<caller file="%s" name="%s" line="%s"></caller><callee file="%s" name="%s"></callee>'
-                       % (pydevd_vars.makeValidXmlValue(call_info.caller_file),
-                          pydevd_vars.makeValidXmlValue(call_info.caller_name),
-                          pydevd_vars.makeValidXmlValue(call_info.caller_line),
-                          pydevd_vars.makeValidXmlValue(call_info.callee_file),
-                          pydevd_vars.makeValidXmlValue(call_info.callee_name)))
+    cmdTextList.append('<caller file="%s" name="%s" def_line="%s"></caller><callee file="%s" name="%s" def_line="%s" call_line="%s"></callee>'
+                       % (pydevd_vars.makeValidXmlValue(hierarchy_call_data.caller_file),
+                          pydevd_vars.makeValidXmlValue(hierarchy_call_data.caller_name),
+                          pydevd_vars.makeValidXmlValue(hierarchy_call_data.caller_def_lineno),
+                          pydevd_vars.makeValidXmlValue(hierarchy_call_data.callee_file),
+                          pydevd_vars.makeValidXmlValue(hierarchy_call_data.callee_name),
+                          pydevd_vars.makeValidXmlValue(hierarchy_call_data.callee_def_lineno),
+                          pydevd_vars.makeValidXmlValue(hierarchy_call_data.callee_call_lineno)))
 
     cmdTextList.append("</hierarchy_call></xml>")
     cmdText = ''.join(cmdTextList)
@@ -174,7 +177,7 @@ def isFirstCall(dbg, frame, filename):
     return False
 
 
-def sendSignatureReturnTrace(dbg, frame, filename, return_value): #send return_type only if return_signature_cache_manager exists
+def sendSignatureReturnTrace(dbg, frame, filename, return_value):
     if dbg.signature_factory and dbg.signature_factory.is_in_scope(filename) and dbg.return_signature_cache_manager:
         signature = dbg.signature_factory.create_signature(frame)
         return_info = get_type_of_value(return_value)
@@ -183,8 +186,8 @@ def sendSignatureReturnTrace(dbg, frame, filename, return_value): #send return_t
             dbg.writer.addCommand(create_return_signature_message(signature, return_info))
 
 
-def sendHierarchyCallTrace(dbg, frame, filename):
+def sendHierarchyCallTrace(dbg, callee_frame, filename):
     if dbg.signature_factory and dbg.signature_factory.is_in_scope(filename) and dbg.call_hierarchy_cache_manager:
-        call_info = dbg.call_hierarchy_cache_manager.add(frame)
-        if (call_info):
-            dbg.writer.addCommand(create_hierarchy_call_message(call_info))
+        call_data = dbg.call_hierarchy_cache_manager.add(callee_frame)
+        if (call_data):
+            dbg.writer.addCommand(create_hierarchy_call_message(call_data))
