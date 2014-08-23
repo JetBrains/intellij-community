@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Specified a push from-to settings for one repository
+ * For a single repository, specifies what is pushed and where.
  */
 public class PushSpec {
 
@@ -40,4 +40,10 @@ public class PushSpec {
   public PushTarget getTarget() {
     return myTarget;
   }
+
+  @Override
+  public String toString() {
+    return mySource + "->" + myTarget;
+  }
+
 }
