@@ -19,9 +19,9 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 
 
-public abstract class PyDynamicCallDataManager implements PyFunctionCallInfoManager {
+public abstract class PyDynamicCallDataManager implements PyCallDataManager {
 
-  public static PyFunctionCallInfoManager getInstance(Project project) {
+  public static PyCallDataManager getInstance(Project project) {
     return ServiceManager.getService(project, PyDynamicCallDataManager.class);
   }
 }

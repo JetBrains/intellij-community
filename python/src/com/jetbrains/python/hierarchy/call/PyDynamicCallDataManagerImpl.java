@@ -24,16 +24,15 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.jetbrains.python.debugger.PyHierarchyCallCacheManager;
 import com.jetbrains.python.debugger.PyHierarchyCallData;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.List;
 
 
 public class PyDynamicCallDataManagerImpl extends PyDynamicCallDataManager {
-  private final static String MODULE_CALLER_NAME = "<module>";
+  private final static String MODULE_CALLABLE_NAME = "<module>";
   private final static String LAMBDA_CALLER_NAME = "<lambda>";
 
   private final Project myProject;
@@ -43,65 +42,81 @@ public class PyDynamicCallDataManagerImpl extends PyDynamicCallDataManager {
   }
 
   @Override
-  public List<PsiElement> getCallees(@NotNull PyFunction function) {
+  public List<PsiElement> getCallees(@NotNull PyFunction element) {
     List<PsiElement> callees = Lists.newArrayList();
 
     PyHierarchyCallCacheManager callCacheManager = PyHierarchyCallCacheManager.getInstance(myProject);
-    Object[] dynamicCallees = callCacheManager.findCallees(function);
+    Object[] dynamicCallees = callCacheManager.findCallees(element);
     if (dynamicCallees.length > 0) {
       for (Object calleeData: dynamicCallees) {
         PyHierarchyCallData data = (PyHierarchyCallData)calleeData;
-        VirtualFile calleeFile = LocalFileSystem.getInstance().findFileByPath(data.getCalleeFile());
-        if (calleeFile == null) {
-          continue;
-        }
-        PsiFile file = PsiManager.getInstance(myProject).findFile(calleeFile);
-        if (!(file instanceof PyFile)) {
-          continue;
-        }
-        PyFile pyCalleeFile = (PyFile)file;
-        String calleeName = data.getCalleeName();
-        if (calleeName.equals(MODULE_CALLER_NAME)) {
-          callees.add(pyCalleeFile);
-        }
-        PsiElement callee = pyCalleeFile.getElementNamed(calleeName);
-        if (callee instanceof PyFunction || callee instanceof PyClass) {
-          callees.add(callee);
-        }
+        resolveElement(data.getCalleeFile(), data.getCalleeName(), callees);
       }
     }
     return callees;
   }
 
   @Override
-  public List<PsiElement> getCallers(@NotNull PyFunction function) {
+  public List<PsiElement> getCallers(@NotNull PyFunction element) {
     List<PsiElement> callers = Lists.newArrayList();
 
     PyHierarchyCallCacheManager callCacheManager = PyHierarchyCallCacheManager.getInstance(myProject);
-    Object[] dynamicCallers = callCacheManager.findCallers(function);
+    Object[] dynamicCallers = callCacheManager.findCallers(element);
     if (dynamicCallers.length > 0) {
       for (Object callerData: dynamicCallers) {
         PyHierarchyCallData data = (PyHierarchyCallData)callerData;
-        VirtualFile callerFile = LocalFileSystem.getInstance().findFileByPath(data.getCallerFile());
-        if (callerFile == null) {
-          continue;
-        }
-        PsiFile file = PsiManager.getInstance(myProject).findFile(callerFile);
-        if (!(file instanceof PyFile)) {
-          continue;
-        }
-        PyFile pyCallerFile = (PyFile)file;
-        String callerName = data.getCallerName();
-        if (callerName.equals(MODULE_CALLER_NAME)) {
-          callers.add(pyCallerFile);
-          continue;
-        }
-        PsiElement caller = pyCallerFile.getElementNamed(callerName);
-        if (caller instanceof PyFunction || caller instanceof PyClass) {
-          callers.add(caller);
-        }
+        resolveElement(data.getCallerFile(), data.getCallerName(), callers);
       }
     }
     return callers;
+  }
+
+  private void resolveElement(final String fileName, final String elementName, final Collection<PsiElement> result) {
+    VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(fileName);
+    if (virtualFile == null) {
+      return;
+    }
+    PsiFile file = PsiManager.getInstance(myProject).findFile(virtualFile);
+    if (!(file instanceof PyFile)) {
+      return;
+    }
+    PyFile pyFile = (PyFile)file;
+    if (elementName.equals(MODULE_CALLABLE_NAME)) {
+      result.add(pyFile);
+    }
+
+    final List<String> parts = Lists.newArrayList(elementName.split("\\."));
+    PyRecursiveElementVisitor visitor = new PyRecursiveElementVisitor() {
+      private void visitRequiredElement(PyElement element) {
+        if (parts.size() == 0) {
+          return;
+        }
+        if (element.getName().equals(parts.get(0))) {
+          parts.remove(0);
+          if (parts.size() == 0) {
+            result.add(element);
+            return;
+          }
+          super.visitPyElement(element);
+        }
+      }
+
+      @Override
+      public void visitPyFile(PyFile pyFile) {
+          parts.remove(0);
+          super.visitPyFile(pyFile);
+      }
+
+      @Override
+      public void visitPyClass(PyClass pyClass) {
+        visitRequiredElement(pyClass);
+      }
+
+      @Override
+      public void visitPyFunction(PyFunction pyFunction) {
+        visitRequiredElement(pyFunction);
+      }
+    };
+    visitor.visitPyFile(pyFile);
   }
 }
