@@ -29,16 +29,16 @@ import java.util.Collection;
  * Base class to provide vcs-specific info
  */
 
-public abstract class PushSupport<Repo extends Repository> {
+public abstract class PushSupport<Repo extends Repository, Source extends PushSource, Target extends PushTarget> {
 
-  public static final ExtensionPointName<PushSupport<? extends Repository>> PUSH_SUPPORT_EP =
+  public static final ExtensionPointName<PushSupport<? extends Repository, ? extends PushSource, ? extends PushTarget>> PUSH_SUPPORT_EP =
     ExtensionPointName.create("com.intellij.pushSupport");
 
   @NotNull
   public abstract AbstractVcs getVcs();
 
   @NotNull
-  public abstract Pusher getPusher();
+  public abstract Pusher<Repo, Source, Target> getPusher();
 
   @NotNull
   public abstract OutgoingCommitsProvider getOutgoingCommitsProvider();
@@ -47,7 +47,7 @@ public abstract class PushSupport<Repo extends Repository> {
    * @return Default push destination
    */
   @Nullable
-  public abstract PushTarget getDefaultTarget(@NotNull Repo repository);
+  public abstract Target getDefaultTarget(@NotNull Repo repository);
 
   /**
    * @return All remembered remote destinations used for completion
@@ -59,7 +59,7 @@ public abstract class PushSupport<Repo extends Repository> {
    * @return current source(branch) for repository
    */
   @NotNull
-  public abstract PushSource getSource(@NotNull Repo repository);
+  public abstract Source getSource(@NotNull Repo repository);
 
   /**
    * Parse user input string, and create the valid target for push,
@@ -68,7 +68,7 @@ public abstract class PushSupport<Repo extends Repository> {
    * @see #validateSpec(Repository, PushSpec)
    */
   @Nullable
-  public abstract PushTarget createTarget(@NotNull Repo repository, @NotNull String targetName);
+  public abstract Target createTarget(@NotNull Repo repository, @NotNull String targetName);
 
   /**
    * @return RepositoryManager for vcs

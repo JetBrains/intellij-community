@@ -34,7 +34,7 @@ import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.Collection;
 
-public class HgPushSupport extends PushSupport<HgRepository> {
+public class HgPushSupport extends PushSupport<HgRepository, HgPushSource, HgTarget> {
 
   private final static String ENTER_REMOTE = "Enter Remote";
   @NotNull private final Project myProject;
@@ -53,7 +53,7 @@ public class HgPushSupport extends PushSupport<HgRepository> {
 
   @NotNull
   @Override
-  public Pusher getPusher() {
+  public Pusher<HgRepository, HgPushSource, HgTarget> getPusher() {
     return new HgPusher();
   }
 

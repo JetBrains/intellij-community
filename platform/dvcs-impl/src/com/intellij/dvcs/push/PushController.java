@@ -50,7 +50,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class PushController implements Disposable {
 
   @NotNull private final Project myProject;
-  @NotNull private final List<PushSupport<? extends Repository>> myPushSupports;
+  @NotNull private final List<PushSupport<? extends Repository, ? extends PushSource, ? extends PushTarget>> myPushSupports;
   @NotNull private final PushLog myPushLog;
   @NotNull private final VcsPushDialog myDialog;
   private boolean mySingleRepoProject;
@@ -58,7 +58,6 @@ public class PushController implements Disposable {
   private final Map<PushSupport, MyPushOptionValueModel> myAdditionalValuesMap;
 
   private final Map<RepositoryNode, MyRepoModel> myView2Model = new HashMap<RepositoryNode, MyRepoModel>();
-
 
   public PushController(@NotNull Project project,
                         @NotNull VcsPushDialog dialog,
@@ -122,32 +121,34 @@ public class PushController implements Disposable {
   private boolean createTreeModel(@NotNull CheckedTreeNode rootNode, @NotNull List<? extends Repository> preselectedRepositories) {
     if (myPushSupports.isEmpty()) return true;
     int repoCount = 0;
-    for (PushSupport<? extends Repository> support : myPushSupports) {
+    for (PushSupport<? extends Repository, ? extends PushSource, ? extends PushTarget> support : myPushSupports) {
       repoCount += createNodesForVcs(support, rootNode, preselectedRepositories);
     }
     return repoCount == 1;
   }
 
-  private <T extends Repository> int createNodesForVcs(@NotNull PushSupport<T> pushSupport,
-                                                       @NotNull CheckedTreeNode rootNode,
-                                                       @NotNull List<? extends Repository> preselectedRepositories) {
-    RepositoryManager<T> repositoryManager = pushSupport.getRepositoryManager();
-    List<T> repositories = repositoryManager.getRepositories();
-    for (T repository : repositories) {
+  private <R extends Repository, S extends PushSource, T extends PushTarget> int createNodesForVcs(
+    @NotNull PushSupport<R, S, T> pushSupport,
+    @NotNull CheckedTreeNode rootNode,
+    @NotNull List<? extends Repository> preselectedRepositories)
+  {
+    RepositoryManager<R> repositoryManager = pushSupport.getRepositoryManager();
+    List<R> repositories = repositoryManager.getRepositories();
+    for (R repository : repositories) {
       createRepoNode(pushSupport, repository, rootNode, preselectedRepositories.contains(repository), repositories.size() == 1);
     }
     return repositories.size();
   }
 
-  private <T extends Repository> void createRepoNode(@NotNull final PushSupport<T> support,
-                                                     @NotNull final T repository,
+  private <R extends Repository, S extends PushSource, T extends PushTarget> void createRepoNode(@NotNull final PushSupport<R, S, T> support,
+                                                     @NotNull final R repository,
                                                      @NotNull CheckedTreeNode rootNode,
                                                      boolean isSelected,
                                                      boolean isSingleRepositoryProject) {
-    PushTarget target = support.getDefaultTarget(repository);
-    final MyRepoModel model = new MyRepoModel(repository, support, isSingleRepositoryProject || isSelected,
-                                              new PushSpec(support.getSource(repository), target),
-                                              DEFAULT_CHILDREN_PRESENTATION_NUMBER);
+    T target = support.getDefaultTarget(repository);
+    final MyRepoModel<R, S, T> model = new MyRepoModel<R, S, T>(repository, support, isSingleRepositoryProject || isSelected,
+                                                                new PushSpec<S, T>(support.getSource(repository), target),
+                                                                DEFAULT_CHILDREN_PRESENTATION_NUMBER);
     RepositoryWithBranchPanel repoPanel = new RepositoryWithBranchPanel(myProject, DvcsUtil.getShortRepositoryName(repository),
                                                                         support.getSource(repository).getPresentation(),
                                                                         target == null ? "" : target.getPresentation(),
@@ -162,9 +163,9 @@ public class PushController implements Disposable {
       public void onTargetChanged(String newValue) {
         VcsError validationError = support.validate(model.getRepository(), newValue);
         if (validationError == null) {
-          PushTarget newTarget = support.createTarget(repository, newValue);
+          T newTarget = support.createTarget(repository, newValue);
           repoNode.setTargetPresentation(support.renderTarget(newTarget));
-          model.setSpec(new PushSpec(model.getSpec().getSource(), newTarget));
+          model.setSpec(new PushSpec<S, T>(model.getSpec().getSource(), newTarget));
           loadCommits(model, repoNode, false);
         }
         else {
@@ -172,7 +173,7 @@ public class PushController implements Disposable {
           repoNode.setTargetPresentation(StringUtil.isEmptyOrSpaces(newValue)
                                          ? support.renderTarget(null)
                                          : new SimpleColoredText(newValue, SimpleTextAttributes.ERROR_ATTRIBUTES));
-          model.setSpec(new PushSpec(model.getSpec().getSource(), null));
+          model.setSpec(new PushSpec<S, T>(model.getSpec().getSource(), null));
         }
         myDialog.updateButtons();
       }
@@ -235,8 +236,7 @@ public class PushController implements Disposable {
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        OutgoingResult outgoing = support.getOutgoingCommitsProvider()
-          .getOutgoingCommits(model.getRepository(), model.getSpec(), initial);
+        OutgoingResult outgoing = support.getOutgoingCommitsProvider().getOutgoingCommits(model.getRepository(), model.getSpec(), initial);
         result.compareAndSet(null, outgoing);
       }
     };
@@ -253,22 +253,28 @@ public class PushController implements Disposable {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         for (PushSupport support : myPushSupports) {
-          MyPushOptionValueModel additionalOptionsModel = myAdditionalValuesMap.get(support);
-          support.getPusher()
-            .push(collectPushInfoForVcs(support), additionalOptionsModel == null ? null : additionalOptionsModel.getCurrentValue(), force);
+          doPush(support, force);
         }
       }
     };
     task.queue();
   }
 
+  private <R extends Repository, S extends PushSource, T extends PushTarget> void doPush(@NotNull PushSupport<R, S, T> support,
+                                                                                         boolean force) {
+    MyPushOptionValueModel additionalOptionsModel = myAdditionalValuesMap.get(support);
+    VcsPushOptionValue options = additionalOptionsModel == null ? null : additionalOptionsModel.getCurrentValue();
+    Pusher<R, S, T> pusher = support.getPusher();
+    pusher.push(collectPushSpecsForVcs(support), options, force);
+  }
+
   @NotNull
-  private Map<Repository, PushSpec> collectPushInfoForVcs(@NotNull final PushSupport pushSupport) {
-    Map<Repository, PushSpec> pushSpecs = new HashMap<Repository, PushSpec>();
+  private <R extends Repository, S extends PushSource, T extends PushTarget> Map<R, PushSpec<S, T>> collectPushSpecsForVcs(@NotNull PushSupport<R, S, T> pushSupport) {
+    Map<R, PushSpec<S, T>> pushSpecs = ContainerUtil.newHashMap();
     Collection<MyRepoModel> repositoriesInformation = getSelectedRepoNode();
     for (MyRepoModel repoModel : repositoriesInformation) {
       if (pushSupport.equals(repoModel.getSupport())) {
-        pushSpecs.put(repoModel.getRepository(), repoModel.getSpec());
+        pushSpecs.put((R)repoModel.getRepository(), repoModel.getSpec());
       }
     }
     return pushSpecs;
@@ -362,20 +368,20 @@ public class PushController implements Disposable {
     });
   }
 
-  private static class MyRepoModel {
-    @NotNull final Repository myRepository;
-    @NotNull private PushSupport mySupport;
+  private static class MyRepoModel<Repo extends Repository, S extends PushSource, T extends PushTarget> {
+    @NotNull final Repo myRepository;
+    @NotNull private PushSupport<Repo, S, T> mySupport;
 
-    @NotNull PushSpec mySpec;
+    @NotNull PushSpec<S, T> mySpec;
     int myNumberOfShownCommits;
 
     List<? extends VcsFullCommitDetails> myLoadedCommits;
     boolean myIsSelected;
 
-    public MyRepoModel(@NotNull Repository repository,
-                       @NotNull PushSupport supportForRepo,
+    public MyRepoModel(@NotNull Repo repository,
+                       @NotNull PushSupport<Repo, S, T> supportForRepo,
                        boolean isSelected,
-                       @NotNull PushSpec spec,
+                       @NotNull PushSpec<S, T> spec,
                        int num) {
       myRepository = repository;
       mySupport = supportForRepo;
@@ -385,12 +391,12 @@ public class PushController implements Disposable {
     }
 
     @NotNull
-    public Repository getRepository() {
+    public Repo getRepository() {
       return myRepository;
     }
 
     @NotNull
-    public PushSupport getSupport() {
+    public PushSupport<Repo, S, T> getSupport() {
       return mySupport;
     }
 
@@ -403,11 +409,11 @@ public class PushController implements Disposable {
     }
 
     @NotNull
-    public PushSpec getSpec() {
+    public PushSpec<S, T> getSpec() {
       return mySpec;
     }
 
-    public void setSpec(@NotNull PushSpec spec) {
+    public void setSpec(@NotNull PushSpec<S, T> spec) {
       mySpec = spec;
     }
 
