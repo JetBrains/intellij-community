@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.ideaConfigurationServer;
+package org.jetbrains.plugins.settingsRepository;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;

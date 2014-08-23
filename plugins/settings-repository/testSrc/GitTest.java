@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.ideaConfigurationServer;
+package org.jetbrains.plugins.settingsRepository;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -20,8 +20,8 @@ import org.eclipse.jgit.lib.IndexDiff;
 import org.eclipse.jgit.lib.Repository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.ideaConfigurationServer.git.GitEx;
-import org.jetbrains.plugins.ideaConfigurationServer.git.GitRepositoryManager;
+import org.jetbrains.plugins.settingsRepository.git.GitEx;
+import org.jetbrains.plugins.settingsRepository.git.GitRepositoryManager;
 import org.junit.*;
 
 import javax.swing.*;

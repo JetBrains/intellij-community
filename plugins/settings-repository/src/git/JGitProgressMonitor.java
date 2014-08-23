@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.ideaConfigurationServer.git;
+package org.jetbrains.plugins.settingsRepository.git;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import org.eclipse.jgit.lib.ProgressMonitor;

@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.ideaConfigurationServer.git;
+package org.jetbrains.plugins.settingsRepository.git;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;

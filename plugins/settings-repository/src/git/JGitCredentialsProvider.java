@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.ideaConfigurationServer.git;
+package org.jetbrains.plugins.settingsRepository.git;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.PasswordUtil;
@@ -11,9 +11,9 @@ import org.eclipse.jgit.errors.UnsupportedCredentialItem;
 import org.eclipse.jgit.transport.CredentialItem;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.URIish;
-import org.jetbrains.plugins.ideaConfigurationServer.AuthDialog;
-import org.jetbrains.plugins.ideaConfigurationServer.BaseRepositoryManager;
-import org.jetbrains.plugins.ideaConfigurationServer.IcsManager;
+import org.jetbrains.plugins.settingsRepository.AuthDialog;
+import org.jetbrains.plugins.settingsRepository.BaseRepositoryManager;
+import org.jetbrains.plugins.settingsRepository.IcsManager;
 
 import java.io.*;
 

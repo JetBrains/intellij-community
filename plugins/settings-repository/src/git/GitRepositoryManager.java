@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.ideaConfigurationServer.git;
+package org.jetbrains.plugins.settingsRepository.git;
 
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -16,7 +16,7 @@ import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.plugins.ideaConfigurationServer.BaseRepositoryManager;
+import org.jetbrains.plugins.settingsRepository.BaseRepositoryManager;
 
 import java.io.File;
 import java.io.IOException;

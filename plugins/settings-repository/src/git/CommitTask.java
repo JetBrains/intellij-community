@@ -1,12 +1,12 @@
-package org.jetbrains.plugins.ideaConfigurationServer.git;
+package org.jetbrains.plugins.settingsRepository.git;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.lib.IndexDiff;
 import org.eclipse.jgit.lib.ProgressMonitor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.ideaConfigurationServer.BaseRepositoryManager;
-import org.jetbrains.plugins.ideaConfigurationServer.IcsUrlBuilder;
+import org.jetbrains.plugins.settingsRepository.BaseRepositoryManager;
+import org.jetbrains.plugins.settingsRepository.IcsUrlBuilder;
 
 import java.util.Collection;
 

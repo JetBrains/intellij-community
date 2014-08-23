@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.ideaConfigurationServer;
+package org.jetbrains.plugins.settingsRepository;
 
 import com.intellij.ide.ApplicationLoadListener;
 import com.intellij.openapi.Disposable;
@@ -27,7 +27,7 @@ import com.intellij.util.SingleAlarm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.plugins.ideaConfigurationServer.git.GitRepositoryManager;
+import org.jetbrains.plugins.settingsRepository.git.GitRepositoryManager;
 
 import java.io.File;
 import java.io.IOException;

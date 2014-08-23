@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.ideaConfigurationServer.actions;
+package org.jetbrains.plugins.settingsRepository.actions;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.StorageScheme;
@@ -25,10 +25,10 @@ import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.ideaConfigurationServer.CommitToIcsDialog;
-import org.jetbrains.plugins.ideaConfigurationServer.IcsBundle;
-import org.jetbrains.plugins.ideaConfigurationServer.IcsManager;
-import org.jetbrains.plugins.ideaConfigurationServer.ProjectId;
+import org.jetbrains.plugins.settingsRepository.CommitToIcsDialog;
+import org.jetbrains.plugins.settingsRepository.IcsBundle;
+import org.jetbrains.plugins.settingsRepository.IcsManager;
+import org.jetbrains.plugins.settingsRepository.ProjectId;
 
 import java.util.Collection;
 import java.util.Collections;

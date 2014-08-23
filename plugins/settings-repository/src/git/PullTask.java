@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.ideaConfigurationServer.git;
+package org.jetbrains.plugins.settingsRepository.git;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.*;
 
-import static org.jetbrains.plugins.ideaConfigurationServer.BaseRepositoryManager.LOG;
+import static org.jetbrains.plugins.settingsRepository.BaseRepositoryManager.LOG;
 
 class PullTask {
   public static void execute(@NotNull GitRepositoryManager manager, @NotNull ProgressIndicator indicator) throws Exception {

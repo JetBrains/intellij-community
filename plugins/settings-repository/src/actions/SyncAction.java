@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.ideaConfigurationServer.actions;
+package org.jetbrains.plugins.settingsRepository.actions;
 
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
@@ -6,9 +6,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.plugins.ideaConfigurationServer.IcsBundle;
-import org.jetbrains.plugins.ideaConfigurationServer.IcsManager;
-import org.jetbrains.plugins.ideaConfigurationServer.SyncType;
+import org.jetbrains.plugins.settingsRepository.IcsBundle;
+import org.jetbrains.plugins.settingsRepository.IcsManager;
+import org.jetbrains.plugins.settingsRepository.SyncType;
 
 class SyncAction extends DumbAwareAction {
   private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.balloonGroup(IcsManager.PLUGIN_NAME);

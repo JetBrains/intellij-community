@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.ideaConfigurationServer;
+package org.jetbrains.plugins.settingsRepository;
 
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
