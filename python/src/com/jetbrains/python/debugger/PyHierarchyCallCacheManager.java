@@ -17,7 +17,7 @@ package com.jetbrains.python.debugger;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyElement;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class PyHierarchyCallCacheManager {
@@ -25,11 +25,11 @@ public abstract class PyHierarchyCallCacheManager {
     return ServiceManager.getService(project, PyHierarchyCallCacheManager.class);
   }
 
-  public abstract void recordHierarchyCallInfo(@NotNull PyHierarchyCallInfo callInfo);
+  public abstract void recordHierarchyCallData(@NotNull PyHierarchyCallData callInfo);
 
-  public abstract Object[] findFunctionCallers(@NotNull PyFunction function);
+  public abstract Object[] findCallers(@NotNull PyElement element);
 
-  public abstract Object[] findFunctionCallees(@NotNull PyFunction function);
+  public abstract Object[] findCallees(@NotNull PyElement element);
 
   public abstract void clearCache();
 }
