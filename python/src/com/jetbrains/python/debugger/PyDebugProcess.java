@@ -291,8 +291,9 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
-  public void recordHierarchyCallInfo(PyHierarchyCallInfo callInfo) {
-    PyHierarchyCallCacheManager.getInstance(getSession().getProject()).recordHierarchyCallInfo(myPositionConverter.convertHierarchyCallInfo(callInfo));
+  public void recordHierarchyCallData(PyHierarchyCallData callData) {
+    PyHierarchyCallCacheManager.getInstance(getSession().getProject()).recordHierarchyCallData(
+      myPositionConverter.convertHierarchyCallData(callData));
   }
 
   protected void afterConnect() {

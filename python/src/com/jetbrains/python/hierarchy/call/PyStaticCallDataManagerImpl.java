@@ -16,10 +16,8 @@
 package com.jetbrains.python.hierarchy.call;
 
 import com.google.common.collect.Lists;
-import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesOptions;
-import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -38,16 +36,16 @@ import java.util.Collection;
 import java.util.List;
 
 
-public class PyStaticFunctionCallInfoManagerImpl extends PyStaticFunctionCallInfoManager {
+public class PyStaticCallDataManagerImpl extends PyStaticCallDataManager {
   private final Project myProject;
 
-  public PyStaticFunctionCallInfoManagerImpl(Project project) {
+  public PyStaticCallDataManagerImpl(Project project) {
     myProject = project;
   }
 
   @Override
-  public Collection<PyFunction> getCallees(@NotNull PyFunction function) {
-    final List<PyFunction> callees = Lists.newArrayList();
+  public Collection<PsiElement> getCallees(@NotNull PyFunction function) {
+    final List<PsiElement> callees = Lists.newArrayList();
 
     final PyRecursiveElementVisitor visitor = new PyRecursiveElementVisitor() {
       @Override
@@ -84,8 +82,8 @@ public class PyStaticFunctionCallInfoManagerImpl extends PyStaticFunctionCallInf
   }
 
   @Override
-  public Collection<PyFunction> getCallers(@NotNull PyFunction function) {
-    final Collection<PyFunction> callers = Lists.newArrayList();
+  public Collection<PsiElement> getCallers(@NotNull PyFunction function) {
+    final List<PsiElement> callers = Lists.newArrayList();
     final Collection<UsageInfo> usages = findUsages(function);
 
     for (UsageInfo usage: usages) {

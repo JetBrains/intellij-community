@@ -488,8 +488,8 @@ public class RemoteDebugger implements ProcessDebugger {
       myDebugProcess.recordReturnSignature(signature);
     }
 
-    private void recordHierarchyCallInfo(PyHierarchyCallInfo callInfo) {
-      myDebugProcess.recordHierarchyCallInfo(callInfo);
+    private void recordHierarchyCallInfo(PyHierarchyCallData callInfo) {
+      myDebugProcess.recordHierarchyCallData(callInfo);
     }
 
     // todo: extract response processing

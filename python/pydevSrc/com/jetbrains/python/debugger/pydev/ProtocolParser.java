@@ -55,7 +55,7 @@ public class ProtocolParser {
     return signature;
   }
 
-  public static PyHierarchyCallInfo parseHierarchyCallInfo(String payload) throws PyDebuggerException {
+  public static PyHierarchyCallData parseHierarchyCallInfo(String payload) throws PyDebuggerException {
     final XppReader reader = openReader(payload, true);
     reader.moveDown();
     if (!"hierarchy_call".equals(reader.getNodeName())) {
@@ -68,7 +68,7 @@ public class ProtocolParser {
     }
     final String callerFile = readString(reader, "file", "");
     final String callerName = readString(reader, "name", "");
-    final int callerLine = Integer.parseInt(readString(reader, "line", "0"));
+    final int callerDefLine = Integer.parseInt(readString(reader, "def_line", "0"));
     reader.moveUp();
 
     reader.moveDown();
@@ -77,10 +77,13 @@ public class ProtocolParser {
     }
     final String calleeFile = readString(reader, "file", "");
     final String calleeName = readString(reader, "name", "");
+    final int calleeDefLine = Integer.parseInt(readString(reader, "def_line", "0"));
+    final int calleeCallLine = Integer.parseInt(readString(reader, "call_line", "0"));
 
-    PyHierarchyCallInfo callInfo = new PyHierarchyCallInfo(callerFile, callerName, callerLine, calleeFile, calleeName);
+    PyHierarchyCallData callData = new PyHierarchyCallData(callerFile, callerName, callerDefLine, calleeFile, calleeName, calleeDefLine);
+    callData.addCalleeCallLine(calleeCallLine);
 
-    return callInfo;
+    return callData;
   }
 
   public static String parseSourceContent(String payload) throws PyDebuggerException {

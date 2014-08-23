@@ -23,8 +23,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.jetbrains.python.debugger.PyHierarchyCallCacheManager;
-import com.jetbrains.python.debugger.PyHierarchyCalleeData;
-import com.jetbrains.python.debugger.PyHierarchyCallerData;
+import com.jetbrains.python.debugger.PyHierarchyCallData;
+import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
@@ -32,22 +32,25 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 
-public class PyDynamicFunctionCallInfoManagerImpl extends PyDynamicFunctionCallInfoManager {
+public class PyDynamicCallDataManagerImpl extends PyDynamicCallDataManager {
+  private final static String MODULE_CALLER_NAME = "<module>";
+  private final static String LAMBDA_CALLER_NAME = "<lambda>";
+
   private final Project myProject;
 
-  public PyDynamicFunctionCallInfoManagerImpl(Project project) {
+  public PyDynamicCallDataManagerImpl(Project project) {
     myProject = project;
   }
 
   @Override
-  public List<PyFunction> getCallees(@NotNull PyFunction function) {
-    List<PyFunction> callees = Lists.newArrayList();
+  public List<PsiElement> getCallees(@NotNull PyFunction function) {
+    List<PsiElement> callees = Lists.newArrayList();
 
     PyHierarchyCallCacheManager callCacheManager = PyHierarchyCallCacheManager.getInstance(myProject);
-    Object[] dynamicCallees = callCacheManager.findFunctionCallees(function);
+    Object[] dynamicCallees = callCacheManager.findCallees(function);
     if (dynamicCallees.length > 0) {
       for (Object calleeData: dynamicCallees) {
-        PyHierarchyCalleeData data = (PyHierarchyCalleeData)calleeData;
+        PyHierarchyCallData data = (PyHierarchyCallData)calleeData;
         VirtualFile calleeFile = LocalFileSystem.getInstance().findFileByPath(data.getCalleeFile());
         if (calleeFile == null) {
           continue;
@@ -57,9 +60,13 @@ public class PyDynamicFunctionCallInfoManagerImpl extends PyDynamicFunctionCallI
           continue;
         }
         PyFile pyCalleeFile = (PyFile)file;
-        PsiElement callee = pyCalleeFile.getElementNamed(data.getCalleeName());
-        if (callee instanceof PyFunction) {
-          callees.add((PyFunction)callee);
+        String calleeName = data.getCalleeName();
+        if (calleeName.equals(MODULE_CALLER_NAME)) {
+          callees.add(pyCalleeFile);
+        }
+        PsiElement callee = pyCalleeFile.getElementNamed(calleeName);
+        if (callee instanceof PyFunction || callee instanceof PyClass) {
+          callees.add(callee);
         }
       }
     }
@@ -67,14 +74,14 @@ public class PyDynamicFunctionCallInfoManagerImpl extends PyDynamicFunctionCallI
   }
 
   @Override
-  public List<PyFunction> getCallers(@NotNull PyFunction function) {
-    List<PyFunction> callers = Lists.newArrayList();
+  public List<PsiElement> getCallers(@NotNull PyFunction function) {
+    List<PsiElement> callers = Lists.newArrayList();
 
     PyHierarchyCallCacheManager callCacheManager = PyHierarchyCallCacheManager.getInstance(myProject);
-    Object[] dynamicCallers = callCacheManager.findFunctionCallers(function);
+    Object[] dynamicCallers = callCacheManager.findCallers(function);
     if (dynamicCallers.length > 0) {
       for (Object callerData: dynamicCallers) {
-        PyHierarchyCallerData data = (PyHierarchyCallerData)callerData;
+        PyHierarchyCallData data = (PyHierarchyCallData)callerData;
         VirtualFile callerFile = LocalFileSystem.getInstance().findFileByPath(data.getCallerFile());
         if (callerFile == null) {
           continue;
@@ -84,9 +91,14 @@ public class PyDynamicFunctionCallInfoManagerImpl extends PyDynamicFunctionCallI
           continue;
         }
         PyFile pyCallerFile = (PyFile)file;
-        PsiElement caller = pyCallerFile.getElementNamed(data.getCallerName());
-        if (caller instanceof PyFunction) {
-          callers.add((PyFunction)caller);
+        String callerName = data.getCallerName();
+        if (callerName.equals(MODULE_CALLER_NAME)) {
+          callers.add(pyCallerFile);
+          continue;
+        }
+        PsiElement caller = pyCallerFile.getElementNamed(callerName);
+        if (caller instanceof PyFunction || caller instanceof PyClass) {
+          callers.add(caller);
         }
       }
     }

@@ -16,19 +16,21 @@
 package com.jetbrains.python.debugger;
 
 
-public class PyHierarchyCallInfo {
+public class PyHierarchyCallData {
   private final String myCallerFile;
   private final String myCallerName;
   private final int myCallerLine;
   private final String myCalleeFile;
   private final String myCalleeName;
+  private final int myCalleeLine;
 
-  public PyHierarchyCallInfo(String callerFile, String callerName, int callerLine, String calleeFile, String calleeName) {
+  public PyHierarchyCallData(String callerFile, String callerName, int callerLine, String calleeFile, String calleeName, int calleeLine) {
     myCallerFile = callerFile;
     myCallerName = callerName;
     myCallerLine = callerLine;
     myCalleeFile = calleeFile;
     myCalleeName = calleeName;
+    myCalleeLine = calleeLine;
   }
 
   public String getCallerFile() {
@@ -49,6 +51,10 @@ public class PyHierarchyCallInfo {
 
   public String getCalleeName() {
     return myCalleeName;
+  }
+
+  public int getCalleeLine() {
+    return myCalleeLine;
   }
 
   public PyHierarchyCallerData toPyHierarchyCallerData() {

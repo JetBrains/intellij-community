@@ -115,8 +115,8 @@ public class PyLocalPositionConverter implements PyPositionConverter {
   }
 
   @Override
-  public PyHierarchyCallInfo convertHierarchyCallInfo(PyHierarchyCallInfo callInfo) {
-    return callInfo;
+  public PyHierarchyCallData convertHierarchyCallData(PyHierarchyCallData callData) {
+    return callData;
   }
 
   public VirtualFile getVirtualFile(String path) {

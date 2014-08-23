@@ -20,5 +20,5 @@ public interface PyPositionConverter {
 
   PyReturnSignature convertReturnSignature(PyReturnSignature returnSignature);
 
-  PyHierarchyCallInfo convertHierarchyCallInfo(PyHierarchyCallInfo callInfo);
+  PyHierarchyCallData convertHierarchyCallData(PyHierarchyCallData callData);
 }

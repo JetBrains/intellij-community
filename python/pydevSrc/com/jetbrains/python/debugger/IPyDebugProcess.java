@@ -26,5 +26,5 @@ public interface IPyDebugProcess extends PyFrameAccessor {
 
   void recordReturnSignature(PyReturnSignature signature);
 
-  void recordHierarchyCallInfo (PyHierarchyCallInfo callInfo);
+  void recordHierarchyCallData(PyHierarchyCallData callInfo);
 }

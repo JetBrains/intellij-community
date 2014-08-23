@@ -13,29 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.debugger;
+package com.jetbrains.python.hierarchy.call;
 
-import java.util.Set;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 
 
-public class PyHierarchyCalleeData extends PyHierarchyDataBase {
-  protected PyHierarchyCalleeData(String callerFile, String calleeFile, String callerName, String calleeName) {
-    super(callerFile, calleeFile, callerName, calleeName);
-  }
+public abstract class PyStaticCallDataManager implements PyCallDataManager {
 
-  public Set<Integer> getCalleeLines() {
-    return getLines();
-  }
-
-  public PyHierarchyCalleeData addCalleeLine(int line) {
-    addLine(line);
-
-    return this;
-  }
-
-  public PyHierarchyCalleeData addAllCalleeLines(PyHierarchyCalleeData data) {
-    addAllLines(data);
-
-    return this;
+  public static PyCallDataManager getInstance(Project project) {
+    return ServiceManager.getService(project, PyStaticCallDataManager.class);
   }
 }

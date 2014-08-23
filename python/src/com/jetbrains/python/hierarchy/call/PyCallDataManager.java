@@ -13,29 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.debugger;
+package com.jetbrains.python.hierarchy.call;
 
-import java.util.Set;
+import com.intellij.psi.PsiElement;
+import com.jetbrains.python.psi.PyFunction;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
+import java.util.List;
 
 
-public class PyHierarchyCallerData extends PyHierarchyDataBase {
-  public PyHierarchyCallerData(String callerFile, String calleeFile, String callerName, String calleeName) {
-    super(callerFile, calleeFile, callerName, calleeName);
-  }
+public interface PyCallDataManager {
+  Collection<PsiElement> getCallees(@NotNull PyFunction pyFunction);
 
-  public Set<Integer> getCallerLines() {
-    return getLines();
-  }
-
-  public PyHierarchyCallerData addCallerLine(int line) {
-    addLine(line);
-
-    return this;
-  }
-
-  public PyHierarchyCallerData addAllCallerLines(PyHierarchyCallerData callerData) {
-    addAllLines(callerData);
-
-    return this;
-  }
+  Collection<PsiElement> getCallers(@NotNull PyFunction pyFunction);
 }
