@@ -10,21 +10,21 @@
   <depends>com.intellij.modules.xml</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <ApplicationLoadListener implementation="org.jetbrains.plugins.ideaConfigurationServer.IcsManager"/>
+    <ApplicationLoadListener implementation="org.jetbrains.plugins.settingsRepository.IcsManager"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-    <projectService serviceInterface="org.jetbrains.plugins.ideaConfigurationServer.ProjectId"
-                    serviceImplementation="org.jetbrains.plugins.ideaConfigurationServer.ProjectId"/>
-    <checkinHandlerFactory implementation="org.jetbrains.plugins.ideaConfigurationServer.actions.CommitToIcsAction$IcsBeforeCommitDialogHandler" order="first"/>
+    <projectService serviceInterface="org.jetbrains.plugins.settingsRepository.ProjectId"
+                    serviceImplementation="org.jetbrains.plugins.settingsRepository.ProjectId"/>
+    <checkinHandlerFactory implementation="org.jetbrains.plugins.settingsRepository.actions.CommitToIcsAction$IcsBeforeCommitDialogHandler" order="first"/>
   </extensions>
 
   <actions>
-    <action id="SyncIcs" class="org.jetbrains.plugins.ideaConfigurationServer.actions.SyncAction">
+    <action id="SyncIcs" class="org.jetbrains.plugins.settingsRepository.actions.SyncAction">
       <add-to-group group-id="VcsGroups" anchor="last"/>
     </action>
-    <action id="ConfigureIcs" class="org.jetbrains.plugins.ideaConfigurationServer.actions.ConfigureIcsAction">
+    <action id="ConfigureIcs" class="org.jetbrains.plugins.settingsRepository.actions.ConfigureIcsAction">
       <add-to-group group-id="ExportImportGroup"/>
     </action>
-    <action id="CommitToIcs" class="org.jetbrains.plugins.ideaConfigurationServer.actions.CommitToIcsAction">
+    <action id="CommitToIcs" class="org.jetbrains.plugins.settingsRepository.actions.CommitToIcsAction">
       <add-to-group group-id="ChangesViewPopupMenu" relative-to-action="ChangesView.Shelve" anchor="after"/>
     </action>
   </actions>

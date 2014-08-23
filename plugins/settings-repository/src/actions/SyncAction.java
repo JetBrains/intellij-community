@@ -25,11 +25,10 @@ class SyncAction extends DumbAwareAction {
       IcsManager.getInstance().sync(SyncType.MERGE, project);
     }
     catch (Exception e) {
-      NOTIFICATION_GROUP.createNotification(IcsBundle.message("sync.rejected.message", StringUtil.notNullize(e.getMessage(), "Internal error")), NotificationType.ERROR)
-        .notify(project == null || project.isDisposed() ? null : project);
+      NOTIFICATION_GROUP.createNotification(IcsBundle.message("sync.rejected.title"), StringUtil.notNullize(e.getMessage(), "Internal error"), NotificationType.ERROR, null).notify(project);
+      return;
     }
 
-    NOTIFICATION_GROUP.createNotification(IcsBundle.message("sync.done.message"), NotificationType.INFORMATION)
-      .notify(project == null || project.isDisposed() ? null : project);
+    NOTIFICATION_GROUP.createNotification(IcsBundle.message("sync.done.message"), NotificationType.INFORMATION).notify(project);
   }
 }

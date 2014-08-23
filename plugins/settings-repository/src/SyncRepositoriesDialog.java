@@ -85,8 +85,8 @@ public class SyncRepositoriesDialog extends DialogWrapper {
         IcsManager.getInstance().sync(syncType, project);
       }
       catch (Exception e) {
-        Messages.showErrorDialog(parent, IcsBundle.message("sync.rejected.message", StringUtil.notNullize(e.getMessage(), "Internal error")),
-                                 IcsBundle.message("sync.rejected.title"));
+        Messages.showErrorDialog(parent, StringUtil.notNullize(e.getMessage(), "Internal error"), IcsBundle.message("sync.rejected.title"));
+        return;
       }
 
       Messages.showInfoMessage(parent, IcsBundle.message("sync.done.message"), IcsBundle.message("sync.done.title"));

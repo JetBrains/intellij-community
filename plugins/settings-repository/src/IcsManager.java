@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SingleAlarm;
 import org.jetbrains.annotations.NotNull;
@@ -225,8 +226,10 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
   public void dispose() {
   }
 
-  public void sync(@NotNull final SyncType syncType, @Nullable Project project) {
+  public void sync(@NotNull final SyncType syncType, @Nullable Project project) throws Exception {
     ApplicationManager.getApplication().assertIsDispatchThread();
+
+    final Ref<Exception> exceptionRef = new Ref<Exception>();
 
     cancelAndDisableAutoCommit();
     try {
@@ -248,7 +251,11 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
             }
           }
           catch (Exception e) {
-            LOG.error(e);
+            //noinspection InstanceofCatchParameter
+            if (!(e instanceof AuthenticationException)) {
+              LOG.error(e);
+            }
+            exceptionRef.set(e);
           }
         }
       });
@@ -256,6 +263,10 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
     finally {
       autoCommitEnabled = true;
       writeAndDeleteProhibited = false;
+    }
+
+    if (!exceptionRef.isNull()) {
+      throw exceptionRef.get();
     }
   }
 

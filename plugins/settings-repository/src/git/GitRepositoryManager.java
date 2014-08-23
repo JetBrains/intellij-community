@@ -3,19 +3,17 @@ package org.jetbrains.plugins.settingsRepository.git;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SmartList;
 import org.eclipse.jgit.api.CommitCommand;
-import org.eclipse.jgit.lib.ConfigConstants;
-import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.lib.PersonIdent;
-import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.errors.TransportException;
+import org.eclipse.jgit.internal.JGitText;
+import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
-import org.eclipse.jgit.transport.CredentialsProvider;
-import org.eclipse.jgit.transport.OperationResult;
-import org.eclipse.jgit.transport.PushResult;
-import org.eclipse.jgit.transport.RemoteRefUpdate;
+import org.eclipse.jgit.transport.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.plugins.settingsRepository.AuthenticationException;
 import org.jetbrains.plugins.settingsRepository.BaseRepositoryManager;
 
 import java.io.File;
@@ -102,14 +100,39 @@ public final class GitRepositoryManager extends BaseRepositoryManager {
   @Override
   public void push(@NotNull ProgressIndicator indicator) throws Exception {
     LOG.debug("Push");
-    Iterable<PushResult> pushResults = git.push().setProgressMonitor(new JGitProgressMonitor(indicator)).setCredentialsProvider(getCredentialsProvider()).call();
-    for (PushResult pushResult : pushResults) {
-      if (LOG.isDebugEnabled()) {
-        printMessages(pushResult);
 
-        for (RemoteRefUpdate refUpdate : pushResult.getRemoteUpdates()) {
-          LOG.debug(refUpdate.toString());
+    Repository repository = git.getRepository();
+    List<RefSpec> refSpecs = new SmartList<RefSpec>(new RemoteConfig(repository.getConfig(), Constants.DEFAULT_REMOTE_NAME).getPushRefSpecs());
+    if (refSpecs.isEmpty()) {
+      Ref head = repository.getRef(Constants.HEAD);
+      if (head != null && head.isSymbolic())
+        refSpecs.add(new RefSpec(head.getLeaf().getName()));
+    }
+
+    JGitProgressMonitor monitor = new JGitProgressMonitor(indicator);
+    for (Transport transport : Transport.openAll(repository, Constants.DEFAULT_REMOTE_NAME, Transport.Operation.PUSH)) {
+      transport.setCredentialsProvider(getCredentialsProvider());
+
+      try {
+        PushResult result = transport.push(monitor, transport.findRemoteRefUpdatesFor(refSpecs));
+        if (LOG.isDebugEnabled()) {
+          printMessages(result);
+
+          for (RemoteRefUpdate refUpdate : result.getRemoteUpdates()) {
+            LOG.debug(refUpdate.toString());
+          }
         }
+      }
+      catch (TransportException e) {
+        if (e.getMessage().contains(JGitText.get().notAuthorized)) {
+          throw new AuthenticationException(e.getMessage(), e);
+        }
+        else {
+          throw e;
+        }
+      }
+      finally {
+        transport.close();
       }
     }
   }
