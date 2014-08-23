@@ -20,6 +20,7 @@ import com.intellij.find.*;
 import com.intellij.find.actions.FindInPathAction;
 import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.find.impl.FindInProjectUtil;
+import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -38,6 +39,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -48,9 +50,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.content.Content;
-import com.intellij.usageView.*;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
-import com.intellij.usages.UsageViewManager;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.AdapterProcessor;
@@ -168,7 +169,7 @@ public class ReplaceInProjectManager {
     @Override
     public String getLongDescriptiveName() {
       UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(false, myFindModel);
-      return "Replace "+presentation.getToolwindowTitle()+" with '"+ myFindModel.getStringToReplace()+"'";
+      return "Replace "+ StringUtil.decapitalize(presentation.getToolwindowTitle())+" with '"+ myFindModel.getStringToReplace()+"'";
     }
 
     @Override
@@ -193,7 +194,9 @@ public class ReplaceInProjectManager {
                                   final FindManager findManager) {
     presentation.setMergeDupLinesAvailable(false);
     final ReplaceContext[] context = new ReplaceContext[1];
-    manager.searchAndShowUsages(new UsageTarget[]{new ReplaceInProjectTarget(myProject, findModelCopy)},
+    final ReplaceInProjectTarget target = new ReplaceInProjectTarget(myProject, findModelCopy);
+    ((FindManagerImpl)FindManager.getInstance(myProject)).getFindUsagesManager().addToHistory(target);
+    manager.searchAndShowUsages(new UsageTarget[]{target},
                                 usageSearcherFactory, processPresentation, presentation, new UsageViewManager.UsageViewStateListener() {
         @Override
         public void usageViewCreated(@NotNull UsageView usageView) {
