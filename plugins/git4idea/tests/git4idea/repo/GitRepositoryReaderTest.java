@@ -54,7 +54,7 @@ public class GitRepositoryReaderTest extends GitPlatformTest {
     });
   }
 
-  @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors", "UnusedParameters"})
+  @SuppressWarnings({"UnusedParameters"})
   public GitRepositoryReaderTest(@NotNull String name, @NotNull File testDir) {
     myTestCaseDir = testDir;
   }
