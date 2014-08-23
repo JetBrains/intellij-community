@@ -16,53 +16,55 @@
 package com.jetbrains.python.debugger;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nullable;
 
 public class PyHierarchyCallDataConverter {
-  public static PyHierarchyCallerData stringToHierarchyCallerData(String calleePath, String callerData) {
+  public static PyHierarchyCallData callerDataStringToHierarchyCallData(@Nullable String calleePath, String callerData) {
     String[] parts = callerData.split("\t");
-    if (parts.length > 2) {
+    if (parts.length > 3) {
       String calleeName = parts[0];
       String callerPath = parts[1];
       String callerName = parts[2];
-      PyHierarchyCallerData data = new PyHierarchyCallerData(callerPath, calleePath, callerName, calleeName);
+      PyHierarchyCallData callData = new PyHierarchyCallData(callerPath, callerName, -1, calleePath, calleeName, -1);
       for (int i = 3; i < parts.length; i++) {
-        data.addCallerLine(Integer.parseInt(parts[i]));
+        callData.addCalleeCallLine(Integer.parseInt(parts[i]));
       }
 
-      return data;
+      return callData;
     }
 
     return null;
   }
 
-  public static PyHierarchyCalleeData stringToHierarchyCalleeData(String callerFile, String calleeData) {
+  public static PyHierarchyCallData calleeDataStringToHierarchyCallData(@Nullable String callerPath, String calleeData) {
     String[] parts = calleeData.split("\t");
-    if (parts.length > 2) {
+    if (parts.length > 3) {
       String callerName = parts[0];
-      String calleeFile = parts[1];
+      String calleePath = parts[1];
       String calleeName = parts[2];
-      PyHierarchyCalleeData data = new PyHierarchyCalleeData(callerFile, calleeFile, callerName, calleeName);
+      PyHierarchyCallData callData = new PyHierarchyCallData(callerPath, callerName, -1, calleePath, calleeName, -1);
       for (int i = 3; i < parts.length; i++) {
-        data.addCalleeLine(Integer.parseInt(parts[i]));
+        callData.addCalleeCallLine(Integer.parseInt(parts[i]));
       }
 
-      return data;
+      return callData;
     }
 
     return null;
   }
 
-  public static String hierarchyCallerDataToString(PyHierarchyCallerData data) {
-    return data.getCalleeName()
-           + "\t" + data.getCallerFile()
-           + "\t" + data.getCallerName()
-           + "\t" + StringUtil.join(data.getCallerLines(), "\t");
+  public static String hierarchyCallDataToCallerDataString(PyHierarchyCallData callData) {
+    return callData.getCalleeName()
+           + "\t" + callData.getCallerFile()
+           + "\t" + callData.getCallerName()
+           + "\t" + StringUtil.join(callData.getCalleeCallLines(), "\t");
   }
 
-  public static String hierarchyCalleeDataToString(PyHierarchyCalleeData data) {
-    return data.getCallerName()
-           + "\t" + data.getCalleeFile()
-           + "\t" + data.getCalleeName()
-           + "\t" + StringUtil.join(data.getCalleeLines(), "\t");
+  public static String hierarchyCallDataToCalleeDataString(PyHierarchyCallData callData) {
+    return callData.getCallerName()
+           + "\t" + callData.getCalleeFile()
+           + "\t" + callData.getCalleeName()
+           + "\t" + StringUtil.join(callData.getCalleeCallLines(), "\t");
   }
+
 }
