@@ -8,9 +8,9 @@ import org.eclipse.jgit.transport.URIish
 
 import java.io.*
 
-public class FileCredentialsStore : CredentialsStore {
+class FileCredentialsStore : CredentialsStore {
   // we store only one pair for any URL, don't want to add complexity, OS keychain should be used
-  private var credentials: CredentialsStore.Credentials? = null
+  private var credentials: Credentials? = null
 
   {
     val loginDataFile = getPasswordStorageFile()
@@ -19,19 +19,20 @@ public class FileCredentialsStore : CredentialsStore {
         var hasErrors = true
         val `in` = DataInputStream(FileInputStream(loginDataFile))
         try {
-          credentials = CredentialsStore.Credentials(PasswordUtil.decodePassword(IOUtil.readString(`in`)), PasswordUtil.decodePassword(IOUtil.readString(`in`)))
+          credentials = Credentials(PasswordUtil.decodePassword(IOUtil.readString(`in`)), PasswordUtil.decodePassword(IOUtil.readString(`in`)))
           hasErrors = false
-        } finally {
+        }
+        finally {
           if (hasErrors) {
             //noinspection ResultOfMethodCallIgnored
             loginDataFile.delete()
           }
           `in`.close()
         }
-      } catch (e: IOException) {
+      }
+      catch (e: IOException) {
         BaseRepositoryManager.LOG.error(e)
       }
-
     }
   }
 
@@ -39,15 +40,21 @@ public class FileCredentialsStore : CredentialsStore {
     return File(IcsManager.getPluginSystemDir(), ".git_auth")
   }
 
-  override fun get(uri: URIish): CredentialsStore.Credentials? {
+  override fun get(uri: URIish): Credentials? {
     return credentials
   }
 
   override fun reset(uri: URIish) {
-    credentials!!.password = null
+    if (credentials != null) {
+      credentials = Credentials(credentials!!.username, null)
+    }
   }
 
-  override fun save(uri: URIish, credentials: CredentialsStore.Credentials) {
+  override fun save(uri: URIish, credentials: Credentials) {
+    if (this.credentials?.equals(credentials) === true) {
+      return
+    }
+
     this.credentials = credentials
     ApplicationManager.getApplication()!!.executeOnPooledThread(object : Runnable {
       override fun run() {
@@ -58,13 +65,14 @@ public class FileCredentialsStore : CredentialsStore {
           try {
             IOUtil.writeString(PasswordUtil.encodePassword(credentials.username), out)
             IOUtil.writeString(PasswordUtil.encodePassword(credentials.password), out)
-          } finally {
+          }
+          finally {
             out.close()
           }
-        } catch (e: IOException) {
+        }
+        catch (e: IOException) {
           BaseRepositoryManager.LOG.error(e)
         }
-
       }
     })
   }

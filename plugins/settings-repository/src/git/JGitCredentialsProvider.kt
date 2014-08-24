@@ -1,15 +1,13 @@
 package org.jetbrains.plugins.settingsRepository.git
 
 import com.intellij.openapi.util.NotNullLazyValue
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.ui.UIUtil
-import org.eclipse.jgit.errors.UnsupportedCredentialItem
 import org.eclipse.jgit.transport.CredentialItem
 import org.eclipse.jgit.transport.CredentialsProvider
 import org.eclipse.jgit.transport.URIish
-import org.jetbrains.plugins.settingsRepository.AuthDialog
 import org.jetbrains.plugins.settingsRepository.CredentialsStore
+import org.jetbrains.plugins.settingsRepository.showAuthenticationForm
+import org.jetbrains.plugins.settingsRepository.Credentials
 
 class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<CredentialsStore>) : CredentialsProvider() {
   override fun isInteractive(): Boolean {
@@ -44,51 +42,31 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
   }
 
   private fun doGet(uri: URIish, userNameItem: CredentialItem.Username, passwordItem: CredentialItem.Password): Boolean {
-    val credentials = credentialsStore.getValue().get(uri)
+    var credentials = credentialsStore.getValue().get(uri)
 
-    var user: String? = uri.getUser()
-    var password: String?
-    if (user == null) {
-      // username is not in the url - reading pre-filled value from the password storage
-      user = credentials?.username
-      password = credentials?.password
-    }
-    else {
-      password = StringUtil.nullize(uri.getPass(), true)
+    var userFromUri: String? = uri.getUser()
+    var passwordFromUri: String?
+    if (userFromUri != null) {
+      passwordFromUri = StringUtil.nullize(uri.getPass(), true)
       // username is in url - read password only if it is for the same user
-      if (password == null && user == credentials?.username) {
-        password = credentials?.password
+      if (userFromUri != credentials?.username) {
+        credentials = Credentials(userFromUri, passwordFromUri)
+      }
+      else if (passwordFromUri != null && passwordFromUri != credentials?.password) {
+        credentials = Credentials(userFromUri, passwordFromUri)
       }
     }
 
-    val ok: Boolean
-    if (user != null && password != null) {
-      ok = true
-    }
-    else {
-      var dialog: AuthDialog? = null
-      UIUtil.invokeAndWaitIfNeeded(object : Runnable {
-        override fun run() {
-          dialog = AuthDialog("Login required", "Login to " + uri, user, password)
-          dialog!!.show()
-        }
-      })
-      ok = dialog!!.isOK()
-      if (ok) {
-        user = dialog!!.getUsername()
-        password = dialog!!.getPassword()
-        if (StringUtil.isEmptyOrSpaces(password)) {
-          password = "x-oauth-basic"
-        }
-      }
+    if (credentials?.username == null || credentials?.password == null) {
+      credentials = showAuthenticationForm(credentials, uri.toString(), uri.getHost())
     }
 
-    if (ok) {
-      userNameItem.setValue(user)
-      passwordItem.setValue(password!!.toCharArray())
-      credentialsStore.getValue().save(uri, CredentialsStore.Credentials(user, password))
+    userNameItem.setValue(credentials?.username)
+    passwordItem.setValue(credentials?.password?.toCharArray())
+    if (credentials != null) {
+      credentialsStore.getValue().save(uri, credentials!!)
     }
-    return ok
+    return credentials != null
   }
 
   override fun reset(uri: URIish) {

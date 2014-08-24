@@ -2,18 +2,38 @@ package org.jetbrains.plugins.settingsRepository
 
 import com.intellij.openapi.util.text.StringUtil
 import org.eclipse.jgit.transport.URIish
+import com.intellij.util.ui.UIUtil
+import com.intellij.openapi.ui.DialogBuilder
+import com.intellij.openapi.ui.DialogWrapper
+
+public fun showAuthenticationForm(credentials: Credentials?, uri: String, host: String?): Credentials? {
+  val authenticationForm = RepositoryAuthenticationForm(credentials?.username, credentials?.password, if (host == "github.com") IcsBundle.message("login.github.note") else null)
+  var ok = false
+  UIUtil.invokeAndWaitIfNeeded(object : Runnable {
+    override fun run() {
+      ok = DialogBuilder().title("Log in to " + StringUtil.trimMiddle(uri.toString(), 50)).centerPanel(authenticationForm.getPanel()).show() == DialogWrapper.OK_EXIT_CODE
+    }
+  })
+  if (ok) {
+    val passwordChars = authenticationForm.getPassword()
+    val username = authenticationForm.getUsername()
+    return Credentials(username, if (passwordChars == null) (if (username == null) null else "x-oauth-basic") else String(passwordChars))
+  }
+  return null
+}
+
+data
+public class Credentials(username: String?, password: String?) {
+  public val username: String?
+  public val password: String?
+
+  {
+    this.username = StringUtil.nullize(username, true)
+    this.password = StringUtil.nullize(password)
+  }
+}
 
 public trait CredentialsStore {
-  public class Credentials(username: String?, password: String?) {
-    public var username: String?
-    public var password: String?
-
-    {
-      this.username = StringUtil.nullize(username, true)
-      this.password = StringUtil.nullize(password)
-    }
-  }
-
   public fun get(uri: URIish): Credentials?
 
   public fun save(uri: URIish, credentials: Credentials)
