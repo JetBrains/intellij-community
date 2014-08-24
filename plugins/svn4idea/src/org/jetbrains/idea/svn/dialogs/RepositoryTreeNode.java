@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.NotNullFunction;
@@ -29,7 +30,6 @@ import org.jetbrains.idea.svn.dialogs.browserCache.NodeLoadState;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
-import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -128,7 +128,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
 
   private void initChildren() {
     myChildren.clear();
-    myChildren.add(new DefaultMutableTreeNode("Loading"));
+    myChildren.add(new SimpleTextNode(CommonBundle.getLoadingTreeNodeText()));
     myChildrenLoadState = NodeLoadState.LOADING;
   }
 
@@ -204,8 +204,10 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
         ((RepositoryTreeNode) child).setParentNode(this);
         myChildren.add(child);
         myChildrenLoadState = oldState;
-      } else if (child instanceof DefaultMutableTreeNode) {
-        myChildren.add(new DefaultMutableTreeNode(((DefaultMutableTreeNode) child).getUserObject()));
+      }
+      else if (child instanceof SimpleTextNode) {
+        SimpleTextNode node = (SimpleTextNode)child;
+        myChildren.add(new SimpleTextNode(node.getText(), node.isError()));
         myChildrenLoadState = oldState;
       }
     }
@@ -215,8 +217,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
 
   public void setErrorNode(@NotNull String text) {
     myChildren.clear();
-    myChildren.add(new DefaultMutableTreeNode(text));
-
+    myChildren.add(new SimpleTextNode(text, true));
     myChildrenLoadState = NodeLoadState.ERROR;
     myModel.reload(this);
   }
