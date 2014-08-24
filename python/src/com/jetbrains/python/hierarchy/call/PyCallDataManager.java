@@ -16,15 +16,14 @@
 package com.jetbrains.python.hierarchy.call;
 
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.List;
 
 
 public interface PyCallDataManager {
-  Collection<PsiElement> getCallees(@NotNull PyFunction pyFunction);
+  Collection<PsiElement> getCallees(@NotNull PyElement pyElement);
 
-  Collection<PsiElement> getCallers(@NotNull PyFunction pyFunction);
+  Collection<PsiElement> getCallers(@NotNull PyElement pyElement);
 }

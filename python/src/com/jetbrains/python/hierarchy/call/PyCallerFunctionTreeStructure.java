@@ -22,6 +22,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,18 +34,18 @@ import java.util.List;
 public class PyCallerFunctionTreeStructure extends HierarchyTreeStructure {
   private final String myScopeType;
 
-  public PyCallerFunctionTreeStructure(Project project, PyFunction function, String currentScopeType) {
-    super(project, new PyCallHierarchyNodeDescriptor(project, null, function, true, false));
+  public PyCallerFunctionTreeStructure(Project project, PsiElement element, String currentScopeType) {
+    super(project, new PyCallHierarchyNodeDescriptor(project, null, element, true, false));
     myScopeType = currentScopeType;
   }
 
   @NotNull
   @Override
   protected Object[] buildChildren(@NotNull HierarchyNodeDescriptor descriptor) {
-    final PsiElement enclosingElement = ((PyCallHierarchyNodeDescriptor)descriptor).getEnclosingElement();
-    final PyFunction function = enclosingElement instanceof PyFunction ? (PyFunction)enclosingElement : null;
+    final PyElement element = ((PyCallHierarchyNodeDescriptor)descriptor).getEnclosingElement();
+    final boolean isCallable = element instanceof PyFunction || element instanceof PyClass || element instanceof PyFile;
     HierarchyNodeDescriptor nodeDescriptor = getBaseDescriptor();
-    if (function == null || nodeDescriptor == null) {
+    if (!isCallable || nodeDescriptor == null) {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
@@ -52,12 +55,12 @@ public class PyCallerFunctionTreeStructure extends HierarchyTreeStructure {
       PyDynamicCallDataManager.getInstance(myProject)
     };
     for (PyCallDataManager functionManager: functionManagers) {
-      callers.addAll(functionManager.getCallers(function));
+      callers.addAll(functionManager.getCallers(element));
     }
 
     final HashMap<PsiElement, PyCallHierarchyNodeDescriptor> callerToDescriptorMap = new HashMap<PsiElement, PyCallHierarchyNodeDescriptor>();
     final List<PyCallHierarchyNodeDescriptor> descriptors = Lists.newArrayList();
-    PsiElement baseClass = function.getContainingClass();
+    PsiElement baseClass = element instanceof PyFunction ? ((PyFunction)element).getContainingClass() : null;
 
     for (PsiElement caller: callers) {
       if (baseClass != null && !isInScope(baseClass, caller, myScopeType)) continue;

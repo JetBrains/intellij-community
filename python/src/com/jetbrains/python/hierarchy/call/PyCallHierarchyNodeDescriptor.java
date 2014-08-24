@@ -66,8 +66,8 @@ public class PyCallHierarchyNodeDescriptor extends HierarchyNodeDescriptor imple
     return (PyFunction)myElement;
   }
 
-  public final PsiElement getEnclosingElement(){
-    return PsiTreeUtil.getNonStrictParentOfType(myElement, PyFunction.class, PyClass.class, PyFile.class, PyLambdaExpression.class);
+  public final PyElement getEnclosingElement(){
+    return PsiTreeUtil.getNonStrictParentOfType(myElement, PyFunction.class, PyClass.class, PyFile.class);
   }
 
   public final PsiElement getTargetElement() {
@@ -167,7 +167,6 @@ public class PyCallHierarchyNodeDescriptor extends HierarchyNodeDescriptor imple
   public boolean hasReference(final PsiReference reference) {
     return myReferences.contains(reference);
   }
-
 
 
   @Override

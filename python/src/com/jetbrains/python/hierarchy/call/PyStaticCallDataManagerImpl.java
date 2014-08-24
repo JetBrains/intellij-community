@@ -25,12 +25,14 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.findUsages.PyClassFindUsagesHandler;
 import com.jetbrains.python.findUsages.PyFunctionFindUsagesHandler;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -44,7 +46,7 @@ public class PyStaticCallDataManagerImpl extends PyStaticCallDataManager {
   }
 
   @Override
-  public Collection<PsiElement> getCallees(@NotNull PyFunction function) {
+  public Collection<PsiElement> getCallees(@NotNull PyElement element) {
     final List<PsiElement> callees = Lists.newArrayList();
 
     final PyRecursiveElementVisitor visitor = new PyRecursiveElementVisitor() {
@@ -71,20 +73,20 @@ public class PyStaticCallDataManagerImpl extends PyStaticCallDataManager {
         super.visitPyCallExpression(callExpression);
         PsiElement calleeFunction = callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
         if (calleeFunction instanceof PyFunction) {
-          callees.add((PyFunction)calleeFunction);
+          callees.add(calleeFunction);
         }
       }
     };
 
-    visitor.visitElement(function);
+    visitor.visitElement(element);
 
     return callees;
   }
 
   @Override
-  public Collection<PsiElement> getCallers(@NotNull PyFunction function) {
+  public Collection<PsiElement> getCallers(@NotNull PyElement pyElement) {
     final List<PsiElement> callers = Lists.newArrayList();
-    final Collection<UsageInfo> usages = findUsages(function);
+    final Collection<UsageInfo> usages = findUsages(pyElement);
 
     for (UsageInfo usage: usages) {
       PsiElement element = usage.getElement();
@@ -100,13 +102,13 @@ public class PyStaticCallDataManagerImpl extends PyStaticCallDataManager {
       if (element instanceof PyCallExpression) {
         PsiElement caller = PsiTreeUtil.getParentOfType(element, PyParameterList.class, PyFunction.class);
         if (caller instanceof PyFunction) {
-          callers.add((PyFunction)caller);
+          callers.add(caller);
         }
         else if (caller instanceof PyParameterList) {
           PsiElement innerFunction = PsiTreeUtil.getParentOfType(caller, PyFunction.class);
           PsiElement outerFunction = PsiTreeUtil.getParentOfType(innerFunction, PyFunction.class);
           if (innerFunction != null && outerFunction != null) {
-            callers.add((PyFunction)outerFunction);
+            callers.add(outerFunction);
           }
         }
       }
@@ -115,8 +117,11 @@ public class PyStaticCallDataManagerImpl extends PyStaticCallDataManager {
     return callers;
   }
 
-  private static Collection<UsageInfo> findUsages(@NotNull final PyFunction function) {
-    final FindUsagesHandler handler = createFindUsageHandler(function);
+  private static Collection<UsageInfo> findUsages(@NotNull final PsiElement element) {
+    final FindUsagesHandler handler = createFindUsageHandler(element);
+    if (handler == null) {
+      return Lists.newArrayList();
+    }
     final CommonProcessors.CollectProcessor<UsageInfo> processor = new CommonProcessors.CollectProcessor<UsageInfo>();
     final PsiElement[] psiElements = ArrayUtil.mergeArrays(handler.getPrimaryElements(), handler.getSecondaryElements());
     final FindUsagesOptions options = handler.getFindUsagesOptions(null);
@@ -129,20 +134,26 @@ public class PyStaticCallDataManagerImpl extends PyStaticCallDataManager {
   /**
    * @see {@link com.jetbrains.python.findUsages.PyFindUsagesHandlerFactory#createFindUsagesHandler(com.intellij.psi.PsiElement, boolean) createFindUsagesHandler}
    */
-  private static FindUsagesHandler createFindUsageHandler(@NotNull final PyFunction function) {
-    final Collection<PsiElement> superMethods = PySuperMethodsSearch.search(function, true).findAll();
-    if (superMethods.size() > 0) {
-      final PsiElement next = superMethods.iterator().next();
-      if (next instanceof PyFunction && !isInObject((PyFunction)next)) {
-        List<PsiElement> allMethods = Lists.newArrayList();
-        allMethods.add(function);
-        allMethods.addAll(superMethods);
+  @Nullable
+  private static FindUsagesHandler createFindUsageHandler(@NotNull final PsiElement element) {
+    if (element instanceof PyFunction) {
+      final Collection<PsiElement> superMethods = PySuperMethodsSearch.search((PyFunction)element, true).findAll();
+      if (superMethods.size() > 0) {
+        final PsiElement next = superMethods.iterator().next();
+        if (next instanceof PyFunction && !isInObject((PyFunction)next)) {
+          List<PsiElement> allMethods = Lists.newArrayList();
+          allMethods.add(element);
+          allMethods.addAll(superMethods);
 
-        return new PyFunctionFindUsagesHandler(function, allMethods);
+          return new PyFunctionFindUsagesHandler(element, allMethods);
+        }
       }
+      return new PyFunctionFindUsagesHandler(element);
     }
-
-    return new PyFunctionFindUsagesHandler(function);
+    if (element instanceof PyClass) {
+      return new PyClassFindUsagesHandler((PyClass)element);
+    }
+    return null;
   }
 
   /**

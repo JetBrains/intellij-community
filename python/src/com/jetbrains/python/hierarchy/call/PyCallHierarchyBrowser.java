@@ -27,6 +27,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.PopupHandler;
 import com.jetbrains.python.hierarchy.PyHierarchyUtils;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,17 +81,17 @@ public class PyCallHierarchyBrowser extends CallHierarchyBrowserBase {
 
   @Override
   protected boolean isApplicableElement(@NotNull PsiElement element) {
-    return element instanceof PyFunction;
+    return element instanceof PyFunction || element instanceof PyClass || element instanceof PyFile;
   }
 
   @Nullable
   @Override
   protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull String typeName, @NotNull PsiElement psiElement) {
     if (CALLER_TYPE.equals(typeName)) {
-      return new PyCallerFunctionTreeStructure(myProject, (PyFunction)psiElement, getCurrentScopeType());
+      return new PyCallerFunctionTreeStructure(myProject, psiElement, getCurrentScopeType());
     }
     else if (CALLEE_TYPE.equals(typeName)) {
-      return new PyCalleeFunctionTreeStructure(myProject, (PyFunction)psiElement, getCurrentScopeType());
+      return new PyCalleeFunctionTreeStructure(myProject, psiElement, getCurrentScopeType());
     }
     else {
       LOG.error("unexpected type: " + typeName);

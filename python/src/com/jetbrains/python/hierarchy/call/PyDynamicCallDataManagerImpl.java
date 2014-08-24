@@ -32,8 +32,6 @@ import java.util.List;
 
 
 public class PyDynamicCallDataManagerImpl extends PyDynamicCallDataManager {
-  private final static String MODULE_CALLABLE_NAME = "<module>";
-  private final static String LAMBDA_CALLER_NAME = "<lambda>";
 
   private final Project myProject;
 
@@ -42,7 +40,7 @@ public class PyDynamicCallDataManagerImpl extends PyDynamicCallDataManager {
   }
 
   @Override
-  public List<PsiElement> getCallees(@NotNull PyFunction element) {
+  public List<PsiElement> getCallees(@NotNull PyElement element) {
     List<PsiElement> callees = Lists.newArrayList();
 
     PyHierarchyCallCacheManager callCacheManager = PyHierarchyCallCacheManager.getInstance(myProject);
@@ -57,7 +55,7 @@ public class PyDynamicCallDataManagerImpl extends PyDynamicCallDataManager {
   }
 
   @Override
-  public List<PsiElement> getCallers(@NotNull PyFunction element) {
+  public List<PsiElement> getCallers(@NotNull PyElement element) {
     List<PsiElement> callers = Lists.newArrayList();
 
     PyHierarchyCallCacheManager callCacheManager = PyHierarchyCallCacheManager.getInstance(myProject);
@@ -81,7 +79,7 @@ public class PyDynamicCallDataManagerImpl extends PyDynamicCallDataManager {
       return;
     }
     PyFile pyFile = (PyFile)file;
-    if (elementName.equals(MODULE_CALLABLE_NAME)) {
+    if (elementName.equals(pyFile.getName())) {
       result.add(pyFile);
     }
 

@@ -27,6 +27,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,14 +51,14 @@ public class PyCallHierarchyProvider implements HierarchyProvider {
         element = TargetElementUtilBase.findTargetElement(editor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED |
                                                                   TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED |
                                                                   TargetElementUtilBase.LOOKUP_ITEM_ACCEPTED);
-        if (element instanceof PyFunction) {
+        if (element instanceof PyFunction || element instanceof PyClass || element instanceof PyFile) {
           return element;
         }
 
         element = file.findElementAt(editor.getCaretModel().getOffset());
       }
     }
-    return PsiTreeUtil.getParentOfType(element, PyFunction.class, false);
+    return PsiTreeUtil.getNonStrictParentOfType(element, PyFunction.class, PyClass.class, PyFile.class);
   }
 
   @NotNull

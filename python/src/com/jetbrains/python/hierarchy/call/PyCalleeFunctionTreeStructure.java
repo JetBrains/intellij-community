@@ -21,7 +21,9 @@ import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
+import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,18 +35,18 @@ import java.util.Map;
 public class PyCalleeFunctionTreeStructure extends HierarchyTreeStructure {
   private final String myScopeType;
 
-  public PyCalleeFunctionTreeStructure(Project project, PyFunction function, String currentScopeType) {
-    super(project, new PyCallHierarchyNodeDescriptor(project, null, function, true, false));
+  public PyCalleeFunctionTreeStructure(Project project, PsiElement element, String currentScopeType) {
+    super(project, new PyCallHierarchyNodeDescriptor(project, null, element, true, false));
     myScopeType = currentScopeType;
   }
 
   @NotNull
   @Override
   protected Object[] buildChildren(@NotNull HierarchyNodeDescriptor descriptor) {
-    final PsiElement enclosingElement = ((PyCallHierarchyNodeDescriptor)descriptor).getEnclosingElement();
-    final PyFunction function = enclosingElement instanceof PyFunction ? (PyFunction)enclosingElement : null;
+    final PyElement element = ((PyCallHierarchyNodeDescriptor)descriptor).getEnclosingElement();
+    final boolean isCallable = element instanceof PyFunction || element instanceof PyClass || element instanceof PyFile;
     HierarchyNodeDescriptor nodeDescriptor = getBaseDescriptor();
-    if (function == null || nodeDescriptor == null) {
+    if (!isCallable || nodeDescriptor == null) {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
@@ -54,12 +56,12 @@ public class PyCalleeFunctionTreeStructure extends HierarchyTreeStructure {
       PyDynamicCallDataManager.getInstance(myProject)
     };
     for (PyCallDataManager functionManager: functionManagers) {
-      callees.addAll(functionManager.getCallees(function));
+      callees.addAll(functionManager.getCallees(element));
     }
 
     final Map<PsiElement, PyCallHierarchyNodeDescriptor> calleeToDescriptorMap = new HashMap<PsiElement, PyCallHierarchyNodeDescriptor>();
     final List<PyCallHierarchyNodeDescriptor> descriptors = Lists.newArrayList();
-    PsiElement baseClass = function.getContainingClass();
+    PsiElement baseClass = element instanceof PyFunction ? ((PyFunction)element).getContainingClass() : null;
 
     for (PsiElement callee: callees) {
       if (baseClass != null && !isInScope(baseClass, callee, myScopeType)) continue;
@@ -78,9 +80,5 @@ public class PyCalleeFunctionTreeStructure extends HierarchyTreeStructure {
   @Override
   public boolean isAlwaysShowPlus() {
     return true;
-  }
-
-  private void fgh(PyElement element) {
-
   }
 }

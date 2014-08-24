@@ -325,7 +325,7 @@ public class PyHierarchyCallCacheManagerImpl extends PyHierarchyCallCacheManager
   }
 
   @Nullable
-  public static VirtualFile getFile(@NotNull PyElement element) {
+  public static VirtualFile getFile(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
 
     return file != null ? file.getOriginalFile().getVirtualFile() : null;
@@ -381,10 +381,11 @@ public class PyHierarchyCallCacheManagerImpl extends PyHierarchyCallCacheManager
 
   private String getQualifiedName(final String fileName, final String callableName, final int callableDefLine) {
     VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fileName);
-    if (callableName.equals(MODULE_CALLABLE_NAME) || callableName.equals(LAMBDA_CALLABLE_NAME)) {
-      return callableName;
-    }
     if (vFile != null) {
+      if (callableName.equals(MODULE_CALLABLE_NAME)) {
+        return vFile.getName();
+      }
+
       final Document document = FileDocumentManager.getInstance().getDocument(vFile);
       if (document != null) {
         String qualifiedName = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
