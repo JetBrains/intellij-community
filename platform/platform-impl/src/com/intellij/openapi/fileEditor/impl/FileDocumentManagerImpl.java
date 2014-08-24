@@ -651,7 +651,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     public boolean process(final VirtualFile file, final Document document) {
       String message = UIBundle.message("file.cache.conflict.message.text", file.getPresentableUrl());
 
-      final DialogBuilder builder = new DialogBuilder((Project)null);
+      final DialogBuilder builder = new DialogBuilder();
       builder.setCenterPanel(new JLabel(message, Messages.getQuestionIcon(), SwingConstants.CENTER));
       builder.addOkAction().setText(UIBundle.message("file.cache.conflict.load.fs.changes.button"));
       builder.addCancelAction().setText(UIBundle.message("file.cache.conflict.keep.memory.changes.button"));

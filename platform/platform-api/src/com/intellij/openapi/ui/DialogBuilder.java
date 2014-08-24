@@ -59,14 +59,18 @@ public class DialogBuilder implements Disposable {
     showImpl(false);
   }
 
-  public DialogBuilder(Project project) {
+  public DialogBuilder(@Nullable Project project) {
     myDialogWrapper = new MyDialogWrapper(project, true);
     Disposer.register(myDialogWrapper.getDisposable(), this);
   }
 
-  public DialogBuilder(Component parent) {
+  public DialogBuilder(@Nullable Component parent) {
     myDialogWrapper = new MyDialogWrapper(parent, true);
     Disposer.register(myDialogWrapper.getDisposable(), this);
+  }
+
+  public DialogBuilder() {
+    this(((Project)null));
   }
 
   @Override
@@ -91,6 +95,12 @@ public class DialogBuilder implements Disposable {
   }
 
   @NotNull
+  public DialogBuilder centerPanel(@NotNull JComponent centerPanel) {
+    myCenterPanel = centerPanel;
+    return this;
+  }
+
+  @NotNull
   public DialogBuilder setNorthPanel(@NotNull JComponent northPanel) {
     myNorthPanel = northPanel;
     return this;
@@ -100,6 +110,7 @@ public class DialogBuilder implements Disposable {
     myTitle = title;
   }
 
+  @NotNull
   public DialogBuilder title(@NotNull String title) {
     myTitle = title;
     return this;
@@ -267,7 +278,7 @@ public class DialogBuilder implements Disposable {
     protected Action createAction(final DialogWrapper dialogWrapper) {
       return new AbstractAction(){
         @Override
-        public void actionPerformed(ActionEvent e) {
+        public void actionPerformed(@NotNull ActionEvent e) {
           dialogWrapper.close(myExitCode);
         }
       };
@@ -325,7 +336,7 @@ public class DialogBuilder implements Disposable {
 
   private class MyDialogWrapper extends DialogWrapper {
     private String myHelpId = null;
-    private MyDialogWrapper(Project project, boolean canBeParent) {
+    private MyDialogWrapper(@Nullable Project project, boolean canBeParent) {
       super(project, canBeParent);
     }
 
