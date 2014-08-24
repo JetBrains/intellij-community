@@ -2,6 +2,7 @@ package org.jetbrains.plugins.settingsRepository.git;
 
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import org.eclipse.jgit.api.CommitCommand;
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.settingsRepository.AuthenticationException;
 import org.jetbrains.plugins.settingsRepository.BaseRepositoryManager;
+import org.jetbrains.plugins.settingsRepository.CredentialsStore;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,9 +25,11 @@ import java.util.List;
 public final class GitRepositoryManager extends BaseRepositoryManager {
   final GitEx git;
 
+  private final NotNullLazyValue<CredentialsStore> credentialsStore;
   private CredentialsProvider credentialsProvider;
 
-  public GitRepositoryManager() throws IOException {
+  public GitRepositoryManager(@NotNull NotNullLazyValue<CredentialsStore> credentialsStore) throws IOException {
+    this.credentialsStore = credentialsStore;
     Repository repository = new FileRepositoryBuilder().setWorkTree(dir).build();
     git = new GitEx(repository);
     if (!dir.exists()) {
@@ -48,7 +52,7 @@ public final class GitRepositoryManager extends BaseRepositoryManager {
   @NotNull
   CredentialsProvider getCredentialsProvider() {
     if (credentialsProvider == null) {
-      credentialsProvider = new JGitCredentialsProvider();
+      credentialsProvider = new JGitCredentialsProvider(credentialsStore);
     }
     return credentialsProvider;
   }

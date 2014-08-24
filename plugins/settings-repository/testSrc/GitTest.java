@@ -7,6 +7,7 @@ import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.impl.stores.StreamProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.testFramework.PlatformTestCase;
@@ -77,7 +78,13 @@ public class GitTest {
       }
     });
 
-    IcsManager.getInstance().setRepositoryManager(new GitRepositoryManager());
+    IcsManager.getInstance().setRepositoryManager(new GitRepositoryManager(new NotNullLazyValue<CredentialsStore>() {
+      @NotNull
+      @Override
+      protected CredentialsStore compute() {
+        throw new UnsupportedOperationException();
+      }
+    }));
   }
 
   @After

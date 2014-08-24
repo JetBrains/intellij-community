@@ -1,0 +1,17 @@
+<root>
+  <item name='org.eclipse.jgit.transport.CredentialsProvider boolean get(org.eclipse.jgit.transport.URIish, java.util.List&lt;org.eclipse.jgit.transport.CredentialItem&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.transport.CredentialsProvider boolean get(org.eclipse.jgit.transport.URIish, java.util.List&lt;org.eclipse.jgit.transport.CredentialItem&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.transport.CredentialsProvider boolean get(org.eclipse.jgit.transport.URIish, org.eclipse.jgit.transport.CredentialItem...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.transport.CredentialsProvider boolean supports(org.eclipse.jgit.transport.CredentialItem...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.transport.CredentialsProvider void reset(org.eclipse.jgit.transport.URIish) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+</root>

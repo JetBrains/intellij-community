@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SingleAlarm;
@@ -45,6 +46,14 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
   private RepositoryManager repositoryManager;
 
   private IcsStatus status;
+
+  private final AtomicNotNullLazyValue<CredentialsStore> credentialsStore = new AtomicNotNullLazyValue<CredentialsStore>() {
+    @NotNull
+    @Override
+    protected CredentialsStore compute() {
+      return new FileCredentialsStore();
+    }
+  };
 
   protected final SingleAlarm commitAlarm = new SingleAlarm(new Runnable() {
     @Override
@@ -178,7 +187,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
   private void connectAndUpdateRepository(@NotNull Application application) {
     try {
       if (!application.isUnitTestMode()) {
-        repositoryManager = new GitRepositoryManager();
+        repositoryManager = new GitRepositoryManager(credentialsStore);
         setStatus(IcsStatus.OPENED);
         if (settings.updateOnStart && repositoryManager.hasUpstream()) {
           // todo progress
