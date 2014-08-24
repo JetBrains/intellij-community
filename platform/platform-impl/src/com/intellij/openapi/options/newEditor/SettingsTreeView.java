@@ -24,6 +24,7 @@ import com.intellij.openapi.options.ex.NodeConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
@@ -441,7 +442,17 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
 
     @Override
     public int getWeight() {
-      return WeightBasedComparator.UNDEFINED_WEIGHT;
+      SimpleNode parent = getParent();
+      if (parent != null && myRoot == parent.getParent()) {
+        if (myConfigurable instanceof NodeConfigurable) {
+          return ((NodeConfigurable)myConfigurable).getGroupWeight();
+        }
+        if (myConfigurable instanceof ConfigurableWrapper) {
+          return ((ConfigurableWrapper)myConfigurable).getExtensionPoint().groupWeight;
+        }
+        return 0; // sort by name
+      }
+      return Integer.MIN_VALUE; // do not sort
     }
   }
 
@@ -523,6 +534,17 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
           }
           else if (myFilter.myContext.getModified().contains(configurable)) {
             myTextLabel.setForeground(JBColor.BLUE);
+          }
+          else {
+            SimpleNode simpleNode = node;
+            while (simpleNode != null) {
+              SimpleNode parent = simpleNode.getParent();
+              if (parent != null && myRoot == parent.getParent() && simpleNode.getWeight() == 0) {
+                myTextLabel.setForeground(JBColor.GRAY);
+                parent = null;
+              }
+              simpleNode = parent;
+            }
           }
         }
       }
@@ -744,7 +766,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     boolean myWasHoldingFilter;
 
     public MyBuilder(SimpleTreeStructure structure) {
-      super(myTree, myFilter, structure, new WeightBasedComparator(false));
+      super(myTree, myFilter, structure, COMPARATOR);
       myTree.addTreeExpansionListener(new TreeExpansionListener() {
         public void treeExpanded(TreeExpansionEvent event) {
           invalidateExpansions();
@@ -832,4 +854,28 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
       }
     }
   }
+
+  private static final Comparator<NodeDescriptor> COMPARATOR = new Comparator<NodeDescriptor>() {
+    @Override
+    public int compare(NodeDescriptor descriptor1, NodeDescriptor descriptor2) {
+      MyNode node1 = extractNode(descriptor1);
+      MyNode node2 = extractNode(descriptor2);
+      if (node1 == null || node2 == null) {
+        return node2 != null ? -1 : node1 != null ? 1 : 0;
+      }
+      int weight1 = node1.getWeight();
+      int weight2 = node2.getWeight();
+
+      if (weight1 > weight2) {
+        return -1;
+      }
+      if (weight1 < weight2) {
+        return 1;
+      }
+      if (weight1 == Integer.MIN_VALUE) {
+        return 0; // do not sort if undefined weight
+      }
+      return StringUtil.naturalCompare(node1.myDisplayName, node2.myDisplayName);
+    }
+  };
 }
