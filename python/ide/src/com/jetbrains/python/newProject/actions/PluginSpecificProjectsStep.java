@@ -27,11 +27,11 @@ import java.util.List;
 public class PluginSpecificProjectsStep extends DefaultActionGroup implements DumbAware {
 
   public PluginSpecificProjectsStep(@NotNull final NullableConsumer<AbstractProjectSettingsStep> callback,
-                                    @NotNull final List<DirectoryProjectGenerator> projectGenerators) {
+                                    @NotNull final List<DirectoryProjectGenerator> projectGenerators, boolean isWelcomeScreen) {
     super("Plugin-specific", true);
     getTemplatePresentation().setIcon(AllIcons.Nodes.PluginLogo);
     for (DirectoryProjectGenerator generator : projectGenerators) {
-      add(new ProjectSpecificAction(callback, generator));
+      add(new ProjectSpecificAction(callback, generator, isWelcomeScreen));
     }
   }
 }

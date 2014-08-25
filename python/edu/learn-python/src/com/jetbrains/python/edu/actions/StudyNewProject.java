@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 public class StudyNewProject extends ProjectSpecificAction {
 
   public StudyNewProject(@NotNull final String name, @Nullable final Runnable runnable) {
-    super(new GenerateProjectCallback(runnable), new StudyDirectoryProjectGenerator(), name);
+    super(new GenerateProjectCallback(runnable), new StudyDirectoryProjectGenerator(), name, true);
   }
 
   public StudyNewProject() {
