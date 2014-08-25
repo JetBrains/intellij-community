@@ -21,12 +21,6 @@ public class JsonPropertyImpl extends JsonPropertyMixin implements JsonProperty 
     else super.accept(visitor);
   }
 
-  @Override
-  @NotNull
-  public List<JsonValue> getValueList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, JsonValue.class);
-  }
-
   @NotNull
   public String getName() {
     return JsonPsiImplUtils.getName(this);

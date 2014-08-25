@@ -62,6 +62,7 @@ property ::= string_literal ':' value {
     getName
     getNameElement
     getValue
+    value=""
   ]
   mixin="com.intellij.json.psi.impl.JsonPropertyMixin"
   recoverWhile = not_brace_or_comma

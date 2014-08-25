@@ -9,9 +9,6 @@ import com.intellij.psi.PsiNamedElement;
 public interface JsonProperty extends JsonElement, PsiNamedElement {
 
   @NotNull
-  List<JsonValue> getValueList();
-
-  @NotNull
   String getName();
 
   @NotNull
