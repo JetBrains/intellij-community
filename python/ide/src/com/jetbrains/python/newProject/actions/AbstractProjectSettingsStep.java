@@ -109,12 +109,7 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
   @Override
   public JPanel createPanel() {
     final JPanel basePanel = createBasePanel();
-    final JPanel mainPanel = new JPanel(new BorderLayout()) {
-      @Override
-      protected void paintComponent(Graphics g) {
-        myLocationField.requestFocus();
-      }
-    };
+    final JPanel mainPanel = new JPanel(new BorderLayout());
 
     final JPanel scrollPanel = new JPanel(new BorderLayout());
 
