@@ -58,6 +58,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
@@ -1007,6 +1008,10 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     private MySearchField() {
       super(false);
       addKeyListener(new KeyAdapter() {});
+      if (Registry.is("ide.new.settings.dialog")) {
+        setBackground(UIUtil.getSidePanelColor());
+        setBorder(new EmptyBorder(5, 10, 2, 10));
+      }
     }
 
     @Override
