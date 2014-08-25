@@ -170,7 +170,7 @@ ANY= .|\n
 {USUAL_TYPES}"::"                                   { yybegin(IN_VALUE); return DIRECTIVE;}
 {HIGHLIGHT_TYPES}"::"                               { yybegin(IN_HIGHLIGHT); return CUSTOM_DIRECTIVE;}
 [0-9A-Za-z\-:]*"::"                                 { yybegin(IN_VALUE); return CUSTOM_DIRECTIVE;}
-"|"[0-9A-Za-z]*"|"                                  { return SUBSTITUTION;}
+"|"[0-9A-Za-z_]*"|"                                 { return SUBSTITUTION;}
 [0-9A-Za-z_\[|.]*                                   { yybegin(IN_COMMENT); return COMMENT;}
 {CRLF}{2}                                           { yybegin(INIT); return COMMENT;}
 {SPACE}*{CRLF}+                                     { return WHITESPACE; }
