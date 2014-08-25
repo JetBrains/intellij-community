@@ -15,15 +15,20 @@
  */
 package org.jetbrains.plugins.coursecreator;
 
+import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.coursecreator.format.Course;
+
+import java.io.File;
 
 @State(name = "CCProjectService",
        storages = {
@@ -32,6 +37,7 @@ import org.jetbrains.plugins.coursecreator.format.Course;
 )
 public class CCProjectService implements PersistentStateComponent<Element> {
 
+  private static final Logger LOG = Logger.getInstance(CCProjectService.class.getName());
   public Course myCourse;
   public static final String COURSE_ELEMENT = "course";
 
@@ -63,4 +69,11 @@ public class CCProjectService implements PersistentStateComponent<Element> {
     return ServiceManager.getService(project, CCProjectService.class);
   }
 
+  public static void deleteProjectFile(File file, @NotNull final Project project) {
+   if (!file.delete()) {
+     LOG.info("Failed to delete file "  + file.getPath());
+   }
+    VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
+    ProjectView.getInstance(project).refresh();
+  }
 }

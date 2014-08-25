@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.coursecreator.CCProjectService;
 import org.jetbrains.plugins.coursecreator.format.TaskWindow;
 
 import javax.swing.*;
@@ -22,11 +23,15 @@ public class CreateTaskWindowDialog extends DialogWrapper {
   private final CreateTaskWindowPanel myPanel;
   private final Project myProject;
 
+  public Project getProject() {
+    return myProject;
+  }
+
   public CreateTaskWindowDialog(@NotNull final Project project, @NotNull final TaskWindow taskWindow) {
     super(project, true);
     setTitle(TITLE);
     myTaskWindow = taskWindow;
-    myPanel = new CreateTaskWindowPanel();
+    myPanel = new CreateTaskWindowPanel(this);
     if (taskWindow.getHintName() != null) {
       setHintText(project, taskWindow);
     }
@@ -50,8 +55,10 @@ public class CreateTaskWindowDialog extends DialogWrapper {
           while ((line = bufferedReader.readLine()) != null) {
             hintText.append(line).append("\n");
           }
+          myPanel.doClick();
+          //myPanel.enableHint(true);
           myPanel.setHintText(hintText.toString());
-          myPanel.enableHint(true);
+
         }
         catch (FileNotFoundException e) {
           LOG.error("created hint was not found", e);
@@ -97,6 +104,19 @@ public class CreateTaskWindowDialog extends DialogWrapper {
     }
     VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
     ProjectView.getInstance(myProject).refresh();
+  }
+
+  public void deleteHint() {
+    VirtualFile hintsDir = myProject.getBaseDir().findChild("hints");
+    if (hintsDir != null) {
+      String hintName = myTaskWindow.getHintName();
+      File hintFile = new File(hintsDir.getPath(), hintName);
+      if (hintFile.exists()) {
+        CCProjectService.deleteProjectFile(hintFile, myProject);
+        myTaskWindow.setHint(null);
+        myPanel.resetHint();
+      }
+    }
   }
 
   @Nullable

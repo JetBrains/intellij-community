@@ -46,10 +46,10 @@ public class DeleteTaskWindowAction extends DumbAwareAction {
     final TaskFile taskFile = task.getTaskFile(file.getName());
     final List<TaskWindow> taskWindows = taskFile.getTaskWindows();
     if (taskWindows.contains(myTaskWindow)) {
+      myTaskWindow.removeResources(project);
       taskWindows.remove(myTaskWindow);
       DaemonCodeAnalyzerImpl.getInstance(project).restart(file);
     }
-
   }
 
 }

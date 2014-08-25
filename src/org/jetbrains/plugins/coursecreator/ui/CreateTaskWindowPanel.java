@@ -7,6 +7,7 @@ import java.awt.event.ItemListener;
 
 public class CreateTaskWindowPanel extends JPanel {
 
+  private final CreateTaskWindowDialog myDialog;
   private JPanel myPanel;
   private JTextArea myTaskWindowText;
   private JTextField myHintName;
@@ -15,9 +16,10 @@ public class CreateTaskWindowPanel extends JPanel {
   private JLabel myHintNameLabel;
   private JLabel myHintTextLabel;
 
-  public CreateTaskWindowPanel() {
+  public CreateTaskWindowPanel(CreateTaskWindowDialog dialog) {
     super(new BorderLayout());
     add(myPanel, BorderLayout.CENTER);
+    myDialog = dialog;
     enableHint(false);
     myCreateHintCheckBox.addItemListener(new ItemListener() {
       @Override
@@ -25,6 +27,9 @@ public class CreateTaskWindowPanel extends JPanel {
         int state = e.getStateChange();
         // 1 for checked
         enableHint(state == 1);
+        if (state == 2) {
+          myDialog.deleteHint();
+        }
       }
     });
   }
@@ -62,5 +67,14 @@ public class CreateTaskWindowPanel extends JPanel {
 
   public boolean createHint() {
     return myHintName.isEnabled();
+  }
+
+  public void doClick() {
+    myCreateHintCheckBox.doClick();
+  }
+
+  public void resetHint() {
+    myHintName.setText("");
+    myHintText.setText("");
   }
 }
