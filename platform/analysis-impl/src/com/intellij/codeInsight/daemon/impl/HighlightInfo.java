@@ -21,11 +21,9 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.actions.CleanupInspectionIntention;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -793,7 +791,8 @@ public class HighlightInfo implements Segment {
       if (options != null || key == null) {
         return options;
       }
-      List<IntentionAction> newOptions = IntentionManager.getInstance().getStandardIntentionOptions(key, element);
+      IntentionManager intentionManager = IntentionManager.getInstance();
+      List<IntentionAction> newOptions = intentionManager.getStandardIntentionOptions(key, element);
       InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile();
       InspectionToolWrapper toolWrapper = profile.getInspectionTool(key.toString(), element);
       if (!(toolWrapper instanceof LocalInspectionToolWrapper)) {
@@ -806,29 +805,9 @@ public class HighlightInfo implements Segment {
 
         myCanCleanup = toolWrapper.isCleanupTool();
 
-        InspectionProfileEntry wrappedTool;
-        if (toolWrapper instanceof LocalInspectionToolWrapper) {
-          wrappedTool = ((LocalInspectionToolWrapper)toolWrapper).getTool();
-          Class aClass = myAction.getClass();
-          if (myAction instanceof QuickFixWrapper) {
-            aClass = ((QuickFixWrapper)myAction).getFix().getClass();
-          }
-          newOptions.add(new CleanupInspectionIntention(toolWrapper, aClass));
-        }
-        else if (toolWrapper instanceof GlobalInspectionToolWrapper) {
-          wrappedTool = ((GlobalInspectionToolWrapper)toolWrapper).getTool();
-          if (wrappedTool instanceof GlobalSimpleInspectionTool && (myAction instanceof LocalQuickFix || myAction instanceof QuickFixWrapper)) {
-            Class aClass = myAction.getClass();
-            if (myAction instanceof QuickFixWrapper) {
-              aClass = ((QuickFixWrapper)myAction).getFix().getClass();
-            }
-            newOptions.add(new CleanupInspectionIntention(toolWrapper, aClass));
-          }
-        }
-        else {
-          throw new AssertionError("unknown tool: " + toolWrapper+"; key: "+myKey);
-        }
-
+        ContainerUtil.addIfNotNull(newOptions, intentionManager.createFixAllIntention(toolWrapper, myAction));
+        InspectionProfileEntry wrappedTool = toolWrapper instanceof LocalInspectionToolWrapper ? ((LocalInspectionToolWrapper)toolWrapper).getTool()
+                                                                                               : ((GlobalInspectionToolWrapper)toolWrapper).getTool();
         if (wrappedTool instanceof CustomSuppressableInspectionTool) {
           final IntentionAction[] suppressActions = ((CustomSuppressableInspectionTool)wrappedTool).getSuppressActions(element);
           if (suppressActions != null) {

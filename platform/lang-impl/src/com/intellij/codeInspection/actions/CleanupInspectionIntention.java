@@ -17,6 +17,7 @@
 package com.intellij.codeInspection.actions;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -46,10 +47,12 @@ import java.util.List;
 public class CleanupInspectionIntention implements IntentionAction, HighPriorityAction {
   private final InspectionToolWrapper myToolWrapper;
   private final Class myQuickfixClass;
+  private final String myText;
 
-  public CleanupInspectionIntention(@NotNull InspectionToolWrapper toolWrapper, @NotNull Class quickFixClass) {
+  public CleanupInspectionIntention(@NotNull InspectionToolWrapper toolWrapper, @NotNull Class quickFixClass, String text) {
     myToolWrapper = toolWrapper;
     myQuickfixClass = quickFixClass;
+    myText = text;
   }
 
   @Override
@@ -84,6 +87,7 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
         return d2.getTextRange().getStartOffset() - d1.getTextRange().getStartOffset();
       }
     });
+    boolean applicableFixFound = false;
     for (final ProblemDescriptor descriptor : descriptions) {
       final QuickFix[] fixes = descriptor.getFixes();
       if (fixes != null && fixes.length > 0) {
@@ -91,6 +95,7 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
           if (fix != null && fix.getClass().isAssignableFrom(myQuickfixClass)) {
             final PsiElement element = descriptor.getPsiElement();
             if (element != null && element.isValid()) {
+              applicableFixFound = true;
               ApplicationManager.getApplication().runWriteAction(new Runnable() {
                 @Override
                 public void run() {
@@ -103,6 +108,10 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
           }
         }
       }
+    }
+
+    if (!applicableFixFound) {
+      HintManager.getInstance().showErrorHint(editor, "Unfortunately '" + myText + "' is currently not available for batch mode");
     }
   }
 
