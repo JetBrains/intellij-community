@@ -1201,7 +1201,8 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
    * @return default view for the specified configurable
    */
   private JComponent createDefaultComponent(SearchableConfigurable searchable) {
-    Box box = Box.createVerticalBox();
+    JPanel box = new JPanel();
+    box.setLayout(new BoxLayout(box, BoxLayout.Y_AXIS));
     try {
       box.add(new JLabel(OptionsBundle.message(searchable.getId() + ".settings.description")));
     }
