@@ -858,24 +858,30 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
   private static final Comparator<NodeDescriptor> COMPARATOR = new Comparator<NodeDescriptor>() {
     @Override
     public int compare(NodeDescriptor descriptor1, NodeDescriptor descriptor2) {
-      MyNode node1 = extractNode(descriptor1);
-      MyNode node2 = extractNode(descriptor2);
-      if (node1 == null || node2 == null) {
-        return node2 != null ? -1 : node1 != null ? 1 : 0;
-      }
-      int weight1 = node1.getWeight();
-      int weight2 = node2.getWeight();
-
-      if (weight1 > weight2) {
-        return -1;
-      }
-      if (weight1 < weight2) {
-        return 1;
-      }
-      if (weight1 == Integer.MIN_VALUE) {
-        return 0; // do not sort if undefined weight
-      }
-      return StringUtil.naturalCompare(node1.myDisplayName, node2.myDisplayName);
+      return compareNodes(extractNode(descriptor1), extractNode(descriptor2));
     }
   };
+
+  int compareConfigurables(Configurable configurable1, Configurable configurable2) {
+    return compareNodes(myConfigurableToNodeMap.get(configurable1), myConfigurableToNodeMap.get(configurable2));
+  }
+
+  private static int compareNodes(MyNode node1, MyNode node2) {
+    if (node1 == null || node2 == null) {
+      return node2 != null ? -1 : node1 != null ? 1 : 0;
+    }
+    int weight1 = node1.getWeight();
+    int weight2 = node2.getWeight();
+
+    if (weight1 > weight2) {
+      return -1;
+    }
+    if (weight1 < weight2) {
+      return 1;
+    }
+    if (weight1 == Integer.MIN_VALUE) {
+      return 0; // do not sort if undefined weight
+    }
+    return StringUtil.naturalCompare(node1.myDisplayName, node2.myDisplayName);
+  }
 }
