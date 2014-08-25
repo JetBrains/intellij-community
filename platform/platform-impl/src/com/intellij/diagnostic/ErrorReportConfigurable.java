@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,13 +25,6 @@ import org.apache.commons.codec.binary.Base64;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: stathik
- * Date: Aug 11, 2003
- * Time: 8:59:04 PM
- * To change this template use Options | File Templates.
- */
 public class ErrorReportConfigurable implements JDOMExternalizable, NamedComponent {
   public String ITN_LOGIN = "";
   public String ITN_PASSWORD_CRYPT = "";
@@ -43,12 +36,14 @@ public class ErrorReportConfigurable implements JDOMExternalizable, NamedCompone
     return ServiceManager.getService(ErrorReportConfigurable.class);
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
     if (! KEEP_ITN_PASSWORD)
       ITN_PASSWORD_CRYPT = "";
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     String itnPassword = ITN_PASSWORD_CRYPT;
     if (! KEEP_ITN_PASSWORD)
@@ -58,13 +53,14 @@ public class ErrorReportConfigurable implements JDOMExternalizable, NamedCompone
     ITN_PASSWORD_CRYPT = itnPassword;
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "ErrorReportConfigurable";
   }
 
   public String getPlainItnPassword () {
-    return new String(new Base64().decode(ErrorReportConfigurable.getInstance().ITN_PASSWORD_CRYPT.getBytes()));
+    return new String(new Base64().decode(getInstance().ITN_PASSWORD_CRYPT.getBytes()));
   }
 
   public void setPlainItnPassword (String password) {
