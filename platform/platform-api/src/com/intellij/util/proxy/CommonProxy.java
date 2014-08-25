@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,12 +31,6 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 1/21/13
- * Time: 12:39 PM
- */
 public class CommonProxy extends ProxySelector {
   private final static CommonProxy ourInstance = new CommonProxy();
   private final CommonAuthenticator myAuthenticator;
@@ -241,7 +235,7 @@ public class CommonProxy extends ProxySelector {
     }
   }
 
-  private int correctPortByProtocol(@NotNull URI uri) {
+  private static int correctPortByProtocol(@NotNull URI uri) {
     if (uri.getPort() == -1) {
       if ("http".equals(uri.getScheme())) {
         return ProtocolDefaultPorts.HTTP;
@@ -351,7 +345,7 @@ public class CommonProxy extends ProxySelector {
     public HostInfo() {
     }
 
-    public HostInfo(String protocol, @NotNull String host, int port) {
+    public HostInfo(@Nullable String protocol, @NotNull String host, int port) {
       myPort = port;
       myHost = host;
       myProtocol = protocol;
@@ -371,16 +365,15 @@ public class CommonProxy extends ProxySelector {
 
     @Override
     public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
 
       HostInfo info = (HostInfo)o;
-
-      if (myPort != info.myPort) return false;
-      if (!myHost.equals(info.myHost)) return false;
-      if (myProtocol != null ? !myProtocol.equals(info.myProtocol) : info.myProtocol != null) return false;
-
-      return true;
+      return myPort == info.myPort && myHost.equals(info.myHost) && Comparing.equal(myProtocol, info.myProtocol);
     }
 
     @Override
