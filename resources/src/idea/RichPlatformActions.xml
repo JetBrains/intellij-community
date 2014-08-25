@@ -50,17 +50,10 @@
       <action id="NewModule" class="com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction"/>
       <action id="ImportProject" class="com.intellij.ide.actions.ImportProjectAction" text="Import Project..."/>
       <action id="ImportModule" class="com.intellij.ide.actions.ImportModuleAction" text="Import Module..."/>
-      <action id="OpenProject" class="com.intellij.ide.actions.OpenProjectAction"/>
-
+      <action id="NewElement" class="com.intellij.ide.actions.NewElementAction"/>
       <add-to-group group-id="FileOpenGroup" anchor="first"/>
     </group>
-    <action id="NewElement" class="com.intellij.ide.actions.NewElementAction">
-      <add-to-group group-id="OpenProjectGroup" anchor="before" relative-to-action="OpenFile"/>
-    </action>
 
-    <group>
-      <add-to-group group-id="ExportImportGroup" anchor="first"/>
-    </group>
     <action id="SaveAsNewFormat" class="com.intellij.ide.actions.SaveAsDirectoryBasedFormatAction" text="Save as Directory-Based Format...">
       <add-to-group group-id="ExportImportGroup" anchor="last"/>
     </action>
@@ -362,11 +355,9 @@
     <!-- ****************************************************************** -->
 
     <group id="WelcomeScreen.QuickStart.IDEA">
-      <action id="WelcomeScreen.CreateNewProject" class="com.intellij.ide.actions.NewProjectAction"
-              icon="AllIcons.General.CreateNewProject"/>
+      <action id="WelcomeScreen.CreateNewProject" class="com.intellij.ide.actions.NewProjectAction" icon="AllIcons.General.CreateNewProject"/>
       <action id="WelcomeScreen.ImportProject" class="com.intellij.ide.actions.ImportProjectAction" icon="AllIcons.General.ImportProject"/>
-      <action id="WelcomeScreen.OpenProject" class="com.intellij.ide.actions.OpenFileAction"
-              icon="AllIcons.General.OpenProject"/>
+      <action id="WelcomeScreen.OpenProject" class="com.intellij.ide.actions.OpenFileAction" icon="AllIcons.General.OpenProject"/>
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
     </group>
 
