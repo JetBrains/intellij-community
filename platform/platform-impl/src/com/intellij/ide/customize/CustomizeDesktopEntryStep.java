@@ -19,8 +19,10 @@ import com.intellij.ide.actions.CreateDesktopEntryAction;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -34,7 +36,7 @@ public class CustomizeDesktopEntryStep extends AbstractCustomizeWizardStep {
   private final JCheckBox myCreateEntryCheckBox = new JCheckBox(ActionsBundle.message("action.CreateDesktopEntry.description"));
   private final JCheckBox myGlobalEntryCheckBox = new JCheckBox("For all users");
 
-  public CustomizeDesktopEntryStep() {
+  public CustomizeDesktopEntryStep(@Nullable String iconPath) {
     setLayout(new GridBagLayout());
 
     GridBag gbc =
@@ -44,6 +46,11 @@ public class CustomizeDesktopEntryStep extends AbstractCustomizeWizardStep {
 
     gbc.nextLine().insets.left = UIUtil.PANEL_REGULAR_INSETS.left;
     add(myGlobalEntryCheckBox, gbc);
+
+    if (iconPath != null) {
+      gbc.nextLine().insets.top = UIUtil.LARGE_VGAP;
+      add(new JLabel(IconLoader.getIcon(iconPath)), gbc.anchor(GridBagConstraints.CENTER));
+    }
 
     add(Box.createVerticalGlue(), gbc.nextLine().weighty(1));
 
