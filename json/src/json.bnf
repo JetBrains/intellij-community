@@ -42,8 +42,7 @@
 
     extends("object|array|literal")=value
     extends("string_literal|number_literal|boolean_literal|null_literal")=literal
-    implements("property")="com.intellij.psi.PsiNamedElement"
-    implements("property")="com.intellij.json.psi.JsonElement"
+    implements("property")="com.intellij.json.psi.JsonNamedElement"
 }
 
 json ::= object | array
@@ -62,6 +61,7 @@ property ::= string_literal ':' value {
     getName
     getNameElement
     getValue
+    // suppress getValueList() accessor
     value=""
   ]
   mixin="com.intellij.json.psi.impl.JsonPropertyMixin"
