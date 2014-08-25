@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 public interface ScopeDescriptorProvider {
+  ScopeDescriptor[] EMPTY = new ScopeDescriptor[0];
   ExtensionPointName<ScopeDescriptorProvider> EP_NAME = ExtensionPointName.create("com.intellij.scopeDescriptorProvider");
 
   @NotNull
