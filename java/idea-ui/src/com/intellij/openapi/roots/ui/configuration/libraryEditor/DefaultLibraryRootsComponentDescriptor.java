@@ -130,7 +130,8 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
     public boolean isAccepted(@NotNull VirtualFile rootCandidate, @NotNull ProgressIndicator progressIndicator) {
       if (rootCandidate.isDirectory()) {
         for (VirtualFile file : rootCandidate.getChildren()) {
-          if (NATIVE_LIBRARY_EXTENSIONS.contains(file.getExtension())) {
+          String extension = file.getExtension();
+          if (extension != null && NATIVE_LIBRARY_EXTENSIONS.contains(extension)) {
             return true;
           }
         }
