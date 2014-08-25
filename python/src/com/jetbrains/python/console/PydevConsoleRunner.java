@@ -128,7 +128,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   protected int[] myPorts;
   private PydevConsoleCommunication myPydevConsoleCommunication;
   private PyConsoleProcessHandler myProcessHandler;
-  private PydevConsoleExecuteActionHandler myConsoleExecuteActionHandler;
+  protected PydevConsoleExecuteActionHandler myConsoleExecuteActionHandler;
   private List<ConsoleListener> myConsoleListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final PyConsoleType myConsoleType;
   private Map<String, String> myEnvironmentVariables;

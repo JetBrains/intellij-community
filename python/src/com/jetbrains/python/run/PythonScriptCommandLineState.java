@@ -115,8 +115,9 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
     }
 
     @Override
-    protected void createContentDescriptor() {
-      //don't create
+    protected void createContentDescriptorAndActions() {
+      AnAction a = createConsoleExecAction(myConsoleExecuteActionHandler);
+      registerActionShortcuts(Lists.newArrayList(a), getConsoleView().getConsole().getConsoleEditor().getComponent());
     }
 
     @Override
