@@ -87,6 +87,6 @@ public class CustomizeDesktopEntryStep extends AbstractCustomizeWizardStep {
 
   @Override
   protected String getHTMLFooter() {
-    return "Desktop entry can be configured later in Tools | Create Desktop Entry...";
+    return "Desktop entry can be created later in Tools | Create Desktop Entry...";
   }
 }
