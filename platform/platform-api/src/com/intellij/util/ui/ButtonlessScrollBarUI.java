@@ -276,6 +276,16 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     return new ButtonlessScrollBarUI();
   }
 
+
+  public static BasicScrollBarUI createTransparent() {
+    return new ButtonlessScrollBarUI() {
+      @Override
+      public boolean alwaysShowTrack() {
+        return false;
+      }
+    };
+  }
+
   @Override
   public void installUI(JComponent c) {
     super.installUI(c);
