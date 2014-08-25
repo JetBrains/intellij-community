@@ -39,6 +39,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
@@ -847,7 +848,15 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     } else if (url.startsWith(PSI_ELEMENT_PROTOCOL)) {
       final String refText = url.substring(PSI_ELEMENT_PROTOCOL.length());
       DocumentationProvider provider = getProviderFromElement(psiElement);
-      final PsiElement targetElement = provider.getDocumentationElementForLink(manager, refText, psiElement);
+      PsiElement targetElement = provider.getDocumentationElementForLink(manager, refText, psiElement);
+      if (targetElement == null) {
+        for (DocumentationProvider documentationProvider : Extensions.getExtensions(DocumentationProvider.EP_NAME)) {
+          targetElement = documentationProvider.getDocumentationElementForLink(manager, refText, psiElement);
+          if (targetElement != null) {
+            break;
+          }
+        }
+      }
       if (targetElement != null) {
         fetchDocInfo(getDefaultCollector(targetElement, null), component);
       }
