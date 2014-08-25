@@ -47,16 +47,21 @@
 
 json ::= object | array
 
-object ::= '{' [properties] '}' {
+object ::= '{' object_element* '}' {
   pin=1
   methods=[
     findProperty
   ]
 }
 
-private properties ::= property (',' property)* { pin(".*")=1 }
-property ::= string_literal ':' value {
-  pin = 2
+private object_element ::= property (','|&'}') {
+  recoverWhile = not_brace_or_next_value
+  pin = 1
+}
+
+// Hackity-hack to parse array elements and properties even if separating commas are missing,
+// TODO: Find out if there is any simpler way to do so in GrammarKit
+property ::= string_literal ':' value  {
   methods=[
     getName
     getNameElement
@@ -65,15 +70,14 @@ property ::= string_literal ':' value {
     value=""
   ]
   mixin="com.intellij.json.psi.impl.JsonPropertyMixin"
-  recoverWhile = not_brace_or_comma
+  pin = 1
 }
 
-array ::= '[' [array_elements] ']' {
+array ::= '[' array_element* ']' { pin=1 }
+
+private array_element ::= value (','|&']') {
+  recoverWhile = not_bracket_or_next_value
   pin=1
-}
-private array_elements ::= array_element (',' array_element)* { pin(".*")=1 }
-private array_element ::= value {
-  recoverWhile = not_bracket_or_comma
 }
 
 string_literal ::= STRING
@@ -88,5 +92,5 @@ literal ::= string_literal | number_literal | boolean_literal | null_literal {
 value ::= object | array | literal
 
 // Recoveries
-private not_bracket_or_comma ::= !(']'|',')
-private not_brace_or_comma ::= !('}'|',')
+private not_bracket_or_next_value ::= !(']'|value)
+private not_brace_or_next_value ::= !('}'|value)

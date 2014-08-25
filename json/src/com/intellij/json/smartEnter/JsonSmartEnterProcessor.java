@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -52,7 +53,8 @@ public class JsonSmartEnterProcessor extends SmartEnterProcessorWithFixers {
     if (document.getLineNumber(elementEndOffset) != document.getLineNumber(caretOffset)) {
       return false;
     }
-    final PsiElement nextLeaf = PsiTreeUtil.nextLeaf(element);
+    // Skip empty PsiError elements if comma is missing
+    PsiElement nextLeaf = PsiTreeUtil.nextLeaf(element, true);
     return nextLeaf == null || (nextLeaf instanceof PsiWhiteSpace && nextLeaf.getText().contains("\n"));
   }
 
@@ -80,7 +82,6 @@ public class JsonSmartEnterProcessor extends SmartEnterProcessorWithFixers {
       throws IncorrectOperationException {
       if (element instanceof JsonProperty) {
         final JsonValue jsonValue = ((JsonProperty)element).getValue();
-        // TODO find workaround for grammar in cases like {"foo": 42 "bar": null} (note missing comma)
         if (jsonValue != null && terminatedOnCurrentLine(editor, jsonValue) && !isFollowedByComma(jsonValue)) {
           editor.getDocument().insertString(jsonValue.getTextRange().getEndOffset(), ",");
         }

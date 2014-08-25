@@ -66,7 +66,7 @@ public class JsonParser implements PsiParser {
   };
 
   /* ********************************************************** */
-  // '[' [array_elements] ']'
+  // '[' array_element* ']'
   public static boolean array(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "array")) return false;
     if (!nextTokenIs(builder_, L_BRACKET)) return false;
@@ -81,61 +81,51 @@ public class JsonParser implements PsiParser {
     return result_ || pinned_;
   }
 
-  // [array_elements]
+  // array_element*
   private static boolean array_1(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "array_1")) return false;
-    array_elements(builder_, level_ + 1);
-    return true;
-  }
-
-  /* ********************************************************** */
-  // value
-  static boolean array_element(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "array_element")) return false;
-    boolean result_;
-    Marker marker_ = enter_section_(builder_, level_, _NONE_, null);
-    result_ = value(builder_, level_ + 1);
-    exit_section_(builder_, level_, marker_, null, result_, false, not_bracket_or_comma_parser_);
-    return result_;
-  }
-
-  /* ********************************************************** */
-  // array_element (',' array_element)*
-  static boolean array_elements(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "array_elements")) return false;
-    boolean result_;
-    boolean pinned_;
-    Marker marker_ = enter_section_(builder_, level_, _NONE_, null);
-    result_ = array_element(builder_, level_ + 1);
-    pinned_ = result_; // pin = 1
-    result_ = result_ && array_elements_1(builder_, level_ + 1);
-    exit_section_(builder_, level_, marker_, null, result_, pinned_, null);
-    return result_ || pinned_;
-  }
-
-  // (',' array_element)*
-  private static boolean array_elements_1(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "array_elements_1")) return false;
     int pos_ = current_position_(builder_);
     while (true) {
-      if (!array_elements_1_0(builder_, level_ + 1)) break;
-      if (!empty_element_parsed_guard_(builder_, "array_elements_1", pos_)) break;
+      if (!array_element(builder_, level_ + 1)) break;
+      if (!empty_element_parsed_guard_(builder_, "array_1", pos_)) break;
       pos_ = current_position_(builder_);
     }
     return true;
   }
 
-  // ',' array_element
-  private static boolean array_elements_1_0(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "array_elements_1_0")) return false;
+  /* ********************************************************** */
+  // value (','|&']')
+  static boolean array_element(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "array_element")) return false;
     boolean result_;
     boolean pinned_;
     Marker marker_ = enter_section_(builder_, level_, _NONE_, null);
-    result_ = consumeToken(builder_, COMMA);
+    result_ = value(builder_, level_ + 1);
     pinned_ = result_; // pin = 1
-    result_ = result_ && array_element(builder_, level_ + 1);
-    exit_section_(builder_, level_, marker_, null, result_, pinned_, null);
+    result_ = result_ && array_element_1(builder_, level_ + 1);
+    exit_section_(builder_, level_, marker_, null, result_, pinned_, not_bracket_or_next_value_parser_);
     return result_ || pinned_;
+  }
+
+  // ','|&']'
+  private static boolean array_element_1(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "array_element_1")) return false;
+    boolean result_;
+    Marker marker_ = enter_section_(builder_);
+    result_ = consumeToken(builder_, COMMA);
+    if (!result_) result_ = array_element_1_1(builder_, level_ + 1);
+    exit_section_(builder_, marker_, null, result_);
+    return result_;
+  }
+
+  // &']'
+  private static boolean array_element_1_1(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "array_element_1_1")) return false;
+    boolean result_;
+    Marker marker_ = enter_section_(builder_, level_, _AND_, null);
+    result_ = consumeToken(builder_, R_BRACKET);
+    exit_section_(builder_, level_, marker_, null, result_, false, null);
+    return result_;
   }
 
   /* ********************************************************** */
@@ -179,45 +169,45 @@ public class JsonParser implements PsiParser {
   }
 
   /* ********************************************************** */
-  // !('}'|',')
-  static boolean not_brace_or_comma(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "not_brace_or_comma")) return false;
+  // !('}'|value)
+  static boolean not_brace_or_next_value(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "not_brace_or_next_value")) return false;
     boolean result_;
     Marker marker_ = enter_section_(builder_, level_, _NOT_, null);
-    result_ = !not_brace_or_comma_0(builder_, level_ + 1);
+    result_ = !not_brace_or_next_value_0(builder_, level_ + 1);
     exit_section_(builder_, level_, marker_, null, result_, false, null);
     return result_;
   }
 
-  // '}'|','
-  private static boolean not_brace_or_comma_0(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "not_brace_or_comma_0")) return false;
+  // '}'|value
+  private static boolean not_brace_or_next_value_0(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "not_brace_or_next_value_0")) return false;
     boolean result_;
     Marker marker_ = enter_section_(builder_);
     result_ = consumeToken(builder_, R_CURLY);
-    if (!result_) result_ = consumeToken(builder_, COMMA);
+    if (!result_) result_ = value(builder_, level_ + 1);
     exit_section_(builder_, marker_, null, result_);
     return result_;
   }
 
   /* ********************************************************** */
-  // !(']'|',')
-  static boolean not_bracket_or_comma(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "not_bracket_or_comma")) return false;
+  // !(']'|value)
+  static boolean not_bracket_or_next_value(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "not_bracket_or_next_value")) return false;
     boolean result_;
     Marker marker_ = enter_section_(builder_, level_, _NOT_, null);
-    result_ = !not_bracket_or_comma_0(builder_, level_ + 1);
+    result_ = !not_bracket_or_next_value_0(builder_, level_ + 1);
     exit_section_(builder_, level_, marker_, null, result_, false, null);
     return result_;
   }
 
-  // ']'|','
-  private static boolean not_bracket_or_comma_0(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "not_bracket_or_comma_0")) return false;
+  // ']'|value
+  private static boolean not_bracket_or_next_value_0(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "not_bracket_or_next_value_0")) return false;
     boolean result_;
     Marker marker_ = enter_section_(builder_);
     result_ = consumeToken(builder_, R_BRACKET);
-    if (!result_) result_ = consumeToken(builder_, COMMA);
+    if (!result_) result_ = value(builder_, level_ + 1);
     exit_section_(builder_, marker_, null, result_);
     return result_;
   }
@@ -247,7 +237,7 @@ public class JsonParser implements PsiParser {
   }
 
   /* ********************************************************** */
-  // '{' [properties] '}'
+  // '{' object_element* '}'
   public static boolean object(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "object")) return false;
     if (!nextTokenIs(builder_, L_CURLY)) return false;
@@ -262,65 +252,66 @@ public class JsonParser implements PsiParser {
     return result_ || pinned_;
   }
 
-  // [properties]
+  // object_element*
   private static boolean object_1(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "object_1")) return false;
-    properties(builder_, level_ + 1);
-    return true;
-  }
-
-  /* ********************************************************** */
-  // property (',' property)*
-  static boolean properties(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "properties")) return false;
-    if (!nextTokenIs(builder_, STRING)) return false;
-    boolean result_;
-    boolean pinned_;
-    Marker marker_ = enter_section_(builder_, level_, _NONE_, null);
-    result_ = property(builder_, level_ + 1);
-    pinned_ = result_; // pin = 1
-    result_ = result_ && properties_1(builder_, level_ + 1);
-    exit_section_(builder_, level_, marker_, null, result_, pinned_, null);
-    return result_ || pinned_;
-  }
-
-  // (',' property)*
-  private static boolean properties_1(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "properties_1")) return false;
     int pos_ = current_position_(builder_);
     while (true) {
-      if (!properties_1_0(builder_, level_ + 1)) break;
-      if (!empty_element_parsed_guard_(builder_, "properties_1", pos_)) break;
+      if (!object_element(builder_, level_ + 1)) break;
+      if (!empty_element_parsed_guard_(builder_, "object_1", pos_)) break;
       pos_ = current_position_(builder_);
     }
     return true;
   }
 
-  // ',' property
-  private static boolean properties_1_0(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "properties_1_0")) return false;
+  /* ********************************************************** */
+  // property (','|&'}')
+  static boolean object_element(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "object_element")) return false;
     boolean result_;
     boolean pinned_;
     Marker marker_ = enter_section_(builder_, level_, _NONE_, null);
-    result_ = consumeToken(builder_, COMMA);
+    result_ = property(builder_, level_ + 1);
     pinned_ = result_; // pin = 1
-    result_ = result_ && property(builder_, level_ + 1);
-    exit_section_(builder_, level_, marker_, null, result_, pinned_, null);
+    result_ = result_ && object_element_1(builder_, level_ + 1);
+    exit_section_(builder_, level_, marker_, null, result_, pinned_, not_brace_or_next_value_parser_);
     return result_ || pinned_;
+  }
+
+  // ','|&'}'
+  private static boolean object_element_1(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "object_element_1")) return false;
+    boolean result_;
+    Marker marker_ = enter_section_(builder_);
+    result_ = consumeToken(builder_, COMMA);
+    if (!result_) result_ = object_element_1_1(builder_, level_ + 1);
+    exit_section_(builder_, marker_, null, result_);
+    return result_;
+  }
+
+  // &'}'
+  private static boolean object_element_1_1(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "object_element_1_1")) return false;
+    boolean result_;
+    Marker marker_ = enter_section_(builder_, level_, _AND_, null);
+    result_ = consumeToken(builder_, R_CURLY);
+    exit_section_(builder_, level_, marker_, null, result_, false, null);
+    return result_;
   }
 
   /* ********************************************************** */
   // string_literal ':' value
   public static boolean property(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "property")) return false;
+    if (!nextTokenIs(builder_, STRING)) return false;
     boolean result_;
     boolean pinned_;
-    Marker marker_ = enter_section_(builder_, level_, _NONE_, "<property>");
+    Marker marker_ = enter_section_(builder_, level_, _NONE_, null);
     result_ = string_literal(builder_, level_ + 1);
-    result_ = result_ && consumeToken(builder_, COLON);
-    pinned_ = result_; // pin = 2
-    result_ = result_ && value(builder_, level_ + 1);
-    exit_section_(builder_, level_, marker_, PROPERTY, result_, pinned_, not_brace_or_comma_parser_);
+    pinned_ = result_; // pin = 1
+    result_ = result_ && report_error_(builder_, consumeToken(builder_, COLON));
+    result_ = pinned_ && value(builder_, level_ + 1) && result_;
+    exit_section_(builder_, level_, marker_, PROPERTY, result_, pinned_, null);
     return result_ || pinned_;
   }
 
@@ -349,14 +340,14 @@ public class JsonParser implements PsiParser {
     return result_;
   }
 
-  final static Parser not_brace_or_comma_parser_ = new Parser() {
+  final static Parser not_brace_or_next_value_parser_ = new Parser() {
     public boolean parse(PsiBuilder builder_, int level_) {
-      return not_brace_or_comma(builder_, level_ + 1);
+      return not_brace_or_next_value(builder_, level_ + 1);
     }
   };
-  final static Parser not_bracket_or_comma_parser_ = new Parser() {
+  final static Parser not_bracket_or_next_value_parser_ = new Parser() {
     public boolean parse(PsiBuilder builder_, int level_) {
-      return not_bracket_or_comma(builder_, level_ + 1);
+      return not_bracket_or_next_value(builder_, level_ + 1);
     }
   };
 }
