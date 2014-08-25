@@ -70,7 +70,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
 
       List<AnAction> actions = Lists.newArrayList(createActions(runner.getConsoleView(), runner.getProcessHandler()));
 
-      return new DefaultExecutionResult(runner.getConsoleView(), runner.getProcessHandler());
+      return new DefaultExecutionResult(runner.getConsoleView(), runner.getProcessHandler(), actions.toArray(new AnAction[actions.size()]));
     }
     else {
       return super.execute(executor, patchers);
