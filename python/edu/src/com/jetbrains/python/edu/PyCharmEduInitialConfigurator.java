@@ -116,7 +116,7 @@ public class PyCharmEduInitialConfigurator {
           });
         }
       });
-      PyCodeInsightSettings.getInstance().SHOW_IMPORT_POPUP = true;
+      PyCodeInsightSettings.getInstance().SHOW_IMPORT_POPUP = false;
     }
 
     if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
