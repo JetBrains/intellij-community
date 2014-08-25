@@ -33,6 +33,7 @@ import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -96,6 +97,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     myTree.setShowsRootHandles(false);
 
     myScroller = ScrollPaneFactory.createScrollPane(myTree, true);
+    myScroller.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createTransparent());
     myScroller.setBackground(UIUtil.getSidePanelColor());
     myScroller.getViewport().setBackground(UIUtil.getSidePanelColor());
     myScroller.getVerticalScrollBar().setBackground(UIUtil.getSidePanelColor());
