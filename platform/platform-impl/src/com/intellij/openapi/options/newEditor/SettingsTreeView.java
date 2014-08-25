@@ -26,7 +26,10 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
-import com.intellij.ui.treeStructure.*;
+import com.intellij.ui.treeStructure.CachingSimpleNode;
+import com.intellij.ui.treeStructure.SimpleNode;
+import com.intellij.ui.treeStructure.SimpleTree;
+import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.ArrayUtil;
@@ -49,7 +52,10 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
@@ -74,8 +80,8 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
   SettingsTreeView(SettingsFilter filter, ConfigurableGroup... groups) {
     myFilter = filter;
     myRoot = new MyRoot(groups);
-
     myTree = new MyTree();
+    myTree.setBackground(UIUtil.getSidePanelColor());
     myTree.getInputMap().clear();
     TreeUtil.installActions(myTree);
 
@@ -89,8 +95,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(false);
 
-    myScroller = ScrollPaneFactory.createScrollPane(myTree);
-    myScroller.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+    myScroller = ScrollPaneFactory.createScrollPane(myTree, true);
     add(myScroller);
 
     myTree.addComponentListener(new ComponentAdapter() {
@@ -463,6 +468,11 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     protected JComponent createItemComponent() {
       myTextLabel = new ErrorLabel();
       return myTextLabel;
+    }
+
+    @Override
+    protected Color getBackground() {
+      return UIUtil.getSidePanelColor();
     }
 
     @Override
