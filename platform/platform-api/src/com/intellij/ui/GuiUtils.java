@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
@@ -47,11 +47,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 
 public class GuiUtils {
-
   private static final Insets paddingFromDialogBoundaries = new Insets(7, 5, 7, 5);
   private static final Insets paddingInsideDialog = new Insets(5, 5, 5, 5);
 
-  public static final int lengthForFileField = 25;
   private static final CharFilter NOT_MNEMONIC_CHAR_FILTER = new CharFilter() {
     @Override
     public boolean accept(char ch) {
@@ -78,33 +76,33 @@ public class GuiUtils {
     return result;
   }
 
-  public static JPanel constructDirectoryBrowserField(final JTextField aTextField, final String aSearchedObjectName) {
-    return constructFieldWithBrowseButton(aTextField, new ActionListener() {
+  public static JPanel constructDirectoryBrowserField(final JTextField field, final String objectName) {
+    return constructFieldWithBrowseButton(field, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        FileChooserDescriptor descriptor = FileChooserDescriptorFactory.getDirectoryChooserDescriptor(aSearchedObjectName);
-        VirtualFile file = FileChooser.chooseFile(descriptor, aTextField, null, null);
+        FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle("Select " + objectName);
+        VirtualFile file = FileChooser.chooseFile(descriptor, field, null, null);
         if (file != null) {
-          aTextField.setText(FileUtil.toSystemDependentName(file.getPath()));
-          aTextField.postActionEvent();
+          field.setText(FileUtil.toSystemDependentName(file.getPath()));
+          field.postActionEvent();
         }
       }
     });
   }
 
-  public static JPanel constructFileURLBrowserField(final TextFieldWithHistory aFieldWithHistory,
-                                                    final String aSearchedObjectName) {
-    return constructFieldWithBrowseButton(aFieldWithHistory, new ActionListener() {
+  public static JPanel constructFileURLBrowserField(final TextFieldWithHistory field, final String objectName) {
+    return constructFieldWithBrowseButton(field, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        FileChooserDescriptor descriptor = FileChooserDescriptorFactory.getFileChooserDescriptor(aSearchedObjectName);
-        VirtualFile file = FileChooser.chooseFile(descriptor, aFieldWithHistory, null, null);
+        FileChooserDescriptor descriptor =
+          FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withTitle("Select " + objectName);
+        VirtualFile file = FileChooser.chooseFile(descriptor, field, null, null);
         if (file != null) {
           try {
-            aFieldWithHistory.setText(VfsUtil.virtualToIoFile(file).toURL().toString());
+            field.setText(VfsUtilCore.virtualToIoFile(file).toURI().toURL().toString());
           }
           catch (MalformedURLException e1) {
-            aFieldWithHistory.setText("");
+            field.setText("");
           }
         }
       }
