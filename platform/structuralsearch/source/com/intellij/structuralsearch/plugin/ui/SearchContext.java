@@ -9,12 +9,11 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.structuralsearch.impl.matcher.DataProvider;
 
 /**
  * Context of the search to be done
  */
-public final class SearchContext implements DataProvider, Cloneable {
+public final class SearchContext implements Cloneable {
   private final PsiFile file;
   private final Project project;
 
