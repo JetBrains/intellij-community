@@ -157,7 +157,7 @@ public class PsiEventsTest extends PsiTestCase {
     assertEquals(psiDirectory.getName(), expected, string);
   }
 
-  public void testRenameFile1() throws Exception {
+  public void testRenameFile() throws Exception {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = myPrjDir1.createChildData(null, "a.txt");
     PsiFile psiFile = fileManager.findFile(file);
@@ -174,7 +174,7 @@ public class PsiEventsTest extends PsiTestCase {
     assertEquals(psiFile.getName(), expected, string);
   }
 
-  public void testRenameFile2() throws Exception {
+  public void testRenameFileChangingExtension() throws Exception {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = myPrjDir1.createChildData(null, "a.txt");
     PsiFile psiFile = fileManager.findFile(file);
@@ -191,7 +191,7 @@ public class PsiEventsTest extends PsiTestCase {
     assertEquals(psiFile.getName(), expected, string);
   }
 
-  public void testRenameFile3() throws Exception {
+  public void testRenameFileToIgnored() throws Exception {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = myPrjDir1.createChildData(null, "a.txt");
     PsiFile psiFile = fileManager.findFile(file);
@@ -209,7 +209,7 @@ public class PsiEventsTest extends PsiTestCase {
     assertNull(fileManager.findFile(file));
   }
 
-  public void testRenameFile4() throws Exception {
+  public void testRenameFileFromIgnored() throws Exception {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = myPrjDir1.createChildData(null, "CVS");
     PsiDirectory psiDirectory = fileManager.findDirectory(file.getParent());
@@ -226,7 +226,7 @@ public class PsiEventsTest extends PsiTestCase {
     assertEquals(psiDirectory.getName(), expected, string);
   }
 
-  public void testRenameDirectory1() throws Exception {
+  public void testRenameDirectory() throws Exception {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = myPrjDir1.createChildDirectory(null, "dir1");
     PsiDirectory psiDirectory = fileManager.findDirectory(file);
@@ -243,7 +243,7 @@ public class PsiEventsTest extends PsiTestCase {
     assertEquals(psiDirectory.getName(), expected, string);
   }
 
-  public void testRenameDirectory2() throws Exception {
+  public void testRenameDirectoryToIgnored() throws Exception {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = myPrjDir1.createChildDirectory(null, "dir1");
     PsiDirectory psiDirectory = fileManager.findDirectory(file);
@@ -261,7 +261,7 @@ public class PsiEventsTest extends PsiTestCase {
     assertNull(fileManager.findDirectory(file));
   }
 
-  public void testRenameDirectory3() throws Exception {
+  public void testRenameDirectoryFromIgnored() throws Exception {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = myPrjDir1.createChildDirectory(null, "CVS");
     PsiDirectory psiDirectory = fileManager.findDirectory(file.getParent());
@@ -302,7 +302,7 @@ public class PsiEventsTest extends PsiTestCase {
     ReadOnlyAttributeUtil.setReadOnlyAttribute(file, false);
   }
 
-  public void testMoveFile1() throws Exception {
+  public void testMoveFile() throws Exception {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = myPrjDir1.createChildData(null, "a.txt");
     PsiFile psiFile = fileManager.findFile(file);
@@ -319,7 +319,7 @@ public class PsiEventsTest extends PsiTestCase {
     assertEquals(psiFile.getName(), expected, string);
   }
 
-  public void testMoveFile2() throws Exception {
+  public void testMoveFileToIgnoredDir() throws Exception {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = myPrjDir1.createChildData(null, "a.txt");
     PsiFile psiFile = fileManager.findFile(file);
@@ -337,7 +337,7 @@ public class PsiEventsTest extends PsiTestCase {
     assertNull(fileManager.findFile(file));
   }
 
-  public void testMoveFile3() throws Exception {
+  public void testMoveFileFromIgnoredDir() throws Exception {
     VirtualFile file = myIgnoredDir.createChildData(null, "a.txt");
 
     EventsTestListener listener = new EventsTestListener();
@@ -352,7 +352,7 @@ public class PsiEventsTest extends PsiTestCase {
     assertEquals(expected, string);
   }
 
-  public void testMoveFile4() throws Exception {
+  public void testMoveFileInsideIgnoredDir() throws Exception {
     VirtualFile file = myIgnoredDir.createChildData(null, "a.txt");
     VirtualFile subdir = myIgnoredDir.createChildDirectory(null, "subdir");
 
@@ -366,7 +366,7 @@ public class PsiEventsTest extends PsiTestCase {
     assertEquals(expected, string);
   }
 
-  public void testMoveDirectory1() throws Exception {
+  public void testMoveDirectory() throws Exception {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = myPrjDir1.createChildDirectory(null, "dir");
     PsiDirectory psiDirectory = fileManager.findDirectory(file);
@@ -383,7 +383,7 @@ public class PsiEventsTest extends PsiTestCase {
     assertEquals(psiDirectory.getName(), expected, string);
   }
 
-  public void testMoveDirectory2() throws Exception {
+  public void testMoveDirectoryToIgnored() throws Exception {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = myPrjDir1.createChildDirectory(null, "dir");
     PsiDirectory psiDirectory = fileManager.findDirectory(file);
@@ -401,7 +401,7 @@ public class PsiEventsTest extends PsiTestCase {
     assertNull(fileManager.findDirectory(file));
   }
 
-  public void testMoveDirectory3() throws Exception {
+  public void testMoveDirectoryFromIgnored() throws Exception {
     VirtualFile file = myIgnoredDir.createChildDirectory(null, "dir");
 
     EventsTestListener listener = new EventsTestListener();
@@ -416,7 +416,7 @@ public class PsiEventsTest extends PsiTestCase {
     assertEquals(expected, string);
   }
 
-  public void testMoveDirectory4() throws Exception {
+  public void testMoveDirectoryInsideIgnored() throws Exception {
     VirtualFile file = myIgnoredDir.createChildDirectory(null, "dir");
     VirtualFile subdir = myIgnoredDir.createChildDirectory(null, "subdir");
 
