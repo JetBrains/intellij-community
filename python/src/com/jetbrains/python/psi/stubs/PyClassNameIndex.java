@@ -57,7 +57,7 @@ public class PyClassNameIndex extends StringStubIndexExtension<PyClass> {
     int pos = qName.lastIndexOf(".");
     String shortName = pos > 0 ? qName.substring(pos+1) : qName;
     for (PyClass pyClass : find(shortName, project, scope)) {
-      if (pyClass.getQualifiedName().equals(qName)) {
+      if (qName.equals(pyClass.getQualifiedName())) {
         return pyClass;
       }
     }
