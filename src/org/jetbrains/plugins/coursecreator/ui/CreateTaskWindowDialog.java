@@ -64,7 +64,7 @@ public class CreateTaskWindowDialog extends DialogWrapper {
           LOG.error("created hint was not found", e);
         }
         catch (IOException e) {
-          e.printStackTrace();
+          LOG.error(e);
         }
       }
     }
