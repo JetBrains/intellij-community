@@ -17,7 +17,6 @@ import org.netbeans.lib.cvsclient.file.IReaderFactory;
 import org.netbeans.lib.cvsclient.file.IWriterFactory;
 import org.netbeans.lib.cvsclient.io.IStreamLogger;
 import org.netbeans.lib.cvsclient.util.BugLog;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
 import java.util.zip.Deflater;
@@ -43,8 +42,6 @@ public final class ConnectionStreams
 	private OutputStream outputStream;
 	private DeflaterOutputStream deflaterOutputStream;
 	private final String myCharset;
-  @NonNls private static final String UNTIL_HERE_THE_CONTENT_IS_GZIPPED_MESSAGE = "@until here the content is gzipped@";
-  @NonNls private static final String FROM_NOW_ON_THE_CONTENT_IS_GZIPPED_MESSAGE = "@from now on the content is gzipped@";
 
   // Setup ==================================================================
 
@@ -111,8 +108,6 @@ public final class ConnectionStreams
     loggedWriter.flush();
     if (deflaterOutputStream != null) {
       deflaterOutputStream.finish();
-
-      println(UNTIL_HERE_THE_CONTENT_IS_GZIPPED_MESSAGE, streamLogger.getOutputLogStream());
     }
     loggedOutputStream.flush();
   }
@@ -155,9 +150,6 @@ public final class ConnectionStreams
 		loggedWriter.flush();
 		loggedOutputStream.flush();
 
-		println(FROM_NOW_ON_THE_CONTENT_IS_GZIPPED_MESSAGE, streamLogger.getInputLogStream());
-		println(FROM_NOW_ON_THE_CONTENT_IS_GZIPPED_MESSAGE, streamLogger.getOutputLogStream());
-
 		deflaterOutputStream = new DeflaterOutputStream(connection.getOutputStream(), new Deflater(6));
 		setOutputStream(deflaterOutputStream);
 
@@ -178,16 +170,5 @@ public final class ConnectionStreams
 
 		this.loggedOutputStream = streamLogger.createLoggingOutputStream(outputStream);
 		this.loggedWriter = createWriter(this.loggedOutputStream);
-	}
-
-	private void println(String text, OutputStream outputStream) throws IOException {
-		final OutputStreamWriter writerNoSpecialEncoding = new OutputStreamWriter(outputStream);
-		println(text, writerNoSpecialEncoding);
-		writerNoSpecialEncoding.flush();
-	}
-
-	private void println(String text, Writer writer) throws IOException {
-		writer.write(text);
-		writer.write('\n');
 	}
 }

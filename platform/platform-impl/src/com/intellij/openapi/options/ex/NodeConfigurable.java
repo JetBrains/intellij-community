@@ -27,9 +27,15 @@ import java.util.ArrayList;
 public final class NodeConfigurable extends SearchableConfigurable.Parent.Abstract {
   private final ArrayList<Configurable> myConfigurables = new ArrayList<Configurable>();
   private final String myId;
+  private final int myWeight;
 
-  public NodeConfigurable(@NotNull String id) {
+  public NodeConfigurable(@NotNull String id, int weight) {
     myId = id;
+    myWeight = weight;
+  }
+
+  public int getGroupWeight() {
+    return myWeight;
   }
 
   public void add(Configurable configurable) {

@@ -197,14 +197,14 @@
                     serviceImplementation="com.intellij.openapi.editor.impl.LazyRangeMarkerFactoryImpl"/>
 
     <!-- General -->
-    <applicationConfigurable groupId="appearance" key="title.general" bundle="messages.IdeBundle" id="preferences.general" instance="com.intellij.ide.GeneralSettingsConfigurable"/>
+    <applicationConfigurable groupId="appearance" groupWeight="120" key="title.general" bundle="messages.IdeBundle" id="preferences.general" instance="com.intellij.ide.GeneralSettingsConfigurable"/>
 
     <!-- Appearance -->
-    <applicationConfigurable groupId="appearance" instance="com.intellij.ide.ui.AppearanceConfigurable" id="appearance" key="title.appearance"
+    <applicationConfigurable groupId="appearance" groupWeight="150" instance="com.intellij.ide.ui.AppearanceConfigurable" id="appearance" key="title.appearance"
                              bundle="messages.IdeBundle"/>
 
     <!-- Keymap -->
-    <applicationConfigurable groupId="appearance" instance="com.intellij.openapi.keymap.impl.ui.KeymapPanel" id="preferences.keymap" key="keymap.display.name"
+    <applicationConfigurable groupId="appearance" groupWeight="140" instance="com.intellij.openapi.keymap.impl.ui.KeymapPanel" id="preferences.keymap" key="keymap.display.name"
                              bundle="messages.KeyMapBundle"/>
     <applicationConfigurable parentId="appearance" instance="com.intellij.openapi.keymap.impl.ui.QuickListsPanel" id="reference.idesettings.quicklists"
                              displayName="Quick Lists"/>
@@ -214,10 +214,10 @@
                              key="title.customizations" bundle="messages.IdeBundle"/>
 
     <!-- Notifications -->
-    <applicationConfigurable groupId="appearance" displayName="Notifications" instance="com.intellij.notification.impl.NotificationsConfigurable"/>
+    <applicationConfigurable groupId="appearance" groupWeight="110" displayName="Notifications" instance="com.intellij.notification.impl.NotificationsConfigurable"/>
 
     <!-- Plugins -->
-    <applicationConfigurable groupId="appearance" instance="com.intellij.ide.plugins.PluginManagerConfigurable" id="preferences.pluginManager"
+    <applicationConfigurable groupId="appearance" groupWeight="130" instance="com.intellij.ide.plugins.PluginManagerConfigurable" id="preferences.pluginManager"
                              displayName="Plugins"/>
     <actionFromOptionDescriptorProvider implementation="com.intellij.ide.plugins.InstalledPluginsManagerMain$PluginsActionFromOptionDescriptorProvider"/>
     <applicationConfigurable parentId="preferences.general" instance="com.intellij.util.net.HTTPProxySettingsPanel" id="http.proxy" displayName="HTTP Proxy" />
@@ -250,7 +250,7 @@
     <componentConfigurationMerger implementation="com.intellij.openapi.vcs.changes.shelf.ShelfManagerConfigurationMerger"/>
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.hint.EscapeHandler" id="hide-hints"/>
 
-    <projectConfigurable groupId="language" instance="com.intellij.javaee.ExternalResourceConfigurable" key="display.name.edit.external.resource"
+    <projectConfigurable groupId="language" groupWeight="110" instance="com.intellij.javaee.ExternalResourceConfigurable" key="display.name.edit.external.resource"
                          bundle="messages.XmlBundle" id="preferences.externalResources">
       <configurable instance="com.intellij.javaee.XMLCatalogConfigurable" displayName="XML Catalog" id="xml.catalog"/>
     </projectConfigurable>

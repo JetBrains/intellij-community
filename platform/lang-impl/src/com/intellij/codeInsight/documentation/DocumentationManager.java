@@ -994,6 +994,20 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return getTitle(element, true);
   }
 
+  @Nullable
+  public Image getElementImage(@NotNull PsiElement element, @NotNull String imageSpec) {
+    DocumentationProvider provider = getProviderFromElement(element);
+    if (provider instanceof CompositeDocumentationProvider) {
+      for (DocumentationProvider p : ((CompositeDocumentationProvider)provider).getAllProviders()) {
+        if (p instanceof DocumentationProviderEx) {
+          Image image = ((DocumentationProviderEx)p).getLocalImageForElement(element, imageSpec);
+          if (image != null) return image;
+        }
+      }
+    }
+    return null;
+  }
+
   private interface DocumentationCollector {
     @Nullable
     String getDocumentation() throws Exception;

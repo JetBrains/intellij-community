@@ -100,7 +100,7 @@ public final class MixedConfigurableGroup implements SearchableConfigurable, Con
     for (Configurable configurable : configurables) {
       String groupId = null;
       if (configurable instanceof ConfigurableWrapper) {
-        groupId = ((ConfigurableWrapper)configurable).getGroupId();
+        groupId = ((ConfigurableWrapper)configurable).getExtensionPoint().groupId;
       }
       ArrayList<Configurable> list = map.get(groupId);
       if (list == null) {
@@ -110,7 +110,7 @@ public final class MixedConfigurableGroup implements SearchableConfigurable, Con
     }
     ArrayList<Configurable> buildList = map.get("build");
     if (buildList != null) {
-      NodeConfigurable buildTools = new NodeConfigurable("build.tools");
+      NodeConfigurable buildTools = new NodeConfigurable("build.tools", 1000);
       buildTools.add(find("MavenSettings", buildList.iterator()));
       buildTools.add(find("reference.settingsdialog.project.gradle", buildList.iterator()));
       buildTools.add(find("reference.settingsdialog.project.gant", buildList.iterator()));

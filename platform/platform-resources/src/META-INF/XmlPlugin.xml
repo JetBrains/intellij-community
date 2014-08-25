@@ -531,7 +531,7 @@
     <selectInTarget implementation="com.intellij.ide.browsers.actions.SelectInDefaultBrowserTarget"/>
     <xml.xmlExtension implementation="com.intellij.xml.HtmlXmlExtension"/>
 
-    <applicationConfigurable groupId="tools" instance="com.intellij.ide.browsers.BrowserSettings" id="reference.settings.ide.settings.web.browsers"
+    <applicationConfigurable groupId="tools" groupWeight="160" instance="com.intellij.ide.browsers.BrowserSettings" id="reference.settings.ide.settings.web.browsers"
                              key="browsers.settings" bundle="messages.IdeBundle"/>
     <lang.inspectionSuppressor language="XML" implementationClass="com.intellij.codeInspection.XmlInspectionSuppressor"/>
 
