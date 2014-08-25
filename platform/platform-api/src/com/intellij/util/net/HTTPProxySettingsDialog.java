@@ -31,13 +31,14 @@ public class HTTPProxySettingsDialog extends DialogWrapper {
     super(false);
 
     setTitle(CommonBundle.message("title.http.proxy.settings"));
-    panel = new HttpProxySettingsUi(HttpConfigurable.getInstance());
-    panel.reset();
+    final HttpConfigurable settings = HttpConfigurable.getInstance();
+    panel = new HttpProxySettingsUi(settings);
+    panel.reset(settings);
 
     okAction = new AbstractAction(CommonBundle.getOkButtonText()) {
       @Override
       public void actionPerformed(@NotNull ActionEvent e) {
-        panel.apply();
+        panel.apply(settings);
         close(OK_EXIT_CODE);
       }
     };
@@ -53,7 +54,7 @@ public class HTTPProxySettingsDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    return panel.createComponent();
+    return panel.getComponent();
   }
 
   @Override

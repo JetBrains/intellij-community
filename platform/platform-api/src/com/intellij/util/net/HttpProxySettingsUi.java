@@ -15,10 +15,8 @@
  */
 package com.intellij.util.net;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.Comparing;
@@ -30,12 +28,9 @@ import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.proxy.JavaProxyProperty;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -43,8 +38,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class HttpProxySettingsUi implements SearchableConfigurable, Configurable.NoScroll {
-  public static final String NAME = "Proxy";
+class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
   private JPanel myMainPanel;
 
   private JTextField myProxyLoginTextField;
@@ -73,50 +67,49 @@ public class HttpProxySettingsUi implements SearchableConfigurable, Configurable
   private JLabel myNoProxyForLabel;
   private JCheckBox myPacUrlCheckBox;
   private JTextField myPacUrlTextField;
-  private final HttpConfigurable myHttpConfigurable;
   private volatile boolean myConnectionCheckInProgress;
 
   @Override
-  public boolean isModified() {
-    HttpConfigurable httpConfigurable = myHttpConfigurable;
-    if (!Comparing.equal(myProxyExceptions.getText().trim(), httpConfigurable.PROXY_EXCEPTIONS)) {
+  public boolean isModified(@NotNull HttpConfigurable settings) {
+    if (!Comparing.equal(myProxyExceptions.getText().trim(), settings.PROXY_EXCEPTIONS)) {
       return true;
     }
-    boolean isModified = httpConfigurable.USE_PROXY_PAC != myAutoDetectProxyRb.isSelected();
-    isModified |= httpConfigurable.USE_PAC_URL != myPacUrlCheckBox.isSelected();
-    isModified |= !Comparing.strEqual(httpConfigurable.PAC_URL, myPacUrlTextField.getText());
-    isModified |= httpConfigurable.USE_HTTP_PROXY != myUseHTTPProxyRb.isSelected();
-    isModified |= httpConfigurable.PROXY_AUTHENTICATION != myProxyAuthCheckBox.isSelected();
-    isModified |= httpConfigurable.KEEP_PROXY_PASSWORD != myRememberProxyPasswordCheckBox.isSelected();
-    isModified |= httpConfigurable.PROXY_TYPE_IS_SOCKS != mySocks.isSelected();
+    boolean isModified = settings.USE_PROXY_PAC != myAutoDetectProxyRb.isSelected();
+    isModified |= settings.USE_PAC_URL != myPacUrlCheckBox.isSelected();
+    isModified |= !Comparing.strEqual(settings.PAC_URL, myPacUrlTextField.getText());
+    isModified |= settings.USE_HTTP_PROXY != myUseHTTPProxyRb.isSelected();
+    isModified |= settings.PROXY_AUTHENTICATION != myProxyAuthCheckBox.isSelected();
+    isModified |= settings.KEEP_PROXY_PASSWORD != myRememberProxyPasswordCheckBox.isSelected();
+    isModified |= settings.PROXY_TYPE_IS_SOCKS != mySocks.isSelected();
 
-    isModified |= !Comparing.strEqual(httpConfigurable.PROXY_LOGIN, myProxyLoginTextField.getText());
-    isModified |= !Comparing.strEqual(httpConfigurable.getPlainProxyPassword(),new String (myProxyPasswordTextField.getPassword()));
+    isModified |= !Comparing.strEqual(settings.PROXY_LOGIN, myProxyLoginTextField.getText());
+    isModified |= !Comparing.strEqual(settings.getPlainProxyPassword(), new String(myProxyPasswordTextField.getPassword()));
 
     try {
-      isModified |= httpConfigurable.PROXY_PORT != Integer.valueOf(myProxyPortTextField.getText()).intValue();
-    } catch (NumberFormatException e) {
+      isModified |= settings.PROXY_PORT != Integer.valueOf(myProxyPortTextField.getText()).intValue();
+    }
+    catch (NumberFormatException e) {
       isModified = true;
     }
-    isModified |= !Comparing.strEqual(httpConfigurable.PROXY_HOST, myProxyHostTextField.getText());
+    isModified |= !Comparing.strEqual(settings.PROXY_HOST, myProxyHostTextField.getText());
     return isModified;
   }
 
-  public HttpProxySettingsUi(final HttpConfigurable httpConfigurable) {
-    final ButtonGroup group = new ButtonGroup();
+  public HttpProxySettingsUi(@NotNull final HttpConfigurable settings) {
+    ButtonGroup group = new ButtonGroup();
     group.add(myUseHTTPProxyRb);
     group.add(myAutoDetectProxyRb);
     group.add(myNoProxyRb);
     myNoProxyRb.setSelected(true);
 
-    final ButtonGroup proxyTypeGroup = new ButtonGroup();
+    ButtonGroup proxyTypeGroup = new ButtonGroup();
     proxyTypeGroup.add(myHTTP);
     proxyTypeGroup.add(mySocks);
     myHTTP.setSelected(true);
 
     myProxyExceptions.setBorder(UIUtil.getTextFieldBorder());
 
-    final Boolean property = Boolean.getBoolean(JavaProxyProperty.USE_SYSTEM_PROXY);
+    Boolean property = Boolean.getBoolean(JavaProxyProperty.USE_SYSTEM_PROXY);
     mySystemProxyDefined.setVisible(Boolean.TRUE.equals(property));
     if (Boolean.TRUE.equals(property)) {
       mySystemProxyDefined.setIcon(Messages.getWarningIcon());
@@ -137,7 +130,7 @@ public class HttpProxySettingsUi implements SearchableConfigurable, Configurable
       }
     });
 
-    final ActionListener listener = new ActionListener() {
+    ActionListener listener = new ActionListener() {
       @Override
       public void actionPerformed(@NotNull ActionEvent e) {
         enableProxy(myUseHTTPProxyRb.isSelected());
@@ -146,129 +139,133 @@ public class HttpProxySettingsUi implements SearchableConfigurable, Configurable
     myUseHTTPProxyRb.addActionListener(listener);
     myAutoDetectProxyRb.addActionListener(listener);
     myNoProxyRb.addActionListener(listener);
-    myHttpConfigurable = httpConfigurable;
 
     myClearPasswordsButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(@NotNull ActionEvent e) {
-        myHttpConfigurable.clearGenericPasswords();
+        settings.clearGenericPasswords();
         //noinspection DialogTitleCapitalization
         Messages.showMessageDialog(myMainPanel, "Proxy passwords were cleared.", "Auto-detected Proxy", Messages.getInformationIcon());
       }
     });
 
-    if (HttpConfigurable.getInstance() != null) {
-      myCheckButton.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(@NotNull ActionEvent e) {
-          final String title = "Check Proxy Settings";
-          final String answer = Messages
-            .showInputDialog(myMainPanel, "Warning: your settings will be saved.\n\nEnter any URL to check connection to:",
-                             title, Messages.getQuestionIcon(), "http://", null);
-          if (! StringUtil.isEmptyOrSpaces(answer)) {
-            apply();
-            final HttpConfigurable instance = HttpConfigurable.getInstance();
-            final AtomicReference<IOException> exc = new AtomicReference<IOException>();
-            myCheckButton.setEnabled(false);
-            myCheckButton.setText("Check connection (in progress...)");
-            myConnectionCheckInProgress = true;
-            final Application application = ApplicationManager.getApplication();
-            application.executeOnPooledThread(new Runnable() {
+    configureCheckButton();
+  }
+
+  private void configureCheckButton() {
+    if (HttpConfigurable.getInstance() == null) {
+      myCheckButton.setVisible(false);
+      return;
+    }
+
+    myCheckButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(@NotNull ActionEvent e) {
+        final String title = "Check Proxy Settings";
+        final String answer = Messages.showInputDialog(myMainPanel, "Warning: your settings will be saved.\n\nEnter any URL to check connection to:",
+                                                       title, Messages.getQuestionIcon(), "http://", null);
+        if (StringUtil.isEmptyOrSpaces(answer)) {
+          return;
+        }
+
+        final HttpConfigurable settings = HttpConfigurable.getInstance();
+        apply(settings);
+        final AtomicReference<IOException> exceptionReference = new AtomicReference<IOException>();
+        myCheckButton.setEnabled(false);
+        myCheckButton.setText("Check connection (in progress...)");
+        myConnectionCheckInProgress = true;
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          @Override
+          public void run() {
+            HttpURLConnection connection = null;
+            try {
+              //already checked for null above
+              //noinspection ConstantConditions
+              connection = settings.openHttpConnection(answer);
+              connection.setReadTimeout(3 * 1000);
+              connection.setConnectTimeout(3 * 1000);
+              connection.connect();
+              final int code = connection.getResponseCode();
+              if (HttpURLConnection.HTTP_OK != code) {
+                exceptionReference.set(new IOException("Error code: " + code));
+              }
+            }
+            catch (IOException e) {
+              exceptionReference.set(e);
+            }
+            finally {
+              if (connection != null) {
+                connection.disconnect();
+              }
+            }
+            //noinspection SSBasedInspection
+            SwingUtilities.invokeLater(new Runnable() {
               @Override
               public void run() {
-                HttpURLConnection connection = null;
-                try {
-                  //already checked for null above
-                  //noinspection ConstantConditions
-                  connection = instance.openHttpConnection(answer);
-                  connection.setReadTimeout(3 * 1000);
-                  connection.setConnectTimeout(3 * 1000);
-                  connection.connect();
-                  final int code = connection.getResponseCode();
-                  if (HttpURLConnection.HTTP_OK != code) {
-                    exc.set(new IOException("Error code: " + code));
-                  }
+                myConnectionCheckInProgress = false;
+                reset(settings);  // since password might have been set
+                Component parent;
+                if (myMainPanel.isShowing()) {
+                  parent = myMainPanel;
+                  myCheckButton.setText("Check connection");
+                  myCheckButton.setEnabled(canEnableConnectionCheck());
                 }
-                catch (IOException e1) {
-                  exc.set(e1);
-                }
-                finally {
-                  if (connection != null) {
-                    connection.disconnect();
+                else {
+                  IdeFrame frame = IdeFocusManager.findInstance().getLastFocusedFrame();
+                  if (frame == null) {
+                    return;
                   }
+                  parent = frame.getComponent();
                 }
-                //noinspection SSBasedInspection
-                SwingUtilities.invokeLater(new Runnable() {
-                  @Override
-                  public void run() {
-                    myConnectionCheckInProgress = false;
-                    reset();  // since password might have been set
-                    Component parent;
-                    if (myMainPanel.isShowing()) {
-                      parent = myMainPanel;
-                      myCheckButton.setText("Check connection");
-                      myCheckButton.setEnabled(canEnableConnectionCheck());
-                    } else {
-                      final IdeFrame frame = IdeFocusManager.findInstance().getLastFocusedFrame();
-                      if (frame == null) {
-                        return;
-                      }
-                      parent = frame.getComponent();
-                    }
-                    //noinspection ThrowableResultOfMethodCallIgnored
-                    final IOException exception = exc.get();
-                    if (exception == null) {
-                      Messages.showMessageDialog(parent, "Connection successful", title, Messages.getInformationIcon());
-                    }
-                    else {
-                      final String message = exception.getMessage();
-                      if (instance.USE_HTTP_PROXY) {
-                        instance.LAST_ERROR = message;
-                      }
-                      Messages.showErrorDialog(parent, errorText(message));
-                    }
+                //noinspection ThrowableResultOfMethodCallIgnored
+                final IOException exception = exceptionReference.get();
+                if (exception == null) {
+                  Messages.showMessageDialog(parent, "Connection successful", title, Messages.getInformationIcon());
+                }
+                else {
+                  final String message = exception.getMessage();
+                  if (settings.USE_HTTP_PROXY) {
+                    settings.LAST_ERROR = message;
                   }
-                });
+                  Messages.showErrorDialog(parent, errorText(message));
+                }
               }
             });
           }
-        }
-      });
-    } else {
-      myCheckButton.setVisible(false);
-    }
+        });
+      }
+    });
   }
 
   private boolean canEnableConnectionCheck() {
-    return ! myNoProxyRb.isSelected() && ! myConnectionCheckInProgress;
+    return !myNoProxyRb.isSelected() && !myConnectionCheckInProgress;
   }
 
   @Override
-  public void reset() {
+  public void reset(@NotNull HttpConfigurable settings) {
     myNoProxyRb.setSelected(true);  // default
-    HttpConfigurable httpConfigurable = myHttpConfigurable;
-    myAutoDetectProxyRb.setSelected(httpConfigurable.USE_PROXY_PAC);
-    myPacUrlCheckBox.setSelected(httpConfigurable.USE_PAC_URL);
-    myPacUrlTextField.setText(httpConfigurable.PAC_URL);
-    myUseHTTPProxyRb.setSelected(httpConfigurable.USE_HTTP_PROXY);
-    myProxyAuthCheckBox.setSelected(httpConfigurable.PROXY_AUTHENTICATION);
+    myAutoDetectProxyRb.setSelected(settings.USE_PROXY_PAC);
+    myPacUrlCheckBox.setSelected(settings.USE_PAC_URL);
+    myPacUrlTextField.setText(settings.PAC_URL);
+    myUseHTTPProxyRb.setSelected(settings.USE_HTTP_PROXY);
+    myProxyAuthCheckBox.setSelected(settings.PROXY_AUTHENTICATION);
 
-    enableProxy(httpConfigurable.USE_HTTP_PROXY);
+    enableProxy(settings.USE_HTTP_PROXY);
 
-    myProxyLoginTextField.setText(httpConfigurable.PROXY_LOGIN);
-    myProxyPasswordTextField.setText(httpConfigurable.getPlainProxyPassword());
+    myProxyLoginTextField.setText(settings.PROXY_LOGIN);
+    myProxyPasswordTextField.setText(settings.getPlainProxyPassword());
 
-    myProxyPortTextField.setText(Integer.toString(httpConfigurable.PROXY_PORT));
-    myProxyHostTextField.setText(httpConfigurable.PROXY_HOST);
-    myProxyExceptions.setText(httpConfigurable.PROXY_EXCEPTIONS);
+    myProxyPortTextField.setText(Integer.toString(settings.PROXY_PORT));
+    myProxyHostTextField.setText(settings.PROXY_HOST);
+    myProxyExceptions.setText(settings.PROXY_EXCEPTIONS);
 
-    myRememberProxyPasswordCheckBox.setSelected(httpConfigurable.KEEP_PROXY_PASSWORD);
-    mySocks.setSelected(httpConfigurable.PROXY_TYPE_IS_SOCKS);
-    myHTTP.setSelected(!httpConfigurable.PROXY_TYPE_IS_SOCKS);
+    myRememberProxyPasswordCheckBox.setSelected(settings.KEEP_PROXY_PASSWORD);
+    mySocks.setSelected(settings.PROXY_TYPE_IS_SOCKS);
+    myHTTP.setSelected(!settings.PROXY_TYPE_IS_SOCKS);
 
-    final boolean showError = !StringUtil.isEmptyOrSpaces(httpConfigurable.LAST_ERROR);
+    final boolean showError = !StringUtil.isEmptyOrSpaces(settings.LAST_ERROR);
     myErrorLabel.setVisible(showError);
-    myErrorLabel.setText(showError ? errorText(httpConfigurable.LAST_ERROR) : "");
+    myErrorLabel.setText(showError ? errorText(settings.LAST_ERROR) : "");
 
     final String oldStyleText = CommonProxy.getMessageFromProps(CommonProxy.getOldStyleProperties());
     myOtherWarning.setVisible(oldStyleText != null);
@@ -284,29 +281,29 @@ public class HttpProxySettingsUi implements SearchableConfigurable, Configurable
   }
 
   @Override
-  public void apply () {
-    HttpConfigurable httpConfigurable = myHttpConfigurable;
-    if (isModified()){
-      httpConfigurable.AUTHENTICATION_CANCELLED = false;
+  public void apply(@NotNull HttpConfigurable settings) {
+    if (isModified(settings)) {
+      settings.AUTHENTICATION_CANCELLED = false;
     }
-    httpConfigurable.USE_PROXY_PAC = myAutoDetectProxyRb.isSelected();
-    httpConfigurable.USE_PAC_URL = myPacUrlCheckBox.isSelected();
-    httpConfigurable.PAC_URL = trimFieldText(myPacUrlTextField);
-    httpConfigurable.USE_HTTP_PROXY = myUseHTTPProxyRb.isSelected();
-    httpConfigurable.PROXY_TYPE_IS_SOCKS = mySocks.isSelected();
-    httpConfigurable.PROXY_AUTHENTICATION = myProxyAuthCheckBox.isSelected();
-    httpConfigurable.KEEP_PROXY_PASSWORD = myRememberProxyPasswordCheckBox.isSelected();
+    settings.USE_PROXY_PAC = myAutoDetectProxyRb.isSelected();
+    settings.USE_PAC_URL = myPacUrlCheckBox.isSelected();
+    settings.PAC_URL = trimFieldText(myPacUrlTextField);
+    settings.USE_HTTP_PROXY = myUseHTTPProxyRb.isSelected();
+    settings.PROXY_TYPE_IS_SOCKS = mySocks.isSelected();
+    settings.PROXY_AUTHENTICATION = myProxyAuthCheckBox.isSelected();
+    settings.KEEP_PROXY_PASSWORD = myRememberProxyPasswordCheckBox.isSelected();
 
-    httpConfigurable.PROXY_LOGIN = trimFieldText(myProxyLoginTextField);
-    httpConfigurable.setPlainProxyPassword(new String(myProxyPasswordTextField.getPassword()));
-    httpConfigurable.PROXY_EXCEPTIONS = myProxyExceptions.getText();
+    settings.PROXY_LOGIN = trimFieldText(myProxyLoginTextField);
+    settings.setPlainProxyPassword(new String(myProxyPasswordTextField.getPassword()));
+    settings.PROXY_EXCEPTIONS = myProxyExceptions.getText();
 
     try {
-      httpConfigurable.PROXY_PORT = Integer.valueOf(trimFieldText(myProxyPortTextField)).intValue();
-    } catch (NumberFormatException e) {
-      httpConfigurable.PROXY_PORT = 80;
+      settings.PROXY_PORT = Integer.valueOf(trimFieldText(myProxyPortTextField)).intValue();
     }
-    httpConfigurable.PROXY_HOST = trimFieldText(myProxyHostTextField);
+    catch (NumberFormatException e) {
+      settings.PROXY_PORT = 80;
+    }
+    settings.PROXY_HOST = trimFieldText(myProxyHostTextField);
   }
 
   private static String trimFieldText(JTextField field) {
@@ -315,7 +312,7 @@ public class HttpProxySettingsUi implements SearchableConfigurable, Configurable
     return trimmed;
   }
 
-  private void enableProxy (boolean enabled) {
+  private void enableProxy(boolean enabled) {
     myHostNameLabel.setEnabled(enabled);
     myPortNumberLabel.setEnabled(enabled);
     myProxyHostTextField.setEnabled(enabled);
@@ -337,7 +334,7 @@ public class HttpProxySettingsUi implements SearchableConfigurable, Configurable
     myPacUrlTextField.setEnabled(autoDetectProxy && myPacUrlCheckBox.isSelected());
   }
 
-  private void enableProxyAuthentication (boolean enabled) {
+  private void enableProxyAuthentication(boolean enabled) {
     myProxyPasswordLabel.setEnabled(enabled);
     myProxyLoginLabel.setEnabled(enabled);
 
@@ -347,73 +344,9 @@ public class HttpProxySettingsUi implements SearchableConfigurable, Configurable
     myRememberProxyPasswordCheckBox.setEnabled(enabled);
   }
 
+  @Override
+  @NotNull
   public JComponent getComponent() {
     return myMainPanel;
-  }
-
-  @Override
-  public JComponent createComponent() {
-    return myMainPanel;
-  }
-
-  @Override
-  @NotNull
-  public String getId() {
-    return getHelpTopic();
-  }
-
-  @Override
-  public Runnable enableSearch(final String option) {
-    return null;
-  }
-
-  @Override
-  @Nls
-  public String getDisplayName() {
-    return NAME;
-  }
-
-  @Override
-  @NotNull
-  public String getHelpTopic() {
-    return "http.proxy";
-  }
-
-  @Deprecated
-  /**
-   * @deprecated to remove in IDEA 15
-   */
-  public void addActionListener(final ActionListener actionListener) {
-    myProxyLoginTextField.addActionListener(actionListener);
-    DocumentListener docListener = new DocumentListener() {
-      @Override
-      public void insertUpdate(@NotNull DocumentEvent e) {
-        //noinspection ConstantConditions
-        actionListener.actionPerformed(null);
-      }
-
-      @Override
-      public void removeUpdate(@NotNull DocumentEvent e) {
-        //noinspection ConstantConditions
-        actionListener.actionPerformed(null);
-      }
-
-      @Override
-      public void changedUpdate(@NotNull DocumentEvent e) {
-        //noinspection ConstantConditions
-        actionListener.actionPerformed(null);
-      }
-    };
-    myProxyPasswordTextField.getDocument().addDocumentListener(docListener);
-    myProxyAuthCheckBox.addActionListener(actionListener);
-    myProxyPortTextField.getDocument().addDocumentListener(docListener);
-    myProxyHostTextField.getDocument().addDocumentListener(docListener);
-    myUseHTTPProxyRb.addActionListener(actionListener);
-    myRememberProxyPasswordCheckBox.addActionListener(actionListener);
-
-  }
-
-  @Override
-  public void disposeUIResources() {
   }
 }
