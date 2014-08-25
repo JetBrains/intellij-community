@@ -324,6 +324,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     if (additionalActions != null) {
       for (final AnAction action : additionalActions) {
         actions.add(action);
+        ShortcutSet shortcutSet = action.getShortcutSet();
+        if (shortcutSet != null) {
+          action.registerCustomShortcutSet(shortcutSet, this);
+        }
       }
     }
 
