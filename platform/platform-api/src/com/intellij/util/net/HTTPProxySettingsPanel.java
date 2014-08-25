@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,13 +43,6 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * Created by IntelliJ IDEA.
- * User: stathik
- * Date: Aug 28, 2003
- * Time: 3:52:47 PM
- * To change this template use Options | File Templates.
- */
 public class HTTPProxySettingsPanel implements SearchableConfigurable, Configurable.NoScroll {
   public static final String NAME = "Proxy";
   private JPanel myMainPanel;
@@ -83,11 +76,13 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
   private final HttpConfigurable myHttpConfigurable;
   private volatile boolean myConnectionCheckInProgress;
 
+  @Override
   public boolean isModified() {
-    boolean isModified = false;
     HttpConfigurable httpConfigurable = myHttpConfigurable;
-    if (! Comparing.equal(myProxyExceptions.getText().trim(), httpConfigurable.PROXY_EXCEPTIONS)) return true;
-    isModified |= httpConfigurable.USE_PROXY_PAC != myAutoDetectProxyRb.isSelected();
+    if (!Comparing.equal(myProxyExceptions.getText().trim(), httpConfigurable.PROXY_EXCEPTIONS)) {
+      return true;
+    }
+    boolean isModified = httpConfigurable.USE_PROXY_PAC != myAutoDetectProxyRb.isSelected();
     isModified |= httpConfigurable.USE_PAC_URL != myPacUrlCheckBox.isSelected();
     isModified |= !Comparing.strEqual(httpConfigurable.PAC_URL, myPacUrlTextField.getText());
     isModified |= httpConfigurable.USE_HTTP_PROXY != myUseHTTPProxyRb.isSelected();
@@ -130,19 +125,21 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
     }
 
     myProxyAuthCheckBox.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
+      @Override
+      public void actionPerformed(@NotNull ActionEvent e) {
         enableProxyAuthentication(myProxyAuthCheckBox.isSelected());
       }
     });
     myPacUrlCheckBox.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         myPacUrlTextField.setEnabled(myPacUrlCheckBox.isSelected());
       }
     });
 
     final ActionListener listener = new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
+      @Override
+      public void actionPerformed(@NotNull ActionEvent e) {
         enableProxy(myUseHTTPProxyRb.isSelected());
       }
     };
@@ -153,16 +150,17 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
 
     myClearPasswordsButton.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         myHttpConfigurable.clearGenericPasswords();
-        Messages.showMessageDialog(myMainPanel, "Proxy passwords were cleared.", "Auto-detected proxy", Messages.getInformationIcon());
+        //noinspection DialogTitleCapitalization
+        Messages.showMessageDialog(myMainPanel, "Proxy passwords were cleared.", "Auto-detected Proxy", Messages.getInformationIcon());
       }
     });
 
     if (HttpConfigurable.getInstance() != null) {
       myCheckButton.addActionListener(new ActionListener() {
         @Override
-        public void actionPerformed(ActionEvent e) {
+        public void actionPerformed(@NotNull ActionEvent e) {
           final String title = "Check Proxy Settings";
           final String answer = Messages
             .showInputDialog(myMainPanel, "Warning: your settings will be saved.\n\nEnter any URL to check connection to:",
@@ -205,7 +203,7 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
                   public void run() {
                     myConnectionCheckInProgress = false;
                     reset();  // since password might have been set
-                    Component parent = null;
+                    Component parent;
                     if (myMainPanel.isShowing()) {
                       parent = myMainPanel;
                       myCheckButton.setText("Check connection");
@@ -245,6 +243,7 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
     return ! myNoProxyRb.isSelected() && ! myConnectionCheckInProgress;
   }
 
+  @Override
   public void reset() {
     myNoProxyRb.setSelected(true);  // default
     HttpConfigurable httpConfigurable = myHttpConfigurable;
@@ -280,10 +279,11 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
     }
   }
 
-  private String errorText(final String s) {
+  private static String errorText(String s) {
     return "Problem with connection: " + s;
   }
 
+  @Override
   public void apply () {
     HttpConfigurable httpConfigurable = myHttpConfigurable;
     if (isModified()){
@@ -351,40 +351,56 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
     return myMainPanel;
   }
 
+  @Override
   public JComponent createComponent() {
     return myMainPanel;
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();
   }
 
+  @Override
   public Runnable enableSearch(final String option) {
     return null;
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return NAME;
   }
 
+  @Override
+  @NotNull
   public String getHelpTopic() {
     return "http.proxy";
   }
 
+  @Deprecated
+  /**
+   * @deprecated to remove in IDEA 15
+   */
   public void addActionListener(final ActionListener actionListener) {
     myProxyLoginTextField.addActionListener(actionListener);
     DocumentListener docListener = new DocumentListener() {
-      public void insertUpdate(DocumentEvent e) {
+      @Override
+      public void insertUpdate(@NotNull DocumentEvent e) {
+        //noinspection ConstantConditions
         actionListener.actionPerformed(null);
       }
 
-      public void removeUpdate(DocumentEvent e) {
+      @Override
+      public void removeUpdate(@NotNull DocumentEvent e) {
+        //noinspection ConstantConditions
         actionListener.actionPerformed(null);
       }
 
-      public void changedUpdate(DocumentEvent e) {
+      @Override
+      public void changedUpdate(@NotNull DocumentEvent e) {
+        //noinspection ConstantConditions
         actionListener.actionPerformed(null);
       }
     };
