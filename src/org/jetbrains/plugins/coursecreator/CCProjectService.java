@@ -21,18 +21,21 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.coursecreator.format.Course;
+import org.jetbrains.plugins.coursecreator.format.*;
 
 import java.io.File;
+import java.util.List;
 
 @State(name = "CCProjectService",
        storages = {
-           @Storage(file = "$PROJECT_CONFIG_DIR$/course_service.xml")
+         @Storage(file = "$PROJECT_CONFIG_DIR$/course_service.xml")
        }
 )
 public class CCProjectService implements PersistentStateComponent<Element> {
@@ -70,10 +73,45 @@ public class CCProjectService implements PersistentStateComponent<Element> {
   }
 
   public static void deleteProjectFile(File file, @NotNull final Project project) {
-   if (!file.delete()) {
-     LOG.info("Failed to delete file "  + file.getPath());
-   }
+    if (!file.delete()) {
+      LOG.info("Failed to delete file " + file.getPath());
+    }
     VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
     ProjectView.getInstance(project).refresh();
+  }
+
+  public static void drawTaskWindows(@NotNull final VirtualFile virtualFile, @NotNull final Editor editor, @NotNull final Course course) {
+    VirtualFile taskDir = virtualFile.getParent();
+    if (taskDir == null) {
+      return;
+    }
+    String taskDirName = taskDir.getName();
+    if (!taskDirName.contains("task")) {
+      return;
+    }
+    VirtualFile lessonDir = taskDir.getParent();
+    if (lessonDir == null) {
+      return;
+    }
+    String lessonDirName = lessonDir.getName();
+    if (!lessonDirName.contains("lesson")) {
+      return;
+    }
+    Lesson lesson = course.getLessonsMap().get(lessonDirName);
+    if (lesson == null) {
+      return;
+    }
+    Task task = lesson.getTask(taskDirName);
+    if (task == null) {
+      return;
+    }
+    TaskFile taskFile = task.getTaskFile(virtualFile.getName());
+    if (taskFile == null) {
+      return;
+    }
+    List<TaskWindow> taskWindows = taskFile.getTaskWindows();
+    for (TaskWindow taskWindow : taskWindows) {
+      taskWindow.drawHighlighter(editor);
+    }
   }
 }

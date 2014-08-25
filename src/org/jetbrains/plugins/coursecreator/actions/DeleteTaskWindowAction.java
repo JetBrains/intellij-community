@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
@@ -32,6 +33,10 @@ public class DeleteTaskWindowAction extends DumbAwareAction {
     if (project == null) return;
     final PsiFile file = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
     if (file == null) return;
+    final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
+    if (editor == null) {
+      return;
+    }
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) return;
 
@@ -48,6 +53,8 @@ public class DeleteTaskWindowAction extends DumbAwareAction {
     if (taskWindows.contains(myTaskWindow)) {
       myTaskWindow.removeResources(project);
       taskWindows.remove(myTaskWindow);
+      editor.getMarkupModel().removeAllHighlighters();
+      CCProjectService.drawTaskWindows(file.getVirtualFile(), editor, course);
       DaemonCodeAnalyzerImpl.getInstance(project).restart(file);
     }
   }

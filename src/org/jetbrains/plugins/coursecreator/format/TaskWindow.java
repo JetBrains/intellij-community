@@ -1,7 +1,12 @@
 package org.jetbrains.plugins.coursecreator.format;
 
 import com.google.gson.annotations.Expose;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -11,7 +16,6 @@ import java.io.File;
 
 public class TaskWindow {
 
-  private static final Logger LOG = Logger.getInstance(TaskWindow.class.getName());
   @Expose public int line;
   @Expose public int start;
   @Expose public String hint;
@@ -60,5 +64,14 @@ public class TaskWindow {
       File hintFile = new File(hints.getPath(), myHint);
       CCProjectService.deleteProjectFile(hintFile, project);
     }
+  }
+
+  public void drawHighlighter(@NotNull final Editor editor) {
+    int startOffset = editor.getDocument().getLineStartOffset(line) + start;
+    int endOffset = startOffset + myReplacementLength;
+    TextAttributes defaultTestAttributes =
+      EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.LIVE_TEMPLATE_ATTRIBUTES);
+    editor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, HighlighterLayer.LAST + 1, defaultTestAttributes,
+                                                HighlighterTargetArea.EXACT_RANGE);
   }
 }

@@ -58,6 +58,7 @@ public class AddTaskWindow extends DumbAwareAction {
       return;
     }
     taskFile.addTaskWindow(taskWindow);
+    taskWindow.drawHighlighter(editor);
     DaemonCodeAnalyzerImpl.getInstance(project).restart(file);
   }
 

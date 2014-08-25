@@ -35,6 +35,9 @@
 
   <project-components>
     <!-- Add your project components here -->
+    <component>
+      <implementation-class>org.jetbrains.plugins.coursecreator.CCProjectComponent</implementation-class>
+    </component>
   </project-components>
 
   <actions>
