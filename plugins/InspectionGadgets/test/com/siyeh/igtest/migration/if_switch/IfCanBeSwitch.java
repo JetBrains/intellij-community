@@ -75,4 +75,21 @@ class IfCanBeSwitch {
       // do something else.
     }
   }
+
+  Num num;
+  enum Num {
+    ONE, TWO
+  }
+  Num getNum() {
+    return num;
+  }
+  void ifWithGetterToSwitch() {
+    <warning descr="'if' statement replaceable with 'switch' statement">if</warning> (getNum() == Num.ONE) {
+      System.out.println(1);
+    } else if (getNum() == Num.TWO) {
+      System.out.println(2);
+    } else {
+      System.out.println("-");
+    }
+  }
 }

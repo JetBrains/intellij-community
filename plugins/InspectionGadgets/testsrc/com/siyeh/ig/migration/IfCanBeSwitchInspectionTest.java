@@ -38,6 +38,7 @@ public class IfCanBeSwitchInspectionTest extends LightInspectionTestCase {
   protected InspectionProfileEntry getInspection() {
     final IfCanBeSwitchInspection inspection = new IfCanBeSwitchInspection();
     inspection.suggestIntSwitches = true;
+    inspection.suggestEnumSwitches = true;
     inspection.setOnlySuggestNullSafe(true);
     return inspection;
   }
