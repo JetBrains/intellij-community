@@ -56,19 +56,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class PostprocessReformattingAspect implements PomModelAspect {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PostprocessReformattingAspect");
   private final Project myProject;
   private final PsiManager myPsiManager;
   private final TreeAspect myTreeAspect;
-  private final Map<FileViewProvider, List<ASTNode>> myReformatElements = new HashMap<FileViewProvider, List<ASTNode>>();
-  private volatile int myDisabledCounter = 0;
-  private final Set<FileViewProvider> myUpdatedProviders = new HashSet<FileViewProvider>();
-  private final AtomicInteger myPostponedCounter = new AtomicInteger();
   private static final Key<Throwable> REFORMAT_ORIGINATOR = Key.create("REFORMAT_ORIGINATOR");
   private static final boolean STORE_REFORMAT_ORIGINATOR_STACKTRACE = ApplicationManager.getApplication().isInternal();
+
+  private final ThreadLocal<Context> myContext = new ThreadLocal<Context>() {
+    @Override
+    protected Context initialValue() {
+      return new Context();
+    }
+  };
 
   public PostprocessReformattingAspect(Project project, PsiManager psiManager, TreeAspect treeAspect,final CommandProcessor processor) {
     myProject = project;
@@ -113,12 +115,12 @@ public class PostprocessReformattingAspect implements PomModelAspect {
 
   public <T> T disablePostprocessFormattingInside(@NotNull Computable<T> computable) {
     try {
-      myDisabledCounter++;
+      getContext().myDisabledCounter++;
       return computable.compute();
     }
     finally {
-      myDisabledCounter--;
-      LOG.assertTrue(myDisabledCounter > 0 || !isDisabled());
+      getContext().myDisabledCounter--;
+      LOG.assertTrue(getContext().myDisabledCounter > 0 || !isDisabled());
     }
   }
 
@@ -145,13 +147,13 @@ public class PostprocessReformattingAspect implements PomModelAspect {
   }
 
   private void incrementPostponedCounter() {
-    myPostponedCounter.incrementAndGet();
+    getContext().myPostponedCounter++;
   }
 
   private void decrementPostponedCounter() {
     Application application = ApplicationManager.getApplication();
     application.assertIsDispatchThread();
-    if (myPostponedCounter.decrementAndGet() == 0) {
+    if (--getContext().myPostponedCounter == 0) {
       if (application.isWriteAccessAllowed()) {
         doPostponedFormatting();
       }
@@ -175,7 +177,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     atomic(new Runnable() {
       @Override
       public void run() {
-        if (isDisabled() || myPostponedCounter.get() == 0 && !ApplicationManager.getApplication().isUnitTestMode()) return;
+        if (isDisabled() || getContext().myPostponedCounter == 0 && !ApplicationManager.getApplication().isUnitTestMode()) return;
         final TreeChangeEvent changeSet = (TreeChangeEvent)event.getChangeSet(myTreeAspect);
         if (changeSet == null) return;
         final PsiElement psiElement = changeSet.getRootElement().getPsi();
@@ -184,7 +186,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
         final FileViewProvider viewProvider = containingFile.getViewProvider();
 
         if (!viewProvider.isEventSystemEnabled()) return;
-        myUpdatedProviders.add(viewProvider);
+        getContext().myUpdatedProviders.add(viewProvider);
         for (final ASTNode node : changeSet.getChangedElements()) {
           final TreeChange treeChange = changeSet.getChangesByElement(node);
           for (final ASTNode affectedChild : treeChange.getAffectedChildren()) {
@@ -221,7 +223,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
       public void run() {
         if (isDisabled()) return;
         try {
-          FileViewProvider[] viewProviders = myUpdatedProviders.toArray(new FileViewProvider[myUpdatedProviders.size()]);
+          FileViewProvider[] viewProviders = getContext().myUpdatedProviders.toArray(new FileViewProvider[getContext().myUpdatedProviders.size()]);
           for (final FileViewProvider viewProvider : viewProviders) {
             doPostponedFormatting(viewProvider);
           }
@@ -230,7 +232,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
           LOG.error(e);
         }
         finally {
-          LOG.assertTrue(myReformatElements.isEmpty(), myReformatElements);
+          LOG.assertTrue(getContext().myReformatElements.isEmpty(), getContext().myReformatElements);
         }
       }
     });
@@ -248,7 +250,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     atomic(new Runnable() {
       @Override
       public void run() {
-        if (isDisabled() || check && !myUpdatedProviders.contains(viewProvider)) return;
+        if (isDisabled() || check && !getContext().myUpdatedProviders.contains(viewProvider)) return;
 
         try {
           disablePostprocessFormattingInside(new Runnable() {
@@ -259,8 +261,8 @@ public class PostprocessReformattingAspect implements PomModelAspect {
           });
         }
         finally {
-          myUpdatedProviders.remove(viewProvider);
-          myReformatElements.remove(viewProvider);
+          getContext().myUpdatedProviders.remove(viewProvider);
+          getContext().myReformatElements.remove(viewProvider);
           viewProvider.putUserData(REFORMAT_ORIGINATOR, null);
         }
       }
@@ -268,7 +270,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
   }
 
   public boolean isViewProviderLocked(@NotNull FileViewProvider fileViewProvider) {
-    return myReformatElements.containsKey(fileViewProvider);
+    return getContext().myReformatElements.containsKey(fileViewProvider);
   }
 
   public void beforeDocumentChanged(@NotNull FileViewProvider viewProvider) {
@@ -292,10 +294,10 @@ public class PostprocessReformattingAspect implements PomModelAspect {
       LOG.assertTrue(oldIndent >= 0,
                      "for not generated items old indentation must be defined: element=" + child + ", text=" + child.getText());
     }
-    List<ASTNode> list = myReformatElements.get(viewProvider);
+    List<ASTNode> list = getContext().myReformatElements.get(viewProvider);
     if (list == null) {
       list = new ArrayList<ASTNode>();
-      myReformatElements.put(viewProvider, list);
+      getContext().myReformatElements.put(viewProvider, list);
       if (STORE_REFORMAT_ORIGINATOR_STACKTRACE) {
         viewProvider.putUserData(REFORMAT_ORIGINATOR, new Throwable());
       }
@@ -304,7 +306,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
   }
 
   private void doPostponedFormattingInner(@NotNull FileViewProvider key) {
-    final List<ASTNode> astNodes = myReformatElements.remove(key);
+    final List<ASTNode> astNodes = getContext().myReformatElements.remove(key);
     final Document document = key.getDocument();
     // Sort ranges by end offsets so that we won't need any offset adjustment after reformat or reindent
     if (document == null) return;
@@ -370,7 +372,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
       String expectedPsi = treeDebugBuilder.psiToString(psi);
 
       if (!expectedPsi.equals(actualPsiTree)) {
-        myReformatElements.clear();
+        getContext().myReformatElements.clear();
         assert expectedPsi.equals(actualPsiTree) : "Refactored psi should be the same as result of parsing";
       }
     }
@@ -627,7 +629,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
   }
 
   public boolean isDisabled() {
-    return myDisabledCounter > 0;
+    return getContext().myDisabledCounter > 0;
   }
 
   @NotNull
@@ -769,6 +771,17 @@ public class PostprocessReformattingAspect implements PomModelAspect {
 
   @TestOnly
   public void clear() {
-    myReformatElements.clear();
+    getContext().myReformatElements.clear();
+  }
+
+  private Context getContext() {
+    return myContext.get();
+  }
+
+  private static class Context {
+    private int myPostponedCounter = 0;
+    private int myDisabledCounter = 0;
+    private final Set<FileViewProvider> myUpdatedProviders = new HashSet<FileViewProvider>();
+    private final Map<FileViewProvider, List<ASTNode>> myReformatElements = new HashMap<FileViewProvider, List<ASTNode>>();
   }
 }
