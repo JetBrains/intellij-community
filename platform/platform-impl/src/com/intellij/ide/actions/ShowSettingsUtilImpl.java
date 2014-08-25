@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.ide.ui.search.SearchUtil;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
@@ -51,7 +53,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   @NotNull
-  private static DialogWrapper getDialog(@Nullable Project project, @NotNull ConfigurableGroup[] groups, @Nullable Configurable toSelect) {
+  public static DialogWrapper getDialog(@Nullable Project project, @NotNull ConfigurableGroup[] groups, @Nullable Configurable toSelect) {
     return Registry.is("ide.perProjectModality")
            ? new OptionsEditorDialog(getProject(project), filterEmptyGroups(groups), toSelect, true)
            : new OptionsEditorDialog(getProject(project), filterEmptyGroups(groups), toSelect);
@@ -133,20 +135,20 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
 
   @Override
   public void showSettingsDialog(@Nullable final Project project, @NotNull final String nameToSelect) {
-    ConfigurableGroup[] group = getConfigurableGroups(project, true);
-
+    ConfigurableGroup[] groups = getConfigurableGroups(project, true);
     Project actualProject = getProject(project);
 
-    group = filterEmptyGroups(group);
+    groups = filterEmptyGroups(groups);
+    getDialog(actualProject, groups, findPreselectedByDisplayName(nameToSelect, groups)).show();
+  }
 
-    OptionsEditorDialog dialog;
-    if (Registry.is("ide.perProjectModality")) {
-      dialog = new OptionsEditorDialog(actualProject, group, nameToSelect, true);
+  @Nullable
+  private static Configurable findPreselectedByDisplayName(final String preselectedConfigurableDisplayName, ConfigurableGroup[] groups) {
+    final List<Configurable> all = SearchUtil.expand(groups);
+    for (Configurable each : all) {
+      if (preselectedConfigurableDisplayName.equals(each.getDisplayName())) return each;
     }
-    else {
-      dialog = new OptionsEditorDialog(actualProject, group, nameToSelect);
-    }
-    dialog.show();
+    return null;
   }
 
   public static void showSettingsDialog(@Nullable Project project, final String id2Select, final String filter) {
@@ -157,17 +159,12 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     group = filterEmptyGroups(group);
     final Configurable configurable2Select = findConfigurable2Select(id2Select, group);
 
-    final OptionsEditorDialog dialog;
-    if (Registry.is("ide.perProjectModality")) {
-      dialog = new OptionsEditorDialog(actualProject, group, configurable2Select, true);
-    } else {
-      dialog = new OptionsEditorDialog(actualProject, group, configurable2Select);
-    }
+    final DialogWrapper dialog = getDialog(project, group, configurable2Select);
 
     new UiNotifyConnector.Once(dialog.getContentPane(), new Activatable.Adapter() {
       @Override
       public void showNotify() {
-        final OptionsEditor editor = (OptionsEditor)dialog.getData(OptionsEditor.KEY.getName());
+        final OptionsEditor editor = (OptionsEditor)((DataProvider)dialog).getData(OptionsEditor.KEY.getName());
         LOG.assertTrue(editor != null);
         editor.select(configurable2Select, filter);
       }
