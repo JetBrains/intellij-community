@@ -23,6 +23,7 @@ import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.*;
+import com.intellij.openapi.options.newEditor.IdeSettingsDialog;
 import com.intellij.openapi.options.newEditor.OptionsEditor;
 import com.intellij.openapi.options.newEditor.OptionsEditorDialog;
 import com.intellij.openapi.project.Project;
@@ -54,9 +55,14 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
 
   @NotNull
   public static DialogWrapper getDialog(@Nullable Project project, @NotNull ConfigurableGroup[] groups, @Nullable Configurable toSelect) {
+    project = getProject(project);
+    final ConfigurableGroup[] filteredGroups = filterEmptyGroups(groups);
+    if (Registry.is("ide.new.settings.dialog")) {
+      return new IdeSettingsDialog(project, filteredGroups, toSelect);
+    }
     return Registry.is("ide.perProjectModality")
-           ? new OptionsEditorDialog(getProject(project), filterEmptyGroups(groups), toSelect, true)
-           : new OptionsEditorDialog(getProject(project), filterEmptyGroups(groups), toSelect);
+           ? new OptionsEditorDialog(project, filteredGroups, toSelect, true)
+           : new OptionsEditorDialog(project, filteredGroups, toSelect);
   }
 
   @NotNull
