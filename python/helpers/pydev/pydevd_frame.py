@@ -146,46 +146,53 @@ class PyDBFrame:
             try:
                 line = frame.f_lineno
                 flag = False
-                exist_result, result = mainDebugger.first_plugin_result('should_stop_on_break', self, frame, event, self._args, arg)
-                if exist_result:
-                    (flag, frame) = result
-
                 #return is not taken into account for breakpoint hit because we'd have a double-hit in this case
                 #(one for the line and the other for the return).
 
+                breakpoint = None
+                exist_result = False
+                stop = False
                 if not flag and event != 'return' and info.pydev_state != STATE_SUSPEND and breakpoints_for_file is not None\
                 and DictContains(breakpoints_for_file, line):
-                    #ok, hit breakpoint, now, we have to discover if it is a conditional breakpoint
-                    # lets do the conditional stuff here
                     breakpoint = breakpoints_for_file[line]
-
                     stop = True
+                    new_frame = frame
                     if info.pydev_step_cmd == CMD_STEP_OVER and info.pydev_step_stop is frame and event in ('line', 'return'):
                         stop = False #we don't stop on breakpoint if we have to stop by step-over (it will be processed later)
-                    else:
+                else:
+                    exist_result, result = mainDebugger.first_plugin_result('get_breakpoint', frame, event, self._args)
+                    if exist_result:
+                         (flag, breakpoint, new_frame) = result
+
+                if breakpoint:
+                    #ok, hit breakpoint, now, we have to discover if it is a conditional breakpoint
+                    # lets do the conditional stuff here
+                    if stop or exist_result:
                         if breakpoint.condition is not None:
                             try:
-                                val = eval(breakpoint.condition, frame.f_globals, frame.f_locals)
+                                val = eval(breakpoint.condition, new_frame.f_globals, new_frame.f_locals)
                                 if not val:
                                     return self.trace_dispatch
 
                             except:
                                 pydev_log.info('Error while evaluating condition \'%s\': %s\n' % (breakpoint.condition, sys.exc_info()[1]))
-
                                 return self.trace_dispatch
 
                     if breakpoint.expression is not None:
                         try:
                             try:
-                                val = eval(breakpoint.expression, frame.f_globals, frame.f_locals)
+                                val = eval(breakpoint.expression, new_frame.f_globals, new_frame.f_locals)
                             except:
                                 val = sys.exc_info()[1]
                         finally:
                             if val is not None:
                                 thread.additionalInfo.message = val
-
-                    if stop:
-                        self.setSuspend(thread, CMD_SET_BREAK)
+                if stop:
+                    self.setSuspend(thread, CMD_SET_BREAK)
+                elif flag:
+                    exist_result, result = mainDebugger.first_plugin_result('suspend', self, thread, frame)
+                    if exist_result:
+                        frame = result
 
                 # if thread has a suspend flag, we suspend with a busy wait
                 if info.pydev_state == STATE_SUSPEND:

@@ -5,6 +5,7 @@ from pydevd_comm import CMD_SET_BREAK, CMD_STEP_OVER, CMD_ADD_EXCEPTION_BREAK
 import pydevd_vars
 from runfiles import DictContains
 from pydevd_file_utils import GetFileNameAndBaseFromFile
+from pydevd_frame import add_exception_to_frame
 
 class Jinja2LineBreakpoint(LineBreakpoint):
 
@@ -208,9 +209,9 @@ def has_exception_breaks(mainDebugger):
     return hasattr(mainDebugger, 'jinja2_exception_break') and mainDebugger.jinja2_exception_break
 
 def can_not_skip(mainDebugger, frame, info):
-    is_render = is_jinja2_render_call(frame)
-    check = hasattr(mainDebugger, 'jinja2_breakpoints') and mainDebugger.jinja2_breakpoints and is_render or \
-            is_render and info.pydev_call_inside_jinja2 is not None #when we come from python function to jinja2 template
+    #is_render = is_jinja2_render_call(frame)
+    check = hasattr(mainDebugger, 'jinja2_breakpoints') and mainDebugger.jinja2_breakpoints and is_jinja2_render_call(frame)
+    #        is_render and info.pydev_call_inside_jinja2 is not None #when we come from python function to jinja2 template
     return check
 
 def prepare_for_cmds(mainDebugger, info):
@@ -294,57 +295,35 @@ def stop(mainDebugger, frame, event, args, stop_info, arg):
     return False
 
 
-def should_stop_on_break(mainDebugger, pydb_frame, frame, event, args, arg):
+def get_breakpoint(mainDebugger, frame, event, args):
     mainDebugger, filename, info, thread = args
+    is_result_exist = False
+    result = None
+    new_frame = None
+    jinja2_breakpoint = None
+    flag = False
     if event in ('line', 'call') and info.pydev_state != STATE_SUSPEND and hasattr(mainDebugger, 'jinja2_breakpoints') and \
             mainDebugger.jinja2_breakpoints and is_jinja2_render_call(frame):
-        return True, shouldStopOnJinja2Break(mainDebugger, pydb_frame, frame, event, arg, args)
-    return False, None
+        filename = get_jinja2_template_filename(frame)
+        jinja2_breakpoints_for_file = mainDebugger.jinja2_breakpoints.get(filename)
+        new_frame = Jinja2TemplateFrame(frame)
+
+        if jinja2_breakpoints_for_file:
+            lineno = frame.f_lineno
+            template_lineno = get_jinja2_template_line(frame)
+            if template_lineno is not None and DictContains(jinja2_breakpoints_for_file, template_lineno):
+                is_result_exist = True
+                jinja2_breakpoint = jinja2_breakpoints_for_file[template_lineno]
+                if jinja2_breakpoint.is_triggered(frame):
+                    flag = True
+                    new_frame = Jinja2TemplateFrame(frame)
+
+    result = flag, jinja2_breakpoint, new_frame
+    return is_result_exist, result
 
 
-def shouldStopOnJinja2Break(mainDebugger, pydb_frame, frame, event, arg, args):
-    mainDebugger, filename, info, thread = args
-    flag = False
-    filename = get_jinja2_template_filename(frame)
-    jinja2_breakpoints_for_file = mainDebugger.jinja2_breakpoints.get(filename)
-    new_frame = Jinja2TemplateFrame(frame)
-    if jinja2_breakpoints_for_file:
-        lineno = frame.f_lineno
-        template_lineno = get_jinja2_template_line(frame)
-
-        if template_lineno is not None and DictContains(jinja2_breakpoints_for_file, template_lineno):
-            jinja2_breakpoint = jinja2_breakpoints_for_file[template_lineno]
-
-            if jinja2_breakpoint.is_triggered(frame):
-                flag = True
-                new_frame = Jinja2TemplateFrame(frame)
-
-                if jinja2_breakpoint.condition is not None:
-                    try:
-                        val = eval(jinja2_breakpoint.condition, new_frame.f_globals, new_frame.f_locals)
-                        if not val:
-                            flag = False
-                    except:
-                        pydev_log.info(
-                            'Error while evaluating condition \'%s\': %s\n' % (jinja2_breakpoint.condition, sys.exc_info()[1]))
-
-                if jinja2_breakpoint.expression is not None:
-                    try:
-                        try:
-                            val = eval(jinja2_breakpoint.expression, new_frame.f_globals, new_frame.f_locals)
-                        except:
-                            val = sys.exc_info()[1]
-                    finally:
-                        if val is not None:
-                            thread.additionalInfo.message = val
-
-                if flag:
-                    frame = suspend_jinja2(pydb_frame, mainDebugger, thread, frame)
-    return flag, frame
-
-
-def add_exception_to_frame(frame, exception_info):
-    frame.f_locals['__exception__'] = exception_info
+def suspend(mainDebugger, pydb_frame, thread, frame):
+    return True, suspend_jinja2(pydb_frame, mainDebugger, thread, frame)
 
 
 def exception_break(mainDebugger, pydb_frame, frame, event, args, arg):
