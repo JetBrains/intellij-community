@@ -2,6 +2,9 @@
   <item name="org.apache.commons.lang.mutable.MutableBoolean MutableBoolean(java.lang.Boolean) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.mutable.MutableBoolean boolean equals(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.mutable.MutableBoolean boolean equals(java.lang.Object)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;false&quot;"/>
@@ -18,6 +21,9 @@
   </item>
   <item name="org.apache.commons.lang.mutable.MutableByte MutableByte(java.lang.Number) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.mutable.MutableByte boolean equals(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.mutable.MutableByte boolean equals(java.lang.Object)">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -48,6 +54,9 @@
   <item name="org.apache.commons.lang.mutable.MutableDouble MutableDouble(java.lang.Number) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.mutable.MutableDouble boolean equals(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.mutable.MutableDouble boolean equals(java.lang.Object)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;false&quot;"/>
@@ -74,6 +83,9 @@
   <item name="org.apache.commons.lang.mutable.MutableFloat MutableFloat(java.lang.Number) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.mutable.MutableFloat boolean equals(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.mutable.MutableFloat boolean equals(java.lang.Object)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;false&quot;"/>
@@ -99,6 +111,9 @@
   </item>
   <item name="org.apache.commons.lang.mutable.MutableInt MutableInt(java.lang.Number) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.mutable.MutableInt boolean equals(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.mutable.MutableInt boolean equals(java.lang.Object)">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -129,6 +144,9 @@
   <item name="org.apache.commons.lang.mutable.MutableLong MutableLong(java.lang.Number) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.mutable.MutableLong boolean equals(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.mutable.MutableLong boolean equals(java.lang.Object)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;false&quot;"/>
@@ -155,6 +173,9 @@
   <item name="org.apache.commons.lang.mutable.MutableLong void subtract(java.lang.Number) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.mutable.MutableObject boolean equals(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.mutable.MutableObject boolean equals(java.lang.Object)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;false&quot;"/>
@@ -162,6 +183,9 @@
   </item>
   <item name="org.apache.commons.lang.mutable.MutableShort MutableShort(java.lang.Number) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.mutable.MutableShort boolean equals(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.mutable.MutableShort boolean equals(java.lang.Object)">
     <annotation name="org.jetbrains.annotations.Contract">

@@ -776,15 +776,13 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
       @Override
       public void valueChanged(@NotNull ListSelectionEvent e){
-        final LookupElement item = getCurrentItem();
-        if (oldItem != item && !myList.isEmpty()) { // do not update on temporary model wipe
-          fireCurrentItemChanged(item);
-          if (myDisposed) { //a listener may have decided to close us, what can we do?
-            return;
-          }
+        if (!myUpdating) {
+          final LookupElement item = getCurrentItem();
+          fireCurrentItemChanged(oldItem, item);
           oldItem = item;
         }
       }
+
     });
 
     new ClickListener() {
@@ -876,9 +874,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     }
   }
 
-  void fireCurrentItemChanged(LookupElement item){
-    if (!myListeners.isEmpty()){
-      LookupEvent event = new LookupEvent(this, item, (char)0);
+  private void fireCurrentItemChanged(@Nullable LookupElement oldItem, @Nullable LookupElement currentItem) {
+    if (oldItem != currentItem && !myListeners.isEmpty()) {
+      LookupEvent event = new LookupEvent(this, currentItem, (char)0);
       for (LookupListener listener : myListeners) {
         listener.currentItemChanged(event);
       }
@@ -1088,6 +1086,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   public void refreshUi(boolean mayCheckReused, boolean onExplicitAction) {
     assert !myUpdating;
+    LookupElement prevItem = getCurrentItem();
     myUpdating = true;
     try {
       final boolean reused = mayCheckReused && checkReused();
@@ -1100,6 +1099,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     }
     finally {
       myUpdating = false;
+      fireCurrentItemChanged(prevItem, getCurrentItem());
     }
   }
 

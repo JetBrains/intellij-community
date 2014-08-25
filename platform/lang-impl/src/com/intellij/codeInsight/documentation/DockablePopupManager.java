@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AsyncResult;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
@@ -136,30 +137,37 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
 
 
   protected AnAction[] createActions() {
-    return new AnAction[]{
-      new ToggleAction(getAutoUpdateTitle(), getAutoUpdateDescription(),
-                       AllIcons.General.AutoscrollFromSource) {
-        @Override
-        public boolean isSelected(AnActionEvent e) {
-          return myAutoUpdateDocumentation;
-        }
+    ToggleAction toggleAutoUpdateAction = new ToggleAction(getAutoUpdateTitle(), getAutoUpdateDescription(),
+                                           AllIcons.General.AutoscrollFromSource) {
+      @Override
+      public boolean isSelected(AnActionEvent e) {
+        return myAutoUpdateDocumentation;
+      }
 
-        @Override
-        public void setSelected(AnActionEvent e, boolean state) {
-          PropertiesComponent.getInstance().setValue(getAutoUpdateEnabledProperty(), String.valueOf(state));
-          myAutoUpdateDocumentation = state;
-          restartAutoUpdate(state);
-        }
-      },
-      new AnAction("Restore Popup", getRestorePopupDescription(), AllIcons.Actions.Cancel) {
-        @Override
-        public void actionPerformed(AnActionEvent e) {
-          restorePopupBehavior();
-        }
-      }};
+      @Override
+      public void setSelected(AnActionEvent e, boolean state) {
+        PropertiesComponent.getInstance().setValue(getAutoUpdateEnabledProperty(), String.valueOf(state));
+        myAutoUpdateDocumentation = state;
+        restartAutoUpdate(state);
+      }
+    };
+    AnAction restorePopupAction = new AnAction("Restore Popup", getRestorePopupDescription(), AllIcons.Actions.Cancel) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        restorePopupBehavior();
+      }
+    };
+    ShortcutSet restorePopupShortcutSet = getRestorePopupShortcutSet();
+    if (restorePopupShortcutSet != null) {
+      restorePopupAction.registerCustomShortcutSet(restorePopupShortcutSet, null);
+    }
+    return new AnAction[]{toggleAutoUpdateAction, restorePopupAction};
   }
 
-  
+  protected ShortcutSet getRestorePopupShortcutSet() {
+    return null;
+  }
+
   protected void restartAutoUpdate(final boolean state) {
     if (state && myToolWindow != null) {
       if (myAutoUpdateRequest == null) {
@@ -228,13 +236,10 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
   protected void restorePopupBehavior() {
     if (myToolWindow != null) {
       PropertiesComponent.getInstance().setValue(getShowInToolWindowProperty(), Boolean.FALSE.toString());
-
-      final Content[] contents = myToolWindow.getContentManager().getContents();
-      for (final Content content : contents) {
-        myToolWindow.getContentManager().removeContent(content, true);
-      }
-
-      ToolWindowManagerEx.getInstanceEx(myProject).unregisterToolWindow(getToolwindowId());
+      ToolWindowManagerEx toolWindowManagerEx = ToolWindowManagerEx.getInstanceEx(myProject);
+      toolWindowManagerEx.hideToolWindow(getToolwindowId(), false);
+      toolWindowManagerEx.unregisterToolWindow(getToolwindowId());
+      Disposer.dispose(myToolWindow.getContentManager());
       myToolWindow = null;
       restartAutoUpdate(false);
     }

@@ -165,7 +165,7 @@ public class EditorNotificationsImpl extends EditorNotifications {
       }
 
       @Override
-      public void onCanceled(@NotNull ProgressIndicator _) {
+      public void onCanceled(@NotNull ProgressIndicator ignored) {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {

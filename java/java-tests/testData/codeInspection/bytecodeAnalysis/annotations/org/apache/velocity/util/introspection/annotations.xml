@@ -5,6 +5,9 @@
   <item name="org.apache.velocity.util.introspection.ClassMap void populateMethodCacheWithInterface(org.apache.velocity.util.introspection.ClassMap.MethodCache, java.lang.Class) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.velocity.util.introspection.ClassMap.MethodCache MethodCache(org.apache.velocity.runtime.log.Log, org.apache.velocity.util.introspection.ClassMap.1) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.velocity.util.introspection.ClassMap.MethodCache java.lang.String makeMethodKey(java.lang.String, java.lang.Object[]) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -90,10 +93,19 @@
   <item name="org.apache.velocity.util.introspection.MethodMap void add(java.lang.reflect.Method) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.velocity.util.introspection.SecureIntrospectorImpl boolean checkObjectExecutePermission(java.lang.Class, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.velocity.util.introspection.SecureIntrospectorImpl java.lang.reflect.Method getMethod(java.lang.Class, java.lang.String, java.lang.Object[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;_,_,null-&gt;null;null,_,_-&gt;null&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.velocity.util.introspection.SecureUberspector java.util.Iterator getIterator(java.lang.Object, org.apache.velocity.util.introspection.Info) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.util.introspection.SecureUberspector java.util.Iterator getIterator(java.lang.Object, org.apache.velocity.util.introspection.Info) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.util.introspection.SecureUberspector java.util.Iterator getIterator(java.lang.Object, org.apache.velocity.util.introspection.Info)">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -103,15 +115,36 @@
   <item name="org.apache.velocity.util.introspection.UberspectImpl java.util.Iterator getIterator(java.lang.Object, org.apache.velocity.util.introspection.Info) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.velocity.util.introspection.UberspectImpl java.util.Iterator getIterator(java.lang.Object, org.apache.velocity.util.introspection.Info) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.util.introspection.UberspectImpl org.apache.velocity.util.introspection.VelMethod getMethod(java.lang.Object, java.lang.String, java.lang.Object[], org.apache.velocity.util.introspection.Info) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.util.introspection.UberspectImpl org.apache.velocity.util.introspection.VelMethod getMethod(java.lang.Object, java.lang.String, java.lang.Object[], org.apache.velocity.util.introspection.Info) 3">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.velocity.util.introspection.UberspectImpl org.apache.velocity.util.introspection.VelMethod getMethod(java.lang.Object, java.lang.String, java.lang.Object[], org.apache.velocity.util.introspection.Info)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_,_-&gt;null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.velocity.util.introspection.UberspectImpl org.apache.velocity.util.introspection.VelPropertyGet getPropertyGet(java.lang.Object, java.lang.String, org.apache.velocity.util.introspection.Info) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.util.introspection.UberspectImpl org.apache.velocity.util.introspection.VelPropertyGet getPropertyGet(java.lang.Object, java.lang.String, org.apache.velocity.util.introspection.Info) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.velocity.util.introspection.UberspectImpl org.apache.velocity.util.introspection.VelPropertyGet getPropertyGet(java.lang.Object, java.lang.String, org.apache.velocity.util.introspection.Info)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_-&gt;null&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.velocity.util.introspection.UberspectImpl org.apache.velocity.util.introspection.VelPropertySet getPropertySet(java.lang.Object, java.lang.String, java.lang.Object, org.apache.velocity.util.introspection.Info) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.util.introspection.UberspectImpl org.apache.velocity.util.introspection.VelPropertySet getPropertySet(java.lang.Object, java.lang.String, java.lang.Object, org.apache.velocity.util.introspection.Info) 3">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.util.introspection.UberspectImpl org.apache.velocity.util.introspection.VelPropertySet getPropertySet(java.lang.Object, java.lang.String, java.lang.Object, org.apache.velocity.util.introspection.Info)">
     <annotation name="org.jetbrains.annotations.Contract">

@@ -38,6 +38,7 @@ import com.intellij.openapi.util.EdtRunnable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.LightColors;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -58,6 +59,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
@@ -247,7 +249,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
     setLayout(new BorderLayout());
 
-    myMainSplitter = new Splitter(false);
+    myMainSplitter = Registry.is("ide.new.settings.dialog") ? new OnePixelSplitter(false) : new Splitter(false);
     myMainSplitter.setFirstComponent(myLeftSide);
 
     myLoadingDecorator = new LoadingDecorator(myOwnDetails.getComponent(), this, 150);
@@ -1007,6 +1009,10 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     private MySearchField() {
       super(false);
       addKeyListener(new KeyAdapter() {});
+      if (Registry.is("ide.new.settings.dialog")) {
+        setBackground(UIUtil.getSidePanelColor());
+        setBorder(new EmptyBorder(5, 10, 2, 10));
+      }
     }
 
     @Override
@@ -1205,7 +1211,16 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     if (searchable instanceof Configurable.Composite) {
       box.add(Box.createVerticalStrut(10));
       Configurable.Composite composite = (Configurable.Composite)searchable;
-      for (final Configurable configurable : composite.getConfigurables()) {
+      Configurable[] configurables = composite.getConfigurables();
+      if (myTreeView != null) {
+        Arrays.sort(configurables, new Comparator<Configurable>() {
+          @Override
+          public int compare(Configurable configurable1, Configurable configurable2) {
+            return myTreeView.compareConfigurables(configurable1, configurable2);
+          }
+        });
+      }
+      for (final Configurable configurable : configurables) {
         box.add(new LinkLabel(configurable.getDisplayName(), AllIcons.Ide.Link) {
           @Override
           public void doClick() {

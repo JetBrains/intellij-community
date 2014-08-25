@@ -84,6 +84,9 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
         }
         final Color color = getForeground();
         final String name = value.getName();
+        if (StringUtil.isEmpty(text.toString())) {
+          continue;
+        }
         result.add(new LineExtensionInfo("  " + name + ": ", color, null, null, Font.PLAIN));
 
         Variable var = new Variable(name, lineNumber);

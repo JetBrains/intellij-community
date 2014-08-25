@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -63,12 +64,17 @@ public class JavaTestGenerator implements TestGenerator {
               if (targetClass == null) {
                 return null;
               }
-              addSuperClass(targetClass, project, d.getSuperClassName());
+              final TestFramework frameworkDescriptor = d.getSelectedTestFrameworkDescriptor();
+              final String defaultSuperClass = frameworkDescriptor.getDefaultSuperClass();
+              final String superClassName = d.getSuperClassName();
+              if (!Comparing.strEqual(superClassName, defaultSuperClass)) {
+                addSuperClass(targetClass, project, superClassName);
+              }
 
               Editor editor = CodeInsightUtil.positionCursor(project, targetClass.getContainingFile(), targetClass.getLBrace());
               addTestMethods(editor,
                              targetClass,
-                             d.getSelectedTestFrameworkDescriptor(),
+                             frameworkDescriptor,
                              d.getSelectedMethods(),
                              d.shouldGeneratedBefore(),
                              d.shouldGeneratedAfter());
@@ -135,7 +141,7 @@ public class JavaTestGenerator implements TestGenerator {
   private static void addSuperClass(PsiClass targetClass, Project project, String superClassName) throws IncorrectOperationException {
     if (superClassName == null) return;
     final PsiReferenceList extendsList = targetClass.getExtendsList();
-    if (extendsList == null || extendsList.getReferencedTypes().length > 0) return;
+    if (extendsList == null) return;
 
     PsiElementFactory ef = JavaPsiFacade.getInstance(project).getElementFactory();
     PsiJavaCodeReferenceElement superClassRef;
@@ -147,7 +153,12 @@ public class JavaTestGenerator implements TestGenerator {
     else {
       superClassRef = ef.createFQClassNameReferenceElement(superClassName, GlobalSearchScope.allScope(project));
     }
-    extendsList.add(superClassRef);
+    final PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
+    if (referenceElements.length == 0) {
+      extendsList.add(superClassRef);
+    } else {
+      referenceElements[0].replace(superClassRef);
+    }
   }
 
   @Nullable

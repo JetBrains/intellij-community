@@ -38,6 +38,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,7 +67,7 @@ public class ToggleMethodBreakpointAction extends AnAction {
     }
     final BreakpointManager manager = debugManager.getBreakpointManager();
     final PlaceInDocument place = getPlace(e);
-    if(place != null) {
+    if(place != null && DocumentUtil.isValidOffset(place.getOffset(), place.getDocument())) {
       Breakpoint breakpoint = manager.findBreakpoint(place.getDocument(), place.getOffset(), MethodBreakpoint.CATEGORY);
       if(breakpoint == null) {
         final int methodLine = place.getDocument().getLineNumber(place.getOffset());

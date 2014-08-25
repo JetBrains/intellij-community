@@ -96,7 +96,7 @@ public class StringUtil extends StringUtilRt {
     @Nullable
     @Override
     public String fun(@Nullable String s) {
-      return s == null ? null : s.trim();
+      return trim(s);
     }
   };
 
@@ -850,6 +850,11 @@ public class StringUtil extends StringUtilRt {
                                                   @NotNull String secondPrefix,
                                                   @NotNull String thirdPrefix) {
     return startsWithConcatenation(string, firstPrefix, secondPrefix, thirdPrefix);
+  }
+
+  @Nullable
+  public static String trim(@Nullable String s) {
+    return s == null ? null : s.trim();
   }
 
   @NotNull

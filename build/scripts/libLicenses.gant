@@ -252,7 +252,7 @@ libraryLicense(name: "XML-RPC", libraryName: "XmlRPC", version: "2.0", license: 
 libraryLicense(name: "XStream", version: "1.4.3", license: "BSD", url: "http://xstream.codehaus.org/", licenseUrl: "http://xstream.codehaus.org/license.html")
 libraryLicense(name: "YourKit Java Profiler", libraryName: "yjp-controller-api-redist.jar", version: "8.0.x", license: "link (commercial license)", url: "http://yourkit.com/", licenseUrl: "http://www.yourkit.com/purchase/license.html")
 libraryLicense(name: "protobuf", version: "2.5.0", license: "New BSD", url: "http://code.google.com/p/protobuf/", licenseUrl: "http://code.google.com/p/protobuf/source/browse/trunk/COPYING.txt?r=367")
-libraryLicense(name: "Netty", libraryName: "Netty", version: "4.1.0.Beta1", license: "Apache 2.0", url: "http://netty.io", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")
+libraryLicense(name: "Netty", libraryName: "Netty", version: "4.1.0.Beta3", license: "Apache 2.0", url: "http://netty.io", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")
 libraryLicense(name: "Kryo", libraryName: "Kryo", version: "2.22", license: "New BSD License", url: "https://github.com/EsotericSoftware/kryo", licenseUrl: "https://github.com/EsotericSoftware/kryo/blob/master/license.txt")
 libraryLicense(name: "Snappy-Java", libraryName: "Snappy-Java", version: "0.3", license: "Apache 2.0", url: "https://github.com/dain/snappy", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")
 libraryLicense(name: "Cucumber-Java", libraryName: "cucumber-java", version: "1.0.14", license: "MIT License", url: "https://github.com/cucumber/cucumber-jvm/", licenseUrl: "http://www.opensource.org/licenses/mit-license.html")

@@ -14,7 +14,7 @@
     <orderEntry type="module" module-name="bootstrap" />
     <orderEntry type="library" exported="" name="jgoodies-forms" level="project" />
     <orderEntry type="module" module-name="forms_rt" exported="" />
-    <orderEntry type="library" exported="" name="commons-codec" level="project" />
+    <orderEntry type="library" name="commons-codec" level="project" />
     <orderEntry type="module" module-name="platform-resources-en" exported="" />
     <orderEntry type="library" name="OroMatcher" level="project" />
     <orderEntry type="module" module-name="icons" />

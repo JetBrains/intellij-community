@@ -15,18 +15,22 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.ide.ui.search.SearchUtil;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.*;
+import com.intellij.openapi.options.newEditor.IdeSettingsDialog;
 import com.intellij.openapi.options.newEditor.OptionsEditor;
 import com.intellij.openapi.options.newEditor.OptionsEditorDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +46,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.ShowSettingsUtilImpl");
-  private AtomicBoolean myShown = new AtomicBoolean(false);
+  private final AtomicBoolean myShown = new AtomicBoolean(false);
 
   @NotNull
   private static Project getProject(@Nullable Project project) {
@@ -50,10 +54,15 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   @NotNull
-  private static DialogWrapper getDialog(@Nullable Project project, @NotNull ConfigurableGroup[] groups, @Nullable Configurable toSelect) {
+  public static DialogWrapper getDialog(@Nullable Project project, @NotNull ConfigurableGroup[] groups, @Nullable Configurable toSelect) {
+    project = getProject(project);
+    final ConfigurableGroup[] filteredGroups = filterEmptyGroups(groups);
+    if (Registry.is("ide.new.settings.dialog")) {
+      return new IdeSettingsDialog(project, filteredGroups, toSelect);
+    }
     return Registry.is("ide.perProjectModality")
-           ? new OptionsEditorDialog(getProject(project), filterEmptyGroups(groups), toSelect, true)
-           : new OptionsEditorDialog(getProject(project), filterEmptyGroups(groups), toSelect);
+           ? new OptionsEditorDialog(project, filteredGroups, toSelect, true)
+           : new OptionsEditorDialog(project, filteredGroups, toSelect);
   }
 
   @NotNull
@@ -132,20 +141,20 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
 
   @Override
   public void showSettingsDialog(@Nullable final Project project, @NotNull final String nameToSelect) {
-    ConfigurableGroup[] group = getConfigurableGroups(project, true);
-
+    ConfigurableGroup[] groups = getConfigurableGroups(project, true);
     Project actualProject = getProject(project);
 
-    group = filterEmptyGroups(group);
+    groups = filterEmptyGroups(groups);
+    getDialog(actualProject, groups, findPreselectedByDisplayName(nameToSelect, groups)).show();
+  }
 
-    OptionsEditorDialog dialog;
-    if (Registry.is("ide.perProjectModality")) {
-      dialog = new OptionsEditorDialog(actualProject, group, nameToSelect, true);
+  @Nullable
+  private static Configurable findPreselectedByDisplayName(final String preselectedConfigurableDisplayName, ConfigurableGroup[] groups) {
+    final List<Configurable> all = SearchUtil.expand(groups);
+    for (Configurable each : all) {
+      if (preselectedConfigurableDisplayName.equals(each.getDisplayName())) return each;
     }
-    else {
-      dialog = new OptionsEditorDialog(actualProject, group, nameToSelect);
-    }
-    dialog.show();
+    return null;
   }
 
   public static void showSettingsDialog(@Nullable Project project, final String id2Select, final String filter) {
@@ -156,17 +165,12 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     group = filterEmptyGroups(group);
     final Configurable configurable2Select = findConfigurable2Select(id2Select, group);
 
-    final OptionsEditorDialog dialog;
-    if (Registry.is("ide.perProjectModality")) {
-      dialog = new OptionsEditorDialog(actualProject, group, configurable2Select, true);
-    } else {
-      dialog = new OptionsEditorDialog(actualProject, group, configurable2Select);
-    }
+    final DialogWrapper dialog = getDialog(project, group, configurable2Select);
 
     new UiNotifyConnector.Once(dialog.getContentPane(), new Activatable.Adapter() {
       @Override
       public void showNotify() {
-        final OptionsEditor editor = (OptionsEditor)dialog.getData(OptionsEditor.KEY.getName());
+        final OptionsEditor editor = (OptionsEditor)((DataProvider)dialog).getData(OptionsEditor.KEY.getName());
         LOG.assertTrue(editor != null);
         editor.select(configurable2Select, filter);
       }
@@ -241,23 +245,26 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   @Override
-  public boolean editConfigurable(Component parent, Configurable configurable) {
+  public boolean editConfigurable(@Nullable Component parent, @NotNull Configurable configurable) {
     return editConfigurable(parent, configurable, null);
   }
 
   @Override
-  public boolean editConfigurable(final Component parent, final Configurable configurable, @Nullable final Runnable advancedInitialization) {
+  public boolean editConfigurable(@Nullable Component parent, @NotNull Configurable configurable, @Nullable Runnable advancedInitialization) {
     return editConfigurable(parent, null, configurable, createDimensionKey(configurable), advancedInitialization);
   }
 
-  private static boolean editConfigurable(final @Nullable Component parent, @Nullable Project project, final Configurable configurable, final String dimensionKey,
+  private static boolean editConfigurable(@Nullable Component parent,
+                                          @Nullable Project project,
+                                          @NotNull Configurable configurable,
+                                          String dimensionKey,
                                           @Nullable final Runnable advancedInitialization) {
     SingleConfigurableEditor editor;
-    if (parent != null) {
-      editor = new SingleConfigurableEditor(parent, configurable, dimensionKey);
+    if (parent == null) {
+      editor = new SingleConfigurableEditor(project, configurable, dimensionKey);
     }
     else {
-      editor = new SingleConfigurableEditor(project, configurable, dimensionKey);
+      editor = new SingleConfigurableEditor(parent, configurable, dimensionKey);
     }
     if (advancedInitialization != null) {
       new UiNotifyConnector.Once(editor.getContentPane(), new Activatable.Adapter() {
@@ -271,10 +278,9 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     return editor.isOK();
   }
 
-  public static String createDimensionKey(Configurable configurable) {
-    String displayName = configurable.getDisplayName();
-    displayName = displayName.replaceAll("\n", "_").replaceAll(" ", "_");
-    return "#" + displayName;
+  @NotNull
+  public static String createDimensionKey(@NotNull Configurable configurable) {
+    return '#' + StringUtil.replaceChar(StringUtil.replaceChar(configurable.getDisplayName(), '\n', '_'), ' ', '_');
   }
 
   @Override

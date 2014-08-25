@@ -91,10 +91,27 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
   private static boolean hasNonCodeAnnotations(@NotNull PsiModifierListOwner element) {
     Project project = element.getProject();
     PsiAnnotation[] externalAnnotations = ExternalAnnotationsManager.getInstance(project).findExternalAnnotations(element);
-    if (externalAnnotations != null && externalAnnotations.length > 0) {
-      return true;
+    if (externalAnnotations != null) {
+      for (PsiAnnotation annotation : externalAnnotations) {
+        if (isVisibleAnnotation(annotation)) {
+          return true;
+        }
+      }
     }
-    return InferredAnnotationsManager.getInstance(project).findInferredAnnotations(element).length > 0;
+    for (PsiAnnotation annotation : InferredAnnotationsManager.getInstance(project).findInferredAnnotations(element)) {
+      if (isVisibleAnnotation(annotation)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isVisibleAnnotation(@NotNull PsiAnnotation annotation) {
+    PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
+    if (ref == null) return true;
+
+    PsiElement target = ref.resolve();
+    return !(target instanceof PsiClass) || JavaDocInfoGenerator.isDocumentedAnnotationType((PsiClass)target);
   }
 
   @Override

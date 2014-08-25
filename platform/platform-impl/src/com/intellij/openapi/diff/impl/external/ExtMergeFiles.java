@@ -15,9 +15,15 @@
  */
 package com.intellij.openapi.diff.impl.external;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.util.ExecutionErrorDialog;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.impl.mergeTool.MergeRequestImpl;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 
 import java.util.ArrayList;
@@ -35,6 +41,7 @@ public class ExtMergeFiles extends BaseExternalTool {
 
   @Override
   public boolean isAvailable(DiffRequest request) {
+    if (!(request instanceof MergeRequestImpl)) return false;
     DiffContent[] contents = request.getContents();
     if (contents.length != 3) return false;
     if (externalize(request, 0) == null) return false;
@@ -59,5 +66,33 @@ public class ExtMergeFiles extends BaseExternalTool {
       else params.add(param);
     }
     return params;
+  }
+
+  public void show(DiffRequest request) {
+    saveContents(request);
+
+    int result = DialogWrapper.CANCEL_EXIT_CODE;
+
+    GeneralCommandLine commandLine = new GeneralCommandLine();
+    commandLine.setExePath(getToolPath());
+    try {
+      commandLine.addParameters(getParameters(request));
+      commandLine.createProcess();
+
+      if (Messages.YES == Messages.showYesNoDialog(request.getProject(),
+                                                   "Press \"Mark as Resolved\" when you finish resolving conflicts in the external tool",
+                                                   "Merge In External Tool", "Mark as Resolved", "Cancel", null)) {
+        result = DialogWrapper.OK_EXIT_CODE;
+      }
+      ((MergeRequestImpl)request).getResultContent().getFile().refresh(false, false);
+      // We can actually check exit code of external tool, but some of them could work with tabs -> do not close at all
+    }
+    catch (Exception e) {
+      ExecutionErrorDialog
+        .show(new ExecutionException(e.getMessage()), DiffBundle.message("cant.launch.diff.tool.error.message"), request.getProject());
+    }
+    finally {
+      ((MergeRequestImpl)request).setResult(result);
+    }
   }
 }
