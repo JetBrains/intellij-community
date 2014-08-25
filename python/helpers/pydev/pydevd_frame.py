@@ -403,6 +403,12 @@ class PyDBFrame:
                     if stop:
                         self.setSuspend(thread, CMD_SET_BREAK)
 
+                if event == 'return':
+                    if main_debugger.cmd_line:
+                        base = basename(back.f_code.co_filename)
+                        if base == 'pydevd.py' and back.f_code.co_name == 'run':
+                            self.setSuspend(thread, CMD_SET_BREAK) # we suspend on exit
+
                 # if thread has a suspend flag, we suspend with a busy wait
                 if info.pydev_state == STATE_SUSPEND:
                     self.doWaitSuspend(thread, frame, event, arg)

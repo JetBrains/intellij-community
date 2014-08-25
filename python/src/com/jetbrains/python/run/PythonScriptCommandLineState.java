@@ -20,6 +20,7 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.ParamsGroup;
+import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.CommandLineArgumentsProvider;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
@@ -61,10 +62,18 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
   @Override
   public ExecutionResult execute(Executor executor, final CommandLinePatcher... patchers) throws ExecutionException {
     if (myConfig.showCommandLineAfterwards()) {
+      if (executor.getId() == DefaultDebugExecutor.EXECUTOR_ID) {
+        return super.execute(executor, ArrayUtil.append(patchers, new CommandLinePatcher() {
+          @Override
+          public void patchCommandLine(GeneralCommandLine commandLine) {
+            commandLine.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_DEBUGGER).addParameterAt(1, "--cmd-line");
+          }
+        }));
+      }
 
       PydevConsoleRunner runner =
         new PythonScriptWithConsoleRunner(myConfig.getProject(), myConfig.getSdk(), PyConsoleType.PYTHON, myConfig.getWorkingDirectory(),
-                               myConfig.getEnvs(), patchers);
+                                          myConfig.getEnvs(), patchers);
 
       runner.runSync();
 
@@ -109,7 +118,9 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
                                          @NotNull Sdk sdk,
                                          @NotNull PyConsoleType consoleType,
                                          @Nullable String workingDir,
-                                         Map<String, String> environmentVariables, CommandLinePatcher[] patchers, String... statementsToExecute) {
+                                         Map<String, String> environmentVariables,
+                                         CommandLinePatcher[] patchers,
+                                         String... statementsToExecute) {
       super(project, sdk, consoleType, workingDir, environmentVariables, statementsToExecute);
       myPatchers = patchers;
     }
@@ -124,7 +135,6 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
     protected CommandLineArgumentsProvider createCommandLineArgumentsProvider(final Sdk sdk,
                                                                               final Map<String, String> environmentVariables,
                                                                               int[] ports) {
-
       final ArrayList<String> args = new ArrayList<String>();
       args.add(sdk.getHomePath());
       final String versionString = sdk.getVersionString();
@@ -139,7 +149,8 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       try {
         GeneralCommandLine cmd = generateCommandLine(myPatchers);
         args.addAll(cmd.getParametersList().getList());
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
         //pass
       }
       return new CommandLineArgumentsProvider() {
@@ -158,7 +169,6 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
           return addDefaultEnvironments(sdk, environmentVariables);
         }
       };
-
     }
   }
 }

@@ -77,7 +77,7 @@ import pydevd_vm_type
 import pydevd_tracing
 import pydevd_io
 from pydevd_additional_thread_info import PyDBAdditionalThreadInfo
-from pydevd_custom_frames import CustomFramesContainer, CustomFramesContainerInit
+from pydevd_custom_frames import CustomFramesContainer, CustomFramesContainerInit, addCustomFrame
 import pydevd_dont_trace
 import pydevd_traceproperty
 
@@ -1549,6 +1549,64 @@ class PyDB:
         cmd = self.cmdFactory.makeExitMessage()
         self.writer.addCommand(cmd)
 
+    def wait_for_commands(self, globals):
+        thread = threading.currentThread()
+        frame = MyFrame()
+        frame.f_globals = globals
+        frame.f_locals = globals
+        frame.f_lineno = -1
+        frame.f_code = FCode(setup['file'], setup['file'])
+        thread_id = GetThreadId(thread)
+        # frame_id = addCustomFrame(frame, 'todo', GetThreadId(thread))
+        cmd = self.cmdFactory.makeThreadSuspendMessage(thread_id, frame, CMD_CONSOLE_EXEC, '')
+        self.writer.addCommand(cmd)
+        while True:
+            self.processInternalCommands()
+            time.sleep(0.01)
+
+class MyFrame:
+    def __init__(
+            self,
+            frame,
+            template_frame_file=None,
+            template_frame_line=None):
+
+        if template_frame_file is None:
+            template_frame_file = get_template_file_name(frame)
+
+        self.back_context = frame.f_locals['context']
+        self.f_code = FCode('Django Template', template_frame_file)
+
+        if template_frame_line is None:
+            template_frame_line = get_template_line(frame, template_frame_file)
+        self.f_lineno = template_frame_line
+
+        self.f_back = frame
+        self.f_globals = {}
+        self.f_locals = self.collect_context()
+        self.f_trace = None
+
+    def collect_context(self):
+        res = {}
+        try:
+            for d in self.back_context.dicts:
+                res.update(d)
+        except AttributeError:
+            pass
+        return res
+
+    def changeVariable(self, name, value):
+        for d in self.back_context.dicts:
+            if DictContains(d, name):
+                d[name] = value
+        self.f_locals[name] = value
+
+
+class FCode:
+    def __init__(self, name, filename):
+        self.co_name = name
+        self.co_filename = filename
+
 def set_debug(setup):
     setup['DEBUG_RECORD_SOCKET_READS'] = True
     setup['DEBUG_TRACE_BREAKPOINTS'] = 1
@@ -1566,6 +1624,7 @@ def processCommandLine(argv):
     setup['multiproc'] = False #Used by PyCharm (reuses connection: ssh tunneling)
     setup['multiprocess'] = False # Used by PyDev (creates new connection to ide)
     setup['save-signatures'] = False
+    setup['cmd-line'] = False
     i = 0
     del argv[0]
     while (i < len(argv)):
@@ -1603,6 +1662,9 @@ def processCommandLine(argv):
         elif (argv[i] == '--save-signatures'):
             del argv[i]
             setup['save-signatures'] = True
+        elif (argv[i] == '--cmd-line'):
+            del argv[i]
+            setup['cmd-line'] = True
         else:
             raise ValueError("unexpected option " + argv[i])
     return setup
@@ -2036,6 +2098,11 @@ if __name__ == '__main__':
     except:
         pass  # It's ok not having stackless there...
 
+    debugger = PyDB()
+
+    if setup['cmd-line']:
+        debugger.cmd_line = True
+
     if fix_app_engine_debug:
         sys.stderr.write("pydev debugger: google app engine integration enabled\n")
         curr_dir = os.path.dirname(__file__)
@@ -2048,10 +2115,8 @@ if __name__ == '__main__':
         sys.argv.insert(3, '--automatic_restart=no')
         sys.argv.insert(4, '--max_module_instances=1')
 
-        debugger = PyDB()
         # Run the dev_appserver
         debugger.run(setup['file'], None, None, set_trace=False)
-
     else:
         # as to get here all our imports are already resolved, the psyco module can be
         # changed and we'll still get the speedups in the debugger, as those functions
@@ -2067,7 +2132,6 @@ if __name__ == '__main__':
             import pydevd_psyco_stub
             sys.modules['psyco'] = pydevd_psyco_stub
 
-        debugger = PyDB()
 
         if setup['save-signatures']:
             if pydevd_vm_type.GetVmType() == pydevd_vm_type.PydevdVmType.JYTHON:
@@ -2085,3 +2149,8 @@ if __name__ == '__main__':
         connected = True  # Mark that we're connected when started from inside ide.
 
         debugger.run(setup['file'], None, None)
+
+        # if setup['cmd-line']:
+        #     debugger.wait_for_commands(globals)
+
+
