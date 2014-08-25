@@ -24,8 +24,10 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SingleAlarm;
+import com.mcdermottroe.apple.OSXKeychain;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -34,12 +36,13 @@ import org.jetbrains.plugins.settingsRepository.git.GitRepositoryManager;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.Collection;
 
-public class IcsManager implements ApplicationLoadListener, Disposable {
+public final class IcsManager implements ApplicationLoadListener, Disposable {
   static final Logger LOG = Logger.getInstance(IcsManager.class);
 
-  public static final String PLUGIN_NAME = "Idea Configuration Server";
+  public static final String PLUGIN_NAME = "Settings Repository";
 
   private final IcsSettings settings = new IcsSettings();
 
@@ -51,11 +54,35 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
     @NotNull
     @Override
     protected CredentialsStore compute() {
+      if (SystemInfo.isMacIntel64 && SystemInfo.isMacOSLeopard) {
+        try {
+          OSXKeychain.setLibraryPath(getPathToBundledFile("osxkeychain.so"));
+          return new OsXCredentialsStore();
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+      }
       return new FileCredentialsStore();
     }
   };
 
-  protected final SingleAlarm commitAlarm = new SingleAlarm(new Runnable() {
+  @NotNull
+  private static String getPathToBundledFile(@NotNull String filename) {
+    final URL url = IcsManager.class.getResource("");
+    String folder;
+    if ("jar".equals(url.getProtocol())) {
+      // running from build
+      folder = "/plugins/settings-repository";
+    }
+    else {
+      // running from sources
+      folder = "/settings-repository";
+    }
+    return FileUtil.toSystemDependentName(PathManager.getHomePath() + folder + "/lib/" + filename);
+  }
+
+  private final SingleAlarm commitAlarm = new SingleAlarm(new Runnable() {
     @Override
     public void run() {
       ProgressManager.getInstance().run(new Task.Backgroundable(null, IcsBundle.message("task.commit.title")) {

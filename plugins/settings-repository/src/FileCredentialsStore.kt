@@ -9,7 +9,7 @@ import org.eclipse.jgit.transport.URIish
 import java.io.*
 
 class FileCredentialsStore : CredentialsStore {
-  // we store only one pair for any URL, don't want to add complexity, OS keychain should be used
+  // we store only one for any URL, don't want to add complexity, OS keychain should be used
   private var credentials: Credentials? = null
 
   {
@@ -36,13 +36,9 @@ class FileCredentialsStore : CredentialsStore {
     }
   }
 
-  private fun getPasswordStorageFile(): File {
-    return File(IcsManager.getPluginSystemDir(), ".git_auth")
-  }
+  private fun getPasswordStorageFile() = File(IcsManager.getPluginSystemDir(), ".git_auth")
 
-  override fun get(uri: URIish): Credentials? {
-    return credentials
-  }
+  override fun get(uri: URIish): Credentials? = credentials
 
   override fun reset(uri: URIish) {
     if (credentials != null) {
@@ -51,7 +47,7 @@ class FileCredentialsStore : CredentialsStore {
   }
 
   override fun save(uri: URIish, credentials: Credentials) {
-    if (this.credentials?.equals(credentials) === true) {
+    if (credentials.equals(this.credentials)) {
       return
     }
 
