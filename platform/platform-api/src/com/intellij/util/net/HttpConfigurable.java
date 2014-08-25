@@ -96,7 +96,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     return ServiceManager.getService(HttpConfigurable.class);
   }
 
-  public static boolean editConfigurable(JComponent parent) {
+  public static boolean editConfigurable(@Nullable JComponent parent) {
     return ShowSettingsUtil.getInstance().editConfigurable(parent, new HTTPProxySettingsPanel(getInstance()));
   }
 
@@ -175,15 +175,16 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     synchronized (myLock) {
       proxyInfo = myGenericPasswords.get(new CommonProxy.HostInfo("", host, port));
     }
-    if (proxyInfo == null) return null;
+    if (proxyInfo == null) {
+      return null;
+    }
     return new PasswordAuthentication(proxyInfo.getUsername(), decode(String.valueOf(proxyInfo.getPasswordCrypt())).toCharArray());
   }
 
   public void putGenericPassword(final String host, final int port, final PasswordAuthentication authentication, final boolean remember) {
-    final PasswordAuthentication coded = new PasswordAuthentication(authentication.getUserName(), encode(String.valueOf(authentication.getPassword())).toCharArray());
+    PasswordAuthentication coded = new PasswordAuthentication(authentication.getUserName(), encode(String.valueOf(authentication.getPassword())).toCharArray());
     synchronized (myLock) {
-      myGenericPasswords.put(new CommonProxy.HostInfo("", host, port), new ProxyInfo(remember, coded.getUserName(), String.valueOf(
-        coded.getPassword())));
+      myGenericPasswords.put(new CommonProxy.HostInfo("", host, port), new ProxyInfo(remember, coded.getUserName(), String.valueOf(coded.getPassword())));
     }
   }
 
