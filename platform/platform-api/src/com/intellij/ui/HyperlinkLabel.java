@@ -223,7 +223,9 @@ public class HyperlinkLabel extends HighlightableComponent {
       LOG.error(e);
     }
     highlightedText.applyToComponent(this);
-    ((JComponent)getParent()).revalidate();
+    final JComponent parent = (JComponent)getParent();
+    parent.revalidate();
+    parent.repaint();
     adjustSize();
   }
 
