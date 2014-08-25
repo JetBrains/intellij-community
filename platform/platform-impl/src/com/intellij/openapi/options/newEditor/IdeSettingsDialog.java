@@ -29,13 +29,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.Gray;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.border.CustomLineBorder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -124,7 +128,8 @@ public class IdeSettingsDialog extends DialogWrapper implements DataProvider {
   @Override
   protected JComponent createSouthPanel() {
     final JComponent panel = super.createSouthPanel();
-    panel.setBorder(new EmptyBorder(0, 12, 8, 12));
+    CustomLineBorder line = new CustomLineBorder(new JBColor(Gray._153, Gray._80), 1, 0, 0, 0);
+    panel.setBorder(new CompoundBorder(line, new EmptyBorder(0, 12, 8, 12)));
     return panel;
   }
 
