@@ -48,7 +48,8 @@ public class HyperlinkLabel extends HighlightableComponent {
     @NotNull
     @Override
     public Color produce() {
-      return UIUtil.getLabelTextForeground();
+      final Color foreground = UIUtil.getLabelTextForeground();
+      return foreground == null ? UIUtil.getLabelForeground() : foreground;
     }
   }), null, null, null, Font.BOLD);
 
