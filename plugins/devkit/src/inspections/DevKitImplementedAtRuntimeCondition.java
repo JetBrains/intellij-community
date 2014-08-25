@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.lang.documentation;
+package org.jetbrains.idea.devkit.inspections;
+
+import com.intellij.codeInspection.inheritance.ImplementedAtRuntimeCondition;
+import com.intellij.psi.PsiClass;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Dmitry Avdeev
+ * @author nik
  */
-public abstract class AbstractDocumentationProvider extends DocumentationProviderEx {
-
+public class DevKitImplementedAtRuntimeCondition extends ImplementedAtRuntimeCondition {
+  @Override
+  public boolean isImplementedAtRuntime(@NotNull PsiClass psiClass) {
+    return DevKitImplicitUsageProvider.isDomElementClass(psiClass);
+  }
 }

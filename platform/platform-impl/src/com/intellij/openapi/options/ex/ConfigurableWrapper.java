@@ -165,10 +165,6 @@ public class ConfigurableWrapper implements SearchableConfigurable {
     return myEp;
   }
 
-  public String getGroupId() {
-    return myEp.groupId;
-  }
-
   public String getParentId() {
     return myEp.parentId;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.lang.documentation;
+package com.intellij.codeInspection.inheritance;
+
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.psi.PsiClass;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Dmitry Avdeev
+ * @author nik
  */
-public abstract class AbstractDocumentationProvider extends DocumentationProviderEx {
+public abstract class ImplementedAtRuntimeCondition {
+  public static final ExtensionPointName<ImplementedAtRuntimeCondition> EP_NAME = ExtensionPointName.create("com.intellij.codeInsight.implementedAtRuntime");
 
+  public abstract boolean isImplementedAtRuntime(@NotNull PsiClass psiClass);
 }

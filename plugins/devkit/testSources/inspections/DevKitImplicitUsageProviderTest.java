@@ -20,6 +20,7 @@ import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.siyeh.ig.inheritance.AbstractClassNeverImplementedInspection;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/implicitUsage")
 public class DevKitImplicitUsageProviderTest extends LightCodeInsightFixtureTestCase {
@@ -37,7 +38,7 @@ public class DevKitImplicitUsageProviderTest extends LightCodeInsightFixtureTest
     myFixture.addClass("package com.intellij.util.xml; public interface DomElementVisitor {}");
     myFixture.addClass("package com.intellij.util.xml; public interface GenericAttributeValue<T> extends DomElement {}");
 
-    myFixture.enableInspections(new UnusedSymbolLocalInspection(), new UnusedDeclarationInspection());
+    myFixture.enableInspections(new UnusedSymbolLocalInspection(), new UnusedDeclarationInspection(), new AbstractClassNeverImplementedInspection());
   }
 
   public void testImplicitUsagesDomElement() {

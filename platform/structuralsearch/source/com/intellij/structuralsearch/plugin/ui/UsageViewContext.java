@@ -8,9 +8,13 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceCommand;
-import com.intellij.usages.*;
+import com.intellij.usages.ConfigurableUsageTarget;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageViewPresentation;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -61,20 +65,15 @@ public class UsageViewContext {
     return new SearchCommand(mySearchContext.getProject(), this);
   }
 
-  protected String _getPresentableText() {
-    return myConfiguration.getMatchOptions().getSearchPattern();
-  }
-
-  public UsageTarget getTarget() {
-    return new MyUsageTarget(_getPresentableText());
+  public ConfigurableUsageTarget getTarget() {
+    return new MyUsageTarget();
   }
 
   public void configure(@NotNull UsageViewPresentation presentation) {
-    String s = _getPresentableText();
-    if (s.length() > 15) s = s.substring(0,15) + "...";
-    final String usagesString = SSRBundle.message("occurrences.of", s);
-    presentation.setUsagesString(usagesString);
-    presentation.setTabText(StringUtil.capitalize(usagesString));
+    final String pattern = myConfiguration.getMatchOptions().getSearchPattern();
+    final String usagesString = SSRBundle.message("occurrences.of", StringUtil.shortenTextWithEllipsis(pattern, 50, 0, true));
+    presentation.setUsagesString(SSRBundle.message("occurrences.of", pattern));
+    presentation.setTabText(usagesString);
     presentation.setUsagesWord(SSRBundle.message("occurrence"));
     presentation.setCodeUsagesString(SSRBundle.message("found.occurrences"));
   }
@@ -82,15 +81,12 @@ public class UsageViewContext {
   protected void configureActions() {}
 
   private class MyUsageTarget implements ConfigurableUsageTarget,ItemPresentation {
-    private final String myPresentableText;
 
-    MyUsageTarget(String str) {
-      myPresentableText = str;
-    }
-
+    @NotNull
     @Override
     public String getPresentableText() {
-      return myPresentableText;
+      final MatchOptions matchOptions = myConfiguration.getMatchOptions();
+      return SSRBundle.message("occurrences.of.0.in.1", matchOptions.getSearchPattern(), matchOptions.getScope().getDisplayName());
     }
 
     @Override
@@ -177,7 +173,7 @@ public class UsageViewContext {
     @NotNull
     @Override
     public String getLongDescriptiveName() {
-      return _getPresentableText();
+      return getPresentableText();
     }
   }
 }

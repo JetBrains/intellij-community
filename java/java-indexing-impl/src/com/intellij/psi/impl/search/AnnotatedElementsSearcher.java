@@ -18,7 +18,6 @@ package com.intellij.psi.impl.search;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
@@ -50,7 +49,12 @@ public class AnnotatedElementsSearcher implements QueryExecutor<PsiModifierListO
     });
     assert annotationFQN != null;
 
-    final PsiManagerImpl psiManager = (PsiManagerImpl)annClass.getManager();
+    final PsiManager psiManager = ApplicationManager.getApplication().runReadAction(new Computable<PsiManager>() {
+      @Override
+      public PsiManager compute() {
+        return annClass.getManager();
+      }
+    });
 
     final SearchScope useScope = p.getScope();
     final Class<? extends PsiModifierListOwner>[] types = p.getTypes();

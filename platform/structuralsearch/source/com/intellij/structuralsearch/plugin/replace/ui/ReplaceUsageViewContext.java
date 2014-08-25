@@ -44,13 +44,6 @@ class ReplaceUsageViewContext extends UsageViewContext {
     return command;
   }
 
-  protected String _getPresentableText() {
-    return SSRBundle.message("replaceusageview.text",
-                             getConfiguration().getMatchOptions().getSearchPattern(),
-                            ((ReplaceConfiguration)getConfiguration()).getOptions().getReplacement()
-    );
-  }
-
   public Replacer getReplacer() {
     return replacer;
   }

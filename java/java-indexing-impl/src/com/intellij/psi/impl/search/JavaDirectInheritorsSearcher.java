@@ -110,9 +110,14 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
 
     Map<String, List<PsiClass>> classes = new HashMap<String, List<PsiClass>>();
 
-    for (PsiReferenceList referenceList : candidates) {
+    for (final PsiReferenceList referenceList : candidates) {
       ProgressIndicatorProvider.checkCanceled();
-      final PsiClass candidate = (PsiClass)referenceList.getParent();
+      final PsiClass candidate = (PsiClass)ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
+        @Override
+        public PsiElement compute() {
+          return referenceList.getParent();
+        }
+      });
       if (!checkInheritance(p, aClass, candidate)) continue;
 
       String fqn = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
@@ -148,7 +153,13 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
         if (!consumer.process(candidate)) return false;
       }
 
-      if (aClass.isEnum()) {
+      boolean isEnum = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          return aClass.isEnum();
+        }
+      });
+      if (isEnum) {
         // abstract enum can be subclassed in the body
         PsiField[] fields = ApplicationManager.getApplication().runReadAction(new Computable<PsiField[]>() {
           @Override
@@ -189,10 +200,10 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     // if there is a class from the same jar, prefer it
     boolean sameJarClassFound = false;
 
-    VirtualFile jarFile = PsiUtil.getJarFile(aClass);
+    VirtualFile jarFile = getJarFile(aClass);
     if (jarFile != null) {
       for (PsiClass sameNamedClass : sameNamedClasses) {
-        boolean fromSameJar = Comparing.equal(PsiUtil.getJarFile(sameNamedClass), jarFile);
+        boolean fromSameJar = Comparing.equal(getJarFile(sameNamedClass), jarFile);
         if (fromSameJar) {
           sameJarClassFound = true;
           if (!consumer.process(sameNamedClass)) return false;
@@ -201,5 +212,14 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     }
 
     return sameJarClassFound || ContainerUtil.process(sameNamedClasses, consumer);
+  }
+
+  private static VirtualFile getJarFile(final PsiClass aClass) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
+      @Override
+      public VirtualFile compute() {
+        return PsiUtil.getJarFile(aClass);
+      }
+    });
   }
 }
