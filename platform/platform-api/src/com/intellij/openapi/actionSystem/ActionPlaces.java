@@ -76,6 +76,7 @@ public abstract class ActionPlaces {
   public static final String ANT_MESSAGES_TOOLBAR = "AntMessagesToolbar";
   public static final String ANT_EXPLORER_POPUP = "AntExplorerPopup";
   public static final String ANT_EXPLORER_TOOLBAR = "AntExplorerToolbar";
+  public static final String GULP_VIEW_POPUP = "JavaScriptGulpPopup";
 
   //todo: probably these context should be splitted into several contexts
   public static final String CODE_INSPECTION = "CodeInspection";
@@ -133,7 +134,7 @@ public abstract class ActionPlaces {
     FILEVIEW_POPUP, CHECKOUT_POPUP, LVCS_DIRECTORY_HISTORY_POPUP, GUI_DESIGNER_EDITOR_POPUP, GUI_DESIGNER_COMPONENT_TREE_POPUP,
     GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP,
     CREATE_EJB_POPUP, CHANGES_VIEW_POPUP, REMOTE_HOST_VIEW_POPUP, REMOTE_HOST_DIALOG_POPUP, TFS_TREE_POPUP,
-    ACTION_PLACE_VCS_QUICK_LIST_POPUP_ACTION, PHING_EXPLORER_POPUP, NAVIGATION_BAR_POPUP
+    ACTION_PLACE_VCS_QUICK_LIST_POPUP_ACTION, PHING_EXPLORER_POPUP, NAVIGATION_BAR_POPUP, GULP_VIEW_POPUP
   };
 
   public static boolean isPopupPlace(@NotNull String place) {
