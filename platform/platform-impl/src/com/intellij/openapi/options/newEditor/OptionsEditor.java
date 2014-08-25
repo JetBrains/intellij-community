@@ -38,6 +38,7 @@ import com.intellij.openapi.util.EdtRunnable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.LightColors;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -248,7 +249,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
     setLayout(new BorderLayout());
 
-    myMainSplitter = new Splitter(false);
+    myMainSplitter = Registry.is("ide.new.settings.dialog") ? new OnePixelSplitter(false) : new Splitter(false);
     myMainSplitter.setFirstComponent(myLeftSide);
 
     myLoadingDecorator = new LoadingDecorator(myOwnDetails.getComponent(), this, 150);
