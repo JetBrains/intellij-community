@@ -1,4 +1,5 @@
 import sys
+import re
 from docutils.core import publish_string
 from docutils import nodes
 from docutils.nodes import Text
@@ -53,6 +54,53 @@ class RestHTMLTranslator(_EpydocHTMLTranslator):
     if node.parent[0][0].astext().startswith("type "):
       self.body.append("</a>")
     HTMLTranslator.depart_field_body(self, node)
+
+  def visit_reference(self, node):
+    atts = {}
+    if 'refuri' in node:
+      atts['href'] = node['refuri']
+      if self.settings.cloak_email_addresses and atts['href'].startswith('mailto:'):
+        atts['href'] = self.cloak_mailto(atts['href'])
+        self.in_mailto = True
+      # atts['class'] += ' external'
+    else:
+      assert 'refid' in node, 'References must have "refuri" or "refid" attribute.'
+      atts['href'] = '#' + node['refid']
+      atts['class'] += ' internal'
+    if not isinstance(node.parent, nodes.TextElement):
+      assert len(node) == 1 and isinstance(node[0], nodes.image)
+      atts['class'] += ' image-reference'
+    self.body.append(self.starttag(node, 'a', '', **atts))
+
+  def starttag(self, node, tagname, suffix='\n', **attributes):
+    attr_dicts = [attributes]
+    if isinstance(node, nodes.Node):
+        attr_dicts.append(node.attributes)
+    if isinstance(node, dict):
+        attr_dicts.append(node)
+    # Munge each attribute dictionary.  Unfortunately, we need to
+    # iterate through attributes one at a time because some
+    # versions of docutils don't case-normalize attributes.
+    for attr_dict in attr_dicts:
+        for (key, val) in attr_dict.items():
+            # Prefix all CSS classes with "rst-"; and prefix all
+            # names with "rst-" to avoid conflicts.
+            if key.lower() in ('class', 'id', 'name'):
+                attr_dict[key] = 'rst-%s' % val
+            elif key.lower() in ('classes', 'ids', 'names'):
+                attr_dict[key] = ['rst-%s' % cls for cls in val]
+            elif key.lower() == 'href':
+                if attr_dict[key][:1]=='#':
+                    attr_dict[key] = '#rst-%s' % attr_dict[key][1:]
+                else:
+                    pass
+    # For headings, use class="heading"
+    if re.match(r'^h\d+$', tagname):
+        attributes['class'] = ' '.join([attributes.get('class',''),
+                                        'heading']).strip()
+
+    return HTMLTranslator.starttag(self, node, tagname, suffix,
+                                       **attributes)
 
 
   def visit_field_list(self, node):
