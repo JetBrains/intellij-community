@@ -16,7 +16,6 @@
 package org.zmlx.hg4idea.push;
 
 import com.intellij.dvcs.push.*;
-import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -106,12 +105,12 @@ public class HgPushSupport extends PushSupport<HgRepository, HgPushSource, HgTar
 
   @Override
   @Nullable
-  public VcsError validate(@NotNull Repository repository, @Nullable String targetToValidate) {
+  public VcsError validate(@NotNull HgRepository repository, @Nullable String targetToValidate) {
     return StringUtil.isEmptyOrSpaces(targetToValidate) ? new VcsError("Please, specify remote push path for repository!") : null;
   }
 
   @Override
-  public SimpleColoredText renderTarget(@Nullable PushTarget target) {
+  public SimpleColoredText renderTarget(@Nullable HgTarget target) {
     if (target == null || StringUtil.isEmptyOrSpaces(target.getPresentation())) {
       return new SimpleColoredText(ENTER_REMOTE, SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
     }

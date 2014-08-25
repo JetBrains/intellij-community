@@ -85,7 +85,7 @@ public abstract class PushSupport<Repo extends Repository, Source extends PushSo
    * @return null if target is valid for selected repository
    */
   @Nullable
-  public abstract VcsError validate(@NotNull Repository repository, @Nullable String targetToValidate);
+  public abstract VcsError validate(@NotNull Repo repository, @Nullable String targetToValidate);
 
-  public abstract SimpleColoredText renderTarget(@Nullable PushTarget target);
+  public abstract SimpleColoredText renderTarget(@Nullable Target target);
 }
