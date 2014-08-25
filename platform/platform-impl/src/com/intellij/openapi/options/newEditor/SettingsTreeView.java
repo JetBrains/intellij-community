@@ -476,6 +476,11 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     }
 
     @Override
+    protected Color getForeground() {
+      return new JBColor(Gray._60, Gray._140);
+    }
+
+    @Override
     protected void layout() {
       myNodeIcon = new JLabel(" ", SwingConstants.RIGHT);
       myProjectIcon = new JLabel(" ", SwingConstants.LEFT);
