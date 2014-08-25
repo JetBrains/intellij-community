@@ -104,6 +104,13 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     myConsoleView.attachToProcess(myProcessHandler);
 
     // Runner creating
+    createContentDescriptor();
+
+    // Run
+    myProcessHandler.startNotify();
+  }
+
+  protected void createContentDescriptor() {
     final Executor defaultExecutor = DefaultRunExecutor.getRunExecutorInstance();
     final DefaultActionGroup toolbarActions = new DefaultActionGroup();
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions, false);
@@ -134,9 +141,6 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     panel.updateUI();
 
     showConsole(defaultExecutor, contentDescriptor);
-
-    // Run
-    myProcessHandler.startNotify();
   }
 
   protected String constructConsoleTitle(final @NotNull String consoleTitle) {
