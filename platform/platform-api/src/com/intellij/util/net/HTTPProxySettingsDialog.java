@@ -23,7 +23,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 
 public class HTTPProxySettingsDialog extends DialogWrapper {
-  private final HTTPProxySettingsPanel panel;
+  private final HttpProxySettingsUi panel;
   private final Action okAction;
   private final Action cancelAction;
 
@@ -31,7 +31,7 @@ public class HTTPProxySettingsDialog extends DialogWrapper {
     super(false);
 
     setTitle(CommonBundle.message("title.http.proxy.settings"));
-    panel = new HTTPProxySettingsPanel(HttpConfigurable.getInstance());
+    panel = new HttpProxySettingsUi(HttpConfigurable.getInstance());
     panel.reset();
 
     okAction = new AbstractAction(CommonBundle.getOkButtonText()) {

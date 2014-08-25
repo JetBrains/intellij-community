@@ -43,7 +43,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class HTTPProxySettingsPanel implements SearchableConfigurable, Configurable.NoScroll {
+public class HttpProxySettingsUi implements SearchableConfigurable, Configurable.NoScroll {
   public static final String NAME = "Proxy";
   private JPanel myMainPanel;
 
@@ -102,7 +102,7 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
     return isModified;
   }
 
-  public HTTPProxySettingsPanel(final HttpConfigurable httpConfigurable) {
+  public HttpProxySettingsUi(final HttpConfigurable httpConfigurable) {
     final ButtonGroup group = new ButtonGroup();
     group.add(myUseHTTPProxyRb);
     group.add(myAutoDetectProxyRb);

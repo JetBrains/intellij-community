@@ -97,7 +97,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   }
 
   public static boolean editConfigurable(@Nullable JComponent parent) {
-    return ShowSettingsUtil.getInstance().editConfigurable(parent, new HTTPProxySettingsPanel(getInstance()));
+    return ShowSettingsUtil.getInstance().editConfigurable(parent, new HttpProxySettingsUi(getInstance()));
   }
 
   @Override
