@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.DocumentUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
@@ -91,7 +92,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     RangeHighlighterEx highlighter = myHighlighter;
     if (highlighter != null &&
         (!highlighter.isValid()
-         || highlighter.getStartOffset() >= document.getTextLength()
+         || !DocumentUtil.isValidOffset(highlighter.getStartOffset(), document)
          || !Comparing.equal(highlighter.getTextAttributes(), attributes)
          // it seems that this check is not needed - we always update line number from the highlighter
          // and highlighter is removed on line and file change anyway
