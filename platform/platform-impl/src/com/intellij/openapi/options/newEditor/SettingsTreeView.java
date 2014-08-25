@@ -36,6 +36,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +48,6 @@ import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.plaf.TreeUI;
-import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
@@ -96,6 +96,9 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     myTree.setShowsRootHandles(false);
 
     myScroller = ScrollPaneFactory.createScrollPane(myTree, true);
+    myScroller.setBackground(UIUtil.getSidePanelColor());
+    myScroller.getViewport().setBackground(UIUtil.getSidePanelColor());
+    myScroller.getVerticalScrollBar().setBackground(UIUtil.getSidePanelColor());
     add(myScroller);
 
     myTree.addComponentListener(new ComponentAdapter() {
@@ -498,8 +501,11 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
                                                   boolean leaf,
                                                   int row,
                                                   boolean focused) {
-      myTextLabel.setOpaque(selected);
+      myTextLabel.setOpaque(true);
+      myNodeIcon.setOpaque(true);
       myTextLabel.setFont(UIUtil.getLabelFont());
+      myNodeIcon.setBackground(selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getSidePanelColor());
+      myRendererComponent.setBackground(selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getSidePanelColor());
 
       String text;
       boolean hasSeparatorAbove = false;
@@ -728,7 +734,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
       super.processMouseEvent(e);
     }
 
-    private final class MyTreeUi extends BasicTreeUI {
+    private final class MyTreeUi extends WideSelectionTreeUI {
 
       @Override
       public void toggleExpandState(TreePath path) {
