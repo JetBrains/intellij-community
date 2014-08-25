@@ -23,10 +23,11 @@
   <depends>com.intellij.modules.python</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-      <directoryProjectGenerator implementation="org.jetbrains.plugins.coursecreator.CCProjectGenerator"/>
-      <projectService serviceImplementation="org.jetbrains.plugins.coursecreator.CCProjectService"/>
-      <codeInsight.lineMarkerProvider language="Python" implementationClass="org.jetbrains.plugins.coursecreator.highlighting.CCTaskLineMarkerProvider"/>
-      <treeStructureProvider implementation="org.jetbrains.plugins.coursecreator.projectView.CCTreeStructureProvider"/>
+    <directoryProjectGenerator implementation="org.jetbrains.plugins.coursecreator.CCProjectGenerator"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.coursecreator.CCProjectService"/>
+    <codeInsight.lineMarkerProvider language="Python"
+                                    implementationClass="org.jetbrains.plugins.coursecreator.highlighting.CCTaskLineMarkerProvider"/>
+    <treeStructureProvider implementation="org.jetbrains.plugins.coursecreator.projectView.CCTreeStructureProvider"/>
   </extensions>
 
   <application-components>
@@ -41,19 +42,22 @@
   </project-components>
 
   <actions>
-      <action id="CreateLesson" class="org.jetbrains.plugins.coursecreator.actions.CreateLesson">
-          <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
-      </action>
-      <action id="CreateTask" class="org.jetbrains.plugins.coursecreator.actions.CreateTask">
-          <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
-      </action>
-      <action id="AddTaskWindow" class="org.jetbrains.plugins.coursecreator.actions.AddTaskWindow">
-          <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="CopyReference"/>
-      </action>
-      <action id="GenerateJson" class="org.jetbrains.plugins.coursecreator.actions.GenerateJson">
-      </action>
-      <action id="PackCourse" class="org.jetbrains.plugins.coursecreator.actions.PackCourse">
-      </action>
+    <action id="CreateLesson" class="org.jetbrains.plugins.coursecreator.actions.CreateLesson">
+      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
+    </action>
+    <action id="CreateTaskFile" class="org.jetbrains.plugins.coursecreator.actions.CreateTaskFileAction">
+      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
+    </action>
+    <action id="CreateTask" class="org.jetbrains.plugins.coursecreator.actions.CreateTask">
+      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
+    </action>
+    <action id="AddTaskWindow" class="org.jetbrains.plugins.coursecreator.actions.AddTaskWindow">
+      <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="CopyReference"/>
+    </action>
+    <action id="GenerateJson" class="org.jetbrains.plugins.coursecreator.actions.GenerateJson">
+    </action>
+    <action id="PackCourse" class="org.jetbrains.plugins.coursecreator.actions.PackCourse">
+    </action>
   </actions>
 
 </idea-plugin>
