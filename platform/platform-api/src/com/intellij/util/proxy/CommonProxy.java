@@ -22,6 +22,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -206,14 +208,12 @@ public class CommonProxy extends ProxySelector {
     }
     try {
       ourReenterDefence.set(Boolean.TRUE);
-      final String host = uri.getHost() == null ? "" : uri.getHost();
-      final int port = correctPortByProtocol(uri);
-      final String protocol = uri.getScheme();
-      if ("localhost".equals(host) || "127.0.0.1".equals(host) || "::1".equals(host)) {
+      String host = StringUtil.notNullize(uri.getHost());
+      if (NetUtils.isLocalhost(host)) {
         return NO_PROXY_LIST;
       }
 
-      final HostInfo info = new HostInfo(protocol, host, port);
+      final HostInfo info = new HostInfo(uri.getScheme(), host, correctPortByProtocol(uri));
       final Map<String, ProxySelector> copy;
       synchronized (myLock) {
         if (myNoProxy.contains(Pair.create(info, Thread.currentThread()))) {
@@ -224,13 +224,14 @@ public class CommonProxy extends ProxySelector {
       }
       for (Map.Entry<String, ProxySelector> entry : copy.entrySet()) {
         final List<Proxy> proxies = entry.getValue().select(uri);
-        if (proxies != null && proxies.size() > 0) {
+        if (!ContainerUtil.isEmpty(proxies)) {
           LOG.debug("CommonProxy.select returns custom proxy for " + uri.toString() + ", " + proxies.toString());
           return proxies;
         }
       }
       return NO_PROXY_LIST;
-    } finally {
+    }
+    finally {
       ourReenterDefence.remove();
     }
   }

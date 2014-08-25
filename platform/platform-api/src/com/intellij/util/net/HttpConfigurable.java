@@ -33,6 +33,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.Base64;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.WaitForProgressToShow;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.proxy.JavaProxyProperty;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -59,8 +60,7 @@ import java.util.*;
   },
   storageChooser = HttpConfigurable.StorageChooser.class
 )
-public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, ApplicationComponent,
-                                         ExportableApplicationComponent {
+public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, ExportableApplicationComponent {
   public static final int CONNECTION_TIMEOUT = SystemProperties.getIntProperty("idea.connection.timeout", 10000);
   private static final Logger LOG = Logger.getInstance(HttpConfigurable.class);
 
@@ -348,8 +348,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
    * @throws IOException
    */
   public void prepareURL(@NotNull String url) throws IOException {
-    CommonProxy.isInstalledAssertion();
-
     URLConnection connection = openConnection(url);
     try {
       connection.connect();
@@ -367,31 +365,34 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     }
   }
 
+  @NotNull
   public URLConnection openConnection(@NotNull String location) throws IOException {
     CommonProxy.isInstalledAssertion();
     final URL url = new URL(location);
     URLConnection urlConnection = null;
     final List<Proxy> proxies = CommonProxy.getInstance().select(url);
-    if (proxies == null || proxies.isEmpty()) {
+    if (ContainerUtil.isEmpty(proxies)) {
       urlConnection = url.openConnection();
-    } else {
-      IOException ioe = null;
+    }
+    else {
+      IOException exception = null;
       for (Proxy proxy : proxies) {
         try {
           urlConnection = url.openConnection(proxy);
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
           // continue iteration
-          ioe = e;
+          exception = e;
         }
       }
-      if (urlConnection == null && ioe != null) {
-        throw ioe;
+      if (urlConnection == null && exception != null) {
+        throw exception;
       }
     }
-    if (urlConnection != null) {
-      urlConnection.setReadTimeout(CONNECTION_TIMEOUT);
-      urlConnection.setConnectTimeout(CONNECTION_TIMEOUT);
-    }
+
+    assert urlConnection != null;
+    urlConnection.setReadTimeout(CONNECTION_TIMEOUT);
+    urlConnection.setConnectTimeout(CONNECTION_TIMEOUT);
     return urlConnection;
   }
 
