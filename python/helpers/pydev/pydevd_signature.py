@@ -6,7 +6,6 @@ trace._warn = lambda *args: None   # workaround for http://bugs.python.org/issue
 import gc
 from pydevd_comm import CMD_SIGNATURE_CALL_TRACE, NetCommand
 import pydevd_vars
-from pydevd_constants import xrange
 
 class Signature(object):
     def __init__(self, file, name):
@@ -44,7 +43,7 @@ class SignatureFactory(object):
             locals = frame.f_locals
             filename, modulename, funcname = self.file_module_function_of(frame)
             res = Signature(filename, funcname)
-            for i in xrange(0, code.co_argcount):
+            for i in range(0, code.co_argcount):
                 name = code.co_varnames[i]
                 tp = type(locals[name])
                 class_name = tp.__name__
@@ -124,8 +123,9 @@ def create_signature_message(signature):
     return NetCommand(CMD_SIGNATURE_CALL_TRACE, 0, cmdText)
 
 def sendSignatureCallTrace(dbg, frame, filename):
-    if dbg.signature_factory.is_in_scope(filename):
-        dbg.writer.addCommand(create_signature_message(dbg.signature_factory.create_signature(frame)))
+    if dbg.signature_factory:
+        if dbg.signature_factory.is_in_scope(filename):
+            dbg.writer.addCommand(create_signature_message(dbg.signature_factory.create_signature(frame)))
 
 
 

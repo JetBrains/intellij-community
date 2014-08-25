@@ -1,12 +1,36 @@
-from pydev_imports import xmlrpclib, _queue, Exec
+from pydev_imports import xmlrpclib
 import sys
+
+import traceback
+
 from pydevd_constants import USE_LIB_COPY
 from pydevd_constants import IS_JYTHON
-from _pydev_imps import _pydev_thread as thread
+
+try:
+    if USE_LIB_COPY:
+        import _pydev_Queue as _queue
+    else:
+        import Queue as _queue
+except:
+    import queue as _queue
+
+try:
+    from pydevd_exec import Exec
+except:
+    from pydevd_exec2 import Exec
+
+try:
+    if USE_LIB_COPY:
+        import _pydev_thread as thread
+    else:
+        import thread
+except:
+    import _thread as thread
+
 import pydevd_xml
 import pydevd_vars
-from pydevd_utils import *  # @UnusedWildImport
-import traceback
+
+from pydevd_utils import *
 
 #=======================================================================================================================
 # Null
@@ -188,6 +212,8 @@ class BaseInterpreterInterface:
                             self._input_error_printed = True
                             sys.stderr.write('\nError when trying to update pydoc.help.input\n')
                             sys.stderr.write('(help() may not work -- please report this as a bug in the pydev bugtracker).\n\n')
+                            import traceback
+
                             traceback.print_exc()
 
                 try:
@@ -218,6 +244,8 @@ class BaseInterpreterInterface:
         except SystemExit:
             raise
         except:
+            import traceback;
+
             traceback.print_exc()
 
         return more
@@ -347,7 +375,7 @@ class BaseInterpreterInterface:
         self.interruptable = True
 
     def get_server(self):
-        if getattr(self, 'host', None) is not None:
+        if self.host is not None:
             return xmlrpclib.Server('http://%s:%s' % (self.host, self.client_port))
         else:
             return None
@@ -392,7 +420,7 @@ class BaseInterpreterInterface:
 
         # Important: it has to be really enabled in the main thread, so, schedule
         # it to run in the main thread.
-        self.exec_queue.put(do_change_variable)
+        self.exec_queue.put(do_connect_to_debugger)
 
     def _findFrame(self, thread_id, frame_id):
         '''
@@ -418,6 +446,7 @@ class BaseInterpreterInterface:
             try:
                 # Try to import the packages needed to attach the debugger
                 import pydevd
+                import pydevd_vars
                 if USE_LIB_COPY:
                     import _pydev_threading as threading
                 else:
@@ -425,7 +454,7 @@ class BaseInterpreterInterface:
 
             except:
                 # This happens on Jython embedded in host eclipse
-                traceback.print_exc()
+                import traceback;traceback.print_exc()
                 sys.stderr.write('pydevd is not available, cannot connect\n',)
 
             import pydev_localhost
@@ -441,7 +470,7 @@ class BaseInterpreterInterface:
                 import pydevd_tracing
                 pydevd_tracing.SetTrace(None)
             except:
-                traceback.print_exc()
+                import traceback;traceback.print_exc()
                 sys.stderr.write('Failed to connect to target debugger.\n')
 
             # Register to process commands when idle
@@ -450,7 +479,7 @@ class BaseInterpreterInterface:
                 import pydevconsole
                 pydevconsole.set_debug_hook(self.debugger.processInternalCommands)
             except:
-                traceback.print_exc()
+                import traceback;traceback.print_exc()
                 sys.stderr.write('Version of Python does not support debuggable Interactive Console.\n')
 
         # Important: it has to be really enabled in the main thread, so, schedule
@@ -476,7 +505,7 @@ class BaseInterpreterInterface:
                     enable_gui(guiname)
                 except:
                     sys.stderr.write("Failed to enable GUI event loop integration for '%s'\n" % guiname)
-                    traceback.print_exc()
+                    import traceback;traceback.print_exc()
             elif guiname not in ['none', '', None]:
                 # Only print a warning if the guiname was going to do something
                 sys.stderr.write("PyDev console: Python version does not support GUI event loop integration for '%s'\n" % guiname)

@@ -10,6 +10,7 @@ import os
 import sys
 
 from pydevd_constants import USE_LIB_COPY
+from pydevd_constants import IS_JYTHON
 
 if USE_LIB_COPY:
     import _pydev_threading as threading
@@ -22,7 +23,15 @@ fix_getpass.fixGetpass()
 
 import pydevd_vars
 
-from pydev_imports import Exec, _queue
+from pydev_imports import Exec
+
+try:
+    if USE_LIB_COPY:
+        import _pydev_Queue as _queue
+    else:
+        import Queue as _queue
+except:
+    import queue as _queue
 
 try:
     import __builtin__
@@ -49,6 +58,17 @@ try:
 except:
     #That's OK, not all versions of python have sys.version_info
     pass
+
+try:
+    try:
+        if USE_LIB_COPY:
+            import _pydev_xmlrpclib as xmlrpclib
+        else:
+            import xmlrpclib
+    except ImportError:
+        import xmlrpc.client as xmlrpclib
+except ImportError:
+    import _pydev_xmlrpclib as xmlrpclib
 
 
 class Command:
@@ -228,7 +248,7 @@ except:
 #=======================================================================================================================
 # _DoExit
 #=======================================================================================================================
-def _DoExit(*args):
+def DoExit(*args):
     '''
         We have to override the exit because calling sys.exit will only actually exit the main thread,
         and as we're in a Xml-rpc server, that won't work.
@@ -292,6 +312,7 @@ def start_server(host, port, interpreter):
     sys.stderr.write(interpreter.get_greeting_msg())
     sys.stderr.flush()
 
+    interpreter.server = server
     server.serve_forever()
 
     return server
@@ -300,7 +321,7 @@ def start_server(host, port, interpreter):
 def StartServer(host, port, client_port):
     #replace exit (see comments on method)
     #note that this does not work in jython!!! (sys method can't be replaced).
-    sys.exit = _DoExit
+    sys.exit = DoExit
 
     interpreter = InterpreterInterface(host, client_port, threading.currentThread())
 

@@ -81,7 +81,7 @@ class PyDBFrame:
 
             if trace is not None: #on jython trace is None on the first event
                 exception_breakpoint = get_exception_breakpoint(
-                    exception, mainDebugger.break_on_caught_exceptions)
+                    exception, mainDebugger.break_on_caught_exceptions.copy())
 
                 if exception_breakpoint is not None:
                     if not exception_breakpoint.notify_on_first_raise_only or just_raised(trace):
@@ -203,7 +203,6 @@ class PyDBFrame:
 
             try:
                 frame_id_to_frame = {}
-                frame_id_to_frame[id(frame)] = frame
                 f = trace_obj.tb_frame
                 while f is not None:
                     frame_id_to_frame[id(f)] = f
@@ -245,7 +244,7 @@ class PyDBFrame:
             if getattr(thread, 'pydev_do_not_trace', None):
                 return None
 
-            if event == 'call' and main_debugger.signature_factory:
+            if event == 'call':
                 sendSignatureCallTrace(main_debugger, frame, filename)
 
             is_exception_event = event == 'exception'
@@ -403,6 +402,12 @@ class PyDBFrame:
 
                     if stop:
                         self.setSuspend(thread, CMD_SET_BREAK)
+
+                if event == 'return':
+                    if main_debugger.cmd_line:
+                        base = basename(back.f_code.co_filename)
+                        if base == 'pydevd.py' and back.f_code.co_name == 'run':
+                            self.setSuspend(thread, CMD_SET_BREAK) # we suspend on exit
 
                 # if thread has a suspend flag, we suspend with a busy wait
                 if info.pydev_state == STATE_SUSPEND:

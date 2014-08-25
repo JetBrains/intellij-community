@@ -1,5 +1,6 @@
 import os.path
 import sys
+import weakref
 import threading
 import time
 

@@ -37,7 +37,10 @@ except ImportError:
     import _pydev_imports_tipper
 
 
-from _pydev_imps import _pydev_socket as socket
+if pydevd_constants.USE_LIB_COPY:
+    import _pydev_socket as socket
+else:
+    import socket
 
 import sys
 if sys.platform == "darwin":
@@ -62,7 +65,10 @@ for name, mod in sys.modules.items():
 
 import traceback
 
-from _pydev_imps import _pydev_time as time
+if pydevd_constants.USE_LIB_COPY:
+    import _pydev_time as time
+else:
+    import time
 
 try:
     import StringIO
@@ -87,7 +93,7 @@ def dbg(s, prior):
 #        f = open('c:/temp/test.txt', 'a')
 #        print_ >> f, s
 #        f.close()
-
+   
 import pydev_localhost
 HOST = pydev_localhost.get_localhost() # Symbolic name meaning the local host
 
@@ -197,7 +203,7 @@ class T(Thread):
 
 
     def connectToServer(self):
-        from _pydev_imps import _pydev_socket as socket
+        import socket
 
         self.socket = s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:

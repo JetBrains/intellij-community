@@ -25,6 +25,8 @@ if sys.platform.find('java') != -1:
     from java.lang.System import arraycopy #@UnresolvedImport
     from java.lang.System import out #@UnresolvedImport
     import java.lang.String #@UnresolvedImport
+    import org.python.core.PyDictionary #@UnresolvedImport
+
 
 __DBG = 0
 def dbg(s):

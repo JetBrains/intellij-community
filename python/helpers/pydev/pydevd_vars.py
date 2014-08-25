@@ -3,6 +3,7 @@
 """
 import pickle
 from django_frame import DjangoTemplateFrame
+from pydevd_constants import * #@UnusedWildImport
 from types import * #@UnusedWildImport
 
 from pydevd_custom_frames import getCustomFrame
@@ -18,9 +19,10 @@ if USE_LIB_COPY:
     import _pydev_threading as threading
 else:
     import threading
+import pydevd_resolver
 import traceback
 import pydevd_save_locals
-from pydev_imports import Exec, execfile
+from pydev_imports import Exec, quote, execfile
 
 try:
     import types
@@ -202,7 +204,7 @@ def getVariable(thread_id, frame_id, scope, attrs):
         attrList = []
 
     if scope == 'EXPRESSION':
-        for count in xrange(len(attrList)):
+        for count in range(len(attrList)):
             if count == 0:
                 # An Expression can be in any scope (globals/locals), therefore it needs to evaluated as an expression
                 var = evaluateExpression(thread_id, frame_id, attrList[count], False)

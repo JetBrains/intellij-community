@@ -1,6 +1,7 @@
 '''
 This module holds the constants used for specifying the states of the debugger.
 '''
+
 STATE_RUN = 1
 STATE_SUSPEND = 2
 
@@ -118,40 +119,20 @@ if IS_PY3K:
         return list(d.values())
 
     DictIterValues = dict.values
-
-    def DictIterItems(d):
-        return d.items()
-
-    def DictItems(d):
-        return list(d.items())
-
 else:
     DictKeys = dict.keys
     try:
         DictIterValues = dict.itervalues
     except:
         DictIterValues = dict.values #Older versions don't have the itervalues
-
     DictValues = dict.values
-
-    def DictIterItems(d):
-        return d.iteritems()
-
-    def DictItems(d):
-        return d.items()
 
 
 try:
-    xrange = xrange
+    xrange
 except:
     #Python 3k does not have it
     xrange = range
-    
-try:
-    import itertools
-    izip = itertools.izip
-except:
-    izip = zip
 
 try:
     object

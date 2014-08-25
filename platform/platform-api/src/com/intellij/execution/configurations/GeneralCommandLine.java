@@ -197,6 +197,10 @@ public class GeneralCommandLine implements UserDataHolder {
    * @return single-string representation of this command line.
    */
   public String getCommandLineString(@Nullable final String exeName) {
+    return ParametersList.join(getCommandLineList(exeName));
+  }
+
+  public List<String> getCommandLineList(@Nullable final String exeName) {
     final List<String> commands = new ArrayList<String>();
     if (exeName != null) {
       commands.add(exeName);
@@ -208,7 +212,7 @@ public class GeneralCommandLine implements UserDataHolder {
       commands.add("<null>");
     }
     commands.addAll(myProgramParams.getList());
-    return ParametersList.join(commands);
+    return commands;
   }
 
   /**

@@ -61,14 +61,32 @@ from pydevd_constants import * #@UnusedWildImport
 
 import sys
 
-from _pydev_imps import _pydev_time as time
-
 if USE_LIB_COPY:
+    import _pydev_time as time
     import _pydev_threading as threading
+    try:
+        import _pydev_thread as thread
+    except ImportError:
+        import _thread as thread #Py3K changed it.
+    import _pydev_Queue as _queue
+    from _pydev_socket import socket
+    from _pydev_socket import AF_INET, SOCK_STREAM
+    from _pydev_socket import SHUT_RD, SHUT_WR
 else:
+    import time
     import threading
-from _pydev_imps._pydev_socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR
-from pydev_imports import _queue
+    try:
+        import thread
+    except ImportError:
+        import _thread as thread #Py3K changed it.
+
+    try:
+        import Queue as _queue
+    except ImportError:
+        import queue as _queue
+    from socket import socket
+    from socket import AF_INET, SOCK_STREAM
+    from socket import SHUT_RD, SHUT_WR
 
 try:
     from urllib import quote, quote_plus, unquote, unquote_plus
@@ -85,8 +103,6 @@ import pydev_log
 import _pydev_completer
 
 from pydevd_tracing import GetExceptionTracebackStr
-import pydevd_console
-from pydev_monkey import disable_trace_thread_modules, enable_trace_thread_modules
 
 
 
@@ -992,7 +1008,7 @@ class InternalEvaluateExpression(InternalThreadCommand):
         try:
             result = pydevd_vars.evaluateExpression(self.thread_id, self.frame_id, self.expression, self.doExec)
             xml = "<xml>"
-            xml += pydevd_vars.varToXML(result, self.expression, self.doTrim)
+            xml += pydevd_vars.varToXML(result, "", self.doTrim)
             xml += "</xml>"
             cmd = dbg.cmdFactory.makeEvaluateExpressionMessage(self.sequence, xml)
             dbg.writer.addCommand(cmd)
@@ -1152,12 +1168,7 @@ class InternalEvaluateConsoleExpression(InternalThreadCommand):
                 console_message = pydevd_console.execute_console_command(frame, self.thread_id, self.frame_id, self.line)
                 cmd = dbg.cmdFactory.makeSendConsoleMessage(self.sequence, console_message.toXML())
             else:
-                from pydevd_console import ConsoleMessage
-                console_message = ConsoleMessage()
-                console_message.add_console_message(
-                    pydevd_console.CONSOLE_ERROR, 
-                    "Select the valid frame in the debug view (thread: %s, frame: %s invalid)" % (self.thread_id, self.frame_id), 
-                )
+                console_message.add_console_message(pydevd_console.CONSOLE_ERROR, "Select the valid frame in the debug view")
                 cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, console_message.toXML())
         except:
             exc = GetExceptionTracebackStr()
@@ -1234,10 +1245,13 @@ class InternalConsoleExec(InternalThreadCommand):
 
     def doIt(self, dbg):
         """ Converts request into python variable """
+        pydev_start_new_thread = None
         try:
             try:
-                #don't trace new threads created by console command
-                disable_trace_thread_modules()
+                pydev_start_new_thread = thread.start_new_thread
+
+                thread.start_new_thread = thread._original_start_new_thread #don't trace new threads created by console command
+                thread.start_new = thread._original_start_new_thread
 
                 result = pydevconsole.consoleExec(self.thread_id, self.frame_id, self.expression)
                 xml = "<xml>"
@@ -1251,8 +1265,8 @@ class InternalConsoleExec(InternalThreadCommand):
                 cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, "Error evaluating console expression " + exc)
                 dbg.writer.addCommand(cmd)
         finally:
-            enable_trace_thread_modules()
-
+            thread.start_new_thread = pydev_start_new_thread
+            thread.start_new = pydev_start_new_thread
             sys.stderr.flush()
             sys.stdout.flush()
 
