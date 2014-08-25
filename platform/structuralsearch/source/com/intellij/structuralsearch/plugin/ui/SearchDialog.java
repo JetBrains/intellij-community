@@ -12,6 +12,7 @@ import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -184,7 +185,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
         try {
           new WriteAction(){
             @Override
-            protected void run(Result result) throws Throwable {
+            protected void run(Result result) {
               if (!isValid()) {
                 getOKAction().setEnabled(false);
               }
@@ -195,8 +196,8 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
             }
           }.execute();
         }
-        catch (Exception e) {
-          e.printStackTrace();
+        catch (RuntimeException e) {
+          Logger.getInstance(SearchDialog.class).error(e);
         }
       }
     }, 500);
