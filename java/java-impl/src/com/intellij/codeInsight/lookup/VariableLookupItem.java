@@ -57,7 +57,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
 
   private static Color getExpressionColor(@Nullable PsiExpression expression) {
     if (expression instanceof PsiReferenceExpression) {
-      PsiElement target = ((PsiReferenceExpression)expression).resolve();
+      final PsiElement target = ((PsiReferenceExpression)expression).resolve();
       if (target instanceof PsiVariable) {
         return RecursionManager.doPreventingRecursion(expression, true, new Computable<Color>() {
           @Override
