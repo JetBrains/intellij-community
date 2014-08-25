@@ -91,12 +91,8 @@ abstract class BaseExternalTool implements DiffTool {
   }
 
   public void show(DiffRequest request) {
-    for (DiffContent diffContent : request.getContents()) {
-      Document document = diffContent.getDocument();
-      if (document != null) {
-        FileDocumentManager.getInstance().saveDocument(document);
-      }
-    }
+    saveContents(request);
+
     GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.setExePath(getToolPath());
     try {
@@ -106,6 +102,15 @@ abstract class BaseExternalTool implements DiffTool {
     catch (Exception e) {
       ExecutionErrorDialog.show(new ExecutionException(e.getMessage()),
                                 DiffBundle.message("cant.launch.diff.tool.error.message"), request.getProject());
+    }
+  }
+
+  protected void saveContents(DiffRequest request) {
+    for (DiffContent diffContent : request.getContents()) {
+      Document document = diffContent.getDocument();
+      if (document != null) {
+        FileDocumentManager.getInstance().saveDocument(document);
+      }
     }
   }
 
