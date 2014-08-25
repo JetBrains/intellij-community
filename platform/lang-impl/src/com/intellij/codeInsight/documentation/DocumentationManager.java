@@ -171,7 +171,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       @Override
       public void beforeEditorTyping(char c, DataContext dataContext) {
         final JBPopup hint = getDocInfoHint();
-        if (hint != null) {
+        if (hint != null && LookupManager.getActiveLookup(myEditor) == null) {
           hint.cancel();
         }
       }
