@@ -151,21 +151,17 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
         restartAutoUpdate(state);
       }
     };
-    AnAction restorePopupAction = new AnAction("Restore Popup", getRestorePopupDescription(), AllIcons.Actions.Cancel) {
+    return new AnAction[]{toggleAutoUpdateAction, createRestorePopupAction()};
+  }
+
+  @NotNull
+  protected AnAction createRestorePopupAction() {
+    return new AnAction("Restore Popup", getRestorePopupDescription(), AllIcons.Actions.Cancel) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         restorePopupBehavior();
       }
     };
-    ShortcutSet restorePopupShortcutSet = getRestorePopupShortcutSet();
-    if (restorePopupShortcutSet != null) {
-      restorePopupAction.registerCustomShortcutSet(restorePopupShortcutSet, null);
-    }
-    return new AnAction[]{toggleAutoUpdateAction, restorePopupAction};
-  }
-
-  protected ShortcutSet getRestorePopupShortcutSet() {
-    return null;
   }
 
   protected void restartAutoUpdate(final boolean state) {

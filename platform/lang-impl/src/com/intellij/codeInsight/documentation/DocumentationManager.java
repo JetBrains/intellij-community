@@ -126,9 +126,13 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return "Auto Show Documentation for Selected Element";
   }
 
+  @NotNull
   @Override
-  protected ShortcutSet getRestorePopupShortcutSet() {
-    return ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_JAVADOC).getShortcutSet();
+  protected AnAction createRestorePopupAction() {
+    AnAction restorePopupAction = super.createRestorePopupAction();
+    ShortcutSet quickDocShortcut = ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_JAVADOC).getShortcutSet();
+    restorePopupAction.registerCustomShortcutSet(quickDocShortcut, null);
+    return restorePopupAction;
   }
 
   @Override
