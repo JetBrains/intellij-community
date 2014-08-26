@@ -37,6 +37,7 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EdtRunnable;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.LightColors;
@@ -1013,10 +1014,12 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       addKeyListener(new KeyAdapter() {});
       if (Registry.is("ide.new.settings.dialog")) {
         final JTextField editor = getTextEditor();
-        editor.putClientProperty("JTextField.variant", "search");
-        if (!(editor.getUI() instanceof DarculaTextFieldUI)) {
-          editor.setUI((DarculaTextFieldUI)DarculaTextFieldUI.createUI(editor));
-          editor.setBorder(new DarculaTextBorder());
+        if (!SystemInfo.isMac) {
+          editor.putClientProperty("JTextField.variant", "search");
+          if (!(editor.getUI() instanceof DarculaTextFieldUI)) {
+            editor.setUI((DarculaTextFieldUI)DarculaTextFieldUI.createUI(editor));
+            editor.setBorder(new DarculaTextBorder());
+          }
         }
         setBackground(UIUtil.getSidePanelColor());
         setBorder(new EmptyBorder(5, 10, 2, 10));
