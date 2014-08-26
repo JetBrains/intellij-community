@@ -4,6 +4,7 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -28,23 +29,23 @@ public class CreateTaskWindowDialog extends DialogWrapper {
   }
 
   public CreateTaskWindowDialog(@NotNull final Project project, @NotNull final TaskWindow taskWindow, int lessonIndex,
-                                int taskIndex, String taskFileName) {
+                                int taskIndex, String taskFileName, int taskWindowIndex) {
     super(project, true);
     setTitle(TITLE);
     myTaskWindow = taskWindow;
     myPanel = new CreateTaskWindowPanel(this);
+    String generatedHintName = "lesson" + lessonIndex + "task" + taskIndex + taskFileName + "_" + taskWindowIndex;
+    myPanel.setGeneratedHintName(generatedHintName);
     if (taskWindow.getHintName() != null) {
       setHintText(project, taskWindow);
     }
     myProject = project;
     String taskWindowTaskText = taskWindow.getTaskText();
     myPanel.setTaskWindowText(taskWindowTaskText != null ? taskWindowTaskText : "");
-    int taskWindowIndex = taskWindow.getIndex() + 1;
-    String generatedHintName = "lesson" + lessonIndex + "task" + taskIndex + taskFileName + "_" + taskWindowIndex;
-    myPanel.setGeneratedHintName(generatedHintName);
     String hintName = taskWindow.getHintName();
     myPanel.setHintName(hintName != null ? hintName : "");
     init();
+    initValidation();
   }
 
   private void setHintText(Project project, TaskWindow taskWindow) {
@@ -62,7 +63,6 @@ public class CreateTaskWindowDialog extends DialogWrapper {
           myPanel.doClick();
           //myPanel.enableHint(true);
           myPanel.setHintText(hintText.toString());
-
         }
         catch (FileNotFoundException e) {
           LOG.error("created hint was not found", e);
@@ -114,6 +114,9 @@ public class CreateTaskWindowDialog extends DialogWrapper {
     VirtualFile hintsDir = myProject.getBaseDir().findChild("hints");
     if (hintsDir != null) {
       String hintName = myTaskWindow.getHintName();
+      if (hintName == null) {
+        return;
+      }
       File hintFile = new File(hintsDir.getPath(), hintName);
       if (hintFile.exists()) {
         CCProjectService.deleteProjectFile(hintFile, myProject);
@@ -127,5 +130,24 @@ public class CreateTaskWindowDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     return myPanel;
+  }
+
+  @Nullable
+  @Override
+  public ValidationInfo doValidate() {
+    String name = myPanel.getHintName();
+    VirtualFile hintsDir = myProject.getBaseDir().findChild("hints");
+    if (hintsDir == null) {
+      return null;
+    }
+    VirtualFile child = hintsDir.findChild(name);
+    if (child == null) {
+      return null;
+    }
+    return myTaskWindow.getHintName() != null ? null : new ValidationInfo("Hint file with such filename already exists");
+  }
+
+  public void validateInput() {
+    super.initValidation();
   }
 }

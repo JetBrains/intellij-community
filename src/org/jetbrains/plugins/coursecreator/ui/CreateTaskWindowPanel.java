@@ -1,6 +1,9 @@
 package org.jetbrains.plugins.coursecreator.ui;
 
+import com.intellij.ui.DocumentAdapter;
+
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -31,6 +34,13 @@ public class CreateTaskWindowPanel extends JPanel {
         if (state == 2) {
           myDialog.deleteHint();
         }
+      }
+    });
+
+    myHintName.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        myDialog.validateInput();
       }
     });
   }

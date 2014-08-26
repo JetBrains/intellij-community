@@ -52,7 +52,7 @@ public class AddTaskWindow extends DumbAwareAction {
     final Task task = lesson.getTask(taskDir.getName());
     final TaskFile taskFile = task.getTaskFile(file.getName());
     final TaskWindow taskWindow = new TaskWindow(lineNumber, realStart, length, model.getSelectedText());
-    CreateTaskWindowDialog dlg = new CreateTaskWindowDialog(project, taskWindow, lesson.getIndex(), task.getIndex(), file.getVirtualFile().getNameWithoutExtension());
+    CreateTaskWindowDialog dlg = new CreateTaskWindowDialog(project, taskWindow, lesson.getIndex(), task.getIndex(), file.getVirtualFile().getNameWithoutExtension(), taskFile.getTaskWindows().size() + 1);
     dlg.show();
     if (dlg.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
       return;

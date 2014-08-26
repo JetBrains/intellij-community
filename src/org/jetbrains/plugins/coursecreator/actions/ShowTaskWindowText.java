@@ -36,8 +36,9 @@ public class ShowTaskWindowText extends DumbAwareAction {
 
     final Lesson lesson = course.getLesson(lessonDir.getName());
     final Task task = lesson.getTask(taskDir.getName());
+    final TaskFile taskFile = task.getTaskFile(file.getName());
     //TODO: copy task window and return if modification canceled
-    CreateTaskWindowDialog dlg = new CreateTaskWindowDialog(project, myTaskWindow, lesson.getIndex(), task.getIndex(), file.getVirtualFile().getNameWithoutExtension());
+    CreateTaskWindowDialog dlg = new CreateTaskWindowDialog(project, myTaskWindow, lesson.getIndex(), task.getIndex(), file.getVirtualFile().getNameWithoutExtension(), taskFile.getTaskWindows().size() + 1);
     dlg.show();
   }
 }
