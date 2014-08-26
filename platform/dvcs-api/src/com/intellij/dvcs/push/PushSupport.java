@@ -23,7 +23,7 @@ import com.intellij.ui.SimpleColoredText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
+import java.util.List;
 
 /**
  * Base class to provide vcs-specific info
@@ -50,10 +50,11 @@ public abstract class PushSupport<Repo extends Repository, Source extends PushSo
   public abstract Target getDefaultTarget(@NotNull Repo repository);
 
   /**
-   * @return All remembered remote destinations used for completion
+   * @return All remote destinations which will be proposed to user in the target field completion.
+   *         They will be shown in the same order as they appear in the returned list.
    */
   @NotNull
-  public abstract Collection<String> getTargetNames(@NotNull Repo repository);
+  public abstract List<String> getTargetNames(@NotNull Repo repository);
 
   /**
    * @return current source(branch) for repository

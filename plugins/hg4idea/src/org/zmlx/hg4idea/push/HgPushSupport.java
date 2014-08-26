@@ -31,7 +31,7 @@ import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;
 
-import java.util.Collection;
+import java.util.List;
 
 public class HgPushSupport extends PushSupport<HgRepository, HgPushSource, HgTarget> {
 
@@ -71,13 +71,13 @@ public class HgPushSupport extends PushSupport<HgRepository, HgPushSource, HgTar
 
   @NotNull
   @Override
-  public Collection<String> getTargetNames(@NotNull HgRepository repository) {
-    return ContainerUtil.map(repository.getRepositoryConfig().getPaths(), new Function<String, String>() {
+  public List<String> getTargetNames(@NotNull HgRepository repository) {
+    return ContainerUtil.sorted(ContainerUtil.map(repository.getRepositoryConfig().getPaths(), new Function<String, String>() {
       @Override
       public String fun(String s) {
         return HgUtil.removePasswordIfNeeded(s);
       }
-    });
+    }));
   }
 
   @NotNull

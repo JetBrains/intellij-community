@@ -36,7 +36,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.util.Collection;
 import java.util.List;
 
 public class RepositoryWithBranchPanel extends NonOpaquePanel implements TreeCellRenderer {
@@ -51,7 +50,7 @@ public class RepositoryWithBranchPanel extends NonOpaquePanel implements TreeCel
   private String myOldDestination;
 
   public RepositoryWithBranchPanel(Project project, @NotNull String repoName,
-                                   @NotNull String sourceName, String targetName, @NotNull Collection<String> targetVariants) {
+                                   @NotNull String sourceName, String targetName, @NotNull final List<String> targetVariants) {
     super();
     setLayout(new BorderLayout());
     myRepositoryCheckbox = new JBCheckBox();
@@ -68,7 +67,12 @@ public class RepositoryWithBranchPanel extends NonOpaquePanel implements TreeCel
     myArrowLabel = new JLabel(" -> ");
     myOldDestination = targetName;
     TextFieldWithAutoCompletionListProvider<String> provider =
-      new TextFieldWithAutoCompletion.StringsCompletionProvider(targetVariants, null);
+      new TextFieldWithAutoCompletion.StringsCompletionProvider(targetVariants, null) {
+        @Override
+        public int compare(String item1, String item2) {
+          return Integer.valueOf(ContainerUtil.indexOf(targetVariants, item1)).compareTo(ContainerUtil.indexOf(targetVariants, item2));
+        }
+      };
     myDestBranchTextField = new TextFieldWithAutoCompletion<String>(project, provider, true, targetName) {
 
       @Override

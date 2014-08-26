@@ -1430,6 +1430,16 @@ public class ContainerUtil extends ContainerUtilRt {
     return sorted;
   }
 
+  @NotNull
+  public static <T extends Comparable> List<T> sorted(@NotNull Collection<T> list) {
+    return sorted(list, new Comparator<T>() {
+      @Override
+      public int compare(T o1, T o2) {
+        return o1.compareTo(o2);
+      }
+    });
+  }
+
   public static <T> void sort(@NotNull T[] a, @NotNull Comparator<T> comparator) {
     int size = a.length;
 
@@ -1926,6 +1936,15 @@ public class ContainerUtil extends ContainerUtilRt {
       }
     }
     return -1;
+  }
+
+  public static <T> int indexOf(@NotNull List<T> list, @NotNull final T object) {
+    return indexOf(list, new Condition<T>() {
+      @Override
+      public boolean value(T t) {
+        return t.equals(object);
+      }
+    });
   }
 
   @NotNull
