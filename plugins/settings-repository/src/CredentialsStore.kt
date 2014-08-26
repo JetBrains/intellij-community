@@ -6,6 +6,8 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.ui.DialogWrapper
 
+public fun String?.nullize(): String? = StringUtil.nullize(this)
+
 public fun showAuthenticationForm(credentials: Credentials?, uri: String, host: String?): Credentials? {
   val authenticationForm = RepositoryAuthenticationForm(credentials?.username, credentials?.password, if (host == "github.com") IcsBundle.message("login.github.note") else null)
   var ok = false
@@ -22,15 +24,9 @@ public fun showAuthenticationForm(credentials: Credentials?, uri: String, host: 
   return null
 }
 
-data
-public class Credentials(username: String?, password: String?) {
-  public val username: String?
-  public val password: String?
-
-  {
-    this.username = StringUtil.nullize(username, true)
-    this.password = StringUtil.nullize(password)
-  }
+public data class Credentials(username: String?, password: String?) {
+  public val username: String? = username.nullize()
+  public val password: String? = password.nullize()
 }
 
 public trait CredentialsStore {

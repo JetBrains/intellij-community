@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.settingsRepository
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.PasswordUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.IOUtil
@@ -17,7 +16,7 @@ class FileCredentialsStore : CredentialsStore {
     if (loginDataFile.exists()) {
       try {
         var hasErrors = true
-        val `in` = DataInputStream(FileInputStream(loginDataFile))
+        val `in` = DataInputStream(BufferedInputStream(FileInputStream(loginDataFile)))
         try {
           credentials = Credentials(PasswordUtil.decodePassword(IOUtil.readString(`in`)), PasswordUtil.decodePassword(IOUtil.readString(`in`)))
           hasErrors = false
@@ -52,24 +51,21 @@ class FileCredentialsStore : CredentialsStore {
     }
 
     this.credentials = credentials
-    ApplicationManager.getApplication()!!.executeOnPooledThread(object : Runnable {
-      override fun run() {
-        try {
-          val loginDataFile = getPasswordStorageFile()
-          FileUtil.createParentDirs(loginDataFile)
-          val out = DataOutputStream(FileOutputStream(loginDataFile))
-          try {
-            IOUtil.writeString(PasswordUtil.encodePassword(credentials.username), out)
-            IOUtil.writeString(PasswordUtil.encodePassword(credentials.password), out)
-          }
-          finally {
-            out.close()
-          }
-        }
-        catch (e: IOException) {
-          BaseRepositoryManager.LOG.error(e)
-        }
+
+    try {
+      val loginDataFile = getPasswordStorageFile()
+      FileUtil.createParentDirs(loginDataFile)
+      val out = DataOutputStream(BufferedOutputStream(FileOutputStream(loginDataFile)))
+      try {
+        IOUtil.writeString(PasswordUtil.encodePassword(credentials.username), out)
+        IOUtil.writeString(PasswordUtil.encodePassword(credentials.password), out)
       }
-    })
+      finally {
+        out.close()
+      }
+    }
+    catch (e: IOException) {
+      BaseRepositoryManager.LOG.error(e)
+    }
   }
 }
