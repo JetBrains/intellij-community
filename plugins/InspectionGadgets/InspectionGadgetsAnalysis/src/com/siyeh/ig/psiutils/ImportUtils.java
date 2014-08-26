@@ -67,6 +67,9 @@ public class ImportUtils {
         !hasDefaultImportConflict(qualifiedName, javaFile) && !hasOnDemandImportConflict(qualifiedName, javaFile)) {
       return;
     }
+    if (hasExactImportConflict(qualifiedName, javaFile)) {
+      return;
+    }
     final Project project = importList.getProject();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiElementFactory elementFactory = psiFacade.getElementFactory();
@@ -156,7 +159,7 @@ public class ImportUtils {
     return false;
   }
 
-  private static boolean hasExactImportConflict(String fqName, PsiJavaFile file) {
+  public static boolean hasExactImportConflict(String fqName, PsiJavaFile file) {
     final PsiImportList imports = file.getImportList();
     if (imports == null) {
       return false;
