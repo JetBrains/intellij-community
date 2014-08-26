@@ -24,7 +24,6 @@ import com.intellij.openapi.options.ex.NodeConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.CachingSimpleNode;
 import com.intellij.ui.treeStructure.SimpleNode;
@@ -42,6 +41,8 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.openapi.options.ex.MixedConfigurableGroup.getGroupWeight;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -453,21 +454,6 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     public boolean isAlwaysLeaf() {
       return myComposite == null;
     }
-
-    @Override
-    public int getWeight() {
-      SimpleNode parent = getParent();
-      if (parent != null && myRoot == parent.getParent()) {
-        if (myConfigurable instanceof NodeConfigurable) {
-          return ((NodeConfigurable)myConfigurable).getGroupWeight();
-        }
-        if (myConfigurable instanceof ConfigurableWrapper) {
-          return ((ConfigurableWrapper)myConfigurable).getExtensionPoint().groupWeight;
-        }
-        return 0; // sort by name
-      }
-      return Integer.MIN_VALUE; // do not sort
-    }
   }
 
   private final class MyRenderer extends GroupedElementsRenderer.Tree {
@@ -549,7 +535,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
             SimpleNode simpleNode = node;
             while (simpleNode != null) {
               SimpleNode parent = simpleNode.getParent();
-              if (parent != null && myRoot == parent.getParent() && simpleNode.getWeight() == 0) {
+              if (parent != null && myRoot == parent.getParent() && getGroupWeight(getConfigurable(simpleNode)) == 0) {
                 myTextLabel.setForeground(HIDDEN_NODE);
                 parent = null;
               }
@@ -775,7 +761,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     boolean myWasHoldingFilter;
 
     public MyBuilder(SimpleTreeStructure structure) {
-      super(myTree, myFilter, structure, COMPARATOR);
+      super(myTree, myFilter, structure, null);
       myTree.addTreeExpansionListener(new TreeExpansionListener() {
         public void treeExpanded(TreeExpansionEvent event) {
           invalidateExpansions();
@@ -862,35 +848,5 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
         myTree.collapsePath(each);
       }
     }
-  }
-
-  private static final Comparator<NodeDescriptor> COMPARATOR = new Comparator<NodeDescriptor>() {
-    @Override
-    public int compare(NodeDescriptor descriptor1, NodeDescriptor descriptor2) {
-      return compareNodes(extractNode(descriptor1), extractNode(descriptor2));
-    }
-  };
-
-  int compareConfigurables(Configurable configurable1, Configurable configurable2) {
-    return compareNodes(myConfigurableToNodeMap.get(configurable1), myConfigurableToNodeMap.get(configurable2));
-  }
-
-  private static int compareNodes(MyNode node1, MyNode node2) {
-    if (node1 == null || node2 == null) {
-      return node2 != null ? -1 : node1 != null ? 1 : 0;
-    }
-    int weight1 = node1.getWeight();
-    int weight2 = node2.getWeight();
-
-    if (weight1 > weight2) {
-      return -1;
-    }
-    if (weight1 < weight2) {
-      return 1;
-    }
-    if (weight1 == Integer.MIN_VALUE) {
-      return 0; // do not sort if undefined weight
-    }
-    return StringUtil.naturalCompare(node1.myDisplayName, node2.myDisplayName);
   }
 }

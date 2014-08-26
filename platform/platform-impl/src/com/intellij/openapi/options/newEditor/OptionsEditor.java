@@ -1228,16 +1228,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     if (searchable instanceof Configurable.Composite) {
       box.add(Box.createVerticalStrut(10));
       Configurable.Composite composite = (Configurable.Composite)searchable;
-      Configurable[] configurables = composite.getConfigurables();
-      if (myTreeView != null) {
-        Arrays.sort(configurables, new Comparator<Configurable>() {
-          @Override
-          public int compare(Configurable configurable1, Configurable configurable2) {
-            return myTreeView.compareConfigurables(configurable1, configurable2);
-          }
-        });
-      }
-      for (final Configurable configurable : configurables) {
+      for (final Configurable configurable : composite.getConfigurables()) {
         box.add(new LinkLabel(configurable.getDisplayName(), AllIcons.Ide.Link) {
           @Override
           public void doClick() {
