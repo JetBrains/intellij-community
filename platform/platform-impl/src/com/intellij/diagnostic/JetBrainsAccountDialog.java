@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,32 +19,25 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ClickListener;
-import com.intellij.util.net.HTTPProxySettingsDialog;
+import com.intellij.util.net.HttpConfigurable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
-/**
- * Created by IntelliJ IDEA.
- * User: stathik
- * Date: Aug 8, 2003
- * Time: 3:49:50 PM
- * To change this template use Options | File Templates.
- */
 public class JetBrainsAccountDialog extends DialogWrapper {
   private JTextField myItnLoginTextField;
   private JPasswordField myItnPasswordTextField;
   private JCheckBox myRememberITNPasswordCheckBox;
 
-  public void storeInfo () {
+  public void storeInfo() {
     ErrorReportConfigurable.getInstance().ITN_LOGIN = myItnLoginTextField.getText();
     ErrorReportConfigurable.getInstance().setPlainItnPassword(new String(myItnPasswordTextField.getPassword()));
     ErrorReportConfigurable.getInstance().KEEP_ITN_PASSWORD = myRememberITNPasswordCheckBox.isSelected();
   }
 
-  public void loadInfo () {
+  public void loadInfo() {
     myItnLoginTextField.setText(ErrorReportConfigurable.getInstance().ITN_LOGIN);
     myItnPasswordTextField.setText(ErrorReportConfigurable.getInstance().getPlainItnPassword());
     myRememberITNPasswordCheckBox.setSelected(ErrorReportConfigurable.getInstance().KEEP_ITN_PASSWORD);
@@ -64,6 +57,7 @@ public class JetBrainsAccountDialog extends DialogWrapper {
   protected JLabel mySendingSettingsLabel;
   private JLabel myCreateAccountLabel;
 
+  @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.diagnostic.AbstractSendErrorDialog";
   }
@@ -73,6 +67,7 @@ public class JetBrainsAccountDialog extends DialogWrapper {
     return myItnLoginTextField;
   }
 
+  @Override
   protected void init() {
     setTitle(ReportMessages.ERROR_REPORT);
     getContentPane().add(myMainPanel);
@@ -80,14 +75,12 @@ public class JetBrainsAccountDialog extends DialogWrapper {
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-        HTTPProxySettingsDialog settingsDialog = new HTTPProxySettingsDialog ();
-        settingsDialog.pack();
-        settingsDialog.show();
+        HttpConfigurable.editConfigurable(myMainPanel);
         return true;
       }
     }.installOn(mySendingSettingsLabel);
 
-    mySendingSettingsLabel.setCursor(new Cursor (Cursor.HAND_CURSOR));
+    mySendingSettingsLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
     loadInfo();
 
@@ -98,9 +91,9 @@ public class JetBrainsAccountDialog extends DialogWrapper {
         return true;
       }
     }.installOn(myCreateAccountLabel);
-    myCreateAccountLabel.setCursor(new Cursor (Cursor.HAND_CURSOR));
+    myCreateAccountLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-    super.init ();
+    super.init();
   }
 
   @Override
@@ -109,6 +102,7 @@ public class JetBrainsAccountDialog extends DialogWrapper {
     super.doOKAction();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myMainPanel;
   }

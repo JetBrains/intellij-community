@@ -37,6 +37,7 @@ public class PtyCommandLine extends GeneralCommandLine {
 
   public PtyCommandLine() { }
 
+  @NotNull
   @Override
   protected Process startProcess(@NotNull List<String> commands) throws IOException {
     if (SystemInfo.isUnix) {

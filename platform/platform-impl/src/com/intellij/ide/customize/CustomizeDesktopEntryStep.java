@@ -75,7 +75,7 @@ public class CustomizeDesktopEntryStep extends AbstractCustomizeWizardStep {
   }
 
   public static boolean isAvailable() {
-    return true || CreateDesktopEntryAction.isAvailable();
+    return CreateDesktopEntryAction.isAvailable();
   }
 
   @Override

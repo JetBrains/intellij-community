@@ -22,6 +22,12 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 
+@Deprecated
+@SuppressWarnings("UnusedDeclaration")
+/**
+ * @deprecated Use {@link com.intellij.util.net.HttpConfigurable#editConfigurable(javax.swing.JComponent)}
+ * to remove in IDEA 15
+ */
 public class HTTPProxySettingsDialog extends DialogWrapper {
   private final HttpProxySettingsUi panel;
   private final Action okAction;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
 import com.intellij.openapi.vfs.impl.http.RemoteFileState;
 import com.intellij.ui.AppUIUtil;
-import com.intellij.util.net.HTTPProxySettingsDialog;
+import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -86,22 +86,22 @@ public class RemoteFilePanel {
     remoteFileInfo.addDownloadingListener(myDownloadingListener);
     myCancelButton.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(final ActionEvent e) {
+      public void actionPerformed(@NotNull final ActionEvent e) {
         remoteFileInfo.cancelDownloading();
       }
     });
 
     myTryAgainButton.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(final ActionEvent e) {
+      public void actionPerformed(@NotNull final ActionEvent e) {
         showCard(DOWNLOADING_CARD);
         remoteFileInfo.restartDownloading();
       }
     });
     myChangeProxySettingsButton.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(final ActionEvent e) {
-        new HTTPProxySettingsDialog().show();
+      public void actionPerformed(@NotNull ActionEvent e) {
+        HttpConfigurable.editConfigurable(myMainPanel);
       }
     });
 
