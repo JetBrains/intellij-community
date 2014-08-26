@@ -151,7 +151,7 @@ public class FSOperations {
     }
   }
 
-  public static void processFilesToRecompile(CompileContext context, ModuleBuildTarget target, FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget> processor) throws IOException {
+  public static void processFilesToRecompile(CompileContext context, @NotNull ModuleBuildTarget target, FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget> processor) throws IOException {
     context.getProjectDescriptor().fsState.processFilesToRecompile(context, target, processor);
   }
 
