@@ -518,13 +518,13 @@ public abstract class ChooseByNameBase {
               else {
                 Component oppositeComponent = e.getOppositeComponent();
                 if (oppositeComponent == myCheckBox) {
-                  myTextField.requestFocus();
+                  IdeFocusManager.getInstance(myProject).requestFocus(myTextField, true);
                   return;
                 }
                 if (oppositeComponent != null && !(oppositeComponent instanceof JFrame) &&
                     myList.isShowing() &&
                     (oppositeComponent == myList || SwingUtilities.isDescendingFrom(myList, oppositeComponent))) {
-                  myTextField.requestFocus();// Otherwise me may skip some KeyEvents
+                  IdeFocusManager.getInstance(myProject).requestFocus(myTextField, true);// Otherwise me may skip some KeyEvents
                   return;
                 }
 
@@ -533,8 +533,7 @@ public abstract class ChooseByNameBase {
                   if (!((IdeEventQueue)queue).wasRootRecentlyClicked(oppositeComponent)) {
                     Component root = SwingUtilities.getRoot(myTextField);
                     if (root != null && root.isShowing()) {
-                      root.requestFocus();
-                      myTextField.requestFocus();
+                      IdeFocusManager.getInstance(myProject).requestFocus(myTextField, true);
                       return;
                     }
                   }
@@ -641,7 +640,7 @@ public abstract class ChooseByNameBase {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         if (!myTextField.hasFocus()) {
-          myTextField.requestFocus();
+          IdeFocusManager.getInstance(myProject).requestFocus(myTextField, true);
         }
 
         if (clickCount == 2) {
