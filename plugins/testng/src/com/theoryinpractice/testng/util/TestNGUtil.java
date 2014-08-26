@@ -207,7 +207,7 @@ public class TestNGUtil {
         if (AnnotationUtil.isAnnotated(psiClass, TEST_ANNOTATION_FQN, true, true)) {
           //even if it has a global test, we ignore private methods
           boolean isPrivate = element.hasModifierProperty(PsiModifier.PRIVATE);
-          return !isPrivate;
+          return !isPrivate && !element.hasModifierProperty(PsiModifier.STATIC) && !hasConfig(element);
         }
         if (hasTestJavaDoc(psiClass, checkJavadoc)) return true;
       }
