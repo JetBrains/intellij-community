@@ -21,6 +21,6 @@ public abstract class SourceCell implements IpnbCell {
 
   @NotNull
   public String getSourceAsString() {
-    return StringUtil.join(mySource, "\n");
+    return StringUtil.join(mySource);
   }
 }

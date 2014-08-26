@@ -134,7 +134,7 @@ public class CodePanel extends IpnbEditablePanel<JComponent, CodeCell> {
     super.runCell();
     final Document document = myCodeSourcePanel.getEditor().getDocument();
     final String text = document.getText();
-    myCell.setSource(StringUtil.splitByLines(text));
+    myCell.setSource(StringUtil.splitByLinesKeepSeparators(text));
     final IpnbConnectionManager connectionManager = IpnbConnectionManager.getInstance(myProject);
     connectionManager.executeCell(this);
   }

@@ -65,6 +65,39 @@ public class WebSocketConnectionTest extends TestCase {
     assertTrue(evaluated.get());
   }
 
+  public void testCompositeInput() throws IOException, URISyntaxException, InterruptedException {
+    final Ref<Boolean> evaluated = Ref.create(false);
+    final IpnbConnection connection = new IpnbConnection(getTestServerURI(), new IpnbConnectionListenerBase() {
+      private String myMessageId;
+
+      @Override
+      public void onOpen(@NotNull IpnbConnection connection) {
+        myMessageId = connection.execute("def simple_crit_func(feat_sub):\n" +
+                                         "\n" +
+                                         "    \"\"\" Returns sum of numerical values of an input list. \"\"\" \n" +
+                                         "\n" +
+                                         "    return sum(feat_sub)\n" +
+                                         "\n" +
+                                         "simple_crit_func([1,2,4])");
+      }
+
+      @Override
+      public void onOutput(@NotNull IpnbConnection connection, @NotNull String parentMessageId, @NotNull List<CellOutput> outputs) {
+        if (myMessageId.equals(parentMessageId)) {
+          assertEquals(outputs.size(), 1);
+          assertEquals(outputs.get(0).getClass(), OutCellOutput.class);
+          final String[] text = outputs.get(0).getText();
+          assertNotNull(text);
+          assertEquals("7", text[0]);
+          evaluated.set(true);
+          connection.shutdown();
+        }
+      }
+    });
+    connection.close();
+    assertTrue(evaluated.get());
+  }
+
   @NotNull
   public static URI getTestServerURI() {
     try {
