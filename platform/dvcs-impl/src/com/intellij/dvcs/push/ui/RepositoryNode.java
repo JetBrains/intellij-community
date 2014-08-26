@@ -61,7 +61,6 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode 
     ArrayList<String> strings = myTargetPresentation.getTexts();
     ArrayList<SimpleTextAttributes> attributes = myTargetPresentation.getAttributes();
     for (int i = 0; i < strings.size(); i++) {
-      //todo check that all texts belong to editable component!!!
       renderer.append(strings.get(i), attributes.get(i), textField);
     }
   }
