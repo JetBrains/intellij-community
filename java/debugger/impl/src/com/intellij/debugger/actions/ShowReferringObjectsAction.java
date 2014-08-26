@@ -24,7 +24,9 @@ import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.psi.PsiExpression;
-import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.frame.XCompositeNode;
+import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XInspectDialog;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
@@ -63,11 +65,11 @@ public class ShowReferringObjectsAction extends XDebuggerTreeActionBase {
                                  @NotNull ValueDescriptorImpl valueDescriptor,
                                  @NotNull EvaluationContextImpl evaluationContext,
                                  NodeManagerImpl nodeManager) {
-      super(parent, valueDescriptor, evaluationContext, nodeManager);
+      super(parent, valueDescriptor, evaluationContext, nodeManager, false);
     }
 
     public ReferringObjectsValue(JavaValue javaValue) {
-      super(null, javaValue.getDescriptor(), javaValue.getEvaluationContext(), null);
+      super(null, javaValue.getDescriptor(), javaValue.getEvaluationContext(), null, false);
     }
 
     @Override
