@@ -33,7 +33,7 @@ public class BitSetFlags implements Flags {
     if (size < 0)
       throw new NegativeArraySizeException("size < 0: " + size);
     mySize = size;
-    myBitSet = new BitSet(size);
+    myBitSet = new BitSet();
   }
 
   public BitSetFlags(int size, boolean defaultValue) {
