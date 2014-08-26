@@ -17,6 +17,7 @@
 package com.intellij.vcs.log.graph.utils.impl;
 
 import com.intellij.util.BooleanFunction;
+import com.intellij.vcs.log.graph.utils.Flags;
 import com.intellij.vcs.log.graph.utils.UpdatableIntToIntMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,6 +27,16 @@ public class ListIntToIntMap extends AbstractIntToIntMap implements UpdatableInt
   @NotNull
   public static UpdatableIntToIntMap newInstance(@NotNull final BooleanFunction<Integer> thisIsVisible, final int longSize) {
     return newInstance(thisIsVisible, longSize, DEFAULT_BLOCK_SIZE);
+  }
+
+  @NotNull
+  public static UpdatableIntToIntMap newInstance(final Flags visibleNodes) {
+    return newInstance(new BooleanFunction<Integer>() {
+      @Override
+      public boolean fun(Integer integer) {
+        return visibleNodes.get(integer);
+      }
+    }, visibleNodes.size());
   }
 
   /**
@@ -153,5 +164,6 @@ public class ListIntToIntMap extends AbstractIntToIntMap implements UpdatableInt
     for (int blockIndex = endSumIndex + 1; blockIndex < mySubSumOfBlocks.length; blockIndex++)
       mySubSumOfBlocks[blockIndex] += sumDelta;
   }
+
 
 }
