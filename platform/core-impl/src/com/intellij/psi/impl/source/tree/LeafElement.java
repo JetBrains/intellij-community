@@ -290,16 +290,14 @@ public abstract class LeafElement extends TreeElement {
   }
 
   @Override
-  @Nullable
-  public <T extends PsiElement> T getPsi(Class<T> clazz) {
+  public <T extends PsiElement> T getPsi(@NotNull Class<T> clazz) {
     return getPsi(clazz, getPsi(), LOG);
   }
 
-  @Nullable
-  static <T extends PsiElement> T getPsi(Class<T> clazz, PsiElement element, Logger log) {
+  static <T extends PsiElement> T getPsi(@NotNull Class<T> clazz, PsiElement element, Logger log) {
     log.assertTrue(clazz.isInstance(element), "unexpected psi class. expected: " + clazz
                                              + " got: " + (element == null ? null : element.getClass()));
+    //noinspection unchecked
     return (T)element;
   }
-
 }
