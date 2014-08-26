@@ -10,16 +10,11 @@ import org.jetbrains.plugins.settingsRepository.showAuthenticationForm
 import org.jetbrains.plugins.settingsRepository.Credentials
 
 class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<CredentialsStore>) : CredentialsProvider() {
-  override fun isInteractive(): Boolean {
-    return true
-  }
+  override fun isInteractive() = true
 
   override fun supports(vararg items: CredentialItem?): Boolean {
     for (item in items) {
-      if (item is CredentialItem.Password) {
-        continue
-      }
-      if (item is CredentialItem.Username) {
+      if (item is CredentialItem.Password || item is CredentialItem.Username) {
         continue
       }
       return false
@@ -56,6 +51,8 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
         credentials = Credentials(userFromUri, passwordFromUri)
       }
     }
+
+
 
     if (credentials?.username == null || credentials?.password == null) {
       credentials = showAuthenticationForm(credentials, uri.toString(), uri.getHost())

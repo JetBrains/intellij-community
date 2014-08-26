@@ -13,7 +13,7 @@
           <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Update repository from remote on start"/>
+          <text resource-bundle="messages/IcsBundle" key="settings.update.on.start"/>
         </properties>
       </component>
       <component id="1cf3d" class="javax.swing.JCheckBox" binding="shareProjectWorkspaceCheckBox" default-binding="true">
@@ -29,7 +29,7 @@
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="URL:"/>
+          <text resource-bundle="messages/IcsBundle" key="settings.upstream.url"/>
         </properties>
       </component>
       <vspacer id="970a3">
