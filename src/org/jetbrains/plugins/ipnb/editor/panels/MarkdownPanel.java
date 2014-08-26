@@ -25,7 +25,15 @@ public class MarkdownPanel extends IpnbEditablePanel<JPanel, MarkdownCell> {
 
   @Override
   protected String getRawCellText() {
-    return myCell.getSourceAsString();
+    final String string = myCell.getSourceAsString();
+    if (isStyleOrScript(string)) {
+      return "";
+    }
+    return string;
+  }
+
+  private boolean isStyleOrScript(String string) {
+    return string.contains("<style>") || string.contains("<script>");
   }
 
   @Override
@@ -43,6 +51,7 @@ public class MarkdownPanel extends IpnbEditablePanel<JPanel, MarkdownCell> {
     boolean hasFormula = false;
     boolean isEscaped = false;
     boolean inFormula = false;
+    if (isStyleOrScript(myCell.getSourceAsString())) return;
     for (String string : myCell.getSource()) {
       string = StringUtil.replace(string, "\\(", "(");
       string = StringUtil.replace(string, "\\)", ")");
