@@ -84,7 +84,7 @@ public class ExtMergeFiles extends BaseExternalTool {
 
       if (Messages.YES == Messages.showYesNoDialog(request.getProject(),
                                                    "Press \"Mark as Resolved\" when you finish resolving conflicts in the external tool",
-                                                   "Merge In External Tool", "Mark as Resolved", "Cancel", null)) {
+                                                   "Merge In External Tool", "Mark as Resolved", "Revert", null)) {
         result = DialogWrapper.OK_EXIT_CODE;
       }
       ((MergeRequestImpl)request).getResultContent().getFile().refresh(false, false);
