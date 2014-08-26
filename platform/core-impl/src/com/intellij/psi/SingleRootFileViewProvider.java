@@ -383,7 +383,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   @Override
   public PsiReference findReferenceAt(final int offset) {
-    final PsiFileImpl psiFile = (PsiFileImpl)getPsi(getBaseLanguage());
+    final PsiFile psiFile = getPsi(getBaseLanguage());
     return findReferenceAt(psiFile, offset);
   }
 
