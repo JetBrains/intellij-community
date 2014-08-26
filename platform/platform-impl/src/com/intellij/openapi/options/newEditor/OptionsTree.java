@@ -37,6 +37,7 @@ import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
@@ -49,12 +50,14 @@ import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.plaf.TreeUI;
-import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
@@ -403,6 +406,9 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       } else {
         myProjectIcon.setVisible(false);
       }
+      if (Registry.is("ide.new.settings.dialog")) {
+        result.setBackground(selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getSidePanelColor());
+      }
       return result;
     }
 
@@ -727,7 +733,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       super.processMouseEvent(e);
     }
 
-    private class MyTreeUi extends BasicTreeUI {
+    private class MyTreeUi extends WideSelectionTreeUI {
 
       @Override
       public void toggleExpandState(final TreePath path) {

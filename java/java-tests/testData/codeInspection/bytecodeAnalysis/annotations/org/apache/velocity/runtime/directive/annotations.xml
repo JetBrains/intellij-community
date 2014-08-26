@@ -5,6 +5,9 @@
   <item name="org.apache.velocity.runtime.directive.Block void init(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, org.apache.velocity.runtime.parser.node.Node) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.velocity.runtime.directive.Block void init(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, org.apache.velocity.runtime.parser.node.Node) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.velocity.runtime.directive.Block void init(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, org.apache.velocity.runtime.parser.node.Node) 2">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -13,6 +16,9 @@
   </item>
   <item name="org.apache.velocity.runtime.directive.BlockMacro void init(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, org.apache.velocity.runtime.parser.node.Node) 2">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.directive.Break boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.runtime.directive.Break boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node) 2">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -25,11 +31,20 @@
   <item name="org.apache.velocity.runtime.directive.Break java.lang.String getName()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.velocity.runtime.directive.Break void init(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, org.apache.velocity.runtime.parser.node.Node) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.velocity.runtime.directive.Break void init(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, org.apache.velocity.runtime.parser.node.Node) 2">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.velocity.runtime.directive.Define boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.directive.Define boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.runtime.directive.Define boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.runtime.directive.Define boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node)">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -42,11 +57,23 @@
   <item name="org.apache.velocity.runtime.directive.Define void init(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, org.apache.velocity.runtime.parser.node.Node) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.velocity.runtime.directive.Define void init(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, org.apache.velocity.runtime.parser.node.Node) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.velocity.runtime.directive.Define void init(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, org.apache.velocity.runtime.parser.node.Node) 2">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.velocity.runtime.directive.Directive org.apache.velocity.runtime.directive.Scope makeScope(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.velocity.runtime.directive.Directive org.apache.velocity.runtime.directive.Scope makeScope(java.lang.Object)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.directive.Directive void init(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, org.apache.velocity.runtime.parser.node.Node) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.runtime.directive.Directive void init(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, org.apache.velocity.runtime.parser.node.Node) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.runtime.directive.Evaluate boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -74,11 +101,35 @@
   <item name="org.apache.velocity.runtime.directive.Foreach void clean(org.apache.velocity.context.InternalContextAdapter, java.lang.Object, java.lang.Object, java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.velocity.runtime.directive.Foreach void clean(org.apache.velocity.context.InternalContextAdapter, java.lang.Object, java.lang.Object, java.lang.Object) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.runtime.directive.Foreach void clean(org.apache.velocity.context.InternalContextAdapter, java.lang.Object, java.lang.Object, java.lang.Object) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.runtime.directive.Foreach void clean(org.apache.velocity.context.InternalContextAdapter, java.lang.Object, java.lang.Object, java.lang.Object) 3">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.runtime.directive.Foreach void init(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, org.apache.velocity.runtime.parser.node.Node) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.velocity.runtime.directive.Foreach void init(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, org.apache.velocity.runtime.parser.node.Node) 2">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.velocity.runtime.directive.Foreach void put(org.apache.velocity.context.InternalContextAdapter, java.lang.String, java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.directive.Foreach.NullHolderContext NullHolderContext(java.lang.String, org.apache.velocity.context.InternalContextAdapter) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.runtime.directive.Foreach.NullHolderContext NullHolderContext(java.lang.String, org.apache.velocity.context.InternalContextAdapter, org.apache.velocity.runtime.directive.Foreach.1) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.runtime.directive.Foreach.NullHolderContext NullHolderContext(java.lang.String, org.apache.velocity.context.InternalContextAdapter, org.apache.velocity.runtime.directive.Foreach.1) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.runtime.directive.ForeachScope ForeachScope(java.lang.Object, java.lang.Object) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.runtime.directive.Include boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node) 2">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -87,6 +138,9 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_,_-&gt;true;_,!null,_-&gt;true;_,_,!null-&gt;true;_,null,_-&gt;true;null,_,_-&gt;true&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.velocity.runtime.directive.Include boolean renderOutput(org.apache.velocity.runtime.parser.node.Node, org.apache.velocity.context.InternalContextAdapter, java.io.Writer) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.runtime.directive.Include boolean renderOutput(org.apache.velocity.runtime.parser.node.Node, org.apache.velocity.context.InternalContextAdapter, java.io.Writer)">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -99,8 +153,14 @@
   <item name="org.apache.velocity.runtime.directive.InputBase java.lang.String getInputEncoding(org.apache.velocity.context.InternalContextAdapter) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.velocity.runtime.directive.Literal boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.velocity.runtime.directive.Literal boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.directive.Literal boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.runtime.directive.Literal boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node)">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -110,8 +170,20 @@
   <item name="org.apache.velocity.runtime.directive.Literal java.lang.String getName()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.velocity.runtime.directive.Literal void init(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, org.apache.velocity.runtime.parser.node.Node) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.velocity.runtime.directive.Literal void init(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, org.apache.velocity.runtime.parser.node.Node) 2">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.directive.Macro boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.runtime.directive.Macro boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.runtime.directive.Macro boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.runtime.directive.Macro boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node)">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -120,6 +192,9 @@
   </item>
   <item name="org.apache.velocity.runtime.directive.Macro java.lang.String getName()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.directive.Macro java.lang.StringBuffer macroToString(java.lang.StringBuffer, java.lang.String[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.runtime.directive.Macro java.lang.StringBuffer macroToString(java.lang.StringBuffer, java.lang.String[]) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -138,8 +213,14 @@
   <item name="org.apache.velocity.runtime.directive.Macro void init(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, org.apache.velocity.runtime.parser.node.Node) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.velocity.runtime.directive.Macro void init(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, org.apache.velocity.runtime.parser.node.Node) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.velocity.runtime.directive.Macro void init(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, org.apache.velocity.runtime.parser.node.Node) 2">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.directive.MacroParseException MacroParseException(java.lang.String, java.lang.String, org.apache.velocity.runtime.parser.Token) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.runtime.directive.MacroParseException java.lang.String getMessage()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -171,14 +252,26 @@
   <item name="org.apache.velocity.runtime.directive.RuntimeMacro void init(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, org.apache.velocity.runtime.parser.node.Node) 2">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.velocity.runtime.directive.Scope Scope(java.lang.Object, java.lang.Object) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.runtime.directive.Scope.Info Info(org.apache.velocity.runtime.directive.Scope, java.lang.Object) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.velocity.runtime.directive.Scope.Info java.lang.String toString()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.directive.Stop boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.runtime.directive.Stop boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node) 2">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.velocity.runtime.directive.Stop java.lang.String getName()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.directive.Stop void init(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, org.apache.velocity.runtime.parser.node.Node) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.runtime.directive.Stop void init(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, org.apache.velocity.runtime.parser.node.Node) 2">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -193,6 +286,9 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_,_,_-&gt;true;_,!null,_,_-&gt;true;_,_,!null,_-&gt;true;_,_,_,!null-&gt;true;_,_,_,null-&gt;true;_,null,_,_-&gt;true;null,_,_,_-&gt;true&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.velocity.runtime.directive.VelocimacroProxy java.lang.String buildErrorMsg(org.apache.velocity.runtime.parser.node.Node, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.runtime.directive.VelocimacroProxy java.lang.String buildErrorMsg(org.apache.velocity.runtime.parser.node.Node, int)">
     <annotation name="org.jetbrains.annotations.NotNull"/>

@@ -27,16 +27,20 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.util.Base64;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.WaitForProgressToShow;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.proxy.JavaProxyProperty;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
-import org.apache.commons.codec.binary.Base64;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,25 +52,18 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.*;
 import java.util.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: stathik
- * Date: Oct 7, 2003
- * Time: 3:58:23 PM
- * To change this template use Options | File Templates.
- */
 @State(
   name = "HttpConfigurable",
   storages = {
-    @Storage( file = StoragePathMacros.APP_CONFIG + "/other.xml" ),
-    @Storage( file = StoragePathMacros.APP_CONFIG + "/proxy.settings.xml" )
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml"),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/proxy.settings.xml")
   },
   storageChooser = HttpConfigurable.StorageChooser.class
 )
-public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, ApplicationComponent,
-                                         ExportableApplicationComponent {
+public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, ExportableApplicationComponent {
   public static final int CONNECTION_TIMEOUT = SystemProperties.getIntProperty("idea.connection.timeout", 10000);
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.net.HttpConfigurable");
+  private static final Logger LOG = Logger.getInstance(HttpConfigurable.class);
+
   public boolean PROXY_TYPE_IS_SOCKS = false;
   public boolean USE_HTTP_PROXY = false;
   public boolean USE_PROXY_PAC = false;
@@ -79,23 +76,28 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   public volatile String PROXY_PASSWORD_CRYPT = "";
   public boolean KEEP_PROXY_PASSWORD = false;
   public transient String LAST_ERROR;
-  public Map<CommonProxy.HostInfo, ProxyInfo> myGenericPasswords = new HashMap<CommonProxy.HostInfo, ProxyInfo>();
-  public Set<CommonProxy.HostInfo> myGenericCancelled = new HashSet<CommonProxy.HostInfo>();
-  private transient final Object myLock = new Object();
-  private IdeaWideProxySelector mySelector;
-  private IdeaWideAuthenticator myAuthenticator;
-  public transient Getter<PasswordAuthentication> myTestAuthRunnable = new StaticGetter<PasswordAuthentication>(null);
-  public transient Getter<PasswordAuthentication> myTestGenericAuthRunnable = new StaticGetter<PasswordAuthentication>(null);
+
+  private final Map<CommonProxy.HostInfo, ProxyInfo> myGenericPasswords = new THashMap<CommonProxy.HostInfo, ProxyInfo>();
+  private final Set<CommonProxy.HostInfo> myGenericCancelled = new THashSet<CommonProxy.HostInfo>();
+
+  private transient IdeaWideProxySelector mySelector;
+
   public String PROXY_EXCEPTIONS = "";
   public boolean USE_PAC_URL = false;
   public String PAC_URL = "";
+
+  private transient final Object myLock = new Object();
+
+  @SuppressWarnings("UnusedDeclaration")
+  public transient Getter<PasswordAuthentication> myTestAuthRunnable = new StaticGetter<PasswordAuthentication>(null);
+  public transient Getter<PasswordAuthentication> myTestGenericAuthRunnable = new StaticGetter<PasswordAuthentication>(null);
 
   public static HttpConfigurable getInstance() {
     return ServiceManager.getService(HttpConfigurable.class);
   }
 
-  public static boolean editConfigurable(final JComponent parent) {
-    return ShowSettingsUtil.getInstance().editConfigurable(parent, new HTTPProxySettingsPanel(getInstance()));
+  public static boolean editConfigurable(@Nullable JComponent parent) {
+    return ShowSettingsUtil.getInstance().editConfigurable(parent, new HTTPProxySettingsPanel());
   }
 
   @Override
@@ -113,10 +115,9 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   @Override
   public void initComponent() {
     mySelector = new IdeaWideProxySelector(this);
-    myAuthenticator = new IdeaWideAuthenticator(this);
-    final String name = getClass().getName();
+    String name = getClass().getName();
     CommonProxy.getInstance().setCustom(name, mySelector);
-    CommonProxy.getInstance().setCustomAuth(name, myAuthenticator);
+    CommonProxy.getInstance().setCustomAuth(name, new IdeaWideAuthenticator(this));
   }
 
   @NotNull
@@ -139,7 +140,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
   private void correctPasswords(HttpConfigurable from, HttpConfigurable to) {
     synchronized (myLock) {
-      to.myGenericPasswords = new HashMap<CommonProxy.HostInfo, ProxyInfo>();
+      to.myGenericPasswords.clear();
       for (Map.Entry<CommonProxy.HostInfo, ProxyInfo> entry : from.myGenericPasswords.entrySet()) {
         if (Boolean.TRUE.equals(entry.getValue().isStore())) {
           to.myGenericPasswords.put(entry.getKey(), entry.getValue());
@@ -157,9 +158,9 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     correctPasswords(state, this);
   }
 
-  public boolean isGenericPasswordCanceled(final String host, final int port) {
+  public boolean isGenericPasswordCanceled(@NotNull String host, int port) {
     synchronized (myLock) {
-      return myGenericCancelled.contains(Pair.create(host, port));
+      return myGenericCancelled.contains(new CommonProxy.HostInfo(null, host, port));
     }
   }
 
@@ -174,15 +175,16 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     synchronized (myLock) {
       proxyInfo = myGenericPasswords.get(new CommonProxy.HostInfo("", host, port));
     }
-    if (proxyInfo == null) return null;
+    if (proxyInfo == null) {
+      return null;
+    }
     return new PasswordAuthentication(proxyInfo.getUsername(), decode(String.valueOf(proxyInfo.getPasswordCrypt())).toCharArray());
   }
 
   public void putGenericPassword(final String host, final int port, final PasswordAuthentication authentication, final boolean remember) {
-    final PasswordAuthentication coded = new PasswordAuthentication(authentication.getUserName(), encode(String.valueOf(authentication.getPassword())).toCharArray());
+    PasswordAuthentication coded = new PasswordAuthentication(authentication.getUserName(), encode(String.valueOf(authentication.getPassword())).toCharArray());
     synchronized (myLock) {
-      myGenericPasswords.put(new CommonProxy.HostInfo("", host, port), new ProxyInfo(remember, coded.getUserName(), String.valueOf(
-        coded.getPassword())));
+      myGenericPasswords.put(new CommonProxy.HostInfo("", host, port), new ProxyInfo(remember, coded.getUserName(), String.valueOf(coded.getPassword())));
     }
   }
 
@@ -191,8 +193,8 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     return decode(PROXY_PASSWORD_CRYPT);
   }
 
-  private String decode(String value) {
-    return new String(new Base64().decode(value.getBytes()));
+  private static String decode(String value) {
+    return new String(Base64.decode(value));
   }
 
   @Transient
@@ -200,8 +202,8 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     PROXY_PASSWORD_CRYPT = encode(password);
   }
 
-  private String encode(String password) {
-    return new String(new Base64().encode(password.getBytes()));
+  private static String encode(String password) {
+    return new String(Base64.encode(password.getBytes(CharsetToolkit.UTF8_CHARSET)));
   }
 
   public PasswordAuthentication getGenericPromptedAuthentication(final String prefix, final String host, final String prompt, final int port, final boolean remember) {
@@ -210,6 +212,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     }
     final PasswordAuthentication[] value = new PasswordAuthentication[1];
     final Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         if (isGenericPasswordCanceled(host, port)) return;
         final PasswordAuthentication password = getGenericPassword(host, port);
@@ -251,6 +254,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     final String login = PROXY_LOGIN == null ? "" : PROXY_LOGIN;
     final PasswordAuthentication[] value = new PasswordAuthentication[1];
     final Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         if (AUTHENTICATION_CANCELLED) return;
         // password might have changed, and the check below is for that
@@ -327,7 +331,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
             USE_PROXY_PAC = false;
             Messages.showMessageDialog(frame.getComponent(), "Proxy: both 'use proxy' and 'autodetect proxy' settings were set." +
                                                              "\nOnly one of these options should be selected.\nPlease re-configure.",
-                                       "Proxy setup", Messages.getWarningIcon());
+                                       "Proxy Setup", Messages.getWarningIcon());
             editConfigurable(frame.getComponent());
           }
         }
@@ -344,51 +348,52 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
    * @param url URL for HTTP connection
    * @throws IOException
    */
-  public void prepareURL (String url) throws IOException {
-    //setAuthenticator();
-    CommonProxy.isInstalledAssertion();
-
-    final URLConnection connection = openConnection(url);
+  public void prepareURL(@NotNull String url) throws IOException {
+    URLConnection connection = openConnection(url);
     try {
       connection.connect();
       connection.getInputStream();
     }
-    catch (Throwable e) {
-      if (e instanceof IOException) {
-        throw (IOException)e;
-      }
-    } finally {
+    catch (IOException e) {
+      throw e;
+    }
+    catch (Throwable ignored) {
+    }
+    finally {
       if (connection instanceof HttpURLConnection) {
         ((HttpURLConnection)connection).disconnect();
       }
     }
   }
 
+  @NotNull
   public URLConnection openConnection(@NotNull String location) throws IOException {
     CommonProxy.isInstalledAssertion();
     final URL url = new URL(location);
     URLConnection urlConnection = null;
     final List<Proxy> proxies = CommonProxy.getInstance().select(url);
-    if (proxies == null || proxies.isEmpty()) {
+    if (ContainerUtil.isEmpty(proxies)) {
       urlConnection = url.openConnection();
-    } else {
-      IOException ioe = null;
+    }
+    else {
+      IOException exception = null;
       for (Proxy proxy : proxies) {
         try {
           urlConnection = url.openConnection(proxy);
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
           // continue iteration
-          ioe = e;
+          exception = e;
         }
       }
-      if (urlConnection == null && ioe != null) {
-        throw ioe;
+      if (urlConnection == null && exception != null) {
+        throw exception;
       }
     }
-    if (urlConnection != null) {
-      urlConnection.setReadTimeout(CONNECTION_TIMEOUT);
-      urlConnection.setConnectTimeout(CONNECTION_TIMEOUT);
-    }
+
+    assert urlConnection != null;
+    urlConnection.setReadTimeout(CONNECTION_TIMEOUT);
+    urlConnection.setConnectTimeout(CONNECTION_TIMEOUT);
     return urlConnection;
   }
 
@@ -518,6 +523,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     public String myUsername;
     public String myPasswordCrypt;
 
+    @SuppressWarnings("UnusedDeclaration")
     public ProxyInfo() {
     }
 
@@ -547,6 +553,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
       return myPasswordCrypt;
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     public void setPasswordCrypt(String passwordCrypt) {
       myPasswordCrypt = passwordCrypt;
     }

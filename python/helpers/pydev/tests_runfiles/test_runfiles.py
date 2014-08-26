@@ -26,6 +26,7 @@ if 'pydev_runfiles' in sys.modules:
 import pydev_runfiles
 import unittest
 import tempfile
+import re
 
 try:
     set

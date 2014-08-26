@@ -23,6 +23,7 @@ import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
+import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,10 +42,7 @@ class XAddToWatchesAction extends XDebuggerTreeActionBase {
     if (watchesView != null) {
       String expression = node.getValueContainer().getEvaluationExpression();
       if (!StringUtil.isEmpty(expression)) {
-        XExpressionImpl watchExpression = XExpressionImpl.fromText(expression);
-        if (watchExpression != null) {
-          watchesView.addWatchExpression(watchExpression, -1, true);
-        }
+        watchesView.addWatchExpression(XExpressionImpl.fromText(expression), -1, true);
       }
     }
   }
@@ -55,7 +53,10 @@ class XAddToWatchesAction extends XDebuggerTreeActionBase {
     if (view == null && project != null) {
       XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
       if (session != null) {
-        return ((XDebugSessionImpl)session).getSessionTab().getWatchesView();
+        XDebugSessionTab tab = ((XDebugSessionImpl)session).getSessionTab();
+        if (tab != null) {
+          return tab.getWatchesView();
+        }
       }
     }
     return view;

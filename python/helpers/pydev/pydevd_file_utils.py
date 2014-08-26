@@ -38,6 +38,10 @@
         machine for the paths that'll actually have breakpoints).
 '''
 
+
+
+
+from pydevd_constants import *  #@UnusedWildImport
 import os.path
 import sys
 import traceback

@@ -51,6 +51,7 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
   public CustomizeIDEWizardDialog() {
     super(null, true, true);
     setTitle("Customize " + ApplicationNamesInfo.getInstance().getProductName());
+    getPeer().setAppIcons();
     initSteps();
     mySkipButton.addActionListener(this);
     myBackButton.addActionListener(this);

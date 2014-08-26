@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -540,7 +540,7 @@ public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool
     }
 
     if (required && superMethods.length == 0 && isTagRequired(psiMethod, "@throws") && psiMethod.getThrowsList().getReferencedTypes().length > 0) {
-      final Map<PsiClassType, PsiClass> declaredExceptions = new HashMap<PsiClassType, PsiClass>();
+      final Map<PsiClassType, PsiClass> declaredExceptions = new LinkedHashMap<PsiClassType, PsiClass>();
       final PsiClassType[] classTypes = psiMethod.getThrowsList().getReferencedTypes();
       for (PsiClassType classType : classTypes) {
         final PsiClass psiClass = classType.resolve();

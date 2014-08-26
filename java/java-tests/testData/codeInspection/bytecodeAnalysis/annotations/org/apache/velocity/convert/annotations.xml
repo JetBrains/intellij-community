@@ -2,6 +2,9 @@
   <item name="org.apache.velocity.convert.WebMacro boolean writeTemplate(java.lang.String, java.lang.String, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.velocity.convert.WebMacro boolean writeTemplate(java.lang.String, java.lang.String, java.lang.String) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.velocity.convert.WebMacro boolean writeTemplate(java.lang.String, java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;_,null,_-&gt;false&quot;"/>

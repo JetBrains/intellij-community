@@ -82,4 +82,8 @@ public final class DocumentUtil {
     }
     return startOffset;
   }
+
+  public static boolean isValidOffset(int offset, @NotNull Document document) {
+    return offset >= 0 && offset <= document.getTextLength();
+  }
 }

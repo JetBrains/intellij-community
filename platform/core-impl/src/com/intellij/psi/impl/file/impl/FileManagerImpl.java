@@ -26,7 +26,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.ContentBasedFileSubstitutor;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -411,7 +410,7 @@ public class FileManagerImpl implements FileManager {
       if (myFileIndex.isExcludedFile(vFile)) return null;
     }
     else {
-      if (FileTypeRegistry.getInstance().isFileIgnored(vFile)) return null;
+      if (myFileIndex.isUnderIgnored(vFile)) return null;
     }
 
     VirtualFile parent = vFile.getParent();

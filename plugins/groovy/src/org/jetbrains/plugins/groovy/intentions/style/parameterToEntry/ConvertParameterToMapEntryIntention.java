@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -459,17 +460,33 @@ public class ConvertParameterToMapEntryIntention extends Intention {
           }
         };
         ReferencesSearch.search(namedElem).forEach(consumer);
-        if (namedElem instanceof GrField && ((GrField)namedElem).isProperty()) {
-          final GrAccessorMethod[] getters = ((GrField)namedElem).getGetters();
+        boolean isProperty = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+          @Override
+          public Boolean compute() {
+            return namedElem instanceof GrField && ((GrField)namedElem).isProperty();
+          }
+        });
+        if (isProperty) {
+          final GrAccessorMethod[] getters = ApplicationManager.getApplication().runReadAction(new Computable<GrAccessorMethod[]>() {
+            @Override
+            public GrAccessorMethod[] compute() {
+              return ((GrField)namedElem).getGetters();
+            }
+          });
           for (GrAccessorMethod getter : getters) {
             MethodReferencesSearch.search(getter).forEach(consumer);
           }
         }
-        for (PsiReference reference : references) {
-          final PsiElement element = reference.getElement();
-          if (element != null) {
-            occurrences.add(element);
-          }
+        for (final PsiReference reference : references) {
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            @Override
+            public void run() {
+              final PsiElement element = reference.getElement();
+              if (element != null) {
+                occurrences.add(element);
+              }
+            }
+          });
         }
       }
 

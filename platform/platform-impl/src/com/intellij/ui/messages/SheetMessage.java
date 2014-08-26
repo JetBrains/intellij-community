@@ -70,6 +70,8 @@ public class SheetMessage {
     final Component recentFocusOwner = activeWindow == null ? null : activeWindow.getMostRecentFocusOwner();
     beforeShowFocusOwner = new WeakReference<Component>(recentFocusOwner);
 
+    maximizeIfNeeded(owner);
+
     myWindow = new JDialog(owner, "This should not be shown", Dialog.ModalityType.APPLICATION_MODAL);
     myWindow.getRootPane().putClientProperty("apple.awt.draggableWindowBackground", Boolean.FALSE);
 
@@ -130,6 +132,16 @@ public class SheetMessage {
       focusCandidate.requestFocus();
     }
 
+  }
+
+  private static void maximizeIfNeeded(final Window owner) {
+    if (owner == null) return;
+    if (owner instanceof Frame) {
+      Frame f = (Frame)owner;
+      if (f.getState() == Frame.ICONIFIED) {
+        f.setState(Frame.NORMAL);
+      }
+    }
   }
 
   private void setWindowOpacity(float opacity) {

@@ -170,7 +170,7 @@ public class SliceNullnessAnalyzer {
     final SliceLeafAnalyzer.SliceNodeGuide guide = new SliceLeafAnalyzer.SliceNodeGuide(treeStructure);
     WalkingState<SliceNode> walkingState = new WalkingState<SliceNode>(guide) {
       @Override
-      public void visit(@NotNull SliceNode element) {
+      public void visit(@NotNull final SliceNode element) {
         element.calculateDupNode();
         node(element, map).clear();
         SliceNode duplicate = element.getDuplicate();
@@ -178,11 +178,10 @@ public class SliceNullnessAnalyzer {
           node(element, map).add(node(duplicate, map));
         }
         else {
-          final SliceUsage sliceUsage = element.getValue();
           final PsiElement value = ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
             @Override
             public PsiElement compute() {
-              return sliceUsage.getElement();
+              return element.getValue().getElement();
             }
           });
           Nullness nullness = ApplicationManager.getApplication().runReadAction(new Computable<Nullness>() {
@@ -198,7 +197,13 @@ public class SliceNullnessAnalyzer {
             group(element, map, NullAnalysisResult.NOT_NULLS).add(value);
           }
           else {
-            Collection<? extends AbstractTreeNode> children = element.getChildren();
+            Collection<? extends AbstractTreeNode> children = ApplicationManager.getApplication().runReadAction(
+              new Computable<Collection<? extends AbstractTreeNode>>() {
+                @Override
+                public Collection<? extends AbstractTreeNode> compute() {
+                  return element.getChildren();
+                }
+              });
             if (children.isEmpty()) {
               group(element, map, NullAnalysisResult.UNKNOWNS).add(value);
             }

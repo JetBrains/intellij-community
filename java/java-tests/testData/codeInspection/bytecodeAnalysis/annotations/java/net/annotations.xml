@@ -38,6 +38,9 @@
   <item name="java.net.DatagramSocket DatagramSocket(java.net.DatagramSocketImpl) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.net.DatagramSocket DatagramSocket(java.net.SocketAddress) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.net.DatagramSocket void connect(java.net.InetAddress, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -52,6 +55,12 @@
   </item>
   <item name="java.net.DatagramSocket void send(java.net.DatagramPacket) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.net.DatagramSocket void setDatagramSocketImplFactory(java.net.DatagramSocketImplFactory) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.InetAddress boolean equals(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.net.InetAddress boolean equals(java.lang.Object)">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -90,6 +99,12 @@
   <item name="java.net.InetAddress java.net.InetAddress getByAddress(java.lang.String, byte[])">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.net.InetAddress java.net.InetAddress getByName(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.InetAddress java.net.InetAddress[] getAllByName(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.net.InetAddress java.net.InetAddress[] getAllByName(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;!null&quot;"/>
@@ -121,23 +136,137 @@
   <item name="java.net.ServerSocket void implAccept(java.net.Socket) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.net.ServerSocket void setSocketFactory(java.net.SocketImplFactory) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.Socket Socket(java.lang.String, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.Socket Socket(java.lang.String, int, boolean) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.Socket Socket(java.lang.String, int, java.net.InetAddress, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.Socket Socket(java.net.InetAddress, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.Socket Socket(java.net.InetAddress, int, boolean) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.Socket Socket(java.net.InetAddress, int, java.net.InetAddress, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.net.Socket Socket(java.net.SocketAddress, java.net.SocketAddress, boolean) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.net.Socket java.lang.String toString()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.net.Socket void bind(java.net.SocketAddress) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.net.Socket void connect(java.net.SocketAddress, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.net.Socket void setSocketImplFactory(java.net.SocketImplFactory) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI URI(java.lang.String, java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI URI(java.lang.String, java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI URI(java.lang.String, java.lang.String, java.lang.String) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI URI(java.lang.String, java.lang.String, java.lang.String, int, java.lang.String, java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI URI(java.lang.String, java.lang.String, java.lang.String, int, java.lang.String, java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI URI(java.lang.String, java.lang.String, java.lang.String, int, java.lang.String, java.lang.String, java.lang.String) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI URI(java.lang.String, java.lang.String, java.lang.String, int, java.lang.String, java.lang.String, java.lang.String) 4">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI URI(java.lang.String, java.lang.String, java.lang.String, int, java.lang.String, java.lang.String, java.lang.String) 5">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI URI(java.lang.String, java.lang.String, java.lang.String, int, java.lang.String, java.lang.String, java.lang.String) 6">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI URI(java.lang.String, java.lang.String, java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI URI(java.lang.String, java.lang.String, java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI URI(java.lang.String, java.lang.String, java.lang.String, java.lang.String) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI URI(java.lang.String, java.lang.String, java.lang.String, java.lang.String) 3">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI URI(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI URI(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI URI(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI URI(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String) 3">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI URI(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String) 4">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI boolean equal(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI boolean equal(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI boolean equalIgnoringCase(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI boolean equalIgnoringCase(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI boolean equals(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.net.URI int access$2502(java.net.URI, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.net.URI int compare(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI int compare(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI int compareIgnoringCase(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI int compareIgnoringCase(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.net.URI int compareTo(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.net.URI int compareTo(java.net.URI) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.net.URI int hash(int, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI int hashIgnoringCase(int, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.net.URI int join(char[], int[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -255,6 +384,30 @@
   <item name="java.net.URI java.lang.String resolvePath(java.lang.String, java.lang.String, boolean) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.net.URI java.lang.String toString(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, int, java.lang.String, java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI java.lang.String toString(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, int, java.lang.String, java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI java.lang.String toString(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, int, java.lang.String, java.lang.String, java.lang.String) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI java.lang.String toString(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, int, java.lang.String, java.lang.String, java.lang.String) 3">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI java.lang.String toString(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, int, java.lang.String, java.lang.String, java.lang.String) 4">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI java.lang.String toString(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, int, java.lang.String, java.lang.String, java.lang.String) 6">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI java.lang.String toString(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, int, java.lang.String, java.lang.String, java.lang.String) 7">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI java.lang.String toString(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, int, java.lang.String, java.lang.String, java.lang.String) 8">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.net.URI java.lang.String toString(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, int, java.lang.String, java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -303,8 +456,44 @@
   <item name="java.net.URI long lowMask(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.net.URI void appendAuthority(java.lang.StringBuffer, java.lang.String, java.lang.String, java.lang.String, int) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI void appendAuthority(java.lang.StringBuffer, java.lang.String, java.lang.String, java.lang.String, int) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI void appendAuthority(java.lang.StringBuffer, java.lang.String, java.lang.String, java.lang.String, int) 3">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.net.URI void appendEscape(java.lang.StringBuffer, byte) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.net.URI void appendFragment(java.lang.StringBuffer, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI void appendSchemeSpecificPart(java.lang.StringBuffer, java.lang.String, java.lang.String, java.lang.String, java.lang.String, int, java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI void appendSchemeSpecificPart(java.lang.StringBuffer, java.lang.String, java.lang.String, java.lang.String, java.lang.String, int, java.lang.String, java.lang.String) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI void appendSchemeSpecificPart(java.lang.StringBuffer, java.lang.String, java.lang.String, java.lang.String, java.lang.String, int, java.lang.String, java.lang.String) 3">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI void appendSchemeSpecificPart(java.lang.StringBuffer, java.lang.String, java.lang.String, java.lang.String, java.lang.String, int, java.lang.String, java.lang.String) 4">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI void appendSchemeSpecificPart(java.lang.StringBuffer, java.lang.String, java.lang.String, java.lang.String, java.lang.String, int, java.lang.String, java.lang.String) 6">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI void appendSchemeSpecificPart(java.lang.StringBuffer, java.lang.String, java.lang.String, java.lang.String, java.lang.String, int, java.lang.String, java.lang.String) 7">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI void checkPath(java.lang.String, java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URI void checkPath(java.lang.String, java.lang.String, java.lang.String) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.net.URI void maybeAddLeadingDot(char[], int[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -345,6 +534,9 @@
   <item name="java.net.URL URL(java.net.URL, java.lang.String, java.net.URLStreamHandler) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.net.URL boolean equals(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.net.URL boolean equals(java.lang.Object)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;false&quot;"/>
@@ -368,6 +560,9 @@
   <item name="java.net.URL void set(java.lang.String, java.lang.String, int, java.lang.String, java.lang.String) 3">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.net.URL void setURLStreamHandlerFactory(java.net.URLStreamHandlerFactory) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.net.URL void writeObject(java.io.ObjectOutputStream) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -380,10 +575,16 @@
   <item name="java.net.URLConnection java.lang.String getContentHandlerPkgPrefixes()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.net.URLConnection java.lang.String getDefaultRequestProperty(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.net.URLConnection java.lang.String getDefaultRequestProperty(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;null;null-&gt;null&quot;"/>
     </annotation>
+  </item>
+  <item name="java.net.URLConnection java.lang.String getHeaderField(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.net.URLConnection java.lang.String getHeaderField(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -392,6 +593,9 @@
   </item>
   <item name="java.net.URLConnection java.lang.String guessContentTypeFromStream(java.io.InputStream) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.net.URLConnection java.lang.String stripOffParameters(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.net.URLConnection java.lang.String stripOffParameters(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -415,6 +619,18 @@
   </item>
   <item name="java.net.URLConnection void addRequestProperty(java.lang.String, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.net.URLConnection void setContentHandlerFactory(java.net.ContentHandlerFactory) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URLConnection void setDefaultRequestProperty(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URLConnection void setDefaultRequestProperty(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.net.URLConnection void setFileNameMap(java.net.FileNameMap) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.net.URLConnection void setRequestProperty(java.lang.String, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>

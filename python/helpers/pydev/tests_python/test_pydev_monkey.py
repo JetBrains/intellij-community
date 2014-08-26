@@ -3,7 +3,6 @@ import pydev_monkey
 import sys
 
 
-
 class TestCase(unittest.TestCase):
 
     def test_monkey(self):

@@ -145,7 +145,7 @@ def _restore_pm_excepthook():
 
 def update_exception_hook(dbg):
     if dbg.break_on_uncaught_exceptions:
-        _set_pm_excepthook(dbg.break_on_uncaught_exceptions)
+        _set_pm_excepthook(dbg.break_on_uncaught_exceptions.copy())
     else:
         _restore_pm_excepthook()
 

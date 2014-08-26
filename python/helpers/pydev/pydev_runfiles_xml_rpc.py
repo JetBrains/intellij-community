@@ -1,10 +1,16 @@
+import threading
 import traceback
 import warnings
 
 from _pydev_filesystem_encoding import getfilesystemencoding
-from pydev_imports import xmlrpclib, _queue
-Queue = _queue.Queue
+from pydev_imports import xmlrpclib
 from pydevd_constants import *
+
+
+try:
+    from Queue import Queue
+except:
+    from queue import Queue
 
 #This may happen in IronPython (in Python it shouldn't happen as there are
 #'fast' replacements that are used in xmlrpclib.py)

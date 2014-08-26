@@ -11,7 +11,13 @@
   <item name="org.apache.velocity.exception.ParseErrorException ParseErrorException(org.apache.velocity.exception.VelocityException, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.velocity.exception.ParseErrorException ParseErrorException(org.apache.velocity.exception.VelocityException, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.velocity.exception.ParseErrorException ParseErrorException(org.apache.velocity.runtime.parser.ParseException, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.exception.ParseErrorException ParseErrorException(org.apache.velocity.runtime.parser.ParseException, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
 </root>

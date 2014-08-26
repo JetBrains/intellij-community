@@ -19,15 +19,15 @@
  */
 package com.intellij.psi.impl.search;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.AnnotatedPackagesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
@@ -44,49 +44,67 @@ public class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage, Anno
     final PsiClass annClass = p.getAnnotationClass();
     assert annClass.isAnnotationType() : "Annotation type should be passed to annotated packages search";
 
-    final String annotationFQN = annClass.getQualifiedName();
+    final String annotationFQN = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Override
+      public String compute() {
+        return annClass.getQualifiedName();
+      }
+    });
     assert annotationFQN != null;
 
-    final PsiManagerImpl psiManager = (PsiManagerImpl)annClass.getManager();
-    final SearchScope useScope = p.getScope();
+    final PsiManager psiManager = ApplicationManager.getApplication().runReadAction(new Computable<PsiManager>() {
+      @Override
+      public PsiManager compute() {
+        return annClass.getManager();
+      }
+    });
+    final GlobalSearchScope useScope = (GlobalSearchScope)p.getScope();
 
-    final String annotationShortName = annClass.getName();
+    final String annotationShortName = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Override
+      public String compute() {
+        return annClass.getName();
+      }
+    });
     assert annotationShortName != null;
 
-    final GlobalSearchScope scope = useScope instanceof GlobalSearchScope ? (GlobalSearchScope)useScope : null;
+    final Collection<PsiAnnotation> annotations = JavaAnnotationIndex.getInstance().get(annotationShortName, psiManager.getProject(),
+                                                                                        useScope);
 
-    final Collection<PsiAnnotation> annotations = JavaAnnotationIndex.getInstance().get(annotationShortName, psiManager.getProject(), scope);
-    for (PsiAnnotation annotation : annotations) {
-      PsiModifierList modlist = (PsiModifierList)annotation.getParent();
-      final PsiElement owner = modlist.getParent();
-      if (!(owner instanceof PsiClass)) continue;
-      PsiClass candidate = (PsiClass)owner;
-      if (!"package-info".equals(candidate.getName())) continue;
-
-      LOG.assertTrue(candidate.isValid());
-
-      final PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
-      if (ref == null) continue;
-
-      if (!psiManager.areElementsEquivalent(ref.resolve(), annClass)) continue;
-      if (useScope instanceof GlobalSearchScope &&
-          !((GlobalSearchScope)useScope).contains(candidate.getContainingFile().getVirtualFile())) {
-        continue;
-      }
-      final String qname = candidate.getQualifiedName();
-      if (qname != null && !consumer.process(JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(
-        qname.substring(0, qname.lastIndexOf('.'))))) {
-        return false;
-      }
+    for (final PsiAnnotation annotation : annotations) {
+      boolean accepted = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>(){
+        @Override
+        public Boolean compute() {
+          PsiModifierList modlist = (PsiModifierList)annotation.getParent();
+          final PsiElement owner = modlist.getParent();
+          if ((owner instanceof PsiClass)) {
+            PsiClass candidate = (PsiClass)owner;
+            if ("package-info".equals(candidate.getName())) {
+              LOG.assertTrue(candidate.isValid());
+              final PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
+              if (ref != null && psiManager.areElementsEquivalent(ref.resolve(), annClass) &&
+                  useScope.contains(candidate.getContainingFile().getVirtualFile())) {
+                final String qname = candidate.getQualifiedName();
+                if (qname != null && !consumer.process(JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(
+                  qname.substring(0, qname.lastIndexOf('.'))))) {
+                  return false;
+                }
+              }
+            }
+          }
+          return true;
+        }
+      });
+      if (!accepted) return false;
     }
 
     PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(psiManager.getProject());
     final GlobalSearchScope infoFilesFilter = new PackageInfoFilesOnly();
 
     GlobalSearchScope infoFiles =
-      useScope instanceof GlobalSearchScope ? ((GlobalSearchScope)useScope).intersectWith(infoFilesFilter) : infoFilesFilter;
+      useScope.intersectWith(infoFilesFilter);
 
-    final boolean[] wantmore = {true};
+    final boolean[] wantMore = {true};
     helper.processAllFilesWithWord(annotationShortName, infoFiles, new Processor<PsiFile>() {
       @Override
       public boolean process(final PsiFile psiFile) {
@@ -103,12 +121,12 @@ public class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage, Anno
 
         if (!psiManager.areElementsEquivalent(ref.resolve(), annClass)) return true;
 
-        wantmore[0] = consumer.process(JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(stmt.getPackageName()));
-        return wantmore[0];
+        wantMore[0] = consumer.process(JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(stmt.getPackageName()));
+        return wantMore[0];
       }
     }, true);
 
-    return wantmore[0];
+    return wantMore[0];
   }
 
   private static class PackageInfoFilesOnly extends GlobalSearchScope {

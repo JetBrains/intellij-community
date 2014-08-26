@@ -421,7 +421,7 @@ class FindInProjectTask {
 
     SearchScope customScope = myFindModel.getCustomScope();
     GlobalSearchScope scope = myPsiDirectory != null
-                              ? GlobalSearchScopesCore.directoryScope(myPsiDirectory, true)
+                              ? GlobalSearchScopesCore.directoryScope(myPsiDirectory, myFindModel.isWithSubdirectories())
                               : myModule != null
                                 ? myModule.getModuleContentScope()
                                 : customScope instanceof GlobalSearchScope

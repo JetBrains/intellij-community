@@ -202,6 +202,10 @@
                      key="equals.between.inconvertible.types.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.EqualsBetweenInconvertibleTypesInspection"/>
+    <localInspection language="JAVA" shortName="EqualsWithItself" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="equals.with.itself.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.bugs.EqualsWithItselfInspection"/>
     <localInspection language="JAVA" suppressId="NonFinalFieldReferenceInEquals" shortName="EqualsUsesNonFinalVariable"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="non.final.field.in.equals.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"

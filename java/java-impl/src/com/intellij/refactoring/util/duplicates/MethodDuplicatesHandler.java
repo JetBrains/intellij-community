@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,13 +28,14 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
@@ -71,7 +72,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     }
 
     final AnalysisScope scope = new AnalysisScope(file);
-    final Module module = ModuleUtil.findModuleForPsiElement(file);
+    final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     final BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(RefactoringBundle.message("replace.method.duplicates.scope.chooser.title", REFACTORING_NAME),
                                                                 RefactoringBundle.message("replace.method.duplicates.scope.chooser.message"),
                                                                 project, scope, module != null ? module.getName() : null, false,
@@ -134,13 +135,18 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     }
 
     final Map<PsiMember, Set<Module>> memberWithModulesMap = new HashMap<PsiMember, Set<Module>>();
-    for (PsiMember member : members) {
-      final Module module = ModuleUtil.findModuleForPsiElement(member);
+    for (final PsiMember member : members) {
+      final Module module = ApplicationManager.getApplication().runReadAction(new Computable<Module>() {
+        @Override
+        public Module compute() {
+          return ModuleUtilCore.findModuleForPsiElement(member);
+        }
+      });
       if (module != null) {
         final HashSet<Module> dependencies = new HashSet<Module>();
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
-            ModuleUtil.collectModulesDependsOn(module, dependencies);
+            ModuleUtilCore.collectModulesDependsOn(module, dependencies);
           }
         });
         memberWithModulesMap.put(member, dependencies);
@@ -158,7 +164,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
             progressIndicator.setText2(ProjectUtil.calcRelativeToProjectPath(virtualFile, project));
           }
         }
-        final Module targetModule = ModuleUtil.findModuleForPsiElement(file);
+        final Module targetModule = ModuleUtilCore.findModuleForPsiElement(file);
         if (targetModule == null) return;
         for (Map.Entry<PsiMember, Set<Module>> entry : memberWithModulesMap.entrySet()) {
           final Set<Module> dependencies = entry.getValue();

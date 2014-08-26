@@ -29,6 +29,9 @@
   <item name="org.apache.velocity.anakia.AnakiaJDOMFactory org.jdom.Element element(java.lang.String, org.jdom.Namespace)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.velocity.anakia.AnakiaTask java.lang.String getRelativePath(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.velocity.anakia.AnakiaTask java.lang.String getRelativePath(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;!null&quot;"/>
@@ -70,6 +73,9 @@
   <item name="org.apache.velocity.anakia.NodeList NodeList(org.jdom.Element) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.velocity.anakia.NodeList boolean equals(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.velocity.anakia.NodeList boolean equals(java.lang.Object)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;false&quot;"/>
@@ -80,6 +86,9 @@
   </item>
   <item name="org.apache.velocity.anakia.NodeList org.apache.velocity.anakia.NodeList selectNodes(java.lang.String)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.anakia.NodeList.AttributeXMLOutputter AttributeXMLOutputter(org.apache.velocity.anakia.NodeList.1) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.anakia.NodeList.AttributeXMLOutputter void output(org.jdom.Attribute, java.io.Writer) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>

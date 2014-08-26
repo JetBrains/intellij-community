@@ -31,10 +31,12 @@ import static org.jetbrains.org.objectweb.asm.Opcodes.*;
 public class LeakingParameters {
   public final Frame<Value>[] frames;
   public final boolean[] parameters;
+  public final boolean[] nullableParameters;
 
-  public LeakingParameters(Frame<Value>[] frames, boolean[] parameters) {
+  public LeakingParameters(Frame<Value>[] frames, boolean[] parameters, boolean[] nullableParameters) {
     this.frames = frames;
     this.parameters = parameters;
+    this.nullableParameters = nullableParameters;
   }
 
   public static LeakingParameters build(String className, MethodNode methodNode, boolean jsr) throws AnalyzerException {
@@ -57,7 +59,12 @@ public class LeakingParameters {
         }
       }
     }
-    return new LeakingParameters((Frame<Value>[])(Frame<?>[])frames, collector.leaking);
+    boolean[] notNullParameters = collector.leaking;
+    boolean[] nullableParameters = collector.nullableLeaking;
+    for (int i = 0; i < nullableParameters.length; i++) {
+      nullableParameters[i] |= notNullParameters[i];
+    }
+    return new LeakingParameters((Frame<Value>[])(Frame<?>[])frames, notNullParameters, nullableParameters);
   }
 
   public static LeakingParameters buildFast(String className, MethodNode methodNode, boolean jsr) throws AnalyzerException {
@@ -66,11 +73,14 @@ public class LeakingParameters {
                         new Analyzer<IParamsValue>(parametersUsage).analyze(className, methodNode) :
                         new LiteAnalyzer<IParamsValue>(parametersUsage).analyze(className, methodNode);
     int leakingMask = parametersUsage.leaking;
-    boolean[] result = new boolean[parametersUsage.arity];
-    for (int i = 0; i < result.length; i++) {
-      result[i] = (leakingMask & (1 << i)) != 0;
+    int nullableLeakingMask = parametersUsage.nullableLeaking;
+    boolean[] notNullParameters = new boolean[parametersUsage.arity];
+    boolean[] nullableParameters = new boolean[parametersUsage.arity];
+    for (int i = 0; i < notNullParameters.length; i++) {
+      notNullParameters[i] = (leakingMask & (1 << i)) != 0;
+      nullableParameters[i] = ((leakingMask | nullableLeakingMask) & (1 << i)) != 0;
     }
-    return new LeakingParameters((Frame<Value>[])frames, result);
+    return new LeakingParameters((Frame<Value>[])frames, notNullParameters, nullableParameters);
   }
 }
 
@@ -288,6 +298,7 @@ class IParametersUsage extends Interpreter<IParamsValue> {
   static final IParamsValue val1 = new IParamsValue(0, 1);
   static final IParamsValue val2 = new IParamsValue(0, 2);
   int leaking = 0;
+  int nullableLeaking = 0;
   int called = -1;
   final int rangeStart;
   final int rangeEnd;
@@ -415,8 +426,12 @@ class IParametersUsage extends Interpreter<IParamsValue> {
       case BALOAD:
       case CALOAD:
       case SALOAD:
+        leaking |= value1.params;
+        size = 1;
+        break;
       case PUTFIELD:
         leaking |= value1.params;
+        nullableLeaking |= value2.params;
         size = 1;
         break;
       default:
@@ -432,11 +447,14 @@ class IParametersUsage extends Interpreter<IParamsValue> {
       case LASTORE:
       case FASTORE:
       case DASTORE:
-      case AASTORE:
       case BASTORE:
       case CASTORE:
       case SASTORE:
         leaking |= value1.params;
+        break;
+      case AASTORE:
+        leaking |= value1.params;
+        nullableLeaking |= value3.params;
         break;
       default:
     }
@@ -479,9 +497,11 @@ class IParametersUsage extends Interpreter<IParamsValue> {
 
 class LeakingParametersCollector extends ParametersUsage {
   final boolean[] leaking;
+  final boolean[] nullableLeaking;
   LeakingParametersCollector(MethodNode methodNode) {
     super(methodNode);
     leaking = new boolean[arity];
+    nullableLeaking = new boolean[arity];
   }
 
   @Override
@@ -518,10 +538,19 @@ class LeakingParametersCollector extends ParametersUsage {
       case BALOAD:
       case CALOAD:
       case SALOAD:
-      case PUTFIELD:
         boolean[] params = value1.params;
         for (int i = 0; i < arity; i++) {
           leaking[i] |= params[i];
+        }
+        break;
+      case PUTFIELD:
+        params = value1.params;
+        for (int i = 0; i < arity; i++) {
+          leaking[i] |= params[i];
+        }
+        params = value2.params;
+        for (int i = 0; i < arity; i++) {
+          nullableLeaking[i] |= params[i];
         }
         break;
       default:
@@ -536,13 +565,22 @@ class LeakingParametersCollector extends ParametersUsage {
       case LASTORE:
       case FASTORE:
       case DASTORE:
-      case AASTORE:
       case BASTORE:
       case CASTORE:
       case SASTORE:
         boolean[] params = value1.params;
         for (int i = 0; i < arity; i++) {
           leaking[i] |= params[i];
+        }
+        break;
+      case AASTORE:
+        params = value1.params;
+        for (int i = 0; i < arity; i++) {
+          leaking[i] |= params[i];
+        }
+        params = value3.params;
+        for (int i = 0; i < arity; i++) {
+          nullableLeaking[i] |= params[i];
         }
         break;
       default:
