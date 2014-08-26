@@ -22,6 +22,7 @@ import com.intellij.codeInsight.template.impl.CustomLiveTemplateLookupElement;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.codeInsight.template.postfix.completion.PostfixTemplateLookupElement;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
+import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
@@ -137,7 +138,8 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
         }
         // don't care about errors in multiCaret mode
         else if (editor.getCaretModel().getAllCarets().size() == 1) {
-          LOG.error("Template not found by key: " + key);
+          LOG.error("Template not found by key: " + key + "; offset = " + callback.getOffset(), 
+                    AttachmentFactory.createAttachment(callback.getFile().getVirtualFile()));
         }
         return;
       }
@@ -145,7 +147,8 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
 
     // don't care about errors in multiCaret mode
     if (editor.getCaretModel().getAllCarets().size() == 1) {
-      LOG.error("Template not found by key: " + key);
+      LOG.error("Template not found by key: " + key + "; offset = " + callback.getOffset(), 
+                    AttachmentFactory.createAttachment(callback.getFile().getVirtualFile()));
     }
   }
 
