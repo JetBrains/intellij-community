@@ -212,29 +212,29 @@ public class ChangesFragmentedDiffPanel implements Disposable {
       @Override
       public void actionPerformed(AnActionEvent e) {
         if (!getEnabled()) return;
-        OpenFileDescriptor descriptor = createDescriptor();
+        final OpenFileDescriptor descriptor = createDescriptor();
         if (descriptor == null) return;
-        final OpenFileDescriptor finalDescriptor = descriptor;
+
         final Runnable runnable = new Runnable() {
           @Override
           public void run() {
-            FileEditorManager.getInstance(myProject).openTextEditor(finalDescriptor, true);
+            FileEditorManager.getInstance(myProject).openTextEditor(descriptor, true);
           }
         };
 
-        if (! ModalityState.NON_MODAL.equals(ModalityState.current())) {
+        if (ModalityState.NON_MODAL.equals(ModalityState.current())) {
+          runnable.run();
+        }
+        else {
           final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
           if (window instanceof DialogWrapperDialog) {
             final DialogWrapper wrapper = ((DialogWrapperDialog)window).getDialogWrapper();
             if (wrapper != null) {
-              Disposer.dispose(wrapper.getDisposable());
-              wrapper.close(DialogWrapper.CANCEL_EXIT_CODE);
+              wrapper.doCancelAction();
               ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL, myProject.getDisposed());
-              return;
             }
           }
         }
-        runnable.run();
       }
 
       @Override
