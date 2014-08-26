@@ -1,13 +1,15 @@
 import com.intellij.openapi.util.Ref;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.ipnb.format.cells.output.CellOutput;
+import org.jetbrains.plugins.ipnb.format.cells.output.OutCellOutput;
 import org.jetbrains.plugins.ipnb.protocol.IpnbConnection;
 import org.jetbrains.plugins.ipnb.protocol.IpnbConnectionListenerBase;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Map;
+import java.util.List;
 
 /**
  *
@@ -47,9 +49,13 @@ public class WebSocketConnectionTest extends TestCase {
       }
 
       @Override
-      public void onOutput(@NotNull IpnbConnection connection, @NotNull String parentMessageId, @NotNull Map<String, String> outputs) {
+      public void onOutput(@NotNull IpnbConnection connection, @NotNull String parentMessageId, @NotNull List<CellOutput> outputs) {
         if (myMessageId.equals(parentMessageId)) {
-          assertEquals("4", outputs.get("text/plain"));
+          assertEquals(outputs.size(), 1);
+          assertEquals(outputs.get(0).getClass(), OutCellOutput.class);
+          final String[] text = outputs.get(0).getText();
+          assertNotNull(text);
+          assertEquals("4", text[0]);
           evaluated.set(true);
           connection.shutdown();
         }

@@ -21,7 +21,6 @@ import org.jetbrains.plugins.ipnb.format.cells.output.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Map;
 import java.util.List;
 
 public class CodePanel extends IpnbEditablePanel<JComponent, CodeCell> {
@@ -89,32 +88,38 @@ public class CodePanel extends IpnbEditablePanel<JComponent, CodeCell> {
     c.gridy = 0;
     for (CellOutput cellOutput : myCell.getCellOutputs()) {
       c.gridy++;
-      if (cellOutput instanceof ImageCellOutput) {
-        addPromptPanel(panel, myCell.getPromptNumber(), IpnbEditorUtil.PromptType.Out,
-                       new ImagePanel((ImageCellOutput)cellOutput), c);
-      }
-      else if (cellOutput instanceof HtmlCellOutput) {
-        addPromptPanel(panel, myCell.getPromptNumber(), IpnbEditorUtil.PromptType.Out,
-                       new HtmlPanel((HtmlCellOutput)cellOutput), c);
-      }
-      else if (cellOutput instanceof LatexCellOutput) {
-        addPromptPanel(panel, myCell.getPromptNumber(), IpnbEditorUtil.PromptType.Out,
-                       new LatexPanel((LatexCellOutput)cellOutput), c);
-      }
-      else if (cellOutput instanceof ErrorCellOutput) {
-        addPromptPanel(panel, myCell.getPromptNumber(), IpnbEditorUtil.PromptType.Out,
-                       new ErrorPanel((ErrorCellOutput)cellOutput), c);
-      }
-      else if (cellOutput instanceof StreamCellOutput) {
-        addPromptPanel(panel, myCell.getPromptNumber(), IpnbEditorUtil.PromptType.Out,
-                       new StreamPanel((StreamCellOutput)cellOutput), c);
-      }
-      else if (cellOutput.getSourceAsString() != null) {
-        addPromptPanel(panel, myCell.getPromptNumber(), IpnbEditorUtil.PromptType.Out,
-                       new CodeOutputPanel(cellOutput.getSourceAsString()), c);
-      }
+      addOutputPanel(panel, c, cellOutput, true);
     }
     return panel;
+  }
+
+  private void addOutputPanel(@NotNull final JComponent panel, @NotNull final GridBagConstraints c,
+                              @NotNull final CellOutput cellOutput, boolean addPrompt) {
+    final IpnbEditorUtil.PromptType promptType = addPrompt ? IpnbEditorUtil.PromptType.Out : IpnbEditorUtil.PromptType.None;
+    if (cellOutput instanceof ImageCellOutput) {
+      addPromptPanel(panel, myCell.getPromptNumber(), promptType,
+                     new ImagePanel((ImageCellOutput)cellOutput), c);
+    }
+    else if (cellOutput instanceof HtmlCellOutput) {
+      addPromptPanel(panel, myCell.getPromptNumber(), promptType,
+                     new HtmlPanel((HtmlCellOutput)cellOutput), c);
+    }
+    else if (cellOutput instanceof LatexCellOutput) {
+      addPromptPanel(panel, myCell.getPromptNumber(), promptType,
+                     new LatexPanel((LatexCellOutput)cellOutput), c);
+    }
+    else if (cellOutput instanceof ErrorCellOutput) {
+      addPromptPanel(panel, myCell.getPromptNumber(), promptType,
+                     new ErrorPanel((ErrorCellOutput)cellOutput), c);
+    }
+    else if (cellOutput instanceof StreamCellOutput) {
+      addPromptPanel(panel, myCell.getPromptNumber(), promptType,
+                     new StreamPanel((StreamCellOutput)cellOutput), c);
+    }
+    else if (cellOutput.getSourceAsString() != null) {
+      addPromptPanel(panel, myCell.getPromptNumber(), promptType,
+                     new CodeOutputPanel(cellOutput.getSourceAsString()), c);
+    }
   }
 
   @Override
@@ -134,7 +139,7 @@ public class CodePanel extends IpnbEditablePanel<JComponent, CodeCell> {
     connectionManager.executeCell(this);
   }
 
-  public void updatePanel(@NotNull final Map<String, String> outputMap) {
+  public void updatePanel(@NotNull final List<CellOutput> outputContent) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
@@ -149,15 +154,12 @@ public class CodePanel extends IpnbEditablePanel<JComponent, CodeCell> {
 
         addPromptPanel(myViewPanel, myCell.getPromptNumber(), IpnbEditorUtil.PromptType.In, myCodeSourcePanel, c);
 
-        for (Map.Entry<String, String> entry : outputMap.entrySet()) {
-          final String type = entry.getKey();
-          final String output = entry.getValue();
-          myCell.addCellOutput(new CellOutput(new String[]{output}));
+        for (CellOutput output : outputContent) {
+          myCell.addCellOutput(output);
           c.gridx = 0;
           c.gridy += 1;
 
-          addPromptPanel(myViewPanel, myCell.getPromptNumber(), "text/plain".equals(type) ? IpnbEditorUtil.PromptType.Out :
-                                                                IpnbEditorUtil.PromptType.None, new CodeOutputPanel(output), c);
+          addOutputPanel(myViewPanel, c, output, output instanceof OutCellOutput);
         }
         revalidate();
         repaint();

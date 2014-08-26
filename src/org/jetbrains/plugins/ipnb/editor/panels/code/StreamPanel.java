@@ -12,10 +12,12 @@ public class StreamPanel extends IpnbPanel {
 
   public StreamPanel(@NotNull final StreamCellOutput cell) {
     myCell = cell;
+    myViewPanel = createViewPanel();
+    add(myViewPanel);
   }
 
   @Override
-  protected JComponent createViewPanel() {   //TODO
+  protected JComponent createViewPanel() {
     JTextArea textArea = new JTextArea(myCell.getStream());
     textArea.setEditable(false);
     return textArea;

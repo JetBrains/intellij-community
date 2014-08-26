@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.ipnb.protocol;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -10,6 +9,10 @@ import org.java_websocket.drafts.Draft_17;
 import org.java_websocket.handshake.ClientHandshakeBuilder;
 import org.java_websocket.handshake.ServerHandshake;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.ipnb.format.cells.output.CellOutput;
+import org.jetbrains.plugins.ipnb.format.cells.output.ErrorCellOutput;
+import org.jetbrains.plugins.ipnb.format.cells.output.OutCellOutput;
+import org.jetbrains.plugins.ipnb.format.cells.output.StreamCellOutput;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -73,7 +76,7 @@ public class IpnbConnection {
     myShellThread.start();
 
     myIOPubClient = new WebSocketClient(getIOPubURI(), draft) {
-      private LinkedHashMap<String, String> myOutput = new LinkedHashMap<String, String>();
+      private ArrayList<CellOutput> myOutput = new ArrayList<CellOutput>();
 
       @Override
       public void onOpen(ServerHandshake handshakeData) {
@@ -91,21 +94,21 @@ public class IpnbConnection {
         final String messageType = header.getMessageType();
         if ("pyout".equals(messageType)) {
           final PyOutContent content = gson.fromJson(msg.getContent(), PyOutContent.class);
-          myOutput.putAll(content.getData());
+          myOutput.add(createCellOutput(content));
         }
         else if ("pyerr".equals(messageType)) {
           final PyErrContent content = gson.fromJson(msg.getContent(), PyErrContent.class);
-          myOutput.putAll(ImmutableMap.of("error", content.getEvalue()));
+          myOutput.add(createCellOutput(content));
         }
         else if ("stream".equals(messageType)) {
           final PyStreamContent content = gson.fromJson(msg.getContent(), PyStreamContent.class);
-          myOutput.putAll(ImmutableMap.of("stream", content.getData()));
+          myOutput.add(createCellOutput(content));
         }
         else if ("status".equals(messageType)) {
           final PyStatusContent content = gson.fromJson(msg.getContent(), PyStatusContent.class);
           if (content.getExecutionState().equals("idle")) {
             //noinspection unchecked
-            myListener.onOutput(IpnbConnection.this, parentHeader.getMessageId(), (Map<String, String>)myOutput.clone());
+            myListener.onOutput(IpnbConnection.this, parentHeader.getMessageId(), (List<CellOutput>)myOutput.clone());
             myOutput.clear();
           }
         }
@@ -305,8 +308,26 @@ public class IpnbConnection {
     }
   }
 
+  private CellOutput createCellOutput(@NotNull final PyContent content) {
+    if (content instanceof PyErrContent) {
+      return new ErrorCellOutput(((PyErrContent)content).getEvalue(),
+                                 ((PyErrContent)content).getEname(), ((PyErrContent)content).getTraceback());
+    }
+    else if (content instanceof PyStreamContent) {
+      final String data = ((PyStreamContent)content).getData();
+      return new StreamCellOutput(data, new String[]{data});
+    }
+    else if (content instanceof PyOutContent) {
+      final Collection<String> values = ((PyOutContent)content).getData().values();
+      return new OutCellOutput(values.toArray(new String[values.size()]), null);
+    }
+    return null;
+  }
+
+  private interface PyContent {}
+
   @SuppressWarnings("UnusedDeclaration")
-  private static class PyOutContent {
+  private static class PyOutContent implements PyContent {
     private int execution_count;
     private HashMap<String, String> data;
     private JsonObject metadata;
@@ -325,10 +346,10 @@ public class IpnbConnection {
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  private static class PyErrContent {
+  private static class PyErrContent implements PyContent {
     private String ename;
     private String evalue;
-    private List<String> traceback;
+    private String[] traceback;
 
     public String getEname() {
       return ename;
@@ -338,13 +359,13 @@ public class IpnbConnection {
       return evalue;
     }
 
-    public List<String> getTraceback() {
+    public String[] getTraceback() {
       return traceback;
     }
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  private static class PyStreamContent {
+  private static class PyStreamContent implements PyContent {
     private String data;
     private String name;
 

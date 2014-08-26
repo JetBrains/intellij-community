@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.panels.code.CodePanel;
+import org.jetbrains.plugins.ipnb.format.cells.output.CellOutput;
 import org.jetbrains.plugins.ipnb.protocol.IpnbConnection;
 import org.jetbrains.plugins.ipnb.protocol.IpnbConnectionListenerBase;
 
@@ -18,6 +19,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public final class IpnbConnectionManager implements ProjectComponent {
@@ -54,7 +56,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
           }
 
           @Override
-          public void onOutput(@NotNull IpnbConnection connection, @NotNull String parentMessageId, @NotNull Map<String, String> outputs) {
+          public void onOutput(@NotNull IpnbConnection connection, @NotNull String parentMessageId, @NotNull List<CellOutput> outputs) {
             if (!myUpdateMap.containsKey(parentMessageId)) return;
             final CodePanel cell = myUpdateMap.remove(parentMessageId);
             cell.updatePanel(outputs);
