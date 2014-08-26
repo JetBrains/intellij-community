@@ -316,13 +316,14 @@ class PyDB:
         self.force_post_mortem_stop = 0
         self.signature_factory = None
         self.SetTrace = pydevd_tracing.SetTrace
-        # we call this functions very often, so we need cache for them
+
+        #working with plugins
+        self.usable_plugin = None
+        self.plugins = []
+        #we call this functions very often, so we need cache them
         self.can_not_skip_cache = None
         self.has_exception_breaks_cache = None
-        self.usable_plugin = None
 
-        plugin_base = PluginBase(package='pydevd_plugins')
-        self.plugin_source = plugin_base.make_plugin_source(searchpath=[os.path.dirname(os.path.realpath(__file__)) + '/pydevd_plugins'])
         self.load_plugins()
 
         #this is a dict of thread ids pointing to thread ids. Whenever a command is passed to the java end that
@@ -1251,7 +1252,8 @@ class PyDB:
         self.writer.addCommand(cmd)
 
     def load_plugins(self):
-        self.plugins = []
+        plugin_base = PluginBase(package='pydevd_plugins')
+        self.plugin_source = plugin_base.make_plugin_source(searchpath=[os.path.dirname(os.path.realpath(__file__)) + '/pydevd_plugins'])
         for plugin in self.plugin_source.list_plugins():
             loaded_plugin = None
             try:
