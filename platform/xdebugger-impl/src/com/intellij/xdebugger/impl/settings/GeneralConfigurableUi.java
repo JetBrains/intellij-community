@@ -25,23 +25,27 @@ class GeneralConfigurableUi implements ConfigurableUi<XDebuggerGeneralSettings> 
   private JPanel rootPanel;
   private JCheckBox hideDebugWindowCheckBox;
   private JCheckBox focusApplicationOnBreakpointCheckBox;
+  private JCheckBox myShowDebugWindowOnCheckBox;
 
   @Override
   public void reset(@NotNull XDebuggerGeneralSettings settings) {
     focusApplicationOnBreakpointCheckBox.setSelected(Registry.is("debugger.mayBringFrameToFrontOnBreakpoint"));
     hideDebugWindowCheckBox.setSelected(settings.isHideDebuggerOnProcessTermination());
+    myShowDebugWindowOnCheckBox.setSelected(settings.isShowDebuggerOnBreakpoint());
   }
 
   @Override
   public boolean isModified(@NotNull XDebuggerGeneralSettings settings) {
     return focusApplicationOnBreakpointCheckBox.isSelected() != Registry.is("debugger.mayBringFrameToFrontOnBreakpoint") ||
-           hideDebugWindowCheckBox.isSelected() != settings.isHideDebuggerOnProcessTermination();
+           hideDebugWindowCheckBox.isSelected() != settings.isHideDebuggerOnProcessTermination() ||
+           myShowDebugWindowOnCheckBox.isSelected() != settings.isShowDebuggerOnBreakpoint();
   }
 
   @Override
   public void apply(@NotNull XDebuggerGeneralSettings settings) {
     Registry.get("debugger.mayBringFrameToFrontOnBreakpoint").setValue(focusApplicationOnBreakpointCheckBox.isSelected());
     settings.setHideDebuggerOnProcessTermination(hideDebugWindowCheckBox.isSelected());
+    settings.setShowDebuggerOnBreakpoint(myShowDebugWindowOnCheckBox.isSelected());
   }
 
   @NotNull
