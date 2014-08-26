@@ -18,7 +18,7 @@ public class StreamPanel extends IpnbPanel {
 
   @Override
   protected JComponent createViewPanel() {
-    JTextArea textArea = new JTextArea(myCell.getStream());
+    JTextArea textArea = new JTextArea(myCell.getSourceAsString());
     textArea.setEditable(false);
     return textArea;
   }
