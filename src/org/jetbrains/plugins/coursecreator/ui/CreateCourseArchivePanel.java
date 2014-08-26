@@ -14,7 +14,6 @@ import java.awt.event.ActionListener;
 import java.io.File;
 
 public class CreateCourseArchivePanel extends JPanel {
-  private final Project myProject;
   private JPanel myPanel;
   private JTextField myNameField;
   private TextFieldWithBrowseButton myLocationField;
@@ -25,13 +24,13 @@ public class CreateCourseArchivePanel extends JPanel {
   public CreateCourseArchivePanel(@NotNull final Project project, CreateCourseArchiveDialog dlg) {
     setLayout(new BorderLayout());
     add(myPanel, BorderLayout.CENTER);
-    myProject = project;
     myErrorIcon.setIcon(AllIcons.Actions.Lightning);
     setState(false);
     myDlg = dlg;
-    myDlg.enableOKAction(false);
+    myNameField.setText("course");
+    myLocationField.setText(project.getBasePath());
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    myLocationField.addBrowseFolderListener("Choose location folder", null, myProject, descriptor);
+    myLocationField.addBrowseFolderListener("Choose location folder", null, project, descriptor);
     myLocationField.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {

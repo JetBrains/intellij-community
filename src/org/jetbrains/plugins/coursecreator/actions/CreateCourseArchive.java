@@ -31,8 +31,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipOutputStream;
 
-public class PackCourse extends DumbAwareAction {
-  private static final Logger LOG = Logger.getInstance(PackCourse.class.getName());
+public class CreateCourseArchive extends DumbAwareAction {
+  private static final Logger LOG = Logger.getInstance(CreateCourseArchive.class.getName());
   String myZipName;
   String myLocationDir;
 
@@ -44,7 +44,7 @@ public class PackCourse extends DumbAwareAction {
     myLocationDir = locationDir;
   }
 
-  public PackCourse() {
+  public CreateCourseArchive() {
     super("Generate course archive", "Generate course archive", AllIcons.FileTypes.Archive);
   }
 
