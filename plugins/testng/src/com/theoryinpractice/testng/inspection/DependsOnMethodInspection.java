@@ -63,17 +63,13 @@ public class DependsOnMethodInspection extends BaseJavaLocalInspectionTool
     @Nullable
     public ProblemDescriptor[] checkClass(@NotNull PsiClass psiClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
 
-        //LOGGER.info("Looking for dependsOnMethods problems in " + psiClass.getName());
-
-        if (!psiClass.getContainingFile().isWritable()) return null;
-
         PsiAnnotation[] annotations = TestNGUtil.getTestNGAnnotations(psiClass);
         if(annotations.length == 0) return ProblemDescriptor.EMPTY_ARRAY;
         List<ProblemDescriptor> problemDescriptors = new ArrayList<ProblemDescriptor>();
 
         for (PsiAnnotation annotation : annotations) {
           final PsiAnnotationMemberValue value = annotation.findDeclaredAttributeValue("dependsOnMethods");
-          if (value != null) {
+          if (value != null && !TestNGUtil.isDisabled(annotation)) {
             String text = value.getText();
             if (value instanceof PsiReferenceExpression) {
               final PsiElement resolve = ((PsiReferenceExpression)value).resolve();

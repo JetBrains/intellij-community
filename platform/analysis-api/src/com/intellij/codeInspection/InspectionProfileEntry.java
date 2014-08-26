@@ -71,7 +71,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool{
   public boolean isSuppressedFor(@NotNull PsiElement element) {
     Set<InspectionSuppressor> suppressors = getSuppressors(element);
     for (InspectionSuppressor suppressor : suppressors) {
-      if (suppressor != null && isSuppressed(suppressor, element)) {
+      if (isSuppressed(suppressor, element)) {
         return true;
       }
     }
@@ -99,10 +99,8 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool{
       });
       Set<InspectionSuppressor> suppressors = getSuppressors(element);
       for (InspectionSuppressor suppressor : suppressors) {
-        if (suppressor != null) {
-          SuppressQuickFix[] actions = suppressor.getSuppressActions(element, getShortName());
-          fixes.addAll(Arrays.asList(actions));
-        }
+        SuppressQuickFix[] actions = suppressor.getSuppressActions(element, getShortName());
+        fixes.addAll(Arrays.asList(actions));
       }
       return fixes.toArray(new SuppressQuickFix[fixes.size()]);
     }
@@ -121,16 +119,17 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool{
 
   public static Set<InspectionSuppressor> getSuppressors(@NotNull PsiElement element) {
     FileViewProvider viewProvider = element.getContainingFile().getViewProvider();
+    final InspectionSuppressor elementLanguageSuppressor = LanguageInspectionSuppressors.INSTANCE.forLanguage(element.getLanguage());
     if (viewProvider instanceof TemplateLanguageFileViewProvider) {
       LinkedHashSet<InspectionSuppressor> suppressors = new LinkedHashSet<InspectionSuppressor>();
       ContainerUtil.addIfNotNull(suppressors, LanguageInspectionSuppressors.INSTANCE.forLanguage(viewProvider.getBaseLanguage()));
       for (Language language : viewProvider.getLanguages()) {
         ContainerUtil.addIfNotNull(suppressors, LanguageInspectionSuppressors.INSTANCE.forLanguage(language));
       }
-      ContainerUtil.addIfNotNull(suppressors, LanguageInspectionSuppressors.INSTANCE.forLanguage(element.getLanguage()));
+      ContainerUtil.addIfNotNull(suppressors, elementLanguageSuppressor);
       return suppressors;
     }
-    return Collections.singleton(LanguageInspectionSuppressors.INSTANCE.forLanguage(element.getLanguage()));
+    return elementLanguageSuppressor != null ? Collections.singleton(elementLanguageSuppressor) : Collections.<InspectionSuppressor>emptySet();
   }
 
   public void cleanup(Project project) {

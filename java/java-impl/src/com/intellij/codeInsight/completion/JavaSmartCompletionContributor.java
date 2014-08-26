@@ -158,8 +158,9 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
             @Override
             public void consume(PsiType type) {
               final PsiClass psiClass = PsiUtil.resolveClassInType(type);
-              if (psiClass == null) return;
+              if (psiClass == null || psiClass instanceof PsiTypeParameter) return;
 
+              //noinspection SuspiciousMethodCalls
               if (expectedClassTypes.contains(type)) return;
 
               result.addElement(createInstanceofLookupElement(psiClass, parameterizedTypes));

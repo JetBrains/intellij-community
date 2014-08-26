@@ -16,6 +16,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.AllClassesGetter;
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.lang.Language;
@@ -33,21 +34,21 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.FilteredQuery;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
-import com.intellij.psi.util.FileTypeUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
 public class CodeInsightUtil {
   @Nullable
@@ -283,6 +284,11 @@ public class CodeInsightUtil {
 
     final Processor<PsiClass> inheritorsProcessor =
       createInheritorsProcessor(context, baseType, arrayDim, getRawSubtypes, consumer, baseClass, baseSubstitutor);
+
+    addContextTypeArguments(context, baseType, inheritorsProcessor);
+
+    if (baseClass.hasModifierProperty(PsiModifier.FINAL)) return;
+
     if (matcher.getPrefix().length() > 2) {
       AllClassesGetter.processJavaClasses(matcher, context.getProject(), scope, new Processor<PsiClass>() {
         @Override
@@ -305,6 +311,30 @@ public class CodeInsightUtil {
       query.forEach(inheritorsProcessor);
     }
 
+  }
+
+  private static void addContextTypeArguments(final PsiElement context,
+                                              final PsiClassType baseType,
+                                              final Processor<PsiClass> inheritorsProcessor) {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        Set<String> usedNames = ContainerUtil.newHashSet();
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
+        PsiElement each = context;
+        while (true) {
+          PsiTypeParameterListOwner typed = PsiTreeUtil.getParentOfType(each, PsiTypeParameterListOwner.class);
+          if (typed == null) break;
+          for (PsiTypeParameter parameter : typed.getTypeParameters()) {
+            if (baseType.isAssignableFrom(factory.createType(parameter)) && usedNames.add(parameter.getName())) {
+              inheritorsProcessor.process(CompletionUtil.getOriginalOrSelf(parameter));
+            }
+          }
+
+          each = typed;
+        }
+      }
+    });
   }
 
   public static Processor<PsiClass> createInheritorsProcessor(final PsiElement context, final PsiClassType baseType,

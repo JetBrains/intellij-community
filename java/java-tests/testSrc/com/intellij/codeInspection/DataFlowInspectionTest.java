@@ -109,6 +109,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testAssigningClassLiteralToNullable() throws Throwable { doTest(); }
 
   public void testSynchronizingOnNullable() throws Throwable { doTest(); }
+  public void testSwitchOnNullable() { doTest(); }
   public void testReturningNullFromVoidMethod() throws Throwable { doTest(); }
 
   public void testCatchRuntimeException() throws Throwable { doTest(); }
