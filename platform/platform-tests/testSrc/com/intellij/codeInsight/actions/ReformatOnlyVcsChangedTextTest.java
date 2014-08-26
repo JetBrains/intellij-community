@@ -163,6 +163,28 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
     );
   }
 
+  public void testModificationCRLF() throws IOException {
+    doTest(
+      "public class B {\r\n" +
+      "           int a = 3;\r\n" +
+      "           String text;\r\n" +
+      "           Object last = null;\r\n" +
+      "           Object first = null;\r\n" +
+      "           Object second = null;\r\n" +
+      "}",
+
+      "public class B {\r\n" +
+      "           int a = 33;\r\n" +
+      "           String text;\r\n" +
+      "           Object last = new Object();\r\n" +
+      "           Object first = null;\r\n" +
+      "           Object second = new Object();\r\n" +
+      "}",
+
+      line(1, 1), line(3,3), line(5,5)
+    );
+  }
+
   public void testReformatFiles() throws IOException {
     ChangedFilesStructure fs = new ChangedFilesStructure(myWorkingDirectory);
 
