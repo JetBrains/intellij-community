@@ -22,9 +22,13 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.impl.mergeTool.MergeRequestImpl;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -81,6 +85,14 @@ public class ExtMergeFiles extends BaseExternalTool {
     try {
       commandLine.addParameters(getParameters(request));
       commandLine.createProcess();
+
+      ProgressManager.getInstance().run(new Task.Modal(request.getProject(), "Launching external tool", false) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          indicator.setIndeterminate(true);
+          TimeoutUtil.sleep(1000);
+        }
+      });
 
       if (Messages.YES == Messages.showYesNoDialog(request.getProject(),
                                                    "Press \"Mark as Resolved\" when you finish resolving conflicts in the external tool",
