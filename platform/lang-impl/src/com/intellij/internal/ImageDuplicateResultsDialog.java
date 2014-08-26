@@ -39,7 +39,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
@@ -232,7 +231,6 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
 
             final JBPopup popup =
               JBPopupFactory.getInstance().createComponentPopupBuilder(viewComponent, viewComponent.getPreferredFocusableComponent())
-                .setRequestFocusCondition(myProject, NotLookupOrSearchCondition.INSTANCE)
                 .setProject(myProject)
                 .setDimensionServiceKey(myProject, DocumentationManager.JAVADOC_LOCATION_AND_SIZE, false)
                 .setResizable(true)
