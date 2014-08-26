@@ -228,6 +228,7 @@ public class GeneralCommandLine implements UserDataHolder {
     return StringUtil.join(CommandLineUtil.toCommandLine(exePath, myProgramParams.getList(), platform), "\n");
   }
 
+  @NotNull
   public Process createProcess() throws ExecutionException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Executing [" + getCommandLineString() + "]");
@@ -257,6 +258,7 @@ public class GeneralCommandLine implements UserDataHolder {
     }
   }
 
+  @NotNull
   protected Process startProcess(@NotNull List<String> commands) throws IOException {
     ProcessBuilder builder = new ProcessBuilder(commands);
     setupEnvironment(builder.environment());
