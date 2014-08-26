@@ -33,7 +33,7 @@ import javax.swing.tree.TreeSelectionModel;
 public class TestNGTestTreeView extends TestTreeView {
 
   protected TreeCellRenderer getRenderer(final TestConsoleProperties properties) {
-    return new ResultTreeRenderer((TestNGConsoleProperties)properties);
+    return new ResultTreeRenderer(getTestFrameworkRunningModel());
   }
 
   public TestProxy getSelectedTest(@NotNull TreePath treepath) {
