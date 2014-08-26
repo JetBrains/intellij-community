@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.ipnb.format;
 
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,6 +30,7 @@ public class IpnbParser {
   @NotNull
   public static IpnbFile parseIpnbFile(@NotNull String fileText, String path) throws IOException {
     IpnbFileRaw rawFile = gson.fromJson(fileText, IpnbFileRaw.class);
+    if (rawFile == null) return new IpnbFile(new IpnbFileRaw(), Lists.<IpnbCell>newArrayList(), path);
     List<IpnbCell> cells = new ArrayList<IpnbCell>();
     final IpnbWorksheet[] worksheets = rawFile.worksheets;
     for (IpnbWorksheet worksheet : worksheets) {
@@ -170,6 +172,10 @@ public class IpnbParser {
         raw.text = cellOutput.getText();
         //raw.output_type = "display_data";
       }
+      else if (cellOutput instanceof SvgCellOutput) {
+        raw.svg = ((SvgCellOutput)cellOutput).getSvg();
+        raw.text = cellOutput.getText();
+      }
       else if (cellOutput instanceof JpegCellOutput) {
         raw.jpeg = ((JpegCellOutput)cellOutput).getBase64String();
         raw.text = cellOutput.getText();
@@ -209,6 +215,9 @@ public class IpnbParser {
       }
       else if (jpeg != null) {
         cellOutput = new JpegCellOutput(jpeg, text);
+      }
+      else if (svg != null) {
+        cellOutput = new SvgCellOutput(svg, text);
       }
       else if (latex != null) {
         cellOutput = new LatexCellOutput(latex, prompt_number, text);
