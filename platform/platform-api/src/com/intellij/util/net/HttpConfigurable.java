@@ -55,6 +55,7 @@ import java.util.*;
 @State(
   name = "HttpConfigurable",
   storages = {
+    // we use two storages due to backward compatibility, see http://crucible.labs.intellij.net/cru/CR-IC-5142
     @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml"),
     @Storage(file = StoragePathMacros.APP_CONFIG + "/proxy.settings.xml")
   },
