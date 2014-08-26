@@ -113,25 +113,27 @@ public class TestNGUtil {
   private static final String SUITE_TAG_NAME = "suite";
 
   public static boolean hasConfig(PsiModifierListOwner element) {
-    PsiMethod[] methods;
     if (element instanceof PsiClass) {
-      methods = ((PsiClass) element).getMethods();
+      for (PsiMethod method : ((PsiClass)element).getAllMethods()) {
+        if (isConfigMethod(method)) return true;
+      }
     } else {
       if (!(element instanceof PsiMethod)) return false;
-      methods = new PsiMethod[] {(PsiMethod) element};
+      return isConfigMethod((PsiMethod)element);
+    }
+    return false;
+  }
+
+  private static boolean isConfigMethod(PsiMethod method) {
+    for (String fqn : CONFIG_ANNOTATIONS_FQN) {
+      if (AnnotationUtil.isAnnotated(method, fqn, false)) return true;
     }
 
-    for (PsiMethod method : methods) {
-      for (String fqn : CONFIG_ANNOTATIONS_FQN) {
-        if (AnnotationUtil.isAnnotated(method, fqn, false)) return true;
-      }
-
-      if (hasDocTagsSupport) {
-        final PsiDocComment comment = method.getDocComment();
-        if (comment != null) {
-          for (String javadocTag : CONFIG_JAVADOC_TAGS) {
-            if (comment.findTagByName(javadocTag) != null) return true;
-          }
+    if (hasDocTagsSupport) {
+      final PsiDocComment comment = method.getDocComment();
+      if (comment != null) {
+        for (String javadocTag : CONFIG_JAVADOC_TAGS) {
+          if (comment.findTagByName(javadocTag) != null) return true;
         }
       }
     }
