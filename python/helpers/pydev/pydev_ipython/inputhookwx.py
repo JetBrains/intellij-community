@@ -19,7 +19,7 @@ Authors:  Robin Dunn, Brian Granger, Ondrej Certik
 
 import sys
 import signal
-import time
+from _pydev_imps import _pydev_time as time
 from timeit import default_timer as clock
 import wx
 

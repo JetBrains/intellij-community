@@ -8,6 +8,7 @@ from types import * #@UnusedWildImport
 
 from pydevd_custom_frames import getCustomFrame
 from pydevd_xml import *
+from _pydev_imps import _pydev_thread
 
 try:
     from StringIO import StringIO
@@ -15,11 +16,7 @@ except ImportError:
     from io import StringIO
 import sys #@Reimport
 
-if USE_LIB_COPY:
-    import _pydev_threading as threading
-else:
-    import threading
-import pydevd_resolver
+import _pydev_threading as threading
 import traceback
 import pydevd_save_locals
 from pydev_imports import Exec, quote, execfile
@@ -71,7 +68,7 @@ def dumpFrames(thread_id):
 # AdditionalFramesContainer
 #===============================================================================
 class AdditionalFramesContainer:
-    lock = threading.Lock()
+    lock = _pydev_thread.allocate_lock()
     additional_frames = {} #dict of dicts
 
 
@@ -204,7 +201,7 @@ def getVariable(thread_id, frame_id, scope, attrs):
         attrList = []
 
     if scope == 'EXPRESSION':
-        for count in range(len(attrList)):
+        for count in xrange(len(attrList)):
             if count == 0:
                 # An Expression can be in any scope (globals/locals), therefore it needs to evaluated as an expression
                 var = evaluateExpression(thread_id, frame_id, attrList[count], False)

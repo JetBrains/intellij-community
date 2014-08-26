@@ -1,4 +1,5 @@
 import time
+import sys
 
 try:
     from PySide import QtCore

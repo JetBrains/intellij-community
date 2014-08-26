@@ -3,6 +3,7 @@ import unittest
 
 import pydevconsole
 from pydev_imports import xmlrpclib, SimpleXMLRPCServer
+import sys
 from pydev_localhost import get_localhost
 from pydev_ipython_console_011 import get_pydev_frontend
 

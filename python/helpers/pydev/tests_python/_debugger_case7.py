@@ -5,4 +5,4 @@ def Call():
     
 if __name__ == '__main__':
     Call()
-    print 'TEST SUCEEDED!'
+    print('TEST SUCEEDED!')

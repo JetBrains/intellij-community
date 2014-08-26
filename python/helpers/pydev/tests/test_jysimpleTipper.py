@@ -4,17 +4,14 @@
 import unittest
 import os
 import sys
-#make it as if we were executing from the directory above this one (so that we can use pycompletionserver
-#without the need for it being in the pythonpath)
-sys.argv[0] = os.path.dirname(sys.argv[0]) 
-#twice the dirname to get the previous level from this file.
-sys.path.insert(1, os.path.join(os.path.dirname(sys.argv[0])))
 
 #this does not work (they must be in the system pythonpath)
 #sys.path.insert(1, r"D:\bin\eclipse321\plugins\org.junit_3.8.1\junit.jar" ) #some late loading jar tests
 #sys.path.insert(1, r"D:\bin\eclipse331_1\plugins\org.apache.ant_1.7.0.v200706080842\lib\ant.jar" ) #some late loading jar tests
 
+IS_JYTHON = 0
 if sys.platform.find('java') != -1:
+    IS_JYTHON = 1
     from _pydev_jy_imports_tipper import ismethod
     from _pydev_jy_imports_tipper import isclass
     from _pydev_jy_imports_tipper import dirObj
@@ -236,22 +233,24 @@ class TestCompl(unittest.TestCase):
         assert isMet[1][0].basicAsStr() == "function:met2 args=['arg1', 'arg2'], varargs=vararg, kwargs=kwarg, docs:docmet2"
         assert not isclass(met2)
         
+        
+if not IS_JYTHON:
+    # Disable tests if not running under Jython
+    class TestMod(unittest.TestCase):
+        pass
+    class TestCompl(TestMod):
+        pass
+    class TestSearch(TestMod):
+        pass
 
 
 if __name__ == '__main__':
-    if sys.platform.find('java') != -1:
-        #Only run if jython
-        suite = unittest.makeSuite(TestCompl)
-        suite2 = unittest.makeSuite(TestMod)
-        suite3 = unittest.makeSuite(TestSearch)
+    #Only run if jython
+    suite = unittest.makeSuite(TestCompl)
+    suite2 = unittest.makeSuite(TestMod)
+    suite3 = unittest.makeSuite(TestSearch)
+    
+    unittest.TextTestRunner(verbosity=1).run(suite)
+    unittest.TextTestRunner(verbosity=1).run(suite2)
+    unittest.TextTestRunner(verbosity=1).run(suite3)
         
-        unittest.TextTestRunner(verbosity=1).run(suite)
-        unittest.TextTestRunner(verbosity=1).run(suite2)
-        unittest.TextTestRunner(verbosity=1).run(suite3)
-        
-#        suite.addTest(Test('testCase12'))
-#        suite = unittest.TestSuite()
-#        unittest.TextTestRunner(verbosity=1).run(suite)
-
-    else:
-        sys.stdout.write('Not running jython tests for non-java platform: %s' % sys.platform)

@@ -1,7 +1,6 @@
 '''
 This module holds the constants used for specifying the states of the debugger.
 '''
-
 STATE_RUN = 1
 STATE_SUSPEND = 2
 
@@ -73,13 +72,10 @@ except AttributeError:
 SUPPORT_GEVENT = os.getenv('GEVENT_SUPPORT', 'False') == 'True'
 
 USE_LIB_COPY = SUPPORT_GEVENT and not IS_PY3K and sys.version_info[1] >= 6
+import _pydev_threading as threading
 
-if USE_LIB_COPY:
-    import _pydev_threading as threading
-else:
-    import threading
-
-_nextThreadIdLock = threading.Lock()
+from _pydev_imps import _pydev_thread
+_nextThreadIdLock = _pydev_thread.allocate_lock()
 
 #=======================================================================================================================
 # Jython?
@@ -119,20 +115,40 @@ if IS_PY3K:
         return list(d.values())
 
     DictIterValues = dict.values
+
+    def DictIterItems(d):
+        return d.items()
+
+    def DictItems(d):
+        return list(d.items())
+
 else:
     DictKeys = dict.keys
     try:
         DictIterValues = dict.itervalues
     except:
         DictIterValues = dict.values #Older versions don't have the itervalues
+
     DictValues = dict.values
+
+    def DictIterItems(d):
+        return d.iteritems()
+
+    def DictItems(d):
+        return d.items()
 
 
 try:
-    xrange
+    xrange = xrange
 except:
     #Python 3k does not have it
     xrange = range
+    
+try:
+    import itertools
+    izip = itertools.izip
+except:
+    izip = zip
 
 try:
     object
