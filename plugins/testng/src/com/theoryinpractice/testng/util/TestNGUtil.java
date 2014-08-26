@@ -178,13 +178,7 @@ public class TestNGUtil {
       if (checkDisabled) {
         PsiAnnotation annotation = AnnotationUtil.findAnnotation(element, true, TEST_ANNOTATION_FQN);
         if (annotation != null) {
-          PsiNameValuePair[] attribs = annotation.getParameterList().getAttributes();
-          for (PsiNameValuePair attrib : attribs) {
-            final String attribName = attrib.getName();
-            final PsiAnnotationMemberValue attribValue = attrib.getValue();
-            if (Comparing.strEqual(attribName, "enabled") && attribValue != null && attribValue.textMatches("false"))
-              return false;
-          }
+          if (isDisabled(annotation)) return false;
         }
       }
       return true;
@@ -213,6 +207,11 @@ public class TestNGUtil {
       }
     }
     return false;
+  }
+
+  public static boolean isDisabled(PsiAnnotation annotation) {
+    final PsiAnnotationMemberValue attributeValue = annotation.findDeclaredAttributeValue("enabled");
+    return attributeValue != null && attributeValue.textMatches("false");
   }
 
   private static boolean hasTestJavaDoc(@NotNull PsiDocCommentOwner element, final boolean checkJavadoc) {
