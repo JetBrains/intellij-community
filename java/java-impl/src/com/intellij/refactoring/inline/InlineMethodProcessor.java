@@ -448,7 +448,12 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
             if (element instanceof PsiReferenceExpression) {
               refExprList.add((PsiReferenceExpression)element);
             } else if (element instanceof PsiImportStaticReferenceElement) {
-              imports2Delete.add(PsiTreeUtil.getParentOfType(element, PsiImportStaticStatement.class));
+              final JavaResolveResult[] resolveResults = ((PsiImportStaticReferenceElement)element).multiResolve(false);
+              if (resolveResults.length < 2) {
+                //no overloads available: ensure broken import are deleted and
+                //unused overloaded imports are deleted by optimize imports helper
+                imports2Delete.add(PsiTreeUtil.getParentOfType(element, PsiImportStaticStatement.class));
+              }
             }
             else if (JavaLanguage.INSTANCE != element.getLanguage()) {
               GenericInlineHandler.inlineReference(usage, myMethod, myInliners);
