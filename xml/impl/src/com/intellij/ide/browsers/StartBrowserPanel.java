@@ -59,7 +59,7 @@ public class StartBrowserPanel {
   private JPanel myRoot;
 
   public StartBrowserPanel() {
-    myStartJavaScriptDebuggerCheckBox.setVisible(JavaScriptDebuggerStarter.Util.EP_NAME.getExtensions().length > 0);
+    myStartJavaScriptDebuggerCheckBox.setVisible(JavaScriptDebuggerStarter.Util.hasStarters());
     myRoot.addAncestorListener(new AncestorListenerAdapter() {
       @Override
       public void ancestorAdded(AncestorEvent event) {
