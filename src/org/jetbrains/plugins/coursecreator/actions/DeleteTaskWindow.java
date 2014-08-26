@@ -18,11 +18,11 @@ import org.jetbrains.plugins.coursecreator.format.*;
 import java.util.List;
 
 @SuppressWarnings("ComponentNotRegistered")
-public class DeleteTaskWindowAction extends DumbAwareAction {
+public class DeleteTaskWindow extends DumbAwareAction {
   @NotNull
   private final TaskWindow myTaskWindow;
 
-  public DeleteTaskWindowAction(@NotNull final TaskWindow taskWindow) {
+  public DeleteTaskWindow(@NotNull final TaskWindow taskWindow) {
     super("Delete task window","Delete task window", null);
     myTaskWindow = taskWindow;
   }

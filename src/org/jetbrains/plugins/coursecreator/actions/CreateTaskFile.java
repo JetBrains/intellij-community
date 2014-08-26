@@ -22,9 +22,9 @@ import org.jetbrains.plugins.coursecreator.format.Course;
 import org.jetbrains.plugins.coursecreator.format.Lesson;
 import org.jetbrains.plugins.coursecreator.format.Task;
 
-public class CreateTaskFileAction extends DumbAwareAction {
+public class CreateTaskFile extends DumbAwareAction {
 
-  public CreateTaskFileAction() {
+  public CreateTaskFile() {
     super("Task File", "Create new Task File", PythonPsiApiIcons.PythonFile);
   }
 
@@ -47,7 +47,9 @@ public class CreateTaskFileAction extends DumbAwareAction {
     final Lesson lesson = course.getLesson(lessonDir.getName());
     final Task task = lesson.getTask(taskDir.getName());
 
-    final String taskFileName = Messages.showInputDialog("Name:", "Task File Name", null, null, null);
+    final int index = task.getTaskFiles().size() + 1;
+    String generatedName = "file" + index;
+    final String taskFileName = Messages.showInputDialog("Name:", "Task File Name", null, generatedName, null);
     if (taskFileName == null) return;
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -56,7 +58,7 @@ public class CreateTaskFileAction extends DumbAwareAction {
           final FileTemplate taskTemplate = FileTemplateManager.getInstance().getInternalTemplate("task.py");
           try {
             final PsiElement taskPyFile = FileTemplateUtil.createFromTemplate(taskTemplate, taskFileName + ".py", null, taskDir);
-            task.addTaskFile(taskPyFile.getContainingFile().getName(), task.task_files.size() + 1);
+            task.addTaskFile(taskPyFile.getContainingFile().getName(), index);
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               @Override
               public void run() {

@@ -34,4 +34,8 @@ public class Task {
   public void setIndex(int index) {
     myIndex = index;
   }
+
+  public Map<String, TaskFile> getTaskFiles() {
+    return task_files;
+  }
 }

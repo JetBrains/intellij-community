@@ -58,7 +58,7 @@ public class CreateTask extends DumbAwareAction {
           try {
             final PsiElement taskFile = FileTemplateUtil.createFromTemplate(template, "task.html", null, taskDirectory);
             final PsiElement testsFile = FileTemplateUtil.createFromTemplate(testsTemplate, "tests.py", null, taskDirectory);
-            final PsiElement taskPyFile = FileTemplateUtil.createFromTemplate(taskTemplate, taskName + ".py", null, taskDirectory);
+            final PsiElement taskPyFile = FileTemplateUtil.createFromTemplate(taskTemplate, "file1" + ".py", null, taskDirectory);
 
             final Task task = new Task(taskName);
             task.addTaskFile(taskPyFile.getContainingFile().getName(), size + 1);

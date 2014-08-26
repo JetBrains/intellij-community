@@ -45,7 +45,7 @@
     <action id="CreateLesson" class="org.jetbrains.plugins.coursecreator.actions.CreateLesson">
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
     </action>
-    <action id="CreateTaskFile" class="org.jetbrains.plugins.coursecreator.actions.CreateTaskFileAction">
+    <action id="CreateTaskFile" class="org.jetbrains.plugins.coursecreator.actions.CreateTaskFile">
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
     </action>
     <action id="CreateTask" class="org.jetbrains.plugins.coursecreator.actions.CreateTask">
