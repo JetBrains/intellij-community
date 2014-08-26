@@ -91,8 +91,6 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
   private boolean useLastConfiguration;
 
-  private static boolean ourOpenInNewTab;
-
   @NonNls private FileType ourFtSearchVariant = StructuralSearchUtil.getDefaultFileType();
   private static Language ourDialect = null;
   private static String ourContext = null;
@@ -499,7 +497,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
     final UsageViewContext context = createUsageViewContext(config);
     final UsageViewPresentation presentation = new UsageViewPresentation();
-    presentation.setOpenInNewTab(openInNewTab.isSelected());
+    presentation.setOpenInNewTab(FindSettings.getInstance().isShowResultsInSeparateView());
     presentation.setScopeText(config.getMatchOptions().getScope().getDisplayName());
     context.configure(presentation);
 
@@ -636,7 +634,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       JPanel panel = new JPanel(new BorderLayout());
       panel.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
       openInNewTab = new JCheckBox(FindBundle.message("find.open.in.new.tab.checkbox"));
-      openInNewTab.setSelected(ourOpenInNewTab);
+      openInNewTab.setSelected(FindSettings.getInstance().isShowResultsInSeparateView());
       ToolWindow findWindow = ToolWindowManager.getInstance(searchContext.getProject()).getToolWindow(ToolWindowId.FIND);
       openInNewTab.setEnabled(findWindow != null && findWindow.isAvailable());
       panel.add(openInNewTab, BorderLayout.EAST);
@@ -869,8 +867,9 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     super.doOKAction();
     if (!myRunFindActionOnClose) return;
 
-    FindSettings.getInstance().setDefaultScopeName(selectedScope.getDisplayName());
-    ourOpenInNewTab = openInNewTab.isSelected();
+    final FindSettings findSettings = FindSettings.getInstance();
+    findSettings.setDefaultScopeName(selectedScope.getDisplayName());
+    findSettings.setShowResultsInSeparateView(openInNewTab.isSelected());
 
     try {
       if (model.getShadowConfig() != null) {
