@@ -54,6 +54,8 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiElement;
@@ -526,6 +528,17 @@ public abstract class ChooseByNameBase {
                     (oppositeComponent == myList || SwingUtilities.isDescendingFrom(myList, oppositeComponent))) {
                   IdeFocusManager.getInstance(myProject).requestFocus(myTextField, true);// Otherwise me may skip some KeyEvents
                   return;
+                }
+
+                if (oppositeComponent != null) {
+                  ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+                  ToolWindow toolWindow = toolWindowManager.getToolWindow(toolWindowManager.getActiveToolWindowId());
+                  if (toolWindow != null) {
+                    JComponent toolWindowComponent = toolWindow.getComponent();
+                    if (SwingUtilities.isDescendingFrom(oppositeComponent, toolWindowComponent)) {
+                      return; // Allow toolwindows to gain focus (used by QuickDoc shown in a toolwindow)
+                    }
+                  }
                 }
 
                 EventQueue queue = Toolkit.getDefaultToolkit().getSystemEventQueue();
