@@ -23,6 +23,7 @@ public class TaskWindow {
   @Expose public int length;
   public String myTaskText;
   public int myReplacementLength;
+  public int myIndex;
 
   public TaskWindow() {}
 
@@ -72,5 +73,14 @@ public class TaskWindow {
       EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.LIVE_TEMPLATE_ATTRIBUTES);
     editor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, HighlighterLayer.LAST + 1, defaultTestAttributes,
                                                 HighlighterTargetArea.EXACT_RANGE);
+  }
+
+  public int getIndex() {
+    return myIndex;
+  }
+
+  public void setIndex(int index) {
+
+    myIndex = index;
   }
 }

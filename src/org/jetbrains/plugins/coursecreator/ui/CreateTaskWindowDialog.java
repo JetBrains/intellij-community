@@ -27,7 +27,8 @@ public class CreateTaskWindowDialog extends DialogWrapper {
     return myProject;
   }
 
-  public CreateTaskWindowDialog(@NotNull final Project project, @NotNull final TaskWindow taskWindow) {
+  public CreateTaskWindowDialog(@NotNull final Project project, @NotNull final TaskWindow taskWindow, int lessonIndex,
+                                int taskIndex, String taskFileName) {
     super(project, true);
     setTitle(TITLE);
     myTaskWindow = taskWindow;
@@ -38,6 +39,9 @@ public class CreateTaskWindowDialog extends DialogWrapper {
     myProject = project;
     String taskWindowTaskText = taskWindow.getTaskText();
     myPanel.setTaskWindowText(taskWindowTaskText != null ? taskWindowTaskText : "");
+    int taskWindowIndex = taskWindow.getIndex() + 1;
+    String generatedHintName = "lesson" + lessonIndex + "task" + taskIndex + taskFileName + "_" + taskWindowIndex;
+    myPanel.setGeneratedHintName(generatedHintName);
     String hintName = taskWindow.getHintName();
     myPanel.setHintName(hintName != null ? hintName : "");
     init();

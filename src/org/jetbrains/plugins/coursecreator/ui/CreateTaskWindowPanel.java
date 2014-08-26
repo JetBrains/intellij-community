@@ -15,6 +15,7 @@ public class CreateTaskWindowPanel extends JPanel {
   private JCheckBox myCreateHintCheckBox;
   private JLabel myHintNameLabel;
   private JLabel myHintTextLabel;
+  private String myGeneratedHintName = "";
 
   public CreateTaskWindowPanel(CreateTaskWindowDialog dialog) {
     super(new BorderLayout());
@@ -39,6 +40,7 @@ public class CreateTaskWindowPanel extends JPanel {
     myHintText.setEnabled(isEnable);
     myHintNameLabel.setEnabled(isEnable);
     myHintTextLabel.setEnabled(isEnable);
+    myHintName.setText(myGeneratedHintName);
   }
 
   public void setTaskWindowText(String taskWindowText) {
@@ -76,5 +78,9 @@ public class CreateTaskWindowPanel extends JPanel {
   public void resetHint() {
     myHintName.setText("");
     myHintText.setText("");
+  }
+
+  public void setGeneratedHintName(String generatedHintName) {
+    myGeneratedHintName = generatedHintName;
   }
 }

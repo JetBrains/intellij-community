@@ -13,6 +13,7 @@ public class Lesson {
   @Expose public String name;
   @Expose public List<Task> task_list = new ArrayList<Task>();
 
+  public int myIndex;
   public Map<String, Task> myTasksMap = new HashMap<String, Task>();
 
   public Lesson() {}
@@ -32,5 +33,13 @@ public class Lesson {
 
   public List<Task> getTasklist() {
     return task_list;
+  }
+
+  public void setIndex(int index) {
+    myIndex = index;
+  }
+
+  public int getIndex() {
+    return myIndex;
   }
 }

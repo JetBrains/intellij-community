@@ -61,7 +61,8 @@ public class CreateTask extends DumbAwareAction {
             final PsiElement taskPyFile = FileTemplateUtil.createFromTemplate(taskTemplate, taskName + ".py", null, taskDirectory);
 
             final Task task = new Task(taskName);
-            task.addTaskFile(taskPyFile.getContainingFile().getName());
+            task.addTaskFile(taskPyFile.getContainingFile().getName(), size + 1);
+            task.setIndex(size + 1);
             lesson.addTask(task, taskDirectory);
 
             ApplicationManager.getApplication().invokeLater(new Runnable() {

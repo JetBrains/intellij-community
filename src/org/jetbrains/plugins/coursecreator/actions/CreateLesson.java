@@ -46,6 +46,7 @@ public class CreateLesson extends DumbAwareAction {
         if (lessonDirectory != null) {
           view.selectElement(lessonDirectory);
           final Lesson lesson = new Lesson(lessonName);
+          lesson.setIndex(size + 1);
           course.addLesson(lesson, lessonDirectory);
         }
       }

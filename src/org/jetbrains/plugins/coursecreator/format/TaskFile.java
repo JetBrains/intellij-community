@@ -8,14 +8,24 @@ import java.util.List;
 
 public class TaskFile {
   @Expose public List<TaskWindow> task_windows = new ArrayList<TaskWindow>();
+  public int myIndex;
 
   public TaskFile() {}
 
-  public void addTaskWindow(@NotNull final TaskWindow taskWindow) {
+  public void addTaskWindow(@NotNull final TaskWindow taskWindow, int index) {
+    taskWindow.setIndex(index);
     task_windows.add(taskWindow);
   }
 
   public List<TaskWindow> getTaskWindows() {
     return task_windows;
+  }
+
+  public void setIndex(int index) {
+    myIndex = index;
+  }
+
+  public int getIndex() {
+    return myIndex;
   }
 }
