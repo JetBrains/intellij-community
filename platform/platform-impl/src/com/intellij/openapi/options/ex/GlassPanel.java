@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,10 @@
 package com.intellij.openapi.options.ex;
 
 import com.intellij.ide.ui.search.SearchUtil;
+import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.components.JBTabbedPane;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +30,7 @@ import java.awt.geom.Area;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.Kernel;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -64,17 +68,19 @@ public class GlassPanel extends JComponent {
       final Point leftPoint = SwingUtilities.convertPoint(myPanel, new Point(visibleRect.x, visibleRect.y), surfaceComponent);
       Area innerPanel = new Area(new Rectangle2D.Double(leftPoint.x, leftPoint.y, visibleRect.width, visibleRect.height));
       Area mask = new Area(screen);
-
+      ArrayList<JComponent> components = new ArrayList<JComponent>();
       for (JComponent lightComponent : myLightComponents) {
-        final Area area = getComponentArea(surfaceComponent, lightComponent);
+        final Area area = getComponentArea(surfaceComponent, lightComponent, 1);
         if (area == null) continue;
+        components.add(lightComponent);
 
         if (lightComponent instanceof JLabel) {
           final JLabel label = (JLabel)lightComponent;
           final Component labelFor = label.getLabelFor();
           if (labelFor instanceof JComponent) {
-            final Area labelForArea = getComponentArea(surfaceComponent, (JComponent)labelFor);
+            final Area labelForArea = getComponentArea(surfaceComponent, (JComponent)labelFor, 1);
             if (labelForArea != null) {
+              components.add((JComponent)labelFor);
               area.add(labelForArea);
             }
           }
@@ -86,19 +92,32 @@ public class GlassPanel extends JComponent {
 
       Graphics2D g2 = (Graphics2D)g;
 
-      Color shieldColor = new Color(0.0f, 0.0f, 0.0f, 0.15f);
+      Color shieldColor = new Color(0.0f, 0.0f, 0.0f, 0.20f);
       Color boundsColor = Color.gray;
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g2.setColor(shieldColor);
       g2.fill(mask);
 
-      g2.setColor(boundsColor);
-      g2.draw(mask);
+      g2.setColor(ColorUtil.toAlpha(Color.orange, 25));
+      GraphicsConfig config = GraphicsUtil.setupAAPainting(g2);
+      for (int i = 2; i > 0; i--) {
+        g2.setStroke(new BasicStroke(i));
+        Area arrr = new Area();
+        for (JComponent component : components) {
+          Area area = getComponentArea(surfaceComponent, component, i-1);
+          if (area != null) {
+            arrr.add(area);
+          }
+        }
+        g2.draw(arrr);
+      }
+
+      config.restore();
     }
   }
 
   @Nullable
-  private Area getComponentArea(final JComponent surfaceComponent, final JComponent lightComponent) {
+  private Area getComponentArea(final JComponent surfaceComponent, final JComponent lightComponent, int offset) {
     if (!lightComponent.isShowing()) return null;
 
     final Point panelPoint = SwingUtilities.convertPoint(lightComponent, new Point(0, 0), surfaceComponent);
@@ -115,12 +134,17 @@ public class GlassPanel extends JComponent {
 
     int hInset = isWithBorder ? 7 : isLabelFromTabbedPane ? 20 : 7;
     int vInset = isWithBorder ? 1 : isLabelFromTabbedPane ? 10 : 5;
-    final Area area = new Area(new RoundRectangle2D.Double(x - hInset + insetsToIgnore.left,
-                                                           y - vInset + insetsToIgnore.top,
-                                                           lightComponent.getWidth() + hInset * 2 - insetsToIgnore.right - insetsToIgnore.left,
-                                                           lightComponent.getHeight() + vInset * 2 - insetsToIgnore.top - insetsToIgnore.bottom,
-                                                           6, 6));
-    return area;
+    hInset += offset;
+    vInset += offset;
+    int xCoord = x - hInset + insetsToIgnore.left;
+    int yCoord = y - vInset + insetsToIgnore.top;
+    int width = lightComponent.getWidth() + hInset * 2 - insetsToIgnore.right - insetsToIgnore.left;
+    int height = lightComponent.getHeight() + vInset * 2 - insetsToIgnore.top - insetsToIgnore.bottom;
+    return new Area(new RoundRectangle2D.Double(xCoord,
+                                                yCoord,
+                                                width,
+                                                height,
+                                                Math.min(height, 30), Math.min(height, 30)));
   }
 
   protected static Kernel getBlurKernel(int blurSize) {
