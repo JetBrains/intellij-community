@@ -1,5 +1,9 @@
 package org.jetbrains.plugins.coursecreator.actions;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -12,15 +16,16 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.io.ZipUtil;
 import org.jetbrains.plugins.coursecreator.CCProjectService;
 import org.jetbrains.plugins.coursecreator.format.*;
+import org.jetbrains.plugins.coursecreator.ui.CreateCourseArchiveDialog;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,8 +33,19 @@ import java.util.zip.ZipOutputStream;
 
 public class PackCourse extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(PackCourse.class.getName());
+  String myZipName;
+  String myLocationDir;
+
+  public void setZipName(String zipName) {
+    myZipName = zipName;
+  }
+
+  public void setLocationDir(String locationDir) {
+    myLocationDir = locationDir;
+  }
+
   public PackCourse() {
-    super("Generate course archive","Generate course archive", null);
+    super("Generate course archive", "Generate course archive", AllIcons.FileTypes.Archive);
   }
 
   @Override
@@ -38,15 +54,18 @@ public class PackCourse extends DumbAwareAction {
     if (project == null) {
       return;
     }
-
     final CCProjectService service = CCProjectService.getInstance(project);
     final Course course = service.getCourse();
     if (course == null) return;
+    generateJson(project);
+    CreateCourseArchiveDialog dlg = new CreateCourseArchiveDialog(project, this);
+    dlg.show();
+    if (dlg.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
+      return;
+    }
     final VirtualFile baseDir = project.getBaseDir();
     final Map<String, Lesson> lessons = course.getLessonsMap();
-
     List<FileEditor> editorList = new ArrayList<FileEditor>();
-
     for (Map.Entry<String, Lesson> lesson : lessons.entrySet()) {
       final VirtualFile lessonDir = baseDir.findChild(lesson.getKey());
       if (lessonDir == null) continue;
@@ -65,8 +84,9 @@ public class PackCourse extends DumbAwareAction {
             final int lineStartOffset = document.getLineStartOffset(taskWindow.line);
             final int offset = lineStartOffset + taskWindow.start;
             final FileEditor[] editors = FileEditorManager.getInstance(project).getEditors(file);
-            if (editors.length > 0)
+            if (editors.length > 0) {
               editorList.add(editors[0]);
+            }
 
             CommandProcessor.getInstance().executeCommand(project, new Runnable() {
               @Override
@@ -80,14 +100,12 @@ public class PackCourse extends DumbAwareAction {
                 });
               }
             }, "x", "qwe");
-
-
           }
         }
       }
     }
     try {
-      File zipFile = new File(project.getBasePath(), course.getName() + ".zip");
+      File zipFile = new File(myLocationDir, myZipName + ".zip");
       ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
 
       for (Map.Entry<String, Lesson> entry : lessons.entrySet()) {
@@ -100,13 +118,48 @@ public class PackCourse extends DumbAwareAction {
       ZipUtil.addFileOrDirRecursively(zos, null, new File(baseDir.getPath(), "course.json"), "course.json", null, null);
       ZipUtil.addFileOrDirRecursively(zos, null, new File(baseDir.getPath(), "test_helper.py"), "test_helper.py", null, null);
       zos.close();
-    } catch (IOException e1) {
+      Messages.showInfoMessage("Course archive was saved to " + zipFile.getPath(), "Course Archive Was Created Successfully");
+    }
+    catch (IOException e1) {
       LOG.error(e1);
     }
 
     for (FileEditor fileEditor : editorList) {
       UndoManager.getInstance(project).undo(fileEditor);
     }
+
+    VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
+    ProjectView.getInstance(project).refresh();
   }
 
+  private void generateJson(Project project) {
+    final CCProjectService service = CCProjectService.getInstance(project);
+    final Course course = service.getCourse();
+    final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
+    final String json = gson.toJson(course);
+    final File courseJson = new File(project.getBasePath(), "course.json");
+    FileWriter writer = null;
+    try {
+      writer = new FileWriter(courseJson);
+      writer.write(json);
+    }
+    catch (IOException e) {
+      Messages.showErrorDialog(e.getMessage(), "Failed to Generate Json");
+      LOG.info(e);
+    }
+    catch (Exception e) {
+      Messages.showErrorDialog(e.getMessage(), "Failed to Generate Json");
+      LOG.info(e);
+    }
+    finally {
+      try {
+        if (writer != null) {
+          writer.close();
+        }
+      }
+      catch (IOException e1) {
+        //close silently
+      }
+    }
+  }
 }

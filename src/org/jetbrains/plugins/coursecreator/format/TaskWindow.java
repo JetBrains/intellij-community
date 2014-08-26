@@ -23,7 +23,6 @@ public class TaskWindow {
   @Expose public int length;
   public String myTaskText;
   public int myReplacementLength;
-  public String myHint;
 
   public TaskWindow() {}
 
@@ -48,20 +47,20 @@ public class TaskWindow {
   }
 
   public void setHint(String hint) {
-    myHint = hint;
+    this.hint = hint;
   }
 
   public String getHintName() {
-    return myHint;
+    return hint;
   }
 
   public void removeResources(@NotNull final Project project) {
-    if (myHint != null) {
+    if (hint != null) {
       VirtualFile hints = project.getBaseDir().findChild("hints");
       if (hints == null) {
         return;
       }
-      File hintFile = new File(hints.getPath(), myHint);
+      File hintFile = new File(hints.getPath(), hint);
       CCProjectService.deleteProjectFile(hintFile, project);
     }
   }
