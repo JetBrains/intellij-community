@@ -56,7 +56,7 @@ public class ShowStructureSettingsAction extends AnAction implements DumbAware {
         protected JComponent createSouthPanel() {
           JComponent panel = super.createSouthPanel();
           assert panel != null;
-          CustomLineBorder line = new CustomLineBorder(new JBColor(Gray._153, Gray._80), 1, 0, 0, 0);
+          CustomLineBorder line = new CustomLineBorder(new JBColor(Gray._153.withAlpha(128), Gray._100.withAlpha(128)), 1, 0, 0, 0);
           panel.setBorder(new CompoundBorder(line, new EmptyBorder(10, 5, 5, 5)));
           return panel;
         }

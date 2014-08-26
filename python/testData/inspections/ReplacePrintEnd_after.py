@@ -1,0 +1,1 @@
+print(var, end=' ')

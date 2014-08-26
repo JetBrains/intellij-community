@@ -28,16 +28,16 @@ public class ProjectSpecificAction extends DefaultActionGroup implements DumbAwa
   private final ProjectSpecificSettingsStep mySettings;
 
   public ProjectSpecificAction(@NotNull final NullableConsumer<AbstractProjectSettingsStep> callback,
-                               @NotNull final DirectoryProjectGenerator projectGenerator) {
-    this(callback, projectGenerator, projectGenerator.getName());
+                               @NotNull final DirectoryProjectGenerator projectGenerator, boolean isWelcomeScreen) {
+    this(callback, projectGenerator, projectGenerator.getName(), isWelcomeScreen);
   }
 
   public ProjectSpecificAction(@NotNull final NullableConsumer<AbstractProjectSettingsStep> callback,
                                @NotNull final DirectoryProjectGenerator projectGenerator,
-                               @NotNull final String name) {
+                               @NotNull final String name, boolean isWelcomeScreen) {
     super(name, true);
     getTemplatePresentation().setIcon(projectGenerator.getLogo());
-    mySettings = new ProjectSpecificSettingsStep(projectGenerator, callback);
+    mySettings = new ProjectSpecificSettingsStep(projectGenerator, callback, isWelcomeScreen);
     add(mySettings);
   }
 

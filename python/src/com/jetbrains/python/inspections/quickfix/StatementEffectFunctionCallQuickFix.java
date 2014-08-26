@@ -18,14 +18,12 @@ package com.jetbrains.python.inspections.quickfix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyElementGenerator;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -77,14 +75,23 @@ public class StatementEffectFunctionCallQuickFix implements LocalQuickFix {
 
     RemoveUnnecessaryBackslashQuickFix.removeBackSlash(next);
     if (whiteSpace != null) whiteSpace.delete();
+    String commentText = null;
     if (next != null) {
-      final String text = next.getText();
+      final PsiElement lastChild = next.getLastChild();
+      if (lastChild instanceof PsiComment) {
+        commentText = lastChild.getText();
+      }
+      final String text = next instanceof PyExpressionStatement ? ((PyExpressionStatement)next).getExpression().getText() : next.getText();
+
       stringBuilder.append(text);
       if (text.endsWith(",") && PyNames.PRINT.equals(expressionText))
         stringBuilder.append(" end=' '");
       next.delete();
     }
     stringBuilder.append(")");
+    if (commentText != null) {
+      stringBuilder.append(commentText);
+    }
     expression.replace(elementGenerator.createFromText(LanguageLevel.forElement(expression), PyExpression.class,
                                                        stringBuilder.toString()));
   }

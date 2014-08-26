@@ -34,6 +34,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Function;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
@@ -44,13 +45,16 @@ import com.jetbrains.python.debugger.PySignatureCacheManager;
 import com.jetbrains.python.debugger.PySignatureUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeParser;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.ChainIterable;
 import com.jetbrains.python.toolbox.FP;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.HeadMethod;
+import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -414,8 +418,10 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       return true;
     }
     HttpClient client = new HttpClient();
-    client.setTimeout(5 * 1000);
-    client.setConnectionTimeout(5 * 1000);
+    HttpConnectionManagerParams params = client.getHttpConnectionManager().getParams();
+    params.setSoTimeout(5 * 1000);
+    params.setConnectionTimeout(5 * 1000);
+
     try {
       HeadMethod method = new HeadMethod(url);
       int rc = client.executeMethod(method);
@@ -618,9 +624,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     if (checkReturn) {
       RaiseVisitor visitor = new RaiseVisitor();
       PyStatementList statementList = element.getStatementList();
-      if (statementList != null) {
-        statementList.accept(visitor);
-      }
+      statementList.accept(visitor);
       if (visitor.myHasReturn) {
         builder.append(prefix).append("return:").append(offset);
         if (PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB) {

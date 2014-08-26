@@ -856,6 +856,17 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           }
         }
       }
+      if (targetElement == null) {
+        for (Language language : Language.getRegisteredLanguages()) {
+          DocumentationProvider documentationProvider = LanguageDocumentation.INSTANCE.forLanguage(language);
+          if (documentationProvider != null) {
+            targetElement = documentationProvider.getDocumentationElementForLink(manager, refText, psiElement);
+            if (targetElement != null) {
+              break;
+            }
+          }
+        }
+      }
       if (targetElement != null) {
         fetchDocInfo(getDefaultCollector(targetElement, null), component);
       }

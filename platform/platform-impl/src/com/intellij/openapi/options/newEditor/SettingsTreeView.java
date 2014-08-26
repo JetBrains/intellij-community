@@ -82,6 +82,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     myFilter = filter;
     myRoot = new MyRoot(groups);
     myTree = new MyTree();
+    myTree.putClientProperty(WideSelectionTreeUI.TREE_TABLE_TREE_KEY, Boolean.TRUE);
     myTree.setBackground(UIUtil.getSidePanelColor());
     myTree.getInputMap().clear();
     TreeUtil.installActions(myTree);
