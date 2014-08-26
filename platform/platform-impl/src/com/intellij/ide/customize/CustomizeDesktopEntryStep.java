@@ -39,8 +39,8 @@ public class CustomizeDesktopEntryStep extends AbstractCustomizeWizardStep {
   public CustomizeDesktopEntryStep(String iconPath) {
     setLayout(new BorderLayout());
 
-    JPanel panel = createBigButtonPanel(new BorderLayout(10, 10), myCreateEntryCheckBox, EmptyRunnable.INSTANCE);
-    panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    JPanel panel = createBigButtonPanel(createSmallBorderLayout(), myCreateEntryCheckBox, EmptyRunnable.INSTANCE);
+    panel.setBorder(createSmallEmptyBorder());
 
     JPanel buttonPanel = new JPanel(new GridBagLayout());
     buttonPanel.setOpaque(false);

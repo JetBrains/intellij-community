@@ -120,7 +120,7 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     result.add(myContentPanel, BorderLayout.CENTER);
     result.add(myFooterLabel, BorderLayout.SOUTH);
     result.setPreferredSize(new Dimension(700, 600));
-    result.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    result.setBorder(AbstractCustomizeWizardStep.createSmallEmptyBorder());
     return result;
   }
 
