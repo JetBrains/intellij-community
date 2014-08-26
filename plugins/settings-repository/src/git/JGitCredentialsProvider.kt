@@ -24,19 +24,25 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
 
   override fun get(uri: URIish, vararg items: CredentialItem?): Boolean {
     var userNameItem: CredentialItem.Username? = null
-    var passwordItem: CredentialItem.Password? = null
+    var passwordItem: CredentialItem? = null
     for (item in items) {
       if (item is CredentialItem.Username) {
-        userNameItem = item as CredentialItem.Username
+        userNameItem = item
       }
       else if (item is CredentialItem.Password) {
-        passwordItem = item as CredentialItem.Password
+        passwordItem = item
+      }
+      else if (item is CredentialItem.StringType) {
+        if (item.getPromptText() == "Password: ") {
+          passwordItem = item
+          continue
+        }
       }
     }
-    return (userNameItem == null && passwordItem == null) || doGet(uri, userNameItem!!, passwordItem!!)
+    return (userNameItem == null && passwordItem == null) || doGet(uri, userNameItem, passwordItem)
   }
 
-  private fun doGet(uri: URIish, userNameItem: CredentialItem.Username, passwordItem: CredentialItem.Password): Boolean {
+  private fun doGet(uri: URIish, userNameItem: CredentialItem.Username?, passwordItem: CredentialItem?): Boolean {
     var credentials = credentialsStore.getValue().get(uri)
 
     var userFromUri: String? = uri.getUser()
@@ -52,14 +58,20 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
       }
     }
 
-
-
     if (credentials?.username == null || credentials?.password == null) {
       credentials = showAuthenticationForm(credentials, uri.toString(), uri.getHost())
     }
 
-    userNameItem.setValue(credentials?.username)
-    passwordItem.setValue(credentials?.password?.toCharArray())
+    userNameItem?.setValue(credentials?.username)
+    if (passwordItem != null) {
+      if (passwordItem is CredentialItem.Password) {
+        passwordItem.setValue(credentials?.password?.toCharArray())
+      }
+      else {
+        (passwordItem as CredentialItem.StringType).setValue(credentials?.password)
+      }
+    }
+
     if (credentials != null) {
       credentialsStore.getValue().save(uri, credentials!!)
     }
