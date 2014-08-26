@@ -18,6 +18,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.ContainerUtil;
 import com.theoryinpractice.testng.configuration.SearchingForTestsTask;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.configuration.TestNGRunnableState;
@@ -53,7 +54,7 @@ public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
             return new SearchingForTestsTask(serverSocket, config, tempFile, client) {
               @Override
               protected void fillTestObjects(final Map<PsiClass, Collection<PsiMethod>> classes) throws CantRunException {
-                final HashMap<PsiClass, Collection<PsiMethod>> fullClassList = new HashMap<>();
+                final HashMap<PsiClass, Collection<PsiMethod>> fullClassList = ContainerUtil.newHashMap();
                 super.fillTestObjects(fullClassList);
                 for (final PsiClass aClass : fullClassList.keySet()) {
                   if (!ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
