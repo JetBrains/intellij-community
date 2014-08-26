@@ -16,6 +16,8 @@
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.internal.statistic.UsageTrigger;
@@ -1010,9 +1012,20 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       super(false);
       addKeyListener(new KeyAdapter() {});
       if (Registry.is("ide.new.settings.dialog")) {
+        final JTextField editor = getTextEditor();
+        editor.putClientProperty("JTextField.variant", "search");
+        if (!(editor.getUI() instanceof DarculaTextFieldUI)) {
+          editor.setUI((DarculaTextFieldUI)DarculaTextFieldUI.createUI(editor));
+          editor.setBorder(new DarculaTextBorder());
+        }
         setBackground(UIUtil.getSidePanelColor());
         setBorder(new EmptyBorder(5, 10, 2, 10));
       }
+    }
+
+    @Override
+    protected boolean isSearchControlUISupported() {
+      return true;
     }
 
     @Override
