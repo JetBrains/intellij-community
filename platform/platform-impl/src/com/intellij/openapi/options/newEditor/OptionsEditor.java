@@ -847,7 +847,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return mySearch;//myTree.getTree();
+    return myTreeView != null ? myTreeView.myTree : mySearch;//myTree.getTree();
   }
 
   @Override
