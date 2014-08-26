@@ -300,7 +300,7 @@ public class JsonParser implements PsiParser {
   }
 
   /* ********************************************************** */
-  // string_literal ':' value
+  // string_literal (':' value)
   public static boolean property(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "property")) return false;
     if (!nextTokenIs(builder_, STRING)) return false;
@@ -309,9 +309,21 @@ public class JsonParser implements PsiParser {
     Marker marker_ = enter_section_(builder_, level_, _NONE_, null);
     result_ = string_literal(builder_, level_ + 1);
     pinned_ = result_; // pin = 1
-    result_ = result_ && report_error_(builder_, consumeToken(builder_, COLON));
-    result_ = pinned_ && value(builder_, level_ + 1) && result_;
+    result_ = result_ && property_1(builder_, level_ + 1);
     exit_section_(builder_, level_, marker_, PROPERTY, result_, pinned_, null);
+    return result_ || pinned_;
+  }
+
+  // ':' value
+  private static boolean property_1(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "property_1")) return false;
+    boolean result_;
+    boolean pinned_;
+    Marker marker_ = enter_section_(builder_, level_, _NONE_, null);
+    result_ = consumeToken(builder_, COLON);
+    pinned_ = result_; // pin = 1
+    result_ = result_ && value(builder_, level_ + 1);
+    exit_section_(builder_, level_, marker_, null, result_, pinned_, null);
     return result_ || pinned_;
   }
 
