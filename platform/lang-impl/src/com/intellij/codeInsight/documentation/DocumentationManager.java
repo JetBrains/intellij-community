@@ -141,6 +141,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       IdeFocusManager.getInstance(myProject).requestFocus(myPreviouslyFocused, true);
     }
     super.restorePopupBehavior();
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        updateComponent();
+      }
+    });
   }
 
   /**
