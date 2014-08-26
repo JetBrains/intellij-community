@@ -15,7 +15,6 @@
  */
 package com.intellij.testFramework;
 
-import com.intellij.openapi.util.text.StringUtil;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,10 +44,15 @@ public class LoggedErrorProcessor {
   public void processError(String message, Throwable t, String[] details, @NotNull Logger logger) {
     logger.info(message, t);
 
+    System.err.println("ERROR: " + message);
+    if (t != null) t.printStackTrace(System.err);
     if (details != null && details.length > 0) {
-      message += "\n Details:" + StringUtil.join(details, "\n   ");
+      System.out.println("details: ");
+      for (String detail : details) {
+        System.out.println(detail);
+      }
     }
 
-    throw new RuntimeException(message, t);
+    throw new AssertionError(message);
   }
 }

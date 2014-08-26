@@ -1300,7 +1300,7 @@ class Foo {{
     type '.'
     assert myFixture.lookupElementStrings == ['Util.bar', 'Util.CONSTANT', 'Util.foo']
 
-    def p = LookupElementPresentation.renderElement(myFixture.lookupElements[1])
+    def p = ApplicationManager.application.runReadAction ({ LookupElementPresentation.renderElement(myFixture.lookupElements[1]) } as Computable)
     assert p.itemText == 'Util.CONSTANT'
     assert p.tailText == ' (foo)'
     assert p.typeText == 'int'
