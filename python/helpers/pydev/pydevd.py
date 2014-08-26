@@ -733,7 +733,7 @@ class PyDB:
                         breakpoint.add(self.breakpoints, file, line, func_name)
                         supported_type = True
                     else:
-                        #supported_type = self.search_for_plugins('add_line_breakpoint', type, file, line, condition, expression, func_name)
+                        #supported_type = self.plugin_function('add_line_breakpoint', type, file, line, condition, expression, func_name)
                         supported_type = self.add_plugin_breakpoint('add_line_breakpoint', type, file, line, condition, expression, func_name)
 
                     if not supported_type:
@@ -759,7 +759,7 @@ class PyDB:
                                 del self.breakpoints[file][line]
                                 specific_type = True
                             else:
-                                specific_type = self.search_for_plugins('find_and_remove_line_break', type, file, line)
+                                specific_type = self.plugin_function('find_and_remove_line_break', type, file, line)
 
                             if not specific_type:
                                 #remove all
@@ -769,7 +769,7 @@ class PyDB:
                                 except:
                                     pass
 
-                                found = found or self.search_for_plugins('remove_line_break', type, file, line)
+                                found = found or self.plugin_function('remove_line_break', type, file, line)
 
                             if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
                                 sys.stderr.write('Removed breakpoint:%s - %s\n' % (file, line))
@@ -825,7 +825,7 @@ class PyDB:
                         supported_type = True
 
                     else:
-                        #supported_type = self.search_for_plugins('add_exception_breakpoint', type, exception)
+                        #supported_type = self.plugin_function('add_exception_breakpoint', type, exception)
                         supported_type = self.add_plugin_breakpoint('add_exception_breakpoint', type, exception)
 
                     if not supported_type:
@@ -844,7 +844,7 @@ class PyDB:
                         update_exception_hook(self)
                         supported_type = True
                     else:
-                        supported_type = self.search_for_plugins('remove_exception_breakpoint', type, exception)
+                        supported_type = self.plugin_function('remove_exception_breakpoint', type, exception)
 
                     if not supported_type:
                         raise NameError(type)
@@ -1259,16 +1259,10 @@ class PyDB:
             except:
                 pydev_log.error("Failed to load plugin %s" % plugin)
             if loaded_plugin:
-                #can_not_skip_fun = getattr(loaded_plugin, 'can_not_skip', None)
-                #if can_not_skip_fun:
-                #    self.can_not_skip_cache.append(can_not_skip_fun)
-                #can_skip_fun = getattr(loaded_plugin, 'has_exception_breaks', None)
-                #if can_skip_fun:
-                #    self.has_exception_breaks_cache.append(can_skip_fun)
-
                 self.plugins.append(loaded_plugin)
 
     def add_plugin_breakpoint(self, func_name, *args, **kwargs):
+        #add breakpoint from plugin and remember usable plugin
         for loaded_plugin in self.plugins:
             if hasattr(loaded_plugin, func_name):
                 func = getattr(loaded_plugin, func_name)
@@ -1278,7 +1272,7 @@ class PyDB:
                     return True
         return False
 
-    def can_not_skip_from_plugins(self, *args, **kwargs):
+    def can_not_skip_from_plugin(self, *args, **kwargs):
         if not self.usable_plugin:
             return False
         if not self.can_not_skip_cache:
@@ -1294,7 +1288,7 @@ class PyDB:
             return True
         return False
 
-    def has_exception_breaks_from_plugins(self, *args, **kwargs):
+    def has_exception_breaks_from_plugin(self, *args, **kwargs):
         if not self.usable_plugin:
             return False
         if not self.has_exception_breaks_cache:
@@ -1310,7 +1304,8 @@ class PyDB:
             return True
         return False
 
-    def search_for_plugins(self, func_name, *args, **kwargs):
+    def plugin_function(self, func_name, *args, **kwargs):
+        #call function from plugin
         if not self.usable_plugin:
             return False
         loaded_plugin = self.usable_plugin
@@ -1320,7 +1315,8 @@ class PyDB:
                 return True
         return False
 
-    def first_plugin_result(self, func_name, *args, **kwargs):
+    def plugin_func_with_result(self, func_name, *args, **kwargs):
+        #call function from plugin and return its result
         if not self.usable_plugin:
             return False, None
         loaded_plugin = self.usable_plugin

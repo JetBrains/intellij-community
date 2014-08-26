@@ -56,7 +56,7 @@ class PyDBFrame:
                         flag = False
                 else:
                     try:
-                        exist_result, result = mainDebugger.first_plugin_result('exception_break', self, frame, event, self._args, arg)
+                        exist_result, result = mainDebugger.plugin_func_with_result('exception_break', self, frame, event, self._args, arg)
                         if exist_result:
                             (flag, frame) = result
 
@@ -106,7 +106,7 @@ class PyDBFrame:
                     or (info.pydev_step_cmd in (CMD_STEP_RETURN, CMD_STEP_OVER) and info.pydev_step_stop is not frame)
 
                 if can_skip:
-                    can_skip = not mainDebugger.can_not_skip_from_plugins(frame, info)
+                    can_skip = not mainDebugger.can_not_skip_from_plugin(frame, info)
 
                 # Let's check to see if we are in a function that has a breakpoint. If we don't have a breakpoint,
                 # we will return nothing for the next trace
@@ -115,7 +115,7 @@ class PyDBFrame:
                 if not breakpoints_for_file:
                     if can_skip:
                         if mainDebugger.always_exception_set or \
-                                        mainDebugger.has_exception_breaks_from_plugins():
+                                        mainDebugger.has_exception_breaks_from_plugin():
                             return self.trace_exception
                         else:
                             return None
@@ -160,7 +160,7 @@ class PyDBFrame:
                     if info.pydev_step_cmd == CMD_STEP_OVER and info.pydev_step_stop is frame and event in ('line', 'return'):
                         stop = False #we don't stop on breakpoint if we have to stop by step-over (it will be processed later)
                 else:
-                    exist_result, result = mainDebugger.first_plugin_result('get_breakpoint', frame, event, self._args)
+                    exist_result, result = mainDebugger.plugin_func_with_result('get_breakpoint', frame, event, self._args)
                     if exist_result:
                          (flag, breakpoint, new_frame) = result
 
@@ -190,7 +190,7 @@ class PyDBFrame:
                 if stop:
                     self.setSuspend(thread, CMD_SET_BREAK)
                 elif flag:
-                    exist_result, result = mainDebugger.first_plugin_result('suspend', self, thread, frame)
+                    exist_result, result = mainDebugger.plugin_func_with_result('suspend', self, thread, frame)
                     if exist_result:
                         frame = result
 
@@ -205,16 +205,16 @@ class PyDBFrame:
 
             #step handling. We stop when we hit the right frame
             try:
-                mainDebugger.search_for_plugins('prepare_for_cmds', info)
+                mainDebugger.plugin_function('prepare_for_cmds', info)
                 stop_info = {}
 
                 if info.pydev_step_cmd == CMD_STEP_INTO:
                     stop_info['stop'] = event in ('line', 'return')
-                    mainDebugger.search_for_plugins('cmd_step_into', frame, event, self._args, stop_info)
+                    mainDebugger.plugin_function('cmd_step_into', frame, event, self._args, stop_info)
 
                 elif info.pydev_step_cmd == CMD_STEP_OVER:
                     stop_info['stop'] = info.pydev_step_stop is frame and event in ('line', 'return')
-                    mainDebugger.search_for_plugins('cmd_step_over', frame, event, self._args, stop_info)
+                    mainDebugger.plugin_function('cmd_step_over', frame, event, self._args, stop_info)
 
                 elif info.pydev_step_cmd == CMD_SMART_STEP_INTO:
                     stop_info['stop'] = False
@@ -263,7 +263,7 @@ class PyDBFrame:
                     stop_info['stop'] = False
 
                 if True in stop_info.values():
-                    stopped_on_plugin = mainDebugger.search_for_plugins('stop', frame, event, self._args, stop_info, arg)
+                    stopped_on_plugin = mainDebugger.plugin_function('stop', frame, event, self._args, stop_info, arg)
                     if DictContains(stop_info, 'stop') and stop_info['stop'] and not stopped_on_plugin:
                         #event is always == line or return at this point
                         if event == 'line':
