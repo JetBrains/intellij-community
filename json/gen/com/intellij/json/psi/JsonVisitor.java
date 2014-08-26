@@ -3,6 +3,7 @@ package com.intellij.json.psi;
 
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiNamedElement;
 
 public class JsonVisitor extends PsiElementVisitor {
 
@@ -31,7 +32,8 @@ public class JsonVisitor extends PsiElementVisitor {
   }
 
   public void visitProperty(@NotNull JsonProperty o) {
-    visitNamedElement(o);
+    visitElement(o);
+    // visitPsiNamedElement(o);
   }
 
   public void visitStringLiteral(@NotNull JsonStringLiteral o) {
@@ -39,10 +41,6 @@ public class JsonVisitor extends PsiElementVisitor {
   }
 
   public void visitValue(@NotNull JsonValue o) {
-    visitElement(o);
-  }
-
-  public void visitNamedElement(@NotNull JsonNamedElement o) {
     visitElement(o);
   }
 
