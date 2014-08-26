@@ -25,6 +25,7 @@ import com.intellij.openapi.diff.impl.mergeTool.MergeRequestImpl;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +41,7 @@ public class ExtMergeFiles extends BaseExternalTool {
   }
 
   @Override
-  public boolean isAvailable(DiffRequest request) {
+  public boolean isAvailable(@NotNull DiffRequest request) {
     if (!(request instanceof MergeRequestImpl)) return false;
     DiffContent[] contents = request.getContents();
     if (contents.length != 3) return false;
@@ -52,7 +53,8 @@ public class ExtMergeFiles extends BaseExternalTool {
   }
 
   @Override
-  protected List<String> getParameters(DiffRequest request) throws Exception {
+  @NotNull
+  protected List<String> getParameters(@NotNull DiffRequest request) throws Exception {
     final List<String> params = new ArrayList<String>();
     String result = ((MergeRequestImpl)request).getResultContent().getFile().getPath();
     String left = externalize(request, 0).getContentFile().getPath();
@@ -68,7 +70,8 @@ public class ExtMergeFiles extends BaseExternalTool {
     return params;
   }
 
-  public void show(DiffRequest request) {
+  @Override
+  public void show(@NotNull DiffRequest request) {
     saveContents(request);
 
     int result = DialogWrapper.CANCEL_EXIT_CODE;
