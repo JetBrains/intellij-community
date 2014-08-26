@@ -1,5 +1,7 @@
 package org.jetbrains.plugins.coursecreator;
 
+import com.intellij.facet.ui.FacetEditorValidator;
+import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
@@ -74,13 +76,26 @@ public class CCProjectGenerator extends PythonProjectGenerator implements Direct
   @NotNull
   @Override
   public ValidationResult validate(@NotNull String s) {
-    return ValidationResult.OK;
+    String message = "";
+    message = mySettingsPanel.getDescription().equals("") ? "Enter description" : message;
+    message = mySettingsPanel.getAuthor().equals("") ? "Enter author name" : message;
+    message = mySettingsPanel.getName().equals("") ? "Enter course name" : message;
+    return message.equals("")? ValidationResult.OK : new ValidationResult(message) ;
   }
 
   @Nullable
   @Override
   public JPanel extendBasePanel() throws ProcessCanceledException {
     mySettingsPanel = new CCNewProjectPanel();
+    mySettingsPanel.registerValidators(new FacetValidatorsManager() {
+      public void registerValidator(FacetEditorValidator validator, JComponent... componentsToWatch) {
+        throw new UnsupportedOperationException();
+      }
+
+      public void validate() {
+        fireStateChanged();
+      }
+    });
     return mySettingsPanel.getMainPanel();
   }
 }
