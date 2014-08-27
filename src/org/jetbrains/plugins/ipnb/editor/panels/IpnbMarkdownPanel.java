@@ -7,7 +7,7 @@ import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.IpnbUtils;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
-import org.jetbrains.plugins.ipnb.format.cells.MarkdownCell;
+import org.jetbrains.plugins.ipnb.format.cells.IpnbMarkdownCell;
 import org.scilab.forge.jlatexmath.ParseException;
 import org.scilab.forge.jlatexmath.TeXFormula;
 import org.scilab.forge.jlatexmath.TeXIcon;
@@ -15,10 +15,10 @@ import org.scilab.forge.jlatexmath.TeXIcon;
 import javax.swing.*;
 import java.awt.*;
 
-public class MarkdownPanel extends IpnbEditablePanel<JPanel, MarkdownCell> {
-  private static final Logger LOG = Logger.getInstance(MarkdownPanel.class);
+public class IpnbMarkdownPanel extends IpnbEditablePanel<JPanel, IpnbMarkdownCell> {
+  private static final Logger LOG = Logger.getInstance(IpnbMarkdownPanel.class);
 
-  public MarkdownPanel(@NotNull final MarkdownCell cell) {
+  public IpnbMarkdownPanel(@NotNull final IpnbMarkdownCell cell) {
     super(cell);
     initPanel();
   }

@@ -98,28 +98,28 @@ public class IpnbParser {
 
     public static IpnbCellRaw fromCell(@NotNull final IpnbCell cell) {
       final IpnbCellRaw raw = new IpnbCellRaw();
-      if (cell instanceof MarkdownCell) {
+      if (cell instanceof IpnbMarkdownCell) {
         raw.cell_type = "markdown";
-        raw.source = ((MarkdownCell)cell).getSource();
+        raw.source = ((IpnbMarkdownCell)cell).getSource();
       }
-      else if (cell instanceof CodeCell) {
+      else if (cell instanceof IpnbCodeCell) {
         raw.cell_type = "code";
         final ArrayList<CellOutputRaw> outputRaws = new ArrayList<CellOutputRaw>();
-        for (CellOutput cellOutput : ((CodeCell)cell).getCellOutputs()) {
-          outputRaws.add(CellOutputRaw.fromOutput(cellOutput));
+        for (IpnbOutputCell outputCell : ((IpnbCodeCell)cell).getCellOutputs()) {
+          outputRaws.add(CellOutputRaw.fromOutput(outputCell));
         }
         raw.outputs = outputRaws.toArray(new CellOutputRaw[outputRaws.size()]);
-        raw.language = ((CodeCell)cell).getLanguage();
-        raw.input = ((CodeCell)cell).getSource();
-        raw.prompt_number = ((CodeCell)cell).getPromptNumber();
+        raw.language = ((IpnbCodeCell)cell).getLanguage();
+        raw.input = ((IpnbCodeCell)cell).getSource();
+        raw.prompt_number = ((IpnbCodeCell)cell).getPromptNumber();
       }
-      else if (cell instanceof RawCell) {
+      else if (cell instanceof IpnbRawCell) {
         raw.cell_type = "raw";
       }
-      else if (cell instanceof HeadingCell) {
+      else if (cell instanceof IpnbHeadingCell) {
         raw.cell_type = "heading";
-        raw.source = ((HeadingCell)cell).getSource();
-        raw.level = ((HeadingCell)cell).getLevel();
+        raw.source = ((IpnbHeadingCell)cell).getSource();
+        raw.level = ((IpnbHeadingCell)cell).getLevel();
       }
       return raw;
     }
@@ -127,20 +127,20 @@ public class IpnbParser {
     public IpnbCell createCell() {
       final IpnbCell cell;
       if (cell_type.equals("markdown")) {
-        cell = new MarkdownCell(source);
+        cell = new IpnbMarkdownCell(source);
       }
       else if (cell_type.equals("code")) {
-        final List<CellOutput> cellOutputs = new ArrayList<CellOutput>();
+        final List<IpnbOutputCell> outputCells = new ArrayList<IpnbOutputCell>();
         for (CellOutputRaw outputRaw : outputs) {
-          cellOutputs.add(outputRaw.createOutput());
+          outputCells.add(outputRaw.createOutput());
         }
-        cell = new CodeCell(language, input, prompt_number, cellOutputs);
+        cell = new IpnbCodeCell(language, input, prompt_number, outputCells);
       }
       else if (cell_type.equals("raw")) {
-        cell = new RawCell();
+        cell = new IpnbRawCell();
       }
       else if (cell_type.equals("heading")) {
-        cell = new HeadingCell(source, level);
+        cell = new IpnbHeadingCell(source, level);
       }
       else {
         cell = null;
@@ -164,80 +164,80 @@ public class IpnbParser {
     String[] traceback;
 
 
-    public static CellOutputRaw fromOutput(@NotNull final CellOutput cellOutput) {
+    public static CellOutputRaw fromOutput(@NotNull final IpnbOutputCell outputCell) {
       final CellOutputRaw raw = new CellOutputRaw();
 
-      if (cellOutput instanceof PngCellOutput) {
-        raw.png = ((PngCellOutput)cellOutput).getBase64String();
-        raw.text = cellOutput.getText();
+      if (outputCell instanceof IpnbPngOutputCell) {
+        raw.png = ((IpnbPngOutputCell)outputCell).getBase64String();
+        raw.text = outputCell.getText();
         //raw.output_type = "display_data";
       }
-      else if (cellOutput instanceof SvgCellOutput) {
-        raw.svg = ((SvgCellOutput)cellOutput).getSvg();
-        raw.text = cellOutput.getText();
+      else if (outputCell instanceof IpnbSvgOutputCell) {
+        raw.svg = ((IpnbSvgOutputCell)outputCell).getSvg();
+        raw.text = outputCell.getText();
       }
-      else if (cellOutput instanceof JpegCellOutput) {
-        raw.jpeg = ((JpegCellOutput)cellOutput).getBase64String();
-        raw.text = cellOutput.getText();
+      else if (outputCell instanceof IpnbJpegOutputCell) {
+        raw.jpeg = ((IpnbJpegOutputCell)outputCell).getBase64String();
+        raw.text = outputCell.getText();
       }
-      else if (cellOutput instanceof LatexCellOutput) {
-        raw.latex = ((LatexCellOutput)cellOutput).getLatex();
-        raw.prompt_number = ((LatexCellOutput)cellOutput).getPromptNumber();
-        raw.text = cellOutput.getText();
+      else if (outputCell instanceof IpnbLatexOutputCell) {
+        raw.latex = ((IpnbLatexOutputCell)outputCell).getLatex();
+        raw.prompt_number = ((IpnbLatexOutputCell)outputCell).getPromptNumber();
+        raw.text = outputCell.getText();
       }
-      else if (cellOutput instanceof StreamCellOutput) {
-        raw.stream = ((StreamCellOutput)cellOutput).getStream();
+      else if (outputCell instanceof IpnbStreamOutputCell) {
+        raw.stream = ((IpnbStreamOutputCell)outputCell).getStream();
         raw.output_type = "stream";
-        raw.text = cellOutput.getText();
+        raw.text = outputCell.getText();
       }
-      else if (cellOutput instanceof HtmlCellOutput) {
-        raw.html = ((HtmlCellOutput)cellOutput).getHtmls();
-        raw.text = cellOutput.getText();
+      else if (outputCell instanceof IpnbHtmlOutputCell) {
+        raw.html = ((IpnbHtmlOutputCell)outputCell).getHtmls();
+        raw.text = outputCell.getText();
       }
-      else if (cellOutput instanceof ErrorCellOutput) {
+      else if (outputCell instanceof IpnbErrorOutputCell) {
         raw.output_type = "pyerr";
-        raw.evalue = ((ErrorCellOutput)cellOutput).getEvalue();
-        raw.ename = ((ErrorCellOutput)cellOutput).getEname();
-        raw.traceback = cellOutput.getText();
+        raw.evalue = ((IpnbErrorOutputCell)outputCell).getEvalue();
+        raw.ename = ((IpnbErrorOutputCell)outputCell).getEname();
+        raw.traceback = outputCell.getText();
       }
-      else if (cellOutput instanceof OutCellOutput) {
+      else if (outputCell instanceof IpnbOutOutputCell) {
         raw.output_type = "pyout";
-        raw.text = cellOutput.getText();
-        raw.prompt_number = ((OutCellOutput)cellOutput).getPromptNumber();
+        raw.text = outputCell.getText();
+        raw.prompt_number = outputCell.getPromptNumber();
       }
       return raw;
     }
 
-    public CellOutput createOutput() {
-      final CellOutput cellOutput;
+    public IpnbOutputCell createOutput() {
+      final IpnbOutputCell outputCell;
       if (png != null) {
-        cellOutput = new PngCellOutput(png, text);
+        outputCell = new IpnbPngOutputCell(png, text, prompt_number);
       }
       else if (jpeg != null) {
-        cellOutput = new JpegCellOutput(jpeg, text);
+        outputCell = new IpnbJpegOutputCell(jpeg, text, prompt_number);
       }
       else if (svg != null) {
-        cellOutput = new SvgCellOutput(svg, text);
+        outputCell = new IpnbSvgOutputCell(svg, text, prompt_number);
       }
       else if (latex != null) {
-        cellOutput = new LatexCellOutput(latex, prompt_number, text);
+        outputCell = new IpnbLatexOutputCell(latex, prompt_number, text);
       }
       else if (stream != null) {
-        cellOutput = new StreamCellOutput(stream, text);
+        outputCell = new IpnbStreamOutputCell(stream, text, prompt_number);
       }
       else if (html != null) {
-        cellOutput = new HtmlCellOutput(html, text);
+        outputCell = new IpnbHtmlOutputCell(html, text, prompt_number);
       }
       else if ("pyerr".equals(output_type)) {
-        cellOutput = new ErrorCellOutput(evalue, ename, traceback);
+        outputCell = new IpnbErrorOutputCell(evalue, ename, traceback, prompt_number);
       }
       else if ("pyout".equals(output_type)) {
-        cellOutput = new OutCellOutput(text, prompt_number);
+        outputCell = new IpnbOutOutputCell(text, prompt_number);
       }
       else {
-        cellOutput = new CellOutput(text);
+        outputCell = new IpnbOutputCell(text, prompt_number);
       }
-      return cellOutput;
+      return outputCell;
     }
   }
 }

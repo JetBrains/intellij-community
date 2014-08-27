@@ -2,16 +2,19 @@ package org.jetbrains.plugins.ipnb.format.cells;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.ipnb.format.cells.output.CellOutput;
+import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
 
 import java.util.List;
 
-public class CodeCell extends SourceCell {
+public class IpnbCodeCell extends IpnbEditableCell {
   @NotNull private final String myLanguage;
   @Nullable private final Integer myPromptNumber;
-  @NotNull private final List<CellOutput> myCellOutputs;
+  @NotNull private final List<IpnbOutputCell> myCellOutputs;
 
-  public CodeCell(@NotNull final String language, @NotNull final String[] input, Integer number, @NotNull final List<CellOutput> cellOutputs) {
+  public IpnbCodeCell(@NotNull final String language,
+                      @NotNull final String[] input,
+                      @Nullable final Integer number,
+                      @NotNull final List<IpnbOutputCell> cellOutputs) {
     super(input);
     myLanguage = language;
     myPromptNumber = number;
@@ -29,7 +32,7 @@ public class CodeCell extends SourceCell {
   }
 
   @NotNull
-  public List<CellOutput> getCellOutputs() {
+  public List<IpnbOutputCell> getCellOutputs() {
     return myCellOutputs;
   }
 
@@ -37,7 +40,7 @@ public class CodeCell extends SourceCell {
     myCellOutputs.clear();
   }
 
-  public void addCellOutput(@NotNull final CellOutput cellOutput) {
+  public void addCellOutput(@NotNull final IpnbOutputCell cellOutput) {
     myCellOutputs.add(cellOutput);
   }
 }

@@ -36,7 +36,7 @@ public class IpnbEditorProvider implements FileEditorProvider, DumbAware {
   @NotNull
   @Override
   public FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
-    return new MyEditorState(-1, ArrayUtil.EMPTY_STRING_ARRAY);
+    return new IpnbEditorState(-1, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
   @Override

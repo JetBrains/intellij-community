@@ -4,14 +4,14 @@ import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbPanel;
-import org.jetbrains.plugins.ipnb.format.cells.output.HtmlCellOutput;
+import org.jetbrains.plugins.ipnb.format.cells.output.IpnbHtmlOutputCell;
 
 import javax.swing.*;
 
-public class HtmlPanel extends IpnbPanel {
-  @NotNull private final HtmlCellOutput myCell;
+public class IpnbHtmlPanel extends IpnbPanel {
+  @NotNull private final IpnbHtmlOutputCell myCell;
 
-  public HtmlPanel(@NotNull final HtmlCellOutput cell) {
+  public IpnbHtmlPanel(@NotNull final IpnbHtmlOutputCell cell) {
     myCell = cell;
     myViewPanel = createViewPanel();
     add(myViewPanel);

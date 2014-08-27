@@ -1,14 +1,16 @@
 package org.jetbrains.plugins.ipnb.format.cells.output;
 
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ipnb.format.cells.IpnbCell;
 
-public class CellOutput {
+public class IpnbOutputCell implements IpnbCell {
+  @Nullable protected final Integer myPromptNumber;
   @Nullable private final String[] myText;
 
-  public CellOutput(@Nullable final String[] text) {
+  public IpnbOutputCell(@Nullable final String[] text, @Nullable final Integer promptNumber) {
     myText = text;
+    myPromptNumber = promptNumber;
   }
 
   @Nullable
@@ -19,5 +21,10 @@ public class CellOutput {
   @Nullable
   public String getSourceAsString() {
     return myText == null ? null : StringUtil.join(myText, "\n");
+  }
+
+  @Nullable
+  public Integer getPromptNumber() {
+    return myPromptNumber;
   }
 }

@@ -5,10 +5,10 @@ import org.jetbrains.plugins.ipnb.editor.panels.IpnbPanel;
 
 import javax.swing.*;
 
-public class CodeOutputPanel extends IpnbPanel {
+public class IpnbCodeOutputPanel extends IpnbPanel {
   @NotNull private final String myOutputText;
 
-  public CodeOutputPanel(@NotNull String outputText) {
+  public IpnbCodeOutputPanel(@NotNull String outputText) {
     myOutputText = outputText;
     myViewPanel = createViewPanel();
     add(myViewPanel);

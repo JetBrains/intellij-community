@@ -9,13 +9,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
-import org.jetbrains.plugins.ipnb.editor.panels.code.CodePanel;
+import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodePanel;
 import org.jetbrains.plugins.ipnb.format.IpnbFile;
-import org.jetbrains.plugins.ipnb.format.cells.CodeCell;
-import org.jetbrains.plugins.ipnb.format.cells.HeadingCell;
+import org.jetbrains.plugins.ipnb.format.cells.IpnbCodeCell;
+import org.jetbrains.plugins.ipnb.format.cells.IpnbHeadingCell;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbCell;
-import org.jetbrains.plugins.ipnb.format.cells.MarkdownCell;
-import org.jetbrains.plugins.ipnb.format.cells.output.CellOutput;
+import org.jetbrains.plugins.ipnb.format.cells.IpnbMarkdownCell;
+import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
 
 import javax.swing.*;
 import java.awt.*;
@@ -85,19 +85,19 @@ public class IpnbFilePanel extends JPanel {
 
   private int addCellToPanel(IpnbCell cell, GridBagConstraints c) {
     IpnbPanel comp;
-    if (cell instanceof CodeCell) {
-      comp = new CodePanel(myProject, myParent, (CodeCell)cell);
+    if (cell instanceof IpnbCodeCell) {
+      comp = new IpnbCodePanel(myProject, myParent, (IpnbCodeCell)cell);
       c.gridwidth = 2;
       c.gridx = 0;
       add(comp, c);
       myIpnbPanels.add(comp);
     }
-    else if (cell instanceof MarkdownCell) {
-      comp = new MarkdownPanel((MarkdownCell)cell);
+    else if (cell instanceof IpnbMarkdownCell) {
+      comp = new IpnbMarkdownPanel((IpnbMarkdownCell)cell);
       addComponent(c, comp);
     }
-    else if (cell instanceof HeadingCell) {
-      comp = new HeadingPanel((HeadingCell)cell);
+    else if (cell instanceof IpnbHeadingCell) {
+      comp = new IpnbHeadingPanel((IpnbHeadingCell)cell);
       addComponent(c, comp);
     }
     else {
@@ -111,12 +111,12 @@ public class IpnbFilePanel extends JPanel {
 
   public void addCell() {
     removeAll();
-    final CodeCell cell = new CodeCell("python", new String[]{""}, null, new ArrayList<CellOutput>());
+    final IpnbCodeCell cell = new IpnbCodeCell("python", new String[]{""}, null, new ArrayList<IpnbOutputCell>());
     final IpnbPanel selectedCell = getSelectedCell();
     final int index = myIpnbPanels.indexOf(selectedCell);
     myIpnbFile.addCell(cell, index+1);
 
-    final CodePanel codePanel = new CodePanel(myProject, myParent, cell);
+    final IpnbCodePanel codePanel = new IpnbCodePanel(myProject, myParent, cell);
     myIpnbPanels.add(index + 1, codePanel);
 
     final GridBagConstraints c = new GridBagConstraints();
@@ -127,7 +127,7 @@ public class IpnbFilePanel extends JPanel {
     c.insets = new Insets(INSET_Y, INSET_X, 0, 0);
 
     for (IpnbPanel comp : myIpnbPanels) {
-      if (comp instanceof CodePanel) {
+      if (comp instanceof IpnbCodePanel) {
         c.gridwidth = 2;
         c.gridx = 0;
         add(comp, c);
@@ -149,20 +149,20 @@ public class IpnbFilePanel extends JPanel {
     final GridBagConstraints c = ((GridBagLayout)getLayout()).getConstraints(from);
     final int index = myIpnbPanels.indexOf(from);
     IpnbPanel comp;
-    if (cell instanceof CodeCell) {
-      comp = new CodePanel(myProject, myParent, (CodeCell)cell);
+    if (cell instanceof IpnbCodeCell) {
+      comp = new IpnbCodePanel(myProject, myParent, (IpnbCodeCell)cell);
       c.gridwidth = 2;
       c.gridx = 0;
       add(comp, c);
     }
-    else if (cell instanceof MarkdownCell) {
-      comp = new MarkdownPanel((MarkdownCell)cell);
+    else if (cell instanceof IpnbMarkdownCell) {
+      comp = new IpnbMarkdownPanel((IpnbMarkdownCell)cell);
       c.gridwidth = 1;
       c.gridx = 1;
       add(comp, c);
     }
-    else if (cell instanceof HeadingCell) {
-      comp = new HeadingPanel((HeadingCell)cell);
+    else if (cell instanceof IpnbHeadingCell) {
+      comp = new IpnbHeadingPanel((IpnbHeadingCell)cell);
       c.gridwidth = 1;
       c.gridx = 1;
       add(comp, c);

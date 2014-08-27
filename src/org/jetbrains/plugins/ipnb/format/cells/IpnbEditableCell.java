@@ -3,10 +3,10 @@ package org.jetbrains.plugins.ipnb.format.cells;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class SourceCell implements IpnbCell {
+public abstract class IpnbEditableCell implements IpnbCell {
   @NotNull private String[] mySource;
 
-  SourceCell(@NotNull final String[] source) {
+  IpnbEditableCell(@NotNull final String[] source) {
     mySource = source;
   }
 

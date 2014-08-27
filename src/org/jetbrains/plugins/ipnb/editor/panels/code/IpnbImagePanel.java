@@ -5,7 +5,7 @@ import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbPanel;
-import org.jetbrains.plugins.ipnb.format.cells.output.ImageCellOutput;
+import org.jetbrains.plugins.ipnb.format.cells.output.IpnbImageOutputCell;
 import sun.misc.BASE64Decoder;
 
 import javax.imageio.ImageIO;
@@ -14,11 +14,11 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
-public class ImagePanel extends IpnbPanel {
-  private static final Logger LOG = Logger.getInstance(ImagePanel.class);
-  @NotNull private final ImageCellOutput myCell;
+public class IpnbImagePanel extends IpnbPanel {
+  private static final Logger LOG = Logger.getInstance(IpnbImagePanel.class);
+  @NotNull private final IpnbImageOutputCell myCell;
 
-  public ImagePanel(@NotNull final ImageCellOutput cell) {
+  public IpnbImagePanel(@NotNull final IpnbImageOutputCell cell) {
     myCell = cell;
     myViewPanel = createViewPanel();
     add(myViewPanel);

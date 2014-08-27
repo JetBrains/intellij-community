@@ -10,8 +10,8 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
-import org.jetbrains.plugins.ipnb.editor.panels.code.CodePanel;
-import org.jetbrains.plugins.ipnb.format.cells.output.CellOutput;
+import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodePanel;
+import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
 import org.jetbrains.plugins.ipnb.protocol.IpnbConnection;
 import org.jetbrains.plugins.ipnb.protocol.IpnbConnectionListenerBase;
 
@@ -26,7 +26,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance(IpnbConnectionManager.class);
   private final Project myProject;
   private Map<IpnbFileEditor, IpnbConnection> myKernels = new HashMap<IpnbFileEditor, IpnbConnection>();
-  private Map<String, CodePanel> myUpdateMap = new HashMap<String, CodePanel>();
+  private Map<String, IpnbCodePanel> myUpdateMap = new HashMap<String, IpnbCodePanel>();
 
   public IpnbConnectionManager(final Project project) {
     myProject = project;
@@ -36,7 +36,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
     return project.getComponent(IpnbConnectionManager.class);
   }
 
-  public void executeCell(@NotNull final CodePanel codePanel) {
+  public void executeCell(@NotNull final IpnbCodePanel codePanel) {
     final IpnbFileEditor fileEditor = codePanel.getFileEditor();
     if (!myKernels.containsKey(fileEditor)) {
       try {
@@ -56,9 +56,9 @@ public final class IpnbConnectionManager implements ProjectComponent {
           }
 
           @Override
-          public void onOutput(@NotNull IpnbConnection connection, @NotNull String parentMessageId, @NotNull List<CellOutput> outputs) {
+          public void onOutput(@NotNull IpnbConnection connection, @NotNull String parentMessageId, @NotNull List<IpnbOutputCell> outputs) {
             if (!myUpdateMap.containsKey(parentMessageId)) return;
-            final CodePanel cell = myUpdateMap.remove(parentMessageId);
+            final IpnbCodePanel cell = myUpdateMap.remove(parentMessageId);
             cell.updatePanel(outputs);
           }
         });

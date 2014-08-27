@@ -1,8 +1,8 @@
 import com.intellij.openapi.util.Ref;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.ipnb.format.cells.output.CellOutput;
-import org.jetbrains.plugins.ipnb.format.cells.output.OutCellOutput;
+import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutOutputCell;
+import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
 import org.jetbrains.plugins.ipnb.protocol.IpnbConnection;
 import org.jetbrains.plugins.ipnb.protocol.IpnbConnectionListenerBase;
 
@@ -49,10 +49,10 @@ public class WebSocketConnectionTest extends TestCase {
       }
 
       @Override
-      public void onOutput(@NotNull IpnbConnection connection, @NotNull String parentMessageId, @NotNull List<CellOutput> outputs) {
+      public void onOutput(@NotNull IpnbConnection connection, @NotNull String parentMessageId, @NotNull List<IpnbOutputCell> outputs) {
         if (myMessageId.equals(parentMessageId)) {
           assertEquals(outputs.size(), 1);
-          assertEquals(outputs.get(0).getClass(), OutCellOutput.class);
+          assertEquals(outputs.get(0).getClass(), IpnbOutOutputCell.class);
           final String[] text = outputs.get(0).getText();
           assertNotNull(text);
           assertEquals("4", text[0]);
@@ -82,10 +82,10 @@ public class WebSocketConnectionTest extends TestCase {
       }
 
       @Override
-      public void onOutput(@NotNull IpnbConnection connection, @NotNull String parentMessageId, @NotNull List<CellOutput> outputs) {
+      public void onOutput(@NotNull IpnbConnection connection, @NotNull String parentMessageId, @NotNull List<IpnbOutputCell> outputs) {
         if (myMessageId.equals(parentMessageId)) {
           assertEquals(outputs.size(), 1);
-          assertEquals(outputs.get(0).getClass(), OutCellOutput.class);
+          assertEquals(outputs.get(0).getClass(), IpnbOutOutputCell.class);
           final String[] text = outputs.get(0).getText();
           assertNotNull(text);
           assertEquals("7", text[0]);

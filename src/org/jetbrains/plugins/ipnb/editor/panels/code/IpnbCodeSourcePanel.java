@@ -23,7 +23,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
-import org.jetbrains.plugins.ipnb.editor.panels.EditorPanel;
+import org.jetbrains.plugins.ipnb.editor.panels.IpnbEditorPanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbPanel;
 
@@ -37,13 +37,13 @@ import java.awt.event.MouseEvent;
 /**
  * @author traff
  */
-public class CodeSourcePanel extends IpnbPanel implements EditorPanel {
+public class IpnbCodeSourcePanel extends IpnbPanel implements IpnbEditorPanel {
   private Editor myEditor;
   @NotNull private final Project myProject;
-  @NotNull private final CodePanel myParent;
+  @NotNull private final IpnbCodePanel myParent;
   @NotNull private final String mySource;
 
-  public CodeSourcePanel(@NotNull final Project project, @NotNull final CodePanel parent, @NotNull final String source) {
+  public IpnbCodeSourcePanel(@NotNull final Project project, @NotNull final IpnbCodePanel parent, @NotNull final String source) {
     myProject = project;
     myParent = parent;
     mySource = source;

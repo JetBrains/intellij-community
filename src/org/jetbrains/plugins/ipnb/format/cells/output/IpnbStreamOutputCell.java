@@ -1,12 +1,13 @@
 package org.jetbrains.plugins.ipnb.format.cells.output;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class StreamCellOutput extends CellOutput {
+public class IpnbStreamOutputCell extends IpnbOutputCell {
   @NotNull private final String myStream;
 
-  public StreamCellOutput(@NotNull final String stream, String[] text) {
-    super(text);
+  public IpnbStreamOutputCell(@NotNull final String stream, String[] text, @Nullable final Integer prompt) {
+    super(text, prompt);
     myStream = stream;
   }
 

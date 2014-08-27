@@ -2,15 +2,15 @@ package org.jetbrains.plugins.ipnb.editor.panels.code;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbPanel;
-import org.jetbrains.plugins.ipnb.format.cells.output.StreamCellOutput;
+import org.jetbrains.plugins.ipnb.format.cells.output.IpnbStreamOutputCell;
 
 import javax.swing.*;
 
-public class StreamPanel extends IpnbPanel {
+public class IpnbStreamPanel extends IpnbPanel {
 
-  @NotNull private final StreamCellOutput myCell;
+  @NotNull private final IpnbStreamOutputCell myCell;
 
-  public StreamPanel(@NotNull final StreamCellOutput cell) {
+  public IpnbStreamPanel(@NotNull final IpnbStreamOutputCell cell) {
     myCell = cell;
     myViewPanel = createViewPanel();
     add(myViewPanel);

@@ -4,11 +4,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
-import org.jetbrains.plugins.ipnb.format.cells.HeadingCell;
+import org.jetbrains.plugins.ipnb.format.cells.IpnbHeadingCell;
 
-public class HeadingPanel extends IpnbEditablePanel<JBLabel, HeadingCell> {
+public class IpnbHeadingPanel extends IpnbEditablePanel<JBLabel, IpnbHeadingCell> {
 
-  public HeadingPanel(@NotNull final HeadingCell cell) {
+  public IpnbHeadingPanel(@NotNull final IpnbHeadingCell cell) {
     super(cell);
     myCell = cell;
     initPanel();

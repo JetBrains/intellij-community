@@ -9,10 +9,9 @@ import org.java_websocket.drafts.Draft_17;
 import org.java_websocket.handshake.ClientHandshakeBuilder;
 import org.java_websocket.handshake.ServerHandshake;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.ipnb.format.cells.output.CellOutput;
-import org.jetbrains.plugins.ipnb.format.cells.output.ErrorCellOutput;
-import org.jetbrains.plugins.ipnb.format.cells.output.OutCellOutput;
-import org.jetbrains.plugins.ipnb.format.cells.output.StreamCellOutput;
+import org.jetbrains.plugins.ipnb.format.cells.output.*;
+import org.jetbrains.plugins.ipnb.format.cells.output.IpnbErrorOutputCell;
+import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutOutputCell;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -76,7 +75,7 @@ public class IpnbConnection {
     myShellThread.start();
 
     myIOPubClient = new WebSocketClient(getIOPubURI(), draft) {
-      private ArrayList<CellOutput> myOutput = new ArrayList<CellOutput>();
+      private ArrayList<IpnbOutputCell> myOutput = new ArrayList<IpnbOutputCell>();
 
       @Override
       public void onOpen(ServerHandshake handshakeData) {
@@ -108,7 +107,7 @@ public class IpnbConnection {
           final PyStatusContent content = gson.fromJson(msg.getContent(), PyStatusContent.class);
           if (content.getExecutionState().equals("idle")) {
             //noinspection unchecked
-            myListener.onOutput(IpnbConnection.this, parentHeader.getMessageId(), (List<CellOutput>)myOutput.clone());
+            myListener.onOutput(IpnbConnection.this, parentHeader.getMessageId(), (List<IpnbOutputCell>)myOutput.clone());
             myOutput.clear();
           }
         }
@@ -308,18 +307,18 @@ public class IpnbConnection {
     }
   }
 
-  private CellOutput createCellOutput(@NotNull final PyContent content) {
+  private IpnbOutputCell createCellOutput(@NotNull final PyContent content) {
     if (content instanceof PyErrContent) {
-      return new ErrorCellOutput(((PyErrContent)content).getEvalue(),
-                                 ((PyErrContent)content).getEname(), ((PyErrContent)content).getTraceback());
+      return new IpnbErrorOutputCell(((PyErrContent)content).getEvalue(),
+                                 ((PyErrContent)content).getEname(), ((PyErrContent)content).getTraceback(), null);
     }
     else if (content instanceof PyStreamContent) {
       final String data = ((PyStreamContent)content).getData();
-      return new StreamCellOutput(data, new String[]{data});
+      return new IpnbStreamOutputCell(data, new String[]{data}, null);
     }
     else if (content instanceof PyOutContent) {
       final Collection<String> values = ((PyOutContent)content).getData().values();
-      return new OutCellOutput(values.toArray(new String[values.size()]), null);
+      return new IpnbOutOutputCell(values.toArray(new String[values.size()]), null);
     }
     return null;
   }

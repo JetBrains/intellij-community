@@ -2,10 +2,10 @@ package org.jetbrains.plugins.ipnb.format.cells;
 
 import org.jetbrains.annotations.NotNull;
 
-public class HeadingCell extends SourceCell {
+public class IpnbHeadingCell extends IpnbEditableCell {
   private int myLevel;
 
-  public HeadingCell(@NotNull final String[] source, int level) {
+  public IpnbHeadingCell(@NotNull final String[] source, int level) {
     super(source);
     myLevel = level;
   }

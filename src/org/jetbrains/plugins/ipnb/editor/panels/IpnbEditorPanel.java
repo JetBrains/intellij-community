@@ -20,6 +20,6 @@ import com.intellij.openapi.editor.Editor;
 /**
  * @author traff
  */
-public interface EditorPanel {
+public interface IpnbEditorPanel {
   Editor getEditor();
 }

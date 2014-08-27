@@ -7,7 +7,7 @@ import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbPanel;
-import org.jetbrains.plugins.ipnb.format.cells.output.LatexCellOutput;
+import org.jetbrains.plugins.ipnb.format.cells.output.IpnbLatexOutputCell;
 import org.scilab.forge.jlatexmath.ParseException;
 import org.scilab.forge.jlatexmath.TeXFormula;
 import org.scilab.forge.jlatexmath.TeXIcon;
@@ -15,11 +15,11 @@ import org.scilab.forge.jlatexmath.TeXIcon;
 import javax.swing.*;
 import java.awt.*;
 
-public class LatexPanel extends IpnbPanel {
-  private static final Logger LOG = Logger.getInstance(LatexPanel.class);
-  private final LatexCellOutput myCell;
+public class IpnbLatexPanel extends IpnbPanel {
+  private static final Logger LOG = Logger.getInstance(IpnbLatexPanel.class);
+  private final IpnbLatexOutputCell myCell;
 
-  public LatexPanel(@NotNull final LatexCellOutput cell) {
+  public IpnbLatexPanel(@NotNull final IpnbLatexOutputCell cell) {
     super();
     myCell = cell;
     setLayout(new VerticalFlowLayout(FlowLayout.LEFT));

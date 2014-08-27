@@ -5,10 +5,10 @@ import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.format.IpnbFile;
 import org.jetbrains.plugins.ipnb.format.IpnbParser;
-import org.jetbrains.plugins.ipnb.format.cells.CodeCell;
+import org.jetbrains.plugins.ipnb.format.cells.IpnbCodeCell;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbCell;
-import org.jetbrains.plugins.ipnb.format.cells.MarkdownCell;
-import org.jetbrains.plugins.ipnb.format.cells.output.CellOutput;
+import org.jetbrains.plugins.ipnb.format.cells.IpnbMarkdownCell;
+import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -33,7 +33,7 @@ public class JsonParserTest extends TestCase {
     Iterables.removeIf(cells, new Predicate<IpnbCell>() {
       @Override
       public boolean apply(IpnbCell cell) {
-        return !(cell instanceof MarkdownCell);
+        return !(cell instanceof IpnbMarkdownCell);
       }
     });
     assertEquals(7, cells.size());
@@ -47,8 +47,8 @@ public class JsonParserTest extends TestCase {
     final List<IpnbCell> cells = ipnbFile.getCells();
     assertEquals(1, cells.size());
     final IpnbCell cell = cells.get(0);
-    assertTrue(cell instanceof MarkdownCell);
-    final String[] source = ((MarkdownCell)cell).getSource();
+    assertTrue(cell instanceof IpnbMarkdownCell);
+    final String[] source = ((IpnbMarkdownCell)cell).getSource();
     final String joined = StringUtil.join(source);
     assertEquals("<img src=\"images/ipython_logo.png\">", joined);
   }
@@ -61,16 +61,16 @@ public class JsonParserTest extends TestCase {
     final List<IpnbCell> cells = ipnbFile.getCells();
     assertEquals(1, cells.size());
     final IpnbCell cell = cells.get(0);
-    assertTrue(cell instanceof CodeCell);
-    final List<CellOutput> outputs = ((CodeCell)cell).getCellOutputs();
+    assertTrue(cell instanceof IpnbCodeCell);
+    final List<IpnbOutputCell> outputs = ((IpnbCodeCell)cell).getCellOutputs();
     assertEquals(0, outputs.size());
-    final String[] source = ((CodeCell)cell).getSource();
+    final String[] source = ((IpnbCodeCell)cell).getSource();
     final String joined = StringUtil.join(source);
     assertEquals("e = x + 2*y", joined);
-    final String language = ((CodeCell)cell).getLanguage();
+    final String language = ((IpnbCodeCell)cell).getLanguage();
     assertEquals("python", language);
-    final int number = ((CodeCell)cell).getPromptNumber();
-    assertEquals(4, number);
+    final Integer number = ((IpnbCodeCell)cell).getPromptNumber();
+    assertEquals(new Integer(4), number);
   }
 
   public void testOutputs() throws IOException {
@@ -81,10 +81,10 @@ public class JsonParserTest extends TestCase {
     final List<IpnbCell> cells = ipnbFile.getCells();
     assertEquals(1, cells.size());
     final IpnbCell cell = cells.get(0);
-    assertTrue(cell instanceof CodeCell);
-    final List<CellOutput> outputs = ((CodeCell)cell).getCellOutputs();
+    assertTrue(cell instanceof IpnbCodeCell);
+    final List<IpnbOutputCell> outputs = ((IpnbCodeCell)cell).getCellOutputs();
     assertEquals(1, outputs.size());
-    final CellOutput output = outputs.get(0);
+    final IpnbOutputCell output = outputs.get(0);
     final String[] text = output.getText();
     final String joined = StringUtil.join(text);
     assertEquals("\"Add(Symbol('x'), Mul(Integer(2), Symbol('y')))\"", joined);

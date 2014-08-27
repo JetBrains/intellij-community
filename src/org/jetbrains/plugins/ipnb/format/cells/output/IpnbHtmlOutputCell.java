@@ -1,12 +1,13 @@
 package org.jetbrains.plugins.ipnb.format.cells.output;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class HtmlCellOutput extends CellOutput {
+public class IpnbHtmlOutputCell extends IpnbOutputCell {
   @NotNull private final String[] myHtml;
 
-  public HtmlCellOutput(@NotNull final String[] html, String[] text) {
-    super(text);
+  public IpnbHtmlOutputCell(@NotNull final String[] html, String[] text, @Nullable final Integer prompt) {
+    super(text, prompt);
     myHtml = html;
   }
 
