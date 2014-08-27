@@ -34,7 +34,6 @@ import java.io.IOException;
  * @author Mikhail Golubev
  */
 public abstract class NewBaseRepositoryImpl extends BaseRepository {
-  private static final Logger LOG = Logger.getInstance(NewBaseRepositoryImpl.class);
   private static final AuthScope BASIC_AUTH_SCOPE =
     new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT, AuthScope.ANY_REALM, AuthSchemes.BASIC);
   // Provides preemptive authentication in HttpClient 4.x
