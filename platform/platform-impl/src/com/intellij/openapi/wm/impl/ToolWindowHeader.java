@@ -529,10 +529,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
       if (component != null && !component.isShowing()) {
         return;
       }
-      action.update(event);
-      if (event.getPresentation().isEnabled()) {
-        action.actionPerformed(event);
-      }
+      action.actionPerformed(event);
     }
 
     public boolean isActive() {
