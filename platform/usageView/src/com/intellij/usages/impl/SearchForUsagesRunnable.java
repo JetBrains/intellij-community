@@ -327,7 +327,7 @@ class SearchForUsagesRunnable implements Runnable {
       @Override
       public void run() {
         notifyByFindBalloon(null, MessageType.WARNING, myProcessPresentation, myProject,
-                            Collections.singletonList(UsageViewManagerImpl.getProgressTitle(myPresentation)));
+                            Collections.singletonList(StringUtil.escapeXml(UsageViewManagerImpl.getProgressTitle(myPresentation))));
         findStartedBalloonShown.set(true);
       }
     }, 300, ModalityState.NON_MODAL);
