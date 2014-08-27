@@ -298,6 +298,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   protected void processKeyEvent(KeyEvent e) {
     if (e.isAltDown()) return;
+    if (e.isShiftDown() && isNavigationKey(e.getKeyCode())) return;
     if (mySearchPopup != null) {
       mySearchPopup.processKeyEvent(e);
       return;
@@ -498,6 +499,15 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   private static boolean isUpDownHomeEnd(int keyCode) {
     return keyCode == KeyEvent.VK_HOME || keyCode == KeyEvent.VK_END || keyCode == KeyEvent.VK_UP || keyCode == KeyEvent.VK_DOWN;
   }
+
+  private static boolean isPgUpPgDown(int keyCode) {
+    return keyCode == KeyEvent.VK_PAGE_UP || keyCode == KeyEvent.VK_PAGE_DOWN;
+  }
+
+  private static boolean isNavigationKey(int keyCode) {
+    return isPgUpPgDown(keyCode) || isUpDownHomeEnd(keyCode);
+  }
+  
 
   private void manageSearchPopup(@Nullable SearchPopup searchPopup) {
     Project project = null;
