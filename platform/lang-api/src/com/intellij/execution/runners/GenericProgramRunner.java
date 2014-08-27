@@ -40,15 +40,25 @@ public abstract class GenericProgramRunner<Settings extends RunnerSettings> exte
     ExecutionManager.getInstance(environment.getProject()).startRunProfile(new RunProfileStarter() {
       @Override
       public RunContentDescriptor execute(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment) throws ExecutionException {
-        return postProcess(environment, doExecute(environment.getProject(), state, environment.getContentToReuse(), environment), callback);
+        return postProcess(environment, doExecute(state, environment), callback);
       }
     }, state, environment);
   }
 
   @Nullable
-  protected abstract RunContentDescriptor doExecute(@NotNull Project project,
-                                                    @NotNull RunProfileState state,
-                                                    @Nullable RunContentDescriptor contentToReuse,
-                                                    @NotNull ExecutionEnvironment environment) throws ExecutionException;
+  protected RunContentDescriptor doExecute(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment) throws ExecutionException {
+    return doExecute(environment.getProject(), state, environment.getContentToReuse(), environment);
+  }
 
+  @Deprecated
+  @Nullable
+  /**
+   * @deprecated to remove in IDEA 16
+   */
+  protected RunContentDescriptor doExecute(@NotNull Project project,
+                                           @NotNull RunProfileState state,
+                                           @Nullable RunContentDescriptor contentToReuse,
+                                           @NotNull ExecutionEnvironment environment) throws ExecutionException {
+    throw new AbstractMethodError();
+  }
 }

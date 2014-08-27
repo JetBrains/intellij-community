@@ -21,25 +21,19 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author spleaner
  */
 public abstract class DefaultProgramRunner extends GenericProgramRunner {
-
   @Override
-  protected RunContentDescriptor doExecute(@NotNull final Project project,
-                                           @NotNull final RunProfileState state,
-                                           final RunContentDescriptor contentToReuse,
-                                           @NotNull final ExecutionEnvironment env) throws ExecutionException {
+  protected RunContentDescriptor doExecute(@NotNull RunProfileState state, @NotNull ExecutionEnvironment env) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
     ExecutionResult executionResult = state.execute(env.getExecutor(), this);
     if (executionResult == null) {
       return null;
     }
-    return new RunContentBuilder(executionResult, env).showRunContent(contentToReuse);
+    return new RunContentBuilder(executionResult, env).showRunContent(env.getContentToReuse());
   }
-
 }
