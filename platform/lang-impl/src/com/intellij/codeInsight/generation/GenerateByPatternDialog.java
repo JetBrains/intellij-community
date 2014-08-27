@@ -71,8 +71,9 @@ public class GenerateByPatternDialog extends DialogWrapper {
     };
     myTree.setRootVisible(false);
     myTree.setCellRenderer(new DefaultTreeCellRenderer() {
+      @NotNull
       @Override
-      public Component getTreeCellRendererComponent(JTree tree,
+      public Component getTreeCellRendererComponent(@NotNull JTree tree,
                                                     Object value,
                                                     boolean sel,
                                                     boolean expanded,
@@ -94,7 +95,7 @@ public class GenerateByPatternDialog extends DialogWrapper {
     myTree.setModel(new DefaultTreeModel(root));
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
-      public void valueChanged(TreeSelectionEvent e) {
+      public void valueChanged(@NotNull TreeSelectionEvent e) {
         update();
       }
     });
