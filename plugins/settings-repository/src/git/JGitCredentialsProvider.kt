@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.settingsRepository.git
 
 import com.intellij.openapi.util.NotNullLazyValue
-import com.intellij.openapi.util.text.StringUtil
 import org.eclipse.jgit.transport.CredentialItem
 import org.eclipse.jgit.transport.CredentialsProvider
 import org.eclipse.jgit.transport.URIish
@@ -9,8 +8,11 @@ import org.jetbrains.plugins.settingsRepository.CredentialsStore
 import org.jetbrains.plugins.settingsRepository.showAuthenticationForm
 import org.jetbrains.plugins.settingsRepository.Credentials
 import org.jetbrains.plugins.settingsRepository.nullize
+import org.jetbrains.plugins.settingsRepository.isFulfilled
 
 class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<CredentialsStore>) : CredentialsProvider() {
+  private var credentialsFromGit: Credentials? = null
+
   override fun isInteractive() = true
 
   override fun supports(vararg items: CredentialItem?): Boolean {
@@ -48,29 +50,38 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
 
     val userFromUri: String? = uri.getUser().nullize()
     val passwordFromUri: String? = uri.getPass().nullize()
+    var saveCredentialsToStore = false
     if (userFromUri != null && passwordFromUri != null) {
       credentials = Credentials(userFromUri, passwordFromUri)
     }
     else {
-      credentials = credentialsStore.getValue().get(uri)
+      if (credentialsFromGit == null) {
+        credentialsFromGit = getCredentialsUsingGit(uri)
+      }
+      credentials = credentialsFromGit
 
-      if (userFromUri != null) {
-        // username is in url - read password only if it is for the same user
-        if (userFromUri != credentials?.username) {
-          credentials = Credentials(userFromUri, passwordFromUri)
+      if (credentials == null) {
+        credentials = credentialsStore.getValue().get(uri)
+        saveCredentialsToStore = true
+
+        if (userFromUri != null) {
+          // username is in url - read password only if it is for the same user
+          if (userFromUri != credentials?.username) {
+            credentials = Credentials(userFromUri, passwordFromUri)
+          }
+          else if (passwordFromUri != null && passwordFromUri != credentials?.password) {
+            credentials = Credentials(userFromUri, passwordFromUri)
+          }
         }
-        else if (passwordFromUri != null && passwordFromUri != credentials?.password) {
-          credentials = Credentials(userFromUri, passwordFromUri)
-        }
       }
+    }
 
-      if (credentials?.username == null || credentials?.password == null) {
-        credentials = showAuthenticationForm(credentials, uri.toString(), uri.getHost())
-      }
+    if (!credentials.isFulfilled()) {
+      credentials = showAuthenticationForm(credentials, uri.toString(), uri.getHost())
+    }
 
-      if (credentials != null) {
-        credentialsStore.getValue().save(uri, credentials!!)
-      }
+    if (saveCredentialsToStore && credentials.isFulfilled()) {
+      credentialsStore.getValue().save(uri, credentials!!)
     }
 
     userNameItem?.setValue(credentials?.username)
@@ -87,6 +98,7 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
   }
 
   override fun reset(uri: URIish) {
+    credentialsFromGit = null
     credentialsStore.getValue().reset(uri)
   }
 }

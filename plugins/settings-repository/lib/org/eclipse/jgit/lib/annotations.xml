@@ -1,0 +1,8 @@
+<root>
+  <item name='org.eclipse.jgit.lib.BaseRepositoryBuilder B setGitDir(java.io.File)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.lib.Repository org.eclipse.jgit.lib.StoredConfig getConfig()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+</root>

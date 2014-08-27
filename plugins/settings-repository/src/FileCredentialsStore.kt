@@ -7,16 +7,21 @@ import org.eclipse.jgit.transport.URIish
 
 import java.io.*
 
-class FileCredentialsStore : CredentialsStore {
+class FileCredentialsStore(private val storeFile: File) : CredentialsStore {
   // we store only one for any URL, don't want to add complexity, OS keychain should be used
   private var credentials: Credentials? = null
 
-  {
-    val loginDataFile = getPasswordStorageFile()
-    if (loginDataFile.exists()) {
+  private var dataLoaded = !storeFile.exists()
+
+  fun ensureLoaded() {
+    if (dataLoaded) {
+      return
+    }
+
+    if (storeFile.exists()) {
       try {
         var hasErrors = true
-        val `in` = DataInputStream(BufferedInputStream(FileInputStream(loginDataFile)))
+        val `in` = DataInputStream(FileInputStream(storeFile).buffered())
         try {
           credentials = Credentials(PasswordUtil.decodePassword(IOUtil.readString(`in`)), PasswordUtil.decodePassword(IOUtil.readString(`in`)))
           hasErrors = false
@@ -24,7 +29,7 @@ class FileCredentialsStore : CredentialsStore {
         finally {
           if (hasErrors) {
             //noinspection ResultOfMethodCallIgnored
-            loginDataFile.delete()
+            storeFile.delete()
           }
           `in`.close()
         }
@@ -35,9 +40,10 @@ class FileCredentialsStore : CredentialsStore {
     }
   }
 
-  private fun getPasswordStorageFile() = File(IcsManager.getPluginSystemDir(), ".git_auth")
-
-  override fun get(uri: URIish): Credentials? = credentials
+  override fun get(uri: URIish): Credentials? {
+    ensureLoaded()
+    return credentials
+  }
 
   override fun reset(uri: URIish) {
     if (credentials != null) {
@@ -53,9 +59,8 @@ class FileCredentialsStore : CredentialsStore {
     this.credentials = credentials
 
     try {
-      val loginDataFile = getPasswordStorageFile()
-      FileUtil.createParentDirs(loginDataFile)
-      val out = DataOutputStream(BufferedOutputStream(FileOutputStream(loginDataFile)))
+      FileUtil.createParentDirs(storeFile)
+      val out = DataOutputStream(FileOutputStream(storeFile).buffered())
       try {
         IOUtil.writeString(PasswordUtil.encodePassword(credentials.username), out)
         IOUtil.writeString(PasswordUtil.encodePassword(credentials.password), out)

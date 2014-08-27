@@ -29,6 +29,8 @@ public data class Credentials(username: String?, password: String?) {
   public val password: String? = password.nullize()
 }
 
+public fun Credentials?.isFulfilled(): Boolean = this != null && username != null && password != null
+
 public trait CredentialsStore {
   public fun get(uri: URIish): Credentials?
 

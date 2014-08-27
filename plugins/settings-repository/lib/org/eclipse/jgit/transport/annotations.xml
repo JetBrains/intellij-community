@@ -14,4 +14,7 @@
   <item name='org.eclipse.jgit.transport.CredentialsProvider void reset(org.eclipse.jgit.transport.URIish) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='org.eclipse.jgit.transport.URIish java.lang.String toPrivateString()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
 </root>

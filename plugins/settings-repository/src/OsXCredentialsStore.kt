@@ -52,7 +52,22 @@ class OsXCredentialsStore : CredentialsStore {
       return
     }
 
-    OSXKeychain.getInstance().addGenericPassword(SERVICE_NAME, host, "${PasswordUtil.encodePassword(credentials.username)}@${PasswordUtil.encodePassword(credentials.password)}")
+    val data = "${PasswordUtil.encodePassword(credentials.username)}@${PasswordUtil.encodePassword(credentials.password)}"
+
+    val keychain = OSXKeychain.getInstance()
+    if (oldCredentials == null) {
+      try {
+        keychain.addGenericPassword(SERVICE_NAME, host, data)
+        return
+      }
+      catch(e: OSXKeychainException) {
+        if (e.getMessage()?.contains("The specified item already exists in the keychain.") !== true) {
+          throw e
+        }
+      }
+    }
+
+    keychain.modifyGenericPassword(SERVICE_NAME, host, data)
   }
 
   override fun reset(uri: URIish) {

@@ -63,7 +63,7 @@ public final class IcsManager implements ApplicationLoadListener, Disposable {
           LOG.error(e);
         }
       }
-      return new FileCredentialsStore();
+      return new FileCredentialsStore(new File(getPluginSystemDir(), ".git_auth"));
     }
   };
 
