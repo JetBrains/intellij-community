@@ -28,4 +28,6 @@ public class NativeMethodNamingConvention implements Runnable
     public native void run();
 
     private void a() {}
+
+    public static native void <warning descr="'native' method name 'b' is too short">b</warning>();
 }
