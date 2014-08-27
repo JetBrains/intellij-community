@@ -23,8 +23,6 @@ import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.util.Consumer;
-import com.intellij.util.NullableConsumer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,21 +47,14 @@ public abstract class AsyncGenericProgramRunner<Settings extends RunnerSettings>
           }
         });
       }
-    }).doWhenRejected(new NullableConsumer<String>() {
-      @Override
-      public void consume(@Nullable String errorMessage) {
-        if (environment.getProject().isDisposed()) {
-          return;
-        }
-
-        ExecutionUtil.handleExecutionError(environment, new ExecutionException(ObjectUtils.chooseNotNull(errorMessage, "Internal error")));
-      }
     });
   }
 
   /**
    * Makes all the needed preparations for the further execution. Although this method is called in EDT,
    * these preparations can be performed in a background thread.
+   *
+   * You must call {@link ExecutionUtil#handleExecutionError} in case of error
    *
    * @param environment ExecutionEnvironment instance
    * @param state RunProfileState instance
