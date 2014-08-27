@@ -176,6 +176,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     }
     log("on state changed ");
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         for (SVNURL key : outdatedRequests) {
           removeLazyNotificationByKey(key);
@@ -487,6 +488,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     final File authDir = new File(configuration.getConfigurationDirectory(), "auth");
     if (authDir.exists()) {
       final Runnable process = new Runnable() {
+        @Override
         public void run() {
           final ProgressIndicator ind = ProgressManager.getInstance().getProgressIndicator();
           if (ind != null) {
@@ -494,7 +496,8 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
             ind.setText("Clearing stored credentials in " + authDir.getAbsolutePath());
           }
           final File[] files = authDir.listFiles(new FilenameFilter() {
-            public boolean accept(File dir, String name) {
+            @Override
+            public boolean accept(@NotNull File dir, @NotNull String name) {
               return ourAuthKinds.contains(name);
             }
           });
