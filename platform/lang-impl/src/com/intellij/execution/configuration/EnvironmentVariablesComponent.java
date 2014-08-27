@@ -26,13 +26,13 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.EnvironmentUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.ChangeListener;
 import java.io.File;
-import java.util.HashMap;
 import java.util.Map;
 
 public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWithBrowseButton> implements UserActivityProviderComponent {
@@ -113,19 +113,19 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
     element.addContent(envsElement);
   }
 
+  /**
+   * To be removed in IDEA 15
+   * @deprecated use {@link com.intellij.util.EnvironmentUtil#inlineParentOccurrences(java.util.Map)} instead
+   */
+  @Deprecated
   public static void inlineParentOccurrences(final Map<String, String> envs) {
-    final Map<String, String> parentParams = new HashMap<String, String>(System.getenv());
-    for (String envKey : envs.keySet()) {
-      final String val = envs.get(envKey);
-      if (val != null) {
-        final String parentVal = parentParams.get(envKey);
-        if (parentVal != null && containsEnvKeySubstitution(envKey, val)) {
-          envs.put(envKey, val.replace("$" + envKey + "$", parentVal));
-        }
-      }
-    }
+    EnvironmentUtil.inlineParentOccurrences(envs);
   }
 
+  /**
+   * To be removed in IDEA 15
+   */
+  @Deprecated
   public static boolean containsEnvKeySubstitution(final String envKey, final String val) {
     return ArrayUtil.find(val.split(File.pathSeparator), "$" + envKey + "$") != -1;
   }
