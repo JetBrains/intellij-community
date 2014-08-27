@@ -191,10 +191,21 @@ public class SearchingForTestsTask extends Task.Backgroundable {
 
   private void composeTestSuiteFromClasses() {
     Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
+
+    final boolean findTestMethodsForClass = shouldSearchForTestMethods();
+
     for (final Map.Entry<PsiClass, Collection<PsiMethod>> entry : myClasses.entrySet()) {
-      Collection<String> methods = new HashSet<String>(entry.getValue().size());
-      for (PsiMethod method : entry.getValue()) {
+      final Collection<PsiMethod> depMethods = entry.getValue();
+      Collection<String> methods = new HashSet<String>(depMethods.size());
+      for (PsiMethod method : depMethods) {
         methods.add(method.getName());
+      }
+      if (findTestMethodsForClass && depMethods.isEmpty()) {
+        for (PsiMethod method : entry.getKey().getMethods()) {
+          if (TestNGUtil.hasTest(method)) {
+            methods.add(method.getName());
+          }
+        }
       }
       map.put(ApplicationManager.getApplication().runReadAction(
         new Computable<String>() {
@@ -241,6 +252,17 @@ public class SearchingForTestsTask extends Task.Backgroundable {
     catch (IOException e) {
       LOG.error(e);
     }
+  }
+
+  private boolean shouldSearchForTestMethods() {
+    boolean dependantMethods = false;
+    for (Collection<PsiMethod> methods : myClasses.values()) {
+      if (!methods.isEmpty()) {
+        dependantMethods = true;
+        break;
+      }
+    }
+    return dependantMethods;
   }
 
   private void composeTestSuiteFromXml() throws CantRunException {
