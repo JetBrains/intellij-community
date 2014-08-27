@@ -205,13 +205,13 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
 
     myNameField.addFocusListener(new FocusAdapter() {
       @Override
-      public void focusLost(FocusEvent e) {
+      public void focusLost(@NotNull FocusEvent e) {
         onNameChanged();
       }
     });
     myExtensionField.addFocusListener(new FocusAdapter() {
       @Override
-      public void focusLost(FocusEvent e) {
+      public void focusLost(@NotNull FocusEvent e) {
         onNameChanged();
       }
     });
