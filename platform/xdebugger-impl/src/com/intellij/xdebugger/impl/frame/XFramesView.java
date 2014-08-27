@@ -391,7 +391,7 @@ public class XFramesView extends XDebugView {
     }
 
     private void selectTopFrame() {
-      if (!myStackFrames.isEmpty()) {
+      if (!myStackFrames.isEmpty() && mySelectedStack != null) {
         XStackFrame topFrame = myStackFrames.get(0);
         myFramesList.setSelectedValue(topFrame, true);
         mySession.setCurrentStackFrame(mySelectedStack, topFrame, true);
