@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.ipnb.format;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbCell;
 
 import java.util.List;
@@ -17,6 +18,10 @@ public class IpnbFile {
 
   public List<IpnbCell> getCells() {
     return myCells;
+  }
+
+  public void addCell(@NotNull final IpnbCell cell, int index) {
+    myCells.add(index, cell);
   }
 
   public String getPath() {

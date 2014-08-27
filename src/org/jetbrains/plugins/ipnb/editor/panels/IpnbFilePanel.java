@@ -15,12 +15,14 @@ import org.jetbrains.plugins.ipnb.format.cells.CodeCell;
 import org.jetbrains.plugins.ipnb.format.cells.HeadingCell;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbCell;
 import org.jetbrains.plugins.ipnb.format.cells.MarkdownCell;
+import org.jetbrains.plugins.ipnb.format.cells.output.CellOutput;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.List;
 
 public class IpnbFilePanel extends JPanel {
@@ -46,7 +48,7 @@ public class IpnbFilePanel extends JPanel {
     setBackground(IpnbEditorUtil.getBackground());
     myIpnbFile = file;
 
-    layoutFile(file);
+    layoutFile();
 
     addMouseListener(new MouseAdapter() {
       @Override
@@ -59,7 +61,7 @@ public class IpnbFilePanel extends JPanel {
     UIUtil.requestFocus(this);
   }
 
-  private void layoutFile(@NotNull final IpnbFile file) {
+  private void layoutFile() {
     GridBagConstraints c = new GridBagConstraints();
     c.fill = GridBagConstraints.HORIZONTAL;
     c.gridx = 0;
@@ -73,7 +75,7 @@ public class IpnbFilePanel extends JPanel {
     panel.setOpaque(false);
     add(panel);
 
-    for (IpnbCell cell : file.getCells()) {
+    for (IpnbCell cell : myIpnbFile.getCells()) {
       c.gridy = addCellToPanel(cell, c);
     }
 
@@ -105,6 +107,42 @@ public class IpnbFilePanel extends JPanel {
       setSelectedCell(comp);
     }
     return c.gridy + 1;
+  }
+
+  public void addCell() {
+    removeAll();
+    final CodeCell cell = new CodeCell("python", new String[]{""}, null, new ArrayList<CellOutput>());
+    final IpnbPanel selectedCell = getSelectedCell();
+    final int index = myIpnbPanels.indexOf(selectedCell);
+    myIpnbFile.addCell(cell, index+1);
+
+    final CodePanel codePanel = new CodePanel(myProject, myParent, cell);
+    myIpnbPanels.add(index + 1, codePanel);
+
+    final GridBagConstraints c = new GridBagConstraints();
+    c.fill = GridBagConstraints.HORIZONTAL;
+    c.gridx = 0;
+    c.gridy = 0;
+    c.gridwidth = 1;
+    c.insets = new Insets(INSET_Y, INSET_X, 0, 0);
+
+    for (IpnbPanel comp : myIpnbPanels) {
+      if (comp instanceof CodePanel) {
+        c.gridwidth = 2;
+        c.gridx = 0;
+        add(comp, c);
+      }
+      else {
+        c.gridwidth = 1;
+        c.gridx = 1;
+        add(comp, c);
+      }
+      c.gridy += 1;
+    }
+    c.weighty = 1;
+    add(createEmptyPanel(), c);
+
+    setSelectedCell(codePanel);
   }
 
   public void replaceComponent(@NotNull final IpnbPanel from, @NotNull final IpnbCell cell) {

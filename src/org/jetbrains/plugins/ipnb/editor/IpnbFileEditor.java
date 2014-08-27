@@ -22,6 +22,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ipnb.editor.actions.IpnbAddCellAction;
 import org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellAction;
 import org.jetbrains.plugins.ipnb.editor.actions.IpnbSaveAction;
 import org.jetbrains.plugins.ipnb.editor.panels.HeadingPanel;
@@ -90,31 +91,10 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
   private JPanel createControlPanel() {
     final JPanel controlPanel = new JPanel();
     controlPanel.setBackground(IpnbEditorUtil.getBackground());
-    final JButton saveButton = new JButton();
-    saveButton.setBackground(IpnbEditorUtil.getBackground());
-    saveButton.setPreferredSize(new Dimension(30, 30));
-    saveButton.setIcon(AllIcons.Actions.Menu_saveall);
-    saveButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        final IpnbSaveAction action = (IpnbSaveAction)ActionManager.getInstance().getAction("IpnbSaveAction");
-        action.saveAndCheckpoint(myIpnbFilePanel.getIpnbFile());
-      }
-    });
-    controlPanel.add(saveButton);
+    addSaveButton(controlPanel);
+    addAddButton(controlPanel);
 
-    myRunCellButton = new JButton();
-    myRunCellButton.setBackground(IpnbEditorUtil.getBackground());
-    myRunCellButton.setPreferredSize(new Dimension(30, 30));
-    myRunCellButton.setIcon(AllIcons.General.Run);
-    myRunCellButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        final IpnbRunCellAction action = (IpnbRunCellAction)ActionManager.getInstance().getAction("IpnbRunCellAction");
-        action.runCell(myIpnbFilePanel);
-      }
-    });
-    controlPanel.add(myRunCellButton);
+    addRunButton(controlPanel);
 
     myCellTypeCombo = new ComboBox(ourCellTypes);
 
@@ -134,6 +114,51 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
     final MatteBorder border = BorderFactory.createMatteBorder(0, 0, 1, 0, JBColor.GRAY);
     controlPanel.setBorder(border);
     return controlPanel;
+  }
+
+  private void addRunButton(@NotNull final JPanel controlPanel) {
+    myRunCellButton = new JButton();
+    myRunCellButton.setBackground(IpnbEditorUtil.getBackground());
+    myRunCellButton.setPreferredSize(new Dimension(30, 30));
+    myRunCellButton.setIcon(AllIcons.General.Run);
+    myRunCellButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final IpnbRunCellAction action = (IpnbRunCellAction)ActionManager.getInstance().getAction("IpnbRunCellAction");
+        action.runCell(myIpnbFilePanel);
+      }
+    });
+    controlPanel.add(myRunCellButton);
+  }
+
+  private void addSaveButton(@NotNull final JPanel controlPanel) {
+    final JButton saveButton = new JButton();
+    saveButton.setBackground(IpnbEditorUtil.getBackground());
+    saveButton.setPreferredSize(new Dimension(30, 30));
+    saveButton.setIcon(AllIcons.Actions.Menu_saveall);
+    saveButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final IpnbSaveAction action = (IpnbSaveAction)ActionManager.getInstance().getAction("IpnbSaveAction");
+        action.saveAndCheckpoint(myIpnbFilePanel.getIpnbFile());
+      }
+    });
+    controlPanel.add(saveButton);
+  }
+
+  private void addAddButton(@NotNull final JPanel controlPanel) {
+    final JButton saveButton = new JButton();
+    saveButton.setBackground(IpnbEditorUtil.getBackground());
+    saveButton.setPreferredSize(new Dimension(30, 30));
+    saveButton.setIcon(AllIcons.General.Add);
+    saveButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final IpnbAddCellAction action = (IpnbAddCellAction)ActionManager.getInstance().getAction("IpnbAddCellAction");
+        action.addCell(myIpnbFilePanel);
+      }
+    });
+    controlPanel.add(saveButton);
   }
 
   public JButton getRunCellButton() {
