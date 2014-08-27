@@ -15,6 +15,9 @@
  */
 package com.intellij.util.net;
 
+import com.google.common.net.HostAndPort;
+import com.google.common.net.InetAddresses;
+import com.google.common.net.InternetDomainName;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.ui.Messages;
@@ -23,12 +26,14 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.ui.PortField;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.proxy.JavaProxyProperty;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -44,7 +49,7 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
   private JTextField myProxyLoginTextField;
   private JPasswordField myProxyPasswordTextField;
   private JCheckBox myProxyAuthCheckBox;
-  private JTextField myProxyPortTextField;
+  private PortField myProxyPortTextField;
   private JTextField myProxyHostTextField;
   private JCheckBox myRememberProxyPasswordCheckBox;
 
@@ -71,28 +76,22 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
 
   @Override
   public boolean isModified(@NotNull HttpConfigurable settings) {
-    if (!Comparing.equal(myProxyExceptions.getText().trim(), settings.PROXY_EXCEPTIONS)) {
-      return true;
+    if (!isValid()) {
+      return false;
     }
-    boolean isModified = settings.USE_PROXY_PAC != myAutoDetectProxyRb.isSelected();
-    isModified |= settings.USE_PAC_URL != myPacUrlCheckBox.isSelected();
-    isModified |= !Comparing.strEqual(settings.PAC_URL, myPacUrlTextField.getText());
-    isModified |= settings.USE_HTTP_PROXY != myUseHTTPProxyRb.isSelected();
-    isModified |= settings.PROXY_AUTHENTICATION != myProxyAuthCheckBox.isSelected();
-    isModified |= settings.KEEP_PROXY_PASSWORD != myRememberProxyPasswordCheckBox.isSelected();
-    isModified |= settings.PROXY_TYPE_IS_SOCKS != mySocks.isSelected();
 
-    isModified |= !Comparing.strEqual(settings.PROXY_LOGIN, myProxyLoginTextField.getText());
-    isModified |= !Comparing.strEqual(settings.getPlainProxyPassword(), new String(myProxyPasswordTextField.getPassword()));
-
-    try {
-      isModified |= settings.PROXY_PORT != Integer.valueOf(myProxyPortTextField.getText()).intValue();
-    }
-    catch (NumberFormatException e) {
-      isModified = true;
-    }
-    isModified |= !Comparing.strEqual(settings.PROXY_HOST, myProxyHostTextField.getText());
-    return isModified;
+    return !Comparing.strEqual(myProxyExceptions.getText().trim(), settings.PROXY_EXCEPTIONS) ||
+           settings.USE_PROXY_PAC != myAutoDetectProxyRb.isSelected() ||
+           settings.USE_PAC_URL != myPacUrlCheckBox.isSelected() ||
+           !Comparing.strEqual(settings.PAC_URL, myPacUrlTextField.getText()) ||
+           settings.USE_HTTP_PROXY != myUseHTTPProxyRb.isSelected() ||
+           settings.PROXY_AUTHENTICATION != myProxyAuthCheckBox.isSelected() ||
+           settings.KEEP_PROXY_PASSWORD != myRememberProxyPasswordCheckBox.isSelected() ||
+           settings.PROXY_TYPE_IS_SOCKS != mySocks.isSelected() ||
+           !Comparing.strEqual(settings.PROXY_LOGIN, myProxyLoginTextField.getText()) ||
+           !Comparing.strEqual(settings.getPlainProxyPassword(), new String(myProxyPasswordTextField.getPassword())) ||
+           settings.PROXY_PORT != myProxyPortTextField.getNumber() ||
+           !Comparing.strEqual(settings.PROXY_HOST, myProxyHostTextField.getText());
   }
 
   public HttpProxySettingsUi(@NotNull final HttpConfigurable settings) {
@@ -255,17 +254,17 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
     myProxyLoginTextField.setText(settings.PROXY_LOGIN);
     myProxyPasswordTextField.setText(settings.getPlainProxyPassword());
 
-    myProxyPortTextField.setText(Integer.toString(settings.PROXY_PORT));
+    myProxyPortTextField.setNumber(settings.PROXY_PORT);
     myProxyHostTextField.setText(settings.PROXY_HOST);
-    myProxyExceptions.setText(settings.PROXY_EXCEPTIONS);
+    myProxyExceptions.setText(StringUtil.notNullize(settings.PROXY_EXCEPTIONS));
 
     myRememberProxyPasswordCheckBox.setSelected(settings.KEEP_PROXY_PASSWORD);
     mySocks.setSelected(settings.PROXY_TYPE_IS_SOCKS);
     myHTTP.setSelected(!settings.PROXY_TYPE_IS_SOCKS);
 
-    final boolean showError = !StringUtil.isEmptyOrSpaces(settings.LAST_ERROR);
+    boolean showError = !StringUtil.isEmptyOrSpaces(settings.LAST_ERROR);
     myErrorLabel.setVisible(showError);
-    myErrorLabel.setText(showError ? errorText(settings.LAST_ERROR) : "");
+    myErrorLabel.setText(showError ? errorText(settings.LAST_ERROR) : null);
 
     final String oldStyleText = CommonProxy.getMessageFromProps(CommonProxy.getOldStyleProperties());
     myOtherWarning.setVisible(oldStyleText != null);
@@ -276,40 +275,75 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
     }
   }
 
-  private static String errorText(String s) {
+  @NotNull
+  private static String errorText(@NotNull String s) {
     return "Problem with connection: " + s;
+  }
+
+  private boolean isValid() {
+    if (myUseHTTPProxyRb.isSelected()) {
+      String host = getText(myProxyHostTextField);
+      if (host == null) {
+        return false;
+      }
+
+      try {
+        HostAndPort parsedHost = HostAndPort.fromString(host);
+        if (parsedHost.hasPort()) {
+          return false;
+        }
+        host = parsedHost.getHostText();
+
+        try {
+          InetAddresses.forString(host);
+          return true;
+        }
+        catch (IllegalArgumentException e) {
+          // it is not an IPv4 or IPv6 literal
+        }
+
+        InternetDomainName.from(host);
+      }
+      catch (IllegalArgumentException e) {
+        return false;
+      }
+
+      if (myProxyAuthCheckBox.isSelected()) {
+        return !StringUtil.isEmptyOrSpaces(myProxyLoginTextField.getText()) && myProxyPasswordTextField.getPassword().length > 0;
+      }
+    }
+    return true;
   }
 
   @Override
   public void apply(@NotNull HttpConfigurable settings) {
+    if (!isValid()) {
+      return;
+    }
+
     if (isModified(settings)) {
       settings.AUTHENTICATION_CANCELLED = false;
     }
+
     settings.USE_PROXY_PAC = myAutoDetectProxyRb.isSelected();
     settings.USE_PAC_URL = myPacUrlCheckBox.isSelected();
-    settings.PAC_URL = trimFieldText(myPacUrlTextField);
+    settings.PAC_URL = getText(myPacUrlTextField);
     settings.USE_HTTP_PROXY = myUseHTTPProxyRb.isSelected();
     settings.PROXY_TYPE_IS_SOCKS = mySocks.isSelected();
     settings.PROXY_AUTHENTICATION = myProxyAuthCheckBox.isSelected();
     settings.KEEP_PROXY_PASSWORD = myRememberProxyPasswordCheckBox.isSelected();
 
-    settings.PROXY_LOGIN = trimFieldText(myProxyLoginTextField);
+    settings.PROXY_LOGIN = getText(myProxyLoginTextField);
     settings.setPlainProxyPassword(new String(myProxyPasswordTextField.getPassword()));
-    settings.PROXY_EXCEPTIONS = myProxyExceptions.getText();
+    settings.PROXY_EXCEPTIONS = StringUtil.nullize(myProxyExceptions.getText(), true);
 
-    try {
-      settings.PROXY_PORT = Integer.valueOf(trimFieldText(myProxyPortTextField)).intValue();
-    }
-    catch (NumberFormatException e) {
-      settings.PROXY_PORT = 80;
-    }
-    settings.PROXY_HOST = trimFieldText(myProxyHostTextField);
+    settings.PROXY_PORT = myProxyPortTextField.getNumber();
+    settings.PROXY_HOST = getText(myProxyHostTextField);
   }
 
-  private static String trimFieldText(JTextField field) {
-    String trimmed = field.getText().trim();
-    field.setText(trimmed);
-    return trimmed;
+  @Nullable
+  private static String getText(@NotNull JTextField field) {
+    return StringUtil.nullize(field.getText(), true);
   }
 
   private void enableProxy(boolean enabled) {

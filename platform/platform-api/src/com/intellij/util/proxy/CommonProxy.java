@@ -325,7 +325,8 @@ public class CommonProxy extends ProxySelector {
     if (host == null) {
       if (site != null) {
         host = site.getHostName();
-      } else if (requestingUrl != null) {
+      }
+      else if (requestingUrl != null) {
         host = requestingUrl.getHost();
       }
     }
