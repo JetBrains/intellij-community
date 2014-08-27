@@ -113,25 +113,27 @@ public class TestNGUtil {
   private static final String SUITE_TAG_NAME = "suite";
 
   public static boolean hasConfig(PsiModifierListOwner element) {
-    PsiMethod[] methods;
     if (element instanceof PsiClass) {
-      methods = ((PsiClass) element).getMethods();
+      for (PsiMethod method : ((PsiClass)element).getAllMethods()) {
+        if (isConfigMethod(method)) return true;
+      }
     } else {
       if (!(element instanceof PsiMethod)) return false;
-      methods = new PsiMethod[] {(PsiMethod) element};
+      return isConfigMethod((PsiMethod)element);
+    }
+    return false;
+  }
+
+  private static boolean isConfigMethod(PsiMethod method) {
+    for (String fqn : CONFIG_ANNOTATIONS_FQN) {
+      if (AnnotationUtil.isAnnotated(method, fqn, false)) return true;
     }
 
-    for (PsiMethod method : methods) {
-      for (String fqn : CONFIG_ANNOTATIONS_FQN) {
-        if (AnnotationUtil.isAnnotated(method, fqn, false)) return true;
-      }
-
-      if (hasDocTagsSupport) {
-        final PsiDocComment comment = method.getDocComment();
-        if (comment != null) {
-          for (String javadocTag : CONFIG_JAVADOC_TAGS) {
-            if (comment.findTagByName(javadocTag) != null) return true;
-          }
+    if (hasDocTagsSupport) {
+      final PsiDocComment comment = method.getDocComment();
+      if (comment != null) {
+        for (String javadocTag : CONFIG_JAVADOC_TAGS) {
+          if (comment.findTagByName(javadocTag) != null) return true;
         }
       }
     }
@@ -178,13 +180,7 @@ public class TestNGUtil {
       if (checkDisabled) {
         PsiAnnotation annotation = AnnotationUtil.findAnnotation(element, true, TEST_ANNOTATION_FQN);
         if (annotation != null) {
-          PsiNameValuePair[] attribs = annotation.getParameterList().getAttributes();
-          for (PsiNameValuePair attrib : attribs) {
-            final String attribName = attrib.getName();
-            final PsiAnnotationMemberValue attribValue = attrib.getValue();
-            if (Comparing.strEqual(attribName, "enabled") && attribValue != null && attribValue.textMatches("false"))
-              return false;
-          }
+          if (isDisabled(annotation)) return false;
         }
       }
       return true;
@@ -207,12 +203,17 @@ public class TestNGUtil {
         if (AnnotationUtil.isAnnotated(psiClass, TEST_ANNOTATION_FQN, true, true)) {
           //even if it has a global test, we ignore private methods
           boolean isPrivate = element.hasModifierProperty(PsiModifier.PRIVATE);
-          return !isPrivate;
+          return !isPrivate && !element.hasModifierProperty(PsiModifier.STATIC) && !hasConfig(element);
         }
         if (hasTestJavaDoc(psiClass, checkJavadoc)) return true;
       }
     }
     return false;
+  }
+
+  public static boolean isDisabled(PsiAnnotation annotation) {
+    final PsiAnnotationMemberValue attributeValue = annotation.findDeclaredAttributeValue("enabled");
+    return attributeValue != null && attributeValue.textMatches("false");
   }
 
   private static boolean hasTestJavaDoc(@NotNull PsiDocCommentOwner element, final boolean checkJavadoc) {

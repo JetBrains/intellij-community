@@ -79,10 +79,13 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
            matchesModule(myModuleGroupPattern, myModulePattern, file, fileIndex);
   }
 
-  private boolean fileMatcher(VirtualFile virtualFile, ProjectFileIndex fileIndex, VirtualFile projectBaseDir){
+  private boolean fileMatcher(@NotNull VirtualFile virtualFile, ProjectFileIndex fileIndex, VirtualFile projectBaseDir){
     final String relativePath = getRelativePath(virtualFile, fileIndex, true, projectBaseDir);
     if (relativePath == null) {
       LOG.error("vFile: " + virtualFile + "; projectBaseDir: " + projectBaseDir + "; content File: "+fileIndex.getContentRootForFile(virtualFile));
+    }
+    if (StringUtil.isEmptyOrSpaces(relativePath) && !virtualFile.equals(projectBaseDir)) {
+      return false;
     }
     return myFilePattern.matcher(relativePath).matches();
   }

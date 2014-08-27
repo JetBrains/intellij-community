@@ -143,12 +143,10 @@ public abstract class ComponentStoreImpl implements IComponentStore {
 
   private <T> void commitPersistentComponent(@NotNull final PersistentStateComponent<T> persistentStateComponent,
                                              @NotNull StateStorageManager.ExternalizationSession session) {
-    Storage[] storageSpecs = getComponentStorageSpecs(persistentStateComponent, StateStorageOperation.WRITE);
-
     T state = persistentStateComponent.getState();
     if (state != null) {
-      session
-        .setState(storageSpecs, persistentStateComponent, getComponentName(persistentStateComponent), state);
+      Storage[] storageSpecs = getComponentStorageSpecs(persistentStateComponent, StateStorageOperation.WRITE);
+      session.setState(storageSpecs, persistentStateComponent, getComponentName(persistentStateComponent), state);
     }
   }
 

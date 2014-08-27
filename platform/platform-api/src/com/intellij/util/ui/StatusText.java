@@ -186,7 +186,8 @@ public abstract class StatusText {
   }
 
   public void paint(Component owner, Graphics g) {
-    if (!isStatusVisible() || owner != myOwner) return;
+    boolean wrongComponent = owner != myOwner && owner != null && owner.getParent() != myOwner;
+    if (!isStatusVisible() || wrongComponent) return;
 
     Rectangle b = getTextComponentBound();
     myComponent.setBounds(0, 0, b.width, b.height);

@@ -15,32 +15,18 @@
  */
 package com.intellij.util.net;
 
-import com.intellij.openapi.options.ConfigurableBase;
 import org.jetbrains.annotations.NotNull;
 
-public class HTTPProxySettingsPanel extends ConfigurableBase<HttpProxySettingsUi, HttpConfigurable> {
+@SuppressWarnings("UnusedDeclaration")
+@Deprecated
+/**
+ * @deprecated Use {@link HttpProxyConfigurable}
+ * to remove in IDEA 15
+ */
+public class HTTPProxySettingsPanel extends HttpProxyConfigurable {
   public static final String NAME = "Proxy";
 
-  private final HttpConfigurable settings;
-
-  public HTTPProxySettingsPanel() {
-    this(HttpConfigurable.getInstance());
-  }
-
   public HTTPProxySettingsPanel(@NotNull HttpConfigurable settings) {
-    super("http.proxy", NAME, "http.proxy");
-
-    this.settings = settings;
-  }
-
-  @NotNull
-  @Override
-  protected HttpConfigurable getSettings() {
-    return settings;
-  }
-
-  @Override
-  protected HttpProxySettingsUi createUi() {
-    return new HttpProxySettingsUi(settings);
+    super(settings);
   }
 }

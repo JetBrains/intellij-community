@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,13 @@
 
 package com.maddyhome.idea.copyright.ui;
 
-import com.intellij.ide.actions.OpenProjectFileChooserDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -33,6 +34,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -200,34 +202,26 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
     result.add(new AnAction("Import", "Import", PlatformIcons.IMPORT_ICON) {
       @Override
       public void actionPerformed(AnActionEvent event) {
-        final OpenProjectFileChooserDescriptor descriptor = new OpenProjectFileChooserDescriptor(true) {
-          @Override
-          public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-            return super.isFileVisible(file, showHiddenFiles) || canContainCopyright(file);
-          }
-
-          @Override
-          public boolean isFileSelectable(VirtualFile file) {
-            return super.isFileSelectable(file) || canContainCopyright(file);
-          }
-
-          private boolean canContainCopyright(VirtualFile file) {
-            return !file.isDirectory() && (file.getFileType() == StdFileTypes.IDEA_MODULE || file.getFileType() == StdFileTypes.XML);
-          }
-        };
-        descriptor.setTitle("Choose file containing copyright notice");
+        FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+          .withFileFilter(new Condition<VirtualFile>() {
+            @Override
+            public boolean value(VirtualFile file) {
+              return file.getFileType() == StdFileTypes.IDEA_MODULE || file.getFileType() == StdFileTypes.XML;
+            }
+          })
+          .withTitle("Choose file containing copyright notice");
         FileChooser.chooseFile(descriptor, myProject, null, new Consumer<VirtualFile>() {
           @Override
           public void consume(VirtualFile file) {
-            final List<CopyrightProfile> copyrightProfiles = ExternalOptionHelper.loadOptions(VfsUtilCore.virtualToIoFile(file));
-            if (copyrightProfiles == null) return;
-            if (!copyrightProfiles.isEmpty()) {
-              if (copyrightProfiles.size() == 1) {
-                importProfile(copyrightProfiles.get(0));
+            final List<CopyrightProfile> profiles = ExternalOptionHelper.loadOptions(VfsUtilCore.virtualToIoFile(file));
+            if (profiles == null) return;
+            if (!profiles.isEmpty()) {
+              if (profiles.size() == 1) {
+                importProfile(profiles.get(0));
               }
               else {
                 JBPopupFactory.getInstance()
-                  .createListPopup(new BaseListPopupStep<CopyrightProfile>("Choose profile to import", copyrightProfiles) {
+                  .createListPopup(new BaseListPopupStep<CopyrightProfile>("Choose profile to import", profiles) {
                     @Override
                     public PopupStep onChosen(final CopyrightProfile selectedValue, boolean finalChoice) {
                       return doFinalStep(new Runnable() {
@@ -243,7 +237,8 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
                     public String getTextFor(CopyrightProfile value) {
                       return value.getName();
                     }
-                  }).showUnderneathOf(myNorthPanel);
+                  })
+                  .showUnderneathOf(myNorthPanel);
               }
             }
             else {

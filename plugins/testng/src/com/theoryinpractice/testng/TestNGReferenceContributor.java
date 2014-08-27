@@ -170,7 +170,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
       if (cls != null) {
         PsiMethod[] methods = cls.findMethodsByName(methodName, true);
         for (PsiMethod method : methods) {
-          if (TestNGUtil.hasTest(method) || TestNGUtil.hasConfig(method)) {
+          if (TestNGUtil.hasTest(method, false) || TestNGUtil.hasConfig(method)) {
             return method;
           }
         }

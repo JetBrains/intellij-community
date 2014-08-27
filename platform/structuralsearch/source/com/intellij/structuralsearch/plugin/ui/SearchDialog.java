@@ -12,6 +12,7 @@ import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -89,8 +90,6 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   protected final ExistingTemplatesComponent existingTemplatesComponent;
 
   private boolean useLastConfiguration;
-
-  private static boolean ourOpenInNewTab;
 
   @NonNls private FileType ourFtSearchVariant = StructuralSearchUtil.getDefaultFileType();
   private static Language ourDialect = null;
@@ -184,7 +183,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
         try {
           new WriteAction(){
             @Override
-            protected void run(Result result) throws Throwable {
+            protected void run(Result result) {
               if (!isValid()) {
                 getOKAction().setEnabled(false);
               }
@@ -195,8 +194,8 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
             }
           }.execute();
         }
-        catch (Exception e) {
-          e.printStackTrace();
+        catch (RuntimeException e) {
+          Logger.getInstance(SearchDialog.class).error(e);
         }
       }
     }, 500);
@@ -498,7 +497,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
     final UsageViewContext context = createUsageViewContext(config);
     final UsageViewPresentation presentation = new UsageViewPresentation();
-    presentation.setOpenInNewTab(openInNewTab.isSelected());
+    presentation.setOpenInNewTab(FindSettings.getInstance().isShowResultsInSeparateView());
     presentation.setScopeText(config.getMatchOptions().getScope().getDisplayName());
     context.configure(presentation);
 
@@ -635,7 +634,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       JPanel panel = new JPanel(new BorderLayout());
       panel.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
       openInNewTab = new JCheckBox(FindBundle.message("find.open.in.new.tab.checkbox"));
-      openInNewTab.setSelected(ourOpenInNewTab);
+      openInNewTab.setSelected(FindSettings.getInstance().isShowResultsInSeparateView());
       ToolWindow findWindow = ToolWindowManager.getInstance(searchContext.getProject()).getToolWindow(ToolWindowId.FIND);
       openInNewTab.setEnabled(findWindow != null && findWindow.isAvailable());
       panel.add(openInNewTab, BorderLayout.EAST);
@@ -868,8 +867,9 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     super.doOKAction();
     if (!myRunFindActionOnClose) return;
 
-    FindSettings.getInstance().setDefaultScopeName(selectedScope.getDisplayName());
-    ourOpenInNewTab = openInNewTab.isSelected();
+    final FindSettings findSettings = FindSettings.getInstance();
+    findSettings.setDefaultScopeName(selectedScope.getDisplayName());
+    findSettings.setShowResultsInSeparateView(openInNewTab.isSelected());
 
     try {
       if (model.getShadowConfig() != null) {

@@ -45,7 +45,7 @@ public class Conditions {
   public static <T> Condition<T> is(final T option) {
     return new Condition<T>() {
       public boolean value(T t) {
-        return t == option;
+        return Comparing.equal(t, option);
       }
     };
   }

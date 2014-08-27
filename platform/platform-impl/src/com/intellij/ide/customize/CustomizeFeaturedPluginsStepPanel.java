@@ -218,7 +218,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
       }, null);
       gbc.insets.bottom = -5;
       groupPanel.add(titleLabel, gbc);
-      gbc.insets.bottom = 10;
+      gbc.insets.bottom = SMALL_GAP;
       groupPanel.add(topicLabel, gbc);
       groupPanel.add(descriptionLabel, gbc);
       gbc.weighty = 1;
@@ -238,7 +238,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
           protected Color getColor() {
             return ColorUtil.withAlpha(JBColor.foreground(), .2);
           }
-        }, BorderFactory.createEmptyBorder(0, GAP / 2, 0, GAP / 2)));
+        }, BorderFactory.createEmptyBorder(0, SMALL_GAP, 0, SMALL_GAP)));
       cursor++;
     }
 

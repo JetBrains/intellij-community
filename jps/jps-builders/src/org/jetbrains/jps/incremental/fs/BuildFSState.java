@@ -145,13 +145,17 @@ public class BuildFSState extends FSState {
     setRoundDelta(CURRENT_ROUND_DELTA_KEY, context, new FilesDelta());
   }
 
-  public <R extends BuildRootDescriptor, T extends BuildTarget<R>> boolean processFilesToRecompile(CompileContext context, final T target, final FileProcessor<R, T> processor) throws IOException {
+  public <R extends BuildRootDescriptor, T extends BuildTarget<R>> boolean processFilesToRecompile(CompileContext context, final @NotNull T target, final FileProcessor<R, T> processor) throws IOException {
     final Map<BuildRootDescriptor, Set<File>> data = getSourcesToRecompile(context, target);
     final CompileScope scope = context.getScope();
     synchronized (data) {
       for (Map.Entry<BuildRootDescriptor, Set<File>> entry : data.entrySet()) {
         //noinspection unchecked
         R root = (R)entry.getKey();
+        if (!target.equals(root.getTarget())) {
+          // the data can contain roots from other targets (e.g. when compiling module cycles)
+          continue;
+        }
         for (File file : entry.getValue()) {
           if (!scope.isAffected(target, file)) {
             continue;

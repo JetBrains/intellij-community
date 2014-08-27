@@ -16,6 +16,8 @@
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.internal.statistic.UsageTrigger;
@@ -35,6 +37,7 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EdtRunnable;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.LightColors;
@@ -847,7 +850,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return mySearch;//myTree.getTree();
+    return myTreeView != null ? myTreeView.myTree : mySearch;//myTree.getTree();
   }
 
   @Override
@@ -1010,9 +1013,22 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       super(false);
       addKeyListener(new KeyAdapter() {});
       if (Registry.is("ide.new.settings.dialog")) {
+        final JTextField editor = getTextEditor();
+        if (!SystemInfo.isMac) {
+          editor.putClientProperty("JTextField.variant", "search");
+          if (!(editor.getUI() instanceof DarculaTextFieldUI)) {
+            editor.setUI((DarculaTextFieldUI)DarculaTextFieldUI.createUI(editor));
+            editor.setBorder(new DarculaTextBorder());
+          }
+        }
         setBackground(UIUtil.getSidePanelColor());
         setBorder(new EmptyBorder(5, 10, 2, 10));
       }
+    }
+
+    @Override
+    protected boolean isSearchControlUISupported() {
+      return true;
     }
 
     @Override
@@ -1212,16 +1228,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     if (searchable instanceof Configurable.Composite) {
       box.add(Box.createVerticalStrut(10));
       Configurable.Composite composite = (Configurable.Composite)searchable;
-      Configurable[] configurables = composite.getConfigurables();
-      if (myTreeView != null) {
-        Arrays.sort(configurables, new Comparator<Configurable>() {
-          @Override
-          public int compare(Configurable configurable1, Configurable configurable2) {
-            return myTreeView.compareConfigurables(configurable1, configurable2);
-          }
-        });
-      }
-      for (final Configurable configurable : configurables) {
+      for (final Configurable configurable : composite.getConfigurables()) {
         box.add(new LinkLabel(configurable.getDisplayName(), AllIcons.Ide.Link) {
           @Override
           public void doClick() {

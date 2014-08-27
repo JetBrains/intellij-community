@@ -29,8 +29,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.ui.CheckedTreeNode;
+import com.intellij.ui.SimpleColoredText;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
@@ -148,7 +151,9 @@ public class PushController implements Disposable {
                                                                         support.getSource(repository).getPresentation(),
                                                                         target == null ? "" : target.getPresentation(),
                                                                         support.getTargetNames(repository));
-    final RepositoryNode repoNode = isSingleRepositoryProject ? new SingleRepositoryNode(repoPanel) : new RepositoryNode(repoPanel);
+    final RepositoryNode repoNode = isSingleRepositoryProject
+                                    ? new SingleRepositoryNode(repoPanel, support.renderTarget(target))
+                                    : new RepositoryNode(repoPanel, support.renderTarget(target));
     myView2Model.put(repoNode, model);
     repoNode.setChecked(model.isSelected());
     repoPanel.addRepoNodeListener(new RepositoryNodeListener() {
@@ -156,21 +161,24 @@ public class PushController implements Disposable {
       public void onTargetChanged(String newValue) {
         VcsError validationError = support.validate(model.getRepository(), newValue);
         if (validationError == null) {
-          repoNode.markTargetValid(true);
-          myView2Model.get(repoNode).setSpec(new PushSpec(model.getSpec().getSource(), support.createTarget(repository, newValue)));
+          PushTarget newTarget = support.createTarget(repository, newValue);
+          repoNode.setTargetPresentation(support.renderTarget(newTarget));
+          model.setSpec(new PushSpec(model.getSpec().getSource(), newTarget));
           loadCommits(model, repoNode, false);
         }
         else {
-          //todo may be should store validation errors in model and get errors during dialog validation
-          repoNode.markTargetValid(false);
-          myView2Model.get(repoNode).setSpec(new PushSpec(model.getSpec().getSource(), null));
+          //todo change presentation for invalid/null target!!!! Should it be common for all invalid target or custom?
+          repoNode.setTargetPresentation(StringUtil.isEmptyOrSpaces(newValue)
+                                         ? support.renderTarget(null)
+                                         : new SimpleColoredText(newValue, SimpleTextAttributes.ERROR_ATTRIBUTES));
+          model.setSpec(new PushSpec(model.getSpec().getSource(), null));
         }
         myDialog.updateButtons();
       }
 
       @Override
       public void onSelectionChanged(boolean isSelected) {
-        myView2Model.get(repoNode).setSelected(isSelected);
+        model.setSelected(isSelected);
         repoNode.setChecked(isSelected);
         myDialog.updateButtons();
       }

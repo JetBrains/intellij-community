@@ -16,14 +16,13 @@
 package com.intellij.openapi.fileChooser;
 
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.UIBundle;
-import org.jetbrains.annotations.NotNull;
 
 public class FileChooserDescriptorFactory {
-  private FileChooserDescriptorFactory() {
-  }
+  private FileChooserDescriptorFactory() { }
 
   public static FileChooserDescriptor createAllButJarContentsDescriptor() {
     return new FileChooserDescriptor(true, true, true, true, false, true);
@@ -45,19 +44,31 @@ public class FileChooserDescriptorFactory {
     return new FileChooserDescriptor(true, false, false, false, false, false) {
       @Override
       public boolean isFileSelectable(VirtualFile file) {
-        if (super.isFileSelectable(file)) return true;
-
-        if (SystemInfo.isMac && file.isDirectory() && "app".equals(file.getExtension())) {
-          return true;
-        }
-
-        return false;
+        return super.isFileSelectable(file) || SystemInfo.isMac && file.isDirectory() && "app".equals(file.getExtension());
       }
     };
   }
 
   public static FileChooserDescriptor createSingleLocalFileDescriptor() {
     return new FileChooserDescriptor(true, true, true, true, false, false);
+  }
+
+  public static FileChooserDescriptor createSingleFileDescriptor(final FileType fileType) {
+    return new FileChooserDescriptor(true, false, false, false, false, false).withFileFilter(new Condition<VirtualFile>() {
+      @Override
+      public boolean value(VirtualFile file) {
+        return file.getFileType() == fileType;
+      }
+    });
+  }
+
+  public static FileChooserDescriptor createSingleFileDescriptor(final String extension) {
+    return new FileChooserDescriptor(true, false, false, false, false, false).withFileFilter(new Condition<VirtualFile>() {
+      @Override
+      public boolean value(VirtualFile file) {
+        return Comparing.equal(file.getExtension(), extension, SystemInfo.isFileSystemCaseSensitive);
+      }
+    });
   }
 
   public static FileChooserDescriptor createSingleFolderDescriptor() {
@@ -72,54 +83,40 @@ public class FileChooserDescriptorFactory {
     return new FileChooserDescriptor(true, true, false, false, false, false);
   }
 
-  public static FileChooserDescriptor getDirectoryChooserDescriptor(String aSearchedObjectName) {
-    final FileChooserDescriptor singleFolderDescriptor = createSingleFolderDescriptor();
-    singleFolderDescriptor.setTitle(UIBundle.message("file.chooser.select.object.title", aSearchedObjectName));
-    return singleFolderDescriptor;
+  public static FileChooserDescriptor createSingleFileOrFolderDescriptor(final FileType fileType) {
+    return new FileChooserDescriptor(true, true, false, false, false, false).withFileFilter(new Condition<VirtualFile>() {
+      @Override
+      public boolean value(VirtualFile file) {
+        return file.getFileType() == fileType;
+      }
+    });
   }
 
-  public static FileChooserDescriptor getFileChooserDescriptor(String aSearchedObjectName) {
-    final FileChooserDescriptor fileChooserDescriptor = createSingleFileNoJarsDescriptor();
-    fileChooserDescriptor.setTitle(UIBundle.message("file.chooser.select.object.title", aSearchedObjectName));
-    return fileChooserDescriptor;
-  }
-
-  public static FileChooserDescriptor createSingleFileDescriptor(final FileType fileType) {
-    return createSingleFileDescriptor(fileType, false);
-  }
-
-  /**
-   * Creates file descriptor with certain type and (possible) folders.
-   * @param fileType supported type
-   * @param supportDirectories support directories or not
-   * @return descriptor
-   */
-  @NotNull
+  /** @deprecated use {@link #createSingleFileDescriptor(FileType)} or {@link #createSingleFileOrFolderDescriptor(FileType)} (to be removed in IDEA 14) */
+  @SuppressWarnings("UnusedDeclaration")
   public static FileChooserDescriptor createSingleFileDescriptor(final FileType fileType, final boolean supportDirectories) {
-    return new FileChooserDescriptor(true, supportDirectories, false, false, false, false) {
-      @Override
-      public boolean isFileVisible(final VirtualFile file, final boolean showHiddenFiles) {
-        return file.isDirectory() || file.getFileType() == fileType;
-      }
-
-      @Override
-      public boolean isFileSelectable(final VirtualFile file) {
-        return super.isFileSelectable(file) && (file.getFileType() == fileType || ((file.isDirectory() && supportDirectories)));
-      }
-    };
+    return supportDirectories ? createSingleFileOrFolderDescriptor(fileType) : createSingleFileDescriptor(fileType);
   }
 
-  /**
-   * @deprecated use {@link #createSingleFileNoJarsDescriptor()} (to be removed in IDEA 15)
-   */
+  /** @deprecated not very useful (to be removed in IDEA 15) */
+  @SuppressWarnings("UnusedDeclaration")
+  public static FileChooserDescriptor getDirectoryChooserDescriptor(String objectName) {
+    return createSingleFolderDescriptor().withTitle("Select " + objectName);
+  }
+
+  /** @deprecated not very useful (to be removed in IDEA 15) */
+  @SuppressWarnings("UnusedDeclaration")
+  public static FileChooserDescriptor getFileChooserDescriptor(String objectName) {
+    return createSingleFileNoJarsDescriptor().withTitle("Select " + objectName);
+  }
+
+  /** @deprecated use {@link #createSingleFileNoJarsDescriptor()} (to be removed in IDEA 15) */
   @SuppressWarnings({"UnusedDeclaration", "deprecation"})
   public static FileChooserDescriptorBuilder onlyFiles() {
     return FileChooserDescriptorBuilder.onlyFiles();
   }
 
-  /**
-   * @deprecated use {@link #createSingleFileOrFolderDescriptor()} ()} (to be removed in IDEA 15)
-   */
+  /** @deprecated use {@link #createSingleFileOrFolderDescriptor()} ()} (to be removed in IDEA 15) */
   @SuppressWarnings({"UnusedDeclaration", "deprecation"})
   public static FileChooserDescriptorBuilder filesAndFolders() {
     return FileChooserDescriptorBuilder.filesAndFolders();

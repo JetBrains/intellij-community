@@ -93,7 +93,7 @@ public class DiffPanelOptions {
         while (window instanceof DialogWrapperDialog) {
           DialogWrapperDialog dlg = (DialogWrapperDialog)window;
           window = window.getParent();
-          dlg.getDialogWrapper().close(DialogWrapper.CLOSE_EXIT_CODE);
+          dlg.getDialogWrapper().doCancelAction();
         }
         return true;
       }

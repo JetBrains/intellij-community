@@ -223,10 +223,10 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   public int getDecrementButtonHeight() {
-    return decrButton.getHeight();
+    return Math.max(0, decrButton.getHeight());
   }
   public int getIncrementButtonHeight() {
-    return incrButton.getHeight();
+    return Math.max(0, incrButton.getHeight());
   }
 
   private void resetRegularThumbAnimator() {

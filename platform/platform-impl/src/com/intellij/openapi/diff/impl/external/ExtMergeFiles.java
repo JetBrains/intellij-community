@@ -22,9 +22,14 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.impl.mergeTool.MergeRequestImpl;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.TimeoutUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +45,7 @@ public class ExtMergeFiles extends BaseExternalTool {
   }
 
   @Override
-  public boolean isAvailable(DiffRequest request) {
+  public boolean isAvailable(@NotNull DiffRequest request) {
     if (!(request instanceof MergeRequestImpl)) return false;
     DiffContent[] contents = request.getContents();
     if (contents.length != 3) return false;
@@ -52,7 +57,8 @@ public class ExtMergeFiles extends BaseExternalTool {
   }
 
   @Override
-  protected List<String> getParameters(DiffRequest request) throws Exception {
+  @NotNull
+  protected List<String> getParameters(@NotNull DiffRequest request) throws Exception {
     final List<String> params = new ArrayList<String>();
     String result = ((MergeRequestImpl)request).getResultContent().getFile().getPath();
     String left = externalize(request, 0).getContentFile().getPath();
@@ -68,7 +74,8 @@ public class ExtMergeFiles extends BaseExternalTool {
     return params;
   }
 
-  public void show(DiffRequest request) {
+  @Override
+  public void show(@NotNull DiffRequest request) {
     saveContents(request);
 
     int result = DialogWrapper.CANCEL_EXIT_CODE;
@@ -79,9 +86,17 @@ public class ExtMergeFiles extends BaseExternalTool {
       commandLine.addParameters(getParameters(request));
       commandLine.createProcess();
 
+      ProgressManager.getInstance().run(new Task.Modal(request.getProject(), "Launching external tool", false) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          indicator.setIndeterminate(true);
+          TimeoutUtil.sleep(1000);
+        }
+      });
+
       if (Messages.YES == Messages.showYesNoDialog(request.getProject(),
                                                    "Press \"Mark as Resolved\" when you finish resolving conflicts in the external tool",
-                                                   "Merge In External Tool", "Mark as Resolved", "Cancel", null)) {
+                                                   "Merge In External Tool", "Mark as Resolved", "Revert", null)) {
         result = DialogWrapper.OK_EXIT_CODE;
       }
       ((MergeRequestImpl)request).getResultContent().getFile().refresh(false, false);

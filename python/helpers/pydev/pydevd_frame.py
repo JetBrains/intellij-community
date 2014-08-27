@@ -15,7 +15,11 @@ from pydevd_comm import CMD_ADD_DJANGO_EXCEPTION_BREAK, \
     CMD_STEP_INTO, CMD_SMART_STEP_INTO, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT
 from pydevd_constants import *  # @UnusedWildImport
 from pydevd_file_utils import GetFilenameAndBase
-from pydevd_signature import sendSignatureCallTrace
+try:
+    from pydevd_signature import sendSignatureCallTrace
+except ImportError:
+    def sendSignatureCallTrace(*args, **kwargs):
+        pass
 import pydevd_vars
 import pydevd_dont_trace
 
@@ -81,7 +85,7 @@ class PyDBFrame:
 
             if trace is not None: #on jython trace is None on the first event
                 exception_breakpoint = get_exception_breakpoint(
-                    exception, mainDebugger.break_on_caught_exceptions.copy())
+                    exception, mainDebugger.break_on_caught_exceptions)
 
                 if exception_breakpoint is not None:
                     if not exception_breakpoint.notify_on_first_raise_only or just_raised(trace):
@@ -203,6 +207,7 @@ class PyDBFrame:
 
             try:
                 frame_id_to_frame = {}
+                frame_id_to_frame[id(frame)] = frame
                 f = trace_obj.tb_frame
                 while f is not None:
                     frame_id_to_frame[id(f)] = f
@@ -244,7 +249,7 @@ class PyDBFrame:
             if getattr(thread, 'pydev_do_not_trace', None):
                 return None
 
-            if event == 'call':
+            if event == 'call' and main_debugger.signature_factory:
                 sendSignatureCallTrace(main_debugger, frame, filename)
 
             is_exception_event = event == 'exception'
@@ -402,12 +407,6 @@ class PyDBFrame:
 
                     if stop:
                         self.setSuspend(thread, CMD_SET_BREAK)
-
-                if event == 'return':
-                    if main_debugger.cmd_line:
-                        base = basename(back.f_code.co_filename)
-                        if base == 'pydevd.py' and back.f_code.co_name == 'run':
-                            self.setSuspend(thread, CMD_SET_BREAK) # we suspend on exit
 
                 # if thread has a suspend flag, we suspend with a busy wait
                 if info.pydev_state == STATE_SUSPEND:

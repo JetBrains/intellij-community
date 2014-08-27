@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class EqualsWithItselfInspectionTest extends LightInspectionTestCase {
 
-  public void testEqualsWithItSelf() { doTest(); }
+  public void testEqualsWithItself() { doTest(); }
 
   @Nullable
   @Override

@@ -2,12 +2,10 @@
 '''
 @author Radim Kubacki
 '''
-import __builtin__
 import _pydev_imports_tipper
 import traceback
 import StringIO
 import sys
-import time
 import urllib
 import pycompletionserver
 
@@ -24,7 +22,7 @@ def GetImports(module_name):
     except:
         s = StringIO.StringIO()
         exc_info = sys.exc_info()
-    
+
         traceback.print_exception(exc_info[0], exc_info[1], exc_info[2], limit=None, file=s)
         err = s.getvalue()
         pycompletionserver.dbg('Received error: ' + str(err), pycompletionserver.ERROR)
@@ -38,4 +36,4 @@ if __name__ == '__main__':
     mod_name = sys.argv[1]
 
     print(GetImports(mod_name))
-           
+

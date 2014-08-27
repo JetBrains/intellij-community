@@ -42,6 +42,9 @@ public class InlineMethodMultifileTest extends RefactoringTestCase {
   public void testRemoveStaticImports() throws Exception {
     doTest("Foo", "foo");
   }
+  public void testPreserveStaticImportsIfOverloaded() throws Exception {
+    doTest("Foo", "foo");
+  }
 
   private void doTest(String className, String methodName) throws Exception {
     String rootBefore = getRoot() + "/before";

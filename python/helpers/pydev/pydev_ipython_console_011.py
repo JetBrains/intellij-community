@@ -19,7 +19,6 @@ import os
 import codeop
 
 from IPython.core.error import UsageError
-from IPython.core.inputsplitter import IPythonInputSplitter
 from IPython.core.completer import IPCompleter
 from IPython.core.interactiveshell import InteractiveShell, InteractiveShellABC
 from IPython.core.usage import default_banner_parts
@@ -53,7 +52,8 @@ def show_in_pager(self, strng):
     print(strng)
 
 def create_editor_hook(pydev_host, pydev_client_port):
-    def call_editor(self, filename, line=0, wait=True):
+    
+    def call_editor(filename, line=0, wait=True):
         """ Open an editor in PyDev """
         if line is None:
             line = 0
@@ -62,6 +62,9 @@ def create_editor_hook(pydev_host, pydev_client_port):
         # we don't launch a process. This is more like what happens in the zmqshell
         filename = os.path.abspath(filename)
 
+        # import sys
+        # sys.__stderr__.write('Calling editor at: %s:%s\n' % (pydev_host, pydev_client_port))
+        
         # Tell PyDev to open the editor
         server = xmlrpclib.Server('http://%s:%s' % (pydev_host, pydev_client_port))
         server.IPythonEditor(filename, str(line))
@@ -291,21 +294,16 @@ class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
 InteractiveShellABC.register(PyDevTerminalInteractiveShell)  # @UndefinedVariable
 
 #=======================================================================================================================
-# PyDevFrontEnd
+# _PyDevFrontEnd
 #=======================================================================================================================
-class PyDevFrontEnd:
+class _PyDevFrontEnd:
 
     version = release.__version__
 
-    def __init__(self, pydev_host, pydev_client_port, *args, **kwarg):
+    def __init__(self, *args, **kwarg):
 
         # Create and initialize our IPython instance.
         self.ipython = PyDevTerminalInteractiveShell.instance()
-
-        # Back channel to PyDev to open editors (in the future other
-        # info may go back this way. This is the same channel that is
-        # used to get stdin, see StdIn in pydev_console_utils)
-        self.ipython.set_hook('editor', create_editor_hook(pydev_host, pydev_client_port))
 
         # Display the IPython banner, this has version info and
         # help info
@@ -412,6 +410,9 @@ class PyDevFrontEnd:
 
     def getNamespace(self):
         return self.ipython.user_ns
+    
+    def clearBuffer(self):
+        del self._curr_exec_lines[:] 
 
     def addExec(self, line):
         if self._curr_exec_lines:
@@ -463,3 +464,28 @@ IPython.lib.inputhook.enable_gui = pydev_ipython.inputhook.enable_gui
 # rely on using the inputhooks directly.
 for name in pydev_ipython.inputhook.__all__:
     setattr(IPython.lib.inputhook, name, getattr(pydev_ipython.inputhook, name))
+
+
+class _PyDevFrontEndContainer:
+    _instance = None
+    _last_host_port = None
+    
+def get_pydev_frontend(pydev_host, pydev_client_port):
+    if _PyDevFrontEndContainer._instance is None:
+        _PyDevFrontEndContainer._instance = _PyDevFrontEnd()
+        
+    if _PyDevFrontEndContainer._last_host_port != (pydev_host, pydev_client_port):
+        _PyDevFrontEndContainer._last_host_port = pydev_host, pydev_client_port
+        
+        # Back channel to PyDev to open editors (in the future other
+        # info may go back this way. This is the same channel that is
+        # used to get stdin, see StdIn in pydev_console_utils)
+        _PyDevFrontEndContainer._instance.ipython.hooks['editor'] = create_editor_hook(pydev_host, pydev_client_port)
+
+        # Note: setting the callback directly because setting it with set_hook would actually create a chain instead
+        # of ovewriting at each new call).
+        # _PyDevFrontEndContainer._instance.ipython.set_hook('editor', create_editor_hook(pydev_host, pydev_client_port))
+        
+    return _PyDevFrontEndContainer._instance
+        
+    

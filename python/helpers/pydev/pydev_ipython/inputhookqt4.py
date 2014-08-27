@@ -19,11 +19,7 @@ Author: Christian Boos
 import os
 import signal
 
-from pydevd_constants import USE_LIB_COPY
-if USE_LIB_COPY:
-    import _pydev_threading as threading
-else:
-    import threading
+import threading
 
 
 from pydev_ipython.qt_for_kernel import QtCore, QtGui

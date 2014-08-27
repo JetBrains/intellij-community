@@ -64,6 +64,9 @@ public class EqualsWithItselfInspection extends BaseInspection {
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
+      if (arguments.length != 1) {
+        return;
+      }
       final PsiExpression argument = arguments[0];
       if (!EquivalenceChecker.expressionsAreEquivalent(qualifier, argument) ||
           SideEffectChecker.mayHaveSideEffects(qualifier)) {

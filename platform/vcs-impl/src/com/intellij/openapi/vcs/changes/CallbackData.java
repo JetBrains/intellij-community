@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 class CallbackData {
   private final static Logger LOG = Logger.getInstance("com.intellij.openapi.vcs.changes.CallbackData");
@@ -50,7 +48,7 @@ class CallbackData {
       return new CallbackData(new Runnable() {
         public void run() {
           if (mode.isCallbackOnAwt()) {
-            SwingUtilities.invokeLater(new Runnable() {
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
                 LOG.debug("invokeAfterUpdate: silent wrapper called for project: " + project.getName());
                 if (project.isDisposed()) return;

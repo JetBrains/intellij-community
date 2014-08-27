@@ -24,7 +24,6 @@ import com.intellij.openapi.options.ex.NodeConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.CachingSimpleNode;
 import com.intellij.ui.treeStructure.SimpleNode;
@@ -42,6 +41,8 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.openapi.options.ex.MixedConfigurableGroup.getGroupWeight;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -64,6 +65,11 @@ import java.util.List;
  * @author Sergey.Malenkov
  */
 final class SettingsTreeView extends JComponent implements Disposable, OptionsEditorColleague {
+  private static final Color NORMAL_NODE = new JBColor(Gray._60, Gray._140);
+  private static final Color HIDDEN_NODE = JBColor.GRAY;
+  private static final Color WRONG_CONTENT = JBColor.RED;
+  private static final Color MODIFIED_CONTENT = JBColor.BLUE;
+
   final SimpleTree myTree;
   final FilteringTreeBuilder myBuilder;
 
@@ -259,6 +265,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     }
     if (mySeparator == null) {
       mySeparator = new JLabel();
+      mySeparator.setForeground(NORMAL_NODE);
       mySeparator.setFont(UIUtil.getLabelFont());
       mySeparator.setFont(getFont().deriveFont(Font.BOLD));
     }
@@ -273,17 +280,14 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
         bounds.height = height;
       }
       g.setColor(myTree.getBackground());
+      g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
       if (g instanceof Graphics2D) {
-        int h = bounds.height / 4;
-        int y = bounds.y + bounds.height - h;
-        g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height - h);
+        int h = 4; // gradient height
+        int y = bounds.y + bounds.height;
         ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(
           0, y, g.getColor(),
           0, y + h, ColorUtil.toAlpha(g.getColor(), 0)));
-        g.fillRect(bounds.x, y, bounds.width, h + h);
-      }
-      else {
-        g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+        g.fillRect(bounds.x, y, bounds.width, h);
       }
       mySeparator.setSize(bounds.width - 1, bounds.height);
       mySeparator.paint(g.create(bounds.x + 1, bounds.y, bounds.width - 1, bounds.height));
@@ -450,21 +454,6 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     public boolean isAlwaysLeaf() {
       return myComposite == null;
     }
-
-    @Override
-    public int getWeight() {
-      SimpleNode parent = getParent();
-      if (parent != null && myRoot == parent.getParent()) {
-        if (myConfigurable instanceof NodeConfigurable) {
-          return ((NodeConfigurable)myConfigurable).getGroupWeight();
-        }
-        if (myConfigurable instanceof ConfigurableWrapper) {
-          return ((ConfigurableWrapper)myConfigurable).getExtensionPoint().groupWeight;
-        }
-        return 0; // sort by name
-      }
-      return Integer.MIN_VALUE; // do not sort
-    }
   }
 
   private final class MyRenderer extends GroupedElementsRenderer.Tree {
@@ -477,21 +466,12 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     }
 
     @Override
-    protected Color getBackground() {
-      return UIUtil.getSidePanelColor();
-    }
-
-    @Override
-    protected Color getForeground() {
-      return new JBColor(Gray._60, Gray._140);
-    }
-
-    @Override
     protected void layout() {
       myNodeIcon = new JLabel(" ", SwingConstants.RIGHT);
       myProjectIcon = new JLabel(" ", SwingConstants.LEFT);
-      myProjectIcon.setOpaque(true);
-      //myRendererComponent.add(BorderLayout.NORTH, mySeparatorComponent);
+      myNodeIcon.setOpaque(false);
+      myTextLabel.setOpaque(false);
+      myProjectIcon.setOpaque(false);
       myRendererComponent.add(BorderLayout.CENTER, myComponent);
       myRendererComponent.add(BorderLayout.WEST, myNodeIcon);
       myRendererComponent.add(BorderLayout.EAST, myProjectIcon);
@@ -504,25 +484,17 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
                                                   boolean leaf,
                                                   int row,
                                                   boolean focused) {
-      myTextLabel.setOpaque(true);
-      myNodeIcon.setOpaque(true);
       myTextLabel.setFont(UIUtil.getLabelFont());
-      myNodeIcon.setBackground(selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getSidePanelColor());
-      myRendererComponent.setBackground(selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getSidePanelColor());
-
-      String text;
-      boolean hasSeparatorAbove = false;
-      int preferredForcedWidth = -1;
+      myRendererComponent.setBackground(selected ? UIUtil.getTreeSelectionBackground() : myTree.getBackground());
 
       MyNode node = extractNode(value);
       if (node == null) {
-        text = value.toString();
+        myTextLabel.setText(value.toString());
       }
       else {
-        text = node.myDisplayName;
+        myTextLabel.setText(node.myDisplayName);
         // show groups in bold
         if (myRoot == node.getParent()) {
-          hasSeparatorAbove = node != myRoot.getChildAt(0);
           myTextLabel.setFont(myTextLabel.getFont().deriveFont(Font.BOLD));
         }
         TreePath path = tree.getPathForRow(row);
@@ -546,25 +518,25 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
 
           forcedWidth = visibleRect.width > 0 ? visibleRect.width - indent : forcedWidth;
         }
-        preferredForcedWidth = forcedWidth - 4;
+        myRendererComponent.setPrefereedWidth(forcedWidth - 4);
       }
-      Component result = configureComponent(text, null, null, null, selected, hasSeparatorAbove, null, preferredForcedWidth);
       // update font color for modified configurables
+      myTextLabel.setForeground(selected ? UIUtil.getTreeSelectionForeground() : NORMAL_NODE);
       if (!selected && node != null) {
         Configurable configurable = node.myConfigurable;
         if (configurable != null) {
           if (myFilter.myContext.getErrors().containsKey(configurable)) {
-            myTextLabel.setForeground(JBColor.RED);
+            myTextLabel.setForeground(WRONG_CONTENT);
           }
           else if (myFilter.myContext.getModified().contains(configurable)) {
-            myTextLabel.setForeground(JBColor.BLUE);
+            myTextLabel.setForeground(MODIFIED_CONTENT);
           }
           else {
             SimpleNode simpleNode = node;
             while (simpleNode != null) {
               SimpleNode parent = simpleNode.getParent();
-              if (parent != null && myRoot == parent.getParent() && simpleNode.getWeight() == 0) {
-                myTextLabel.setForeground(JBColor.GRAY);
+              if (parent != null && myRoot == parent.getParent() && getGroupWeight(getConfigurable(simpleNode)) == 0) {
+                myTextLabel.setForeground(HIDDEN_NODE);
                 parent = null;
               }
               simpleNode = parent;
@@ -600,7 +572,6 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
         myProjectIcon.setToolTipText(OptionsBundle.message(project.isDefault()
                                                            ? "configurable.default.project.tooltip"
                                                            : "configurable.current.project.tooltip"));
-        myProjectIcon.setBackground(myTextLabel.getBackground());
         myProjectIcon.setVisible(true);
       }
       else {
@@ -615,7 +586,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
       else {
         myNodeIcon.setIcon(null);
       }
-      return result;
+      return myRendererComponent;
     }
 
     int getSeparatorHeight() {
@@ -790,7 +761,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     boolean myWasHoldingFilter;
 
     public MyBuilder(SimpleTreeStructure structure) {
-      super(myTree, myFilter, structure, COMPARATOR);
+      super(myTree, myFilter, structure, null);
       myTree.addTreeExpansionListener(new TreeExpansionListener() {
         public void treeExpanded(TreeExpansionEvent event) {
           invalidateExpansions();
@@ -877,35 +848,5 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
         myTree.collapsePath(each);
       }
     }
-  }
-
-  private static final Comparator<NodeDescriptor> COMPARATOR = new Comparator<NodeDescriptor>() {
-    @Override
-    public int compare(NodeDescriptor descriptor1, NodeDescriptor descriptor2) {
-      return compareNodes(extractNode(descriptor1), extractNode(descriptor2));
-    }
-  };
-
-  int compareConfigurables(Configurable configurable1, Configurable configurable2) {
-    return compareNodes(myConfigurableToNodeMap.get(configurable1), myConfigurableToNodeMap.get(configurable2));
-  }
-
-  private static int compareNodes(MyNode node1, MyNode node2) {
-    if (node1 == null || node2 == null) {
-      return node2 != null ? -1 : node1 != null ? 1 : 0;
-    }
-    int weight1 = node1.getWeight();
-    int weight2 = node2.getWeight();
-
-    if (weight1 > weight2) {
-      return -1;
-    }
-    if (weight1 < weight2) {
-      return 1;
-    }
-    if (weight1 == Integer.MIN_VALUE) {
-      return 0; // do not sort if undefined weight
-    }
-    return StringUtil.naturalCompare(node1.myDisplayName, node2.myDisplayName);
   }
 }

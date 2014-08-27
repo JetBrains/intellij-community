@@ -396,8 +396,8 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
       PersistentFS.getInstance().findRoot("", myFS);
       fail("should fail by assertion in PersistentFsImpl.findRoot()");
     }
-    catch (AssertionError e) {
-      String message = e.getMessage();
+    catch (Throwable t) {
+      String message = t.getMessage();
       assertTrue(message, message.startsWith("Invalid root"));
     }
   }

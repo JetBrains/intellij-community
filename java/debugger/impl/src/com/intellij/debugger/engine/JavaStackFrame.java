@@ -370,7 +370,7 @@ public class JavaStackFrame extends XStackFrame {
     ArgumentValueDescriptorImpl descriptor = myNodeManager.getArgumentValueDescriptor(null, index, value, name);
     // setContext is required to calculate correct name
     descriptor.setContext(evaluationContext);
-    return JavaValue.create(descriptor, evaluationContext, myNodeManager);
+    return JavaValue.create(null, descriptor, evaluationContext, myNodeManager, true);
   }
 
   protected void superBuildVariables(final EvaluationContextImpl evaluationContext, XValueChildrenList children) throws EvaluateException {

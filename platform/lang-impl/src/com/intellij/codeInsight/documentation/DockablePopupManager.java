@@ -23,7 +23,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -35,6 +34,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.content.*;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -151,21 +151,17 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
         restartAutoUpdate(state);
       }
     };
-    AnAction restorePopupAction = new AnAction("Restore Popup", getRestorePopupDescription(), AllIcons.Actions.Cancel) {
+    return new AnAction[]{toggleAutoUpdateAction, createRestorePopupAction()};
+  }
+
+  @NotNull
+  protected AnAction createRestorePopupAction() {
+    return new AnAction("Restore Popup", getRestorePopupDescription(), AllIcons.Actions.Cancel) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         restorePopupBehavior();
       }
     };
-    ShortcutSet restorePopupShortcutSet = getRestorePopupShortcutSet();
-    if (restorePopupShortcutSet != null) {
-      restorePopupAction.registerCustomShortcutSet(restorePopupShortcutSet, null);
-    }
-    return new AnAction[]{toggleAutoUpdateAction, restorePopupAction};
-  }
-
-  protected ShortcutSet getRestorePopupShortcutSet() {
-    return null;
   }
 
   protected void restartAutoUpdate(final boolean state) {
@@ -197,12 +193,16 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
   public void updateComponent() {
     if (myProject.isDisposed()) return;
 
-    AsyncResult<DataContext> asyncResult = DataManager.getInstance().getDataContextFromFocus();
-    DataContext dataContext = asyncResult.getResult();
-    if (dataContext == null) {
-      return;
-    }
+    DataManager.getInstance().getDataContextFromFocus().doWhenDone(new Consumer<DataContext>() {
+      @Override
+      public void consume(@NotNull DataContext dataContext) {
+        if (!myProject.isOpen()) return;
+        updateComponentInner(dataContext);
+      }
+    });
+  }
 
+  private void updateComponentInner(@NotNull DataContext dataContext) {
     if (CommonDataKeys.PROJECT.getData(dataContext) != myProject) {
       return;
     }

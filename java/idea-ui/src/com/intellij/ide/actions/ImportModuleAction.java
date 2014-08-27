@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.module.Module;
@@ -39,7 +40,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.Collections;
@@ -94,14 +94,7 @@ public class ImportModuleAction extends AnAction {
 
   @Nullable
   public static AddModuleWizard selectFileAndCreateWizard(final Project project, Component dialogParent) {
-    FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, true, true, false, false) {
-      FileChooserDescriptor myDelegate = new OpenProjectFileChooserDescriptor(true);
-      @Override
-      public Icon getIcon(VirtualFile file) {
-        Icon icon = myDelegate.getIcon(file);
-        return icon == null ? super.getIcon(file) : icon;
-      }
-    };
+    FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
     descriptor.setHideIgnored(false);
     descriptor.setTitle("Select File or Directory to Import");
     ProjectImportProvider[] providers = ProjectImportProvider.PROJECT_IMPORT_PROVIDER.getExtensions();
