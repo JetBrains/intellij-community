@@ -10,6 +10,7 @@ import org.eclipse.jgit.api.errors.ConcurrentRefUpdateException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.dircache.DirCacheCheckout;
+import org.eclipse.jgit.errors.TransportException;
 import org.eclipse.jgit.internal.JGitText;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.merge.*;
@@ -20,6 +21,7 @@ import org.eclipse.jgit.transport.*;
 import org.eclipse.jgit.treewalk.FileTreeIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.settingsRepository.AuthenticationException;
 
 import java.io.IOException;
 import java.text.MessageFormat;
@@ -28,6 +30,17 @@ import java.util.*;
 import static org.jetbrains.plugins.settingsRepository.BaseRepositoryManager.LOG;
 
 class PullTask {
+  public static void wrapIfNeedAndReThrow(@NotNull TransportException e) throws AuthenticationException, TransportException {
+    String message = e.getMessage();
+    if (message.contains(JGitText.get().notAuthorized) ||
+        message.contains("Auth cancel") || message.contains("Auth fail") /* JSch */) {
+      throw new AuthenticationException(message, e);
+    }
+    else {
+      throw e;
+    }
+  }
+
   public static void execute(@NotNull GitRepositoryManager manager, @NotNull ProgressIndicator indicator) throws Exception {
     LOG.debug("Pull");
 
@@ -55,6 +68,10 @@ class PullTask {
     try {
       transport.setCredentialsProvider(manager.getCredentialsProvider());
       fetchResult = transport.fetch(new JGitProgressMonitor(indicator), null);
+    }
+    catch (TransportException e) {
+      wrapIfNeedAndReThrow(e);
+      return null;
     }
     finally {
       transport.close();

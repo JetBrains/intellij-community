@@ -7,14 +7,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import org.eclipse.jgit.api.CommitCommand;
 import org.eclipse.jgit.errors.TransportException;
-import org.eclipse.jgit.internal.JGitText;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.plugins.settingsRepository.AuthenticationException;
 import org.jetbrains.plugins.settingsRepository.BaseRepositoryManager;
 import org.jetbrains.plugins.settingsRepository.CredentialsStore;
 
@@ -128,12 +126,7 @@ public final class GitRepositoryManager extends BaseRepositoryManager {
         }
       }
       catch (TransportException e) {
-        if (e.getMessage().contains(JGitText.get().notAuthorized)) {
-          throw new AuthenticationException(e.getMessage(), e);
-        }
-        else {
-          throw e;
-        }
+        PullTask.wrapIfNeedAndReThrow(e);
       }
       finally {
         transport.close();

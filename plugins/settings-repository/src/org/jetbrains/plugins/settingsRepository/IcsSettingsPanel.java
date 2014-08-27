@@ -147,12 +147,8 @@ public class IcsSettingsPanel extends DialogWrapper {
         url = url.substring(StandardFileSystems.FILE_PROTOCOL_PREFIX.length());
         isFile = true;
       }
-      else if (url.startsWith("git@") || url.startsWith("ssh://") || url.startsWith("git+ssh://")) {
-        Messages.showErrorDialog(getContentPane(), "SSH URL is not supported, please use HTTP/HTTPS");
-        return false;
-      }
       else {
-        isFile = !URLUtil.containsScheme(url);
+        isFile = !url.startsWith("git@") && !URLUtil.containsScheme(url);
       }
 
       if (isFile && !checkFileRepo(url, repositoryManager)) {

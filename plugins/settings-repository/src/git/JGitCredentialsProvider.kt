@@ -36,7 +36,9 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
         passwordItem = item
       }
       else if (item is CredentialItem.StringType) {
-        if (item.getPromptText() == "Password: ") {
+        val promptText = item.getPromptText()
+        if (promptText != null && (promptText == "Password: " ||
+                promptText.startsWith("Passphrase for ") /* JSch prompt */)) {
           passwordItem = item
           continue
         }
