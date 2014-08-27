@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public class ThreadDumper {
     boolean dumpSuccessful = false;
 
     try {
-      ThreadInfo[] threads = threadMXBean.dumpAllThreads(false, false);
+      ThreadInfo[] threads = sort(threadMXBean.dumpAllThreads(false, false));
       for(ThreadInfo info: threads) {
         if (info != null) {
           if (info.getThreadName().equals("AWT-EventQueue-1")) {
@@ -61,7 +61,7 @@ public class ThreadDumper {
 
     if (!dumpSuccessful) {
       final long[] threadIds = threadMXBean.getAllThreadIds();
-      final ThreadInfo[] threadInfo = threadMXBean.getThreadInfo(threadIds, Integer.MAX_VALUE);
+      final ThreadInfo[] threadInfo = sort(threadMXBean.getThreadInfo(threadIds, Integer.MAX_VALUE));
       for (ThreadInfo info : threadInfo) {
         if (info != null) {
           if (info.getThreadName().equals("AWT-EventQueue-1")) {
@@ -73,6 +73,22 @@ public class ThreadDumper {
     }
 
     return edtStack;
+  }
+
+  private static ThreadInfo[] sort(ThreadInfo[] threads) {
+    int edtIndex = -1;
+    for (int i = 0; i < threads.length; i++) {
+      if (threads[i].getThreadName().startsWith("AWT-EventQueue")) {
+        edtIndex = i;
+        break;
+      }
+    }
+    if (edtIndex > 0) {
+      ThreadInfo edt = threads[edtIndex];
+      System.arraycopy(threads, 0, threads, 1, edtIndex);
+      threads[0] = edt;
+    }
+    return threads;
   }
 
   private static void dumpThreadInfo(final ThreadInfo info, final Writer f) {
