@@ -755,7 +755,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       return false;
     }
 
-    private static void addCreateMemberFromUsageFixes(PyType type, PsiReference reference, String refText, List<LocalQuickFix> actions) {
+    private void addCreateMemberFromUsageFixes(PyType type, PsiReference reference, String refText, List<LocalQuickFix> actions) {
       PsiElement element = reference.getElement();
       if (type instanceof PyClassTypeImpl) {
         PyClass cls = ((PyClassType)type).getPyClass();
@@ -771,6 +771,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       else if (type instanceof PyModuleType) {
         PyFile file = ((PyModuleType)type).getModule();
         actions.add(new AddFunctionQuickFix(refText, file.getName()));
+        addCreateClassFix(refText, element, actions);
       }
     }
 
