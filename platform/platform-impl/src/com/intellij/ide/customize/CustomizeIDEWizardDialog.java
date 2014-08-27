@@ -58,6 +58,9 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     myNavigationLabel.setEnabled(false);
     myFooterLabel.setEnabled(false);
     init();
+    if (mySteps.size() > 1) {
+      getRootPane().setDefaultButton(myNextButton);
+    }
     initCurrentStep(true);
     setSize(400, 300);
     System.setProperty(StartupActionScriptManager.STARTUP_WIZARD_MODE, "true");
