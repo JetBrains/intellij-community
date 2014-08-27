@@ -51,7 +51,6 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -181,7 +180,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
     myEditVariablesButton.addActionListener(
       new ActionListener(){
         @Override
-        public void actionPerformed(ActionEvent e) {
+        public void actionPerformed(@NotNull ActionEvent e) {
           editVariables();
         }
       }
@@ -200,7 +199,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
     myTemplate.parseSegments();
   }
 
-  @Nullable
+  @NotNull
   private JComponent createNorthPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
 
@@ -239,7 +238,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
     myExpandByCombo = new ComboBox(new String[]{myDefaultShortcutItem, SPACE, TAB, ENTER});
     myExpandByCombo.addItemListener(new ItemListener() {
       @Override
-      public void itemStateChanged(ItemEvent e) {
+      public void itemStateChanged(@NotNull ItemEvent e) {
         Object selectedItem = myExpandByCombo.getSelectedItem();
         if(myDefaultShortcutItem.equals(selectedItem)) {
           myTemplate.setShortcutChar(TemplateSettings.DEFAULT_CHAR);
@@ -277,7 +276,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
       cb.setSelected(myOptions.get(processor).booleanValue());
       cb.addActionListener(new ActionListener() {
         @Override
-        public void actionPerformed(ActionEvent e) {
+        public void actionPerformed(@NotNull ActionEvent e) {
           myOptions.put(processor, cb.isSelected());
         }
       });
@@ -512,7 +511,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
     myCbReformat.setSelected(myTemplate.isToReformat());
     myCbReformat.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         myTemplate.setToReformat(myCbReformat.isSelected());
       }
     });
