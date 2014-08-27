@@ -378,7 +378,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     rootNode.setStarted(true);
   }
 
-  public void finish() {
+  public void finish(final boolean started) {
     if (start > 0) {
       end = System.currentTimeMillis();
     }
@@ -409,6 +409,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
           }
         }
         tree.repaint();
+        TestsUIUtil.notifyByBalloon(project, started, rootNode, getProperties(), "in " + getTime());
       }
     });
   }
