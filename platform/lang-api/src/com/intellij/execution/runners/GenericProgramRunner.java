@@ -18,7 +18,6 @@ package com.intellij.execution.runners;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
-import com.intellij.execution.Executor;
 import com.intellij.execution.RunProfileStarter;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RunnerSettings;
@@ -36,16 +35,12 @@ public abstract class GenericProgramRunner<Settings extends RunnerSettings> exte
   public static final String CONTENT_TO_REUSE = CONTENT_TO_REUSE_DATA_KEY.getName();
 
   @Override
-  protected void execute(@NotNull ExecutionEnvironment environment, @Nullable final Callback callback, @NotNull Project project, @NotNull RunProfileState state)
+  protected void execute(@NotNull ExecutionEnvironment environment, @Nullable final Callback callback, @NotNull RunProfileState state)
     throws ExecutionException {
-    ExecutionManager.getInstance(project).startRunProfile(new RunProfileStarter() {
+    ExecutionManager.getInstance(environment.getProject()).startRunProfile(new RunProfileStarter() {
       @Override
-      public RunContentDescriptor execute(@NotNull Project project,
-                                          @NotNull Executor executor,
-                                          @NotNull RunProfileState state,
-                                          @Nullable RunContentDescriptor contentToReuse,
-                                          @NotNull ExecutionEnvironment environment) throws ExecutionException {
-        return postProcess(environment, doExecute(project, state, contentToReuse, environment), callback);
+      public RunContentDescriptor execute(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment) throws ExecutionException {
+        return postProcess(environment, doExecute(environment.getProject(), state, environment.getContentToReuse(), environment), callback);
       }
     }, state, environment);
   }

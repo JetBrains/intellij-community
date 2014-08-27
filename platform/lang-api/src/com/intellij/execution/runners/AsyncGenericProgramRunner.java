@@ -17,12 +17,10 @@ package com.intellij.execution.runners;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
-import com.intellij.execution.Executor;
 import com.intellij.execution.RunProfileStarter;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.util.Consumer;
 import com.intellij.util.NullableConsumer;
@@ -38,16 +36,15 @@ public abstract class AsyncGenericProgramRunner<Settings extends RunnerSettings>
   @Override
   protected final void execute(@NotNull final ExecutionEnvironment environment,
                                @Nullable final Callback callback,
-                               @NotNull final Project project,
                                @NotNull final RunProfileState state) throws ExecutionException {
-    prepare(project, environment, state).doWhenDone(new Consumer<RunProfileStarter>() {
+    prepare(environment, state).doWhenDone(new Consumer<RunProfileStarter>() {
       @Override
       public void consume(@Nullable final RunProfileStarter result) {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
-            if (!project.isDisposed()) {
-              startRunProfile(project, environment, state, callback, result);
+            if (!environment.getProject().isDisposed()) {
+              startRunProfile(environment, state, callback, result);
             }
           }
         });
@@ -55,7 +52,7 @@ public abstract class AsyncGenericProgramRunner<Settings extends RunnerSettings>
     }).doWhenRejected(new NullableConsumer<String>() {
       @Override
       public void consume(@Nullable String errorMessage) {
-        if (project.isDisposed()) {
+        if (environment.getProject().isDisposed()) {
           return;
         }
 
@@ -68,29 +65,21 @@ public abstract class AsyncGenericProgramRunner<Settings extends RunnerSettings>
    * Makes all the needed preparations for the further execution. Although this method is called in EDT,
    * these preparations can be performed in a background thread.
    *
-   * @param project Project instance
    * @param environment ExecutionEnvironment instance
    * @param state RunProfileState instance
    * @return RunProfileStarter async result
    */
   @NotNull
-  protected abstract AsyncResult<RunProfileStarter> prepare(@NotNull Project project,
-                                                            @NotNull ExecutionEnvironment environment,
-                                                            @NotNull RunProfileState state) throws ExecutionException;
+  protected abstract AsyncResult<RunProfileStarter> prepare(@NotNull ExecutionEnvironment environment, @NotNull RunProfileState state) throws ExecutionException;
 
-  private static void startRunProfile(@NotNull Project project,
-                                      @NotNull ExecutionEnvironment environment,
+  private static void startRunProfile(@NotNull ExecutionEnvironment environment,
                                       @NotNull RunProfileState state,
                                       @Nullable final Callback callback,
                                       @Nullable final RunProfileStarter starter) {
-    ExecutionManager.getInstance(project).startRunProfile(new RunProfileStarter() {
+    ExecutionManager.getInstance(environment.getProject()).startRunProfile(new RunProfileStarter() {
       @Override
-      public RunContentDescriptor execute(@NotNull Project project,
-                                          @NotNull Executor executor,
-                                          @NotNull RunProfileState state,
-                                          @Nullable RunContentDescriptor contentToReuse,
-                                          @NotNull ExecutionEnvironment environment) throws ExecutionException {
-        return postProcess(environment, starter == null ? null : starter.execute(project, executor, state, contentToReuse, environment), callback);
+      public RunContentDescriptor execute(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment) throws ExecutionException {
+        return postProcess(environment, starter == null ? null : starter.execute(state, environment), callback);
       }
     }, state, environment);
   }
