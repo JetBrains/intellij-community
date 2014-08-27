@@ -20,14 +20,17 @@ import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.RuntimeInterruptedException;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
@@ -39,6 +42,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -74,6 +78,7 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.util.*;
 import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -101,6 +106,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
                                ApplicationEx application,
                                ProjectFileIndex projectFileIndex) throws IOException {
     super(project);
+    ((FutureTask)resolveProcess).run();
     myApplication = application;
     myProjectFileIndex = projectFileIndex;
     if (ResolveScopeManagerImpl.ENABLED_REF_BACK) {
@@ -381,7 +387,9 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     fileIsResolved.writeTo(new File(getStorageDirectory(), "bitSet"));
   }
 
-  private volatile Future<?> resolveProcess; // write from EDT only
+  private volatile Future<?> resolveProcess = new FutureTask<Object>(EmptyRunnable.getInstance(), null); // write from EDT only
+  private volatile ProgressIndicator resolveIndicator = new EmptyProgressIndicator();
+  
   @Override
   public void run() {
     while (!myDisposed) {
@@ -389,8 +397,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
       synchronized (filesToResolve) {
         isEmpty = filesToResolve.isEmpty();
       }
-      Future<?> process = resolveProcess;
-      if (enableVetoes.get() > 0 || isEmpty || process != null && !process.isDone()) {
+      if (enableVetoes.get() > 0 || isEmpty || !resolveProcess.isDone()) {
         try {
           waitForQueue();
         }
@@ -407,24 +414,32 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
       myApplication.invokeLater(new Runnable() {
         @Override
         public void run() {
-          if (resolveProcess != null && !resolveProcess.isDone()) return;
+          if (!resolveProcess.isDone()) return;
           log("Started to resolve " + files.size() + " files");
 
           Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, "Resolving files...", true) {
             @Override
             public void run(@NotNull final ProgressIndicator indicator) {
               if (!myApplication.isDisposed()) {
-                processBatch(indicator, files);
+                try {
+                  processBatch(indicator, files);
+                }
+                catch (RuntimeInterruptedException ignore) {
+                  // see future.cancel() in disable()
+                }
               }
             }
           };
+          ProgressIndicator indicator;
           if (files.size() > 1) {
             //show progress
-            resolveProcess = ProgressManagerImpl.runProcessWithProgressAsynchronously(backgroundable);
+            indicator = new BackgroundableProcessIndicator(backgroundable);
           }
           else {
-            resolveProcess = ProgressManagerImpl.runProcessWithProgressAsynchronously(backgroundable, new MyProgress(), null);
+            indicator = new MyProgress();
           }
+          resolveIndicator = indicator;
+          resolveProcess = ProgressManagerImpl.runProcessWithProgressAsynchronously(backgroundable, indicator, null);
         }
       }, myProject.getDisposed());
 
@@ -559,6 +574,8 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
   }
 
   private void disable() {
+    resolveIndicator.cancel();
+    resolveProcess.cancel(true);
     enableVetoes.incrementAndGet();
     wakeUp();
   }
