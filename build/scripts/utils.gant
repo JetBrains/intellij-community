@@ -306,7 +306,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   }
 
   ant.copy(todir: path) {
-    fileset(dir: "$ch/build/conf/mac")
+    fileset(dir: "$ch/build/conf/mac/Contents")
   }
 
   ant.tstamp() {
@@ -316,14 +316,14 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   String executable = args.executable != null ? args.executable : p("component.names.product").toLowerCase()
   String helpId = args.help_id != null ? args.help_id : "IJ"
   String icns = "idea.icns"
-  String helpIcns = "$path/Contents/Resources/${helpId}.help/Contents/Resources/Shared/product.icns"
+  String helpIcns = "$path/Resources/${helpId}.help/Contents/Resources/Shared/product.icns"
   if (args.icns != null) {
-    ant.delete(file: "$path/Contents/Resources/idea.icns")
-    ant.copy(file: args.icns, todir: "$path/Contents/Resources")
+    ant.delete(file: "$path/Resources/idea.icns")
+    ant.copy(file: args.icns, todir: "$path/Resources")
     ant.copy(file: args.icns, tofile: helpIcns)
     icns = new File((String)args.icns).getName();
   } else {
-    ant.copy(file: "$path/Contents/Resources/idea.icns", tofile: helpIcns)
+    ant.copy(file: "$path/Resources/idea.icns", tofile: helpIcns)
   }
 
   String fullName = args.fullName != null ? args.fullName : p("component.names.fullname")
@@ -385,7 +385,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
 """
   }
 
-  ant.replace(file: "$path/Contents/Info.plist") {
+  ant.replace(file: "$path/Info.plist") {
     replacefilter(token: "@@build@@", value: args.buildNumber)
     replacefilter(token: "@@doc_types@@", value: ifNull(args.doc_types, ""))
     replacefilter(token: "@@executable@@", value: executable)
@@ -705,7 +705,7 @@ binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths,
         exclude(name: "bin/*.py")
         exclude(name: "bin/fsnotifier")
         exclude(name: "bin/restarter")
-        exclude(name: "Contents/MacOS/*")
+        exclude(name: "MacOS/*")
         extraBins.each {
           exclude(name: it)
         }
@@ -719,7 +719,7 @@ binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths,
         include(name: "bin/*.py")
         include(name: "bin/fsnotifier")
         include(name: "bin/restarter")
-        include(name: "Contents/MacOS/*")
+        include(name: "MacOS/*")
         extraBins.each {
           include(name: it)
         }

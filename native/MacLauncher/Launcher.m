@@ -92,13 +92,23 @@ NSArray *allVms() {
     NSString *explicit = [[[NSProcessInfo processInfo] environment] objectForKey:@"IDEA_JDK"];
 
     if (explicit != nil) {
-        appendBundle(explicit, jvmBundlePaths);
+        // check if IDEA_JDK value corresponds  with JVMVersion from Info.plist
+        NSLog(@"value of IDEA_JDK: %@", explicit);
+        NSBundle *jdkBundle = [NSBundle bundleWithPath:explicit];
+        NSString *required = requiredJvmVersion();
+        if (jdkBundle != nil && required != NULL) {
+            if (satisfies(jvmVersion(jdkBundle), required)) {
+                appendBundle(explicit, jvmBundlePaths);
+                debugLog(@"User VM:");
+                debugLog([jdkBundle bundlePath]);
+            }
+        }
     }
-    else {
+    if (! jvmBundlePaths.count > 0 ) {
         NSBundle *bundle = [NSBundle mainBundle];
-        NSString *appDir = bundle.bundlePath;
+        NSString *appDir = [bundle.bundlePath stringByAppendingPathComponent:@"Contents"];
 
-        appendJvmBundlesAt([appDir stringByAppendingPathComponent:@"jre"], jvmBundlePaths);
+        appendJvmBundlesAt([appDir stringByAppendingPathComponent:@"/jre"], jvmBundlePaths);
         if (jvmBundlePaths.count > 0) return jvmBundlePaths;
 
         appendJvmBundlesAt([NSHomeDirectory() stringByAppendingPathComponent:@"Library/Java/JavaVirtualMachines"], jvmBundlePaths);
@@ -147,6 +157,7 @@ NSBundle *findMatchingVm() {
     NSString *required = requiredJvmVersion();
     debugLog([NSString stringWithFormat:@"Required VM: %@", required]);
 
+    if (required != nil && required != NULL) {
     for (NSBundle *vm in vmBundles) {
         if (satisfies(jvmVersion(vm), required)) {
             debugLog(@"Chosen VM:");
@@ -154,9 +165,11 @@ NSBundle *findMatchingVm() {
             return vm;
         }
     }
-
-    debugLog(@"No matching VM found");
-
+    } else {
+        NSLog(@"Info.plist is corrupted, Absent JVMOptios key.");
+        exit(-1);
+    }
+    NSLog(@"No matching VM found.");
     return nil;
 }
 
@@ -174,14 +187,21 @@ CFBundleRef NSBundle2CFBundle(NSBundle *bundle) {
 - (NSMutableString *)buildClasspath:(NSBundle *)jvm {
     NSDictionary *jvmInfo = [[NSBundle mainBundle] objectForInfoDictionaryKey:JVMOptions];
     NSMutableString *classpathOption = [NSMutableString stringWithString:@"-Djava.class.path="];
-    [classpathOption appendString:[jvmInfo objectForKey:@"ClassPath"]];
-
-    NSString *toolsJar = [[jvm bundlePath] stringByAppendingString:@"/Contents/Home/lib/tools.jar"];
-    if ([[NSFileManager defaultManager] fileExistsAtPath:toolsJar]) {
+    NSString *classPath = [jvmInfo objectForKey:@"ClassPath"];
+    if (classPath != nil && classPath != NULL) {
+      [classpathOption appendString:[jvmInfo objectForKey:@"ClassPath"]];
+      NSString *toolsJar = [[jvm bundlePath] stringByAppendingString:@"/Contents/Home/lib/tools.jar"];
+      if ([[NSFileManager defaultManager] fileExistsAtPath:toolsJar]) {
         [classpathOption appendString:@":"];
         [classpathOption appendString:toolsJar];
     }
-    return classpathOption;
+
+    } else {
+        NSLog(@"Info.plist is corrupted, Absent ClassPath key.");
+        exit(-1);
+    }
+        
+  return classpathOption;
 }
 
 
@@ -206,8 +226,20 @@ NSString *getDefaultPropertiesFilePath() {
     return [[[NSBundle mainBundle] bundlePath] stringByAppendingString:@"/bin/idea.properties"];
 }
 
-NSString *getDefaultVMOptionsFilePath() {
-    return [[[NSBundle mainBundle] bundlePath] stringByAppendingString:@"/bin/idea.vmoptions"];
+// NSString *getDefaultVMOptionsFilePath() {
+//    return [[[NSBundle mainBundle] bundlePath] stringByAppendingString:@fileName];
+
+NSString *getDefaultFilePath(NSString *fileName) {
+    NSString *fullFileName = [[[NSBundle mainBundle] bundlePath] stringByAppendingString:@"/Contents"];
+    fullFileName = [fullFileName stringByAppendingString:fileName];
+    NSLog(@"fullFileName is: %@", fullFileName);
+    if ([[NSFileManager defaultManager] fileExistsAtPath:fullFileName]) {
+      NSLog(@"fullFileName exists: %@", fullFileName);
+    } else{
+      fullFileName = [[[NSBundle mainBundle] bundlePath] stringByAppendingString:fileName];
+      NSLog(@"fullFileName exists: %@", fullFileName);
+    }
+    return fullFileName;
 }
 
 NSString *getVMOptionsFilePath() {
@@ -217,7 +249,8 @@ NSString *getVMOptionsFilePath() {
 NSArray *parseVMOptions() {
     NSArray *inConfig=[VMOptionsReader readFile:getVMOptionsFilePath()];
     if (inConfig) return inConfig;
-    return [VMOptionsReader readFile:getDefaultVMOptionsFilePath()];
+    //return [VMOptionsReader readFile:getDefaultVMOptionsFilePath()];
+    return [VMOptionsReader readFile:getDefaultFilePath(@"/bin/idea.vmoptions")];
 }
 
 NSDictionary *parseProperties() {
@@ -263,6 +296,13 @@ NSDictionary *parseProperties() {
 
 - (const char *)mainClassName {
     NSDictionary *jvmInfo = [[NSBundle mainBundle] objectForInfoDictionaryKey:JVMOptions];
+    
+    NSString *mainClass = [jvmInfo objectForKey:@"MainClass"];
+    if (mainClass == nil || mainClass == NULL) {
+        NSLog(@"Info.plist is corrupted, Absent MainClass key.");
+        exit(-1);
+    }
+    
     char *answer = strdup([[jvmInfo objectForKey:@"MainClass"] UTF8String]);
     
     char *cur = answer;
@@ -279,11 +319,14 @@ NSDictionary *parseProperties() {
 - (void)process_cwd {
     NSDictionary *jvmInfo = [[NSBundle mainBundle] objectForInfoDictionaryKey:JVMOptions];
     NSString *cwd = [jvmInfo objectForKey:@"WorkingDirectory"];
-    if (cwd != nil) {
+    if (cwd != nil && cwd != NULL) {
         cwd = [self expandMacros:cwd];
         if (chdir([cwd UTF8String]) != 0) {
             NSLog(@"Cannot chdir to working directory at %@", cwd);
         }
+    } else {
+        NSLog(@"Info.plist is corrupted, Absent WorkingDirectory key.");
+        exit(-1);
     }
 }
 
