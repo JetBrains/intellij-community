@@ -1,4 +1,4 @@
-def f(my, *, param, **args):
+def foo(my, *, param, **args):
   """
 
   :param my:
