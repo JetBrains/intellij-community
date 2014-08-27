@@ -66,6 +66,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -442,16 +443,20 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       }
     };
 
-    final KeyboardShortcut keyboardShortcut = ActionManagerEx.getInstanceEx().getKeyboardShortcut("QuickJavaDoc");
-    final List<Pair<ActionListener, KeyStroke>> actions =
-      Collections.singletonList(Pair.<ActionListener, KeyStroke>create(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          createToolWindow(element, originalElement);
-          final JBPopup hint = getDocInfoHint();
-          if (hint != null && hint.isVisible()) hint.cancel();
-        }
-      }, keyboardShortcut != null ? keyboardShortcut.getFirstKeyStroke() : null)); // Null keyStroke is ok here
+    ActionListener actionListener = new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        createToolWindow(element, originalElement);
+        final JBPopup hint = getDocInfoHint();
+        if (hint != null && hint.isVisible()) hint.cancel();
+      }
+    };
+    List<Pair<ActionListener, KeyStroke>> actions = ContainerUtil.newSmartList();
+    AnAction quickDocAction = ActionManagerEx.getInstanceEx().getAction(IdeActions.ACTION_QUICK_JAVADOC);
+    for (Shortcut shortcut : quickDocAction.getShortcutSet().getShortcuts()) {
+      if (!(shortcut instanceof KeyboardShortcut)) continue;
+      actions.add(Pair.create(actionListener, ((KeyboardShortcut)shortcut).getFirstKeyStroke()));
+    }
 
     boolean hasLookup = LookupManager.getActiveLookup(myEditor) != null;
     final JBPopup hint = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
