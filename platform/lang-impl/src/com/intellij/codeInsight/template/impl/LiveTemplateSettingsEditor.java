@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -469,14 +468,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
   }
 
   private void updateHighlighter() {
-    List<TemplateContextType> applicableContexts = getApplicableContexts();
-    if (!applicableContexts.isEmpty()) {
-      TemplateContext contextByType = new TemplateContext();
-      contextByType.setEnabled(applicableContexts.get(0), true);
-      TemplateEditorUtil.setHighlighter(myTemplateEditor, contextByType);
-      return;
-    }
-    ((EditorEx) myTemplateEditor).repaint(0, myTemplateEditor.getDocument().getTextLength());
+    TemplateEditorUtil.setHighlighter(myTemplateEditor, ContainerUtil.getFirstItem(getApplicableContexts()));
   }
 
   private void validateEditVariablesButton() {
