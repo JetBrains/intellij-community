@@ -144,19 +144,6 @@ public class TestNGRunnableState extends JavaCommandLineState {
         if (mySearchForTestIndicator != null && !mySearchForTestIndicator.isCanceled()) {
           task.finish();
         }
-
-        final Runnable notificationRunnable = new Runnable() {
-          public void run() {
-            final Project project = config.getProject();
-            if (project.isDisposed()) return;
-
-            final TestConsoleProperties consoleProperties = console.getProperties();
-            if (consoleProperties == null) return;
-            final TestNGResults resultsView = console.getResultsView();
-            TestsUIUtil.notifyByBalloon(project, myStarted, console.getResultsView().getRoot(), consoleProperties, "in " + resultsView.getTime());
-          }
-        };
-        SwingUtilities.invokeLater(notificationRunnable);
       }
 
       @Override
@@ -175,7 +162,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
       public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
         final TestNGResults resultsView = console.getResultsView();
         if (resultsView != null) {
-          resultsView.finish();
+          resultsView.finish(myStarted);
         }
       }
 

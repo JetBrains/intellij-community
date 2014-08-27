@@ -235,7 +235,7 @@ public class JBScrollPane extends JScrollPane {
       }
       if (colHead != null) {
         Rectangle headerBounds = colHead.getBounds();
-        headerBounds.width = viewportBounds.width - headerBounds.x;
+        headerBounds.width = viewportBounds.width;
         colHead.setBounds(headerBounds);
       }
       hideFromView(layout.getCorner(UPPER_RIGHT_CORNER));
@@ -249,7 +249,7 @@ public class JBScrollPane extends JScrollPane {
       }
       if (rowHead != null) {
         Rectangle headerBounds = rowHead.getBounds();
-        headerBounds.height = viewportBounds.height - headerBounds.y;
+        headerBounds.height = viewportBounds.height;
         rowHead.setBounds(headerBounds);
       }
 
