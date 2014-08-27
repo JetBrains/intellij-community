@@ -118,13 +118,11 @@ public class TemplateEditorUtil {
     editor.setHighlighter(layeredHighlighter);
   }
 
-  private final static TokenSet TOKENS_TO_MERGE = TokenSet.create(TemplateTokenType.TEXT);
-
   private static class TemplateHighlighter extends SyntaxHighlighterBase {
     private final Lexer myLexer;
 
     public TemplateHighlighter() {
-      myLexer = new MergingLexerAdapter(new TemplateTextLexer(), TOKENS_TO_MERGE);
+      myLexer = new MergingLexerAdapter(new TemplateTextLexer(), TokenSet.create(TemplateTokenType.TEXT));
     }
 
     @Override
