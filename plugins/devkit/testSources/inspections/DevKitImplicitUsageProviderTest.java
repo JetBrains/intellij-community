@@ -48,4 +48,8 @@ public class DevKitImplicitUsageProviderTest extends LightCodeInsightFixtureTest
   public void testImplicitUsagesDomElementVisitor() {
     myFixture.testHighlighting("ImplicitUsagesDomElementVisitor.java");
   }
+
+  public void testImplementedAtRuntimeDomElementImpl() {
+    myFixture.testHighlighting("ImplementedAtRuntimeDomElementImpl.java");
+  }
 }
