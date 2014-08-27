@@ -129,6 +129,9 @@ public class ImportToImportFromIntention implements IntentionAction {
       sure(myImportElement.getImportReferenceExpression());
       final Project project = myImportElement.getProject();
 
+      final PyElementGenerator generator = PyElementGenerator.getInstance(project);
+      final LanguageLevel languageLevel = LanguageLevel.forElement(myImportElement);
+
       // usages of imported name are qualifiers; what they refer to?
       try {
         // remember names and make them drop qualifiers
@@ -136,13 +139,15 @@ public class ImportToImportFromIntention implements IntentionAction {
         for (PsiReference ref : myReferences) {
           final PsiElement elt = ref.getElement();
           final PsiElement parentElt = elt.getParent();
-          usedNames.add(sure(sure(parentElt).getLastChild()).getText()); // TODO: find ident node more properly
+          // TODO: find ident node more properly
+          final String nameUsed = sure(sure(parentElt).getLastChild()).getText();
+          usedNames.add(nameUsed);
           if (!FileModificationService.getInstance().preparePsiElementForWrite(elt)) {
             return;
           }
-          final PsiElement nextElt = elt.getNextSibling();
-          if (nextElt != null && ".".equals(nextElt.getText())) nextElt.delete();
-          elt.delete();
+          assert parentElt instanceof PyReferenceExpression;
+          final PyElement newReference = generator.createExpressionFromText(languageLevel, nameUsed);
+          parentElt.replace(newReference);
         }
 
         // create a separate import stmt for the module
@@ -160,20 +165,17 @@ public class ImportToImportFromIntention implements IntentionAction {
         else {
           throw new IncorrectOperationException("Not an import at all");
         }
-        final PyElementGenerator generator = PyElementGenerator.getInstance(project);
-        final StringBuilder builder = new StringBuilder("from ").append(getDots()).append(myModuleName).append(" import ");
-        builder.append(StringUtil.join(usedNames, ", "));
-        final PyFromImportStatement fromImportStatement =
-          generator.createFromText(LanguageLevel.getDefault(), PyFromImportStatement.class, builder.toString());
+        final PyFromImportStatement newImportStatement =
+          generator.createFromImportStatement(languageLevel, getDots() + myModuleName, StringUtil.join(usedNames, ", "), null);
         final PsiElement parent = importStatement.getParent();
         sure(parent);
         sure(parent.isValid());
         if (importElements.length == 1) {
           if (myHasModuleReference) {
-            parent.addAfter(fromImportStatement, importStatement); // add 'import from': we need the module imported as is
+            parent.addAfter(newImportStatement, importStatement); // add 'import from': we need the module imported as is
           }
           else { // replace entire existing import
-            sure(parent.getNode()).replaceChild(sure(importStatement.getNode()), sure(fromImportStatement.getNode()));
+            sure(parent.getNode()).replaceChild(sure(importStatement.getNode()), sure(newImportStatement.getNode()));
             // import_statement.replace(from_import_stmt);
           }
         }
@@ -187,7 +189,7 @@ public class ImportToImportFromIntention implements IntentionAction {
               }
             }
           }
-          parent.addAfter(fromImportStatement, importStatement);
+          parent.addAfter(newImportStatement, importStatement);
         }
       }
       catch (IncorrectOperationException ignored) {
