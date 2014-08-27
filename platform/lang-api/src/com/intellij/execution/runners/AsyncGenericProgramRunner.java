@@ -59,8 +59,7 @@ public abstract class AsyncGenericProgramRunner<Settings extends RunnerSettings>
           return;
         }
 
-        ExecutionUtil.handleExecutionError(project, environment.getExecutor().getToolWindowId(), environment.getRunProfile(),
-                                           new ExecutionException(ObjectUtils.chooseNotNull(errorMessage, "Internal error")));
+        ExecutionUtil.handleExecutionError(environment, new ExecutionException(ObjectUtils.chooseNotNull(errorMessage, "Internal error")));
       }
     });
   }
