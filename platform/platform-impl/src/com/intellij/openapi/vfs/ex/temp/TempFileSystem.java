@@ -136,7 +136,7 @@ public class TempFileSystem extends LocalFileSystemBase {
     }
 
     fsItem.getParent().removeChild(fsItem);
-    ((FSDir)newParentItem).addChild(fsItem);
+    newDir.addChild(fsItem.isDirectory() ? new FSDir(newDir, fsItem.myName) : new FSFile(newDir, fsItem.myName));
   }
 
   @Override
