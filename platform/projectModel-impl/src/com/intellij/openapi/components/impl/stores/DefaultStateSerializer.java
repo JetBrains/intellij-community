@@ -27,10 +27,10 @@ import com.intellij.util.xmlb.Accessor;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
-
 
 @SuppressWarnings({"deprecation"})
 class DefaultStateSerializer {
@@ -40,7 +40,7 @@ class DefaultStateSerializer {
   private DefaultStateSerializer() {
   }
 
-  static Element serializeState(Object state, final Storage storage) throws  WriteExternalException {
+  static Element serializeState(@NotNull Object state, final Storage storage) throws WriteExternalException {
     if (state instanceof Element) {
       return (Element)state;
     }
@@ -53,7 +53,8 @@ class DefaultStateSerializer {
       }
       catch (WriteExternalException e) {
         throw e;
-      }catch (Throwable e) {
+      }
+      catch (Throwable e) {
         LOG.info("Unable to serialize component state!", e);
         return new Element("empty");
       }
