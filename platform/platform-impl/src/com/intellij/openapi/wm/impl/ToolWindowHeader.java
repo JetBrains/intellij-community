@@ -220,6 +220,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
 
   @Override
   public ModalityState getModalityState() {
+    if (myToolWindow == null) return null;
     return ModalityState.stateForComponent(myToolWindow.getComponent());
   }
 
