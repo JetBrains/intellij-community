@@ -18,6 +18,7 @@ package com.intellij.psi.impl.cache.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -109,14 +110,15 @@ public class SCR14423Test extends PsiTestCase {
 
         assertTrue(psiClass.isValid());
 
-        PsiTestUtil.addExcludedRoot(myModule, myPackDir);
-
-        assertFalse(psiClass.isValid());
-
-        ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-        final ContentEntry content = rootModel.getContentEntries()[0];
-        content.removeExcludeFolder(content.getExcludeFolders()[0]);
-        rootModel.commit();
+        FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+        String ignoredFilesList = fileTypeManager.getIgnoredFilesList();
+        fileTypeManager.setIgnoredFilesList(ignoredFilesList + ";p");
+        try {
+          assertFalse(psiClass.isValid());
+        }
+        finally {
+          fileTypeManager.setIgnoredFilesList(ignoredFilesList);
+        }
 
         psiClass = myJavaFacade.findClass("p.A");
         assertTrue(psiClass.isValid());
