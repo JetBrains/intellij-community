@@ -52,6 +52,10 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
 
   public abstract AbstractTestProxy getSelectedTest(@NotNull TreePath selectionPath);
 
+  protected TestFrameworkRunningModel getTestFrameworkRunningModel() {
+    return myModel;
+  }
+
   @Nullable
   public AbstractTestProxy getSelectedTest() {
     TreePath[] paths = getSelectionPaths();

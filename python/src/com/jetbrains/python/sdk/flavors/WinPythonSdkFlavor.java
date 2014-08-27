@@ -34,6 +34,7 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
   public static WinPythonSdkFlavor INSTANCE = new WinPythonSdkFlavor();
   private static Map<String, String> ourRegistryMap =
     ImmutableMap.of("HKEY_LOCAL_MACHINE\\SOFTWARE\\Python\\PythonCore", "python.exe",
+                    "HKEY_LOCAL_MACHINE\\SOFTWARE\\Wow6432Node\\Python\\PythonCore", "python.exe",
                     "HKEY_LOCAL_MACHINE\\SOFTWARE\\IronPython", "ipy.exe");
 
   private WinPythonSdkFlavor() {

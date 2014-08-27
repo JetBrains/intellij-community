@@ -46,7 +46,7 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
   private Map<String, Icon> myLafNames = new LinkedHashMap<String, Icon>();
 
   public CustomizeUIThemeStepPanel() {
-    setLayout(new BorderLayout(10, 10));
+    setLayout(createSmallBorderLayout());
     IconLoader.activate();
 
     initLafs();
@@ -65,13 +65,13 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
         radioButton.setSelected(true);
         myDefaultLafName = lafName;
       }
-      final JPanel panel = createBigButtonPanel(new BorderLayout(10, 10), radioButton, new Runnable() {
+      final JPanel panel = createBigButtonPanel(createSmallBorderLayout(), radioButton, new Runnable() {
         @Override
         public void run() {
           applyLaf(lafName, CustomizeUIThemeStepPanel.this);
         }
       });
-      panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+      panel.setBorder(createSmallEmptyBorder());
       panel.add(radioButton, myColumnMode ? BorderLayout.WEST : BorderLayout.NORTH);
       final JLabel label = new JLabel(myColumnMode ? IconUtil.scale(IconUtil.cropIcon(icon, icon.getIconWidth() * 2 / 3, icon.getIconHeight() * 2 / 3), .5) : icon);
       label.setVerticalAlignment(SwingConstants.TOP);

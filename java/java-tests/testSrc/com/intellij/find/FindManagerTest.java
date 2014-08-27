@@ -343,6 +343,28 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertSize(2, findUsages(findModel));
   }
 
+  public void testNonRecursiveDirectory() throws Exception {
+    VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(createTempDirectory());
+    addSourceContentToRoots(myModule, root);
+
+    VirtualFile foo = createChildDirectory(root, "foo");
+    VirtualFile bar = createChildDirectory(foo, "bar");
+    createFile(myModule, root, "A.txt", "goo doo");
+    createFile(myModule, foo, "A.txt", "goo doo");
+    createFile(myModule, bar, "A.txt", "doo goo");
+
+    FindModel findModel = FindManagerTestUtils.configureFindModel("done");
+    findModel.setProjectScope(false);
+    findModel.setDirectoryName(foo.getPath());
+    findModel.setStringToFind("doo");
+
+    findModel.setWithSubdirectories(true);
+    assertSize(2, findUsages(findModel));
+
+    findModel.setWithSubdirectories(false);
+    assertSize(1, findUsages(findModel));
+  }
+
   public void testReplaceRegexp() {
     FindModel findModel = new FindModel();
     findModel.setStringToFind("bug_(?=here)");

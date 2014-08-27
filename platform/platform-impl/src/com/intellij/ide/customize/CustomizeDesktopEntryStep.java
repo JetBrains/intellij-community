@@ -19,6 +19,8 @@ import com.intellij.ide.actions.CreateDesktopEntryAction;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 
@@ -34,18 +36,32 @@ public class CustomizeDesktopEntryStep extends AbstractCustomizeWizardStep {
   private final JCheckBox myCreateEntryCheckBox = new JCheckBox(ActionsBundle.message("action.CreateDesktopEntry.description"));
   private final JCheckBox myGlobalEntryCheckBox = new JCheckBox("For all users");
 
-  public CustomizeDesktopEntryStep() {
-    setLayout(new GridBagLayout());
+  public CustomizeDesktopEntryStep(String iconPath) {
+    setLayout(new BorderLayout());
+
+    JPanel panel = createBigButtonPanel(createSmallBorderLayout(), myCreateEntryCheckBox, EmptyRunnable.INSTANCE);
+    panel.setBorder(createSmallEmptyBorder());
+
+    JPanel buttonPanel = new JPanel(new GridBagLayout());
+    buttonPanel.setOpaque(false);
 
     GridBag gbc =
       new GridBag().setDefaultAnchor(GridBagConstraints.WEST).setDefaultFill(GridBagConstraints.HORIZONTAL).setDefaultWeightX(1);
 
-    add(myCreateEntryCheckBox, gbc.nextLine());
+    myCreateEntryCheckBox.setOpaque(false);
+    buttonPanel.add(myCreateEntryCheckBox, gbc.nextLine());
 
+    myGlobalEntryCheckBox.setOpaque(false);
     gbc.nextLine().insets.left = UIUtil.PANEL_REGULAR_INSETS.left;
-    add(myGlobalEntryCheckBox, gbc);
+    buttonPanel.add(myGlobalEntryCheckBox, gbc);
 
-    add(Box.createVerticalGlue(), gbc.nextLine().weighty(1));
+    panel.add(buttonPanel, BorderLayout.NORTH);
+
+    JLabel label = new JLabel(IconLoader.getIcon(iconPath));
+    label.setVerticalAlignment(JLabel.TOP);
+    panel.add(label, BorderLayout.CENTER);
+
+    add(panel, BorderLayout.CENTER);
 
     myCreateEntryCheckBox.addChangeListener(new ChangeListener() {
       @Override
@@ -87,6 +103,6 @@ public class CustomizeDesktopEntryStep extends AbstractCustomizeWizardStep {
 
   @Override
   protected String getHTMLFooter() {
-    return "Desktop entry can be configured later in Tools | Create Desktop Entry...";
+    return "Desktop entry can be created later in Tools | Create Desktop Entry...";
   }
 }

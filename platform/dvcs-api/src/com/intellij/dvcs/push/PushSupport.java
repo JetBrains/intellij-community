@@ -19,6 +19,7 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.ui.SimpleColoredText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -85,4 +86,6 @@ public abstract class PushSupport<Repo extends Repository> {
    */
   @Nullable
   public abstract VcsError validate(@NotNull Repository repository, @Nullable String targetToValidate);
+
+  public abstract SimpleColoredText renderTarget(@Nullable PushTarget target);
 }

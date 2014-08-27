@@ -13,10 +13,13 @@ except:
     setattr(__builtin__, 'False', 0)
 
 import pydevd_constants
-from pydevd_constants import DictIterItems, xrange, izip
+from pydevd_constants import DictIterItems, xrange
 
 
-MAX_ITEMS_TO_HANDLE = 500
+# Note: 300 is already a lot to see in the outline (after that the user should really use the shell to get things)
+# and this also means we'll pass less information to the client side (which makes debugging faster).
+MAX_ITEMS_TO_HANDLE = 300 
+
 TOO_LARGE_MSG = 'Too large to show contents. Max items to show: ' + str(MAX_ITEMS_TO_HANDLE)
 TOO_LARGE_ATTR = 'Unable to handle:'
 
@@ -272,19 +275,20 @@ class TupleResolver: #to enumerate tuples and lists
         return var[int(attribute)]
 
     def getDictionary(self, var):
-        #return dict( [ (i, x) for i, x in enumerate(var) ] )
-        # modified 'cause jython does not have enumerate support
         l = len(var)
         d = {}
 
-        if l < MAX_ITEMS_TO_HANDLE:
-            format = '%0' + str(int(len(str(l)))) + 'd'
+        format_str = '%0' + str(int(len(str(l)))) + 'd'
 
-
-            for i, item in izip(xrange(l), var):
-                d[ format % i ] = item
-        else:
-            d[TOO_LARGE_ATTR] = TOO_LARGE_MSG
+        i = 0
+        for item in var:
+            d[format_str % i] = item
+            i += 1
+            
+            if i > MAX_ITEMS_TO_HANDLE:
+                d[TOO_LARGE_ATTR] = TOO_LARGE_MSG
+                break
+                
         d['__len__'] = len(var)
         return d
 
@@ -381,13 +385,24 @@ class NdArrayResolver:
         This resolves a numpy ndarray returning some metadata about the NDArray
     '''
 
+    def is_numeric(self, obj):
+        if not hasattr(obj, 'dtype'):
+            return False
+        return obj.dtype.kind in 'biufc'
+
     def resolve(self, obj, attribute):
         if attribute == '__internals__':
             return defaultResolver.getDictionary(obj)
         if attribute == 'min':
-            return obj.min()
+            if self.is_numeric(obj):
+                return obj.min()
+            else:
+                return None
         if attribute == 'max':
-            return obj.max()
+            if self.is_numeric(obj):
+                return obj.max()
+            else:
+                return None
         if attribute == 'shape':
             return obj.shape
         if attribute == 'dtype':
@@ -403,8 +418,12 @@ class NdArrayResolver:
             ret['min'] = 'ndarray too big, calculating min would slow down debugging'
             ret['max'] = 'ndarray too big, calculating max would slow down debugging'
         else:
-            ret['min'] = obj.min()
-            ret['max'] = obj.max()
+            if self.is_numeric(obj):
+                ret['min'] = obj.min()
+                ret['max'] = obj.max()
+            else:
+                ret['min'] = 'not a numeric object'
+                ret['max'] = 'not a numeric object'
         ret['shape'] = obj.shape
         ret['dtype'] = obj.dtype
         ret['size'] = obj.size

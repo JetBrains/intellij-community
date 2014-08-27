@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,9 @@ import com.intellij.refactoring.typeCook.deductive.resolver.Binding;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author db
@@ -35,10 +35,10 @@ import java.util.Map;
 public class Result {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeCook.deductive.builder.Result");
 
-  private final HashSet<PsiElement> myVictims;
-  private final HashMap<PsiElement, PsiType> myTypes;
+  private final Set<PsiElement> myVictims;
+  private final Map<PsiElement, PsiType> myTypes;
   private final Settings mySettings;
-  private final HashMap<PsiTypeCastExpression, PsiType> myCastToOperandType;
+  private final Map<PsiTypeCastExpression, PsiType> myCastToOperandType;
 
   private int myCookedNumber = -1;
   private int myCastsRemoved = -1;
@@ -92,10 +92,10 @@ public class Result {
     return originalType;
   }
 
-  public HashSet<PsiElement> getCookedElements() {
+  public Set<PsiElement> getCookedElements() {
     myCookedNumber = 0;
 
-    final HashSet<PsiElement> set = new HashSet<PsiElement>();
+    final Set<PsiElement> set = new HashSet<PsiElement>();
 
     for (final PsiElement element : myVictims) {
       final PsiType originalType = Util.getType(element);
@@ -137,7 +137,7 @@ public class Result {
     return false;
   }
 
-  public void apply(final HashSet<PsiElement> victims) {
+  public void apply(final Set<PsiElement> victims) {
     for (final PsiElement element : victims) {
       if (element instanceof PsiTypeCastExpression && myCastToOperandType.containsKey(element)) {
         final PsiTypeCastExpression cast = ((PsiTypeCastExpression)element);

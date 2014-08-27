@@ -21,11 +21,17 @@
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.NotNull;
 
 public class HierarchyScopeDescriptorProvider implements ScopeDescriptorProvider {
   @NotNull
   public ScopeDescriptor[] getScopeDescriptors(final Project project) {
+    if (Comparing.strEqual(ToolWindowManager.getInstance(project).getActiveToolWindowId(), ToolWindowId.TODO_VIEW)) {
+      return EMPTY;
+    }
     return new ScopeDescriptor[]{new ClassHierarchyScopeDescriptor(project)};
   }
 }

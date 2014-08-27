@@ -31,6 +31,12 @@
       <val val="&quot;!null,_,_,_-&gt;true;_,!null,_,_-&gt;true;_,_,!null,_-&gt;true;_,_,_,!null-&gt;true;_,_,_,null-&gt;true;_,_,null,_-&gt;true;_,null,_,_-&gt;true;null,_,_,_-&gt;true&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.velocity.runtime.RuntimeInstance org.apache.velocity.app.event.EventHandler initializeSpecificEventHandler(java.lang.String, java.lang.String, java.lang.Class) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.runtime.RuntimeInstance org.apache.velocity.app.event.EventHandler initializeSpecificEventHandler(java.lang.String, java.lang.String, java.lang.Class) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.velocity.runtime.RuntimeInstance org.apache.velocity.app.event.EventHandler initializeSpecificEventHandler(java.lang.String, java.lang.String, java.lang.Class)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;_,_,null-&gt;null;null,_,_-&gt;null&quot;"/>
@@ -81,6 +87,9 @@
   <item name="org.apache.velocity.runtime.VelocimacroFactory boolean addVelocimacro(java.lang.String, org.apache.velocity.runtime.parser.node.Node, java.lang.String[], java.lang.String) 3">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.velocity.runtime.VelocimacroFactory.Twonk Twonk(org.apache.velocity.runtime.VelocimacroFactory.1) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.velocity.runtime.VelocimacroManager boolean addVM(java.lang.String, org.apache.velocity.runtime.parser.node.Node, java.lang.String[], java.lang.String, boolean) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -89,10 +98,22 @@
       <val val="&quot;!null,_,_,_,_-&gt;true;_,!null,_,_,_-&gt;true;_,_,!null,_,_-&gt;true;_,_,_,!null,_-&gt;true;_,_,_,_,false-&gt;true;_,_,_,_,true-&gt;true;_,_,_,null,_-&gt;true;_,_,null,_,_-&gt;true;null,_,_,_,_-&gt;true&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.velocity.runtime.VelocimacroManager boolean usingNamespaces(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.runtime.VelocimacroManager org.apache.velocity.runtime.directive.VelocimacroProxy get(java.lang.String, java.lang.String, java.lang.String) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.velocity.runtime.VelocimacroManager.MacroEntry MacroEntry(java.lang.String, org.apache.velocity.runtime.parser.node.Node, java.lang.String[], java.lang.String, org.apache.velocity.runtime.RuntimeServices) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.velocity.runtime.VelocimacroManager.MacroEntry MacroEntry(java.lang.String, org.apache.velocity.runtime.parser.node.Node, java.lang.String[], java.lang.String, org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.runtime.VelocimacroManager.1) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.VelocimacroManager.MacroEntry MacroEntry(java.lang.String, org.apache.velocity.runtime.parser.node.Node, java.lang.String[], java.lang.String, org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.runtime.VelocimacroManager.1) 5">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.runtime.VelocimacroManager.MacroEntry org.apache.velocity.runtime.directive.VelocimacroProxy getProxy(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
 </root>

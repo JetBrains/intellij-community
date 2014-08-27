@@ -1,5 +1,7 @@
 package com.siyeh.igtest.numeric.pointless_arithmetic_expression;
 
+import java.util.Random;
+
 public class PointlessArithmeticExpression
 {
     private static final int ZERO_CONSTANT = 0;
@@ -108,7 +110,7 @@ class Main {
 
   int fly(int i) {
     final Main main = new Main(12);
-    return <warning descr="'(CONST + (new Main(5).i) * 8) - (Main.CONST + new Main(5).i * (8))' can be replaced with '0'">(CONST + (new Main(5).i) * 8) - (Main.CONST + new Main(5).i * (8))</warning>;
+    return (CONST + (new Main(5).i) * 8) - (Main.CONST + new Main(5).i * (8));
   }
 
   int one = <warning descr="'5/5' can be replaced with '1'">5/5</warning>;
@@ -128,3 +130,12 @@ class Expanded {{
   int div = 3 / 2 / 2;
   int mod = 3 % 2 % 2;
 }}
+class SideEffects {
+  public static void main( String args[] ){
+    Random rand = new Random();
+    int array[] = {1, 2, 4};
+    int i = 1;
+    int b = array[i++] - array[i++];
+    System.out.println(rand.nextInt(1000) - rand.nextInt(1000));
+  }
+}

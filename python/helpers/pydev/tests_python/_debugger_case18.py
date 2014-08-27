@@ -1,4 +1,4 @@
-
+import sys
 
 def m2(a):
     a = 10
@@ -6,7 +6,7 @@ def m2(a):
     c = 30
     
     def function2():
-        print a
+        print(a)
 
     return a
 

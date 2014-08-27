@@ -28,11 +28,47 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.BasicInterpreter;
 import org.jetbrains.org.objectweb.asm.tree.analysis.BasicValue;
 import org.jetbrains.org.objectweb.asm.tree.analysis.Frame;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.*;
 import static org.jetbrains.org.objectweb.asm.Opcodes.*;
+
+final class ParamKey {
+  final Method method;
+  final int i;
+  final boolean stable;
+
+
+  ParamKey(Method method, int i, boolean stable) {
+    this.method = method;
+    this.i = i;
+    this.stable = stable;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    ParamKey paramKey = (ParamKey)o;
+
+    if (i != paramKey.i) return false;
+    if (stable != paramKey.stable) return false;
+    if (!method.equals(paramKey.method)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = method.hashCode();
+    result = 31 * result + i;
+    result = 31 * result + (stable ? 1 : 0);
+    return result;
+  }
+}
 
 final class CombinedCall extends BasicValue {
   final Method method;
@@ -106,18 +142,44 @@ final class CombinedSingleAnalysis {
   }
 
   final Equation<Key, Value> notNullParamEquation(int i, boolean stable) {
-    final Key key = new Key(method, new In(i), stable);
+    final Key key = new Key(method, new In(i, In.NOT_NULL), stable);
     final Result<Key, Value> result;
     if (interpreter.dereferenced[i]) {
       result = new Final<Key, Value>(Value.NotNull);
     }
     else {
-      Set<Key> calls = interpreter.callDerefs[i];
+      Set<ParamKey> calls = interpreter.callDerefs[i];
       if (calls == null || calls.isEmpty()) {
         result = new Final<Key, Value>(Value.Top);
       }
       else {
-        result = new Pending<Key, Value>(new SingletonSet<Product<Key, Value>>(new Product<Key, Value>(Value.Top, calls)));
+        Set<Key> keys = new HashSet<Key>();
+        for (ParamKey pk: calls) {
+          keys.add(new Key(pk.method, new In(pk.i, In.NOT_NULL), pk.stable));
+        }
+        result = new Pending<Key, Value>(new SingletonSet<Product<Key, Value>>(new Product<Key, Value>(Value.Top, keys)));
+      }
+    }
+    return new Equation<Key, Value>(key, result);
+  }
+
+  final Equation<Key, Value> nullableParamEquation(int i, boolean stable) {
+    final Key key = new Key(method, new In(i, In.NULLABLE), stable);
+    final Result<Key, Value> result;
+    if (interpreter.dereferenced[i] || interpreter.notNullable[i] || returnValue instanceof NParamValue && ((NParamValue)returnValue).n == i) {
+      result = new Final<Key, Value>(Value.Top);
+    }
+    else {
+      Set<ParamKey> calls = interpreter.callDerefs[i];
+      if (calls == null || calls.isEmpty()) {
+        result = new Final<Key, Value>(Value.Null);
+      }
+      else {
+        Set<Product<Key, Value>> sum = new HashSet<Product<Key, Value>>();
+        for (ParamKey pk: calls) {
+          sum.add(new Product<Key, Value>(Value.Top, Collections.singleton(new Key(pk.method, new In(pk.i, In.NULLABLE), pk.stable))));
+        }
+        result = new Pending<Key, Value>(sum);
       }
     }
     return new Equation<Key, Value>(key, result);
@@ -228,10 +290,12 @@ final class CombinedSingleAnalysis {
 
 final class CombinedInterpreter extends BasicInterpreter {
   final boolean[] dereferenced;
-  final Set<Key>[] callDerefs;
+  final boolean[] notNullable;
+  final Set<ParamKey>[] callDerefs;
 
   CombinedInterpreter(int arity) {
     dereferenced = new boolean[arity];
+    notNullable = new boolean[arity];
     callDerefs = new Set[arity];
   }
 
@@ -303,9 +367,16 @@ final class CombinedInterpreter extends BasicInterpreter {
       case BALOAD:
       case CALOAD:
       case SALOAD:
+        if (value1 instanceof NParamValue) {
+          dereferenced[((NParamValue)value1).n] = true;
+        }
+        break;
       case PUTFIELD:
         if (value1 instanceof NParamValue) {
           dereferenced[((NParamValue)value1).n] = true;
+        }
+        if (value2 instanceof NParamValue) {
+          notNullable[((NParamValue)value2).n] = true;
         }
         break;
       default:
@@ -321,13 +392,21 @@ final class CombinedInterpreter extends BasicInterpreter {
       case LASTORE:
       case FASTORE:
       case DASTORE:
-      case AASTORE:
       case BASTORE:
       case CASTORE:
       case SASTORE:
         if (value1 instanceof NParamValue) {
           dereferenced[((NParamValue)value1).n] = true;
         }
+        break;
+      case AASTORE:
+        if (value1 instanceof NParamValue) {
+          dereferenced[((NParamValue)value1).n] = true;
+        }
+        if (value3 instanceof NParamValue) {
+          notNullable[((NParamValue)value3).n] = true;
+        }
+        break;
       default:
     }
     return super.ternaryOperation(insn, value1, value2, value3);
@@ -347,7 +426,6 @@ final class CombinedInterpreter extends BasicInterpreter {
         }
     }
 
-
     switch (opCode) {
       case INVOKESTATIC:
       case INVOKESPECIAL:
@@ -360,14 +438,17 @@ final class CombinedInterpreter extends BasicInterpreter {
 
         for (int i = shift; i < values.size(); i++) {
           if (values.get(i) instanceof NParamValue) {
-            if (opCode != INVOKEINTERFACE) {
-              int n = ((NParamValue)values.get(i)).n;
-              Set<Key> npKeys = callDerefs[n];
+            int n = ((NParamValue)values.get(i)).n;
+            if (opCode == INVOKEINTERFACE) {
+              notNullable[n] = true;
+            }
+            else {
+              Set<ParamKey> npKeys = callDerefs[n];
               if (npKeys == null) {
-                npKeys = new HashSet<Key>();
+                npKeys = new HashSet<ParamKey>();
                 callDerefs[n] = npKeys;
               }
-              npKeys.add(new Key(method, new In(i - shift), stable));
+              npKeys.add(new ParamKey(method, i - shift, stable));
             }
           }
         }

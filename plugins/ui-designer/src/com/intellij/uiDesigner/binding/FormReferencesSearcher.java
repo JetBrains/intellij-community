@@ -30,7 +30,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.search.PsiSearchHelperImpl;
 import com.intellij.psi.search.*;
@@ -42,16 +41,19 @@ import com.intellij.util.QueryExecutor;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
  * @author max
  */
 public class FormReferencesSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
+  @Override
   public boolean execute(@NotNull final ReferencesSearch.SearchParameters p, @NotNull final Processor<PsiReference> consumer) {
     if (!scopeCanContainForms(p.getScope())) return true;
     final PsiElement refElement = p.getElementToSearch();
     final PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+      @Override
       public PsiFile compute() {
         if (!refElement.isValid()) return null;
         return refElement.getContainingFile();
@@ -60,7 +62,12 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
     if (psiFile == null) return true;
     final VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) return true;
-    Project project = psiFile.getProject();
+    Project project = ApplicationManager.getApplication().runReadAction(new Computable<Project>() {
+      @Override
+      public Project compute() {
+        return psiFile.getProject();
+      }
+    });
     Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(virtualFile);
     if (module == null) return true;
     final GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesScope(module);
@@ -96,17 +103,23 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
     if (!(scope instanceof LocalSearchScope)) return true;
     LocalSearchScope localSearchScope = (LocalSearchScope) scope;
     final PsiElement[] elements = localSearchScope.getScope();
-    for (PsiElement element : elements) {
+    for (final PsiElement element : elements) {
       if (element instanceof PsiDirectory) return true;
-      PsiFile file;
-      if (element instanceof PsiFile) {
-        file = (PsiFile) element;
-      }
-      else {
-        if (!element.isValid()) continue;
-        file = element.getContainingFile();
-      }
-      if (file.getFileType() == StdFileTypes.GUI_DESIGNER_FORM) return true;
+      boolean isForm = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          PsiFile file;
+          if (element instanceof PsiFile) {
+            file = (PsiFile)element;
+          }
+          else {
+            if (!element.isValid()) return false;
+            file = element.getContainingFile();
+          }
+          return file.getFileType() == StdFileTypes.GUI_DESIGNER_FORM;
+        }
+      });
+      if (isForm) return true;
     }
     return false;
   }
@@ -114,13 +127,13 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
   private static boolean processReferencesInUIForms(Processor<PsiReference> processor,
                                                     PsiManager psiManager, final PsiClass aClass,
                                                     GlobalSearchScope scope, final LocalSearchScope filterScope) {
-    PsiManagerImpl manager = (PsiManagerImpl)psiManager;
     String className = getQualifiedName(aClass);
-    return className == null || processReferencesInUIFormsInner(className, aClass, processor, scope, manager, filterScope);
+    return className == null || processReferencesInUIFormsInner(className, aClass, processor, scope, psiManager, filterScope);
   }
 
   public static String getQualifiedName(final PsiClass aClass) {
     return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Override
       public String compute() {
         if (!aClass.isValid()) return null;
         return aClass.getQualifiedName();
@@ -131,49 +144,33 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
   private static boolean processReferencesInUIForms(Processor<PsiReference> processor,
                                                     PsiManager psiManager, final PsiEnumConstant enumConstant,
                                                    GlobalSearchScope scope, final LocalSearchScope filterScope) {
-    PsiManagerImpl manager = (PsiManagerImpl)psiManager;
     String className = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       @Override
       public String compute() {
         return enumConstant.getName();
       }
     });
-    return className == null || processReferencesInUIFormsInner(className, enumConstant, processor, scope, manager, filterScope);
-
+    return className == null || processReferencesInUIFormsInner(className, enumConstant, processor, scope, psiManager, filterScope);
   }
 
   private static boolean processReferencesInUIFormsInner(String name,
                                                          PsiElement element,
                                                          Processor<PsiReference> processor,
                                                          GlobalSearchScope scope1,
-                                                         PsiManagerImpl manager,
+                                                         PsiManager manager,
                                                          final LocalSearchScope filterScope) {
     GlobalSearchScope scope = GlobalSearchScope.projectScope(manager.getProject()).intersectWith(scope1);
-    manager.startBatchFilesProcessingMode();
+    List<PsiFile> files = FormClassIndex.findFormsBoundToClass(manager.getProject(), name, scope);
 
-    try {
-      List<PsiFile> files = FormClassIndex.findFormsBoundToClass(manager.getProject(), name, scope);
-
-      for (PsiFile file : files) {
-        ProgressManager.checkCanceled();
-
-        if (file.getFileType() != StdFileTypes.GUI_DESIGNER_FORM) continue;
-        if (!processReferences(processor, file, name, element, filterScope)) return false;
-      }
-    }
-    finally {
-      manager.finishBatchFilesProcessingMode();
-    }
-
-    return true;
+    return processReferencesInFiles(files, manager, name, element, filterScope, processor);
   }
 
   private static boolean processReferencesInUIForms(Processor<PsiReference> processor,
-                                                    PsiManager psiManager,PsiField field,
-                                                   GlobalSearchScope scope1,
-                                                   LocalSearchScope filterScope) {
-    PsiManagerImpl manager = (PsiManagerImpl)psiManager;
-    GlobalSearchScope scope = GlobalSearchScope.projectScope(manager.getProject()).intersectWith(scope1);
+                                                    PsiManager psiManager,
+                                                    PsiField field,
+                                                    GlobalSearchScope scope1,
+                                                    LocalSearchScope filterScope) {
+    GlobalSearchScope scope = GlobalSearchScope.projectScope(psiManager.getProject()).intersectWith(scope1);
     final AccessToken token = ReadAction.start();
     PsiClass containingClass = field.getContainingClass();
     if (containingClass == null) return true;
@@ -184,28 +181,17 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
     finally {
       token.finish();
     }
-    manager.startBatchFilesProcessingMode();
-
-    try {
-      final List<PsiFile> files = FormClassIndex.findFormsBoundToClass(psiManager.getProject(), containingClass, scope);
-
-      for (PsiFile file : files) {
-        ProgressManager.checkCanceled();
-
-        if (file.getFileType() != StdFileTypes.GUI_DESIGNER_FORM) continue;
-        if (!processReferences(processor, file, fieldName, field, filterScope)) return false;
-      }
-    }
-    finally {
-      manager.finishBatchFilesProcessingMode();
-    }
-
-    return true;
+    final List<PsiFile> files = FormClassIndex.findFormsBoundToClass(psiManager.getProject(), containingClass, scope);
+    return processReferencesInFiles(files, psiManager, fieldName, field, filterScope, processor);
   }
 
-  private static boolean processReferences(final Processor<PsiReference> processor, final PsiFile file, String name, final PsiElement element,
+  private static boolean processReferences(final Processor<PsiReference> processor,
+                                           final PsiFile file,
+                                           String name,
+                                           final PsiElement element,
                                            final LocalSearchScope filterScope) {
     CharSequence chars = ApplicationManager.getApplication().runReadAction(new NullableComputable<CharSequence>() {
+      @Override
       public CharSequence compute() {
         if (filterScope != null) {
           boolean isInScope = false;
@@ -228,6 +214,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
       if (index < 0) break;
       final int finalIndex = index;
       final Boolean searchDone = ApplicationManager.getApplication().runReadAction(new NullableComputable<Boolean>() {
+        @Override
         public Boolean compute() {
           final PsiReference ref = file.findReferenceAt(finalIndex + offset + 1);
           if (ref != null && ref.isReferenceTo(element)) {
@@ -244,13 +231,13 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
   }
 
   private static boolean processReferencesInUIForms(final Processor<PsiReference> processor,
-                                                    PsiManager psiManager, final Property property,
+                                                    PsiManager psiManager,
+                                                    final Property property,
                                                     final GlobalSearchScope globalSearchScope,
                                                     final LocalSearchScope filterScope) {
     final Project project = psiManager.getProject();
 
     final GlobalSearchScope scope = GlobalSearchScope.projectScope(project).intersectWith(globalSearchScope);
-    final PsiManagerImpl manager = (PsiManagerImpl)psiManager;
     String name = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       @Override
       public String compute() {
@@ -259,7 +246,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
     });
     if (name == null) return true;
 
-    manager.startBatchFilesProcessingMode();
+    psiManager.startBatchFilesProcessingMode();
 
     try {
       CommonProcessors.CollectProcessor<VirtualFile> collector = new CommonProcessors.CollectProcessor<VirtualFile>() {
@@ -285,36 +272,54 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
       }
     }
     finally {
-      manager.finishBatchFilesProcessingMode();
+      psiManager.finishBatchFilesProcessingMode();
     }
 
     return true;
   }
 
   private static boolean processReferencesInUIForms(final Processor<PsiReference> processor,
-                                                    PsiManager psiManager, final PropertiesFile propFile,
+                                                    PsiManager psiManager,
+                                                    final PropertiesFile propFile,
                                                     final GlobalSearchScope globalSearchScope,
                                                     final LocalSearchScope filterScope) {
     final Project project = psiManager.getProject();
     GlobalSearchScope scope = GlobalSearchScope.projectScope(project).intersectWith(globalSearchScope);
-    PsiManagerImpl manager = (PsiManagerImpl)psiManager;
-    final String baseName = propFile.getResourceBundle().getBaseName();
-    manager.startBatchFilesProcessingMode();
+    final String baseName = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Override
+      public String compute() {
+        return propFile.getResourceBundle().getBaseName();
+      }
+    });
+    PsiFile containingFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+      @Override
+      public PsiFile compute() {
+        return propFile.getContainingFile();
+      }
+    });
+
+    List<PsiFile> files = Arrays.asList(CacheManager.SERVICE.getInstance(project).getFilesWithWord(baseName, UsageSearchContext.IN_PLAIN_TEXT, scope, true));
+    return processReferencesInFiles(files, psiManager, baseName, containingFile, filterScope, processor);
+  }
+
+  private static boolean processReferencesInFiles(List<PsiFile> files,
+                                                  PsiManager psiManager, String baseName,
+                                                  PsiElement element,
+                                                  LocalSearchScope filterScope,
+                                                  Processor<PsiReference> processor) {
+    psiManager.startBatchFilesProcessingMode();
 
     try {
-      PsiFile[] files = CacheManager.SERVICE.getInstance(project).getFilesWithWord(baseName, UsageSearchContext.IN_PLAIN_TEXT, scope, true);
-
       for (PsiFile file : files) {
         ProgressManager.checkCanceled();
 
         if (file.getFileType() != StdFileTypes.GUI_DESIGNER_FORM) continue;
-        if (!processReferences(processor, file, baseName, propFile.getContainingFile(), filterScope)) return false;
+        if (!processReferences(processor, file, baseName, element, filterScope)) return false;
       }
     }
     finally {
-      manager.finishBatchFilesProcessingMode();
+      psiManager.finishBatchFilesProcessingMode();
     }
-
     return true;
   }
 }

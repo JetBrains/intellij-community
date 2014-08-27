@@ -31,8 +31,8 @@ import javax.swing.*;
 public class ProjectSpecificSettingsStep extends AbstractProjectSettingsStep implements DumbAware {
 
   public ProjectSpecificSettingsStep(@NotNull final DirectoryProjectGenerator projectGenerator,
-                                     @NotNull final NullableConsumer<AbstractProjectSettingsStep> callback) {
-    super(projectGenerator, callback);
+                                     @NotNull final NullableConsumer<AbstractProjectSettingsStep> callback, boolean isWelcomeScreen) {
+    super(projectGenerator, callback, isWelcomeScreen);
   }
 
   @Override

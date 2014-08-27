@@ -27,6 +27,7 @@ public class XDebuggerGeneralSettings {
   private boolean myUnmuteOnStop = false;
 
   private boolean hideDebuggerOnProcessTermination;
+  private boolean myShowDebuggerOnBreakpoint = true;
 
   @Tag("evaluation-dialog-mode")
   public EvaluationMode getEvaluationDialogMode() {
@@ -52,5 +53,13 @@ public class XDebuggerGeneralSettings {
 
   public void setHideDebuggerOnProcessTermination(boolean hideDebuggerOnProcessTermination) {
     this.hideDebuggerOnProcessTermination = hideDebuggerOnProcessTermination;
+  }
+
+  public boolean isShowDebuggerOnBreakpoint() {
+    return myShowDebuggerOnBreakpoint;
+  }
+
+  public void setShowDebuggerOnBreakpoint(boolean showDebuggerOnBreakpoint) {
+    this.myShowDebuggerOnBreakpoint = showDebuggerOnBreakpoint;
   }
 }

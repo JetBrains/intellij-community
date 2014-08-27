@@ -20,6 +20,7 @@ Authors
 # Imports
 #-----------------------------------------------------------------------------
 
+import os
 import sys
 from _pydev_imps import _pydev_time as time
 from timeit import default_timer as clock

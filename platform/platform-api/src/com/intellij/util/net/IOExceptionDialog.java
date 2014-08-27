@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.GuiUtils;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,16 +29,9 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.lang.reflect.InvocationTargetException;
 
-/**
- * Created by IntelliJ IDEA.
- * User: stathik
- * Date: Nov 19, 2003
- * Time: 10:04:14 PM
- * To change this template use Options | File Templates.
- */
 public class IOExceptionDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(IOExceptionDialog.class);
-  private JTextArea myErrorLabel;
+  private final JTextArea myErrorLabel;
 
   public IOExceptionDialog(String title, String errorText)  {
     super((Project)null, true);
@@ -65,8 +59,8 @@ public class IOExceptionDialog extends DialogWrapper {
     return new Action[] {
       new AbstractAction(CommonBundle.message("dialog.ioexception.proxy")) {
         @Override
-        public void actionPerformed(ActionEvent e) {
-          new HTTPProxySettingsDialog().show();
+        public void actionPerformed(@NotNull ActionEvent e) {
+          HttpConfigurable.editConfigurable(ObjectUtils.tryCast(e.getSource(), JComponent.class));
         }
       }
     };
@@ -79,14 +73,14 @@ public class IOExceptionDialog extends DialogWrapper {
   public static boolean showErrorDialog(final String title, final String text) {
     final Ref<Boolean> ok = Ref.create(false);
     try {
-      final Runnable doRun = new Runnable() {
+      GuiUtils.runOrInvokeAndWait(new Runnable() {
+        @Override
         public void run() {
           IOExceptionDialog dialog = new IOExceptionDialog(title, text);
           dialog.show();
           ok.set(dialog.isOK());
         }
-      };
-      GuiUtils.runOrInvokeAndWait(doRun);
+      });
     }
     catch (InterruptedException e) {
       LOG.info(e);

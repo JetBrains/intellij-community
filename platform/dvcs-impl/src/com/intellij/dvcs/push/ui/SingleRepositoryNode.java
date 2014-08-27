@@ -17,6 +17,7 @@ package com.intellij.dvcs.push.ui;
 
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,8 +29,8 @@ public class SingleRepositoryNode extends RepositoryNode {
 
   @NotNull private final RepositoryWithBranchPanel myRepositoryPanel;
 
-  public SingleRepositoryNode(@NotNull RepositoryWithBranchPanel repositoryPanel) {
-    super(repositoryPanel);
+  public SingleRepositoryNode(@NotNull RepositoryWithBranchPanel repositoryPanel, @NotNull SimpleColoredText customTargetPresentation) {
+    super(repositoryPanel, customTargetPresentation);
     myRepositoryPanel = repositoryPanel;
   }
 
@@ -43,10 +44,8 @@ public class SingleRepositoryNode extends RepositoryNode {
     renderer.append(myRepositoryPanel.getSourceName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     renderer.append(myRepositoryPanel.getArrow(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     EditorTextField textField = myRepositoryPanel.getRemoteTextFiled();
-    String targetName = myRepositoryPanel.getRemoteTargetName();
-    renderTargetName(renderer, textField, targetName);
+    renderTargetName(renderer, textField);
     Insets insets = BorderFactory.createEmptyBorder().getBorderInsets(textField);
     renderer.setBorder(new EmptyBorder(insets));
   }
-
 }

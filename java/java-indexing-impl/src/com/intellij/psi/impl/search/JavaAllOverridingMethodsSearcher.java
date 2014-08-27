@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.impl.search;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
@@ -39,11 +41,18 @@ public class JavaAllOverridingMethodsSearcher implements QueryExecutor<Pair<PsiM
   public boolean execute(@NotNull final AllOverridingMethodsSearch.SearchParameters p, @NotNull final Processor<Pair<PsiMethod, PsiMethod>> consumer) {
     final PsiClass psiClass = p.getPsiClass();
 
-    PsiMethod[] methodsArray = psiClass.getMethods();
-    final List<PsiMethod> methods = new ArrayList<PsiMethod>(methodsArray.length);
-    for (PsiMethod method : methodsArray) {
-      if (PsiUtil.canBeOverriden(method)) methods.add(method);
-    }
+    final List<PsiMethod> methods = ApplicationManager.getApplication().runReadAction(new Computable<List<PsiMethod>>() {
+      @Override
+      public List<PsiMethod> compute() {
+        PsiMethod[] methodsArray = psiClass.getMethods();
+        final List<PsiMethod> methods = new ArrayList<PsiMethod>(methodsArray.length);
+        for (PsiMethod method : methodsArray) {
+          if (PsiUtil.canBeOverriden(method)) methods.add(method);
+        }
+        return methods;
+      }
+    });
+
 
     final SearchScope scope = p.getScope();
 

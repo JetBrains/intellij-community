@@ -184,11 +184,11 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       }
     }
     if (context.maySwitchToAST(this) && LanguageLevel.forElement(this).isAtLeast(LanguageLevel.PYTHON30)) {
-      PyAnnotation anno = getAnnotation();
-      if (anno != null) {
-        PyClass pyClass = anno.resolveToClass();
-        if (pyClass != null) {
-          return new PyClassTypeImpl(pyClass, false);
+      final PyAnnotation annotation = getAnnotation();
+      if (annotation != null) {
+        final PyType type = context.getType(annotation);
+        if (type != null) {
+          return type;
         }
       }
     }
@@ -571,7 +571,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
 
   @Override
   public PyAnnotation getAnnotation() {
-    return findChildByClass(PyAnnotation.class);
+    return getStubOrPsiChild(PyElementTypes.ANNOTATION);
   }
 
   @NotNull
@@ -699,21 +699,6 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   @Nullable
   @Override
   public String getQualifiedName() {
-    String name = getName();
-    if (name == null) {
-      return null;
-    }
-    PyClass containingClass = getContainingClass();
-    if (containingClass != null) {
-      return containingClass.getQualifiedName() + "." + name;
-    }
-    if (PsiTreeUtil.getStubOrPsiParent(this) instanceof PyFile) {
-      VirtualFile virtualFile = getContainingFile().getVirtualFile();
-      if (virtualFile != null) {
-        final String packageName = QualifiedNameFinder.findShortestImportableName(this, virtualFile);
-        return packageName + "." + name;
-      }
-    }
-    return null;
+    return QualifiedNameFinder.getQualifiedName(this);
   }
 }

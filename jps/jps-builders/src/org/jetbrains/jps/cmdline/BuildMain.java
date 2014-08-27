@@ -74,7 +74,29 @@ public class BuildMain {
     final File systemDir = new File(FileUtil.toCanonicalPath(args[SYSTEM_DIR_ARG]));
     Utils.setSystemRoot(systemDir);
 
-    ourEventLoopGroup = new NioEventLoopGroup(1, SharedThreadPool.getInstance());
+    // IDEA-123132, let's try again
+    for (int attempt = 0; attempt < 3; attempt++) {
+      try {
+        ourEventLoopGroup = new NioEventLoopGroup(1, SharedThreadPool.getInstance());
+        break;
+      }
+      catch (IllegalStateException e) {
+        if (attempt == 2) {
+          printErrorAndExit(host, port, e);
+          return;
+        }
+        else {
+          LOG.warn("Cannot create event loop, attempt #" + attempt, e);
+          try {
+            //noinspection BusyWait
+            Thread.sleep(10 * (attempt + 1));
+          }
+          catch (InterruptedException ignored) {
+          }
+        }
+      }
+    }
+
     final Bootstrap bootstrap = new Bootstrap().group(ourEventLoopGroup).channel(NioSocketChannel.class).handler(new ChannelInitializer() {
       @Override
       protected void initChannel(Channel channel) throws Exception {
@@ -92,15 +114,17 @@ public class BuildMain {
       future.channel().writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createParamRequest()));
     }
     else {
-      @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-      final Throwable reason = future.cause();
-      System.err.println("Error connecting to " + host + ":" + port + "; reason: " + (reason != null? reason.getMessage() : "unknown"));
-      if (reason != null) {
-        reason.printStackTrace(System.err);
-      }
-      System.err.println("Exiting.");
-      System.exit(-1);
+      printErrorAndExit(host, port, future.cause());
     }
+  }
+
+  private static void printErrorAndExit(String host, int port, Throwable reason) {
+    System.err.println("Error connecting to " + host + ":" + port + "; reason: " + (reason != null ? reason.getMessage() : "unknown"));
+    if (reason != null) {
+      reason.printStackTrace(System.err);
+    }
+    System.err.println("Exiting.");
+    System.exit(-1);
   }
 
   private static class MyMessageHandler extends SimpleChannelInboundHandler<CmdlineRemoteProto.Message> {

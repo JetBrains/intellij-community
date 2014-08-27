@@ -43,6 +43,9 @@
   <item name="java.beans.beancontext.BeanContextServicesSupport void bcsPreSerializationHook(java.io.ObjectOutputStream) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.beans.beancontext.BeanContextServicesSupport void childJustRemovedHook(java.lang.Object, java.beans.beancontext.BeanContextSupport.BCSChild) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.beans.beancontext.BeanContextServicesSupport void childJustRemovedHook(java.lang.Object, java.beans.beancontext.BeanContextSupport.BCSChild) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>

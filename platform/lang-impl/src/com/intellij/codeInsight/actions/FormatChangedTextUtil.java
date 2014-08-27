@@ -20,6 +20,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -281,7 +282,7 @@ public class FormatChangedTextUtil {
 
   @NotNull
   private static List<TextRange> calculateChangedTextRanges(@NotNull Project project, @NotNull PsiFile file, @NotNull String contentFromVcs) {
-    Document documentFromVcs = EditorFactory.getInstance().createDocument(contentFromVcs);
+    Document documentFromVcs = ((EditorFactoryImpl)EditorFactory.getInstance()).createDocument(contentFromVcs, true, false);
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);
 
     if (document == null) {

@@ -146,12 +146,27 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
 
     for (PsiParameter parameter : method.getParameterList().getParameters()) {
       String parameterKey = PsiFormatUtil.getExternalName(parameter, false, Integer.MAX_VALUE);
-      String externalParameterAnnotation =
-        myExternalAnnotationsManager.findExternalAnnotation(parameter, AnnotationUtil.NOT_NULL) == null ? "null" : "@NotNull";
-      String inferredParameterAnnotation =
-        myInferredAnnotationsManager.findInferredAnnotation(parameter, AnnotationUtil.NOT_NULL) == null ? "null" : "@NotNull";
-      if (!externalParameterAnnotation.equals(inferredParameterAnnotation)) {
-        diffs.add(parameterKey + ": " + externalParameterAnnotation + " != " + inferredParameterAnnotation);
+
+      {
+        // @NotNull
+        String externalNotNull =
+          myExternalAnnotationsManager.findExternalAnnotation(parameter, AnnotationUtil.NOT_NULL) == null ? "null" : "@NotNull";
+        String inferredNotNull =
+          myInferredAnnotationsManager.findInferredAnnotation(parameter, AnnotationUtil.NOT_NULL) == null ? "null" : "@NotNull";
+        if (!externalNotNull.equals(inferredNotNull)) {
+          diffs.add(parameterKey + ": " + externalNotNull + " != " + inferredNotNull);
+        }
+      }
+
+      {
+        // @Nullable
+        String externalNullable =
+          myExternalAnnotationsManager.findExternalAnnotation(parameter, AnnotationUtil.NULLABLE) == null ? "null" : "@Nullable";
+        String inferredNullable =
+          myInferredAnnotationsManager.findInferredAnnotation(parameter, AnnotationUtil.NULLABLE) == null ? "null" : "@Nullable";
+        if (!externalNullable.equals(inferredNullable)) {
+          diffs.add(parameterKey + ": " + externalNullable + " != " + inferredNullable);
+        }
       }
     }
 

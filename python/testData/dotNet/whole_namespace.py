@@ -2,5 +2,5 @@ import clr
 
 clr.AddReferenceByPartialName("SingleNameSpace")
 
-<caret>ingleNameSpace
+import <caret>SingleNameSpace
 print SingleNameSpace.MyClass

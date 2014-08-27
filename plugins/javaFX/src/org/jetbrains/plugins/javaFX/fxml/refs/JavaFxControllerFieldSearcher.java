@@ -24,6 +24,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.Processor;
@@ -58,12 +59,7 @@ public class JavaFxControllerFieldSearcher implements QueryExecutor<PsiReference
           }
         });
         if (qualifiedName != null) {
-          Project project = ApplicationManager.getApplication().runReadAction(new Computable<Project>() {
-            @Override
-            public Project compute() {
-              return containingClass.getProject();
-            }
-          });
+          Project project = PsiUtilCore.getProjectInReadAction(containingClass);
           final List<PsiFile> fxmlWithController =
             JavaFxControllerClassIndex.findFxmlWithController(project, qualifiedName);
           for (final PsiFile file : fxmlWithController) {

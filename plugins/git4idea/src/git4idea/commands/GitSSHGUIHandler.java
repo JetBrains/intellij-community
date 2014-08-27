@@ -16,6 +16,8 @@
 package git4idea.commands;
 
 import com.intellij.ide.passwordSafe.ui.PasswordSafePromptDialog;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -28,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -56,11 +57,11 @@ public class GitSSHGUIHandler {
       message = GitBundle.message("ssh.changed.host.key", hostname, port, fingerprint, serverHostKeyAlgorithm);
     }
     final AtomicBoolean rc = new AtomicBoolean();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       public void run() {
         rc.set(Messages.YES == Messages.showYesNoDialog(myProject, message, GitBundle.getString("ssh.confirm.key.titile"), null));
       }
-    });
+    }, ModalityState.any());
     return rc.get();
   }
 
@@ -84,11 +85,11 @@ public class GitSSHGUIHandler {
   private String processLastError(boolean resetPassword, final String lastError) {
     String error;
     if (lastError != null && lastError.length() != 0 && !resetPassword) {
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
         public void run() {
           showError(lastError);
         }
-      });
+      }, ModalityState.any());
       error = null;
     }
     else {
@@ -124,25 +125,17 @@ public class GitSSHGUIHandler {
                                          final Vector<Boolean> echo,
                                          final String lastError) {
     final AtomicReference<Vector<String>> rc = new AtomicReference<Vector<String>>();
-    try {
-      EventQueue.invokeAndWait(new Runnable() {
-        public void run() {
-          showError(lastError);
-          GitSSHKeyboardInteractiveDialog dialog =
-            new GitSSHKeyboardInteractiveDialog(name, numPrompts, instruction, prompt, echo, username);
-          dialog.show();
-          if (dialog.isOK()) {
-            rc.set(dialog.getResults());
-          }
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      public void run() {
+        showError(lastError);
+        GitSSHKeyboardInteractiveDialog dialog =
+          new GitSSHKeyboardInteractiveDialog(name, numPrompts, instruction, prompt, echo, username);
+        dialog.show();
+        if (dialog.isOK()) {
+          rc.set(dialog.getResults());
         }
-      });
-    }
-    catch (InterruptedException e) {
-      throw new RuntimeException("dialog failed", e);
-    }
-    catch (InvocationTargetException e) {
-      throw new RuntimeException("dialog failed", e);
-    }
+      }
+    }, ModalityState.any());
     return rc.get();
   }
 

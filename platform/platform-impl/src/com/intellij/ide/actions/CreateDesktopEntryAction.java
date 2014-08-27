@@ -112,7 +112,7 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
     }
     catch (Exception e) {
       if (ApplicationManager.getApplication() == null) {
-        return;
+        throw new RuntimeException(e);
       }
       final String message = e.getMessage();
       if (!StringUtil.isEmptyOrSpaces(message)) {

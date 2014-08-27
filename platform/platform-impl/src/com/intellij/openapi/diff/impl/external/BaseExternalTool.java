@@ -46,7 +46,7 @@ abstract class BaseExternalTool implements DiffTool {
     myToolProperty = toolProperty;
   }
 
-  public final boolean canShow(DiffRequest request) {
+  public final boolean canShow(@NotNull DiffRequest request) {
     if (!isEnabled() || StringUtil.isEmpty(getToolPath())) return false;
     return isAvailable(request);
   }
@@ -56,10 +56,10 @@ abstract class BaseExternalTool implements DiffTool {
     return null;
   }
 
-  public abstract boolean isAvailable(DiffRequest request);
+  public abstract boolean isAvailable(@NotNull DiffRequest request);
 
   @Nullable
-  protected ContentExternalizer externalize(final DiffRequest request, final int index) {
+  protected ContentExternalizer externalize(@NotNull DiffRequest request, final int index) {
     final VirtualFile file = getLocalFile(request.getContents()[index].getFile());
 
     if (LocalFileExternalizer.canExternalizeAsFile(file)) {
@@ -81,7 +81,8 @@ abstract class BaseExternalTool implements DiffTool {
     return myEnableProperty.value(getProperties());
   }
 
-  protected List<String> getParameters(DiffRequest request) throws Exception {
+  @NotNull
+  protected List<String> getParameters(@NotNull DiffRequest request) throws Exception {
     final String p1 = convertToPath(request, 0);
     final String p2 = convertToPath(request, 1);
     final List<String> params = new ArrayList<String>();
@@ -91,12 +92,8 @@ abstract class BaseExternalTool implements DiffTool {
   }
 
   public void show(DiffRequest request) {
-    for (DiffContent diffContent : request.getContents()) {
-      Document document = diffContent.getDocument();
-      if (document != null) {
-        FileDocumentManager.getInstance().saveDocument(document);
-      }
-    }
+    saveContents(request);
+
     GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.setExePath(getToolPath());
     try {
@@ -106,6 +103,15 @@ abstract class BaseExternalTool implements DiffTool {
     catch (Exception e) {
       ExecutionErrorDialog.show(new ExecutionException(e.getMessage()),
                                 DiffBundle.message("cant.launch.diff.tool.error.message"), request.getProject());
+    }
+  }
+
+  protected void saveContents(DiffRequest request) {
+    for (DiffContent diffContent : request.getContents()) {
+      Document document = diffContent.getDocument();
+      if (document != null) {
+        FileDocumentManager.getInstance().saveDocument(document);
+      }
     }
   }
 

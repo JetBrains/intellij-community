@@ -21,6 +21,8 @@ import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.ui.SimpleColoredText;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -34,6 +36,7 @@ import java.util.Collection;
 
 public class HgPushSupport extends PushSupport<HgRepository> {
 
+  private final static String ENTER_REMOTE = "Enter Remote";
   @NotNull private final Project myProject;
   @NotNull private final HgVcs myVcs;
 
@@ -105,5 +108,13 @@ public class HgPushSupport extends PushSupport<HgRepository> {
   @Nullable
   public VcsError validate(@NotNull Repository repository, @Nullable String targetToValidate) {
     return StringUtil.isEmptyOrSpaces(targetToValidate) ? new VcsError("Please, specify remote push path for repository!") : null;
+  }
+
+  @Override
+  public SimpleColoredText renderTarget(@Nullable PushTarget target) {
+    if (target == null || StringUtil.isEmptyOrSpaces(target.getPresentation())) {
+      return new SimpleColoredText(ENTER_REMOTE, SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
+    }
+    return new SimpleColoredText(target.getPresentation(), SimpleTextAttributes.SYNTHETIC_ATTRIBUTES);
   }
 }

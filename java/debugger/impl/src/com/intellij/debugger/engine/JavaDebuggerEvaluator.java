@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.engine;
 
+import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
@@ -73,9 +74,16 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator {
           callback.errorOccurred("Context is not available");
           return;
         }
+        descriptor.setContext(evalContext);
+        @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
+        EvaluateException exception = descriptor.getEvaluateException();
+        if (exception != null) {
+          callback.errorOccurred(exception.getMessage());
+          return;
+        }
         JavaDebugProcess process = myDebugProcess.getXdebugProcess();
         if (process != null) {
-          callback.evaluated(JavaValue.create(descriptor, evalContext, process.getNodeManager()));
+          callback.evaluated(JavaValue.create(null, descriptor, evalContext, process.getNodeManager(), true));
         }
       }
     });

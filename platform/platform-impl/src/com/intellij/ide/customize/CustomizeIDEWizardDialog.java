@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBCardLayout;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -34,9 +33,9 @@ import java.util.List;
 public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionListener {
   private static final String BUTTONS = "BUTTONS";
   private static final String NOBUTTONS = "NOBUTTONS";
-  private final JButton mySkipButton = new JButton("Skip All and Set Defaults");
   private final JButton myBackButton = new JButton("Back");
   private final JButton myNextButton = new JButton("Next");
+  private final JButton myStartUsingButton = new JButton("Start using " + ApplicationNamesInfo.getInstance().getFullProductName());
 
   private final JBCardLayout myCardLayout = new JBCardLayout();
   protected final List<AbstractCustomizeWizardStep> mySteps = new ArrayList<AbstractCustomizeWizardStep>();
@@ -51,10 +50,11 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
   public CustomizeIDEWizardDialog() {
     super(null, true, true);
     setTitle("Customize " + ApplicationNamesInfo.getInstance().getProductName());
+    getPeer().setAppIcons();
     initSteps();
-    mySkipButton.addActionListener(this);
     myBackButton.addActionListener(this);
     myNextButton.addActionListener(this);
+    myStartUsingButton.addActionListener(this);
     myNavigationLabel.setEnabled(false);
     myFooterLabel.setEnabled(false);
     init();
@@ -119,7 +119,7 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     result.add(myContentPanel, BorderLayout.CENTER);
     result.add(myFooterLabel, BorderLayout.SOUTH);
     result.setPreferredSize(new Dimension(700, 600));
-    result.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    result.setBorder(AbstractCustomizeWizardStep.createSmallEmptyBorder());
     return result;
   }
 
@@ -131,15 +131,15 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     gbc.fill = GridBagConstraints.BOTH;
     gbc.gridx = 0;
     gbc.gridy = 0;
-    buttonPanel.add(mySkipButton, gbc);
-    gbc.gridx++;
     buttonPanel.add(myBackButton, gbc);
     gbc.gridx++;
     gbc.weightx = 1;
     buttonPanel.add(Box.createHorizontalGlue(), gbc);
-    gbc.gridx++;
     gbc.weightx = 0;
+    gbc.gridx++;
     buttonPanel.add(myNextButton, gbc);
+    gbc.gridx++;
+    buttonPanel.add(myStartUsingButton, gbc);
     buttonPanel.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
     myButtonWrapper.add(buttonPanel, BUTTONS);
     myButtonWrapper.add(new JLabel(), NOBUTTONS);
@@ -153,7 +153,7 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
 
   @Override
   public void actionPerformed(ActionEvent e) {
-    if (e.getSource() == mySkipButton) {
+    if (e.getSource() == myStartUsingButton) {
       doOKAction();
       return;
     }
@@ -163,10 +163,6 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
       return;
     }
     if (e.getSource() == myNextButton) {
-      if (myIndex >= mySteps.size() - 1) {
-        doOKAction();
-        return;
-      }
       myIndex++;
       initCurrentStep(true);
     }
@@ -203,11 +199,12 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     if (myIndex > 0) {
       myBackButton.setText("Back to " + mySteps.get(myIndex - 1).getTitle());
     }
-    mySkipButton.setText("Skip " + (myIndex > 0 ? "Remaining" : "All") + " and Set Defaults");
 
-    myNextButton.setText(myIndex < mySteps.size() - 1
-                         ? "Next: " + mySteps.get(myIndex + 1).getTitle()
-                         : "Start using " + ApplicationNamesInfo.getInstance().getFullProductName());
+    myNextButton.setVisible(myIndex < mySteps.size() - 1);
+    if (myIndex < mySteps.size() - 1) {
+      myNextButton.setText("Next: " + mySteps.get(myIndex + 1).getTitle());
+    }
+
     myHeaderLabel.setText(myCurrentStep.getHTMLHeader());
     myFooterLabel.setText(myCurrentStep.getHTMLFooter());
     StringBuilder navHTML = new StringBuilder("<html><body>");
@@ -218,16 +215,5 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
       if (i == myIndex) navHTML.append("</b>");
     }
     myNavigationLabel.setText(navHTML.toString());
-  }
-
-
-  private static <T extends Component> void getChildren(@NotNull Component c, Class<? extends T> cls, List<T> accumulator) {
-    if (cls.isAssignableFrom(c.getClass())) accumulator.add((T)c);
-    if (c instanceof Container) {
-      Component[] components = ((Container)c).getComponents();
-      for (Component component : components) {
-        getChildren(component, cls, accumulator);
-      }
-    }
   }
 }

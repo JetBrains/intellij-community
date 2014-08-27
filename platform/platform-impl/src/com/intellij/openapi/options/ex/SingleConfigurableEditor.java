@@ -46,7 +46,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
   private Component myParentComponent;
   private Configurable myConfigurable;
   private JComponent myCenterPanel;
-  private String myDimensionKey;
+  private final String myDimensionKey;
   private final boolean myShowApplyButton;
   private boolean myChangesWereApplied;
 
@@ -134,6 +134,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
     return displayName.replaceAll("\n", " ");
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     if (myDimensionKey == null) {
       return super.getDimensionServiceKey();
@@ -143,6 +144,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
     }
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     List<Action> actions = new ArrayList<Action>();
@@ -157,6 +159,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
     return actions.toArray(new Action[actions.size()]);
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(myConfigurable.getHelpTopic());
   }
@@ -169,6 +172,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
     super.doCancelAction();
   }
 
+  @Override
   protected void doOKAction() {
     try {
       if (myConfigurable.isModified()) myConfigurable.apply();
@@ -201,10 +205,11 @@ public class SingleConfigurableEditor extends DialogWrapper {
     public ApplyAction() {
       super(CommonBundle.getApplyButtonText());
       final Runnable updateRequest = new Runnable() {
+        @Override
         public void run() {
-          if (!SingleConfigurableEditor.this.isShowing()) return;
+          if (!isShowing()) return;
           try {
-            ApplyAction.this.setEnabled(myConfigurable != null && myConfigurable.isModified());
+            setEnabled(myConfigurable != null && myConfigurable.isModified());
           }
           catch (IndexNotReadyException ignored) {
           }
@@ -214,6 +219,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
 
       // invokeLater necessary to make sure dialog is already shown so we calculate modality state correctly.
       SwingUtilities.invokeLater(new Runnable() {
+        @Override
         public void run() {
           addUpdateRequest(updateRequest);
         }
@@ -224,6 +230,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
       myUpdateAlarm.addRequest(updateRequest, 500, ModalityState.stateForComponent(getWindow()));
     }
 
+    @Override
     public void actionPerformed(ActionEvent event) {
       if (myPerformAction) return;
       try {
@@ -248,11 +255,13 @@ public class SingleConfigurableEditor extends DialogWrapper {
     }
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     myCenterPanel = myConfigurable.createComponent();
     return myCenterPanel;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     if (myConfigurable instanceof BaseConfigurable) {
       JComponent preferred = ((BaseConfigurable)myConfigurable).getPreferredFocusedComponent();
@@ -261,6 +270,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
     return IdeFocusTraversalPolicy.getPreferredFocusedComponent(myCenterPanel);
   }
 
+  @Override
   public void dispose() {
     super.dispose();
     myConfigurable.disposeUIResources();

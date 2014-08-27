@@ -1,12 +1,7 @@
 '''
 @author Fabio Zadrozny 
 '''
-import os
 import sys
-#make it as if we were executing from the directory above this one (so that we can use pycompletionserver
-#without the need for it being in the pythonpath)
-#twice the dirname to get the previous level from this file.
-sys.path.insert(1, os.path.split(os.path.split(__file__)[0])[0])
 
 try:
     import __builtin__ #@UnusedImport
@@ -50,13 +45,14 @@ if sys.platform.find('java') == -1:
                 pass
     
         def testImports5(self):
-            tip = _pydev_imports_tipper.GenerateTip('__builtin__.list')
+            tip = _pydev_imports_tipper.GenerateTip('%s.list' % BUILTIN_MOD)
             s = self.assertIn('sort', tip)
             self.CheckArgs(
                 s, 
                 '(cmp=None, key=None, reverse=False)', 
                 '(self, object cmp, object key, bool reverse)',
-                '(self, cmp: object, key: object, reverse: bool)'
+                '(self, cmp: object, key: object, reverse: bool)',
+                '(key=None, reverse=False)',
             )
             
         def testImports2a(self):
@@ -64,14 +60,24 @@ if sys.platform.find('java') == -1:
             self.assertIn('__doc__', tips)
             
         def testImports2b(self):
-            tips = _pydev_imports_tipper.GenerateTip('%s' % BUILTIN_MOD)
-            t = self.assertIn('file' , tips)
-            self.assert_('->' in t[1].strip() or 'file' in t[1])
+            try:
+                file
+            except:
+                pass
+            else:
+                tips = _pydev_imports_tipper.GenerateTip('%s' % BUILTIN_MOD)
+                t = self.assertIn('file' , tips)
+                self.assert_('->' in t[1].strip() or 'file' in t[1])
             
         def testImports2c(self):
-            tips = _pydev_imports_tipper.GenerateTip('%s.file' % BUILTIN_MOD)
-            t = self.assertIn('readlines' , tips)
-            self.assert_('->' in t[1] or 'sizehint' in t[1])
+            try:
+                file # file is not available on py 3
+            except:
+                pass
+            else:
+                tips = _pydev_imports_tipper.GenerateTip('%s.file' % BUILTIN_MOD)
+                t = self.assertIn('readlines' , tips)
+                self.assert_('->' in t[1] or 'sizehint' in t[1])
             
         def testImports(self):
             '''
@@ -110,9 +116,9 @@ if sys.platform.find('java') == -1:
             self.assertIn('RuntimeError'   , tip)
             self.assertIn('RuntimeWarning' , tip)
             
-            t = self.assertIn('cmp' , tip)
-            
-            self.CheckArgs(t, '(x, y)', '(object x, object y)', '(x: object, y: object)') #args
+            # Remove cmp as it's not available on py 3
+            #t = self.assertIn('cmp' , tip)
+            #self.CheckArgs(t, '(x, y)', '(object x, object y)', '(x: object, y: object)') #args
             
             t = self.assertIn('isinstance' , tip)
             self.CheckArgs(t, '(object, class_or_type_or_tuple)', '(object o, type typeinfo)', '(o: object, typeinfo: type)') #args

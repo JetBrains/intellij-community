@@ -15,7 +15,11 @@ from pydevd_comm import CMD_ADD_DJANGO_EXCEPTION_BREAK, \
     CMD_STEP_INTO, CMD_SMART_STEP_INTO, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT
 from pydevd_constants import *  # @UnusedWildImport
 from pydevd_file_utils import GetFilenameAndBase
-from pydevd_signature import sendSignatureCallTrace
+try:
+    from pydevd_signature import sendSignatureCallTrace
+except ImportError:
+    def sendSignatureCallTrace(*args, **kwargs):
+        pass
 import pydevd_vars
 import pydevd_dont_trace
 

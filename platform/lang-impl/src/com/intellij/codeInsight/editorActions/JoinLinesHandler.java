@@ -29,6 +29,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
@@ -49,6 +50,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate.CANNOT_JOIN;
 
@@ -61,66 +63,65 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
     myOriginalHandler = originalHandler;
   }
 
-  private static TextRange findStartAndEnd(CharSequence text, int start, int end, int maxoffset) {
+  @NotNull
+  private static TextRange findStartAndEnd(@NotNull CharSequence text, int start, int end, int maxoffset) {
     while (start > 0 && (text.charAt(start) == ' ' || text.charAt(start) == '\t')) start--;
     while (end < maxoffset && (text.charAt(end) == ' ' || text.charAt(end) == '\t')) end++;
     return new TextRange(start, end);
   }
 
   @Override
-  public void executeWriteAction(final Editor editor, final DataContext dataContext) {
+  public void executeWriteAction(@NotNull final Editor editor, @Nullable Caret caret, final DataContext dataContext) {
+    assert caret != null;
     if (!(editor.getDocument() instanceof DocumentEx)) {
-      myOriginalHandler.execute(editor, dataContext);
+      myOriginalHandler.execute(editor, caret, dataContext);
       return;
     }
     final DocumentEx doc = (DocumentEx)editor.getDocument();
     final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getContentComponent()));
-    if (project == null) {
-      return;
-    }
-
-    LogicalPosition caretPosition = editor.getCaretModel().getLogicalPosition();
+    if (project == null) return;
 
     final PsiDocumentManager docManager = PsiDocumentManager.getInstance(project);
     PsiFile psiFile = docManager.getPsiFile(doc);
 
     if (psiFile == null) {
-      myOriginalHandler.execute(editor, dataContext);
+      myOriginalHandler.execute(editor, caret, dataContext);
       return;
     }
 
+    LogicalPosition caretPosition = caret.getLogicalPosition();
     int startLine = caretPosition.line;
     int endLine = startLine + 1;
-    if (editor.getSelectionModel().hasSelection()) {
-      startLine = doc.getLineNumber(editor.getSelectionModel().getSelectionStart());
-      endLine = doc.getLineNumber(editor.getSelectionModel().getSelectionEnd());
-      if (doc.getLineStartOffset(endLine) == editor.getSelectionModel().getSelectionEnd()) endLine--;
+    if (caret.hasSelection()) {
+      startLine = doc.getLineNumber(caret.getSelectionStart());
+      endLine = doc.getLineNumber(caret.getSelectionEnd());
+      if (doc.getLineStartOffset(endLine) == caret.getSelectionEnd()) endLine--;
     }
 
     final int startReformatOffset = CharArrayUtil.shiftBackward(doc.getCharsSequence(), doc.getLineEndOffset(startLine), " \t");
     CodeEditUtil.setNodeReformatStrategy(new NotNullFunction<ASTNode, Boolean>() {
       @NotNull
       @Override
-      public Boolean fun(ASTNode node) {
+      public Boolean fun(@NotNull ASTNode node) {
         return node.getTextRange().getStartOffset() >= startReformatOffset;
       }
     });
     try {
-      doJob(editor, doc, project, docManager, psiFile, startLine, endLine);
+      doJob(editor, doc, caret, project, docManager, psiFile, startLine, endLine);
     }
     finally {
       CodeEditUtil.setNodeReformatStrategy(null);
     }
   }
 
-  private static void doJob(Editor editor,
-                            DocumentEx doc,
-                            Project project,
-                            PsiDocumentManager docManager,
-                            PsiFile psiFile,
+  private static void doJob(@NotNull Editor editor,
+                            @NotNull DocumentEx doc,
+                            @NotNull Caret caret, 
+                            @NotNull Project project,
+                            @NotNull PsiDocumentManager docManager,
+                            @NotNull PsiFile psiFile,
                             int startLine,
-                            int endLine)
-  {
+                            int endLine) {
     int caretRestoreOffset = -1;
     // joining lines, several times if selection is multiline
     for (int i = startLine; i < endLine; i++) {
@@ -262,17 +263,19 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
     }
     docManager.commitDocument(doc); // cheap on an already-committed doc
 
-    if (editor.getSelectionModel().hasSelection()) {
-      editor.getCaretModel().moveToOffset(editor.getSelectionModel().getSelectionEnd());
+    if (caret.hasSelection()) {
+      caret.moveToOffset(caret.getSelectionEnd());
     }
     else if (caretRestoreOffset != CANNOT_JOIN) {
-      editor.getCaretModel().moveToOffset(caretRestoreOffset);
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-      editor.getSelectionModel().removeSelection();
+      caret.moveToOffset(caretRestoreOffset);
+      if (caret == editor.getCaretModel().getPrimaryCaret()) { // performance
+        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      }
+      caret.removeSelection();
     }
   }
 
-  private static boolean isCommentElement(final PsiElement element) {
+  private static boolean isCommentElement(@Nullable final PsiElement element) {
     return element != null && PsiTreeUtil.getParentOfType(element, PsiComment.class, false) != null;
   }
 }

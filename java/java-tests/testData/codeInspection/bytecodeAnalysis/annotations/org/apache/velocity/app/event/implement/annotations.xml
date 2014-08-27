@@ -31,11 +31,20 @@
   <item name="org.apache.velocity.app.event.implement.EscapeXmlReference java.lang.String getMatchAttribute()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.velocity.app.event.implement.IncludeNotFound java.lang.String includeEvent(java.lang.String, java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.app.event.implement.IncludeNotFound java.lang.String includeEvent(java.lang.String, java.lang.String, java.lang.String) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.velocity.app.event.implement.IncludeNotFound void setRuntimeServices(org.apache.velocity.runtime.RuntimeServices) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.velocity.app.event.implement.IncludeRelativePath java.lang.String includeEvent(java.lang.String, java.lang.String, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.app.event.implement.IncludeRelativePath java.lang.String includeEvent(java.lang.String, java.lang.String, java.lang.String) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.app.event.implement.IncludeRelativePath java.lang.String includeEvent(java.lang.String, java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -48,6 +57,12 @@
   <item name="org.apache.velocity.app.event.implement.InvalidReferenceInfo java.lang.String toString()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.velocity.app.event.implement.PrintExceptions java.lang.Object methodException(java.lang.Class, java.lang.String, java.lang.Exception) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.app.event.implement.PrintExceptions java.lang.Object methodException(java.lang.Class, java.lang.String, java.lang.Exception) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.velocity.app.event.implement.PrintExceptions java.lang.Object methodException(java.lang.Class, java.lang.String, java.lang.Exception) 2">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -57,6 +72,12 @@
   <item name="org.apache.velocity.app.event.implement.PrintExceptions java.lang.String getStackTrace(java.lang.Throwable) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.velocity.app.event.implement.ReportInvalidReferences boolean invalidSetMethod(org.apache.velocity.context.Context, java.lang.String, java.lang.String, org.apache.velocity.util.introspection.Info) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.app.event.implement.ReportInvalidReferences boolean invalidSetMethod(org.apache.velocity.context.Context, java.lang.String, java.lang.String, org.apache.velocity.util.introspection.Info) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.velocity.app.event.implement.ReportInvalidReferences boolean invalidSetMethod(org.apache.velocity.context.Context, java.lang.String, java.lang.String, org.apache.velocity.util.introspection.Info) 3">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -65,6 +86,15 @@
       <val val="&quot;!null,_,_,_-&gt;false;_,!null,_,_-&gt;false;_,_,!null,_-&gt;false;_,_,_,!null-&gt;false;_,_,_,null-&gt;false;_,_,null,_-&gt;false;_,null,_,_-&gt;false;null,_,_,_-&gt;false&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.velocity.app.event.implement.ReportInvalidReferences java.lang.Object invalidGetMethod(org.apache.velocity.context.Context, java.lang.String, java.lang.Object, java.lang.String, org.apache.velocity.util.introspection.Info) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.app.event.implement.ReportInvalidReferences java.lang.Object invalidGetMethod(org.apache.velocity.context.Context, java.lang.String, java.lang.Object, java.lang.String, org.apache.velocity.util.introspection.Info) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.app.event.implement.ReportInvalidReferences java.lang.Object invalidGetMethod(org.apache.velocity.context.Context, java.lang.String, java.lang.Object, java.lang.String, org.apache.velocity.util.introspection.Info) 3">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.velocity.app.event.implement.ReportInvalidReferences java.lang.Object invalidGetMethod(org.apache.velocity.context.Context, java.lang.String, java.lang.Object, java.lang.String, org.apache.velocity.util.introspection.Info) 4">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -72,6 +102,15 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_,_,_,_-&gt;null;_,!null,_,_,_-&gt;null;_,_,!null,_,_-&gt;null;_,_,_,!null,_-&gt;null;_,_,_,_,!null-&gt;null;_,_,_,_,null-&gt;null;_,_,_,null,_-&gt;null;_,_,null,_,_-&gt;null;_,null,_,_,_-&gt;null;null,_,_,_,_-&gt;null&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.velocity.app.event.implement.ReportInvalidReferences java.lang.Object invalidMethod(org.apache.velocity.context.Context, java.lang.String, java.lang.Object, java.lang.String, org.apache.velocity.util.introspection.Info) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.app.event.implement.ReportInvalidReferences java.lang.Object invalidMethod(org.apache.velocity.context.Context, java.lang.String, java.lang.Object, java.lang.String, org.apache.velocity.util.introspection.Info) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.app.event.implement.ReportInvalidReferences java.lang.Object invalidMethod(org.apache.velocity.context.Context, java.lang.String, java.lang.Object, java.lang.String, org.apache.velocity.util.introspection.Info) 3">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.app.event.implement.ReportInvalidReferences java.lang.Object invalidMethod(org.apache.velocity.context.Context, java.lang.String, java.lang.Object, java.lang.String, org.apache.velocity.util.introspection.Info) 4">
     <annotation name="org.jetbrains.annotations.NotNull"/>

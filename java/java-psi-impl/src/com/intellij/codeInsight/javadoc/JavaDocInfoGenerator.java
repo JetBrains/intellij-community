@@ -727,7 +727,7 @@ public class JavaDocInfoGenerator {
       boolean inferred = AnnotationUtil.isInferredAnnotation(annotation);
       if (resolved instanceof PsiClass) {
         final PsiClass annotationType = (PsiClass)resolved;
-        if (AnnotationUtil.isAnnotated(annotationType, "java.lang.annotation.Documented", false)) {
+        if (isDocumentedAnnotationType(annotationType)) {
           if (inferred) buffer.append("<i>");
           final PsiClassType type = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(annotationType, PsiSubstitutor.EMPTY);
           buffer.append("@");
@@ -768,6 +768,10 @@ public class JavaDocInfoGenerator {
       }
       if (splitAnnotations) buffer.append("\n");
     }
+  }
+
+  public static boolean isDocumentedAnnotationType(PsiClass annotationType) {
+    return AnnotationUtil.isAnnotated(annotationType, "java.lang.annotation.Documented", false);
   }
 
   private void generateMethodParameterJavaDoc(@NonNls StringBuilder buffer, PsiParameter parameter, boolean generatePrologueAndEpilogue) {

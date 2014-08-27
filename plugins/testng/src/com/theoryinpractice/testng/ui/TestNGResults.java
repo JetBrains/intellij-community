@@ -466,6 +466,10 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     this.failedToStart = failedToStart;
   }
 
+  public boolean hasFinishedTests() {
+    return count > 0;
+  }
+
   private class OpenSourceSelectionListener implements TreeSelectionListener {
 
     public void valueChanged(TreeSelectionEvent e) {

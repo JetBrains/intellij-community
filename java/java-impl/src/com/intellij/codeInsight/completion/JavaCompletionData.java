@@ -484,7 +484,7 @@ public class JavaCompletionData extends JavaAwareCompletionData {
       }
     }
 
-    if ((isInsideParameterList(position) || isAtResourceVariableStart(position)) &&
+    if ((isInsideParameterList(position) || isAtResourceVariableStart(position) || isAtCatchVariableStart(position)) &&
         !psiElement().afterLeaf(PsiKeyword.FINAL).accepts(position) &&
         !AFTER_DOT.accepts(position)) {
       result.addElement(TailTypeDecorator.withTail(createKeyword(position, PsiKeyword.FINAL), TailType.HUMBLE_SPACE_BEFORE_WORD));
@@ -671,6 +671,10 @@ public class JavaCompletionData extends JavaAwareCompletionData {
 
   private static boolean isAtResourceVariableStart(PsiElement position) {
     return psiElement().insideStarting(psiElement(PsiTypeElement.class).withParent(PsiResourceList.class)).accepts(position);
+  }
+
+  private static boolean isAtCatchVariableStart(PsiElement position) {
+    return psiElement().insideStarting(psiElement(PsiTypeElement.class).withParent(PsiCatchSection.class)).accepts(position);
   }
 
   private static void addBreakContinue(CompletionResultSet result, PsiElement position) {

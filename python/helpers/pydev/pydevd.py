@@ -1,10 +1,13 @@
 #IMPORTANT: pydevd_constants must be the 1st thing defined because it'll keep a reference to the original sys._getframe
 from __future__ import nested_scopes # Jython 2.1 support
+from pydevd_constants import * # @UnusedWildImport
+
+import pydev_monkey_qt
+pydev_monkey_qt.patch_qt()
 
 import traceback
 
 from django_debug import DjangoLineBreakpoint
-from pydevd_signature import SignatureFactory
 from pydevd_frame import add_exception_to_frame
 import pydev_imports
 from pydevd_breakpoints import * #@UnusedWildImport
@@ -59,7 +62,8 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          StartServer, \
                          InternalSetNextStatementThread, \
                          ReloadCodeCommand, \
-    CMD_SET_PY_EXCEPTION, \
+                         ID_TO_MEANING,\
+                         CMD_SET_PY_EXCEPTION, \
                          CMD_IGNORE_THROWN_EXCEPTION_AT,\
                          InternalGetBreakpointException, \
                          InternalSendCurrExceptionTrace,\
@@ -81,14 +85,12 @@ from pydevd_custom_frames import CustomFramesContainer, CustomFramesContainerIni
 import pydevd_dont_trace
 import pydevd_traceproperty
 
-from _pydev_imps import _pydev_time as time
+from _pydev_imps import _pydev_time as time, _pydev_thread
 
-if USE_LIB_COPY:
-    import _pydev_threading as threading
-else:
-    import threading
+import _pydev_threading as threading
 
 import os
+import atexit
 
 
 threadingEnumerate = threading.enumerate
@@ -112,9 +114,11 @@ DONT_TRACE = {
               '_pydev_execfile.py':1,
               '_pydev_jython_execfile.py':1,
               '_pydev_threading':1,
+              '_pydev_Queue':1,
               'django_debug.py':1,
               'django_frame.py':1,
               'pydev_log.py':1,
+              'pydev_monkey.py':1 ,
               'pydevd.py':1 ,
               'pydevd_additional_thread_info.py':1,
               'pydevd_comm.py':1,
@@ -219,7 +223,7 @@ class PyDBCommandThread(PyDBDaemonThread):
 
 
 def killAllPydevThreads():
-    threads = threadingEnumerate()
+    threads = DictKeys(PyDBDaemonThread.created_pydb_daemon_threads)
     for t in threads:
         if hasattr(t, 'doKillPydevThread'):
             t.doKillPydevThread()
@@ -233,12 +237,23 @@ class PyDBCheckAliveThread(PyDBDaemonThread):
     def __init__(self, pyDb):
         PyDBDaemonThread.__init__(self)
         self.pyDb = pyDb
-        self.setDaemon(False)
         self.setName('pydevd.CheckAliveThread')
 
     def OnRun(self):
             if self.dontTraceMe:
-                self.pyDb.SetTrace(None) # no debugging on this thread
+
+                disable_tracing = True
+        
+                if pydevd_vm_type.GetVmType() == pydevd_vm_type.PydevdVmType.JYTHON and sys.hexversion <= 0x020201f0:
+                    # don't run untraced threads if we're in jython 2.2.1 or lower
+                    # jython bug: if we start a thread and another thread changes the tracing facility
+                    # it affects other threads (it's not set only for the thread but globally)
+                    # Bug: http://sourceforge.net/tracker/index.php?func=detail&aid=1870039&group_id=12867&atid=112867
+                    disable_tracing = False
+        
+                if disable_tracing:
+                    pydevd_tracing.SetTrace(None)  # no debugging on this thread
+                    
             while not self.killReceived:
                 if not self.pyDb.haveAliveThreads():
                     try:
@@ -298,8 +313,8 @@ class PyDB:
 
         self.django_exception_break = {}
         self.readyToRun = False
-        self._main_lock = threading.Lock()
-        self._lock_running_thread_ids = threading.Lock()
+        self._main_lock = _pydev_thread.allocate_lock()
+        self._lock_running_thread_ids = _pydev_thread.allocate_lock()
         self._py_db_command_thread_event = threading.Event()
         CustomFramesContainer._py_db_command_thread_event = self._py_db_command_thread_event
         self._finishDebuggingSession = False
@@ -332,7 +347,11 @@ class PyDB:
 
     def haveAliveThreads(self):
         for t in threadingEnumerate():
-            if not isinstance(t, PyDBDaemonThread) and isThreadAlive(t) and not t.isDaemon():
+            if isinstance(t, PyDBDaemonThread):
+                pydev_log.error_once(
+                    'Error in debugger: Found PyDBDaemonThread through threading.enumerate().\n')
+                
+            if isThreadAlive(t) and not t.isDaemon():
                 return True
 
         return False
@@ -387,11 +406,9 @@ class PyDB:
         if thread_id == "*":
             threads = threadingEnumerate()
             for t in threads:
-                thread_name = t.getName()
-                if not thread_name.startswith('pydevd.') or thread_name == 'pydevd.CommandThread':
-                    thread_id = GetThreadId(t)
-                    queue = self.getInternalQueue(thread_id)
-                    queue.put(int_cmd)
+                thread_id = GetThreadId(t)
+                queue = self.getInternalQueue(thread_id)
+                queue.put(int_cmd)
 
         else:
             queue = self.getInternalQueue(thread_id)
@@ -442,7 +459,13 @@ class PyDB:
                 for t in all_threads:
                     thread_id = GetThreadId(t)
 
-                    if not isinstance(t, PyDBDaemonThread) and isThreadAlive(t):
+                    if isinstance(t, PyDBDaemonThread):
+                        pydev_log.error_once('Found PyDBDaemonThread in threading.enumerate.')
+                        
+                    elif getattr(t, 'is_pydev_daemon_thread', False):
+                        pass # I.e.: skip the DummyThreads created from pydev daemon threads
+                        
+                    elif isThreadAlive(t):
                         program_threads_alive[thread_id] = t
 
                         if not DictContains(self._running_thread_ids, thread_id):
@@ -505,19 +528,18 @@ class PyDB:
         threads = threadingEnumerate()
         try:
             for t in threads:
-                if not t.getName().startswith('pydevd.'):
-                    # TODO: optimize so that we only actually add that tracing if it's in
-                    # the new breakpoint context.
-                    additionalInfo = None
-                    try:
-                        additionalInfo = t.additionalInfo
-                    except AttributeError:
-                        pass  # that's ok, no info currently set
+                # TODO: optimize so that we only actually add that tracing if it's in
+                # the new breakpoint context.
+                additionalInfo = None
+                try:
+                    additionalInfo = t.additionalInfo
+                except AttributeError:
+                    pass  # that's ok, no info currently set
 
-                    if additionalInfo is not None:
-                        for frame in additionalInfo.IterFrames():
-                            if frame is not ignore_frame:
-                                self.SetTraceForFrameAndParents(frame, overwrite_prev_trace=overwrite_prev_trace)
+                if additionalInfo is not None:
+                    for frame in additionalInfo.IterFrames():
+                        if frame is not ignore_frame:
+                            self.SetTraceForFrameAndParents(frame, overwrite_prev_trace=overwrite_prev_trace)
         finally:
             frame = None
             t = None
@@ -592,7 +614,7 @@ class PyDB:
         it may be worth refactoring it (actually, reordering the ifs so that the ones used mostly come before
         probably will give better performance).
         '''
-        #print ID_TO_MEANING[str(cmd_id)], repr(text)
+        #print(ID_TO_MEANING[str(cmd_id)], repr(text))
 
         self._main_lock.acquire()
         try:
@@ -834,7 +856,7 @@ class PyDB:
                     id_to_pybreakpoint[breakpoint_id] = breakpoint
                     self.consolidate_breakpoints(file, id_to_pybreakpoint, breakpoints)
 
-                    self.setTracingForUntracedContexts()
+                    self.setTracingForUntracedContexts(overwrite_prev_trace=True)
 
                 elif cmd_id == CMD_REMOVE_BREAK:
                     #command to remove some breakpoint
@@ -862,7 +884,7 @@ class PyDB:
                             raise NameError(breakpoint_type)
 
                         try:
-                            id_to_pybreakpoint = file_to_id_to_breakpoint[file]
+                            id_to_pybreakpoint = file_to_id_to_breakpoint.get(file, {})
                             if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
                                 existing = id_to_pybreakpoint[breakpoint_id]
                                 sys.stderr.write('Removed breakpoint:%s - line:%s - func_name:%s (id: %s)\n' % (
@@ -1319,7 +1341,7 @@ class PyDB:
             if self._finishDebuggingSession and not self._terminationEventSent:
                 #that was not working very well because jython gave some socket errors
                 try:
-                    threads = threadingEnumerate()
+                    threads = DictKeys(PyDBDaemonThread.created_pydb_daemon_threads)
                     for t in threads:
                         if hasattr(t, 'doKillPydevThread'):
                             t.doKillPydevThread()
@@ -1332,10 +1354,10 @@ class PyDB:
 
             is_file_to_ignore = DictContains(DONT_TRACE, base) #we don't want to debug threading or anything related to pydevd
 
+            #print('trace_dispatch', base, frame.f_lineno, event, frame.f_code.co_name, is_file_to_ignore)
             if is_file_to_ignore:
                 return None
 
-            #print('trace_dispatch', base, frame.f_lineno, event, frame.f_code.co_name)
             try:
                 #this shouldn't give an exception, but it could happen... (python bug)
                 #see http://mail.python.org/pipermail/python-bugs-list/2007-June/038796.html
@@ -1401,8 +1423,9 @@ class PyDB:
 
 
 
-    def SetTraceForFrameAndParents(self, frame, also_add_to_passed_frame=True, overwrite_prev_trace=False):
-        dispatch_func = self.trace_dispatch
+    def SetTraceForFrameAndParents(self, frame, also_add_to_passed_frame=True, overwrite_prev_trace=False, dispatch_func=None):
+        if dispatch_func is None:
+            dispatch_func = self.trace_dispatch
 
         if also_add_to_passed_frame:
             self.update_trace(frame, dispatch_func, overwrite_prev_trace)
@@ -1439,8 +1462,8 @@ class PyDB:
         net = NetCommand(str(CMD_THREAD_CREATE), 0, '<xml><thread name="pydevd.writer" id="-1"/></xml>')
         self.writer.addCommand(net)
 
-        pydevd_tracing.SetTrace(self.trace_dispatch)
         self.patch_threads()
+        pydevd_tracing.SetTrace(self.trace_dispatch)
 
 
         PyDBCommandThread(self).start()
@@ -1543,43 +1566,47 @@ def processCommandLine(argv):
     setup['multiproc'] = False #Used by PyCharm (reuses connection: ssh tunneling)
     setup['multiprocess'] = False # Used by PyDev (creates new connection to ide)
     setup['save-signatures'] = False
+    setup['print-in-debugger-startup'] = False
     i = 0
     del argv[0]
     while (i < len(argv)):
-        if (argv[i] == '--port'):
+        if argv[i] == '--port':
             del argv[i]
             setup['port'] = int(argv[i])
             del argv[i]
-        elif (argv[i] == '--vm_type'):
+        elif argv[i] == '--vm_type':
             del argv[i]
             setup['vm_type'] = argv[i]
             del argv[i]
-        elif (argv[i] == '--client'):
+        elif argv[i] == '--client':
             del argv[i]
             setup['client'] = argv[i]
             del argv[i]
-        elif (argv[i] == '--server'):
+        elif argv[i] == '--server':
             del argv[i]
             setup['server'] = True
-        elif (argv[i] == '--file'):
+        elif argv[i] == '--file':
             del argv[i]
             setup['file'] = argv[i]
             i = len(argv) # pop out, file is our last argument
-        elif (argv[i] == '--DEBUG_RECORD_SOCKET_READS'):
+        elif argv[i] == '--DEBUG_RECORD_SOCKET_READS':
             del argv[i]
             setup['DEBUG_RECORD_SOCKET_READS'] = True
-        elif (argv[i] == '--DEBUG'):
+        elif argv[i] == '--DEBUG':
             del argv[i]
             set_debug(setup)
-        elif (argv[i] == '--multiproc'):
+        elif argv[i] == '--multiproc':
             del argv[i]
             setup['multiproc'] = True
-        elif (argv[i] == '--multiprocess'):
+        elif argv[i] == '--multiprocess':
             del argv[i]
             setup['multiprocess'] = True
-        elif (argv[i] == '--save-signatures'):
+        elif argv[i] == '--save-signatures':
             del argv[i]
             setup['save-signatures'] = True
+        elif argv[i] == '--print-in-debugger-startup':
+            del argv[i]
+            setup['print-in-debugger-startup'] = True
         else:
             raise ValueError("unexpected option " + argv[i])
     return setup
@@ -1590,18 +1617,6 @@ def usage(doExit=0):
     if doExit:
         sys.exit(0)
 
-def SetTraceForParents(frame, dispatch_func):
-    frame = frame.f_back
-    while frame:
-        if frame.f_trace is None:
-            frame.f_trace = dispatch_func
-
-        frame = frame.f_back
-    del frame
-
-def exit_hook():
-    debugger = GetGlobalDebugger()
-    debugger.exiting()
 
 def initStdoutRedirect():
     if not getattr(sys, 'stdoutBuf', None):
@@ -1666,7 +1681,7 @@ def settrace(
 
 
 
-_set_trace_lock = threading.Lock()
+_set_trace_lock = _pydev_thread.allocate_lock()
 
 def _locked_settrace(
     host,
@@ -1748,7 +1763,9 @@ def _locked_settrace(
             # As this is the first connection, also set tracing for any untraced threads
             debugger.setTracingForUntracedContexts(ignore_frame=GetFrame(), overwrite_prev_trace=overwrite_prev_trace)
 
-        sys.exitfunc = exit_hook
+        # Stop the tracing as the last thing before the actual shutdown for a clean exit.
+        atexit.register(stoptrace)
+        
         #Suspend as the last thing after all tracing is in place.
         if suspend:
             debugger.setSuspend(t, CMD_SET_BREAK)
@@ -1793,16 +1810,15 @@ def stoptrace():
 
         from pydev_monkey import undo_patch_thread_modules
         undo_patch_thread_modules()
-
+ 
         debugger = GetGlobalDebugger()
-
+ 
         if debugger:
-            debugger.trace_dispatch = None
-
-            debugger.SetTraceForFrameAndParents(GetFrame(), False)
-
+  
+            debugger.SetTraceForFrameAndParents(
+                GetFrame(), also_add_to_passed_frame=True, overwrite_prev_trace=True, dispatch_func=lambda *args:None)
             debugger.exiting()
-
+  
             killAllPydevThreads()
 
         connected = False
@@ -1893,6 +1909,7 @@ class SetupHolder:
 # main
 #=======================================================================================================================
 if __name__ == '__main__':
+    
     # parse the command line. --file is our last argument that is required
     try:
         sys.original_argv = sys.argv[:]
@@ -1902,6 +1919,12 @@ if __name__ == '__main__':
         traceback.print_exc()
         usage(1)
 
+    if setup['print-in-debugger-startup']:
+        try:
+            pid = ' (pid: %s)' % os.getpid()
+        except:
+            pid = ''
+        sys.stderr.write("pydev debugger: starting%s\n" % pid)
 
     fix_getpass.fixGetpass()
 
@@ -2047,6 +2070,8 @@ if __name__ == '__main__':
             if pydevd_vm_type.GetVmType() == pydevd_vm_type.PydevdVmType.JYTHON:
                 sys.stderr.write("Collecting run-time type information is not supported for Jython\n")
             else:
+                # Only import it if we're going to use it!
+                from pydevd_signature import SignatureFactory
                 debugger.signature_factory = SignatureFactory()
 
         try:
@@ -2059,3 +2084,4 @@ if __name__ == '__main__':
         connected = True  # Mark that we're connected when started from inside ide.
 
         debugger.run(setup['file'], None, None)
+        

@@ -66,27 +66,34 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   private final ValueDescriptorImpl myValueDescriptor;
   private final EvaluationContextImpl myEvaluationContext;
   private final NodeManagerImpl myNodeManager;
+  private final boolean myContextSet;
 
   protected JavaValue(JavaValue parent,
                     @NotNull ValueDescriptorImpl valueDescriptor,
                     @NotNull EvaluationContextImpl evaluationContext,
-                    NodeManagerImpl nodeManager) {
+                    NodeManagerImpl nodeManager,
+                    boolean contextSet) {
     super(valueDescriptor.getName());
     myParent = parent;
     myValueDescriptor = valueDescriptor;
     myEvaluationContext = evaluationContext;
     myNodeManager = nodeManager;
+    myContextSet = contextSet;
   }
 
-  private static JavaValue create(JavaValue parent, @NotNull ValueDescriptorImpl valueDescriptor, EvaluationContextImpl evaluationContext, NodeManagerImpl nodeManager, boolean init) {
+  static JavaValue create(JavaValue parent,
+                          @NotNull ValueDescriptorImpl valueDescriptor,
+                          EvaluationContextImpl evaluationContext,
+                          NodeManagerImpl nodeManager,
+                          boolean contextSet) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    return new JavaValue(parent, valueDescriptor, evaluationContext, nodeManager);
+    return new JavaValue(parent, valueDescriptor, evaluationContext, nodeManager, contextSet);
   }
 
   static JavaValue create(@NotNull ValueDescriptorImpl valueDescriptor,
                           EvaluationContextImpl evaluationContext,
                           NodeManagerImpl nodeManager) {
-    return create(null, valueDescriptor, evaluationContext, nodeManager, true);
+    return create(null, valueDescriptor, evaluationContext, nodeManager, false);
   }
 
   public JavaValue getParent() {
@@ -113,7 +120,9 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
       @Override
       public void threadAction() {
-        myValueDescriptor.setContext(myEvaluationContext);
+        if (!myContextSet) {
+          myValueDescriptor.setContext(myEvaluationContext);
+        }
         myValueDescriptor.updateRepresentation(myEvaluationContext, new DescriptorLabelListener() {
           @Override
           public void labelChanged() {

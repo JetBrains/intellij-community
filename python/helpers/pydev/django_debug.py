@@ -2,6 +2,7 @@ import inspect
 from django_frame import DjangoTemplateFrame
 from pydevd_comm import CMD_SET_BREAK
 from pydevd_constants import DJANGO_SUSPEND, GetThreadId, DictContains
+from pydevd_file_utils import NormFileToServer
 from pydevd_breakpoints import LineBreakpoint
 import pydevd_vars
 import traceback

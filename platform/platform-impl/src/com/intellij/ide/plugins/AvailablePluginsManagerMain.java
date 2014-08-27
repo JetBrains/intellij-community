@@ -29,7 +29,7 @@ import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
-import com.intellij.util.net.HTTPProxySettingsDialog;
+import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,6 +41,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.TreeSet;
 
 /**
@@ -50,7 +51,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
   public static final String MANAGE_REPOSITORIES = "Manage repositories...";
   public static final String N_A = "N/A";
 
-  private PluginManagerMain installed;
+  private final PluginManagerMain installed;
   private final String myVendorFilter;
 
   public AvailablePluginsManagerMain(PluginManagerMain installed, PluginManagerUISettings uiSettings, String vendorFilter) {
@@ -63,11 +64,11 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
       manageRepositoriesBtn.setMnemonic('m');
       manageRepositoriesBtn.addActionListener(new ActionListener() {
         @Override
-        public void actionPerformed(ActionEvent e) {
+        public void actionPerformed(@NotNull ActionEvent e) {
           if (ShowSettingsUtil.getInstance().editConfigurable(myActionsPanel, new PluginHostsConfigurable())) {
             final ArrayList<String> pluginHosts = UpdateSettings.getInstance().myPluginHosts;
             if (!pluginHosts.contains(((AvailablePluginsTableModel)pluginsModel).getRepository())) {
-              ((AvailablePluginsTableModel)pluginsModel).setRepository(AvailablePluginsTableModel.ALL, myFilter.getFilter().toLowerCase());
+              ((AvailablePluginsTableModel)pluginsModel).setRepository(AvailablePluginsTableModel.ALL, myFilter.getFilter().toLowerCase(Locale.ENGLISH));
             }
             loadAvailablePlugins();
           }
@@ -78,11 +79,9 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
 
     final JButton httpProxySettingsButton = new JButton(IdeBundle.message("button.http.proxy.settings"));
     httpProxySettingsButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        HTTPProxySettingsDialog settingsDialog = new HTTPProxySettingsDialog();
-        settingsDialog.pack();
-        settingsDialog.show();
-        if (settingsDialog.isOK()) {
+      @Override
+      public void actionPerformed(@NotNull ActionEvent e) {
+        if (HttpConfigurable.editConfigurable(getMainPanel())) {
           loadAvailablePlugins();
         }
       }
@@ -114,7 +113,8 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
     
     pluginTable.registerKeyboardAction(
       new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
+        @Override
+        public void actionPerformed(@NotNull ActionEvent e) {
           installSelected(pluginTable);
         }
       },
@@ -235,7 +235,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
       return new AnAction(availableCategory) {
         @Override
         public void actionPerformed(AnActionEvent e) {
-          final String filter = myFilter.getFilter().toLowerCase();
+          final String filter = myFilter.getFilter().toLowerCase(Locale.ENGLISH);
           ((AvailablePluginsTableModel)pluginsModel).setCategory(availableCategory, filter);
         }
       };
@@ -277,7 +277,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
       return new AnAction(host) {
         @Override
         public void actionPerformed(AnActionEvent e) {
-          final String filter = myFilter.getFilter().toLowerCase();
+          final String filter = myFilter.getFilter().toLowerCase(Locale.ENGLISH);
           ((AvailablePluginsTableModel)pluginsModel).setRepository(host, filter);
           TableUtil.ensureSelectionExists(getPluginTable());
         }

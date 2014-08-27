@@ -835,6 +835,37 @@ public class PyTypeTest extends PyTestCase {
            "expr = (1,) + (True, 'spam') + ()");
   }
 
+  public void testConstructorUnification() {
+    doTest("C[int]",
+           "class C(object):\n" +
+           "    def __init__(self, x):\n" +
+           "        '''\n" +
+           "        :type x: T\n" +
+           "        :rtype: C[T]\n" +
+           "        '''\n" +
+           "        pass\n" +
+           "\n" +
+           "expr = C(10)\n");
+  }
+
+  public void testGenericClassMethodUnification() {
+    doTest("int",
+           "class C(object):\n" +
+           "    def __init__(self, x):\n" +
+           "        '''\n" +
+           "        :type x: T\n" +
+           "        :rtype: C[T]\n" +
+           "        '''\n" +
+           "        pass\n" +
+           "    def foo(self):\n" +
+           "        '''\n" +
+           "        :rtype: T\n" +
+           "        '''\n" +
+           "        pass\n" +
+           "\n" +
+           "expr = C(10).foo()\n");
+  }
+
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {
     return TypeEvalContext.userInitiated(element.getContainingFile()).withTracing();
   }

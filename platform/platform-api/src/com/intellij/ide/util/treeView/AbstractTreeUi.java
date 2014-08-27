@@ -83,7 +83,7 @@ public class AbstractTreeUi {
     }
   };
   long myOwnComparatorStamp;
-  long myLastComparatorStamp;
+  private long myLastComparatorStamp;
 
   private DefaultMutableTreeNode myRootNode;
   private final Map<Object, Object> myElementToNodeMap = new HashMap<Object, Object>();
@@ -109,7 +109,7 @@ public class AbstractTreeUi {
   private final Map<Object, List<NodeAction>> myNodeChildrenActions = new HashMap<Object, List<NodeAction>>();
 
   private long myClearOnHideDelay = -1;
-  private final Map<AbstractTreeUi, Long> ourUi2Countdown = Collections.synchronizedMap(new WeakHashMap<AbstractTreeUi, Long>());
+  private volatile long ourUi2Countdown;
 
   private final Set<Runnable> myDeferredSelections = new HashSet<Runnable>();
   private final Set<Runnable> myDeferredExpansions = new HashSet<Runnable>();
@@ -263,7 +263,7 @@ public class AbstractTreeUi {
   }
 
 
-  boolean isNodeActionsPending() {
+  private boolean isNodeActionsPending() {
     return !myNodeActions.isEmpty() || !myNodeChildrenActions.isEmpty();
   }
 
@@ -310,28 +310,23 @@ public class AbstractTreeUi {
 
   private void cleanUpAll() {
     final long now = System.currentTimeMillis();
-    final AbstractTreeUi[] uis = ourUi2Countdown.keySet().toArray(new AbstractTreeUi[ourUi2Countdown.size()]);
-    for (AbstractTreeUi eachUi : uis) {
-      if (eachUi == null) continue;
-      final Long timeToCleanup = ourUi2Countdown.get(eachUi);
-      if (timeToCleanup == null) continue;
-      if (now >= timeToCleanup.longValue()) {
-        ourUi2Countdown.remove(eachUi);
-        Runnable runnable = new Runnable() {
-          @Override
-          public void run() {
-            if (!canInitiateNewActivity()) return;
+    final long timeToCleanup = ourUi2Countdown;
+    if (timeToCleanup != 0 && now >= timeToCleanup) {
+      ourUi2Countdown = 0;
+      Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+          if (!canInitiateNewActivity()) return;
 
-            myCleanupTask = null;
-            getBuilder().cleanUp();
-          }
-        };
-        if (isPassthroughMode()) {
-          runnable.run();
+          myCleanupTask = null;
+          getBuilder().cleanUp();
         }
-        else {
-          invokeLaterIfNeeded(false, runnable);
-        }
+      };
+      if (isPassthroughMode()) {
+        runnable.run();
+      }
+      else {
+        invokeLaterIfNeeded(false, runnable);
       }
     }
   }
@@ -390,7 +385,7 @@ public class AbstractTreeUi {
     cancelCurrentCleanupTask();
 
     myCanProcessDeferredSelections = true;
-    ourUi2Countdown.remove(this);
+    ourUi2Countdown = 0;
 
     if (!myWasEverShown || myUpdateFromRootRequested || myUpdateIfInactive) {
       getBuilder().updateFromRoot();
@@ -408,7 +403,7 @@ public class AbstractTreeUi {
     }
   }
 
-  public void deactivate() {
+  void deactivate() {
     getUpdater().hideNotify();
     myBusyAlarm.cancelAllRequests();
 
@@ -420,7 +415,7 @@ public class AbstractTreeUi {
     }
 
     if (getClearOnHideDelay() >= 0) {
-      ourUi2Countdown.put(this, System.currentTimeMillis() + getClearOnHideDelay());
+      ourUi2Countdown = System.currentTimeMillis() + getClearOnHideDelay();
       scheduleCleanUpAll();
     }
   }
@@ -687,7 +682,7 @@ public class AbstractTreeUi {
       wasCleanedUp = true;
     }
 
-    if (myRootNodeWasQueuedToInitialize) return wasCleanedUp;
+    if (myRootNodeWasQueuedToInitialize) return true;
 
     myRootNodeWasQueuedToInitialize = true;
 
@@ -2878,7 +2873,7 @@ public class AbstractTreeUi {
     if (!getBuilder().isSmartExpand()) return false;
 
     boolean smartExpand = !myNotForSmartExpand.contains(node) && canSmartExpand;
-    return smartExpand && validateAutoExpand(smartExpand, getElementFor(node));
+    return smartExpand && validateAutoExpand(true, getElementFor(node));
   }
 
   private void processSmartExpand(@NotNull final DefaultMutableTreeNode node, final boolean canSmartExpand, boolean forced) {
@@ -3778,7 +3773,7 @@ public class AbstractTreeUi {
 
     final boolean oldCanProcessDeferredSelection = myCanProcessDeferredSelections;
 
-    if (!deferred && wasRootNodeInitialized() && willAffectSelection) {
+    if (!deferred && wasRootNodeInitialized()) {
       _getReady().doWhenDone(new Runnable() {
         @Override
         public void run() {
@@ -4357,12 +4352,13 @@ public class AbstractTreeUi {
       Object eachElement = element;
       DefaultMutableTreeNode firstVisible = null;
       while (true) {
-        if (!isValid(eachElement) || eachElement == null) break;
+        if (eachElement == null || !isValid(eachElement)) break;
 
         final int preselected = getRowIfUnderSelection(eachElement);
         if (preselected >= 0) {
           firstVisible = (DefaultMutableTreeNode)getTree().getPathForRow(preselected).getLastPathComponent();
-        } else {
+        }
+        else {
           firstVisible = getNodeForElement(eachElement, true);
         }
 
@@ -4371,15 +4367,20 @@ public class AbstractTreeUi {
           kidsToExpand.add(eachElement);
         }
         if (firstVisible != null) break;
-        eachElement = eachElement != null ? getTreeStructure().getParentElement(eachElement) : null;
+        eachElement = getTreeStructure().getParentElement(eachElement);
         if (eachElement == null) {
           firstVisible = null;
           break;
         }
 
-        if (kidsToExpand.contains(eachElement)) {
+        int i = kidsToExpand.indexOf(eachElement);
+        if (i != -1) {
           try {
-            LOG.error("Tree path contains equal elements at different levels: element=" + eachElement + " class=" + eachElement.getClass() + " path=" + kidsToExpand + " tree structure=" + myTreeStructure);
+            Object existing = kidsToExpand.get(i);
+            LOG.error("Tree path contains equal elements at different levels:\n" +
+                      " element: '" + eachElement + "'; " + eachElement.getClass() + " ("+System.identityHashCode(eachElement)+");\n" +
+                      "existing: '" + existing + "'; " + existing.getClass()+ " ("+System.identityHashCode(existing)+"); " +
+                      "path='" + kidsToExpand + "'; tree structure=" + myTreeStructure);
           }
           catch (AssertionError ignored) {
           }
@@ -5044,6 +5045,7 @@ public class AbstractTreeUi {
       return myUpdateChildren;
     }
 
+    @Override
     @NotNull
     @NonNls
     public synchronized String toString() {

@@ -1,13 +1,22 @@
 <root>
+  <item name="org.apache.velocity.app.event.EventCartridge boolean addEventHandler(org.apache.velocity.app.event.EventHandler) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.velocity.app.event.EventCartridge boolean addEventHandler(org.apache.velocity.app.event.EventHandler)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;false&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.velocity.app.event.EventCartridge boolean attachToContext(org.apache.velocity.context.Context) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.velocity.app.event.EventCartridge boolean attachToContext(org.apache.velocity.context.Context)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;false&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.velocity.app.event.EventCartridge boolean removeEventHandler(org.apache.velocity.app.event.EventHandler) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.app.event.EventCartridge boolean removeEventHandler(org.apache.velocity.app.event.EventHandler)">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -59,11 +68,23 @@
   <item name="org.apache.velocity.app.event.EventHandlerUtil java.lang.String includeEvent(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, java.lang.String, java.lang.String, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.velocity.app.event.EventHandlerUtil void callEventHandlers(java.util.Iterator, java.util.Iterator, org.apache.velocity.app.event.EventHandlerMethodExecutor) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.app.event.EventHandlerUtil void callEventHandlers(java.util.Iterator, java.util.Iterator, org.apache.velocity.app.event.EventHandlerMethodExecutor) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.app.event.EventHandlerUtil void initializeEventCartridge(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.app.event.EventCartridge) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.velocity.app.event.EventHandlerUtil void invalidSetMethod(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, java.lang.String, java.lang.String, org.apache.velocity.util.introspection.Info) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.velocity.app.event.EventHandlerUtil void invalidSetMethod(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, java.lang.String, java.lang.String, org.apache.velocity.util.introspection.Info) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.app.event.EventHandlerUtil void iterateOverEventHandlers(java.util.Iterator, org.apache.velocity.app.event.EventHandlerMethodExecutor) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.app.event.IncludeEventHandler.IncludeEventExecutor void execute(org.apache.velocity.app.event.EventHandler) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>

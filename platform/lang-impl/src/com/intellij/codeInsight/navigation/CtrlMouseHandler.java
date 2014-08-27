@@ -455,7 +455,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
     @Override
     public void showDocInfo(@NotNull DocumentationManager docManager) {
-      docManager.showJavaDocInfo(myTargetElement, myElementAtPointer, true, null);
+      docManager.showJavaDocInfo(myTargetElement, myElementAtPointer, null);
       docManager.setAllowContentUpdateFromContext(false);
     }
   }
@@ -1115,7 +1115,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         if (hint != null) {
           hint.hide(true);
         }
-        myDocumentationManager.showJavaDocInfo(targetElement, myContext, true, null);
+        myDocumentationManager.showJavaDocInfo(targetElement, myContext, null);
       }
     }
   }

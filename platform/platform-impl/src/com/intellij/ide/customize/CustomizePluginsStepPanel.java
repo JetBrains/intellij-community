@@ -115,7 +115,7 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
       gbc.weighty = 1;
       groupPanel.add(Box.createVerticalGlue(), gbc);
       gbc.weighty = 0;
-      JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+      JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, SMALL_GAP, SMALL_GAP / 2));
       buttonsPanel.setOpaque(false);
       if (pluginGroups.getSets(group).size() == 1) {
         buttonsPanel.add(createLink(SWITCH_COMMAND + ":" + group, getGroupSwitchTextProvider(group)));
@@ -139,7 +139,7 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
           protected Color getColor() {
             return ColorUtil.withAlpha(JBColor.foreground(), .2);
           }
-        }, BorderFactory.createEmptyBorder(GAP / 2, GAP, GAP / 2, GAP)));
+        }, BorderFactory.createEmptyBorder(SMALL_GAP, GAP, SMALL_GAP, GAP)));
       cursor++;
     }
   }

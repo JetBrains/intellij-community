@@ -15,8 +15,10 @@
  */
 package com.intellij.execution.testframework.sm.runner.states;
 
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.CompositePrintable;
 import com.intellij.execution.testframework.Printer;
+import com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -75,7 +77,7 @@ public class TestFailedState extends AbstractState {
           printer.mark();
           addMark = false;
         }
-        printer.print(errorText, ConsoleViewContentType.ERROR_OUTPUT);
+        TestsPresentationUtil.printWithAnsiColoring(printer, errorText, ProcessOutputTypes.STDERR);
       }
     }
   }

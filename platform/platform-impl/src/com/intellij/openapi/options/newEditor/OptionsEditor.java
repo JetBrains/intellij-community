@@ -16,6 +16,8 @@
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.internal.statistic.UsageTrigger;
@@ -35,9 +37,11 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EdtRunnable;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.LightColors;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -58,6 +62,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
@@ -247,7 +252,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
     setLayout(new BorderLayout());
 
-    myMainSplitter = new Splitter(false);
+    myMainSplitter = Registry.is("ide.new.settings.dialog") ? new OnePixelSplitter(false) : new Splitter(false);
     myMainSplitter.setFirstComponent(myLeftSide);
 
     myLoadingDecorator = new LoadingDecorator(myOwnDetails.getComponent(), this, 150);
@@ -845,7 +850,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return mySearch;//myTree.getTree();
+    return myTreeView != null ? myTreeView.myTree : mySearch;//myTree.getTree();
   }
 
   @Override
@@ -1007,6 +1012,23 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     private MySearchField() {
       super(false);
       addKeyListener(new KeyAdapter() {});
+      if (Registry.is("ide.new.settings.dialog")) {
+        final JTextField editor = getTextEditor();
+        if (!SystemInfo.isMac) {
+          editor.putClientProperty("JTextField.variant", "search");
+          if (!(editor.getUI() instanceof DarculaTextFieldUI)) {
+            editor.setUI((DarculaTextFieldUI)DarculaTextFieldUI.createUI(editor));
+            editor.setBorder(new DarculaTextBorder());
+          }
+        }
+        setBackground(UIUtil.getSidePanelColor());
+        setBorder(new EmptyBorder(5, 10, 2, 10));
+      }
+    }
+
+    @Override
+    protected boolean isSearchControlUISupported() {
+      return true;
     }
 
     @Override
@@ -1195,7 +1217,8 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
    * @return default view for the specified configurable
    */
   private JComponent createDefaultComponent(SearchableConfigurable searchable) {
-    Box box = Box.createVerticalBox();
+    JPanel box = new JPanel();
+    box.setLayout(new BoxLayout(box, BoxLayout.Y_AXIS));
     try {
       box.add(new JLabel(OptionsBundle.message(searchable.getId() + ".settings.description")));
     }

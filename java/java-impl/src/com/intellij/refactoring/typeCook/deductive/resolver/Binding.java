@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.refactoring.typeCook.deductive.resolver;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeVariable;
 
-import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author db
@@ -47,7 +47,7 @@ public abstract class Binding {
 
   public abstract void merge(Binding b, boolean removeObject);
 
-  public abstract HashSet<PsiTypeVariable> getBoundVariables();
+  public abstract Set<PsiTypeVariable> getBoundVariables();
 
   public abstract int getWidth();
 

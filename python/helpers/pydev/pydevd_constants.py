@@ -72,13 +72,10 @@ except AttributeError:
 SUPPORT_GEVENT = os.getenv('GEVENT_SUPPORT', 'False') == 'True'
 
 USE_LIB_COPY = SUPPORT_GEVENT and not IS_PY3K and sys.version_info[1] >= 6
+import _pydev_threading as threading
 
-if USE_LIB_COPY:
-    import _pydev_threading as threading
-else:
-    import threading
-
-_nextThreadIdLock = threading.Lock()
+from _pydev_imps import _pydev_thread
+_nextThreadIdLock = _pydev_thread.allocate_lock()
 
 #=======================================================================================================================
 # Jython?

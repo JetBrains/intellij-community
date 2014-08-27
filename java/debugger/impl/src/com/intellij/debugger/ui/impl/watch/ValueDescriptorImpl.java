@@ -203,6 +203,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     }
     catch (EvaluateException e) {
       myValueException = e;
+      setFailed(e);
       myValue = getTargetExceptionWithStackTraceFilled(evaluationContext, e);
       myIsExpandable = false;
     }

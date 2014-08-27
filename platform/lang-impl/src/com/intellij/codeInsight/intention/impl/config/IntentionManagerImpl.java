@@ -20,12 +20,13 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.codeInspection.GlobalInspectionTool;
+import com.intellij.codeInspection.GlobalSimpleInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.actions.CleanupInspectionIntention;
 import com.intellij.codeInspection.actions.RunInspectionIntention;
-import com.intellij.codeInspection.ex.DisableInspectionToolAction;
-import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
-import com.intellij.codeInspection.ex.EditInspectionToolsSettingsInSuppressedPlaceIntention;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
@@ -179,6 +180,32 @@ public class IntentionManagerImpl extends IntentionManager {
     options.add(new RunInspectionIntention(displayKey));
     options.add(new DisableInspectionToolAction(displayKey));
     return options;
+  }
+
+  @Nullable
+  @Override
+  public IntentionAction createFixAllIntention(InspectionToolWrapper toolWrapper, IntentionAction action) {
+    if (toolWrapper instanceof LocalInspectionToolWrapper) {
+      Class aClass = action.getClass();
+      if (action instanceof QuickFixWrapper) {
+        aClass = ((QuickFixWrapper)action).getFix().getClass();
+      }
+      return new CleanupInspectionIntention(toolWrapper, aClass, action.getText());
+    }
+    else if (toolWrapper instanceof GlobalInspectionToolWrapper) {
+      GlobalInspectionTool wrappedTool = ((GlobalInspectionToolWrapper)toolWrapper).getTool();
+      if (wrappedTool instanceof GlobalSimpleInspectionTool && (action instanceof LocalQuickFix || action instanceof QuickFixWrapper)) {
+        Class aClass = action.getClass();
+        if (action instanceof QuickFixWrapper) {
+          aClass = ((QuickFixWrapper)action).getFix().getClass();
+        }
+        return new CleanupInspectionIntention(toolWrapper, aClass, action.getText());
+      }
+    }
+    else {
+      throw new AssertionError("unknown tool: " + toolWrapper);
+    }
+    return null;
   }
 
   @Override

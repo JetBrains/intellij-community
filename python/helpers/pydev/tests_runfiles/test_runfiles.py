@@ -26,6 +26,7 @@ if 'pydev_runfiles' in sys.modules:
 import pydev_runfiles
 import unittest
 import tempfile
+import re
 
 try:
     set
@@ -191,7 +192,7 @@ class RunfilesTest(unittest.TestCase):
         files_with_tests = [1 for t in self.all_tests if len(t._tests) > 0]
         self.assertNotEquals(len(self.files), len(files_with_tests))
 
-    def count_tests(self, tests):
+    def count_suite(self, tests=None):
         total = 0
         for t in tests:
             total += t.countTestCases()
@@ -207,60 +208,60 @@ class RunfilesTest(unittest.TestCase):
 
     def test_finding_tests_from_modules_with_bad_filter_returns_0_tests(self):
         self._setup_scenario(self.file_dir, ["NO_TESTS_ARE_SURE_TO_HAVE_THIS_NAME"])
-        self.assertEquals(0, self.count_tests(self.all_tests))
+        self.assertEquals(0, self.count_suite(self.all_tests))
 
     def test_finding_test_with_unique_name_returns_1_test(self):
         self._setup_scenario(self.file_dir, include_tests=["test_i_am_a_unique_test_name"])
         filtered_tests = self.MyTestRunner.filter_tests(self.all_tests)
-        self.assertEquals(1, self.count_tests(filtered_tests))
+        self.assertEquals(1, self.count_suite(filtered_tests))
 
     def test_finding_test_with_non_unique_name(self):
         self._setup_scenario(self.file_dir, include_tests=["test_non_unique_name"])
         filtered_tests = self.MyTestRunner.filter_tests(self.all_tests)
-        self.assertEquals(1, self.count_tests(filtered_tests) > 2)
+        self.assertEquals(1, self.count_suite(filtered_tests) > 2)
 
     def test_finding_tests_with_regex_filters(self):
         self._setup_scenario(self.file_dir, include_tests=["test_non*"])
         filtered_tests = self.MyTestRunner.filter_tests(self.all_tests)
-        self.assertEquals(1, self.count_tests(filtered_tests) > 2)
+        self.assertEquals(1, self.count_suite(filtered_tests) > 2)
 
         self._setup_scenario(self.file_dir, ["^$"])
         filtered_tests = self.MyTestRunner.filter_tests(self.all_tests)
-        self.assertEquals(0, self.count_tests(filtered_tests))
+        self.assertEquals(0, self.count_suite(filtered_tests))
 
         self._setup_scenario(self.file_dir, None, exclude_tests=["*"])
         filtered_tests = self.MyTestRunner.filter_tests(self.all_tests)
-        self.assertEquals(0, self.count_tests(filtered_tests))
+        self.assertEquals(0, self.count_suite(filtered_tests))
 
     def test_matching_tests(self):
         self._setup_scenario(self.file_dir, None, ['StillYetAnotherSampleTest'])
         filtered_tests = self.MyTestRunner.filter_tests(self.all_tests)
-        self.assertEqual(1, self.count_tests(filtered_tests))
+        self.assertEqual(1, self.count_suite(filtered_tests))
 
         self._setup_scenario(self.file_dir, None, ['SampleTest.test_xxxxxx1'])
         filtered_tests = self.MyTestRunner.filter_tests(self.all_tests)
-        self.assertEqual(1, self.count_tests(filtered_tests))
+        self.assertEqual(1, self.count_suite(filtered_tests))
 
         self._setup_scenario(self.file_dir, None, ['SampleTest'])
         filtered_tests = self.MyTestRunner.filter_tests(self.all_tests)
-        self.assertEqual(8, self.count_tests(filtered_tests))
+        self.assertEqual(8, self.count_suite(filtered_tests))
 
         self._setup_scenario(self.file_dir, None, ['AnotherSampleTest.todo_not_tested'])
         filtered_tests = self.MyTestRunner.filter_tests(self.all_tests)
-        self.assertEqual(1, self.count_tests(filtered_tests))
+        self.assertEqual(1, self.count_suite(filtered_tests))
 
         self._setup_scenario(self.file_dir, None, ['StillYetAnotherSampleTest', 'SampleTest.test_xxxxxx1'])
         filtered_tests = self.MyTestRunner.filter_tests(self.all_tests)
-        self.assertEqual(2, self.count_tests(filtered_tests))
+        self.assertEqual(2, self.count_suite(filtered_tests))
 
         self._setup_scenario(self.file_dir, None, exclude_tests=['*'])
         filtered_tests = self.MyTestRunner.filter_tests(self.all_tests)
-        self.assertEqual(self.count_tests(filtered_tests), 0)
+        self.assertEqual(self.count_suite(filtered_tests), 0)
 
 
         self._setup_scenario(self.file_dir, None, exclude_tests=['*a*'])
         filtered_tests = self.MyTestRunner.filter_tests(self.all_tests)
-        self.assertEqual(self.count_tests(filtered_tests), 6)
+        self.assertEqual(self.count_suite(filtered_tests), 6)
 
         self.assertEqual(
             set(self.MyTestRunner.list_test_names(filtered_tests)),
@@ -269,7 +270,7 @@ class RunfilesTest(unittest.TestCase):
 
         self._setup_scenario(self.file_dir, None, exclude_tests=['*a*', '*x*'])
         filtered_tests = self.MyTestRunner.filter_tests(self.all_tests)
-        self.assertEqual(self.count_tests(filtered_tests), 2)
+        self.assertEqual(self.count_suite(filtered_tests), 2)
 
         self.assertEqual(
             set(self.MyTestRunner.list_test_names(filtered_tests)),
@@ -362,17 +363,43 @@ class RunfilesTest(unittest.TestCase):
                     ('notifyTest', 'ok', '', '', simple_test, 'SampleTest.test_xxxxxx2'),
                     ('notifyTest', 'ok', '', '', simple_test2, 'YetAnotherSampleTest.test_abc'),
                 ]
+            
             if not IS_JYTHON:
-                expected.append(('notifyTest', 'error', '', 'ValueError: This is an INTENTIONAL value error in setUpClass.',
-                        simpleClass_test.replace('/', os.path.sep), 'samples.simpleClass_test.SetUpClassTest <setUpClass>'))
-                expected.append(('notifyTest', 'error', '', 'ValueError: This is an INTENTIONAL value error in setUpModule.',
-                            simpleModule_test.replace('/', os.path.sep), 'samples.simpleModule_test <setUpModule>'))
+                if 'samples.simpleClass_test' in str(notifications):
+                    expected.append(('notifyTest', 'error', '', 'ValueError: This is an INTENTIONAL value error in setUpClass.',
+                            simpleClass_test.replace('/', os.path.sep), 'samples.simpleClass_test.SetUpClassTest <setUpClass>'))
+                    expected.append(('notifyTest', 'error', '', 'ValueError: This is an INTENTIONAL value error in setUpModule.',
+                                simpleModule_test.replace('/', os.path.sep), 'samples.simpleModule_test <setUpModule>'))
+                else:
+                    expected.append(('notifyTest', 'error', '', 'ValueError: This is an INTENTIONAL value error in setUpClass.',
+                            simpleClass_test.replace('/', os.path.sep), 'simpleClass_test.SetUpClassTest <setUpClass>'))
+                    expected.append(('notifyTest', 'error', '', 'ValueError: This is an INTENTIONAL value error in setUpModule.',
+                                simpleModule_test.replace('/', os.path.sep), 'simpleModule_test <setUpModule>'))
             else:
                 expected.append(('notifyTest', 'ok', '', '', simpleClass_test, 'SetUpClassTest.test_blank'))
                 expected.append(('notifyTest', 'ok', '', '', simpleModule_test, 'SetUpModuleTest.test_blank'))
 
             expected.append(('notifyTestRunFinished',))
             expected.sort()
+            new_notifications = []
+            for notification in expected:
+                try:
+                    if len(notification) == 6:
+                        # Some are binary on Py3.
+                        new_notifications.append((
+                            notification[0], 
+                            notification[1], 
+                            notification[2].encode('latin1'), 
+                            notification[3].encode('latin1'), 
+                            notification[4], 
+                            notification[5], 
+                        ))
+                    else:
+                        new_notifications.append(notification)
+                except:
+                    raise
+            expected = new_notifications
+                    
             notifications.sort()
             self.assertEqual(
                 expected,

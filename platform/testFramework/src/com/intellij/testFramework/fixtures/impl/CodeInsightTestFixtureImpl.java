@@ -1425,6 +1425,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
             module.getMessageBus().syncPublisher(FacetManager.FACETS_TOPIC).facetConfigurationChanged(facet);
           }
         }
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+
         if (myCaresAboutInjection) {
           setupEditorForInjectedLanguage();
         }

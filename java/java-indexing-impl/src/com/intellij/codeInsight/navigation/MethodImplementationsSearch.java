@@ -50,7 +50,7 @@ public class MethodImplementationsSearch implements QueryExecutor<PsiElement, De
     })) {
       return false;
     }
-    final ArrayList<PsiMethod> methods = new ArrayList<PsiMethod>();
+    List<PsiMethod> methods = new ArrayList<PsiMethod>();
     getOverridingMethods(psiMethod, methods, searchScope);
     return ContainerUtil.process(methods, consumer);
   }

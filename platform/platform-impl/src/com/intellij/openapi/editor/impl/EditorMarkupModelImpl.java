@@ -127,9 +127,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
   void recalcEditorDimensions() {
     EditorImpl.MyScrollBar scrollBar = myEditor.getVerticalScrollBar();
-    int scrollBarHeight = scrollBar.getSize().height;
+    int scrollBarHeight = Math.max(0, scrollBar.getSize().height);
 
     myEditorScrollbarTop = scrollBar.getDecScrollButtonHeight()/* + 1*/;
+    assert myEditorScrollbarTop>=0;
     int editorScrollbarBottom = scrollBar.getIncScrollButtonHeight();
     myEditorTargetHeight = scrollBarHeight - myEditorScrollbarTop - editorScrollbarBottom;
     myEditorSourceHeight = myEditor.getPreferredHeight();
@@ -1056,29 +1057,30 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     int startLineNumber = end == -1 ? 0 : offsetToLine(start, document);
     int startY;
     int lineCount;
-    if (myEditorSourceHeight < myEditorTargetHeight) {
+    int editorTargetHeight = Math.max(0, myEditorTargetHeight);
+    if (myEditorSourceHeight < editorTargetHeight) {
       lineCount = 0;
       startY = myEditorScrollbarTop + startLineNumber * myEditor.getLineHeight();
     }
     else {
       lineCount = myEditorSourceHeight / myEditor.getLineHeight();
-      startY = myEditorScrollbarTop + (int)((float)startLineNumber / lineCount * myEditorTargetHeight);
+      startY = myEditorScrollbarTop + (int)((float)startLineNumber / lineCount * editorTargetHeight);
     }
 
     int endY;
     int endLineNumber = offsetToLine(end, document);
     if (end == -1 || start == -1) {
-      endY = Math.min(myEditorSourceHeight, myEditorTargetHeight);
+      endY = Math.min(myEditorSourceHeight, editorTargetHeight);
     }
     else if (start == end || offsetToLine(start, document) == endLineNumber) {
       endY = startY; // both offsets are on the same line, no need to recalc Y position
     }
     else {
-      if (myEditorSourceHeight < myEditorTargetHeight) {
+      if (myEditorSourceHeight < editorTargetHeight) {
         endY = myEditorScrollbarTop + endLineNumber * myEditor.getLineHeight();
       }
       else {
-        endY = myEditorScrollbarTop + (int)((float)endLineNumber / lineCount * myEditorTargetHeight);
+        endY = myEditorScrollbarTop + (int)((float)endLineNumber / lineCount * editorTargetHeight);
       }
     }
     if (endY < startY) endY = startY;

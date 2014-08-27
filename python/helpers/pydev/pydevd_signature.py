@@ -1,8 +1,13 @@
 import inspect
-import trace
 import os
 
-trace._warn = lambda *args: None   # workaround for http://bugs.python.org/issue17143 (PY-8706)
+try:
+    import trace
+except ImportError:
+    pass
+else:
+    trace._warn = lambda *args: None   # workaround for http://bugs.python.org/issue17143 (PY-8706)
+
 import gc
 from pydevd_comm import CMD_SIGNATURE_CALL_TRACE, NetCommand
 import pydevd_vars

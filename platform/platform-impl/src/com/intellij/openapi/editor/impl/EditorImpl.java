@@ -4822,22 +4822,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int getDecScrollButtonHeight() {
       ScrollBarUI barUI = getUI();
       Insets insets = getInsets();
+      int top = Math.max(0, insets.top);
       if (barUI instanceof ButtonlessScrollBarUI) {
-        return insets.top + ((ButtonlessScrollBarUI)barUI).getDecrementButtonHeight();
+        return top + ((ButtonlessScrollBarUI)barUI).getDecrementButtonHeight();
       }
-      else if (barUI instanceof BasicScrollBarUI) {
+      if (barUI instanceof BasicScrollBarUI) {
         try {
           JButton decrButtonValue = (JButton)decrButtonField.get(barUI);
           LOG.assertTrue(decrButtonValue != null);
-          return insets.top + decrButtonValue.getHeight();
+          return top + decrButtonValue.getHeight();
         }
         catch (Exception exc) {
           throw new IllegalStateException(exc);
         }
       }
-      else {
-        return insets.top + 15;
-      }
+      return top + 15;
     }
 
     /**
