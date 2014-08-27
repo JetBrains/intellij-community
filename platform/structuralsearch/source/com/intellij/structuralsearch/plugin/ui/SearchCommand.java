@@ -114,7 +114,7 @@ public class SearchCommand {
         new Runnable() {
           @Override
           public void run() {
-            NotificationGroup.toolWindowGroup("Structural Search", ToolWindowId.FIND, true)
+            NotificationGroup.toolWindowGroup("Structural Search", ToolWindowId.FIND)
               .createNotification(SSRBundle.message("problem", e.getMessage()), MessageType.ERROR).notify(project);
           }
         },
