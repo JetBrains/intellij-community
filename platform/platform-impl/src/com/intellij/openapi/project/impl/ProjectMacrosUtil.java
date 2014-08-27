@@ -25,17 +25,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.ex.SingleConfigurableEditor;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 public class ProjectMacrosUtil {
@@ -50,11 +46,7 @@ public class ProjectMacrosUtil {
     if (application.isHeadlessEnvironment() || application.isUnitTestMode()) {
       throw new RuntimeException(text + ": " + StringUtil.join(undefinedMacros, ", "));
     }
-    final UndefinedMacrosConfigurable configurable =
-      new UndefinedMacrosConfigurable(text, undefinedMacros);
-    final SingleConfigurableEditor editor = new SingleConfigurableEditor(project, configurable);
-    editor.show();
-    return editor.isOK();
+    return ShowSettingsUtil.getInstance().editConfigurable(project, new UndefinedMacrosConfigurable(text, undefinedMacros));
   }
 
   public static boolean checkNonIgnoredMacros(final Project project, final Set<String> usedMacros){

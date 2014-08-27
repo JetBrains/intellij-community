@@ -18,10 +18,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurableGroup;
-import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.ex.*;
 import com.intellij.openapi.options.newEditor.IdeSettingsDialog;
 import com.intellij.openapi.options.newEditor.OptionsEditor;
@@ -31,6 +28,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.navigation.Place;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -60,6 +58,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     if (Registry.is("ide.new.settings.dialog")) {
       return new IdeSettingsDialog(project, filteredGroups, toSelect);
     }
+    //noinspection deprecation
     return Registry.is("ide.perProjectModality")
            ? new OptionsEditorDialog(project, filteredGroups, toSelect, true)
            : new OptionsEditorDialog(project, filteredGroups, toSelect);
@@ -160,8 +159,6 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   public static void showSettingsDialog(@Nullable Project project, final String id2Select, final String filter) {
     ConfigurableGroup[] group = getConfigurableGroups(project, true);
 
-    Project actualProject = getProject(project);
-
     group = filterEmptyGroups(group);
     final Configurable configurable2Select = findConfigurable2Select(id2Select, group);
 
@@ -231,17 +228,29 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
 
   @Override
   public <T extends Configurable> T findProjectConfigurable(final Project project, final Class<T> confClass) {
+    //noinspection deprecation
     return ConfigurableExtensionPointUtil.findProjectConfigurable(project, confClass);
   }
 
   @Override
   public boolean editConfigurable(Project project, String dimensionServiceKey, @NotNull Configurable configurable) {
-    return editConfigurable(null, project, configurable, dimensionServiceKey, null);
+    return editConfigurable(project, dimensionServiceKey, configurable, isWorthToShowApplyButton(configurable));
+  }
+
+  private static boolean isWorthToShowApplyButton(@NotNull Configurable configurable) {
+    return configurable instanceof Place.Navigator ||
+           configurable instanceof Composite ||
+           configurable instanceof TabbedConfigurable;
+  }
+
+  @Override
+  public boolean editConfigurable(Project project, String dimensionServiceKey, @NotNull Configurable configurable, boolean showApplyButton) {
+    return editConfigurable(null, project, configurable, dimensionServiceKey, null, showApplyButton);
   }
 
   @Override
   public boolean editConfigurable(Project project, Configurable configurable, Runnable advancedInitialization) {
-    return editConfigurable(null, project, configurable, createDimensionKey(configurable), advancedInitialization);
+    return editConfigurable(null, project, configurable, createDimensionKey(configurable), advancedInitialization, isWorthToShowApplyButton(configurable));
   }
 
   @Override
@@ -251,20 +260,21 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
 
   @Override
   public boolean editConfigurable(@Nullable Component parent, @NotNull Configurable configurable, @Nullable Runnable advancedInitialization) {
-    return editConfigurable(parent, null, configurable, createDimensionKey(configurable), advancedInitialization);
+    return editConfigurable(parent, null, configurable, createDimensionKey(configurable), advancedInitialization, isWorthToShowApplyButton(configurable));
   }
 
   private static boolean editConfigurable(@Nullable Component parent,
                                           @Nullable Project project,
                                           @NotNull Configurable configurable,
                                           String dimensionKey,
-                                          @Nullable final Runnable advancedInitialization) {
-    SingleConfigurableEditor editor;
+                                          @Nullable final Runnable advancedInitialization,
+                                          boolean showApplyButton) {
+    final SingleConfigurableEditor editor;
     if (parent == null) {
-      editor = new SingleConfigurableEditor(project, configurable, dimensionKey);
+      editor = new SingleConfigurableEditor(project, configurable, dimensionKey, showApplyButton);
     }
     else {
-      editor = new SingleConfigurableEditor(parent, configurable, dimensionKey);
+      editor = new SingleConfigurableEditor(parent, configurable, dimensionKey, showApplyButton);
     }
     if (advancedInitialization != null) {
       new UiNotifyConnector.Once(editor.getContentPane(), new Activatable.Adapter() {
@@ -284,8 +294,8 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   @Override
-  public boolean editConfigurable(Component parent, String dimensionServiceKey,Configurable configurable) {
-    return editConfigurable(parent, null, configurable, dimensionServiceKey, null);
+  public boolean editConfigurable(Component parent, String dimensionServiceKey, Configurable configurable) {
+    return editConfigurable(parent, null, configurable, dimensionServiceKey, null, isWorthToShowApplyButton(configurable));
   }
 
   public boolean isAlreadyShown() {

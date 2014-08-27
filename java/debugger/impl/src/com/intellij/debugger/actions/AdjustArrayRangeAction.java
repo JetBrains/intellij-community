@@ -23,12 +23,10 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.render.*;
-import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ex.SingleConfigurableEditor;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.Nullable;
 
 public class AdjustArrayRangeAction extends DebuggerAction {
@@ -67,30 +65,25 @@ public class AdjustArrayRangeAction extends DebuggerAction {
       title = title + " " + label.substring(index);
     }
     final ArrayRenderer clonedRenderer = renderer.clone();
-    final NamedArrayConfigurable configurable = new NamedArrayConfigurable(title, clonedRenderer);
-    SingleConfigurableEditor editor = new SingleConfigurableEditor(project, configurable,
-                                                                   ShowSettingsUtilImpl.createDimensionKey(configurable), false);
-    editor.show();
-
-    if(editor.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
+    if (ShowSettingsUtil.getInstance().editConfigurable(project, new NamedArrayConfigurable(title, clonedRenderer))) {
       debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(debuggerContext.getSuspendContext()) {
-          @Override
-          public void contextAction() throws Exception {
-            final ValueDescriptorImpl nodeDescriptor = (ValueDescriptorImpl)selectedNode.getDescriptor();
-            final Renderer lastRenderer = nodeDescriptor.getLastRenderer();
-            if (lastRenderer instanceof ArrayRenderer) {
-              selectedNode.setRenderer(clonedRenderer);
-            }
-            else if (lastRenderer instanceof CompoundNodeRenderer) {
-              final CompoundNodeRenderer compoundRenderer = (CompoundNodeRenderer)lastRenderer;
-              final ChildrenRenderer childrenRenderer = compoundRenderer.getChildrenRenderer();
-              if (childrenRenderer instanceof ExpressionChildrenRenderer) {
-                ExpressionChildrenRenderer.setPreferableChildrenRenderer(nodeDescriptor, clonedRenderer);
-                selectedNode.calcRepresentation();
-              }
+        @Override
+        public void contextAction() throws Exception {
+          final ValueDescriptorImpl nodeDescriptor = (ValueDescriptorImpl)selectedNode.getDescriptor();
+          final Renderer lastRenderer = nodeDescriptor.getLastRenderer();
+          if (lastRenderer instanceof ArrayRenderer) {
+            selectedNode.setRenderer(clonedRenderer);
+          }
+          else if (lastRenderer instanceof CompoundNodeRenderer) {
+            final CompoundNodeRenderer compoundRenderer = (CompoundNodeRenderer)lastRenderer;
+            final ChildrenRenderer childrenRenderer = compoundRenderer.getChildrenRenderer();
+            if (childrenRenderer instanceof ExpressionChildrenRenderer) {
+              ExpressionChildrenRenderer.setPreferableChildrenRenderer(nodeDescriptor, clonedRenderer);
+              selectedNode.calcRepresentation();
             }
           }
-        });
+        }
+      });
     }
   }
 
