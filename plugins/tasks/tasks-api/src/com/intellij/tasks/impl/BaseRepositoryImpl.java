@@ -20,7 +20,6 @@ import java.net.URLEncoder;
  * @author Dmitry Avdeev
  */
 public abstract class BaseRepositoryImpl extends BaseRepository {
-  private static final Logger LOG = Logger.getInstance(BaseRepositoryImpl.class);
   private final HttpClient myClient;
 
   protected BaseRepositoryImpl() {
@@ -113,8 +112,7 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
   protected void configureHttpMethod(HttpMethod method) {
   }
 
-  public abstract class HttpTestConnection<T extends HttpMethod> extends CancellableConnection {
-
+  public abstract static class HttpTestConnection<T extends HttpMethod> extends CancellableConnection {
     protected T myMethod;
 
     public HttpTestConnection(T method) {
