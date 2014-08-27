@@ -272,6 +272,7 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
   }
 
   public boolean checkValid() {
+    if (myLocationField == null) return true;
     final String projectName = myLocationField.getText();
     setErrorText(null);
     myInstallFramework = false;
