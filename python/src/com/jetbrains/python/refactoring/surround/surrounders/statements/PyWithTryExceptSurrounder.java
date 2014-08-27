@@ -44,7 +44,6 @@ public class PyWithTryExceptSurrounder extends PyStatementSurrounder {
       createFromText(LanguageLevel.getDefault(), PyTryExceptStatement.class, getTemplate());
     final PsiElement parent = elements[0].getParent();
     final PyStatementList statementList = tryStatement.getTryPart().getStatementList();
-    assert statementList != null;
     statementList.addRange(elements[0], elements[elements.length - 1]);
     statementList.getFirstChild().delete();
     tryStatement = (PyTryExceptStatement)parent.addBefore(tryStatement, elements[0]);
@@ -71,7 +70,6 @@ public class PyWithTryExceptSurrounder extends PyStatementSurrounder {
   protected TextRange getResultRange(PyTryExceptStatement tryStatement) {
     final PyExceptPart part = tryStatement.getExceptParts()[0];
     final PyStatementList list = part.getStatementList();
-    assert list != null;
     return list.getTextRange();
   }
 

@@ -2,6 +2,6 @@ public class StructuredConfigKey {
   {
     try {
 
-    } catch (<caret>)
+    } catch (<caret>
   }
 }

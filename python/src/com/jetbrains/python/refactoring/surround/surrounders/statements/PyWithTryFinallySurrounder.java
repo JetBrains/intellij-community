@@ -42,7 +42,6 @@ public class PyWithTryFinallySurrounder extends PyWithTryExceptSurrounder {
     final PyFinallyPart finallyPart = tryStatement.getFinallyPart();
     assert finallyPart != null;
     final PyStatementList statementList = finallyPart.getStatementList();
-    assert statementList != null;
     return statementList.getTextRange();
   }
 }

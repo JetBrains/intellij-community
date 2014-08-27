@@ -26,7 +26,7 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor implement
   protected Executor myExecutor;
 
   public EditConfigurationsDialog(final Project project) {
-    super(project, new RunConfigurable(project), IdeModalityType.PROJECT);
+    super(project, new RunConfigurable(project), "#com.intellij.execution.impl.EditConfigurationsDialog", IdeModalityType.PROJECT);
     ((RunConfigurable)getConfigurable()).setRunDialog(this);
     setTitle(ExecutionBundle.message("run.debug.dialog.title"));
     setHorizontalStretch(1.3F);
@@ -40,11 +40,6 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor implement
       // if configurable was not modified, apply was not called and Run Configurable has not called 'updateActiveConfigurationFromSelected'
       configurable.updateActiveConfigurationFromSelected();
     }
-  }
-
-  @Override
-  protected String getDimensionServiceKey() {
-    return "#com.intellij.execution.impl.EditConfigurationsDialog";
   }
 
   @Nullable

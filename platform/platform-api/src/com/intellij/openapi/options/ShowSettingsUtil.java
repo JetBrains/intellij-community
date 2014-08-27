@@ -43,19 +43,23 @@ public abstract class ShowSettingsUtil {
 
   public abstract boolean editConfigurable(@Nullable Component parent, @NotNull Configurable configurable);
 
-  public abstract boolean editConfigurable(Component parent, Configurable configurable, Runnable advancedInitialization);
+  public abstract boolean editConfigurable(Component parent, Configurable configurable, @NotNull Runnable advancedInitialization);
 
   public abstract boolean editConfigurable(Project project, @NonNls String dimensionServiceKey, Configurable configurable);
+
+  public abstract boolean editConfigurable(Project project, @NonNls String dimensionServiceKey, Configurable configurable, boolean showApplyButton);
 
   public abstract boolean editConfigurable(Component parent, String dimensionServiceKey, Configurable configurable);
 
   /**
    * @deprecated create a new instance of configurable instead
+   * to remove in IDEA 15
    */
   public abstract <T extends Configurable> T findProjectConfigurable(Project project, Class<T> confClass);
 
   /**
    * @deprecated create a new instance of configurable instead
+   * to remove in IDEA 15
    */
   public abstract <T extends Configurable> T findApplicationConfigurable(Class<T> confClass);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,16 @@ package com.intellij.lexer;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Naive implementation of lexer that able to combine element types of two other lexers.
+ * 
+ * The implementation doesn't give any guarantees about valid points of 'incremental relexing', 
+ * because it returns start/end-offsets not for token that was used but for the shortest one.
+ * 
+ * Also it reduces state size to 16 bits for nested lexer.
+ * 
+ * @deprecated use {@link com.intellij.psi.templateLanguages.TemplateBlackAndWhiteLexer} or {@link com.intellij.lexer.LayeredLexer} instead
+ */
 public abstract class CompositeLexer extends LexerBase {
   private final Lexer myLexer1;
   private final Lexer myLexer2;

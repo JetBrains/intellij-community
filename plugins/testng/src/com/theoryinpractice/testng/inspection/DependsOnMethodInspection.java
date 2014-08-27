@@ -23,12 +23,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSet;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -83,10 +85,25 @@ public class DependsOnMethodInspection extends BaseJavaLocalInspectionTool
                 }
               }
             }
-            Matcher matcher = PATTERN.matcher(text);
+            final Set<String> names = new HashSet<String>();
+            final Matcher matcher = PATTERN.matcher(text);
+            int idx = 0;
             while (matcher.find()) {
-                String methodName = matcher.group(1);
+              String methodName = matcher.group(1);
+              if (!names.add(methodName)) {
+                PsiAnnotationMemberValue element2Highlight = value;
+                if (value instanceof PsiArrayInitializerMemberValue) {
+                  final PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)value).getInitializers();
+                  if (idx < initializers.length) {
+                    element2Highlight = initializers[idx];
+                  }
+                }
+                problemDescriptors.add(manager.createProblemDescriptor(element2Highlight, "Duplicated method name: " + methodName,
+                                                                       (LocalQuickFix)null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                                                       isOnTheFly));
+              }
                 checkMethodNameDependency(manager, psiClass, methodName, value, problemDescriptors, isOnTheFly);
+                idx++;
             }
           }
         }

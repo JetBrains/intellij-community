@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -52,7 +51,6 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -182,7 +180,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
     myEditVariablesButton.addActionListener(
       new ActionListener(){
         @Override
-        public void actionPerformed(ActionEvent e) {
+        public void actionPerformed(@NotNull ActionEvent e) {
           editVariables();
         }
       }
@@ -201,7 +199,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
     myTemplate.parseSegments();
   }
 
-  @Nullable
+  @NotNull
   private JComponent createNorthPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
 
@@ -240,7 +238,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
     myExpandByCombo = new ComboBox(new String[]{myDefaultShortcutItem, SPACE, TAB, ENTER});
     myExpandByCombo.addItemListener(new ItemListener() {
       @Override
-      public void itemStateChanged(ItemEvent e) {
+      public void itemStateChanged(@NotNull ItemEvent e) {
         Object selectedItem = myExpandByCombo.getSelectedItem();
         if(myDefaultShortcutItem.equals(selectedItem)) {
           myTemplate.setShortcutChar(TemplateSettings.DEFAULT_CHAR);
@@ -278,7 +276,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
       cb.setSelected(myOptions.get(processor).booleanValue());
       cb.addActionListener(new ActionListener() {
         @Override
-        public void actionPerformed(ActionEvent e) {
+        public void actionPerformed(@NotNull ActionEvent e) {
           myOptions.put(processor, cb.isSelected());
         }
       });
@@ -469,14 +467,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
   }
 
   private void updateHighlighter() {
-    List<TemplateContextType> applicableContexts = getApplicableContexts();
-    if (!applicableContexts.isEmpty()) {
-      TemplateContext contextByType = new TemplateContext();
-      contextByType.setEnabled(applicableContexts.get(0), true);
-      TemplateEditorUtil.setHighlighter(myTemplateEditor, contextByType);
-      return;
-    }
-    ((EditorEx) myTemplateEditor).repaint(0, myTemplateEditor.getDocument().getTextLength());
+    TemplateEditorUtil.setHighlighter(myTemplateEditor, ContainerUtil.getFirstItem(getApplicableContexts()));
   }
 
   private void validateEditVariablesButton() {
@@ -520,7 +511,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
     myCbReformat.setSelected(myTemplate.isToReformat());
     myCbReformat.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         myTemplate.setToReformat(myCbReformat.isSelected());
       }
     });

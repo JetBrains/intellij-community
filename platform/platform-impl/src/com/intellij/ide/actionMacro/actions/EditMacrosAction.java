@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,29 +16,22 @@
 package com.intellij.ide.actionMacro.actions;
 
 import com.intellij.ide.actionMacro.ActionMacro;
+import com.intellij.ide.actionMacro.ActionMacroConfigurable;
 import com.intellij.ide.actionMacro.ActionMacroManager;
-import com.intellij.ide.actionMacro.EditMacrosDialog;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 
-/**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jul 22, 2003
- * Time: 3:33:04 PM
- * To change this template use Options | File Templates.
- */
 public class EditMacrosAction extends AnAction implements DumbAware {
+  @Override
   public void actionPerformed(AnActionEvent e) {
-    EditMacrosDialog dialog = new EditMacrosDialog(CommonDataKeys.PROJECT.getData(e.getDataContext()));
-    dialog.show();
+    ShowSettingsUtil.getInstance().editConfigurable(e.getProject(), "#com.intellij.ide.actionMacro.EditMacrosDialog", new ActionMacroConfigurable());
   }
 
+  @Override
   public void update(AnActionEvent e) {
-    final ActionMacroManager manager = ActionMacroManager.getInstance();
-    ActionMacro[] macros = manager.getAllMacros();
+    ActionMacro[] macros = ActionMacroManager.getInstance().getAllMacros();
     e.getPresentation().setEnabled(macros != null && macros.length > 0);
   }
 }
