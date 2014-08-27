@@ -80,6 +80,12 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
       protected void initSteps() {
         provider.initSteps(this, mySteps);
       }
+
+      @Override
+      protected void createButtons(JPanel buttonPanel, GridBagConstraints gbc) {
+        provider.addButtons(this, buttonPanel, gbc);
+        super.createButtons(buttonPanel, gbc);
+      }
     }.show();
   }
 
@@ -131,6 +137,15 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     gbc.fill = GridBagConstraints.BOTH;
     gbc.gridx = 0;
     gbc.gridy = 0;
+    createButtons(buttonPanel, gbc);
+    buttonPanel.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
+    myButtonWrapper.add(buttonPanel, BUTTONS);
+    myButtonWrapper.add(new JLabel(), NOBUTTONS);
+    myButtonWrapperLayout.show(myButtonWrapper, BUTTONS);
+    return myButtonWrapper;
+  }
+
+  protected void createButtons(JPanel buttonPanel, GridBagConstraints gbc) {
     buttonPanel.add(myBackButton, gbc);
     gbc.gridx++;
     gbc.weightx = 1;
@@ -140,11 +155,6 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     buttonPanel.add(myNextButton, gbc);
     gbc.gridx++;
     buttonPanel.add(myStartUsingButton, gbc);
-    buttonPanel.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
-    myButtonWrapper.add(buttonPanel, BUTTONS);
-    myButtonWrapper.add(new JLabel(), NOBUTTONS);
-    myButtonWrapperLayout.show(myButtonWrapper, BUTTONS);
-    return myButtonWrapper;
   }
 
   void setButtonsVisible(boolean visible) {
