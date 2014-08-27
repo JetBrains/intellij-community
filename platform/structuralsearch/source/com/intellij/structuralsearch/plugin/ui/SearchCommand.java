@@ -56,6 +56,7 @@ public class SearchCommand {
       }
 
       public void matchingFinished() {
+        if (project.isDisposed()) return;
         findEnded();
         progress.setText(SSRBundle.message("found.progress.message", count));
       }
@@ -132,9 +133,7 @@ public class SearchCommand {
   }
 
   protected void findEnded() {
-    if (!project.isDisposed()) {
-      StructuralSearchPlugin.getInstance(project).setSearchInProgress(false);
-    }
+    StructuralSearchPlugin.getInstance(project).setSearchInProgress(false);
   }
 
   protected void foundUsage(MatchResult result, Usage usage) {
