@@ -290,7 +290,8 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       final ContentManager manager = ContentFactory.SERVICE.getInstance().createContentManager(this, false, myProject);
       Disposer.register((Disposable)myRunnerUi, manager);
       manager.getComponent();
-    } else {
+    }
+    else {
       final DockManager dockManager = DockManager.getInstance(myProject);
       if (dockManager != null) { //default project
         dockManager.register(this);
@@ -1375,7 +1376,6 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   private class MyComponent extends Wrapper.FocusHolder implements DataProvider, QuickActionProvider {
-
     private boolean myWasEverAdded;
 
     public MyComponent() {
@@ -1841,9 +1841,6 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     public void dragOutFinished(MouseEvent event, TabInfo source) {
       final Component component = event.getComponent();
       final IdeFrame window = UIUtil.getParentOfType(IdeFrame.class, component);
-      if (window != null) {
-
-      }
       mySession.process(event);
       mySession = null;
     }
