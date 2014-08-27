@@ -435,7 +435,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
   private class ShowPathButton extends AnActionButton implements DumbAware {
     public ShowPathButton() {
-      super("Show path for the selected interpreter", AllIcons.Actions.ShowAsTree);
+      super("Show paths for the selected interpreter", AllIcons.Actions.ShowAsTree);
     }
 
     @Override
