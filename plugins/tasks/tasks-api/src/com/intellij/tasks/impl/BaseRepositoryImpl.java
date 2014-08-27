@@ -1,7 +1,6 @@
 package com.intellij.tasks.impl;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.config.TaskSettings;
 import com.intellij.util.net.HttpConfigurable;
