@@ -127,21 +127,16 @@ public class CloudAccountSelectionEditor {
       }
     };
 
-    final SingleConfigurableEditor configurableEditor
-      = new SingleConfigurableEditor(myMainPanel, configurable, ShowSettingsUtilImpl.createDimensionKey(configurable), false) {
-
+    if (!new SingleConfigurableEditor(myMainPanel, configurable, ShowSettingsUtilImpl.createDimensionKey(configurable), false) {
       {
         errorConsumerRef.set(new Consumer<String>() {
-
           @Override
           public void consume(String s) {
             setErrorText(s);
           }
         });
       }
-    };
-
-    if (!configurableEditor.showAndGet()) {
+    }.showAndGet()) {
       return;
     }
 
