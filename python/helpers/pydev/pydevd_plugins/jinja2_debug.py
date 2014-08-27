@@ -178,8 +178,12 @@ def find_render_function_frame(frame):
         return old_frame
 
 def get_jinja2_template_line(frame):
+    debug_info = None
     if DictContains(frame.f_globals,'__jinja_template__'):
-        debug_info = frame.f_globals['__jinja_template__'].debug_info
+        _debug_info = frame.f_globals['__jinja_template__']._debug_info
+        if _debug_info is not '':
+            #sometimes template contains only plain text
+            debug_info = frame.f_globals['__jinja_template__'].debug_info
 
     if debug_info is None:
         return None
@@ -209,10 +213,12 @@ def has_exception_breaks(mainDebugger):
     return hasattr(mainDebugger, 'jinja2_exception_break') and mainDebugger.jinja2_exception_break
 
 def can_not_skip(mainDebugger, frame, info):
-    #is_render = is_jinja2_render_call(frame)
-    check = hasattr(mainDebugger, 'jinja2_breakpoints') and mainDebugger.jinja2_breakpoints and is_jinja2_render_call(frame)
-    #        is_render and info.pydev_call_inside_jinja2 is not None #when we come from python function to jinja2 template
-    return check
+    if hasattr(mainDebugger, 'jinja2_breakpoints') and mainDebugger.jinja2_breakpoints and is_jinja2_render_call(frame):
+        filename = get_jinja2_template_filename(frame)
+        jinja2_breakpoints_for_file = mainDebugger.jinja2_breakpoints.get(filename)
+        if jinja2_breakpoints_for_file:
+            return True
+    return False
 
 def prepare_for_cmds(mainDebugger, info):
     if info.pydev_step_cmd != CMD_STEP_OVER:
