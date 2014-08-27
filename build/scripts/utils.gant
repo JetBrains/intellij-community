@@ -355,7 +355,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   new File("$path/bin/idea.properties").text = effectiveProperties.toString()
   new File("$path/bin/idea.vmoptions").text = "$mem64 -XX:+UseCompressedOops".split(" ").join("\n")
 
-  String classPath = classPathLibs.collect {"\$APP_PACKAGE/lib/${it}" }.join(":")
+  String classPath = classPathLibs.collect {"\$APP_PACKAGE/Contents/lib/${it}" }.join(":")
 
   String archs = """
     <key>LSArchitecturePriority</key>
@@ -407,7 +407,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   }
 
   if (executable != "idea") {
-    ant.move(file: "$path/Contents/MacOS/idea", tofile: "$path/Contents/MacOS/$executable")
+    ant.move(file: "$path/MacOS/idea", tofile: "$path/MacOS/$executable")
   }
 
   ant.replace(file: "$path/bin/inspect.sh") {
