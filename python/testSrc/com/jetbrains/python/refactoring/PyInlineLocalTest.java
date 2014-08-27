@@ -81,7 +81,13 @@ public class PyInlineLocalTest extends PyTestCase {
     doTest();
   }
 
+  // PY-12401
   public void testComment() {
+    doTest();
+  }
+
+  // PY-13114
+  public void testReferenceInParenthesis() {
     doTest();
   }
 }
