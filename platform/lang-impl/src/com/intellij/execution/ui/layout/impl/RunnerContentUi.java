@@ -1390,9 +1390,13 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       if (KEY.is(dataId)) {
         return RunnerContentUi.this;
       }
-      else {
-        return null;
+
+      ContentManager originalContentManager = myOriginal == null ? null : myOriginal.getContentManager();
+      JComponent originalContentComponent = originalContentManager == null ? null : originalContentManager.getComponent();
+      if (originalContentComponent instanceof DataProvider) {
+        return ((DataProvider)originalContentComponent).getData(dataId);
       }
+      return null;
     }
 
     @SuppressWarnings("NullableProblems")
