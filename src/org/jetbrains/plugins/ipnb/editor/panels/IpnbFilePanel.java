@@ -35,9 +35,9 @@ public class IpnbFilePanel extends JPanel {
   @Nullable private Disposable myParent;
   @NotNull private final IpnbFileEditor.CellSelectionListener myListener;
 
-  private final List<IpnbPanel> myIpnbPanels = Lists.newArrayList();
+  private final List<IpnbEditablePanel> myIpnbPanels = Lists.newArrayList();
 
-  private IpnbPanel mySelectedCell;
+  private IpnbEditablePanel mySelectedCell;
 
   public IpnbFilePanel(@NotNull final Project project, @Nullable final Disposable parent, @NotNull final IpnbFile file,
                        @NotNull final IpnbFileEditor.CellSelectionListener listener) {
@@ -84,27 +84,27 @@ public class IpnbFilePanel extends JPanel {
   }
 
   private int addCellToPanel(IpnbCell cell, GridBagConstraints c) {
-    IpnbPanel comp;
+    IpnbEditablePanel panel;
     if (cell instanceof IpnbCodeCell) {
-      comp = new IpnbCodePanel(myProject, myParent, (IpnbCodeCell)cell);
+      panel = new IpnbCodePanel(myProject, myParent, (IpnbCodeCell)cell);
       c.gridwidth = 2;
       c.gridx = 0;
-      add(comp, c);
-      myIpnbPanels.add(comp);
+      add(panel, c);
+      myIpnbPanels.add(panel);
     }
     else if (cell instanceof IpnbMarkdownCell) {
-      comp = new IpnbMarkdownPanel((IpnbMarkdownCell)cell);
-      addComponent(c, comp);
+      panel = new IpnbMarkdownPanel((IpnbMarkdownCell)cell);
+      addComponent(c, panel);
     }
     else if (cell instanceof IpnbHeadingCell) {
-      comp = new IpnbHeadingPanel((IpnbHeadingCell)cell);
-      addComponent(c, comp);
+      panel = new IpnbHeadingPanel((IpnbHeadingCell)cell);
+      addComponent(c, panel);
     }
     else {
       throw new UnsupportedOperationException(cell.getClass().toString());
     }
     if (c.gridy == 0) {
-      setSelectedCell(comp);
+      setSelectedCell(panel);
     }
     return c.gridy + 1;
   }
@@ -112,7 +112,7 @@ public class IpnbFilePanel extends JPanel {
   public void addCell() {
     removeAll();
     final IpnbCodeCell cell = new IpnbCodeCell("python", new String[]{""}, null, new ArrayList<IpnbOutputCell>());
-    final IpnbPanel selectedCell = getSelectedCell();
+    final IpnbEditablePanel selectedCell = getSelectedCell();
     final int index = myIpnbPanels.indexOf(selectedCell);
     myIpnbFile.addCell(cell, index+1);
 
@@ -145,42 +145,42 @@ public class IpnbFilePanel extends JPanel {
     setSelectedCell(codePanel);
   }
 
-  public void replaceComponent(@NotNull final IpnbPanel from, @NotNull final IpnbCell cell) {
+  public void replaceComponent(@NotNull final IpnbEditablePanel from, @NotNull final IpnbCell cell) {
     final GridBagConstraints c = ((GridBagLayout)getLayout()).getConstraints(from);
     final int index = myIpnbPanels.indexOf(from);
-    IpnbPanel comp;
+    IpnbEditablePanel panel;
     if (cell instanceof IpnbCodeCell) {
-      comp = new IpnbCodePanel(myProject, myParent, (IpnbCodeCell)cell);
+      panel = new IpnbCodePanel(myProject, myParent, (IpnbCodeCell)cell);
       c.gridwidth = 2;
       c.gridx = 0;
-      add(comp, c);
+      add(panel, c);
     }
     else if (cell instanceof IpnbMarkdownCell) {
-      comp = new IpnbMarkdownPanel((IpnbMarkdownCell)cell);
+      panel = new IpnbMarkdownPanel((IpnbMarkdownCell)cell);
       c.gridwidth = 1;
       c.gridx = 1;
-      add(comp, c);
+      add(panel, c);
     }
     else if (cell instanceof IpnbHeadingCell) {
-      comp = new IpnbHeadingPanel((IpnbHeadingCell)cell);
+      panel = new IpnbHeadingPanel((IpnbHeadingCell)cell);
       c.gridwidth = 1;
       c.gridx = 1;
-      add(comp, c);
+      add(panel, c);
     }
     else {
       throw new UnsupportedOperationException(cell.getClass().toString());
     }
     if (index >= 0) {
       myIpnbPanels.remove(index);
-      myIpnbPanels.add(index, comp);
+      myIpnbPanels.add(index, panel);
     }
-    setSelectedCell(comp);
+    setSelectedCell(panel);
     remove(from);
     revalidate();
     repaint();
   }
 
-  private void addComponent(@NotNull final GridBagConstraints c, @NotNull final IpnbPanel comp) {
+  private void addComponent(@NotNull final GridBagConstraints c, @NotNull final IpnbEditablePanel comp) {
     c.gridwidth = 1;
     c.gridx = 1;
     add(comp, c);
@@ -210,14 +210,14 @@ public class IpnbFilePanel extends JPanel {
     }
   }
 
-  private void selectPrev(@NotNull IpnbPanel cell) {
+  private void selectPrev(@NotNull IpnbEditablePanel cell) {
     int index = myIpnbPanels.indexOf(cell);
     if (index > 0) {
       setSelectedCell(myIpnbPanels.get(index - 1));
     }
   }
 
-  public void selectNext(@NotNull IpnbPanel cell) {
+  public void selectNext(@NotNull IpnbEditablePanel cell) {
     int index = myIpnbPanels.indexOf(cell);
     if (index < myIpnbPanels.size() - 1) {
       setSelectedCell(myIpnbPanels.get(index + 1));
@@ -235,7 +235,7 @@ public class IpnbFilePanel extends JPanel {
 
   private void updateCellSelection(MouseEvent e) {
     if (e.getClickCount() > 0) {
-      IpnbPanel ipnbPanel = getIpnbPanelByClick(e.getPoint());
+      IpnbEditablePanel ipnbPanel = getIpnbPanelByClick(e.getPoint());
       if (ipnbPanel != null) {
         ipnbPanel.setEditing(false);
         ipnbPanel.requestFocus();
@@ -245,7 +245,7 @@ public class IpnbFilePanel extends JPanel {
     }
   }
 
-  public void setSelectedCell(@NotNull final IpnbPanel ipnbPanel) {
+  public void setSelectedCell(@NotNull final IpnbEditablePanel ipnbPanel) {
     if (ipnbPanel.equals(mySelectedCell)) return;
     if (mySelectedCell != null)
       mySelectedCell.setEditing(false);
@@ -255,13 +255,13 @@ public class IpnbFilePanel extends JPanel {
     myListener.selectionChanged(ipnbPanel);
   }
 
-  public IpnbPanel getSelectedCell() {
+  public IpnbEditablePanel getSelectedCell() {
     return mySelectedCell;
   }
 
   @Nullable
-  private IpnbPanel getIpnbPanelByClick(@NotNull final Point point) {
-    for (IpnbPanel c: myIpnbPanels) {
+  private IpnbEditablePanel getIpnbPanelByClick(@NotNull final Point point) {
+    for (IpnbEditablePanel c: myIpnbPanels) {
       if (c.contains(point.y)) {
         return c;
       }

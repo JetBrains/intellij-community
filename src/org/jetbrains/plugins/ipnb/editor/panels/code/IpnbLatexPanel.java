@@ -6,7 +6,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
-import org.jetbrains.plugins.ipnb.editor.panels.IpnbPanel;
 import org.jetbrains.plugins.ipnb.format.cells.output.IpnbLatexOutputCell;
 import org.scilab.forge.jlatexmath.ParseException;
 import org.scilab.forge.jlatexmath.TeXFormula;
@@ -15,13 +14,11 @@ import org.scilab.forge.jlatexmath.TeXIcon;
 import javax.swing.*;
 import java.awt.*;
 
-public class IpnbLatexPanel extends IpnbPanel {
+public class IpnbLatexPanel extends IpnbCodeOutputPanel<IpnbLatexOutputCell> {
   private static final Logger LOG = Logger.getInstance(IpnbLatexPanel.class);
-  private final IpnbLatexOutputCell myCell;
 
   public IpnbLatexPanel(@NotNull final IpnbLatexOutputCell cell) {
-    super();
-    myCell = cell;
+    super(cell);
     setLayout(new VerticalFlowLayout(FlowLayout.LEFT));
 
     myViewPanel = createViewPanel();

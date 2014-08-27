@@ -73,7 +73,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
     c.gridy = 0;
     c.gridwidth = 1;
 
-    myCodeSourcePanel = new IpnbCodeSourcePanel(myProject, this, myCell.getSourceAsString());
+    myCodeSourcePanel = new IpnbCodeSourcePanel(myProject, this, myCell);
     if (myParent != null)
       Disposer.register(myParent, new Disposable() {
       @Override
@@ -118,7 +118,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
     }
     else if (outputCell.getSourceAsString() != null) {
       addPromptPanel(panel, myCell.getPromptNumber(), promptType,
-                     new IpnbCodeOutputPanel(outputCell.getSourceAsString()), c);
+                     new IpnbCodeOutputPanel(outputCell), c);
     }
   }
 

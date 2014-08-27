@@ -1,47 +1,24 @@
 package org.jetbrains.plugins.ipnb.editor.panels;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.ipnb.format.cells.IpnbCell;
+
 import javax.swing.*;
 import java.awt.*;
 
-public abstract class IpnbPanel<T extends JComponent> extends JPanel {
-  private boolean myEditing;
+public abstract class IpnbPanel<T extends JComponent, K extends IpnbCell> extends JPanel {
   protected T myViewPanel;
+  protected K myCell;
 
-  public IpnbPanel() {
+  public IpnbPanel(@NotNull final K cell) {
     super(new CardLayout());
+    myCell = cell;
   }
 
-  public boolean contains(int y) {
-    return y>= getTop() && y<=getBottom();
+  public K getCell() {
+    return myCell;
   }
 
-  public int getTop() {
-    return getY();
-  }
-
-  public int getBottom() {
-    return getTop() + getHeight();
-  }
-
-  public boolean isEditing() {
-    return myEditing;
-  }
-
-  public void setEditing(boolean editing) {
-    myEditing = editing;
-  }
 
   protected abstract T createViewPanel();
-
-  public void switchToEditing() {
-    setEditing(true);
-    getParent().repaint();
-  }
-
-  public void runCell() {
-    setEditing(false);
-  }
-
-  public void updateCellView() { // TODO: make abstract
-  }
 }

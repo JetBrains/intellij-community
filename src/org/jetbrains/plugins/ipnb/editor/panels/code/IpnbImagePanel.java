@@ -4,7 +4,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
-import org.jetbrains.plugins.ipnb.editor.panels.IpnbPanel;
 import org.jetbrains.plugins.ipnb.format.cells.output.IpnbImageOutputCell;
 import sun.misc.BASE64Decoder;
 
@@ -14,12 +13,11 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
-public class IpnbImagePanel extends IpnbPanel {
+public class IpnbImagePanel extends IpnbCodeOutputPanel<IpnbImageOutputCell> {
   private static final Logger LOG = Logger.getInstance(IpnbImagePanel.class);
-  @NotNull private final IpnbImageOutputCell myCell;
 
   public IpnbImagePanel(@NotNull final IpnbImageOutputCell cell) {
-    myCell = cell;
+    super(cell);
     myViewPanel = createViewPanel();
     add(myViewPanel);
   }

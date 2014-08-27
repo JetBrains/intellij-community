@@ -4,7 +4,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
-import org.jetbrains.plugins.ipnb.editor.panels.IpnbPanel;
 import org.jetbrains.plugins.ipnb.format.cells.output.IpnbErrorOutputCell;
 
 import javax.swing.*;
@@ -14,12 +13,9 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
 import java.awt.*;
 
-public class IpnbErrorPanel extends IpnbPanel {
-
-  @NotNull private final IpnbErrorOutputCell myCell;
-
+public class IpnbErrorPanel extends IpnbCodeOutputPanel<IpnbErrorOutputCell> {
   public IpnbErrorPanel(@NotNull final IpnbErrorOutputCell cell) {
-    myCell = cell;
+    super(cell);
     myViewPanel = createViewPanel();
     add(myViewPanel);
   }

@@ -26,6 +26,7 @@ import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbEditorPanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbPanel;
+import org.jetbrains.plugins.ipnb.format.cells.IpnbCodeCell;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,16 +38,17 @@ import java.awt.event.MouseEvent;
 /**
  * @author traff
  */
-public class IpnbCodeSourcePanel extends IpnbPanel implements IpnbEditorPanel {
+public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> implements IpnbEditorPanel {
   private Editor myEditor;
   @NotNull private final Project myProject;
   @NotNull private final IpnbCodePanel myParent;
   @NotNull private final String mySource;
 
-  public IpnbCodeSourcePanel(@NotNull final Project project, @NotNull final IpnbCodePanel parent, @NotNull final String source) {
+  public IpnbCodeSourcePanel(@NotNull final Project project, @NotNull final IpnbCodePanel parent, @NotNull final IpnbCodeCell cell) {
+    super(cell);
     myProject = project;
     myParent = parent;
-    mySource = source;
+    mySource = cell.getSourceAsString();
     final JComponent panel = createViewPanel();
     add(panel);
   }

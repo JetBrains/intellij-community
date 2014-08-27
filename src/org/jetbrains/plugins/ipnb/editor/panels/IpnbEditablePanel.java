@@ -13,19 +13,16 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbCell> extends IpnbPanel<T> {
+public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbCell> extends IpnbPanel<T, K> {
+  private boolean myEditing;
   protected JTextArea myEditablePanel;
   public final static String EDITABLE_PANEL = "Editable panel";
   public final static String VIEW_PANEL = "View panel";
-  protected K myCell;
 
   public IpnbEditablePanel(@NotNull K cell) {
-    myCell = cell;
+    super(cell);
   }
 
-  public K getCell() {
-    return myCell;
-  }
 
   protected void initPanel() {
     myViewPanel = createViewPanel();
@@ -98,6 +95,29 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbCell
       }
     });
     return textArea;
+  }
+
+  public boolean contains(int y) {
+    return y>= getTop() && y<=getBottom();
+  }
+
+  public int getTop() {
+    return getY();
+  }
+
+  public int getBottom() {
+    return getTop() + getHeight();
+  }
+
+  public boolean isEditing() {
+    return myEditing;
+  }
+
+  public void setEditing(boolean editing) {
+    myEditing = editing;
+  }
+
+  public void updateCellView() { // TODO: make abstract
   }
 
 }

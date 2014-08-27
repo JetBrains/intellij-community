@@ -25,10 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.actions.IpnbAddCellAction;
 import org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellAction;
 import org.jetbrains.plugins.ipnb.editor.actions.IpnbSaveAction;
-import org.jetbrains.plugins.ipnb.editor.panels.IpnbHeadingPanel;
-import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
-import org.jetbrains.plugins.ipnb.editor.panels.IpnbMarkdownPanel;
-import org.jetbrains.plugins.ipnb.editor.panels.IpnbPanel;
+import org.jetbrains.plugins.ipnb.editor.panels.*;
 import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodePanel;
 import org.jetbrains.plugins.ipnb.format.IpnbParser;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbCodeCell;
@@ -102,7 +99,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
       @Override
       public void actionPerformed(ActionEvent e) {
         final Object selectedItem = myCellTypeCombo.getSelectedItem();
-        final IpnbPanel selectedCell = myIpnbFilePanel.getSelectedCell();
+        final IpnbEditablePanel selectedCell = myIpnbFilePanel.getSelectedCell();
         if (selectedCell != null && selectedItem instanceof String) {
           updateCellType((String)selectedItem, selectedCell);
         }
@@ -165,7 +162,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
     return myRunCellButton;
   }
 
-  private void updateCellType(@NotNull final String selectedItem, @NotNull final IpnbPanel selectedCell) {
+  private void updateCellType(@NotNull final String selectedItem, @NotNull final IpnbEditablePanel selectedCell) {
     if (selectedCell instanceof IpnbHeadingPanel) {
       final IpnbHeadingCell cell = ((IpnbHeadingPanel)selectedCell).getCell();
       if (selectedItem.startsWith(headingCellType)) {

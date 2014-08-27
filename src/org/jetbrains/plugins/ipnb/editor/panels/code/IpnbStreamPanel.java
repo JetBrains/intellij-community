@@ -1,17 +1,13 @@
 package org.jetbrains.plugins.ipnb.editor.panels.code;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.ipnb.editor.panels.IpnbPanel;
 import org.jetbrains.plugins.ipnb.format.cells.output.IpnbStreamOutputCell;
 
 import javax.swing.*;
 
-public class IpnbStreamPanel extends IpnbPanel {
-
-  @NotNull private final IpnbStreamOutputCell myCell;
-
+public class IpnbStreamPanel extends IpnbCodeOutputPanel<IpnbStreamOutputCell> {
   public IpnbStreamPanel(@NotNull final IpnbStreamOutputCell cell) {
-    myCell = cell;
+    super(cell);
     myViewPanel = createViewPanel();
     add(myViewPanel);
   }

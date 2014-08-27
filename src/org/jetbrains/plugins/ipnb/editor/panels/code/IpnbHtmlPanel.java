@@ -3,16 +3,13 @@ package org.jetbrains.plugins.ipnb.editor.panels.code;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
-import org.jetbrains.plugins.ipnb.editor.panels.IpnbPanel;
 import org.jetbrains.plugins.ipnb.format.cells.output.IpnbHtmlOutputCell;
 
 import javax.swing.*;
 
-public class IpnbHtmlPanel extends IpnbPanel {
-  @NotNull private final IpnbHtmlOutputCell myCell;
-
+public class IpnbHtmlPanel extends IpnbCodeOutputPanel<IpnbHtmlOutputCell> {
   public IpnbHtmlPanel(@NotNull final IpnbHtmlOutputCell cell) {
-    myCell = cell;
+    super(cell);
     myViewPanel = createViewPanel();
     add(myViewPanel);
   }
