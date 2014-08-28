@@ -212,23 +212,26 @@ public final class IcsManager implements ApplicationLoadListener, Disposable {
 
   @SuppressWarnings("SSBasedInspection")
   private void connectAndUpdateRepository(@NotNull Application application) {
+    if (application.isUnitTestMode()) {
+      return;
+    }
+
     try {
-      if (!application.isUnitTestMode()) {
-        repositoryManager = new GitRepositoryManager(credentialsStore);
-        setStatus(IcsStatus.OPENED);
-        if (settings.updateOnStart && repositoryManager.hasUpstream()) {
-          // todo progress
-          repositoryManager.updateRepository(new EmptyProgressIndicator());
-        }
+      repositoryManager = new GitRepositoryManager(credentialsStore);
+      setStatus(IcsStatus.OPENED);
+      if (settings.updateOnStart && repositoryManager.hasUpstream()) {
+        // todo progress
+        repositoryManager.updateRepository(new EmptyProgressIndicator());
       }
     }
+    catch (AuthenticationException e) {
+      LOG.warn(e);
+    }
     catch (Exception e) {
-      try {
-        LOG.error(e);
-      }
-      finally {
-        setStatus(getStatus() == IcsStatus.OPENED ? IcsStatus.UPDATE_FAILED : IcsStatus.OPEN_FAILED);
-      }
+      LOG.error(e);
+    }
+    finally {
+      setStatus(getStatus() == IcsStatus.OPENED ? IcsStatus.UPDATE_FAILED : IcsStatus.OPEN_FAILED);
     }
   }
 
