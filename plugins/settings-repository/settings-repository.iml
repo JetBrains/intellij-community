@@ -55,7 +55,9 @@
           <root url="jar://$MODULE_DIR$/lib/osxkeychain.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/lib/osxkeychain-sources.zip!/" />
+        </SOURCES>
       </library>
     </orderEntry>
   </component>

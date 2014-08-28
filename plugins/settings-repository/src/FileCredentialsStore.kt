@@ -40,7 +40,7 @@ class FileCredentialsStore(private val storeFile: File) : CredentialsStore {
     }
   }
 
-  override fun get(uri: URIish): Credentials? {
+  override fun get(host: String?, sshKeyFile: String?): Credentials? {
     ensureLoaded()
     return credentials
   }
@@ -51,7 +51,7 @@ class FileCredentialsStore(private val storeFile: File) : CredentialsStore {
     }
   }
 
-  override fun save(uri: URIish, credentials: Credentials) {
+  override fun save(host: String?, credentials: Credentials, sshKeyFile: String?) {
     if (credentials.equals(this.credentials)) {
       return
     }

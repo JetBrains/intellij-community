@@ -32,9 +32,9 @@ public data class Credentials(username: String?, password: String?) {
 public fun Credentials?.isFulfilled(): Boolean = this != null && username != null && password != null
 
 public trait CredentialsStore {
-  public fun get(uri: URIish): Credentials?
+  public fun get(host: String?, sshKeyFile: String?): Credentials?
 
-  public fun save(uri: URIish, credentials: Credentials)
+  public fun save(host: String?, credentials: Credentials, sshKeyFile: String?)
 
   public fun reset(uri: URIish)
 }

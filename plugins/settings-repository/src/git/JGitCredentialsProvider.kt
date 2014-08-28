@@ -28,6 +28,7 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
   override fun get(uri: URIish, vararg items: CredentialItem?): Boolean {
     var userNameItem: CredentialItem.Username? = null
     var passwordItem: CredentialItem? = null
+    var sshKeyFile: String? = null
     for (item in items) {
       if (item is CredentialItem.Username) {
         userNameItem = item
@@ -37,17 +38,20 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
       }
       else if (item is CredentialItem.StringType) {
         val promptText = item.getPromptText()
-        if (promptText != null && (promptText == "Password: " ||
-                promptText.startsWith("Passphrase for ") /* JSch prompt */)) {
-          passwordItem = item
-          continue
+        if (promptText != null) {
+          val marker = "Passphrase for "
+          if (promptText.startsWith(marker) /* JSch prompt */) {
+            sshKeyFile = promptText.substring(marker.length())
+            passwordItem = item
+            continue
+          }
         }
       }
     }
-    return (userNameItem == null && passwordItem == null) || doGet(uri, userNameItem, passwordItem)
+    return (userNameItem == null && passwordItem == null) || doGet(uri, userNameItem, passwordItem, sshKeyFile)
   }
 
-  private fun doGet(uri: URIish, userNameItem: CredentialItem.Username?, passwordItem: CredentialItem?): Boolean {
+  private fun doGet(uri: URIish, userNameItem: CredentialItem.Username?, passwordItem: CredentialItem?, sshKeyFile: String?): Boolean {
     var credentials: Credentials?
 
     val userFromUri: String? = uri.getUser().nullize()
@@ -63,7 +67,7 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
       credentials = credentialsFromGit
 
       if (credentials == null) {
-        credentials = credentialsStore.getValue().get(uri)
+        credentials = credentialsStore.getValue().get(uri.getHost(), sshKeyFile)
         saveCredentialsToStore = true
 
         if (userFromUri != null) {
@@ -83,7 +87,7 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
     }
 
     if (saveCredentialsToStore && credentials.isFulfilled()) {
-      credentialsStore.getValue().save(uri, credentials!!)
+      credentialsStore.getValue().save(uri.getHost(), credentials!!, sshKeyFile)
     }
 
     userNameItem?.setValue(credentials?.username)
