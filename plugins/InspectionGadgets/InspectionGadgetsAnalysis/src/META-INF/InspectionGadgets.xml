@@ -1383,6 +1383,10 @@
                      key="junit3.style.test.method.in.junit4.class.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.JUnit3StyleTestMethodInJUnit4ClassInspection"/>
+    <localInspection language="JAVA" shortName="JUnit3MethodNamingConvention"
+                     bundle="com.siyeh.InspectionGadgetsBundle" key="junit3.method.naming.convention.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false"
+                     level="WARNING" implementationClass="com.siyeh.ig.junit.JUnit3MethodNamingConventionInspection"/>
     <localInspection language="JAVA" shortName="JUnit4MethodNamingConvention"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="junit4.method.naming.convention.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false"
