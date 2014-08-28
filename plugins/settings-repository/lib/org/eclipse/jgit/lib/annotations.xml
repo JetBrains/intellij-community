@@ -17,6 +17,27 @@
   <item name='org.eclipse.jgit.lib.Config java.util.Set&lt;java.lang.String&gt; getSubsections(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='org.eclipse.jgit.lib.IndexDiff java.util.Set&lt;java.lang.String&gt; getAdded()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.lib.IndexDiff java.util.Set&lt;java.lang.String&gt; getChanged()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.lib.IndexDiff java.util.Set&lt;java.lang.String&gt; getMissing()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.lib.IndexDiff java.util.Set&lt;java.lang.String&gt; getModified()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.lib.IndexDiff java.util.Set&lt;java.lang.String&gt; getRemoved()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.lib.IndexDiff java.util.Set&lt;java.lang.String&gt; getUntracked()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.lib.IndexDiff java.util.Set&lt;java.lang.String&gt; getUntrackedFolders()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='org.eclipse.jgit.lib.Ref java.lang.String getName()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>

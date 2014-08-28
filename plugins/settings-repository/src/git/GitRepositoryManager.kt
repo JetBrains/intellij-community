@@ -77,7 +77,7 @@ public class GitRepositoryManager(private val credentialsStore: NotNullLazyValue
 
   override fun commit(indicator: ProgressIndicator) {
     synchronized (lock) {
-      CommitTask.execute(this, indicator)
+      commit(this, indicator)
     }
   }
 

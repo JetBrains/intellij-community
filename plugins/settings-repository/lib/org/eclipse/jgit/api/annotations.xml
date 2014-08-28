@@ -5,6 +5,9 @@
   <item name='org.eclipse.jgit.api.CommitCommand org.eclipse.jgit.api.CommitCommand setCommitter(org.eclipse.jgit.lib.PersonIdent)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='org.eclipse.jgit.api.CommitCommand org.eclipse.jgit.api.CommitCommand setMessage(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='org.eclipse.jgit.api.CommitCommand org.eclipse.jgit.api.CommitCommand setReflogComment(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
