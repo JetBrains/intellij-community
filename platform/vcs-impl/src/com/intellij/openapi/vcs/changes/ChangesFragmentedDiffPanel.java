@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -281,21 +282,44 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     myTitleLabel.setText(titleText((DiffPanelImpl)currentPanel));
     myLeftLines = state.getLeftLines();
 
+    EditorEx hEditor1 = (EditorEx)((DiffPanelImpl)myHorizontal).getEditor1();
+    EditorEx vEditor1 = (EditorEx)((DiffPanelImpl)myVertical).getEditor1();
+    EditorEx hEditor2 = (EditorEx)((DiffPanelImpl)myHorizontal).getEditor2();
+    EditorEx vEditor2 = (EditorEx)((DiffPanelImpl)myVertical).getEditor2();
+
+    assert  hEditor1 != null;
+    assert  vEditor1 != null;
+    assert  hEditor2 != null;
+    assert  vEditor2 != null;
+
     FragmentedEditorHighlighter bh = fragmentedContent.getBeforeHighlighter();
     if (bh != null) {
-      ((EditorEx) ((DiffPanelImpl) myHorizontal).getEditor1()).setHighlighter(bh);
-      ((EditorEx) ((DiffPanelImpl) myVertical).getEditor1()).setHighlighter(bh);
+      hEditor1.setHighlighter(bh);
+      vEditor1.setHighlighter(bh);
     }
     FragmentedEditorHighlighter ah = fragmentedContent.getAfterHighlighter();
     if (ah != null) {
-      ((EditorEx) ((DiffPanelImpl) myHorizontal).getEditor2()).setHighlighter(ah);
-      ((EditorEx) ((DiffPanelImpl) myVertical).getEditor2()).setHighlighter(ah);
+      hEditor2.setHighlighter(ah);
+      vEditor2.setHighlighter(ah);
     }
     if (((DiffPanelImpl) currentPanel).getEditor1() != null) {
       highlightTodo(true, fragmentedContent.getBeforeTodoRanges());
     }
     if (((DiffPanelImpl) currentPanel).getEditor2() != null) {
       highlightTodo(false, fragmentedContent.getAfterTodoRanges());
+    }
+    if (fragmentedContent.getFileType() != null && myProject != null && !myProject.isDisposed()) {
+      CodeStyleFacade codeStyleFacade = CodeStyleFacade.getInstance(myProject);
+      int tabSize = codeStyleFacade.getTabSize(fragmentedContent.getFileType());
+      boolean useTabCharacter = codeStyleFacade.useTabCharacter(fragmentedContent.getFileType());
+      hEditor1.getSettings().setTabSize(tabSize);
+      vEditor1.getSettings().setTabSize(tabSize);
+      hEditor2.getSettings().setTabSize(tabSize);
+      vEditor2.getSettings().setTabSize(tabSize);
+      hEditor1.getSettings().setUseTabCharacter(useTabCharacter);
+      vEditor1.getSettings().setUseTabCharacter(useTabCharacter);
+      hEditor2.getSettings().setUseTabCharacter(useTabCharacter);
+      vEditor2.getSettings().setUseTabCharacter(useTabCharacter);
     }
     ensurePresentation();
     softWraps(myConfiguration.SOFT_WRAPS_IN_SHORT_DIFF);
