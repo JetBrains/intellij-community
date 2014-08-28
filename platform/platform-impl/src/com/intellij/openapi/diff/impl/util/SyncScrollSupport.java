@@ -152,10 +152,8 @@ public class SyncScrollSupport implements Disposable {
 
     if (master == null || slave == null) return;
 
-    int masterHeaderOffset = getHeaderOffset(master);
-    int slaveHeaderOffset = getHeaderOffset(slave);
-    int masterVerticalScrollOffset = master.getScrollingModel().getVerticalScrollOffset() + masterHeaderOffset;
-    int slaveVerticalScrollOffset = slave.getScrollingModel().getVerticalScrollOffset() + slaveHeaderOffset;
+    int masterVerticalScrollOffset = master.getScrollingModel().getVerticalScrollOffset();
+    int slaveVerticalScrollOffset = slave.getScrollingModel().getVerticalScrollOffset();
 
     Rectangle viewRect = master.getScrollingModel().getVisibleArea();
     int middleY = viewRect.height / 3;
@@ -177,7 +175,8 @@ public class SyncScrollSupport implements Disposable {
       offset = point.y - middleY + correction;
     }
 
-    doScrollVertically(slave.getScrollingModel(), offset);
+    int deltaHeaderOffset = getHeaderOffset(slave) - getHeaderOffset(master);
+    doScrollVertically(slave.getScrollingModel(), offset + deltaHeaderOffset);
   }
 
   private static int getHeaderOffset(@NotNull final Editor editor) {
