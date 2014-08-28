@@ -179,4 +179,9 @@ public abstract class ApplicationStarterBase extends ApplicationStarterEx {
     }
     return file;
   }
+
+  @Override
+  public boolean canProcessExternalCommandLine() {
+    return true;
+  }
 }
