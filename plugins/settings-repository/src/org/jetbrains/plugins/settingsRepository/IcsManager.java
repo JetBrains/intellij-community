@@ -97,7 +97,7 @@ public final class IcsManager implements ApplicationLoadListener, Disposable {
         }
       });
     }
-  }, settings.commitDelay);
+  }, settings.getCommitDelay());
 
   private volatile boolean autoCommitEnabled = true;
   private volatile boolean writeAndDeleteProhibited;
@@ -203,7 +203,7 @@ public final class IcsManager implements ApplicationLoadListener, Disposable {
           return repositoryManager.has(IcsUrlBuilder.buildPath(fileSpec, roamingType, projectId));
         }
 
-        return settings.shareProjectWorkspace || !fileSpec.equals(StoragePathMacros.WORKSPACE_FILE);
+        return settings.getShareProjectWorkspace() || !fileSpec.equals(StoragePathMacros.WORKSPACE_FILE);
       }
     });
 
@@ -219,7 +219,7 @@ public final class IcsManager implements ApplicationLoadListener, Disposable {
     try {
       repositoryManager = new GitRepositoryManager(credentialsStore);
       setStatus(IcsStatus.OPENED);
-      if (settings.updateOnStart && repositoryManager.hasUpstream()) {
+      if (settings.getUpdateOnStart() && repositoryManager.hasUpstream()) {
         // todo progress
         repositoryManager.updateRepository(new EmptyProgressIndicator());
       }

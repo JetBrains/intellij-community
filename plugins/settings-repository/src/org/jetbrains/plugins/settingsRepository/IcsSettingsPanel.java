@@ -37,8 +37,8 @@ public class IcsSettingsPanel extends DialogWrapper {
     IcsManager icsManager = IcsManager.getInstance();
     IcsSettings settings = icsManager.getSettings();
 
-    updateOnStartCheckBox.setSelected(settings.updateOnStart);
-    shareProjectWorkspaceCheckBox.setSelected(settings.shareProjectWorkspace);
+    updateOnStartCheckBox.setSelected(settings.getUpdateOnStart());
+    shareProjectWorkspaceCheckBox.setSelected(settings.getShareProjectWorkspace());
     urlTextField.setText(icsManager.getRepositoryManager().getRemoteRepositoryUrl());
     urlTextField.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFolderDescriptor()));
 
@@ -111,13 +111,13 @@ public class IcsSettingsPanel extends DialogWrapper {
     IcsSettings settings = IcsManager.getInstance().getSettings();
     boolean settingsModified = false;
     boolean updateOnStart = updateOnStartCheckBox.isSelected();
-    if (updateOnStart != settings.updateOnStart) {
-      settings.updateOnStart = updateOnStart;
+    if (updateOnStart != settings.getUpdateOnStart()) {
+      settings.setUpdateOnStart(updateOnStart);
       settingsModified = true;
     }
     boolean shareProjectWorkspace = shareProjectWorkspaceCheckBox.isSelected();
-    if (shareProjectWorkspace != settings.shareProjectWorkspace) {
-      settings.shareProjectWorkspace = shareProjectWorkspace;
+    if (shareProjectWorkspace != settings.getShareProjectWorkspace()) {
+      settings.setShareProjectWorkspace(shareProjectWorkspace);
       settingsModified = true;
     }
 

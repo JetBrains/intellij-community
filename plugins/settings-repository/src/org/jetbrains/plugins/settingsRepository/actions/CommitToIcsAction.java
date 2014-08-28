@@ -124,12 +124,12 @@ class CommitToIcsAction extends CommonCheckinFilesAction {
         new DialogWrapper.PropertyDoNotAskOption("") {
           @Override
           public void setToBeShown(boolean value, int exitCode) {
-            IcsManager.getInstance().getSettings().doNoAskMapProject = !value;
+            IcsManager.getInstance().getSettings().setDoNoAskMapProject(!value);
           }
 
           @Override
           public boolean isToBeShown() {
-            return !IcsManager.getInstance().getSettings().doNoAskMapProject;
+            return !IcsManager.getInstance().getSettings().getDoNoAskMapProject();
           }
 
           @Override
