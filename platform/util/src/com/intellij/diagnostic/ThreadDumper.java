@@ -24,6 +24,8 @@ import java.io.Writer;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
+import java.util.Arrays;
+import java.util.Comparator;
 
 /**
  * @author yole
@@ -76,18 +78,21 @@ public class ThreadDumper {
   }
 
   private static ThreadInfo[] sort(ThreadInfo[] threads) {
-    int edtIndex = -1;
-    for (int i = 0; i < threads.length; i++) {
-      if (threads[i].getThreadName().startsWith("AWT-EventQueue")) {
-        edtIndex = i;
-        break;
+    Arrays.sort(threads, new Comparator<ThreadInfo>() {
+      @Override
+      public int compare(ThreadInfo o1, ThreadInfo o2) {
+        final String t1 = o1.getThreadName();
+        final String t2 = o2.getThreadName();
+        if (t1.startsWith("AWT-EventQueue")) return -1;
+        if (t2.startsWith("AWT-EventQueue")) return 1;
+        final boolean r1 = o1.getThreadState() == Thread.State.RUNNABLE;
+        final boolean r2 = o2.getThreadState() == Thread.State.RUNNABLE;
+        if (r1 && !r2) return -1;
+        if (r2 && !r1) return 1;
+        return 0;
       }
-    }
-    if (edtIndex > 0) {
-      ThreadInfo edt = threads[edtIndex];
-      System.arraycopy(threads, 0, threads, 1, edtIndex);
-      threads[0] = edt;
-    }
+    });
+
     return threads;
   }
 
