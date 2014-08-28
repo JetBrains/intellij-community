@@ -22,6 +22,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.IconUtil;
@@ -139,7 +140,10 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
 
   @Override
   public String getHTMLFooter() {
-    return "UI theme can be changed later in " + CommonBundle.settingsTitle() + " | Appearance";
+    return "UI theme can be changed later in " +
+           CommonBundle.settingsTitle()
+           + " | " + OptionsBundle.message("configurable.group.appearance.settings.display.name")
+           + " | " + "Appearance";
   }
 
   private void applyLaf(String lafName, Component component) {
