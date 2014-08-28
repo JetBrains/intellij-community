@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.options.newEditor;
 
+import com.intellij.AbstractBundle;
+import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
@@ -1220,7 +1222,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     JPanel box = new JPanel();
     box.setLayout(new BoxLayout(box, BoxLayout.Y_AXIS));
     try {
-      box.add(new JLabel(OptionsBundle.message(searchable.getId() + ".settings.description")));
+      box.add(new JLabel(getDefaultDescription(searchable)));
     }
     catch (AssertionError error) {
       return null; // description is not set
@@ -1238,6 +1240,18 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       }
     }
     return box;
+  }
+
+  @NotNull
+  private static String getDefaultDescription(SearchableConfigurable configurable) {
+    String key = configurable.getId() + ".settings.description";
+    if (configurable instanceof ConfigurableWrapper) {
+      ConfigurableWrapper wrapper = (ConfigurableWrapper) configurable;
+      ConfigurableEP ep = wrapper.getExtensionPoint();
+      ResourceBundle resourceBundle = AbstractBundle.getResourceBundle(ep.bundle, ep.getPluginDescriptor().getPluginClassLoader());
+      return CommonBundle.message(resourceBundle, key);
+    }
+    return OptionsBundle.message(key);
   }
 
   private class Simple extends ConfigurableContent {
