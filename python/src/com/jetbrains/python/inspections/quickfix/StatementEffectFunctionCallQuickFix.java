@@ -100,6 +100,9 @@ public class StatementEffectFunctionCallQuickFix implements LocalQuickFix {
           stringBuilder.append(elements[1].getText());
         }
       }
+      else {
+        stringBuilder.append(next.getText());
+      }
     }
     else {
       stringBuilder.append(next.getText());
