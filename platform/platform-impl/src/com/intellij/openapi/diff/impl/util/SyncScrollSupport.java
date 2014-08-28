@@ -142,7 +142,7 @@ public class SyncScrollSupport implements Disposable {
   private static void syncVerticalScroll(@NotNull ScrollingContext context,
                                          @NotNull Rectangle newRectangle,
                                          @NotNull Rectangle oldRectangle) {
-    if (newRectangle.y == oldRectangle.y && newRectangle.height == oldRectangle.height) return;
+    if (newRectangle.y == oldRectangle.y) return;
     EditingSides sidesContainer = context.getSidesContainer();
     FragmentSide masterSide = context.getMasterSide();
     FragmentSide masterDiffSide = context.getMasterDiffSide();
