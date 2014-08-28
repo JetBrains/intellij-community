@@ -9,15 +9,16 @@ import org.jetbrains.plugins.settingsRepository.showAuthenticationForm
 import org.jetbrains.plugins.settingsRepository.Credentials
 import org.jetbrains.plugins.settingsRepository.nullize
 import org.jetbrains.plugins.settingsRepository.isFulfilled
+import org.eclipse.jgit.lib.Repository
 
-class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<CredentialsStore>) : CredentialsProvider() {
+class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<CredentialsStore>, private val repository: Repository) : CredentialsProvider() {
   private var credentialsFromGit: Credentials? = null
 
   override fun isInteractive() = true
 
   override fun supports(vararg items: CredentialItem?): Boolean {
     for (item in items) {
-      if (item is CredentialItem.Password || item is CredentialItem.Username) {
+      if (item is CredentialItem.Password || item is CredentialItem.Username || item is CredentialItem.StringType) {
         continue
       }
       return false
@@ -62,7 +63,7 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
     }
     else {
       if (credentialsFromGit == null) {
-        credentialsFromGit = getCredentialsUsingGit(uri)
+        credentialsFromGit = getCredentialsUsingGit(uri, repository)
       }
       credentials = credentialsFromGit
 

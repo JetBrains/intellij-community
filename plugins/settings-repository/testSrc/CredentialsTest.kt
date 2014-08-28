@@ -19,7 +19,7 @@ class CredentialsTest {
   private var storeFile: File? = null
 
   private fun createProvider(credentialsStore: CredentialsStore): JGitCredentialsProvider {
-    return JGitCredentialsProvider(NotNullLazyValue.createConstantValue<CredentialsStore>(credentialsStore))
+    return JGitCredentialsProvider(NotNullLazyValue.createConstantValue<CredentialsStore>(credentialsStore), FileRepositoryBuilder().setBare().setGitDir(File("/tmp/fake")).build())
   }
 
   private fun createFileStore(): FileCredentialsStore {
@@ -41,7 +41,7 @@ class CredentialsTest {
     assertThat(username.getValue(), equalTo("develar"))
     assertThat(String(password.getValue()!!), equalTo("bike"))
     // ensure that credentials store was not used
-    assertThat(credentialsStore.get(uri), nullValue())
+    assertThat(credentialsStore.get(uri.getHost()), nullValue())
     assertThat(storeFile?.exists(), equalTo(false))
   }
 
@@ -52,8 +52,6 @@ class CredentialsTest {
     }
 
     val credentialsStore = createFileStore()
-    JGitCredentialsProvider(NotNullLazyValue.createConstantValue<CredentialsStore>(credentialsStore))
-
     val username = CredentialItem.Username()
     val password = CredentialItem.Password()
     val uri = URIish("https://develar@bitbucket.org/develar/test-ics.git")

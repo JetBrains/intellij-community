@@ -5,11 +5,16 @@ import org.eclipse.jgit.transport.URIish
 import com.intellij.util.ui.UIUtil
 import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.application.ApplicationManager
 
 public fun String?.nullize(): String? = StringUtil.nullize(this)
 
 public fun showAuthenticationForm(credentials: Credentials?, uri: String, host: String?): Credentials? {
-  val authenticationForm = RepositoryAuthenticationForm(credentials?.username, credentials?.password, if (host == "github.com") IcsBundle.message("login.github.note") else null)
+  if (ApplicationManager.getApplication()?.isUnitTestMode() === true) {
+    throw AssertionError("showAuthenticationForm called from tests")
+  }
+
+  val authenticationForm = RepositoryAuthenticationForm(credentials?.username, credentials?.password, IcsBundle.message(if (host == "github.com") "login.github.note" else "login.other.git.provider.note"))
   var ok = false
   UIUtil.invokeAndWaitIfNeeded(object : Runnable {
     override fun run() {
@@ -32,9 +37,9 @@ public data class Credentials(username: String?, password: String?) {
 public fun Credentials?.isFulfilled(): Boolean = this != null && username != null && password != null
 
 public trait CredentialsStore {
-  public fun get(host: String?, sshKeyFile: String?): Credentials?
+  public fun get(host: String?, sshKeyFile: String? = null): Credentials?
 
-  public fun save(host: String?, credentials: Credentials, sshKeyFile: String?)
+  public fun save(host: String?, credentials: Credentials, sshKeyFile: String? = null)
 
   public fun reset(uri: URIish)
 }

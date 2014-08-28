@@ -50,7 +50,7 @@ public final class GitRepositoryManager extends BaseRepositoryManager {
   @NotNull
   CredentialsProvider getCredentialsProvider() {
     if (credentialsProvider == null) {
-      credentialsProvider = new JGitCredentialsProvider(credentialsStore);
+      credentialsProvider = new JGitCredentialsProvider(credentialsStore, git.getRepository());
     }
     return credentialsProvider;
   }

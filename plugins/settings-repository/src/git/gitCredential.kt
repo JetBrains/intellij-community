@@ -6,12 +6,13 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.plugins.settingsRepository.BaseRepositoryManager
 import com.intellij.execution.process.ProcessNotCreatedException
+import org.eclipse.jgit.lib.Repository
 
 private var canUseGitExe = true
 
 // https://www.kernel.org/pub/software/scm/git/docs/git-credential.html
-fun getCredentialsUsingGit(uri: URIish): Credentials? {
-  if (!canUseGitExe) {
+fun getCredentialsUsingGit(uri: URIish, repository: Repository): Credentials? {
+  if (!canUseGitExe || repository.getConfig().getSubsections("credential").isEmpty()) {
     return null
   }
 
@@ -24,12 +25,12 @@ fun getCredentialsUsingGit(uri: URIish): Credentials? {
   try {
     process = commandLine.createProcess()
   }
-  catch(e: ProcessNotCreatedException) {
+  catch (e: ProcessNotCreatedException) {
     canUseGitExe = false
     return null
   }
 
-  val writer = process.getOutputStream().buffered().writer()
+  val writer = process.getOutputStream().writer()
   writer.write("url=")
   writer.write(uri.toPrivateString())
   writer.write("\n\n")
