@@ -351,6 +351,12 @@ class PyDB:
                 pydev_log.error_once(
                     'Error in debugger: Found PyDBDaemonThread through threading.enumerate().\n')
                 
+            if getattr(t, 'is_pydev_daemon_thread', False):
+                #Important: Jython 2.5rc4 has a bug where a thread created with thread.start_new_thread won't be
+                #set as a daemon thread, so, we also have to check for the 'is_pydev_daemon_thread' flag.
+                #See: https://github.com/fabioz/PyDev.Debugger/issues/11
+                continue
+            
             if isThreadAlive(t) and not t.isDaemon():
                 return True
 
@@ -1400,9 +1406,14 @@ class PyDB:
 
         except Exception:
             # Log it
-            if traceback is not None:
-                # This can actually happen during the interpreter shutdown in Python 2.7
-                traceback.print_exc()
+            try:
+                if traceback is not None:
+                    # This can actually happen during the interpreter shutdown in Python 2.7
+                    traceback.print_exc()
+            except:
+                # Error logging? We're really in the interpreter shutdown...
+                # (https://github.com/fabioz/PyDev.Debugger/issues/8) 
+                pass
             return None
 
     if USE_PSYCO_OPTIMIZATION:
@@ -1455,13 +1466,6 @@ class PyDB:
 
     def prepareToRun(self):
         ''' Shared code to prepare debugging by installing traces and registering threads '''
-
-        # for completeness, we'll register the pydevd.reader & pydevd.writer threads
-        net = NetCommand(str(CMD_THREAD_CREATE), 0, '<xml><thread name="pydevd.reader" id="-1"/></xml>')
-        self.writer.addCommand(net)
-        net = NetCommand(str(CMD_THREAD_CREATE), 0, '<xml><thread name="pydevd.writer" id="-1"/></xml>')
-        self.writer.addCommand(net)
-
         self.patch_threads()
         pydevd_tracing.SetTrace(self.trace_dispatch)
 
@@ -1720,11 +1724,6 @@ def _locked_settrace(
         bufferStdOutToServer = stdoutToServer
         bufferStdErrToServer = stderrToServer
 
-        net = NetCommand(str(CMD_THREAD_CREATE), 0, '<xml><thread name="pydevd.reader" id="-1"/></xml>')
-        debugger.writer.addCommand(net)
-        net = NetCommand(str(CMD_THREAD_CREATE), 0, '<xml><thread name="pydevd.writer" id="-1"/></xml>')
-        debugger.writer.addCommand(net)
-
         if bufferStdOutToServer:
             initStdoutRedirect()
 
@@ -1846,6 +1845,11 @@ class DispatchReader(ReaderThread):
         self.dispatcher = dispatcher
         ReaderThread.__init__(self, self.dispatcher.client)
 
+    def OnRun(self):
+        dummy_thread = threading.currentThread()
+        dummy_thread.is_pydev_daemon_thread = False
+        return ReaderThread.OnRun(self)
+        
     def handleExcept(self):
         ReaderThread.handleExcept(self)
 
