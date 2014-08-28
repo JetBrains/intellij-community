@@ -538,7 +538,6 @@ public class RemoteDebugger implements ProcessDebugger {
           final PyThreadInfo event = parseThreadEvent(frame);
           PyThreadInfo thread = myThreads.get(event.getId());
           if (thread == null) {
-            LOG.error("Trying to stop on non-existent thread: " + event.getId() + ", " + event.getStopReason() + ", " + event.getMessage());
             myThreads.put(event.getId(), event);
             thread = event;
           }
