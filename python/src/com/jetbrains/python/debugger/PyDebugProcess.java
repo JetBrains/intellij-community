@@ -84,6 +84,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private final XSmartStepIntoHandler<?> mySmartStepIntoHandler;
   private boolean myWaitingForConnection = false;
   private PyStackFrame myStackFrameBeforeResume;
+  private PyStackFrame myConsoleContextFrame = null;
 
   public PyDebugProcess(final @NotNull XDebugSession session,
                         @NotNull final ServerSocket serverSocket,
@@ -283,6 +284,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   @Override
   public void recordSignature(PySignature signature) {
     PySignatureCacheManager.getInstance(getSession().getProject()).recordSignature(myPositionConverter.convertSignature(signature));
+  }
+
+  @Override
+  public void showConsole(PyThreadInfo thread) {
+    myConsoleContextFrame = new PyExecutionStack(this, thread).getTopFrame();
   }
 
   protected void afterConnect() {
@@ -545,6 +551,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
 
     final PyStackFrame frame = (PyStackFrame)getSession().getCurrentStackFrame();
+
+    if (frame == null && myConsoleContextFrame != null) {
+      return myConsoleContextFrame;
+    }
+
     if (frame == null) {
       throw new PyDebuggerException("Process is running");
     }
