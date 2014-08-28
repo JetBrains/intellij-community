@@ -15,12 +15,14 @@
  */
 package com.intellij.execution.configuration;
 
+import com.google.common.collect.ImmutableMap;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.util.EnvVariablesTable;
 import com.intellij.execution.util.EnvironmentVariable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.UserActivityProviderComponent;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,13 +33,14 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWithBrowseButton implements UserActivityProviderComponent {
 
-  private final Map<String, String> myEnvs = new LinkedHashMap<String, String>();
+  private Map<String, String> myEnvs = Collections.emptyMap();
   private boolean myPassParentEnvs;
   private final List<ChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -52,14 +55,20 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     });
   }
 
+  /**
+   * @return unmodifiable Map instance, use {@link #setEnvs(java.util.Map)} to update env vars
+   */
   @NotNull
   public Map<String, String> getEnvs() {
     return myEnvs;
   }
 
+  /**
+   * @param envs Map instance with reliable user-specified iteration order,
+   *             like {@link java.util.LinkedHashMap} or {@link com.google.common.collect.ImmutableMap}
+   */
   public void setEnvs(@NotNull Map<String, String> envs) {
-    myEnvs.clear();
-    myEnvs.putAll(envs);
+    myEnvs = ImmutableMap.copyOf(envs);
     String envsStr = stringifyEnvs(myEnvs);
     setText(envsStr);
   }
@@ -114,10 +123,12 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     protected MyEnvironmentVariablesDialog() {
       super(EnvironmentVariablesTextFieldWithBrowseButton.this, true);
       myEnvVariablesTable = new EnvVariablesTable();
-      List<EnvironmentVariable> envVariables = ContainerUtil.newArrayList();
-      for (Map.Entry<String, String> entry : myEnvs.entrySet()) {
-        envVariables.add(new EnvironmentVariable(entry.getKey(), entry.getValue(), false));
-      }
+      List<EnvironmentVariable> envVariables = ContainerUtil.map(myEnvs.entrySet(), new Function<Map.Entry<String, String>, EnvironmentVariable>() {
+        @Override
+        public EnvironmentVariable fun(Map.Entry<String, String> entry) {
+          return new EnvironmentVariable(entry.getKey(), entry.getValue(), false);
+        }
+      });
       myEnvVariablesTable.setValues(envVariables);
       myUseDefaultCb.setSelected(isPassParentEnvs());
       myWholePanel.add(myEnvVariablesTable.getComponent(), BorderLayout.CENTER);
