@@ -11,10 +11,7 @@ import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodePanel;
 import org.jetbrains.plugins.ipnb.format.IpnbFile;
-import org.jetbrains.plugins.ipnb.format.cells.IpnbCodeCell;
-import org.jetbrains.plugins.ipnb.format.cells.IpnbHeadingCell;
-import org.jetbrains.plugins.ipnb.format.cells.IpnbCell;
-import org.jetbrains.plugins.ipnb.format.cells.IpnbMarkdownCell;
+import org.jetbrains.plugins.ipnb.format.cells.*;
 import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
 
 import javax.swing.*;
@@ -38,6 +35,7 @@ public class IpnbFilePanel extends JPanel {
   private final List<IpnbEditablePanel> myIpnbPanels = Lists.newArrayList();
 
   private IpnbEditablePanel mySelectedCell;
+  private IpnbEditablePanel myBufferPanel;
 
   public IpnbFilePanel(@NotNull final Project project, @Nullable final Disposable parent, @NotNull final IpnbFile file,
                        @NotNull final IpnbFileEditor.CellSelectionListener listener) {
@@ -109,15 +107,19 @@ public class IpnbFilePanel extends JPanel {
     return c.gridy + 1;
   }
 
-  public void addCell() {
+  public void createAndAddCell() {
     removeAll();
     final IpnbCodeCell cell = new IpnbCodeCell("python", new String[]{""}, null, new ArrayList<IpnbOutputCell>());
+    final IpnbCodePanel codePanel = new IpnbCodePanel(myProject, myParent, cell);
+
+    addCell(cell, codePanel);
+  }
+
+  private void addCell(IpnbEditableCell cell, IpnbEditablePanel panel) {
     final IpnbEditablePanel selectedCell = getSelectedCell();
     final int index = myIpnbPanels.indexOf(selectedCell);
     myIpnbFile.addCell(cell, index+1);
-
-    final IpnbCodePanel codePanel = new IpnbCodePanel(myProject, myParent, cell);
-    myIpnbPanels.add(index + 1, codePanel);
+    myIpnbPanels.add(index + 1, panel);
 
     final GridBagConstraints c = new GridBagConstraints();
     c.fill = GridBagConstraints.HORIZONTAL;
@@ -126,15 +128,22 @@ public class IpnbFilePanel extends JPanel {
     c.gridwidth = 1;
     c.insets = new Insets(INSET_Y, INSET_X, 0, 0);
 
+    final JPanel promptPanel = new JPanel();
+    promptPanel.setPreferredSize(new Dimension(IpnbEditorUtil.PROMPT_SIZE.width, 1));
+    promptPanel.setBackground(getBackground());
+    promptPanel.setOpaque(false);
+    add(promptPanel);
+
+    c.gridy += 1;
     for (IpnbPanel comp : myIpnbPanels) {
+      c.gridwidth = 1;
+      c.gridx = 1;
       if (comp instanceof IpnbCodePanel) {
         c.gridwidth = 2;
         c.gridx = 0;
         add(comp, c);
       }
       else {
-        c.gridwidth = 1;
-        c.gridx = 1;
         add(comp, c);
       }
       c.gridy += 1;
@@ -142,7 +151,27 @@ public class IpnbFilePanel extends JPanel {
     c.weighty = 1;
     add(createEmptyPanel(), c);
 
-    setSelectedCell(codePanel);
+    setSelectedCell(panel);
+    revalidate();
+    repaint();
+  }
+
+  public void cutCell() {
+    myBufferPanel = getSelectedCell();
+    selectNextOrPrev(myBufferPanel);
+    final int index = myIpnbPanels.indexOf(myBufferPanel);
+    if (index < 0) return;
+    myIpnbPanels.remove(index);
+    myIpnbFile.removeCell(index);
+
+    remove(myBufferPanel);
+  }
+
+  public void pasteCell() {
+    if (myBufferPanel == null) return;
+    removeAll();
+    final IpnbEditablePanel editablePanel = (IpnbEditablePanel)myBufferPanel.clone();
+    addCell(editablePanel.getCell(), editablePanel);
   }
 
   public void replaceComponent(@NotNull final IpnbEditablePanel from, @NotNull final IpnbCell cell) {
@@ -221,6 +250,20 @@ public class IpnbFilePanel extends JPanel {
     int index = myIpnbPanels.indexOf(cell);
     if (index < myIpnbPanels.size() - 1) {
       setSelectedCell(myIpnbPanels.get(index + 1));
+    }
+  }
+
+  public void selectNextOrPrev(@NotNull IpnbEditablePanel cell) {
+    int index = myIpnbPanels.indexOf(cell);
+    if (index < myIpnbPanels.size() - 1) {
+      setSelectedCell(myIpnbPanels.get(index + 1));
+    }
+    else if (index > 0) {
+      setSelectedCell(myIpnbPanels.get(index - 1));
+    }
+    else {
+      mySelectedCell = null;
+      repaint();
     }
   }
 

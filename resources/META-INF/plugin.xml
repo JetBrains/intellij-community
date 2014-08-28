@@ -33,5 +33,7 @@
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbSaveAction" id="IpnbSaveAction" text="Save and Checkpoint">
     </action>
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbAddCellAction" id="IpnbAddCellAction" text="Insert Cell Below"/>
+    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbCutCellAction" id="IpnbCutCellAction" text="Cut Cell"/>
+    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbPasteCellAction" id="IpnbPasteCellAction" text="Paste Cell Below"/>
   </actions>
 </idea-plugin>

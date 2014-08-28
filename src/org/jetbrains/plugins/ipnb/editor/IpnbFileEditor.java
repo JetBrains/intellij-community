@@ -22,15 +22,13 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.ipnb.editor.actions.IpnbAddCellAction;
-import org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellAction;
-import org.jetbrains.plugins.ipnb.editor.actions.IpnbSaveAction;
+import org.jetbrains.plugins.ipnb.editor.actions.*;
 import org.jetbrains.plugins.ipnb.editor.panels.*;
 import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodePanel;
 import org.jetbrains.plugins.ipnb.format.IpnbParser;
+import org.jetbrains.plugins.ipnb.format.cells.IpnbCell;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbCodeCell;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbHeadingCell;
-import org.jetbrains.plugins.ipnb.format.cells.IpnbCell;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbMarkdownCell;
 import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
 
@@ -90,7 +88,8 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
     controlPanel.setBackground(IpnbEditorUtil.getBackground());
     addSaveButton(controlPanel);
     addAddButton(controlPanel);
-
+    addCutButton(controlPanel);
+    addPasteButton(controlPanel);
     addRunButton(controlPanel);
 
     myCellTypeCombo = new ComboBox(ourCellTypes);
@@ -129,33 +128,52 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
   }
 
   private void addSaveButton(@NotNull final JPanel controlPanel) {
-    final JButton saveButton = new JButton();
-    saveButton.setBackground(IpnbEditorUtil.getBackground());
-    saveButton.setPreferredSize(new Dimension(30, 30));
-    saveButton.setIcon(AllIcons.Actions.Menu_saveall);
-    saveButton.addActionListener(new ActionListener() {
+    addButton(controlPanel, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         final IpnbSaveAction action = (IpnbSaveAction)ActionManager.getInstance().getAction("IpnbSaveAction");
         action.saveAndCheckpoint(myIpnbFilePanel.getIpnbFile());
       }
-    });
-    controlPanel.add(saveButton);
+    }, AllIcons.Actions.Menu_saveall);
+  }
+
+  private void addCutButton(@NotNull final JPanel controlPanel) {
+    addButton(controlPanel, new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final IpnbCutCellAction action = (IpnbCutCellAction)ActionManager.getInstance().getAction("IpnbCutCellAction");
+        action.cutCell(myIpnbFilePanel);
+      }
+    }, AllIcons.Actions.Menu_cut);
+  }
+
+  private void addPasteButton(@NotNull final JPanel controlPanel) {
+    addButton(controlPanel, new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final IpnbPasteCellAction action = (IpnbPasteCellAction)ActionManager.getInstance().getAction("IpnbPasteCellAction");
+        action.pasteCell(myIpnbFilePanel);
+      }
+    }, AllIcons.Actions.Menu_paste);
+  }
+
+  private void addButton(@NotNull final  JPanel controlPanel, @NotNull final ActionListener listener, @NotNull final  Icon icon) {
+    final JButton button = new JButton();
+    button.setBackground(IpnbEditorUtil.getBackground());
+    button.setPreferredSize(new Dimension(30, 30));
+    button.setIcon(icon);
+    button.addActionListener(listener);
+    controlPanel.add(button);
   }
 
   private void addAddButton(@NotNull final JPanel controlPanel) {
-    final JButton saveButton = new JButton();
-    saveButton.setBackground(IpnbEditorUtil.getBackground());
-    saveButton.setPreferredSize(new Dimension(30, 30));
-    saveButton.setIcon(AllIcons.General.Add);
-    saveButton.addActionListener(new ActionListener() {
+    addButton(controlPanel, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         final IpnbAddCellAction action = (IpnbAddCellAction)ActionManager.getInstance().getAction("IpnbAddCellAction");
         action.addCell(myIpnbFilePanel);
       }
-    });
-    controlPanel.add(saveButton);
+    }, AllIcons.General.Add);
   }
 
   public JButton getRunCellButton() {

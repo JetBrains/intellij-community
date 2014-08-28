@@ -17,4 +17,10 @@ public class IpnbHeadingCell extends IpnbEditableCell {
   public void setLevel(int level) {
     myLevel = level;
   }
+
+  @SuppressWarnings({"CloneDoesntCallSuperClone", "CloneDoesntDeclareCloneNotSupportedException"})
+  @Override
+  public Object clone() {
+    return new IpnbHeadingCell(getSource(), myLevel);
+  }
 }

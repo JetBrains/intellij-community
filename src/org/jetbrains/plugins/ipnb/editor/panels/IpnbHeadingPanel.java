@@ -10,7 +10,6 @@ public class IpnbHeadingPanel extends IpnbEditablePanel<JBLabel, IpnbHeadingCell
 
   public IpnbHeadingPanel(@NotNull final IpnbHeadingCell cell) {
     super(cell);
-    myCell = cell;
     initPanel();
   }
 
@@ -40,4 +39,9 @@ public class IpnbHeadingPanel extends IpnbEditablePanel<JBLabel, IpnbHeadingCell
     return label;
   }
 
+  @SuppressWarnings("CloneDoesntCallSuperClone")
+  @Override
+  protected Object clone() {
+    return new IpnbHeadingPanel((IpnbHeadingCell)myCell.clone());
+  }
 }

@@ -33,7 +33,6 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
     super(cell);
     myProject = project;
     myParent = parent;
-    myCell = cell;
 
     myViewPanel = createViewPanel();
     add(myViewPanel);
@@ -118,7 +117,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
     }
     else if (outputCell.getSourceAsString() != null) {
       addPromptPanel(panel, myCell.getPromptNumber(), promptType,
-                     new IpnbCodeOutputPanel(outputCell), c);
+                     new IpnbCodeOutputPanel<IpnbOutputCell>(outputCell), c);
     }
   }
 
@@ -165,5 +164,11 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
         repaint();
       }
     });
+  }
+
+  @SuppressWarnings({"CloneDoesntCallSuperClone", "CloneDoesntDeclareCloneNotSupportedException"})
+  @Override
+  protected Object clone() {
+    return new IpnbCodePanel(myProject, myParent, (IpnbCodeCell)myCell.clone());
   }
 }

@@ -19,6 +19,5 @@ public abstract class IpnbPanel<T extends JComponent, K extends IpnbCell> extend
     return myCell;
   }
 
-
   protected abstract T createViewPanel();
 }

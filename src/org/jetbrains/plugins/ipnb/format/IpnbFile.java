@@ -24,6 +24,10 @@ public class IpnbFile {
     myCells.add(index, cell);
   }
 
+  public void removeCell(int index) {
+    myCells.remove(index);
+  }
+
   public String getPath() {
     return myPath;
   }

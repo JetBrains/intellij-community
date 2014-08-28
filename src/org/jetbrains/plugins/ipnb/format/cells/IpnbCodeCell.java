@@ -4,6 +4,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class IpnbCodeCell extends IpnbEditableCell {
@@ -42,5 +44,11 @@ public class IpnbCodeCell extends IpnbEditableCell {
 
   public void addCellOutput(@NotNull final IpnbOutputCell cellOutput) {
     myCellOutputs.add(cellOutput);
+  }
+
+  @SuppressWarnings({"CloneDoesntCallSuperClone", "CloneDoesntDeclareCloneNotSupportedException"})
+  @Override
+  public Object clone() {
+    return new IpnbCodeCell(myLanguage, Arrays.copyOf(getSource(), getSource().length), myPromptNumber, new ArrayList<IpnbOutputCell>(myCellOutputs));
   }
 }

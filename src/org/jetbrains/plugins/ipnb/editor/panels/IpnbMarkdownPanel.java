@@ -133,4 +133,9 @@ public class IpnbMarkdownPanel extends IpnbEditablePanel<JPanel, IpnbMarkdownCel
     updatePanel(myViewPanel);
   }
 
+  @SuppressWarnings("CloneDoesntCallSuperClone")
+  @Override
+  protected Object clone() {
+    return new IpnbMarkdownPanel((IpnbMarkdownCell)myCell.clone());
+  }
 }

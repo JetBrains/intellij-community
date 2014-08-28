@@ -1,10 +1,11 @@
 package org.jetbrains.plugins.ipnb.editor.panels;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.ipnb.format.cells.IpnbCell;
+import org.jetbrains.plugins.ipnb.format.cells.IpnbEditableCell;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,7 +14,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbCell> extends IpnbPanel<T, K> {
+public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEditableCell> extends IpnbPanel<T, K> {
+  private static final Logger LOG = Logger.getInstance(IpnbEditablePanel.class);
   private boolean myEditing;
   protected JTextArea myEditablePanel;
   public final static String EDITABLE_PANEL = "Editable panel";
@@ -118,6 +120,22 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbCell
   }
 
   public void updateCellView() { // TODO: make abstract
+  }
+
+  @SuppressWarnings("CloneDoesntDeclareCloneNotSupportedException")
+  @Override
+  protected Object clone() {
+    try {
+      return super.clone();
+    }
+    catch (CloneNotSupportedException e) {
+      LOG.error(e);
+    }
+    return null;
+  }
+
+  public K getCell() {
+    return myCell;
   }
 
 }

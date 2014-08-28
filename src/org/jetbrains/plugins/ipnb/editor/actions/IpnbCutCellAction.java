@@ -10,8 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 
-public class IpnbAddCellAction extends AnAction {
-  public IpnbAddCellAction() {
+public class IpnbCutCellAction extends AnAction {
+  public IpnbCutCellAction() {
     super(AllIcons.General.Run);
   }
 
@@ -21,11 +21,13 @@ public class IpnbAddCellAction extends AnAction {
     final FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(context);
     if (editor instanceof IpnbFileEditor) {
       final IpnbFilePanel component = ((IpnbFileEditor)editor).getIpnbFilePanel();
-      addCell(component);
+      cutCell(component);
     }
   }
 
-  public void addCell(@NotNull final IpnbFilePanel ipnbFilePanel) {
-    ipnbFilePanel.createAndAddCell();
+  public void cutCell(@NotNull final IpnbFilePanel ipnbFilePanel) {
+    ipnbFilePanel.cutCell();
+    ipnbFilePanel.revalidate();
+    ipnbFilePanel.repaint();
   }
 }
