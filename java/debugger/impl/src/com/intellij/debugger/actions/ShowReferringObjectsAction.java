@@ -15,26 +15,29 @@
  */
 package com.intellij.debugger.actions;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.ui.impl.watch.FieldDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.psi.PsiExpression;
-import com.intellij.xdebugger.frame.XCompositeNode;
-import com.intellij.xdebugger.frame.XValue;
-import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XInspectDialog;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
-import com.sun.jdi.ObjectReference;
-import com.sun.jdi.Value;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator;
+import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.List;
 
 /**
@@ -53,28 +56,33 @@ public class ShowReferringObjectsAction extends XDebuggerTreeActionBase {
                                                  tree.getEditorsProvider(),
                                                  tree.getSourcePosition(),
                                                  nodeName,
-                                                 new ReferringObjectsValue(javaValue),
+                                                 new ReferringObjectsValue(javaValue, false),
                                                  tree.getValueMarkers());
-      dialog.setTitle("Referring objects for " + nodeName);
+      dialog.setTitle(DebuggerBundle.message("showReferring.dialog.title", nodeName));
       dialog.show();
     }
   }
 
   private static class ReferringObjectsValue extends JavaValue {
+    private final boolean myIsField;
+
     private ReferringObjectsValue(JavaValue parent,
                                  @NotNull ValueDescriptorImpl valueDescriptor,
                                  @NotNull EvaluationContextImpl evaluationContext,
-                                 NodeManagerImpl nodeManager) {
+                                 NodeManagerImpl nodeManager,
+                                 boolean isField) {
       super(parent, valueDescriptor, evaluationContext, nodeManager, false);
+      myIsField = isField;
     }
 
-    public ReferringObjectsValue(JavaValue javaValue) {
+    public ReferringObjectsValue(JavaValue javaValue, boolean isField) {
       super(null, javaValue.getDescriptor(), javaValue.getEvaluationContext(), null, false);
+      myIsField = isField;
     }
 
     @Override
     public boolean canNavigateToSource() {
-      return false;
+      return true;
     }
 
     @Override
@@ -94,34 +102,98 @@ public class ShowReferringObjectsAction extends XDebuggerTreeActionBase {
             List<ObjectReference> references = ((ObjectReference)value).referringObjects(MAX_REFERRING);
             int i = 1;
             for (final ObjectReference reference : references) {
-              ValueDescriptorImpl descriptor = new ValueDescriptorImpl(getProject(), reference) {
-                @Override
-                public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
-                  return reference;
-                }
+              // try to find field name
+              Field field = findField(reference, value);
+              if (field != null) {
+                ValueDescriptorImpl descriptor = new FieldDescriptorImpl(getProject(), reference, field) {
+                  @Override
+                  public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
+                    return reference;
+                  }
+                };
+                children.add(new ReferringObjectsValue(null, descriptor, getEvaluationContext(), null, true));
+                i++;
+              }
+              else {
+                ValueDescriptorImpl descriptor = new ValueDescriptorImpl(getProject(), reference) {
+                  @Override
+                  public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
+                    return reference;
+                  }
 
-                @Override
-                public String getName() {
-                  return "Ref";
-                }
+                  @Override
+                  public String getName() {
+                    return "Ref";
+                  }
 
-                @Override
-                public String calcValueName() {
-                  return "Ref";
-                }
+                  @Override
+                  public String calcValueName() {
+                    return "Ref";
+                  }
 
-                @Override
-                public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
-                  return null;
-                }
-              };
-              children.add("Referrer " + i++ , new ReferringObjectsValue(null, descriptor, getEvaluationContext(), null));
+                  @Override
+                  public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
+                    return null;
+                  }
+                };
+                children.add("Referrer " + i++, new ReferringObjectsValue(null, descriptor, getEvaluationContext(), null, false));
+              }
             }
 
             node.addChildren(children, true);
           }
         }
       );
+    }
+
+    @Override
+    public void computePresentation(@NotNull final XValueNode node, @NotNull final XValuePlace place) {
+      if (!myIsField) {
+        super.computePresentation(node, place);
+      }
+      else {
+        super.computePresentation(new XValueNodePresentationConfigurator.ConfigurableXValueNodeImpl() {
+          @Override
+          public void applyPresentation(@Nullable Icon icon, @NotNull final XValuePresentation valuePresenter, boolean hasChildren) {
+            node.setPresentation(icon, new XValuePresentation() {
+              @NotNull
+              @Override
+              public String getSeparator() {
+                return " in ";
+              }
+
+              @Nullable
+              @Override
+              public String getType() {
+                return valuePresenter.getType();
+              }
+
+              @Override
+              public void renderValue(@NotNull XValueTextRenderer renderer) {
+                valuePresenter.renderValue(renderer);
+              }
+            }, hasChildren);
+          }
+
+          @Override
+          public void setFullValueEvaluator(@NotNull XFullValueEvaluator fullValueEvaluator) {
+          }
+
+          @Override
+          public boolean isObsolete() {
+            return false;
+          }
+        }, place);
+      }
+    }
+
+    private static Field findField(ObjectReference reference, Value value) {
+      for (Field field : reference.referenceType().allFields()) {
+        if (reference.getValue(field) == value) {
+          return field;
+        }
+      }
+      return null;
     }
   }
 }

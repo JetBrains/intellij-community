@@ -46,6 +46,9 @@
       <localInspection language="JAVA" shortName="MisorderedAssertEqualsArgumentsTestNG" displayName="Misordered 'assertEquals()' arguments"
                        groupName="TestNG" enabledByDefault="false" level="WARNING"
                        implementationClass="com.theoryinpractice.testng.inspection.MisorderedAssertEqualsArgumentsTestNGInspection"/>
+      <localInspection language="JAVA" shortName="TestNGMethodNamingConvention" displayName="TestNG test method naming convention"
+                       groupName="TestNG" enabledByDefault="false" level="WARNING"
+                       implementationClass="com.theoryinpractice.testng.inspection.TestNGMethodNamingConventionInspection"/>
 
       <intentionAction>
           <className>com.theoryinpractice.testng.intention.TestNGOrderEntryFix</className>

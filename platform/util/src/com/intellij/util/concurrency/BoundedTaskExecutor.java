@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,8 +46,9 @@ public class BoundedTaskExecutor implements Executor {
     }
   };
 
-  public BoundedTaskExecutor(Executor backendExecutor, int maxSimultaneousTasks) {
+  public BoundedTaskExecutor(@NotNull Executor backendExecutor, int maxSimultaneousTasks) {
     myBackendExecutor = backendExecutor;
+    assert maxSimultaneousTasks >= 1 : maxSimultaneousTasks;
     myMaxTasks = Math.max(maxSimultaneousTasks, 1);
   }
 
@@ -56,7 +57,8 @@ public class BoundedTaskExecutor implements Executor {
     submit(task);
   }
 
-  public Future<?> submit(Runnable task) {
+  @NotNull
+  public Future<?> submit(@NotNull Runnable task) {
     final RunnableFuture<Void> future = queueTask(new FutureTask<Void>(task, null));
     if (future == null) {
       throw new RuntimeException("Failed to queue task: " + task);
@@ -64,7 +66,8 @@ public class BoundedTaskExecutor implements Executor {
     return future;
   }
 
-  public <T> Future<T> submit(Callable<T> task) {
+  @NotNull
+  public <T> Future<T> submit(@NotNull Callable<T> task) {
     final RunnableFuture<T> future = queueTask(new FutureTask<T>(task));
     if (future == null) {
       throw new RuntimeException("Failed to queue task: " + task);
@@ -73,7 +76,7 @@ public class BoundedTaskExecutor implements Executor {
   }
 
   @Nullable
-  private <T> RunnableFuture<T> queueTask(FutureTask<T> futureTask) {
+  private <T> RunnableFuture<T> queueTask(@NotNull FutureTask<T> futureTask) {
     if (myTaskQueue.offer(futureTask)) {
       processQueue();
       return futureTask;

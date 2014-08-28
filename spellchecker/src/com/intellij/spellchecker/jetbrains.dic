@@ -302,6 +302,7 @@ namespaces
 nchar
 nclob
 ndbcluster
+nmtoken
 noarchivelog
 noaudit
 nocache

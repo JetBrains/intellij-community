@@ -674,7 +674,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     final Document document = myEditor.getDocument();
     final RangeMarker lastProcessedOutput = document.createRangeMarker(document.getTextLength(), document.getTextLength());
     final int caretOffset = myEditor.getCaretModel().getOffset();
-    final boolean isAtLastLine = document.getLineNumber(caretOffset) >= document.getLineCount() - 1;
+    final boolean isAtLastLine = isCaretAtLastLine();
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       @Override
@@ -1078,6 +1078,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         };
         if (immediately) {
           model.runBatchFoldingOperation(operation);
+          if (isCaretAtLastLine()) {
+            EditorUtil.scrollToTheEnd(myEditor);
+          }
         }
         else {
           model.runBatchFoldingOperationDoNotCollapseCaret(operation);
@@ -1090,6 +1093,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     else {
       myFoldingAlarm.addRequest(runnable, 50);
     }
+  }
+
+  private boolean isCaretAtLastLine() {
+    final Document document = myEditor.getDocument();
+    final int caretOffset = myEditor.getCaretModel().getOffset();
+    return document.getLineNumber(caretOffset) >= document.getLineCount() - 1;
   }
 
   private void addFolding(Document document, CharSequence chars, int line, List<FoldRegion> toAdd) {

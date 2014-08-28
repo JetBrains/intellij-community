@@ -16,7 +16,7 @@
 
 package com.intellij.execution.configurations;
 
-import com.intellij.execution.configuration.EnvironmentVariablesComponent;
+import com.intellij.util.EnvironmentUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -70,7 +70,7 @@ public class SimpleProgramParameters {
   public void setupEnvs(Map<String, String> envs, boolean passDefault) {
     if (!envs.isEmpty()) {
       final HashMap<String, String> map = new HashMap<String, String>(envs);
-      EnvironmentVariablesComponent.inlineParentOccurrences(map);
+      EnvironmentUtil.inlineParentOccurrences(map);
       setEnv(map);
       setPassParentEnvs(passDefault);
     }

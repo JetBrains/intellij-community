@@ -61,21 +61,26 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
 
   private PyReplaceExpressionUtil() {}
 
+  /**
+   * @param oldExpr old expression that will be substituted
+   * @param newExpr new expression to substitute with
+   * @return whether new expression should be wrapped in parenthesis to preserve original semantics
+   */
   public static boolean isNeedParenthesis(@NotNull final PyElement oldExpr, @NotNull final PyElement newExpr) {
     final PyElement parentExpr = (PyElement)oldExpr.getParent();
     if (parentExpr instanceof PyArgumentList) {
       return newExpr instanceof PyTupleExpression;
     }
-    if (!(parentExpr instanceof PyExpression)) {
+    if (parentExpr instanceof PyParenthesizedExpression || !(parentExpr instanceof PyExpression)) {
       return false;
     }
-    int newPriority = getExpressionPriority(newExpr);
-    int parentPriority = getExpressionPriority(parentExpr);
+    final int newPriority = getExpressionPriority(newExpr);
+    final int parentPriority = getExpressionPriority(parentExpr);
     if (parentPriority > newPriority) {
       return true;
     } else if (parentPriority == newPriority && parentPriority != 0) {
       if (parentExpr instanceof PyBinaryExpression) {
-        PyBinaryExpression binaryExpression = (PyBinaryExpression)parentExpr;
+        final PyBinaryExpression binaryExpression = (PyBinaryExpression)parentExpr;
         if (isNotAssociative(binaryExpression) && oldExpr.equals(binaryExpression.getRightExpression())) {
           return true;
         }

@@ -1,4 +1,5 @@
-<html-property-table baseHelpRef="http://dev.w3.org/html5/spec/"><tag name        = "article"
+<html-property-table baseHelpRef="http://www.w3.org/html/wg/drafts/html/master/">
+<tag name        = "article"
      helpref     = "sections.html#the-article-element"
      description = "Self-contained syndicatable or reusable composition"
      startTag    = "true"
@@ -15,7 +16,7 @@
      dtd         = ""
 />
 <tag name        = "audio"
-     helpref     = "embedded-content-0.html#the-audio-element"
+     helpref     = "embedded-content.html#the-audio-element"
      description = "Audio player"
      startTag    = "true"
      endTag      = "true"
@@ -71,7 +72,7 @@
      dtd         = ""
 />
 <tag name        = "embed"
-     helpref     = "embedded-content-0.html#the-embed-element"
+     helpref     = "embedded-content.html#the-embed-element"
      description = "Plugin"
      startTag    = "true"
      endTag      = "true"
@@ -224,7 +225,7 @@
      dtd         = ""
 />
 <tag name        = "source"
-     helpref     = "embedded-content-0.html#the-source-element"
+     helpref     = "embedded-content.html#the-source-element"
      description = "Media source for "
      startTag    = "true"
      endTag      = "true"
@@ -256,7 +257,7 @@
      dtd         = ""
 />
 <tag name        = "track"
-     helpref     = "embedded-content-0.html#the-track-element"
+     helpref     = "embedded-content.html#the-track-element"
      description = "Timed text track"
      startTag    = "true"
      endTag      = "true"
@@ -264,7 +265,7 @@
      dtd         = ""
 />
 <tag name        = "video"
-     helpref     = "embedded-content-0.html#the-video-element"
+     helpref     = "embedded-content.html#the-video-element"
      description = "Video player"
      startTag    = "true"
      endTag      = "true"
@@ -280,7 +281,7 @@
      dtd         = ""
 />
 <attribute name        = "allowfullscreen"
-           helpref     = "embedded-content-0.html#allowfullscreen"
+           helpref     = "embedded-content.html#attr-iframe-allowfullscreen"
            description = "Whether to allow the iframe's contents to use requestFullscreen()"
            relatedTags = "iframe"
            dtd         = ""
@@ -288,7 +289,7 @@
            default     = "true"
 />
 <attribute name        = "async"
-           helpref     = "scripting-1.html#async"
+           helpref     = "scripting-1.html#attr-script-async"
            description = "Execute script asynchronously"
            relatedTags = "script"
            dtd         = ""
@@ -296,7 +297,7 @@
            default     = "true"
 />
 <attribute name        = "autocomplete"
-           helpref     = "forms.html#autocomplete"
+           helpref     = "forms.html#attr-form-autocomplete"
            description = "Default setting for autofill feature for controls in the form"
            relatedTags = "form"
            dtd         = ""
@@ -304,7 +305,7 @@
            default     = "true"
 />
 <attribute name        = "autocomplete"
-           helpref     = "forms.html#autocomplete-1"
+           helpref     = "forms.html#attr-fe-autocomplete"
            description = "Hint for form autofill feature"
            relatedTags = "input; select; textarea"
            dtd         = ""
@@ -312,7 +313,7 @@
            default     = "true"
 />
 <attribute name        = "autofocus"
-           helpref     = "forms.html#autofocus"
+           helpref     = "forms.html#attr-fe-autofocus"
            description = "Automatically focus the form control when the page is loaded"
            relatedTags = "button; input; keygen; select; textarea"
            dtd         = ""
@@ -320,7 +321,7 @@
            default     = "true"
 />
 <attribute name        = "autoplay"
-           helpref     = "embedded-content-0.html#autoplay"
+           helpref     = "embedded-content.html#attr-media-autoplay"
            description = "Hint that the media resource can be started automatically when the page is loaded"
            relatedTags = "audio; video"
            dtd         = ""
@@ -328,7 +329,7 @@
            default     = "true"
 />
 <attribute name        = "challenge"
-           helpref     = "forms.html#challenge"
+           helpref     = "forms.html#attr-keygen-challenge"
            description = "String to package with the generated and signed public key"
            relatedTags = "keygen"
            dtd         = ""
@@ -336,7 +337,7 @@
            default     = "true"
 />
 <attribute name        = "command"
-           helpref     = "interactive-elements.html#command-1"
+           helpref     = "interactive-elements.html#attr-menuitem-command"
            description = "Command definition"
            relatedTags = "menuitem"
            dtd         = ""
@@ -360,7 +361,7 @@
            default     = "true"
 />
 <attribute name        = "controls"
-           helpref     = "embedded-content-0.html#controls"
+           helpref     = "embedded-content.html#attr-media-controls"
            description = "Show user agent controls"
            relatedTags = "audio; video"
            dtd         = ""
@@ -368,7 +369,7 @@
            default     = "true"
 />
 <attribute name        = "crossorigin"
-           helpref     = "embedded-content-0.html#crossorigin-3"
+           helpref     = "embedded-content.html#attr-media-crossorigin"
            description = "How the element handles crossorigin requests"
            relatedTags = "audio; img; link; script; video"
            dtd         = ""
@@ -376,7 +377,7 @@
            default     = "true"
 />
 <attribute name        = "default"
-           helpref     = "interactive-elements.html#default-4"
+           helpref     = "interactive-elements.html#attr-menuitem-default"
            description = "Mark the command as being a default command"
            relatedTags = "menuitem"
            dtd         = ""
@@ -384,7 +385,7 @@
            default     = "true"
 />
 <attribute name        = "default"
-           helpref     = "embedded-content-0.html#default"
+           helpref     = "embedded-content.html#attr-track-default"
            description = "Enable the track if no other text track is more suitable"
            relatedTags = "track"
            dtd         = ""
@@ -392,7 +393,7 @@
            default     = "true"
 />
 <attribute name        = "dirname"
-           helpref     = "forms.html#dirname-1"
+           helpref     = "forms.html#attr-fe-dirname"
            description = "Name of form field to use for sending the element's directionality in form submission"
            relatedTags = "input; textarea"
            dtd         = ""
@@ -400,7 +401,7 @@
            default     = "true"
 />
 <attribute name        = "download"
-           helpref     = "links.html#download-1"
+           helpref     = "links.html#attr-hyperlink-download"
            description = "Whether to download the resource instead of navigating to it, and its file name if so"
            relatedTags = "a; area"
            dtd         = ""
@@ -424,7 +425,7 @@
            default     = "true"
 />
 <attribute name        = "form"
-           helpref     = "forms.html#form-1"
+           helpref     = "forms.html#attr-fae-form"
            description = "Associates the control with a form element"
            relatedTags = "button; fieldset; input; keygen; label; object; output; select; textarea"
            dtd         = ""
@@ -432,7 +433,7 @@
            default     = "true"
 />
 <attribute name        = "formaction"
-           helpref     = "forms.html#formaction"
+           helpref     = "forms.html#attr-fs-formaction"
            description = "URL to use for form submission"
            relatedTags = "button; input"
            dtd         = ""
@@ -440,7 +441,7 @@
            default     = "true"
 />
 <attribute name        = "formenctype"
-           helpref     = "forms.html#formenctype"
+           helpref     = "forms.html#attr-fs-formenctype"
            description = "Form data set encoding type to use for form submission"
            relatedTags = "button; input"
            dtd         = ""
@@ -448,7 +449,7 @@
            default     = "true"
 />
 <attribute name        = "formmethod"
-           helpref     = "forms.html#formmethod"
+           helpref     = "forms.html#attr-fs-formmethod"
            description = "HTTP method to use for form submission"
            relatedTags = "button; input"
            dtd         = ""
@@ -456,7 +457,7 @@
            default     = "true"
 />
 <attribute name        = "formnovalidate"
-           helpref     = "forms.html#formnovalidate"
+           helpref     = "forms.html#attr-fs-formnovalidate"
            description = "Bypass form control validation for form submission"
            relatedTags = "button; input"
            dtd         = ""
@@ -464,7 +465,7 @@
            default     = "true"
 />
 <attribute name        = "formtarget"
-           helpref     = "forms.html#formtarget"
+           helpref     = "forms.html#attr-fs-formtarget"
            description = "Browsing context for form submission"
            relatedTags = "button; input"
            dtd         = ""
@@ -480,7 +481,7 @@
            default     = "true"
 />
 <attribute name        = "high"
-           helpref     = "forms.html#high"
+           helpref     = "forms.html#attr-meter-high"
            description = "Low limit of high range"
            relatedTags = "meter"
            dtd         = ""
@@ -488,27 +489,19 @@
            default     = "true"
 />
 <attribute name        = "icon"
-           helpref     = "interactive-elements.html#icon"
+           helpref     = "interactive-elements.html#attr-menuitem-icon"
            description = "Icon for the command"
            relatedTags = "menuitem"
            dtd         = ""
            type        = "Valid non-empty URL potentially surrounded by spaces"
            default     = "true"
 />
-<attribute name        = "inert"
-           helpref     = ""
-           description = "Whether the element and its descendants are inert"
-           relatedTags = "HTML elements"
-           dtd         = ""
-           type        = "Boolean attribute"
-           default     = "true"
-/>
 <attribute name        = "inputmode"
-           helpref     = "forms.html#inputmode-1"
+           helpref     = "forms.html#attr-fe-inputmode"
            description = "Hint for selecting an input modality"
            relatedTags = "input; textarea"
            dtd         = ""
-           type        = "verbatim; "
+           type        = "verbatim"
            default     = "true"
 />
 <attribute name        = "itemid"
@@ -552,7 +545,7 @@
            default     = "true"
 />
 <attribute name        = "keytype"
-           helpref     = "forms.html#keytype"
+           helpref     = "forms.html#attr-keygen-keytype"
            description = "The type of cryptographic key to generate"
            relatedTags = "keygen"
            dtd         = ""
@@ -560,7 +553,7 @@
            default     = "true"
 />
 <attribute name        = "kind"
-           helpref     = "embedded-content-0.html#kind"
+           helpref     = "embedded-content.html#attr-track-kind"
            description = "The type of text track"
            relatedTags = "track"
            dtd         = ""
@@ -568,7 +561,7 @@
            default     = "true"
 />
 <attribute name        = "list"
-           helpref     = "forms.html#list"
+           helpref     = "forms.html#attr-input-list"
            description = "List of autocomplete options"
            relatedTags = "input"
            dtd         = ""
@@ -576,7 +569,7 @@
            default     = "true"
 />
 <attribute name        = "loop"
-           helpref     = "embedded-content-0.html#loop"
+           helpref     = "embedded-content.html#attr-media-loop"
            description = "Whether to loop the media resource"
            relatedTags = "audio; video"
            dtd         = ""
@@ -584,7 +577,7 @@
            default     = "true"
 />
 <attribute name        = "low"
-           helpref     = "forms.html#low"
+           helpref     = "forms.html#attr-meter-low"
            description = "High limit of low range"
            relatedTags = "meter"
            dtd         = ""
@@ -592,7 +585,7 @@
            default     = "true"
 />
 <attribute name        = "manifest"
-           helpref     = "semantics.html#manifest"
+           helpref     = "semantics.html#attr-html-manifest"
            description = "Application cache manifest"
            relatedTags = "html"
            dtd         = ""
@@ -600,7 +593,7 @@
            default     = "true"
 />
 <attribute name        = "max"
-           helpref     = "forms.html#max-0"
+           helpref     = "forms.html#attr-input-max"
            description = "Maximum value"
            relatedTags = "input"
            dtd         = ""
@@ -608,7 +601,7 @@
            default     = "true"
 />
 <attribute name        = "max"
-           helpref     = "forms.html#max-3"
+           helpref     = "forms.html#attr-meter-max"
            description = "Upper bound of range"
            relatedTags = "meter; progress"
            dtd         = ""
@@ -616,7 +609,7 @@
            default     = "true"
 />
 <attribute name        = "mediagroup"
-           helpref     = "embedded-content-0.html#mediagroup"
+           helpref     = "embedded-content.html#attr-media-mediagroup"
            description = "Groups media elements together with an implicit MediaController"
            relatedTags = "audio; video"
            dtd         = ""
@@ -624,7 +617,7 @@
            default     = "true"
 />
 <attribute name        = "menu"
-           helpref     = "forms.html#menu-1"
+           helpref     = "forms.html#attr-button-menu"
            description = "Specifies the element's designated pop-up menu"
            relatedTags = "button"
            dtd         = ""
@@ -632,7 +625,7 @@
            default     = "true"
 />
 <attribute name        = "min"
-           helpref     = "forms.html#min-0"
+           helpref     = "forms.html#attr-input-min"
            description = "Minimum value"
            relatedTags = "input"
            dtd         = ""
@@ -640,7 +633,7 @@
            default     = "true"
 />
 <attribute name        = "min"
-           helpref     = "forms.html#min-1"
+           helpref     = "forms.html#attr-meter-min"
            description = "Lower bound of range"
            relatedTags = "meter"
            dtd         = ""
@@ -648,7 +641,7 @@
            default     = "true"
 />
 <attribute name        = "minlength"
-           helpref     = "forms.html#minlength-0"
+           helpref     = "forms.html#attr-input-minlength"
            description = "Minimum length of value"
            relatedTags = "input; textarea"
            dtd         = ""
@@ -656,7 +649,7 @@
            default     = "true"
 />
 <attribute name        = "muted"
-           helpref     = "embedded-content-0.html#muted-1"
+           helpref     = "embedded-content.html#attr-media-muted"
            description = "Whether to mute the media resource by default"
            relatedTags = "audio; video"
            dtd         = ""
@@ -664,7 +657,7 @@
            default     = "true"
 />
 <attribute name        = "novalidate"
-           helpref     = "forms.html#novalidate"
+           helpref     = "forms.html#attr-fs-novalidate"
            description = "Bypass form control validation for form submission"
            relatedTags = "form"
            dtd         = ""
@@ -672,7 +665,7 @@
            default     = "true"
 />
 <attribute name        = "open"
-           helpref     = "interactive-elements.html#open"
+           helpref     = "interactive-elements.html#attr-details-open"
            description = "Whether the details are visible"
            relatedTags = "details"
            dtd         = ""
@@ -680,7 +673,7 @@
            default     = "true"
 />
 <attribute name        = "open"
-           helpref     = "interactive-elements.html#open-1"
+           helpref     = "interactive-elements.html#attr-dialog-open"
            description = "Whether the dialog box is showing"
            relatedTags = "dialog"
            dtd         = ""
@@ -688,7 +681,7 @@
            default     = "true"
 />
 <attribute name        = "optimum"
-           helpref     = "forms.html#optimum"
+           helpref     = "forms.html#attr-meter-optimum"
            description = "Optimum value in gauge"
            relatedTags = "meter"
            dtd         = ""
@@ -696,7 +689,7 @@
            default     = "true"
 />
 <attribute name        = "pattern"
-           helpref     = "forms.html#pattern-0"
+           helpref     = "forms.html#attr-input-pattern"
            description = "Pattern to be matched by the form control's value"
            relatedTags = "input"
            dtd         = ""
@@ -704,7 +697,7 @@
            default     = "true"
 />
 <attribute name        = "placeholder"
-           helpref     = "forms.html#placeholder-0"
+           helpref     = "forms.html#attr-input-placeholder"
            description = "User-visible label to be placed within the form control"
            relatedTags = "input; textarea"
            dtd         = ""
@@ -712,7 +705,7 @@
            default     = "true"
 />
 <attribute name        = "poster"
-           helpref     = "embedded-content-0.html#poster"
+           helpref     = "embedded-content.html#attr-video-poster"
            description = "Poster frame to show prior to video playback"
            relatedTags = "video"
            dtd         = ""
@@ -720,7 +713,7 @@
            default     = "true"
 />
 <attribute name        = "preload"
-           helpref     = "embedded-content-0.html#preload"
+           helpref     = "embedded-content.html#attr-media-preload"
            description = "Hints how much buffering the media resource will likely need"
            relatedTags = "audio; video"
            dtd         = ""
@@ -728,7 +721,7 @@
            default     = "true"
 />
 <attribute name        = "radiogroup"
-           helpref     = "interactive-elements.html#radiogroup"
+           helpref     = "interactive-elements.html#attr-menuitem-radiogroup"
            description = "Name of group of commands to treat as a radio button group"
            relatedTags = "menuitem"
            dtd         = ""
@@ -736,7 +729,7 @@
            default     = "true"
 />
 <attribute name        = "required"
-           helpref     = "forms.html#required-0"
+           helpref     = "forms.html#attr-input-required"
            description = "Whether the control is required for form submission"
            relatedTags = "input; select; textarea"
            dtd         = ""
@@ -744,7 +737,7 @@
            default     = "true"
 />
 <attribute name        = "reversed"
-           helpref     = "grouping-content.html#reversed"
+           helpref     = "grouping-content.html#attr-ol-reversed"
            description = "Number the list backwards"
            relatedTags = "ol"
            dtd         = ""
@@ -752,7 +745,7 @@
            default     = "true"
 />
 <attribute name        = "sandbox"
-           helpref     = "embedded-content-0.html#sandbox"
+           helpref     = "embedded-content.html#attr-iframe-sandbox"
            description = "Security rules for nested content"
            relatedTags = "iframe"
            dtd         = ""
@@ -768,7 +761,7 @@
            default     = "true"
 />
 <attribute name        = "scoped"
-           helpref     = "document-metadata.html#scoped"
+           helpref     = "document-metadata.html#attr-style-scoped"
            description = "Whether the styles apply to the entire document or just the parent subtree"
            relatedTags = "style"
            dtd         = ""
@@ -776,7 +769,7 @@
            default     = "true"
 />
 <attribute name        = "seamless"
-           helpref     = "embedded-content-0.html#seamless"
+           helpref     = "embedded-content.html#attr-iframe-seamless"
            description = "Whether to apply the document's styles to the nested content"
            relatedTags = "iframe"
            dtd         = ""
@@ -784,7 +777,7 @@
            default     = "true"
 />
 <attribute name        = "sizes"
-           helpref     = "links.html#sizes-0"
+           helpref     = "links.html#attr-link-sizes"
            description = "Sizes of the icons (for rel=icon)"
            relatedTags = "link"
            dtd         = ""
@@ -792,7 +785,7 @@
            default     = "true"
 />
 <attribute name        = "sortable"
-           helpref     = "tabular-data.html#sortable-0"
+           helpref     = "tabular-data.html#attr-table-sortable"
            description = "Enables a sorting interface for the table"
            relatedTags = "table"
            dtd         = ""
@@ -800,7 +793,7 @@
            default     = "true"
 />
 <attribute name        = "sorted"
-           helpref     = "tabular-data.html#sorted-0"
+           helpref     = "tabular-data.html#attr-th-sorted"
            description = "Column sort direction and ordinality"
            relatedTags = "th"
            dtd         = ""
@@ -808,7 +801,7 @@
            default     = "true"
 />
 <attribute name        = "srcdoc"
-           helpref     = "embedded-content-0.html#srcdoc"
+           helpref     = "embedded-content.html#attr-iframe-srcdoc"
            description = "A document to render in the iframe"
            relatedTags = "iframe"
            dtd         = ""
@@ -816,15 +809,23 @@
            default     = "true"
 />
 <attribute name        = "srclang"
-           helpref     = "embedded-content-0.html#srclang"
+           helpref     = "embedded-content.html#attr-track-srclang"
            description = "Language of the text track"
            relatedTags = "track"
            dtd         = ""
            type        = "Valid BCP 47 language tag"
            default     = "true"
 />
+<attribute name        = "srcset"
+           helpref     = "embedded-content.html#attr-img-srcset"
+           description = "Images to use in different situations (e.g. high-resolution displays, small monitors, etc)"
+           relatedTags = "img"
+           dtd         = ""
+           type        = "Comma-separated list of image candidate strings"
+           default     = "true"
+/>
 <attribute name        = "step"
-           helpref     = "forms.html#step-0"
+           helpref     = "forms.html#attr-input-step"
            description = "Granularity to be matched by the form control's value"
            relatedTags = "input"
            dtd         = ""
@@ -840,7 +841,7 @@
            default     = "true"
 />
 <attribute name        = "typemustmatch"
-           helpref     = "embedded-content-0.html#typemustmatch"
+           helpref     = "embedded-content.html#attr-object-typemustmatch"
            description = "Whether the type attribute and the Content-Type value need to match for the resource to be used"
            relatedTags = "object"
            dtd         = ""
@@ -848,7 +849,7 @@
            default     = "true"
 />
 <attribute name        = "wrap"
-           helpref     = "forms.html#wrap"
+           helpref     = "forms.html#attr-textarea-wrap"
            description = "How the value of the form control is to be wrapped for form submission"
            relatedTags = "textarea"
            dtd         = ""

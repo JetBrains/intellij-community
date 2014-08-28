@@ -146,6 +146,7 @@ public class RegistryUi implements Disposable {
           RegistryValue rv = myModel.getRegistryValue(row);
           if (rv.isBoolean()) {
             rv.setValue(!rv.asBoolean());
+            keyChanged(rv.getKey());
             for (int i : new int[]{0, 1, 2}) myModel.fireTableCellUpdated(row, i);
             revaliateActions();
             if (search.isPopupActive()) search.hidePopup();

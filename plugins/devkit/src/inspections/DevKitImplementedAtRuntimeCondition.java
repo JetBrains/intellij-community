@@ -17,6 +17,7 @@ package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.inheritance.ImplementedAtRuntimeCondition;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public class DevKitImplementedAtRuntimeCondition extends ImplementedAtRuntimeCondition {
   @Override
   public boolean isImplementedAtRuntime(@NotNull PsiClass psiClass) {
-    return DevKitImplicitUsageProvider.isDomElementClass(psiClass);
+    return DevKitImplicitUsageProvider.isDomElementClass(psiClass) ||
+           InheritanceUtil.isInheritor(psiClass, "com.intellij.jam.JamElement");
   }
 }

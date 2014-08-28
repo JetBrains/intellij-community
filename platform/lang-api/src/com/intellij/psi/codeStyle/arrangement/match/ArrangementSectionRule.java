@@ -53,7 +53,7 @@ public class ArrangementSectionRule implements Cloneable {
   }
 
   public static ArrangementSectionRule create(@Nullable String start, @Nullable String end, @NotNull StdArrangementMatchRule... rules) {
-    return create(start, end, ContainerUtil.newArrayList(rules));
+    return create(start, end, rules.length == 0 ? ContainerUtil.<StdArrangementMatchRule>emptyList() : ContainerUtil.newArrayList(rules));
   }
 
   public static ArrangementSectionRule create(@Nullable String start, @Nullable String end, @NotNull List<StdArrangementMatchRule> rules) {
@@ -68,14 +68,10 @@ public class ArrangementSectionRule implements Cloneable {
     return new ArrangementSectionRule(start, end, matchRules);
   }
 
-  @Nullable
-  private static StdArrangementMatchRule createSectionRule(@Nullable String comment, @NotNull ArrangementSettingsToken token) {
-    if (StringUtil.isEmpty(comment)) {
-      return null;
-    }
-    final ArrangementAtomMatchCondition type = new ArrangementAtomMatchCondition(token);
+  @NotNull
+  private static StdArrangementMatchRule createSectionRule(@NotNull String comment, @NotNull ArrangementSettingsToken token) {
     final ArrangementAtomMatchCondition text = new ArrangementAtomMatchCondition(StdArrangementTokens.Regexp.TEXT, comment);
-    final ArrangementMatchCondition condition = ArrangementUtil.combine(type, text);
+    final ArrangementMatchCondition condition = ArrangementUtil.combine(new ArrangementAtomMatchCondition(token), text);
     return new StdArrangementMatchRule(new StdArrangementEntryMatcher(condition));
   }
 

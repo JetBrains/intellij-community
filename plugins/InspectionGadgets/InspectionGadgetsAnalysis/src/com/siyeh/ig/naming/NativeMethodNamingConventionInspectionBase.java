@@ -77,7 +77,7 @@ public class NativeMethodNamingConventionInspectionBase extends ConventionInspec
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
-      if (method.isConstructor() || method.hasModifierProperty(PsiModifier.STATIC)) {
+      if (method.isConstructor()) {
         return;
       }
       if (!method.hasModifierProperty(PsiModifier.NATIVE)) {

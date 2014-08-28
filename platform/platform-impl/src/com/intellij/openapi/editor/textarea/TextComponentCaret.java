@@ -151,6 +151,12 @@ public class TextComponentCaret extends UserDataHolderBase implements Caret {
   }
 
   @Override
+  public void setSelection(int startOffset, int endOffset, boolean updateSystemSelection) {
+    // updating system selection is not supported currently for TextComponentEditor
+    setSelection(startOffset, endOffset);
+  }
+
+  @Override
   public void setSelection(int startOffset, @Nullable VisualPosition endPosition, int endOffset) {
     getSelectionModel().setSelection(startOffset, endPosition, endOffset);
   }
@@ -158,6 +164,13 @@ public class TextComponentCaret extends UserDataHolderBase implements Caret {
   @Override
   public void setSelection(@Nullable VisualPosition startPosition, int startOffset, @Nullable VisualPosition endPosition, int endOffset) {
     getSelectionModel().setSelection(startPosition, startOffset, endPosition, endOffset);
+  }
+
+  @Override
+  public void setSelection(@Nullable VisualPosition startPosition, int startOffset, @Nullable VisualPosition endPosition, int endOffset,
+                           boolean updateSystemSelection) {
+    // updating system selection is not supported currently for TextComponentEditor
+    setSelection(startPosition, startOffset, endPosition, endOffset);
   }
 
   @Override

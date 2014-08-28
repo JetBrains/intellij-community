@@ -16,8 +16,12 @@
 package git4idea.validators;
 
 import com.intellij.util.Function;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
+import com.intellij.util.containers.ContainerUtil;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
+import java.util.Collection;
 
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
@@ -26,52 +30,16 @@ import static org.testng.Assert.assertTrue;
  * The test for {@link GitRefNameValidator}.
  * Tests are based on the <a href="http://www.kernel.org/pub/software/scm/git/docs/git-check-ref-format.html">
  * specification of valid Git references</a>
- *
- * @author Kirill Likhodedov
  */
+@RunWith(Parameterized.class)
 public class GitRefNameValidatorTest {
-  
-  @DataProvider(name = "valid")
-  public Object[][] createValidData() {
-    return new Object[][] {
-      { "WORD",              "branch"                 },
-      { "UNDERSCORED_WORD",  "new_branch"             },
-      { "HIERARCHY",         "user/branch"            },
-      { "HIERARCHY_2",       "user/branch/sub_branch" },
-      { "BEGINS_WITH_SLASH", "/branch"                }, // actual branch name will be with trimmed slash
-      { "NON_CONS_DOTS",     "complex.branch.name"    }
-    };
-  }
-  
-  @DataProvider(name = "simple_invalid")
-  public Object[][] createInvalidData() {
-    return new Object[][] {
-      { "BEGIN_WITH_DOT",      ".branch"      },
-      { "ONLY_DOT",            "."            },
-      { "ENDS_WITH_SLASH",     "branch/"      },
-      { "ENDS_WITH_DOT",       "branch."      },
-      { "ENDS_WITH_LOCK",      "branch.lock"  },
-      { "TWO_DOTS_1",          "branch..name" },
-      { "TWO_DOTS_2",          "..name"       }, 
-      { "TWO_DOTS_3",          "..branch"     }
-    };
-  }
 
   private static final String[] ILLEGAL_CHARS = { " ", "~", "^", ":", "?", "*", "[", "@{", "\\" };
-
-  @DataProvider(name = "invalid_chars")
-  public Object[][] createInvalidCharsData() {
-    return populateWithIllegalChars(ILLEGAL_CHARS, new Function<String, String>() {
-      @Override public String fun(String s) {
-        return s;
-      }
-    });
-  }
-
-  private static final int CONTROL_CHARS_START = 5; // we can't test from 0 to 4 via @DataProvider due to TestNG limitations
+  private static final int CONTROL_CHARS_START = 0;
   private static final int CONTROL_CHARS_END = 31;
   private static final int CONTROL_CHARS_SIZE = CONTROL_CHARS_END - CONTROL_CHARS_START + 1;
   private static final String[] CONTROL_CHARS = new String[CONTROL_CHARS_SIZE + 1]; // + DEL
+
   static {
     for (int i = CONTROL_CHARS_START; i <= CONTROL_CHARS_END; i++) {
       CONTROL_CHARS[i-CONTROL_CHARS_START] = String.valueOf((char)i);
@@ -79,8 +47,42 @@ public class GitRefNameValidatorTest {
     CONTROL_CHARS[CONTROL_CHARS_SIZE] = "\u007F"; // DEL
   }
 
-  @DataProvider(name = "invalid_control_chars")
-  public Object[][] createInvalidControlCharsData() {
+  private final String myRefNameToTest;
+  private final boolean myIsExpectedValid;
+
+  private static Object[][] createValidData() {
+      return new Object[][] {
+        { "WORD",              "branch"                 },
+        { "UNDERSCORED_WORD",  "new_branch"             },
+        { "HIERARCHY",         "user/branch"            },
+        { "HIERARCHY_2",       "user/branch/sub_branch" },
+        { "BEGINS_WITH_SLASH", "/branch"                }, // actual branch name will be with trimmed slash
+        { "NON_CONS_DOTS",     "complex.branch.name"    }
+      };
+    }
+
+  private static Object[][] createInvalidData() {
+      return new Object[][] {
+        { "BEGIN_WITH_DOT",      ".branch"      },
+        { "ONLY_DOT",            "."            },
+        { "ENDS_WITH_SLASH",     "branch/"      },
+        { "ENDS_WITH_DOT",       "branch."      },
+        { "ENDS_WITH_LOCK",      "branch.lock"  },
+        { "TWO_DOTS_1",          "branch..name" },
+        { "TWO_DOTS_2",          "..name"       },
+        { "TWO_DOTS_3",          "..branch"     }
+      };
+    }
+
+  public static Object[][] createInvalidCharsData() {
+    return populateWithIllegalChars(ILLEGAL_CHARS, new Function<String, String>() {
+      @Override public String fun(String s) {
+        return s;
+      }
+    });
+  }
+
+  public static Object[][] createInvalidControlCharsData() {
     return populateWithIllegalChars(CONTROL_CHARS, new Function<String, String>() {
       @Override public String fun(String s) {
         Character c = s.charAt(0);
@@ -99,34 +101,38 @@ public class GitRefNameValidatorTest {
     return data;
   }
 
-  @Test(dataProvider = "valid")
-  public void testValid(String testName, String branchName) {
-    assertValid(branchName);
+  @Parameterized.Parameters(name = "{0}")
+  public static Collection<Object[]> data() {
+    Collection<Object[]> data = ContainerUtil.newArrayList();
+    populateData(data, createValidData(), true);
+    populateData(data, createInvalidData(), false);
+    populateData(data, createInvalidCharsData(), false);
+    populateData(data, createInvalidControlCharsData(), false);
+    return data;
   }
 
-  @Test(dataProvider = "simple_invalid")
-  public void testSimpleInvalid(String testName, String branchName) {
-    assertInvalid(branchName);
-  }
-
-  @Test(dataProvider = "invalid_chars")
-  public void testInvalidChars(String testName, String branchName) {
-    assertInvalid(branchName);
-  }
-
-  @Test(dataProvider = "invalid_control_chars")
-  public void control_chars_are_invalid(String testName, String branchName) {
-    assertInvalid(branchName);
-  }
-  
-  // \u0000 to \u0004 can't be passed to the TestNG DataProvider - see org.testng.remote.strprotocol.MessageHelper
-  @Test
-  public void control_chars_from_0_to_4_are_invalid() {
-    for (int i = 0; i < 5; i++) {
-      assertInvalid("bra" + (char)i + "nch");
+  private static void populateData(Collection<Object[]> data, Object[][] source, boolean valid) {
+    for (Object[] testCase : source) {
+      data.add(new Object[] {testCase[0], testCase[1], valid});
     }
   }
 
+  @SuppressWarnings("UnusedParameters")
+  public GitRefNameValidatorTest(String name, String refNameToTest, boolean valid) {
+    myRefNameToTest = refNameToTest;
+    myIsExpectedValid = valid;
+  }
+
+  @Test
+  public void testAll() {
+    if (myIsExpectedValid) {
+      assertValid(myRefNameToTest);
+    }
+    else {
+      assertInvalid(myRefNameToTest);
+    }
+  }
+  
   private static void assertValid(String branchName) {
     assertTrue(GitRefNameValidator.getInstance().checkInput(branchName), "Should be valid");
     assertTrue(GitRefNameValidator.getInstance().canClose(branchName), "Should be valid");

@@ -255,6 +255,24 @@ public class EnvironmentUtil {
     return getEnvironmentMap();
   }
 
+  public static void inlineParentOccurrences(@NotNull Map<String, String> envs) {
+    Map<String, String> parentParams = new HashMap<String, String>(System.getenv());
+    for (Map.Entry<String, String> entry : envs.entrySet()) {
+      String key = entry.getKey();
+      String value = entry.getValue();
+      if (value != null) {
+        String parentVal = parentParams.get(key);
+        if (parentVal != null && containsEnvKeySubstitution(key, value)) {
+          envs.put(key, value.replace("$" + key + "$", parentVal));
+        }
+      }
+    }
+  }
+
+  private static boolean containsEnvKeySubstitution(final String envKey, final String val) {
+    return ArrayUtil.find(val.split(File.pathSeparator), "$" + envKey + "$") != -1;
+  }
+
   @TestOnly
   static Map<String, String> testLoader() {
     try {

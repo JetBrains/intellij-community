@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.dvcs.test;
+package git4idea.test;
 
 import com.intellij.mock.MockVirtualFileSystem;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -26,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -34,39 +32,12 @@ import java.io.OutputStream;
  * VirtualFile implementation for tests based on {@link java.io.File}.
  * Not reusing {@link com.intellij.mock.MockVirtualFile}, because the latter holds everything in memory, which is fast, but requires
  * synchronization with the real file system.
- *
- * @author Kirill Likhodedov
  */
 public class MockVirtualFile extends VirtualFile {
 
   private static final VirtualFileSystem ourFileSystem = new MockVirtualFileSystem();
 
   private final String myPath;
-
-  @NotNull
-  static VirtualFile fromPath(@NotNull String absolutePath) {
-    return new MockVirtualFile(FileUtil.toSystemIndependentName(absolutePath));
-  }
-
-  @NotNull
-  static VirtualFile fromPath(@NotNull String relativePath, @NotNull Project project) {
-    try {
-      return fromPath(new File(project.getBaseDir().getPath() + "/" + relativePath).getCanonicalPath());
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @NotNull
-  static VirtualFile fromPath(@NotNull String relativePath, @NotNull String basePath) {
-    try {
-      return fromPath(new File(basePath + "/" + relativePath).getCanonicalPath());
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
 
   public MockVirtualFile(@NotNull String path) {
     myPath = FileUtil.toSystemIndependentName(path);

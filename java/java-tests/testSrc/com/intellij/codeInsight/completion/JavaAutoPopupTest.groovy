@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package com.intellij.codeInsight.completion
+
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
@@ -24,10 +25,7 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.template.*
-import com.intellij.codeInsight.template.impl.LiveTemplateDocumentationProvider
-import com.intellij.codeInsight.template.impl.TemplateImpl
-import com.intellij.codeInsight.template.impl.TemplateManagerImpl
-import com.intellij.codeInsight.template.impl.TemplateSettings
+import com.intellij.codeInsight.template.impl.*
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
@@ -61,6 +59,7 @@ import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.NotNull
 
 import java.awt.event.KeyEvent
+
 /**
  * @author peter
  */
@@ -1660,5 +1659,26 @@ class Foo {{
     edt { ((EditorEx)myFixture.editor).setColumnMode(true) }
     type 'toStr'
     assert lookup
+  }
+  
+  public void "test show popup with single live template if show_live_tempate_in_completion option is enabled"() {
+    def oldValue = LiveTemplateCompletionContributor.ourShowTemplatesInTests
+    try {
+      LiveTemplateCompletionContributor.ourShowTemplatesInTests = false
+      myFixture.configureByText "a.java", """
+class Foo {{
+  ita<caret>
+"""
+      type 'r'
+      assert lookup == null
+      
+      LiveTemplateCompletionContributor.ourShowTemplatesInTests = true
+      type '\br'
+      assert lookup
+      assert myFixture.lookupElementStrings == ['itar']
+    }
+    finally {
+      LiveTemplateCompletionContributor.ourShowTemplatesInTests = oldValue
+    }
   }
 }

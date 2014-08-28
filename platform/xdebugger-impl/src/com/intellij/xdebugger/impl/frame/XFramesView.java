@@ -188,10 +188,10 @@ public class XFramesView extends XDebugView {
     return toolbar;
   }
 
-  private StackFramesListBuilder getOrCreateBuilder(XExecutionStack executionStack) {
+  private StackFramesListBuilder getOrCreateBuilder(XExecutionStack executionStack, XDebugSession session) {
     StackFramesListBuilder builder = myBuilders.get(executionStack);
     if (builder == null) {
-      builder = new StackFramesListBuilder(executionStack);
+      builder = new StackFramesListBuilder(executionStack, session);
       myBuilders.put(executionStack, builder);
     }
     return builder;
@@ -244,7 +244,6 @@ public class XFramesView extends XDebugView {
     }
     myToolbar.setAddSeparatorFirst(!invisible);
     updateFrames(activeExecutionStack, session);
-    myListenersEnabled = true;
   }
 
   @Override
@@ -270,19 +269,14 @@ public class XFramesView extends XDebugView {
       return;
     }
     if (mySelectedStack != null) {
-      getOrCreateBuilder(mySelectedStack).stop();
+      getOrCreateBuilder(mySelectedStack, session).stop();
     }
 
     mySelectedStack = executionStack;
     if (executionStack != null) {
-      StackFramesListBuilder builder = getOrCreateBuilder(executionStack);
+      StackFramesListBuilder builder = getOrCreateBuilder(executionStack, session);
       builder.initModel(myFramesList.getModel());
       builder.start();
-      XStackFrame topFrame = executionStack.getTopFrame();
-      if (topFrame != null) {
-        myFramesList.setSelectedValue(topFrame, true);
-        session.setCurrentStackFrame(executionStack, topFrame);
-      }
     }
   }
 
@@ -303,7 +297,7 @@ public class XFramesView extends XDebugView {
     if (selected instanceof XStackFrame) {
       XDebugSession session = getSession(e);
       if (session != null) {
-        session.setCurrentStackFrame(mySelectedStack, (XStackFrame)selected);
+        session.setCurrentStackFrame(mySelectedStack, (XStackFrame)selected, myFramesList.getSelectedIndex() == 0);
       }
     }
   }
@@ -312,21 +306,15 @@ public class XFramesView extends XDebugView {
     private XExecutionStack myExecutionStack;
     private final List<XStackFrame> myStackFrames;
     private String myErrorMessage;
-    private int myNextFrameIndex;
+    private int myNextFrameIndex = 0;
     private boolean myRunning;
     private boolean myAllFramesLoaded;
+    private final XDebugSession mySession;
 
-    private StackFramesListBuilder(final XExecutionStack executionStack) {
+    private StackFramesListBuilder(final XExecutionStack executionStack, XDebugSession session) {
       myExecutionStack = executionStack;
+      mySession = session;
       myStackFrames = new ArrayList<XStackFrame>();
-      XStackFrame topFrame = executionStack.getTopFrame();
-      if (topFrame != null) {
-        myStackFrames.add(topFrame);
-        myNextFrameIndex = 1;
-      }
-      else {
-        myNextFrameIndex = 0;
-      }
     }
 
     @Override
@@ -336,6 +324,9 @@ public class XFramesView extends XDebugView {
         public void run() {
           myStackFrames.addAll(stackFrames);
           addFrameListElements(stackFrames, last);
+          if (myNextFrameIndex == 0) {
+            selectTopFrame();
+          }
           myNextFrameIndex += stackFrames.size();
           myAllFramesLoaded = last;
           if (last) {
@@ -399,6 +390,15 @@ public class XFramesView extends XDebugView {
       myRunning = false;
     }
 
+    private void selectTopFrame() {
+      if (!myStackFrames.isEmpty() && mySelectedStack != null) {
+        XStackFrame topFrame = myStackFrames.get(0);
+        myFramesList.setSelectedValue(topFrame, true);
+        mySession.setCurrentStackFrame(mySelectedStack, topFrame, true);
+        myListenersEnabled = true;
+      }
+    }
+
     @SuppressWarnings("unchecked")
     public void initModel(final DefaultListModel model) {
       model.removeAllElements();
@@ -411,6 +411,7 @@ public class XFramesView extends XDebugView {
       else if (!myAllFramesLoaded) {
         model.addElement(null);
       }
+      selectTopFrame();
     }
   }
 }

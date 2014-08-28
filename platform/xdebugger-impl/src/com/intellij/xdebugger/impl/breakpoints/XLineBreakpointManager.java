@@ -261,7 +261,7 @@ public class XLineBreakpointManager {
           || mouseEvent.isMetaDown() || mouseEvent.isControlDown()
           || mouseEvent.getButton() != MouseEvent.BUTTON1
           || MarkupEditorFilterFactory.createIsDiffFilter().avaliableIn(editor)
-          || e.getArea() != EditorMouseEventArea.LINE_MARKERS_AREA
+          || (e.getArea() != EditorMouseEventArea.LINE_MARKERS_AREA && e.getArea() != EditorMouseEventArea.FOLDING_OUTLINE_AREA)
           || ConsoleViewUtil.isConsoleViewEditor(editor)
           ||!isFromMyProject(editor)) {
         return;

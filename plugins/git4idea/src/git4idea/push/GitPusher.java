@@ -256,7 +256,7 @@ public final class GitPusher {
                                            @NotNull GitCommitsByRepoAndBranch commits,
                                            @NotNull GitRepository repository) {
     GitPushSpec pushSpec = pushInfo.getPushSpecs().get(repository);
-    GitSimplePushResult simplePushResult = pushAndGetSimpleResult(repository, pushSpec, commits.get(repository));
+    GitSimplePushResult simplePushResult = pushAndGetSimpleResult(repository, pushSpec);
     String output = simplePushResult.getOutput();
     switch (simplePushResult.getType()) {
       case SUCCESS:
@@ -306,8 +306,7 @@ public final class GitPusher {
   }
 
   @NotNull
-  private GitSimplePushResult pushAndGetSimpleResult(@NotNull GitRepository repository,
-                                                            @NotNull GitPushSpec pushSpec, @NotNull GitCommitsByBranch commitsByBranch) {
+  private GitSimplePushResult pushAndGetSimpleResult(@NotNull GitRepository repository, @NotNull GitPushSpec pushSpec) {
     if (pushSpec.getDest() == NO_TARGET_BRANCH) {
       return GitSimplePushResult.notPushed();
     }
@@ -364,21 +363,6 @@ public final class GitPusher {
       }
     }
     return false;
-  }
-
-  @NotNull
-  private static String formPushSpec(@NotNull GitPushSpec spec, @NotNull GitRemote remote) {
-    String destWithRemote = spec.getDest().getName();
-    String prefix = remote.getName() + "/";
-    String destName;
-    if (destWithRemote.startsWith(prefix)) {
-      destName = destWithRemote.substring(prefix.length());
-    }
-    else {
-      LOG.error("Destination remote branch has invalid name. Remote branch name: " + destWithRemote + "\nRemote: " + remote);
-      destName = destWithRemote;
-    }
-    return spec.getSource().getName() + ":" + destName;
   }
 
   @NotNull

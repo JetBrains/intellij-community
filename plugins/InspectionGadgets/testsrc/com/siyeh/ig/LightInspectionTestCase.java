@@ -109,15 +109,20 @@ public abstract class LightInspectionTestCase extends LightCodeInsightFixtureTes
       lastWord = lastWord.substring(0, lastWord.length() - 10);
     }
     final int length = lastWord.length();
+    boolean upperCase = false;
     for (int i = 0; i < length; i++) {
       final char ch = lastWord.charAt(i);
       if (Character.isUpperCase(ch)) {
-        if (i != 0) {
-          basePath.append('_');
+        if (!upperCase) {
+          upperCase = true;
+          if (i != 0) {
+            basePath.append('_');
+          }
         }
         basePath.append(Character.toLowerCase(ch));
       }
       else {
+        upperCase = false;
         basePath.append(ch);
       }
     }
