@@ -17,7 +17,6 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.SubTag;
 import com.intellij.util.xml.events.DomEvent;
@@ -36,7 +35,7 @@ public class IncrementalUpdateEventsTest extends DomTestCase {
     myElement = createElement("<a><child/><child/><child-element/><child-element/></a>");
   }
 
-  public void testRemove0() throws IncorrectOperationException {
+  public void testRemove0() {
     deleteTag(0);
     putExpected(new DomEvent(myElement, false));
     assertResultsAndClear();
@@ -54,13 +53,13 @@ public class IncrementalUpdateEventsTest extends DomTestCase {
     assertResultsAndClear();
   }
 
-  public void testRemove1() throws IncorrectOperationException {
+  public void testRemove1() {
     deleteTag(1);
     putExpected(new DomEvent(myElement, false));
     assertResultsAndClear();
   }
 
-  public void testRemove2() throws IncorrectOperationException {
+  public void testRemove2() {
     deleteTag(2);
     putExpected(new DomEvent(myElement, false));
     assertResultsAndClear();
@@ -70,37 +69,37 @@ public class IncrementalUpdateEventsTest extends DomTestCase {
     assertResultsAndClear();
   }
 
-  public void testRemove3() throws IncorrectOperationException {
+  public void testRemove3() {
     deleteTag(3);
     putExpected(new DomEvent(myElement, false));
     assertResultsAndClear();
   }
 
-  public void testAdd0() throws Throwable {
+  public void testAdd0() {
     addChildTag(0);
     putExpected(new DomEvent(myElement, false));
     assertResultsAndClear();
   }
 
-  public void testAdd1() throws Throwable {
+  public void testAdd1() {
     addChildTag(1);
     putExpected(new DomEvent(myElement, false));
     assertResultsAndClear();
   }
 
-  public void testAdd2() throws Throwable {
+  public void testAdd2() {
     addChildElementTag(2);
     putExpected(new DomEvent(myElement, false));
     assertResultsAndClear();
   }
 
-  public void testAdd3() throws Throwable {
+  public void testAdd3() {
     addChildElementTag(3);
     putExpected(new DomEvent(myElement, false));
     assertResultsAndClear();
   }
 
-  public void testAdd4() throws Throwable {
+  public void testAdd4() {
     final XmlTag tag = myElement.getXmlTag();
     tag.addAfter(createTag("<child-element/>"), tag.getSubTags()[3]);
     putExpected(new DomEvent(myElement, false));
@@ -111,18 +110,18 @@ public class IncrementalUpdateEventsTest extends DomTestCase {
     return myElement.getChildElements().get(index);
   }
 
-  private void addChildTag(int index) throws IncorrectOperationException {
+  private void addChildTag(int index) {
     final XmlTag tag = myElement.getXmlTag();
     tag.addBefore(createTag("<child/>"), tag.getSubTags()[index]);
   }
 
-  private void addChildElementTag(int index) throws IncorrectOperationException {
+  private void addChildElementTag(int index) {
     final XmlTag tag = myElement.getXmlTag();
     tag.addBefore(createTag("<child-element/>"), tag.getSubTags()[index]);
   }
 
 
-  private void deleteTag(final int index) throws IncorrectOperationException {
+  private void deleteTag(final int index) {
     WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
@@ -131,7 +130,7 @@ public class IncrementalUpdateEventsTest extends DomTestCase {
     });
   }
 
-  private MyElement createElement(final String xml) throws IncorrectOperationException {
+  private MyElement createElement(final String xml) {
     return createElement(xml, MyElement.class);
   }
 
@@ -143,6 +142,4 @@ public class IncrementalUpdateEventsTest extends DomTestCase {
 
     List<MyElement> getChildElements();
   }
-
-
 }
