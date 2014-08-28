@@ -152,38 +152,37 @@ public class SyncScrollSupport implements Disposable {
 
     if (master == null || slave == null) return;
 
+    int masterHeaderOffset = getHeaderOffset(master);
+    int slaveHeaderOffset = getHeaderOffset(slave);
+    int masterVerticalScrollOffset = master.getScrollingModel().getVerticalScrollOffset() + masterHeaderOffset;
+    int slaveVerticalScrollOffset = slave.getScrollingModel().getVerticalScrollOffset() + slaveHeaderOffset;
+
     Rectangle viewRect = master.getScrollingModel().getVisibleArea();
     int middleY = viewRect.height / 3;
-
-    int masterVerticalScrollOffset = getScrollOffset(master);
-    int slaveVerticalScrollOffset = getScrollOffset(slave);
 
     LogicalPosition masterPos = master.xyToLogicalPosition(new Point(viewRect.x, masterVerticalScrollOffset + middleY));
     int masterCenterLine = masterPos.line;
     if (masterCenterLine > master.getDocument().getLineCount()) {
       masterCenterLine = master.getDocument().getLineCount();
     }
-    int scrollToLine = sidesContainer.getLineBlocks().transform(masterDiffSide, masterCenterLine) + 1;
-    int actualLine = scrollToLine - 1;
+    int scrollToLine = sidesContainer.getLineBlocks().transform(masterDiffSide, masterCenterLine);
 
     int offset;
-    if (scrollToLine <= 0) {
+    if (scrollToLine < 0) {
       offset = slaveVerticalScrollOffset + newRectangle.y - oldRectangle.y;
     }
     else {
       int correction = (masterVerticalScrollOffset + middleY) % master.getLineHeight();
-      Point point = slave.logicalPositionToXY(new LogicalPosition(actualLine, masterPos.column));
+      Point point = slave.logicalPositionToXY(new LogicalPosition(scrollToLine, masterPos.column));
       offset = point.y - middleY + correction;
     }
 
     doScrollVertically(slave.getScrollingModel(), offset);
   }
 
-  private static int getScrollOffset(@NotNull final Editor editor) {
+  private static int getHeaderOffset(@NotNull final Editor editor) {
     final JComponent header = editor.getHeaderComponent();
-    int headerOffset = header == null ? 0 : header.getHeight();
-
-    return editor.getScrollingModel().getVerticalScrollOffset() - headerOffset;
+    return header == null ? 0 : header.getHeight();
   }
 
   private static void doScrollVertically(@NotNull ScrollingModel model, int offset) {
