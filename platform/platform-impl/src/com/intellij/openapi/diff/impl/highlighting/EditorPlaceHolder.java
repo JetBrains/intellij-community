@@ -93,7 +93,7 @@ class EditorPlaceHolder extends DiffMarkup implements DiffVersionComponent {
           } else {
             document = new DocumentImpl("Can not show", true);
             final EditorFactory editorFactory = EditorFactory.getInstance();
-            myEditor = DiffUtil.createEditor(document, getProject(), true);
+            myEditor = DiffUtil.createEditor(document, getProject(), true, content.getContentType());
             addDisposable(new Disposable() {
               public void dispose() {
                 editorFactory.releaseEditor(myEditor);
@@ -105,7 +105,7 @@ class EditorPlaceHolder extends DiffMarkup implements DiffVersionComponent {
       }
       else {
         final EditorFactory editorFactory = EditorFactory.getInstance();
-        myEditor = DiffUtil.createEditor(document, getProject(), false);
+        myEditor = DiffUtil.createEditor(document, getProject(), false, content.getContentType());
         addDisposable(new Disposable() {
           public void dispose() {
             editorFactory.releaseEditor(myEditor);
