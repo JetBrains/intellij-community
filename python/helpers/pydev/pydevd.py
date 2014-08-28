@@ -1563,14 +1563,10 @@ class PyDB:
         thread_id = GetThreadId(thread)
         import pydevd_vars
         pydevd_vars.addAdditionalFrameById(thread_id, {id(frame): frame})
-        # frame.f_globals = globals
-        # frame.f_locals = globals
-        # frame.f_lineno = -1
-        # frame.f_code = FCode(setup['file'], setup['file'])
 
-        # frame_id = addCustomFrame(frame, 'todo', GetThreadId(thread))
         cmd = self.cmdFactory.makeShowConsoleMessage(thread_id, frame)
         self.writer.addCommand(cmd)
+
         while True:
             self.processInternalCommands()
             time.sleep(0.01)
