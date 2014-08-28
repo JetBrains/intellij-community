@@ -44,7 +44,6 @@ public class PyWithIfElseSurrounder extends PyStatementSurrounder {
       PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyIfStatement.class, "if True:\n    pass\nelse:    pass\n");
     final PsiElement parent = elements[0].getParent();
     final PyStatementList statementList = ifStatement.getIfPart().getStatementList();
-    assert statementList != null;
     statementList.addRange(elements[0], elements[elements.length - 1]);
     statementList.deleteChildRange(statementList.getFirstChild(), statementList.getFirstChild());
 

@@ -23,22 +23,22 @@ import com.intellij.ui.SimpleColoredText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
+import java.util.List;
 
 /**
  * Base class to provide vcs-specific info
  */
 
-public abstract class PushSupport<Repo extends Repository> {
+public abstract class PushSupport<Repo extends Repository, Source extends PushSource, Target extends PushTarget> {
 
-  public static final ExtensionPointName<PushSupport<? extends Repository>> PUSH_SUPPORT_EP =
+  public static final ExtensionPointName<PushSupport<? extends Repository, ? extends PushSource, ? extends PushTarget>> PUSH_SUPPORT_EP =
     ExtensionPointName.create("com.intellij.pushSupport");
 
   @NotNull
   public abstract AbstractVcs getVcs();
 
   @NotNull
-  public abstract Pusher getPusher();
+  public abstract Pusher<Repo, Source, Target> getPusher();
 
   @NotNull
   public abstract OutgoingCommitsProvider getOutgoingCommitsProvider();
@@ -47,19 +47,20 @@ public abstract class PushSupport<Repo extends Repository> {
    * @return Default push destination
    */
   @Nullable
-  public abstract PushTarget getDefaultTarget(@NotNull Repo repository);
+  public abstract Target getDefaultTarget(@NotNull Repo repository);
 
   /**
-   * @return All remembered remote destinations used for completion
+   * @return All remote destinations which will be proposed to user in the target field completion.
+   *         They will be shown in the same order as they appear in the returned list.
    */
   @NotNull
-  public abstract Collection<String> getTargetNames(@NotNull Repo repository);
+  public abstract List<String> getTargetNames(@NotNull Repo repository);
 
   /**
    * @return current source(branch) for repository
    */
   @NotNull
-  public abstract PushSource getSource(@NotNull Repo repository);
+  public abstract Source getSource(@NotNull Repo repository);
 
   /**
    * Parse user input string, and create the valid target for push,
@@ -68,7 +69,7 @@ public abstract class PushSupport<Repo extends Repository> {
    * @see #validateSpec(Repository, PushSpec)
    */
   @Nullable
-  public abstract PushTarget createTarget(@NotNull Repo repository, @NotNull String targetName);
+  public abstract Target createTarget(@NotNull Repo repository, @NotNull String targetName);
 
   /**
    * @return RepositoryManager for vcs
@@ -85,7 +86,7 @@ public abstract class PushSupport<Repo extends Repository> {
    * @return null if target is valid for selected repository
    */
   @Nullable
-  public abstract VcsError validate(@NotNull Repository repository, @Nullable String targetToValidate);
+  public abstract VcsError validate(@NotNull Repo repository, @Nullable String targetToValidate);
 
-  public abstract SimpleColoredText renderTarget(@Nullable PushTarget target);
+  public abstract SimpleColoredText renderTarget(@Nullable Target target);
 }

@@ -40,7 +40,6 @@ import java.util.Locale;
     )}
 )
 public class ExportableFileTemplateSettings extends FileTemplatesLoader implements PersistentStateComponent<Element>, ExportableComponent {
-
   public final static String EXPORTABLE_SETTINGS_FILE = "file.template.settings.xml";
 
   static final String ELEMENT_TEMPLATE = "template";
@@ -57,7 +56,6 @@ public class ExportableFileTemplateSettings extends FileTemplatesLoader implemen
   public static ExportableFileTemplateSettings getInstance() {
     return ServiceManager.getService(ExportableFileTemplateSettings.class);
   }
-
 
   @NotNull
   @Override
@@ -76,10 +74,9 @@ public class ExportableFileTemplateSettings extends FileTemplatesLoader implemen
   @Nullable
   @Override
   public Element getState() {
-    Element element = new Element("fileTemplateSettings");
+    Element element = null;
     for (FTManager manager : getAllManagers()) {
-      final Element templatesGroup = new Element(getXmlElementGroupName(manager));
-      element.addContent(templatesGroup);
+      Element templatesGroup = null;
       for (FileTemplateBase template : manager.getAllTemplates(true)) {
         // save only those settings that differ from defaults
         boolean shouldSave = template.isReformatCode() != FileTemplateBase.DEFAULT_REFORMAT_CODE_VALUE;
@@ -94,6 +91,14 @@ public class ExportableFileTemplateSettings extends FileTemplatesLoader implemen
         templateElement.setAttribute(ATTRIBUTE_REFORMAT, Boolean.toString(template.isReformatCode()));
         if (template instanceof BundledFileTemplate) {
           templateElement.setAttribute(ATTRIBUTE_ENABLED, Boolean.toString(((BundledFileTemplate)template).isEnabled()));
+        }
+
+        if (templatesGroup == null) {
+          templatesGroup = new Element(getXmlElementGroupName(manager));
+          if (element == null) {
+            element = new Element("fileTemplateSettings");
+          }
+          element.addContent(templatesGroup);
         }
         templatesGroup.addContent(templateElement);
       }

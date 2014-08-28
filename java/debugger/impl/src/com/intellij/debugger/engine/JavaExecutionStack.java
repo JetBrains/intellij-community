@@ -17,7 +17,6 @@ package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -46,7 +45,7 @@ public class JavaExecutionStack extends XExecutionStack {
   private final DebugProcessImpl myDebugProcess;
   private final NodeManagerImpl myNodeManager;
   private volatile JavaStackFrame myTopFrame;
-  private boolean myTopFrameReady = false;
+  private volatile boolean myTopFrameReady = false;
   private final MethodsTracker myTracker = new MethodsTracker();
 
   public JavaExecutionStack(@NotNull ThreadReferenceProxyImpl threadProxy, @NotNull DebugProcessImpl debugProcess, boolean current) {
@@ -99,25 +98,7 @@ public class JavaExecutionStack extends XExecutionStack {
   @Nullable
   @Override
   public JavaStackFrame getTopFrame() {
-    if (!myTopFrameReady) {
-      //TODO: remove sync calculation
-      if (DebuggerManagerThreadImpl.isManagerThread()) {
-        myTopFrame = calcTopFrame();
-      }
-      else {
-        myDebugProcess.getManagerThread().invokeAndWait(new DebuggerCommandImpl() {
-          @Override
-          public Priority getPriority() {
-            return Priority.HIGH;
-          }
-
-          @Override
-          protected void action() throws Exception {
-            myTopFrame = calcTopFrame();
-          }
-        });
-      }
-    }
+    assert myTopFrameReady : "Top frame must be already calculated here";
     return myTopFrame;
   }
 
@@ -183,8 +164,20 @@ public class JavaExecutionStack extends XExecutionStack {
     @Override
     public void contextAction() throws Exception {
       if (myStackFramesIterator.hasNext()) {
-        JavaStackFrame frame = new JavaStackFrame(myStackFramesIterator.next(), myDebugProcess, myTracker, myNodeManager);
-        if (DebuggerSettings.getInstance().SHOW_LIBRARY_STACKFRAMES || (!frame.getDescriptor().isSynthetic() && !frame.getDescriptor().isInLibraryContent())) {
+        JavaStackFrame frame;
+        boolean first = myAdded == 0;
+        if (first && myTopFrameReady) {
+          frame = myTopFrame;
+          myStackFramesIterator.next();
+        }
+        else {
+          frame = new JavaStackFrame(myStackFramesIterator.next(), myDebugProcess, myTracker, myNodeManager);
+          if (first && !myTopFrameReady) {
+            myTopFrame = frame;
+            myTopFrameReady = true;
+          }
+        }
+        if (first || DebuggerSettings.getInstance().SHOW_LIBRARY_STACKFRAMES || (!frame.getDescriptor().isSynthetic() && !frame.getDescriptor().isInLibraryContent())) {
           if (++myAdded > mySkip) {
             myContainer.addStackFrames(Arrays.asList(frame), false);
           }

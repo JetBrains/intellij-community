@@ -80,13 +80,12 @@ public interface XDebugSession extends AbstractDebuggerSession {
 
   void showExecutionPoint();
 
-  void setCurrentStackFrame(@NotNull XExecutionStack executionStack, @NotNull XStackFrame frame);
+  void setCurrentStackFrame(@NotNull XExecutionStack executionStack, @NotNull XStackFrame frame, boolean isTopFrame);
 
   /**
-   * @deprecated use {@link #setCurrentStackFrame(com.intellij.xdebugger.frame.XExecutionStack, com.intellij.xdebugger.frame.XStackFrame)} instead
+   * @deprecated use {@link #setCurrentStackFrame(com.intellij.xdebugger.frame.XExecutionStack, com.intellij.xdebugger.frame.XStackFrame, boolean)} instead
    */
-  @SuppressWarnings("UnusedDeclaration")
-  void setCurrentStackFrame(@NotNull XStackFrame frame);
+  void setCurrentStackFrame(@NotNull XExecutionStack executionStack, @NotNull XStackFrame frame);
 
   /**
    * Call this method to setup custom icon and/or error message (it will be shown in tooltip) for breakpoint

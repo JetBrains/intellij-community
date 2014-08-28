@@ -17,19 +17,13 @@ package com.siyeh.ig.naming;
 
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
 public class StaticMethodNamingConventionInspectionBase extends ConventionInspection {
   private static final int DEFAULT_MIN_LENGTH = 4;
   private static final int DEFAULT_MAX_LENGTH = 32;
-
-  @SuppressWarnings("PublicField")
-  public boolean ignoreNativeMethods = true;
 
   @Override
   @NotNull
@@ -61,13 +55,6 @@ public class StaticMethodNamingConventionInspectionBase extends ConventionInspec
   }
 
   @Override
-  public JComponent[] createExtraOptions() {
-    return new JComponent[]{
-      new CheckBox("ignore 'native' methods", this, "ignoreNativeMethods")
-    };
-  }
-
-  @Override
   protected String getDefaultRegex() {
     return "[a-z][A-Za-z\\d]*";
   }
@@ -95,7 +82,7 @@ public class StaticMethodNamingConventionInspectionBase extends ConventionInspec
       if (!method.hasModifierProperty(PsiModifier.STATIC)) {
         return;
       }
-      if (ignoreNativeMethods && method.hasModifierProperty(PsiModifier.NATIVE)) {
+      if (method.hasModifierProperty(PsiModifier.NATIVE) && isInspectionEnabled("NativeMethodNamingConvention", method)) {
         return;
       }
       final String name = method.getName();

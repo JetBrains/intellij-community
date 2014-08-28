@@ -74,7 +74,7 @@ public class PyDefaultArgumentQuickFix implements LocalQuickFix {
       }
       str.append("):\n\tpass");
       PyIfStatement ifStatement = elementGenerator.createFromText(LanguageLevel.forElement(function), PyIfStatement.class,
-                                                "if not " + defName + ": " + defName + " = " + defaultValue.getText());
+                                                "if not " + defName + ":\n\t" + defName + " = " + defaultValue.getText());
 
       PyStatement firstStatement = list.getStatements()[0];
       PyStringLiteralExpression docString = function.getDocStringExpression();

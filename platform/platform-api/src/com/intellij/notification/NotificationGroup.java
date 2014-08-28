@@ -66,6 +66,10 @@ public final class NotificationGroup {
     return new NotificationGroup(displayId, NotificationDisplayType.TOOL_WINDOW, logByDefault, toolWindowId);
   }
 
+  public static NotificationGroup toolWindowGroup(@NotNull String displayId, @NotNull String toolWindowId) {
+    return toolWindowGroup(displayId, toolWindowId, true);
+  }
+
   public String getDisplayId() {
     return myDisplayId;
   }

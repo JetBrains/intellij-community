@@ -771,8 +771,7 @@ public class CompositeElement extends TreeElement {
   }
 
   @Override
-  @Nullable
-  public <T extends PsiElement> T getPsi(Class<T> clazz) {
+  public <T extends PsiElement> T getPsi(@NotNull Class<T> clazz) {
     return LeafElement.getPsi(clazz, getPsi(), LOG);
   }
 

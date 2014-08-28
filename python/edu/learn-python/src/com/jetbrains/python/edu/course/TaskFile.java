@@ -173,7 +173,18 @@ public class TaskFile implements Stateful {
     for (TaskWindow w : taskWindows) {
       if ((w.getLine() == line) && (w.getStart() >= oldEndOffsetInLine)) {
         int distance = w.getStart() - oldEndOffsetInLine;
-        if (lineChange != 0 || newEndOffsetInLine <= w.getStart()) {
+        boolean coveredByPrevTW = false;
+        int prevIndex = w.getIndex() - 1;
+        if (StudyUtils.indexIsValid(prevIndex, taskWindows)) {
+          TaskWindow prevTW = taskWindows.get(prevIndex);
+          if (prevTW.getLine() == line) {
+            int endOffset = prevTW.getStart() + prevTW.getLength();
+            if (endOffset >= newEndOffsetInLine) {
+              coveredByPrevTW = true;
+            }
+          }
+        }
+        if (lineChange != 0 || newEndOffsetInLine <= w.getStart() || coveredByPrevTW) {
           w.setStart(distance + newEndOffsetInLine);
           w.setLine(line + lineChange);
         }

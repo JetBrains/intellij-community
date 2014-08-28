@@ -42,8 +42,6 @@ import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.openapi.options.ex.MixedConfigurableGroup.getGroupWeight;
-
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
@@ -66,7 +64,6 @@ import java.util.List;
  */
 final class SettingsTreeView extends JComponent implements Disposable, OptionsEditorColleague {
   private static final Color NORMAL_NODE = new JBColor(Gray._60, Gray._140);
-  private static final Color HIDDEN_NODE = JBColor.GRAY;
   private static final Color WRONG_CONTENT = JBColor.RED;
   private static final Color MODIFIED_CONTENT = JBColor.BLUE;
 
@@ -530,17 +527,6 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
           }
           else if (myFilter.myContext.getModified().contains(configurable)) {
             myTextLabel.setForeground(MODIFIED_CONTENT);
-          }
-          else {
-            SimpleNode simpleNode = node;
-            while (simpleNode != null) {
-              SimpleNode parent = simpleNode.getParent();
-              if (parent != null && myRoot == parent.getParent() && getGroupWeight(getConfigurable(simpleNode)) == 0) {
-                myTextLabel.setForeground(HIDDEN_NODE);
-                parent = null;
-              }
-              simpleNode = parent;
-            }
           }
         }
       }

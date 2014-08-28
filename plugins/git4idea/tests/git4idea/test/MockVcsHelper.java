@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.dvcs.test;
+package git4idea.test;
 
 import com.intellij.ide.errorTreeView.HotfixData;
 import com.intellij.openapi.project.Project;
@@ -41,9 +41,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Kirill Likhodedov
- */
 public class MockVcsHelper extends AbstractVcsHelper {
   private volatile boolean myCommitDialogShown;
   private volatile boolean myMergeDialogShown;

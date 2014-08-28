@@ -20,7 +20,6 @@
 package com.intellij.util.io.storage;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,10 +55,8 @@ public class HeavyProcessLatch {
     public void processFinished();
   }
 
-  @NotNull
-  public Disposable addListener(@NotNull HeavyProcessListener listener) {
-    Disposable disposable = Disposer.newDisposable();
-    myEventDispatcher.addListener(listener, disposable);
-    return disposable;
+  public void addListener(@NotNull Disposable parentDisposable,
+                          @NotNull HeavyProcessListener listener) {
+    myEventDispatcher.addListener(listener, parentDisposable);
   }
 }

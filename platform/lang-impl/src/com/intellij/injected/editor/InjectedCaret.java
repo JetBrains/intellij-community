@@ -165,6 +165,12 @@ public class InjectedCaret implements Caret {
   }
 
   @Override
+  public void setSelection(int startOffset, int endOffset, boolean updateSystemSelection) {
+    TextRange hostRange = myEditorWindow.getDocument().injectedToHost(new ProperTextRange(startOffset, endOffset));
+    myDelegate.setSelection(hostRange.getStartOffset(), hostRange.getEndOffset(), updateSystemSelection);
+  }
+
+  @Override
   public void setSelection(int startOffset, @Nullable VisualPosition endPosition, int endOffset) {
     TextRange hostRange = myEditorWindow.getDocument().injectedToHost(new ProperTextRange(startOffset, endOffset));
     myDelegate.setSelection(hostRange.getStartOffset(), endPosition, hostRange.getEndOffset());
@@ -174,6 +180,12 @@ public class InjectedCaret implements Caret {
   public void setSelection(@Nullable VisualPosition startPosition, int startOffset, @Nullable VisualPosition endPosition, int endOffset) {
     TextRange hostRange = myEditorWindow.getDocument().injectedToHost(new ProperTextRange(startOffset, endOffset));
     myDelegate.setSelection(startPosition, hostRange.getStartOffset(), endPosition, hostRange.getEndOffset());
+  }
+
+  @Override
+  public void setSelection(@Nullable VisualPosition startPosition, int startOffset, @Nullable VisualPosition endPosition, int endOffset, boolean updateSystemSelection) {
+    TextRange hostRange = myEditorWindow.getDocument().injectedToHost(new ProperTextRange(startOffset, endOffset));
+    myDelegate.setSelection(startPosition, hostRange.getStartOffset(), endPosition, hostRange.getEndOffset(), updateSystemSelection);
   }
 
   @Override

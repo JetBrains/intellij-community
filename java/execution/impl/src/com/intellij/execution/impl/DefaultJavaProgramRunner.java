@@ -69,10 +69,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
   }
 
   @Override
-  protected RunContentDescriptor doExecute(@NotNull final Project project,
-                                           @NotNull final RunProfileState state,
-                                           final RunContentDescriptor contentToReuse,
-                                           @NotNull final ExecutionEnvironment env) throws ExecutionException {
+  protected RunContentDescriptor doExecute(@NotNull final RunProfileState state, @NotNull final ExecutionEnvironment env) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     ExecutionResult executionResult;
@@ -100,11 +97,11 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     onProcessStarted(env.getRunnerSettings(), executionResult);
 
     final RunContentBuilder contentBuilder = new RunContentBuilder(executionResult, env);
-    Disposer.register(project, contentBuilder);
+    Disposer.register(env.getProject(), contentBuilder);
     if (shouldAddDefaultActions) {
       addDefaultActions(contentBuilder);
     }
-    return contentBuilder.showRunContent(contentToReuse);
+    return contentBuilder.showRunContent(env.getContentToReuse());
   }
 
   @Deprecated

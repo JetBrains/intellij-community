@@ -38,7 +38,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class HotSwapProgressImpl extends HotSwapProgress{
-  static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("HotSwap", ToolWindowId.DEBUG, true);
+  static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("HotSwap", ToolWindowId.DEBUG);
 
   TIntObjectHashMap<List<String>> myMessages = new TIntObjectHashMap<List<String>>();
   private final ProgressWindow myProgressWindow;

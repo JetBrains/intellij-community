@@ -136,16 +136,13 @@ public class SyncScrollSupport implements Disposable {
     Editor slaveEditor = sidesContainer.getEditor(masterSide.otherSide());
     if (slaveEditor == null) return;
 
-    ScrollingModel scrollingModel = slaveEditor.getScrollingModel();
-    scrollingModel.disableAnimation();
-    scrollingModel.scrollHorizontally(newScrollOffset);
-    scrollingModel.enableAnimation();
+    doScrollHorizontally(slaveEditor.getScrollingModel(), newScrollOffset);
   }
 
   private static void syncVerticalScroll(@NotNull ScrollingContext context,
                                          @NotNull Rectangle newRectangle,
                                          @NotNull Rectangle oldRectangle) {
-    if (newRectangle.y == oldRectangle.y && newRectangle.height == oldRectangle.height) return;
+    if (newRectangle.y == oldRectangle.y) return;
     EditingSides sidesContainer = context.getSidesContainer();
     FragmentSide masterSide = context.getMasterSide();
     FragmentSide masterDiffSide = context.getMasterDiffSide();
@@ -155,42 +152,55 @@ public class SyncScrollSupport implements Disposable {
 
     if (master == null || slave == null) return;
 
+    int masterVerticalScrollOffset = master.getScrollingModel().getVerticalScrollOffset();
+    int slaveVerticalScrollOffset = slave.getScrollingModel().getVerticalScrollOffset();
+
     Rectangle viewRect = master.getScrollingModel().getVisibleArea();
     int middleY = viewRect.height / 3;
 
-    int masterVerticalScrollOffset = getScrollOffset(master);
-    int slaveVerticalScrollOffset = getScrollOffset(slave);
+    if (master.getDocument().getTextLength() == 0) return;
 
     LogicalPosition masterPos = master.xyToLogicalPosition(new Point(viewRect.x, masterVerticalScrollOffset + middleY));
     int masterCenterLine = masterPos.line;
-    if (masterCenterLine > master.getDocument().getLineCount()) {
-      masterCenterLine = master.getDocument().getLineCount();
+    int scrollToLine = sidesContainer.getLineBlocks().transform(masterDiffSide, masterCenterLine);
+
+    int offset;
+    if (scrollToLine < 0) {
+      offset = slaveVerticalScrollOffset + newRectangle.y - oldRectangle.y;
     }
-    int scrollToLine = sidesContainer.getLineBlocks().transform(masterDiffSide, masterCenterLine) + 1;
-    int actualLine = scrollToLine - 1;
+    else {
+      int correction = (masterVerticalScrollOffset + middleY) % master.getLineHeight();
+      Point point = slave.logicalPositionToXY(new LogicalPosition(scrollToLine, masterPos.column));
+      offset = point.y - middleY + correction;
+    }
 
+    int deltaHeaderOffset = getHeaderOffset(slave) - getHeaderOffset(master);
+    doScrollVertically(slave.getScrollingModel(), offset + deltaHeaderOffset);
+  }
 
-    slave.getScrollingModel().disableAnimation();
+  private static int getHeaderOffset(@NotNull final Editor editor) {
+    final JComponent header = editor.getHeaderComponent();
+    return header == null ? 0 : header.getHeight();
+  }
+
+  private static void doScrollVertically(@NotNull ScrollingModel model, int offset) {
+    model.disableAnimation();
     try {
-      if (scrollToLine <= 0) {
-        int offset = newRectangle.y - oldRectangle.y;
-        slave.getScrollingModel().scrollVertically(slaveVerticalScrollOffset + offset);
-      }
-      else {
-        int correction = (masterVerticalScrollOffset + middleY) % master.getLineHeight();
-        Point point = slave.logicalPositionToXY(new LogicalPosition(actualLine, masterPos.column));
-        slave.getScrollingModel().scrollVertically(point.y - middleY + correction);
-      }
-    } finally {
-      slave.getScrollingModel().enableAnimation();
+      model.scrollVertically(offset);
+    }
+    finally {
+      model.enableAnimation();
     }
   }
 
-  private static int getScrollOffset(@NotNull final Editor editor) {
-    final JComponent header = editor.getHeaderComponent();
-    int headerOffset = header == null ? 0 : header.getHeight();
-    
-    return editor.getScrollingModel().getVerticalScrollOffset() - headerOffset;
+  private static void doScrollHorizontally(@NotNull ScrollingModel model, int offset) {
+    model.disableAnimation();
+    try {
+      model.scrollHorizontally(offset);
+    }
+    finally {
+      model.enableAnimation();
+    }
   }
 
   public static void scrollEditor(@NotNull Editor editor, int logicalLine) {

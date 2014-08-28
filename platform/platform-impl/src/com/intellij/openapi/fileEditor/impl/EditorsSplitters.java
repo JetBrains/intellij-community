@@ -148,7 +148,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   }
 
 
-  private boolean showEmptyText() {
+  protected boolean showEmptyText() {
     return myCurrentWindow == null || myCurrentWindow.getFiles().length == 0;
   }
 

@@ -28,6 +28,8 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.impl.ContentImpl;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Locale;
+
 /**
  * @author Denis Zhdanov
  * @since 5/13/13 4:15 PM
@@ -39,9 +41,8 @@ public abstract class AbstractExternalSystemToolWindowFactory implements ToolWin
 
   protected AbstractExternalSystemToolWindowFactory(@NotNull ProjectSystemId id) {
     myExternalSystemId = id;
-    myNotificationGroup = NotificationGroup.toolWindowGroup("notification.group.id." + id.toString().toLowerCase(),
-                                                            myExternalSystemId.getReadableName(),
-                                                            true);
+    myNotificationGroup = NotificationGroup.toolWindowGroup("notification.group.id." + id.toString().toLowerCase(Locale.ENGLISH),
+                                                            myExternalSystemId.getReadableName());
   }
 
   @Override

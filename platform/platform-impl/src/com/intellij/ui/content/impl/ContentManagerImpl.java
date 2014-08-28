@@ -676,11 +676,6 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     dataProviders.add(provider);
   }
 
-  @Nullable
-  public DataProvider getDataProvider() {
-    return myComponent;
-  }
-
   @Override
   public void propertyChange(@NotNull PropertyChangeEvent event) {
     if (Content.PROP_COMPONENT.equals(event.getPropertyName())) {

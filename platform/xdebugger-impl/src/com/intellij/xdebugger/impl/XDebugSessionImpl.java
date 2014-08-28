@@ -97,6 +97,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private XSuspendContext mySuspendContext;
   private XExecutionStack myCurrentExecutionStack;
   private XStackFrame myCurrentStackFrame;
+  private boolean myIsTopFrame;
   private XSourcePosition myCurrentPosition;
   private final AtomicBoolean myPaused = new AtomicBoolean();
   private MyDependentBreakpointListener myDependentBreakpointListener;
@@ -560,7 +561,7 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   private boolean isTopFrameSelected() {
-    return myCurrentExecutionStack != null && myCurrentExecutionStack.getTopFrame() == myCurrentStackFrame;
+    return myCurrentExecutionStack != null && myIsTopFrame;
   }
 
 
@@ -571,7 +572,7 @@ public class XDebugSessionImpl implements XDebugSession {
       if (executionStack != null) {
         XStackFrame topFrame = executionStack.getTopFrame();
         if (topFrame != null) {
-          setCurrentStackFrame(executionStack, topFrame);
+          setCurrentStackFrame(executionStack, topFrame, true);
           myDebuggerManager.showExecutionPosition();
         }
       }
@@ -579,17 +580,18 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   @Override
-  public void setCurrentStackFrame(@NotNull final XStackFrame frame) {
-    setCurrentStackFrame(myCurrentExecutionStack, frame);
+  public void setCurrentStackFrame(@NotNull XExecutionStack executionStack, @NotNull XStackFrame frame) {
+    setCurrentStackFrame(myCurrentExecutionStack, frame, frame == executionStack.getTopFrame());
   }
 
   @Override
-  public void setCurrentStackFrame(@NotNull XExecutionStack executionStack, @NotNull XStackFrame frame) {
+  public void setCurrentStackFrame(@NotNull XExecutionStack executionStack, @NotNull XStackFrame frame, boolean isTopFrame) {
     if (mySuspendContext == null) return;
 
     boolean frameChanged = myCurrentStackFrame != frame;
     myCurrentExecutionStack = executionStack;
     myCurrentStackFrame = frame;
+    myIsTopFrame = isTopFrame;
     activateSession();
 
     if (frameChanged) {

@@ -22,8 +22,8 @@ package org.jetbrains.idea.eclipse;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
@@ -38,8 +38,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.IdeaTestCase;
-import junit.framework.Assert;
-import org.jdom.Document;
+import com.intellij.testFramework.PlatformTestUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader;
@@ -49,7 +48,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 public class EclipseImlTest extends IdeaTestCase {
-  @NonNls public static final String JUNIT = "JUNIT";
+  @NonNls private static final String JUNIT = "JUNIT";
 
   @Override
   protected void setUp() throws Exception {
@@ -75,11 +74,8 @@ public class EclipseImlTest extends IdeaTestCase {
     if (!SystemInfo.isWindows) {
       fileText = fileText.replaceAll(EclipseXml.FILE_PROTOCOL + "/", EclipseXml.FILE_PROTOCOL);
     }
-    String communityAppDir = PathManager.getHomePath();
-    if (new File(PathManager.getHomePath(), "community").exists()) {
-      communityAppDir += "/community";
-    }
-    fileText = fileText.replaceAll("\\$" + JUNIT + "\\$", communityAppDir);
+    String communityLib = FileUtil.toSystemIndependentName(PathManagerEx.findFileUnderCommunityHome("lib").getAbsolutePath());
+    fileText = fileText.replaceAll("\\$" + JUNIT + "\\$", communityLib);
     final Element classpathElement = JDOMUtil.loadDocument(fileText).getRootElement();
     final Module module = WriteCommandAction.runWriteCommandAction(null, new Computable<Module>() {
       @Override
@@ -104,15 +100,14 @@ public class EclipseImlTest extends IdeaTestCase {
     final Element actualImlElement = new Element("root");
     ((ModuleRootManagerImpl)ModuleRootManager.getInstance(module)).getState().writeExternal(actualImlElement);
 
-    PathMacros.getInstance().setMacro(JUNIT, communityAppDir);
+    PathMacros.getInstance().setMacro(JUNIT, communityLib);
     PathMacroManager.getInstance(module).collapsePaths(actualImlElement);
     PathMacroManager.getInstance(project).collapsePaths(actualImlElement);
     PathMacros.getInstance().removeMacro(JUNIT);
 
     final Element expectedIml =
       JDOMUtil.loadDocument(new File(project.getBaseDir().getPath() + "/expected", "expected.iml")).getRootElement();
-    Assert.assertTrue(new String(JDOMUtil.printDocument(new Document(actualImlElement), "\n")),
-                      JDOMUtil.areElementsEqual(expectedIml, actualImlElement));
+    PlatformTestUtil.assertElementsEqual(expectedIml, actualImlElement);
   }
 
 

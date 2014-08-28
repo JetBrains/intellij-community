@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,14 @@
  */
 package com.siyeh.ig.junit;
 
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiType;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TestUtils;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class TestMethodIsPublicVoidNoArgInspection extends BaseInspection {
@@ -70,37 +70,26 @@ public class TestMethodIsPublicVoidNoArgInspection extends BaseInspection {
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
       //note: no call to super;
-      @NonNls final String methodName = method.getName();
-      if (!methodName.startsWith("test") &&
-          !TestUtils.isJUnit4TestMethod(method)) {
+      if (method.isConstructor()) {
+        return;
+      }
+      if (!TestUtils.isJUnit3TestMethod(method) && !TestUtils.isJUnit4TestMethod(method)) {
         return;
       }
       final PsiType returnType = method.getReturnType();
-      if (returnType == null) {
-        return;
-      }
       final PsiParameterList parameterList = method.getParameterList();
       final boolean takesArguments;
       final boolean isStatic;
       if (parameterList.getParametersCount() == 0) {
         takesArguments = false;
         isStatic = method.hasModifierProperty(PsiModifier.STATIC);
-        if (!isStatic && returnType.equals(PsiType.VOID) &&
-            method.hasModifierProperty(PsiModifier.PUBLIC)) {
+        if (!isStatic && PsiType.VOID.equals(returnType) && method.hasModifierProperty(PsiModifier.PUBLIC)) {
           return;
         }
       }
       else {
         isStatic = false;
         takesArguments = true;
-      }
-      final PsiClass targetClass = method.getContainingClass();
-      if (!AnnotationUtil.isAnnotated(method, "org.junit.Test", true)) {
-        if (targetClass == null ||
-            !InheritanceUtil.isInheritor(targetClass,
-                                         "junit.framework.TestCase")) {
-          return;
-        }
       }
       registerMethodError(method, Boolean.valueOf(takesArguments),
                           Boolean.valueOf(isStatic));

@@ -287,7 +287,7 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
                                     new LogicalPosition(caretState.SELECTION_START_LINE, caretState.SELECTION_START_COLUMN),
                                     new LogicalPosition(caretState.SELECTION_END_LINE, caretState.SELECTION_END_COLUMN)));
         }
-        caretModel.setCaretsAndSelections(states);
+        caretModel.setCaretsAndSelections(states, false);
       }
       else {
         LogicalPosition pos = new LogicalPosition(state.CARETS[0].LINE, state.CARETS[0].COLUMN);

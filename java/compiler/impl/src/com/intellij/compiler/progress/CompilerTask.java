@@ -22,12 +22,11 @@
 package com.intellij.compiler.progress;
 
 import com.intellij.compiler.CompilerManagerImpl;
-import com.intellij.compiler.CompilerMessageImpl;
 import com.intellij.compiler.impl.CompilerErrorTreeView;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.openapi.application.Application;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.*;
@@ -42,6 +41,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -120,6 +120,26 @@ public class CompilerTask extends Task.Backgroundable {
     mySessionId = sessionId;
   }
 
+  @NotNull
+  public Object getContentId() {
+    return myContentId;
+  }
+
+  public void registerCloseAction(final Runnable onClose) {
+    synchronized (myMessageViewLock) {
+      if (myErrorTreeView != null) {
+        Disposer.register(myErrorTreeView, new Disposable() {
+          @Override
+          public void dispose() {
+            onClose.run();
+          }
+        });
+        return;
+      }
+    }
+    onClose.run();
+  }
+  
   @Override
   public String getProcessId() {
     return "compilation";
@@ -221,13 +241,15 @@ public class CompilerTask extends Task.Backgroundable {
 
   private void addIndicatorDelegate() {
     ProgressIndicator indicator = myIndicator;
-    if (!(indicator instanceof ProgressIndicatorEx)) return;
+    if (!(indicator instanceof ProgressIndicatorEx)) {
+      return;
+    }
     ((ProgressIndicatorEx)indicator).addStateDelegate(new ProgressIndicatorBase() {
 
       @Override
       public void cancel() {
         super.cancel();
-        closeUI();
+        selectFirstMessage();
         stopAppIconProgress();
       }
 
@@ -235,11 +257,26 @@ public class CompilerTask extends Task.Backgroundable {
       public void stop() {
         super.stop();
         if (!isCanceled()) {
-          closeUI();
+          selectFirstMessage();
         }
         stopAppIconProgress();
       }
 
+      private void selectFirstMessage() {
+        if (!isHeadlessMode()) {
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              synchronized (myMessageViewLock) {
+                if (myErrorTreeView != null) {
+                  myErrorTreeView.selectFirstMessage();
+                }
+              }
+            }
+          });
+        }
+      }
+      
       private void stopAppIconProgress() {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
@@ -249,7 +286,8 @@ public class CompilerTask extends Task.Backgroundable {
               if (myErrorCount > 0) {
                 appIcon.setErrorBadge(myProject, String.valueOf(myErrorCount));
                 appIcon.requestAttention(myProject, true);
-              } else if (!myCompilationStartedAutomatically) {
+              } 
+              else if (!myCompilationStartedAutomatically) {
                 appIcon.setOkBadge(myProject, true);
                 appIcon.requestAttention(myProject, false);
               }
@@ -450,16 +488,20 @@ public class CompilerTask extends Task.Backgroundable {
   public void showCompilerContent() {
     synchronized (myMessageViewLock) {
       if (myErrorTreeView != null) {
-        final MessageView messageView = MessageView.SERVICE.getInstance(myProject);
-        Content[] contents = messageView.getContentManager().getContents();
-        for (Content content : contents) {
-          if (CONTENT_ID_KEY.get(content) == myContentId) {
-            messageView.getContentManager().setSelectedContent(content);
-            return;
-          }
-        }
+        showCompilerContent(myProject, myContentId);
       }
     }
+  }
+
+  public static boolean showCompilerContent(final Project project, final Object contentId) {
+    final MessageView messageView = MessageView.SERVICE.getInstance(project);
+    for (Content content : messageView.getContentManager().getContents()) {
+      if (CONTENT_ID_KEY.get(content) == contentId) {
+        messageView.getContentManager().setSelectedContent(content);
+        return true;
+      }
+    }
+    return false;
   }
 
   private void removeAllContents(Project project, Content notRemove) {
@@ -488,41 +530,13 @@ public class CompilerTask extends Task.Backgroundable {
 
   private void activateMessageView() {
     synchronized (myMessageViewLock) {
-      if (myErrorTreeView != null) {
+      if (myErrorTreeView != null && myProject != null) {
         final ToolWindow tw = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
         if (tw != null) {
           tw.activate(null, false);
         }
       }
     }
-  }
-
-  private void closeUI() {
-    if (isHeadlessMode()) {
-      return;
-    }
-    Window window = getWindow();
-    ModalityState modalityState = window != null ? ModalityState.stateForComponent(window) : ModalityState.NON_MODAL;
-    final Application application = ApplicationManager.getApplication();
-    application.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        synchronized (myMessageViewLock) {
-          if (myErrorTreeView != null) {
-            final boolean shouldRetainView = myErrorCount > 0 || myWarningCount > 0 && !myErrorTreeView.isHideWarnings();
-            if (shouldRetainView) {
-              addMessage(new CompilerMessageImpl(myProject, CompilerMessageCategory.STATISTICS, CompilerBundle.message("statistics.error.count", myErrorCount)));
-              addMessage(new CompilerMessageImpl(myProject, CompilerMessageCategory.STATISTICS, CompilerBundle.message("statistics.warnings.count", myWarningCount)));
-              //activateMessageView();
-              myErrorTreeView.selectFirstMessage();
-            }
-            else {
-              removeAllContents(myProject, null);
-            }
-          }
-        }
-      }
-    }, modalityState);
   }
 
   public Window getWindow(){
@@ -607,7 +621,7 @@ public class CompilerTask extends Task.Backgroundable {
       if (event.getContent() == myContent) {
         synchronized (myMessageViewLock) {
           if (myErrorTreeView != null) {
-            myErrorTreeView.dispose();
+            Disposer.dispose(myErrorTreeView);
             myErrorTreeView = null;
             if (myIndicator.isRunning()) {
               cancel();

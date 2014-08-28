@@ -167,7 +167,9 @@ public class UsageViewUtil {
     int offset = info.getNavigationOffset();
     VirtualFile file = info.getVirtualFile();
     Project project = info.getProject();
-    FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file, offset), requestFocus);
+    if (file != null) {
+      FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file, offset), requestFocus);
+    }
   }
 
   public static Set<UsageInfo> getNotExcludedUsageInfos(final UsageView usageView) {

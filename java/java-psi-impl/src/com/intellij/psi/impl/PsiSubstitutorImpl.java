@@ -394,7 +394,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
           }
         }
       }
-    } else if (substituted instanceof PsiWildcardType && ((PsiWildcardType)substituted).isSuper()) {
+    } else if (substituted instanceof PsiWildcardType && ((PsiWildcardType)substituted).isSuper() && !(oldSubstituted instanceof PsiCapturedWildcardType)) {
       final PsiType erasure = TypeConversionUtil.erasure(((PsiWildcardType)substituted).getBound());
       if (erasure != null) {
         final PsiType[] boundTypes = typeParameter.getExtendsListTypes();

@@ -743,7 +743,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
     @Override
     public void setColor(Color color) {
-      if (!UIUtil.isUnderDarcula() || !JBTable.this.getBackground().equals(color)) {
+      if (color != null && (!UIUtil.isUnderDarcula() || !JBTable.this.getBackground().equals(color))) {
         //noinspection UseJBColor
         color = new Color(UIUtil.getGrayFilter().filterRGB(0, 0, color.getRGB()));
       }
