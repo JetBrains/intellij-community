@@ -1431,7 +1431,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
-  public static <T extends Comparable> List<T> sorted(@NotNull Collection<T> list) {
+  public static <T extends Comparable<T>> List<T> sorted(@NotNull Collection<T> list) {
     return sorted(list, new Comparator<T>() {
       @Override
       public int compare(T o1, T o2) {
