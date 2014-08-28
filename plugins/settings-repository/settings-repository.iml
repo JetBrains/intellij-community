@@ -17,14 +17,12 @@
           <root url="file://$MODULE_DIR$/lib" />
         </ANNOTATIONS>
         <CLASSES>
-          <root url="file://$MODULE_DIR$/lib" />
+          <root url="jar://$MODULE_DIR$/lib/org.eclipse.jgit-3.4.1.201406201815-r.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="file://$MODULE_DIR$/lib" />
+          <root url="jar://$MODULE_DIR$/lib/org.eclipse.jgit-3.4.1.201406201815-r-sources.jar!/" />
         </SOURCES>
-        <jarDirectory url="file://$MODULE_DIR$/lib" recursive="false" />
-        <jarDirectory url="file://$MODULE_DIR$/lib" recursive="false" type="SOURCES" />
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="vcs-impl" />
@@ -45,9 +43,21 @@
     <orderEntry type="module" module-name="platform-resources" scope="TEST" />
     <orderEntry type="module" module-name="platform-resources-en" scope="TEST" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="bootstrap" />
+    <orderEntry type="module" module-name="bootstrap" scope="TEST" />
     <orderEntry type="library" name="JSch" level="project" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
+    <orderEntry type="module-library">
+      <library name="osxkeychain">
+        <ANNOTATIONS>
+          <root url="file://$MODULE_DIR$/lib" />
+        </ANNOTATIONS>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/osxkeychain.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>
 
