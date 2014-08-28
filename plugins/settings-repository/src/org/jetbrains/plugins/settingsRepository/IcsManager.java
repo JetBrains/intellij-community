@@ -92,7 +92,7 @@ public final class IcsManager implements ApplicationLoadListener, Disposable {
             repositoryManager.commit(indicator);
           }
           catch (Exception e) {
-            LOG.error(e);
+            BaseRepositoryManager.LOG.error(e);
           }
         }
       });
@@ -225,10 +225,10 @@ public final class IcsManager implements ApplicationLoadListener, Disposable {
       }
     }
     catch (AuthenticationException e) {
-      LOG.warn(e);
+      BaseRepositoryManager.LOG.warn(e);
     }
     catch (Exception e) {
-      LOG.error(e);
+      BaseRepositoryManager.LOG.error(e);
     }
     finally {
       setStatus(getStatus() == IcsStatus.OPENED ? IcsStatus.UPDATE_FAILED : IcsStatus.OPEN_FAILED);
@@ -255,7 +255,7 @@ public final class IcsManager implements ApplicationLoadListener, Disposable {
           fileBasedStorage.updateFileExternallyFromStreamProviders();
         }
         catch (Throwable e) {
-          LOG.debug(e);
+          LOG.error(e);
         }
       }
     }
@@ -292,7 +292,7 @@ public final class IcsManager implements ApplicationLoadListener, Disposable {
           catch (Exception e) {
             //noinspection InstanceofCatchParameter
             if (!(e instanceof AuthenticationException)) {
-              LOG.error(e);
+              BaseRepositoryManager.LOG.error(e);
             }
             exceptionRef.set(e);
           }

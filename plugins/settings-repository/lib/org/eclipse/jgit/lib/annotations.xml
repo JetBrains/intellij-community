@@ -53,6 +53,9 @@
   <item name='org.eclipse.jgit.lib.Repository org.eclipse.jgit.lib.RefUpdate updateRef(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='org.eclipse.jgit.lib.Repository org.eclipse.jgit.lib.RepositoryState getRepositoryState()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='org.eclipse.jgit.lib.Repository org.eclipse.jgit.lib.StoredConfig getConfig()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>

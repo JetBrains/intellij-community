@@ -59,10 +59,16 @@ fun pull(manager: GitRepositoryManager, indicator: ProgressIndicator) {
 }
 
 private fun fetch(manager: GitRepositoryManager, indicator: ProgressIndicator, prevRefUpdateResult: RefUpdate.Result?): MergeResult? {
+  val repository = manager.git.getRepository()
+  val repositoryState = repository.getRepositoryState()
+  if (repositoryState != RepositoryState.SAFE) {
+    LOG.warn(MessageFormat.format(JGitText.get().cannotPullOnARepoWithState, repositoryState.name()))
+  }
+
   // we must use the same StoredConfig instance during the operation
-  val config = manager.git.getRepository().getConfig()
+  val config = repository.getConfig()
   val remoteConfig = RemoteConfig(config, Constants.DEFAULT_REMOTE_NAME)
-  val transport = Transport.open(manager.git.getRepository(), remoteConfig)
+  val transport = Transport.open(repository, remoteConfig)
   val fetchResult: FetchResult
   try {
     transport.setCredentialsProvider(manager.credentialsProvider)
@@ -76,23 +82,15 @@ private fun fetch(manager: GitRepositoryManager, indicator: ProgressIndicator, p
     transport.close()
   }
 
-  GitRepositoryManager.printMessages(fetchResult)
-
-  val trackingRefUpdates = fetchResult.getTrackingRefUpdates()
-  if (trackingRefUpdates.isEmpty()) {
-    LOG.debug("No remote changes (ref updates is empty)")
-  }
-
   if (LOG.isDebugEnabled()) {
-    for (refUpdate in trackingRefUpdates) {
+    printMessages(fetchResult)
+    for (refUpdate in fetchResult.getTrackingRefUpdates()) {
       LOG.debug(refUpdate.toString())
     }
   }
 
-  val fetchRefSpecs = remoteConfig.getFetchRefSpecs()
-
   var hasChanges = false
-  for (fetchRefSpec in fetchRefSpecs) {
+  for (fetchRefSpec in remoteConfig.getFetchRefSpecs()) {
     val refUpdate = fetchResult.getTrackingRefUpdate(fetchRefSpec.getDestination())
     if (refUpdate == null) {
       LOG.debug("No ref update for " + fetchRefSpec)
@@ -100,7 +98,6 @@ private fun fetch(manager: GitRepositoryManager, indicator: ProgressIndicator, p
     }
 
     val refUpdateResult = refUpdate.getResult()
-
     // we can have more than one fetch ref spec, but currently we don't worry about it
     if (refUpdateResult == RefUpdate.Result.LOCK_FAILURE || refUpdateResult == RefUpdate.Result.IO_FAILURE) {
       if (prevRefUpdateResult == refUpdateResult) {
@@ -108,7 +105,6 @@ private fun fetch(manager: GitRepositoryManager, indicator: ProgressIndicator, p
       }
 
       LOG.warn("Ref update result " + refUpdateResult.name() + ", trying again after 500 ms")
-      //noinspection BusyWait
       Thread.sleep(500)
       return fetch(manager, indicator, refUpdateResult)
     }

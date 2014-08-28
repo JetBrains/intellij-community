@@ -137,16 +137,13 @@ public class GitRepositoryManager(private val credentialsStore: NotNullLazyValue
 
     return true
   }
+}
 
-  class object {
-
-    fun printMessages(fetchResult: OperationResult) {
-      if (BaseRepositoryManager.LOG.isDebugEnabled()) {
-        val messages = fetchResult.getMessages()
-        if (!StringUtil.isEmptyOrSpaces(messages)) {
-          BaseRepositoryManager.LOG.debug(messages)
-        }
-      }
+fun printMessages(fetchResult: OperationResult) {
+  if (BaseRepositoryManager.LOG.isDebugEnabled()) {
+    val messages = fetchResult.getMessages()
+    if (!StringUtil.isEmptyOrSpaces(messages)) {
+      BaseRepositoryManager.LOG.debug(messages)
     }
   }
 }
