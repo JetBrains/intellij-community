@@ -65,7 +65,7 @@ private fun fetch(manager: GitRepositoryManager, indicator: ProgressIndicator, p
   val transport = Transport.open(manager.git.getRepository(), remoteConfig)
   val fetchResult: FetchResult
   try {
-    transport.setCredentialsProvider(manager.getCredentialsProvider())
+    transport.setCredentialsProvider(manager.credentialsProvider)
     fetchResult = transport.fetch(JGitProgressMonitor(indicator), null)
   }
   catch (e: TransportException) {

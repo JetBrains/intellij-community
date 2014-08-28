@@ -20,7 +20,15 @@ import java.io.IOException
 public class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<CredentialsStore>) : BaseRepositoryManager() {
   val git: GitEx
 
-  private var credentialsProvider: CredentialsProvider? = null
+  private var _credentialsProvider: CredentialsProvider? = null
+
+  val credentialsProvider: CredentialsProvider
+    get() {
+      if (_credentialsProvider == null) {
+        _credentialsProvider == JGitCredentialsProvider(credentialsStore, git.getRepository())
+      }
+      return _credentialsProvider!!
+    }
 
   {
     val repository = FileRepositoryBuilder().setWorkTree(dir).build()
@@ -39,13 +47,6 @@ public class GitRepositoryManager(private val credentialsStore: NotNullLazyValue
   throws(javaClass<IOException>())
   override fun initRepository(dir: File) {
     GitEx.createBareRepository(dir)
-  }
-
-  fun getCredentialsProvider(): CredentialsProvider {
-    if (credentialsProvider == null) {
-      credentialsProvider = JGitCredentialsProvider(credentialsStore, git.getRepository())
-    }
-    return credentialsProvider!!
   }
 
   override fun getRemoteRepositoryUrl(): String? {
@@ -97,7 +98,7 @@ public class GitRepositoryManager(private val credentialsStore: NotNullLazyValue
 
     val monitor = JGitProgressMonitor(indicator)
     for (transport in Transport.openAll(repository, Constants.DEFAULT_REMOTE_NAME, Transport.Operation.PUSH)) {
-      transport.setCredentialsProvider(getCredentialsProvider())
+      transport.setCredentialsProvider(credentialsProvider)
 
       try {
         val result = transport.push(monitor, transport.findRemoteRefUpdatesFor(refSpecs))
