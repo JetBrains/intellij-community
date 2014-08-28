@@ -27,17 +27,20 @@ public class VcsLogFilterCollectionImpl implements VcsLogFilterCollection {
 
   @Nullable private final VcsLogBranchFilter myBranchFilter;
   @Nullable private final VcsLogUserFilter myUserFilter;
+  @Nullable private final VcsLogHashFilter myHashFilter;
   @Nullable private final VcsLogDateFilter myDateFilter;
   @Nullable private final VcsLogTextFilter myTextFilter;
   @Nullable private final VcsLogStructureFilter myStructureFilter;
 
   public VcsLogFilterCollectionImpl(@Nullable VcsLogBranchFilter branchFilter,
                                     @Nullable VcsLogUserFilter userFilter,
+                                    @Nullable VcsLogHashFilter hashFilter,
                                     @Nullable VcsLogDateFilter dateFilter,
                                     @Nullable VcsLogTextFilter textFilter,
                                     @Nullable VcsLogStructureFilter structureFilter) {
     myBranchFilter = branchFilter;
     myUserFilter = userFilter;
+    myHashFilter = hashFilter;
     myDateFilter = dateFilter;
     myTextFilter = textFilter;
     myStructureFilter = structureFilter;
@@ -47,6 +50,12 @@ public class VcsLogFilterCollectionImpl implements VcsLogFilterCollection {
   @Override
   public VcsLogBranchFilter getBranchFilter() {
     return myBranchFilter;
+  }
+
+  @Override
+  @Nullable
+  public VcsLogHashFilter getHashFilter() {
+    return myHashFilter;
   }
 
   @Nullable

@@ -13,15 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log;
+package com.intellij.vcs.log.impl;
 
+import com.intellij.vcs.log.VcsLogHashFilter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public interface VcsLogHashFilter {
+public class VcsLogHashFilterImpl implements VcsLogHashFilter {
+
+  @NotNull private final Collection<String> myHashes;
+
+  public VcsLogHashFilterImpl(@NotNull Collection<String> hashes) {
+    myHashes = hashes;
+  }
 
   @NotNull
-  Collection<String> getHashes();
-
+  @Override
+  public Collection<String> getHashes() {
+    return myHashes;
+  }
 }
