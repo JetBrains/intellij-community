@@ -1,5 +1,28 @@
 <root>
+  <item name='org.eclipse.jgit.api.CommitCommand org.eclipse.jgit.api.CommitCommand setReflogComment(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.api.CommitCommand org.eclipse.jgit.revwalk.RevCommit call()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.api.Git org.eclipse.jgit.api.CommitCommand commit()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='org.eclipse.jgit.api.Git org.eclipse.jgit.lib.Repository getRepository()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+      name='org.eclipse.jgit.api.MergeResult MergeResult(org.eclipse.jgit.lib.ObjectId, org.eclipse.jgit.lib.ObjectId, org.eclipse.jgit.lib.ObjectId[], org.eclipse.jgit.api.MergeResult.MergeStatus, org.eclipse.jgit.merge.MergeStrategy, java.util.Map&lt;java.lang.String,org.eclipse.jgit.merge.MergeResult&lt;?&gt;&gt;)'>
+    <annotation name='kotlin.jvm.KotlinSignature'>
+      <val name="value"
+           val="&quot;fun MergeResult(newHead: ObjectId?, base: ObjectId?, mergedCommits: Array&lt;out ObjectId?&gt;?, mergeStatus: MergeResult.MergeStatus?, mergeStrategy: MergeStrategy?, lowLevelResults: Map&lt;String, MergeResult&lt;out Sequence?&gt;&gt;?)&quot;"/>
+    </annotation>
+  </item>
+  <item
+      name='org.eclipse.jgit.api.MergeResult MergeResult(org.eclipse.jgit.lib.ObjectId, org.eclipse.jgit.lib.ObjectId, org.eclipse.jgit.lib.ObjectId[], org.eclipse.jgit.api.MergeResult.MergeStatus, org.eclipse.jgit.merge.MergeStrategy, java.util.Map&lt;java.lang.String,org.eclipse.jgit.merge.MergeResult&lt;?&gt;&gt;) 2'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.jgit.api.MergeResult org.eclipse.jgit.api.MergeResult.MergeStatus getMergeStatus()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
 </root>

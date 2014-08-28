@@ -1,0 +1,8 @@
+<root>
+  <item name='org.eclipse.jgit.revwalk.RevObject org.eclipse.jgit.lib.ObjectId getId()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.revwalk.RevWalk org.eclipse.jgit.revwalk.RevCommit lookupCommit(org.eclipse.jgit.lib.AnyObjectId)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+</root>

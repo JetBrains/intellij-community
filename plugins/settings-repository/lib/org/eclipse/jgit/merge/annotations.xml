@@ -1,0 +1,8 @@
+<root>
+  <item name='org.eclipse.jgit.merge.MergeMessageFormatter java.lang.String format(java.util.List&lt;org.eclipse.jgit.lib.Ref&gt;, org.eclipse.jgit.lib.Ref)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.merge.ThreeWayMergeStrategy org.eclipse.jgit.merge.ThreeWayMerger newMerger(org.eclipse.jgit.lib.Repository)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+</root>

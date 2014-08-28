@@ -5,10 +5,30 @@
   <item name='org.eclipse.jgit.lib.BaseRepositoryBuilder B setGitDir(java.io.File)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='org.eclipse.jgit.lib.Config T get(org.eclipse.jgit.lib.Config.SectionParser&lt;T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='org.eclipse.jgit.lib.Config java.util.Set&lt;java.lang.String&gt; getSubsections(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.lib.Ref java.lang.String getName()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.lib.Ref org.eclipse.jgit.lib.Ref getTarget()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.lib.Repository org.eclipse.jgit.lib.Ref peel(org.eclipse.jgit.lib.Ref)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.lib.Repository org.eclipse.jgit.lib.RefUpdate updateRef(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='org.eclipse.jgit.lib.Repository org.eclipse.jgit.lib.StoredConfig getConfig()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.lib.Repository void writeMergeHeads(java.util.List&lt;org.eclipse.jgit.lib.ObjectId&gt;)'>
+    <annotation name='kotlin.jvm.KotlinSignature'>
+      <val name="value" val="&quot;fun writeMergeHeads(heads: List&lt;ObjectId?&gt;?): Unit&quot;"/>
+    </annotation>
   </item>
 </root>
