@@ -46,7 +46,7 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiUtilBase");
   public static final Comparator<Language> LANGUAGE_COMPARATOR = new Comparator<Language>() {
     @Override
-    public int compare(Language o1, Language o2) {
+    public int compare(@NotNull Language o1, @NotNull Language o2) {
       return o1.getID().compareTo(o2.getID());
     }
   };
