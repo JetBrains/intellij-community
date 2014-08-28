@@ -25,7 +25,7 @@ public class GitRepositoryManager(private val credentialsStore: NotNullLazyValue
   val credentialsProvider: CredentialsProvider
     get() {
       if (_credentialsProvider == null) {
-        _credentialsProvider == JGitCredentialsProvider(credentialsStore, git.getRepository())
+        _credentialsProvider = JGitCredentialsProvider(credentialsStore, git.getRepository())
       }
       return _credentialsProvider!!
     }

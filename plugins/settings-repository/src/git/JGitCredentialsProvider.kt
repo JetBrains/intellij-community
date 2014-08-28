@@ -10,6 +10,7 @@ import org.jetbrains.plugins.settingsRepository.Credentials
 import org.jetbrains.plugins.settingsRepository.nullize
 import org.jetbrains.plugins.settingsRepository.isFulfilled
 import org.eclipse.jgit.lib.Repository
+import org.jetbrains.plugins.settingsRepository.isOSXCredentialsStoreSupported
 
 class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<CredentialsStore>, private val repository: Repository) : CredentialsProvider() {
   private var credentialsFromGit: Credentials? = null
@@ -62,16 +63,23 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
       credentials = Credentials(userFromUri, passwordFromUri)
     }
     else {
-      if (credentialsFromGit == null) {
-        credentialsFromGit = getCredentialsUsingGit(uri, repository)
+      // we open password protected SSH key file using OS X keychain - "git credentials" is pointless in this case
+      if (sshKeyFile == null || !isOSXCredentialsStoreSupported()) {
+        if (credentialsFromGit == null) {
+          credentialsFromGit = getCredentialsUsingGit(uri, repository)
+        }
+        credentials = credentialsFromGit
       }
-      credentials = credentialsFromGit
+      else {
+        credentials = null
+      }
 
       if (credentials == null) {
         credentials = credentialsStore.getValue().get(uri.getHost(), sshKeyFile)
         saveCredentialsToStore = true
 
-        if (userFromUri != null) {
+        // SSH URL git@github.com:develar/_idea_settings.git, so, username will be "git", we ignore it because in case of SSH credentials account name equals to key filename, but not to username
+        if (userFromUri != null && (credentials == null || sshKeyFile == null)) {
           // username is in url - read password only if it is for the same user
           if (userFromUri != credentials?.username) {
             credentials = Credentials(userFromUri, passwordFromUri)

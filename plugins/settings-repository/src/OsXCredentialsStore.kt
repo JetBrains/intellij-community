@@ -5,6 +5,9 @@ import com.mcdermottroe.apple.OSXKeychain
 import com.intellij.openapi.util.PasswordUtil
 import gnu.trove.THashMap
 import com.mcdermottroe.apple.OSXKeychainException
+import com.intellij.openapi.util.SystemInfo
+
+fun isOSXCredentialsStoreSupported() = SystemInfo.isMacIntel64 && SystemInfo.isMacOSLeopard
 
 class OsXCredentialsStore : CredentialsStore {
   class object {
@@ -31,21 +34,32 @@ class OsXCredentialsStore : CredentialsStore {
     catch (e: OSXKeychainException) {
       val errorMessage = e.getMessage()
       if (errorMessage == null || (!errorMessage.contains("The specified item could not be found in the keychain.") &&
-              !errorMessage.contains("The user name or passphrase you entered is not correct.") /* if user press "Deny" we also get this error, so, we don't try to show again */)) {
+        !errorMessage.contains("The user name or passphrase you entered is not correct.") /* if user press "Deny" we also get this error, so, we don't try to show again */)) {
         IcsManager.LOG.error(e)
       }
       return null
     }
 
-    if (data != null) {
+    if (data == null) {
+      return null
+    }
+
+    if (sshKeyFile == null) {
       val separatorIndex = data.indexOf('@')
       if (separatorIndex > 0) {
         val username = PasswordUtil.decodePassword(data.substring(0, separatorIndex))
         val password = PasswordUtil.decodePassword(data.substring(separatorIndex + 1))
         credentials = Credentials(username, password)
-        accountToCredentials[accountName] = credentials!!
+      }
+      else {
+        return null
       }
     }
+    else {
+      credentials = Credentials(sshKeyFile, data)
+    }
+
+    accountToCredentials[accountName] = credentials!!
     return credentials
   }
 
@@ -58,7 +72,7 @@ class OsXCredentialsStore : CredentialsStore {
       return
     }
 
-    val data = "${PasswordUtil.encodePassword(credentials.username)}@${PasswordUtil.encodePassword(credentials.password)}"
+    val data = if (sshKeyFile == null) "${PasswordUtil.encodePassword(credentials.username)}@${PasswordUtil.encodePassword(credentials.password)}" else credentials.password
 
     val keychain = OSXKeychain.getInstance()
     if (oldCredentials == null) {
