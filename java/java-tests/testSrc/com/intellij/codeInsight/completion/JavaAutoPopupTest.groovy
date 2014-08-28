@@ -1661,7 +1661,7 @@ class Foo {{
     assert lookup
   }
   
-  public void "test show popup with single live template if show.live.templates.in.completion option is enabled"() {
+  public void "test show popup with single live template if show_live_tempate_in_completion option is enabled"() {
     def oldValue = LiveTemplateCompletionContributor.ourShowTemplatesInTests
     try {
       LiveTemplateCompletionContributor.ourShowTemplatesInTests = false
