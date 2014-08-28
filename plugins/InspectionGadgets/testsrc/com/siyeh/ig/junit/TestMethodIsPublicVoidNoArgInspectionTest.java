@@ -13,28 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.naming;
+package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class StaticMethodNamingConventionInspectionTest extends LightInspectionTestCase {
+public class TestMethodIsPublicVoidNoArgInspectionTest extends LightInspectionTestCase {
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    final NativeMethodNamingConventionInspection inspection = new NativeMethodNamingConventionInspection();
-    inspection.m_minLength = 0;
-    myFixture.enableInspections(inspection);
-  }
+  public void testJUnit3TestMethodIsPublicVoidNoArg() { doTest(); }
+  public void testJUnit4TestMethodIsPublicVoidNoArg() { doTest(); }
 
+  @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new StaticMethodNamingConventionInspection();
+    return new TestMethodIsPublicVoidNoArgInspection();
   }
 
-  public void testStaticMethodNamingConvention() { doTest(); }
+  @Override
+  protected String[] getEnvironmentClasses() {
+    return new String[] {
+      "package org.junit; " +
+      "public @interface Test {\n" +
+      "    java.lang.Class<? extends java.lang.Throwable> expected() default org.junit.Test.None.class;" +
+      "}",
+      "package junit.framework;" +
+      "public abstract class TestCase {}"};
+  }
 }

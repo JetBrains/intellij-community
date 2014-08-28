@@ -57,7 +57,6 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
-  @Bombed(day = 30, month = Calendar.AUGUST)
   public void testCyclicParamsDependency() throws Exception {
     doTest();
   }
