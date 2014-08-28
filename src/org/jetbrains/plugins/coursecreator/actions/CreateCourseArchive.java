@@ -8,12 +8,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -22,13 +19,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.io.ZipUtil;
 import org.jetbrains.plugins.coursecreator.CCProjectService;
+import org.jetbrains.plugins.coursecreator.StudyDocumentListener;
 import org.jetbrains.plugins.coursecreator.format.*;
 import org.jetbrains.plugins.coursecreator.ui.CreateCourseArchiveDialog;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.zip.ZipOutputStream;
 
 public class CreateCourseArchive extends DumbAwareAction {
@@ -57,7 +53,6 @@ public class CreateCourseArchive extends DumbAwareAction {
     final CCProjectService service = CCProjectService.getInstance(project);
     final Course course = service.getCourse();
     if (course == null) return;
-    generateJson(project);
     CreateCourseArchiveDialog dlg = new CreateCourseArchiveDialog(project, this);
     dlg.show();
     if (dlg.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
@@ -65,7 +60,8 @@ public class CreateCourseArchive extends DumbAwareAction {
     }
     final VirtualFile baseDir = project.getBaseDir();
     final Map<String, Lesson> lessons = course.getLessonsMap();
-    List<FileEditor> editorList = new ArrayList<FileEditor>();
+    //List<FileEditor> editorList = new ArrayList<FileEditor>();
+    Map<VirtualFile, TaskFile> taskFiles = new HashMap<VirtualFile, TaskFile>();
     for (Map.Entry<String, Lesson> lesson : lessons.entrySet()) {
       final VirtualFile lessonDir = baseDir.findChild(lesson.getKey());
       if (lessonDir == null) continue;
@@ -77,17 +73,16 @@ public class CreateCourseArchive extends DumbAwareAction {
           if (file == null) continue;
           final Document document = FileDocumentManager.getInstance().getDocument(file);
           if (document == null) continue;
-
           final TaskFile taskFile = entry.getValue();
-          for (final TaskWindow taskWindow : taskFile.getTaskWindows()) {
+          document.addDocumentListener(new InsertionListener(taskFile));
+          taskFiles.put(file, taskFile);
+          taskFile.setTrackChanges(false);
+          Collections.sort(taskFile.getTaskWindows());
+          for (int i = taskFile.getTaskWindows().size() - 1; i >=0 ; i--) {
+            final TaskWindow taskWindow = taskFile.getTaskWindows().get(i);
             final String taskText = taskWindow.getTaskText();
             final int lineStartOffset = document.getLineStartOffset(taskWindow.line);
             final int offset = lineStartOffset + taskWindow.start;
-            final FileEditor[] editors = FileEditorManager.getInstance(project).getEditors(file);
-            if (editors.length > 0) {
-              editorList.add(editors[0]);
-            }
-
             CommandProcessor.getInstance().executeCommand(project, new Runnable() {
               @Override
               public void run() {
@@ -104,6 +99,7 @@ public class CreateCourseArchive extends DumbAwareAction {
         }
       }
     }
+    generateJson(project);
     try {
       File zipFile = new File(myLocationDir, myZipName + ".zip");
       ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
@@ -124,10 +120,30 @@ public class CreateCourseArchive extends DumbAwareAction {
       LOG.error(e1);
     }
 
-    for (FileEditor fileEditor : editorList) {
-      UndoManager.getInstance(project).undo(fileEditor);
+    for (Map.Entry<VirtualFile, TaskFile> entry: taskFiles.entrySet()) {
+      TaskFile value = entry.getValue();
+      final Document document = FileDocumentManager.getInstance().getDocument(entry.getKey());
+      if (document == null) {
+        continue;
+      }
+      for (final TaskWindow taskWindow : value.getTaskWindows()){
+        final int lineStartOffset = document.getLineStartOffset(taskWindow.line);
+        final int offset = lineStartOffset + taskWindow.start;
+        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+          @Override
+          public void run() {
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              @Override
+              public void run() {
+                document.replaceString(offset, offset + taskWindow.length, taskWindow.getPossibleAnswer());
+                FileDocumentManager.getInstance().saveDocument(document);
+              }
+            });
+          }
+        }, "x", "qwe");
+      }
+      value.setTrackChanges(true);
     }
-
     VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
     ProjectView.getInstance(project).refresh();
   }
@@ -160,6 +176,23 @@ public class CreateCourseArchive extends DumbAwareAction {
       catch (IOException e1) {
         //close silently
       }
+    }
+  }
+
+  private class InsertionListener extends StudyDocumentListener {
+
+    public InsertionListener(TaskFile taskFile) {
+      super(taskFile);
+    }
+
+    @Override
+    protected void updateTaskWindowLength(CharSequence fragment, TaskWindow taskWindow, int change) {
+    //we don't need to update task window length
+    }
+
+    @Override
+    protected boolean needModify() {
+      return true;
     }
   }
 }

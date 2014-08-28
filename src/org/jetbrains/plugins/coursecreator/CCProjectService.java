@@ -21,6 +21,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,7 +32,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.coursecreator.format.*;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @State(name = "CCProjectService",
        storages = {
@@ -43,6 +46,7 @@ public class CCProjectService implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(CCProjectService.class.getName());
   public Course myCourse;
   public static final String COURSE_ELEMENT = "course";
+  private static final Map<Document, StudyDocumentListener> myDocumentListeners = new HashMap<Document, StudyDocumentListener>();
 
   public void setCourse(@NotNull final Course course) {
     myCourse = course;
@@ -113,5 +117,22 @@ public class CCProjectService implements PersistentStateComponent<Element> {
     for (TaskWindow taskWindow : taskWindows) {
       taskWindow.drawHighlighter(editor);
     }
+  }
+
+  public static void addDocumentListener(Document document, StudyDocumentListener listener) {
+    myDocumentListeners.put(document, listener);
+  }
+
+  public static StudyDocumentListener getListener(Document document) {
+    return myDocumentListeners.get(document);
+  }
+
+  public static void removeListener(Document document) {
+    myDocumentListeners.remove(document);
+  }
+
+  public static boolean indexIsValid(int index, List<TaskWindow> collection) {
+    int size = collection.size();
+    return index >= 0 && index < size;
   }
 }

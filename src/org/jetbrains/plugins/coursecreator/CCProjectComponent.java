@@ -3,10 +3,13 @@ package org.jetbrains.plugins.coursecreator;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.event.EditorFactoryEvent;
+import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +45,7 @@ public class CCProjectComponent implements ProjectComponent {
             FileEditor fileEditor = FileEditorManager.getInstance(myProject).getSelectedEditor(file);
             if (fileEditor instanceof PsiAwareTextEditorImpl) {
               Editor editor = ((PsiAwareTextEditorImpl)fileEditor).getEditor();
-              CCProjectService.drawTaskWindows(file, editor, course);
+              new CCEditorFactoryListener().editorCreated(new EditorFactoryEvent(new EditorFactoryImpl(ProjectManager.getInstance()), editor ));
             }
           }
         }
