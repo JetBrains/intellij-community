@@ -12,15 +12,15 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler.vars;
+package org.jetbrains.java.decompiler.modules.decompiler.vars;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import de.fernflower.modules.decompiler.decompose.IGraphNode;
-import de.fernflower.util.SFormsFastMapDirect;
+import org.jetbrains.java.decompiler.modules.decompiler.decompose.IGraphNode;
+import org.jetbrains.java.decompiler.util.SFormsFastMapDirect;
 
 public class VarVersionNode implements IGraphNode {
 	

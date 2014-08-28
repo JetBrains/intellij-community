@@ -1,9 +1,9 @@
-package de.fernflower.code.instructions;
+package org.jetbrains.java.decompiler.code.instructions;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import de.fernflower.code.JumpInstruction;
+import org.jetbrains.java.decompiler.code.JumpInstruction;
 
 public class IF_ICMPEQ extends JumpInstruction {
 

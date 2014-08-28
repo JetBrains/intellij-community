@@ -12,14 +12,14 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler.exps;
+package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import de.fernflower.modules.decompiler.vars.CheckTypesResult;
-import de.fernflower.struct.gen.VarType;
-import de.fernflower.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
+import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 
 public class SwitchExprent extends Exprent {

@@ -12,7 +12,7 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler;
+package org.jetbrains.java.decompiler.modules.decompiler;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -22,44 +22,44 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.fernflower.code.CodeConstants;
-import de.fernflower.code.Instruction;
-import de.fernflower.code.InstructionSequence;
-import de.fernflower.code.cfg.BasicBlock;
-import de.fernflower.main.DecompilerContext;
-import de.fernflower.modules.decompiler.exps.ArrayExprent;
-import de.fernflower.modules.decompiler.exps.AssignmentExprent;
-import de.fernflower.modules.decompiler.exps.ConstExprent;
-import de.fernflower.modules.decompiler.exps.ExitExprent;
-import de.fernflower.modules.decompiler.exps.Exprent;
-import de.fernflower.modules.decompiler.exps.FieldExprent;
-import de.fernflower.modules.decompiler.exps.FunctionExprent;
-import de.fernflower.modules.decompiler.exps.IfExprent;
-import de.fernflower.modules.decompiler.exps.InvocationExprent;
-import de.fernflower.modules.decompiler.exps.MonitorExprent;
-import de.fernflower.modules.decompiler.exps.NewExprent;
-import de.fernflower.modules.decompiler.exps.SwitchExprent;
-import de.fernflower.modules.decompiler.exps.VarExprent;
-import de.fernflower.modules.decompiler.sforms.DirectGraph;
-import de.fernflower.modules.decompiler.sforms.DirectNode;
-import de.fernflower.modules.decompiler.sforms.FlattenStatementsHelper;
-import de.fernflower.modules.decompiler.sforms.FlattenStatementsHelper.FinallyPathWrapper;
-import de.fernflower.modules.decompiler.stats.BasicBlockStatement;
-import de.fernflower.modules.decompiler.stats.CatchAllStatement;
-import de.fernflower.modules.decompiler.stats.CatchStatement;
-import de.fernflower.modules.decompiler.stats.RootStatement;
-import de.fernflower.modules.decompiler.stats.Statement;
-import de.fernflower.modules.decompiler.vars.VarProcessor;
-import de.fernflower.struct.StructClass;
-import de.fernflower.struct.attr.StructBootstrapMethodsAttribute;
-import de.fernflower.struct.attr.StructGeneralAttribute;
-import de.fernflower.struct.consts.ConstantPool;
-import de.fernflower.struct.consts.LinkConstant;
-import de.fernflower.struct.consts.PooledConstant;
-import de.fernflower.struct.consts.PrimitiveConstant;
-import de.fernflower.struct.gen.MethodDescriptor;
-import de.fernflower.struct.gen.VarType;
-import de.fernflower.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.code.Instruction;
+import org.jetbrains.java.decompiler.code.InstructionSequence;
+import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.ArrayExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.ExitExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.FieldExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.FunctionExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.IfExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.InvocationExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.MonitorExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.NewExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.SwitchExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectGraph;
+import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectNode;
+import org.jetbrains.java.decompiler.modules.decompiler.sforms.FlattenStatementsHelper;
+import org.jetbrains.java.decompiler.modules.decompiler.sforms.FlattenStatementsHelper.FinallyPathWrapper;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.BasicBlockStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchAllStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
+import org.jetbrains.java.decompiler.struct.StructClass;
+import org.jetbrains.java.decompiler.struct.attr.StructBootstrapMethodsAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
+import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
+import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
+import org.jetbrains.java.decompiler.struct.consts.PooledConstant;
+import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
+import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
+import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 public class ExprProcessor implements CodeConstants {
 

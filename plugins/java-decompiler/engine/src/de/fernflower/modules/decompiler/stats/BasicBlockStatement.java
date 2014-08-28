@@ -12,15 +12,15 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler.stats;
+package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
-import de.fernflower.code.CodeConstants;
-import de.fernflower.code.Instruction;
-import de.fernflower.code.SimpleInstructionSequence;
-import de.fernflower.code.cfg.BasicBlock;
-import de.fernflower.main.DecompilerContext;
-import de.fernflower.main.collectors.CounterContainer;
-import de.fernflower.modules.decompiler.ExprProcessor;
+import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.code.Instruction;
+import org.jetbrains.java.decompiler.code.SimpleInstructionSequence;
+import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
+import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 
 public class BasicBlockStatement extends Statement {
 	

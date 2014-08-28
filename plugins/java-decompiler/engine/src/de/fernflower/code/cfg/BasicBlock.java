@@ -12,16 +12,16 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.code.cfg;
+package org.jetbrains.java.decompiler.code.cfg;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import de.fernflower.code.Instruction;
-import de.fernflower.code.InstructionSequence;
-import de.fernflower.code.SimpleInstructionSequence;
-import de.fernflower.main.DecompilerContext;
-import de.fernflower.modules.decompiler.decompose.IGraphNode;
+import org.jetbrains.java.decompiler.code.Instruction;
+import org.jetbrains.java.decompiler.code.InstructionSequence;
+import org.jetbrains.java.decompiler.code.SimpleInstructionSequence;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.modules.decompiler.decompose.IGraphNode;
 
 public class BasicBlock implements IGraphNode {
 

@@ -12,17 +12,17 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.struct.lazy;
+package org.jetbrains.java.decompiler.struct.lazy;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 
-import de.fernflower.main.extern.IBytecodeProvider;
-import de.fernflower.struct.StructMethod;
-import de.fernflower.struct.attr.StructGeneralAttribute;
-import de.fernflower.struct.consts.ConstantPool;
-import de.fernflower.util.DataInputFullStream;
+import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
+import org.jetbrains.java.decompiler.struct.StructMethod;
+import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
+import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
+import org.jetbrains.java.decompiler.util.DataInputFullStream;
 
 public class LazyLoader {
 

@@ -12,22 +12,22 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler.stats;
+package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-import de.fernflower.code.CodeConstants;
-import de.fernflower.main.DecompilerContext;
-import de.fernflower.main.collectors.CounterContainer;
-import de.fernflower.modules.decompiler.DecHelper;
-import de.fernflower.modules.decompiler.ExprProcessor;
-import de.fernflower.modules.decompiler.StatEdge;
-import de.fernflower.modules.decompiler.exps.VarExprent;
-import de.fernflower.modules.decompiler.vars.VarProcessor;
-import de.fernflower.struct.gen.VarType;
-import de.fernflower.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
+import org.jetbrains.java.decompiler.modules.decompiler.DecHelper;
+import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
+import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 public class CatchStatement extends Statement {
 	

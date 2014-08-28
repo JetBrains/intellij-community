@@ -12,7 +12,7 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.struct.gen.generics;
+package org.jetbrains.java.decompiler.struct.gen.generics;
 
 import java.util.ArrayList;
 import java.util.List;

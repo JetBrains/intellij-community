@@ -12,19 +12,19 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler;
+package org.jetbrains.java.decompiler.modules.decompiler;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-import de.fernflower.code.cfg.BasicBlock;
-import de.fernflower.main.DecompilerContext;
-import de.fernflower.main.collectors.CounterContainer;
-import de.fernflower.modules.decompiler.exps.Exprent;
-import de.fernflower.modules.decompiler.stats.BasicBlockStatement;
-import de.fernflower.modules.decompiler.stats.SequenceStatement;
-import de.fernflower.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.BasicBlockStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.SequenceStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 
 
 public class SequenceHelper {

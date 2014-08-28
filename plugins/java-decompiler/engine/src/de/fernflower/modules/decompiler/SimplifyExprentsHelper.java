@@ -12,7 +12,7 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler;
+package org.jetbrains.java.decompiler.modules.decompiler;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,28 +22,28 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.fernflower.code.CodeConstants;
-import de.fernflower.main.ClassesProcessor.ClassNode;
-import de.fernflower.main.DecompilerContext;
-import de.fernflower.main.extern.IFernflowerPreferences;
-import de.fernflower.modules.decompiler.exps.ArrayExprent;
-import de.fernflower.modules.decompiler.exps.AssignmentExprent;
-import de.fernflower.modules.decompiler.exps.ConstExprent;
-import de.fernflower.modules.decompiler.exps.ExitExprent;
-import de.fernflower.modules.decompiler.exps.Exprent;
-import de.fernflower.modules.decompiler.exps.FunctionExprent;
-import de.fernflower.modules.decompiler.exps.IfExprent;
-import de.fernflower.modules.decompiler.exps.InvocationExprent;
-import de.fernflower.modules.decompiler.exps.MonitorExprent;
-import de.fernflower.modules.decompiler.exps.NewExprent;
-import de.fernflower.modules.decompiler.exps.VarExprent;
-import de.fernflower.modules.decompiler.sforms.SSAConstructorSparseEx;
-import de.fernflower.modules.decompiler.stats.IfStatement;
-import de.fernflower.modules.decompiler.stats.Statement;
-import de.fernflower.modules.decompiler.vars.VarVersionPaar;
-import de.fernflower.struct.StructClass;
-import de.fernflower.struct.gen.VarType;
-import de.fernflower.util.FastSparseSetFactory.FastSparseSet;
+import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.ArrayExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.ExitExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.FunctionExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.IfExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.InvocationExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.MonitorExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.NewExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.sforms.SSAConstructorSparseEx;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPaar;
+import org.jetbrains.java.decompiler.struct.StructClass;
+import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
 
 public class SimplifyExprentsHelper {
 

@@ -12,17 +12,17 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.code.interpreter;
+package org.jetbrains.java.decompiler.code.interpreter;
 
-import de.fernflower.code.CodeConstants;
-import de.fernflower.code.Instruction;
-import de.fernflower.struct.consts.ConstantPool;
-import de.fernflower.struct.consts.LinkConstant;
-import de.fernflower.struct.consts.PrimitiveConstant;
-import de.fernflower.struct.gen.DataPoint;
-import de.fernflower.struct.gen.MethodDescriptor;
-import de.fernflower.struct.gen.VarType;
-import de.fernflower.util.ListStack;
+import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.code.Instruction;
+import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
+import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
+import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
+import org.jetbrains.java.decompiler.struct.gen.DataPoint;
+import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
+import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.util.ListStack;
 
 public class InstructionImpact {
 	

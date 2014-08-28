@@ -12,16 +12,16 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler;
+package org.jetbrains.java.decompiler.modules.decompiler;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Set;
 
-import de.fernflower.modules.decompiler.stats.DoStatement;
-import de.fernflower.modules.decompiler.stats.IfStatement;
-import de.fernflower.modules.decompiler.stats.SequenceStatement;
-import de.fernflower.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.SequenceStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 
 
 

@@ -12,28 +12,28 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler.vars;
+package org.jetbrains.java.decompiler.modules.decompiler.vars;
 
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-import de.fernflower.code.CodeConstants;
-import de.fernflower.main.DecompilerContext;
-import de.fernflower.modules.decompiler.exps.AssignmentExprent;
-import de.fernflower.modules.decompiler.exps.ConstExprent;
-import de.fernflower.modules.decompiler.exps.Exprent;
-import de.fernflower.modules.decompiler.exps.FunctionExprent;
-import de.fernflower.modules.decompiler.exps.VarExprent;
-import de.fernflower.modules.decompiler.sforms.DirectGraph;
-import de.fernflower.modules.decompiler.stats.CatchAllStatement;
-import de.fernflower.modules.decompiler.stats.CatchStatement;
-import de.fernflower.modules.decompiler.stats.RootStatement;
-import de.fernflower.modules.decompiler.stats.Statement;
-import de.fernflower.struct.StructClass;
-import de.fernflower.struct.StructMethod;
-import de.fernflower.struct.gen.MethodDescriptor;
-import de.fernflower.struct.gen.VarType;
+import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.FunctionExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectGraph;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchAllStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.struct.StructClass;
+import org.jetbrains.java.decompiler.struct.StructMethod;
+import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
+import org.jetbrains.java.decompiler.struct.gen.VarType;
 
 public class VarTypeProcessor {
 	

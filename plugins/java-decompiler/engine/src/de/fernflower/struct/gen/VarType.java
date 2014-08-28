@@ -12,10 +12,10 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.struct.gen;
+package org.jetbrains.java.decompiler.struct.gen;
 
-import de.fernflower.code.CodeConstants;
-import de.fernflower.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 public class VarType {  // TODO: optimize switch
 	

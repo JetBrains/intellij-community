@@ -12,7 +12,7 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler.exps;
+package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import java.util.List;
 

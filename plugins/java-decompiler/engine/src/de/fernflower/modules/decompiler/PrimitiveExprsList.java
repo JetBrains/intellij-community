@@ -12,12 +12,12 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler;
+package org.jetbrains.java.decompiler.modules.decompiler;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import de.fernflower.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 
 public class PrimitiveExprsList {
 

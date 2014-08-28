@@ -12,7 +12,7 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler.sforms;
+package org.jetbrains.java.decompiler.modules.decompiler.sforms;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -21,23 +21,23 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 
-import de.fernflower.code.CodeConstants;
-import de.fernflower.modules.decompiler.exps.AssignmentExprent;
-import de.fernflower.modules.decompiler.exps.Exprent;
-import de.fernflower.modules.decompiler.exps.FunctionExprent;
-import de.fernflower.modules.decompiler.exps.VarExprent;
-import de.fernflower.modules.decompiler.sforms.FlattenStatementsHelper.FinallyPathWrapper;
-import de.fernflower.modules.decompiler.stats.CatchAllStatement;
-import de.fernflower.modules.decompiler.stats.CatchStatement;
-import de.fernflower.modules.decompiler.stats.RootStatement;
-import de.fernflower.modules.decompiler.stats.Statement;
-import de.fernflower.modules.decompiler.vars.VarVersionPaar;
-import de.fernflower.struct.StructMethod;
-import de.fernflower.struct.gen.MethodDescriptor;
-import de.fernflower.util.FastSparseSetFactory;
-import de.fernflower.util.FastSparseSetFactory.FastSparseSet;
-import de.fernflower.util.InterpreterUtil;
-import de.fernflower.util.SFormsFastMapDirect;
+import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.FunctionExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.sforms.FlattenStatementsHelper.FinallyPathWrapper;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchAllStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPaar;
+import org.jetbrains.java.decompiler.struct.StructMethod;
+import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
+import org.jetbrains.java.decompiler.util.FastSparseSetFactory;
+import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.util.SFormsFastMapDirect;
 
 public class SSAConstructorSparseEx {
 

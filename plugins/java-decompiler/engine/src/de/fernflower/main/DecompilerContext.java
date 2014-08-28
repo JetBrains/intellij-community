@@ -12,17 +12,17 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.main;
+package org.jetbrains.java.decompiler.main;
 
 import java.util.HashMap;
 
-import de.fernflower.main.collectors.CounterContainer;
-import de.fernflower.main.collectors.ImportCollector;
-import de.fernflower.main.collectors.VarNamesCollector;
-import de.fernflower.main.extern.IFernflowerLogger;
-import de.fernflower.main.extern.IFernflowerPreferences;
-import de.fernflower.modules.renamer.PoolInterceptor;
-import de.fernflower.struct.StructContext;
+import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
+import org.jetbrains.java.decompiler.main.collectors.ImportCollector;
+import org.jetbrains.java.decompiler.main.collectors.VarNamesCollector;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+import org.jetbrains.java.decompiler.modules.renamer.PoolInterceptor;
+import org.jetbrains.java.decompiler.struct.StructContext;
 
 
 public class DecompilerContext {

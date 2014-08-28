@@ -12,7 +12,7 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.code.cfg;
+package org.jetbrains.java.decompiler.code.cfg;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,22 +25,22 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.fernflower.code.CodeConstants;
-import de.fernflower.code.ExceptionHandler;
-import de.fernflower.code.Instruction;
-import de.fernflower.code.InstructionSequence;
-import de.fernflower.code.JumpInstruction;
-import de.fernflower.code.SimpleInstructionSequence;
-import de.fernflower.code.SwitchInstruction;
-import de.fernflower.code.interpreter.InstructionImpact;
-import de.fernflower.main.DecompilerContext;
-import de.fernflower.modules.code.DeadCodeHelper;
-import de.fernflower.struct.StructMethod;
-import de.fernflower.struct.consts.ConstantPool;
-import de.fernflower.struct.gen.DataPoint;
-import de.fernflower.struct.gen.VarType;
-import de.fernflower.util.ListStack;
-import de.fernflower.util.VBStyleCollection;
+import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.code.ExceptionHandler;
+import org.jetbrains.java.decompiler.code.Instruction;
+import org.jetbrains.java.decompiler.code.InstructionSequence;
+import org.jetbrains.java.decompiler.code.JumpInstruction;
+import org.jetbrains.java.decompiler.code.SimpleInstructionSequence;
+import org.jetbrains.java.decompiler.code.SwitchInstruction;
+import org.jetbrains.java.decompiler.code.interpreter.InstructionImpact;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.modules.code.DeadCodeHelper;
+import org.jetbrains.java.decompiler.struct.StructMethod;
+import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
+import org.jetbrains.java.decompiler.struct.gen.DataPoint;
+import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.util.ListStack;
+import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 public class ControlFlowGraph implements CodeConstants {
 

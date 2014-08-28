@@ -12,12 +12,12 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.struct.consts;
+package org.jetbrains.java.decompiler.struct.consts;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import de.fernflower.code.CodeConstants;
+import org.jetbrains.java.decompiler.code.CodeConstants;
 
 /*
     cp_info {

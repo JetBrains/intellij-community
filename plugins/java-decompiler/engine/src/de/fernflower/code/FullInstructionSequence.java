@@ -12,9 +12,9 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.code;
+package org.jetbrains.java.decompiler.code;
 
-import de.fernflower.util.VBStyleCollection;
+import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 
 public class FullInstructionSequence extends InstructionSequence {

@@ -12,14 +12,14 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.struct.gen;
+package org.jetbrains.java.decompiler.struct.gen;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import de.fernflower.code.CodeConstants;
-import de.fernflower.struct.StructMethod;
-import de.fernflower.util.ListStack;
+import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.struct.StructMethod;
+import org.jetbrains.java.decompiler.util.ListStack;
 
 public class DataPoint {
 

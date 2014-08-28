@@ -12,10 +12,10 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler;
+package org.jetbrains.java.decompiler.modules.decompiler;
 
-import de.fernflower.modules.decompiler.exps.Exprent;
-import de.fernflower.util.ListStack;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.util.ListStack;
 
 public class ExprentStack extends ListStack<Exprent> {
 	

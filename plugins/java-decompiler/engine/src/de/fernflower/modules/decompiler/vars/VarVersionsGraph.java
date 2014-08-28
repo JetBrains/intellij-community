@@ -12,7 +12,7 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler.vars;
+package org.jetbrains.java.decompiler.modules.decompiler.vars;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,10 +22,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import de.fernflower.modules.decompiler.decompose.GenericDominatorEngine;
-import de.fernflower.modules.decompiler.decompose.IGraph;
-import de.fernflower.modules.decompiler.decompose.IGraphNode;
-import de.fernflower.util.VBStyleCollection;
+import org.jetbrains.java.decompiler.modules.decompiler.decompose.GenericDominatorEngine;
+import org.jetbrains.java.decompiler.modules.decompiler.decompose.IGraph;
+import org.jetbrains.java.decompiler.modules.decompiler.decompose.IGraphNode;
+import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 
 public class VarVersionsGraph {

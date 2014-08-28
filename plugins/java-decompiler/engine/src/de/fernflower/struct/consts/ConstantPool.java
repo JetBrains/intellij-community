@@ -12,7 +12,7 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.struct.consts;
+package org.jetbrains.java.decompiler.struct.consts;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -21,12 +21,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.fernflower.code.CodeConstants;
-import de.fernflower.main.DecompilerContext;
-import de.fernflower.modules.renamer.PoolInterceptor;
-import de.fernflower.struct.gen.FieldDescriptor;
-import de.fernflower.struct.gen.MethodDescriptor;
-import de.fernflower.struct.gen.VarType;
+import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.modules.renamer.PoolInterceptor;
+import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
+import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
+import org.jetbrains.java.decompiler.struct.gen.VarType;
 
 public class ConstantPool {
 	

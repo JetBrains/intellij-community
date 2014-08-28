@@ -1,4 +1,4 @@
-package de.fernflower.main.rels;
+package org.jetbrains.java.decompiler.main.rels;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -7,21 +7,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.fernflower.code.CodeConstants;
-import de.fernflower.code.Instruction;
-import de.fernflower.code.InstructionSequence;
-import de.fernflower.main.ClassesProcessor;
-import de.fernflower.main.ClassesProcessor.ClassNode;
-import de.fernflower.main.DecompilerContext;
-import de.fernflower.struct.StructClass;
-import de.fernflower.struct.StructMethod;
-import de.fernflower.struct.attr.StructBootstrapMethodsAttribute;
-import de.fernflower.struct.attr.StructGeneralAttribute;
-import de.fernflower.struct.consts.LinkConstant;
-import de.fernflower.struct.consts.PooledConstant;
-import de.fernflower.struct.consts.PrimitiveConstant;
-import de.fernflower.struct.gen.MethodDescriptor;
-import de.fernflower.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.code.Instruction;
+import org.jetbrains.java.decompiler.code.InstructionSequence;
+import org.jetbrains.java.decompiler.main.ClassesProcessor;
+import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.struct.StructClass;
+import org.jetbrains.java.decompiler.struct.StructMethod;
+import org.jetbrains.java.decompiler.struct.attr.StructBootstrapMethodsAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
+import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
+import org.jetbrains.java.decompiler.struct.consts.PooledConstant;
+import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
+import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 public class LambdaProcessor {
 

@@ -12,7 +12,7 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.main;
+package org.jetbrains.java.decompiler.main;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -27,24 +27,24 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.fernflower.code.CodeConstants;
-import de.fernflower.main.collectors.CounterContainer;
-import de.fernflower.main.collectors.ImportCollector;
-import de.fernflower.main.extern.IFernflowerLogger;
-import de.fernflower.main.extern.IFernflowerPreferences;
-import de.fernflower.main.extern.IIdentifierRenamer;
-import de.fernflower.main.rels.ClassWrapper;
-import de.fernflower.main.rels.LambdaProcessor;
-import de.fernflower.main.rels.NestedClassProcessor;
-import de.fernflower.main.rels.NestedMemberAccess;
-import de.fernflower.modules.decompiler.exps.InvocationExprent;
-import de.fernflower.modules.decompiler.vars.VarVersionPaar;
-import de.fernflower.struct.StructClass;
-import de.fernflower.struct.StructContext;
-import de.fernflower.struct.StructMethod;
-import de.fernflower.struct.attr.StructInnerClassesAttribute;
-import de.fernflower.struct.gen.VarType;
-import de.fernflower.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
+import org.jetbrains.java.decompiler.main.collectors.ImportCollector;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+import org.jetbrains.java.decompiler.main.extern.IIdentifierRenamer;
+import org.jetbrains.java.decompiler.main.rels.ClassWrapper;
+import org.jetbrains.java.decompiler.main.rels.LambdaProcessor;
+import org.jetbrains.java.decompiler.main.rels.NestedClassProcessor;
+import org.jetbrains.java.decompiler.main.rels.NestedMemberAccess;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.InvocationExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPaar;
+import org.jetbrains.java.decompiler.struct.StructClass;
+import org.jetbrains.java.decompiler.struct.StructContext;
+import org.jetbrains.java.decompiler.struct.StructMethod;
+import org.jetbrains.java.decompiler.struct.attr.StructInnerClassesAttribute;
+import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 public class ClassesProcessor {
 

@@ -12,9 +12,9 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler.vars;
+package org.jetbrains.java.decompiler.modules.decompiler.vars;
 
-import de.fernflower.modules.decompiler.exps.VarExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
 
 public class VarVersionPaar {
 

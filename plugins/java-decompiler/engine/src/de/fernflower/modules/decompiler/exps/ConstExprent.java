@@ -12,19 +12,19 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler.exps;
+package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import de.fernflower.code.CodeConstants;
-import de.fernflower.main.DecompilerContext;
-import de.fernflower.main.extern.IFernflowerPreferences;
-import de.fernflower.modules.decompiler.ExprProcessor;
-import de.fernflower.struct.gen.FieldDescriptor;
-import de.fernflower.struct.gen.VarType;
-import de.fernflower.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
+import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
+import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 public class ConstExprent extends Exprent {
 	private static final HashMap<Integer, String> escapes = new HashMap<Integer, String>();

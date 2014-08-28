@@ -12,16 +12,16 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.struct;
+package org.jetbrains.java.decompiler.struct;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.jar.Manifest;
 
-import de.fernflower.main.extern.IDecompilatSaver;
-import de.fernflower.struct.lazy.LazyLoader;
-import de.fernflower.struct.lazy.LazyLoader.Link;
+import org.jetbrains.java.decompiler.main.extern.IDecompilatSaver;
+import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
+import org.jetbrains.java.decompiler.struct.lazy.LazyLoader.Link;
 
 public class ContextUnit {
 	

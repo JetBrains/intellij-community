@@ -1,8 +1,8 @@
-package de.fernflower.modules.renamer;
+package org.jetbrains.java.decompiler.modules.renamer;
 
 import java.util.HashSet;
 
-import de.fernflower.main.extern.IIdentifierRenamer;
+import org.jetbrains.java.decompiler.main.extern.IIdentifierRenamer;
 
 public class ConverterHelper implements IIdentifierRenamer {
 

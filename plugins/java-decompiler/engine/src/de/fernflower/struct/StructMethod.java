@@ -12,7 +12,7 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.struct;
+package org.jetbrains.java.decompiler.struct;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -21,18 +21,18 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.fernflower.code.CodeConstants;
-import de.fernflower.code.ConstantsUtil;
-import de.fernflower.code.ExceptionHandler;
-import de.fernflower.code.ExceptionTable;
-import de.fernflower.code.FullInstructionSequence;
-import de.fernflower.code.Instruction;
-import de.fernflower.code.InstructionSequence;
-import de.fernflower.struct.attr.StructGeneralAttribute;
-import de.fernflower.struct.attr.StructLocalVariableTableAttribute;
-import de.fernflower.struct.consts.ConstantPool;
-import de.fernflower.util.DataInputFullStream;
-import de.fernflower.util.VBStyleCollection;
+import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.code.ConstantsUtil;
+import org.jetbrains.java.decompiler.code.ExceptionHandler;
+import org.jetbrains.java.decompiler.code.ExceptionTable;
+import org.jetbrains.java.decompiler.code.FullInstructionSequence;
+import org.jetbrains.java.decompiler.code.Instruction;
+import org.jetbrains.java.decompiler.code.InstructionSequence;
+import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
+import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
+import org.jetbrains.java.decompiler.util.DataInputFullStream;
+import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 /*
     method_info {

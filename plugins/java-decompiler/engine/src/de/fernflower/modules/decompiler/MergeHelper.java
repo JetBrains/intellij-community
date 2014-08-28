@@ -12,22 +12,22 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler;
+package org.jetbrains.java.decompiler.modules.decompiler;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import de.fernflower.code.cfg.BasicBlock;
-import de.fernflower.main.DecompilerContext;
-import de.fernflower.main.collectors.CounterContainer;
-import de.fernflower.modules.decompiler.exps.Exprent;
-import de.fernflower.modules.decompiler.exps.IfExprent;
-import de.fernflower.modules.decompiler.stats.BasicBlockStatement;
-import de.fernflower.modules.decompiler.stats.DoStatement;
-import de.fernflower.modules.decompiler.stats.IfStatement;
-import de.fernflower.modules.decompiler.stats.Statement;
-import de.fernflower.modules.decompiler.stats.SwitchStatement;
+import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.IfExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.BasicBlockStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.SwitchStatement;
 
 public class MergeHelper {
 

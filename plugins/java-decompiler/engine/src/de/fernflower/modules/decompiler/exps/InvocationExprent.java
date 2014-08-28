@@ -12,26 +12,26 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler.exps;
+package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import java.util.*;
 
-import de.fernflower.code.CodeConstants;
-import de.fernflower.main.ClassesProcessor.ClassNode;
-import de.fernflower.main.DecompilerContext;
-import de.fernflower.main.extern.IFernflowerPreferences;
-import de.fernflower.main.rels.MethodWrapper;
-import de.fernflower.modules.decompiler.ExprProcessor;
-import de.fernflower.modules.decompiler.vars.CheckTypesResult;
-import de.fernflower.modules.decompiler.vars.VarProcessor;
-import de.fernflower.modules.decompiler.vars.VarVersionPaar;
-import de.fernflower.struct.StructClass;
-import de.fernflower.struct.StructMethod;
-import de.fernflower.struct.consts.LinkConstant;
-import de.fernflower.struct.gen.MethodDescriptor;
-import de.fernflower.struct.gen.VarType;
-import de.fernflower.util.InterpreterUtil;
-import de.fernflower.util.ListStack;
+import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
+import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPaar;
+import org.jetbrains.java.decompiler.struct.StructClass;
+import org.jetbrains.java.decompiler.struct.StructMethod;
+import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
+import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
+import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.util.ListStack;
 
 
 public class InvocationExprent extends Exprent {

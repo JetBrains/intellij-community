@@ -12,16 +12,16 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler.sforms;
+package org.jetbrains.java.decompiler.modules.decompiler.sforms;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
-import de.fernflower.modules.decompiler.exps.Exprent;
-import de.fernflower.modules.decompiler.sforms.FlattenStatementsHelper.FinallyPathWrapper;
-import de.fernflower.util.VBStyleCollection;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.modules.decompiler.sforms.FlattenStatementsHelper.FinallyPathWrapper;
+import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 
 public class DirectGraph {

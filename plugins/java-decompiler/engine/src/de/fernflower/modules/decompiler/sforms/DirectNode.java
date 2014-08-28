@@ -12,14 +12,14 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler.sforms;
+package org.jetbrains.java.decompiler.modules.decompiler.sforms;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import de.fernflower.modules.decompiler.exps.Exprent;
-import de.fernflower.modules.decompiler.stats.BasicBlockStatement;
-import de.fernflower.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.BasicBlockStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 
 
 public class DirectNode {

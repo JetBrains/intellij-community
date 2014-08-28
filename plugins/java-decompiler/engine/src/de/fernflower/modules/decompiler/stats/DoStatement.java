@@ -12,16 +12,16 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler.stats;
+package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import de.fernflower.main.DecompilerContext;
-import de.fernflower.modules.decompiler.ExprProcessor;
-import de.fernflower.modules.decompiler.StatEdge;
-import de.fernflower.modules.decompiler.exps.Exprent;
-import de.fernflower.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 
 public class DoStatement extends Statement {

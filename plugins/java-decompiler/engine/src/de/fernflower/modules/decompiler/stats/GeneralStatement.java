@@ -12,13 +12,13 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler.stats;
+package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import java.util.Collection;
 import java.util.HashSet;
 
-import de.fernflower.main.DecompilerContext;
-import de.fernflower.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 
 

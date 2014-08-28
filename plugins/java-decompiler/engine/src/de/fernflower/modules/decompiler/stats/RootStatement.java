@@ -12,9 +12,9 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler.stats;
+package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
-import de.fernflower.modules.decompiler.ExprProcessor;
+import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 
 
 public class RootStatement extends Statement {

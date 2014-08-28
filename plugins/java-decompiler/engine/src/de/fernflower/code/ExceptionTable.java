@@ -12,13 +12,13 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.code;
+package org.jetbrains.java.decompiler.code;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import de.fernflower.code.interpreter.Util;
-import de.fernflower.struct.StructContext;
+import org.jetbrains.java.decompiler.code.interpreter.Util;
+import org.jetbrains.java.decompiler.struct.StructContext;
 
 public class ExceptionTable {
 

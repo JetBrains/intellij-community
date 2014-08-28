@@ -12,26 +12,26 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler;
+package org.jetbrains.java.decompiler.modules.decompiler;
 
 import java.util.List;
 
-import de.fernflower.code.CodeConstants;
-import de.fernflower.modules.decompiler.exps.AnnotationExprent;
-import de.fernflower.modules.decompiler.exps.ConstExprent;
-import de.fernflower.modules.decompiler.exps.ExitExprent;
-import de.fernflower.modules.decompiler.exps.Exprent;
-import de.fernflower.modules.decompiler.exps.FunctionExprent;
-import de.fernflower.modules.decompiler.exps.VarExprent;
-import de.fernflower.modules.decompiler.stats.IfStatement;
-import de.fernflower.modules.decompiler.stats.SequenceStatement;
-import de.fernflower.modules.decompiler.stats.Statement;
-import de.fernflower.struct.StructMethod;
-import de.fernflower.struct.attr.StructAnnotationAttribute;
-import de.fernflower.struct.attr.StructAnnotationParameterAttribute;
-import de.fernflower.struct.attr.StructGeneralAttribute;
-import de.fernflower.struct.gen.MethodDescriptor;
-import de.fernflower.util.VBStyleCollection;
+import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.AnnotationExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.ExitExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.FunctionExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.SequenceStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.struct.StructMethod;
+import org.jetbrains.java.decompiler.struct.attr.StructAnnotationAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructAnnotationParameterAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
+import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
+import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 public class IdeaNotNullHelper {
 

@@ -12,24 +12,24 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.main;
+package org.jetbrains.java.decompiler.main;
 
-import de.fernflower.code.CodeConstants;
-import de.fernflower.main.ClassesProcessor.ClassNode;
-import de.fernflower.main.rels.ClassWrapper;
-import de.fernflower.main.rels.MethodWrapper;
-import de.fernflower.modules.decompiler.exps.Exprent;
-import de.fernflower.modules.decompiler.exps.InvocationExprent;
-import de.fernflower.modules.decompiler.exps.NewExprent;
-import de.fernflower.modules.decompiler.exps.VarExprent;
-import de.fernflower.modules.decompiler.stats.Statement;
-import de.fernflower.modules.decompiler.vars.VarVersionPaar;
-import de.fernflower.struct.StructClass;
-import de.fernflower.struct.StructField;
-import de.fernflower.struct.StructMethod;
-import de.fernflower.struct.gen.FieldDescriptor;
-import de.fernflower.struct.gen.VarType;
-import de.fernflower.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
+import org.jetbrains.java.decompiler.main.rels.ClassWrapper;
+import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.InvocationExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.NewExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPaar;
+import org.jetbrains.java.decompiler.struct.StructClass;
+import org.jetbrains.java.decompiler.struct.StructField;
+import org.jetbrains.java.decompiler.struct.StructMethod;
+import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
+import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 public class EnumProcessor {
 

@@ -12,7 +12,7 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler.vars;
+package org.jetbrains.java.decompiler.modules.decompiler.vars;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,19 +21,19 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 
-import de.fernflower.code.CodeConstants;
-import de.fernflower.main.DecompilerContext;
-import de.fernflower.main.collectors.CounterContainer;
-import de.fernflower.modules.decompiler.exps.ConstExprent;
-import de.fernflower.modules.decompiler.exps.Exprent;
-import de.fernflower.modules.decompiler.exps.VarExprent;
-import de.fernflower.modules.decompiler.sforms.DirectGraph;
-import de.fernflower.modules.decompiler.sforms.FlattenStatementsHelper;
-import de.fernflower.modules.decompiler.sforms.SSAConstructorSparseEx;
-import de.fernflower.modules.decompiler.stats.RootStatement;
-import de.fernflower.struct.StructMethod;
-import de.fernflower.struct.gen.VarType;
-import de.fernflower.util.FastSparseSetFactory.FastSparseSet;
+import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectGraph;
+import org.jetbrains.java.decompiler.modules.decompiler.sforms.FlattenStatementsHelper;
+import org.jetbrains.java.decompiler.modules.decompiler.sforms.SSAConstructorSparseEx;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
+import org.jetbrains.java.decompiler.struct.StructMethod;
+import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
 
 public class VarVersionsProcessor {
 	

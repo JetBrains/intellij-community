@@ -12,14 +12,14 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.code.cfg;
+package org.jetbrains.java.decompiler.code.cfg;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import de.fernflower.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
 
 public class ExceptionRangeCFG {
 	

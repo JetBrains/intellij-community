@@ -12,7 +12,7 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.struct;
+package org.jetbrains.java.decompiler.struct;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,10 +22,10 @@ import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import de.fernflower.main.DecompilerContext;
-import de.fernflower.main.extern.IDecompilatSaver;
-import de.fernflower.main.extern.IFernflowerLogger;
-import de.fernflower.struct.lazy.LazyLoader;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.extern.IDecompilatSaver;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
 
 
 public class StructContext {

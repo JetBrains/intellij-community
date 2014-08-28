@@ -12,15 +12,15 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.util;
+package org.jetbrains.java.decompiler.util;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.Map.Entry;
 
-import de.fernflower.modules.decompiler.exps.VarExprent;
-import de.fernflower.util.FastSparseSetFactory.FastSparseSet;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
+import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
 
 public class SFormsFastMapDirect {
 

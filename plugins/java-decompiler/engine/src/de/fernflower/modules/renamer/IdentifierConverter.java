@@ -1,4 +1,4 @@
-package de.fernflower.modules.renamer;
+package org.jetbrains.java.decompiler.modules.renamer;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -7,18 +7,18 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
-import de.fernflower.code.CodeConstants;
-import de.fernflower.main.DecompilerContext;
-import de.fernflower.main.extern.IFernflowerPreferences;
-import de.fernflower.main.extern.IIdentifierRenamer;
-import de.fernflower.struct.StructClass;
-import de.fernflower.struct.StructContext;
-import de.fernflower.struct.StructField;
-import de.fernflower.struct.StructMethod;
-import de.fernflower.struct.gen.FieldDescriptor;
-import de.fernflower.struct.gen.MethodDescriptor;
-import de.fernflower.struct.gen.VarType;
-import de.fernflower.util.VBStyleCollection;
+import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+import org.jetbrains.java.decompiler.main.extern.IIdentifierRenamer;
+import org.jetbrains.java.decompiler.struct.StructClass;
+import org.jetbrains.java.decompiler.struct.StructContext;
+import org.jetbrains.java.decompiler.struct.StructField;
+import org.jetbrains.java.decompiler.struct.StructMethod;
+import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
+import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
+import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 public class IdentifierConverter {
 

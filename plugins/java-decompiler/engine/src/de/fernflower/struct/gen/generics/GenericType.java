@@ -12,12 +12,12 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.struct.gen.generics;
+package org.jetbrains.java.decompiler.struct.gen.generics;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import de.fernflower.code.CodeConstants;
+import org.jetbrains.java.decompiler.code.CodeConstants;
 
 public class GenericType {
 	

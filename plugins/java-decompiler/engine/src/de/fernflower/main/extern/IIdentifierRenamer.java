@@ -1,4 +1,4 @@
-package de.fernflower.main.extern;
+package org.jetbrains.java.decompiler.main.extern;
 
 
 public interface IIdentifierRenamer {

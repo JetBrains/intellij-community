@@ -12,19 +12,19 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler.exps;
+package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
-import de.fernflower.code.CodeConstants;
-import de.fernflower.modules.decompiler.ExprProcessor;
-import de.fernflower.modules.decompiler.vars.CheckTypesResult;
-import de.fernflower.struct.gen.VarType;
-import de.fernflower.util.InterpreterUtil;
-import de.fernflower.util.ListStack;
+import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
+import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.util.ListStack;
 
 
 

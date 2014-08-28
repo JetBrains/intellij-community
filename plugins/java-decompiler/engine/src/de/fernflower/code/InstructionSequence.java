@@ -12,7 +12,7 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.code;
+package org.jetbrains.java.decompiler.code;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -20,11 +20,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import de.fernflower.code.interpreter.Util;
-import de.fernflower.main.DecompilerContext;
-import de.fernflower.struct.StructContext;
-import de.fernflower.util.InterpreterUtil;
-import de.fernflower.util.VBStyleCollection;
+import org.jetbrains.java.decompiler.code.interpreter.Util;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.struct.StructContext;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 
 public abstract class InstructionSequence {

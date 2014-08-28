@@ -12,13 +12,13 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.struct.attr;
+package org.jetbrains.java.decompiler.struct.attr;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 
-import de.fernflower.modules.decompiler.exps.Exprent;
-import de.fernflower.struct.consts.ConstantPool;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 
 
 public class StructAnnDefaultAttribute extends StructGeneralAttribute {

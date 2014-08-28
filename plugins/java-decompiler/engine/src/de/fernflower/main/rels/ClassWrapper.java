@@ -12,29 +12,29 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.main.rels;
+package org.jetbrains.java.decompiler.main.rels;
 
 import java.io.IOException;
 import java.util.HashSet;
 
-import de.fernflower.code.CodeConstants;
-import de.fernflower.main.DecompilerContext;
-import de.fernflower.main.collectors.CounterContainer;
-import de.fernflower.main.collectors.VarNamesCollector;
-import de.fernflower.main.extern.IFernflowerLogger;
-import de.fernflower.main.extern.IFernflowerPreferences;
-import de.fernflower.modules.decompiler.exps.Exprent;
-import de.fernflower.modules.decompiler.stats.RootStatement;
-import de.fernflower.modules.decompiler.vars.VarProcessor;
-import de.fernflower.modules.decompiler.vars.VarVersionPaar;
-import de.fernflower.struct.StructClass;
-import de.fernflower.struct.StructField;
-import de.fernflower.struct.StructMethod;
-import de.fernflower.struct.attr.StructGeneralAttribute;
-import de.fernflower.struct.attr.StructLocalVariableTableAttribute;
-import de.fernflower.struct.gen.MethodDescriptor;
-import de.fernflower.util.InterpreterUtil;
-import de.fernflower.util.VBStyleCollection;
+import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
+import org.jetbrains.java.decompiler.main.collectors.VarNamesCollector;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPaar;
+import org.jetbrains.java.decompiler.struct.StructClass;
+import org.jetbrains.java.decompiler.struct.StructField;
+import org.jetbrains.java.decompiler.struct.StructMethod;
+import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
+import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 public class ClassWrapper {
 

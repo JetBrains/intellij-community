@@ -12,7 +12,7 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.main;
+package org.jetbrains.java.decompiler.main;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -22,42 +22,42 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
-import de.fernflower.code.CodeConstants;
-import de.fernflower.main.ClassesProcessor.ClassNode;
-import de.fernflower.main.extern.IFernflowerLogger;
-import de.fernflower.main.extern.IFernflowerPreferences;
-import de.fernflower.main.rels.ClassWrapper;
-import de.fernflower.main.rels.MethodWrapper;
-import de.fernflower.modules.decompiler.ExprProcessor;
-import de.fernflower.modules.decompiler.exps.AnnotationExprent;
-import de.fernflower.modules.decompiler.exps.ConstExprent;
-import de.fernflower.modules.decompiler.exps.Exprent;
-import de.fernflower.modules.decompiler.exps.NewExprent;
-import de.fernflower.modules.decompiler.stats.RootStatement;
-import de.fernflower.modules.decompiler.vars.VarTypeProcessor;
-import de.fernflower.modules.decompiler.vars.VarVersionPaar;
-import de.fernflower.modules.renamer.PoolInterceptor;
-import de.fernflower.struct.StructClass;
-import de.fernflower.struct.StructField;
-import de.fernflower.struct.StructMethod;
-import de.fernflower.struct.attr.StructAnnDefaultAttribute;
-import de.fernflower.struct.attr.StructAnnotationAttribute;
-import de.fernflower.struct.attr.StructAnnotationParameterAttribute;
-import de.fernflower.struct.attr.StructConstantValueAttribute;
-import de.fernflower.struct.attr.StructExceptionsAttribute;
-import de.fernflower.struct.attr.StructGeneralAttribute;
-import de.fernflower.struct.attr.StructGenericSignatureAttribute;
-import de.fernflower.struct.consts.PrimitiveConstant;
-import de.fernflower.struct.gen.FieldDescriptor;
-import de.fernflower.struct.gen.MethodDescriptor;
-import de.fernflower.struct.gen.VarType;
-import de.fernflower.struct.gen.generics.GenericClassDescriptor;
-import de.fernflower.struct.gen.generics.GenericFieldDescriptor;
-import de.fernflower.struct.gen.generics.GenericMain;
-import de.fernflower.struct.gen.generics.GenericMethodDescriptor;
-import de.fernflower.struct.gen.generics.GenericType;
-import de.fernflower.util.InterpreterUtil;
-import de.fernflower.util.VBStyleCollection;
+import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+import org.jetbrains.java.decompiler.main.rels.ClassWrapper;
+import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
+import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.AnnotationExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.NewExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarTypeProcessor;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPaar;
+import org.jetbrains.java.decompiler.modules.renamer.PoolInterceptor;
+import org.jetbrains.java.decompiler.struct.StructClass;
+import org.jetbrains.java.decompiler.struct.StructField;
+import org.jetbrains.java.decompiler.struct.StructMethod;
+import org.jetbrains.java.decompiler.struct.attr.StructAnnDefaultAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructAnnotationAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructAnnotationParameterAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructConstantValueAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructExceptionsAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructGenericSignatureAttribute;
+import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
+import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
+import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
+import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.struct.gen.generics.GenericClassDescriptor;
+import org.jetbrains.java.decompiler.struct.gen.generics.GenericFieldDescriptor;
+import org.jetbrains.java.decompiler.struct.gen.generics.GenericMain;
+import org.jetbrains.java.decompiler.struct.gen.generics.GenericMethodDescriptor;
+import org.jetbrains.java.decompiler.struct.gen.generics.GenericType;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 public class ClassWriter {
 	

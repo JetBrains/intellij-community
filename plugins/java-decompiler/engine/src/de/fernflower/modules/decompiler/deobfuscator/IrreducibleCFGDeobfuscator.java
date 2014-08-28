@@ -12,15 +12,15 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler.deobfuscator;
+package org.jetbrains.java.decompiler.modules.decompiler.deobfuscator;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-import de.fernflower.modules.decompiler.StatEdge;
-import de.fernflower.modules.decompiler.stats.BasicBlockStatement;
-import de.fernflower.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.BasicBlockStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 
 
 public class IrreducibleCFGDeobfuscator {

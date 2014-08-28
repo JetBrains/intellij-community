@@ -12,7 +12,7 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.util;
+package org.jetbrains.java.decompiler.util;
 
 import java.util.ArrayList;
 import java.util.Collection;

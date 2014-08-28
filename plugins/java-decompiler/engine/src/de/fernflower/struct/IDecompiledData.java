@@ -12,7 +12,7 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.struct;
+package org.jetbrains.java.decompiler.struct;
 
 public interface IDecompiledData {
 

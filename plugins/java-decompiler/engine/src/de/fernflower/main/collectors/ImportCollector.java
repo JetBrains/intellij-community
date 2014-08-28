@@ -12,7 +12,7 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.main.collectors;
+package org.jetbrains.java.decompiler.main.collectors;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -24,10 +24,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 
-import de.fernflower.main.ClassesProcessor;
-import de.fernflower.main.DecompilerContext;
-import de.fernflower.main.ClassesProcessor.ClassNode;
-import de.fernflower.struct.StructContext;
+import org.jetbrains.java.decompiler.main.ClassesProcessor;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
+import org.jetbrains.java.decompiler.struct.StructContext;
 
 
 public class ImportCollector {

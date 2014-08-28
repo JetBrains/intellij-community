@@ -12,7 +12,7 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler.decompose;
+package org.jetbrains.java.decompiler.modules.decompiler.decompose;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,11 +23,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.Map.Entry;
 
-import de.fernflower.modules.decompiler.StatEdge;
-import de.fernflower.modules.decompiler.stats.Statement;
-import de.fernflower.util.FastFixedSetFactory;
-import de.fernflower.util.InterpreterUtil;
-import de.fernflower.util.FastFixedSetFactory.FastFixedSet;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.util.FastFixedSetFactory;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.util.FastFixedSetFactory.FastFixedSet;
 
 public class FastExtendedPostdominanceHelper {
 

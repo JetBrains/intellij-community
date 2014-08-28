@@ -12,12 +12,12 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler.decompose;
+package org.jetbrains.java.decompiler.modules.decompiler.decompose;
 
 import java.util.List;
 import java.util.Set;
 
-import de.fernflower.util.VBStyleCollection;
+import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 public class GenericDominatorEngine {
 

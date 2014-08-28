@@ -12,17 +12,17 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.main.decompiler;
+package org.jetbrains.java.decompiler.main.decompiler;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 
-import de.fernflower.main.DecompilerContext;
-import de.fernflower.main.Fernflower;
-import de.fernflower.main.extern.IBytecodeProvider;
-import de.fernflower.main.extern.IDecompilatSaver;
-import de.fernflower.main.extern.IFernflowerLogger;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.Fernflower;
+import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
+import org.jetbrains.java.decompiler.main.extern.IDecompilatSaver;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 
 
 public class IdeDecompiler {

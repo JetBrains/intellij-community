@@ -12,22 +12,22 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.main;
+package org.jetbrains.java.decompiler.main;
 
 import java.io.BufferedWriter;
 import java.io.StringWriter;
 import java.util.HashMap;
 
-import de.fernflower.main.ClassesProcessor.ClassNode;
-import de.fernflower.main.collectors.CounterContainer;
-import de.fernflower.main.extern.IBytecodeProvider;
-import de.fernflower.main.extern.IDecompilatSaver;
-import de.fernflower.main.extern.IFernflowerPreferences;
-import de.fernflower.modules.renamer.IdentifierConverter;
-import de.fernflower.struct.IDecompiledData;
-import de.fernflower.struct.StructClass;
-import de.fernflower.struct.StructContext;
-import de.fernflower.struct.lazy.LazyLoader;
+import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
+import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
+import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
+import org.jetbrains.java.decompiler.main.extern.IDecompilatSaver;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+import org.jetbrains.java.decompiler.modules.renamer.IdentifierConverter;
+import org.jetbrains.java.decompiler.struct.IDecompiledData;
+import org.jetbrains.java.decompiler.struct.StructClass;
+import org.jetbrains.java.decompiler.struct.StructContext;
+import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
 
 
 public class Fernflower implements IDecompiledData {

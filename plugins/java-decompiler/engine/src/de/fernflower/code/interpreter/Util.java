@@ -12,11 +12,11 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.code.interpreter;
+package org.jetbrains.java.decompiler.code.interpreter;
 
-import de.fernflower.code.Instruction;
-import de.fernflower.struct.StructClass;
-import de.fernflower.struct.StructContext;
+import org.jetbrains.java.decompiler.code.Instruction;
+import org.jetbrains.java.decompiler.struct.StructClass;
+import org.jetbrains.java.decompiler.struct.StructContext;
 
 
 // FIXME: move to StructContext

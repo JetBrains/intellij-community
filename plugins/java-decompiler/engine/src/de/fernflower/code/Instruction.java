@@ -12,7 +12,7 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.code;
+package org.jetbrains.java.decompiler.code;
 
 import java.io.DataOutputStream;
 import java.io.IOException;

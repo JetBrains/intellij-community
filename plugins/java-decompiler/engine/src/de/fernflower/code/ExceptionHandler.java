@@ -12,12 +12,12 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.code;
+package org.jetbrains.java.decompiler.code;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import de.fernflower.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
 
 public class ExceptionHandler {
 

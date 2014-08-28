@@ -12,14 +12,14 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.struct.gen.generics;
+package org.jetbrains.java.decompiler.struct.gen.generics;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import de.fernflower.code.CodeConstants;
-import de.fernflower.main.DecompilerContext;
-import de.fernflower.struct.StructClass;
+import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.struct.StructClass;
 
 public class GenericMain {
 	

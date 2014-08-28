@@ -1,9 +1,9 @@
-package de.fernflower.modules.renamer;
+package org.jetbrains.java.decompiler.modules.renamer;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import de.fernflower.struct.StructClass;
+import org.jetbrains.java.decompiler.struct.StructClass;
 
 public class ClassWrapperNode {
 

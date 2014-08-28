@@ -12,7 +12,7 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.struct.gen;
+package org.jetbrains.java.decompiler.struct.gen;
 
 public class FieldDescriptor {
 	

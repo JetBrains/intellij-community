@@ -12,13 +12,13 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler.vars;
+package org.jetbrains.java.decompiler.modules.decompiler.vars;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import de.fernflower.modules.decompiler.exps.Exprent;
-import de.fernflower.struct.gen.VarType;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.struct.gen.VarType;
 
 public class CheckTypesResult {
 

@@ -12,7 +12,7 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.struct;
+package org.jetbrains.java.decompiler.struct;
 
 import java.io.DataOutputStream;
 import java.io.File;
@@ -22,14 +22,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import de.fernflower.code.CodeConstants;
-import de.fernflower.struct.attr.StructGeneralAttribute;
-import de.fernflower.struct.consts.ConstantPool;
-import de.fernflower.struct.consts.PrimitiveConstant;
-import de.fernflower.struct.lazy.LazyLoader;
-import de.fernflower.util.DataInputFullStream;
-import de.fernflower.util.InterpreterUtil;
-import de.fernflower.util.VBStyleCollection;
+import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
+import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
+import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
+import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
+import org.jetbrains.java.decompiler.util.DataInputFullStream;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 /*
     ClassFile {

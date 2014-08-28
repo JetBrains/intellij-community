@@ -12,7 +12,7 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler.vars;
+package org.jetbrains.java.decompiler.modules.decompiler.vars;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,12 +22,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 
-import de.fernflower.main.DecompilerContext;
-import de.fernflower.main.collectors.VarNamesCollector;
-import de.fernflower.modules.decompiler.stats.RootStatement;
-import de.fernflower.modules.decompiler.stats.Statement;
-import de.fernflower.struct.StructMethod;
-import de.fernflower.struct.gen.VarType;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.collectors.VarNamesCollector;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.struct.StructMethod;
+import org.jetbrains.java.decompiler.struct.gen.VarType;
 
 
 public class VarProcessor {

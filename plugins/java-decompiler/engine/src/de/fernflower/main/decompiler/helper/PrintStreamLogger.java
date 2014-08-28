@@ -12,12 +12,12 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.main.decompiler.helper;
+package org.jetbrains.java.decompiler.main.decompiler.helper;
 
 import java.io.PrintStream;
 
-import de.fernflower.main.extern.IFernflowerLogger;
-import de.fernflower.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 public class PrintStreamLogger implements IFernflowerLogger {
 

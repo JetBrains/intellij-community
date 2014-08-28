@@ -12,13 +12,13 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.main.decompiler;
+package org.jetbrains.java.decompiler.main.decompiler;
 
 import java.io.File;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import de.fernflower.main.extern.IFernflowerLogger;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 
 
 public class WebDecompiler extends ConsoleDecompiler {

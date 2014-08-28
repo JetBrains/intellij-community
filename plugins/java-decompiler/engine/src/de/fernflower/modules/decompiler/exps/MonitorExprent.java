@@ -12,12 +12,12 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler.exps;
+package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import de.fernflower.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 
 public class MonitorExprent extends Exprent {

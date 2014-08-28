@@ -12,37 +12,37 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.main.rels;
+package org.jetbrains.java.decompiler.main.rels;
 
 import java.io.IOException;
 
-import de.fernflower.code.InstructionSequence;
-import de.fernflower.code.cfg.ControlFlowGraph;
-import de.fernflower.main.DecompilerContext;
-import de.fernflower.main.collectors.CounterContainer;
-import de.fernflower.main.extern.IFernflowerLogger;
-import de.fernflower.main.extern.IFernflowerPreferences;
-import de.fernflower.modules.code.DeadCodeHelper;
-import de.fernflower.modules.decompiler.ClearStructHelper;
-import de.fernflower.modules.decompiler.DomHelper;
-import de.fernflower.modules.decompiler.ExitHelper;
-import de.fernflower.modules.decompiler.ExprProcessor;
-import de.fernflower.modules.decompiler.FinallyProcessor;
-import de.fernflower.modules.decompiler.IdeaNotNullHelper;
-import de.fernflower.modules.decompiler.IfHelper;
-import de.fernflower.modules.decompiler.InlineSingleBlockHelper;
-import de.fernflower.modules.decompiler.LabelHelper;
-import de.fernflower.modules.decompiler.LoopExtractHelper;
-import de.fernflower.modules.decompiler.MergeHelper;
-import de.fernflower.modules.decompiler.PPandMMHelper;
-import de.fernflower.modules.decompiler.SecondaryFunctionsHelper;
-import de.fernflower.modules.decompiler.SequenceHelper;
-import de.fernflower.modules.decompiler.StackVarsProcessor;
-import de.fernflower.modules.decompiler.deobfuscator.ExceptionDeobfuscator;
-import de.fernflower.modules.decompiler.stats.RootStatement;
-import de.fernflower.modules.decompiler.vars.VarProcessor;
-import de.fernflower.struct.StructClass;
-import de.fernflower.struct.StructMethod;
+import org.jetbrains.java.decompiler.code.InstructionSequence;
+import org.jetbrains.java.decompiler.code.cfg.ControlFlowGraph;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+import org.jetbrains.java.decompiler.modules.code.DeadCodeHelper;
+import org.jetbrains.java.decompiler.modules.decompiler.ClearStructHelper;
+import org.jetbrains.java.decompiler.modules.decompiler.DomHelper;
+import org.jetbrains.java.decompiler.modules.decompiler.ExitHelper;
+import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
+import org.jetbrains.java.decompiler.modules.decompiler.FinallyProcessor;
+import org.jetbrains.java.decompiler.modules.decompiler.IdeaNotNullHelper;
+import org.jetbrains.java.decompiler.modules.decompiler.IfHelper;
+import org.jetbrains.java.decompiler.modules.decompiler.InlineSingleBlockHelper;
+import org.jetbrains.java.decompiler.modules.decompiler.LabelHelper;
+import org.jetbrains.java.decompiler.modules.decompiler.LoopExtractHelper;
+import org.jetbrains.java.decompiler.modules.decompiler.MergeHelper;
+import org.jetbrains.java.decompiler.modules.decompiler.PPandMMHelper;
+import org.jetbrains.java.decompiler.modules.decompiler.SecondaryFunctionsHelper;
+import org.jetbrains.java.decompiler.modules.decompiler.SequenceHelper;
+import org.jetbrains.java.decompiler.modules.decompiler.StackVarsProcessor;
+import org.jetbrains.java.decompiler.modules.decompiler.deobfuscator.ExceptionDeobfuscator;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
+import org.jetbrains.java.decompiler.struct.StructClass;
+import org.jetbrains.java.decompiler.struct.StructMethod;
 
 public class MethodProcessorThread implements Runnable {
 

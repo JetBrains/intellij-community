@@ -1,9 +1,9 @@
-package de.fernflower.code.optinstructions;
+package org.jetbrains.java.decompiler.code.optinstructions;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import de.fernflower.code.Instruction;
+import org.jetbrains.java.decompiler.code.Instruction;
 
 public class INVOKEDYNAMIC extends Instruction {
 

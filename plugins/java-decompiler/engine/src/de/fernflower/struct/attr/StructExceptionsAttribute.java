@@ -12,7 +12,7 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.struct.attr;
+package org.jetbrains.java.decompiler.struct.attr;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.fernflower.struct.consts.ConstantPool;
+import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 
 public class StructExceptionsAttribute extends StructGeneralAttribute {
 

@@ -12,7 +12,7 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.struct.consts;
+package org.jetbrains.java.decompiler.struct.consts;
 
 import java.io.DataOutputStream;
 import java.io.IOException;

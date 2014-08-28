@@ -1,4 +1,4 @@
-package de.fernflower.struct.attr;
+package org.jetbrains.java.decompiler.struct.attr;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
@@ -6,9 +6,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.fernflower.struct.consts.ConstantPool;
-import de.fernflower.struct.consts.LinkConstant;
-import de.fernflower.struct.consts.PooledConstant;
+import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
+import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
+import org.jetbrains.java.decompiler.struct.consts.PooledConstant;
 
 public class StructBootstrapMethodsAttribute extends StructGeneralAttribute {
 	

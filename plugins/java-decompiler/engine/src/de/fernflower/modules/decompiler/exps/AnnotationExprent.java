@@ -12,13 +12,13 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler.exps;
+package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import java.util.List;
 
-import de.fernflower.main.DecompilerContext;
-import de.fernflower.modules.decompiler.ExprProcessor;
-import de.fernflower.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 
 public class AnnotationExprent extends Exprent {

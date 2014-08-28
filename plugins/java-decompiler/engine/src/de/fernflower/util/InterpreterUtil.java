@@ -12,7 +12,7 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.util;
+package org.jetbrains.java.decompiler.util;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -25,8 +25,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
-import de.fernflower.main.DecompilerContext;
-import de.fernflower.main.extern.IFernflowerPreferences;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 
 public class InterpreterUtil {
 	

@@ -12,7 +12,7 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler;
+package org.jetbrains.java.decompiler.modules.decompiler;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -20,8 +20,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import de.fernflower.modules.decompiler.exps.Exprent;
-import de.fernflower.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 
 
 public class DecHelper {

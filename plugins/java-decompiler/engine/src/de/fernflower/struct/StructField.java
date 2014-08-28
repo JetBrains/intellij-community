@@ -12,14 +12,14 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.struct;
+package org.jetbrains.java.decompiler.struct;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import de.fernflower.struct.attr.StructGeneralAttribute;
-import de.fernflower.struct.consts.ConstantPool;
-import de.fernflower.util.VBStyleCollection;
+import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
+import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
+import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 /*
  	field_info {

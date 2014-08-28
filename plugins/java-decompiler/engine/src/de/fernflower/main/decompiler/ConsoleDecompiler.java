@@ -12,7 +12,7 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.main.decompiler;
+package org.jetbrains.java.decompiler.main.decompiler;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -32,13 +32,13 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
-import de.fernflower.main.DecompilerContext;
-import de.fernflower.main.Fernflower;
-import de.fernflower.main.decompiler.helper.PrintStreamLogger;
-import de.fernflower.main.extern.IBytecodeProvider;
-import de.fernflower.main.extern.IDecompilatSaver;
-import de.fernflower.main.extern.IFernflowerLogger;
-import de.fernflower.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.Fernflower;
+import org.jetbrains.java.decompiler.main.decompiler.helper.PrintStreamLogger;
+import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
+import org.jetbrains.java.decompiler.main.extern.IDecompilatSaver;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 
 public class ConsoleDecompiler implements IBytecodeProvider, IDecompilatSaver {

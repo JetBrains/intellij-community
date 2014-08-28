@@ -12,7 +12,7 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.main.collectors;
+package org.jetbrains.java.decompiler.main.collectors;
 
 public class CounterContainer {
 

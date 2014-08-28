@@ -12,7 +12,7 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler.deobfuscator;
+package org.jetbrains.java.decompiler.modules.decompiler.deobfuscator;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,17 +23,17 @@ import java.util.List;
 import java.util.Set;
 import java.util.Map.Entry;
 
-import de.fernflower.code.CodeConstants;
-import de.fernflower.code.Instruction;
-import de.fernflower.code.InstructionSequence;
-import de.fernflower.code.SimpleInstructionSequence;
-import de.fernflower.code.cfg.BasicBlock;
-import de.fernflower.code.cfg.ControlFlowGraph;
-import de.fernflower.code.cfg.ExceptionRangeCFG;
-import de.fernflower.modules.decompiler.decompose.GenericDominatorEngine;
-import de.fernflower.modules.decompiler.decompose.IGraph;
-import de.fernflower.modules.decompiler.decompose.IGraphNode;
-import de.fernflower.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.code.Instruction;
+import org.jetbrains.java.decompiler.code.InstructionSequence;
+import org.jetbrains.java.decompiler.code.SimpleInstructionSequence;
+import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
+import org.jetbrains.java.decompiler.code.cfg.ControlFlowGraph;
+import org.jetbrains.java.decompiler.code.cfg.ExceptionRangeCFG;
+import org.jetbrains.java.decompiler.modules.decompiler.decompose.GenericDominatorEngine;
+import org.jetbrains.java.decompiler.modules.decompiler.decompose.IGraph;
+import org.jetbrains.java.decompiler.modules.decompiler.decompose.IGraphNode;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 public class ExceptionDeobfuscator {
 

@@ -12,7 +12,7 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.main.extern;
+package org.jetbrains.java.decompiler.main.extern;
 
 import java.util.jar.Manifest;
 

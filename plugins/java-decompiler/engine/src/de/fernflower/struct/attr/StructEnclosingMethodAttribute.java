@@ -12,10 +12,10 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.struct.attr;
+package org.jetbrains.java.decompiler.struct.attr;
 
-import de.fernflower.struct.consts.ConstantPool;
-import de.fernflower.struct.consts.LinkConstant;
+import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
+import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
 
 public class StructEnclosingMethodAttribute extends StructGeneralAttribute {
 

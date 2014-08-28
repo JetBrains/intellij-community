@@ -12,7 +12,7 @@
  *    A PARTICULAR PURPOSE. 
  */
 
-package de.fernflower.modules.decompiler;
+package org.jetbrains.java.decompiler.modules.decompiler;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -25,28 +25,28 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import de.fernflower.code.cfg.BasicBlock;
-import de.fernflower.code.cfg.ControlFlowGraph;
-import de.fernflower.code.cfg.ExceptionRangeCFG;
-import de.fernflower.main.DecompilerContext;
-import de.fernflower.main.extern.IFernflowerLogger;
-import de.fernflower.modules.decompiler.decompose.FastExtendedPostdominanceHelper;
-import de.fernflower.modules.decompiler.deobfuscator.IrreducibleCFGDeobfuscator;
-import de.fernflower.modules.decompiler.stats.BasicBlockStatement;
-import de.fernflower.modules.decompiler.stats.CatchAllStatement;
-import de.fernflower.modules.decompiler.stats.CatchStatement;
-import de.fernflower.modules.decompiler.stats.DoStatement;
-import de.fernflower.modules.decompiler.stats.GeneralStatement;
-import de.fernflower.modules.decompiler.stats.IfStatement;
-import de.fernflower.modules.decompiler.stats.RootStatement;
-import de.fernflower.modules.decompiler.stats.SequenceStatement;
-import de.fernflower.modules.decompiler.stats.Statement;
-import de.fernflower.modules.decompiler.stats.SwitchStatement;
-import de.fernflower.modules.decompiler.stats.SynchronizedStatement;
-import de.fernflower.util.FastFixedSetFactory;
-import de.fernflower.util.InterpreterUtil;
-import de.fernflower.util.VBStyleCollection;
-import de.fernflower.util.FastFixedSetFactory.FastFixedSet;
+import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
+import org.jetbrains.java.decompiler.code.cfg.ControlFlowGraph;
+import org.jetbrains.java.decompiler.code.cfg.ExceptionRangeCFG;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+import org.jetbrains.java.decompiler.modules.decompiler.decompose.FastExtendedPostdominanceHelper;
+import org.jetbrains.java.decompiler.modules.decompiler.deobfuscator.IrreducibleCFGDeobfuscator;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.BasicBlockStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchAllStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.GeneralStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.SequenceStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.SwitchStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.SynchronizedStatement;
+import org.jetbrains.java.decompiler.util.FastFixedSetFactory;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.util.VBStyleCollection;
+import org.jetbrains.java.decompiler.util.FastFixedSetFactory.FastFixedSet;
 
 public class DomHelper {
 	
