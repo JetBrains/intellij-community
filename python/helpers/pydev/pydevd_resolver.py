@@ -381,20 +381,34 @@ class NdArrayResolver:
         This resolves a numpy ndarray returning some metadata about the NDArray
     '''
 
+    def is_numeric(self, obj):
+        if not hasattr(obj, 'dtype'):
+            return False
+        return obj.dtype.kind in 'biufc'
+
     def resolve(self, obj, attribute):
         if attribute == '__internals__':
             return defaultResolver.getDictionary(obj)
         if attribute == 'min':
-            return obj.min()
+            if self.is_numeric(obj):
+                return obj.min()
+            else:
+                return None
         if attribute == 'max':
-            return obj.max()
+            if self.is_numeric(obj):
+                return obj.max()
+            else:
+                return None
         if attribute == 'shape':
             return obj.shape
         if attribute == 'dtype':
             return obj.dtype
         if attribute == 'size':
             return obj.size
-        return None
+        try:
+            return obj[int(attribute)]
+        except:
+            return None
 
     def getDictionary(self, obj):
         ret = dict()
@@ -403,11 +417,23 @@ class NdArrayResolver:
             ret['min'] = 'ndarray too big, calculating min would slow down debugging'
             ret['max'] = 'ndarray too big, calculating max would slow down debugging'
         else:
-            ret['min'] = obj.min()
-            ret['max'] = obj.max()
+            if self.is_numeric(obj):
+                ret['min'] = obj.min()
+                ret['max'] = obj.max()
+            else:
+                ret['min'] = 'not a numeric object'
+                ret['max'] = 'not a numeric object'
         ret['shape'] = obj.shape
         ret['dtype'] = obj.dtype
         ret['size'] = obj.size
+        # see TupleResolver.getDictionary()
+        l = len(obj)
+        if l < MAX_ITEMS_TO_HANDLE:
+            format = '%0' + str(int(len(str(l)))) + 'd'
+            for i, item in izip(xrange(l), obj):
+                ret[format % i ] = item
+        else:
+            ret[TOO_LARGE_ATTR] = TOO_LARGE_MSG
         return ret
 
 
