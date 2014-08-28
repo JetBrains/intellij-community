@@ -1,17 +1,18 @@
 /*
- *    Fernflower - The Analytical Java Decompiler
- *    http://www.reversed-java.com
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
- *    (C) 2008 - 2010, Stiver
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *    This software is NEITHER public domain NOR free software 
- *    as per GNU License. See license.txt for more details.
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *    This software is distributed WITHOUT ANY WARRANTY; without 
- *    even the implied warranty of MERCHANTABILITY or FITNESS FOR 
- *    A PARTICULAR PURPOSE. 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 package org.jetbrains.java.decompiler.code;
 
 /*
@@ -20,74 +21,77 @@ package org.jetbrains.java.decompiler.code;
 
 public class SwitchInstruction extends Instruction {
 
-	private int[] destinations;
+  private int[] destinations;
 
-	private int[] values;
-	
-	private int defaultdest; 
-	
-	public SwitchInstruction() {}
-	
-	
-	public void initInstruction(InstructionSequence seq) {
-		
-		int pref = (opcode==CodeConstants.opc_tableswitch?3:2);
-		int len = this.getOperands().length - pref;
-		defaultdest = seq.getPointerByRelOffset(this.getOperand(0));
+  private int[] values;
 
-		int low = 0; 
-		
-		if(opcode==CodeConstants.opc_lookupswitch) {
-			len/=2;
-		} else {
-			low = this.getOperand(1);
-		}
-		
-		destinations = new int[len]; 
-		values = new int[len];
-		
-		for(int i=0,k=0;i<len;i++,k++) {
-			if(opcode==CodeConstants.opc_lookupswitch){
-				values[i] = this.getOperand(pref+k);  
-				k++;
-			} else {
-				values[i] = low+k;
-			}
-			destinations[i] = seq.getPointerByRelOffset(this.getOperand(pref+k));
-		}
-	}
+  private int defaultdest;
 
-	public SwitchInstruction clone() {
-		SwitchInstruction newinstr = (SwitchInstruction)super.clone();
-		
-		newinstr.defaultdest = defaultdest;
-		newinstr.destinations = destinations.clone();
-		newinstr.values = values.clone();
-		
-		return newinstr;
-	}
-	
-	public int[] getDestinations() {
-		return destinations;
-	}
+  public SwitchInstruction() {
+  }
 
-	public void setDestinations(int[] destinations) {
-		this.destinations = destinations;
-	}
 
-	public int getDefaultdest() {
-		return defaultdest;
-	}
+  public void initInstruction(InstructionSequence seq) {
 
-	public void setDefaultdest(int defaultdest) {
-		this.defaultdest = defaultdest;
-	}
+    int pref = (opcode == CodeConstants.opc_tableswitch ? 3 : 2);
+    int len = this.getOperands().length - pref;
+    defaultdest = seq.getPointerByRelOffset(this.getOperand(0));
 
-	public int[] getValues() {
-		return values;
-	}
+    int low = 0;
 
-	public void setValues(int[] values) {
-		this.values = values;
-	}
+    if (opcode == CodeConstants.opc_lookupswitch) {
+      len /= 2;
+    }
+    else {
+      low = this.getOperand(1);
+    }
+
+    destinations = new int[len];
+    values = new int[len];
+
+    for (int i = 0, k = 0; i < len; i++, k++) {
+      if (opcode == CodeConstants.opc_lookupswitch) {
+        values[i] = this.getOperand(pref + k);
+        k++;
+      }
+      else {
+        values[i] = low + k;
+      }
+      destinations[i] = seq.getPointerByRelOffset(this.getOperand(pref + k));
+    }
+  }
+
+  public SwitchInstruction clone() {
+    SwitchInstruction newinstr = (SwitchInstruction)super.clone();
+
+    newinstr.defaultdest = defaultdest;
+    newinstr.destinations = destinations.clone();
+    newinstr.values = values.clone();
+
+    return newinstr;
+  }
+
+  public int[] getDestinations() {
+    return destinations;
+  }
+
+  public void setDestinations(int[] destinations) {
+    this.destinations = destinations;
+  }
+
+  public int getDefaultdest() {
+    return defaultdest;
+  }
+
+  public void setDefaultdest(int defaultdest) {
+    this.defaultdest = defaultdest;
+  }
+
+  public int[] getValues() {
+    return values;
+  }
+
+  public void setValues(int[] values) {
+    this.values = values;
+  }
 }

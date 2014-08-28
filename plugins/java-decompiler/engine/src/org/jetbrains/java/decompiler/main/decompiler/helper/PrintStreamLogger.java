@@ -1,83 +1,84 @@
 /*
- *    Fernflower - The Analytical Java Decompiler
- *    http://www.reversed-java.com
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
- *    (C) 2008 - 2010, Stiver
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *    This software is NEITHER public domain NOR free software 
- *    as per GNU License. See license.txt for more details.
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *    This software is distributed WITHOUT ANY WARRANTY; without 
- *    even the implied warranty of MERCHANTABILITY or FITNESS FOR 
- *    A PARTICULAR PURPOSE. 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 package org.jetbrains.java.decompiler.main.decompiler.helper;
-
-import java.io.PrintStream;
 
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
+import java.io.PrintStream;
+
 public class PrintStreamLogger implements IFernflowerLogger {
 
-	private int severity;
-	
-	private int indent; 
-	
-	private PrintStream stream;
-	
-	public PrintStreamLogger(int severity, PrintStream stream) {
-		this.severity = severity;
-		this.indent = 0; 
-		this.stream = stream;
-	}
-	
-	
-	public void writeMessage(String message, int severity) {
-		if (severity >= this.severity) {
-			stream.println(InterpreterUtil.getIndentString(indent) + names[severity] + ": " + message);
-		}
-	}
+  private int severity;
 
-	public void writeMessage(String message, Throwable t) {
-		t.printStackTrace(stream);
-		writeMessage(message, ERROR);
-	}
+  private int indent;
 
-	public void startClass(String classname) {
-		stream.println(InterpreterUtil.getIndentString(indent++)+"Processing class "+classname+" ...");
-	}
+  private PrintStream stream;
 
-	public void endClass() {
-		stream.println(InterpreterUtil.getIndentString(--indent)+"... proceeded.");
-	}
+  public PrintStreamLogger(int severity, PrintStream stream) {
+    this.severity = severity;
+    this.indent = 0;
+    this.stream = stream;
+  }
 
-	public void startWriteClass(String classname) {
-		stream.println(InterpreterUtil.getIndentString(indent++)+"Writing class "+classname+" ...");
-	}
 
-	public void endWriteClass() {
-		stream.println(InterpreterUtil.getIndentString(--indent)+"... written.");
-	}
-	
-	public void startMethod(String method) {
-		if(severity <= INFO) {
-			stream.println(InterpreterUtil.getIndentString(indent)+"Processing method "+method+" ...");
-		}
-	}
+  public void writeMessage(String message, int severity) {
+    if (severity >= this.severity) {
+      stream.println(InterpreterUtil.getIndentString(indent) + names[severity] + ": " + message);
+    }
+  }
 
-	public void endMethod() {
-		if(severity <= INFO) {
-			stream.println(InterpreterUtil.getIndentString(indent)+"... proceeded.");
-		}
-	}
+  public void writeMessage(String message, Throwable t) {
+    t.printStackTrace(stream);
+    writeMessage(message, ERROR);
+  }
 
-	public int getSeverity() {
-		return severity;
-	}
+  public void startClass(String classname) {
+    stream.println(InterpreterUtil.getIndentString(indent++) + "Processing class " + classname + " ...");
+  }
 
-	public void setSeverity(int severity) {
-		this.severity = severity;
-	}
+  public void endClass() {
+    stream.println(InterpreterUtil.getIndentString(--indent) + "... proceeded.");
+  }
+
+  public void startWriteClass(String classname) {
+    stream.println(InterpreterUtil.getIndentString(indent++) + "Writing class " + classname + " ...");
+  }
+
+  public void endWriteClass() {
+    stream.println(InterpreterUtil.getIndentString(--indent) + "... written.");
+  }
+
+  public void startMethod(String method) {
+    if (severity <= INFO) {
+      stream.println(InterpreterUtil.getIndentString(indent) + "Processing method " + method + " ...");
+    }
+  }
+
+  public void endMethod() {
+    if (severity <= INFO) {
+      stream.println(InterpreterUtil.getIndentString(indent) + "... proceeded.");
+    }
+  }
+
+  public int getSeverity() {
+    return severity;
+  }
+
+  public void setSeverity(int severity) {
+    this.severity = severity;
+  }
 }

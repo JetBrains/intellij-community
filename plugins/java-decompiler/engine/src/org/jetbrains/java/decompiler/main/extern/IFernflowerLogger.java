@@ -1,56 +1,57 @@
 /*
- *    Fernflower - The Analytical Java Decompiler
- *    http://www.reversed-java.com
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
- *    (C) 2008 - 2010, Stiver
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *    This software is NEITHER public domain NOR free software 
- *    as per GNU License. See license.txt for more details.
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *    This software is distributed WITHOUT ANY WARRANTY; without 
- *    even the implied warranty of MERCHANTABILITY or FITNESS FOR 
- *    A PARTICULAR PURPOSE. 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 package org.jetbrains.java.decompiler.main.extern;
 
 import java.util.HashMap;
 
 public interface IFernflowerLogger {
 
-	public static final int TRACE = 1;
-	public static final int INFO = 2;
-	public static final int WARNING = 3;
-	public static final int ERROR = 4;
-	public static final int IMMEDIATE = 5;
+  public static final int TRACE = 1;
+  public static final int INFO = 2;
+  public static final int WARNING = 3;
+  public static final int ERROR = 4;
+  public static final int IMMEDIATE = 5;
 
-	public static final HashMap<String, Integer> mapLogLevel = new HashMap<String, Integer>() {{
-		put("TRACE", 1);
-		put("INFO", 2);
-		put("WARN", 3);
-		put("ERROR", 4);
-		put("IMME", 5);
-	}};
-	
-	public static final String[] names = new String[] {""/*DUMMY ENTRY*/, "TRACE", "INFO", "WARNING", "ERROR", ""/*IMMEDIATE*/};
-	
-	public void writeMessage(String message, int severity);
+  public static final HashMap<String, Integer> mapLogLevel = new HashMap<String, Integer>() {{
+    put("TRACE", 1);
+    put("INFO", 2);
+    put("WARN", 3);
+    put("ERROR", 4);
+    put("IMME", 5);
+  }};
 
-	public void writeMessage(String message, Throwable t);
-	
-	public void startClass(String classname);
+  public static final String[] names = new String[]{""/*DUMMY ENTRY*/, "TRACE", "INFO", "WARNING", "ERROR", ""/*IMMEDIATE*/};
 
-	public void endClass();
+  public void writeMessage(String message, int severity);
 
-	public void startWriteClass(String classname);
+  public void writeMessage(String message, Throwable t);
 
-	public void endWriteClass();
-	
-	public void startMethod(String method);
+  public void startClass(String classname);
 
-	public void endMethod();
-	
-	public int getSeverity();
+  public void endClass();
 
-	public void setSeverity(int severity);
+  public void startWriteClass(String classname);
+
+  public void endWriteClass();
+
+  public void startMethod(String method);
+
+  public void endMethod();
+
+  public int getSeverity();
+
+  public void setSeverity(int severity);
 }

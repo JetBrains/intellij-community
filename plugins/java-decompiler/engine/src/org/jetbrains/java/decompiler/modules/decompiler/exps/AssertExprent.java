@@ -1,51 +1,51 @@
 /*
- *    Fernflower - The Analytical Java Decompiler
- *    http://www.reversed-java.com
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
- *    (C) 2008 - 2010, Stiver
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *    This software is NEITHER public domain NOR free software 
- *    as per GNU License. See license.txt for more details.
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *    This software is distributed WITHOUT ANY WARRANTY; without 
- *    even the implied warranty of MERCHANTABILITY or FITNESS FOR 
- *    A PARTICULAR PURPOSE. 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import java.util.List;
 
 public class AssertExprent extends Exprent {
-	
-	private List<Exprent> parameters;
-	
-	{
-		this.type = EXPRENT_ASSERT;
-	}
 
-	public AssertExprent(List<Exprent> parameters) {
-		this.parameters = parameters;
-	}
-	
-	public String toJava(int indent) {
-		
-		StringBuilder buffer = new StringBuilder();
+  private List<Exprent> parameters;
 
-		buffer.append("assert ");
-		
-		if(parameters.get(0) == null) {
-			buffer.append("false");
-		} else {
-			buffer.append(parameters.get(0).toJava(indent));
-		}
-		if(parameters.size() > 1) {
-			buffer.append(" : ");
-			buffer.append(parameters.get(1).toJava(indent));
-		}
+  {
+    this.type = EXPRENT_ASSERT;
+  }
 
-		return buffer.toString();
-	}
-	
+  public AssertExprent(List<Exprent> parameters) {
+    this.parameters = parameters;
+  }
 
+  public String toJava(int indent) {
+
+    StringBuilder buffer = new StringBuilder();
+
+    buffer.append("assert ");
+
+    if (parameters.get(0) == null) {
+      buffer.append("false");
+    }
+    else {
+      buffer.append(parameters.get(0).toJava(indent));
+    }
+    if (parameters.size() > 1) {
+      buffer.append(" : ");
+      buffer.append(parameters.get(1).toJava(indent));
+    }
+
+    return buffer.toString();
+  }
 }

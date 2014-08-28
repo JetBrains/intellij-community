@@ -1,37 +1,37 @@
 /*
- *    Fernflower - The Analytical Java Decompiler
- *    http://www.reversed-java.com
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
- *    (C) 2008 - 2010, Stiver
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *    This software is NEITHER public domain NOR free software 
- *    as per GNU License. See license.txt for more details.
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *    This software is distributed WITHOUT ANY WARRANTY; without 
- *    even the implied warranty of MERCHANTABILITY or FITNESS FOR 
- *    A PARTICULAR PURPOSE. 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 package org.jetbrains.java.decompiler.main.collectors;
 
 public class CounterContainer {
 
-	public static final int STATEMENT_COUNTER = 0;
-	public static final int EXPRENT_COUNTER = 1;
-	public static final int VAR_COUNTER = 2;
-	
-	private int[] values = new int[]{1, 1, 1};
-	
-	public void setCounter(int counter, int value) {
-		values[counter] = value;
-	}
+  public static final int STATEMENT_COUNTER = 0;
+  public static final int EXPRENT_COUNTER = 1;
+  public static final int VAR_COUNTER = 2;
 
-	public int getCounter(int counter) {
-		return values[counter];
-	}
+  private int[] values = new int[]{1, 1, 1};
 
-	public int getCounterAndIncrement(int counter) {
-		return values[counter]++;
-	}
-	
+  public void setCounter(int counter, int value) {
+    values[counter] = value;
+  }
+
+  public int getCounter(int counter) {
+    return values[counter];
+  }
+
+  public int getCounterAndIncrement(int counter) {
+    return values[counter]++;
+  }
 }

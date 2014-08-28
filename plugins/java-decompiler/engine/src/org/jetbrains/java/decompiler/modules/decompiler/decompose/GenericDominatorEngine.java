@@ -1,150 +1,152 @@
 /*
- *    Fernflower - The Analytical Java Decompiler
- *    http://www.reversed-java.com
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
- *    (C) 2008 - 2010, Stiver
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *    This software is NEITHER public domain NOR free software 
- *    as per GNU License. See license.txt for more details.
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *    This software is distributed WITHOUT ANY WARRANTY; without 
- *    even the implied warranty of MERCHANTABILITY or FITNESS FOR 
- *    A PARTICULAR PURPOSE. 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 package org.jetbrains.java.decompiler.modules.decompiler.decompose;
+
+import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 import java.util.List;
 import java.util.Set;
 
-import org.jetbrains.java.decompiler.util.VBStyleCollection;
-
 public class GenericDominatorEngine {
 
-	private IGraph graph; 
+  private IGraph graph;
 
-	private VBStyleCollection<IGraphNode, IGraphNode> colOrderedIDoms = new VBStyleCollection<IGraphNode, IGraphNode>(); 
-	
-	private Set<? extends IGraphNode> setRoots;
-	
-	public GenericDominatorEngine(IGraph graph) {
-		this.graph = graph;
-	}
-	
-	public void initialize() {
-		calcIDoms();
-	}
-	
-	private void orderNodes() {
+  private VBStyleCollection<IGraphNode, IGraphNode> colOrderedIDoms = new VBStyleCollection<IGraphNode, IGraphNode>();
 
-		setRoots = graph.getRoots();
+  private Set<? extends IGraphNode> setRoots;
 
-		for(IGraphNode node : graph.getReversePostOrderList()) {
-			colOrderedIDoms.addWithKey(null, node);
-		}
-		
-	}
-	
-	private IGraphNode getCommonIDom(IGraphNode node1, IGraphNode node2, VBStyleCollection<IGraphNode, IGraphNode> orderedIDoms) {
-		
-		IGraphNode nodeOld;
-		
-		if(node1 == null) {
-			return node2;
-		} else if(node2 == null) {
-			return node1;
-		}
-		
-		int index1 = orderedIDoms.getIndexByKey(node1); 
-		int index2 = orderedIDoms.getIndexByKey(node2);
-		
-		while(index1 != index2) {
-			if(index1 > index2) {
-				nodeOld = node1;
-				node1 = orderedIDoms.getWithKey(node1);
-				
-				if(nodeOld == node1) { // no idom - root or merging point
-					return null;
-				}
-				
-				index1 = orderedIDoms.getIndexByKey(node1);
-			} else {
-				nodeOld = node2;
-				node2 = orderedIDoms.getWithKey(node2);
+  public GenericDominatorEngine(IGraph graph) {
+    this.graph = graph;
+  }
 
-				if(nodeOld == node2) { // no idom - root or merging point
-					return null;
-				}
-				
-				index2 = orderedIDoms.getIndexByKey(node2);
-			}
-		}
-		
-		return node1;
-	}
-	
-	private void calcIDoms() {
+  public void initialize() {
+    calcIDoms();
+  }
 
-		orderNodes();
+  private void orderNodes() {
 
-		List<IGraphNode> lstNodes = colOrderedIDoms.getLstKeys();  
+    setRoots = graph.getRoots();
 
-		for(;;) {
+    for (IGraphNode node : graph.getReversePostOrderList()) {
+      colOrderedIDoms.addWithKey(null, node);
+    }
+  }
 
-			boolean changed = false;
+  private IGraphNode getCommonIDom(IGraphNode node1, IGraphNode node2, VBStyleCollection<IGraphNode, IGraphNode> orderedIDoms) {
 
-			for(IGraphNode node : lstNodes) {
+    IGraphNode nodeOld;
 
-				IGraphNode idom = null;
+    if (node1 == null) {
+      return node2;
+    }
+    else if (node2 == null) {
+      return node1;
+    }
 
-				if(!setRoots.contains(node)) {
-					for(IGraphNode pred : node.getPredecessors()) {
-						if(colOrderedIDoms.getWithKey(pred) != null) {
-							idom = getCommonIDom(idom, pred, colOrderedIDoms);
-							if(idom == null) {
-								break; // no idom found: merging point of two trees
-							}
-						}
-					}
-				}
+    int index1 = orderedIDoms.getIndexByKey(node1);
+    int index2 = orderedIDoms.getIndexByKey(node2);
 
-				if(idom == null) {
-					idom = node;
-				}
+    while (index1 != index2) {
+      if (index1 > index2) {
+        nodeOld = node1;
+        node1 = orderedIDoms.getWithKey(node1);
 
-				IGraphNode oldidom = colOrderedIDoms.putWithKey(idom, node);
-				if(!idom.equals(oldidom)) { // oldidom is null iff the node is touched for the first time  
-					changed = true;
-				}
-			}
+        if (nodeOld == node1) { // no idom - root or merging point
+          return null;
+        }
 
-			if(!changed) {
-				break;
-			}
-		}
+        index1 = orderedIDoms.getIndexByKey(node1);
+      }
+      else {
+        nodeOld = node2;
+        node2 = orderedIDoms.getWithKey(node2);
 
-	}
+        if (nodeOld == node2) { // no idom - root or merging point
+          return null;
+        }
 
-	public VBStyleCollection<IGraphNode, IGraphNode> getOrderedIDoms() {
-		return colOrderedIDoms;
-	}
+        index2 = orderedIDoms.getIndexByKey(node2);
+      }
+    }
 
-	public boolean isDominator(IGraphNode node, IGraphNode dom) {
-	
-		while(!node.equals(dom)) {
+    return node1;
+  }
 
-			IGraphNode idom = colOrderedIDoms.getWithKey(node);
-			
-			if(idom == node) {
-				return false; // root node or merging point
-			} else if(idom == null) {
-				throw new RuntimeException("Inconsistent idom sequence discovered!"); 
-			} else {
-				node = idom;
-			}
-		}
-		
-		return true;
-	}
-	
+  private void calcIDoms() {
+
+    orderNodes();
+
+    List<IGraphNode> lstNodes = colOrderedIDoms.getLstKeys();
+
+    for (; ; ) {
+
+      boolean changed = false;
+
+      for (IGraphNode node : lstNodes) {
+
+        IGraphNode idom = null;
+
+        if (!setRoots.contains(node)) {
+          for (IGraphNode pred : node.getPredecessors()) {
+            if (colOrderedIDoms.getWithKey(pred) != null) {
+              idom = getCommonIDom(idom, pred, colOrderedIDoms);
+              if (idom == null) {
+                break; // no idom found: merging point of two trees
+              }
+            }
+          }
+        }
+
+        if (idom == null) {
+          idom = node;
+        }
+
+        IGraphNode oldidom = colOrderedIDoms.putWithKey(idom, node);
+        if (!idom.equals(oldidom)) { // oldidom is null iff the node is touched for the first time
+          changed = true;
+        }
+      }
+
+      if (!changed) {
+        break;
+      }
+    }
+  }
+
+  public VBStyleCollection<IGraphNode, IGraphNode> getOrderedIDoms() {
+    return colOrderedIDoms;
+  }
+
+  public boolean isDominator(IGraphNode node, IGraphNode dom) {
+
+    while (!node.equals(dom)) {
+
+      IGraphNode idom = colOrderedIDoms.getWithKey(node);
+
+      if (idom == node) {
+        return false; // root node or merging point
+      }
+      else if (idom == null) {
+        throw new RuntimeException("Inconsistent idom sequence discovered!");
+      }
+      else {
+        node = idom;
+      }
+    }
+
+    return true;
+  }
 }

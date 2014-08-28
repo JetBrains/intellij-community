@@ -1,28 +1,22 @@
 /*
- *    Fernflower - The Analytical Java Decompiler
- *    http://www.reversed-java.com
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
- *    (C) 2008 - 2010, Stiver
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *    This software is NEITHER public domain NOR free software 
- *    as per GNU License. See license.txt for more details.
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *    This software is distributed WITHOUT ANY WARRANTY; without 
- *    even the implied warranty of MERCHANTABILITY or FITNESS FOR 
- *    A PARTICULAR PURPOSE. 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 package org.jetbrains.java.decompiler.modules.decompiler;
 
-import java.util.List;
-
 import org.jetbrains.java.decompiler.code.CodeConstants;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.AnnotationExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.ExitExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.FunctionExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.SequenceStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
@@ -33,288 +27,310 @@ import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
+import java.util.List;
+
 public class IdeaNotNullHelper {
 
-	
-	public static boolean removeHardcodedChecks(Statement root, StructMethod mt) {
 
-		boolean checks_removed = false;
-		
-		// parameter @NotNull annotations
-		while(findAndRemoveParameterCheck(root, mt)) { // iterate until nothing found. Each invocation removes one parameter check.
-			checks_removed = true;
-		}
-		
-		// method @NotNull annotation
-		while(findAndRemoveReturnCheck(root, mt)) { // iterate until nothing found. Each invocation handles one method exit check.
-			checks_removed = true;
-		}
-		
-		return checks_removed;
-	}
+  public static boolean removeHardcodedChecks(Statement root, StructMethod mt) {
 
-	private static boolean findAndRemoveParameterCheck(Statement stat, StructMethod mt) {
-		
-		Statement st = stat.getFirst();
-		while(st.type == Statement.TYPE_SEQUENCE) {
-			st = st.getFirst();
-		}
-		
-		if(st.type == Statement.TYPE_IF) {
-			
-			IfStatement ifstat = (IfStatement)st;
-			Statement ifbranch = ifstat.getIfstat();
-			
-			Exprent if_condition = ifstat.getHeadexprent().getCondition();
-			
-			boolean is_notnull_check = false;
-			
-			// TODO: FUNCTION_NE also possible if reversed order (in theory)
-			if(ifbranch != null && if_condition.type == Exprent.EXPRENT_FUNCTION && ((FunctionExprent)if_condition).getFunctype() == FunctionExprent.FUNCTION_EQ &&
-						ifbranch.type == Statement.TYPE_BASICBLOCK && ifbranch.getExprents().size() == 1 && ifbranch.getExprents().get(0).type == Exprent.EXPRENT_EXIT) {
-				
-				FunctionExprent func = (FunctionExprent)if_condition;
-				Exprent first_param = func.getLstOperands().get(0);
-				Exprent second_param = func.getLstOperands().get(1);
-				
-				if(second_param.type == Exprent.EXPRENT_CONST && ((ConstExprent)second_param).getExprType().type == CodeConstants.TYPE_NULL) { // TODO: reversed parameter order
-					if(first_param.type == Exprent.EXPRENT_VAR) {
-						VarExprent var = (VarExprent)first_param;
-						
-						boolean thisvar = (mt.getAccessFlags() & CodeConstants.ACC_STATIC) == 0;
-						
-						MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
-						VBStyleCollection<StructGeneralAttribute, String> attributes = mt.getAttributes();
+    boolean checks_removed = false;
 
-						// parameter annotations
-						StructAnnotationParameterAttribute param_annotations = (StructAnnotationParameterAttribute)attributes.getWithKey(StructGeneralAttribute.ATTRIBUTE_RUNTIME_INVISIBLE_PARAMETER_ANNOTATIONS);
-						if(param_annotations != null) {
+    // parameter @NotNull annotations
+    while (findAndRemoveParameterCheck(root, mt)) { // iterate until nothing found. Each invocation removes one parameter check.
+      checks_removed = true;
+    }
 
-							List<List<AnnotationExprent>> param_annotations_lists = param_annotations.getParamAnnotations();
-							int method_param_number = md.params.length;
-							
-							int index = thisvar ? 1 : 0;
-							for (int i = 0; i < method_param_number; i++) {
+    // method @NotNull annotation
+    while (findAndRemoveReturnCheck(root, mt)) { // iterate until nothing found. Each invocation handles one method exit check.
+      checks_removed = true;
+    }
 
-								if(index == var.getIndex()) {
-									if(param_annotations_lists.size() >= method_param_number - i) {
-										int shift = method_param_number - param_annotations_lists.size(); // NOTE: workaround for compiler bug, count annotations starting with the last parameter
-										
-										List<AnnotationExprent> annotations = param_annotations_lists.get(i - shift);
+    return checks_removed;
+  }
 
-										for(AnnotationExprent ann : annotations) {
-											if(ann.getClassname().equals("org/jetbrains/annotations/NotNull")) {
-												is_notnull_check = true;
-											}
-										}
-									}
-									
-									break;
-								}
-								
-								index+=md.params[i].stack_size;
-							}
-						}
-					}
-				}
-			}
-			
-			if(!is_notnull_check) {
-				return false;
-			}
-			
-			removeParameterCheck(stat, mt);
-			
-			return true;
-		}
-		
-		return false;
-	}
+  private static boolean findAndRemoveParameterCheck(Statement stat, StructMethod mt) {
 
-	private static void removeParameterCheck(Statement stat, StructMethod mt) {
-		
-		Statement st = stat.getFirst();
-		while(st.type == Statement.TYPE_SEQUENCE) {
-			st = st.getFirst();
-		}
+    Statement st = stat.getFirst();
+    while (st.type == Statement.TYPE_SEQUENCE) {
+      st = st.getFirst();
+    }
 
-		IfStatement ifstat = (IfStatement)st;
-		
-		if(ifstat.getElsestat() == null) { // if
-			// TODO:
-		} else { // if - else
-			
-			StatEdge ifedge = ifstat.getIfEdge();
-			StatEdge elseedge = ifstat.getElseEdge();
+    if (st.type == Statement.TYPE_IF) {
 
-			Statement ifbranch = ifstat.getIfstat();
-			Statement elsebranch = ifstat.getElsestat();
-			
-			ifstat.getFirst().removeSuccessor(ifedge);
-			ifstat.getFirst().removeSuccessor(elseedge);
+      IfStatement ifstat = (IfStatement)st;
+      Statement ifbranch = ifstat.getIfstat();
 
-			ifstat.getStats().removeWithKey(ifbranch.id);
-			ifstat.getStats().removeWithKey(elsebranch.id);
+      Exprent if_condition = ifstat.getHeadexprent().getCondition();
 
-			if(!ifbranch.getAllSuccessorEdges().isEmpty()) {
-				ifbranch.removeSuccessor(ifbranch.getAllSuccessorEdges().get(0));
-			}
-			
-			ifstat.getParent().replaceStatement(ifstat, elsebranch);
-			ifstat.getParent().setAllParent();
-		}
-		
-	}
-	
-	private static boolean findAndRemoveReturnCheck(Statement stat, StructMethod mt) {
-		
-		VBStyleCollection<StructGeneralAttribute, String> attributes = mt.getAttributes();
+      boolean is_notnull_check = false;
 
-		boolean is_notnull_check = false;
-		
-		// method annotation, refers to the return value
-		StructAnnotationAttribute attr = (StructAnnotationAttribute)attributes.getWithKey(StructGeneralAttribute.ATTRIBUTE_RUNTIME_INVISIBLE_ANNOTATIONS);
-		if(attr != null) {
-			List<AnnotationExprent> annotations = attr.getAnnotations();
+      // TODO: FUNCTION_NE also possible if reversed order (in theory)
+      if (ifbranch != null &&
+          if_condition.type == Exprent.EXPRENT_FUNCTION &&
+          ((FunctionExprent)if_condition).getFunctype() == FunctionExprent.FUNCTION_EQ &&
+          ifbranch.type == Statement.TYPE_BASICBLOCK &&
+          ifbranch.getExprents().size() == 1 &&
+          ifbranch.getExprents().get(0).type == Exprent.EXPRENT_EXIT) {
 
-			for(AnnotationExprent ann : annotations) {
-				if(ann.getClassname().equals("org/jetbrains/annotations/NotNull")) {
-					is_notnull_check = true;
-				}
-			}
-		}
-		
-		if(is_notnull_check) {
-			return removeReturnCheck(stat, mt);
-		}
-		
-		return false;
-	}
+        FunctionExprent func = (FunctionExprent)if_condition;
+        Exprent first_param = func.getLstOperands().get(0);
+        Exprent second_param = func.getLstOperands().get(1);
+
+        if (second_param.type == Exprent.EXPRENT_CONST &&
+            ((ConstExprent)second_param).getExprType().type == CodeConstants.TYPE_NULL) { // TODO: reversed parameter order
+          if (first_param.type == Exprent.EXPRENT_VAR) {
+            VarExprent var = (VarExprent)first_param;
+
+            boolean thisvar = (mt.getAccessFlags() & CodeConstants.ACC_STATIC) == 0;
+
+            MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
+            VBStyleCollection<StructGeneralAttribute, String> attributes = mt.getAttributes();
+
+            // parameter annotations
+            StructAnnotationParameterAttribute param_annotations = (StructAnnotationParameterAttribute)attributes
+              .getWithKey(StructGeneralAttribute.ATTRIBUTE_RUNTIME_INVISIBLE_PARAMETER_ANNOTATIONS);
+            if (param_annotations != null) {
+
+              List<List<AnnotationExprent>> param_annotations_lists = param_annotations.getParamAnnotations();
+              int method_param_number = md.params.length;
+
+              int index = thisvar ? 1 : 0;
+              for (int i = 0; i < method_param_number; i++) {
+
+                if (index == var.getIndex()) {
+                  if (param_annotations_lists.size() >= method_param_number - i) {
+                    int shift = method_param_number -
+                                param_annotations_lists
+                                  .size(); // NOTE: workaround for compiler bug, count annotations starting with the last parameter
+
+                    List<AnnotationExprent> annotations = param_annotations_lists.get(i - shift);
+
+                    for (AnnotationExprent ann : annotations) {
+                      if (ann.getClassname().equals("org/jetbrains/annotations/NotNull")) {
+                        is_notnull_check = true;
+                      }
+                    }
+                  }
+
+                  break;
+                }
+
+                index += md.params[i].stack_size;
+              }
+            }
+          }
+        }
+      }
+
+      if (!is_notnull_check) {
+        return false;
+      }
+
+      removeParameterCheck(stat, mt);
+
+      return true;
+    }
+
+    return false;
+  }
+
+  private static void removeParameterCheck(Statement stat, StructMethod mt) {
+
+    Statement st = stat.getFirst();
+    while (st.type == Statement.TYPE_SEQUENCE) {
+      st = st.getFirst();
+    }
+
+    IfStatement ifstat = (IfStatement)st;
+
+    if (ifstat.getElsestat() == null) { // if
+      // TODO:
+    }
+    else { // if - else
+
+      StatEdge ifedge = ifstat.getIfEdge();
+      StatEdge elseedge = ifstat.getElseEdge();
+
+      Statement ifbranch = ifstat.getIfstat();
+      Statement elsebranch = ifstat.getElsestat();
+
+      ifstat.getFirst().removeSuccessor(ifedge);
+      ifstat.getFirst().removeSuccessor(elseedge);
+
+      ifstat.getStats().removeWithKey(ifbranch.id);
+      ifstat.getStats().removeWithKey(elsebranch.id);
+
+      if (!ifbranch.getAllSuccessorEdges().isEmpty()) {
+        ifbranch.removeSuccessor(ifbranch.getAllSuccessorEdges().get(0));
+      }
+
+      ifstat.getParent().replaceStatement(ifstat, elsebranch);
+      ifstat.getParent().setAllParent();
+    }
+  }
+
+  private static boolean findAndRemoveReturnCheck(Statement stat, StructMethod mt) {
+
+    VBStyleCollection<StructGeneralAttribute, String> attributes = mt.getAttributes();
+
+    boolean is_notnull_check = false;
+
+    // method annotation, refers to the return value
+    StructAnnotationAttribute attr =
+      (StructAnnotationAttribute)attributes.getWithKey(StructGeneralAttribute.ATTRIBUTE_RUNTIME_INVISIBLE_ANNOTATIONS);
+    if (attr != null) {
+      List<AnnotationExprent> annotations = attr.getAnnotations();
+
+      for (AnnotationExprent ann : annotations) {
+        if (ann.getClassname().equals("org/jetbrains/annotations/NotNull")) {
+          is_notnull_check = true;
+        }
+      }
+    }
+
+    if (is_notnull_check) {
+      return removeReturnCheck(stat, mt);
+    }
+
+    return false;
+  }
 
 
-	private static boolean removeReturnCheck(Statement stat, StructMethod mt) {
+  private static boolean removeReturnCheck(Statement stat, StructMethod mt) {
 
-		Statement parent = stat.getParent();
-		
-		if(parent != null && parent.type == Statement.TYPE_IF && stat.type == Statement.TYPE_BASICBLOCK && stat.getExprents().size() == 1) {
-			Exprent exprent = stat.getExprents().get(0);
-			if(exprent.type == Exprent.EXPRENT_EXIT) {
-				ExitExprent exit_exprent = (ExitExprent)exprent;
-				if(exit_exprent.getExittype() == ExitExprent.EXIT_RETURN) {
-					Exprent exprent_value = exit_exprent.getValue();
-					//if(exprent_value.type == Exprent.EXPRENT_VAR) {   
-					//	VarExprent var_value = (VarExprent)exprent_value;
-						
-						IfStatement ifparent = (IfStatement)parent;
-						Exprent if_condition = ifparent.getHeadexprent().getCondition();
-						
-						if(ifparent.getElsestat() == stat && if_condition.type == Exprent.EXPRENT_FUNCTION &&     
-												((FunctionExprent)if_condition).getFunctype() == FunctionExprent.FUNCTION_EQ) { // TODO: reversed order possible (in theory)
+    Statement parent = stat.getParent();
 
-							FunctionExprent func = (FunctionExprent)if_condition;
-							Exprent first_param = func.getLstOperands().get(0);
-							Exprent second_param = func.getLstOperands().get(1);
+    if (parent != null && parent.type == Statement.TYPE_IF && stat.type == Statement.TYPE_BASICBLOCK && stat.getExprents().size() == 1) {
+      Exprent exprent = stat.getExprents().get(0);
+      if (exprent.type == Exprent.EXPRENT_EXIT) {
+        ExitExprent exit_exprent = (ExitExprent)exprent;
+        if (exit_exprent.getExittype() == ExitExprent.EXIT_RETURN) {
+          Exprent exprent_value = exit_exprent.getValue();
+          //if(exprent_value.type == Exprent.EXPRENT_VAR) {
+          //	VarExprent var_value = (VarExprent)exprent_value;
 
-							StatEdge ifedge = ifparent.getIfEdge();
-							StatEdge elseedge = ifparent.getElseEdge();
+          IfStatement ifparent = (IfStatement)parent;
+          Exprent if_condition = ifparent.getHeadexprent().getCondition();
 
-							Statement ifbranch = ifparent.getIfstat();
-							Statement elsebranch = ifparent.getElsestat();
-							
-							if(second_param.type == Exprent.EXPRENT_CONST && ((ConstExprent)second_param).getExprType().type == CodeConstants.TYPE_NULL) { // TODO: reversed parameter order
-								//if(first_param.type == Exprent.EXPRENT_VAR && ((VarExprent)first_param).getIndex() == var_value.getIndex()) {
-								if(first_param.equals(exprent_value)) {	// TODO: check for absence of side effects like method invocations etc.
-									if(ifbranch.type == Statement.TYPE_BASICBLOCK && ifbranch.getExprents().size() == 1 && // TODO: special check for IllegalStateException
-																	ifbranch.getExprents().get(0).type == Exprent.EXPRENT_EXIT) {
+          if (ifparent.getElsestat() == stat && if_condition.type == Exprent.EXPRENT_FUNCTION &&
+              ((FunctionExprent)if_condition).getFunctype() == FunctionExprent.FUNCTION_EQ) { // TODO: reversed order possible (in theory)
 
-										ifparent.getFirst().removeSuccessor(ifedge);
-										ifparent.getFirst().removeSuccessor(elseedge);
-	
-										ifparent.getStats().removeWithKey(ifbranch.id);
-										ifparent.getStats().removeWithKey(elsebranch.id);
-	
-										if(!ifbranch.getAllSuccessorEdges().isEmpty()) {
-											ifbranch.removeSuccessor(ifbranch.getAllSuccessorEdges().get(0));
-										}
-										
-										if(!ifparent.getFirst().getExprents().isEmpty()) {
-											elsebranch.getExprents().addAll(0, ifparent.getFirst().getExprents());
-										}
-										
-										ifparent.getParent().replaceStatement(ifparent, elsebranch);
-										ifparent.getParent().setAllParent();
-										
-										return true;
-									}
-								}
-							}
-						}
-					//}
-				}
-			}
-		} else if (parent != null && parent.type == Statement.TYPE_SEQUENCE && stat.type == Statement.TYPE_BASICBLOCK && stat.getExprents().size() == 1) {
-			Exprent exprent = stat.getExprents().get(0);
-			if(exprent.type == Exprent.EXPRENT_EXIT) {
-				ExitExprent exit_exprent = (ExitExprent)exprent;
-				if(exit_exprent.getExittype() == ExitExprent.EXIT_RETURN) {
-					Exprent exprent_value = exit_exprent.getValue();
+            FunctionExprent func = (FunctionExprent)if_condition;
+            Exprent first_param = func.getLstOperands().get(0);
+            Exprent second_param = func.getLstOperands().get(1);
 
-					SequenceStatement sequence = (SequenceStatement)parent;
-					int sequence_stats_number = sequence.getStats().size();
-					
-					if(sequence_stats_number > 1 && sequence.getStats().getLast() == stat && sequence.getStats().get(sequence_stats_number - 2).type == Statement.TYPE_IF) {
-						
-						IfStatement ifstat = (IfStatement)sequence.getStats().get(sequence_stats_number - 2);
-						Exprent if_condition = ifstat.getHeadexprent().getCondition();
-						
-						if(ifstat.iftype == IfStatement.IFTYPE_IF && if_condition.type == Exprent.EXPRENT_FUNCTION &&     
-												((FunctionExprent)if_condition).getFunctype() == FunctionExprent.FUNCTION_EQ) { // TODO: reversed order possible (in theory)
+            StatEdge ifedge = ifparent.getIfEdge();
+            StatEdge elseedge = ifparent.getElseEdge();
 
-							FunctionExprent func = (FunctionExprent)if_condition;
-							Exprent first_param = func.getLstOperands().get(0);
-							Exprent second_param = func.getLstOperands().get(1);
+            Statement ifbranch = ifparent.getIfstat();
+            Statement elsebranch = ifparent.getElsestat();
 
-							Statement ifbranch = ifstat.getIfstat();
-							
-							if(second_param.type == Exprent.EXPRENT_CONST && ((ConstExprent)second_param).getExprType().type == CodeConstants.TYPE_NULL) { // TODO: reversed parameter order
-								if(first_param.equals(exprent_value)) {	// TODO: check for absence of side effects like method invocations etc.
-									if(ifbranch.type == Statement.TYPE_BASICBLOCK && ifbranch.getExprents().size() == 1 && // TODO: special check for IllegalStateException
-																	ifbranch.getExprents().get(0).type == Exprent.EXPRENT_EXIT) {
-						
-										ifstat.removeSuccessor(ifstat.getAllSuccessorEdges().get(0)); // remove 'else' edge	
+            if (second_param.type == Exprent.EXPRENT_CONST &&
+                ((ConstExprent)second_param).getExprType().type == CodeConstants.TYPE_NULL) { // TODO: reversed parameter order
+              //if(first_param.type == Exprent.EXPRENT_VAR && ((VarExprent)first_param).getIndex() == var_value.getIndex()) {
+              if (first_param.equals(exprent_value)) {        // TODO: check for absence of side effects like method invocations etc.
+                if (ifbranch.type == Statement.TYPE_BASICBLOCK &&
+                    ifbranch.getExprents().size() == 1 &&
+                    // TODO: special check for IllegalStateException
+                    ifbranch.getExprents().get(0).type == Exprent.EXPRENT_EXIT) {
 
-										if(!ifstat.getFirst().getExprents().isEmpty()) {
-											stat.getExprents().addAll(0, ifstat.getFirst().getExprents());
-										}
-										
-										for(StatEdge edge : ifstat.getAllPredecessorEdges()) {
+                  ifparent.getFirst().removeSuccessor(ifedge);
+                  ifparent.getFirst().removeSuccessor(elseedge);
 
-											ifstat.removePredecessor(edge);
-											edge.getSource().changeEdgeNode(Statement.DIRECTION_FORWARD, edge, stat);
-											stat.addPredecessor(edge);
-										}										
-										
-										sequence.getStats().removeWithKey(ifstat.id);
-										sequence.setFirst(sequence.getStats().get(0));
-										
-										return true;
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-		
+                  ifparent.getStats().removeWithKey(ifbranch.id);
+                  ifparent.getStats().removeWithKey(elsebranch.id);
 
-		for(Statement st: stat.getStats()) {
-			if(removeReturnCheck(st, mt)) {
-				return true;
-			}
-		}
+                  if (!ifbranch.getAllSuccessorEdges().isEmpty()) {
+                    ifbranch.removeSuccessor(ifbranch.getAllSuccessorEdges().get(0));
+                  }
 
-		return false;
-	}
-	
+                  if (!ifparent.getFirst().getExprents().isEmpty()) {
+                    elsebranch.getExprents().addAll(0, ifparent.getFirst().getExprents());
+                  }
+
+                  ifparent.getParent().replaceStatement(ifparent, elsebranch);
+                  ifparent.getParent().setAllParent();
+
+                  return true;
+                }
+              }
+            }
+          }
+          //}
+        }
+      }
+    }
+    else if (parent != null &&
+             parent.type == Statement.TYPE_SEQUENCE &&
+             stat.type == Statement.TYPE_BASICBLOCK &&
+             stat.getExprents().size() == 1) {
+      Exprent exprent = stat.getExprents().get(0);
+      if (exprent.type == Exprent.EXPRENT_EXIT) {
+        ExitExprent exit_exprent = (ExitExprent)exprent;
+        if (exit_exprent.getExittype() == ExitExprent.EXIT_RETURN) {
+          Exprent exprent_value = exit_exprent.getValue();
+
+          SequenceStatement sequence = (SequenceStatement)parent;
+          int sequence_stats_number = sequence.getStats().size();
+
+          if (sequence_stats_number > 1 &&
+              sequence.getStats().getLast() == stat &&
+              sequence.getStats().get(sequence_stats_number - 2).type == Statement.TYPE_IF) {
+
+            IfStatement ifstat = (IfStatement)sequence.getStats().get(sequence_stats_number - 2);
+            Exprent if_condition = ifstat.getHeadexprent().getCondition();
+
+            if (ifstat.iftype == IfStatement.IFTYPE_IF && if_condition.type == Exprent.EXPRENT_FUNCTION &&
+                ((FunctionExprent)if_condition).getFunctype() == FunctionExprent.FUNCTION_EQ) { // TODO: reversed order possible (in theory)
+
+              FunctionExprent func = (FunctionExprent)if_condition;
+              Exprent first_param = func.getLstOperands().get(0);
+              Exprent second_param = func.getLstOperands().get(1);
+
+              Statement ifbranch = ifstat.getIfstat();
+
+              if (second_param.type == Exprent.EXPRENT_CONST &&
+                  ((ConstExprent)second_param).getExprType().type == CodeConstants.TYPE_NULL) { // TODO: reversed parameter order
+                if (first_param.equals(exprent_value)) {        // TODO: check for absence of side effects like method invocations etc.
+                  if (ifbranch.type == Statement.TYPE_BASICBLOCK &&
+                      ifbranch.getExprents().size() == 1 &&
+                      // TODO: special check for IllegalStateException
+                      ifbranch.getExprents().get(0).type == Exprent.EXPRENT_EXIT) {
+
+                    ifstat.removeSuccessor(ifstat.getAllSuccessorEdges().get(0)); // remove 'else' edge
+
+                    if (!ifstat.getFirst().getExprents().isEmpty()) {
+                      stat.getExprents().addAll(0, ifstat.getFirst().getExprents());
+                    }
+
+                    for (StatEdge edge : ifstat.getAllPredecessorEdges()) {
+
+                      ifstat.removePredecessor(edge);
+                      edge.getSource().changeEdgeNode(Statement.DIRECTION_FORWARD, edge, stat);
+                      stat.addPredecessor(edge);
+                    }
+
+                    sequence.getStats().removeWithKey(ifstat.id);
+                    sequence.setFirst(sequence.getStats().get(0));
+
+                    return true;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+
+    for (Statement st : stat.getStats()) {
+      if (removeReturnCheck(st, mt)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
 }

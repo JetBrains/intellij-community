@@ -1,23 +1,19 @@
 /*
- *    Fernflower - The Analytical Java Decompiler
- *    http://www.reversed-java.com
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
- *    (C) 2008 - 2010, Stiver
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *    This software is NEITHER public domain NOR free software 
- *    as per GNU License. See license.txt for more details.
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *    This software is distributed WITHOUT ANY WARRANTY; without 
- *    even the implied warranty of MERCHANTABILITY or FITNESS FOR 
- *    A PARTICULAR PURPOSE. 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 package org.jetbrains.java.decompiler.modules.decompiler;
-
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
 
 import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
@@ -29,125 +25,130 @@ import org.jetbrains.java.decompiler.modules.decompiler.sforms.FlattenStatements
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+
 public class PPandMMHelper {
 
-	private boolean exprentReplaced;
-	
-	public boolean findPPandMM(RootStatement root) {
-		
-		FlattenStatementsHelper flatthelper = new FlattenStatementsHelper();
-		DirectGraph dgraph = flatthelper.buildDirectGraph(root);
+  private boolean exprentReplaced;
 
-		LinkedList<DirectNode> stack = new LinkedList<DirectNode>();
-		stack.add(dgraph.first);
-		
-		HashSet<DirectNode> setVisited = new HashSet<DirectNode>(); 
-		
-		boolean res = false;
-		
-		while(!stack.isEmpty()) {
-			
-			DirectNode node = stack.removeFirst();
-			
-			if(setVisited.contains(node)) {
-				continue;
-			}
-			setVisited.add(node);
-			
-			res |= processExprentList(node.exprents);
-			
-			stack.addAll(node.succs);
-		}
-		
-		return res;
-	}
-	
-	private boolean processExprentList(List<Exprent> lst) {
-		
-		boolean result = false;
+  public boolean findPPandMM(RootStatement root) {
 
-		for(int i=0;i<lst.size();i++) {
-			Exprent exprent = lst.get(i);
-			exprentReplaced = false;
-			
-			Exprent retexpr = processExprentRecursive(exprent);
-			if(retexpr != null) {
-				lst.set(i, retexpr);
+    FlattenStatementsHelper flatthelper = new FlattenStatementsHelper();
+    DirectGraph dgraph = flatthelper.buildDirectGraph(root);
 
-				result = true;
-				i--; // process the same exprent again
-			}
-			
-			result |= exprentReplaced;
-		}
+    LinkedList<DirectNode> stack = new LinkedList<DirectNode>();
+    stack.add(dgraph.first);
 
-		return result;
-	}
+    HashSet<DirectNode> setVisited = new HashSet<DirectNode>();
 
-	private Exprent processExprentRecursive(Exprent exprent) {
+    boolean res = false;
 
-		boolean replaced = true;
-		while(replaced) {
-			replaced = false;
+    while (!stack.isEmpty()) {
 
-			for(Exprent expr: exprent.getAllExprents()) {
-				Exprent retexpr = processExprentRecursive(expr);
-				if(retexpr != null) {
-					exprent.replaceExprent(expr, retexpr);
-					replaced = true;
-					exprentReplaced = true;
-					break;
-				}
-			}
-		}
+      DirectNode node = stack.removeFirst();
 
-		if(exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
-			AssignmentExprent as = (AssignmentExprent)exprent;
+      if (setVisited.contains(node)) {
+        continue;
+      }
+      setVisited.add(node);
 
-			if(as.getRight().type == Exprent.EXPRENT_FUNCTION) {
-				FunctionExprent func = (FunctionExprent)as.getRight();
+      res |= processExprentList(node.exprents);
 
-				VarType midlayer = null;
-				if(func.getFunctype() >= FunctionExprent.FUNCTION_I2L && 
-						func.getFunctype() <= FunctionExprent.FUNCTION_I2S) {
-					midlayer = func.getSimpleCastType();
-					if(func.getLstOperands().get(0).type == Exprent.EXPRENT_FUNCTION) {
-						func = (FunctionExprent)func.getLstOperands().get(0);
-					} else {
-						return null;
-					}
-				}
+      stack.addAll(node.succs);
+    }
 
-				if(func.getFunctype() == FunctionExprent.FUNCTION_ADD ||
-						func.getFunctype() == FunctionExprent.FUNCTION_SUB) {
-					Exprent econd = func.getLstOperands().get(0);
-					Exprent econst = func.getLstOperands().get(1);
+    return res;
+  }
 
-					if(econst.type != Exprent.EXPRENT_CONST && econd.type == Exprent.EXPRENT_CONST &&
-							func.getFunctype() == FunctionExprent.FUNCTION_ADD) {
-						econd = econst;
-						econst = func.getLstOperands().get(0);
-					}
+  private boolean processExprentList(List<Exprent> lst) {
 
-					if(econst.type == Exprent.EXPRENT_CONST && ((ConstExprent)econst).hasValueOne()) {
-						Exprent left = as.getLeft();
+    boolean result = false;
 
-						VarType condtype = econd.getExprType();
-						if(left.equals(econd) && (midlayer == null || midlayer.equals(condtype))) {
-							FunctionExprent ret = new FunctionExprent(
-									func.getFunctype() == FunctionExprent.FUNCTION_ADD?FunctionExprent.FUNCTION_PPI:FunctionExprent.FUNCTION_MMI,
-											Arrays.asList(new Exprent[]{econd}));
-							ret.setImplicitType(condtype);
+    for (int i = 0; i < lst.size(); i++) {
+      Exprent exprent = lst.get(i);
+      exprentReplaced = false;
 
-							exprentReplaced = true;
-							return ret;
-						}
-					}
-				}
-			}
-		}
+      Exprent retexpr = processExprentRecursive(exprent);
+      if (retexpr != null) {
+        lst.set(i, retexpr);
 
-		return null;
-	}
-	
+        result = true;
+        i--; // process the same exprent again
+      }
+
+      result |= exprentReplaced;
+    }
+
+    return result;
+  }
+
+  private Exprent processExprentRecursive(Exprent exprent) {
+
+    boolean replaced = true;
+    while (replaced) {
+      replaced = false;
+
+      for (Exprent expr : exprent.getAllExprents()) {
+        Exprent retexpr = processExprentRecursive(expr);
+        if (retexpr != null) {
+          exprent.replaceExprent(expr, retexpr);
+          replaced = true;
+          exprentReplaced = true;
+          break;
+        }
+      }
+    }
+
+    if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
+      AssignmentExprent as = (AssignmentExprent)exprent;
+
+      if (as.getRight().type == Exprent.EXPRENT_FUNCTION) {
+        FunctionExprent func = (FunctionExprent)as.getRight();
+
+        VarType midlayer = null;
+        if (func.getFunctype() >= FunctionExprent.FUNCTION_I2L &&
+            func.getFunctype() <= FunctionExprent.FUNCTION_I2S) {
+          midlayer = func.getSimpleCastType();
+          if (func.getLstOperands().get(0).type == Exprent.EXPRENT_FUNCTION) {
+            func = (FunctionExprent)func.getLstOperands().get(0);
+          }
+          else {
+            return null;
+          }
+        }
+
+        if (func.getFunctype() == FunctionExprent.FUNCTION_ADD ||
+            func.getFunctype() == FunctionExprent.FUNCTION_SUB) {
+          Exprent econd = func.getLstOperands().get(0);
+          Exprent econst = func.getLstOperands().get(1);
+
+          if (econst.type != Exprent.EXPRENT_CONST && econd.type == Exprent.EXPRENT_CONST &&
+              func.getFunctype() == FunctionExprent.FUNCTION_ADD) {
+            econd = econst;
+            econst = func.getLstOperands().get(0);
+          }
+
+          if (econst.type == Exprent.EXPRENT_CONST && ((ConstExprent)econst).hasValueOne()) {
+            Exprent left = as.getLeft();
+
+            VarType condtype = econd.getExprType();
+            if (left.equals(econd) && (midlayer == null || midlayer.equals(condtype))) {
+              FunctionExprent ret = new FunctionExprent(
+                func.getFunctype() == FunctionExprent.FUNCTION_ADD ? FunctionExprent.FUNCTION_PPI : FunctionExprent.FUNCTION_MMI,
+                Arrays.asList(new Exprent[]{econd}));
+              ret.setImplicitType(condtype);
+
+              exprentReplaced = true;
+              return ret;
+            }
+          }
+        }
+      }
+    }
+
+    return null;
+  }
 }

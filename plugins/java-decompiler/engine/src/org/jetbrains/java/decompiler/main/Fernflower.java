@@ -1,22 +1,19 @@
 /*
- *    Fernflower - The Analytical Java Decompiler
- *    http://www.reversed-java.com
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
- *    (C) 2008 - 2010, Stiver
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *    This software is NEITHER public domain NOR free software 
- *    as per GNU License. See license.txt for more details.
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *    This software is distributed WITHOUT ANY WARRANTY; without 
- *    even the implied warranty of MERCHANTABILITY or FITNESS FOR 
- *    A PARTICULAR PURPOSE. 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 package org.jetbrains.java.decompiler.main;
-
-import java.io.BufferedWriter;
-import java.io.StringWriter;
-import java.util.HashMap;
 
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
@@ -29,82 +26,88 @@ import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructContext;
 import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
 
+import java.io.BufferedWriter;
+import java.io.StringWriter;
+import java.util.HashMap;
+
 
 public class Fernflower implements IDecompiledData {
-	
-	public static final String version = "v0.8.4";
 
-	private StructContext structcontext;
-	
-	private ClassesProcessor clprocessor; 
-	
-	public Fernflower(IBytecodeProvider provider, IDecompilatSaver saver,
-			HashMap<String, Object> propertiesCustom) {
+  public static final String version = "v0.8.4";
 
-		StructContext context = new StructContext(saver, this, new LazyLoader(provider));
-		
-		structcontext = context;
+  private StructContext structcontext;
 
-		DecompilerContext.initContext(propertiesCustom);
-		DecompilerContext.setCountercontainer(new CounterContainer());
+  private ClassesProcessor clprocessor;
 
-	}
+  public Fernflower(IBytecodeProvider provider, IDecompilatSaver saver,
+                    HashMap<String, Object> propertiesCustom) {
 
-	public void decompileContext() {
+    StructContext context = new StructContext(saver, this, new LazyLoader(provider));
 
-		if(DecompilerContext.getOption(IFernflowerPreferences.RENAME_ENTITIES)) {
-			IdentifierConverter ren = new IdentifierConverter();
-			ren.rename(structcontext);
-			ren = null;
-		}
-		
-		clprocessor = new ClassesProcessor(structcontext);
-		
-		DecompilerContext.setClassprocessor(clprocessor);
-		DecompilerContext.setStructcontext(structcontext);
-		
-		structcontext.saveContext();
-	}
+    structcontext = context;
+
+    DecompilerContext.initContext(propertiesCustom);
+    DecompilerContext.setCountercontainer(new CounterContainer());
+  }
+
+  public void decompileContext() {
+
+    if (DecompilerContext.getOption(IFernflowerPreferences.RENAME_ENTITIES)) {
+      IdentifierConverter ren = new IdentifierConverter();
+      ren.rename(structcontext);
+      ren = null;
+    }
+
+    clprocessor = new ClassesProcessor(structcontext);
+
+    DecompilerContext.setClassprocessor(clprocessor);
+    DecompilerContext.setStructcontext(structcontext);
+
+    structcontext.saveContext();
+  }
 
   public void clearContext() {
     DecompilerContext.setCurrentContext(null);
   }
 
-	public String getClassEntryName(StructClass cl, String entryname) {
-		
-		ClassNode node = clprocessor.getMapRootClasses().get(cl.qualifiedName);
-		if(node.type != ClassNode.CLASS_ROOT) {
-			return null;
-		} else {
-			if(DecompilerContext.getOption(IFernflowerPreferences.RENAME_ENTITIES)) {
-				String simple_classname = cl.qualifiedName.substring(cl.qualifiedName.lastIndexOf('/')+1);
-				return entryname.substring(0, entryname.lastIndexOf('/')+1)+simple_classname+".java";
-			} else {
-				return entryname.substring(0, entryname.lastIndexOf(".class"))+".java";
-			}
-		}
-	}
+  public String getClassEntryName(StructClass cl, String entryname) {
 
-	public StructContext getStructcontext() {
-		return structcontext;
-	}
+    ClassNode node = clprocessor.getMapRootClasses().get(cl.qualifiedName);
+    if (node.type != ClassNode.CLASS_ROOT) {
+      return null;
+    }
+    else {
+      if (DecompilerContext.getOption(IFernflowerPreferences.RENAME_ENTITIES)) {
+        String simple_classname = cl.qualifiedName.substring(cl.qualifiedName.lastIndexOf('/') + 1);
+        return entryname.substring(0, entryname.lastIndexOf('/') + 1) + simple_classname + ".java";
+      }
+      else {
+        return entryname.substring(0, entryname.lastIndexOf(".class")) + ".java";
+      }
+    }
+  }
 
-	public String getClassContent(StructClass cl) {
-		
-		String res = null; 
-		
-		try {
-			StringWriter strwriter = new StringWriter();
-			clprocessor.writeClass(structcontext, cl, new BufferedWriter(strwriter));
-			
-			res = strwriter.toString();
-		} catch(ThreadDeath ex) {
-			throw ex;
-		} catch(Throwable ex) {
-			DecompilerContext.getLogger().writeMessage("Class "+cl.qualifiedName+" couldn't be fully decompiled.", ex);
-		}
-		
-		return res;
-	}
-	
+  public StructContext getStructcontext() {
+    return structcontext;
+  }
+
+  public String getClassContent(StructClass cl) {
+
+    String res = null;
+
+    try {
+      StringWriter strwriter = new StringWriter();
+      clprocessor.writeClass(structcontext, cl, new BufferedWriter(strwriter));
+
+      res = strwriter.toString();
+    }
+    catch (ThreadDeath ex) {
+      throw ex;
+    }
+    catch (Throwable ex) {
+      DecompilerContext.getLogger().writeMessage("Class " + cl.qualifiedName + " couldn't be fully decompiled.", ex);
+    }
+
+    return res;
+  }
 }

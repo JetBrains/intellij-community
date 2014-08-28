@@ -1,29 +1,24 @@
 /*
- *    Fernflower - The Analytical Java Decompiler
- *    http://www.reversed-java.com
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
- *    (C) 2008 - 2010, Stiver
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *    This software is NEITHER public domain NOR free software 
- *    as per GNU License. See license.txt for more details.
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *    This software is distributed WITHOUT ANY WARRANTY; without 
- *    even the implied warranty of MERCHANTABILITY or FITNESS FOR 
- *    A PARTICULAR PURPOSE. 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
-
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassWriter;
-import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarTypeProcessor;
@@ -31,168 +26,177 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPaar;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
+
 public class VarExprent extends Exprent {
 
-	public static final int STACK_BASE = 10000;
+  public static final int STACK_BASE = 10000;
 
-	public static final String VAR_NAMELESS_ENCLOSURE = "<VAR_NAMELESS_ENCLOSURE>";
-	
-	private int index;
-	
-	private VarType vartype;
-	
-	private boolean definition = false;;
-	
-	private VarProcessor processor;
-	
-	private int version = 0;
-	
-	private boolean classdef = false;
-	
-	private boolean stack = false;;
-	
-	{
-		this.type = EXPRENT_VAR;
-	}
+  public static final String VAR_NAMELESS_ENCLOSURE = "<VAR_NAMELESS_ENCLOSURE>";
 
-	public VarExprent(int index, VarType vartype, VarProcessor processor) {
-		this.index = index;
-		this.vartype = vartype;
-		this.processor = processor;
-	}
-	
-	public VarType getExprType() {
-		return getVartype();
-	}
-	
-	public int getExprentUse() {
-		return Exprent.MULTIPLE_USES | Exprent.SIDE_EFFECTS_FREE;
-	}
-	
-	public List<Exprent> getAllExprents() {
-		return new ArrayList<Exprent>();
-	}
-	
-	public Exprent copy() {
-		VarExprent var = new VarExprent(index, getVartype(), processor);
-		var.setDefinition(definition);
-		var.setVersion(version);
-		var.setClassdef(classdef);
-		var.setStack(stack);
-		return var;
-	}
-	
-	public String toJava(int indent) {
-		
-		if(classdef) {
-			
-			ClassNode child = DecompilerContext.getClassprocessor().getMapRootClasses().get(vartype.value); 
-			
-			StringWriter strwriter = new StringWriter();
-			BufferedWriter bufstrwriter = new BufferedWriter(strwriter);
-			
-			ClassWriter clwriter = new ClassWriter();
-			try {
-				clwriter.classToJava(child, bufstrwriter, indent);
-				bufstrwriter.flush();
-			} catch(IOException ex) {
-				throw new RuntimeException(ex);
-			}
-			
-			return strwriter.toString();
+  private int index;
 
-		} else {
-			String name = null;
-			if(processor != null) {
-				name = processor.getVarName(new VarVersionPaar(index, version));
-			}
+  private VarType vartype;
 
-			StringBuilder buf = new StringBuilder();
-			
-			if(definition) {
-				if(processor != null && processor.getVarFinal(new VarVersionPaar(index, version)) == VarTypeProcessor.VAR_FINALEXPLICIT) {
-					buf.append("final ");
-				}
-				buf.append(ExprProcessor.getCastTypeName(getVartype())+" ");
-			}
-			buf.append(name==null?("var"+index+(version==0?"":"_"+version)):name);
-			
-			return buf.toString();
-		}
-	}
+  private boolean definition = false;
+  ;
 
-	public boolean equals(Object o) {
-    if(o == this) return true;
-    if(o == null || !(o instanceof VarExprent)) return false;
+  private VarProcessor processor;
+
+  private int version = 0;
+
+  private boolean classdef = false;
+
+  private boolean stack = false;
+  ;
+
+  {
+    this.type = EXPRENT_VAR;
+  }
+
+  public VarExprent(int index, VarType vartype, VarProcessor processor) {
+    this.index = index;
+    this.vartype = vartype;
+    this.processor = processor;
+  }
+
+  public VarType getExprType() {
+    return getVartype();
+  }
+
+  public int getExprentUse() {
+    return Exprent.MULTIPLE_USES | Exprent.SIDE_EFFECTS_FREE;
+  }
+
+  public List<Exprent> getAllExprents() {
+    return new ArrayList<Exprent>();
+  }
+
+  public Exprent copy() {
+    VarExprent var = new VarExprent(index, getVartype(), processor);
+    var.setDefinition(definition);
+    var.setVersion(version);
+    var.setClassdef(classdef);
+    var.setStack(stack);
+    return var;
+  }
+
+  public String toJava(int indent) {
+
+    if (classdef) {
+
+      ClassNode child = DecompilerContext.getClassprocessor().getMapRootClasses().get(vartype.value);
+
+      StringWriter strwriter = new StringWriter();
+      BufferedWriter bufstrwriter = new BufferedWriter(strwriter);
+
+      ClassWriter clwriter = new ClassWriter();
+      try {
+        clwriter.classToJava(child, bufstrwriter, indent);
+        bufstrwriter.flush();
+      }
+      catch (IOException ex) {
+        throw new RuntimeException(ex);
+      }
+
+      return strwriter.toString();
+    }
+    else {
+      String name = null;
+      if (processor != null) {
+        name = processor.getVarName(new VarVersionPaar(index, version));
+      }
+
+      StringBuilder buf = new StringBuilder();
+
+      if (definition) {
+        if (processor != null && processor.getVarFinal(new VarVersionPaar(index, version)) == VarTypeProcessor.VAR_FINALEXPLICIT) {
+          buf.append("final ");
+        }
+        buf.append(ExprProcessor.getCastTypeName(getVartype()) + " ");
+      }
+      buf.append(name == null ? ("var" + index + (version == 0 ? "" : "_" + version)) : name);
+
+      return buf.toString();
+    }
+  }
+
+  public boolean equals(Object o) {
+    if (o == this) return true;
+    if (o == null || !(o instanceof VarExprent)) return false;
 
     VarExprent ve = (VarExprent)o;
     return index == ve.getIndex() &&
-        version == ve.getVersion() &&
-        InterpreterUtil.equalObjects(getVartype(), ve.getVartype()); // FIXME: vartype comparison redundant?
+           version == ve.getVersion() &&
+           InterpreterUtil.equalObjects(getVartype(), ve.getVartype()); // FIXME: vartype comparison redundant?
   }
-	
-	public int getIndex() {
-		return index;
-	}
 
-	public void setIndex(int index) {
-		this.index = index;
-	}
-	
-	public VarType getVartype() {   
-		VarType vt = null;
-		if(processor != null) {
-			vt = processor.getVarType(new VarVersionPaar(index, version));
-		}
-		
-		if(vt == null || (vartype != null && vartype.type != CodeConstants.TYPE_UNKNOWN)) { 
-			vt = vartype;
-		} 
-		
-		return vt==null?VarType.VARTYPE_UNKNOWN:vt;
-	}
+  public int getIndex() {
+    return index;
+  }
 
-	public void setVartype(VarType vartype) {
-		this.vartype = vartype;
-	}
-	
-	public boolean isDefinition() {
-		return definition;
-	}
+  public void setIndex(int index) {
+    this.index = index;
+  }
 
-	public void setDefinition(boolean definition) {
-		this.definition = definition;
-	}
+  public VarType getVartype() {
+    VarType vt = null;
+    if (processor != null) {
+      vt = processor.getVarType(new VarVersionPaar(index, version));
+    }
 
-	public VarProcessor getProcessor() {
-		return processor;
-	}
+    if (vt == null || (vartype != null && vartype.type != CodeConstants.TYPE_UNKNOWN)) {
+      vt = vartype;
+    }
 
-	public void setProcessor(VarProcessor processor) {
-		this.processor = processor;
-	}
+    return vt == null ? VarType.VARTYPE_UNKNOWN : vt;
+  }
 
-	public int getVersion() {
-		return version;
-	}
+  public void setVartype(VarType vartype) {
+    this.vartype = vartype;
+  }
 
-	public void setVersion(int version) {
-		this.version = version;
-	}
+  public boolean isDefinition() {
+    return definition;
+  }
 
-	public boolean isClassdef() {
-		return classdef;
-	}
+  public void setDefinition(boolean definition) {
+    this.definition = definition;
+  }
 
-	public void setClassdef(boolean classdef) {
-		this.classdef = classdef;
-	}
+  public VarProcessor getProcessor() {
+    return processor;
+  }
 
-	public boolean isStack() {
-		return stack;
-	}
+  public void setProcessor(VarProcessor processor) {
+    this.processor = processor;
+  }
 
-	public void setStack(boolean stack) {
-		this.stack = stack;
-	}
+  public int getVersion() {
+    return version;
+  }
+
+  public void setVersion(int version) {
+    this.version = version;
+  }
+
+  public boolean isClassdef() {
+    return classdef;
+  }
+
+  public void setClassdef(boolean classdef) {
+    this.classdef = classdef;
+  }
+
+  public boolean isStack() {
+    return stack;
+  }
+
+  public void setStack(boolean stack) {
+    this.stack = stack;
+  }
 }
