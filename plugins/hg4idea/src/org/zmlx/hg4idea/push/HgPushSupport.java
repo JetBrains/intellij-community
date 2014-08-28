@@ -15,6 +15,7 @@
  */
 package org.zmlx.hg4idea.push;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.*;
 import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.project.Project;
@@ -58,7 +59,7 @@ public class HgPushSupport extends PushSupport<HgRepository, HgPushSource, HgTar
 
   @NotNull
   @Override
-  public OutgoingCommitsProvider getOutgoingCommitsProvider() {
+  public OutgoingCommitsProvider<HgRepository, HgPushSource, HgTarget> getOutgoingCommitsProvider() {
     return new HgOutgoingCommitsProvider();
   }
 
@@ -88,6 +89,7 @@ public class HgPushSupport extends PushSupport<HgRepository, HgPushSource, HgTar
   }
 
   @Override
+  @NotNull
   public HgTarget createTarget(@NotNull HgRepository repository, @NotNull String targetName) {
     return new HgTarget(targetName);
   }
@@ -106,7 +108,9 @@ public class HgPushSupport extends PushSupport<HgRepository, HgPushSource, HgTar
   @Override
   @Nullable
   public VcsError validate(@NotNull HgRepository repository, @Nullable String targetToValidate) {
-    return StringUtil.isEmptyOrSpaces(targetToValidate) ? new VcsError("Please, specify remote push path for repository!") : null;
+    return StringUtil.isEmptyOrSpaces(targetToValidate)
+           ? VcsError.createEmptyTargetError(DvcsUtil.getShortRepositoryName(repository))
+           : null;
   }
 
   @Override

@@ -27,7 +27,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     def c = inferContract("""
   String smth(String s) {
     if (s == null) return null;
-    return s.substring(1);
+    return smth();
   }
 """)
     assert c == 'null -> null'
@@ -308,6 +308,55 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     }
     """)
     assert c == []
+  }
+
+  public void "test skip empty declarations"() {
+    def c = inferContracts("""
+    final Object foo(Object bar) {
+        Object o = 2;
+        if (bar == null) return null;
+        return new String("abc");
+    }
+    """)
+    assert c == ['null -> null', '!null -> !null']
+  }
+
+  public void "test go inside do-while"() {
+    def c = inferContracts("""
+    final Object foo(Object bar) {
+        do {
+          if (bar == null) return null;
+          bar = smth(bar);
+        } while (smthElse());
+        return new String("abc");
+    }
+    """)
+    assert c == ['null -> null']
+  }
+
+  public void "test go inside try"() {
+    def c = inferContracts("""
+    final Object foo(Object bar) {
+        try {
+          if (bar == null) return null;
+          bar = smth(bar);
+        } finally {}
+        return new String("abc");
+    }
+    """)
+    assert c == ['null -> null']
+  }
+
+  public void "test use invoked method notnull"() {
+    def c = inferContracts("""
+    final Object foo(Object bar) {
+        if (bar == null) return null;
+        return doo();
+    }
+
+    @org.jetbrains.annotations.NotNull Object doo() {}
+    """)
+    assert c == ['null -> null', '!null -> !null']
   }
 
   private String inferContract(String method) {
