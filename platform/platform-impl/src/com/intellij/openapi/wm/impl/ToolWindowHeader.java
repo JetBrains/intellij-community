@@ -24,7 +24,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.SystemInfo;
@@ -54,7 +53,7 @@ import java.beans.PropertyChangeListener;
 /**
  * @author pegov
  */
-public abstract class ToolWindowHeader extends JPanel implements Disposable, UISettingsListener, TimerListener {
+public abstract class ToolWindowHeader extends JPanel implements Disposable, UISettingsListener {
   @NonNls private static final String HIDE_ACTIVE_WINDOW_ACTION_ID = "HideActiveWindow";
   @NonNls private static final String HIDE_ACTIVE_SIDE_WINDOW_ACTION_ID = "HideSideWindows";
 
@@ -191,7 +190,6 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     setBorder(BorderFactory.createEmptyBorder(TabsUtil.TABS_BORDER, 1, TabsUtil.TABS_BORDER, 1));
 
     UISettings.getInstance().addUISettingsListener(this, toolWindow.getContentUI());
-    ActionManager.getInstance().addTimerListener(500, this);
   }
 
   @Override
@@ -204,41 +202,6 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     eastPanel.add(Box.createHorizontalStrut(6));
     eastPanel.add(myHideButton);
     eastPanel.add(Box.createHorizontalStrut(1));
-  }
-
-  @Override
-  public void addNotify() {
-    super.addNotify();
-    ActionManager.getInstance().addTimerListener(500, this);
-  }
-
-  @Override
-  public void removeNotify() {
-    super.removeNotify();
-    ActionManager.getInstance().removeTimerListener(this);
-  }
-
-  @Override
-  public ModalityState getModalityState() {
-    if (myToolWindow == null) return null;
-    return ModalityState.stateForComponent(myToolWindow.getComponent());
-  }
-
-  @Override
-  public void run() {
-    for (Component c : myButtonPanel.getComponents()) {
-      if (c instanceof ActionButton) {
-        ActionButton actionButton = (ActionButton) c;
-        Presentation presentation = actionButton.myAction.getTemplatePresentation().clone();
-        DataContext context = DataManager.getInstance().getDataContext(actionButton);
-        AnActionEvent event = new AnActionEvent(null, context, ActionPlaces.UNKNOWN, presentation, ActionManager.getInstance(), 0);
-        actionButton.myAction.update(event);
-        actionButton.setEnabled(event.getPresentation().isEnabled());
-        actionButton.setIcon(event.getPresentation().getIcon(), event.getPresentation().getDisabledIcon(), event.getPresentation().getHoveredIcon());
-      }
-    }
-    myButtonPanel.revalidate();
-    myButtonPanel.repaint();
   }
 
   @Override
@@ -529,6 +492,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
       if (component != null && !component.isShowing()) {
         return;
       }
+
       action.actionPerformed(event);
     }
 

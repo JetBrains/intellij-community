@@ -19,10 +19,14 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -30,13 +34,14 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.docking.DockManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 
-class PreviewPanel extends JPanel {
+class PreviewPanel extends JPanel implements DocumentListener, FileEditorManagerListener.Before {
   private static final int HISTORY_LIMIT = 10;
 
   private final Project myProject;
@@ -46,6 +51,9 @@ class PreviewPanel extends JPanel {
   private boolean myInitialized = false;
   private EditorsSplitters myEditorsSplitters;
   private ArrayList<VirtualFile> myHistory = new ArrayList<VirtualFile>();
+  private VirtualFile myModifiedFile = null;
+  private ToolWindowImpl myToolWindow;
+  private VirtualFile myAwaitingForOpen = null;
 
   public PreviewPanel(Project project, FileEditorManagerImpl manager, DockManager dockManager) {
     myProject = project;
@@ -58,21 +66,30 @@ class PreviewPanel extends JPanel {
   private void initToolWindowIfNeed() {
     if (myInitialized) return;
 
-    final ToolWindowImpl window = (ToolWindowImpl)ToolWindowManager.getInstance(myProject)
+    myToolWindow = (ToolWindowImpl)ToolWindowManager.getInstance(myProject)
       .registerToolWindow(ToolWindowId.PREVIEW, this, ToolWindowAnchor.RIGHT, myProject, false);
-    window.setIcon(AllIcons.Actions.PreviewDetails);
+    myToolWindow.setIcon(AllIcons.Actions.PreviewDetails);
 
     myEditorsSplitters = new EditorsSplitters(myManager, myDockManager, false) {
       @Override
-      protected void afterFileClosed(VirtualFile file) {
-        window.setTitle(": (empty)");
+      public void updateFileName(VirtualFile updatedFile) {
+        super.updateFileName(updatedFile);
+        if (updatedFile != null && updatedFile.equals(getCurrentFile())) {
+          updateWindowTitle(updatedFile);
+        }
       }
 
       @Override
       protected void afterFileOpen(VirtualFile file) {
-        window.setTitle(": " +
-                        StringUtil.getShortened(EditorTabbedContainer.calcTabTitle(myProject, file),
-                                                UISettings.getInstance().EDITOR_TAB_TITLE_LIMIT));
+        if (file.equals(myAwaitingForOpen)) {
+          updateWindowTitle(file);
+          Document document = FileDocumentManager.getInstance().getDocument(file);
+          if (document != null) {
+            myModifiedFile = null;
+            document.addDocumentListener(PreviewPanel.this, myProject);
+          }
+        }
+        myAwaitingForOpen = null;
       }
 
       @Override
@@ -85,25 +102,66 @@ class PreviewPanel extends JPanel {
         return false;
       }
     };
+
+    myProject.getMessageBus().connect().subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, this);
     myEditorsSplitters.createCurrentWindow();
 
     myWindow = myEditorsSplitters.getCurrentWindow();
+    myWindow.setTabsPlacement(UISettings.TABS_NONE);
 
     setLayout(new GridLayout(1, 1));
     add(myEditorsSplitters);
 
-    window.setTitleActions(new MoveToEditorTabsAction(), new CloseFileAction());
+    myToolWindow.setTitleActions(new MoveToEditorTabsAction(), new CloseFileAction());
 
     myInitialized = true;
   }
 
-  EditorWindow getWindow() {
-    return myWindow;
+  private void updateWindowTitle(VirtualFile file) {
+    if (myToolWindow == null) return;
+    if (file == null) {
+      myToolWindow.setTitle(": (empty)");
+    }
+    else {
+      myToolWindow.setTitle(": " +
+                            StringUtil.getShortened(EditorTabbedContainer.calcTabTitle(myProject, file),
+                                                    UISettings.getInstance().EDITOR_TAB_TITLE_LIMIT));
+    }
   }
 
-  EditorsSplitters getSplitters() {
+  @Override
+  public void beforeFileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+    myAwaitingForOpen = file;
+  }
+
+  @Override
+  public void beforeFileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+    if (file.equals(getCurrentFile())) {
+      updateWindowTitle(null);
+      Document document = FileDocumentManager.getInstance().getDocument(file);
+      if (document != null) {
+        document.removeDocumentListener(this);
+      }
+    }
+  }
+
+
+  @Override
+  public void beforeDocumentChange(DocumentEvent event) {
+
+  }
+
+  @Override
+  public void documentChanged(DocumentEvent event) {
+    VirtualFile file = FileDocumentManager.getInstance().getFile(event.getDocument());
+    if (file != null) {
+      myModifiedFile = file;
+    }
+  }
+
+  EditorWindow getWindow() {
     initToolWindowIfNeed();
-    return myEditorsSplitters;
+    return myWindow;
   }
 
   @Nullable
@@ -144,8 +202,8 @@ class PreviewPanel extends JPanel {
     }
   }
 
-  private boolean isModified(VirtualFile currentFile) {
-    return FileStatus.MODIFIED == FileStatusManager.getInstance(myProject).getStatus(currentFile);
+  private boolean isModified(@NotNull VirtualFile file) {
+    return file.equals(myModifiedFile);
   }
 
   //returns last open file if it has "modified" status
