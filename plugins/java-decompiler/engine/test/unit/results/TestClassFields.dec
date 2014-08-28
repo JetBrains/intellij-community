@@ -1,0 +1,14 @@
+package unit.classes;
+
+
+public class TestClassFields {
+
+   private static int[] sizes;
+   private static String[] names = new String[]{"name1", "name2"};
+
+
+   static {
+      sizes = new int[names.length];
+   }
+
+}
