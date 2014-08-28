@@ -409,7 +409,10 @@ class NdArrayResolver:
             return obj.dtype
         if attribute == 'size':
             return obj.size
-        return None
+        try:
+            return obj[int(attribute)]
+        except:
+            return None
 
     def getDictionary(self, obj):
         ret = dict()
@@ -427,6 +430,14 @@ class NdArrayResolver:
         ret['shape'] = obj.shape
         ret['dtype'] = obj.dtype
         ret['size'] = obj.size
+        # see TupleResolver.getDictionary()
+        l = len(obj)
+        if l < MAX_ITEMS_TO_HANDLE:
+            format = '%0' + str(int(len(str(l)))) + 'd'
+            for i, item in izip(xrange(l), obj):
+                ret[format % i ] = item
+        else:
+            ret[TOO_LARGE_ATTR] = TOO_LARGE_MSG
         return ret
 
 
