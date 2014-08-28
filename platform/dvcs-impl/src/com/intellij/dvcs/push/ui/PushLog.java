@@ -158,6 +158,11 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
     myChangesBrowser.getViewer().setEmptyText("No commits selected");
   }
 
+  public void selectNode(@NotNull DefaultMutableTreeNode node) {
+    TreePath selectionPath = new TreePath(node.getPath());
+    myTree.addSelectionPath(selectionPath);
+  }
+
   // Make changes available for diff action
   @Override
   public void calcData(DataKey key, DataSink sink) {
@@ -186,6 +191,10 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
     LoadingTreeNode loading = new LoadingTreeNode();
     loading.getIcon().setImageObserver(new NodeImageObserver(myTree, loading));
     setChildren(parentNode, Collections.singleton(loading));
+  }
+
+  public JComponent getPreferredFocusedComponent() {
+    return myTree;
   }
 
   private class MyTreeCellEditor extends DefaultCellEditor {

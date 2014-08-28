@@ -25,7 +25,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.ArrayList;
 
-public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode {
+public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode, Comparable<RepositoryNode> {
   @NotNull private final RepositoryWithBranchPanel myRepositoryPanel;
   @NotNull protected SimpleColoredText myTargetPresentation;
   private ProgressIndicator myCurrentIndicator;
@@ -102,5 +102,11 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode 
   @NotNull
   public ProgressIndicator startLoading() {
     return myCurrentIndicator = new EmptyProgressIndicator();
+  }
+
+  public int compareTo(@NotNull RepositoryNode repositoryNode) {
+    String name = myRepositoryPanel.getRepositoryName();
+    RepositoryWithBranchPanel panel = (RepositoryWithBranchPanel)repositoryNode.getUserObject();
+    return name.compareTo(panel.getRepositoryName());
   }
 }

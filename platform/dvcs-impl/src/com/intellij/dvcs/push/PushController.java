@@ -57,7 +57,8 @@ public class PushController implements Disposable {
   private static final int DEFAULT_CHILDREN_PRESENTATION_NUMBER = 20;
   private final Map<PushSupport, MyPushOptionValueModel> myAdditionalValuesMap;
 
-  private final Map<RepositoryNode, MyRepoModel> myView2Model = new HashMap<RepositoryNode, MyRepoModel>();
+  private final Map<RepositoryNode, MyRepoModel> myView2Model = new TreeMap<RepositoryNode, MyRepoModel>();
+  //todo need to sort repositories in ui tree using natural order
 
   public PushController(@NotNull Project project,
                         @NotNull VcsPushDialog dialog,
@@ -73,6 +74,20 @@ public class PushController implements Disposable {
     myDialog.updateButtons();
     startLoadingCommits();
     Disposer.register(dialog.getDisposable(), this);
+    selectFirstChecked();
+  }
+
+  private void selectFirstChecked() {
+    Map.Entry<RepositoryNode, MyRepoModel> selected =
+      ContainerUtil.find(myView2Model.entrySet(), new Condition<Map.Entry<RepositoryNode, MyRepoModel>>() {
+        @Override
+        public boolean value(Map.Entry<RepositoryNode, MyRepoModel> entry) {
+          return entry.getValue().isSelected();
+        }
+      });
+    if (selected != null) {
+      myPushLog.selectNode(selected.getKey());
+    }
   }
 
   @Nullable
