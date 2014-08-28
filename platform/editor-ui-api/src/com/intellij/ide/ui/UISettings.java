@@ -64,7 +64,8 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
    */
   public static UISettings getShadowInstance() {
     Application application = ApplicationManager.getApplication();
-    return application != null ? getInstance() : new UISettings();
+    UISettings settings = application == null ? null : application.getComponent(UISettings.class);
+    return settings == null ? new UISettings() : settings;
   }
 
   @Property(filter = FontFilter.class) public String FONT_FACE;
