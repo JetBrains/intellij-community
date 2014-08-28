@@ -191,10 +191,12 @@ public class FocusTrackback {
     if (app == null || wrongOS() || myConsumed || isSheduledForRestore()) return;
 
     Project project = null;
-    DataContext context =
-        myParentWindow == null ? DataManager.getInstance().getDataContext() : DataManager.getInstance().getDataContext(myParentWindow);
-    if (context != null) {
-      project = CommonDataKeys.PROJECT.getData(context);
+    DataManager dataManager = DataManager.getInstance();
+    if (dataManager != null) {
+      DataContext context = myParentWindow == null ? dataManager.getDataContext() : dataManager.getDataContext(myParentWindow);
+      if (context != null) {
+        project = CommonDataKeys.PROJECT.getData(context);
+      }
     }
 
     mySheduledForRestore = true;
