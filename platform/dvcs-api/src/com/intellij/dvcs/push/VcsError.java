@@ -40,4 +40,8 @@ public class VcsError {
       myErrorHandleListener.handleError(loader);
     }
   }
+
+  public static VcsError createEmptyTargetError(@NotNull String name) {
+    return new VcsError("Please, specify remote push path for repository " + name + ".");
+  }
 }

@@ -53,9 +53,6 @@ public class HgPusher extends Pusher<HgRepository, HgPushSource, HgTarget> {
       HgRepository repository = entry.getKey();
       PushSpec<HgPushSource, HgTarget> hgSpec = entry.getValue();
       HgTarget destination = hgSpec.getTarget();
-      if (destination == null) {
-        continue;
-      }
       HgPushSource source = hgSpec.getSource();
       Project project = repository.getProject();
       final HgPushCommand pushCommand = new HgPushCommand(project, repository.getRoot(), destination.myTarget);
