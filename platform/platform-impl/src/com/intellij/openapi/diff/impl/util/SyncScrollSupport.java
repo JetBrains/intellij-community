@@ -158,11 +158,10 @@ public class SyncScrollSupport implements Disposable {
     Rectangle viewRect = master.getScrollingModel().getVisibleArea();
     int middleY = viewRect.height / 3;
 
+    if (master.getDocument().getTextLength() == 0) return;
+
     LogicalPosition masterPos = master.xyToLogicalPosition(new Point(viewRect.x, masterVerticalScrollOffset + middleY));
     int masterCenterLine = masterPos.line;
-    if (masterCenterLine > master.getDocument().getLineCount()) {
-      masterCenterLine = master.getDocument().getLineCount();
-    }
     int scrollToLine = sidesContainer.getLineBlocks().transform(masterDiffSide, masterCenterLine);
 
     int offset;
