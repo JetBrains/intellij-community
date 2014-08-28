@@ -87,4 +87,9 @@ public abstract class XValue extends XValueContainer {
   public void computeTypeSourcePosition(@NotNull XNavigatable navigatable) {
     navigatable.setSourcePosition(null);
   }
+
+  @Nullable
+  public XReferrersProvider getReferrersProvider() {
+    return null;
+  }
 }
