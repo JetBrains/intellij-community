@@ -89,6 +89,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
     addSaveButton(controlPanel);
     addAddButton(controlPanel);
     addCutButton(controlPanel);
+    addCopyButton(controlPanel);
     addPasteButton(controlPanel);
     addRunButton(controlPanel);
 
@@ -145,6 +146,16 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
         action.cutCell(myIpnbFilePanel);
       }
     }, AllIcons.Actions.Menu_cut);
+  }
+
+  private void addCopyButton(@NotNull final JPanel controlPanel) {
+    addButton(controlPanel, new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final IpnbCopyCellAction action = (IpnbCopyCellAction)ActionManager.getInstance().getAction("IpnbCopyCellAction");
+        action.copyCell(myIpnbFilePanel);
+      }
+    }, AllIcons.Actions.Copy);
   }
 
   private void addPasteButton(@NotNull final JPanel controlPanel) {

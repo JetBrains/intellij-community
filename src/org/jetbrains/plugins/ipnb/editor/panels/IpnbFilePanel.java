@@ -167,6 +167,10 @@ public class IpnbFilePanel extends JPanel {
     remove(myBufferPanel);
   }
 
+  public void copyCell() {
+    myBufferPanel = getSelectedCell();
+  }
+
   public void pasteCell() {
     if (myBufferPanel == null) return;
     removeAll();
