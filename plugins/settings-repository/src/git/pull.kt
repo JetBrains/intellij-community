@@ -41,7 +41,7 @@ fun wrapIfNeedAndReThrow(e: TransportException) {
   }
 }
 
-fun execute(manager: GitRepositoryManager, indicator: ProgressIndicator) {
+fun pull(manager: GitRepositoryManager, indicator: ProgressIndicator) {
   LOG.debug("Pull")
 
   val mergeResult = fetch(manager, indicator, null)

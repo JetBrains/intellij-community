@@ -17,8 +17,10 @@ import java.util.Collections;
 public abstract class BaseRepositoryManager implements RepositoryManager {
   public static final Logger LOG = Logger.getInstance(BaseRepositoryManager.class);
 
+  @NotNull
   protected final File dir;
 
+  @NotNull
   protected final Object lock = new Object();
 
   protected BaseRepositoryManager() {

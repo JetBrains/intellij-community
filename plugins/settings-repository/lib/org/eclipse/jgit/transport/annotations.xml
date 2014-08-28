@@ -17,11 +17,25 @@
   <item name='org.eclipse.jgit.transport.OperationResult java.util.Collection&lt;org.eclipse.jgit.transport.TrackingRefUpdate&gt; getTrackingRefUpdates()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='org.eclipse.jgit.transport.PushResult java.util.Collection&lt;org.eclipse.jgit.transport.RemoteRefUpdate&gt; getRemoteUpdates()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='org.eclipse.jgit.transport.RemoteConfig java.util.List&lt;org.eclipse.jgit.transport.RefSpec&gt; getFetchRefSpecs()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.transport.RemoteConfig java.util.List&lt;org.eclipse.jgit.transport.RefSpec&gt; getPushRefSpecs()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+      name='org.eclipse.jgit.transport.Transport java.util.List&lt;org.eclipse.jgit.transport.Transport&gt; openAll(org.eclipse.jgit.lib.Repository, java.lang.String, org.eclipse.jgit.transport.Transport.Operation)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item
       name='org.eclipse.jgit.transport.Transport org.eclipse.jgit.transport.FetchResult fetch(org.eclipse.jgit.lib.ProgressMonitor, java.util.Collection&lt;org.eclipse.jgit.transport.RefSpec&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+      name='org.eclipse.jgit.transport.Transport org.eclipse.jgit.transport.PushResult push(org.eclipse.jgit.lib.ProgressMonitor, java.util.Collection&lt;org.eclipse.jgit.transport.RemoteRefUpdate&gt;)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='org.eclipse.jgit.transport.Transport org.eclipse.jgit.transport.Transport open(org.eclipse.jgit.lib.Repository, org.eclipse.jgit.transport.RemoteConfig)'>

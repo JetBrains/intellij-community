@@ -5,6 +5,12 @@
   <item name='org.eclipse.jgit.lib.BaseRepositoryBuilder B setGitDir(java.io.File)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='org.eclipse.jgit.lib.BaseRepositoryBuilder B setMustExist(boolean)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.lib.BaseRepositoryBuilder B setWorkTree(java.io.File)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='org.eclipse.jgit.lib.Config T get(org.eclipse.jgit.lib.Config.SectionParser&lt;T&gt;)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -12,6 +18,9 @@
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='org.eclipse.jgit.lib.Ref java.lang.String getName()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.lib.Ref org.eclipse.jgit.lib.Ref getLeaf()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='org.eclipse.jgit.lib.Ref org.eclipse.jgit.lib.Ref getTarget()'>
