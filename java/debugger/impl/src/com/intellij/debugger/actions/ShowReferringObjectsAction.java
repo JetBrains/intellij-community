@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.actions;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -57,7 +58,7 @@ public class ShowReferringObjectsAction extends XDebuggerTreeActionBase {
                                                  nodeName,
                                                  new ReferringObjectsValue(javaValue, false),
                                                  tree.getValueMarkers());
-      dialog.setTitle("Referring objects for " + nodeName);
+      dialog.setTitle(DebuggerBundle.message("showReferring.dialog.title", nodeName));
       dialog.show();
     }
   }
