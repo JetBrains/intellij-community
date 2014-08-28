@@ -15,13 +15,16 @@
  */
 package com.siyeh.ig.naming;
 
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.testIntegration.TestFramework;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class InstanceMethodNamingConventionInspectionBase extends ConventionInspection {
@@ -67,6 +70,16 @@ public class InstanceMethodNamingConventionInspectionBase extends ConventionInsp
     return DEFAULT_MAX_LENGTH;
   }
 
+  private static boolean isTestNGTestMethod(PsiMethod method) {
+    final TestFramework[] testFrameworks = Extensions.getExtensions(TestFramework.EXTENSION_NAME);
+    for (TestFramework framework : testFrameworks) {
+      if ("TestNG".equals(framework.getName())) {
+        return framework.isTestMethod(method);
+      }
+    }
+    return false;
+  }
+
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new NamingConventionsVisitor();
@@ -85,6 +98,17 @@ public class InstanceMethodNamingConventionInspectionBase extends ConventionInsp
       }
       final PsiIdentifier nameIdentifier = method.getNameIdentifier();
       if (nameIdentifier == null) {
+        return;
+      }
+      if (TestUtils.isRunnable(method)) {
+        if (TestUtils.isJUnit4TestMethod(method) && isInspectionEnabled("JUnit4MethodNamingConvention", method)) {
+          return;
+        }
+        if (TestUtils.isJUnit3TestMethod(method) && isInspectionEnabled("JUnit3MethodNamingConvention", method)) {
+          return;
+        }
+      }
+      if (isTestNGTestMethod(method) && isInspectionEnabled("TestNGMethodNamingConvention", method)) {
         return;
       }
       final String name = method.getName();
