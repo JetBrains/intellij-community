@@ -79,7 +79,9 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
             keyCode == KeyEvent.VK_DELETE) {
           final int height = myEditor.getLineHeight() * Math.max(myEditor.getDocument().getLineCount(), 1);
           component.setPreferredSize(new Dimension(IpnbEditorUtil.PANEL_WIDTH, height));
-          panel.revalidate();
+          final Container ipnbFilePanel = myParent.getParent();
+          ipnbFilePanel.revalidate();
+          ipnbFilePanel.repaint();
         }
       }
     });
