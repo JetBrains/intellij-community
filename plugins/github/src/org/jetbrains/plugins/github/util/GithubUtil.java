@@ -424,8 +424,15 @@ public class GithubUtil {
   public static void computeValueInModal(@NotNull Project project,
                                          @NotNull String caption,
                                          @NotNull final Consumer<ProgressIndicator> task) {
+    computeValueInModal(project, caption, true, task);
+  }
+
+  public static void computeValueInModal(@NotNull Project project,
+                                         @NotNull String caption,
+                                         boolean canBeCancelled,
+                                         @NotNull final Consumer<ProgressIndicator> task) {
     final Ref<Throwable> exceptionRef = new Ref<Throwable>();
-    ProgressManager.getInstance().run(new Task.Modal(project, caption, true) {
+    ProgressManager.getInstance().run(new Task.Modal(project, caption, canBeCancelled) {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           task.consume(indicator);

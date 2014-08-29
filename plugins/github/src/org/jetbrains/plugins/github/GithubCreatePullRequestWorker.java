@@ -399,15 +399,10 @@ public class GithubCreatePullRequestWorker {
   }
 
   public void configureRemote(@NotNull final ForkInfo fork) {
-    GithubUtil.computeValueInModal(myProject, "Creating remote..", new Consumer<ProgressIndicator>() {
+    GithubUtil.computeValueInModal(myProject, "Creating remote..", false, new Consumer<ProgressIndicator>() {
       @Override
       public void consume(ProgressIndicator indicator) {
-        GithubUtil.runInterruptable(indicator, new Runnable() {
-          @Override
-          public void run() {
-            doConfigureRemote(fork);
-          }
-        });
+        doConfigureRemote(fork);
       }
     });
   }
