@@ -314,7 +314,7 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
                                              boolean isBooleanResult,
                                              boolean stable) throws AnalyzerException {
         List<Equation<Key, Value>> result = new ArrayList<Equation<Key, Value>>(argumentTypes.length * 4 + 1);
-        CombinedSingleAnalysis analyzer = new CombinedSingleAnalysis(method, graph);
+        CombinedAnalysis analyzer = new CombinedAnalysis(method, graph);
         analyzer.analyze();
         if (isReferenceResult) {
           result.add(analyzer.outContractEquation(stable));

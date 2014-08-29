@@ -140,7 +140,19 @@ interface Direction {
 
     @Override
     public int hashCode() {
-      return 1;
+      return -1;
+    }
+  };
+
+  Direction NullableOut = new Direction() {
+    @Override
+    public String toString() {
+      return "NullableOut";
+    }
+
+    @Override
+    public int hashCode() {
+      return -2;
     }
   };
 }
