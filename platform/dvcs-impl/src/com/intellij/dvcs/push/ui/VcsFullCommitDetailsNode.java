@@ -31,10 +31,15 @@ public class VcsFullCommitDetailsNode extends DefaultMutableTreeNode implements 
   @NotNull private final Project myProject;
   private final VcsFullCommitDetails myCommit;
 
-  public VcsFullCommitDetailsNode(@NotNull Project project, VcsFullCommitDetails commit) {
+  public VcsFullCommitDetailsNode(@NotNull Project project, @NotNull VcsFullCommitDetails commit) {
     super(commit, false);
     myProject = project;
     myCommit = commit;
+  }
+
+  @Override
+  public VcsFullCommitDetails getUserObject() {
+    return myCommit;
   }
 
   @Override

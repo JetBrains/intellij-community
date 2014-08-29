@@ -122,10 +122,13 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
         TreePath[] nodes = myTree.getSelectionPaths();
         if (nodes != null) {
           ArrayList<Change> changes = new ArrayList<Change>();
-          for (TreePath node : nodes) {
-            Object nodeInfo = ((DefaultMutableTreeNode)node.getLastPathComponent()).getUserObject();
-            if (nodeInfo instanceof VcsFullCommitDetails) {
-              changes.addAll(((VcsFullCommitDetails)nodeInfo).getChanges());
+          for (TreePath path : nodes) {
+            if (path.getLastPathComponent() instanceof VcsFullCommitDetailsNode) {
+              VcsFullCommitDetailsNode commitDetailsNode = (VcsFullCommitDetailsNode)path.getLastPathComponent();
+              changes.addAll(commitDetailsNode.getUserObject().getChanges());
+            }
+            else if (path.getLastPathComponent() instanceof RepositoryNode) {
+              changes.addAll(collectAllChanges((RepositoryNode)path.getLastPathComponent()));
             }
           }
           myChangesBrowser.getViewer().setEmptyText("No differences");
@@ -152,6 +155,20 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
 
     setLayout(new BorderLayout());
     add(splitter);
+  }
+
+  @NotNull
+  private static Collection<? extends Change> collectAllChanges(@NotNull RepositoryNode rootNode) {
+    ArrayList<Change> changes = new ArrayList<Change>();
+    if (rootNode.getChildCount() <= 0) return changes;
+    for (DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)rootNode.getFirstChild();
+         childNode != null;
+         childNode = (DefaultMutableTreeNode)rootNode.getChildAfter(childNode)) {
+      if (childNode instanceof VcsFullCommitDetailsNode) {
+        changes.addAll(((VcsFullCommitDetailsNode)childNode).getUserObject().getChanges());
+      }
+    }
+    return changes;
   }
 
   private void setDefaultEmptyText() {
