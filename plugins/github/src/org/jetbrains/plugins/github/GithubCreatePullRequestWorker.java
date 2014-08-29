@@ -405,7 +405,7 @@ public class GithubCreatePullRequestWorker {
         GithubUtil.runInterruptable(indicator, new Runnable() {
           @Override
           public void run() {
-            configureRemote(fork);
+            doConfigureRemote(fork);
           }
         });
       }
