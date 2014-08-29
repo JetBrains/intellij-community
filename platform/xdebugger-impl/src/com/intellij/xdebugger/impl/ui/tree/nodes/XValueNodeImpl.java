@@ -26,9 +26,11 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.NotNullFunction;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
+import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.frame.XVariablesView;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
@@ -132,26 +134,32 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
 
   public void updateInlineDebuggerData() {
     try {
-      getValueContainer().computeSourcePosition(new XNavigatable() {
-        @Override
-        public void setSourcePosition(@Nullable XSourcePosition sourcePosition) {
-          final Map<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>> map = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES);
-          final Map<VirtualFile, Long> timestamps = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS);
-          if (map == null || timestamps == null || sourcePosition == null) return;
-          VirtualFile file = sourcePosition.getFile();
-          final Document doc = FileDocumentManager.getInstance().getDocument(file);
-          if (doc == null) return;
-          int line = sourcePosition.getLine();
-          Pair<VirtualFile, Integer> key = Pair.create(file, line);
-          Set<XValueNodeImpl> presentations = map.get(key);
-          if (presentations == null) {
-            presentations = new LinkedHashSet<XValueNodeImpl>();
-            map.put(key, presentations);
-            timestamps.put(file, doc.getModificationStamp());
-          }
-          presentations.add(XValueNodeImpl.this);
+      final XDebugSession session = XDebugView.getSession(getTree());
+      if (session != null) {
+        final XSourcePosition position = session.getCurrentPosition();
+        if (position != null) {
+          getValueContainer().computeSourcePosition(new XNearestSourcePosition() {
+                  @Override
+                  public void setSourcePosition(@Nullable XSourcePosition sourcePosition) {
+                    final Map<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>> map = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES);
+                    final Map<VirtualFile, Long> timestamps = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS);
+                    if (map == null || timestamps == null || sourcePosition == null) return;
+                    VirtualFile file = sourcePosition.getFile();
+                    final Document doc = FileDocumentManager.getInstance().getDocument(file);
+                    if (doc == null) return;
+                    int line = sourcePosition.getLine();
+                    Pair<VirtualFile, Integer> key = Pair.create(file, line);
+                    Set<XValueNodeImpl> presentations = map.get(key);
+                    if (presentations == null) {
+                      presentations = new LinkedHashSet<XValueNodeImpl>();
+                      map.put(key, presentations);
+                      timestamps.put(file, doc.getModificationStamp());
+                    }
+                    presentations.add(XValueNodeImpl.this);
+                  }
+                });
         }
-      });
+      }
     }
     catch (Exception ignore) {
     }
