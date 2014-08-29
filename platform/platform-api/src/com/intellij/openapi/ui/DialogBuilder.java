@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
@@ -82,7 +83,7 @@ public class DialogBuilder implements Disposable {
   }
 
   private MyDialogWrapper showImpl(boolean isModal) {
-    LOG.assertTrue(myTitle != null && myTitle.trim().length() != 0,
+    LOG.assertTrue(!StringUtil.isEmptyOrSpaces(myTitle),
                    String.format("Dialog title shouldn't be empty or null: [%s]", myTitle));
     myDialogWrapper.setTitle(myTitle);
     myDialogWrapper.init();
@@ -209,6 +210,12 @@ public class DialogBuilder implements Disposable {
 
   public void setOkActionEnabled(final boolean isEnabled) {
     myDialogWrapper.setOKActionEnabled(isEnabled);
+  }
+
+  @NotNull
+  public DialogBuilder okActionEnabled(boolean isEnabled) {
+    myDialogWrapper.setOKActionEnabled(isEnabled);
+    return this;
   }
 
   public CustomizableAction getOkAction() {
