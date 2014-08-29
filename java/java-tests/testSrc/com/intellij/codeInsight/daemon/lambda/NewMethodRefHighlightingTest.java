@@ -288,7 +288,7 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
-  @Bombed(day = 30, month = Calendar.AUGUST)
+  @Bombed(day = 30, month = Calendar.SEPTEMBER)
   public void testIDEA127275_() throws Exception {
     doTest();
   }
@@ -305,7 +305,7 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
-  @Bombed(day = 30, month = Calendar.AUGUST)
+  @Bombed(day = 30, month = Calendar.SEPTEMBER)
   public void testAdditionalConstraints3Level() throws Exception {
     doTest();
   }
