@@ -39,6 +39,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
+
 /**
  * @author lambdamix
  */
@@ -172,7 +174,7 @@ public class ProjectBytecodeAnalysis {
   public static HKey getKey(@NotNull PsiModifierListOwner owner, MessageDigest md) {
     LOG.assertTrue(owner instanceof PsiCompiledElement, owner);
     if (owner instanceof PsiMethod) {
-      return BytecodeAnalysisConverter.psiKey((PsiMethod)owner, new Out(), md);
+      return BytecodeAnalysisConverter.psiKey((PsiMethod)owner, Out, md);
     }
     if (owner instanceof PsiParameter) {
       PsiElement parent = owner.getParent();

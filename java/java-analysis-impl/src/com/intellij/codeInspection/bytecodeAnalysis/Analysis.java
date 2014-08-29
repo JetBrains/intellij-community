@@ -28,6 +28,8 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.Frame;
 
 import java.util.*;
 
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
+
 class AbstractValues {
   static final class ParamValue extends BasicValue {
     ParamValue(Type tp) {
@@ -274,10 +276,8 @@ abstract class Analysis<Res> {
     }
     for (int i = 0; i < args.length; i++) {
       BasicValue value;
-      if (direction instanceof InOut && ((InOut)direction).paramIndex == i) {
-        value = new AbstractValues.ParamValue(args[i]);
-      }
-      else if (direction instanceof In && ((In)direction).paramIndex == i) {
+      if (direction instanceof InOut && ((InOut)direction).paramIndex == i ||
+          direction instanceof In && ((In)direction).paramIndex == i) {
         value = new AbstractValues.ParamValue(args[i]);
       }
       else {

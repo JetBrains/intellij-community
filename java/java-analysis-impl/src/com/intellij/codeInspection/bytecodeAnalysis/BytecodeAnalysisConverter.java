@@ -28,6 +28,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
 
 /**
  * @author lambdamix
@@ -272,8 +273,9 @@ public class BytecodeAnalysisConverter {
     return null;
   }
 
+
   private static int mkDirectionKey(Direction dir) {
-    if (dir instanceof Out) {
+    if (dir == Out) {
       return 0;
     } else if (dir instanceof In) {
       In in = (In)dir;
@@ -288,7 +290,7 @@ public class BytecodeAnalysisConverter {
   @NotNull
   private static Direction extractDirection(int directionKey) {
     if (directionKey == 0) {
-      return new Out();
+      return Out;
     }
     else {
       int paramId = directionKey / 8;
@@ -344,7 +346,7 @@ public class BytecodeAnalysisConverter {
         continue;
       }
       Direction direction = extractDirection(key.dirKey);
-      if (value == Value.NotNull && direction instanceof Out && methodKey.equals(key)) {
+      if (value == Value.NotNull && direction == Out && methodKey.equals(key)) {
         notNulls.add(key);
       }
       else if (direction instanceof InOut) {

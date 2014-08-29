@@ -32,6 +32,7 @@ import java.security.MessageDigest;
 import java.util.*;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
 
 /**
  * @author lambdamix
@@ -125,7 +126,7 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
         final Method method = new Method(className, methodNode.name, methodNode.desc);
         final boolean stable = stableClass || (methodNode.access & STABLE_FLAGS) != 0 || "<init>".equals(methodNode.name);
 
-        Key primaryKey = new Key(method, new Out(), stable);
+        Key primaryKey = new Key(method, Out, stable);
         if (argumentTypes.length == 0 && !isInterestingResult) {
           return Pair.create(primaryKey, EMPTY_EQUATIONS);
         }
@@ -215,12 +216,12 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
           protected Equation<Key, Value> compute() {
             if (origins.getValue() != null) {
               try {
-                return new InOutAnalysis(richControlFlow, new Out(), origins.getValue(), stable).analyze();
+                return new InOutAnalysis(richControlFlow, Out, origins.getValue(), stable).analyze();
               }
               catch (AnalyzerException ignored) {
               }
             }
-            return new Equation<Key, Value>(new Key(method, new Out(), stable), FINAL_TOP);
+            return new Equation<Key, Value>(new Key(method, Out, stable), FINAL_TOP);
           }
         };
 
@@ -344,7 +345,7 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
                                 boolean stable) {
         List<Equation<Key, Value>> result = new ArrayList<Equation<Key, Value>>(argumentTypes.length * 3 + 1);
         if (isReferenceResult) {
-          result.add(new Equation<Key, Value>(new Key(method, new Out(), stable), FINAL_TOP));
+          result.add(new Equation<Key, Value>(new Key(method, Out, stable), FINAL_TOP));
         }
         for (int i = 0; i < argumentTypes.length; i++) {
           Type argType = argumentTypes[i];

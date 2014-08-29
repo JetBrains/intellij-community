@@ -34,6 +34,7 @@ import java.util.Set;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.*;
 import static org.jetbrains.org.objectweb.asm.Opcodes.*;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
 
 final class ParamKey {
   final Method method;
@@ -219,7 +220,7 @@ final class CombinedSingleAnalysis {
         }
       }
       if (ASMUtils.isReferenceType(call.getType())) {
-        keys.add(new Key(call.method, new Out(), call.stableCall));
+        keys.add(new Key(call.method, Out, call.stableCall));
       }
       if (keys.isEmpty()) {
         result = new Final<Key, Value>(Value.Top);
@@ -234,7 +235,7 @@ final class CombinedSingleAnalysis {
   }
 
   final Equation<Key, Value> outContractEquation(boolean stable) {
-    final Key key = new Key(method, new Out(), stable);
+    final Key key = new Key(method, Out, stable);
     final Result<Key, Value> result;
     if (exception) {
       result = new Final<Key, Value>(Value.Bot);
@@ -253,7 +254,7 @@ final class CombinedSingleAnalysis {
     }
     else if (returnValue instanceof CombinedCall) {
       CombinedCall call = (CombinedCall)returnValue;
-      Key callKey = new Key(call.method, new Out(), call.stableCall);
+      Key callKey = new Key(call.method, Out, call.stableCall);
       Set<Key> keys = new SingletonSet<Key>(callKey);
       result = new Pending<Key, Value>(new SingletonSet<Product<Key, Value>>(new Product<Key, Value>(Value.Top, keys)));
     }

@@ -37,6 +37,7 @@ import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.Instan
 import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.ParamValue;
 import static com.intellij.codeInspection.bytecodeAnalysis.PResults.*;
 import static org.jetbrains.org.objectweb.asm.Opcodes.*;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
 
 abstract class PResults {
   // SoP = sum of products
