@@ -29,18 +29,19 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
+import com.intellij.util.Function;
 import com.intellij.util.Query;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
@@ -62,7 +63,7 @@ import java.util.List;
  */
 public class PyInlineLocalHandler extends InlineActionHandler {
   private static final Logger LOG = Logger.getInstance(PyInlineLocalHandler.class.getName());
-  
+
   private static final String REFACTORING_NAME = RefactoringBundle.message("inline.variable.title");
   private static final Pair<PyStatement, Boolean> EMPTY_DEF_RESULT = Pair.create(null, false);
   private static final String HELP_ID = "python.reference.inline";
@@ -206,6 +207,16 @@ public class PyInlineLocalHandler extends InlineActionHandler {
               PyPsiUtils.removeElements(next);
             }
             PyPsiUtils.removeElements(def);
+
+            final List<TextRange> ranges = ContainerUtil.mapNotNull(exprs, new Function<PsiElement, TextRange>() {
+              @Override
+              public TextRange fun(PsiElement element) {
+                final PyStatement parentalStatement = PsiTreeUtil.getParentOfType(element, PyStatement.class, false);
+                return parentalStatement != null ? parentalStatement.getTextRange() : null;
+              }
+            });
+            CodeStyleManager.getInstance(project).reformatText(workingFile, ranges);
+
             if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {
               highlightManager.addOccurrenceHighlights(editor, exprs, attributes, true, null);
               WindowManager.getInstance().getStatusBar(project)

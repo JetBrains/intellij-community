@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.JavaClassReferenceCompletionContributor;
 import com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
@@ -137,7 +138,12 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
       PsiElement prev = offset > 1 ? file.findElementAt(offset - 1) : null;
       if (CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET && isRparenth(leaf) &&
           (st instanceof PsiWhileStatement || st instanceof PsiIfStatement) && shouldInsertStatementBody(st, doc, prev)) {
-        new JavaSmartEnterProcessor().process(project, editor, file);
+        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+          @Override
+          public void run() {
+            new JavaSmartEnterProcessor().process(project, editor, file);
+          }
+        }, "Insert block statement", null);
         return Result.STOP;
       }
       if (PsiTreeUtil.getParentOfType(leaf, PsiCodeBlock.class, false, PsiMember.class) != null) {
