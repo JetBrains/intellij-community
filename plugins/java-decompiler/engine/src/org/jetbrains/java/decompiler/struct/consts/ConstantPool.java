@@ -24,7 +24,6 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -125,7 +124,7 @@ public class ConstantPool {
   // public methods
   // *****************************************************************************
 
-  public void writeToOutputStream(DataOutputStream out) throws FileNotFoundException, IOException {
+  public void writeToOutputStream(DataOutputStream out) throws IOException {
 
     out.writeShort(pool.size());
     for (int i = 1; i < pool.size(); i++) {

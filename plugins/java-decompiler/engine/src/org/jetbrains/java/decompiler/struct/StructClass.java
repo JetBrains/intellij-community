@@ -94,15 +94,15 @@ public class StructClass {
   // constructors
   // *****************************************************************************
 
-  public StructClass(String filename, boolean own, LazyLoader loader) throws FileNotFoundException, IOException {
+  public StructClass(String filename, boolean own, LazyLoader loader) throws IOException {
     this(new FileInputStream(filename), own, loader);
   }
 
-  public StructClass(InputStream inStream, boolean own, LazyLoader loader) throws FileNotFoundException, IOException {
+  public StructClass(InputStream inStream, boolean own, LazyLoader loader) throws IOException {
     this(new DataInputFullStream(inStream), own, loader);
   }
 
-  public StructClass(DataInputFullStream inStream, boolean own, LazyLoader loader) throws FileNotFoundException, IOException {
+  public StructClass(DataInputFullStream inStream, boolean own, LazyLoader loader) throws IOException {
     this.own = own;
     this.loader = loader;
 

@@ -77,14 +77,6 @@ public class ListStack<T> extends ArrayList<T> {
     return pointer;
   }
 
-  public T get(int index) {
-    return super.get(index);
-  }
-
-  public T set(int index, T element) {
-    return super.set(index, element);
-  }
-
   public T getByOffset(int offset) {
     return this.get(pointer + offset);
   }
