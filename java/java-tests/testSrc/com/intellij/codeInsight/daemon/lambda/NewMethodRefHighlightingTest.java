@@ -310,6 +310,10 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testWildcardParametrization() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }
