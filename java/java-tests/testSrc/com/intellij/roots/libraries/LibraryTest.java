@@ -1,9 +1,9 @@
 package com.intellij.roots.libraries;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.roots.NativeLibraryOrderRootType;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.RootProvider;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -13,8 +13,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.roots.ModuleRootManagerTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.util.CommonProcessors;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Collections;
 
 /**
@@ -63,6 +66,44 @@ public class LibraryTest extends ModuleRootManagerTestCase {
       "<root><library name=\"junit\"><CLASSES><root url=\"" + classesUrl + "\" /></CLASSES>" +
       "<JAVADOC /><SOURCES><root url=\"" + sourcesUrl + "\" /></SOURCES></library></root>",
       element);
+  }
+
+  public void testResolveDependencyToAddedLibrary() {
+    final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
+    model.addInvalidLibrary("jdom", LibraryTablesRegistrar.PROJECT_LEVEL);
+    commit(model);
+    assertEmpty(getLibraries());
+
+    Library library = createLibrary("jdom", getJDomJar(), null);
+    assertSameElements(getLibraries(), library);
+  }
+
+  public void testResolveDependencyToRenamedLibrary() {
+    Library library = createLibrary("jdom2", getJDomJar(), null);
+
+    final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
+    model.addInvalidLibrary("jdom", LibraryTablesRegistrar.PROJECT_LEVEL);
+    commit(model);
+    assertEmpty(getLibraries());
+
+    Library.ModifiableModel libModel = library.getModifiableModel();
+    libModel.setName("jdom");
+    commit(libModel);
+    assertSameElements(getLibraries(), library);
+  }
+
+  private Collection<Library> getLibraries() {
+    CommonProcessors.CollectProcessor<Library> processor = new CommonProcessors.CollectProcessor<Library>();
+    ModuleRootManager.getInstance(myModule).orderEntries().forEachLibrary(processor);
+    return processor.getResults();
+  }
+
+  private static void commit(final ModifiableRootModel model) {
+    new WriteAction() {
+      protected void run(@NotNull final Result result) {
+        model.commit();
+      }
+    }.execute();
   }
 
   public void testNativePathSerialization() {
