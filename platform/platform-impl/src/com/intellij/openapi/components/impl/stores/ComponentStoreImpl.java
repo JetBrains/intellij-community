@@ -402,7 +402,7 @@ public abstract class ComponentStoreImpl implements IComponentStore {
       }
       catch (StateStorageException e) {
         LOG.info(e);
-        throw new IOException(e.getMessage());
+        throw new IOException(e.getMessage(), e);
       }
 
       return this;

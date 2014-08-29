@@ -363,6 +363,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return myDefaultProject;
   }
 
+  @Nullable
   public Element getDefaultProjectRootElement() {
     return myDefaultProjectRootElement;
   }
@@ -1127,33 +1128,27 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   @Override
-  public void writeExternal(Element parentNode) throws WriteExternalException {
+  public void writeExternal(Element parentNode) {
     if (myDefaultProject != null) {
       myDefaultProject.save();
     }
 
-    if (myDefaultProjectRootElement == null) { //read external isn't called if config folder is absent
-      myDefaultProjectRootElement = new Element(ELEMENT_DEFAULT_PROJECT);
+    if (myDefaultProjectRootElement != null) {
+      myDefaultProjectRootElement.detach();
+      parentNode.addContent(myDefaultProjectRootElement);
     }
-
-    myDefaultProjectRootElement.detach();
-    parentNode.addContent(myDefaultProjectRootElement);
   }
-
 
   public void setDefaultProjectRootElement(final Element defaultProjectRootElement) {
     myDefaultProjectRootElement = defaultProjectRootElement;
   }
 
   @Override
-  public void readExternal(Element parentNode) throws InvalidDataException {
+  public void readExternal(Element parentNode)  {
     myDefaultProjectRootElement = parentNode.getChild(ELEMENT_DEFAULT_PROJECT);
-
-    if (myDefaultProjectRootElement == null) {
-      myDefaultProjectRootElement = new Element(ELEMENT_DEFAULT_PROJECT);
+    if (myDefaultProjectRootElement != null) {
+      myDefaultProjectRootElement.detach();
     }
-
-    myDefaultProjectRootElement.detach();
   }
 
   @Override

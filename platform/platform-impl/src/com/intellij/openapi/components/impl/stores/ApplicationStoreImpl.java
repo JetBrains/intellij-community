@@ -43,6 +43,8 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
   private final StateStorageManager myStateStorageManager;
   private final DefaultsStateStorage myDefaultsStateStorage;
 
+  private String myConfigPath;
+
   // created from PicoContainer
   @SuppressWarnings({"UnusedDeclaration"})
   public ApplicationStoreImpl(final ApplicationImpl application, PathMacroManager pathMacroManager) {
@@ -69,7 +71,11 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
 
       @Override
       protected String getVersionsFilePath() {
-        return PathManager.getConfigPath() + "/options/appComponentVersions.xml";
+        String configPath = myConfigPath;
+        if (configPath == null) {
+          configPath = PathManager.getConfigPath();
+        }
+        return configPath + "/options/appComponentVersions.xml";
       }
 
       @Override
@@ -98,6 +104,7 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
   @Override
   public void setConfigPath(@NotNull final String configPath) {
     myStateStorageManager.addMacro(CONFIG_MACRO, configPath);
+    myConfigPath = configPath;
   }
 
   @Override
