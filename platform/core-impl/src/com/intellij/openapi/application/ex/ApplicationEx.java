@@ -38,7 +38,8 @@ public interface ApplicationEx extends Application {
    * @throws IOException
    * @throws InvalidDataException
    */
-  void load(String optionsPath) throws IOException, InvalidDataException;
+  void load(@Nullable String optionsPath) throws IOException;
+
   boolean isLoaded();
 
   @NotNull

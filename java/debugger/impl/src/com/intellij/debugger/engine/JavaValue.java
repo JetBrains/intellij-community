@@ -357,7 +357,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
             }
             if (myValueDescriptor instanceof LocalVariableDescriptorImpl) {
               SourcePosition position =
-                ((LocalVariableDescriptorImpl)myValueDescriptor).getSourcePosition(getProject(), getDebuggerContext());
+                ((LocalVariableDescriptorImpl)myValueDescriptor).getSourcePosition(getProject(), getDebuggerContext(), navigatable instanceof XNearestSourcePosition);
               if (position != null) {
                 navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(position));
               }

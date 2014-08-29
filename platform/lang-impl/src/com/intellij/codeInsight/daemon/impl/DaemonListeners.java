@@ -530,6 +530,7 @@ public class DaemonListeners implements Disposable {
         StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
         myTogglePopupHintsPanel = new TogglePopupHintsPanel(myProject);
         statusBar.addWidget(myTogglePopupHintsPanel, myProject);
+        updateStatusBar();
 
         stopDaemonAndRestartAllFiles();
       }
