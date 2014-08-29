@@ -111,6 +111,7 @@ public abstract class PyTestCase extends UsefulTestCase {
     final PythonLanguageLevelPusher levelPusher = Extensions.findExtension(FilePropertyPusher.EP_NAME, PythonLanguageLevelPusher.class);
     levelPusher.flushLanguageLevelCache();
     super.tearDown();
+    clearFields(this);
   }
 
   @Nullable
