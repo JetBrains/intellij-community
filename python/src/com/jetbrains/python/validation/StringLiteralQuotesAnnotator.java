@@ -58,9 +58,17 @@ public class StringLiteralQuotesAnnotator extends PyAnnotator {
 
   private boolean checkQuotedString(@NotNull ASTNode stringNode, @NotNull String nodeText) {
     final char firstQuote = nodeText.charAt(0);
-    final int lastChar = nodeText.length() - 1;
-    if (lastChar == 0 || nodeText.charAt(lastChar) != firstQuote ||
-        (nodeText.charAt(lastChar - 1) == '\\' && (lastChar == 1 || nodeText.charAt(lastChar - 2) != '\\'))) {
+    final char lastChar = nodeText.charAt(nodeText.length() - 1);
+    int precedingBackslashCount = 0;
+    for (int i = nodeText.length() - 2; i >= 0; i--) {
+      if (nodeText.charAt(i) == '\\') {
+        precedingBackslashCount++;
+      }
+      else {
+        break;
+      }
+    }
+    if (nodeText.length() == 1 || lastChar != firstQuote || precedingBackslashCount % 2 != 0) {
       getHolder().createErrorAnnotation(stringNode, PyBundle.message("ANN.missing.closing.quote", firstQuote));
       return true;
     }
