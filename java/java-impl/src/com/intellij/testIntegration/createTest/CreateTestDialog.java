@@ -185,7 +185,7 @@ public class CreateTestDialog extends DialogWrapper {
     myTargetClassNameField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       public void documentChanged(DocumentEvent e) {
-        getOKAction().setEnabled(JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(getClassName()));
+        getOKAction().setEnabled(PsiNameHelper.getInstance(myProject).isIdentifier(getClassName()));
       }
     });
 

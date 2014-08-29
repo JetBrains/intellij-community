@@ -351,6 +351,12 @@ class PyDB:
                 pydev_log.error_once(
                     'Error in debugger: Found PyDBDaemonThread through threading.enumerate().\n')
                 
+            if getattr(t, 'is_pydev_daemon_thread', False):
+                #Important: Jython 2.5rc4 has a bug where a thread created with thread.start_new_thread won't be
+                #set as a daemon thread, so, we also have to check for the 'is_pydev_daemon_thread' flag.
+                #See: https://github.com/fabioz/PyDev.Debugger/issues/11
+                continue
+            
             if isThreadAlive(t) and not t.isDaemon():
                 return True
 
@@ -1400,9 +1406,14 @@ class PyDB:
 
         except Exception:
             # Log it
-            if traceback is not None:
-                # This can actually happen during the interpreter shutdown in Python 2.7
-                traceback.print_exc()
+            try:
+                if traceback is not None:
+                    # This can actually happen during the interpreter shutdown in Python 2.7
+                    traceback.print_exc()
+            except:
+                # Error logging? We're really in the interpreter shutdown...
+                # (https://github.com/fabioz/PyDev.Debugger/issues/8) 
+                pass
             return None
 
     if USE_PSYCO_OPTIMIZATION:
@@ -1455,13 +1466,6 @@ class PyDB:
 
     def prepareToRun(self):
         ''' Shared code to prepare debugging by installing traces and registering threads '''
-
-        # for completeness, we'll register the pydevd.reader & pydevd.writer threads
-        net = NetCommand(str(CMD_THREAD_CREATE), 0, '<xml><thread name="pydevd.reader" id="-1"/></xml>')
-        self.writer.addCommand(net)
-        net = NetCommand(str(CMD_THREAD_CREATE), 0, '<xml><thread name="pydevd.writer" id="-1"/></xml>')
-        self.writer.addCommand(net)
-
         self.patch_threads()
         pydevd_tracing.SetTrace(self.trace_dispatch)
 
@@ -1542,12 +1546,30 @@ class PyDB:
 
         pydev_imports.execfile(file, globals, locals)  # execute the script
 
+        return globals
+
     def exiting(self):
         sys.stdout.flush()
         sys.stderr.flush()
         self.checkOutputRedirect()
         cmd = self.cmdFactory.makeExitMessage()
         self.writer.addCommand(cmd)
+
+    def wait_for_commands(self, globals):
+        thread = threading.currentThread()
+        import pydevd_frame_utils
+        frame = pydevd_frame_utils.Frame(None, -1, pydevd_frame_utils.FCode("Console",
+                                                                            os.path.abspath(os.path.dirname(__file__))), globals, globals)
+        thread_id = GetThreadId(thread)
+        import pydevd_vars
+        pydevd_vars.addAdditionalFrameById(thread_id, {id(frame): frame})
+
+        cmd = self.cmdFactory.makeShowConsoleMessage(thread_id, frame)
+        self.writer.addCommand(cmd)
+
+        while True:
+            self.processInternalCommands()
+            time.sleep(0.01)
 
 def set_debug(setup):
     setup['DEBUG_RECORD_SOCKET_READS'] = True
@@ -1567,6 +1589,7 @@ def processCommandLine(argv):
     setup['multiprocess'] = False # Used by PyDev (creates new connection to ide)
     setup['save-signatures'] = False
     setup['print-in-debugger-startup'] = False
+    setup['cmd-line'] = False
     i = 0
     del argv[0]
     while (i < len(argv)):
@@ -1607,6 +1630,9 @@ def processCommandLine(argv):
         elif argv[i] == '--print-in-debugger-startup':
             del argv[i]
             setup['print-in-debugger-startup'] = True
+        elif (argv[i] == '--cmd-line'):
+            del argv[i]
+            setup['cmd-line'] = True
         else:
             raise ValueError("unexpected option " + argv[i])
     return setup
@@ -1719,11 +1745,6 @@ def _locked_settrace(
         connected = True
         bufferStdOutToServer = stdoutToServer
         bufferStdErrToServer = stderrToServer
-
-        net = NetCommand(str(CMD_THREAD_CREATE), 0, '<xml><thread name="pydevd.reader" id="-1"/></xml>')
-        debugger.writer.addCommand(net)
-        net = NetCommand(str(CMD_THREAD_CREATE), 0, '<xml><thread name="pydevd.writer" id="-1"/></xml>')
-        debugger.writer.addCommand(net)
 
         if bufferStdOutToServer:
             initStdoutRedirect()
@@ -1846,6 +1867,11 @@ class DispatchReader(ReaderThread):
         self.dispatcher = dispatcher
         ReaderThread.__init__(self, self.dispatcher.client)
 
+    def OnRun(self):
+        dummy_thread = threading.currentThread()
+        dummy_thread.is_pydev_daemon_thread = False
+        return ReaderThread.OnRun(self)
+        
     def handleExcept(self):
         ReaderThread.handleExcept(self)
 
@@ -2033,6 +2059,12 @@ if __name__ == '__main__':
     except:
         pass  # It's ok not having stackless there...
 
+    debugger = PyDB()
+
+    if setup['cmd-line']:
+        debugger.cmd_line = True
+
+
     if fix_app_engine_debug:
         sys.stderr.write("pydev debugger: google app engine integration enabled\n")
         curr_dir = os.path.dirname(__file__)
@@ -2045,10 +2077,8 @@ if __name__ == '__main__':
         sys.argv.insert(3, '--automatic_restart=no')
         sys.argv.insert(4, '--max_module_instances=1')
 
-        debugger = PyDB()
         # Run the dev_appserver
         debugger.run(setup['file'], None, None, set_trace=False)
-
     else:
         # as to get here all our imports are already resolved, the psyco module can be
         # changed and we'll still get the speedups in the debugger, as those functions
@@ -2063,8 +2093,6 @@ if __name__ == '__main__':
             # if it's available, let's change it for a stub (pydev already made use of it)
             import pydevd_psyco_stub
             sys.modules['psyco'] = pydevd_psyco_stub
-
-        debugger = PyDB()
 
         if setup['save-signatures']:
             if pydevd_vm_type.GetVmType() == pydevd_vm_type.PydevdVmType.JYTHON:
@@ -2083,5 +2111,9 @@ if __name__ == '__main__':
 
         connected = True  # Mark that we're connected when started from inside ide.
 
-        debugger.run(setup['file'], None, None)
-        
+        globals = debugger.run(setup['file'], None, None)
+
+        if setup['cmd-line']:
+            debugger.wait_for_commands(globals)
+
+

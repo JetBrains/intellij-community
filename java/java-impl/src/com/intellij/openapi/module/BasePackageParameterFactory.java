@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.PsiNameHelperImpl;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -41,7 +42,7 @@ public class BasePackageParameterFactory extends ProjectTemplateParameterFactory
   private static final Condition<PsiPackage> PACKAGE_CONDITION = new Condition<PsiPackage>() {
     @Override
     public boolean value(PsiPackage aPackage) {
-      return JavaPsiFacade.getInstance(aPackage.getProject()).getNameHelper().isQualifiedName(aPackage.getQualifiedName()) &&
+      return PsiNameHelper.getInstance(aPackage.getProject()).isQualifiedName(aPackage.getQualifiedName()) &&
              Character.isLowerCase(aPackage.getName().charAt(0));
     }
   };

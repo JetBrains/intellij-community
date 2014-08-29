@@ -269,7 +269,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
           @Override
           public void run() {
             String fieldName = state.getVariableValue(FIELD_VARIABLE).getText();
-            if (!JavaPsiFacade.getInstance(project).getNameHelper().isIdentifier(fieldName)) return;
+            if (!PsiNameHelper.getInstance(project).isIdentifier(fieldName)) return;
             String fieldType = state.getVariableValue(TYPE_VARIABLE).getText();
 
             PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());

@@ -15,8 +15,6 @@
  */
 package com.intellij.ide.customize;
 
-import javax.swing.*;
-import java.awt.*;
 import java.util.List;
 
 /**
@@ -24,6 +22,4 @@ import java.util.List;
  */
 public interface CustomizeIDEWizardStepsProvider {
   void initSteps(CustomizeIDEWizardDialog wizardDialog, List<AbstractCustomizeWizardStep> steps);
-
-  void addButtons(CustomizeIDEWizardDialog wizardDialog, JPanel buttonPanel, GridBagConstraints gbc);
 }

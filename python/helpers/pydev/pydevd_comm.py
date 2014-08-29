@@ -134,6 +134,7 @@ CMD_SEND_CURR_EXCEPTION_TRACE = 138
 CMD_SEND_CURR_EXCEPTION_TRACE_PROCEEDED = 139
 CMD_IGNORE_THROWN_EXCEPTION_AT = 140
 CMD_ENABLE_DONT_TRACE = 141
+CMD_SHOW_CONSOLE = 142
 
 
 
@@ -765,6 +766,12 @@ class NetCommandFactory:
         if dbg:
             dbg.writer.addCommand(net)
         return net
+
+    def makeShowConsoleMessage(self, thread_id, frame):
+        try:
+            return NetCommand(CMD_SHOW_CONSOLE, 0, self.makeThreadSuspendStr(thread_id, frame, CMD_SHOW_CONSOLE, ''))
+        except:
+            return self.makeErrorMessage(0, GetExceptionTracebackStr())
 
     def makeExitMessage(self):
         try:

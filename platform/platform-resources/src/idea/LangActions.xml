@@ -683,6 +683,7 @@
       <action id="XDebugger.ToggleSortValues" class="com.intellij.xdebugger.impl.ui.tree.actions.SortValuesToggleAction" icon="AllIcons.ObjectBrowser.Sorted"/>
       <action id="Debugger.MarkObject" class="com.intellij.xdebugger.impl.actions.MarkObjectAction"/>
       <action id="Debugger.FocusOnBreakpoint" class="com.intellij.xdebugger.impl.actions.FocusOnBreakpointAction"/>
+      <action id="Debugger.ShowReferring" class="com.intellij.xdebugger.impl.ui.tree.actions.ShowReferringObjectsAction"/>
     </group>
 
     <group id="XDebugger.ToolWindow.TopToolbar">
@@ -698,7 +699,6 @@
     </group>
 
     <group id="XDebugger.ToolWindow.LeftToolbar">
-      <reference ref="Rerun"/>
       <reference ref="Resume"/>
       <reference ref="Pause"/>
       <reference ref="Stop"/>
@@ -709,6 +709,7 @@
 
     <group id="XDebugger.ValueGroup" popup="false">
       <reference ref="XDebugger.Inspect"/>
+      <reference ref="Debugger.ShowReferring"/>
       <reference ref="Debugger.MarkObject"/>
       <reference ref="XDebugger.SetValue"/>
       <reference ref="XDebugger.CopyValue"/>

@@ -41,7 +41,7 @@ public abstract class PushSupport<Repo extends Repository, Source extends PushSo
   public abstract Pusher<Repo, Source, Target> getPusher();
 
   @NotNull
-  public abstract OutgoingCommitsProvider getOutgoingCommitsProvider();
+  public abstract OutgoingCommitsProvider<Repo, Source, Target> getOutgoingCommitsProvider();
 
   /**
    * @return Default push destination
@@ -63,12 +63,11 @@ public abstract class PushSupport<Repo extends Repository, Source extends PushSo
   public abstract Source getSource(@NotNull Repo repository);
 
   /**
-   * Parse user input string, and create the valid target for push,
-   * or return <code><b>null</b></code> if the target name is not valid.
+   * Parse user input string, and create the VALID target for push
    *
    * @see #validateSpec(Repository, PushSpec)
    */
-  @Nullable
+  @NotNull
   public abstract Target createTarget(@NotNull Repo repository, @NotNull String targetName);
 
   /**

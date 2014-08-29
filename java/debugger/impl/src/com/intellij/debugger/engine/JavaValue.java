@@ -17,6 +17,7 @@ package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.actions.JavaReferringObjectsValue;
 import com.intellij.debugger.actions.JumpToObjectAction;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -450,5 +451,15 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   @Override
   public String getValueText() {
     return myValueDescriptor.getValueText();
+  }
+  @Nullable
+  @Override
+  public XReferrersProvider getReferrersProvider() {
+    return new XReferrersProvider() {
+      @Override
+      public XValue getReferringObjectsValue() {
+        return new JavaReferringObjectsValue(JavaValue.this, false);
+      }
+    };
   }
 }

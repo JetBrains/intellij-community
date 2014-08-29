@@ -247,7 +247,7 @@ public class MoveInnerDialog extends RefactoringDialog {
       message = RefactoringBundle.message("no.class.name.specified");
     }
     else {
-      if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isIdentifier(className)) {
+      if (!PsiNameHelper.getInstance(manager.getProject()).isIdentifier(className)) {
         message = RefactoringMessageUtil.getIncorrectIdentifierMessage(className);
       }
       else {
@@ -256,7 +256,7 @@ public class MoveInnerDialog extends RefactoringDialog {
             message = RefactoringBundle.message("no.parameter.name.specified");
           }
           else {
-            if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isIdentifier(parameterName)) {
+            if (!PsiNameHelper.getInstance(manager.getProject()).isIdentifier(parameterName)) {
               message = RefactoringMessageUtil.getIncorrectIdentifierMessage(parameterName);
             }
           }

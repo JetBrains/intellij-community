@@ -35,6 +35,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiNameHelper;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
@@ -166,7 +167,7 @@ public class CreateClassDialog extends DialogWrapper {
       myTfClassName.getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
         protected void textChanged(DocumentEvent e) {
-          getOKAction().setEnabled(JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(myTfClassName.getText()));
+          getOKAction().setEnabled(PsiNameHelper.getInstance(myProject).isIdentifier(myTfClassName.getText()));
         }
       });
       getOKAction().setEnabled(StringUtil.isNotEmpty(myClassName));

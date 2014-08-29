@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredText;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.frame.XVariablesView;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -78,6 +79,12 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
             ((XValueCompactPresentation)presentation).renderValue(renderer, value);
           } else {
             presentation.renderValue(renderer);
+          }
+          if (StringUtil.isEmpty(text.toString())) {
+            final String type = value.getValuePresentation().getType();
+            if (!StringUtil.isEmpty(type)) {
+              text.append(type, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            }
           }
         } catch (Exception e) {
           continue;

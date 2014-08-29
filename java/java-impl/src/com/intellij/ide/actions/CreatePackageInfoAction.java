@@ -92,7 +92,7 @@ public class CreatePackageInfoAction extends CreateFromTemplateActionBase implem
     }
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final JavaDirectoryService directoryService = JavaDirectoryService.getInstance();
-    final PsiNameHelper nameHelper = JavaPsiFacade.getInstance(project).getNameHelper();
+    final PsiNameHelper nameHelper = PsiNameHelper.getInstance(project);
     for (PsiDirectory directory : directories) {
       if (projectFileIndex.isUnderSourceRootOfType(directory.getVirtualFile(), JavaModuleSourceRootTypes.SOURCES) &&
           PsiUtil.isLanguageLevel5OrHigher(directory)) {

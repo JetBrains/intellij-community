@@ -31,6 +31,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiNameHelper;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -104,7 +105,7 @@ public abstract class AbstractCreateFormAction extends CreateElementActionBase i
 
     @Override
     public boolean checkInput(String inputString) {
-      return inputString.length() > 0 && JavaPsiFacade.getInstance(myProject).getNameHelper().isQualifiedName(inputString);
+      return inputString.length() > 0 && PsiNameHelper.getInstance(myProject).isQualifiedName(inputString);
     }
   }
 }

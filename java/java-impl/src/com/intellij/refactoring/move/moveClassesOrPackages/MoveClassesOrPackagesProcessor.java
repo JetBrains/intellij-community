@@ -122,7 +122,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   public boolean verifyValidPackageName() {
     String qName = myTargetPackage.getQualifiedName();
     if (!StringUtil.isEmpty(qName)) {
-      PsiNameHelper helper = JavaPsiFacade.getInstance(myProject).getNameHelper();
+      PsiNameHelper helper = PsiNameHelper.getInstance(myProject);
       if (!helper.isQualifiedName(qName)) {
         Messages.showMessageDialog(myProject, RefactoringBundle.message("invalid.target.package.name.specified"), "Invalid Package Name",
                                    Messages.getErrorIcon());

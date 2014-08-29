@@ -27,6 +27,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -213,6 +214,16 @@ class ContractInferenceInterpreter {
       }
     }
 
+    if (expr instanceof PsiNewExpression) {
+      return toContracts(states, NOT_NULL_VALUE);
+    }
+    if (expr instanceof PsiMethodCallExpression) {
+      PsiMethod method = ((PsiMethodCallExpression)expr).resolveMethod();
+      if (method != null && NullableNotNullManager.isNotNull(method)) {
+        return toContracts(states, NOT_NULL_VALUE);
+      }
+    }
+
     final ValueConstraint constraint = getLiteralConstraint(expr);
     if (constraint != null) {
       return toContracts(states, constraint);
@@ -315,7 +326,7 @@ class ContractInferenceInterpreter {
   private List<MethodContract> visitStatements(List<ValueConstraint[]> states, PsiStatement... statements) {
     List<MethodContract> result = ContainerUtil.newArrayList();
     for (PsiStatement statement : statements) {
-      if (statement instanceof PsiBlockStatement && ((PsiBlockStatement)statement).getCodeBlock().getStatements().length == 1) {
+      if (statement instanceof PsiBlockStatement) {
         result.addAll(visitStatements(states, ((PsiBlockStatement)statement).getCodeBlock().getStatements()));
       }
       else if (statement instanceof PsiIfStatement) {
@@ -353,10 +364,34 @@ class ContractInferenceInterpreter {
         List<MethodContract> conditionResults = visitExpression(states, ((PsiAssertStatement)statement).getAssertCondition());
         result.addAll(toContracts(antecedentsOf(filterReturning(conditionResults, FALSE_VALUE)), THROW_EXCEPTION));
       }
+      else if (statement instanceof PsiDeclarationStatement && !mayHaveSideEffects((PsiDeclarationStatement)statement)) {
+        continue;
+      }
+      else if (statement instanceof PsiDoWhileStatement) {
+        result.addAll(visitStatements(states, ((PsiDoWhileStatement)statement).getBody()));
+      }
+      else if (statement instanceof PsiTryStatement) {
+        PsiCodeBlock block = ((PsiTryStatement)statement).getTryBlock();
+        if (block != null) {
+          result.addAll(visitStatements(states, block.getStatements()));
+        }
+      }
 
       break; // visit only the first statement unless it's 'if' whose 'then' always returns and the next statement is effectively 'else'
     }
     return result;
+  }
+
+  private static boolean mayHaveSideEffects(PsiDeclarationStatement statement) {
+    for (PsiElement element : statement.getDeclaredElements()) {
+      if (element instanceof PsiVariable) {
+        PsiExpression initializer = ((PsiVariable)element).getInitializer();
+        if (initializer != null && SideEffectChecker.mayHaveSideEffects(initializer)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private static boolean alwaysReturns(@Nullable PsiStatement statement) {
@@ -381,6 +416,7 @@ class ContractInferenceInterpreter {
       if (expr.textMatches(PsiKeyword.TRUE)) return TRUE_VALUE;
       if (expr.textMatches(PsiKeyword.FALSE)) return FALSE_VALUE;
       if (expr.textMatches(PsiKeyword.NULL)) return NULL_VALUE;
+      if (((PsiLiteralExpression)expr).getValue() instanceof String) return NOT_NULL_VALUE;
     }
     return null;
   }

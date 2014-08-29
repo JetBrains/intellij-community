@@ -17,6 +17,7 @@ package com.jetbrains.python.debugger;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.intellij.execution.console.DuplexConsoleView;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
@@ -35,6 +36,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.remote.RemoteProcessHandlerBase;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
@@ -43,6 +45,7 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
+import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.pydev.*;
 import com.jetbrains.python.run.PythonProcessHandler;
@@ -84,6 +87,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private final XSmartStepIntoHandler<?> mySmartStepIntoHandler;
   private boolean myWaitingForConnection = false;
   private PyStackFrame myStackFrameBeforeResume;
+  private PyStackFrame myConsoleContextFrame = null;
 
   public PyDebugProcess(final @NotNull XDebugSession session,
                         @NotNull final ServerSocket serverSocket,
@@ -283,6 +287,19 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   @Override
   public void recordSignature(PySignature signature) {
     PySignatureCacheManager.getInstance(getSession().getProject()).recordSignature(myPositionConverter.convertSignature(signature));
+  }
+
+  @Override
+  public void showConsole(PyThreadInfo thread) {
+    myConsoleContextFrame = new PyExecutionStack(this, thread).getTopFrame();
+    if (myExecutionConsole instanceof PythonDebugLanguageConsoleView) {
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          ((PythonDebugLanguageConsoleView)myExecutionConsole).enableConsole(false);
+        }
+      });
+    }
   }
 
   protected void afterConnect() {
@@ -545,6 +562,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
 
     final PyStackFrame frame = (PyStackFrame)getSession().getCurrentStackFrame();
+
+    if (frame == null && myConsoleContextFrame != null) {
+      return myConsoleContextFrame;
+    }
+
     if (frame == null) {
       throw new PyDebuggerException("Process is running");
     }

@@ -33,6 +33,8 @@ public abstract class AbstractCommand<T> {
   public static final int SMART_STEP_INTO = 128;
   public static final int EXIT = 129;
   public static final int CALL_SIGNATURE_TRACE = 130;
+  public static final int SHOW_CONSOLE = 142;
+  public static final int ERROR = 901;
 
   public static final int VERSION = 501;
   public static final String NEW_LINE_CHAR = "@_@NEW_LINE_CHAR@_@";
@@ -178,6 +180,10 @@ public abstract class AbstractCommand<T> {
 
   public static boolean isExitEvent(final int command) {
     return command == EXIT;
+  }
+
+  public static boolean isErrorEvent(int command) {
+    return command == ERROR;
   }
 
   protected static class Payload {

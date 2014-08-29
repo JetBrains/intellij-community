@@ -354,7 +354,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
       return;
     }
     final String trimmed = targetClassName.trim();
-    if (!JavaPsiFacade.getInstance(myContext.getProject()).getNameHelper().isQualifiedName(trimmed)) {
+    if (!PsiNameHelper.getInstance(myContext.getProject()).isQualifiedName(trimmed)) {
       setOKActionEnabled(false);
       return;
     }

@@ -134,6 +134,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   public ProjectRootManagerImpl(Project project) {
     myProject = project;
     myRootsCache = new OrderRootsCache(project);
+    myJdkTableMultiListener = new JdkTableMultiListener(project);
   }
 
   @Override
@@ -281,7 +282,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   @Override
   public void disposeComponent() {
-    myJdkTableMultiListener = null;
   }
 
   @Override
@@ -478,45 +478,52 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   void addListenerForTable(LibraryTable.Listener libraryListener,
                            final LibraryTable libraryTable) {
-    LibraryTableMultilistener multilistener = myLibraryTableMultilisteners.get(libraryTable);
-    if (multilistener == null) {
-      multilistener = new LibraryTableMultilistener(libraryTable);
+    synchronized (myLibraryTableListenersLock) {
+      LibraryTableMultiListener multiListener = myLibraryTableMultiListeners.get(libraryTable);
+      if (multiListener == null) {
+        multiListener = new LibraryTableMultiListener(libraryTable);
+        libraryTable.addListener(multiListener);
+        myLibraryTableMultiListeners.put(libraryTable, multiListener);
+      }
+      multiListener.addListener(libraryListener);
     }
-    multilistener.addListener(libraryListener);
   }
 
   void removeListenerForTable(LibraryTable.Listener libraryListener,
                               final LibraryTable libraryTable) {
-    LibraryTableMultilistener multilistener = myLibraryTableMultilisteners.get(libraryTable);
-    if (multilistener == null) {
-      multilistener = new LibraryTableMultilistener(libraryTable);
+    synchronized (myLibraryTableListenersLock) {
+      LibraryTableMultiListener multiListener = myLibraryTableMultiListeners.get(libraryTable);
+      if (multiListener != null) {
+        boolean last = multiListener.removeListener(libraryListener);
+        if (last) {
+          libraryTable.removeListener(multiListener);
+          myLibraryTableMultiListeners.remove(libraryTable);
+        }
+      }
     }
-    multilistener.removeListener(libraryListener);
   }
 
-  private final Map<LibraryTable, LibraryTableMultilistener> myLibraryTableMultilisteners
-    = new HashMap<LibraryTable, LibraryTableMultilistener>();
+  private final Object myLibraryTableListenersLock = new Object();
+  private final Map<LibraryTable, LibraryTableMultiListener> myLibraryTableMultiListeners = new HashMap<LibraryTable, LibraryTableMultiListener>();
 
-  private class LibraryTableMultilistener implements LibraryTable.Listener {
-    final List<LibraryTable.Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private class LibraryTableMultiListener implements LibraryTable.Listener {
+    private final Set<LibraryTable.Listener> myListeners = new LinkedHashSet<LibraryTable.Listener>();
     private final LibraryTable myLibraryTable;
+    private LibraryTable.Listener[] myListenersArray;
 
-    private LibraryTableMultilistener(LibraryTable libraryTable) {
+    private LibraryTableMultiListener(LibraryTable libraryTable) {
       myLibraryTable = libraryTable;
-      myLibraryTable.addListener(this);
-      myLibraryTableMultilisteners.put(myLibraryTable, this);
     }
 
-    private void addListener(LibraryTable.Listener listener) {
+    private synchronized void addListener(LibraryTable.Listener listener) {
       myListeners.add(listener);
+      myListenersArray = null;
     }
 
-    private void removeListener(LibraryTable.Listener listener) {
+    private synchronized boolean removeListener(LibraryTable.Listener listener) {
       myListeners.remove(listener);
-      if (myListeners.isEmpty()) {
-        myLibraryTable.removeListener(this);
-        myLibraryTableMultilisteners.remove(myLibraryTable);
-      }
+      myListenersArray = null;
+      return myListeners.isEmpty();
     }
 
     @Override
@@ -525,11 +532,18 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       mergeRootsChangesDuring(new Runnable() {
         @Override
         public void run() {
-          for (LibraryTable.Listener listener : myListeners) {
+          for (LibraryTable.Listener listener : getListeners()) {
             listener.afterLibraryAdded(newLibrary);
           }
         }
       });
+    }
+
+    private synchronized LibraryTable.Listener[] getListeners() {
+      if (myListenersArray == null) {
+        myListenersArray = myListeners.toArray(new LibraryTable.Listener[myListeners.size()]);
+      }
+      return myListenersArray;
     }
 
     @Override
@@ -538,7 +552,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       mergeRootsChangesDuring(new Runnable() {
         @Override
         public void run() {
-          for (LibraryTable.Listener listener : myListeners) {
+          for (LibraryTable.Listener listener : getListeners()) {
             listener.afterLibraryRenamed(library);
           }
         }
@@ -551,7 +565,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       mergeRootsChangesDuring(new Runnable() {
         @Override
         public void run() {
-          for (LibraryTable.Listener listener : myListeners) {
+          for (LibraryTable.Listener listener : getListeners()) {
             listener.beforeLibraryRemoved(library);
           }
         }
@@ -564,7 +578,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       mergeRootsChangesDuring(new Runnable() {
         @Override
         public void run() {
-          for (LibraryTable.Listener listener : myListeners) {
+          for (LibraryTable.Listener listener : getListeners()) {
             listener.afterLibraryRemoved(library);
           }
         }
@@ -572,24 +586,33 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     }
   }
 
-  private JdkTableMultiListener myJdkTableMultiListener = null;
+  private final JdkTableMultiListener myJdkTableMultiListener;
 
   private class JdkTableMultiListener implements ProjectJdkTable.Listener {
-    final EventDispatcher<ProjectJdkTable.Listener> myDispatcher = EventDispatcher.create(ProjectJdkTable.Listener.class);
+    private final Set<ProjectJdkTable.Listener> myListeners = new LinkedHashSet<ProjectJdkTable.Listener>();
     private MessageBusConnection listenerConnection;
+    private ProjectJdkTable.Listener[] myListenersArray;
 
     private JdkTableMultiListener(Project project) {
       listenerConnection = project.getMessageBus().connect();
       listenerConnection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this);
     }
 
-    private void addListener(ProjectJdkTable.Listener listener) {
-      myDispatcher.addListener(listener);
+    private synchronized void addListener(ProjectJdkTable.Listener listener) {
+      myListeners.add(listener);
+      myListenersArray = null;
     }
 
-    private void removeListener(ProjectJdkTable.Listener listener) {
-      myDispatcher.removeListener(listener);
-      uninstallListener(true);
+    private synchronized void removeListener(ProjectJdkTable.Listener listener) {
+      myListeners.remove(listener);
+      myListenersArray = null;
+    }
+
+    private synchronized ProjectJdkTable.Listener[] getListeners() {
+      if (myListenersArray == null) {
+        myListenersArray = myListeners.toArray(new ProjectJdkTable.Listener[myListeners.size()]);
+      }
+      return myListenersArray;
     }
 
     @Override
@@ -597,7 +620,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       mergeRootsChangesDuring(new Runnable() {
         @Override
         public void run() {
-          myDispatcher.getMulticaster().jdkAdded(jdk);
+          for (ProjectJdkTable.Listener listener : getListeners()) {
+            listener.jdkAdded(jdk);
+          }
         }
       });
     }
@@ -607,7 +632,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       mergeRootsChangesDuring(new Runnable() {
         @Override
         public void run() {
-          myDispatcher.getMulticaster().jdkRemoved(jdk);
+          for (ProjectJdkTable.Listener listener : getListeners()) {
+            listener.jdkRemoved(jdk);
+          }
         }
       });
     }
@@ -617,7 +644,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       mergeRootsChangesDuring(new Runnable() {
         @Override
         public void run() {
-          myDispatcher.getMulticaster().jdkNameChanged(jdk, previousName);
+          for (ProjectJdkTable.Listener listener : getListeners()) {
+            listener.jdkNameChanged(jdk, previousName);
+          }
         }
       });
       String currentName = getProjectSdkName();
@@ -627,32 +656,15 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
         myProjectSdkType = jdk.getSdkType().getName();
       }
     }
-
-    public void uninstallListener(boolean soft) {
-      if (!soft || !myDispatcher.hasListeners()) {
-        if (listenerConnection != null) {
-          listenerConnection.disconnect();
-          listenerConnection = null;
-        }
-      }
-    }
   }
 
   private final Map<RootProvider, Set<OrderEntry>> myRegisteredRootProviders = new HashMap<RootProvider, Set<OrderEntry>>();
 
   void addJdkTableListener(ProjectJdkTable.Listener jdkTableListener) {
-    getJdkTableMultiListener().addListener(jdkTableListener);
-  }
-
-  private JdkTableMultiListener getJdkTableMultiListener() {
-    if (myJdkTableMultiListener == null) {
-      myJdkTableMultiListener = new JdkTableMultiListener(myProject);
-    }
-    return myJdkTableMultiListener;
+    myJdkTableMultiListener.addListener(jdkTableListener);
   }
 
   void removeJdkTableListener(ProjectJdkTable.Listener jdkTableListener) {
-    if (myJdkTableMultiListener == null) return;
     myJdkTableMultiListener.removeListener(jdkTableListener);
   }
 

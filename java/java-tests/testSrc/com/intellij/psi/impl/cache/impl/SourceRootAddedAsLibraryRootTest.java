@@ -2,7 +2,6 @@ package com.intellij.psi.impl.cache.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,7 +15,7 @@ import java.io.IOException;
 /**
  * @author max
  */
-public class SCR19174Test extends PsiTestCase {
+public class SourceRootAddedAsLibraryRootTest extends PsiTestCase {
   private VirtualFile myDir;
   private VirtualFile myVFile;
 
@@ -24,11 +23,7 @@ public class SCR19174Test extends PsiTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    final File root = FileUtil.createTempFile(getName(), "");
-    root.delete();
-    root.mkdir();
-    myFilesToDelete.add(root);
-
+    final File root = createTempDirectory();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
@@ -37,12 +32,6 @@ public class SCR19174Test extends PsiTestCase {
 
           myDir = rootVFile.createChildDirectory(null, "contentAndLibrary");
 
-          /*
-          myVFile = myDir.createChildData(null, "A.java");
-          Writer writer1 = myVFile.getWriter(null);
-          writer1.write("package p; public class A{ public void foo(); }");
-          writer1.close();
-          */
           PsiTestUtil.addSourceRoot(myModule, myDir);
         }
         catch (IOException e) {

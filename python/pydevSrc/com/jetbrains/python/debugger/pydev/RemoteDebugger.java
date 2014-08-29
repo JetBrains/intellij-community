@@ -396,7 +396,8 @@ public class RemoteDebugger implements ProcessDebugger {
     if (type != null) {
       final RemoveBreakpointCommand command = new RemoveBreakpointCommand(this, type, file, line);
       execute(command);  // remove temp. breakpoint
-    } else {
+    }
+    else {
       LOG.error("Temp breakpoint not found for " + file + ":" + line);
     }
   }
@@ -474,6 +475,9 @@ public class RemoteDebugger implements ProcessDebugger {
         else if (AbstractCommand.isCallSignatureTrace(frame.getCommand())) {
           recordCallSignature(ProtocolParser.parseCallSignature(frame.getPayload()));
         }
+        else if (AbstractCommand.isErrorEvent(frame.getCommand())) {
+          LOG.error("Error response from debugger: " + frame.getPayload());
+        }
         else {
           placeResponse(frame.getSequence(), frame);
         }
@@ -528,6 +532,19 @@ public class RemoteDebugger implements ProcessDebugger {
             thread.updateState(PyThreadInfo.State.KILLED, null);
             myThreads.remove(id);
           }
+          break;
+        }
+        case AbstractCommand.SHOW_CONSOLE: {
+          final PyThreadInfo event = parseThreadEvent(frame);
+          PyThreadInfo thread = myThreads.get(event.getId());
+          if (thread == null) {
+            myThreads.put(event.getId(), event);
+            thread = event;
+          }
+          thread.updateState(PyThreadInfo.State.SUSPENDED, event.getFrames());
+          thread.setStopReason(event.getStopReason());
+          thread.setMessage(event.getMessage());
+          myDebugProcess.showConsole(thread);
           break;
         }
       }

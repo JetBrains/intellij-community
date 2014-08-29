@@ -20,6 +20,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginNode;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
@@ -261,7 +262,10 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
 
   @Override
   public String getHTMLFooter() {
-    return "New plugins can also be downloaded in " + CommonBundle.settingsTitle() + " | Plugins";
+    return "New plugins can also be downloaded in "
+           + CommonBundle.settingsTitle()
+           + " | " + OptionsBundle.message("configurable.group.appearance.settings.display.name")
+           + " | " + "Plugins";
   }
 
   public static class OfflineException extends Exception {};

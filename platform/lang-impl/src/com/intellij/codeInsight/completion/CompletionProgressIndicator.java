@@ -762,6 +762,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           data.set(calculateItems(initContext, weigher));
         }
         catch (ProcessCanceledException ignore) {
+          cancel(); // some contributor may just throw PCE; if indicator is not canceled everything will hang
         }
         catch (Throwable t) {
           cancel();

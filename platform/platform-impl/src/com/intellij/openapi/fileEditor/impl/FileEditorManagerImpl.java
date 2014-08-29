@@ -181,7 +181,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     HashSet<EditorsSplitters> all = new LinkedHashSet<EditorsSplitters>();
     if (Registry.is("editor.use.preview")) {
       initUI();
-      all.add(myPreviewPanel.getSplitters());
+      all.add(myPreviewPanel.getWindow().getOwner());
     }
     all.add(getMainSplitters());
     Set<DockContainer> dockContainers = myDockManager.getContainers();
@@ -639,11 +639,12 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     }
     else {
       wndToOpenIn = getSplitters().getCurrentWindow();
-      if (wndToOpenIn == null || !wndToOpenIn.isFileOpen(file)) {
-        EditorWindow previewWindow = getPreviewWindow(file, focusEditor, searchForSplitter);
-        if (previewWindow != null) {
-          wndToOpenIn = previewWindow;
-        }
+    }
+
+    if (wndToOpenIn == null || !wndToOpenIn.isFileOpen(file)) {
+      EditorWindow previewWindow = getPreviewWindow(file, focusEditor, searchForSplitter);
+      if (previewWindow != null) {
+        wndToOpenIn = previewWindow;
       }
     }
 

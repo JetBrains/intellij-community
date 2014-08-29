@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -97,6 +98,7 @@ public class TipUIUtil {
       String minor = ApplicationInfo.getInstance().getMinorVersion();
       replaced = replaced.replace("&minorVersion;", minor);
       replaced = replaced.replace("&majorMinorVersion;", major + ("0".equals(minor) ? "" : ("." + minor)));
+      replaced = replaced.replace("&settingsPath;", CommonBundle.settingsActionPath());
       if (UIUtil.isUnderDarcula()) {
         replaced = replaced.replace("css/tips.css", "css/tips_darcula.css");
       }

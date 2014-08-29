@@ -3,7 +3,6 @@ package com.intellij.psi.impl.cache.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -18,7 +17,7 @@ import java.io.IOException;
 /**
  * @author max
  */
-public class SCR20733Test extends PsiTestCase {
+public class SameSourceRootInTwoModulesTest extends PsiTestCase {
   private VirtualFile myPrjDir1;
   private VirtualFile mySrcDir1;
   private VirtualFile myPackDir;
@@ -27,11 +26,7 @@ public class SCR20733Test extends PsiTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    final File root = FileUtil.createTempFile(getName(), "");
-    root.delete();
-    root.mkdir();
-    myFilesToDelete.add(root);
-
+    final File root = createTempDirectory();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {

@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -39,8 +38,13 @@ public interface ChangeListManagerGate {
 
   void editComment(final String name, final String comment);
   void editName(final String oldName, final String newName);
-  // must be allowed only for perforce change synchronizer, not during normal update
+
+
+  /**
+   * @deprecated unused, to be removed in IDEA 15
+   */
   void moveChanges(final String toList, final Collection<Change> changes);
+
   void setListsToDisappear(final Collection<String> names);
   FileStatus getStatus(final VirtualFile file);
   FileStatus getStatus(final File file);
