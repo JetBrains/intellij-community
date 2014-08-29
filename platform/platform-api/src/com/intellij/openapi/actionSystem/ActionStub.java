@@ -29,6 +29,7 @@ public class ActionStub extends AnAction{
   private static final Logger LOG=Logger.getInstance("#com.intellij.openapi.actionSystem.ActionStub");
 
   private final String myClassName;
+  private final String myProjectType;
   private final String myId;
   private final String myText;
   private final ClassLoader myLoader;
@@ -40,9 +41,10 @@ public class ActionStub extends AnAction{
                     @NotNull String text,
                     ClassLoader loader,
                     PluginId pluginId,
-                    String iconPath) {
+                    String iconPath, String projectType) {
     myLoader = loader;
     myClassName=actionClass;
+    myProjectType = projectType;
     LOG.assertTrue(!id.isEmpty());
     myId=id;
     myText=text;
@@ -102,4 +104,7 @@ public class ActionStub extends AnAction{
     targetAction.setShortcutSet(getShortcutSet());
   }
 
+  public String getProjectType() {
+    return myProjectType;
+  }
 }
