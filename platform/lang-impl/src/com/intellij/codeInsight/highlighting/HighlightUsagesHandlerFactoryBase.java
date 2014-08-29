@@ -15,30 +15,26 @@
  */
 package com.intellij.codeInsight.highlighting;
 
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Bas Leijdekkers
+ * @author Konstantin Bulenkov
  */
-public class HighlightImportedElementsHandlerFactory extends HighlightUsagesHandlerFactoryBase {
-
+public abstract class HighlightUsagesHandlerFactoryBase implements HighlightUsagesHandlerFactory {
   @Nullable
   @Override
-  public HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target) {
-    if (!(target instanceof PsiKeyword) || !PsiKeyword.IMPORT.equals(target.getText())) {
-      return null;
-    }
-    final PsiElement parent = target.getParent();
-    if (!(parent instanceof PsiImportStatementBase)) {
-      return null;
-    }
-    final PsiElement grand = parent.getParent();
-    if (!(grand instanceof PsiImportList)) {
-      return null;
-    }
-    return new HighlightImportedElementsHandler(editor, file, target, (PsiImportStatementBase) parent);
+  public final HighlightUsagesHandlerBase createHighlightUsagesHandler(Editor editor, PsiFile file) {
+    int offset = TargetElementUtilBase.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
+    PsiElement target = file.findElementAt(offset);
+    if (target == null) return null;
+    return createHighlightUsagesHandler(editor, file, target);
   }
+
+  @Nullable
+  public abstract HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target);
 }
