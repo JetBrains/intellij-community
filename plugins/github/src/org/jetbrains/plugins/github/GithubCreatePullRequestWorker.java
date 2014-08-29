@@ -290,6 +290,8 @@ public class GithubCreatePullRequestWorker {
   }
 
   public void launchFetchRemote(@NotNull final ForkInfo fork) {
+    assert fork.getRemoteName() != null;
+
     if (fork.getFetchTask() != null) return;
 
     synchronized (fork.LOCK) {
@@ -314,6 +316,8 @@ public class GithubCreatePullRequestWorker {
   }
 
   public void launchLoadDiffInfo(@NotNull final BranchInfo branch) {
+    assert branch.getForkInfo().getRemoteName() != null;
+
     if (branch.getDiffInfoTask() != null) return;
 
     synchronized (branch.LOCK) {
@@ -342,6 +346,7 @@ public class GithubCreatePullRequestWorker {
 
   @Nullable
   public DiffInfo getDiffInfo(@NotNull final BranchInfo branch) throws IOException {
+    if (branch.getForkInfo().getRemoteName() == null) return null;
     launchLoadDiffInfo(branch);
 
     assert branch.getDiffInfoTask() != null;
