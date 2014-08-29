@@ -62,7 +62,7 @@ public class ConcatenationHelper {
     // iterate in depth, collecting possible operands
     List<Exprent> lstOperands = new ArrayList<Exprent>();
 
-    for (; ; ) {
+    while (true) {
 
       int found = 0;
 

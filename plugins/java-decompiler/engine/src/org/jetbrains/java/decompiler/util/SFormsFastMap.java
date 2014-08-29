@@ -243,9 +243,9 @@ public class SFormsFastMap<E> {
     return arrnew;
   }
 
-  public static interface IElementsUnion<E> {
-    public E union(E first, E second);
+  public interface IElementsUnion<E> {
+    E union(E first, E second);
 
-    public E copy(E element);
+    E copy(E element);
   }
 }

@@ -17,10 +17,10 @@ package org.jetbrains.java.decompiler.struct.gen;
 
 public class FieldDescriptor {
 
-  public static final FieldDescriptor INTEGER_DESCRIPTOR = FieldDescriptor.parseDescriptor("Ljava/lang/Integer;");
-  public static final FieldDescriptor LONG_DESCRIPTOR = FieldDescriptor.parseDescriptor("Ljava/lang/Long;");
-  public static final FieldDescriptor FLOAT_DESCRIPTOR = FieldDescriptor.parseDescriptor("Ljava/lang/Float;");
-  public static final FieldDescriptor DOUBLE_DESCRIPTOR = FieldDescriptor.parseDescriptor("Ljava/lang/Double;");
+  public static final FieldDescriptor INTEGER_DESCRIPTOR = parseDescriptor("Ljava/lang/Integer;");
+  public static final FieldDescriptor LONG_DESCRIPTOR = parseDescriptor("Ljava/lang/Long;");
+  public static final FieldDescriptor FLOAT_DESCRIPTOR = parseDescriptor("Ljava/lang/Float;");
+  public static final FieldDescriptor DOUBLE_DESCRIPTOR = parseDescriptor("Ljava/lang/Double;");
 
   public VarType type;
 

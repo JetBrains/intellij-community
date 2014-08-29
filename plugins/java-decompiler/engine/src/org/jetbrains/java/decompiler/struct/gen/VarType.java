@@ -119,7 +119,7 @@ public class VarType {  // TODO: optimize switch
   }
 
   public boolean isFalseBoolean() {
-    return (convinfo & VarType.FALSEBOOLEAN) != 0;
+    return (convinfo & FALSEBOOLEAN) != 0;
   }
 
   public boolean isSuperset(VarType val) {
@@ -189,13 +189,13 @@ public class VarType {  // TODO: optimize switch
         case CodeConstants.TYPE_FAMILY_INTEGER:
           if ((type1.type == CodeConstants.TYPE_CHAR && type2.type == CodeConstants.TYPE_SHORT)
               || (type1.type == CodeConstants.TYPE_SHORT && type2.type == CodeConstants.TYPE_CHAR)) {
-            return VarType.VARTYPE_SHORTCHAR;
+            return VARTYPE_SHORTCHAR;
           }
           else {
-            return VarType.VARTYPE_BYTECHAR;
+            return VARTYPE_BYTECHAR;
           }
         case CodeConstants.TYPE_FAMILY_OBJECT:
-          return VarType.VARTYPE_NULL;
+          return VARTYPE_NULL;
       }
     }
 
@@ -220,13 +220,13 @@ public class VarType {  // TODO: optimize switch
         case CodeConstants.TYPE_FAMILY_INTEGER:
           if ((type1.type == CodeConstants.TYPE_SHORTCHAR && type2.type == CodeConstants.TYPE_BYTE)
               || (type1.type == CodeConstants.TYPE_BYTE && type2.type == CodeConstants.TYPE_SHORTCHAR)) {
-            return VarType.VARTYPE_SHORT;
+            return VARTYPE_SHORT;
           }
           else {
-            return VarType.VARTYPE_INT;
+            return VARTYPE_INT;
           }
         case CodeConstants.TYPE_FAMILY_OBJECT:
-          return VarType.VARTYPE_OBJECT;
+          return VARTYPE_OBJECT;
       }
     }
 
@@ -236,19 +236,19 @@ public class VarType {  // TODO: optimize switch
   public static VarType getMinTypeInFamily(int family) {
     switch (family) {
       case CodeConstants.TYPE_FAMILY_BOOLEAN:
-        return VarType.VARTYPE_BOOLEAN;
+        return VARTYPE_BOOLEAN;
       case CodeConstants.TYPE_FAMILY_INTEGER:
-        return VarType.VARTYPE_BYTECHAR;
+        return VARTYPE_BYTECHAR;
       case CodeConstants.TYPE_FAMILY_OBJECT:
-        return VarType.VARTYPE_NULL;
+        return VARTYPE_NULL;
       case CodeConstants.TYPE_FAMILY_FLOAT:
-        return VarType.VARTYPE_FLOAT;
+        return VARTYPE_FLOAT;
       case CodeConstants.TYPE_FAMILY_LONG:
-        return VarType.VARTYPE_LONG;
+        return VARTYPE_LONG;
       case CodeConstants.TYPE_FAMILY_DOUBLE:
-        return VarType.VARTYPE_DOUBLE;
+        return VARTYPE_DOUBLE;
       case CodeConstants.TYPE_FAMILY_UNKNOWN:
-        return VarType.VARTYPE_UNKNOWN;
+        return VARTYPE_UNKNOWN;
       default:
         throw new RuntimeException("invalid type family!");
     }

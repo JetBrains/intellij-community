@@ -51,7 +51,7 @@ public class StructExceptionsAttribute extends StructGeneralAttribute {
     if (len > 0) {
       info = new byte[len * 2];
       for (int i = 0, j = 0; i < len; i++, j += 2) {
-        int index = ((Integer)throwsExceptions.get(i)).intValue();
+        int index = throwsExceptions.get(i).intValue();
         info[j] = (byte)(index >> 8);
         info[j + 1] = (byte)(index & 0xFF);
       }
@@ -63,7 +63,7 @@ public class StructExceptionsAttribute extends StructGeneralAttribute {
   }
 
   public String getExcClassname(int index, ConstantPool pool) {
-    return pool.getPrimitiveConstant(((Integer)throwsExceptions.get(index)).intValue()).getString();
+    return pool.getPrimitiveConstant(throwsExceptions.get(index).intValue()).getString();
   }
 
   public List<Integer> getThrowsExceptions() {

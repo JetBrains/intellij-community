@@ -49,8 +49,6 @@ public class CatchAllStatement extends Statement {
     type = Statement.TYPE_CATCHALL;
   }
 
-  ;
-
   private CatchAllStatement(Statement head, Statement handler) {
 
     this();
@@ -102,7 +100,7 @@ public class CatchAllStatement extends Statement {
             return null;
           }
 
-          if (DecHelper.checkStatementExceptions(Arrays.asList(new Statement[]{head, exc}))) {
+          if (DecHelper.checkStatementExceptions(Arrays.asList(head, exc))) {
             return new CatchAllStatement(head, exc);
           }
         }

@@ -159,7 +159,6 @@ public class ClassWriter {
 
         boolean firstpar = true;
         int index = node.lambda_information.is_content_method_static ? 0 : 1;
-        ;
 
         int start_index = md_content.params.length - md_lambda.params.length;
 
@@ -625,7 +624,6 @@ public class ClassWriter {
 
       boolean firstpar = true;
       int index = node_lambda.lambda_information.is_content_method_static ? 0 : 1;
-      ;
 
       int start_index = md_content.params.length - md_lambda.params.length;
 

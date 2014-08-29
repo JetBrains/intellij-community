@@ -22,9 +22,9 @@ import java.io.IOException;
 
 public interface ISaveClass {
 
-  public String getClassEntryName(StructClass cl, String entryname);
+  String getClassEntryName(StructClass cl, String entryname);
 
-  public void saveClassToFile(StructClass cl, File file) throws FileNotFoundException, IOException;
+  void saveClassToFile(StructClass cl, File file) throws FileNotFoundException, IOException;
 
-  public void saveClassToStream(StructClass cl, DataOutputStream out);
+  void saveClassToStream(StructClass cl, DataOutputStream out);
 }

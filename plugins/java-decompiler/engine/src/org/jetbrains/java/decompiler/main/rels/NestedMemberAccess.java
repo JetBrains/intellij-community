@@ -286,7 +286,7 @@ public class NestedMemberAccess {
       res |= replaceInvocations(caller, meth, expr);
     }
 
-    for (; ; ) {
+    while (true) {
 
       boolean found = false;
 
@@ -397,10 +397,10 @@ public class NestedMemberAccess {
         AssignmentExprent ret;
         if (source.type == Exprent.EXPRENT_EXIT) {
           ExitExprent extex = (ExitExprent)source;
-          ret = (AssignmentExprent)((AssignmentExprent)extex.getValue()).copy();
+          ret = (AssignmentExprent)extex.getValue().copy();
         }
         else {
-          ret = (AssignmentExprent)((AssignmentExprent)source).copy();
+          ret = (AssignmentExprent)source.copy();
         }
         FieldExprent fexpr = (FieldExprent)ret.getLeft();
 

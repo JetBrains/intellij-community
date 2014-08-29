@@ -51,7 +51,7 @@ public class SequenceStatement extends Statement {
 
   private SequenceStatement(Statement head, Statement tail) {
 
-    this(Arrays.asList(new Statement[]{head, tail}));
+    this(Arrays.asList(head, tail));
 
     List<StatEdge> lstSuccs = tail.getSuccessorEdges(STATEDGE_DIRECT_ALL);
     if (!lstSuccs.isEmpty()) {
@@ -88,7 +88,7 @@ public class SequenceStatement extends Statement {
           && !stat.isMonitorEnter()) {
 
         if (stat.getLastBasicType() == Statement.LASTBASICTYPE_GENERAL) {
-          if (DecHelper.checkStatementExceptions(Arrays.asList(new Statement[]{head, stat}))) {
+          if (DecHelper.checkStatementExceptions(Arrays.asList(head, stat))) {
             return new SequenceStatement(head, stat);
           }
         }

@@ -41,8 +41,6 @@ public class StructContext {
 
   private HashMap<String, ContextUnit> units = new HashMap<String, ContextUnit>();
 
-  private ContextUnit defaultUnit;
-
   private IDecompilatSaver saver;
 
   private IDecompiledData decdata;
@@ -53,7 +51,7 @@ public class StructContext {
     this.decdata = decdata;
     this.loader = loader;
 
-    defaultUnit = new ContextUnit(ContextUnit.TYPE_FOLDER, null, "", true, saver, decdata);
+    ContextUnit defaultUnit = new ContextUnit(ContextUnit.TYPE_FOLDER, null, "", true, saver, decdata);
     units.put("", defaultUnit);
   }
 

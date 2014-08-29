@@ -78,7 +78,7 @@ public class IdeaNotNullHelper {
         Exprent second_param = func.getLstOperands().get(1);
 
         if (second_param.type == Exprent.EXPRENT_CONST &&
-            ((ConstExprent)second_param).getExprType().type == CodeConstants.TYPE_NULL) { // TODO: reversed parameter order
+            second_param.getExprType().type == CodeConstants.TYPE_NULL) { // TODO: reversed parameter order
           if (first_param.type == Exprent.EXPRENT_VAR) {
             VarExprent var = (VarExprent)first_param;
 
@@ -227,7 +227,7 @@ public class IdeaNotNullHelper {
             Statement elsebranch = ifparent.getElsestat();
 
             if (second_param.type == Exprent.EXPRENT_CONST &&
-                ((ConstExprent)second_param).getExprType().type == CodeConstants.TYPE_NULL) { // TODO: reversed parameter order
+                second_param.getExprType().type == CodeConstants.TYPE_NULL) { // TODO: reversed parameter order
               //if(first_param.type == Exprent.EXPRENT_VAR && ((VarExprent)first_param).getIndex() == var_value.getIndex()) {
               if (first_param.equals(exprent_value)) {        // TODO: check for absence of side effects like method invocations etc.
                 if (ifbranch.type == Statement.TYPE_BASICBLOCK &&
@@ -291,7 +291,7 @@ public class IdeaNotNullHelper {
               Statement ifbranch = ifstat.getIfstat();
 
               if (second_param.type == Exprent.EXPRENT_CONST &&
-                  ((ConstExprent)second_param).getExprType().type == CodeConstants.TYPE_NULL) { // TODO: reversed parameter order
+                  second_param.getExprType().type == CodeConstants.TYPE_NULL) { // TODO: reversed parameter order
                 if (first_param.equals(exprent_value)) {        // TODO: check for absence of side effects like method invocations etc.
                   if (ifbranch.type == Statement.TYPE_BASICBLOCK &&
                       ifbranch.getExprents().size() == 1 &&

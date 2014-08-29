@@ -127,7 +127,7 @@ public class GenericMain {
 
       List<GenericType> lstBounds = new ArrayList<GenericType>();
 
-      for (; ; ) {
+      while (true) {
         if (value.charAt(0) == ':') {
           // empty superclass, skip
           value = value.substring(1);
@@ -199,7 +199,7 @@ public class GenericMain {
 
           GenericType genpar = type.getArguments().get(i);
           if (genpar != null) {
-            buffer.append(GenericMain.getGenericCastTypeName(genpar));
+            buffer.append(getGenericCastTypeName(genpar));
           }
         }
         buffer.append(">");

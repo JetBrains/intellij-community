@@ -70,7 +70,7 @@ public class DeadCodeHelper {
       cont = false;
 
       for (int i = blocks.size() - 1; i >= 0; i--) {
-        BasicBlock block = (BasicBlock)blocks.get(i);
+        BasicBlock block = blocks.get(i);
 
         if (removeEmptyBlock(graph, block, false)) {
           cont = true;
@@ -197,7 +197,7 @@ public class DeadCodeHelper {
         graph.removeBlock(block);
 
         if (deletedRanges) {
-          DeadCodeHelper.removeDeadBlocks(graph);
+          removeDeadBlocks(graph);
         }
       }
     }
@@ -219,7 +219,7 @@ public class DeadCodeHelper {
 
     while (!lstNodes.isEmpty()) {
 
-      BasicBlock node = (BasicBlock)lstNodes.remove(0);
+      BasicBlock node = lstNodes.remove(0);
       if (marked.contains(node)) {
         continue;
       }
@@ -232,14 +232,14 @@ public class DeadCodeHelper {
       }
 
       for (int i = 0; i < node.getPreds().size(); i++) {
-        BasicBlock pred = (BasicBlock)node.getPreds().get(i);
+        BasicBlock pred = node.getPreds().get(i);
         if (!marked.contains(pred) && pred != dom) {
           lstNodes.add(pred);
         }
       }
 
       for (int i = 0; i < node.getPredExceptions().size(); i++) {
-        BasicBlock pred = (BasicBlock)node.getPredExceptions().get(i);
+        BasicBlock pred = node.getPredExceptions().get(i);
         if (!marked.contains(pred) && pred != dom) {
           lstNodes.add(pred);
         }
@@ -259,7 +259,7 @@ public class DeadCodeHelper {
       }
     }
 
-    DeadCodeHelper.removeEmptyBlocks(graph);
+    removeEmptyBlocks(graph);
   }
 
   public static void connectDummyExitBlock(ControlFlowGraph graph) {
@@ -392,7 +392,7 @@ public class DeadCodeHelper {
 
   public static void mergeBasicBlocks(ControlFlowGraph graph) {
 
-    for (; ; ) {
+    while (true) {
 
       boolean merged = false;
 

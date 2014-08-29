@@ -91,7 +91,7 @@ public class GenericDominatorEngine {
 
     List<IGraphNode> lstNodes = colOrderedIDoms.getLstKeys();
 
-    for (; ; ) {
+    while (true) {
 
       boolean changed = false;
 

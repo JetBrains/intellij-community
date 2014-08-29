@@ -19,13 +19,13 @@ import java.util.HashMap;
 
 public interface IFernflowerLogger {
 
-  public static final int TRACE = 1;
-  public static final int INFO = 2;
-  public static final int WARNING = 3;
-  public static final int ERROR = 4;
-  public static final int IMMEDIATE = 5;
+  int TRACE = 1;
+  int INFO = 2;
+  int WARNING = 3;
+  int ERROR = 4;
+  int IMMEDIATE = 5;
 
-  public static final HashMap<String, Integer> mapLogLevel = new HashMap<String, Integer>() {{
+  HashMap<String, Integer> mapLogLevel = new HashMap<String, Integer>() {{
     put("TRACE", 1);
     put("INFO", 2);
     put("WARN", 3);
@@ -33,25 +33,25 @@ public interface IFernflowerLogger {
     put("IMME", 5);
   }};
 
-  public static final String[] names = new String[]{""/*DUMMY ENTRY*/, "TRACE", "INFO", "WARNING", "ERROR", ""/*IMMEDIATE*/};
+  String[] names = new String[]{""/*DUMMY ENTRY*/, "TRACE", "INFO", "WARNING", "ERROR", ""/*IMMEDIATE*/};
 
-  public void writeMessage(String message, int severity);
+  void writeMessage(String message, int severity);
 
-  public void writeMessage(String message, Throwable t);
+  void writeMessage(String message, Throwable t);
 
-  public void startClass(String classname);
+  void startClass(String classname);
 
-  public void endClass();
+  void endClass();
 
-  public void startWriteClass(String classname);
+  void startWriteClass(String classname);
 
-  public void endWriteClass();
+  void endWriteClass();
 
-  public void startMethod(String method);
+  void startMethod(String method);
 
-  public void endMethod();
+  void endMethod();
 
-  public int getSeverity();
+  int getSeverity();
 
-  public void setSeverity(int severity);
+  void setSeverity(int severity);
 }

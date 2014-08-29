@@ -50,7 +50,7 @@ public class IfHelper {
 
     if (stat.getExprents() == null) {
 
-      for (; ; ) {
+      while (true) {
 
         boolean changed = false;
 
@@ -59,7 +59,7 @@ public class IfHelper {
           res |= mergeAllIfsRec(st, setReorderedIfs);
 
           // collapse composed if's
-          if (changed = IfHelper.mergeIfs(st, setReorderedIfs)) {
+          if (changed = mergeIfs(st, setReorderedIfs)) {
             break;
           }
         }
@@ -84,7 +84,7 @@ public class IfHelper {
 
     boolean res = false;
 
-    for (; ; ) {
+    while (true) {
 
       boolean updated = false;
 
@@ -442,7 +442,6 @@ public class IfHelper {
     }
 
     boolean ifdirect = false, elsedirect = false;
-    ;
     boolean noifstat = false, noelsestat = false;
     boolean ifdirectpath = false, elsedirectpath = false;
 
@@ -471,7 +470,7 @@ public class IfHelper {
       }
     }
 
-    Statement last = parent.type == Statement.TYPE_SEQUENCE ? ((SequenceStatement)parent).getStats().getLast() : ifstat;
+    Statement last = parent.type == Statement.TYPE_SEQUENCE ? parent.getStats().getLast() : ifstat;
     noelsestat = (last == ifstat);
 
     if (!last.getAllSuccessorEdges().isEmpty() && last.getAllSuccessorEdges().get(0).getType() == StatEdge.TYPE_FINALLYEXIT) {
@@ -575,7 +574,7 @@ public class IfHelper {
         }
         else {
           Statement ifbranch = ifstat.getIfstat();
-          SequenceStatement newseq = new SequenceStatement(Arrays.asList(new Statement[]{ifstat, ifbranch}));
+          SequenceStatement newseq = new SequenceStatement(Arrays.asList(ifstat, ifbranch));
 
           ifstat.getFirst().removeSuccessor(ifedge);
           ifstat.getStats().removeWithKey(ifbranch.id);

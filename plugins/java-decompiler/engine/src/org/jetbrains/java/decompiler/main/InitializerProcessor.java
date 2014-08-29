@@ -191,7 +191,7 @@ public class InitializerProcessor {
       return;
     }
 
-    for (; ; ) {
+    while (true) {
 
       String fieldWithDescr = null;
       Exprent value = null;

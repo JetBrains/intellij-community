@@ -78,8 +78,6 @@ public class StructMethod implements CodeConstants {
 
   private boolean containsCode = false;
 
-  private boolean own;
-
   private StructClass classStruct;
 
 
@@ -104,7 +102,6 @@ public class StructMethod implements CodeConstants {
 
   public StructMethod(DataInputFullStream in, boolean lazy, boolean own, StructClass clstruct) throws IOException {
 
-    this.own = own;
     this.lazy = lazy;
     this.expanded = !lazy;
     this.classStruct = clstruct;
@@ -125,7 +122,7 @@ public class StructMethod implements CodeConstants {
       String attrname = pool.getPrimitiveConstant(attr_nameindex).getString();
 
       if (StructGeneralAttribute.ATTRIBUTE_CODE.equals(attrname)) {
-        if (!this.own) {
+        if (!own) {
           // skip code in foreign classes
           in.skip(8);
           in.skip(in.readInt());
@@ -478,7 +475,7 @@ public class StructMethod implements CodeConstants {
 
       int[] ops = new int[operands.size()];
       for (int j = 0; j < operands.size(); j++) {
-        ops[j] = ((Integer)operands.get(j)).intValue();
+        ops[j] = operands.get(j).intValue();
       }
 
       Instruction instr = ConstantsUtil.getInstructionInstance(opcode, wide, group, bytecode_version, ops);

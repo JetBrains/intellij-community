@@ -20,7 +20,7 @@ import java.util.Set;
 
 public interface IGraph {
 
-  public List<? extends IGraphNode> getReversePostOrderList();
+  List<? extends IGraphNode> getReversePostOrderList();
 
-  public Set<? extends IGraphNode> getRoots();
+  Set<? extends IGraphNode> getRoots();
 }

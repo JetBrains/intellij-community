@@ -254,7 +254,7 @@ public class DomHelper {
 
     if (stat.type == Statement.TYPE_SEQUENCE) {
 
-      for (; ; ) {
+      while (true) {
 
         boolean found = false;
 
@@ -371,7 +371,7 @@ public class DomHelper {
 
           boolean forceall = i != 0;
 
-          for (; ; ) {
+          while (true) {
 
             if (findSimpleStatements(general, mapExtPost)) {
               reducibility = 0;
@@ -494,7 +494,7 @@ public class DomHelper {
         // collect statement nodes
         HashSet<Statement> setHandlers = new HashSet<Statement>();
         setHandlers.add(head);
-        for (; ; ) {
+        while (true) {
 
           boolean hdfound = false;
           Iterator<Statement> itHandlers = setHandlers.iterator();

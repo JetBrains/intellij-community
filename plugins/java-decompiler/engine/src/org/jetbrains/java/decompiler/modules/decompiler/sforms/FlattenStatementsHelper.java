@@ -321,7 +321,7 @@ public class FlattenStatementsHelper {
 
           boolean isFinallyExit = false;
 
-          for (; ; ) {
+          while (true) {
 
             StackEntry entry = null;
             if (!stack.isEmpty()) {

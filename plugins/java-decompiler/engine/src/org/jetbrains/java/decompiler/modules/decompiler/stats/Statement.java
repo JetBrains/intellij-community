@@ -124,7 +124,6 @@ public class Statement {
     // FIXME: used in FlattenStatementsHelper.flattenStatement()! check and remove
     //lastBasicType = LASTBASICTYPE_GENERAL;
     isMonitorEnter = false;
-    ;
     containsMonitorExit = false;
 
     for (Map<Integer, List<StatEdge>> map : new Map[]{mapSuccEdges, mapPredEdges}) {
@@ -234,7 +233,7 @@ public class Statement {
     // monitorenter and monitorexit
     stat.buildMonitorFlags();
 
-    if (stat.type == Statement.TYPE_SWITCH) {
+    if (stat.type == TYPE_SWITCH) {
       // special case switch, sorting leaf nodes
       ((SwitchStatement)stat).sortEdgesAndNodes();
     }
@@ -390,7 +389,7 @@ public class Statement {
       continueSet.add(edge.getDestination().getBasichead());
     }
 
-    if (type == Statement.TYPE_DO) {
+    if (type == TYPE_DO) {
       continueSet.remove(first.getBasichead());
     }
 
@@ -513,11 +512,11 @@ public class Statement {
   }
 
   public void initExprents() {
-    ; // do nothing
+    // do nothing
   }
 
   public void replaceExprent(Exprent oldexpr, Exprent newexpr) {
-    ; // do nothing
+    // do nothing
   }
 
   public Statement getSimpleCopy() {
@@ -804,7 +803,7 @@ public class Statement {
   }
 
   public BasicBlockStatement getBasichead() {
-    if (type == Statement.TYPE_BASICBLOCK) {
+    if (type == TYPE_BASICBLOCK) {
       return (BasicBlockStatement)this;
     }
     else {
@@ -823,13 +822,12 @@ public class Statement {
   }
 
   public boolean hasBasicSuccEdge() {
-    boolean res = type == Statement.TYPE_BASICBLOCK || (type == Statement.TYPE_IF &&
-                                                        ((IfStatement)this).iftype == IfStatement.IFTYPE_IF) ||
-                  (type == Statement.TYPE_DO && ((DoStatement)this).getLooptype() != DoStatement.LOOP_DO);
 
     // FIXME: default switch
 
-    return res;
+    return type == TYPE_BASICBLOCK || (type == TYPE_IF &&
+                                                        ((IfStatement)this).iftype == IfStatement.IFTYPE_IF) ||
+                  (type == TYPE_DO && ((DoStatement)this).getLooptype() != DoStatement.LOOP_DO);
   }
 
 

@@ -706,7 +706,7 @@ public class ExprProcessor implements CodeConstants {
       return "void";
     }
     else if (tp == CodeConstants.TYPE_OBJECT) {
-      String ret = ExprProcessor.buildJavaClassName(type.value);
+      String ret = buildJavaClassName(type.value);
       if (getShort) {
         ret = DecompilerContext.getImpcollector().getShortName(ret);
       }
@@ -761,7 +761,7 @@ public class ExprProcessor implements CodeConstants {
     List<StatEdge> lstSuccs = stat.getSuccessorEdges(Statement.STATEDGE_DIRECT_ALL);
     if (lstSuccs.size() == 1) {
       StatEdge edge = lstSuccs.get(0);
-      if (edge.getType() != StatEdge.TYPE_REGULAR && edge.explicit == true && edge.getDestination().type != Statement.TYPE_DUMMYEXIT) {
+      if (edge.getType() != StatEdge.TYPE_REGULAR && edge.explicit && edge.getDestination().type != Statement.TYPE_DUMMYEXIT) {
         buf.append(InterpreterUtil.getIndentString(indent));
 
         switch (edge.getType()) {
@@ -820,7 +820,7 @@ public class ExprProcessor implements CodeConstants {
         if (expr.type == Exprent.EXPRENT_MONITOR && ((MonitorExprent)expr).getMontype() == MonitorExprent.MONITOR_ENTER) {
           buf.append("{}"); // empty synchronized block
         }
-        if (ExprProcessor.endsWithSemikolon(expr)) {
+        if (endsWithSemikolon(expr)) {
           buf.append(";");
         }
         buf.append(new_line_separator);
@@ -885,7 +885,7 @@ public class ExprProcessor implements CodeConstants {
         res = "(" + res + ")";
       }
 
-      res = "(" + ExprProcessor.getCastTypeName(leftType) + ")" + res;
+      res = "(" + getCastTypeName(leftType) + ")" + res;
       ret = true;
     }
 

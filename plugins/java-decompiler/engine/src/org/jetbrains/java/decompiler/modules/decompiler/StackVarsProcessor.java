@@ -43,7 +43,7 @@ public class StackVarsProcessor {
 
     SSAUConstructorSparseEx ssau = null;
 
-    for (; ; ) {
+    while (true) {
 
       boolean found = false;
 
@@ -287,7 +287,7 @@ public class StackVarsProcessor {
     int changed = 0;
 
     for (Exprent expr : exprent.getAllExprents()) {
-      for (; ; ) {
+      while (true) {
         Object[] arr = iterateChildExprent(expr, exprent, next, mapVarValues, ssau);
         Exprent retexpr = (Exprent)arr[0];
         changed |= (Boolean)arr[1] ? 1 : 0;
@@ -464,7 +464,7 @@ public class StackVarsProcessor {
     boolean changed = false;
 
     for (Exprent expr : exprent.getAllExprents()) {
-      for (; ; ) {
+      while (true) {
         Object[] arr = iterateChildExprent(expr, parent, next, mapVarValues, ssau);
         Exprent retexpr = (Exprent)arr[0];
         changed |= (Boolean)arr[1];

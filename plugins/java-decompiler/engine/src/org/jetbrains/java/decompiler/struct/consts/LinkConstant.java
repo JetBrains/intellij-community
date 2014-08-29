@@ -40,7 +40,6 @@ public class LinkConstant extends PooledConstant {
   public int paramCount = 0;
 
   public boolean isVoid = false;
-  ;
 
   public boolean returnCategory2 = false;
 

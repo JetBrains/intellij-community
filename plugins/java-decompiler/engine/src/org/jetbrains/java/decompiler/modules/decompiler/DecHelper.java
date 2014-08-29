@@ -76,7 +76,7 @@ public class DecHelper {
       return false;
     }
 
-    for (; ; ) {
+    while (true) {
 
       lst.clear();
 

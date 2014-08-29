@@ -17,7 +17,7 @@ package org.jetbrains.java.decompiler.struct;
 
 public interface IDecompiledData {
 
-  public String getClassEntryName(StructClass cl, String entryname);
+  String getClassEntryName(StructClass cl, String entryname);
 
-  public String getClassContent(StructClass cl);
+  String getClassContent(StructClass cl);
 }

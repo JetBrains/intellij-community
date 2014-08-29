@@ -36,9 +36,7 @@ public class ExprentStack extends ListStack<Exprent> {
 
   public Exprent pop() {
 
-    Exprent o = this.remove(--pointer);
-
-    return o;
+    return this.remove(--pointer);
   }
 
   public ExprentStack clone() {

@@ -323,7 +323,7 @@ public class MergeHelper {
 
     // search for an initializing exprent
     Statement current = stat;
-    for (; ; ) {
+    while (true) {
       Statement parent = current.getParent();
       if (parent == null) {
         break;

@@ -225,7 +225,7 @@ public class ClassReference14Processor {
 
     boolean res = false;
 
-    for (; ; ) {
+    while (true) {
 
       boolean found = false;
 

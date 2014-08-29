@@ -292,10 +292,7 @@ public class FunctionExprent extends Exprent {
     else if (functype == FUNCTION_STRCONCAT) {
       exprType = VarType.VARTYPE_STRING;
     }
-    else if (functype >= FUNCTION_EQ) {
-      exprType = VarType.VARTYPE_BOOLEAN;
-    }
-    else if (functype == FUNCTION_INSTANCEOF) {
+    else if (functype >= FUNCTION_EQ || functype == FUNCTION_INSTANCEOF) {
       exprType = VarType.VARTYPE_BOOLEAN;
     }
     else if (functype >= FUNCTION_ARRAYLENGTH) {

@@ -56,7 +56,7 @@ public class IdentifierConverter {
           helper = (IIdentifierRenamer)IdentifierConverter.class.getClassLoader().loadClass(user_class).newInstance();
         }
         catch (Exception ex) {
-          ; // ignore errors
+          // ignore errors
         }
       }
 

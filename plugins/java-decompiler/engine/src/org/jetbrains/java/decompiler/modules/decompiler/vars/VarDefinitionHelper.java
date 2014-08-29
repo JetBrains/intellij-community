@@ -148,7 +148,7 @@ public class VarDefinitionHelper {
             continue;
           }
           else {
-            List<Exprent> lstSpecial = Arrays.asList(new Exprent[]{dstat.getConditionExprent(), dstat.getIncExprent()});
+            List<Exprent> lstSpecial = Arrays.asList(dstat.getConditionExprent(), dstat.getIncExprent());
             for (VarExprent var : getAllVars(lstSpecial)) {
               if (var.getIndex() == index.intValue()) {
                 stat = stat.getParent();

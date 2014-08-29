@@ -62,9 +62,7 @@ public class MethodProcessorThread implements Runnable {
         this.notify();
       }
     }
-    catch (ThreadDeath ex) {
-      ;
-    }
+    catch (ThreadDeath ignored) { }
     catch (Throwable ex) {
       error = ex;
     }
@@ -169,7 +167,7 @@ public class MethodProcessorThread implements Runnable {
 
     //System.out.println("~~~~~~~~~~~~~~~~~~~~~~ \r\n"+root.toJava());
 
-    for (; ; ) {
+    while (true) {
       StackVarsProcessor stackproc = new StackVarsProcessor();
       stackproc.simplifyStackVars(root, mt, cl);
 
@@ -184,11 +182,11 @@ public class MethodProcessorThread implements Runnable {
       }
     }
 
-    for (; ; ) {
+    while (true) {
 
       LabelHelper.cleanUpEdges(root);
 
-      for (; ; ) {
+      while (true) {
 
         MergeHelper.enhanceLoops(root);
 

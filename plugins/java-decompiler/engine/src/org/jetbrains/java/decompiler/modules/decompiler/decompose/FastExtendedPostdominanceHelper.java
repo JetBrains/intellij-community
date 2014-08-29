@@ -286,7 +286,7 @@ public class FastExtendedPostdominanceHelper {
 
   private void iterateReachability(IReachabilityAction action, int edgetype) {
 
-    for (; ; ) {
+    while (true) {
 
       boolean iterate = false;
 
@@ -350,6 +350,6 @@ public class FastExtendedPostdominanceHelper {
 
 
   private interface IReachabilityAction {
-    public boolean action(Statement node, HashMap<Integer, FastFixedSet<Integer>> mapSets);
+    boolean action(Statement node, HashMap<Integer, FastFixedSet<Integer>> mapSets);
   }
 }

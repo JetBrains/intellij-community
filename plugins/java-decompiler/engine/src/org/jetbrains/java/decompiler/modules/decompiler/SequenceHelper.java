@@ -142,7 +142,7 @@ public class SequenceHelper {
 
     // replace flat statements with synthetic basic blocks
     outer:
-    for (; ; ) {
+    while (true) {
       for (Statement st : stat.getStats()) {
         if ((st.getStats().isEmpty() || st.getExprents() != null) && st.type != Statement.TYPE_BASICBLOCK) {
           destroyAndFlattenStatement(st);
@@ -185,7 +185,7 @@ public class SequenceHelper {
 
     mergeFlatStatements(sequence);
 
-    for (; ; ) {
+    while (true) {
 
       boolean found = false;
 
@@ -242,7 +242,7 @@ public class SequenceHelper {
 
   private static void mergeFlatStatements(SequenceStatement sequence) {
 
-    for (; ; ) {
+    while (true) {
 
       Statement next = null;
       Statement current = null;

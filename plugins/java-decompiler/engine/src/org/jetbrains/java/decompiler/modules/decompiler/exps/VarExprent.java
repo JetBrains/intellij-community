@@ -43,7 +43,6 @@ public class VarExprent extends Exprent {
   private VarType vartype;
 
   private boolean definition = false;
-  ;
 
   private VarProcessor processor;
 
@@ -52,7 +51,6 @@ public class VarExprent extends Exprent {
   private boolean classdef = false;
 
   private boolean stack = false;
-  ;
 
   {
     this.type = EXPRENT_VAR;

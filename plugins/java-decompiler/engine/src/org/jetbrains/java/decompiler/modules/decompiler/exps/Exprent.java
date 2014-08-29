@@ -108,7 +108,7 @@ public class Exprent {
     lstAllExprents.add(this);
 
     for (Exprent expr : lstAllExprents) {
-      if (expr.type == Exprent.EXPRENT_VAR) {
+      if (expr.type == EXPRENT_VAR) {
         set.add(new VarVersionPaar((VarExprent)expr));
       }
     }

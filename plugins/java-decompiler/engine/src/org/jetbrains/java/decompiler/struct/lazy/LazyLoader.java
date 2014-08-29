@@ -109,7 +109,7 @@ public class LazyLoader {
         int name_index = in.readUnsignedShort();
         int descriptor_index = in.readUnsignedShort();
 
-        String elem_arr[] = pool.getClassElement(ConstantPool.METHOD, this_class, name_index, descriptor_index);
+        String[] elem_arr = pool.getClassElement(ConstantPool.METHOD, this_class, name_index, descriptor_index);
         String name = elem_arr[0];
 
         if (mt.getName().equals(name)) {

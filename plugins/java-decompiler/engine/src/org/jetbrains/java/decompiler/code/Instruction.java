@@ -58,7 +58,7 @@ public class Instruction implements CodeConstants {
   }
 
   public Instruction clone() {
-    return ConstantsUtil.getInstructionInstance(opcode, wide, group, bytecode_version, operands == null ? null : (int[])operands.clone());
+    return ConstantsUtil.getInstructionInstance(opcode, wide, group, bytecode_version, operands == null ? null : operands.clone());
   }
 
   public String toString() {

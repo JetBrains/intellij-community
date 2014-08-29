@@ -155,7 +155,7 @@ public class InlineSingleBlockHelper {
     Statement from = edge.getSource();
     Statement to = edge.getDestination();
 
-    for (; ; ) {
+    while (true) {
 
       Statement parent = from.getParent();
       if (parent.containsStatementStrict(to)) {

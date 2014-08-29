@@ -81,7 +81,7 @@ public class FinallyProcessor {
         BasicBlock handler = fin.getHandler().getBasichead().getBlock();
 
         if (catchallBlockIDs.containsKey(handler.id)) {
-          ; // do nothing
+          // do nothing
         }
         else if (finallyBlockIDs.containsKey(handler.id)) {
 
@@ -465,8 +465,6 @@ public class FinallyProcessor {
         range.getProtectedRange().remove(newheadinit);
       }
     }
-
-    return;
   }
 
 
@@ -677,7 +675,7 @@ public class FinallyProcessor {
 
       // exception successors
       if (isLastBlock && blockSample.getSeq().isEmpty()) {
-        ; // do nothing, blockSample will be removed anyway
+        // do nothing, blockSample will be removed anyway
       }
       else {
         if (blockCatch.getSuccExceptions().size() == blockSample.getSuccExceptions().size()) {

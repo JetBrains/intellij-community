@@ -27,27 +27,26 @@ import java.util.List;
 public class InterpreterUtil {
 
   public static void copyFile(File in, File out) throws IOException {
-    FileChannel inChannel = new FileInputStream(in).getChannel();
-    FileChannel outChannel = new FileOutputStream(out).getChannel();
+    FileInputStream inStream = new FileInputStream(in);
     try {
-      // magic number for Windows, 64Mb - 32Kb)
-      int maxCount = (64 * 1024 * 1024) - (32 * 1024);
-      long size = inChannel.size();
-      long position = 0;
-      while (position < size) {
-        position += inChannel.transferTo(position, maxCount, outChannel);
+      FileOutputStream outStream = new FileOutputStream(out);
+      try {
+        FileChannel inChannel = inStream.getChannel();
+        FileChannel outChannel = outStream.getChannel();
+        // magic number for Windows, 64Mb - 32Kb)
+        int maxCount = (64 * 1024 * 1024) - (32 * 1024);
+        long size = inChannel.size();
+        long position = 0;
+        while (position < size) {
+          position += inChannel.transferTo(position, maxCount, outChannel);
+        }
       }
-    }
-    catch (IOException e) {
-      throw e;
+      finally {
+        outStream.close();
+      }
     }
     finally {
-      if (inChannel != null) {
-        inChannel.close();
-      }
-      if (outChannel != null) {
-        outChannel.close();
-      }
+      inStream.close();
     }
   }
 
@@ -74,12 +73,10 @@ public class InterpreterUtil {
   public static boolean equalSets(Collection<?> c1, Collection<?> c2) {
 
     if (c1 == null) {
-      return c2 == null ? true : false;
+      return c2 == null;
     }
-    else {
-      if (c2 == null) {
-        return false;
-      }
+    else if (c2 == null) {
+      return false;
     }
 
     if (c1.size() != c2.size()) {

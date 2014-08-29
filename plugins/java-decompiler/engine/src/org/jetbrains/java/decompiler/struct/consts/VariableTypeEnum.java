@@ -17,31 +17,31 @@ package org.jetbrains.java.decompiler.struct.consts;
 
 public interface VariableTypeEnum {
 
-  public final static int BOOLEAN = 1;
-  public final static int BYTE = 2;
-  public final static int CHAR = 3;
-  public final static int SHORT = 4;
-  public final static int INT = 5;
-  public final static int FLOAT = 6;
-  public final static int LONG = 7;
-  public final static int DOUBLE = 8;
-  public final static int RETURN_ADDRESS = 9;
-  public final static int REFERENCE = 10;
-  public final static int INSTANCE_UNINITIALIZED = 11;
-  public final static int VALUE_UNKNOWN = 12;
-  public final static int VOID = 13;
+  int BOOLEAN = 1;
+  int BYTE = 2;
+  int CHAR = 3;
+  int SHORT = 4;
+  int INT = 5;
+  int FLOAT = 6;
+  int LONG = 7;
+  int DOUBLE = 8;
+  int RETURN_ADDRESS = 9;
+  int REFERENCE = 10;
+  int INSTANCE_UNINITIALIZED = 11;
+  int VALUE_UNKNOWN = 12;
+  int VOID = 13;
 
-  public final static Integer BOOLEAN_OBJ = new Integer(BOOLEAN);
-  public final static Integer BYTE_OBJ = new Integer(BYTE);
-  public final static Integer CHAR_OBJ = new Integer(CHAR);
-  public final static Integer SHORT_OBJ = new Integer(SHORT);
-  public final static Integer INT_OBJ = new Integer(INT);
-  public final static Integer FLOAT_OBJ = new Integer(FLOAT);
-  public final static Integer LONG_OBJ = new Integer(LONG);
-  public final static Integer DOUBLE_OBJ = new Integer(DOUBLE);
-  public final static Integer RETURN_ADDRESS_OBJ = new Integer(RETURN_ADDRESS);
-  public final static Integer REFERENCE_OBJ = new Integer(REFERENCE);
-  public final static Integer INSTANCE_UNINITIALIZED_OBJ = new Integer(INSTANCE_UNINITIALIZED);
-  public final static Integer VALUE_UNKNOWN_OBJ = new Integer(VALUE_UNKNOWN);
-  public final static Integer VOID_OBJ = new Integer(VOID);
+  Integer BOOLEAN_OBJ = new Integer(BOOLEAN);
+  Integer BYTE_OBJ = new Integer(BYTE);
+  Integer CHAR_OBJ = new Integer(CHAR);
+  Integer SHORT_OBJ = new Integer(SHORT);
+  Integer INT_OBJ = new Integer(INT);
+  Integer FLOAT_OBJ = new Integer(FLOAT);
+  Integer LONG_OBJ = new Integer(LONG);
+  Integer DOUBLE_OBJ = new Integer(DOUBLE);
+  Integer RETURN_ADDRESS_OBJ = new Integer(RETURN_ADDRESS);
+  Integer REFERENCE_OBJ = new Integer(REFERENCE);
+  Integer INSTANCE_UNINITIALIZED_OBJ = new Integer(INSTANCE_UNINITIALIZED);
+  Integer VALUE_UNKNOWN_OBJ = new Integer(VALUE_UNKNOWN);
+  Integer VOID_OBJ = new Integer(VOID);
 }

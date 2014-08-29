@@ -91,7 +91,7 @@ public class ExitHelper {
 
     if (stat.getExprents() == null) {
 
-      for (; ; ) {
+      while (true) {
 
         int changed = 0;
 
@@ -160,7 +160,7 @@ public class ExitHelper {
           bstat.addSuccessor(newexitedge);
           oldexitedge.closure.addLabeledEdge(newexitedge);
 
-          SequenceStatement block = new SequenceStatement(Arrays.asList(new Statement[]{stat, bstat}));
+          SequenceStatement block = new SequenceStatement(Arrays.asList(stat, bstat));
           block.setAllParent();
 
           parent.replaceStatement(stat, block);
@@ -324,7 +324,7 @@ public class ExitHelper {
     bstat.setExprents(new ArrayList<Exprent>(Arrays.asList(new Exprent[]{retexpr})));
 
     // build sequence to replace the former top statement
-    SequenceStatement seq = new SequenceStatement(Arrays.asList(new Statement[]{top, bstat}));
+    SequenceStatement seq = new SequenceStatement(Arrays.asList(top, bstat));
     top.setParent(seq);
     bstat.setParent(seq);
     seq.setParent(root);

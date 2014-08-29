@@ -65,7 +65,7 @@ public class LabelHelper {
 
             List<Statement> lst = new ArrayList<Statement>();
             if (parent.type == Statement.TYPE_SEQUENCE) {
-              lst.addAll(((SequenceStatement)parent).getStats());
+              lst.addAll(parent.getStats());
             }
             else if (parent.type == Statement.TYPE_SWITCH) {
               lst.addAll(((SwitchStatement)parent).getCaseStatements());
@@ -489,7 +489,7 @@ public class LabelHelper {
   private static Statement getMinContinueClosure(StatEdge edge) {
 
     Statement closure = edge.closure;
-    for (; ; ) {
+    while (true) {
 
       boolean found = false;
 

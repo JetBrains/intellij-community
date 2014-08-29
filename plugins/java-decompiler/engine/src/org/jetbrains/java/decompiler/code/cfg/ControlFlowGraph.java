@@ -94,11 +94,11 @@ public class ControlFlowGraph implements CodeConstants {
 
       List<BasicBlock> suc = block.getSuccs();
       for (int j = 0; j < suc.size(); j++) {
-        buf.append(">>>>>>>>(regular) Block " + ((BasicBlock)suc.get(j)).id + new_line_separator);
+        buf.append(">>>>>>>>(regular) Block " + suc.get(j).id + new_line_separator);
       }
       suc = block.getSuccExceptions();
       for (int j = 0; j < suc.size(); j++) {
-        BasicBlock handler = (BasicBlock)suc.get(j);
+        BasicBlock handler = suc.get(j);
         ExceptionRangeCFG range = getExceptionRange(handler, block);
 
         if (range == null) {
@@ -134,19 +134,19 @@ public class ControlFlowGraph implements CodeConstants {
   public void removeBlock(BasicBlock block) {
 
     while (block.getSuccs().size() > 0) {
-      block.removeSuccessor((BasicBlock)block.getSuccs().get(0));
+      block.removeSuccessor(block.getSuccs().get(0));
     }
 
     while (block.getSuccExceptions().size() > 0) {
-      block.removeSuccessorException((BasicBlock)block.getSuccExceptions().get(0));
+      block.removeSuccessorException(block.getSuccExceptions().get(0));
     }
 
     while (block.getPreds().size() > 0) {
-      ((BasicBlock)block.getPreds().get(0)).removeSuccessor(block);
+      block.getPreds().get(0).removeSuccessor(block);
     }
 
     while (block.getPredExceptions().size() > 0) {
-      ((BasicBlock)block.getPredExceptions().get(0)).removeSuccessorException(block);
+      block.getPredExceptions().get(0).removeSuccessorException(block);
     }
 
     last.removePredecessor(block);
@@ -154,7 +154,7 @@ public class ControlFlowGraph implements CodeConstants {
     blocks.removeWithKey(block.id);
 
     for (int i = exceptions.size() - 1; i >= 0; i--) {
-      ExceptionRangeCFG range = (ExceptionRangeCFG)exceptions.get(i);
+      ExceptionRangeCFG range = exceptions.get(i);
       if (range.getHandler() == block) {
         exceptions.remove(i);
       }
@@ -394,7 +394,7 @@ public class ControlFlowGraph implements CodeConstants {
 
         ExceptionRangeCFG range = new ExceptionRangeCFG(protectedRange, handle, handler.exceptionClass == null
                                                                                 ? null
-                                                                                : Arrays.asList(new String[]{handler.exceptionClass}));
+                                                                                : Arrays.asList(handler.exceptionClass));
         mapRanges.put(key, range);
 
         exceptions.add(range);
@@ -495,11 +495,11 @@ public class ControlFlowGraph implements CodeConstants {
 
     // find the first intersection
     for (int i = 0; i < lstJsr.size(); i++) {
-      Object[] arr = (Object[])lstJsr.get(i);
+      Object[] arr = lstJsr.get(i);
       HashSet<BasicBlock> set = (HashSet<BasicBlock>)arr[1];
 
       for (int j = i + 1; j < lstJsr.size(); j++) {
-        Object[] arr1 = (Object[])lstJsr.get(j);
+        Object[] arr1 = lstJsr.get(j);
         HashSet<BasicBlock> set1 = (HashSet<BasicBlock>)arr1[1];
 
         if (!set.contains(arr1[0]) && !set1.contains(arr[0])) { // rang 0 doesn't contain entry 1 and vice versa
@@ -613,11 +613,11 @@ public class ControlFlowGraph implements CodeConstants {
 
         for (int i = lst.size() - 1; i >= 0; i--) {
 
-          BasicBlock child = (BasicBlock)lst.get(i);
+          BasicBlock child = lst.get(i);
           Integer childid = child.id;
 
           if (mapNewNodes.containsKey(childid)) {
-            node.replaceSuccessor(child, (BasicBlock)mapNewNodes.get(childid));
+            node.replaceSuccessor(child, mapNewNodes.get(childid));
           }
           else if (common_blocks.contains(child)) {
 
@@ -632,11 +632,11 @@ public class ControlFlowGraph implements CodeConstants {
             }
             else {
               for (int k = 0; k < child.getSuccs().size(); k++) {
-                copy.addSuccessor((BasicBlock)child.getSuccs().get(k));
+                copy.addSuccessor(child.getSuccs().get(k));
               }
             }
             for (int k = 0; k < child.getSuccExceptions().size(); k++) {
-              copy.addSuccessorException((BasicBlock)child.getSuccExceptions().get(k));
+              copy.addSuccessorException(child.getSuccExceptions().get(k));
             }
 
             lstNodes.add(copy);
@@ -666,7 +666,7 @@ public class ControlFlowGraph implements CodeConstants {
 
     for (int i = exceptions.size() - 1; i >= 0; i--) {
 
-      ExceptionRangeCFG range = (ExceptionRangeCFG)exceptions.get(i);
+      ExceptionRangeCFG range = exceptions.get(i);
       List<BasicBlock> lstRange = range.getProtectedRange();
 
       HashSet<BasicBlock> setBoth = new HashSet<BasicBlock>(common_blocks);
@@ -678,7 +678,7 @@ public class ControlFlowGraph implements CodeConstants {
         if (setBoth.size() == lstRange.size()) {
           lstNewRange = new ArrayList<BasicBlock>();
           ExceptionRangeCFG newRange = new ExceptionRangeCFG(lstNewRange,
-                                                             (BasicBlock)mapNewNodes.get(range.getHandler().id), range.getExceptionTypes());
+                                                             mapNewNodes.get(range.getHandler().id), range.getExceptionTypes());
           exceptions.add(newRange);
         }
         else {
@@ -729,14 +729,14 @@ public class ControlFlowGraph implements CodeConstants {
     block.mark = 1;
 
     for (int i = 0; i < block.getSuccs().size(); i++) {
-      BasicBlock suc = (BasicBlock)block.getSuccs().get(i);
+      BasicBlock suc = block.getSuccs().get(i);
       if (suc.mark != 1) {
         removeJsrInstructions(pool, suc, data.copy());
       }
     }
 
     for (int i = 0; i < block.getSuccExceptions().size(); i++) {
-      BasicBlock suc = (BasicBlock)block.getSuccExceptions().get(i);
+      BasicBlock suc = block.getSuccExceptions().get(i);
       if (suc.mark != 1) {
 
         DataPoint point = new DataPoint();

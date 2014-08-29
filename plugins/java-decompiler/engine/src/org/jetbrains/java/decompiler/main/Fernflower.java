@@ -39,12 +39,9 @@ public class Fernflower implements IDecompiledData {
 
   private ClassesProcessor clprocessor;
 
-  public Fernflower(IBytecodeProvider provider, IDecompilatSaver saver,
-                    HashMap<String, Object> propertiesCustom) {
+  public Fernflower(IBytecodeProvider provider, IDecompilatSaver saver, HashMap<String, Object> propertiesCustom) {
 
-    StructContext context = new StructContext(saver, this, new LazyLoader(provider));
-
-    structcontext = context;
+    structcontext = new StructContext(saver, this, new LazyLoader(provider));
 
     DecompilerContext.initContext(propertiesCustom);
     DecompilerContext.setCountercontainer(new CounterContainer());

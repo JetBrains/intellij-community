@@ -32,7 +32,7 @@ public class LowBreakHelper {
 
   private static void lowBreakLabelsRec(Statement stat) {
 
-    for (; ; ) {
+    while (true) {
 
       boolean found = false;
 
@@ -79,7 +79,7 @@ public class LowBreakHelper {
 
   public static Statement getMinClosure(Statement closure, Statement source) {
 
-    for (; ; ) {
+    while (true) {
 
       Statement newclosure = null;
 
@@ -152,7 +152,7 @@ public class LowBreakHelper {
     }
 
 
-    for (; ; ) {
+    while (true) {
 
       boolean found = false;
 

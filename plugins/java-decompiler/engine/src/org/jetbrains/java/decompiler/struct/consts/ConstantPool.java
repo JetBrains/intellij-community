@@ -129,7 +129,7 @@ public class ConstantPool {
 
     out.writeShort(pool.size());
     for (int i = 1; i < pool.size(); i++) {
-      PooledConstant cnst = (PooledConstant)pool.get(i);
+      PooledConstant cnst = pool.get(i);
       if (cnst != null) {
         cnst.writeToStream(out);
       }

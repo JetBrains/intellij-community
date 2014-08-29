@@ -44,7 +44,7 @@ public class LoopExtractHelper {
 
     boolean res = false;
 
-    for (; ; ) {
+    while (true) {
 
       boolean updated = false;
 
@@ -183,7 +183,7 @@ public class LoopExtractHelper {
 
     loop.addLabeledEdge(ifedge);
 
-    SequenceStatement block = new SequenceStatement(Arrays.asList(new Statement[]{loop, target}));
+    SequenceStatement block = new SequenceStatement(Arrays.asList(loop, target));
     loop.getParent().replaceStatement(loop, block);
     block.setAllParent();
 

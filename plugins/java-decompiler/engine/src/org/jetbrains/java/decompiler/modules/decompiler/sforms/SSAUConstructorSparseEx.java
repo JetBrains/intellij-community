@@ -791,7 +791,7 @@ public class SSAUConstructorSparseEx {
 
   private Integer getFirstProtectedRange(Statement stat) {
 
-    for (; ; ) {
+    while (true) {
       Statement parent = stat.getParent();
 
       if (parent == null) {

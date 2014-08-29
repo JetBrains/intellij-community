@@ -45,7 +45,7 @@ public class SimplifyExprentsHelper {
 
     if (stat.getExprents() == null) {
 
-      for (; ; ) {
+      while (true) {
 
         boolean changed = false;
 
@@ -402,7 +402,7 @@ public class SimplifyExprentsHelper {
       AssignmentExprent asf = (AssignmentExprent)first;
       AssignmentExprent ass = (AssignmentExprent)second;
 
-      for (; ; ) {
+      while (true) {
         if (asf.getRight().equals(ass.getRight())) {
           if ((asf.getLeft().type == Exprent.EXPRENT_VAR && ((VarExprent)asf.getLeft()).isStack()) &&
               (ass.getLeft().type != Exprent.EXPRENT_VAR || !((VarExprent)ass.getLeft()).isStack())) {
@@ -789,7 +789,7 @@ public class SimplifyExprentsHelper {
 
                   data.add(new AssignmentExprent(ifvar, new FunctionExprent(FunctionExprent.FUNCTION_IIF,
                                                                             Arrays.asList(new Exprent[]{
-                                                                              ((IfExprent)stif.getHeadexprent()).getCondition(),
+                                                                              stif.getHeadexprent().getCondition(),
                                                                               ifas.getRight(),
                                                                               elseas.getRight()}))));
                   stif.setExprents(data);
@@ -830,7 +830,7 @@ public class SimplifyExprentsHelper {
 
               data.add(new ExitExprent(ifex.getExittype(), new FunctionExprent(FunctionExprent.FUNCTION_IIF,
                                                                                Arrays.asList(new Exprent[]{
-                                                                                 ((IfExprent)stif.getHeadexprent()).getCondition(),
+                                                                                 stif.getHeadexprent().getCondition(),
                                                                                  ifex.getValue(),
                                                                                  elseex.getValue()})), ifex.getRettype()));
               stif.setExprents(data);

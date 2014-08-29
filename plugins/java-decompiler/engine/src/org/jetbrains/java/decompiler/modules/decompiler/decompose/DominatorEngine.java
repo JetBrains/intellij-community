@@ -78,7 +78,7 @@ public class DominatorEngine {
     // exclude first statement
     List<Integer> lstIds = colOrderedIDoms.getLstKeys().subList(1, colOrderedIDoms.getLstKeys().size());
 
-    for (; ; ) {
+    while (true) {
 
       boolean changed = false;
 

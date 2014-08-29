@@ -432,7 +432,7 @@ public class InstructionImpact {
         stack.push(new VarType(var1.type, var1.arraydim - 1, var1.value));
         break;
       case CodeConstants.opc_astore:
-        data.setVariable(instr.getOperand(0), (VarType)stack.pop());
+        data.setVariable(instr.getOperand(0), stack.pop());
         break;
       case CodeConstants.opc_dup:
       case CodeConstants.opc_dup_x1:

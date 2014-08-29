@@ -74,23 +74,23 @@ public abstract class InstructionSequence {
   }
 
   public Instruction getCurrentInstr() {
-    return (Instruction)collinstr.get(pointer);
+    return collinstr.get(pointer);
   }
 
   public Instruction getInstr(int index) {
-    return (Instruction)collinstr.get(index);
+  return collinstr.get(index);
   }
 
   public Instruction getLastInstr() {
-    return (Instruction)collinstr.getLast();
+  return collinstr.getLast();
   }
 
   public int getCurrentOffset() {
-    return ((Integer)collinstr.getKey(pointer)).intValue();
+    return collinstr.getKey(pointer).intValue();
   }
 
-  public int getOffset(int index) {
-    return ((Integer)collinstr.getKey(index)).intValue();
+public int getOffset(int index) {
+    return collinstr.getKey(index).intValue();
   }
 
   public int getPointerByAbsOffset(int offset) {
@@ -104,7 +104,7 @@ public abstract class InstructionSequence {
   }
 
   public int getPointerByRelOffset(int offset) {
-    Integer absoffset = new Integer(((Integer)collinstr.getKey(pointer)).intValue() + offset);
+    Integer absoffset = new Integer(collinstr.getKey(pointer).intValue() + offset);
     if (collinstr.containsKey(absoffset)) {
       return collinstr.getIndexByKey(absoffset);
     }
@@ -114,7 +114,7 @@ public abstract class InstructionSequence {
   }
 
   public void setPointerByAbsOffset(int offset) {
-    Integer absoffset = new Integer(((Integer)collinstr.getKey(pointer)).intValue() + offset);
+    Integer absoffset = new Integer(collinstr.getKey(pointer).intValue() + offset);
     if (collinstr.containsKey(absoffset)) {
       pointer = collinstr.getIndexByKey(absoffset);
     }
@@ -143,10 +143,10 @@ public abstract class InstructionSequence {
     StringBuffer buf = new StringBuffer();
 
     for (int i = 0; i < collinstr.size(); i++) {
-      buf.append(InterpreterUtil.getIndentString(indent));
-      buf.append(((Integer)collinstr.getKey(i)).intValue());
+    buf.append(InterpreterUtil.getIndentString(indent));
+      buf.append(collinstr.getKey(i).intValue());
       buf.append(": ");
-      buf.append(((Instruction)collinstr.get(i)).toString());
+      buf.append(collinstr.get(i).toString());
       buf.append(new_line_separator);
     }
 
@@ -156,7 +156,7 @@ public abstract class InstructionSequence {
   public void writeCodeToStream(DataOutputStream out) throws IOException {
 
     for (int i = 0; i < collinstr.size(); i++) {
-      ((Instruction)collinstr.get(i)).writeToStream(out, ((Integer)collinstr.getKey(i)).intValue());
+      collinstr.get(i).writeToStream(out, collinstr.getKey(i).intValue());
     }
   }
 
@@ -166,7 +166,7 @@ public abstract class InstructionSequence {
 
     out.writeShort(handlers.size());
     for (int i = 0; i < handlers.size(); i++) {
-      ((ExceptionHandler)handlers.get(i)).writeToStream(out);
+      handlers.get(i).writeToStream(out);
     }
   }
 

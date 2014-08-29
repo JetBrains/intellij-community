@@ -63,7 +63,7 @@ public class IrreducibleCFGDeobfuscator {
     }
 
     // transforming and reducing the graph
-    for (; ; ) {
+    while (true) {
       int ttype = 0;
       Node node = null;
 

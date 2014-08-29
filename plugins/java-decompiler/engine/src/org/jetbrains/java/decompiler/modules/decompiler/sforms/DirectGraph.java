@@ -131,6 +131,6 @@ public class DirectGraph {
     // 0 - success, do nothing
     // 1 - cancel iteration
     // 2 - success, delete exprent
-    public int processExprent(Exprent exprent);
+    int processExprent(Exprent exprent);
   }
 }

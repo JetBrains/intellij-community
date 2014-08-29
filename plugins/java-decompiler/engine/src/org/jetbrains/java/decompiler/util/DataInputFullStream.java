@@ -25,14 +25,14 @@ public class DataInputFullStream extends DataInputStream {
     super(in);
   }
 
-  public final int readFull(byte b[]) throws IOException {
+  public final int readFull(byte[] b) throws IOException {
 
     int length = b.length;
     byte[] btemp = new byte[length];
     int pos = 0;
 
     int bytes_read = -1;
-    for (; ; ) {
+    while (true) {
       bytes_read = read(btemp, 0, length - pos);
       if (bytes_read == -1) {
         return -1;

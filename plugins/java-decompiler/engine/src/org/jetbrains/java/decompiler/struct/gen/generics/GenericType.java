@@ -70,7 +70,7 @@ public class GenericType {
           type = CodeConstants.TYPE_OBJECT;
           sig = sig.substring(index + 1, sig.length() - 1);
 
-          for (; ; ) {
+          while (true) {
             String cl = getNextClassSignature(sig);
 
             String name = cl;

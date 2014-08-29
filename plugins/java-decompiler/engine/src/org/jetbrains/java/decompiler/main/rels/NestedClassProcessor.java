@@ -151,7 +151,6 @@ public class NestedClassProcessor {
               InvocationExprent inv_dynamic = new_expr.getConstructor();
 
               int param_index = is_static_lambda_content ? 0 : 1;
-              ;
               int varindex = is_static_lambda_content ? 0 : 1;
 
               for (int i = 0; i < vars_count; ++i) {
@@ -713,7 +712,7 @@ public class NestedClassProcessor {
   private void mergeListSignatures(List<VarFieldPair> first, List<VarFieldPair> second, boolean both) {
 
     int i = 1;
-    for (; ; ) {
+    while (true) {
       if (first.size() <= i || second.size() <= i) {
         break;
       }
