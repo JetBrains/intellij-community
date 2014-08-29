@@ -20,9 +20,6 @@ public class IpnbLatexPanel extends IpnbCodeOutputPanel<IpnbLatexOutputCell> {
   public IpnbLatexPanel(@NotNull final IpnbLatexOutputCell cell) {
     super(cell);
     setLayout(new VerticalFlowLayout(FlowLayout.LEFT));
-
-    myViewPanel = createViewPanel();
-    add(myViewPanel);
   }
 
   @Override

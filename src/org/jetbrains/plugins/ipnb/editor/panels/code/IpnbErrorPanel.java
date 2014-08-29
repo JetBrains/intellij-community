@@ -16,8 +16,6 @@ import java.awt.*;
 public class IpnbErrorPanel extends IpnbCodeOutputPanel<IpnbErrorOutputCell> {
   public IpnbErrorPanel(@NotNull final IpnbErrorOutputCell cell) {
     super(cell);
-    myViewPanel = createViewPanel();
-    add(myViewPanel);
   }
 
   @Override

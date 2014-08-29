@@ -10,8 +10,6 @@ import javax.swing.*;
 public class IpnbHtmlPanel extends IpnbCodeOutputPanel<IpnbHtmlOutputCell> {
   public IpnbHtmlPanel(@NotNull final IpnbHtmlOutputCell cell) {
     super(cell);
-    myViewPanel = createViewPanel();
-    add(myViewPanel);
   }
 
   @Override

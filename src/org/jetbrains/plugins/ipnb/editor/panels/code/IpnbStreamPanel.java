@@ -8,8 +8,6 @@ import javax.swing.*;
 public class IpnbStreamPanel extends IpnbCodeOutputPanel<IpnbStreamOutputCell> {
   public IpnbStreamPanel(@NotNull final IpnbStreamOutputCell cell) {
     super(cell);
-    myViewPanel = createViewPanel();
-    add(myViewPanel);
   }
 
   @Override

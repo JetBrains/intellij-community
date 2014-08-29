@@ -18,8 +18,6 @@ public class IpnbImagePanel extends IpnbCodeOutputPanel<IpnbImageOutputCell> {
 
   public IpnbImagePanel(@NotNull final IpnbImageOutputCell cell) {
     super(cell);
-    myViewPanel = createViewPanel();
-    add(myViewPanel);
   }
 
   @Override
