@@ -132,7 +132,7 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     gbc.fill = GridBagConstraints.BOTH;
     gbc.gridx = 0;
     gbc.gridy = 0;
-    if (!PlatformUtils.isCppIde()) {
+    if (!PlatformUtils.isCLion()) {
       buttonPanel.add(mySkipButton, gbc);
       gbc.gridx++;
     }
