@@ -733,10 +733,6 @@ public class GithubCreatePullRequestWorker {
       myRemoteName = remoteName;
     }
 
-    public void setRemoteName(@Nullable String remoteName) {
-      myRemoteName = remoteName;
-    }
-
     public boolean isProposedToCreateRemote() {
       return myProposedToCreateRemote;
     }
