@@ -54,10 +54,8 @@ public class ExceptionHandler {
 
     String new_line_separator = DecompilerContext.getNewLineSeparator();
 
-    StringBuffer buf = new StringBuffer();
-    buf.append("from: " + from + " to: " + to + " handler: " + handler + new_line_separator);
-    buf.append("from_instr: " + from_instr + " to_instr: " + to_instr + " handler_instr: " + handler_instr + new_line_separator);
-    buf.append("exceptionClass: " + exceptionClass + new_line_separator);
-    return buf.toString();
+    return "from: " + from + " to: " + to + " handler: " + handler + new_line_separator +
+           "from_instr: " + from_instr + " to_instr: " + to_instr + " handler_instr: " + handler_instr + new_line_separator +
+           "exceptionClass: " + exceptionClass + new_line_separator;
   }
 }

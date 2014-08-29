@@ -65,7 +65,7 @@ public class AnnotationExprent extends Exprent {
         String indstr1 = InterpreterUtil.getIndentString(indent + 1);
 
         for (int i = 0; i < parnames.size(); i++) {
-          buffer.append(new_line_separator + indstr1);
+          buffer.append(new_line_separator).append(indstr1);
           buffer.append(parnames.get(i));
           buffer.append(" = ");
           buffer.append(parvalues.get(i).toJava(indent + 2));
@@ -74,7 +74,7 @@ public class AnnotationExprent extends Exprent {
             buffer.append(",");
           }
         }
-        buffer.append(new_line_separator + indstr);
+        buffer.append(new_line_separator).append(indstr);
       }
 
       buffer.append(")");

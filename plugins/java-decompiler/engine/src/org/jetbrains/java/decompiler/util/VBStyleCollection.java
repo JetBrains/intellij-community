@@ -115,7 +115,7 @@ public class VBStyleCollection<E, K> extends ArrayList<E> {
 
   public E remove(int index) {
     addToListIndex(index + 1, -1);
-    Object obj = lstKeys.get(index);
+    K obj = lstKeys.get(index);
     if (obj != null) {
       map.remove(obj);
     }

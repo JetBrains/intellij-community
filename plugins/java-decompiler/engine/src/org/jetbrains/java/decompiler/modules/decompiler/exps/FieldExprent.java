@@ -94,7 +94,7 @@ public class FieldExprent extends Exprent {
   }
 
   public String toJava(int indent) {
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
 
 
     if (isStatic) {

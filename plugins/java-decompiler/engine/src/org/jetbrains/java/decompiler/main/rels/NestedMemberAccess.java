@@ -310,7 +310,7 @@ public class NestedMemberAccess {
     return res;
   }
 
-  private boolean sameTree(ClassNode caller, ClassNode callee) {
+  private static boolean sameTree(ClassNode caller, ClassNode callee) {
 
     if (caller.classStruct.qualifiedName.equals(callee.classStruct.qualifiedName)) {
       return false;

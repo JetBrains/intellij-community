@@ -221,7 +221,7 @@ public class GenericMain {
 
     String res = name.replace('/', '.');
 
-    if (res.indexOf("$") >= 0) {
+    if (res.contains("$")) {
       StructClass cl = DecompilerContext.getStructcontext().getClass(name);
       if (cl == null || !cl.isOwn()) {
         res = res.replace('$', '.');

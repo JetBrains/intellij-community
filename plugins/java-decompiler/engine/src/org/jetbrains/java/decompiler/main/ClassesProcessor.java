@@ -303,7 +303,7 @@ public class ClassesProcessor {
     }
   }
 
-  private void initWrappers(ClassNode node) throws IOException {
+  private static void initWrappers(ClassNode node) throws IOException {
 
     if (node.type == ClassNode.CLASS_LAMBDA) {
       return;
@@ -319,7 +319,7 @@ public class ClassesProcessor {
     }
   }
 
-  private void addClassnameToImport(ClassNode node, ImportCollector imp) {
+  private static void addClassnameToImport(ClassNode node, ImportCollector imp) {
 
     if (node.simpleName != null && node.simpleName.length() > 0) {
       imp.getShortName(node.type == ClassNode.CLASS_ROOT ? node.classStruct.qualifiedName : node.simpleName, false);
@@ -330,7 +330,7 @@ public class ClassesProcessor {
     }
   }
 
-  private void destroyWrappers(ClassNode node) {
+  private static void destroyWrappers(ClassNode node) {
 
     node.wrapper = null;
     node.classStruct.releaseResources();
@@ -345,7 +345,7 @@ public class ClassesProcessor {
   }
 
 
-  public class ClassNode {
+  public static class ClassNode {
 
     public static final int CLASS_ROOT = 0;
     public static final int CLASS_MEMBER = 1;
@@ -436,9 +436,7 @@ public class ClassesProcessor {
       return null;
     }
 
-    public class LambdaInformation {
-
-
+    public static class LambdaInformation {
       public String class_name;
       public String method_name;
       public String method_descriptor;

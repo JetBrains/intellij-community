@@ -43,7 +43,7 @@ public class CheckTypesResult {
     return lstMinTypeExprents;
   }
 
-  public class ExprentTypePair {
+  public static class ExprentTypePair {
     public Exprent exprent;
     public VarType type;
     public VarType desttype;

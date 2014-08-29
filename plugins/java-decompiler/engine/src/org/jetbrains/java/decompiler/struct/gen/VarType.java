@@ -306,7 +306,7 @@ public class VarType {  // TODO: optimize switch
     }
   }
 
-  private int getType(char c) {
+  private static int getType(char c) {
     switch (c) {
       case 'B':
         return CodeConstants.TYPE_BYTE;
@@ -343,7 +343,7 @@ public class VarType {  // TODO: optimize switch
     }
   }
 
-  private String getChar(int type) {
+  private static String getChar(int type) {
     switch (type) {
       case CodeConstants.TYPE_BYTE:
         return "B";

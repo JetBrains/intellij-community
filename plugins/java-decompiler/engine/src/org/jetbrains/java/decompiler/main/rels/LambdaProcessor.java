@@ -112,9 +112,9 @@ public class LambdaProcessor {
 
               LinkConstant content_method_handle = (LinkConstant)bootstrap_arguments.get(1);
 
-              ClassNode node_lambda = clprocessor.new ClassNode(content_method_handle.classname, content_method_handle.elementname,
-                                                                content_method_handle.descriptor, content_method_handle.index1,
-                                                                lambda_class_name, lambda_method_name, lambda_method_descriptor, cl);
+              ClassNode node_lambda = new ClassNode(content_method_handle.classname, content_method_handle.elementname,
+                                                    content_method_handle.descriptor, content_method_handle.index1,
+                                                    lambda_class_name, lambda_method_name, lambda_method_descriptor, cl);
               node_lambda.simpleName = cl.qualifiedName + "##Lambda_" + invoke_dynamic.index1 + "_" + invoke_dynamic.index2;
               node_lambda.enclosingMethod = InterpreterUtil.makeUniqueKey(mt.getName(), mt.getDescriptor());
 

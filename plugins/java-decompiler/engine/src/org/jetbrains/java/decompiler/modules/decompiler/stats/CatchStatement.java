@@ -151,19 +151,19 @@ public class CatchStatement extends Statement {
 
   public String toJava(int indent) {
     String indstr = InterpreterUtil.getIndentString(indent);
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
 
     String new_line_separator = DecompilerContext.getNewLineSeparator();
 
     buf.append(ExprProcessor.listToJava(varDefinitions, indent));
 
     if (isLabeled()) {
-      buf.append(indstr + "label" + this.id + ":" + new_line_separator);
+      buf.append(indstr).append("label").append(this.id).append(":").append(new_line_separator);
     }
 
-    buf.append(indstr + "try {" + new_line_separator);
+    buf.append(indstr).append("try {").append(new_line_separator);
     buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true));
-    buf.append(indstr + "}");
+    buf.append(indstr).append("}");
 
     for (int i = 1; i < stats.size(); i++) {
       List<String> exception_types = exctstrings.get(i - 1);
@@ -174,11 +174,12 @@ public class CatchStatement extends Statement {
           VarType exc_type = new VarType(CodeConstants.TYPE_OBJECT, 0, exception_types.get(exc_index));
           String exc_type_name = ExprProcessor.getCastTypeName(exc_type);
 
-          buf.append(exc_type_name + " | ");
+          buf.append(exc_type_name).append(" | ");
         }
       }
       buf.append(vars.get(i - 1).toJava(indent));
-      buf.append(") {" + new_line_separator + ExprProcessor.jmpWrapper(stats.get(i), indent + 1, true) + indstr + "}");
+      buf.append(") {").append(new_line_separator).append(ExprProcessor.jmpWrapper(stats.get(i), indent + 1, true)).append(indstr)
+        .append("}");
     }
     buf.append(new_line_separator);
 

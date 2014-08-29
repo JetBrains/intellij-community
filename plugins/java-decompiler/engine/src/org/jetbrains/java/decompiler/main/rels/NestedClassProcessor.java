@@ -101,7 +101,7 @@ public class NestedClassProcessor {
     }
   }
 
-  private void setLambdaVars(ClassNode parent, ClassNode child) {
+  private static void setLambdaVars(ClassNode parent, ClassNode child) {
 
     if (child.lambda_information.is_method_reference) { // method reference, no code and no parameters
       return;
@@ -187,7 +187,7 @@ public class NestedClassProcessor {
     }
   }
 
-  private void checkNotFoundClasses(ClassNode root, ClassNode node) {
+  private static void checkNotFoundClasses(ClassNode root, ClassNode node) {
 
     List<ClassNode> lstChildren = new ArrayList<ClassNode>(node.nested);
 
@@ -232,7 +232,7 @@ public class NestedClassProcessor {
     }
   }
 
-  private boolean insertNestedClass(ClassNode root, ClassNode child) {
+  private static boolean insertNestedClass(ClassNode root, ClassNode child) {
 
     Set<String> setEnclosing = child.enclosingClasses;
 
@@ -258,7 +258,7 @@ public class NestedClassProcessor {
   }
 
 
-  private void computeLocalVarsAndDefinitions(final ClassNode node) {
+  private static void computeLocalVarsAndDefinitions(final ClassNode node) {
 
     // local var masks
     // class name, constructor descriptor, field mask
@@ -433,7 +433,7 @@ public class NestedClassProcessor {
     }
   }
 
-  private void insertLocalVars(final ClassNode parent, final ClassNode child) {
+  private static void insertLocalVars(final ClassNode parent, final ClassNode child) {
 
     // enclosing method, is null iff member class
     MethodWrapper encmeth = parent.wrapper.getMethods().getWithKey(child.enclosingMethod);
@@ -634,7 +634,7 @@ public class NestedClassProcessor {
     }
   }
 
-  private HashMap<String, List<VarFieldPair>> getMaskLocalVars(ClassWrapper wrapper) {
+  private static HashMap<String, List<VarFieldPair>> getMaskLocalVars(ClassWrapper wrapper) {
 
     HashMap<String, List<VarFieldPair>> mapMasks = new HashMap<String, List<VarFieldPair>>();
 
@@ -666,7 +666,7 @@ public class NestedClassProcessor {
     return mapMasks;
   }
 
-  private String getEnclosingVarField(StructClass cl, MethodWrapper meth, DirectGraph graph, final int index) {
+  private static String getEnclosingVarField(StructClass cl, MethodWrapper meth, DirectGraph graph, final int index) {
 
     String field = "";
 
@@ -709,7 +709,7 @@ public class NestedClassProcessor {
     return field;
   }
 
-  private void mergeListSignatures(List<VarFieldPair> first, List<VarFieldPair> second, boolean both) {
+  private static void mergeListSignatures(List<VarFieldPair> first, List<VarFieldPair> second, boolean both) {
 
     int i = 1;
     while (true) {
@@ -818,7 +818,7 @@ public class NestedClassProcessor {
   }
 
 
-  private void setLocalClassDefinition(MethodWrapper meth, ClassNode node) {
+  private static void setLocalClassDefinition(MethodWrapper meth, ClassNode node) {
 
     RootStatement root = meth.root;
 
@@ -862,7 +862,7 @@ public class NestedClassProcessor {
   }
 
 
-  private Statement findFirstBlock(Statement stat, HashSet<Statement> setStats) {
+  private static Statement findFirstBlock(Statement stat, HashSet<Statement> setStats) {
 
     LinkedList<Statement> stack = new LinkedList<Statement>();
     stack.add(stat);
@@ -903,7 +903,7 @@ public class NestedClassProcessor {
   }
 
 
-  private Statement getDefStatement(Statement stat, VarType classtype, HashSet<Statement> setStats) {
+  private static Statement getDefStatement(Statement stat, VarType classtype, HashSet<Statement> setStats) {
 
     List<Exprent> condlst = new ArrayList<Exprent>();
     Statement retstat = null;
@@ -958,7 +958,7 @@ public class NestedClassProcessor {
     return retstat;
   }
 
-  private boolean searchForClass(Exprent exprent, VarType classtype) {
+  private static boolean searchForClass(Exprent exprent, VarType classtype) {
 
     List<Exprent> lst = exprent.getAllExprents(true);
     lst.add(exprent);
@@ -1004,7 +1004,7 @@ public class NestedClassProcessor {
   }
 
 
-  private class VarFieldPair {
+  private static class VarFieldPair {
 
     public String keyfield = "";
     public VarVersionPaar varpaar;

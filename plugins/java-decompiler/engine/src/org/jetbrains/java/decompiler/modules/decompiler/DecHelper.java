@@ -83,11 +83,8 @@ public class DecHelper {
       boolean repeat = false;
 
       setDest.remove(post);
-      Iterator<Statement> it = setDest.iterator();
 
-      while (it.hasNext()) {
-        Statement stat = it.next();
-
+      for (Statement stat : setDest) {
         if (stat.getLastBasicType() != Statement.LASTBASICTYPE_GENERAL) {
           if (post == null) {
             post = stat;

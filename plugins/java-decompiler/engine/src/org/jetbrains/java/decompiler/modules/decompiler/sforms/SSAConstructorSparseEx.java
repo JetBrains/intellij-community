@@ -416,7 +416,7 @@ public class SSAConstructorSparseEx {
     return mapNew;
   }
 
-  private SFormsFastMapDirect mergeMaps(SFormsFastMapDirect mapTo, SFormsFastMapDirect map2) {
+  private static SFormsFastMapDirect mergeMaps(SFormsFastMapDirect mapTo, SFormsFastMapDirect map2) {
 
     if (map2 != null && !map2.isEmpty()) {
       mapTo.union(map2);
@@ -425,7 +425,7 @@ public class SSAConstructorSparseEx {
     return mapTo;
   }
 
-  private boolean mapsEqual(SFormsFastMapDirect map1, SFormsFastMapDirect map2) {
+  private static boolean mapsEqual(SFormsFastMapDirect map1, SFormsFastMapDirect map2) {
 
     if (map1 == null) {
       return map2 == null;

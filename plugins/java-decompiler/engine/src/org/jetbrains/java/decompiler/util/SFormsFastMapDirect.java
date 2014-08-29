@@ -27,7 +27,7 @@ public class SFormsFastMapDirect {
 
   private int size;
 
-  private FastSparseSet<Integer>[][] elements = new FastSparseSet[3][];
+  @SuppressWarnings("unchecked") private FastSparseSet<Integer>[][] elements = new FastSparseSet[3][];
 
   private int[][] next = new int[3][];
 
@@ -38,7 +38,8 @@ public class SFormsFastMapDirect {
   private SFormsFastMapDirect(boolean initialize) {
     if (initialize) {
       for (int i = 2; i >= 0; i--) {
-        elements[i] = new FastSparseSet[0];
+        @SuppressWarnings("unchecked") FastSparseSet<Integer>[] empty = new FastSparseSet[0];
+        elements[i] = empty;
         next[i] = new int[0];
       }
     }
@@ -50,7 +51,7 @@ public class SFormsFastMapDirect {
       int[] arrnext = map.next[i];
 
       int length = arr.length;
-      FastSparseSet<Integer>[] arrnew = new FastSparseSet[length];
+      @SuppressWarnings("unchecked") FastSparseSet<Integer>[] arrnew = new FastSparseSet[length];
       int[] arrnextnew = new int[length];
 
       System.arraycopy(arr, 0, arrnew, 0, length);
@@ -78,7 +79,7 @@ public class SFormsFastMapDirect {
       if (length > 0) {
         int[] arrnext = next[i];
 
-        FastSparseSet<Integer>[] arrnew = new FastSparseSet[length];
+        @SuppressWarnings("unchecked") FastSparseSet<Integer>[] arrnew = new FastSparseSet[length];
         int[] arrnextnew = new int[length];
 
         System.arraycopy(arrnext, 0, arrnextnew, 0, length);
@@ -174,7 +175,7 @@ public class SFormsFastMapDirect {
     }
   }
 
-  private void changeNext(int[] arrnext, int key, int oldnext, int newnext) {
+  private static void changeNext(int[] arrnext, int key, int oldnext, int newnext) {
     for (int i = key - 1; i >= 0; i--) {
       if (arrnext[i] == oldnext) {
         arrnext[i] = newnext;
@@ -343,7 +344,7 @@ public class SFormsFastMapDirect {
         }
 
         Set<Integer> set = entry.getValue().toPlainSet();
-        buffer.append(entry.getKey() + "={" + set.toString() + "}");
+        buffer.append(entry.getKey()).append("={").append(set.toString()).append("}");
       }
     }
 
@@ -399,7 +400,7 @@ public class SFormsFastMapDirect {
       }
     }
 
-    FastSparseSet<Integer>[] arrnew = new FastSparseSet[minsize];
+    @SuppressWarnings("unchecked") FastSparseSet<Integer>[] arrnew = new FastSparseSet[minsize];
     System.arraycopy(arr, 0, arrnew, 0, arr.length);
 
     int[] arrnextnew = new int[minsize];

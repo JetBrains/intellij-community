@@ -110,7 +110,7 @@ public class StackVarsProcessor {
     setVersionsToNull(root);
   }
 
-  private void setVersionsToNull(Statement stat) {
+  private static void setVersionsToNull(Statement stat) {
 
     if (stat.getExprents() == null) {
       for (Object obj : stat.getSequentialObjects()) {
@@ -129,7 +129,7 @@ public class StackVarsProcessor {
     }
   }
 
-  private void setExprentVersionsToNull(Exprent exprent) {
+  private static void setExprentVersionsToNull(Exprent exprent) {
 
     List<Exprent> lst = exprent.getAllExprents(true);
     lst.add(exprent);
@@ -236,7 +236,7 @@ public class StackVarsProcessor {
   }
 
 
-  private Exprent isReplaceableVar(Exprent exprent, HashMap<VarVersionPaar, Exprent> mapVarValues, SSAUConstructorSparseEx ssau) {
+  private static Exprent isReplaceableVar(Exprent exprent, HashMap<VarVersionPaar, Exprent> mapVarValues, SSAUConstructorSparseEx ssau) {
 
     Exprent dest = null;
 
@@ -248,7 +248,7 @@ public class StackVarsProcessor {
     return dest;
   }
 
-  private void replaceSingleVar(Exprent parent, VarExprent var, Exprent dest, SSAUConstructorSparseEx ssau) {
+  private static void replaceSingleVar(Exprent parent, VarExprent var, Exprent dest, SSAUConstructorSparseEx ssau) {
 
     parent.replaceExprent(var, dest);
 
@@ -438,7 +438,7 @@ public class StackVarsProcessor {
     }
   }
 
-  private HashSet<VarVersionPaar> getAllVersions(Exprent exprent) {
+  private static HashSet<VarVersionPaar> getAllVersions(Exprent exprent) {
 
     HashSet<VarVersionPaar> res = new HashSet<VarVersionPaar>();
 
@@ -455,11 +455,11 @@ public class StackVarsProcessor {
     return res;
   }
 
-  private Object[] iterateChildExprent(Exprent exprent,
-                                       Exprent parent,
-                                       Exprent next,
-                                       HashMap<VarVersionPaar, Exprent> mapVarValues,
-                                       SSAUConstructorSparseEx ssau) {
+  private static Object[] iterateChildExprent(Exprent exprent,
+                                              Exprent parent,
+                                              Exprent next,
+                                              HashMap<VarVersionPaar, Exprent> mapVarValues,
+                                              SSAUConstructorSparseEx ssau) {
 
     boolean changed = false;
 
@@ -589,7 +589,7 @@ public class StackVarsProcessor {
     return new Object[]{null, changed, false};
   }
 
-  private boolean getUsedVersions(SSAUConstructorSparseEx ssa, VarVersionPaar var, List<VarVersionNode> res) {
+  private static boolean getUsedVersions(SSAUConstructorSparseEx ssa, VarVersionPaar var, List<VarVersionNode> res) {
 
     VarVersionsGraph ssuversions = ssa.getSsuversions();
     VarVersionNode varnode = ssuversions.nodes.getWithKey(var);
@@ -638,10 +638,10 @@ public class StackVarsProcessor {
     return !setNotDoms.isEmpty();
   }
 
-  private boolean isVersionToBeReplaced(VarVersionPaar usedvar,
-                                        HashMap<Integer, HashSet<VarVersionPaar>> mapVars,
-                                        SSAUConstructorSparseEx ssau,
-                                        VarVersionPaar leftpaar) {
+  private static boolean isVersionToBeReplaced(VarVersionPaar usedvar,
+                                               HashMap<Integer, HashSet<VarVersionPaar>> mapVars,
+                                               SSAUConstructorSparseEx ssau,
+                                               VarVersionPaar leftpaar) {
 
     VarVersionsGraph ssuversions = ssau.getSsuversions();
 
@@ -687,9 +687,9 @@ public class StackVarsProcessor {
     return true;
   }
 
-  private HashMap<Integer, HashSet<VarVersionPaar>> getAllVarVersions(VarVersionPaar leftvar,
-                                                                      Exprent exprent,
-                                                                      SSAUConstructorSparseEx ssau) {
+  private static HashMap<Integer, HashSet<VarVersionPaar>> getAllVarVersions(VarVersionPaar leftvar,
+                                                                             Exprent exprent,
+                                                                             SSAUConstructorSparseEx ssau) {
 
     HashMap<Integer, HashSet<VarVersionPaar>> map = new HashMap<Integer, HashSet<VarVersionPaar>>();
     SFormsFastMapDirect mapLiveVars = ssau.getLiveVarVersionsMap(leftvar);

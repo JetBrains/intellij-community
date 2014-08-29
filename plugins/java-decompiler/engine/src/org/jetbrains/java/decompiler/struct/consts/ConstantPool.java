@@ -252,7 +252,7 @@ public class ConstantPool {
           buffer.append("[");
         }
 
-        buffer.append("L" + newname + ";");
+        buffer.append("L").append(newname).append(";");
       }
       else {
         buffer.append(newname);

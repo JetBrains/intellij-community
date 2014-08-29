@@ -105,7 +105,7 @@ public class GenericType {
     }
   }
 
-  private String getNextClassSignature(String value) {
+  private static String getNextClassSignature(String value) {
 
     int counter = 0;
     int index = 0;
@@ -131,7 +131,7 @@ public class GenericType {
     return value.substring(0, index);
   }
 
-  private void parseArgumentsList(String value, GenericType type) {
+  private static void parseArgumentsList(String value, GenericType type) {
 
     if (value == null) {
       return;
@@ -214,7 +214,7 @@ public class GenericType {
     return value.substring(0, index + 1);
   }
 
-  private int getType(char c) {
+  private static int getType(char c) {
     switch (c) {
       case 'B':
         return CodeConstants.TYPE_BYTE;

@@ -66,7 +66,7 @@ public class VarVersionsProcessor {
     setNewVarIndices(typeproc, dgraph);
   }
 
-  private void mergePhiVersions(SSAConstructorSparseEx ssa, DirectGraph dgraph) {
+  private static void mergePhiVersions(SSAConstructorSparseEx ssa, DirectGraph dgraph) {
 
     // collect phi versions
     List<HashSet<VarVersionPaar>> lst = new ArrayList<HashSet<VarVersionPaar>>();
@@ -125,7 +125,7 @@ public class VarVersionsProcessor {
     });
   }
 
-  private void eliminateNonJavaTypes(VarTypeProcessor typeproc) {
+  private static void eliminateNonJavaTypes(VarTypeProcessor typeproc) {
 
     HashMap<VarVersionPaar, VarType> mapExprentMaxTypes = typeproc.getMapExprentMaxTypes();
     HashMap<VarVersionPaar, VarType> mapExprentMinTypes = typeproc.getMapExprentMinTypes();
@@ -152,7 +152,7 @@ public class VarVersionsProcessor {
     }
   }
 
-  private void simpleMerge(VarTypeProcessor typeproc, DirectGraph dgraph, StructMethod mt) {
+  private static void simpleMerge(VarTypeProcessor typeproc, DirectGraph dgraph, StructMethod mt) {
 
     HashMap<VarVersionPaar, VarType> mapExprentMaxTypes = typeproc.getMapExprentMaxTypes();
     HashMap<VarVersionPaar, VarType> mapExprentMinTypes = typeproc.getMapExprentMinTypes();

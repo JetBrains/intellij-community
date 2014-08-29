@@ -112,11 +112,7 @@ public class IfExprent extends Exprent {
   }
 
   public String toJava(int indent) {
-    StringBuffer buf = new StringBuffer("if(");
-    buf.append(condition.toJava(indent));
-    buf.append(")");
-
-    return buf.toString();
+    return "if(" + condition.toJava(indent) + ")";
   }
 
   public boolean equals(Object o) {

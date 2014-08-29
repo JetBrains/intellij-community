@@ -402,7 +402,7 @@ public class NewExprent extends Exprent {
     return buf.toString();
   }
 
-  private String getQualifiedNewInstance(String classname, List<Exprent> lstParams, int indent) {
+  private static String getQualifiedNewInstance(String classname, List<Exprent> lstParams, int indent) {
 
     ClassNode node = DecompilerContext.getClassprocessor().getMapRootClasses().get(classname);
 

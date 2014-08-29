@@ -43,7 +43,7 @@ public class DominatorEngine {
     }
   }
 
-  private Integer getCommonIDom(Integer key1, Integer key2, VBStyleCollection<Integer, Integer> orderedIDoms) {
+  private static Integer getCommonIDom(Integer key1, Integer key2, VBStyleCollection<Integer, Integer> orderedIDoms) {
 
     if (key1 == null) {
       return key2;

@@ -33,16 +33,16 @@ import java.io.IOException;
 
 public class MethodProcessorThread implements Runnable {
 
-  private StructMethod method;
-  private VarProcessor varproc;
-  private DecompilerContext parentContext;
+  public final Object lock = new Object();
 
-  private RootStatement root;
+  private final StructMethod method;
+  private final VarProcessor varproc;
+  private final DecompilerContext parentContext;
 
-  private Throwable error;
+  private volatile RootStatement root;
+  private volatile Throwable error;
 
-  public MethodProcessorThread(StructMethod method, VarProcessor varproc,
-                               DecompilerContext parentContext) {
+  public MethodProcessorThread(StructMethod method, VarProcessor varproc, DecompilerContext parentContext) {
     this.method = method;
     this.varproc = varproc;
     this.parentContext = parentContext;
@@ -58,11 +58,13 @@ public class MethodProcessorThread implements Runnable {
     try {
       root = codeToJava(method, varproc);
 
-      synchronized (this) {
-        this.notify();
+      synchronized (lock) {
+        lock.notifyAll();
       }
     }
-    catch (ThreadDeath ignored) { }
+    catch (ThreadDeath ex) {
+      throw ex;
+    }
     catch (Throwable ex) {
       error = ex;
     }
@@ -248,7 +250,9 @@ public class MethodProcessorThread implements Runnable {
     return root;
   }
 
-  public RootStatement getRoot() {
+  public RootStatement getResult() throws Throwable {
+    Throwable t = error;
+    if (t != null) throw t;
     return root;
   }
 

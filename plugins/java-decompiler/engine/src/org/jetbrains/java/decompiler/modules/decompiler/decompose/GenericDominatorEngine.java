@@ -45,7 +45,7 @@ public class GenericDominatorEngine {
     }
   }
 
-  private IGraphNode getCommonIDom(IGraphNode node1, IGraphNode node2, VBStyleCollection<IGraphNode, IGraphNode> orderedIDoms) {
+  private static IGraphNode getCommonIDom(IGraphNode node1, IGraphNode node2, VBStyleCollection<IGraphNode, IGraphNode> orderedIDoms) {
 
     IGraphNode nodeOld;
 

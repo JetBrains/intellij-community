@@ -497,10 +497,7 @@ public class DomHelper {
         while (true) {
 
           boolean hdfound = false;
-          Iterator<Statement> itHandlers = setHandlers.iterator();
-          while (itHandlers.hasNext()) {
-            Statement handler = itHandlers.next();
-
+          for (Statement handler : setHandlers) {
             if (setNodes.contains(handler)) {
               continue;
             }
@@ -553,9 +550,7 @@ public class DomHelper {
         setHandlers.removeAll(setNodes);
 
         boolean excok = true;
-        Iterator<Statement> itt = setHandlers.iterator();
-        while (itt.hasNext()) {
-          Statement handler = itt.next();
+        for (Statement handler : setHandlers) {
           if (!handler.getNeighbours(StatEdge.TYPE_EXCEPTION, Statement.DIRECTION_BACKWARD).containsAll(setNodes)) {
             excok = false;
             break;

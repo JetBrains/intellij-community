@@ -106,7 +106,7 @@ public class VarVersionsGraph {
     engine.initialize();
   }
 
-  private LinkedList<VarVersionNode> getReversedPostOrder(Collection<VarVersionNode> roots) {
+  private static LinkedList<VarVersionNode> getReversedPostOrder(Collection<VarVersionNode> roots) {
 
     LinkedList<VarVersionNode> lst = new LinkedList<VarVersionNode>();
     HashSet<VarVersionNode> setVisited = new HashSet<VarVersionNode>();
@@ -122,7 +122,7 @@ public class VarVersionsGraph {
     return lst;
   }
 
-  private void addToReversePostOrderListIterative(VarVersionNode root, List<VarVersionNode> lst, HashSet<VarVersionNode> setVisited) {
+  private static void addToReversePostOrderListIterative(VarVersionNode root, List<VarVersionNode> lst, HashSet<VarVersionNode> setVisited) {
 
     HashMap<VarVersionNode, List<VarVersionEdge>> mapNodeSuccs = new HashMap<VarVersionNode, List<VarVersionEdge>>();
 

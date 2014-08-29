@@ -55,19 +55,19 @@ public class GeneralStatement extends Statement {
 
   public String toJava(int indent) {
     String indstr = InterpreterUtil.getIndentString(indent);
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
 
     String new_line_separator = DecompilerContext.getNewLineSeparator();
 
     if (isLabeled()) {
-      buf.append(indstr + "label" + this.id + ":" + new_line_separator);
+      buf.append(indstr).append("label").append(this.id).append(":").append(new_line_separator);
     }
 
-    buf.append(indstr + "abstract statement {" + new_line_separator);
+    buf.append(indstr).append("abstract statement {").append(new_line_separator);
     for (int i = 0; i < stats.size(); i++) {
       buf.append(stats.get(i).toJava(indent + 1));
     }
-    buf.append(indstr + "}");
+    buf.append(indstr).append("}");
 
     return buf.toString();
   }

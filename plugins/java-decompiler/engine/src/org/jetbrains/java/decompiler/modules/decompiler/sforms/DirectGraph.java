@@ -53,7 +53,7 @@ public class DirectGraph {
     }
   }
 
-  private void addToReversePostOrderListIterative(DirectNode root, List<DirectNode> lst) {
+  private static void addToReversePostOrderListIterative(DirectNode root, List<DirectNode> lst) {
 
     LinkedList<DirectNode> stackNode = new LinkedList<DirectNode>();
     LinkedList<Integer> stackIndex = new LinkedList<Integer>();

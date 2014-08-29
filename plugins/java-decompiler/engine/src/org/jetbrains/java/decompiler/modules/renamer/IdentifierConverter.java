@@ -193,11 +193,12 @@ public class IdentifierConverter {
     }
 
     String classOldFullName = cl.qualifiedName;
-    String classNewFullName = classOldFullName;
 
     // TODO: rename packages
     String clsimplename = ConverterHelper.getSimpleClassName(classOldFullName);
     if (helper.toBeRenamed(IIdentifierRenamer.ELEMENT_CLASS, clsimplename, null, null)) {
+      String classNewFullName;
+
       do {
         classNewFullName = ConverterHelper.replaceSimpleClassName(classOldFullName,
                                                                   helper.getNextClassname(classOldFullName, ConverterHelper
@@ -339,7 +340,7 @@ public class IdentifierConverter {
     return descriptor;
   }
 
-  private List<ClassWrapperNode> getReversePostOrderListIterative(List<ClassWrapperNode> roots) {
+  private static List<ClassWrapperNode> getReversePostOrderListIterative(List<ClassWrapperNode> roots) {
 
     List<ClassWrapperNode> res = new ArrayList<ClassWrapperNode>();
 

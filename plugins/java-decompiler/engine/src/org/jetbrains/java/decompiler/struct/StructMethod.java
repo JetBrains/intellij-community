@@ -216,8 +216,11 @@ public class StructMethod implements CodeConstants {
     }
   }
 
-  private void readAttribute(DataInputFullStream in, ConstantPool pool, VBStyleCollection<StructGeneralAttribute, String> lstAttribute,
-                             int attr_nameindex, String attrname) throws IOException {
+  private static void readAttribute(DataInputFullStream in,
+                                    ConstantPool pool,
+                                    VBStyleCollection<StructGeneralAttribute, String> lstAttribute,
+                                    int attr_nameindex,
+                                    String attrname) throws IOException {
 
     StructGeneralAttribute attribute = StructGeneralAttribute.getMatchingAttributeInstance(attr_nameindex, attrname);
 

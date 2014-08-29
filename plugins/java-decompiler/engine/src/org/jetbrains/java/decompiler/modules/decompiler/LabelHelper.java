@@ -223,10 +223,8 @@ public class LabelHelper {
           processEdgesWithNext(ifstat.getFirst(), mapEdges, null);
         }
         else {
-          if (ifstat.getIfstat() != null) {
-            mapEdges = setExplicitEdges(ifstat.getIfstat());
-            processEdgesWithNext(ifstat.getIfstat(), mapEdges, null);
-          }
+          mapEdges = setExplicitEdges(ifstat.getIfstat());
+          processEdgesWithNext(ifstat.getIfstat(), mapEdges, null);
 
           HashMap<Statement, List<StatEdge>> mapEdges1 = null;
           if (ifstat.getElsestat() != null) {
@@ -422,17 +420,14 @@ public class LabelHelper {
     }
   }
 
-  private static HashSet<Statement>[] processStatementLabel(Statement stat) {
+  private static void processStatementLabel(Statement stat) {
+    processStatementLabel(stat, new HashSet<Statement>(), new HashSet<Statement>());
+  }
 
-    HashSet<Statement> setBreak = new HashSet<Statement>();
-    HashSet<Statement> setContinue = new HashSet<Statement>();
-
+  private static void processStatementLabel(Statement stat, Set<Statement> setBreak, Set<Statement> setContinue) {
     if (stat.getExprents() == null) {
       for (Statement st : stat.getStats()) {
-        HashSet<Statement>[] arr = processStatementLabel(st);
-
-        setBreak.addAll(arr[0]);
-        setContinue.addAll(arr[1]);
+        processStatementLabel(st, setBreak, setContinue);
       }
 
       boolean shieldtype = (stat.type == Statement.TYPE_DO || stat.type == Statement.TYPE_SWITCH);
@@ -456,8 +451,6 @@ public class LabelHelper {
 
     setBreak.add(stat);
     setContinue.add(stat);
-
-    return new HashSet[]{setBreak, setContinue};
   }
 
   public static void replaceContinueWithBreak(Statement stat) {

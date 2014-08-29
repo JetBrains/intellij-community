@@ -140,7 +140,7 @@ public int getOffset(int index) {
 
     String new_line_separator = DecompilerContext.getNewLineSeparator();
 
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
 
     for (int i = 0; i < collinstr.size(); i++) {
     buf.append(InterpreterUtil.getIndentString(indent));

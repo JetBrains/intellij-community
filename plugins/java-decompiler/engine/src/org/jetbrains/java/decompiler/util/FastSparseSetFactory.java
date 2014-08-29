@@ -253,7 +253,7 @@ public class FastSparseSetFactory<E> {
       }
     }
 
-    private void changeNext(int[] arrnext, int key, int oldnext, int newnext) {
+    private static void changeNext(int[] arrnext, int key, int oldnext, int newnext) {
       for (int i = key - 1; i >= 0; i--) {
         if (arrnext[i] == oldnext) {
           arrnext[i] = newnext;

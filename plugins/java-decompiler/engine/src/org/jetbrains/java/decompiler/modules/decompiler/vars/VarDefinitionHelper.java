@@ -125,10 +125,7 @@ public class VarDefinitionHelper {
 
     VarNamesCollector vc = DecompilerContext.getVarncollector();
 
-    Iterator<Entry<Integer, Statement>> it = mapVarDefStatements.entrySet().iterator();
-    while (it.hasNext()) {
-      Entry<Integer, Statement> en = it.next();
-
+    for (Entry<Integer, Statement> en : mapVarDefStatements.entrySet()) {
       Statement stat = en.getValue();
       Integer index = en.getKey();
 
@@ -312,9 +309,7 @@ public class VarDefinitionHelper {
     HashSet<Integer> set = new HashSet<Integer>(mapCount.keySet());
 
     // put all variables defined in this statement into the set
-    Iterator<Entry<Integer, Integer>> itMult = mapCount.entrySet().iterator();
-    while (itMult.hasNext()) {
-      Entry<Integer, Integer> en = itMult.next();
+    for (Entry<Integer, Integer> en : mapCount.entrySet()) {
       if (en.getValue().intValue() > 1) {
         mapVarDefStatements.put(en.getKey(), stat);
       }
@@ -325,7 +320,7 @@ public class VarDefinitionHelper {
     return set;
   }
 
-  private List<VarExprent> getAllVars(List<Exprent> lst) {
+  private static List<VarExprent> getAllVars(List<Exprent> lst) {
 
     List<VarExprent> res = new ArrayList<VarExprent>();
     List<Exprent> listTemp = new ArrayList<Exprent>();
@@ -344,7 +339,7 @@ public class VarDefinitionHelper {
     return res;
   }
 
-  private boolean setDefinition(Exprent expr, Integer index) {
+  private static boolean setDefinition(Exprent expr, Integer index) {
     if (expr.type == Exprent.EXPRENT_ASSIGNMENT) {
       Exprent left = ((AssignmentExprent)expr).getLeft();
       if (left.type == Exprent.EXPRENT_VAR) {

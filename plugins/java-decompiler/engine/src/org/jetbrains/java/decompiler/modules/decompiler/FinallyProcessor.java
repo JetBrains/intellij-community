@@ -46,9 +46,8 @@ import java.util.Map.Entry;
 
 public class FinallyProcessor {
 
-
-  private HashMap<Integer, Integer> finallyBlockIDs = new HashMap<Integer, Integer>();
-  private HashMap<Integer, Integer> catchallBlockIDs = new HashMap<Integer, Integer>();
+  private Map<Integer, Integer> finallyBlockIDs = new HashMap<Integer, Integer>();
+  private Map<Integer, Integer> catchallBlockIDs = new HashMap<Integer, Integer>();
 
   private VarProcessor varprocessor;
 
@@ -92,7 +91,7 @@ public class FinallyProcessor {
         }
         else {
 
-          Object[] inf = getFinallyInformation(mt, root, fin);
+          Record inf = getFinallyInformation(mt, root, fin);
 
           if (inf == null) { // inconsistent finally
             catchallBlockIDs.put(handler.id, null);
@@ -181,10 +180,20 @@ public class FinallyProcessor {
   //		return res;
   //	}
 
+  private static class Record {
+    private final int firstCode;
+    private final Map<BasicBlock, Boolean> mapLast;
 
-  private Object[] getFinallyInformation(StructMethod mt, RootStatement root, CatchAllStatement fstat) {
+    private Record(int firstCode, Map<BasicBlock, Boolean> mapLast) {
+      this.firstCode = firstCode;
+      this.mapLast = mapLast;
+    }
+  }
 
-    HashMap<BasicBlock, Boolean> mapLast = new HashMap<BasicBlock, Boolean>();
+
+  private static Record getFinallyInformation(StructMethod mt, RootStatement root, CatchAllStatement fstat) {
+
+    Map<BasicBlock, Boolean> mapLast = new HashMap<BasicBlock, Boolean>();
 
     BasicBlockStatement firstBlockStatement = fstat.getHandler().getBasichead();
     BasicBlock firstBasicBlock = firstBlockStatement.getBlock();
@@ -216,7 +225,7 @@ public class FinallyProcessor {
     LinkedList<DirectNode> stack = new LinkedList<DirectNode>();
     stack.add(dgraph.first);
 
-    HashSet<DirectNode> setVisited = new HashSet<DirectNode>();
+    Set<DirectNode> setVisited = new HashSet<DirectNode>();
 
     while (!stack.isEmpty()) {
 
@@ -356,21 +365,21 @@ public class FinallyProcessor {
       }
     }
 
-    return new Object[]{firstcode, mapLast};
+    return new Record(firstcode, mapLast);
   }
 
-  private void insertSemaphore(ControlFlowGraph graph,
-                               HashSet<BasicBlock> setTry,
-                               BasicBlock head,
-                               BasicBlock handler,
-                               int var,
-                               Object[] information,
-                               int bytecode_version) {
+  private static void insertSemaphore(ControlFlowGraph graph,
+                                      Set<BasicBlock> setTry,
+                                      BasicBlock head,
+                                      BasicBlock handler,
+                                      int var,
+                                      Record information,
+                                      int bytecode_version) {
 
-    HashSet<BasicBlock> setCopy = new HashSet<BasicBlock>(setTry);
+    Set<BasicBlock> setCopy = new HashSet<BasicBlock>(setTry);
 
-    int finallytype = (Integer)information[0];
-    HashMap<BasicBlock, Boolean> mapLast = (HashMap<BasicBlock, Boolean>)information[1];
+    int finallytype = information.firstCode;
+    Map<BasicBlock, Boolean> mapLast = information.mapLast;
 
     // first and last statements
     removeExceptionInstructionsEx(handler, 1, finallytype);
@@ -468,7 +477,7 @@ public class FinallyProcessor {
   }
 
 
-  private void insertBlockBefore(ControlFlowGraph graph, BasicBlock oldblock, BasicBlock newblock) {
+  private static void insertBlockBefore(ControlFlowGraph graph, BasicBlock oldblock, BasicBlock newblock) {
 
     List<BasicBlock> lstTemp = new ArrayList<BasicBlock>();
     lstTemp.addAll(oldblock.getPreds());
@@ -501,7 +510,7 @@ public class FinallyProcessor {
     }
   }
 
-  private HashSet<BasicBlock> getAllBasicBlocks(Statement stat) {
+  private static HashSet<BasicBlock> getAllBasicBlocks(Statement stat) {
 
     List<Statement> lst = new LinkedList<Statement>();
     lst.add(stat);
@@ -530,13 +539,13 @@ public class FinallyProcessor {
   }
 
 
-  private boolean verifyFinallyEx(ControlFlowGraph graph, CatchAllStatement fstat, Object[] information) {
+  private boolean verifyFinallyEx(ControlFlowGraph graph, CatchAllStatement fstat, Record information) {
 
     HashSet<BasicBlock> tryBlocks = getAllBasicBlocks(fstat.getFirst());
     HashSet<BasicBlock> catchBlocks = getAllBasicBlocks(fstat.getHandler());
 
-    int finallytype = (Integer)information[0];
-    HashMap<BasicBlock, Boolean> mapLast = (HashMap<BasicBlock, Boolean>)information[1];
+    int finallytype = information.firstCode;
+    Map<BasicBlock, Boolean> mapLast = information.mapLast;
 
     BasicBlock first = fstat.getHandler().getBasichead().getBlock();
     boolean skippedFirst = false;
@@ -571,16 +580,16 @@ public class FinallyProcessor {
     startBlocks.remove(graph.getLast());
     startBlocks.removeAll(tryBlocks);
 
-    List<Object[]> lstAreas = new ArrayList<Object[]>();
+    List<Area> lstAreas = new ArrayList<Area>();
 
     for (BasicBlock start : startBlocks) {
 
-      Object[] arr = compareSubgraphsEx(graph, start, catchBlocks, first, finallytype, mapLast, skippedFirst);
+      Area arr = compareSubgraphsEx(graph, start, catchBlocks, first, finallytype, mapLast, skippedFirst);
       if (arr == null) {
         return false;
       }
 
-      lstAreas.add(new Object[]{start, arr[0], arr[1]});
+      lstAreas.add(arr);
     }
 
     //		try {
@@ -588,7 +597,7 @@ public class FinallyProcessor {
     //		} catch(Exception ex){ex.printStackTrace();}
 
     // delete areas
-    for (Object[] area : lstAreas) {
+    for (Area area : lstAreas) {
       deleteArea(graph, area);
     }
 
@@ -611,13 +620,25 @@ public class FinallyProcessor {
     return true;
   }
 
-  private Object[] compareSubgraphsEx(ControlFlowGraph graph,
-                                      BasicBlock startSample,
-                                      HashSet<BasicBlock> catchBlocks,
-                                      BasicBlock startCatch,
-                                      int finallytype,
-                                      HashMap<BasicBlock, Boolean> mapLast,
-                                      boolean skippedFirst) {
+  private static class Area {
+    private final BasicBlock start;
+    private final Set<BasicBlock> sample;
+    private final BasicBlock next;
+
+    private Area(BasicBlock start, Set<BasicBlock> sample, BasicBlock next) {
+      this.start = start;
+      this.sample = sample;
+      this.next = next;
+    }
+  }
+
+  private Area compareSubgraphsEx(ControlFlowGraph graph,
+                                  BasicBlock startSample,
+                                  HashSet<BasicBlock> catchBlocks,
+                                  BasicBlock startCatch,
+                                  int finallytype,
+                                  Map<BasicBlock, Boolean> mapLast,
+                                  boolean skippedFirst) {
 
     class BlockStackEntry {
       public BasicBlock blockCatch;
@@ -635,9 +656,9 @@ public class FinallyProcessor {
 
     List<BlockStackEntry> stack = new LinkedList<BlockStackEntry>();
 
-    HashSet<BasicBlock> setSample = new HashSet<BasicBlock>();
+    Set<BasicBlock> setSample = new HashSet<BasicBlock>();
 
-    HashMap<String, BasicBlock[]> mapNext = new HashMap<String, BasicBlock[]>();
+    Map<String, BasicBlock[]> mapNext = new HashMap<String, BasicBlock[]>();
 
     stack.add(new BlockStackEntry(startCatch, startSample, new ArrayList<int[]>()));
 
@@ -719,7 +740,7 @@ public class FinallyProcessor {
       }
 
       if (isLastBlock) {
-        HashSet<BasicBlock> setSuccs = new HashSet<BasicBlock>(blockSample.getSuccs());
+        Set<BasicBlock> setSuccs = new HashSet<BasicBlock>(blockSample.getSuccs());
         setSuccs.removeAll(setSample);
 
         for (BlockStackEntry stackent : stack) {
@@ -734,10 +755,10 @@ public class FinallyProcessor {
       }
     }
 
-    return new Object[]{setSample, getUniqueNext(graph, new HashSet<BasicBlock[]>(mapNext.values()))};
+    return new Area(startSample, setSample, getUniqueNext(graph, new HashSet<BasicBlock[]>(mapNext.values())));
   }
 
-  private BasicBlock getUniqueNext(ControlFlowGraph graph, HashSet<BasicBlock[]> setNext) {
+  private static BasicBlock getUniqueNext(ControlFlowGraph graph, Set<BasicBlock[]> setNext) {
 
     // precondition: there is at most one true exit path in a finally statement
 
@@ -784,7 +805,7 @@ public class FinallyProcessor {
                   return null;
                 }
 
-                for (int j = 0; i < instrNext.getOperands().length; j++) {
+                for (int j = 0; j < instrNext.getOperands().length; j++) {
                   if (instrNext.getOperand(j) != instrBlock.getOperand(j)) {
                     return null;
                   }
@@ -889,7 +910,7 @@ public class FinallyProcessor {
 
       graph.getBlocks().addWithKey(newblock, newblock.id);
 
-      HashSet<BasicBlock> setFinallyExits = graph.getFinallyExits();
+      Set<BasicBlock> setFinallyExits = graph.getFinallyExits();
       if (setFinallyExits.contains(sample)) {
         setFinallyExits.remove(sample);
         setFinallyExits.add(newblock);
@@ -939,10 +960,10 @@ public class FinallyProcessor {
     return true;
   }
 
-  private void deleteArea(ControlFlowGraph graph, Object[] area) {
+  private static void deleteArea(ControlFlowGraph graph, Area area) {
 
-    BasicBlock start = (BasicBlock)area[0];
-    BasicBlock next = (BasicBlock)area[2];
+    BasicBlock start = area.start;
+    BasicBlock next = area.next;
 
     if (start == next) {
       return;
@@ -954,23 +975,23 @@ public class FinallyProcessor {
     }
 
     // collect common exception ranges of predecessors and successors
-    HashSet<BasicBlock> setCommonExceptionHandlers = new HashSet<BasicBlock>(next.getSuccExceptions());
+    Set<BasicBlock> setCommonExceptionHandlers = new HashSet<BasicBlock>(next.getSuccExceptions());
     for (BasicBlock pred : start.getPreds()) {
       setCommonExceptionHandlers.retainAll(pred.getSuccExceptions());
     }
 
     boolean is_outside_range = false;
 
-    HashSet<BasicBlock> setPredecessors = new HashSet<BasicBlock>(start.getPreds());
+    Set<BasicBlock> setPredecessors = new HashSet<BasicBlock>(start.getPreds());
 
     // replace start with next
     for (BasicBlock pred : setPredecessors) {
       pred.replaceSuccessor(start, next);
     }
 
-    HashSet<BasicBlock> setBlocks = (HashSet<BasicBlock>)area[1];
+    Set<BasicBlock> setBlocks = area.sample;
 
-    HashSet<ExceptionRangeCFG> setCommonRemovedExceptionRanges = null;
+    Set<ExceptionRangeCFG> setCommonRemovedExceptionRanges = null;
 
     // remove all the blocks inbetween
     for (BasicBlock block : setBlocks) {
@@ -983,7 +1004,7 @@ public class FinallyProcessor {
           is_outside_range = true;
         }
 
-        HashSet<ExceptionRangeCFG> setRemovedExceptionRanges = new HashSet<ExceptionRangeCFG>();
+        Set<ExceptionRangeCFG> setRemovedExceptionRanges = new HashSet<ExceptionRangeCFG>();
         for (BasicBlock handler : block.getSuccExceptions()) {
           setRemovedExceptionRanges.add(graph.getExceptionRange(handler, block));
         }
@@ -1036,7 +1057,7 @@ public class FinallyProcessor {
     }
   }
 
-  private void removeExceptionInstructionsEx(BasicBlock block, int blocktype, int finallytype) {
+  private static void removeExceptionInstructionsEx(BasicBlock block, int blocktype, int finallytype) {
 
     InstructionSequence seq = block.getSeq();
 

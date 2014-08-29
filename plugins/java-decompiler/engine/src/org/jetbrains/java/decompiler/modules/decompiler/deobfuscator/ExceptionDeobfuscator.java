@@ -32,16 +32,30 @@ import java.util.Map.Entry;
 
 public class ExceptionDeobfuscator {
 
+  private static class Range {
+    private final BasicBlock handler;
+    private final String uniqueStr;
+    private final Set<BasicBlock> protectedRange;
+    private final ExceptionRangeCFG rangeCFG;
+
+    private Range(BasicBlock handler, String uniqueStr, Set<BasicBlock> protectedRange, ExceptionRangeCFG rangeCFG) {
+      this.handler = handler;
+      this.uniqueStr = uniqueStr;
+      this.protectedRange = protectedRange;
+      this.rangeCFG = rangeCFG;
+    }
+  }
+
   public static void restorePopRanges(ControlFlowGraph graph) {
 
-    List<Object[]> lstRanges = new ArrayList<Object[]>();
+    List<Range> lstRanges = new ArrayList<Range>();
 
     // aggregate ranges
     for (ExceptionRangeCFG range : graph.getExceptions()) {
       boolean found = false;
-      for (Object[] arr : lstRanges) {
-        if (arr[0] == range.getHandler() && InterpreterUtil.equalObjects(range.getUniqueExceptionsString(), arr[1])) {
-          ((HashSet<BasicBlock>)arr[2]).addAll(range.getProtectedRange());
+      for (Range arr : lstRanges) {
+        if (arr.handler == range.getHandler() && InterpreterUtil.equalObjects(range.getUniqueExceptionsString(), arr.uniqueStr)) {
+          arr.protectedRange.addAll(range.getProtectedRange());
           found = true;
           break;
         }
@@ -49,37 +63,36 @@ public class ExceptionDeobfuscator {
 
       if (!found) {
         // doesn't matter, which range chosen
-        lstRanges.add(
-          new Object[]{range.getHandler(), range.getUniqueExceptionsString(), new HashSet<BasicBlock>(range.getProtectedRange()), range});
+        lstRanges.add(new Range(range.getHandler(), range.getUniqueExceptionsString(), new HashSet<BasicBlock>(range.getProtectedRange()), range));
       }
     }
 
     // process aggregated ranges
-    for (Object[] range : lstRanges) {
+    for (Range range : lstRanges) {
 
-      if (range[1] != null) {
+      if (range.uniqueStr != null) {
 
-        BasicBlock handler = (BasicBlock)range[0];
+        BasicBlock handler = range.handler;
         InstructionSequence seq = handler.getSeq();
 
-        Instruction firstinstr = null;
+        Instruction firstinstr;
         if (seq.length() > 0) {
           firstinstr = seq.getInstr(0);
 
           if (firstinstr.opcode == CodeConstants.opc_pop ||
               firstinstr.opcode == CodeConstants.opc_astore) {
-            HashSet<BasicBlock> setrange = new HashSet<BasicBlock>((HashSet<BasicBlock>)range[2]);
+            Set<BasicBlock> setrange = new HashSet<BasicBlock>(range.protectedRange);
 
-            for (Object[] range_super : lstRanges) { // finally or strict superset
+            for (Range range_super : lstRanges) { // finally or strict superset
 
               if (range != range_super) {
 
-                HashSet<BasicBlock> setrange_super = new HashSet<BasicBlock>((HashSet<BasicBlock>)range_super[2]);
+                Set<BasicBlock> setrange_super = new HashSet<BasicBlock>(range_super.protectedRange);
 
-                if (!setrange.contains(range_super[0]) && !setrange_super.contains(handler)
-                    && (range_super[1] == null || setrange_super.containsAll(setrange))) {
+                if (!setrange.contains(range_super.handler) && !setrange_super.contains(handler)
+                    && (range_super.uniqueStr == null || setrange_super.containsAll(setrange))) {
 
-                  if (range_super[1] == null) {
+                  if (range_super.uniqueStr == null) {
                     setrange_super.retainAll(setrange);
                   }
                   else {
@@ -129,11 +142,10 @@ public class ExceptionDeobfuscator {
                       seq.removeInstruction(0);
                     }
 
+                    newblock.addSuccessorException(range_super.handler);
+                    range_super.rangeCFG.getProtectedRange().add(newblock);
 
-                    newblock.addSuccessorException((BasicBlock)range_super[0]);
-                    ((ExceptionRangeCFG)range_super[3]).getProtectedRange().add(newblock);
-
-                    handler = ((ExceptionRangeCFG)range[3]).getHandler();
+                    handler = range.rangeCFG.getHandler();
                     seq = handler.getSeq();
                   }
                 }
@@ -147,7 +159,7 @@ public class ExceptionDeobfuscator {
 
   public static void insertEmptyExceptionHandlerBlocks(ControlFlowGraph graph) {
 
-    HashSet<BasicBlock> setVisited = new HashSet<BasicBlock>();
+    Set<BasicBlock> setVisited = new HashSet<BasicBlock>();
 
     for (ExceptionRangeCFG range : graph.getExceptions()) {
       BasicBlock handler = range.getHandler();
@@ -255,7 +267,7 @@ public class ExceptionDeobfuscator {
     List<BasicBlock> lstRes = new ArrayList<BasicBlock>();
 
     LinkedList<BasicBlock> stack = new LinkedList<BasicBlock>();
-    HashSet<BasicBlock> setVisited = new HashSet<BasicBlock>();
+    Set<BasicBlock> setVisited = new HashSet<BasicBlock>();
 
     BasicBlock handler = range.getHandler();
     stack.addFirst(handler);
@@ -285,22 +297,20 @@ public class ExceptionDeobfuscator {
 
   public static boolean hasObfuscatedExceptions(ControlFlowGraph graph) {
 
-    BasicBlock first = graph.getFirst();
-
-    HashMap<BasicBlock, HashSet<BasicBlock>> mapRanges = new HashMap<BasicBlock, HashSet<BasicBlock>>();
+    Map<BasicBlock, Set<BasicBlock>> mapRanges = new HashMap<BasicBlock, Set<BasicBlock>>();
     for (ExceptionRangeCFG range : graph.getExceptions()) {
-      HashSet<BasicBlock> set = mapRanges.get(range.getHandler());
+      Set<BasicBlock> set = mapRanges.get(range.getHandler());
       if (set == null) {
         mapRanges.put(range.getHandler(), set = new HashSet<BasicBlock>());
       }
       set.addAll(range.getProtectedRange());
     }
 
-    for (Entry<BasicBlock, HashSet<BasicBlock>> ent : mapRanges.entrySet()) {
-      HashSet<BasicBlock> setEntries = new HashSet<BasicBlock>();
+    for (Entry<BasicBlock, Set<BasicBlock>> ent : mapRanges.entrySet()) {
+      Set<BasicBlock> setEntries = new HashSet<BasicBlock>();
 
       for (BasicBlock block : ent.getValue()) {
-        HashSet<BasicBlock> setTemp = new HashSet<BasicBlock>(block.getPreds());
+        Set<BasicBlock> setTemp = new HashSet<BasicBlock>(block.getPreds());
         setTemp.removeAll(ent.getValue());
 
         if (!setTemp.isEmpty()) {

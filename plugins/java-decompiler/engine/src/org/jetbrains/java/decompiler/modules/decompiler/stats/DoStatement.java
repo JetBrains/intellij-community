@@ -93,37 +93,38 @@ public class DoStatement extends Statement {
 
   public String toJava(int indent) {
     String indstr = InterpreterUtil.getIndentString(indent);
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
 
     String new_line_separator = DecompilerContext.getNewLineSeparator();
 
     buf.append(ExprProcessor.listToJava(varDefinitions, indent));
 
     if (isLabeled()) {
-      buf.append(indstr + "label" + this.id + ":" + new_line_separator);
+      buf.append(indstr).append("label").append(this.id).append(":").append(new_line_separator);
     }
 
     switch (looptype) {
       case LOOP_DO:
-        buf.append(indstr + "while(true) {" + new_line_separator);
+        buf.append(indstr).append("while(true) {").append(new_line_separator);
         buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true));
-        buf.append(indstr + "}" + new_line_separator);
+        buf.append(indstr).append("}").append(new_line_separator);
         break;
       case LOOP_DOWHILE:
-        buf.append(indstr + "do {" + new_line_separator);
+        buf.append(indstr).append("do {").append(new_line_separator);
         buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true));
-        buf.append(indstr + "} while(" + conditionExprent.get(0).toJava(indent) + ");" + new_line_separator);
+        buf.append(indstr).append("} while(").append(conditionExprent.get(0).toJava(indent)).append(");").append(new_line_separator);
         break;
       case LOOP_WHILE:
-        buf.append(indstr + "while(" + conditionExprent.get(0).toJava(indent) + ") {" + new_line_separator);
+        buf.append(indstr).append("while(").append(conditionExprent.get(0).toJava(indent)).append(") {").append(new_line_separator);
         buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true));
-        buf.append(indstr + "}" + new_line_separator);
+        buf.append(indstr).append("}").append(new_line_separator);
         break;
       case LOOP_FOR:
-        buf.append(indstr + "for(" + (initExprent.get(0) == null ? "" : initExprent.get(0).toJava(indent)) +
-                   "; " + conditionExprent.get(0).toJava(indent) + "; " + incExprent.get(0).toJava(indent) + ") {" + new_line_separator);
+        buf.append(indstr).append("for(").append(initExprent.get(0) == null ? "" : initExprent.get(0).toJava(indent)).append("; ")
+          .append(conditionExprent.get(0).toJava(indent)).append("; ").append(incExprent.get(0).toJava(indent)).append(") {")
+          .append(new_line_separator);
         buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true));
-        buf.append(indstr + "}" + new_line_separator);
+        buf.append(indstr).append("}").append(new_line_separator);
     }
 
     return buf.toString();

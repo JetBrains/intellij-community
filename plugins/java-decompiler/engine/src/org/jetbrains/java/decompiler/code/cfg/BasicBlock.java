@@ -169,7 +169,7 @@ public class BasicBlock implements IGraphNode {
 
     String new_line_separator = DecompilerContext.getNewLineSeparator();
 
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
 
     for (int i = 0; i < seq.length(); i++) {
       if (i < instrOldOffsets.size()) {

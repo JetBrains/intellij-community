@@ -67,6 +67,8 @@ public class ClassWrapper {
       setFieldNames.add(fd.getName());
     }
 
+    int maxsec = Integer.parseInt(DecompilerContext.getProperty(IFernflowerPreferences.MAX_PROCESSING_METHOD).toString());
+
     for (StructMethod mt : classStruct.getMethods()) {
 
       DecompilerContext.getLogger().startMethod(mt.getName() + " " + mt.getDescriptor());
@@ -83,7 +85,6 @@ public class ClassWrapper {
       VarProcessor varproc = new VarProcessor();
       DecompilerContext.setProperty(DecompilerContext.CURRENT_VAR_PROCESSOR, varproc);
 
-      Thread mtthread = null;
       RootStatement root = null;
 
       boolean isError = false;
@@ -91,28 +92,25 @@ public class ClassWrapper {
       try {
         if (mt.containsCode()) {
 
-          int maxsec = 10 * Integer.parseInt(DecompilerContext.getProperty(IFernflowerPreferences.MAX_PROCESSING_METHOD).toString());
-
           if (maxsec == 0) { // blocking wait
             root = MethodProcessorThread.codeToJava(mt, varproc);
           }
           else {
             MethodProcessorThread mtproc = new MethodProcessorThread(mt, varproc, DecompilerContext.getCurrentContext());
-            mtthread = new Thread(mtproc);
+            Thread mtthread = new Thread(mtproc);
+            long stopAt = System.currentTimeMillis() + maxsec * 1000;
 
             mtthread.start();
 
-            int sec = 0;
             while (mtthread.isAlive()) {
 
-              synchronized (mtproc) {
-                mtproc.wait(100);
+              synchronized (mtproc.lock) {
+                mtproc.lock.wait(100);
               }
 
-              if (maxsec > 0 && ++sec > maxsec) {
-                DecompilerContext.getLogger().writeMessage("Processing time limit (" + maxsec + " sec.) for method " +
-                                                           mt.getName() + " " + mt.getDescriptor() + " exceeded, execution interrupted.",
-                                                           IFernflowerLogger.ERROR);
+              if (System.currentTimeMillis() >= stopAt) {
+                String message = "Processing time limit exceeded for method " + mt.getName() + ", execution interrupted.";
+                DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.ERROR);
                 mtthread.stop();
                 isError = true;
                 break;
@@ -120,12 +118,7 @@ public class ClassWrapper {
             }
 
             if (!isError) {
-              if (mtproc.getError() != null) {
-                throw mtproc.getError();
-              }
-              else {
-                root = mtproc.getRoot();
-              }
+              root = mtproc.getResult();
             }
           }
         }
@@ -157,17 +150,6 @@ public class ClassWrapper {
             }
           }
         }
-      }
-      catch (ThreadDeath ex) {
-        try {
-          if (mtthread != null) {
-            mtthread.stop();
-          }
-        }
-        catch (Throwable ignored) {
-        }
-
-        throw ex;
       }
       catch (Throwable ex) {
         DecompilerContext.getLogger().writeMessage("Method " + mt.getName() + " " + mt.getDescriptor() + " couldn't be decompiled.", ex);

@@ -115,7 +115,7 @@ public class VarExprent extends Exprent {
         if (processor != null && processor.getVarFinal(new VarVersionPaar(index, version)) == VarTypeProcessor.VAR_FINALEXPLICIT) {
           buf.append("final ");
         }
-        buf.append(ExprProcessor.getCastTypeName(getVartype()) + " ");
+        buf.append(ExprProcessor.getCastTypeName(getVartype())).append(" ");
       }
       buf.append(name == null ? ("var" + index + (version == 0 ? "" : "_" + version)) : name);
 

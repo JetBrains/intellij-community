@@ -116,13 +116,13 @@ public class CatchAllStatement extends Statement {
 
     String new_line_separator = DecompilerContext.getNewLineSeparator();
 
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
 
     buf.append(ExprProcessor.listToJava(varDefinitions, indent));
 
     boolean labeled = isLabeled();
     if (labeled) {
-      buf.append(indstr + "label" + this.id + ":" + new_line_separator);
+      buf.append(indstr).append("label").append(this.id).append(":").append(new_line_separator);
     }
 
     List<StatEdge> lstSuccs = first.getSuccessorEdges(STATEDGE_DIRECT_ALL);
@@ -134,26 +134,26 @@ public class CatchAllStatement extends Statement {
       buf.append(content);
     }
     else {
-      buf.append(indstr + "try {" + new_line_separator);
+      buf.append(indstr).append("try {").append(new_line_separator);
       buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true));
-      buf.append(indstr + "}");
+      buf.append(indstr).append("}");
     }
 
-    buf.append((isFinally ? " finally" :
-                " catch (" + vars.get(0).toJava(indent) + ")") + " {" + new_line_separator);
+    buf.append(isFinally ? " finally" :
+               " catch (" + vars.get(0).toJava(indent) + ")").append(" {").append(new_line_separator);
 
     if (monitor != null) {
       indstr1 = InterpreterUtil.getIndentString(indent + 1);
-      buf.append(indstr1 + "if(" + monitor.toJava(indent) + ") {" + new_line_separator);
+      buf.append(indstr1).append("if(").append(monitor.toJava(indent)).append(") {").append(new_line_separator);
     }
 
     buf.append(ExprProcessor.jmpWrapper(handler, indent + 1 + (monitor != null ? 1 : 0), true));
 
     if (monitor != null) {
-      buf.append(indstr1 + "}" + new_line_separator);
+      buf.append(indstr1).append("}").append(new_line_separator);
     }
 
-    buf.append(indstr + "}" + new_line_separator);
+    buf.append(indstr).append("}").append(new_line_separator);
 
     return buf.toString();
   }

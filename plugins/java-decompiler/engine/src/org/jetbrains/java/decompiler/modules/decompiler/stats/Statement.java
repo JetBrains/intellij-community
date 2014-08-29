@@ -126,28 +126,21 @@ public class Statement {
     isMonitorEnter = false;
     containsMonitorExit = false;
 
-    for (Map<Integer, List<StatEdge>> map : new Map[]{mapSuccEdges, mapPredEdges}) {
-      map.remove(StatEdge.TYPE_EXCEPTION);
+    processMap(mapSuccEdges);
+    processMap(mapPredEdges);
+    processMap(mapSuccStates);
+    processMap(mapPredStates);
+  }
 
-      List<StatEdge> lst = map.get(STATEDGE_DIRECT_ALL);
-      if (lst != null) {
-        map.put(STATEDGE_ALL, new ArrayList<StatEdge>(lst));
-      }
-      else {
-        map.remove(STATEDGE_ALL);
-      }
+  private static <T> void processMap(Map<Integer, List<T>> map) {
+    map.remove(StatEdge.TYPE_EXCEPTION);
+
+    List<T> lst = map.get(STATEDGE_DIRECT_ALL);
+    if (lst != null) {
+      map.put(STATEDGE_ALL, new ArrayList<T>(lst));
     }
-
-    for (Map<Integer, List<Statement>> map : new Map[]{mapSuccStates, mapPredStates}) {
-      map.remove(StatEdge.TYPE_EXCEPTION);
-
-      List<Statement> lst = map.get(STATEDGE_DIRECT_ALL);
-      if (lst != null) {
-        map.put(STATEDGE_ALL, new ArrayList<Statement>(lst));
-      }
-      else {
-        map.remove(STATEDGE_ALL);
-      }
+    else {
+      map.remove(STATEDGE_ALL);
     }
   }
 
@@ -579,7 +572,7 @@ public class Statement {
   // private methods
   // *****************************************************************************
 
-  private void addToReversePostOrderListIterative(Statement root, List<Statement> lst) {
+  private static void addToReversePostOrderListIterative(Statement root, List<Statement> lst) {
 
     LinkedList<Statement> stackNode = new LinkedList<Statement>();
     LinkedList<Integer> stackIndex = new LinkedList<Integer>();
@@ -622,7 +615,7 @@ public class Statement {
   }
 
 
-  private void addToPostReversePostOrderList(Statement stat, List<Statement> lst, HashSet<Statement> setVisited) {
+  private static void addToPostReversePostOrderList(Statement stat, List<Statement> lst, HashSet<Statement> setVisited) {
 
     if (setVisited.contains(stat)) { // because of not considered exception edges, s. isExitComponent. Should be rewritten, if possible.
       return;

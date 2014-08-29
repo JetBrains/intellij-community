@@ -116,7 +116,7 @@ public class ConstExprent extends Exprent {
     else {
       switch (consttype.type) {
         case CodeConstants.TYPE_BOOLEAN:
-          return new Boolean(((Integer)value).intValue() != 0).toString();
+          return Boolean.toString(((Integer)value).intValue() != 0);
         case CodeConstants.TYPE_CHAR:
           Integer val = (Integer)value;
           String ret = escapes.get(val);
@@ -267,7 +267,7 @@ public class ConstExprent extends Exprent {
     throw new RuntimeException("invalid constant type");
   }
 
-  private String convertStringToJava(String value, boolean ascii) {
+  private static String convertStringToJava(String value, boolean ascii) {
     char[] arr = value.toCharArray();
     StringBuilder buffer = new StringBuilder(arr.length);
 

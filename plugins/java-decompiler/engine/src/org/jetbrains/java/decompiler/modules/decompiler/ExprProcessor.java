@@ -259,7 +259,7 @@ public class ExprProcessor implements CodeConstants {
   }
 
   // FIXME: Ugly code, to be rewritten. A tuple class is needed.
-  private String buildEntryPointKey(LinkedList<String> entrypoints) {
+  private static String buildEntryPointKey(LinkedList<String> entrypoints) {
     if (entrypoints.isEmpty()) {
       return null;
     }
@@ -273,7 +273,7 @@ public class ExprProcessor implements CodeConstants {
     }
   }
 
-  private PrimitiveExprsList copyVarExprents(PrimitiveExprsList data) {
+  private static PrimitiveExprsList copyVarExprents(PrimitiveExprsList data) {
     ExprentStack stack = data.getStack();
     for (int i = 0; i < stack.size(); i++) {
       stack.set(i, stack.get(i).copy());
@@ -281,7 +281,7 @@ public class ExprProcessor implements CodeConstants {
     return data;
   }
 
-  private void collectCatchVars(Statement stat, FlattenStatementsHelper flatthelper, Map<String, VarExprent> map) {
+  private static void collectCatchVars(Statement stat, FlattenStatementsHelper flatthelper, Map<String, VarExprent> map) {
 
     List<VarExprent> lst = null;
 
@@ -306,7 +306,7 @@ public class ExprProcessor implements CodeConstants {
     }
   }
 
-  private void initStatementExprents(Statement stat) {
+  private static void initStatementExprents(Statement stat) {
     stat.initExprents();
 
     for (Statement st : stat.getStats()) {
@@ -754,7 +754,7 @@ public class ExprProcessor implements CodeConstants {
   }
 
   public static String jmpWrapper(Statement stat, int indent, boolean semicolon) {
-    StringBuffer buf = new StringBuffer(stat.toJava(indent));
+    StringBuilder buf = new StringBuilder(stat.toJava(indent));
 
     String new_line_separator = DecompilerContext.getNewLineSeparator();
 
@@ -773,14 +773,14 @@ public class ExprProcessor implements CodeConstants {
         }
 
         if (edge.labeled) {
-          buf.append(" label" + edge.closure.id);
+          buf.append(" label").append(edge.closure.id);
         }
-        buf.append(";" + new_line_separator);
+        buf.append(";").append(new_line_separator);
       }
     }
 
     if (buf.length() == 0 && semicolon) {
-      buf.append(InterpreterUtil.getIndentString(indent) + ";" + new_line_separator);
+      buf.append(InterpreterUtil.getIndentString(indent)).append(";").append(new_line_separator);
     }
 
     return buf.toString();
@@ -789,7 +789,7 @@ public class ExprProcessor implements CodeConstants {
   public static String buildJavaClassName(String name) {
     String res = name.replace('/', '.');
 
-    if (res.indexOf("$") >= 0) { // attempt to invoke foreign member
+    if (res.contains("$")) { // attempt to invoke foreign member
       // classes correctly
       StructClass cl = DecompilerContext.getStructcontext().getClass(name);
       if (cl == null || !cl.isOwn()) {
@@ -808,7 +808,7 @@ public class ExprProcessor implements CodeConstants {
     String indstr = InterpreterUtil.getIndentString(indent);
     String new_line_separator = DecompilerContext.getNewLineSeparator();
 
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
 
     for (Exprent expr : lst) {
       String content = expr.toJava(indent);

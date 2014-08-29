@@ -311,8 +311,7 @@ public class ConsoleDecompiler implements IBytecodeProvider, IDecompilatSaver {
       String filename = new File(getAbsolutePath(path), archivename).getAbsolutePath();
 
       mapArchiveEntries.remove(filename);
-      ZipOutputStream out = mapArchiveStreams.remove(filename);
-
+      OutputStream out = mapArchiveStreams.remove(filename);
       out.flush();
       out.close();
     }

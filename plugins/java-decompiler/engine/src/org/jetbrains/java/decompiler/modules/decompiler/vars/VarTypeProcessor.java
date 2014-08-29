@@ -102,7 +102,7 @@ public class VarTypeProcessor {
     while (!processVarTypes(dgraph)) ;
   }
 
-  private void resetExprentTypes(DirectGraph dgraph) {
+  private static void resetExprentTypes(DirectGraph dgraph) {
 
     dgraph.iterateExprents(new DirectGraph.ExprentIterator() {
       public int processExprent(Exprent exprent) {

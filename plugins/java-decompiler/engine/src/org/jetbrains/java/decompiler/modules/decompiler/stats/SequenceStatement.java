@@ -112,7 +112,7 @@ public class SequenceStatement extends Statement {
     if (islabeled) {
       indstr = InterpreterUtil.getIndentString(indent);
       indent++;
-      buf.append(indstr + "label" + this.id + ": {" + new_line_separator);
+      buf.append(indstr).append("label").append(this.id).append(": {").append(new_line_separator);
     }
 
     boolean notempty = false;
@@ -132,7 +132,7 @@ public class SequenceStatement extends Statement {
     }
 
     if (islabeled) {
-      buf.append(indstr + "}" + new_line_separator);
+      buf.append(indstr).append("}").append(new_line_separator);
     }
 
     return buf.toString();

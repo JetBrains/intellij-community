@@ -158,7 +158,7 @@ public class LazyLoader {
     return link == null ? null : getClassStream(link.externPath, link.internPath);
   }
 
-  private void skipAttributes(DataInputFullStream in) throws IOException {
+  private static void skipAttributes(DataInputFullStream in) throws IOException {
 
     int length = in.readUnsignedShort();
     for (int i = 0; i < length; i++) {

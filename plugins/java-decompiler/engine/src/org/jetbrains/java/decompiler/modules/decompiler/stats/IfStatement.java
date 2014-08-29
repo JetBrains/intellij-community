@@ -201,7 +201,7 @@ public class IfStatement extends Statement {
 
   public String toJava(int indent) {
     String indstr = InterpreterUtil.getIndentString(indent);
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
 
     String new_line_separator = DecompilerContext.getNewLineSeparator();
 
@@ -209,10 +209,10 @@ public class IfStatement extends Statement {
     buf.append(first.toJava(indent));
 
     if (isLabeled()) {
-      buf.append(indstr + "label" + this.id + ":" + new_line_separator);
+      buf.append(indstr).append("label").append(this.id).append(":").append(new_line_separator);
     }
 
-    buf.append(indstr + headexprent.get(0).toJava(indent) + " {" + new_line_separator);
+    buf.append(indstr).append(headexprent.get(0).toJava(indent)).append(" {").append(new_line_separator);
 
     if (ifstat == null) {
       buf.append(InterpreterUtil.getIndentString(indent + 1));
@@ -228,10 +228,10 @@ public class IfStatement extends Statement {
         }
 
         if (ifedge.labeled) {
-          buf.append(" label" + ifedge.closure.id);
+          buf.append(" label").append(ifedge.closure.id);
         }
       }
-      buf.append(";" + new_line_separator);
+      buf.append(";").append(new_line_separator);
     }
     else {
       buf.append(ExprProcessor.jmpWrapper(ifstat, indent + 1, true));
@@ -248,7 +248,7 @@ public class IfStatement extends Statement {
         String content = ExprProcessor.jmpWrapper(elsestat, indent, false);
         content = content.substring(indstr.length());
 
-        buf.append(indstr + "} else ");
+        buf.append(indstr).append("} else ");
         buf.append(content);
 
         elseif = true;
@@ -257,14 +257,14 @@ public class IfStatement extends Statement {
         String content = ExprProcessor.jmpWrapper(elsestat, indent + 1, false);
 
         if (content.length() > 0) {
-          buf.append(indstr + "} else {" + new_line_separator);
+          buf.append(indstr).append("} else {").append(new_line_separator);
           buf.append(content);
         }
       }
     }
 
     if (!elseif) {
-      buf.append(indstr + "}" + new_line_separator);
+      buf.append(indstr).append("}").append(new_line_separator);
     }
 
     return buf.toString();

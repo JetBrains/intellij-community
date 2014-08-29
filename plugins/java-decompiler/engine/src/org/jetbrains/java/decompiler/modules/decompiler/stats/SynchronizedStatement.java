@@ -73,17 +73,17 @@ public class SynchronizedStatement extends Statement {
 
     String new_line_separator = DecompilerContext.getNewLineSeparator();
 
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
     buf.append(ExprProcessor.listToJava(varDefinitions, indent));
     buf.append(first.toJava(indent));
 
     if (isLabeled()) {
-      buf.append(indstr + "label" + this.id + ":" + new_line_separator);
+      buf.append(indstr).append("label").append(this.id).append(":").append(new_line_separator);
     }
 
-    buf.append(indstr + headexprent.get(0).toJava(indent) + " {" + new_line_separator);
+    buf.append(indstr).append(headexprent.get(0).toJava(indent)).append(" {").append(new_line_separator);
     buf.append(ExprProcessor.jmpWrapper(body, indent + 1, true));
-    buf.append(indstr + "}" + new_line_separator);
+    buf.append(indstr).append("}").append(new_line_separator);
 
     return buf.toString();
   }

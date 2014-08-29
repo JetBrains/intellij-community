@@ -683,7 +683,7 @@ public class SSAUConstructorSparseEx {
     return mapNew;
   }
 
-  private SFormsFastMapDirect mergeMaps(SFormsFastMapDirect mapTo, SFormsFastMapDirect map2) {
+  private static SFormsFastMapDirect mergeMaps(SFormsFastMapDirect mapTo, SFormsFastMapDirect map2) {
 
     if (map2 != null && !map2.isEmpty()) {
       mapTo.union(map2);
@@ -692,7 +692,7 @@ public class SSAUConstructorSparseEx {
     return mapTo;
   }
 
-  private boolean mapsEqual(SFormsFastMapDirect map1, SFormsFastMapDirect map2) {
+  private static boolean mapsEqual(SFormsFastMapDirect map1, SFormsFastMapDirect map2) {
 
     if (map1 == null) {
       return map2 == null;
@@ -789,7 +789,7 @@ public class SSAUConstructorSparseEx {
     return map;
   }
 
-  private Integer getFirstProtectedRange(Statement stat) {
+  private static Integer getFirstProtectedRange(Statement stat) {
 
     while (true) {
       Statement parent = stat.getParent();

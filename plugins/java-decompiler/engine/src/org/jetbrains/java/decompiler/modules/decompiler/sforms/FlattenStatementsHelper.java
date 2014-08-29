@@ -26,20 +26,19 @@ import java.util.Map.Entry;
 public class FlattenStatementsHelper {
 
   // statement.id, node.id(direct), node.id(continue)
-  private HashMap<Integer, String[]> mapDestinationNodes = new HashMap<Integer, String[]>();
+  private Map<Integer, String[]> mapDestinationNodes = new HashMap<Integer, String[]>();
 
   // node.id(source), statement.id(destination), edge type
   private List<Edge> listEdges = new ArrayList<Edge>();
 
   // node.id(exit), [node.id(source), statement.id(destination)]
-  public HashMap<String, List<String[]>> mapShortRangeFinallyPathIds = new HashMap<String, List<String[]>>();
+  private Map<String, List<String[]>> mapShortRangeFinallyPathIds = new HashMap<String, List<String[]>>();
 
   // node.id(exit), [node.id(source), statement.id(destination)]
-  public HashMap<String, List<String[]>> mapLongRangeFinallyPathIds = new HashMap<String, List<String[]>>();
+  private Map<String, List<String[]>> mapLongRangeFinallyPathIds = new HashMap<String, List<String[]>>();
 
   // positive if branches
-  public HashMap<String, String> mapPosIfBranch = new HashMap<String, String>();
-
+  private Map<String, Integer> mapPosIfBranch = new HashMap<String, Integer>();
 
   private DirectGraph graph;
 
@@ -99,7 +98,7 @@ public class FlattenStatementsHelper {
       LinkedList<StackEntry> stackFinally = statEntry.stackFinally;
       int statementBreakIndex = statEntry.statementIndex;
 
-      DirectNode node = null, nd = null;
+      DirectNode node, nd;
 
       List<StatEdge> lstSuccEdges = new ArrayList<StatEdge>();
       DirectNode sourcenode = null;
@@ -133,7 +132,7 @@ public class FlattenStatementsHelper {
 
             // 'if' statement: record positive branch
             if (stat.getLastBasicType() == Statement.LASTBASICTYPE_IF) {
-              mapPosIfBranch.put(sourcenode.id, lstSuccEdges.get(0).getDestination().id.toString());
+              mapPosIfBranch.put(sourcenode.id, lstSuccEdges.get(0).getDestination().id);
             }
 
             break;
@@ -485,7 +484,7 @@ public class FlattenStatementsHelper {
     }
   }
 
-  public HashMap<Integer, String[]> getMapDestinationNodes() {
+  public Map<Integer, String[]> getMapDestinationNodes() {
     return mapDestinationNodes;
   }
 

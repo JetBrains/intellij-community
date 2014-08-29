@@ -1046,7 +1046,7 @@ public class ClassWriter {
     return !hidemethod;
   }
 
-  private List<AnnotationExprent> getAllAnnotations(VBStyleCollection<StructGeneralAttribute, String> attributes) {
+  private static List<AnnotationExprent> getAllAnnotations(VBStyleCollection<StructGeneralAttribute, String> attributes) {
 
     String[] annattrnames = new String[]{StructGeneralAttribute.ATTRIBUTE_RUNTIME_VISIBLE_ANNOTATIONS,
       StructGeneralAttribute.ATTRIBUTE_RUNTIME_INVISIBLE_ANNOTATIONS};
@@ -1063,7 +1063,7 @@ public class ClassWriter {
     return lst;
   }
 
-  private List<List<AnnotationExprent>> getAllParameterAnnotations(VBStyleCollection<StructGeneralAttribute, String> attributes) {
+  private static List<List<AnnotationExprent>> getAllParameterAnnotations(VBStyleCollection<StructGeneralAttribute, String> attributes) {
 
     String[] annattrnames = new String[]{StructGeneralAttribute.ATTRIBUTE_RUNTIME_VISIBLE_PARAMETER_ANNOTATIONS,
       StructGeneralAttribute.ATTRIBUTE_RUNTIME_INVISIBLE_PARAMETER_ANNOTATIONS};
@@ -1095,7 +1095,7 @@ public class ClassWriter {
     return ret;
   }
 
-  private String getDescriptorPrintOut(String descriptor, int element) {
+  private static String getDescriptorPrintOut(String descriptor, int element) {
 
     switch (element) {
       case 0: // class
@@ -1125,7 +1125,7 @@ public class ClassWriter {
     }
   }
 
-  private String getTypePrintOut(VarType type) {
+  private static String getTypePrintOut(VarType type) {
     String strtype = ExprProcessor.getCastTypeName(type, false);
     if (ExprProcessor.UNDEFINED_TYPE_STRING.equals(strtype) &&
         DecompilerContext.getOption(IFernflowerPreferences.UNDEFINED_PARAM_TYPE_OBJECT)) {

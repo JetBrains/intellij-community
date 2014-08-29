@@ -122,9 +122,9 @@ public class ClassReference14Processor {
     }
   }
 
-  private void processClassRec(ClassNode node,
-                               final HashMap<ClassWrapper, MethodWrapper> mapClassMeths,
-                               final HashSet<ClassWrapper> setFound) {
+  private static void processClassRec(ClassNode node,
+                                      final HashMap<ClassWrapper, MethodWrapper> mapClassMeths,
+                                      final HashSet<ClassWrapper> setFound) {
 
     final ClassWrapper wrapper = node.wrapper;
 
@@ -221,7 +221,7 @@ public class ClassReference14Processor {
   }
 
 
-  private boolean replaceInvocations(Exprent exprent, ClassWrapper wrapper, MethodWrapper meth) {
+  private static boolean replaceInvocations(Exprent exprent, ClassWrapper wrapper, MethodWrapper meth) {
 
     boolean res = false;
 
@@ -250,7 +250,7 @@ public class ClassReference14Processor {
   }
 
 
-  private String isClass14Invocation(Exprent exprent, ClassWrapper wrapper, MethodWrapper meth) {
+  private static String isClass14Invocation(Exprent exprent, ClassWrapper wrapper, MethodWrapper meth) {
 
     if (exprent.type == Exprent.EXPRENT_FUNCTION) {
       FunctionExprent fexpr = (FunctionExprent)exprent;
