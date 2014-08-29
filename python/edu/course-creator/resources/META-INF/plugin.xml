@@ -1,0 +1,60 @@
+<idea-plugin version="2">
+  <id>org.jetbrains.plugins.coursecreator</id>
+  <name>Course Creator for PyCharm Educational</name>
+  <version>1.0</version>
+
+  <description><![CDATA[
+      Plugin allows you to create new course for PyCharm Education Edition.
+    ]]></description>
+
+  <change-notes><![CDATA[
+    ]]>
+  </change-notes>
+  <!-- please see http://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
+
+  <!-- please see http://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
+       on how to target different products -->
+  <!-- uncomment to enable plugin in all products
+  <depends>com.intellij.modules.lang</depends>
+  -->
+
+  <depends>com.intellij.modules.python</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <directoryProjectGenerator implementation="org.jetbrains.plugins.coursecreator.CCProjectGenerator"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.coursecreator.CCProjectService"/>
+    <codeInsight.lineMarkerProvider language="Python"
+                                    implementationClass="org.jetbrains.plugins.coursecreator.highlighting.CCTaskLineMarkerProvider"/>
+    <treeStructureProvider implementation="org.jetbrains.plugins.coursecreator.projectView.CCTreeStructureProvider"/>
+  </extensions>
+
+  <application-components>
+    <!-- Add your application components here -->
+  </application-components>
+
+  <project-components>
+    <!-- Add your project components here -->
+    <component>
+      <implementation-class>org.jetbrains.plugins.coursecreator.CCProjectComponent</implementation-class>
+    </component>
+  </project-components>
+
+  <actions>
+    <action id="CreateLesson" class="org.jetbrains.plugins.coursecreator.actions.CreateLesson">
+      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
+    </action>
+    <action id="CreateTaskFile" class="org.jetbrains.plugins.coursecreator.actions.CreateTaskFile">
+      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
+    </action>
+    <action id="CreateTask" class="org.jetbrains.plugins.coursecreator.actions.CreateTask">
+      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
+    </action>
+    <action id="AddTaskWindow" class="org.jetbrains.plugins.coursecreator.actions.AddTaskWindow">
+      <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="CopyReference"/>
+    </action>
+    <action id="PackCourse" class="org.jetbrains.plugins.coursecreator.actions.CreateCourseArchive">
+      <add-to-group group-id="MainToolBar" anchor="last" />
+    </action>
+  </actions>
+
+</idea-plugin>

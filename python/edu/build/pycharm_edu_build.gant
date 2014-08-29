@@ -216,6 +216,7 @@ private layoutPlugins(layouts) {
         fileset(dir: "$pythonEduHome/learn-python/resources/courses")
       }
     }
+    layouts.layoutPlugin("course-creator")
   }
 
   layouts.layoutCommunityPlugins(ch)
