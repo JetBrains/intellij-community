@@ -5,8 +5,18 @@
   <item name='org.eclipse.jgit.transport.CredentialsProvider boolean get(org.eclipse.jgit.transport.URIish, java.util.List&lt;org.eclipse.jgit.transport.CredentialItem&gt;) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='org.eclipse.jgit.transport.CredentialsProvider boolean get(org.eclipse.jgit.transport.URIish, org.eclipse.jgit.transport.CredentialItem...)'>
+    <annotation name='kotlin.jvm.KotlinSignature'>
+      <val name="value" val="&quot;fun get(uri: URIish, vararg items: CredentialItem): Boolean&quot;"/>
+    </annotation>
+  </item>
   <item name='org.eclipse.jgit.transport.CredentialsProvider boolean get(org.eclipse.jgit.transport.URIish, org.eclipse.jgit.transport.CredentialItem...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.transport.CredentialsProvider boolean supports(org.eclipse.jgit.transport.CredentialItem...)'>
+    <annotation name='kotlin.jvm.KotlinSignature'>
+      <val name="value" val="&quot;fun supports(vararg items: CredentialItem): Boolean&quot;"/>
+    </annotation>
   </item>
   <item name='org.eclipse.jgit.transport.CredentialsProvider boolean supports(org.eclipse.jgit.transport.CredentialItem...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>

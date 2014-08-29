@@ -33,7 +33,7 @@ import org.eclipse.jgit.merge.ResolveMerger
 
 fun wrapIfNeedAndReThrow(e: TransportException) {
   val message = e.getMessage()!!
-  if (message.contains(JGitText.get().notAuthorized) || message.contains("Auth cancel") || message.contains("Auth fail") /* JSch */) {
+  if (message.contains(JGitText.get().notAuthorized) || message.contains("Auth cancel") || message.contains("Auth fail") || message.contains(": reject HostKey:") /* JSch */) {
     throw AuthenticationException(message, e)
   }
   else {

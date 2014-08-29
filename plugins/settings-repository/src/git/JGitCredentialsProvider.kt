@@ -11,15 +11,17 @@ import org.jetbrains.plugins.settingsRepository.nullize
 import org.jetbrains.plugins.settingsRepository.isFulfilled
 import org.eclipse.jgit.lib.Repository
 import org.jetbrains.plugins.settingsRepository.isOSXCredentialsStoreSupported
+import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.openapi.ui.Messages
 
 class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<CredentialsStore>, private val repository: Repository) : CredentialsProvider() {
   private var credentialsFromGit: Credentials? = null
 
   override fun isInteractive() = true
 
-  override fun supports(vararg items: CredentialItem?): Boolean {
+  override fun supports(vararg items: CredentialItem): Boolean {
     for (item in items) {
-      if (item is CredentialItem.Password || item is CredentialItem.Username || item is CredentialItem.StringType) {
+      if (item is CredentialItem.Password || item is CredentialItem.Username || item is CredentialItem.StringType || item is CredentialItem.YesNoType) {
         continue
       }
       return false
@@ -27,7 +29,7 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
     return true
   }
 
-  override fun get(uri: URIish, vararg items: CredentialItem?): Boolean {
+  override fun get(uri: URIish, vararg items: CredentialItem): Boolean {
     var userNameItem: CredentialItem.Username? = null
     var passwordItem: CredentialItem? = null
     var sshKeyFile: String? = null
@@ -49,8 +51,16 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
           }
         }
       }
+      else if (item is CredentialItem.YesNoType) {
+        item.setValue(MessageDialogBuilder.yesNo("", item.getPromptText()!!).show() == Messages.YES)
+        return true
+      }
     }
-    return (userNameItem == null && passwordItem == null) || doGet(uri, userNameItem, passwordItem, sshKeyFile)
+
+    if (userNameItem == null && passwordItem == null) {
+      return false
+    }
+    return doGet(uri, userNameItem, passwordItem, sshKeyFile)
   }
 
   private fun doGet(uri: URIish, userNameItem: CredentialItem.Username?, passwordItem: CredentialItem?, sshKeyFile: String?): Boolean {
