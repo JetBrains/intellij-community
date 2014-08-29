@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xmlb;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
@@ -34,6 +35,8 @@ import java.util.Set;
 import static com.intellij.util.xmlb.Constants.*;
 
 class MapBinding implements Binding {
+  private static final Logger LOG = Logger.getInstance(MapBinding.class);
+
   private static final Comparator<Object> KEY_COMPARATOR = new Comparator<Object>() {
     @SuppressWarnings("unchecked")
     @Override
@@ -161,7 +164,10 @@ class MapBinding implements Binding {
       Object k = null;
       Object v = null;
 
-      assert entry.getName().equals(getEntryAttributeName());
+      if (!entry.getName().equals(getEntryAttributeName())) {
+        LOG.warn("unexpected entry for serialized Map will be skipped: " + entry);
+        continue;
+      }
 
       Attribute keyAttr = entry.getAttribute(getKeyAttributeName());
       if (keyAttr != null) {
