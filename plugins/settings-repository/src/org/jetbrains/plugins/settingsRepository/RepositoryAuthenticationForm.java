@@ -1,7 +1,9 @@
 package org.jetbrains.plugins.settingsRepository;
 
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -9,24 +11,57 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.event.DocumentEvent;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public final class RepositoryAuthenticationForm {
+final class RepositoryAuthenticationForm extends DialogWrapper {
   private static final Pattern HREF_PATTERN = Pattern.compile("<a(?:\\s+href\\s*=\\s*[\"']([^\"']*)[\"'])?\\s*>([^<]*)</a>");
 
-  private JTextField token;
-  private SimpleColoredComponent note;
-  private JPasswordField password;
+  private static final SimpleTextAttributes LINK_TEXT_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, JBColor.blue);
+  private static final SimpleTextAttributes SMALL_TEXT_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, null);
+
+  private JTextField tokenField;
+  private SimpleColoredComponent noteComponent;
+  private JPasswordField passwordField;
 
   private JPanel panel;
+  private JLabel tokenLabel;
+  private JLabel messageLabel;
 
-  public RepositoryAuthenticationForm(@Nullable String token, @Nullable String password, @Nullable String note) {
-    this.token.setText(token);
-    this.password.setText(password);
+  private final JComponent initialFocusedComponent;
+
+  public RepositoryAuthenticationForm(@NotNull String message, @Nullable String token, @Nullable String password, @Nullable String note, boolean onlyPassword) {
+    super(false);
+
+    setTitle("Settings Repository");
+    setResizable(false);
+
+    messageLabel.setText(message);
+    messageLabel.setBorder(new EmptyBorder(0, 0, 10, 0));
+
+    if (onlyPassword) {
+      tokenLabel.setVisible(false);
+      tokenField.setVisible(false);
+
+      passwordField.getDocument().addDocumentListener(new DocumentAdapter() {
+        @Override
+        protected void textChanged(DocumentEvent e) {
+          setOKActionEnabled(e.getDocument().getLength() != 0);
+        }
+      });
+      initialFocusedComponent = passwordField;
+      setOKActionEnabled(false);
+    }
+    else {
+      tokenField.setText(token);
+      passwordField.setText(password);
+      initialFocusedComponent = StringUtil.isEmpty(token) ? tokenField : passwordField;
+    }
 
     if (note == null) {
-      this.note.setVisible(false);
+      noteComponent.setVisible(false);
     }
     else {
       Matcher matcher = HREF_PATTERN.matcher(note);
@@ -34,35 +69,43 @@ public final class RepositoryAuthenticationForm {
       if (matcher.find()) {
         do {
           if (matcher.start() != prev) {
-            this.note.append(note.substring(prev, matcher.start()), new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, null));
+            noteComponent.append(note.substring(prev, matcher.start()), SMALL_TEXT_ATTRIBUTES);
           }
-          this.note.append(matcher.group(2), new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, JBColor.blue), new SimpleColoredComponent.BrowserLauncherTag(matcher.group(1)));
+          noteComponent.append(matcher.group(2), LINK_TEXT_ATTRIBUTES, new SimpleColoredComponent.BrowserLauncherTag(matcher.group(1)));
           prev = matcher.end();
         }
         while (matcher.find());
 
-        LinkMouseListenerBase.installSingleTagOn(this.note);
+        LinkMouseListenerBase.installSingleTagOn(noteComponent);
       }
 
       if (prev < note.length()) {
-        this.note.append(note.substring(prev), new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, null));
+        noteComponent.append(note.substring(prev), SMALL_TEXT_ATTRIBUTES);
       }
     }
+
+    init();
   }
 
-  @NotNull
-  public JPanel getPanel() {
+  @Nullable
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return initialFocusedComponent;
+  }
+
+  @Override
+  protected JComponent createCenterPanel() {
     return panel;
   }
 
   @Nullable
   public String getUsername() {
-    return StringUtil.nullize(token.getText(), true);
+    return StringUtil.nullize(tokenField.getText(), true);
   }
 
   @Nullable
   public char[] getPassword() {
-    char[] chars = password.getPassword();
+    char[] chars = passwordField.getPassword();
     return chars == null || chars.length == 0 ? null : chars;
   }
 }

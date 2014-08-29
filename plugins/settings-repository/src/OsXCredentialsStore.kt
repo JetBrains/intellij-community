@@ -65,6 +65,10 @@ class OsXCredentialsStore : CredentialsStore {
 
   private fun getServiceName(sshKeyFile: String?) = if (sshKeyFile == null) SERVICE_NAME else "SSH"
 
+  /**
+   * Note - in case of SSH, our added password will not be used until ssh-agent will not be restarted (simply execute "killall ssh-agent").
+   * Also, if you remove password from keychain, ssh-agent will continue to use cached password.
+   */
   override fun save(host: String?, credentials: Credentials, sshKeyFile: String?) {
     val accountName: String = sshKeyFile ?: host!!
     var oldCredentials = accountToCredentials.put(accountName, credentials)

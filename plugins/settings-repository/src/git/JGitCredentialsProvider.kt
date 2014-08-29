@@ -56,7 +56,8 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
   private fun doGet(uri: URIish, userNameItem: CredentialItem.Username?, passwordItem: CredentialItem?, sshKeyFile: String?): Boolean {
     var credentials: Credentials?
 
-    val userFromUri: String? = uri.getUser().nullize()
+    // SSH URL git@github.com:develar/_idea_settings.git, so, username will be "git", we ignore it because in case of SSH credentials account name equals to key filename, but not to username
+    val userFromUri: String? = if (sshKeyFile == null) uri.getUser().nullize() else null
     val passwordFromUri: String? = uri.getPass().nullize()
     var saveCredentialsToStore = false
     if (userFromUri != null && passwordFromUri != null) {
@@ -78,8 +79,7 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
         credentials = credentialsStore.getValue().get(uri.getHost(), sshKeyFile)
         saveCredentialsToStore = true
 
-        // SSH URL git@github.com:develar/_idea_settings.git, so, username will be "git", we ignore it because in case of SSH credentials account name equals to key filename, but not to username
-        if (userFromUri != null && (credentials == null || sshKeyFile == null)) {
+        if (userFromUri != null) {
           // username is in url - read password only if it is for the same user
           if (userFromUri != credentials?.username) {
             credentials = Credentials(userFromUri, passwordFromUri)
@@ -92,7 +92,7 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
     }
 
     if (!credentials.isFulfilled()) {
-      credentials = showAuthenticationForm(credentials, uri.toString(), uri.getHost())
+      credentials = showAuthenticationForm(credentials, uri.toStringWithoutCredentials(), uri.getHost(), sshKeyFile)
     }
 
     if (saveCredentialsToStore && credentials.isFulfilled()) {
@@ -116,4 +116,34 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
     credentialsFromGit = null
     credentialsStore.getValue().reset(uri)
   }
+}
+
+fun URIish.toStringWithoutCredentials(): String {
+  val r = StringBuilder()
+  if (getScheme() != null) {
+    r.append(getScheme())
+    r.append("://")
+  }
+
+  if (getHost() != null) {
+    r.append(getHost())
+    if (getScheme() != null && getPort() > 0) {
+      r.append(':')
+      r.append(getPort())
+    }
+  }
+
+  if (getPath() != null) {
+    if (getScheme() != null) {
+      if (!getPath()!!.startsWith("/")) {
+        r.append('/')
+      }
+    }
+    else if (getHost() != null) {
+      r.append(':')
+    }
+
+    r.append(if (getScheme() != null) getRawPath() else getPath())
+  }
+  return r.toString()
 }

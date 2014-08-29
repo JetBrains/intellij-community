@@ -2,6 +2,7 @@ package org.jetbrains.plugins.settingsRepository;
 
 import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.lang.ref.Reference;
@@ -17,6 +18,7 @@ public final class IcsBundle {
   private IcsBundle() {
   }
 
+  @NotNull
   public static String message(@NonNls @PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {
     return CommonBundle.message(getBundle(), key, params);
   }

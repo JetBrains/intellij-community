@@ -4,29 +4,34 @@ import com.intellij.openapi.util.text.StringUtil
 import org.eclipse.jgit.transport.URIish
 import com.intellij.util.ui.UIUtil
 import com.intellij.openapi.ui.DialogBuilder
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.util.PathUtilRt
 
 public fun String?.nullize(): String? = StringUtil.nullize(this)
 
-public fun showAuthenticationForm(credentials: Credentials?, uri: String, host: String?): Credentials? {
+public fun showAuthenticationForm(credentials: Credentials?, uri: String, host: String?, sshKeyFile: String?): Credentials? {
   if (ApplicationManager.getApplication()?.isUnitTestMode() === true) {
     throw AssertionError("showAuthenticationForm called from tests")
   }
 
-  val authenticationForm = RepositoryAuthenticationForm(credentials?.username, credentials?.password, IcsBundle.message(if (host == "github.com") "login.github.note" else "login.other.git.provider.note"))
-  var ok = false
+  var filledCredentials: Credentials? = null
   UIUtil.invokeAndWaitIfNeeded(object : Runnable {
     override fun run() {
-      ok = DialogBuilder().title("Log in to " + StringUtil.trimMiddle(uri.toString(), 50)).centerPanel(authenticationForm.getPanel()).show() == DialogWrapper.OK_EXIT_CODE
+      val note = if (sshKeyFile == null) IcsBundle.message(if (host == "github.com") "login.github.note" else "login.other.git.provider.note") else null
+      val authenticationForm = RepositoryAuthenticationForm(if (sshKeyFile == null) {
+        IcsBundle.message("log.in.to", StringUtil.trimMiddle(uri, 50))
+      }
+      else {
+        IcsBundle.message("enter.your.password.for.ssh.key", PathUtilRt.getFileName(sshKeyFile))
+      }, credentials?.username, credentials?.password, note, sshKeyFile != null)
+      if (authenticationForm.showAndGet()) {
+        val username = sshKeyFile ?: authenticationForm.getUsername()
+        val passwordChars = authenticationForm.getPassword()
+        filledCredentials = Credentials(username, if (passwordChars == null) (if (username == null) null else "x-oauth-basic") else String(passwordChars))
+      }
     }
   })
-  if (ok) {
-    val passwordChars = authenticationForm.getPassword()
-    val username = authenticationForm.getUsername()
-    return Credentials(username, if (passwordChars == null) (if (username == null) null else "x-oauth-basic") else String(passwordChars))
-  }
-  return null
+  return filledCredentials
 }
 
 public data class Credentials(username: String?, password: String?) {
