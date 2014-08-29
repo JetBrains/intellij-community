@@ -64,14 +64,20 @@ public class IpnbFilePanel extends JPanel {
     c.fill = GridBagConstraints.HORIZONTAL;
     c.gridx = 0;
     c.gridy = 0;
-    c.gridwidth = 1;
+    c.gridwidth = 2;
     c.insets = new Insets(INSET_Y, INSET_X, 0, 0);
 
+    final int width = IpnbEditorUtil.PANEL_WIDTH + IpnbEditorUtil.PROMPT_SIZE.width;
+    final JLabel label = new JLabel("<html><body style='width: " + width + "px'></body></html>");
+    add(label, c);
+
+    c.gridy = 1;
+    c.gridwidth = 1;
     final JPanel panel = new JPanel();
     panel.setPreferredSize(IpnbEditorUtil.PROMPT_SIZE);
     panel.setBackground(getBackground());
     panel.setOpaque(false);
-    add(panel);
+    add(panel, c);
 
     for (IpnbCell cell : myIpnbFile.getCells()) {
       c.gridy = addCellToPanel(cell, c);
@@ -132,7 +138,7 @@ public class IpnbFilePanel extends JPanel {
     promptPanel.setPreferredSize(new Dimension(IpnbEditorUtil.PROMPT_SIZE.width, 1));
     promptPanel.setBackground(getBackground());
     promptPanel.setOpaque(false);
-    add(promptPanel);
+    add(promptPanel, c);
 
     c.gridy += 1;
     for (IpnbPanel comp : myIpnbPanels) {
