@@ -218,6 +218,12 @@ public class DialogBuilder implements Disposable {
     return this;
   }
 
+  @NotNull
+  public DialogBuilder resizable(boolean resizable) {
+    myDialogWrapper.setResizable(resizable);
+    return this;
+  }
+
   public CustomizableAction getOkAction() {
     return get(getActionDescriptors(), OkActionDescriptor.class);
   }
