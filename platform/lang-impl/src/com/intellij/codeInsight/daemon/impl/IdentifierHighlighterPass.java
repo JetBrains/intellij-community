@@ -116,6 +116,13 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
     }
   }
 
+  /**
+   * Returns read and write usages of psi element inside single file
+   *
+   * @param target target psi element
+   * @param psiFile psi file for element
+   * @return a pair where first element is read usages and second is write usages
+   */
   public static Couple<Collection<TextRange>> getHighlightUsages(@NotNull PsiElement target, PsiFile psiFile) {
     Collection<TextRange> readRanges = new ArrayList<TextRange>();
     Collection<TextRange> writeRanges = new ArrayList<TextRange>();
