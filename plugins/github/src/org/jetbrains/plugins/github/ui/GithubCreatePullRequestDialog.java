@@ -16,14 +16,12 @@
 package org.jetbrains.plugins.github.ui;
 
 import com.intellij.CommonBundle;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -32,7 +30,6 @@ import org.jetbrains.plugins.github.api.GithubFullPath;
 import org.jetbrains.plugins.github.util.GithubNotifications;
 import org.jetbrains.plugins.github.util.GithubProjectSettings;
 import org.jetbrains.plugins.github.util.GithubSettings;
-import org.jetbrains.plugins.github.util.GithubUtil;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -132,9 +129,7 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
             myPanel.setDescription(description.getSecond());
           }
 
-          if (branch.getForkInfo().getRemoteName() != null) {
-            myWorker.launchLoadDiffInfo(branch);
-          }
+          myWorker.launchLoadDiffInfo(branch);
         }
       }
     });

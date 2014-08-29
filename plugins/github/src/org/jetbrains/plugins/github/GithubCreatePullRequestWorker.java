@@ -290,10 +290,9 @@ public class GithubCreatePullRequestWorker {
   }
 
   public void launchFetchRemote(@NotNull final ForkInfo fork) {
-    assert fork.getRemoteName() != null;
+    if (fork.getRemoteName() == null) return;
 
     if (fork.getFetchTask() != null) return;
-
     synchronized (fork.LOCK) {
       if (fork.getFetchTask() != null) return;
 
@@ -316,10 +315,9 @@ public class GithubCreatePullRequestWorker {
   }
 
   public void launchLoadDiffInfo(@NotNull final BranchInfo branch) {
-    assert branch.getForkInfo().getRemoteName() != null;
+    if (branch.getForkInfo().getRemoteName() == null) return;
 
     if (branch.getDiffInfoTask() != null) return;
-
     synchronized (branch.LOCK) {
       if (branch.getDiffInfoTask() != null) return;
 
@@ -347,6 +345,7 @@ public class GithubCreatePullRequestWorker {
   @Nullable
   public DiffInfo getDiffInfo(@NotNull final BranchInfo branch) throws IOException {
     if (branch.getForkInfo().getRemoteName() == null) return null;
+
     launchLoadDiffInfo(branch);
 
     assert branch.getDiffInfoTask() != null;
@@ -378,7 +377,7 @@ public class GithubCreatePullRequestWorker {
 
   @NotNull
   private DiffInfo doLoadDiffInfo(@NotNull final BranchInfo branch) throws VcsException {
-    // TODO: make cancelable and abort old speculative requests (when git4idea will allow so)
+    // TODO: make cancelable and abort old speculative requests (when git4idea will allow to do so)
     String currentBranch = myCurrentBranch;
     String targetBranch = branch.getForkInfo().getRemoteName() + "/" + branch.getRemoteName();
 
