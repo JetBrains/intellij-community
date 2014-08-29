@@ -55,6 +55,10 @@ public class DialogBuilder implements Disposable {
     return showImpl(true).getExitCode();
   }
 
+  public boolean showAndGet() {
+    return showImpl(true).isOK();
+  }
+
   public void showNotModal() {
     showImpl(false);
   }
