@@ -325,13 +325,13 @@ public final class ComponentItemDialog extends DialogWrapper {
       if (myDocument == null) {  // why?
         return false;
       }
-      final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(myProject);
-      if (!javaPsiFacade.getNameHelper().isQualifiedName(myDocument.getText())) {
+      if (!PsiNameHelper.getInstance(myProject).isQualifiedName(myDocument.getText())) {
         if (myDocument.getTextLength() > 0) {
           myErrorLabel.setText(UIDesignerBundle.message("add.component.error.qualified.name.required"));
         }
         return false;
       }
+      final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(myProject);
       PsiClass psiClass = javaPsiFacade.findClass(myDocument.getText(), ProjectScope.getAllScope(myProject));
       PsiClass componentClass = javaPsiFacade.findClass(JComponent.class.getName(), ProjectScope.getAllScope(myProject));
       if (psiClass != null && componentClass != null && !InheritanceUtil.isInheritorOrSelf(psiClass, componentClass, true)) {

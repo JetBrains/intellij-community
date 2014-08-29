@@ -44,7 +44,7 @@ public class CreateAnnotationMethodFromUsageFix extends CreateFromUsageBaseFix {
     if (call == null || !call.isValid()) return false;
     String name = call.getName();
 
-    if (name == null || !JavaPsiFacade.getInstance(call.getProject()).getNameHelper().isIdentifier(name)) return false;
+    if (name == null || !PsiNameHelper.getInstance(call.getProject()).isIdentifier(name)) return false;
     if (getAnnotationValueType(call.getValue()) == null) return false;
     setText(QuickFixBundle.message("create.method.from.usage.text", name));
     return true;

@@ -108,7 +108,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
   @Override
   protected void canRun() throws ConfigurationException {
     final String fieldName = getFieldName();
-    final PsiNameHelper helper = JavaPsiFacade.getInstance(myProject).getNameHelper();
+    final PsiNameHelper helper = PsiNameHelper.getInstance(myProject);
     if (!helper.isIdentifier(fieldName)){
       throw new ConfigurationException("\'" + fieldName + "\' is invalid field name for delegation");
     }

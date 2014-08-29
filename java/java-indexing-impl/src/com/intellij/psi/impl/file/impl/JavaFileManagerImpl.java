@@ -179,7 +179,7 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
       // See IDEADEV-5626
       final VirtualFile root = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex().getClassRootForFile(vFile);
       VirtualFile parent = vFile.getParent();
-      final PsiNameHelper nameHelper = JavaPsiFacade.getInstance(myManager.getProject()).getNameHelper();
+      final PsiNameHelper nameHelper = PsiNameHelper.getInstance(myManager.getProject());
       while (parent != null && !Comparing.equal(parent, root)) {
         if (!nameHelper.isIdentifier(parent.getName())) return false;
         parent = parent.getParent();

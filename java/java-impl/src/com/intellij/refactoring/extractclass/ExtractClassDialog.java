@@ -166,7 +166,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
   @Override
   protected void canRun() throws ConfigurationException {
     final Project project = sourceClass.getProject();
-    final PsiNameHelper nameHelper = JavaPsiFacade.getInstance(project).getNameHelper();
+    final PsiNameHelper nameHelper = PsiNameHelper.getInstance(project);
     final List<PsiMethod> methods = getMethodsToExtract();
     final List<PsiField> fields = getFieldsToExtract();
     final List<PsiClass> innerClasses = getClassesToExtract();

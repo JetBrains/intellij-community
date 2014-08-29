@@ -25,6 +25,7 @@ package com.intellij.uiDesigner.propertyInspector.properties;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiNameHelper;
 
 public class IdentifierValidator implements InputValidator {
   private final Project myProject;
@@ -34,7 +35,7 @@ public class IdentifierValidator implements InputValidator {
   }
 
   public boolean checkInput(String inputString) {
-    return JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(inputString);
+    return PsiNameHelper.getInstance(myProject).isIdentifier(inputString);
   }
 
   public boolean canClose(String inputString) {

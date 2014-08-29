@@ -107,8 +107,7 @@ class WrapReturnValueDialog extends RefactoringDialog {
   @Override
   protected void canRun() throws ConfigurationException {
     final Project project = sourceMethod.getProject();
-    final JavaPsiFacade manager = JavaPsiFacade.getInstance(project);
-    final PsiNameHelper nameHelper = manager.getNameHelper();
+    final PsiNameHelper nameHelper = PsiNameHelper.getInstance(project);
     if (myCreateInnerClassButton.isSelected()) {
       final String innerClassName = getInnerClassName().trim();
       if (!nameHelper.isIdentifier(innerClassName)) throw new ConfigurationException("\'" + innerClassName + "\' is invalid inner class name");

@@ -99,7 +99,7 @@ public class GroovyCreateClassDialog extends DialogWrapper {
     myPackageTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       public void documentChanged(DocumentEvent e) {
-        PsiNameHelper nameHelper = JavaPsiFacade.getInstance(myProject).getNameHelper();
+        PsiNameHelper nameHelper = PsiNameHelper.getInstance(myProject);
         String packageName = getPackageName();
         getOKAction().setEnabled(nameHelper.isQualifiedName(packageName) || packageName != null && packageName.isEmpty());
       }

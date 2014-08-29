@@ -93,7 +93,7 @@ final class BindToNewBeanStep extends StepAdapter{
     }
 
     // Check that all included fields are bound to valid bean properties
-    final PsiNameHelper nameHelper = JavaPsiFacade.getInstance(myData.myProject).getNameHelper();
+    final PsiNameHelper nameHelper = PsiNameHelper.getInstance(myData.myProject);
     for(int i = 0; i <myData.myBindings.length; i++){
       final FormProperty2BeanProperty binding = myData.myBindings[i];
       if(binding.myBeanProperty == null){
