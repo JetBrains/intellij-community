@@ -45,8 +45,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
 
   public void addPromptPanel(@NotNull final JComponent parent, Integer promptNumber,
                              @NotNull final IpnbEditorUtil.PromptType promptType,
-                             IpnbPanel component,
-                             GridBagConstraints c) {
+                             @NotNull final IpnbPanel component, @NotNull final GridBagConstraints c) {
     c.gridx = 0;
     c.weightx = 0;
     c.anchor = GridBagConstraints.NORTHWEST;
@@ -56,6 +55,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
 
     c.gridx = 1;
     c.weightx = 1;
+    c.insets = new Insets(2,2,2,2);
     c.anchor = GridBagConstraints.CENTER;
     parent.add(component, c);
     myOutputPanels.add(component);
@@ -112,7 +112,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
                      new IpnbErrorPanel((IpnbErrorOutputCell)outputCell), c);
     }
     else if (outputCell instanceof IpnbStreamOutputCell) {
-      addPromptPanel(panel, myCell.getPromptNumber(), promptType,
+      addPromptPanel(panel, myCell.getPromptNumber(), IpnbEditorUtil.PromptType.None,
                      new IpnbStreamPanel((IpnbStreamOutputCell)outputCell), c);
     }
     else if (outputCell.getSourceAsString() != null) {
