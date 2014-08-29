@@ -171,7 +171,7 @@ public class GithubCreatePullRequestWorker {
     for (ForkInfo fork : myForks) {
       if (fork.getPath().equals(path)) {
         if (fork.getRemoteName() == null && remoteName != null) {
-          fork.setRemote(remoteName);
+          fork.setRemoteName(remoteName);
         }
         return fork;
       }
@@ -184,7 +184,7 @@ public class GithubCreatePullRequestWorker {
       ForkInfo fork = new ForkInfo(path, branches, defaultBranch);
       myForks.add(fork);
       if (remoteName != null) {
-        fork.setRemote(remoteName);
+        fork.setRemoteName(remoteName);
       }
       return fork;
     }
@@ -399,7 +399,7 @@ public class GithubCreatePullRequestWorker {
     String url = GithubUrlUtil.getCloneUrl(path);
 
     if (GithubUtil.addGithubRemote(myProject, myGitRepository, path.getUser(), url)) {
-      fork.setRemote(path.getUser());
+      fork.setRemoteName(path.getUser());
     }
   }
 
@@ -734,7 +734,7 @@ public class GithubCreatePullRequestWorker {
       return myBranches;
     }
 
-    public void setRemote(@NotNull String remoteName) {
+    public void setRemoteName(@NotNull String remoteName) {
       myRemoteName = remoteName;
     }
 
