@@ -181,7 +181,7 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
                                           final boolean stable,
                                           boolean jsr) throws AnalyzerException {
 
-        List<Equation<Key, Value>> result = new ArrayList<Equation<Key, Value>>(argumentTypes.length * 4 + 1);
+        List<Equation<Key, Value>> result = new ArrayList<Equation<Key, Value>>(argumentTypes.length * 4 + 2);
         boolean maybeLeakingParameter = isInterestingResult;
         for (Type argType : argumentTypes) {
           if (ASMUtils.isReferenceType(argType) || (isReferenceResult && ASMUtils.isBooleanType(argType))) {
@@ -313,11 +313,12 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
                                              boolean isReferenceResult,
                                              boolean isBooleanResult,
                                              boolean stable) throws AnalyzerException {
-        List<Equation<Key, Value>> result = new ArrayList<Equation<Key, Value>>(argumentTypes.length * 4 + 1);
+        List<Equation<Key, Value>> result = new ArrayList<Equation<Key, Value>>(argumentTypes.length * 4 + 2);
         CombinedAnalysis analyzer = new CombinedAnalysis(method, graph);
         analyzer.analyze();
         if (isReferenceResult) {
           result.add(analyzer.outContractEquation(stable));
+          result.add(analyzer.nullableResultEquation(stable));
         }
         for (int i = 0; i < argumentTypes.length; i++) {
           Type argType = argumentTypes[i];
@@ -343,9 +344,10 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
                                 boolean isReferenceResult,
                                 boolean isInterestingResult,
                                 boolean stable) {
-        List<Equation<Key, Value>> result = new ArrayList<Equation<Key, Value>>(argumentTypes.length * 3 + 1);
+        List<Equation<Key, Value>> result = new ArrayList<Equation<Key, Value>>(argumentTypes.length * 4 + 2);
         if (isReferenceResult) {
           result.add(new Equation<Key, Value>(new Key(method, Out, stable), FINAL_TOP));
+          result.add(new Equation<Key, Value>(new Key(method, NullableOut, stable), FINAL_BOT));
         }
         for (int i = 0; i < argumentTypes.length; i++) {
           Type argType = argumentTypes[i];

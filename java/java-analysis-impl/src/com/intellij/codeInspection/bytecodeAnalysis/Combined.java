@@ -80,17 +80,19 @@ interface CombinedData {
   }
 
   final class TrackableCallValue extends BasicValue implements Trackable {
-    final Method method;
-    final boolean stableCall;
-    final List<? extends BasicValue> args;
     private final int originInsnIndex;
+    final Method method;
+    final List<? extends BasicValue> args;
+    final boolean stableCall;
+    final boolean thisCall;
 
-    TrackableCallValue(int originInsnIndex, Type tp, Method method, boolean stableCall, List<? extends BasicValue> args) {
+    TrackableCallValue(int originInsnIndex, Type tp, Method method, List<? extends BasicValue> args, boolean stableCall, boolean thisCall) {
       super(tp);
       this.originInsnIndex = originInsnIndex;
       this.method = method;
-      this.stableCall = stableCall;
       this.args = args;
+      this.stableCall = stableCall;
+      this.thisCall = thisCall;
     }
 
     @Override
@@ -309,6 +311,28 @@ final class CombinedAnalysis {
     }
     else {
       result = new Final<Key, Value>(Value.Top);
+    }
+    return new Equation<Key, Value>(key, result);
+  }
+
+  final Equation<Key, Value> nullableResultEquation(boolean stable) {
+    final Key key = new Key(method, NullableOut, stable);
+    final Result<Key, Value> result;
+    if (exception ||
+        returnValue instanceof Trackable && interpreter.dereferencedValues[((Trackable)returnValue).getOriginInsnIndex()]) {
+      result = new Final<Key, Value>(Value.Bot);
+    }
+    else if (returnValue instanceof TrackableCallValue) {
+      TrackableCallValue call = (TrackableCallValue)returnValue;
+      Key callKey = new Key(call.method, NullableOut, call.stableCall || call.thisCall);
+      Set<Key> keys = new SingletonSet<Key>(callKey);
+      result = new Pending<Key, Value>(new SingletonSet<Product<Key, Value>>(new Product<Key, Value>(Value.Null, keys)));
+    }
+    else if (returnValue instanceof TrackableNullValue) {
+      result = new Final<Key, Value>(Value.Null);
+    }
+    else {
+      result = new Final<Key, Value>(Value.Bot);
     }
     return new Equation<Key, Value>(key, result);
   }
@@ -545,10 +569,12 @@ final class CombinedInterpreter extends BasicInterpreter {
             }
           }
         }
+        BasicValue receiver = null;
         if (shift == 1) {
-          values.remove(0);
+          receiver = values.remove(0);
         }
-        return new TrackableCallValue(origin, retType, method, stable, values);
+        boolean thisCall = (opCode == INVOKEINTERFACE || opCode == INVOKEVIRTUAL) && receiver == ThisValue;
+        return new TrackableCallValue(origin, retType, method, values, stable, thisCall);
       case MULTIANEWARRAY:
         return new NotNullValue(super.naryOperation(insn, values).getType());
       default:

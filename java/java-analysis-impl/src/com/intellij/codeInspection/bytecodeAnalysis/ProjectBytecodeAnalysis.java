@@ -103,6 +103,7 @@ public class ProjectBytecodeAnalysis {
         ArrayList<HKey> allKeys = contractKeys((PsiMethod)listOwner, primaryKey);
         MethodAnnotations methodAnnotations = loadMethodAnnotations((PsiMethod)listOwner, primaryKey, allKeys);
         boolean notNull = methodAnnotations.notNulls.contains(primaryKey);
+        boolean nullable = methodAnnotations.nullables.contains(primaryKey);
         String contractValue = methodAnnotations.contracts.get(primaryKey);
         if (notNull && contractValue != null) {
           return new PsiAnnotation[]{
@@ -110,9 +111,20 @@ public class ProjectBytecodeAnalysis {
             createAnnotationFromText("@" + ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT + "(" + contractValue + ")")
           };
         }
+        if (nullable && contractValue != null) {
+          return new PsiAnnotation[]{
+            getNullableAnnotation(),
+            createAnnotationFromText("@" + ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT + "(" + contractValue + ")")
+          };
+        }
         else if (notNull) {
           return new PsiAnnotation[]{
             getNotNullAnnotation()
+          };
+        }
+        else if (nullable) {
+          return new PsiAnnotation[]{
+            getNullableAnnotation()
           };
         }
         else if (contractValue != null) {
@@ -198,14 +210,14 @@ public class ProjectBytecodeAnalysis {
   private ParameterAnnotations loadParameterAnnotations(@NotNull HKey notNullKey)
     throws EquationsLimitException {
 
-    final Solver notNullSolver = new Solver(new ELattice<Value>(Value.NotNull, Value.Top));
+    final Solver notNullSolver = new Solver(new ELattice<Value>(Value.NotNull, Value.Top), Value.Top);
     collectEquations(Collections.singletonList(notNullKey), notNullSolver);
 
     HashMap<HKey, Value> notNullSolutions = notNullSolver.solve();
     boolean notNull =
       (Value.NotNull == notNullSolutions.get(notNullKey)) || (Value.NotNull == notNullSolutions.get(notNullKey.mkUnstable()));
 
-    final Solver nullableSolver = new Solver(new ELattice<Value>(Value.Null, Value.Top));
+    final Solver nullableSolver = new Solver(new ELattice<Value>(Value.Null, Value.Top), Value.Top);
     final HKey nullableKey = new HKey(notNullKey.key, notNullKey.dirKey + 1, true);
     collectEquations(Collections.singletonList(nullableKey), nullableSolver);
     HashMap<HKey, Value> nullableSolutions = nullableSolver.solve();
@@ -217,11 +229,23 @@ public class ProjectBytecodeAnalysis {
   private MethodAnnotations loadMethodAnnotations(@NotNull PsiMethod owner, @NotNull HKey key, ArrayList<HKey> allKeys)
     throws EquationsLimitException {
     MethodAnnotations result = new MethodAnnotations();
-    final Solver solver = new Solver(new ELattice<Value>(Value.Bot, Value.Top));
-    collectEquations(allKeys, solver);
-    HashMap<HKey, Value> solutions = solver.solve();
+
+    final Solver outSolver = new Solver(new ELattice<Value>(Value.Bot, Value.Top), Value.Top);
+    collectEquations(allKeys, outSolver);
+    HashMap<HKey, Value> solutions = outSolver.solve();
     int arity = owner.getParameterList().getParameters().length;
     BytecodeAnalysisConverter.addMethodAnnotations(solutions, result, key, arity);
+
+
+    final Solver nullableMethodSolver = new Solver(new ELattice<Value>(Value.Bot, Value.Null), Value.Bot);
+    HKey nullableKey = key.updateDirection(BytecodeAnalysisConverter.mkDirectionKey(NullableOut));
+    collectEquations(Collections.singletonList(nullableKey), nullableMethodSolver);
+
+    HashMap<HKey, Value> nullableSolutions = nullableMethodSolver.solve();
+    if (nullableSolutions.get(nullableKey) == Value.Null) {
+      result.nullables.add(key);
+    }
+
     return result;
   }
 
@@ -288,6 +312,8 @@ public class ProjectBytecodeAnalysis {
 class MethodAnnotations {
   // @NotNull keys
   final HashSet<HKey> notNulls = new HashSet<HKey>();
+  // @Nullable keys
+  final HashSet<HKey> nullables = new HashSet<HKey>();
   // @Contracts
   final HashMap<HKey, String> contracts = new HashMap<HKey, String>();
 }

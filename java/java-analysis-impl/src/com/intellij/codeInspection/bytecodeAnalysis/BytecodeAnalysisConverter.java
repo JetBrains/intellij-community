@@ -274,16 +274,21 @@ public class BytecodeAnalysisConverter {
   }
 
 
-  private static int mkDirectionKey(Direction dir) {
+  static int mkDirectionKey(Direction dir) {
     if (dir == Out) {
       return 0;
-    } else if (dir instanceof In) {
+    }
+    else if (dir == NullableOut) {
+      return 1;
+    }
+    else if (dir instanceof In) {
       In in = (In)dir;
       // nullity mask is 0/1
-      return 8 * in.paramId() + 1 + in.nullityMask;
-    } else {
+      return 2 + 8 * in.paramId() + in.nullityMask;
+    }
+    else {
       InOut inOut = (InOut)dir;
-      return 8 * inOut.paramId() + 3 + inOut.valueId();
+      return 4 + 8 * inOut.paramId() + inOut.valueId();
     }
   }
 
@@ -292,7 +297,11 @@ public class BytecodeAnalysisConverter {
     if (directionKey == 0) {
       return Out;
     }
+    else if (directionKey == 1) {
+      return NullableOut;
+    }
     else {
+      directionKey--;
       int paramId = directionKey / 8;
       int subDirection = directionKey % 8;
       if (subDirection <= 2) {
