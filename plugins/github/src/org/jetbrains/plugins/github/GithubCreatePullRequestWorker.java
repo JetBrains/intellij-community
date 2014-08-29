@@ -673,15 +673,11 @@ public class GithubCreatePullRequestWorker {
               // such repo may not exist
             }
 
-            GithubRepo fork = GithubApiUtil.findForkByUser(connection, mySource.getUser(), mySource.getRepository(), user);
-            if (fork != null) {
-              return fork;
-            }
-
-            return null;
+            return GithubApiUtil.findForkByUser(connection, mySource.getUser(), mySource.getRepository(), user);
           }
         });
 
+      if (repo == null) return null;
       return doAddFork(repo, indicator);
     }
     catch (IOException e) {
