@@ -189,7 +189,7 @@ public class GithubCreatePullRequestWorker {
       return fork;
     }
     catch (IOException e) {
-      GithubNotifications.showWarning(myProject, "Can't load branches for " + path, e);
+      GithubNotifications.showWarning(myProject, "Can't load branches for " + path.getFullName(), e);
       return null;
     }
   }
@@ -212,7 +212,7 @@ public class GithubCreatePullRequestWorker {
       return fork;
     }
     catch (IOException e) {
-      GithubNotifications.showWarning(myProject, "Can't load branches for " + path, e);
+      GithubNotifications.showWarning(myProject, "Can't load branches for " + path.getFullName(), e);
       return null;
     }
   }
