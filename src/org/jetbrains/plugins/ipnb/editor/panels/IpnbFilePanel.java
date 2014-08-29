@@ -298,6 +298,7 @@ public class IpnbFilePanel extends JPanel {
       mySelectedCell.setEditing(false);
     mySelectedCell = ipnbPanel;
     requestFocus();
+    revalidate();
     repaint();
     myListener.selectionChanged(ipnbPanel);
   }

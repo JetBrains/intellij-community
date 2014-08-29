@@ -133,7 +133,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
       @Override
       public void actionPerformed(ActionEvent e) {
         final IpnbSaveAction action = (IpnbSaveAction)ActionManager.getInstance().getAction("IpnbSaveAction");
-        action.saveAndCheckpoint(myIpnbFilePanel.getIpnbFile());
+        action.saveAndCheckpoint(IpnbFileEditor.this);
       }
     }, AllIcons.Actions.Menu_saveall);
   }
@@ -446,5 +446,9 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
 
   public abstract class CellSelectionListener {
     public abstract void selectionChanged(@NotNull final IpnbPanel ipnbPanel);
+  }
+
+  public VirtualFile getVirtualFile() {
+    return myFile;
   }
 }
