@@ -24,7 +24,11 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
+import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.jetbrains.python.PythonFileType;
 import org.jetbrains.annotations.NotNull;
@@ -125,7 +129,30 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
 
     public int[] getShape(XValueNodeImpl node) {
 
+      final int[] shape = {0};
+
+      node.getTree().addTreeListener(new XDebuggerTreeListener() {
+        @Override
+        public void nodeLoaded(@NotNull RestorableStateNode node, String name) {
+          System.out.printf(name + " node loaded\n");
+        }
+
+        @Override
+        public void childrenLoaded(@NotNull XDebuggerTreeNode node, @NotNull List<XValueContainerNode<?>> children, boolean last) {
+          System.out.printf(children + "children loaded\n");
+          shape[0] = 1;
+        }
+      });
+
       node.getValueContainer().computeChildren(node);
+
+      //while(shape[0] == 0){
+      //
+      //}
+
+      System.out.printf("Children loaded and thread resumed\n");
+
+      System.out.printf("Size: " + node.getChildren());
 
       if (node.getChildCount() > 0) {
         node.getValueContainer().computeChildren(node);
@@ -340,8 +367,8 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
     public MyTableCellRenderer(double min, double max) {
       this.min = min;
       this.max = max;
-      minColor = new Color(80, 0, 0);
-      maxColor = new Color(150, 0, 0);
+      minColor = new Color(100, 0, 0, 200);
+      maxColor = new Color(254, 0, 0, 200);
     }
 
     public void setColored(boolean colored) {
@@ -350,9 +377,6 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
 
     public Component getTableCellRendererComponent(JTable table, Object value,
                                                    boolean isSelected, boolean hasFocus, int rowIndex, int vColIndex) {
-      // 'value' is value contained in the cell located at
-      // (rowIndex, vColIndex)
-
       if (isSelected) {
         // cell (and perhaps other cells) are selected
       }
@@ -361,19 +385,14 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
         // this cell is the anchor and the table has the focus
       }
 
-      // Configure the component with the specified value
       setText(value.toString());
-
-      // Set tool tip if desired
-      setToolTipText((String)value);
-
 
       if (max != min) {
         if (colored) {
           try {
             double med = Double.parseDouble(value.toString());
             int r = (int)(minColor.getRed() + Math.round((maxColor.getRed() - minColor.getRed()) / (max - min) * (med - min)));
-            this.setBackground(new Color(r % 255, 0, 0));
+            this.setBackground(new Color(r % 256, 0, 0, 200));
           }
           catch (NumberFormatException e) {
           }
