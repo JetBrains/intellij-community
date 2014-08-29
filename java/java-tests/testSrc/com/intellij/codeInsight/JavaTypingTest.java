@@ -78,6 +78,14 @@ public class JavaTypingTest extends LightPlatformCodeInsightFixtureTestCase {
     doTest('{');
   }
 
+  public void testFixIfByBraceNewObject() {
+    doTest('{');
+  }
+
+  public void testFixIfByBraceCompositeCondition() {
+    doTest('{');
+  }
+
   public void testFixWhileByBrace() {
     doTest('{');
   }

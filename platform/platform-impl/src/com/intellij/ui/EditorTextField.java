@@ -520,6 +520,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     }
     else if (myWholeTextSelected) {
       doSelectAll(editor);
+      myWholeTextSelected = false;
     }
 
     editor.putUserData(SUPPLEMENTARY_KEY, myIsSupplementary);

@@ -22,6 +22,7 @@ import com.intellij.ui.InplaceButton;
 import com.intellij.ui.TransparentPanel;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -69,7 +70,7 @@ public class PresentationModeProgressPanel {
     }
 
     if (!myProgressBar.isIndeterminate()) {
-      myProgressBar.setValue(((int)(myProgress.getFraction() * 99)) + 1);
+      myProgressBar.setValue((int)(myProgress.getFraction() * 99) + 1);
     }
   }
 
@@ -83,7 +84,7 @@ public class PresentationModeProgressPanel {
                                                  AllIcons.Process.Stop,
                                                  AllIcons.Process.StopHovered);
     myCancelButton = new InplaceButton(iconButton, new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
+      public void actionPerformed(@NotNull final ActionEvent e) {
         myProgress.cancel();
       }
     }).setFillBg(false);

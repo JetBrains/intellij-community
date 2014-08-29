@@ -134,8 +134,9 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
         return Result.CONTINUE;
       }
       PsiElement st = leaf != null ? leaf.getParent() : null;
+      PsiElement prev = offset > 1 ? file.findElementAt(offset - 1) : null;
       if (CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET && isRparenth(leaf) &&
-          (st instanceof PsiWhileStatement || st instanceof PsiIfStatement) && noBody(st, doc)) {
+          (st instanceof PsiWhileStatement || st instanceof PsiIfStatement) && shouldInsertStatementBody(st, doc, prev)) {
         new JavaSmartEnterProcessor().process(project, editor, file);
         return Result.STOP;
       }
@@ -149,9 +150,11 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     return Result.CONTINUE;
   }
 
-  private static boolean noBody(@NotNull PsiElement statement, @NotNull Document doc) {
+  private static boolean shouldInsertStatementBody(@NotNull PsiElement statement, @NotNull Document doc, @Nullable PsiElement prev) {
     PsiStatement block = statement instanceof PsiWhileStatement ? ((PsiWhileStatement)statement).getBody() : ((PsiIfStatement)statement).getThenBranch();
     PsiExpression condition = PsiTreeUtil.getChildOfType(statement, PsiExpression.class);
+    PsiExpression latestExpression = PsiTreeUtil.getParentOfType(prev, PsiExpression.class);
+    if (latestExpression instanceof PsiNewExpression && ((PsiNewExpression)latestExpression).getAnonymousClass() == null) return false;
     return !(block instanceof PsiBlockStatement) && (block == null || startLine(doc, block) != startLine(doc, statement) || condition == null);
   }
 

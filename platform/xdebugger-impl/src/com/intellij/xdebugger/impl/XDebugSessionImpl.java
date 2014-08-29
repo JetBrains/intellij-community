@@ -98,7 +98,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private XExecutionStack myCurrentExecutionStack;
   private XStackFrame myCurrentStackFrame;
   private boolean myIsTopFrame;
-  private XSourcePosition myCurrentPosition;
+  private XSourcePosition myTopFramePosition;
   private final AtomicBoolean myPaused = new AtomicBoolean();
   private MyDependentBreakpointListener myDependentBreakpointListener;
   private XValueMarkers<?, ?> myValueMarkers;
@@ -257,7 +257,13 @@ public class XDebugSessionImpl implements XDebugSession {
   @Override
   @Nullable
   public XSourcePosition getCurrentPosition() {
-    return myCurrentPosition;
+    return myCurrentStackFrame != null ? myCurrentStackFrame.getSourcePosition() : null;
+  }
+
+  @Nullable
+  @Override
+  public XSourcePosition getTopFramePosition() {
+    return myTopFramePosition;
   }
 
   public XDebugSessionTab init(@NotNull XDebugProcess process, @NotNull XDebugSessionData sessionData, @Nullable RunContentDescriptor contentToReuse) {
@@ -540,8 +546,8 @@ public class XDebugSessionImpl implements XDebugSession {
     mySuspendContext = null;
     myCurrentExecutionStack = null;
     myCurrentStackFrame = null;
-    adjustMouseTrackingCounter(myCurrentPosition, -1);
-    myCurrentPosition = null;
+    adjustMouseTrackingCounter(myTopFramePosition, -1);
+    myTopFramePosition = null;
     myActiveNonLineBreakpoint = null;
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
@@ -786,14 +792,14 @@ public class XDebugSessionImpl implements XDebugSession {
     mySuspendContext = suspendContext;
     myCurrentExecutionStack = suspendContext.getActiveExecutionStack();
     myCurrentStackFrame = myCurrentExecutionStack != null ? myCurrentExecutionStack.getTopFrame() : null;
-    myCurrentPosition = myCurrentStackFrame != null ? myCurrentStackFrame.getSourcePosition() : null;
+    myTopFramePosition = myCurrentStackFrame != null ? myCurrentStackFrame.getSourcePosition() : null;
 
     myPaused.set(true);
 
-    if (myCurrentPosition != null) {
-      myDebuggerManager.setActiveSession(this, myCurrentPosition, false, getPositionIconRenderer(true));
+    if (myTopFramePosition != null) {
+      myDebuggerManager.setActiveSession(this, myTopFramePosition, false, getPositionIconRenderer(true));
     }
-    adjustMouseTrackingCounter(myCurrentPosition, 1);
+    adjustMouseTrackingCounter(myTopFramePosition, 1);
 
     if (myShowTabOnSuspend.compareAndSet(true, false)) {
       UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -861,8 +867,8 @@ public class XDebugSessionImpl implements XDebugSession {
       mySessionTab.detachFromSession();
     }
 
-    adjustMouseTrackingCounter(myCurrentPosition, -1);
-    myCurrentPosition = null;
+    adjustMouseTrackingCounter(myTopFramePosition, -1);
+    myTopFramePosition = null;
     myCurrentExecutionStack = null;
     myCurrentStackFrame = null;
     mySuspendContext = null;

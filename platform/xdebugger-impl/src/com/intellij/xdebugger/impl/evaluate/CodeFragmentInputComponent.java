@@ -54,6 +54,7 @@ public class CodeFragmentInputComponent extends EvaluationInputComponent {
     myMainPanel.add(editorPanel, BorderLayout.CENTER);
   }
 
+  @NotNull
   protected XDebuggerEditorBase getInputEditor() {
     return myMultilineEditor;
   }
