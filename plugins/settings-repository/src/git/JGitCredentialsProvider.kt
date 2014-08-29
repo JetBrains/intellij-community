@@ -13,6 +13,7 @@ import org.eclipse.jgit.lib.Repository
 import org.jetbrains.plugins.settingsRepository.isOSXCredentialsStoreSupported
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
+import com.intellij.util.ui.UIUtil
 
 class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<CredentialsStore>, private val repository: Repository) : CredentialsProvider() {
   private var credentialsFromGit: Credentials? = null
@@ -52,7 +53,9 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
         }
       }
       else if (item is CredentialItem.YesNoType) {
-        item.setValue(MessageDialogBuilder.yesNo("", item.getPromptText()!!).show() == Messages.YES)
+        UIUtil.invokeAndWaitIfNeeded(Runnable {
+          item.setValue(MessageDialogBuilder.yesNo("", item.getPromptText()!!).show() == Messages.YES)
+        })
         return true
       }
     }

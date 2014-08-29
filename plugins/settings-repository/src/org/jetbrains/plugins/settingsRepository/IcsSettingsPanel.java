@@ -34,8 +34,6 @@ public class IcsSettingsPanel extends DialogWrapper {
   public IcsSettingsPanel(@Nullable final Project project) {
     super(project, true);
 
-    setModal(true);
-
     IcsManager icsManager = IcsManager.getInstance();
     IcsSettings settings = icsManager.getSettings();
 
