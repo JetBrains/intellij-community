@@ -9,6 +9,9 @@
     <extensionPoint name="postStartupActivity"
                     interface="com.intellij.openapi.startup.StartupActivity"/>
 
+    <extensionPoint name="defaultProjectTypeProvider"
+                    interface="com.intellij.openapi.project.DefaultProjectTypeProvider"/>
+
     <extensionPoint name="errorHandler"
                     interface="com.intellij.openapi.diagnostic.ErrorReportSubmitter"/>
 
