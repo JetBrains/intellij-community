@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -88,13 +89,27 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
           myPanel.setSelectedBranch(fork.getDefaultBranch());
 
           if (fork.getRemoteName() == null && !fork.isProposedToCreateRemote()) {
-            if (Messages.YES ==
-                GithubNotifications
-                  .showYesNoDialog(project, "Can't Find Remote", "Configure remote for '" + fork.getPath().getUser() + "'?",
-                                   ourDoNotAskOption)) {
+            fork.setProposedToCreateRemote(true);
+            boolean createRemote = false;
+
+            switch (GithubSettings.getInstance().getCreatePullRequestCreateRemote()) {
+              case YES:
+                createRemote = true;
+                break;
+              case NO:
+                createRemote = false;
+                break;
+              case UNSURE:
+                createRemote = GithubNotifications.showYesNoDialog(project,
+                                                                   "Can't Find Remote",
+                                                                   "Configure remote for '" + fork.getPath().getUser() + "'?",
+                                                                   ourDoNotAskOption) == Messages.YES;
+                break;
+            }
+
+            if (createRemote) {
               myWorker.configureRemote(fork);
             }
-            fork.setProposedToCreateRemote(true);
           }
 
           if (fork.getRemoteName() == null) {
@@ -221,17 +236,25 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
   private static class CreateRemoteDoNotAskOption implements DoNotAskOption {
     @Override
     public boolean isToBeShown() {
-      return GithubSettings.getInstance().isCreatePullRequestCreateRemoteDoNotAsk();
+      return true;
     }
 
     @Override
     public void setToBeShown(boolean value, int exitCode) {
-      GithubSettings.getInstance().setCreatePullRequestCreateRemoteDoNotAsk(value);
+      if (value) {
+        GithubSettings.getInstance().setCreatePullRequestCreateRemote(ThreeState.UNSURE);
+      }
+      else if (exitCode == DialogWrapper.OK_EXIT_CODE) {
+        GithubSettings.getInstance().setCreatePullRequestCreateRemote(ThreeState.YES);
+      }
+      else {
+        GithubSettings.getInstance().setCreatePullRequestCreateRemote(ThreeState.NO);
+      }
     }
 
     @Override
     public boolean canBeHidden() {
-      return false;
+      return true;
     }
 
     @Override
