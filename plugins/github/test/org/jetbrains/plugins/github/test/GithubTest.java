@@ -181,13 +181,10 @@ public abstract class GithubTest extends GitPlatformTest {
     }
     catch (Exception e) {
       try {
-        afterTest();
+        tearDown();
       }
       catch (Exception e2) {
         e2.printStackTrace();
-      }
-      finally {
-        cleanup();
       }
       throw e;
     }
@@ -199,13 +196,9 @@ public abstract class GithubTest extends GitPlatformTest {
       afterTest();
     }
     finally {
-      cleanup();
+      if (myHttpAuthService != null) myHttpAuthService.cleanup();
       super.tearDown();
     }
-  }
-
-  private void cleanup() {
-    if (myHttpAuthService != null) myHttpAuthService.cleanup();
   }
 
   protected void beforeTest() throws Exception {
