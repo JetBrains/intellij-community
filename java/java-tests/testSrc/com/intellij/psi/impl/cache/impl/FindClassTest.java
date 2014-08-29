@@ -23,7 +23,6 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -38,7 +37,7 @@ import java.io.IOException;
 /**
  * @author max
  */
-public class SCR14423Test extends PsiTestCase {
+public class FindClassTest extends PsiTestCase {
   private VirtualFile myPrjDir1;
   private VirtualFile mySrcDir1;
   private VirtualFile myPackDir;
@@ -47,11 +46,7 @@ public class SCR14423Test extends PsiTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    final File root = FileUtil.createTempFile(getName(), "");
-    root.delete();
-    root.mkdir();
-    myFilesToDelete.add(root);
-
+    final File root = createTempDirectory();
     WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
@@ -76,14 +71,12 @@ public class SCR14423Test extends PsiTestCase {
     });
   }
 
-  public void testBug2() throws Exception {
+  public void testSimple() throws Exception {
     PsiClass psiClass = myJavaFacade.findClass("p.A");
     assertEquals("p.A", psiClass.getQualifiedName());
-
-    testBug1();
   }
 
-  public void testBug1() {
+  public void testClassUnderExcludedFolder() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         PsiTestUtil.addExcludedRoot(myModule, myPackDir);
@@ -102,7 +95,7 @@ public class SCR14423Test extends PsiTestCase {
     });
   }
 
-  public void testBug3() {
+  public void testClassUnderIgnoredFolder() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         PsiClass psiClass = myJavaFacade.findClass("p.A", GlobalSearchScope.allScope(myProject));
@@ -126,7 +119,7 @@ public class SCR14423Test extends PsiTestCase {
     });
   }
 
-  public void testSyncrhonizationAfterChange() {
+  public void testSynchronizationAfterChange() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         FileDocumentManager.getInstance().saveAllDocuments();

@@ -3,7 +3,6 @@ package com.intellij.psi.impl.cache.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -17,20 +16,15 @@ import java.io.IOException;
 /**
  * @author max
  */
-public class SCR17650Test extends PsiTestCase {
+public class ClassFileUnderSourceRootTest extends PsiTestCase {
   private static final String TEST_ROOT = PathManagerEx.getTestDataPath() + "/psi/repositoryUse/cls";
-
   private VirtualFile myDir;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
-    final File root = FileUtil.createTempFile(getName(), "");
-    root.delete();
-    root.mkdir();
-    myFilesToDelete.add(root);
-
+    final File root = createTempDirectory();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
@@ -55,11 +49,10 @@ public class SCR17650Test extends PsiTestCase {
 
   private static VirtualFile getClassFile() {
     VirtualFile vDir = LocalFileSystem.getInstance().findFileByPath(TEST_ROOT.replace(File.separatorChar, '/'));
-    VirtualFile child = vDir.findChild("pack").findChild("MyClass.class");
-    return child;
+    return vDir.findFileByRelativePath("pack/MyClass.class");
   }
 
-  public void test17650() throws Exception {
+  public void testFindClass() throws Exception {
     assertEquals("p.A", myJavaFacade.findClass("p.A").getQualifiedName());
     assertEquals("pack.MyClass", myJavaFacade.findClass("pack.MyClass").getQualifiedName());
   }
