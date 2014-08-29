@@ -13,22 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package com.intellij.codeInsight.highlighting;
-
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.xdebugger.frame;
 
 /**
- * @author yole
- *
- * @see com.intellij.codeInsight.highlighting.HighlightUsagesHandlerFactoryBase
+ * @author Konstantin Bulenkov
  */
-public interface HighlightUsagesHandlerFactory {
-  ExtensionPointName<HighlightUsagesHandlerFactory> EP_NAME = ExtensionPointName.create("com.intellij.highlightUsagesHandlerFactory");
-
-  @Nullable
-  HighlightUsagesHandlerBase createHighlightUsagesHandler(Editor editor, PsiFile file);
+public interface XNearestSourcePosition extends XNavigatable {
 }

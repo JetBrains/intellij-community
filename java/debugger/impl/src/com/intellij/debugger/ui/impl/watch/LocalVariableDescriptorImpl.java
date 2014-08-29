@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.ui.impl.watch;
 
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.SourcePosition;
@@ -22,6 +23,7 @@ import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.jdi.LocalVariableProxyImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
@@ -29,13 +31,23 @@ import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.LocalVariableDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XSourcePosition;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements LocalVariableDescriptor {
   private final StackFrameProxyImpl myFrameProxy;
@@ -61,6 +73,11 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
 
   @Nullable
   public SourcePosition getSourcePosition(final Project project, final DebuggerContextImpl context) {
+    return getSourcePosition(project, context, false);
+  }
+
+  @Nullable
+  public SourcePosition getSourcePosition(final Project project, final DebuggerContextImpl context, boolean nearest) {
     StackFrameProxyImpl frame = context.getFrameProxy();
     if (frame == null) return null;
 
@@ -77,8 +94,49 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
 
     PsiFile containingFile = psiVariable.getContainingFile();
     if(containingFile == null) return null;
-
+    if (nearest) {
+      return findNearest(context, psiVariable, containingFile);
+    }
     return SourcePosition.createFromOffset(containingFile, psiVariable.getTextOffset());
+  }
+
+  private static SourcePosition findNearest(@NotNull DebuggerContextImpl context, @NotNull PsiVariable psi, @NotNull PsiFile file) {
+    final DebuggerSession session = context.getDebuggerSession();
+    if (session != null) {
+      try {
+        final XDebugSession debugSession = session.getXDebugSession();
+        if (debugSession != null) {
+          final XSourcePosition position = debugSession.getCurrentPosition();
+          final Editor editor = PsiUtilBase.findEditor(psi);
+          if (editor != null && position != null && file.getVirtualFile().equals(position.getFile())) {
+            final Couple<Collection<TextRange>> usages = IdentifierHighlighterPass.getHighlightUsages(psi, file);
+            final List<TextRange> ranges = new ArrayList<TextRange>();
+            ranges.addAll(usages.first);
+            ranges.addAll(usages.second);
+            final int breakPointLine = position.getLine();
+            int bestLine = -1;
+            boolean hasSameLine = false;
+            for (TextRange range : ranges) {
+              final int line = editor.offsetToLogicalPosition(range.getStartOffset()).line;
+              if (line > bestLine && line < breakPointLine) {
+                bestLine = line;
+              } else if (line == breakPointLine) {
+                hasSameLine = true;
+              }
+            }
+            if (bestLine > 0) {
+              if (hasSameLine && breakPointLine - bestLine > 4) {
+                return SourcePosition.createFromLine(file, breakPointLine);
+              }
+              return SourcePosition.createFromLine(file, bestLine);
+            }
+          }
+        }
+      }
+      catch (Exception ignore) {
+      }
+    }
+    return SourcePosition.createFromOffset(file, psi.getTextOffset());
   }
 
   public boolean isNewLocal() {
