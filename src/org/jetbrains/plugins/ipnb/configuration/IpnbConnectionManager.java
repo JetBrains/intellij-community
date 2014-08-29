@@ -25,7 +25,7 @@ import java.util.Map;
 public final class IpnbConnectionManager implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance(IpnbConnectionManager.class);
   private final Project myProject;
-  private Map<IpnbFileEditor, IpnbConnection> myKernels = new HashMap<IpnbFileEditor, IpnbConnection>();
+  private Map<String, IpnbConnection> myKernels = new HashMap<String, IpnbConnection>();
   private Map<String, IpnbCodePanel> myUpdateMap = new HashMap<String, IpnbCodePanel>();
 
   public IpnbConnectionManager(final Project project) {
@@ -38,7 +38,8 @@ public final class IpnbConnectionManager implements ProjectComponent {
 
   public void executeCell(@NotNull final IpnbCodePanel codePanel) {
     final IpnbFileEditor fileEditor = codePanel.getFileEditor();
-    if (!myKernels.containsKey(fileEditor)) {
+    final String path = fileEditor.getVirtualFile().getPath();
+    if (!myKernels.containsKey(path)) {
       try {
         final String url = IpnbSettings.getInstance(myProject).getURL();
         if (StringUtil.isEmptyOrSpaces(url)) {
@@ -62,7 +63,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
             cell.updatePanel(outputs);
           }
         });
-        myKernels.put(fileEditor, connection);
+        myKernels.put(path, connection);
       }
       catch (IOException e) {
         LOG.error(e);
@@ -72,7 +73,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
       }
     }
     else {
-      final IpnbConnection connection = myKernels.get(fileEditor);
+      final IpnbConnection connection = myKernels.get(path);
       if (connection != null) {
         final String messageId = connection.execute(codePanel.getCell().getSourceAsString());
         myUpdateMap.put(messageId, codePanel);
