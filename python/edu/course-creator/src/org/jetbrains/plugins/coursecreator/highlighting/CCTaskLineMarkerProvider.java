@@ -36,6 +36,7 @@ public class CCTaskLineMarkerProvider implements LineMarkerProvider {
       if (element instanceof PsiFile) {
         final Project project = element.getProject();
         final Course course = CCProjectService.getInstance(project).getCourse();
+        if (course == null) return;
         final String taskFileName = ((PsiFile) element).getName();
         final PsiDirectory taskDir = ((PsiFile) element).getParent();
         if (taskDir == null) continue;

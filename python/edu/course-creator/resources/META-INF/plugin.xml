@@ -1,6 +1,6 @@
 <idea-plugin version="2">
   <id>org.jetbrains.plugins.coursecreator</id>
-  <name>Cource Creator for PyCharm Education</name>
+  <name>Course Creator for PyCharm Educational</name>
   <version>1.0</version>
 
   <description><![CDATA[
@@ -10,9 +10,7 @@
   <change-notes><![CDATA[
     ]]>
   </change-notes>
-
   <!-- please see http://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
-  <idea-version since-build="138"/>
 
   <!-- please see http://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
        on how to target different products -->

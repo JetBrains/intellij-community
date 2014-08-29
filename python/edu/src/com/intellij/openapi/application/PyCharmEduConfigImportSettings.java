@@ -1,28 +1,12 @@
 package com.intellij.openapi.application;
 
-import com.intellij.util.ThreeState;
+import com.intellij.ide.plugins.PluginManagerCore;
 
 // see com.intellij.openapi.application.ConfigImportHelper.getConfigImportSettings
 @SuppressWarnings("UnusedDeclaration")
 public class PyCharmEduConfigImportSettings extends ConfigImportSettings {
-
-  @Override
-  protected String getProductName(ThreeState full) {
-    return "WebStorm";
+  public PyCharmEduConfigImportSettings() {
+    PluginManagerCore.disablePlugin("org.jetbrains.plugins.coursecreator");
   }
 
-  @Override
-  public String getCustomPathsSelector() {
-    return "WebIDE10";
-  }
-
-  @Override
-  public String getExecutableName() {
-    return "webstorm";
-  }
-
-  @Override
-  public String[] getMainJarNames() {
-    return new String[] { "webide", "webstorm"};
-  }
 }
