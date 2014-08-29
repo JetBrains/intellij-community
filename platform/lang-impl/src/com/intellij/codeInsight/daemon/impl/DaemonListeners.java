@@ -507,7 +507,7 @@ public class DaemonListeners implements Disposable {
     }
 
     @Override
-    public void profileActivated(@NotNull Profile oldProfile, Profile profile) {
+    public void profileActivated(Profile oldProfile, Profile profile) {
       stopDaemonAndRestartAllFiles();
     }
 

@@ -76,7 +76,7 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
       }
 
       @Override
-      public void profileActivated(@NotNull Profile oldProfile, Profile profile) {
+      public void profileActivated(Profile oldProfile, Profile profile) {
         myFileTools.clear();
       }
     };
