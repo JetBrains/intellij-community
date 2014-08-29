@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
@@ -34,9 +35,18 @@ public class EditorComboBoxEditor implements ComboBoxEditor{
   @NonNls protected static final String NAME = "ComboBox.textField";
 
   public EditorComboBoxEditor(Project project, FileType fileType) {
-    myTextField = new ComboboxEditorTextField((Document)null, project, fileType);
+    myTextField = new ComboboxEditorTextField((Document)null, project, fileType) {
+      @Override
+      protected EditorEx createEditor() {
+        EditorEx editor = super.createEditor();
+        onEditorCreate(editor);
+        return editor;
+      }
+    };
     myTextField.setName(NAME);
   }
+
+  protected void onEditorCreate(EditorEx editor) {}
 
   @Override
   public void selectAll() {
