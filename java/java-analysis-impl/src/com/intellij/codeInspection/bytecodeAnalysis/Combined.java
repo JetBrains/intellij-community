@@ -410,7 +410,7 @@ final class CombinedInterpreter extends BasicInterpreter {
         break;
       default:
     }
-    return super.ternaryOperation(insn, value1, value2, value3);
+    return null;
   }
 
   @Override
