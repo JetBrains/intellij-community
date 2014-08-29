@@ -48,6 +48,7 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
   @NotNull private final GithubCreatePullRequestPanel myPanel;
   @NotNull private final GithubCreatePullRequestWorker myWorker;
   @NotNull private final GithubProjectSettings myProjectSettings;
+  @NotNull private static final CreateRemoteDoNotAskOption ourDoNotAskOption = new CreateRemoteDoNotAskOption();
 
   public GithubCreatePullRequestDialog(@NotNull final Project project, @NotNull GithubCreatePullRequestWorker worker) {
     super(project, true);
@@ -90,7 +91,7 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
             if (Messages.YES ==
                 GithubNotifications
                   .showYesNoDialog(project, "Can't Find Remote", "Configure remote for '" + fork.getPath().getUser() + "'?",
-                                   new CreateRemoteDoNotAskOption())) {
+                                   ourDoNotAskOption)) {
               myWorker.configureRemote(fork);
             }
             fork.setProposedToCreateRemote(true);
