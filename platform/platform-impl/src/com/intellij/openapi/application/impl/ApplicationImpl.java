@@ -530,9 +530,13 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  public void load(String path) throws IOException, InvalidDataException {
-    getStateStore().setOptionsPath(path);
-    getStateStore().setConfigPath(PathManager.getConfigPath());
+  public void load(@Nullable String optionsPath) throws IOException {
+    load(PathManager.getConfigPath(), optionsPath);
+  }
+
+  public void load(@NotNull String configPath, @Nullable String optionsPath) throws IOException {
+    getStateStore().setOptionsPath(optionsPath);
+    getStateStore().setConfigPath(configPath);
 
     myIsFiringLoadingEvent = true;
     try {
