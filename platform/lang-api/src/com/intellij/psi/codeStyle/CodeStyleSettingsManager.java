@@ -20,19 +20,18 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.DifferenceFilter;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
-import org.jdom.Element;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CodeStyleSettingsManager implements PersistentStateComponent<Element> {
-  private static final Logger LOG = Logger.getInstance("#" + CodeStyleSettingsManager.class.getName());
+public class CodeStyleSettingsManager implements PersistentStateComponent<CodeStyleSettingsManager> {
+  private static final Logger LOG = Logger.getInstance(CodeStyleSettingsManager.class);
 
   public volatile CodeStyleSettings PER_PROJECT_SETTINGS = null;
   public volatile boolean USE_PER_PROJECT_SETTINGS = false;
   public volatile String PREFERRED_PROJECT_CODE_STYLE = null;
+
   private volatile CodeStyleSettings myTemporarySettings;
   private volatile boolean myIsLoaded = false;
 
@@ -44,7 +43,13 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
         if (!projectSettingsManager.isLoaded()) {
           LegacyCodeStyleSettingsManager legacySettingsManager = ServiceManager.getService(project, LegacyCodeStyleSettingsManager.class);
           if (legacySettingsManager != null && legacySettingsManager.getState() != null) {
-            projectSettingsManager.loadState(legacySettingsManager.getState());
+            try {
+              //noinspection deprecation
+              DefaultJDOMExternalizer.readExternal(projectSettingsManager, legacySettingsManager.getState());
+            }
+            catch (InvalidDataException e) {
+              LOG.error(e);
+            }
             LOG.info("Imported old project code style settings.");
           }
         }
@@ -76,35 +81,14 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
     return CodeStyleSchemes.getInstance().findPreferredScheme(PREFERRED_PROJECT_CODE_STYLE).getCodeStyleSettings();
   }
 
-  private void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-  }
-
-  private void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<CodeStyleSettingsManager>(this, new CodeStyleSettingsManager()));
+  @Override
+  public CodeStyleSettingsManager getState() {
+    return this;
   }
 
   @Override
-  public Element getState() {
-    Element result = new Element("state");
-    try {
-      writeExternal(result);
-    }
-    catch (WriteExternalException e) {
-      LOG.error(e);
-    }
-    return result;
-  }
-
-  @Override
-  public void loadState(Element state) {
-    try {
-      readExternal(state);
-      myIsLoaded = true;
-    }
-    catch (InvalidDataException e) {
-      LOG.error(e);
-    }
+  public void loadState(CodeStyleSettingsManager state) {
+    XmlSerializerUtil.copyBean(state, this);
   }
 
   public CodeStyleSettings getTemporarySettings() {
