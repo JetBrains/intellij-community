@@ -1,10 +1,18 @@
 package com.siyeh.ig.bugs;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class StringEqualityInspectionTest extends IGInspectionTestCase {
+public class StringEqualityInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/bugs/string_equality", new StringEqualityInspection());
+  public void testStringEquality() {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new StringEqualityInspection();
   }
 }
