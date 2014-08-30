@@ -46,11 +46,11 @@ public class VcsLogRefresherTest extends VcsLogPlatformTest {
       throw new AssertionError(e);
     }
   };
-  @NotNull private TestVcsLogProvider myLogProvider;
-  @NotNull private VcsLogDataHolder myDataHolder;
-  @NotNull private Map<Hash, VcsCommitMetadata> myTopDetailsCache;
-  @NotNull private Map<VirtualFile, VcsLogProvider> myLogProviders;
-  @NotNull private List<String> myCommits;
+  private TestVcsLogProvider myLogProvider;
+  private VcsLogDataHolder myDataHolder;
+  private Map<Hash, VcsCommitMetadata> myTopDetailsCache;
+  private Map<VirtualFile, VcsLogProvider> myLogProviders;
+  private List<String> myCommits;
 
   @Override
   public void setUp() throws Exception {
