@@ -31,6 +31,12 @@
       <val val="&quot;!null,_,_,_-&gt;true;_,!null,_,_-&gt;true;_,_,!null,_-&gt;true;_,_,_,!null-&gt;true;_,_,_,null-&gt;true;_,_,null,_-&gt;true;_,null,_,_-&gt;true;null,_,_,_-&gt;true&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.velocity.runtime.RuntimeInstance java.lang.Object getProperty(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.runtime.RuntimeInstance java.lang.String getString(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.velocity.runtime.RuntimeInstance org.apache.velocity.app.event.EventHandler initializeSpecificEventHandler(java.lang.String, java.lang.String, java.lang.Class) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
@@ -41,6 +47,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;_,_,null-&gt;null;null,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.runtime.RuntimeInstance org.apache.velocity.runtime.parser.Parser createNewParser()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -101,7 +108,22 @@
   <item name="org.apache.velocity.runtime.VelocimacroManager boolean usingNamespaces(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="org.apache.velocity.runtime.VelocimacroManager java.lang.String getLibraryName(java.lang.String, java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.runtime.VelocimacroManager java.util.Map addNamespace(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.runtime.VelocimacroManager java.util.Map getNamespace(java.lang.String, boolean)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.runtime.VelocimacroManager org.apache.velocity.runtime.directive.VelocimacroProxy get(java.lang.String, java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.velocity.runtime.VelocimacroManager org.apache.velocity.runtime.directive.VelocimacroProxy get(java.lang.String, java.lang.String, java.lang.String) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.runtime.VelocimacroManager org.apache.velocity.runtime.directive.VelocimacroProxy get(java.lang.String, java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.runtime.VelocimacroManager.MacroEntry MacroEntry(java.lang.String, org.apache.velocity.runtime.parser.node.Node, java.lang.String[], java.lang.String, org.apache.velocity.runtime.RuntimeServices) 1">

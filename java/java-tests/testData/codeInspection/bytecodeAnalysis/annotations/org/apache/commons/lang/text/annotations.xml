@@ -37,11 +37,13 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;_,_,!null,_-&gt;!null;_,_,null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.text.ExtendedMessageFormat java.text.Format getFormat(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.text.ExtendedMessageFormat java.text.ParsePosition next(java.text.ParsePosition) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -422,6 +424,9 @@
   <item name="org.apache.commons.lang.text.StrLookup org.apache.commons.lang.text.StrLookup mapLookup(java.util.Map)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.text.StrLookup.MapStrLookup java.lang.String lookup(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.text.StrMatcher int isMatch(char[], int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -503,6 +508,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.text.StrSubstitutor java.lang.String replace(char[], int, int) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -511,6 +517,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.text.StrSubstitutor java.lang.String replace(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -519,6 +526,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.text.StrSubstitutor java.lang.String replace(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -527,6 +535,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.text.StrSubstitutor java.lang.String replace(java.lang.String, int, int) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -535,6 +544,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.text.StrSubstitutor java.lang.String replace(java.lang.StringBuffer) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -543,6 +553,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.text.StrSubstitutor java.lang.String replace(java.lang.StringBuffer, int, int) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -551,6 +562,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.text.StrSubstitutor java.lang.String replace(org.apache.commons.lang.text.StrBuilder) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -559,6 +571,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.text.StrSubstitutor java.lang.String replace(org.apache.commons.lang.text.StrBuilder, int, int) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -567,8 +580,12 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.text.StrSubstitutor java.lang.String resolveVariable(java.lang.String, org.apache.commons.lang.text.StrBuilder, int, int) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.text.StrSubstitutor java.lang.String resolveVariable(java.lang.String, org.apache.commons.lang.text.StrBuilder, int, int)">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.text.StrSubstitutor org.apache.commons.lang.text.StrSubstitutor setVariablePrefix(java.lang.String) 0">
@@ -612,6 +629,18 @@
   </item>
   <item name="org.apache.commons.lang.text.StrTokenizer int readWithQuotes(char[], int, int, org.apache.commons.lang.text.StrBuilder, java.util.List, int, int) 3">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.text.StrTokenizer java.lang.Object clone()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.text.StrTokenizer java.lang.String getContent()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.text.StrTokenizer java.lang.String nextToken()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.text.StrTokenizer java.lang.String previousToken()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.text.StrTokenizer java.lang.String toString()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
