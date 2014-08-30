@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.containers.HashSet;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
@@ -40,7 +41,6 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.*;
-import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
@@ -48,10 +48,7 @@ import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author amarch
@@ -73,104 +70,23 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
   }
 
   private class NumpyArrayValueProvider extends ArrayValueProvider {
-    private static final String NUMERIC_VALUE_SEPARATOR = " ";
-    private static final String START_ROW_SEPARATOR = "[";
-    private final Pattern STR_VALUE_SEPARATOR = Pattern.compile("'.*?[^\\\\]'|\".*?[^\\\\]\"");
-    private static final String END_ROW_SEPARATOR = "]";
 
     @Override
     public Object[][] parseValues(String rawValues) {
-
-      if (rawValues != null && rawValues.startsWith(START_ROW_SEPARATOR)) {
-        int dimension = 0;
-        while (rawValues.charAt(dimension) == START_ROW_SEPARATOR.charAt(0)) {
-          dimension += 1;
-        }
-
-        String showedValues =
-          dimension > 2 ? rawValues.substring(dimension - 2, rawValues.indexOf(END_ROW_SEPARATOR + END_ROW_SEPARATOR) + 2) : rawValues;
-        String[] rows = showedValues.split("\\]\n( )*\\[");
-
-        Object[][] data = null;
-        boolean numeric = isNumeric(showedValues);
-        for (int i = 0; i < rows.length; i++) {
-          Object[] row;
-
-          if (numeric) {
-            String clearedRow =
-              rows[i].replace(START_ROW_SEPARATOR, "").replace(END_ROW_SEPARATOR, "").replace("  ", " ").replace("  ", " ").trim();
-            row = clearedRow.split(NUMERIC_VALUE_SEPARATOR);
-          }
-          else {
-            String clearedRow = rows[i].replace(START_ROW_SEPARATOR, "").replace(END_ROW_SEPARATOR, "").replace("  ", " ").trim();
-            Matcher matcher = STR_VALUE_SEPARATOR.matcher(clearedRow);
-            List<String> matches = new ArrayList<String>();
-            while (matcher.find()) {
-              matches.add(matcher.group());
-            }
-            row = matches.toArray();
-          }
-
-          data = data == null ? new String[rows.length][row.length] : data;
-          System.arraycopy(row, 0, data[i], 0, row.length);
-        }
-        return data;
-      }
-
       return null;
     }
 
     private boolean isNumeric(String value) {
-      if (value.contains("\'") || value.contains("\"")) {
-        return false;
-      }
       return true;
     }
-
-    public int[] getShape(XValueNodeImpl node) {
-
-      final int[] shape = {0};
-
-      node.getTree().addTreeListener(new XDebuggerTreeListener() {
-        @Override
-        public void nodeLoaded(@NotNull RestorableStateNode node, String name) {
-          System.out.printf(name + " node loaded\n");
-        }
-
-        @Override
-        public void childrenLoaded(@NotNull XDebuggerTreeNode node, @NotNull List<XValueContainerNode<?>> children, boolean last) {
-          System.out.printf(children + "children loaded\n");
-          shape[0] = 1;
-        }
-      });
-
-      node.getValueContainer().computeChildren(node);
-
-      //while(shape[0] == 0){
-      //
-      //}
-
-      System.out.printf("Children loaded and thread resumed\n");
-
-      System.out.printf("Size: " + node.getChildren());
-
-      if (node.getChildCount() > 0) {
-        node.getValueContainer().computeChildren(node);
-        List<? extends TreeNode> children = node.getChildren();
-        for (TreeNode treeNode : children) {
-          int x = 1;
-        }
-      }
-      return new int[0];
-    }
   }
+
 
   private class MyDialog extends DialogWrapper {
     public JTable myTable;
     private XValueNodeImpl myNode;
     private String myNodeName;
     private Project myProject;
-
     private MyComponent myComponent;
 
     private MyDialog(Project project, XValueNodeImpl node, @NotNull String nodeName) {
@@ -189,43 +105,262 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
       init();
     }
 
+
+    public abstract class XDebuggerTreeTableListener implements XDebuggerTreeListener {
+      abstract void setBaseNode(XValueNodeImpl baseNode);
+
+      abstract XValueContainerNode findItems(@NotNull XDebuggerTreeNode node);
+    }
+
     public void setValue(XValueNodeImpl node) {
-      ArrayValueProvider valueProvider;
+      final ArrayValueProvider valueProvider;
 
       if (node.getValuePresentation() != null &&
           node.getValuePresentation().getType() != null &&
           node.getValuePresentation().getType().equals("ndarray")) {
         valueProvider = new NumpyArrayValueProvider();
-        int[] shape = ((NumpyArrayValueProvider)valueProvider).getShape(node);
-        final Object[][] data = valueProvider.parseValues(evaluateFullValue(node));
 
-        double min = Double.MAX_VALUE;
-        double max = Double.MIN_VALUE;
-        if (data.length > 0) {
-          try {
-            for (int i = 0; i < data.length; i++) {
-              for (int j = 0; j < data[0].length; j++) {
-                double d = Double.parseDouble(data[i][j].toString());
-                min = min > d ? d : min;
-                max = max < d ? d : max;
+        //myComponent.setDefaultSpinnerText();
+
+        XDebuggerTreeTableListener tableUpdater = new XDebuggerTreeTableListener() {
+
+          XValueNodeImpl baseNode;
+
+          XValueContainerNode innerNdarray;
+
+          XValueContainerNode innerItems;
+
+          int[] shape;
+
+          int depth = 0;
+
+          int loadedRows = 0;
+
+          HashSet<String> unloadedRowNumbers = new HashSet<String>();
+
+          boolean baseChildrenLoaded = false;
+
+          boolean numeric = false;
+
+          boolean dataLoaded = false;
+
+          Object[][] data;
+
+          @Override
+          public void nodeLoaded(@NotNull RestorableStateNode node, String name) {
+            System.out.printf(name + " node loaded\n");
+
+            if (!baseChildrenLoaded &&
+                (shape == null || name.equals("dtype")) &&
+                ((XValueNodeImpl)node.getParent()).getName().equals(baseNode.getName())) {
+              if (name.equals("shape")) {
+                String rawValue = node.getRawValue();
+                String[] shapes = rawValue.substring(1, rawValue.length() - 1).split(",");
+                shape = new int[shapes.length];
+                for (int i = 0; i < shapes.length; i++) {
+                  shape[i] = Integer.parseInt(shapes[i].trim());
+                }
+                depth = Math.max(shape.length - 2, 0);
+              }
+
+              if (name.equals("dtype")) {
+                String rawValue = node.getRawValue();
+                if ("biufc".contains(rawValue.substring(0, 1))) {
+                  numeric = true;
+                }
               }
             }
           }
-          catch (NumberFormatException e) {
-            min = 0;
-            max = 0;
+
+          @Override
+          public void childrenLoaded(@NotNull XDebuggerTreeNode node, @NotNull List<XValueContainerNode<?>> children, boolean last) {
+            System.out.printf(children + "children loaded\n");
+
+            if (dataLoaded) {
+              return;
+            }
+
+            //todo: not compute children if they yet computed
+
+            if (!baseChildrenLoaded && node.equals(baseNode)) {
+              baseChildrenLoaded = true;
+              innerNdarray = (XValueContainerNode)node;
+              if (shape != null) {
+                if (shape.length >= 2) {
+                  data = new Object[shape[shape.length - 2]][shape[shape.length - 1]];
+                }
+                else {
+                  data = new Object[1][shape[0]];
+                }
+              }
+            }
+
+            //go deeper
+            if (depth > 0) {
+              if (innerNdarray != null && innerNdarray.equals(node)) {
+                innerNdarray = null;
+                innerItems = findItems(node);
+                innerItems.startComputingChildren();
+              }
+
+              if (innerItems != null && innerItems.equals(node)) {
+                innerNdarray = (XValueContainerNode)node.getChildAt(1);
+                innerItems = null;
+                innerNdarray.startComputingChildren();
+                depth -= 1;
+              }
+
+              return;
+            }
+
+            //find ndarray slice to display
+            if (depth == 0) {
+              innerItems = findItems(node);
+              innerItems.startComputingChildren();
+              depth -= 1;
+              return;
+            }
+
+            if (depth == -1 && node.equals(innerItems)) {
+              if (shape != null && shape.length == 1) {
+                for (int i = 0; i < node.getChildCount() - 1; i++) {
+                  data[0][i] = fixValue(((XValueNodeImpl)node.getChildAt(i + 1)).getRawValue());
+                }
+                loadData();
+                loadedRows = 1;
+              }
+              else {
+                for (int i = 0; i < node.getChildCount() - 1; i++) {
+                  ((XValueNodeImpl)node.getChildAt(i + 1)).startComputingChildren();
+                  unloadedRowNumbers.add(((XValueNodeImpl)node.getChildAt(i + 1)).getName());
+                }
+                depth -= 1;
+              }
+              return;
+            }
+
+
+            if (depth == -2) {
+              String name = ((XValueNodeImpl)node).getName();
+              // ndarrray children not computed yet
+              if (unloadedRowNumbers.contains(name)) {
+                unloadedRowNumbers.remove(name);
+                findItems(node).startComputingChildren();
+                return;
+              }
+
+              if (name.startsWith("[")) {
+                int row = parseName(((XValueNodeImpl)node.getParent()).getName());
+                if (data[row][0] == null) {
+                  for (int i = 0; i < node.getChildCount() - 1; i++) {
+                    data[row][i] = fixValue(((XValueNodeImpl)node.getChildAt(i + 1)).getRawValue());
+                  }
+                  loadedRows += 1;
+                }
+              }
+            }
+
+            if (loadedRows == shape[shape.length - 2]) {
+              loadData();
+            }
           }
-        }
-        else {
-          min = 0;
-          max = 0;
-        }
 
-        DefaultTableModel model = new DefaultTableModel(data, range(0, data[0].length - 1));
+          //todo: remove this, make correct code in python
+          private String fixValue(String value) {
+            if (!numeric) {
+              return "\'" + value + "\'";
+            }
+            return value;
+          }
 
-        myTable.setModel(model);
-        myTable.setDefaultEditor(myTable.getColumnClass(0), new MyTableCellEditor(myProject));
-        myTable.setDefaultRenderer(myTable.getColumnClass(0), new MyTableCellRenderer(min, max));
+          public void setBaseNode(XValueNodeImpl baseNode) {
+            this.baseNode = baseNode;
+          }
+
+          private int parseName(String name) {
+            int open = name.indexOf('(');
+            return Integer.parseInt(name.substring(1, open - 2));
+          }
+
+          XValueContainerNode findItems(@NotNull XDebuggerTreeNode node) {
+            for (int i = 0; i < node.getChildCount(); i++) {
+              if (node.getChildAt(i).toString().startsWith("[")) {
+                return (XValueContainerNode)node.getChildAt(i);
+              }
+            }
+            return null;
+          }
+
+          private void loadData() {
+
+            DefaultTableModel model = new DefaultTableModel(data, range(0, data[0].length - 1));
+
+            myTable.setModel(model);
+            myTable.setDefaultEditor(myTable.getColumnClass(0), new MyTableCellEditor(myProject));
+
+            if (numeric) {
+              double min = Double.MAX_VALUE;
+              double max = Double.MIN_VALUE;
+              if (data.length > 0) {
+                try {
+                  for (int i = 0; i < data.length; i++) {
+                    for (int j = 0; j < data[0].length; j++) {
+                      double d = Double.parseDouble(data[i][j].toString());
+                      min = min > d ? d : min;
+                      max = max < d ? d : max;
+                    }
+                  }
+                }
+                catch (NumberFormatException e) {
+                  min = 0;
+                  max = 0;
+                }
+              }
+              else {
+                min = 0;
+                max = 0;
+              }
+
+              myTable.setDefaultRenderer(myTable.getColumnClass(0), new MyTableCellRenderer(min, max));
+            }
+            else {
+              myComponent.getColored().setSelected(false);
+              myComponent.getColored().setVisible(false);
+            }
+
+            myComponent.getTextField().setText(getDefaultSliceRepresentation());
+            dataLoaded = true;
+            innerItems = null;
+            innerNdarray = null;
+          }
+
+          public String getDefaultSliceRepresentation() {
+            String representation = "";
+
+            if (baseNode != null) {
+              representation += baseNode.getName();
+              if (shape != null && shape.length > 0) {
+                for (int i = 0; i < shape.length - 2; i++) {
+                  representation += "[0]";
+                }
+                if (shape.length == 1) {
+                  representation += "[0:" + shape[0] + "]";
+                }
+                else {
+                  representation += "[0:" + shape[shape.length - 2] + "][0:" + shape[shape.length - 1] + "]";
+                }
+              }
+            }
+
+            return representation;
+          }
+        };
+
+        tableUpdater.setBaseNode(node);
+
+        node.getTree().addTreeListener(tableUpdater);
+
+        node.startComputingChildren();
       }
     }
 
@@ -295,6 +430,8 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
     private JBTable myTable;
     private JCheckBox myCheckBox;
 
+    private static final String DATA_LOADING_IN_PROCESS = "Please wait, load array data.";
+
     public MyComponent() {
       super(new GridBagLayout());
 
@@ -353,6 +490,16 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
     public JBTable getTable() {
       return myTable;
     }
+
+    public JCheckBox getColored() {
+      return myCheckBox;
+    }
+
+    public void setDefaultSpinnerText() {
+      DefaultTableModel model = new DefaultTableModel(1, 1);
+      myTable.setModel(model);
+      myTable.setValueAt(DATA_LOADING_IN_PROCESS, 0, 0);
+    }
   }
 
 
@@ -385,7 +532,10 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
         // this cell is the anchor and the table has the focus
       }
 
-      setText(value.toString());
+      if (value != null) {
+        setText(value.toString());
+      }
+
 
       if (max != min) {
         if (colored) {
