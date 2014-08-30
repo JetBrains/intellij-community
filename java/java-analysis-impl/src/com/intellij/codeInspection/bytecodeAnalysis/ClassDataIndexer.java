@@ -227,6 +227,7 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
 
         if (isReferenceResult) {
           result.add(outEquation.getValue());
+          result.add(new Equation<Key, Value>(new Key(method, NullableOut, stable), NullableMethodAnalysis.analyze(methodNode, origins.getValue(), jsr)));
         }
 
         for (int i = 0; i < argumentTypes.length; i++) {

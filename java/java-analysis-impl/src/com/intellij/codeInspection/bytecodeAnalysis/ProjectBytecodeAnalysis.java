@@ -242,10 +242,9 @@ public class ProjectBytecodeAnalysis {
     collectEquations(Collections.singletonList(nullableKey), nullableMethodSolver);
 
     HashMap<HKey, Value> nullableSolutions = nullableMethodSolver.solve();
-    if (nullableSolutions.get(nullableKey) == Value.Null) {
+    if (nullableSolutions.get(nullableKey) == Value.Null || nullableSolutions.get(nullableKey.negate()) == Value.Null) {
       result.nullables.add(key);
     }
-
     return result;
   }
 
