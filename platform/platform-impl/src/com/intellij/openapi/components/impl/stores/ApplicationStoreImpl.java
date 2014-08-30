@@ -57,16 +57,12 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
 
       @Override
       protected String getOldStorageSpec(Object component, final String componentName, final StateStorageOperation operation) {
-        final String fileName;
-
         if (component instanceof NamedJDOMExternalizable) {
-          fileName = StoragePathMacros.APP_CONFIG + "/" + ((NamedJDOMExternalizable)component).getExternalFileName() + XML_EXTENSION;
+          return StoragePathMacros.APP_CONFIG + "/" + ((NamedJDOMExternalizable)component).getExternalFileName() + XML_EXTENSION;
         }
         else {
-          fileName = DEFAULT_STORAGE_SPEC;
+          return DEFAULT_STORAGE_SPEC;
         }
-
-        return fileName;
       }
 
       @Override
