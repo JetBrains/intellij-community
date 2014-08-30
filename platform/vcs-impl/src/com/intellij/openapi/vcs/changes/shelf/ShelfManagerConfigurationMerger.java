@@ -35,7 +35,7 @@ public class ShelfManagerConfigurationMerger implements XmlConfigurationMerger {
 
   public ShelfManagerConfigurationMerger() {
     myConfigPath = PathManager.getConfigPath()+ "/shelf";
-    myFileProcessor = new CompoundShelfFileProcessor("shelf");
+    myFileProcessor = new CompoundShelfFileProcessor();
   }
 
   @TestOnly
