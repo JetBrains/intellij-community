@@ -15,10 +15,10 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.Opcodes;
+import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.tree.*;
-import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
+import org.jetbrains.org.objectweb.asm.tree.analysis.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,30 +26,58 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Specialized version of {@link org.jetbrains.org.objectweb.asm.tree.analysis.Analyzer}.
- * Calculation of fix-point of frames is removed, since frames are not needed to build control flow graph.
- * So, the main point here is handling of subroutines (jsr) and try-catch-finally blocks.
+ * Extended version of {@link org.jetbrains.org.objectweb.asm.tree.analysis.Analyzer}.
+ * It handles frames <b>and</b> additional data.
+ *
+ * @author lambdamix
  */
-public class FramelessAnalyzer implements Opcodes {
-  private int n;
-  private InsnList insns;
-  private List<TryCatchBlockNode>[] handlers;
-  private Subroutine[] subroutines;
-  protected boolean[] wasQueued;
-  protected boolean[] queued;
-  protected int[] queue;
-  protected int top;
+public class AnalyzerExt<V extends Value, Data, MyInterpreter extends Interpreter<V> & InterpreterExt<Data>> implements Opcodes {
 
-  public void analyze(final MethodNode m) throws AnalyzerException {
-    n = m.instructions.size();
-    if ((m.access & (ACC_ABSTRACT | ACC_NATIVE)) != 0 || n == 0) {
-      return;
+  private final MyInterpreter interpreter;
+
+  private int n;
+
+  private InsnList insns;
+
+  private List<TryCatchBlockNode>[] handlers;
+
+  private Frame<V>[] frames;
+
+  private Subroutine[] subroutines;
+
+  private boolean[] queued;
+
+  private int[] queue;
+
+  private int top;
+
+  public Data[] getData() {
+    return data;
+  }
+
+  private Data[] data;
+
+  public AnalyzerExt(final MyInterpreter interpreter, Data[] data, Data startData) {
+    this.interpreter = interpreter;
+    this.data = data;
+    if (data.length > 0) {
+      data[0] = startData;
     }
+  }
+
+  public Frame<V>[] analyze(final String owner, final MethodNode m) throws AnalyzerException {
+    if ((m.access & (ACC_ABSTRACT | ACC_NATIVE)) != 0) {
+      frames = (Frame<V>[]) new Frame<?>[0];
+      return frames;
+    }
+    final V refV = (V) BasicValue.REFERENCE_VALUE;
+
+    n = m.instructions.size();
     insns = m.instructions;
     handlers = (List<TryCatchBlockNode>[]) new List<?>[n];
+    frames = (Frame<V>[]) new Frame<?>[n];
     subroutines = new Subroutine[n];
     queued = new boolean[n];
-    wasQueued = new boolean[n];
     queue = new int[n];
     top = 0;
 
@@ -72,7 +100,6 @@ public class FramelessAnalyzer implements Opcodes {
     Subroutine main = new Subroutine(null, m.maxLocals, null);
     List<AbstractInsnNode> subroutineCalls = new ArrayList<AbstractInsnNode>();
     Map<LabelNode, Subroutine> subroutineHeads = new HashMap<LabelNode, Subroutine>();
-
     findSubroutine(0, main, subroutineCalls);
     while (!subroutineCalls.isEmpty()) {
       JumpInsnNode jsr = (JumpInsnNode) subroutineCalls.remove(0);
@@ -91,10 +118,35 @@ public class FramelessAnalyzer implements Opcodes {
       }
     }
 
-    merge(0, null);
+    // initializes the data structures for the control flow analysis
+    Frame<V> current = newFrame(m.maxLocals, m.maxStack);
+    Frame<V> handler = newFrame(m.maxLocals, m.maxStack);
+    current.setReturn(interpreter.newValue(Type.getReturnType(m.desc)));
+    Type[] args = Type.getArgumentTypes(m.desc);
+    int local = 0;
+    if ((m.access & ACC_STATIC) == 0) {
+      Type ctype = Type.getObjectType(owner);
+      current.setLocal(local++, interpreter.newValue(ctype));
+    }
+    for (int i = 0; i < args.length; ++i) {
+      current.setLocal(local++, interpreter.newValue(args[i]));
+      if (args[i].getSize() == 2) {
+        current.setLocal(local++, interpreter.newValue(null));
+      }
+    }
+    while (local < m.maxLocals) {
+      current.setLocal(local++, interpreter.newValue(null));
+    }
+
+    interpreter.init(data[0]);
+    merge(0, current, null);
+
+    init(owner, m);
+
     // control flow analysis
     while (top > 0) {
       int insn = queue[--top];
+      Frame<V> f = frames[insn];
       Subroutine subroutine = subroutines[insn];
       queued[insn] = false;
 
@@ -104,56 +156,65 @@ public class FramelessAnalyzer implements Opcodes {
         int insnOpcode = insnNode.getOpcode();
         int insnType = insnNode.getType();
 
-        if (insnType == AbstractInsnNode.LABEL || insnType == AbstractInsnNode.LINE || insnType == AbstractInsnNode.FRAME) {
-          merge(insn + 1, subroutine);
+        if (insnType == AbstractInsnNode.LABEL
+            || insnType == AbstractInsnNode.LINE
+            || insnType == AbstractInsnNode.FRAME) {
+          interpreter.init(data[insn]);
+          merge(insn + 1, f, subroutine);
           newControlFlowEdge(insn, insn + 1);
         } else {
+          // delta
+          interpreter.init(data[insn]);
+          current.init(f).execute(insnNode, interpreter);
           subroutine = subroutine == null ? null : subroutine.copy();
 
           if (insnNode instanceof JumpInsnNode) {
             JumpInsnNode j = (JumpInsnNode) insnNode;
             if (insnOpcode != GOTO && insnOpcode != JSR) {
-              merge(insn + 1, subroutine);
+              merge(insn + 1, current, subroutine);
               newControlFlowEdge(insn, insn + 1);
             }
             int jump = insns.indexOf(j.label);
             if (insnOpcode == JSR) {
-              merge(jump, new Subroutine(j.label, m.maxLocals, j));
+              merge(jump, current, new Subroutine(j.label,
+                                                  m.maxLocals, j));
             } else {
-              merge(jump, subroutine);
+              merge(jump, current, subroutine);
             }
             newControlFlowEdge(insn, jump);
           } else if (insnNode instanceof LookupSwitchInsnNode) {
             LookupSwitchInsnNode lsi = (LookupSwitchInsnNode) insnNode;
             int jump = insns.indexOf(lsi.dflt);
-            merge(jump, subroutine);
+            merge(jump, current, subroutine);
             newControlFlowEdge(insn, jump);
             for (int j = 0; j < lsi.labels.size(); ++j) {
               LabelNode label = lsi.labels.get(j);
               jump = insns.indexOf(label);
-              merge(jump, subroutine);
+              merge(jump, current, subroutine);
               newControlFlowEdge(insn, jump);
             }
           } else if (insnNode instanceof TableSwitchInsnNode) {
             TableSwitchInsnNode tsi = (TableSwitchInsnNode) insnNode;
             int jump = insns.indexOf(tsi.dflt);
-            merge(jump, subroutine);
+            merge(jump, current, subroutine);
             newControlFlowEdge(insn, jump);
             for (int j = 0; j < tsi.labels.size(); ++j) {
               LabelNode label = tsi.labels.get(j);
               jump = insns.indexOf(label);
-              merge(jump, subroutine);
+              merge(jump, current, subroutine);
               newControlFlowEdge(insn, jump);
             }
           } else if (insnOpcode == RET) {
             if (subroutine == null) {
-              throw new AnalyzerException(insnNode, "RET instruction outside of a sub routine");
+              throw new AnalyzerException(insnNode,
+                                          "RET instruction outside of a sub routine");
             }
             for (int i = 0; i < subroutine.callers.size(); ++i) {
               JumpInsnNode caller = subroutine.callers.get(i);
               int call = insns.indexOf(caller);
-              if (wasQueued[call]) {
-                merge(call + 1, subroutines[call], subroutine.access);
+              if (frames[call] != null) {
+                merge(call + 1, frames[call], current,
+                      subroutines[call], subroutine.access);
                 newControlFlowEdge(insn, call + 1);
               }
             }
@@ -172,16 +233,22 @@ public class FramelessAnalyzer implements Opcodes {
                 subroutine.access[var] = true;
               }
             }
-            merge(insn + 1, subroutine);
+            merge(insn + 1, current, subroutine);
             newControlFlowEdge(insn, insn + 1);
           }
         }
 
         List<TryCatchBlockNode> insnHandlers = handlers[insn];
         if (insnHandlers != null) {
-          for (TryCatchBlockNode tcb : insnHandlers) {
-            newControlFlowExceptionEdge(insn, tcb);
-            merge(insns.indexOf(tcb.handler), subroutine);
+          for (int i = 0; i < insnHandlers.size(); ++i) {
+            TryCatchBlockNode tcb = insnHandlers.get(i);
+            int jump = insns.indexOf(tcb.handler);
+            if (newControlFlowExceptionEdge(insn, tcb)) {
+              handler.init(f);
+              handler.clearStack();
+              handler.push(refV);
+              merge(jump, handler, subroutine);
+            }
           }
         }
       } catch (AnalyzerException e) {
@@ -192,13 +259,16 @@ public class FramelessAnalyzer implements Opcodes {
                                               + insn + ": " + e.getMessage(), e);
       }
     }
+
+    return frames;
   }
 
-  protected void findSubroutine(int insn, final Subroutine sub,
+  private void findSubroutine(int insn, final Subroutine sub,
                               final List<AbstractInsnNode> calls) throws AnalyzerException {
     while (true) {
       if (insn < 0 || insn >= n) {
-        throw new AnalyzerException(null, "Execution can fall off end of the code");
+        throw new AnalyzerException(null,
+                                    "Execution can fall off end of the code");
       }
       if (subroutines[insn] != null) {
         return;
@@ -259,25 +329,51 @@ public class FramelessAnalyzer implements Opcodes {
     }
   }
 
-  protected void newControlFlowEdge(final int insn, final int successor) {}
+  public Frame<V>[] getFrames() {
+    return frames;
+  }
 
-  protected boolean newControlFlowExceptionEdge(final int insn, final int successor) {
+  public List<TryCatchBlockNode> getHandlers(final int insn) {
+    return handlers[insn];
+  }
+
+  protected void init(String owner, MethodNode m) throws AnalyzerException {
+  }
+
+  protected Frame<V> newFrame(final int nLocals, final int nStack) {
+    return new Frame<V>(nLocals, nStack);
+  }
+
+  protected Frame<V> newFrame(final Frame<? extends V> src) {
+    return new Frame<V>(src);
+  }
+
+  protected void newControlFlowEdge(final int insn, final int successor) {
+  }
+
+  protected boolean newControlFlowExceptionEdge(final int insn,
+                                                final int successor) {
     return true;
   }
 
-  protected boolean newControlFlowExceptionEdge(final int insn, final TryCatchBlockNode tcb) {
+  protected boolean newControlFlowExceptionEdge(final int insn,
+                                                final TryCatchBlockNode tcb) {
     return newControlFlowExceptionEdge(insn, insns.indexOf(tcb.handler));
   }
 
   // -------------------------------------------------------------------------
 
-  protected void merge(final int insn, @Nullable final Subroutine subroutine) throws AnalyzerException {
+  private void merge(final int insn, final Frame<V> frame,
+                     final Subroutine subroutine) throws AnalyzerException {
+    Frame<V> oldFrame = frames[insn];
     Subroutine oldSubroutine = subroutines[insn];
-    boolean changes = false;
+    boolean changes;
 
-    if (!wasQueued[insn]) {
-      wasQueued[insn] = true;
+    if (oldFrame == null) {
+      frames[insn] = newFrame(frame);
       changes = true;
+    } else {
+      changes = oldFrame.merge(frame, interpreter);
     }
 
     if (oldSubroutine == null) {
@@ -294,20 +390,54 @@ public class FramelessAnalyzer implements Opcodes {
       queued[insn] = true;
       queue[top++] = insn;
     }
+
+    // delta
+    mergeData(insn, interpreter);
   }
 
-  protected void merge(final int insn, final Subroutine subroutineBeforeJSR, final boolean[] access) throws AnalyzerException {
+  private void merge(final int insn, final Frame<V> beforeJSR,
+                     final Frame<V> afterRET, final Subroutine subroutineBeforeJSR,
+                     final boolean[] access) throws AnalyzerException {
+    Frame<V> oldFrame = frames[insn];
     Subroutine oldSubroutine = subroutines[insn];
-    boolean changes = false;
+    boolean changes;
 
-    if (!wasQueued[insn]) {
-      wasQueued[insn] = true;
+    afterRET.merge(beforeJSR, access);
+
+    if (oldFrame == null) {
+      frames[insn] = newFrame(afterRET);
       changes = true;
+    } else {
+      changes = oldFrame.merge(afterRET, interpreter);
     }
 
     if (oldSubroutine != null && subroutineBeforeJSR != null) {
       changes |= oldSubroutine.merge(subroutineBeforeJSR);
     }
+    if (changes && !queued[insn]) {
+      queued[insn] = true;
+      queue[top++] = insn;
+    }
+
+    // delta
+    mergeData(insn, interpreter);
+  }
+
+  private void mergeData(int insn, MyInterpreter interpreter) {
+    boolean changes = false;
+
+    Data oldData = data[insn];
+    Data newData = interpreter.getAfterData(insn);
+
+    if (oldData == null) {
+      data[insn] = newData;
+      changes = true;
+    } else if (newData != null) {
+      Data mergedData = interpreter.merge(oldData, newData);
+      data[insn] = mergedData;
+      changes = !oldData.equals(mergedData);
+    }
+
     if (changes && !queued[insn]) {
       queued[insn] = true;
       queue[top++] = insn;
