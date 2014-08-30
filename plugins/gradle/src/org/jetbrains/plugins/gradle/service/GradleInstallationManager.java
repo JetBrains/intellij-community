@@ -4,6 +4,7 @@ import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -110,6 +111,25 @@ public class GradleInstallationManager {
   @Nullable
   public File getGradleHome(@Nullable Project project, @NotNull String linkedProjectPath) {
     return doGetGradleHome(project, linkedProjectPath);
+  }
+
+  @Nullable
+  public Sdk getGradleJdk(@Nullable Project project, @NotNull String linkedProjectPath) {
+    return doGetGradleJdk(project, linkedProjectPath);
+  }
+
+  @Nullable
+  private Sdk doGetGradleJdk(@Nullable Project project, String linkedProjectPath) {
+    if (project == null) {
+      return null;
+    }
+
+    final GradleProjectSettings settings = GradleSettings.getInstance(project).getLinkedProjectSettings(linkedProjectPath);
+    if (settings == null) {
+      return null;
+    }
+
+    return settings.getGradleJvm();
   }
 
   /**

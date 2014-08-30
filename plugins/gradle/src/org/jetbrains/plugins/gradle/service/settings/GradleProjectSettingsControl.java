@@ -22,6 +22,10 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ui.configuration.JdkComboBox;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -67,14 +71,18 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
 
   @NotNull private final GradleInstallationManager myInstallationManager;
 
+  // @formatter:off
   @SuppressWarnings("FieldCanBeLocal") // Used implicitly by reflection at disposeUIResources() and showUi()
   private JLabel                    myGradleHomeLabel;
+  private JLabel                    myGradleJdkLabel;
+  private JdkComboBox               myGradleJdkComboBox;
   private TextFieldWithBrowseButton myGradleHomePathField;
   private JBRadioButton             myUseWrapperButton;
   private JBRadioButton             myUseWrapperWithVerificationButton;
   private JBLabel                   myUseWrapperVerificationLabel;
   private JBRadioButton             myUseLocalDistributionButton;
   private JBRadioButton             myUseBundledDistributionButton;
+  // @formatter:on
 
   private boolean myShowBalloonIfNecessary;
 
@@ -110,8 +118,10 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
     });
 
     myGradleHomeLabel = new JBLabel(GradleBundle.message("gradle.settings.text.home.path"));
-    initGradleHome();
+    myGradleJdkLabel = new JBLabel(GradleBundle.message("gradle.settings.text.jvm.path"));
 
+    initGradleHome();
+    initGradleJdk();
     initControls();
     content.add(myUseWrapperButton, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
     content.add(myUseWrapperWithVerificationButton, ExternalSystemUiUtil.getLabelConstraints(indentLevel));
@@ -123,6 +133,9 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
 
     content.add(myGradleHomeLabel, ExternalSystemUiUtil.getLabelConstraints(indentLevel));
     content.add(myGradleHomePathField, ExternalSystemUiUtil.getFillLineConstraints(0));
+
+    content.add(myGradleJdkLabel, ExternalSystemUiUtil.getLabelConstraints(indentLevel));
+    content.add(myGradleJdkComboBox, ExternalSystemUiUtil.getFillLineConstraints(0));
   }
 
   private void initControls() {
@@ -171,6 +184,16 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
     buttonGroup.add(myUseWrapperWithVerificationButton);
     buttonGroup.add(myUseBundledDistributionButton);
     buttonGroup.add(myUseLocalDistributionButton);
+  }
+
+  private void initGradleJdk() {
+    final ProjectSdksModel jdkModel = new ProjectSdksModel();
+
+    for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
+      jdkModel.addSdk(sdk);
+    }
+
+    myGradleJdkComboBox = new JdkComboBox(jdkModel);
   }
 
   private void initGradleHome() {
@@ -231,6 +254,8 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
       GradleUtil.storeLastUsedGradleHome(gradleHomePath);
     }
 
+    settings.setGradleJvm(myGradleJdkComboBox.getSelectedJdk());
+
     if (myUseLocalDistributionButton.isSelected()) {
       settings.setDistributionType(DistributionType.LOCAL);
     } else if(myUseWrapperButton.isSelected()) {
@@ -244,6 +269,7 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
   protected void updateInitialExtraSettings() {
     String gradleHomePath = FileUtil.toCanonicalPath(myGradleHomePathField.getText());
     getInitialSettings().setGradleHome(StringUtil.isEmpty(gradleHomePath) ? null : gradleHomePath);
+    getInitialSettings().setGradleJvm(myGradleJdkComboBox.getSelectedJdk());
     if (myUseLocalDistributionButton.isSelected()) {
       getInitialSettings().setDistributionType(DistributionType.LOCAL);
     } else if(myUseWrapperButton.isSelected()) {
@@ -272,6 +298,10 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
       return true;
     }
 
+    if (myGradleJdkComboBox.getSelectedJdk() != getInitialSettings()) {
+      return true;
+    }
+
     String gradleHome = FileUtil.toCanonicalPath(myGradleHomePathField.getText());
     if (StringUtil.isEmpty(gradleHome)) {
       return !StringUtil.isEmpty(getInitialSettings().getGradleHome());
@@ -286,7 +316,14 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
     String gradleHome = getInitialSettings().getGradleHome();
     myGradleHomePathField.setText(gradleHome == null ? "" : gradleHome);
     myGradleHomePathField.getTextField().setForeground(LocationSettingType.EXPLICIT_CORRECT.getColor());
-    
+
+    final Sdk gradleJvm = getInitialSettings().getGradleJvm();
+    if (gradleJvm != null) {
+      myGradleJdkComboBox.setSelectedJdk(gradleJvm);
+    } else {
+      myGradleJdkComboBox.setInvalidJdk("Not set");
+    }
+
     updateWrapperControls(getInitialSettings().getExternalProjectPath(), isDefaultModuleCreation);
     if (!myUseLocalDistributionButton.isSelected()) {
       myGradleHomePathField.setEnabled(false);
