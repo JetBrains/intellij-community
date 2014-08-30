@@ -41,8 +41,7 @@ import java.util.*;
 
 @SuppressWarnings({"deprecation"})
 public abstract class ComponentStoreImpl implements IComponentStore {
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentStoreImpl");
+  private static final Logger LOG = Logger.getInstance(ComponentStoreImpl.class);
   private final Map<String, Object> myComponents = Collections.synchronizedMap(new THashMap<String, Object>());
   private final List<SettingsSavingComponent> mySettingsSavingComponents = Collections.synchronizedList(new ArrayList<SettingsSavingComponent>());
   @Nullable private SaveSessionImpl mySession;
@@ -274,13 +273,12 @@ public abstract class ComponentStoreImpl implements IComponentStore {
   @NotNull
   private static <T> Class<T> getComponentStateClass(@NotNull final PersistentStateComponent<T> persistentStateComponent) {
     final Class persistentStateComponentClass = PersistentStateComponent.class;
+
     Class componentClass = persistentStateComponent.getClass();
 
     nextSuperClass:
     while (true) {
-      final Class[] interfaces = componentClass.getInterfaces();
-
-      for (Class anInterface : interfaces) {
+      for (Class anInterface : componentClass.getInterfaces()) {
         if (anInterface.equals(persistentStateComponentClass)) {
           break nextSuperClass;
         }
@@ -290,7 +288,7 @@ public abstract class ComponentStoreImpl implements IComponentStore {
     }
 
     final Type type = ReflectionUtil.resolveVariable(persistentStateComponentClass.getTypeParameters()[0], componentClass);
-
+    assert type != null;
     //noinspection unchecked
     return (Class<T>)ReflectionUtil.getRawType(type);
   }
