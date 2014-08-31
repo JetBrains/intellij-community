@@ -18,10 +18,10 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.AnalyzerExt;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.InterpreterExt;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.LiteAnalyzerExt;
-import com.intellij.util.SingletonSet;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntIterator;
 import gnu.trove.TIntProcedure;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.tree.*;
@@ -40,7 +40,6 @@ import static com.intellij.codeInspection.bytecodeAnalysis.NullableMethodAnalysi
 interface NullableMethodAnalysisData {
   Type NullType = Type.getObjectType("null");
   Type ThisType = Type.getObjectType("this");
-  Type ObjectType = Type.getObjectType("java/lang/Object");
   Type CallType = Type.getObjectType("/Call");
 
   final class LabeledNull extends BasicValue {
@@ -159,7 +158,7 @@ class NullableMethodAnalysis {
       Calls calls = ((Calls)result);
       Set<Product<Key, Value>> sum = new HashSet<Product<Key, Value>>(calls.keys.size());
       for (Key key : calls.keys) {
-        sum.add(new Product<Key, Value>(Value.Null, new SingletonSet<Key>(key)));
+        sum.add(new Product<Key, Value>(Value.Null, Collections.singleton(key)));
       }
       return new Pending<Key, Value>(sum);
     }
@@ -344,7 +343,7 @@ class NullableMethodInterpreter extends BasicInterpreter implements InterpreterE
                            (values.get(0) == ThisValue);
           MethodInsnNode mNode = ((MethodInsnNode)insn);
           Method method = new Method(mNode.owner, mNode.name, mNode.desc);
-          return new Calls(new SingletonSet<Key>(new Key(method, Direction.NullableOut, stable)));
+          return new Calls(Collections.singleton(new Key(method, Direction.NullableOut, stable)));
         }
         break;
       default:
@@ -442,7 +441,7 @@ class NullableMethodInterpreter extends BasicInterpreter implements InterpreterE
     }
   }
 
-  static TIntHashSet merge(TIntHashSet set1, TIntHashSet set2) {
+  static TIntHashSet merge(@Nullable TIntHashSet set1, TIntHashSet set2) {
     if (set1 == null || set1.isEmpty()) {
       return set2;
     }
@@ -463,7 +462,7 @@ class NullableMethodInterpreter extends BasicInterpreter implements InterpreterE
     }
   }
 
-  static Set<Key> merge(Set<Key> set1, Set<Key> set2) {
+  static Set<Key> merge(@Nullable Set<Key> set1, Set<Key> set2) {
     if (set1 == null || set1.isEmpty()) {
       return set2;
     }
