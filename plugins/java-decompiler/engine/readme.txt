@@ -8,7 +8,7 @@ fernflower.decompiler@gmail.com
 
 2. License
 
-See license_en.txt 
+http://www.apache.org/licenses/LICENSE-2.0
 
 
 3. Running from the command line
@@ -47,7 +47,6 @@ das (1): decompile assertions
 hes (1): hide empty super invocation
 hdc (1): hide empty default constructor
 dgs (0): decompile generic signatures
-occ (0): ouput copyright comment
 ner (1): assume return not throwing exceptions
 den (1): decompile enumerations
 rgn (1): remove getClass() invocation, when it is part of a qualified new statement
@@ -58,21 +57,18 @@ nns (1): allow for not set synthetic attribute (workaround to a compiler bug)
 uto (1): consider nameless types as java.lang.Object (workaround to a compiler architecture flaw)
 udv (1): reconstruct variable names from debug information, if present
 rer (1): remove empty exception ranges
-fdi (1): deinline finally structures
-asc (0): allow only ASCII characters in string literals. All other characters will be encoded using Unicode escapes (JLS 3.3). Default encoding is UTF8.  
-mpm (0): maximum allowed processing time per decompiled method, in seconds. 0 means no upper limit.
+fdi (1): de-inline finally structures
+mpm (0): maximum allowed processing time per decompiled method, in seconds. 0 means no upper limit
 ren (0): rename ambiguous (resp. obfuscated) classes and class elements
-urc    : full name of user-supplied class implementing IIdentifierRenamer. It is used to determine which
-         class identifiers should be renamed and provides new identifier names. For more information 
-         s. section 5    
+urc    : full name of user-supplied class implementing IIdentifierRenamer. It is used to determine which class identifiers
+         should be renamed and provides new identifier names. For more information see section 5
 inn (1): check for IntelliJ IDEA-specific @NotNull annotation and remove inserted code if found
 lac (0): decompile lambda expressions to anonymous classes
 nls (0): define new line character to be used for output. 0 - '\r\n' (Windows), 1 - '\n' (Linux) 
 ind    : indentation string (default is "   " (3 spaces))
  
 The default logging level is INFO. This value can be overwritten by setting the option 'log' as follows:
-
-log (INFO): possible values TRACE, INFO, WARN, ERROR  
+log (INFO): possible values TRACE, INFO, WARN, ERROR
 
 
 5. Renaming identifiers
@@ -85,8 +81,8 @@ Option 'ren' (i.e. -ren=1) activates renaming functionality. Default renaming st
 - rename an element if its name is a reserved word or is shorter than 3 characters
 - new names are built according to a simple pattern: (class|method|field)_<consecutive unique number>  
 You can overwrite this rules by providing your own implementation of the 4 key methods invoked by the decompiler while renaming. Simply 
-pass a class that implements de.fernflower.main.extern.IIdentifierRenamer in the option 'urc' (e.g. -urc=com.mypackage.MyRenamer) to 
-Fernflower. The class must be available on the application classpath.
+pass a class that implements org.jetbrains.java.decompiler.main.extern.IIdentifierRenamer in the option 'urc'
+(e.g. -urc=com.mypackage.MyRenamer) to Fernflower. The class must be available on the application classpath.
 
 The meaning of each method should be clear from naming: toBeRenamed determine whether the element will be renamed, while the other three
 provide new names for classes, methods and fields respectively.  

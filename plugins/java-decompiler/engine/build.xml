@@ -1,122 +1,30 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Fernflower" default="dist" basedir=".">
 
-<project name="Fernflower" default="buildAll" basedir=".">
+  <target name="init">
+    <property name="src" value="${basedir}/src"/>
+    <property name="out" value="${basedir}/out"/>
+    <property name="dist" value="${basedir}/fernflower.jar"/>
+  </target>
 
-    <taskdef resource="proguard/ant/task.properties" classpath="${basedir}/lib/proguard_4_11.jar" />
+  <target name="clean" depends="init">
+    <delete includeemptydirs="true" failonerror="false">
+      <fileset dir="${out}"/>
+      <fileset file="${dist}"/>
+    </delete>
+  </target>
 
-   	<taskdef name="javancss" classname="javancss.JavancssAntTask">
-   	    <classpath>
-   	      	<pathelement location="${basedir}/lib/ncss/javancss.jar"/>
-   	      	<pathelement location="${basedir}/lib/ncss/javacc.jar"/>
-   	      	<pathelement location="${basedir}/lib/ncss/ccl.jar"/>
-   	    </classpath>
-	</taskdef>
+  <target name="compile" depends="init,clean">
+    <mkdir dir="${out}"/>
+    <javac srcdir="${src}" destdir="${out}" source="1.6" target="1.6" encoding="UTF-8" debug="true" includeantruntime="false"/>
+  </target>
 
-	<target name="init" description="initialization">
-		<property name="jar.file" value="fernflower.jar" />
-		<property name="timer.jar.file" value="timer.jar" />
-        <property name="src" value="${basedir}/src" />
-		<property name="bin" value="${basedir}/bin" />
-		<property name="lib" value="${basedir}/lib" />
-		<property name="fulldist" value="${basedir}/dist/full" />
-		<property name="obfuscateddist" value="${basedir}/dist/obfuscated" />
-	</target>
-
-    <target name="buildAll" depends="jar, obfuscate" description="build full distribution packet"/>
-
-    <target name="clean" depends="init">
-        <delete includeemptydirs="true" failonerror="false">
-            <fileset dir="${bin}"/>
-            <fileset dir="${fulldist}"/>
-            <fileset dir="${obfuscateddist}"/>
-        </delete>
-    </target>
-
-    <target name="compile" depends="clean" description="compile sources (main module only)">
-        <mkdir dir="${bin}"/>
-        <javac srcdir="${src}" destdir="${bin}" source="1.6" target="1.6" encoding="UTF-8" debug="true" includeantruntime="false"/>
-    </target>
-
-    <target name="jar" depends="compile" description="generate jar file">
-		<jar jarfile="${fulldist}/${jar.file}" compress="true" basedir="${bin}" includes="**/*.class" excludes="test/**/*.*,com/**/*.*,*.class">
-	        <manifest>
-	            <attribute name="Main-Class" value="de.fernflower.main.decompiler.ConsoleDecompiler"/>
-	        </manifest>
-		</jar>
-	</target>
-
-    <target name="obfuscate" depends="init" description="Call Proguard on Fernflower">
-        <condition property="rt_jar" value="${java.home}/../Classes/classes.jar" else="${java.home}/lib/rt.jar">
-            <contains string="${java.vendor}" substring="Apple"/>
-        </condition>
-        <proguard>
-            -injars "${fulldist}/${jar.file}"
-            -outjars "${obfuscateddist}/${jar.file}"
-            -libraryjars "${rt_jar}"
-
-            -forceprocessing
-            -repackageclasses d.ff
-            -optimizationpasses 5
-
-            -keep public class de.fernflower.main.decompiler.ConsoleDecompiler {
-                public protected *;
-            }
-
-            -keep public class de.fernflower.main.decompiler.IdeDecompiler {
-                public protected *;
-            }
-
-            -keep public class de.fernflower.main.extern.* {
-                public protected *;
-            }
-        </proguard>
-    </target>
-
-    <!-- Helper targets -->
-
-    <target name="timer" depends="init" description="generate timer jar file">
-        <jar jarfile="${lib}/timer/${timer.jar.file}" compress="true" basedir="${bin}" includes="com/**/*.class,*.class"/>
-    </target>
-
-    <target name="deploy" depends="jar" description="deploy generated jar file to Tomcat">
-        <property name="tomcat" value="C:/revjava/apache-tomcat-5.5.27/shared/lib/" />
-        <property name="webwrapper" value="D:/Nonbku/workspace/webwrapper/lib/" />
-        <copy todir="${webwrapper}" file="${fulldist}/${jar.file}" overwrite="true"/>
-        <copy todir="${tomcat}" file="${fulldist}/${jar.file}" overwrite="true"/>
-    </target>
-
-    <target name="loc" description="count lines of code">
-        <javancss srcdir="${basedir}/src"
-            generateReport="true"
-            functionMetrics="false"
-            classMetrics="false"
-            includes="**/*.java"
-            excludes="**/test/**,**/de/fernflower/code/instructions/**,**/timer/**"
-        />
-    </target>
-
-	<target name="printunused" depends="init" description="Print unused code">
-	  <proguard>
-	  	-injars      ${fulldist}/${jar.file}
-	  	-libraryjars ${java.home}/lib/rt.jar
-
-	  	-dontoptimize
-	  	-dontobfuscate
-	  	-dontpreverify
-	  	-printusage
-
-	  	-keep public class de.fernflower.main.decompiler.ConsoleDecompiler {
-	  	    public protected *;
-	  	}
-
-	  	-keep public class de.fernflower.main.decompiler.IdeDecompiler {
-	  	    public protected *;
-	  	}
-
-	  	-keep public class de.fernflower.main.extern.* {
-	  	    public protected *;
-	  	}
-	  </proguard>
-	</target>
+  <target name="dist" depends="init,compile">
+    <jar jarfile="${dist}" compress="true" basedir="${out}" includes="**/*.class">
+      <manifest>
+        <attribute name="Main-Class" value="org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler"/>
+      </manifest>
+    </jar>
+  </target>
 
 </project>
