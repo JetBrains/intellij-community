@@ -427,6 +427,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     return getFileStateStorage(getOldStorageSpec(component, componentName, operation));
   }
 
+  @Nullable
   protected abstract String getOldStorageSpec(Object component, final String componentName, final StateStorageOperation operation)
     throws StateStorageException;
 

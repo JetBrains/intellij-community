@@ -52,9 +52,8 @@ public abstract class ComponentStoreImpl implements IComponentStore {
     return getStateStorageManager().getStateStorage(storageSpec);
   }
 
-  protected StateStorage getDefaultsStorage() {
-    throw new UnsupportedOperationException("Method getDefaultsStorage is not supported in " + getClass());
-  }
+  @Nullable
+  protected abstract StateStorage getDefaultsStorage();
 
   @Override
   public void initComponent(@NotNull final Object component, final boolean service) {
@@ -315,13 +314,11 @@ public abstract class ComponentStoreImpl implements IComponentStore {
   protected <T> Storage[] getComponentStorageSpecs(@NotNull final PersistentStateComponent<T> persistentStateComponent,
                                                    final StateStorageOperation operation) throws StateStorageException {
     final State stateSpec = getStateSpec(persistentStateComponent);
-
     final Storage[] storages = stateSpec.storages();
-
-    if (storages.length == 1) return storages;
-
+    if (storages.length == 1) {
+      return storages;
+    }
     assert storages.length > 0;
-
 
     final Class<StorageAnnotationsDefaultValues.NullStateStorageChooser> defaultClass =
         StorageAnnotationsDefaultValues.NullStateStorageChooser.class;
@@ -336,14 +333,11 @@ public abstract class ComponentStoreImpl implements IComponentStore {
     }
     else {
       try {
-        //noinspection unchecked
-        final StateStorageChooser<PersistentStateComponent<T>> storageChooser = storageChooserClass.newInstance();
+        @SuppressWarnings("unchecked")
+        StateStorageChooser<PersistentStateComponent<T>> storageChooser = ReflectionUtil.newInstance(storageChooserClass);
         return storageChooser.selectStorages(storages, persistentStateComponent, operation);
       }
-      catch (InstantiationException e) {
-        throw new StateStorageException(e);
-      }
-      catch (IllegalAccessException e) {
+      catch (RuntimeException e) {
         throw new StateStorageException(e);
       }
     }

@@ -24,6 +24,7 @@ import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -54,6 +55,7 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
         return new FileBasedStorage.FileStorageData(ROOT_ELEMENT_NAME);
       }
 
+      @Nullable
       @Override
       protected String getOldStorageSpec(Object component, final String componentName, final StateStorageOperation operation) {
         if (component instanceof NamedJDOMExternalizable) {
@@ -152,6 +154,7 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
     return myStateStorageManager;
   }
 
+  @Nullable
   @Override
   protected StateStorage getDefaultsStorage() {
     return myDefaultsStateStorage;

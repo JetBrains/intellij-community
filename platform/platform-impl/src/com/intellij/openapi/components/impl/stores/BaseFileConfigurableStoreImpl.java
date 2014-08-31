@@ -116,6 +116,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     return (BaseStorageData) getMainStorage().getStorageData(false);
   }
 
+  @Nullable
   @Override
   protected StateStorage getDefaultsStorage() {
     return myDefaultsStateStorage;

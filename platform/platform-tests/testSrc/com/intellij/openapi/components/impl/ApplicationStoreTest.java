@@ -1,46 +1,29 @@
 package com.intellij.openapi.components.impl;
 
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.openapi.application.Application;
+import com.intellij.application.options.PathMacrosImpl;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.impl.stores.IApplicationStore;
-import com.intellij.openapi.components.impl.stores.StoreUtil;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.components.impl.stores.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.TestLoggerFactory;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.testFramework.LightPlatformLangTestCase;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
 
-public class ApplicationStoreTest {
-  private static File testAppConfig;
+public class ApplicationStoreTest extends LightPlatformLangTestCase {
+  private File testAppConfig;
+  private MyComponentStore componentStore;
 
-  static {
-    Logger.setFactory(TestLoggerFactory.class);
-    PlatformTestCase.initPlatformLangPrefix();
-    System.setProperty("idea.filewatcher.disabled", "true");
-  }
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
 
-  @BeforeClass
-  public static void createApplication() throws IOException {
-    ApplicationManagerEx.createApplication(true, true, true, true, ApplicationManagerEx.IDEA_APPLICATION, null);
-
-    final String testAppConfigPath = System.getProperty("test.app.config.path");
+    String testAppConfigPath = System.getProperty("test.app.config.path");
     if (testAppConfigPath == null) {
       testAppConfig = FileUtil.createTempDirectory("testAppSettings", null);
     }
@@ -49,63 +32,84 @@ public class ApplicationStoreTest {
     }
     FileUtil.delete(testAppConfig);
 
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        PluginManagerCore.getPlugins();
-        final ApplicationImpl app = (ApplicationImpl)ApplicationManagerEx.getApplicationEx();
-        new WriteAction() {
-          @Override
-          protected void run(@NotNull Result result) throws Throwable {
-            app.load(testAppConfig.getAbsolutePath(), testAppConfig.getAbsolutePath() + "/options");
-          }
-        }.execute();
-      }
-    });
+    componentStore = new MyComponentStore(testAppConfig.getAbsolutePath());
   }
 
-  @AfterClass
-  public static void disposeApplication() {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        new WriteAction() {
-          @Override
-          protected void run(@NotNull Result result) throws Throwable {
-            Application application = ApplicationManager.getApplication();
-            if (application != null) {
-              Disposer.dispose(application);
-            }
-          }
-        }.execute();
-      }
-    });
-  }
-
-  @After
+  @Override
   public void tearDown() throws Exception {
-    FileUtil.delete(testAppConfig);
-  }
-
-  @Test
-  public void testStreamProviderSaveIfSeveralStoragesConfigured() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          IApplicationStore applicationStore = getStore();
-          StoreUtil.doSave(applicationStore);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+    try {
+      Disposer.dispose(componentStore);
+      componentStore = null;
+    }
+    finally {
+      try {
+        super.tearDown();
       }
-    });
+      finally {
+        FileUtil.delete(testAppConfig);
+      }
+    }
   }
 
-  @NotNull
-  private static IApplicationStore getStore() {
-    return ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore();
+  public void testStreamProviderSaveIfSeveralStoragesConfigured() throws Exception {
+    SeveralStoragesConfigured component = new SeveralStoragesConfigured();
+    componentStore.initComponent(component, false);
+    StoreUtil.doSave(componentStore);
+  }
+
+  class MyComponentStore extends ComponentStoreImpl implements Disposable {
+    private final StateStorageManager stateStorageManager;
+
+    MyComponentStore(@NotNull final String testAppConfigPath) {
+      TrackingPathMacroSubstitutor macroSubstitutor = new ApplicationPathMacroManager().createTrackingSubstitutor();
+      stateStorageManager = new StateStorageManagerImpl(macroSubstitutor, "application", this, ApplicationManager.getApplication().getPicoContainer()) {
+        @Override
+        protected StorageData createStorageData(String storageSpec) {
+          return new FileBasedStorage.FileStorageData("application");
+        }
+
+        @Nullable
+        @Override
+        protected String getOldStorageSpec(Object component, final String componentName, final StateStorageOperation operation) {
+          return null;
+        }
+
+        @Override
+        protected String getVersionsFilePath() {
+          return testAppConfigPath + "/options/appComponentVersions.xml";
+        }
+
+        @Override
+        protected TrackingPathMacroSubstitutor getMacroSubstitutor(@NotNull final String fileSpec) {
+          if (fileSpec.equals(StoragePathMacros.APP_CONFIG + "/" + PathMacrosImpl.EXT_FILE_NAME + ".xml")) {
+            return null;
+          }
+          return super.getMacroSubstitutor(fileSpec);
+        }
+      };
+
+      stateStorageManager.addMacro(StoragePathMacros.getMacroName(StoragePathMacros.APP_CONFIG), testAppConfigPath);
+    }
+
+    @Override
+    public void load() throws IOException, StateStorageException {
+    }
+
+    @NotNull
+    @Override
+    public StateStorageManager getStateStorageManager() {
+      return stateStorageManager;
+    }
+
+    @Override
+    public void dispose() {
+    }
+
+    @Nullable
+    @Override
+    protected StateStorage getDefaultsStorage() {
+      return null;
+    }
   }
 
   static class SeveralStoragesConfiguredStorageChooser implements StateStorageChooser<SeveralStoragesConfigured> {
