@@ -589,8 +589,14 @@ class RunConfigurable extends BaseConfigurable {
   @Override
   public JComponent createComponent() {
     for (RunConfigurationsSettings each : Extensions.getExtensions(RunConfigurationsSettings.EXTENSION_POINT)) {
-      UnnamedConfigurable configurable = each.createConfigurable();
-      myAdditionalSettings.add(Pair.create(configurable, configurable.createComponent()));
+      try {
+        UnnamedConfigurable configurable = each.createConfigurable(myProject);
+        myAdditionalSettings.add(Pair.create(configurable, configurable.createComponent()));
+      }
+      catch (NoSuchMethodError e) {
+        // in case someone has already implemented old RunConfigurationsSettings.createConfigurable()
+        LOG.error(e);
+      }
     }
 
     myWholePanel = new JPanel(new BorderLayout());
