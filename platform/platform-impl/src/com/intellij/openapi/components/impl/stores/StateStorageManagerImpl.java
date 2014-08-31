@@ -331,7 +331,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   @Override
   @Nullable
-  public synchronized String expandMacros(final String file) {
+  public synchronized String expandMacros(@NotNull String file) {
     final Matcher matcher = MACRO_PATTERN.matcher(file);
     while (matcher.find()) {
       String m = matcher.group(1);

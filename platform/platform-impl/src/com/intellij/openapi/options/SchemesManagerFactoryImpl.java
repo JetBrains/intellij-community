@@ -38,9 +38,9 @@ public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements 
   private final List<SchemesManagerImpl> myRegisteredManagers = ContainerUtil.createLockFreeCopyOnWriteList();
 
   @Override
-  public <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T, E> createSchemesManager(final String fileSpec,
-                                                                                                      final SchemeProcessor<E> processor,
-                                                                                                      final RoamingType roamingType) {
+  public <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T, E> createSchemesManager(@NotNull String fileSpec,
+                                                                                                      @NotNull SchemeProcessor<E> processor,
+                                                                                                      @NotNull RoamingType roamingType) {
     final Application application = ApplicationManager.getApplication();
     if (!(application instanceof ApplicationImpl)) return null;
     String baseDirPath = ((ApplicationImpl)application).getStateStore().getStateStorageManager().expandMacros(fileSpec);
