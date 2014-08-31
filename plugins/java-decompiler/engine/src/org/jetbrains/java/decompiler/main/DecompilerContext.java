@@ -72,7 +72,6 @@ public class DecompilerContext {
     mapDefault.put(IFernflowerPreferences.HIDE_EMPTY_SUPER, "1");
     mapDefault.put(IFernflowerPreferences.HIDE_DEFAULT_CONSTRUCTOR, "1");
     mapDefault.put(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES, "0");
-    mapDefault.put(IFernflowerPreferences.OUTPUT_COPYRIGHT_COMMENT, "0");
     mapDefault.put(IFernflowerPreferences.NO_EXCEPTIONS_RETURN, "1");
     mapDefault.put(IFernflowerPreferences.DECOMPILE_ENUM, "1");
     mapDefault.put(IFernflowerPreferences.FINALLY_DEINLINE, "1");

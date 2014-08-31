@@ -25,7 +25,6 @@ public interface IFernflowerPreferences {
   String HIDE_EMPTY_SUPER = "hes";
   String HIDE_DEFAULT_CONSTRUCTOR = "hdc";
   String DECOMPILE_GENERIC_SIGNATURES = "dgs";
-  String OUTPUT_COPYRIGHT_COMMENT = "occ";
   String NO_EXCEPTIONS_RETURN = "ner";
   String DECOMPILE_ENUM = "den";
   String REMOVE_GETCLASS_NEW = "rgn";

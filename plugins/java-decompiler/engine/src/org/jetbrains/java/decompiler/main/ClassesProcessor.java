@@ -37,7 +37,6 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -267,18 +266,6 @@ public class ClassesProcessor {
 
       StringWriter strwriter = new StringWriter();
       clwriter.classToJava(root, new BufferedWriter(strwriter), 0);
-
-      if (DecompilerContext.getOption(IFernflowerPreferences.OUTPUT_COPYRIGHT_COMMENT)) {
-        outwriter.write("// Decompiled by:       Fernflower " + Fernflower.version);
-        outwriter.write(DecompilerContext.getNewLineSeparator());
-        outwriter.write("// Date:                " + new SimpleDateFormat("dd.MM.yyyy HH:mm:ss").format(new Date()));
-        outwriter.write(DecompilerContext.getNewLineSeparator());
-        outwriter.write("// Copyright:           2008-2010, Stiver");
-        outwriter.write(DecompilerContext.getNewLineSeparator());
-        outwriter.write("// Home page:           http://www.reversed-java.com");
-        outwriter.write(DecompilerContext.getNewLineSeparator());
-        outwriter.write(DecompilerContext.getNewLineSeparator());
-      }
 
       int index = cl.qualifiedName.lastIndexOf("/");
       if (index >= 0) {
