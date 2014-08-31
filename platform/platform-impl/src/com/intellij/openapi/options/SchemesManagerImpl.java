@@ -52,7 +52,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme> extends AbstractSchemesManager<T, E> {
-  private static final Logger LOG = Logger.getInstance("#" + SchemesManagerFactoryImpl.class.getName());
+  private static final Logger LOG = Logger.getInstance(SchemesManagerFactoryImpl.class);
 
   @NonNls private static final String DEFAULT_EXT = ".xml";
 
