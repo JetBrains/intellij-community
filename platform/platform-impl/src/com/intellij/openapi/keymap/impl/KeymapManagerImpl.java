@@ -67,7 +67,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
 
   KeymapManagerImpl(DefaultKeymap defaultKeymap, SchemesManagerFactory factory) {
     mySchemesManager = factory.createSchemesManager(
-      "$ROOT_CONFIG$/keymaps",
+      StoragePathMacros.ROOT_CONFIG + "/keymaps",
       new BaseSchemeProcessor<KeymapImpl>() {
         @Override
         public KeymapImpl readScheme(@NotNull final Document schemeContent) throws InvalidDataException, IOException, JDOMException {

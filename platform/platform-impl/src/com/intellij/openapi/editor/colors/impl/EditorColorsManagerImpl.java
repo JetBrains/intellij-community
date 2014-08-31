@@ -26,6 +26,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
@@ -67,7 +68,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
   private final DefaultColorSchemesManager myDefaultColorSchemesManager;
   private final SchemesManager<EditorColorsScheme, EditorColorsSchemeImpl> mySchemesManager;
   @NonNls private static final String NAME_ATTR = "name";
-  private static final String FILE_SPEC = "$ROOT_CONFIG$/colors";
+  private static final String FILE_SPEC = StoragePathMacros.ROOT_CONFIG + "/colors";
   private static final String FILE_EXT = ".icls";
 
   public EditorColorsManagerImpl(DefaultColorSchemesManager defaultColorSchemesManager, SchemesManagerFactory schemesManagerFactory) {

@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
@@ -46,7 +47,7 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes implements E
   @NonNls static final String CODE_STYLES_DIRECTORY = "codestyles";
 
   private final SchemesManager<CodeStyleScheme, CodeStyleSchemeImpl> mySchemesManager;
-  @NonNls private static final String FILE_SPEC = "$ROOT_CONFIG$/" + CODE_STYLES_DIRECTORY;
+  @NonNls private static final String FILE_SPEC = StoragePathMacros.ROOT_CONFIG + "/" + CODE_STYLES_DIRECTORY;
 
   public CodeStyleSchemesImpl(SchemesManagerFactory schemesManagerFactory) {
     SchemeProcessor<CodeStyleSchemeImpl> processor = new BaseSchemeProcessor<CodeStyleSchemeImpl>() {

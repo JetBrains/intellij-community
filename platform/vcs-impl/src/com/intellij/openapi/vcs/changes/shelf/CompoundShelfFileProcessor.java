@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.components.impl.stores.StreamProvider;
 import com.intellij.openapi.diagnostic.Logger;
@@ -47,7 +48,7 @@ public class CompoundShelfFileProcessor {
     mySubdirName = subdirName;
     myServerStreamProvider = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager().getStreamProvider();
 
-    FILE_SPEC = "$ROOT_CONFIG$/" + subdirName + "/";
+    FILE_SPEC = StoragePathMacros.ROOT_CONFIG + "/" + subdirName + "/";
     myShelfPath = PathManager.getConfigPath() + File.separator + mySubdirName;
   }
 
@@ -55,7 +56,7 @@ public class CompoundShelfFileProcessor {
     myServerStreamProvider = serverStreamProvider;
     myShelfPath = shelfPath;
     mySubdirName = new File(myShelfPath).getName();
-    FILE_SPEC = "$ROOT_CONFIG$/" + mySubdirName + "/";
+    FILE_SPEC = StoragePathMacros.ROOT_CONFIG +  "/" + mySubdirName + "/";
   }
 
   /*

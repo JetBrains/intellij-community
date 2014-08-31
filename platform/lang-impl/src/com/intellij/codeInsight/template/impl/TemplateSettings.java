@@ -105,7 +105,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   private int myMaxKeyLength = 0;
   private char myDefaultShortcutChar = TAB_CHAR;
   private final SchemesManager<TemplateGroup, TemplateGroup> mySchemesManager;
-  private static final String FILE_SPEC = "$ROOT_CONFIG$/templates";
+  private static final String FILE_SPEC = StoragePathMacros.ROOT_CONFIG + "/templates";
 
   public static class TemplateKey {
     private String groupName;

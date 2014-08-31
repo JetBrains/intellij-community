@@ -24,6 +24,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
@@ -63,7 +64,7 @@ public class QuickListsManager implements ExportableApplicationComponent, NamedJ
   public QuickListsManager(ActionManagerEx actionManagerEx, SchemesManagerFactory schemesManagerFactory) {
     myActionManager = actionManagerEx;
     mySchemesManager = schemesManagerFactory.createSchemesManager(
-        "$ROOT_CONFIG$/quicklists",
+      StoragePathMacros.ROOT_CONFIG + "/quicklists",
         new BaseSchemeProcessor<QuickList>(){
           public QuickList readScheme(@NotNull final Document schemeContent) throws InvalidDataException, IOException, JDOMException {
             return loadListFromDocument(schemeContent);

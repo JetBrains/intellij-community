@@ -31,6 +31,8 @@ import org.jetbrains.annotations.NotNull;
  * @since 5/2/12 12:57 PM
  */
 public class StoragePathMacros {
+  @NonNls @NotNull public static final String ROOT_CONFIG = "$ROOT_CONFIG$";
+
   /** Points to the application-level settings root directory. */
   @NonNls @NotNull public static final String APP_CONFIG = "$APP_CONFIG$";
 

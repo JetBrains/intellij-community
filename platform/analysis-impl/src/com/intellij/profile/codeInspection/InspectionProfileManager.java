@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.profile.ApplicationProfileManager;
 import com.intellij.profile.Profile;
@@ -41,7 +42,7 @@ import java.util.List;
  */
 public abstract class InspectionProfileManager extends ApplicationProfileManager implements SeverityProvider, NamedComponent {
   @NonNls protected static final String INSPECTION_DIR = "inspection";
-  @NonNls protected static final String FILE_SPEC = "$ROOT_CONFIG$/" + INSPECTION_DIR;
+  @NonNls protected static final String FILE_SPEC = StoragePathMacros.ROOT_CONFIG + '/' + INSPECTION_DIR;
 
   private final List<ProfileChangeAdapter> myProfileChangeAdapters = ContainerUtil.createLockFreeCopyOnWriteList();
 
