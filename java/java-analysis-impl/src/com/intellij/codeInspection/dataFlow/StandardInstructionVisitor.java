@@ -70,7 +70,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
       DfaValueFactory factory = runner.getFactory();
       if (dfaSource instanceof DfaVariableValue && factory.getVarFactory().getAllQualifiedBy(var).contains(dfaSource)) {
-        dfaSource = factory.createTypeValue(((DfaVariableValue)dfaSource).getVariableType(), ((DfaVariableValue)dfaSource).getInherentNullability());
+        Nullness nullability = memState.isNotNull(dfaSource) ? Nullness.NOT_NULL
+                                                             : ((DfaVariableValue)dfaSource).getInherentNullability();
+        dfaSource = factory.createTypeValue(((DfaVariableValue)dfaSource).getVariableType(), nullability);
       }
 
       if (var.getInherentNullability() == Nullness.NOT_NULL) {
