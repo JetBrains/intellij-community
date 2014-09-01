@@ -15,10 +15,7 @@
  */
 package com.intellij.openapi.actionSystem.impl;
 
-import com.intellij.openapi.actionSystem.ActionStub;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectType;
 import com.intellij.openapi.project.ProjectTypeService;
@@ -37,6 +34,7 @@ public class ChameleonAction extends AnAction {
 
   public ChameleonAction(@NotNull AnAction first, ProjectType projectType) {
     addAction(first, projectType);
+    copyFrom(myActions.values().iterator().next());
   }
 
   public AnAction addAction(AnAction action, ProjectType projectType) {
@@ -55,7 +53,10 @@ public class ChameleonAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    super.update(e);
+    AnAction action = getAction(e);
+    action.update(e);
+    getTemplatePresentation().setEnabled(e.getPresentation().isEnabled());
+    getTemplatePresentation().setVisible(e.getPresentation().isVisible());
   }
 
   private AnAction getAction(AnActionEvent e) {

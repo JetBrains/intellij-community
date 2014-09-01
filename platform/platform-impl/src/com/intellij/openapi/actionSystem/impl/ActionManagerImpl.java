@@ -521,7 +521,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
 
     AnAction anAction = convertStub(stub);
 
-    addToMap(stub.getId(), anAction, stub.getPluginId(), stub.getProjectType() == null ? null : new ProjectType(stub.getProjectType()));
+    addToMap(stub.getId(), anAction, stub.getPluginId(), stub.getProjectType());
     myAction2Id.put(anAction, stub.getId());
 
     return anAction;
@@ -653,7 +653,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
         }
       }
       else {
-        registerAction(id, action, pluginId);
+        registerAction(id, action, pluginId, element.getAttributeValue(PROJECT_TYPE));
       }
     }
   }
@@ -991,8 +991,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
 
   @Override
   public void registerAction(@NotNull String actionId, @NotNull AnAction action, @Nullable PluginId pluginId) {
+    registerAction(actionId, action, pluginId, null);
+  }
+
+  public void registerAction(@NotNull String actionId, @NotNull AnAction action, @Nullable PluginId pluginId, @Nullable String projectType) {
     synchronized (myLock) {
-      if (!addToMap(actionId, action, pluginId, null)) return;
+      if (!addToMap(actionId, action, pluginId, projectType)) return;
       if (myAction2Id.containsKey(action)) {
         reportActionError(pluginId, "action was already registered for another ID. ID is " + myAction2Id.get(action) +
                                     getPluginInfo(pluginId));
@@ -1012,8 +1016,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
   }
 
-  public boolean addToMap(String actionId, AnAction action, PluginId pluginId, ProjectType projectType) {
+  public boolean addToMap(String actionId, AnAction action, PluginId pluginId, String projectType) {
     if (myId2Action.containsKey(actionId)) {
+      ProjectType type = projectType == null ? null : new ProjectType(projectType);
       // make sure id+projectType is unique
       AnAction o = myId2Action.get(actionId);
       ChameleonAction chameleonAction;
@@ -1021,10 +1026,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
         chameleonAction = (ChameleonAction)o;
       }
       else {
-        chameleonAction = new ChameleonAction(o, projectType);
+        chameleonAction = new ChameleonAction(o, type);
         myId2Action.put(actionId, chameleonAction);
       }
-      AnAction old = chameleonAction.addAction(action, projectType);
+      AnAction old = chameleonAction.addAction(action, type);
       if (old != null) {
         reportActionError(pluginId,
                           "action with the ID \"" + actionId + "\" was already registered. Action being registered is " + action +
@@ -1053,7 +1058,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
           return;
         }
       }
-      AnAction oldValue = (AnAction)myId2Action.remove(actionId);
+      AnAction oldValue = myId2Action.remove(actionId);
       myAction2Id.remove(oldValue);
       myId2Index.remove(actionId);
       for (PluginId pluginName : myPlugin2Id.keySet()) {
