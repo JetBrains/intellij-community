@@ -22,7 +22,6 @@ import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.fs.IFile;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -57,25 +56,25 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
   @NotNull
   @Override
   protected StateStorageManager createStateStorageManager() {
-    Document _d = null;
+    Element _d = null;
 
     if (myElement != null) {
       myElement.detach();
-      _d = new Document(myElement);
+      _d = myElement;
     }
 
     final ComponentManager componentManager = getComponentManager();
     final PathMacroManager pathMacroManager = PathMacroManager.getInstance(componentManager);
 
-    final Document document = _d;
+    final Element element = _d;
 
     final XmlElementStorage storage = new XmlElementStorage(pathMacroManager.createTrackingSubstitutor(), componentManager,
                                                             ROOT_TAG_NAME, null, "", ComponentRoamingManager.getInstance(),
                                                             ComponentVersionProvider.EMPTY) {
       @Override
       @Nullable
-      protected Document loadDocument() {
-        return document;
+      protected Element loadDocument() {
+        return element;
       }
 
       @Override
@@ -96,7 +95,8 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
         @Override
         protected void doSave() throws StateStorageException {
-          myProjectManager.setDefaultProjectRootElement(getDocumentToSave().getRootElement());
+          Element element = getElementToSave();
+          myProjectManager.setDefaultProjectRootElement(element == null ? null : element);
         }
 
         @NotNull

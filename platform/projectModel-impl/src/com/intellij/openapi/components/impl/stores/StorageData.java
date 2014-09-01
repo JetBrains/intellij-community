@@ -87,8 +87,12 @@ public class StorageData {
     return element1;
   }
 
-  @NotNull
+  @Nullable
   protected Element save() {
+    if (myComponentStates.isEmpty()) {
+      return null;
+    }
+
     Element rootElement = new Element(myRootElementName);
     String[] componentNames = ArrayUtil.toStringArray(myComponentStates.keySet());
     Arrays.sort(componentNames);
@@ -100,7 +104,6 @@ public class StorageData {
 
       rootElement.addContent(element.clone());
     }
-
     return rootElement;
   }
 
@@ -196,7 +199,7 @@ public class StorageData {
     return myComponentStates.isEmpty();
   }
 
-  public boolean hasState(final String componentName) {
+  public boolean hasState(@NotNull String componentName) {
       return myComponentStates.containsKey(componentName);
   }
 

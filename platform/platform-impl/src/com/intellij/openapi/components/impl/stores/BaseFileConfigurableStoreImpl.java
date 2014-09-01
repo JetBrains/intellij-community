@@ -74,7 +74,11 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     @Override
     @NotNull
     protected Element save() {
-      final Element root = super.save();
+      Element root = super.save();
+      if (root == null) {
+        root = new Element(myRootElementName);
+      }
+
       root.setAttribute(VERSION_OPTION, Integer.toString(myVersion));
       return root;
     }

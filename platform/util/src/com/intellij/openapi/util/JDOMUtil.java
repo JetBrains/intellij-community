@@ -398,9 +398,13 @@ public class JDOMUtil {
   }
 
   public static void writeDocument(@NotNull Document document, @NotNull File file, String lineSeparator) throws IOException {
+    writeParent(document, file, lineSeparator);
+  }
+
+  public static void writeParent(@NotNull Parent element, @NotNull File file, String lineSeparator) throws IOException {
     OutputStream stream = new BufferedOutputStream(new FileOutputStream(file));
     try {
-      writeDocument(document, stream, lineSeparator);
+      writeParent(element, stream, lineSeparator);
     }
     finally {
       stream.close();

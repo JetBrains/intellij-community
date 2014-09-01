@@ -42,13 +42,17 @@ import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.Profile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jdom.Parent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -94,7 +98,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
 
 
       @Override
-      public Document writeScheme(@NotNull final InspectionProfileImpl scheme) throws WriteExternalException {
+      public Element writeScheme(@NotNull final InspectionProfileImpl scheme) throws WriteExternalException {
         return scheme.saveToDocument();
       }
 

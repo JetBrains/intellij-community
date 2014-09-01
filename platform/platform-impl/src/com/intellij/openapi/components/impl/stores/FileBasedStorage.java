@@ -147,9 +147,11 @@ public class FileBasedStorage extends XmlElementStorage {
     @Override
     protected boolean physicalContentNeedsSave() {
       VirtualFile file = getVirtualFile();
-      if (file == null || !file.exists())
+      if (file == null || !file.exists()) {
         return !myStorageData.isEmpty();
-      return !StorageUtil.contentEquals(getDocumentToSave(), file);
+      }
+      Element element = getElementToSave();
+      return element == null || !StorageUtil.contentEquals(element, file);
     }
 
     @Override
@@ -171,7 +173,7 @@ public class FileBasedStorage extends XmlElementStorage {
       }
 
       LOG.assertTrue(myFile != null);
-      myCachedVirtualFile = StorageUtil.save(myFile, getDocumentToSave(), this);
+      myCachedVirtualFile = StorageUtil.save(myFile, getElementToSave(), this);
     }
 
     @NotNull
@@ -246,7 +248,7 @@ public class FileBasedStorage extends XmlElementStorage {
 
   @Override
   @Nullable
-  protected Document loadDocument() {
+  protected Element loadDocument() {
     myBlockSavingTheContent = false;
     try {
       VirtualFile file = getVirtualFile();
@@ -268,7 +270,7 @@ public class FileBasedStorage extends XmlElementStorage {
   }
 
   @Nullable
-  private Document processReadException(@Nullable final Exception e) {
+  private Element processReadException(@Nullable final Exception e) {
     boolean contentTruncated = e == null;
     myBlockSavingTheContent = isProjectOrModuleOrWorkspaceFile() && !contentTruncated;
     if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
@@ -292,10 +294,12 @@ public class FileBasedStorage extends XmlElementStorage {
     return isProjectOrModuleOrWorkspaceFile() && !contentTruncated ? "Please correct the file content" : "File content will be recreated";
   }
 
-  private static Document loadDocumentImpl(final VirtualFile file) throws IOException, JDOMException {
+  @Nullable
+  private static Element loadDocumentImpl(@NotNull VirtualFile file) throws IOException, JDOMException {
     InputStream stream = file.getInputStream();
     try {
-      return JDOMUtil.loadDocument(stream);
+      Document document = JDOMUtil.loadDocument(stream);
+      return document.hasRootElement() ? document.getRootElement() : null;
     }
     finally {
       stream.close();
@@ -318,7 +322,13 @@ public class FileBasedStorage extends XmlElementStorage {
 
   @Nullable
   public File updateFileExternallyFromStreamProviders() throws IOException {
-    BufferExposingByteArrayOutputStream out = StorageUtil.newContentIfDiffers(getDocument(loadData(true, null)), getVirtualFile());
+    Element element = getElement(loadData(true, null));
+    if (element == null) {
+      myFile.delete();
+      return null;
+    }
+
+    BufferExposingByteArrayOutputStream out = StorageUtil.newContentIfDiffers(element, getVirtualFile());
     if (out == null) {
       return null;
     }

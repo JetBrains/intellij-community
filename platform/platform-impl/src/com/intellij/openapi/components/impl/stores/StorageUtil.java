@@ -40,6 +40,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.fs.IFile;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Document;
+import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Parent;
 import org.jetbrains.annotations.NotNull;
@@ -109,8 +110,27 @@ public class StorageUtil {
     return notified;
   }
 
+
+  public static boolean isEmpty(@Nullable Parent element) {
+    if (element == null) {
+      return true;
+    }
+    else if (element instanceof Element) {
+      return JDOMUtil.isEmpty((Element)element);
+    }
+    else {
+      Document document = (Document)element;
+      return !document.hasRootElement() || JDOMUtil.isEmpty(document.getRootElement());
+    }
+  }
+
   @Nullable
-  static VirtualFile save(@NotNull IFile file, Parent element, Object requestor) throws StateStorageException {
+  static VirtualFile save(@NotNull IFile file, @Nullable Parent element, Object requestor) throws StateStorageException {
+    if (isEmpty(element)) {
+      file.delete();
+      return null;
+    }
+
     try {
       BufferExposingByteArrayOutputStream byteOut;
       if (file.exists()) {
@@ -270,17 +290,17 @@ public class StorageUtil {
   }
 
   @NotNull
-  public static BufferExposingByteArrayOutputStream documentToBytes(@NotNull Document document, boolean useSystemLineSeparator) throws IOException {
-    return writeToBytes(document, useSystemLineSeparator ? SystemProperties.getLineSeparator() : "\n");
+  public static BufferExposingByteArrayOutputStream documentToBytes(@NotNull Parent element, boolean useSystemLineSeparator) throws IOException {
+    return writeToBytes(element, useSystemLineSeparator ? SystemProperties.getLineSeparator() : "\n");
   }
 
-  public static void sendContent(@NotNull StreamProvider provider, @NotNull String fileSpec, @NotNull Document copy, @NotNull RoamingType type, boolean async) {
+  public static void sendContent(@NotNull StreamProvider provider, @NotNull String fileSpec, @NotNull Parent element, @NotNull RoamingType type, boolean async) {
     if (!provider.isApplicable(fileSpec, type)) {
       return;
     }
 
     try {
-      doSendContent(provider, fileSpec, copy, type, async);
+      doSendContent(provider, fileSpec, element, type, async);
     }
     catch (IOException e) {
       LOG.warn(e);
@@ -296,9 +316,9 @@ public class StorageUtil {
   /**
    * You must call {@link StreamProvider#isApplicable(String, com.intellij.openapi.components.RoamingType)} before
    */
-  public static void doSendContent(StreamProvider provider, String fileSpec, Document copy, RoamingType type, boolean async) throws IOException {
+  public static void doSendContent(@NotNull StreamProvider provider, @NotNull String fileSpec, @NotNull Parent element, @NotNull RoamingType type, boolean async) throws IOException {
     // we should use standard line-separator (\n) - stream provider can share file content on any OS
-    BufferExposingByteArrayOutputStream content = documentToBytes(copy, false);
+    BufferExposingByteArrayOutputStream content = documentToBytes(element, false);
     provider.saveContent(fileSpec, content.getInternalBuffer(), content.size(), type, async);
   }
 
@@ -318,10 +338,9 @@ public class StorageUtil {
         StateStorage storage = pair.second;
 
         if (storage instanceof XmlElementStorage) {
-          Document state = ((XmlElementStorage)storage).logComponents();
+          Element state = ((XmlElementStorage)storage).logComponents();
           if (state != null) {
-            File logFile = new File(logDirectory, "prev_" + file.getName());
-            JDOMUtil.writeDocument(state, logFile, "\n");
+            JDOMUtil.writeParent(state, new File(logDirectory, "prev_" + file.getName()), "\n");
           }
         }
 
