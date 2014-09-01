@@ -1231,12 +1231,14 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       box.add(Box.createVerticalStrut(10));
       Configurable.Composite composite = (Configurable.Composite)searchable;
       for (final Configurable configurable : composite.getConfigurables()) {
-        box.add(new LinkLabel(configurable.getDisplayName(), AllIcons.Ide.Link) {
+        LinkLabel label = new LinkLabel(configurable.getDisplayName(), null) {
           @Override
           public void doClick() {
             select(configurable, null);
           }
-        });
+        };
+        label.setBorder(BorderFactory.createEmptyBorder(1, 17, 2, 2));
+        box.add(label);
       }
     }
     return box;
