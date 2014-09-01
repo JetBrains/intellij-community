@@ -20,25 +20,16 @@ for i, arg in enumerate(sys.argv[1:]):
                '  {0} [-l|--line line] file[:line]\n' + \
                '  {0} diff file1 file2').format(sys.argv[0]))
         exit(0)
-    elif arg == 'diff' and i == 0:
-        args.append(arg)
-    elif arg == '-l' or arg == '--line':
-        args.append(arg)
-        skip_next = True
-    elif skip_next:
-        args.append(arg)
-        skip_next = False
-    else:
-        if ':' in arg:
-            file_path, line_number = arg.rsplit(':', 1)
-            if line_number.isdigit():
-              args.append('-l')
-              args.append(line_number)
-              args.append(os.path.abspath(file_path))
-            else:
-              args.append(os.path.abspath(arg))
+    elif ':' in arg:
+        file_path, line_number = arg.rsplit(':', 1)
+        if line_number.isdigit():
+          args.append('-l')
+          args.append(line_number)
+          args.append(file_path)
         else:
-            args.append(os.path.abspath(arg))
+          args.append(arg)
+    else:
+        args.append(arg)
 
 def launch_with_port(port):
     found = False
