@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -74,17 +73,16 @@ public class DoubleCheckedLockingInspection extends BaseInspection {
 
   private static class DoubleCheckedLockingFix extends InspectionGadgetsFix {
 
-    private final PsiField field;
+    private final String myFieldName;
 
     private DoubleCheckedLockingFix(PsiField field) {
-      this.field = field;
+      myFieldName = field.getName();
     }
 
     @Override
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "double.checked.locking.quickfix", field.getName());
+      return InspectionGadgetsBundle.message("double.checked.locking.quickfix", myFieldName);
     }
 
     @NotNull
@@ -94,8 +92,21 @@ public class DoubleCheckedLockingInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
+      final PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiIfStatement)) {
+        return;
+      }
+      final PsiIfStatement ifStatement = (PsiIfStatement)parent;
+      final PsiExpression condition = ifStatement.getCondition();
+      if (condition == null) {
+        return;
+      }
+      final PsiField field = findCheckedField(condition);
+      if (field == null) {
+        return;
+      }
       final PsiModifierList modifierList = field.getModifierList();
       if (modifierList == null) {
         return;
@@ -104,13 +115,55 @@ public class DoubleCheckedLockingInspection extends BaseInspection {
     }
   }
 
+  @Nullable
+  private static PsiField findCheckedField(PsiExpression expression) {
+    if (expression instanceof PsiReferenceExpression) {
+      final PsiReferenceExpression referenceExpression =
+        (PsiReferenceExpression)expression;
+      final PsiElement target = referenceExpression.resolve();
+      if (!(target instanceof PsiField)) {
+        return null;
+      }
+      return (PsiField)target;
+    }
+    else if (expression instanceof PsiBinaryExpression) {
+      final PsiBinaryExpression binaryExpression =
+        (PsiBinaryExpression)expression;
+      final IElementType tokenType =
+        binaryExpression.getOperationTokenType();
+      if (!JavaTokenType.EQEQ.equals(tokenType)
+          && !JavaTokenType.NE.equals(tokenType)) {
+        return null;
+      }
+      final PsiExpression lhs = binaryExpression.getLOperand();
+      final PsiExpression rhs = binaryExpression.getROperand();
+      final PsiField field = findCheckedField(lhs);
+      if (field != null) {
+        return field;
+      }
+      return findCheckedField(rhs);
+    }
+    else if (expression instanceof PsiPrefixExpression) {
+      final PsiPrefixExpression prefixExpression =
+        (PsiPrefixExpression)expression;
+      final IElementType tokenType =
+        prefixExpression.getOperationTokenType();
+      if (!JavaTokenType.EXCL.equals(tokenType)) {
+        return null;
+      }
+      return findCheckedField(prefixExpression.getOperand());
+    }
+    else {
+      return null;
+    }
+  }
+
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new DoubleCheckedLockingVisitor();
   }
 
-  private class DoubleCheckedLockingVisitor
-    extends BaseInspectionVisitor {
+  private class DoubleCheckedLockingVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitIfStatement(
@@ -160,49 +213,6 @@ public class DoubleCheckedLockingInspection extends BaseInspection {
         field = null;
       }
       registerStatementError(statement, field);
-    }
-
-    @Nullable
-    private PsiField findCheckedField(PsiExpression expression) {
-      if (expression instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression referenceExpression =
-          (PsiReferenceExpression)expression;
-        final PsiElement target = referenceExpression.resolve();
-        if (!(target instanceof PsiField)) {
-          return null;
-        }
-        return (PsiField)target;
-      }
-      else if (expression instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression binaryExpression =
-          (PsiBinaryExpression)expression;
-        final IElementType tokenType =
-          binaryExpression.getOperationTokenType();
-        if (!JavaTokenType.EQEQ.equals(tokenType)
-            && !JavaTokenType.NE.equals(tokenType)) {
-          return null;
-        }
-        final PsiExpression lhs = binaryExpression.getLOperand();
-        final PsiExpression rhs = binaryExpression.getROperand();
-        final PsiField field = findCheckedField(lhs);
-        if (field != null) {
-          return field;
-        }
-        return findCheckedField(rhs);
-      }
-      else if (expression instanceof PsiPrefixExpression) {
-        final PsiPrefixExpression prefixExpression =
-          (PsiPrefixExpression)expression;
-        final IElementType tokenType =
-          prefixExpression.getOperationTokenType();
-        if (!JavaTokenType.EXCL.equals(tokenType)) {
-          return null;
-        }
-        return findCheckedField(prefixExpression.getOperand());
-      }
-      else {
-        return null;
-      }
     }
   }
 }
