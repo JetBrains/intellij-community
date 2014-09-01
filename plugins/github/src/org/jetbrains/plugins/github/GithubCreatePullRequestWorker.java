@@ -586,7 +586,7 @@ public class GithubCreatePullRequestWorker {
     }
 
     GitCompareBranchesDialog dialog =
-      new GitCompareBranchesDialog(myProject, info.getTo(), info.getFrom(), info.getInfo(), myGitRepository);
+      new GitCompareBranchesDialog(myProject, info.getTo(), info.getFrom(), info.getInfo(), myGitRepository, true);
     dialog.show();
   }
 
