@@ -133,7 +133,12 @@ public class ConsoleDecompiler implements IBytecodeProvider, IDecompilatSaver {
 
   public void decompileContext(File root) {
     this.root = root;
-    fernflower.decompileContext();
+    try {
+      fernflower.decompileContext();
+    }
+    finally {
+      fernflower.clearContext();
+    }
   }
 
   // *******************************************************************

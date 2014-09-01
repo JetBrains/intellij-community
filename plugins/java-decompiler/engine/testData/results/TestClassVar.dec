@@ -1,4 +1,4 @@
-package unit.classes;
+package pkg;
 
 
 public class TestClassVar {

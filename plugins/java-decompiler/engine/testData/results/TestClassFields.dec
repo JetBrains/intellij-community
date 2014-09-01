@@ -1,4 +1,4 @@
-package unit.classes;
+package pkg;
 
 
 public class TestClassFields {
@@ -10,5 +10,4 @@ public class TestClassFields {
    static {
       sizes = new int[names.length];
    }
-
 }
