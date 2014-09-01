@@ -302,6 +302,11 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
   @Override
   public boolean isModified() {
     if (myModel != null) {
+      if (Registry.is("ide.new.settings.dialog")) {
+        if (myPanels != null && myPanels.size() > 0 && myPanels.get(0).isModified()) {
+          return true;
+        }
+      }
       boolean schemeListModified = myModel.isSchemeListModified();
       if (schemeListModified) {
         myApplyCompleted = false;

@@ -16,10 +16,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -34,5 +31,9 @@ public class TestActionEvent extends AnActionEvent {
 
   public TestActionEvent(@NotNull AnAction action) {
     this(DataManager.getInstance().getDataContext(), action);
+  }
+
+  public TestActionEvent() {
+    super(null, DataManager.getInstance().getDataContext(), "", new Presentation(), ActionManager.getInstance(), 0);
   }
 }

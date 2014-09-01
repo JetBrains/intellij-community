@@ -334,19 +334,6 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == ['null -> null']
   }
 
-  public void "test go inside try"() {
-    def c = inferContracts("""
-    final Object foo(Object bar) {
-        try {
-          if (bar == null) return null;
-          bar = smth(bar);
-        } finally {}
-        return new String("abc");
-    }
-    """)
-    assert c == ['null -> null']
-  }
-
   public void "test use invoked method notnull"() {
     def c = inferContracts("""
     final Object foo(Object bar) {

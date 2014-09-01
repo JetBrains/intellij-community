@@ -13,23 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.project;
+package com.siyeh.ig.initialization;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Dmitry Avdeev
+ * @author Bas Leijdekkers
  */
-public abstract class DefaultProjectTypeProvider {
+public class NonThreadSafeLazyInitializationInspectionTest extends LightInspectionTestCase {
 
-  private final static ExtensionPointName<DefaultProjectTypeProvider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.defaultProjectTypeProvider");
+  public void testNonThreadSafeLazyInitialization() { doTest(); }
 
   @Nullable
-  public static ProjectType getDefaultProjectType() {
-    DefaultProjectTypeProvider[] extensions = EXTENSION_POINT_NAME.getExtensions();
-    return extensions.length > 0 ? extensions[0].getProjectType() : null;
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new NonThreadSafeLazyInitializationInspection();
   }
-
-  protected abstract ProjectType getProjectType();
 }

@@ -301,7 +301,6 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
               filesToSave.add(file);
             }
           }
-
         }
       });
 

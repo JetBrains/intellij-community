@@ -575,22 +575,17 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
 
     @Override
-    public boolean saveContent(@NotNull String fileSpec, @NotNull byte[] content, int size, @NotNull RoamingType roamingType, boolean async) throws IOException {
-      boolean result = false;
+    public void saveContent(@NotNull String fileSpec, @NotNull byte[] content, int size, @NotNull RoamingType roamingType, boolean async) throws IOException {
       for (StreamProvider streamProvider : myStreamProviders) {
         try {
-          if (streamProvider.isEnabled() && streamProvider.isApplicable(fileSpec, roamingType) && streamProvider.saveContent(fileSpec, content, size, roamingType, async)) {
-            result = true;
+          if (streamProvider.isEnabled() && streamProvider.isApplicable(fileSpec, roamingType)) {
+            streamProvider.saveContent(fileSpec, content, size, roamingType, async);
           }
-        }
-        catch (ConnectException e) {
-          LOG.debug("Cannot send user profile to server: " + e.getLocalizedMessage());
         }
         catch (Exception e) {
           LOG.debug(e);
         }
       }
-      return result;
     }
 
     @Override

@@ -73,6 +73,17 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
     return PluginPathManager.getPluginHomePath("InspectionGadgets") + "/test/com/siyeh/igfixes/";
   }
 
+  protected void assertQuickfixNotAvailable() {
+    assertQuickfixNotAvailable(myDefaultHint);
+  }
+
+  protected void assertQuickfixNotAvailable(final String quickfixName) {
+    final String testName = getTestName(false);
+    myFixture.configureByFile(getRelativePath() + "/" + testName + ".java");
+    assertEmpty("Quickfix \'" + quickfixName + "\' is available but should not",
+                myFixture.filterAvailableIntentions(quickfixName));
+  }
+
   protected void doTest() {
     assertNotNull(myDefaultHint);
     final String testName = getTestName(false);

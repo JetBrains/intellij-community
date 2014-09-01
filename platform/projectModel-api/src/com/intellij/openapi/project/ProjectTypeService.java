@@ -41,7 +41,7 @@ public class ProjectTypeService implements PersistentStateComponent<ProjectType>
       projectType = getInstance(project).myProjectType;
       if (projectType != null) return projectType;
     }
-    return DefaultProjectTypeProvider.getDefaultProjectType();
+    return DefaultProjectTypeEP.getDefaultProjectType();
   }
 
   public static ProjectTypeService getInstance(@NotNull Project project) {
