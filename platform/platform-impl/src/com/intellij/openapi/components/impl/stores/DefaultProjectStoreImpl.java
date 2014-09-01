@@ -74,7 +74,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
                                                             ComponentVersionProvider.EMPTY) {
       @Override
       @Nullable
-      protected Document loadDocument() throws StateStorageException {
+      protected Document loadDocument() {
         return document;
       }
 

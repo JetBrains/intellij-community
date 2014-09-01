@@ -247,7 +247,7 @@ public class FileBasedStorage extends XmlElementStorage {
 
   @Override
   @Nullable
-  protected Document loadDocument() throws StateStorageException {
+  protected Document loadDocument() {
     myBlockSavingTheContent = false;
     try {
       VirtualFile file = getVirtualFile();

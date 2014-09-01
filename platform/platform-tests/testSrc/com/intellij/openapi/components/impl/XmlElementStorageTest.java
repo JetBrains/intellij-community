@@ -93,7 +93,7 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
     }
 
     @Override
-    protected Document loadDocument() throws StateStorageException {
+    protected Document loadDocument() {
       return myDocument;
     }
 
