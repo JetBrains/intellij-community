@@ -86,6 +86,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.exception.ExceptionUtils java.lang.Throwable getCause(java.lang.Throwable, java.lang.String[]) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -94,6 +95,13 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.exception.ExceptionUtils java.lang.Throwable getCauseUsingFieldName(java.lang.Throwable, java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.exception.ExceptionUtils java.lang.Throwable getCauseUsingMethodName(java.lang.Throwable, java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.exception.ExceptionUtils java.lang.Throwable getCauseUsingWellKnownTypes(java.lang.Throwable) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -102,8 +110,12 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.exception.ExceptionUtils java.lang.Throwable getRootCause(java.lang.Throwable) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.exception.ExceptionUtils java.lang.Throwable getRootCause(java.lang.Throwable)">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.exception.ExceptionUtils java.lang.Throwable[] getThrowables(java.lang.Throwable) 0">
@@ -152,5 +164,14 @@
   </item>
   <item name="org.apache.commons.lang.exception.NestableDelegate void trimStackFrames(java.util.List) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.exception.NestableError java.lang.String getMessage()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.exception.NestableException java.lang.String getMessage()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.exception.NestableRuntimeException java.lang.String getMessage()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
 </root>

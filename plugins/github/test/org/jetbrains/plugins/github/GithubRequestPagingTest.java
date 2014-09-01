@@ -16,8 +16,10 @@
 package org.jetbrains.plugins.github;
 
 import org.jetbrains.plugins.github.api.GithubApiUtil;
+import org.jetbrains.plugins.github.api.GithubConnection;
 import org.jetbrains.plugins.github.api.GithubRepo;
 import org.jetbrains.plugins.github.test.GithubTest;
+import org.jetbrains.plugins.github.util.GithubAuthData;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,17 +38,23 @@ public class GithubRequestPagingTest extends GithubTest {
 
   public void testAvailableRepos() throws Throwable {
 
-    List<GithubRepo> availableRepos = GithubApiUtil.getUserRepos(myGitHubSettings.getAuthData(), myLogin2);
-    List<String> realData = new ArrayList<String>();
-    for (GithubRepo info : availableRepos) {
-      realData.add(info.getName());
-    }
+    GithubConnection connection = new GithubConnection(myGitHubSettings.getAuthData(), true);
+    try {
+      List<GithubRepo> availableRepos = GithubApiUtil.getUserRepos(connection, myLogin2);
+      List<String> realData = new ArrayList<String>();
+      for (GithubRepo info : availableRepos) {
+        realData.add(info.getName());
+      }
 
-    List<String> expectedData = new ArrayList<String>();
-    for (int i = 1; i <= 251; i++) {
-      expectedData.add(String.valueOf(i));
-    }
+      List<String> expectedData = new ArrayList<String>();
+      for (int i = 1; i <= 251; i++) {
+        expectedData.add(String.valueOf(i));
+      }
 
-    assertContainsElements(realData, expectedData);
+      assertContainsElements(realData, expectedData);
+    }
+    finally {
+      connection.close();
+    }
   }
 }

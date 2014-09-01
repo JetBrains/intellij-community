@@ -30,6 +30,7 @@ import com.intellij.util.ThrowableConvertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
+import org.jetbrains.plugins.github.api.GithubConnection;
 import org.jetbrains.plugins.github.api.GithubUser;
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException;
 import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
@@ -112,11 +113,10 @@ public class GithubSettingsPanel {
           }
         }
         catch (GithubAuthenticationException ex) {
-          GithubNotifications.showErrorDialog(myPane, "Login Failure", "Can't login using given credentials: " + ex.getMessage());
+          GithubNotifications.showErrorDialog(myPane, "Login Failure", "Can't login using given credentials: ", ex);
         }
         catch (IOException ex) {
-          LOG.info(ex);
-          GithubNotifications.showErrorDialog(myPane, "Login Failure", "Can't login: " + GithubUtil.getErrorTextFromException(ex));
+          GithubNotifications.showErrorDialog(myPane, "Login Failure", "Can't login: ", ex);
         }
       }
     });
@@ -131,11 +131,12 @@ public class GithubSettingsPanel {
               @Override
               public String convert(ProgressIndicator indicator) throws IOException {
                 return GithubUtil.runTaskWithBasicAuthForHost(project, GithubAuthDataHolder.createFromSettings(), indicator, getHost(),
-                                                              new ThrowableConvertor<GithubAuthData, String, IOException>() {
+                                                              new ThrowableConvertor<GithubConnection, String, IOException>() {
                                                                 @NotNull
                                                                 @Override
-                                                                public String convert(@NotNull GithubAuthData auth) throws IOException {
-                                                                  return GithubApiUtil.getMasterToken(auth, "IntelliJ plugin");
+                                                                public String convert(@NotNull GithubConnection connection)
+                                                                  throws IOException {
+                                                                  return GithubApiUtil.getMasterToken(connection, "IntelliJ plugin");
                                                                 }
                                                               }
                 );

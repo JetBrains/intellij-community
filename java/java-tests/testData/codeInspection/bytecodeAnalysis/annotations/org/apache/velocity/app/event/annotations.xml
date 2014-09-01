@@ -23,6 +23,9 @@
       <val val="&quot;null-&gt;false&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.velocity.app.event.EventCartridge java.util.Iterator getReferenceInsertionEventHandlers()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.velocity.app.event.EventHandlerUtil boolean shouldLogOnNullSet(org.apache.velocity.runtime.RuntimeServices, org.apache.velocity.context.InternalContextAdapter, java.lang.String, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -94,6 +97,9 @@
   </item>
   <item name="org.apache.velocity.app.event.InvalidReferenceEventHandler.InvalidMethodExecutor void execute(org.apache.velocity.app.event.EventHandler) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.app.event.InvalidReferenceEventHandler.InvalidSetMethodExecutor java.lang.Object getReturnValue()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.app.event.InvalidReferenceEventHandler.InvalidSetMethodExecutor void execute(org.apache.velocity.app.event.EventHandler) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>

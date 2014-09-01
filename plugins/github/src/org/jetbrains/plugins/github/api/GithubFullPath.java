@@ -47,14 +47,19 @@ public class GithubFullPath {
   }
 
   @Override
+  public String toString() {
+    return "'" + getFullName() + "'";
+  }
+
+  @Override
   public boolean equals(@Nullable Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
     GithubFullPath that = (GithubFullPath)o;
 
-    if (!StringUtil.endsWithIgnoreCase(myRepositoryName, that.myRepositoryName)) return false;
-    if (!StringUtil.endsWithIgnoreCase(myUserName, that.myUserName)) return false;
+    if (!StringUtil.equalsIgnoreCase(myRepositoryName, that.myRepositoryName)) return false;
+    if (!StringUtil.equalsIgnoreCase(myUserName, that.myUserName)) return false;
 
     return true;
   }

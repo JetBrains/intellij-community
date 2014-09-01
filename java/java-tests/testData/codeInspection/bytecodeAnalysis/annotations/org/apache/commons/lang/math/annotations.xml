@@ -302,6 +302,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.math.NumberUtils java.lang.Float createFloat(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -310,6 +311,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.math.NumberUtils java.lang.Integer createInteger(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -318,6 +320,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.math.NumberUtils java.lang.Long createLong(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -326,6 +329,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.math.NumberUtils java.lang.Number createNumber(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -334,6 +338,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.math.NumberUtils java.math.BigDecimal createBigDecimal(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -342,6 +347,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.math.NumberUtils java.math.BigInteger createBigInteger(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -350,6 +356,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.math.NumberUtils long max(long[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>

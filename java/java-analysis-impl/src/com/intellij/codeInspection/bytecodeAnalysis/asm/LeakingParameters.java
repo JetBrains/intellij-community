@@ -262,7 +262,7 @@ class ParametersUsage extends Interpreter<ParamsValue> {
 
   @Override
   public ParamsValue ternaryOperation(AbstractInsnNode insn, ParamsValue value1, ParamsValue value2, ParamsValue value3) {
-    return val1;
+    return null;
   }
 
   @Override
@@ -458,7 +458,7 @@ class IParametersUsage extends Interpreter<IParamsValue> {
         break;
       default:
     }
-    return val1;
+    return null;
   }
 
   @Override
@@ -560,6 +560,7 @@ class LeakingParametersCollector extends ParametersUsage {
 
   @Override
   public ParamsValue ternaryOperation(AbstractInsnNode insn, ParamsValue value1, ParamsValue value2, ParamsValue value3) {
+    boolean[] params;
     switch (insn.getOpcode()) {
       case IASTORE:
       case LASTORE:
@@ -568,7 +569,7 @@ class LeakingParametersCollector extends ParametersUsage {
       case BASTORE:
       case CASTORE:
       case SASTORE:
-        boolean[] params = value1.params;
+        params = value1.params;
         for (int i = 0; i < arity; i++) {
           leaking[i] |= params[i];
         }
@@ -585,7 +586,7 @@ class LeakingParametersCollector extends ParametersUsage {
         break;
       default:
     }
-    return super.ternaryOperation(insn, value1, value2, value3);
+    return null;
   }
 
   @Override

@@ -21,11 +21,11 @@ public class RedmineIntegrationTest extends TaskManagerTestCase {
 
     // with closed issues
     Task[] found = myRepository.getIssues(null, 0, 25, true);
-    assertEquals(4, found.length);
+    assertEquals(5, found.length);
 
     // without closed issues
     found = myRepository.getIssues(null, 0, 25, false);
-    assertEquals(3, found.length);
+    assertEquals(4, found.length);
 
     // unique summary
     //found = myRepository.getIssues("baz", 0, 25, true);
@@ -70,6 +70,14 @@ public class RedmineIntegrationTest extends TaskManagerTestCase {
     catch (Exception e) {
       assertEquals(TaskBundle.message("failure.login"), e.getMessage());
     }
+  }
+
+  // IDEA-126470
+  public void testIssueWithMissingDescription() throws Exception {
+    final Task issue = myRepository.findTask("8");
+    assertNotNull(issue);
+    assertNull(issue.getDescription());
+    assertEquals(issue.getSummary(), "Artificial issue with no description created via REST API");
   }
 
   @Override
