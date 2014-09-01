@@ -17,12 +17,12 @@ package pkg;
 
 public class TestClassFields {
 
-    private static int[] sizes;
-    private static String[] names;
+  private static int[] sizes;
+  private static String[] names;
 
-    static {
+  static {
 
-    	names = new String[]{"name1", "name2"};
-    	sizes = new int[names.length];
-    }
+    names = new String[]{"name1", "name2"};
+    sizes = new int[names.length];
+  }
 }

@@ -26,10 +26,10 @@ public class TestClassLambda {
    public void testLambda1() {
       int var1 = (int)Math.random();
       Runnable var2 = () -> {
-         System.out.println("hello" + var1);
+         System.out.println("hello1" + var1);
       };
       Runnable var3 = () -> {
-         System.out.println("hello1" + var1);
+         System.out.println("hello2" + var1);
       };
    }
 
