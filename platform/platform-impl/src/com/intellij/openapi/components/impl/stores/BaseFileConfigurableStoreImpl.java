@@ -113,7 +113,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   }
 
   public BaseStorageData getMainStorageData() throws StateStorageException {
-    return (BaseStorageData) getMainStorage().getStorageData(false);
+    return (BaseStorageData) getMainStorage().getStorageData();
   }
 
   @Nullable

@@ -95,8 +95,8 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   protected abstract Document loadDocument() throws StateStorageException;
 
   @Nullable
-  public synchronized Element getState(final String componentName) throws StateStorageException {
-    final StorageData storageData = getStorageData(false);
+  public synchronized Element getState(@NotNull String componentName) throws StateStorageException {
+    final StorageData storageData = getStorageData(false, componentName);
     final Element state = storageData.getState(componentName);
 
     if (state != null) {
@@ -110,23 +110,28 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   }
 
   @Override
-  public boolean hasState(final Object component, final String componentName, final Class<?> aClass, final boolean reloadData) throws StateStorageException {
-    return getStorageData(reloadData).hasState(componentName);
+  public boolean hasState(final Object component, @NotNull String componentName, final Class<?> aClass, final boolean reloadData) throws StateStorageException {
+    return getStorageData(reloadData, componentName).hasState(componentName);
   }
 
   @Override
   @Nullable
-  public <T> T getState(final Object component, final String componentName, Class<T> stateClass, @Nullable T mergeInto) throws StateStorageException {
+  public <T> T getState(final Object component, @NotNull String componentName, Class<T> stateClass, @Nullable T mergeInto) throws StateStorageException {
     return DefaultStateSerializer.deserializeState(getState(componentName), stateClass, mergeInto);
   }
 
   @NotNull
-  protected StorageData getStorageData(final boolean reloadData) throws StateStorageException {
+  protected StorageData getStorageData() throws StateStorageException {
+    return getStorageData(false, null);
+  }
+
+  @NotNull
+  private StorageData getStorageData(boolean reloadData, @Nullable String componentName) {
     if (myLoadedData != null && !reloadData) {
       return myLoadedData;
     }
 
-    myLoadedData = loadData(true);
+    myLoadedData = loadData(myFileSpec.equals(StoragePathMacros.WORKSPACE_FILE) || myComponentRoamingManager.getRoamingType(componentName) != RoamingType.DISABLED);
     return myLoadedData;
   }
 
@@ -194,7 +199,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   @NotNull
   public ExternalizationSession startExternalization() {
     try {
-      final ExternalizationSession session = new MyExternalizationSession(getStorageData(false).clone(), myListener);
+      final ExternalizationSession session = new MyExternalizationSession(getStorageData().clone(), myListener);
       mySession = session;
       return session;
     }
