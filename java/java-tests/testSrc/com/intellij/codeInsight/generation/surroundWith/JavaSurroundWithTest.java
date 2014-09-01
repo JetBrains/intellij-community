@@ -17,6 +17,7 @@ package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.LanguageSurrounders;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
@@ -24,6 +25,7 @@ import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -154,6 +156,18 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
   public void testSurroundExpressionWithElseIfElse() {
     TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
     doTest(getTestName(false), new JavaWithIfElseExpressionSurrounder());
+  }
+
+  public void testSurroundWithTryFinallyUsingIndents() {
+    CommonCodeStyleSettings.IndentOptions indentOptions = getCurrentCodeStyleSettings().getIndentOptions(JavaFileType.INSTANCE);
+    boolean oldUseTabs = indentOptions.USE_TAB_CHARACTER;
+    try {
+      indentOptions.USE_TAB_CHARACTER = true;
+      doTest(getTestName(false), new JavaWithTryFinallySurrounder());
+    }
+    finally {
+      indentOptions.USE_TAB_CHARACTER = oldUseTabs;
+    }
   }
 
   private void doTest(@NotNull String fileName, final Surrounder surrounder) {

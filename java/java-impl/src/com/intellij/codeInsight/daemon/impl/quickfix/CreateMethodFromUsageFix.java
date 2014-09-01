@@ -182,7 +182,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
              context);
   }
 
-  protected static PsiMethod createMethod(PsiClass targetClass,
+  public static PsiMethod createMethod(PsiClass targetClass,
                                           PsiClass parentClass,
                                           PsiMember enclosingContext,
                                           String methodName) {

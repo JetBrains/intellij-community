@@ -33,6 +33,7 @@ class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
   private JCheckBox myCbSkipClassLoaders;
   private ClassFilterEditor mySteppingFilterEditor;
   private JCheckBox myCbSkipSimpleGetters;
+  private JCheckBox myCbCheckFinallyOnPopFrame;
 
   @Override
   public void reset(@NotNull DebuggerSettings settings) {
@@ -45,6 +46,8 @@ class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
 
     mySteppingFilterEditor.setFilters(settings.getSteppingFilters());
     mySteppingFilterEditor.setEnabled(settings.TRACING_FILTERS_ENABLED);
+
+    myCbCheckFinallyOnPopFrame.setSelected(settings.CHECK_FINALLY_ON_POP_FRAME);
   }
 
   @Override
@@ -58,6 +61,8 @@ class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
     settings.SKIP_CONSTRUCTORS = myCbSkipConstructors.isSelected();
     settings.SKIP_CLASSLOADERS = myCbSkipClassLoaders.isSelected();
     settings.TRACING_FILTERS_ENABLED = myCbStepInfoFiltersEnabled.isSelected();
+
+    settings.CHECK_FINALLY_ON_POP_FRAME = myCbCheckFinallyOnPopFrame.isSelected();
 
     mySteppingFilterEditor.stopEditing();
     settings.setSteppingFilters(mySteppingFilterEditor.getFilters());
@@ -78,11 +83,13 @@ class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
     myCbSkipConstructors = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.constructors"));
     myCbSkipClassLoaders = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.classLoaders"));
     myCbSkipSimpleGetters = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.simple.getters"));
+    myCbCheckFinallyOnPopFrame = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.check.finally.on.pop"));
     myCbStepInfoFiltersEnabled = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.step.filters.list.header"));
     panel.add(myCbSkipSyntheticMethods, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0),0, 0));
     panel.add(myCbSkipConstructors, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0),0, 0));
     panel.add(myCbSkipClassLoaders, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0),0, 0));
     panel.add(myCbSkipSimpleGetters, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0),0, 0));
+    panel.add(myCbCheckFinallyOnPopFrame, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0),0, 0));
     panel.add(myCbStepInfoFiltersEnabled, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(8, 0, 0, 0),0, 0));
 
     mySteppingFilterEditor = new ClassFilterEditor(JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables(), null, "reference.viewBreakpoints.classFilters.newPattern");
