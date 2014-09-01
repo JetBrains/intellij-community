@@ -10,7 +10,7 @@
                     interface="com.intellij.openapi.startup.StartupActivity"/>
 
     <extensionPoint name="defaultProjectTypeProvider"
-                    interface="com.intellij.openapi.project.DefaultProjectTypeProvider"/>
+                    beanClass="com.intellij.openapi.project.DefaultProjectTypeEP"/>
 
     <extensionPoint name="errorHandler"
                     interface="com.intellij.openapi.diagnostic.ErrorReportSubmitter"/>

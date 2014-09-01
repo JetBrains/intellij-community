@@ -16,20 +16,21 @@
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
  */
-public abstract class DefaultProjectTypeProvider {
+public class DefaultProjectTypeEP {
 
-  private final static ExtensionPointName<DefaultProjectTypeProvider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.defaultProjectTypeProvider");
+  private final static ExtensionPointName<DefaultProjectTypeEP> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.defaultProjectTypeProvider");
+  @Attribute("type")
+  public String type;
 
   @Nullable
   public static ProjectType getDefaultProjectType() {
-    DefaultProjectTypeProvider[] extensions = EXTENSION_POINT_NAME.getExtensions();
-    return extensions.length > 0 ? extensions[0].getProjectType() : null;
+    DefaultProjectTypeEP[] extensions = EXTENSION_POINT_NAME.getExtensions();
+    return extensions.length > 0 ? new ProjectType(extensions[0].type) : null;
   }
-
-  protected abstract ProjectType getProjectType();
 }
