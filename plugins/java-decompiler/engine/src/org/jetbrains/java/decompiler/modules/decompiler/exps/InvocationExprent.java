@@ -225,9 +225,9 @@ public class InvocationExprent extends Exprent {
     }
     else if (isStatic) {
 
-      ClassNode node = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASSNODE);
+      ClassNode node = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
       if (node == null || !classname.equals(node.classStruct.qualifiedName)) {
-        buf.append(DecompilerContext.getImpcollector().getShortName(ExprProcessor.buildJavaClassName(classname)));
+        buf.append(DecompilerContext.getImportCollector().getShortName(ExprProcessor.buildJavaClassName(classname)));
       }
     }
     else {
@@ -262,10 +262,10 @@ public class InvocationExprent extends Exprent {
 
       if (functype == TYP_GENERAL) {
         if (super_qualifier != null) {
-          StructClass current_class = ((ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASSNODE)).classStruct;
+          StructClass current_class = ((ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE)).classStruct;
 
           if (!super_qualifier.equals(current_class.qualifiedName)) {
-            buf.append(DecompilerContext.getImpcollector().getShortName(ExprProcessor.buildJavaClassName(super_qualifier)));
+            buf.append(DecompilerContext.getImportCollector().getShortName(ExprProcessor.buildJavaClassName(super_qualifier)));
             buf.append(".");
           }
           buf.append("super");
@@ -330,7 +330,7 @@ public class InvocationExprent extends Exprent {
     List<VarVersionPaar> sigFields = null;
     boolean isEnum = false;
     if (functype == TYP_INIT) {
-      ClassNode newnode = DecompilerContext.getClassprocessor().getMapRootClasses().get(classname);
+      ClassNode newnode = DecompilerContext.getClassProcessor().getMapRootClasses().get(classname);
 
       if (newnode != null) {  // own class
         if (newnode.wrapper != null) {
@@ -373,7 +373,7 @@ public class InvocationExprent extends Exprent {
 
     Set<Integer> ret = new HashSet<Integer>();
 
-    StructClass cstr = DecompilerContext.getStructcontext().getClass(classname);
+    StructClass cstr = DecompilerContext.getStructContext().getClass(classname);
     if (cstr != null) {
       List<MethodDescriptor> lstMethods = new ArrayList<MethodDescriptor>();
       for (StructMethod meth : cstr.getMethods()) {

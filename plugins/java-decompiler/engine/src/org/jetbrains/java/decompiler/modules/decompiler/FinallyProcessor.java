@@ -103,7 +103,7 @@ public class FinallyProcessor {
             }
             else {
 
-              int varindex = DecompilerContext.getCountercontainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER);
+              int varindex = DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER);
               insertSemaphore(graph, getAllBasicBlocks(fin.getFirst()), head, handler, varindex, inf, bytecode_version);
 
               finallyBlockIDs.put(handler.id, varindex);

@@ -184,7 +184,7 @@ public class MergeHelper {
               // remove empty if statement as it is now part of the loop
               if (firstif == stat.getFirst()) {
                 BasicBlockStatement bstat = new BasicBlockStatement(new BasicBlock(
-                  DecompilerContext.getCountercontainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
+                  DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
                 bstat.setExprents(new ArrayList<Exprent>());
                 stat.replaceStatement(firstif, bstat);
               }
@@ -223,7 +223,7 @@ public class MergeHelper {
 
               if (firstif.getIfstat() == null) {
                 BasicBlockStatement bstat = new BasicBlockStatement(new BasicBlock(
-                  DecompilerContext.getCountercontainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
+                  DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
                 bstat.setExprents(new ArrayList<Exprent>());
 
                 ifedge.setSource(bstat);
@@ -381,7 +381,7 @@ public class MergeHelper {
 
     if (stat == dostat.getFirst()) {
       BasicBlockStatement bstat = new BasicBlockStatement(new BasicBlock(
-        DecompilerContext.getCountercontainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
+        DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
       bstat.setExprents(new ArrayList<Exprent>());
       dostat.replaceStatement(stat, bstat);
     }

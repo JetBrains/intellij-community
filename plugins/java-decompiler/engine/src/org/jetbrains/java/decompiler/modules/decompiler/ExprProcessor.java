@@ -708,7 +708,7 @@ public class ExprProcessor implements CodeConstants {
     else if (tp == CodeConstants.TYPE_OBJECT) {
       String ret = buildJavaClassName(type.value);
       if (getShort) {
-        ret = DecompilerContext.getImpcollector().getShortName(ret);
+        ret = DecompilerContext.getImportCollector().getShortName(ret);
       }
 
       if (ret == null) {
@@ -791,7 +791,7 @@ public class ExprProcessor implements CodeConstants {
 
     if (res.contains("$")) { // attempt to invoke foreign member
       // classes correctly
-      StructClass cl = DecompilerContext.getStructcontext().getClass(name);
+      StructClass cl = DecompilerContext.getStructContext().getClass(name);
       if (cl == null || !cl.isOwn()) {
         res = res.replace('$', '.');
       }

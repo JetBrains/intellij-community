@@ -87,7 +87,7 @@ public class VarExprent extends Exprent {
 
     if (classdef) {
 
-      ClassNode child = DecompilerContext.getClassprocessor().getMapRootClasses().get(vartype.value);
+      ClassNode child = DecompilerContext.getClassProcessor().getMapRootClasses().get(vartype.value);
 
       StringWriter strwriter = new StringWriter();
       BufferedWriter bufstrwriter = new BufferedWriter(strwriter);

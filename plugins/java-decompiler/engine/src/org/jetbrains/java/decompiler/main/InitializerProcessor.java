@@ -163,7 +163,7 @@ public class InitializerProcessor {
 
     StructClass cl = wrapper.getClassStruct();
 
-    boolean isAnonymous = DecompilerContext.getClassprocessor().getMapRootClasses().get(cl.qualifiedName).type == ClassNode.CLASS_ANONYMOUS;
+    boolean isAnonymous = DecompilerContext.getClassProcessor().getMapRootClasses().get(cl.qualifiedName).type == ClassNode.CLASS_ANONYMOUS;
 
     List<List<Exprent>> lstFirst = new ArrayList<List<Exprent>>();
     List<MethodWrapper> lstMethWrappers = new ArrayList<MethodWrapper>();

@@ -314,7 +314,7 @@ public class SwitchStatement extends Statement {
     for (int i = 0; i < nodes.size(); i++) {
       if (nodes.get(i) == null) {
         BasicBlockStatement bstat = new BasicBlockStatement(new BasicBlock(
-          DecompilerContext.getCountercontainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
+          DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
 
         StatEdge sample_edge = lstEdges.get(i).get(0);
 

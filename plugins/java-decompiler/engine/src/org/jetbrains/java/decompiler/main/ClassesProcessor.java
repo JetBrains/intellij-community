@@ -243,15 +243,15 @@ public class ClassesProcessor {
     }
 
     try {
-      DecompilerContext.setImpcollector(new ImportCollector(root));
-      DecompilerContext.setCountercontainer(new CounterContainer());
+      DecompilerContext.setImportCollector(new ImportCollector(root));
+      DecompilerContext.setCounterContainer(new CounterContainer());
 
       // lambda processing
       LambdaProcessor lambda_proc = new LambdaProcessor();
       lambda_proc.processClass(root);
 
       // add simple class names to implicit import
-      addClassnameToImport(root, DecompilerContext.getImpcollector());
+      addClassnameToImport(root, DecompilerContext.getImportCollector());
       // build wrappers for all nested classes
       // that's where the actual processing takes place
       initWrappers(root);
@@ -277,9 +277,9 @@ public class ClassesProcessor {
         outwriter.write(DecompilerContext.getNewLineSeparator());
       }
 
-      DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASSNODE, root);
+      DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS_NODE, root);
 
-      DecompilerContext.getImpcollector().writeImports(outwriter);
+      DecompilerContext.getImportCollector().writeImports(outwriter);
       outwriter.write(DecompilerContext.getNewLineSeparator());
 
       outwriter.write(strwriter.toString());

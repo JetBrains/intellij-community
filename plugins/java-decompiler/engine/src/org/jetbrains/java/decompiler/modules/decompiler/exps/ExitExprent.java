@@ -88,7 +88,7 @@ public class ExitExprent extends Exprent {
     else {
 
       MethodWrapper meth = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
-      ClassNode node = ((ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASSNODE));
+      ClassNode node = ((ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE));
 
       if (meth != null && node != null) {
         StructExceptionsAttribute attr = (StructExceptionsAttribute)meth.methodStruct.getAttributes().getWithKey("Exceptions");

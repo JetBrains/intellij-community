@@ -122,8 +122,8 @@ public class ClassWriter {
 
     boolean lambda_to_anonymous = DecompilerContext.getOption(IFernflowerPreferences.LAMBDA_TO_ANONYMOUS_CLASS);
 
-    ClassNode nodeold = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASSNODE);
-    DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASSNODE, node);
+    ClassNode nodeold = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
+    DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS_NODE, node);
 
     ClassWrapper wrapper = node_content.wrapper;
     StructClass cl = wrapper.getClassStruct();
@@ -206,7 +206,7 @@ public class ClassWriter {
       writer.flush();
     }
 
-    DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASSNODE, nodeold);
+    DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS_NODE, nodeold);
 
     DecompilerContext.getLogger().endWriteClass();
   }
@@ -216,8 +216,8 @@ public class ClassWriter {
     ClassWrapper wrapper = node.wrapper;
     StructClass cl = wrapper.getClassStruct();
 
-    ClassNode nodeold = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASSNODE);
-    DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASSNODE, node);
+    ClassNode nodeold = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
+    DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS_NODE, node);
 
     // last minute processing
     invokeProcessors(node);
@@ -329,7 +329,7 @@ public class ClassWriter {
     }
     writer.flush();
 
-    DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASSNODE, nodeold);
+    DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS_NODE, nodeold);
 
     DecompilerContext.getLogger().endWriteClass();
   }

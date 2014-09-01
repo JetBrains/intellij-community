@@ -58,7 +58,7 @@ public class CatchStatement extends Statement {
         stats.addWithKey(stat, stat.id);
         exctstrings.add(new ArrayList<String>(edge.getExceptions()));
 
-        vars.add(new VarExprent(DecompilerContext.getCountercontainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER),
+        vars.add(new VarExprent(DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER),
                                 new VarType(CodeConstants.TYPE_OBJECT, 0, edge.getExceptions().get(0)),
                                 // FIXME: for now simply the first type. Should get the first common superclass when possible.
                                 (VarProcessor)DecompilerContext.getProperty(DecompilerContext.CURRENT_VAR_PROCESSOR)));
@@ -192,7 +192,7 @@ public class CatchStatement extends Statement {
 
     for (List<String> exc : this.exctstrings) {
       cs.exctstrings.add(new ArrayList<String>(exc));
-      cs.vars.add(new VarExprent(DecompilerContext.getCountercontainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER),
+      cs.vars.add(new VarExprent(DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER),
                                  new VarType(CodeConstants.TYPE_OBJECT, 0, exc.get(0)),
                                  (VarProcessor)DecompilerContext.getProperty(DecompilerContext.CURRENT_VAR_PROCESSOR)));
     }

@@ -124,7 +124,7 @@ public class MethodProcessorThread implements Runnable {
 
     DeadCodeHelper.mergeBasicBlocks(graph);
 
-    DecompilerContext.getCountercontainer().setCounter(CounterContainer.VAR_COUNTER, mt.getLocalVariables());
+    DecompilerContext.getCounterContainer().setCounter(CounterContainer.VAR_COUNTER, mt.getLocalVariables());
 
     //DotExporter.toDotFile(graph, new File("c:\\Temp\\fern3.dot"), true);
     //System.out.println(graph.toString());

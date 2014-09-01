@@ -44,7 +44,7 @@ public class Fernflower implements IDecompiledData {
     structcontext = new StructContext(saver, this, new LazyLoader(provider));
 
     DecompilerContext.initContext(propertiesCustom);
-    DecompilerContext.setCountercontainer(new CounterContainer());
+    DecompilerContext.setCounterContainer(new CounterContainer());
   }
 
   public void decompileContext() {
@@ -55,8 +55,8 @@ public class Fernflower implements IDecompiledData {
 
     clprocessor = new ClassesProcessor(structcontext);
 
-    DecompilerContext.setClassprocessor(clprocessor);
-    DecompilerContext.setStructcontext(structcontext);
+    DecompilerContext.setClassProcessor(clprocessor);
+    DecompilerContext.setStructContext(structcontext);
 
     structcontext.saveContext();
   }

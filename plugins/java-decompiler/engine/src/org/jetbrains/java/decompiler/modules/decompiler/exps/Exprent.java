@@ -55,7 +55,7 @@ public class Exprent {
 
   {
     // set exprent id
-    id = DecompilerContext.getCountercontainer().getCounterAndIncrement(CounterContainer.EXPRENT_COUNTER);
+    id = DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.EXPRENT_COUNTER);
   }
 
   public int getPrecedence() {

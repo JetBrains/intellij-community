@@ -74,10 +74,10 @@ public class ClassWrapper {
       DecompilerContext.getLogger().startMethod(mt.getName() + " " + mt.getDescriptor());
 
       VarNamesCollector vc = new VarNamesCollector();
-      DecompilerContext.setVarncollector(vc);
+      DecompilerContext.setVarNamesCollector(vc);
 
       CounterContainer counter = new CounterContainer();
-      DecompilerContext.setCountercontainer(counter);
+      DecompilerContext.setCounterContainer(counter);
 
       DecompilerContext.setProperty(DecompilerContext.CURRENT_METHOD, mt);
       DecompilerContext.setProperty(DecompilerContext.CURRENT_METHOD_DESCRIPTOR, MethodDescriptor.parseDescriptor(mt.getDescriptor()));
@@ -165,7 +165,7 @@ public class ClassWrapper {
       varproc.refreshVarNames(new VarNamesCollector(setFieldNames));
 
       // if debug information present and should be used
-      if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VARNAMES)) {
+      if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES)) {
         StructLocalVariableTableAttribute attr = (StructLocalVariableTableAttribute)mt.getAttributes().getWithKey(
           StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TABLE);
 

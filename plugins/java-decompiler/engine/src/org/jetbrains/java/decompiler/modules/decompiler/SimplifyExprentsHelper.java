@@ -137,7 +137,7 @@ public class SimplifyExprentsHelper {
       }
 
       // remove getClass() invocation, which is part of a qualified new
-      if (DecompilerContext.getOption(IFernflowerPreferences.REMOVE_GETCLASS_NEW)) {
+      if (DecompilerContext.getOption(IFernflowerPreferences.REMOVE_GET_CLASS_NEW)) {
         if (isQualifiedNewGetClass(current, next)) {
           list.remove(index);
           res = true;
@@ -516,7 +516,7 @@ public class SimplifyExprentsHelper {
                 nexpr.getConstructor().getLstParameters().get(0).equals(invexpr.getInstance())) {
 
               String classname = nexpr.getNewtype().value;
-              ClassNode node = DecompilerContext.getClassprocessor().getMapRootClasses().get(classname);
+              ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(classname);
               if (node != null && node.type != ClassNode.CLASS_ROOT) {
                 return true;
               }
@@ -703,7 +703,7 @@ public class SimplifyExprentsHelper {
       if (in.getInvocationTyp() == InvocationExprent.INVOKE_DYNAMIC) {
 
         String lambda_class_name = cl.qualifiedName + in.getInvokeDynamicClassSuffix();
-        ClassNode lambda_class = DecompilerContext.getClassprocessor().getMapRootClasses().get(lambda_class_name);
+        ClassNode lambda_class = DecompilerContext.getClassProcessor().getMapRootClasses().get(lambda_class_name);
 
         if (lambda_class != null) { // real lambda class found, replace invocation with an anonymous class
 

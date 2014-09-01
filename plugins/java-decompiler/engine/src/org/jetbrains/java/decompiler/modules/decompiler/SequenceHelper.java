@@ -300,7 +300,7 @@ public class SequenceHelper {
     destroyStatementContent(stat, false);
 
     BasicBlockStatement bstat = new BasicBlockStatement(new BasicBlock(
-      DecompilerContext.getCountercontainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
+      DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
     if (stat.getExprents() == null) {
       bstat.setExprents(new ArrayList<Exprent>());
     }

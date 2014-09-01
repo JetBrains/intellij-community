@@ -54,7 +54,7 @@ public class AnnotationExprent extends Exprent {
 
     buffer.append(indstr);
     buffer.append("@");
-    buffer.append(DecompilerContext.getImpcollector().getShortName(ExprProcessor.buildJavaClassName(classname)));
+    buffer.append(DecompilerContext.getImportCollector().getShortName(ExprProcessor.buildJavaClassName(classname)));
 
     if (!parnames.isEmpty()) {
       buffer.append("(");

@@ -248,7 +248,7 @@ public class VarVersionsProcessor {
     HashMap<VarVersionPaar, VarType> mapExprentMinTypes = typeproc.getMapExprentMinTypes();
     HashMap<VarVersionPaar, Integer> mapFinalVars = typeproc.getMapFinalVars();
 
-    CounterContainer ccon = DecompilerContext.getCountercontainer();
+    CounterContainer ccon = DecompilerContext.getCounterContainer();
 
     final HashMap<VarVersionPaar, Integer> mapVarPaar = new HashMap<VarVersionPaar, Integer>();
     HashMap<Integer, Integer> mapOriginalVarIndices = new HashMap<Integer, Integer>();

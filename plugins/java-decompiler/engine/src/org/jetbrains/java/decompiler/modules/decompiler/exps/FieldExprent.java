@@ -98,9 +98,9 @@ public class FieldExprent extends Exprent {
 
 
     if (isStatic) {
-      ClassNode node = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASSNODE);
+      ClassNode node = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
       if (node == null || !classname.equals(node.classStruct.qualifiedName)) {
-        buf.append(DecompilerContext.getImpcollector().getShortName(ExprProcessor.buildJavaClassName(classname)));
+        buf.append(DecompilerContext.getImportCollector().getShortName(ExprProcessor.buildJavaClassName(classname)));
         buf.append(".");
       }
     }
@@ -126,10 +126,10 @@ public class FieldExprent extends Exprent {
       }
 
       if (super_qualifier != null) {
-        StructClass current_class = ((ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASSNODE)).classStruct;
+        StructClass current_class = ((ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE)).classStruct;
 
         if (!super_qualifier.equals(current_class.qualifiedName)) {
-          buf.append(DecompilerContext.getImpcollector().getShortName(ExprProcessor.buildJavaClassName(super_qualifier)));
+          buf.append(DecompilerContext.getImportCollector().getShortName(ExprProcessor.buildJavaClassName(super_qualifier)));
           buf.append(".");
         }
         buf.append("super");

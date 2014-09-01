@@ -88,7 +88,7 @@ public class EnumProcessor {
         if (initializer != null && initializer.type == Exprent.EXPRENT_NEW) {
           NewExprent nexpr = (NewExprent)initializer;
           if (nexpr.isAnonymous()) {
-            ClassNode child = DecompilerContext.getClassprocessor().getMapRootClasses().get(nexpr.getNewtype().value);
+            ClassNode child = DecompilerContext.getClassProcessor().getMapRootClasses().get(nexpr.getNewtype().value);
             hideDummyFieldInConstant(child.wrapper);
           }
         }

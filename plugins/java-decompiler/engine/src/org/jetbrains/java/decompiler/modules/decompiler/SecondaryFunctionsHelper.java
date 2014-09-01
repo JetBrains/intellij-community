@@ -299,7 +299,7 @@ public class SecondaryFunctionsHelper {
           case FunctionExprent.FUNCTION_FCMPG:
           case FunctionExprent.FUNCTION_DCMPL:
           case FunctionExprent.FUNCTION_DCMPG:
-            int var = DecompilerContext.getCountercontainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER);
+            int var = DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER);
             VarType type = lstOperands.get(0).getExprType();
             VarProcessor processor = (VarProcessor)DecompilerContext.getProperty(DecompilerContext.CURRENT_VAR_PROCESSOR);
 

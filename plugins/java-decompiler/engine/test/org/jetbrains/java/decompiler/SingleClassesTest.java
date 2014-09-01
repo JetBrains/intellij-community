@@ -44,7 +44,7 @@ public class SingleClassesTest {
       put(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES, "0");
       put(IFernflowerPreferences.IDEA_NOT_NULL_ANNOTATION, "1");
       put(IFernflowerPreferences.LAMBDA_TO_ANONYMOUS_CLASS, "0");
-      put(IFernflowerPreferences.USE_DEBUG_VARNAMES, "0");
+      put(IFernflowerPreferences.USE_DEBUG_VAR_NAMES, "0");
       put(IFernflowerPreferences.NEW_LINE_SEPARATOR, (win ? "0" : "1"));
     }});
   }

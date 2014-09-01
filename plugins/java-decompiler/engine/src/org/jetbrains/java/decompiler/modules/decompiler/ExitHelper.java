@@ -117,7 +117,7 @@ public class ExitHelper {
             dest = isExitEdge(ifedge);
             if (dest != null) {
               BasicBlockStatement bstat = new BasicBlockStatement(new BasicBlock(
-                DecompilerContext.getCountercontainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
+                DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
               bstat.setExprents(DecHelper.copyExprentList(dest.getExprents()));
 
               ifst.getFirst().removeSuccessor(ifedge);
@@ -152,7 +152,7 @@ public class ExitHelper {
           stat.removeSuccessor(destedge);
 
           BasicBlockStatement bstat = new BasicBlockStatement(new BasicBlock(
-            DecompilerContext.getCountercontainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
+            DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
           bstat.setExprents(DecHelper.copyExprentList(dest.getExprents()));
 
           StatEdge oldexitedge = dest.getAllSuccessorEdges().get(0);
@@ -315,7 +315,7 @@ public class ExitHelper {
 
     // build a new statement with the single instruction 'return'
     BasicBlockStatement bstat = new BasicBlockStatement(new BasicBlock(
-      DecompilerContext.getCountercontainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
+      DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
 
     ExitExprent retexpr = new ExitExprent(ExitExprent.EXIT_RETURN, null,
                                           ((MethodDescriptor)DecompilerContext

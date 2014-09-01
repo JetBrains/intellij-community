@@ -42,7 +42,7 @@ public class BasicBlockStatement extends Statement {
     this.block = block;
 
     id = block.id;
-    CounterContainer coun = DecompilerContext.getCountercontainer();
+    CounterContainer coun = DecompilerContext.getCounterContainer();
     if (id >= coun.getCounter(CounterContainer.STATEMENT_COUNTER)) {
       coun.setCounter(CounterContainer.STATEMENT_COUNTER, id + 1);
     }
@@ -73,7 +73,7 @@ public class BasicBlockStatement extends Statement {
   public Statement getSimpleCopy() {
 
     BasicBlock newblock = new BasicBlock(
-      DecompilerContext.getCountercontainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER));
+      DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER));
 
     SimpleInstructionSequence seq = new SimpleInstructionSequence();
     for (int i = 0; i < block.getSeq().length(); i++) {

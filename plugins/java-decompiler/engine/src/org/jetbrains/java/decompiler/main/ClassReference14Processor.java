@@ -263,7 +263,7 @@ public class ClassReference14Processor {
                 ((ConstExprent)headexpr.getLstOperands().get(1)).getConsttype().equals(VarType.VARTYPE_NULL)) {
 
               FieldExprent field = (FieldExprent)headexpr.getLstOperands().get(0);
-              ClassNode fieldnode = DecompilerContext.getClassprocessor().getMapRootClasses().get(field.getClassname());
+              ClassNode fieldnode = DecompilerContext.getClassProcessor().getMapRootClasses().get(field.getClassname());
 
               if (fieldnode != null && fieldnode.classStruct.qualifiedName.equals(wrapper.getClassStruct().qualifiedName)) { // source class
                 StructField fd =

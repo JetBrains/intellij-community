@@ -329,7 +329,7 @@ public class NestedMemberAccess {
 
   private Exprent replaceAccessExprent(ClassNode caller, MethodWrapper methdest, InvocationExprent invexpr) {
 
-    ClassNode node = DecompilerContext.getClassprocessor().getMapRootClasses().get(invexpr.getClassname());
+    ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(invexpr.getClassname());
 
     MethodWrapper methsource = null;
     if (node != null && node.wrapper != null) {

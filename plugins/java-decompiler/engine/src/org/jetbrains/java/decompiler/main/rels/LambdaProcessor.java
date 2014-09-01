@@ -54,7 +54,7 @@ public class LambdaProcessor {
 
   public boolean hasLambda(ClassNode node) throws IOException {
 
-    ClassesProcessor clprocessor = DecompilerContext.getClassprocessor();
+    ClassesProcessor clprocessor = DecompilerContext.getClassProcessor();
     StructClass cl = node.classStruct;
 
     if (cl.getBytecodeVersion() < CodeConstants.BYTECODE_JAVA_8) { // lamda beginning with Java 8

@@ -27,33 +27,23 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-
 public class DecompilerContext {
-
   public static final String CURRENT_CLASS = "CURRENT_CLASS";
+  public static final String CURRENT_CLASS_NODE = "CURRENT_CLASS_NODE";
   public static final String CURRENT_METHOD = "CURRENT_METHOD";
   public static final String CURRENT_METHOD_DESCRIPTOR = "CURRENT_METHOD_DESCRIPTOR";
-  public static final String CURRENT_VAR_PROCESSOR = "CURRENT_VAR_PROCESSOR";
-
-  public static final String CURRENT_CLASSNODE = "CURRENT_CLASSNODE";
   public static final String CURRENT_METHOD_WRAPPER = "CURRENT_METHOD_WRAPPER";
+  public static final String CURRENT_VAR_PROCESSOR = "CURRENT_VAR_PROCESSOR";
 
   private static ThreadLocal<DecompilerContext> currentContext = new ThreadLocal<DecompilerContext>();
 
   private final Map<String, Object> properties;
-
-  private StructContext structcontext;
-
-  private ImportCollector impcollector;
-
-  private VarNamesCollector varncollector;
-
-  private CounterContainer countercontainer;
-
-  private ClassesProcessor classprocessor;
-
-  private PoolInterceptor poolinterceptor;
-
+  private StructContext structContext;
+  private ImportCollector importCollector;
+  private VarNamesCollector varNamescollector;
+  private CounterContainer counterContainer;
+  private ClassesProcessor classProcessor;
+  private PoolInterceptor poolInterceptor;
   private IFernflowerLogger logger;
 
   private DecompilerContext(Map<String, Object> properties) {
@@ -88,52 +78,52 @@ public class DecompilerContext {
     return "1".equals(getCurrentContext().properties.get(key));
   }
 
-  public static ImportCollector getImpcollector() {
-    return getCurrentContext().impcollector;
+  public static ImportCollector getImportCollector() {
+    return getCurrentContext().importCollector;
   }
 
-  public static void setImpcollector(ImportCollector impcollector) {
-    getCurrentContext().impcollector = impcollector;
+  public static void setImportCollector(ImportCollector importCollector) {
+    getCurrentContext().importCollector = importCollector;
   }
 
-  public static VarNamesCollector getVarncollector() {
-    return getCurrentContext().varncollector;
+  public static VarNamesCollector getVarNamesCollector() {
+    return getCurrentContext().varNamescollector;
   }
 
-  public static void setVarncollector(VarNamesCollector varncollector) {
-    getCurrentContext().varncollector = varncollector;
+  public static void setVarNamesCollector(VarNamesCollector varNamesCollector) {
+    getCurrentContext().varNamescollector = varNamesCollector;
   }
 
-  public static StructContext getStructcontext() {
-    return getCurrentContext().structcontext;
+  public static StructContext getStructContext() {
+    return getCurrentContext().structContext;
   }
 
-  public static void setStructcontext(StructContext structcontext) {
-    getCurrentContext().structcontext = structcontext;
+  public static void setStructContext(StructContext structContext) {
+    getCurrentContext().structContext = structContext;
   }
 
-  public static CounterContainer getCountercontainer() {
-    return getCurrentContext().countercontainer;
+  public static CounterContainer getCounterContainer() {
+    return getCurrentContext().counterContainer;
   }
 
-  public static void setCountercontainer(CounterContainer countercontainer) {
-    getCurrentContext().countercontainer = countercontainer;
+  public static void setCounterContainer(CounterContainer counterContainer) {
+    getCurrentContext().counterContainer = counterContainer;
   }
 
-  public static ClassesProcessor getClassprocessor() {
-    return getCurrentContext().classprocessor;
+  public static ClassesProcessor getClassProcessor() {
+    return getCurrentContext().classProcessor;
   }
 
-  public static void setClassprocessor(ClassesProcessor classprocessor) {
-    getCurrentContext().classprocessor = classprocessor;
+  public static void setClassProcessor(ClassesProcessor classProcessor) {
+    getCurrentContext().classProcessor = classProcessor;
   }
 
   public static PoolInterceptor getPoolInterceptor() {
-    return getCurrentContext().poolinterceptor;
+    return getCurrentContext().poolInterceptor;
   }
 
   public static void setPoolInterceptor(PoolInterceptor poolinterceptor) {
-    getCurrentContext().poolinterceptor = poolinterceptor;
+    getCurrentContext().poolInterceptor = poolinterceptor;
   }
 
   public static IFernflowerLogger getLogger() {
@@ -141,13 +131,6 @@ public class DecompilerContext {
   }
 
   public static void setLogger(IFernflowerLogger logger) {
-    getCurrentContext().logger = logger;
-    setLogSeverity();
-  }
-
-  private static void setLogSeverity() {
-    IFernflowerLogger logger = getCurrentContext().logger;
-
     if (logger != null) {
       String severity = (String)getProperty(IFernflowerPreferences.LOG_LEVEL);
       if (severity != null) {
@@ -157,6 +140,7 @@ public class DecompilerContext {
         }
       }
     }
+    getCurrentContext().logger = logger;
   }
 
   public static String getNewLineSeparator() {

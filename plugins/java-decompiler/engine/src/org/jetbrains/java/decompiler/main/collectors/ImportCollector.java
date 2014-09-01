@@ -55,7 +55,7 @@ public class ImportCollector {
 
   public String getShortName(String fullname, boolean imported) {
 
-    ClassesProcessor clproc = DecompilerContext.getClassprocessor();
+    ClassesProcessor clproc = DecompilerContext.getClassProcessor();
     ClassNode node = clproc.getMapRootClasses().get(fullname.replace('.', '/'));
 
     String retname = null;
@@ -91,7 +91,7 @@ public class ImportCollector {
       npackage = fullname.substring(0, lastpoint);
     }
 
-    StructContext context = DecompilerContext.getStructcontext();
+    StructContext context = DecompilerContext.getStructContext();
 
     boolean existsDefaultClass = (context.getClass(currentPackageSlash + nshort) != null
                                   && !npackage.equals(currentPackagePoint)) // current package

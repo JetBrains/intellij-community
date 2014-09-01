@@ -67,7 +67,7 @@ public class CatchAllStatement extends Statement {
       }
     }
 
-    vars.add(new VarExprent(DecompilerContext.getCountercontainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER),
+    vars.add(new VarExprent(DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER),
                             new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/Throwable"),
                             (VarProcessor)DecompilerContext.getProperty(DecompilerContext.CURRENT_VAR_PROCESSOR)));
   }
@@ -174,14 +174,14 @@ public class CatchAllStatement extends Statement {
     cas.isFinally = this.isFinally;
 
     if (this.monitor != null) {
-      cas.monitor = new VarExprent(DecompilerContext.getCountercontainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER),
+      cas.monitor = new VarExprent(DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER),
                                    VarType.VARTYPE_INT,
                                    (VarProcessor)DecompilerContext.getProperty(DecompilerContext.CURRENT_VAR_PROCESSOR));
     }
 
     if (!this.vars.isEmpty()) {
       // FIXME: WTF??? vars?!
-      vars.add(new VarExprent(DecompilerContext.getCountercontainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER),
+      vars.add(new VarExprent(DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER),
                               new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/Throwable"),
                               (VarProcessor)DecompilerContext.getProperty(DecompilerContext.CURRENT_VAR_PROCESSOR)));
     }

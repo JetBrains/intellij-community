@@ -176,7 +176,7 @@ public class GenericMain {
     }
     else if (tp == CodeConstants.TYPE_OBJECT) {
       StringBuilder buffer = new StringBuilder();
-      buffer.append(DecompilerContext.getImpcollector().getShortName(buildJavaClassName(type)));
+      buffer.append(DecompilerContext.getImportCollector().getShortName(buildJavaClassName(type)));
 
       if (!type.getArguments().isEmpty()) {
         buffer.append("<");
@@ -222,7 +222,7 @@ public class GenericMain {
     String res = name.replace('/', '.');
 
     if (res.contains("$")) {
-      StructClass cl = DecompilerContext.getStructcontext().getClass(name);
+      StructClass cl = DecompilerContext.getStructContext().getClass(name);
       if (cl == null || !cl.isOwn()) {
         res = res.replace('$', '.');
       }

@@ -79,7 +79,7 @@ public class NewExprent extends Exprent {
     lambda = false;
 
     if (newtype.type == CodeConstants.TYPE_OBJECT && newtype.arraydim == 0) {
-      ClassNode node = DecompilerContext.getClassprocessor().getMapRootClasses().get(newtype.value);
+      ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(newtype.value);
 
       if (node != null && (node.type == ClassNode.CLASS_ANONYMOUS || node.type == ClassNode.CLASS_LAMBDA)) {
         anonymous = true;
@@ -94,7 +94,7 @@ public class NewExprent extends Exprent {
   public VarType getExprType() {
 
     if (anonymous) {
-      ClassNode node = DecompilerContext.getClassprocessor().getMapRootClasses().get(newtype.value);
+      ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(newtype.value);
 
       return node.anonimousClassType;
     }
@@ -177,7 +177,7 @@ public class NewExprent extends Exprent {
 
     if (anonymous) {
 
-      ClassNode child = DecompilerContext.getClassprocessor().getMapRootClasses().get(newtype.value);
+      ClassNode child = DecompilerContext.getClassProcessor().getMapRootClasses().get(newtype.value);
 
       buf.append("(");
 
@@ -185,7 +185,7 @@ public class NewExprent extends Exprent {
 
         InvocationExprent invsuper = child.superInvocation;
 
-        ClassNode newnode = DecompilerContext.getClassprocessor().getMapRootClasses().get(invsuper.getClassname());
+        ClassNode newnode = DecompilerContext.getClassProcessor().getMapRootClasses().get(invsuper.getClassname());
 
         List<VarVersionPaar> sigFields = null;
         if (newnode != null) { // own class
@@ -239,7 +239,7 @@ public class NewExprent extends Exprent {
         String typename = ExprProcessor.getCastTypeName(child.anonimousClassType);
 
         if (enclosing != null) {
-          ClassNode anonimousNode = DecompilerContext.getClassprocessor().getMapRootClasses().get(child.anonimousClassType.value);
+          ClassNode anonimousNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(child.anonimousClassType.value);
           if (anonimousNode != null) {
             typename = anonimousNode.simpleName;
           }
@@ -307,7 +307,7 @@ public class NewExprent extends Exprent {
 
           List<Exprent> lstParameters = constructor.getLstParameters();
 
-          ClassNode newnode = DecompilerContext.getClassprocessor().getMapRootClasses().get(constructor.getClassname());
+          ClassNode newnode = DecompilerContext.getClassProcessor().getMapRootClasses().get(constructor.getClassname());
 
           List<VarVersionPaar> sigFields = null;
           if (newnode != null) { // own class
@@ -354,7 +354,7 @@ public class NewExprent extends Exprent {
           String typename = ExprProcessor.getTypeName(newtype);
 
           if (enclosing != null) {
-            ClassNode newNode = DecompilerContext.getClassprocessor().getMapRootClasses().get(newtype.value);
+            ClassNode newNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(newtype.value);
             if (newNode != null) {
               typename = newNode.simpleName;
             }
@@ -404,7 +404,7 @@ public class NewExprent extends Exprent {
 
   private static String getQualifiedNewInstance(String classname, List<Exprent> lstParams, int indent) {
 
-    ClassNode node = DecompilerContext.getClassprocessor().getMapRootClasses().get(classname);
+    ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(classname);
 
     if (node != null && node.type != ClassNode.CLASS_ROOT && (node.access & CodeConstants.ACC_STATIC) == 0) {
       if (!lstParams.isEmpty()) {
@@ -415,7 +415,7 @@ public class NewExprent extends Exprent {
         if (enclosing.type == Exprent.EXPRENT_VAR) {
           VarExprent varEnclosing = (VarExprent)enclosing;
 
-          StructClass current_class = ((ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASSNODE)).classStruct;
+          StructClass current_class = ((ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE)).classStruct;
           String this_classname = varEnclosing.getProcessor().getThisvars().get(new VarVersionPaar(varEnclosing));
 
           if (!current_class.qualifiedName.equals(this_classname)) {

@@ -108,7 +108,7 @@ public class Statement {
 
   {
     // set statement id
-    id = DecompilerContext.getCountercontainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER);
+    id = DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER);
   }
 
   // *****************************************************************************
