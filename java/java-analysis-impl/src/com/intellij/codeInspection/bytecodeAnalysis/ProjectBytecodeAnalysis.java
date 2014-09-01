@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
@@ -47,8 +48,10 @@ import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
 public class ProjectBytecodeAnalysis {
   public static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.bytecodeAnalysis");
   public static final Key<Boolean> INFERRED_ANNOTATION = Key.create("INFERRED_ANNOTATION");
+  public static final String NULLABLE_METHOD_TRANSITIVITY = "java.annotations.inference.nullable.method.transitivity";
   public static final int EQUATIONS_LIMIT = 1000;
   private final Project myProject;
+  private final boolean nullableMethodTransitivity;
 
   public static ProjectBytecodeAnalysis getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, ProjectBytecodeAnalysis.class);
@@ -56,6 +59,7 @@ public class ProjectBytecodeAnalysis {
 
   public ProjectBytecodeAnalysis(Project project) {
     myProject = project;
+    nullableMethodTransitivity = Registry.is(NULLABLE_METHOD_TRANSITIVITY);
   }
 
   @Nullable
@@ -241,7 +245,12 @@ public class ProjectBytecodeAnalysis {
 
     final Solver nullableMethodSolver = new Solver(new ELattice<Value>(Value.Bot, Value.Null), Value.Bot);
     HKey nullableKey = key.updateDirection(BytecodeAnalysisConverter.mkDirectionKey(NullableOut));
-    collectEquations(Collections.singletonList(nullableKey), nullableMethodSolver, equationsCache);
+    if (nullableMethodTransitivity) {
+      collectEquations(Collections.singletonList(nullableKey), nullableMethodSolver, equationsCache);
+    }
+    else {
+      collectSingleEquation(nullableKey, nullableMethodSolver, equationsCache);
+    }
 
     HashMap<HKey, Value> nullableSolutions = nullableMethodSolver.solve();
     if (nullableSolutions.get(nullableKey) == Value.Null || nullableSolutions.get(nullableKey.negate()) == Value.Null) {
@@ -297,6 +306,32 @@ public class ProjectBytecodeAnalysis {
               }
             }
           }
+        }
+      }
+    }
+  }
+
+  private void collectSingleEquation(HKey hKey, Solver solver, @NotNull Map<Bytes, List<HEquations>> cache) throws EquationsLimitException {
+    GlobalSearchScope librariesScope = ProjectScope.getLibrariesScope(myProject);
+
+    FileBasedIndex index = FileBasedIndex.getInstance();
+
+    ProgressManager.checkCanceled();
+    Bytes bytes = new Bytes(hKey.key);
+
+    List<HEquations> hEquationss = cache.get(bytes);
+    if (hEquationss == null) {
+      hEquationss = index.getValues(BytecodeAnalysisIndex.NAME, bytes, librariesScope);
+      cache.put(bytes, hEquationss);
+    }
+
+    for (HEquations hEquations : hEquationss) {
+      boolean stable = hEquations.stable;
+      for (DirectionResultPair pair : hEquations.results) {
+        int dirKey = pair.directionKey;
+        if (dirKey == hKey.dirKey) {
+          HResult result = pair.hResult;
+          solver.addEquation(new HEquation(new HKey(bytes.bytes, dirKey, stable), result));
         }
       }
     }
