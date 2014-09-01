@@ -2,9 +2,6 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import javafx.scene.Group;
-import javafx.scene.shape.Rectangle;
-
 abstract class NoFormalParams {
   interface I<T> {
     T a(int a);
@@ -35,7 +32,11 @@ abstract class NoFormalParamTypeInferenceNeeded {
 }
 
 class IDEA124983 {
-  private final Group gridGroup = new Group();
+  class Rectangle{
+    public Rectangle(int i, int j, int h, int w) {
+    }
+  }
+
   void createGrid() {
     IntStream.range(0, 4)
       .mapToObj(i -> IntStream.range(0, 4).mapToObj(j -> {
@@ -43,8 +44,10 @@ class IDEA124983 {
         return rect2;
       }))
       .flatMap(s -> s)
-      .forEach(gridGroup.getChildren()::add);
+      .forEach(this::add);
   }
+
+  void add(final Rectangle r) {}
 
   void simplified(final IntStream range) {
     range.mapToObj(i -> range.mapToObj(j -> 1)).flatMap(s -> s);
