@@ -35,6 +35,9 @@ public class CCEditorFactoryListener implements EditorFactoryListener {
     final Lesson lesson = course.getLesson(lessonDir.getName());
     final Task task = lesson.getTask(taskDir.getName());
     final TaskFile taskFile = task.getTaskFile(virtualFile.getName());
+    if (taskFile == null) {
+      return;
+    }
     TaskFileModificationListener listener = new TaskFileModificationListener(taskFile);
     CCProjectService.addDocumentListener(editor.getDocument(), listener);
     editor.getDocument().addDocumentListener(listener);
@@ -54,13 +57,10 @@ public class CCEditorFactoryListener implements EditorFactoryListener {
     editor.getSelectionModel().removeSelection();
   }
 
-  private class TaskFileModificationListener extends StudyDocumentListener {
-
-    private final TaskFile myTaskFile;
+  private static class TaskFileModificationListener extends StudyDocumentListener {
 
     public TaskFileModificationListener(TaskFile taskFile) {
       super(taskFile);
-      myTaskFile = taskFile;
     }
 
     @Override
@@ -70,11 +70,6 @@ public class CCEditorFactoryListener implements EditorFactoryListener {
         if (fragment.equals("\n")) {
           taskWindow.setReplacementLength(taskWindow.getLength() + 1);
         }
-    }
-
-    @Override
-    protected boolean needModify() {
-      return myTaskFile.isTrackChanges();
     }
   }
 }

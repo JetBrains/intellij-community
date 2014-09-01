@@ -2,6 +2,7 @@ package org.jetbrains.plugins.coursecreator.format;
 
 import com.google.gson.annotations.Expose;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.coursecreator.CCProjectService;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,7 +29,8 @@ public class Task {
   }
 
   public TaskFile getTaskFile(@NotNull final String name) {
-    return task_files.get(name);
+    String fileName = CCProjectService.getRealTaskFileName(name);
+    return fileName != null ? task_files.get(fileName) : null;
   }
 
   public void setIndex(int index) {
@@ -37,5 +39,9 @@ public class Task {
 
   public Map<String, TaskFile> getTaskFiles() {
     return task_files;
+  }
+
+  public boolean isTaskFile(String name) {
+    return task_files.get(name) != null;
   }
 }

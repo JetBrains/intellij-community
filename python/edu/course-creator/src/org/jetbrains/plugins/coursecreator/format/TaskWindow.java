@@ -123,10 +123,6 @@ public class TaskWindow implements Comparable{
     return lineDiff;
   }
 
-  public String getPossibleAnswer() {
-    return possible_answer;
-  }
-
   public int getLength() {
     return length;
   }

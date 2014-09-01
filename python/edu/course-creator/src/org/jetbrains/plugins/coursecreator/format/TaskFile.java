@@ -13,15 +13,6 @@ import java.util.List;
 public class TaskFile {
   @Expose public List<TaskWindow> task_windows = new ArrayList<TaskWindow>();
   public int myIndex;
-  public boolean myTrackChanges = true;
-
-  public boolean isTrackChanges() {
-    return myTrackChanges;
-  }
-
-  public void setTrackChanges(boolean trackChanges) {
-    myTrackChanges = trackChanges;
-  }
 
   public TaskFile() {}
 
@@ -106,6 +97,24 @@ public class TaskFile {
           w.setLine(line + lineChange);
         }
       }
+    }
+  }
+
+  public void copy(@NotNull final TaskFile target) {
+    target.setIndex(myIndex);
+    for (TaskWindow taskWindow : task_windows) {
+      TaskWindow savedWindow = new TaskWindow(taskWindow.getLine(), taskWindow.getStart(),
+                                    taskWindow.getLength(), "");
+      target.getTaskWindows().add(savedWindow);
+      savedWindow.setIndex(taskWindow.getIndex());
+    }
+  }
+
+  public void update(@NotNull final TaskFile source) {
+    for (TaskWindow taskWindow : source.getTaskWindows()) {
+      TaskWindow taskWindowUpdated = task_windows.get(taskWindow.getIndex() - 1);
+      taskWindowUpdated.setLine(taskWindow.getLine());
+      taskWindowUpdated.setStart(taskWindow.getStart());
     }
   }
 }
