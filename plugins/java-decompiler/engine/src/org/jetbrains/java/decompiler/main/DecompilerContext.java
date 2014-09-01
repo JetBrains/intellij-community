@@ -24,6 +24,8 @@ import org.jetbrains.java.decompiler.modules.renamer.PoolInterceptor;
 import org.jetbrains.java.decompiler.struct.StructContext;
 
 import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 
 
 public class DecompilerContext {
@@ -38,7 +40,7 @@ public class DecompilerContext {
 
   private static ThreadLocal<DecompilerContext> currentContext = new ThreadLocal<DecompilerContext>();
 
-  private HashMap<String, Object> properties = new HashMap<String, Object>();
+  private final Map<String, Object> properties;
 
   private StructContext structcontext;
 
@@ -54,49 +56,16 @@ public class DecompilerContext {
 
   private IFernflowerLogger logger;
 
-
-  private DecompilerContext(HashMap<String, Object> properties) {
-    this.properties.putAll(properties);
+  private DecompilerContext(Map<String, Object> properties) {
+    this.properties = properties;
   }
 
-  public static void initContext(HashMap<String, Object> propertiesCustom) {
-
-    HashMap<String, Object> mapDefault = new HashMap<String, Object>();
-
-    // default settings
-    mapDefault.put(IFernflowerPreferences.DECOMPILE_INNER, "1");
-    mapDefault.put(IFernflowerPreferences.DECOMPILE_CLASS_1_4, "1");
-    mapDefault.put(IFernflowerPreferences.DECOMPILE_ASSERTIONS, "1");
-    mapDefault.put(IFernflowerPreferences.REMOVE_BRIDGE, "1");
-    mapDefault.put(IFernflowerPreferences.REMOVE_SYNTHETIC, "0");
-    mapDefault.put(IFernflowerPreferences.HIDE_EMPTY_SUPER, "1");
-    mapDefault.put(IFernflowerPreferences.HIDE_DEFAULT_CONSTRUCTOR, "1");
-    mapDefault.put(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES, "0");
-    mapDefault.put(IFernflowerPreferences.NO_EXCEPTIONS_RETURN, "1");
-    mapDefault.put(IFernflowerPreferences.DECOMPILE_ENUM, "1");
-    mapDefault.put(IFernflowerPreferences.FINALLY_DEINLINE, "1");
-    mapDefault.put(IFernflowerPreferences.REMOVE_GETCLASS_NEW, "1");
-    mapDefault.put(IFernflowerPreferences.LITERALS_AS_IS, "0");
-    mapDefault.put(IFernflowerPreferences.ASCII_STRING_CHARACTERS, "0");
-    mapDefault.put(IFernflowerPreferences.BOOLEAN_TRUE_ONE, "1");
-    mapDefault.put(IFernflowerPreferences.SYNTHETIC_NOT_SET, "1");
-    mapDefault.put(IFernflowerPreferences.UNDEFINED_PARAM_TYPE_OBJECT, "1");
-
-    mapDefault.put(IFernflowerPreferences.USE_DEBUG_VARNAMES, "1");
-    mapDefault.put(IFernflowerPreferences.MAX_PROCESSING_METHOD, "0");
-
-    mapDefault.put(IFernflowerPreferences.REMOVE_EMPTY_RANGES, "1");
-
-    mapDefault.put(IFernflowerPreferences.NEW_LINE_SEPARATOR, "0");
-    mapDefault.put(IFernflowerPreferences.INDENT_STRING, "   ");
-
-    mapDefault.put(IFernflowerPreferences.IDEA_NOT_NULL_ANNOTATION, "1");
-
+  public static void initContext(Map<String, Object> propertiesCustom) {
+    Map<String, Object> properties = new HashMap<String, Object>(IFernflowerPreferences.DEFAULTS);
     if (propertiesCustom != null) {
-      mapDefault.putAll(propertiesCustom);
+      properties.putAll(propertiesCustom);
     }
-
-    currentContext.set(new DecompilerContext(mapDefault));
+    currentContext.set(new DecompilerContext(properties));
   }
 
   public static DecompilerContext getCurrentContext() {
@@ -182,7 +151,7 @@ public class DecompilerContext {
     if (logger != null) {
       String severity = (String)getProperty(IFernflowerPreferences.LOG_LEVEL);
       if (severity != null) {
-        Integer iSeverity = IFernflowerLogger.mapLogLevel.get(severity.toUpperCase());
+        Integer iSeverity = IFernflowerLogger.mapLogLevel.get(severity.toUpperCase(Locale.US));
         if (iSeverity != null) {
           logger.setSeverity(iSeverity);
         }

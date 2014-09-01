@@ -135,17 +135,14 @@ public class MethodProcessorThread implements Runnable {
 
     RootStatement root = DomHelper.parseGraph(graph);
 
-    if (!DecompilerContext.getOption(IFernflowerPreferences.FINALLY_CATCHALL)) {
-      FinallyProcessor fproc = new FinallyProcessor(varproc);
-      while (fproc.iterateGraph(mt, root, graph)) {
+    FinallyProcessor fproc = new FinallyProcessor(varproc);
+    while (fproc.iterateGraph(mt, root, graph)) {
 
-        //DotExporter.toDotFile(graph, new File("c:\\Temp\\fern2.dot"), true);
-        //System.out.println(graph.toString());
+      //DotExporter.toDotFile(graph, new File("c:\\Temp\\fern2.dot"), true);
+      //System.out.println(graph.toString());
+      //System.out.println("~~~~~~~~~~~~~~~~~~~~~~ \r\n"+root.toJava());
 
-        //System.out.println("~~~~~~~~~~~~~~~~~~~~~~ \r\n"+root.toJava());
-
-        root = DomHelper.parseGraph(graph);
-      }
+      root = DomHelper.parseGraph(graph);
     }
 
     // remove synchronized exception handler

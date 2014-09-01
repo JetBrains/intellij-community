@@ -72,7 +72,7 @@ public class ConsoleDecompiler implements IBytecodeProvider, IDecompilatSaver {
 
           if (isOption && arg.startsWith("-") &&
               arg.length() > 5 && arg.charAt(4) == '=') {
-            String value = arg.substring(5).toUpperCase();
+            String value = arg.substring(5).toUpperCase(Locale.US);
             if ("TRUE".equals(value)) {
               value = "1";
             }

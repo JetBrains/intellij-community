@@ -15,8 +15,11 @@
  */
 package org.jetbrains.java.decompiler.main.extern;
 
-public interface IFernflowerPreferences {
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
+public interface IFernflowerPreferences {
   String REMOVE_BRIDGE = "rbr";
   String REMOVE_SYNTHETIC = "rsy";
   String DECOMPILE_INNER = "din";
@@ -30,28 +33,51 @@ public interface IFernflowerPreferences {
   String REMOVE_GETCLASS_NEW = "rgn";
   String LITERALS_AS_IS = "lit";
   String BOOLEAN_TRUE_ONE = "bto";
+  String ASCII_STRING_CHARACTERS = "asc";
   String SYNTHETIC_NOT_SET = "nns";
   String UNDEFINED_PARAM_TYPE_OBJECT = "uto";
   String USE_DEBUG_VARNAMES = "udv";
-  String MAX_PROCESSING_METHOD = "mpm";
   String REMOVE_EMPTY_RANGES = "rer";
-  String ASCII_STRING_CHARACTERS = "asc";
-
   String FINALLY_DEINLINE = "fdi";
-
-  String FINALLY_CATCHALL = "FINALLY_CATCHALL";
-  String FINALLY_SEMAPHOR = "FINALLY_SEMAPHOR";
-
-  String RENAME_ENTITIES = "ren";
-  String USER_RENAMER_CLASS = "urc";
-
-  String LOG_LEVEL = "log";
-
-  String NEW_LINE_SEPARATOR = "nls";
   String IDEA_NOT_NULL_ANNOTATION = "inn";
   String LAMBDA_TO_ANONYMOUS_CLASS = "lac";
+
+  String LOG_LEVEL = "log";
+  String MAX_PROCESSING_METHOD = "mpm";
+  String RENAME_ENTITIES = "ren";
+  String USER_RENAMER_CLASS = "urc";
+  String NEW_LINE_SEPARATOR = "nls";
   String INDENT_STRING = "ind";
 
   String LINE_SEPARATOR_WIN = "\r\n";
   String LINE_SEPARATOR_LIN = "\n";
+
+  Map<String, Object> DEFAULTS = Collections.unmodifiableMap(new HashMap<String, Object>() {{
+    put(REMOVE_BRIDGE, "1");
+    put(REMOVE_SYNTHETIC, "0");
+    put(DECOMPILE_INNER, "1");
+    put(DECOMPILE_CLASS_1_4, "1");
+    put(DECOMPILE_ASSERTIONS, "1");
+    put(HIDE_EMPTY_SUPER, "1");
+    put(HIDE_DEFAULT_CONSTRUCTOR, "1");
+    put(DECOMPILE_GENERIC_SIGNATURES, "0");
+    put(NO_EXCEPTIONS_RETURN, "1");
+    put(DECOMPILE_ENUM, "1");
+    put(REMOVE_GETCLASS_NEW, "1");
+    put(LITERALS_AS_IS, "0");
+    put(BOOLEAN_TRUE_ONE, "1");
+    put(ASCII_STRING_CHARACTERS, "0");
+    put(SYNTHETIC_NOT_SET, "1");
+    put(UNDEFINED_PARAM_TYPE_OBJECT, "1");
+    put(USE_DEBUG_VARNAMES, "1");
+    put(REMOVE_EMPTY_RANGES, "1");
+    put(FINALLY_DEINLINE, "1");
+    put(IDEA_NOT_NULL_ANNOTATION, "1");
+    put(LAMBDA_TO_ANONYMOUS_CLASS, "0");
+
+    put(MAX_PROCESSING_METHOD, "0");
+    put(RENAME_ENTITIES, "0");
+    put(NEW_LINE_SEPARATOR, "0");
+    put(INDENT_STRING, "   ");
+  }});
 }
