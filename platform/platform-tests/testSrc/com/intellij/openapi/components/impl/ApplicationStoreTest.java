@@ -69,13 +69,11 @@ public class ApplicationStoreTest extends LightPlatformLangTestCase {
     component.foo = "newValue";
     StoreUtil.doSave(componentStore);
 
-    assertThat(streamProvider.data.get(RoamingType.PER_USER).get(StoragePathMacros.APP_CONFIG + "/proxy.settings.xml"), equalTo("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                                                                                                                                "<application>\n" +
+    assertThat(streamProvider.data.get(RoamingType.PER_USER).get(StoragePathMacros.APP_CONFIG + "/proxy.settings.xml"), equalTo("<application>\n" +
                                                                                                                                 "  <component name=\"HttpConfigurable\">\n" +
                                                                                                                                 "    <option name=\"foo\" value=\"newValue\" />\n" +
                                                                                                                                 "  </component>\n" +
-                                                                                                                                "</application>\n" +
-                                                                                                                                "\n"));
+                                                                                                                                "</application>"));
   }
 
   public void testLoadFromStreamProvider() throws Exception {
@@ -83,13 +81,11 @@ public class ApplicationStoreTest extends LightPlatformLangTestCase {
 
     MyStreamProvider streamProvider = new MyStreamProvider();
     THashMap<String, String> map = new THashMap<String, String>();
-    map.put(StoragePathMacros.APP_CONFIG + "/proxy.settings.xml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                                                                  "<application>\n" +
+    map.put(StoragePathMacros.APP_CONFIG + "/proxy.settings.xml", "<application>\n" +
                                                                   "  <component name=\"HttpConfigurable\">\n" +
                                                                   "    <option name=\"foo\" value=\"newValue\" />\n" +
                                                                   "  </component>\n" +
-                                                                  "</application>\n" +
-                                                                  "\n");
+                                                                  "</application>");
     streamProvider.data.put(RoamingType.PER_USER, map);
 
     componentStore.getStateStorageManager().setStreamProvider(streamProvider);

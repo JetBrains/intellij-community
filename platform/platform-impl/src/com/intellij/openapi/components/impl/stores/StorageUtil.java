@@ -124,6 +124,9 @@ public class StorageUtil {
     }
   }
 
+  /**
+   * Due to historical reasons files in ROOT_CONFIG don’t wrapped into document (xml prolog) opposite to files in APP_CONFIG
+   */
   @Nullable
   static VirtualFile save(@NotNull IFile file, @Nullable Parent element, Object requestor, boolean wrapAsDocument) throws StateStorageException {
     if (isEmpty(element)) {
