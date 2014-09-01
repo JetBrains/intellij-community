@@ -171,20 +171,15 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     }
   }
 
-  protected void loadState(final StorageData result, final Element element) throws StateStorageException {
+  protected void loadState(@NotNull StorageData result, @NotNull Element element) {
     if (myPathMacroSubstitutor != null) {
       myPathMacroSubstitutor.expandPaths(element);
     }
 
     IdeaPluginDescriptorImpl.internJDOMElement(element);
 
-    try {
-      result.load(element);
-      result.checkUnknownMacros(myPathMacroSubstitutor);
-    }
-    catch (IOException e) {
-      throw new StateStorageException(e);
-    }
+    result.load(element);
+    result.checkUnknownMacros(myPathMacroSubstitutor);
   }
 
   @NotNull

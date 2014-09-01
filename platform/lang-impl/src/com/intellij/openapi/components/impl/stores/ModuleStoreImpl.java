@@ -116,7 +116,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     }
 
     @Override
-    public void load(@NotNull final Element rootElement) throws IOException {
+    public void load(@NotNull final Element rootElement) {
       super.load(rootElement);
 
       for (Attribute attribute : rootElement.getAttributes()) {

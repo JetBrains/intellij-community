@@ -59,7 +59,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     }
 
     @Override
-    public void load(@NotNull final Element rootElement) throws IOException {
+    public void load(@NotNull final Element rootElement) {
       super.load(rootElement);
 
       final String v = rootElement.getAttributeValue(VERSION_OPTION);

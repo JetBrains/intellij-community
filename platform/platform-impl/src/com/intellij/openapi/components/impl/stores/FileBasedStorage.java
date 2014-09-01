@@ -198,7 +198,7 @@ public class FileBasedStorage extends XmlElementStorage {
   }
 
   @Override
-  protected void loadState(final StorageData result, final Element element) throws StateStorageException {
+  protected void loadState(@NotNull StorageData result, @NotNull Element element) {
     ((FileStorageData)result).myFilePath = myFile.getAbsolutePath();
     super.loadState(result, element);
   }
