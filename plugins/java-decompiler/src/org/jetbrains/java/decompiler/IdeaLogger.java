@@ -16,7 +16,7 @@
 package org.jetbrains.java.decompiler;
 
 import com.intellij.openapi.diagnostic.Logger;
-import de.fernflower.main.extern.IFernflowerLogger;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 
 public class IdeaLogger implements IFernflowerLogger {
   private final static Logger LOG = Logger.getInstance(IdeaDecompiler.class);
