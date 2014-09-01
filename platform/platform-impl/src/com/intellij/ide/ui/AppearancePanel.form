@@ -401,6 +401,14 @@
                   <text resource-bundle="messages/IdeBundle" key="checkbox.show.editor.preview.popup"/>
                 </properties>
               </component>
+              <component id="3e39" class="javax.swing.JCheckBox" binding="myNavigateToPreviewCheckBox" default-binding="true">
+                <constraints>
+                  <grid row="6" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text resource-bundle="messages/IdeBundle" key="checkbox.use.preview.window"/>
+                </properties>
+              </component>
             </children>
           </grid>
           <grid id="e3cc0" layout-manager="GridLayoutManager" row-count="2" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">

@@ -744,6 +744,10 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     return false;
   }
 
+  public boolean isPreview() {
+    return false;
+  }
+
   private final class MyFocusWatcher extends FocusWatcher {
     @Override
     protected void focusedComponentChanged(final Component component, final AWTEvent cause) {
