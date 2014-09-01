@@ -40,6 +40,7 @@ public abstract class MessageDialogBuilder<T extends MessageDialogBuilder> {
     myMessage = message;
   }
 
+  @NotNull
   public static YesNo yesNo(@NotNull String title, @NotNull String message) {
     return new YesNo(title, message).icon(Messages.getQuestionIcon());
   }

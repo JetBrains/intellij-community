@@ -176,7 +176,6 @@ public abstract class GithubTest extends GitPlatformTest {
 
     myHttpAuthService = (GitHttpAuthTestService)ServiceManager.getService(GitHttpAuthService.class);
 
-
     try {
       beforeTest();
     }
@@ -197,7 +196,7 @@ public abstract class GithubTest extends GitPlatformTest {
       afterTest();
     }
     finally {
-      myHttpAuthService.cleanup();
+      if (myHttpAuthService != null) myHttpAuthService.cleanup();
       super.tearDown();
     }
   }

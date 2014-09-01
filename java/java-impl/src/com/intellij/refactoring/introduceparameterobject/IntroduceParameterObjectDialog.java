@@ -185,8 +185,7 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
   @Override
   protected void canRun() throws ConfigurationException {
     final Project project = sourceMethod.getProject();
-    final JavaPsiFacade manager = JavaPsiFacade.getInstance(project);
-    final PsiNameHelper nameHelper = manager.getNameHelper();
+    final PsiNameHelper nameHelper = PsiNameHelper.getInstance(project);
 
     final List<PsiParameter> parametersToExtract = getParametersToExtract();
     if (parametersToExtract.isEmpty()) {

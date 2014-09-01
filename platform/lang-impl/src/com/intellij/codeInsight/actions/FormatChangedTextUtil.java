@@ -250,7 +250,7 @@ public class FormatChangedTextUtil {
   }
 
   @NotNull
-  public static List<TextRange> getChangedTextRanges(@NotNull Project project, @NotNull PsiFile file) {
+  public static List<TextRange> getChangedTextRanges(@NotNull Project project, @NotNull PsiFile file) throws FilesTooBigForDiffException {
     Change change = ChangeListManager.getInstance(project).getChange(file.getVirtualFile());
     if (change == null) {
       return ContainerUtilRt.emptyList();
@@ -281,7 +281,10 @@ public class FormatChangedTextUtil {
   }
 
   @NotNull
-  private static List<TextRange> calculateChangedTextRanges(@NotNull Project project, @NotNull PsiFile file, @NotNull String contentFromVcs) {
+  private static List<TextRange> calculateChangedTextRanges(@NotNull Project project, 
+                                                            @NotNull PsiFile file, 
+                                                            @NotNull String contentFromVcs) throws FilesTooBigForDiffException 
+  {
     Document documentFromVcs = ((EditorFactoryImpl)EditorFactory.getInstance()).createDocument(contentFromVcs, true, false);
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);
 
@@ -289,23 +292,16 @@ public class FormatChangedTextUtil {
       return ContainerUtil.emptyList();
     }
 
-    try {
-      List<Range> changedRanges;
-
-      LineStatusTracker tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(document);
-      if (tracker != null) {
-        changedRanges = tracker.getRanges();
-      }
-      else {
-        changedRanges = new RangesBuilder(document, documentFromVcs).getRanges();
-      }
-
-      return getChangedTextRanges(document, changedRanges);
+    List<Range> changedRanges;
+    LineStatusTracker tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(document);
+    if (tracker != null) {
+      changedRanges = tracker.getRanges();
     }
-    catch (FilesTooBigForDiffException e) {
-      LOG.error("Error while calculating changed ranges for: " + file.getVirtualFile(), e);
-      return ContainerUtil.emptyList();
+    else {
+      changedRanges = new RangesBuilder(document, documentFromVcs).getRanges();
     }
+
+    return getChangedTextRanges(document, changedRanges);
   }
 
   @NotNull

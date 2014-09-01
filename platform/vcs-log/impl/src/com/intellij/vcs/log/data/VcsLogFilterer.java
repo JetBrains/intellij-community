@@ -48,9 +48,31 @@ public class VcsLogFilterer {
   @NotNull
   public AbstractVcsLogTableModel applyFiltersAndUpdateUi(@NotNull DataPack dataPack, @NotNull VcsLogFilterCollection filters) {
     resetFilters(dataPack);
+    VcsLogHashFilter hashFilter = filters.getHashFilter();
+    if (hashFilter != null && !hashFilter.getHashes().isEmpty()) { // hashes should be shown, no matter if they match other filters or not
+      return applyHashFilter(dataPack, hashFilter.getHashes());
+    }
     List<VcsLogDetailsFilter> detailsFilters = filters.getDetailsFilters();
     applyGraphFilters(dataPack, filters.getBranchFilter());
     return applyDetailsFilter(dataPack, detailsFilters);
+  }
+
+  private GraphTableModel applyHashFilter(@NotNull DataPack dataPack, @NotNull Collection<String> hashes) {
+    final List<Integer> indices = ContainerUtil.mapNotNull(hashes, new Function<String, Integer>() {
+      @Override
+      public Integer fun(String partOfHash) {
+        Hash hash = myLogDataHolder.findHashByString(partOfHash);
+        return hash != null ? myLogDataHolder.getCommitIndex(hash) : null;
+      }
+    });
+    dataPack.getGraphFacade().setVisibleBranches(null);
+    dataPack.getGraphFacade().setFilter(new Condition<Integer>() {
+      @Override
+      public boolean value(Integer integer) {
+        return indices.contains(integer);
+      }
+    });
+    return new GraphTableModel(dataPack, myLogDataHolder, myUI, LoadMoreStage.ALL_REQUESTED);
   }
 
   private static void resetFilters(@NotNull DataPack dataPack) {

@@ -63,7 +63,7 @@
       <add-to-group group-id="Vcs.Browse"/>
     </action>
 
-    <group id="CvsGlobalGroup" class="com.intellij.cvsSupport2.actions.Cvs2Group" test="CVS" popup="true">
+    <group id="CvsGlobalGroup" class="com.intellij.cvsSupport2.actions.Cvs2Group" popup="true">
       <add-to-group group-id="VcsGlobalGroup" anchor="after" relative-to-action="Vcs.Specific"/>
       <separator/>
       <action id="GlobalSettings" class="com.intellij.cvsSupport2.actions.GlobalSettingsAction"/>
@@ -72,7 +72,7 @@
       <separator/>
     </group>
 
-    <group id="CvsFilePopupGroup" class="com.intellij.cvsSupport2.actions.Cvs2Group" test="CVS" popup="true">
+    <group id="CvsFilePopupGroup" class="com.intellij.cvsSupport2.actions.Cvs2Group" popup="true">
       <add-to-group group-id="VcsGroup" anchor="last"/>
     </group>
 
@@ -80,8 +80,8 @@
       <add-to-group group-id="UpdateActionGroup" anchor="last"/>
     </action>
     
-    <group id="AddOptionDialogActionGroup" test="">
-    <action id="Cvs.Ignore" class="com.intellij.cvsSupport2.actions.IgnoreFileAction">
+    <group id="AddOptionDialogActionGroup">
+      <action id="Cvs.Ignore" class="com.intellij.cvsSupport2.actions.IgnoreFileAction">
         <add-to-group group-id="Vcs.CheckinProjectPopup" anchor="last"/>
       </action>
     </group>

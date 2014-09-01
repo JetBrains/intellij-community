@@ -18,6 +18,7 @@ package com.intellij.xdebugger.impl.evaluate;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -79,12 +80,22 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     mySession.addSessionListener(new XDebugSessionAdapter() {
       @Override
       public void sessionStopped() {
-        SwingUtilities.invokeLater(new Runnable() {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
             close(CANCEL_EXIT_CODE);
           }
         });
+      }
+
+      @Override
+      public void stackFrameChanged() {
+        updateSourcePosition();
+      }
+
+      @Override
+      public void sessionPaused() {
+        updateSourcePosition();
       }
     }, myDisposable);
 
@@ -124,6 +135,15 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     init();
   }
 
+  private void updateSourcePosition() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        getInputEditor().setSourcePosition(mySession.getCurrentPosition());
+      }
+    });
+  }
+
   @Override
   protected void doOKAction() {
     evaluate();
@@ -138,7 +158,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
         super.actionPerformed(e);
         if (myMode == EvaluationMode.EXPRESSION && ((e.getModifiers() & InputEvent.CTRL_MASK) != 0)) {
           // add to watches
-          XExpression expression = myInputComponent.getInputEditor().getExpression();
+          XExpression expression = getInputEditor().getExpression();
           if (!XDebuggerUtilImpl.isEmptyExpression(expression)) {
             XDebugSessionTab tab = ((XDebugSessionImpl)mySession).getSessionTab();
             if (tab != null) {
@@ -179,7 +199,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   }
 
   public XExpression getExpression() {
-    return myInputComponent.getInputEditor().getExpression();
+    return getInputEditor().getExpression();
   }
 
   private static String getSwitchButtonText(EvaluationMode mode) {
@@ -205,10 +225,14 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   }
 
   private void requestFocusInEditor() {
-    JComponent preferredFocusedComponent = myInputComponent.getInputEditor().getPreferredFocusedComponent();
+    JComponent preferredFocusedComponent = getInputEditor().getPreferredFocusedComponent();
     if (preferredFocusedComponent != null) {
       IdeFocusManager.getInstance(mySession.getProject()).requestFocus(preferredFocusedComponent, true);
     }
+  }
+
+  private XDebuggerEditorBase getInputEditor() {
+    return myInputComponent.getInputEditor();
   }
 
   private EvaluationInputComponent createInputComponent(EvaluationMode mode, XExpression text) {
@@ -223,7 +247,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   }
 
   private void evaluate() {
-    final XDebuggerEditorBase inputEditor = myInputComponent.getInputEditor();
+    final XDebuggerEditorBase inputEditor = getInputEditor();
     int offset = -1;
 
     //try to save caret position
@@ -262,7 +286,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   }
 
   public void startEvaluation(@NotNull XDebuggerEvaluator.XEvaluationCallback evaluationCallback) {
-    final XDebuggerEditorBase inputEditor = myInputComponent.getInputEditor();
+    final XDebuggerEditorBase inputEditor = getInputEditor();
     inputEditor.saveTextInHistory();
     XExpression expression = inputEditor.getExpression();
 
@@ -277,13 +301,13 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myInputComponent.getInputEditor().getPreferredFocusedComponent();
+    return getInputEditor().getPreferredFocusedComponent();
   }
 
   private class SwitchModeAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
-      XExpression text = myInputComponent.getInputEditor().getExpression();
+      XExpression text = getInputEditor().getExpression();
       if (myMode == EvaluationMode.EXPRESSION) {
         switchToMode(EvaluationMode.CODE_FRAGMENT, text);
       }

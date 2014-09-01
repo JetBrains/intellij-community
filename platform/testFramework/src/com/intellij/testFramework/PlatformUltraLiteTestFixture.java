@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,10 @@
  */
 package com.intellij.testFramework;
 
-import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,21 +28,19 @@ public class PlatformUltraLiteTestFixture {
     return new PlatformUltraLiteTestFixture();
   }
 
-  private Disposable myAppDisposable = null;
+  private final Disposable myAppDisposable = Disposer.newDisposable();
 
   private PlatformUltraLiteTestFixture() { }
 
   public void setUp() {
     final Application application = ApplicationManager.getApplication();
     if (application == null) {
-      myAppDisposable = Disposer.newDisposable();
-      ApplicationManager.setApplication(new MockApplication(myAppDisposable), myAppDisposable);
+      ApplicationImpl testapp = new ApplicationImpl(false, true, true, true, "testapp", null);
+      ApplicationManager.setApplication(testapp, myAppDisposable);
     }
   }
 
   public void tearDown() {
-    if (myAppDisposable != null) {
-      Disposer.dispose(myAppDisposable);
-    }
+    Disposer.dispose(myAppDisposable);
   }
 }

@@ -194,7 +194,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     final Map<String, TypeParameterInfo> infos = new HashMap<String, TypeParameterInfo>();
     for (final TypeParameterInfo info : myTypeParameterInfos) {
       if (!info.isForExistingParameter() &&
-          !JavaPsiFacade.getInstance(myClass.getProject()).getNameHelper().isIdentifier(info.getNewName())) {
+          !PsiNameHelper.getInstance(myClass.getProject()).isIdentifier(info.getNewName())) {
         return RefactoringBundle.message("error.wrong.name.input", info.getNewName());
       }
       final String newName = info.isForExistingParameter() ? parameters[info.getOldParameterIndex()].getName() : info.getNewName();

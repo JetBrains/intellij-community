@@ -40,7 +40,6 @@ public class ActionBean {
   @Attribute(ActionManagerImpl.ICON_ATTR_NAME)
   public String icon;
 
-
   @Attribute(ActionManagerImpl.POPUP_ATTR_NAME)
   public String isPopup;
 
@@ -58,4 +57,7 @@ public class ActionBean {
 
   @Attribute(ActionManagerImpl.OVERRIDES_ATTR_NAME)
   public boolean overrides;
+
+  @Attribute(ActionManagerImpl.PROJECT_TYPE)
+  public String projectType;
 }

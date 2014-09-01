@@ -34,6 +34,7 @@ import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -115,33 +116,50 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
     }
   }
 
-  private void highlightTargetUsages(@NotNull PsiElement target) {
+  /**
+   * Returns read and write usages of psi element inside single file
+   *
+   * @param target target psi element
+   * @param psiFile psi file for element
+   * @return a pair where first element is read usages and second is write usages
+   */
+  public static Couple<Collection<TextRange>> getHighlightUsages(@NotNull PsiElement target, PsiFile psiFile) {
+    Collection<TextRange> readRanges = new ArrayList<TextRange>();
+    Collection<TextRange> writeRanges = new ArrayList<TextRange>();
     final ReadWriteAccessDetector detector = ReadWriteAccessDetector.findDetector(target);
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(target.getProject())).getFindUsagesManager();
     final FindUsagesHandler findUsagesHandler = findUsagesManager.getFindUsagesHandler(target, true);
-    final LocalSearchScope scope = new LocalSearchScope(myFile);
+    final LocalSearchScope scope = new LocalSearchScope(psiFile);
     Collection<PsiReference> refs = findUsagesHandler != null
                               ? findUsagesHandler.findReferencesToHighlight(target, scope)
                               : ReferencesSearch.search(target, scope).findAll();
     for (PsiReference psiReference : refs) {
       final List<TextRange> textRanges = HighlightUsagesHandler.getRangesToHighlight(psiReference);
       if (detector == null || detector.getReferenceAccess(target, psiReference) == ReadWriteAccessDetector.Access.Read) {
-        myReadAccessRanges.addAll(textRanges);
+        readRanges.addAll(textRanges);
       }
       else {
-        myWriteAccessRanges.addAll(textRanges);
+        writeRanges.addAll(textRanges);
       }
     }
 
-    final TextRange declRange = HighlightUsagesHandler.getNameIdentifierRange(myFile, target);
+    final TextRange declRange = HighlightUsagesHandler.getNameIdentifierRange(psiFile, target);
     if (declRange != null) {
       if (detector != null && detector.isDeclarationWriteAccess(target)) {
-        myWriteAccessRanges.add(declRange);
+        writeRanges.add(declRange);
       }
       else {
-        myReadAccessRanges.add(declRange);
+        readRanges.add(declRange);
       }
     }
+
+    return Couple.of(readRanges, writeRanges);
+  }
+
+  private void highlightTargetUsages(@NotNull PsiElement target) {
+    final Couple<Collection<TextRange>> usages = getHighlightUsages(target, myFile);
+    myReadAccessRanges.addAll(usages.first);
+    myWriteAccessRanges.addAll(usages.second);
   }
 
   @Override

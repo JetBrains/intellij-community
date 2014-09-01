@@ -263,7 +263,6 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
     ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
 
-    final JavaPsiFacade facade = getFacade();
     final Condition<String> nameCondition = processor.getHint(JavaCompletionHints.NAME_FILTER);
 
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) {
@@ -291,7 +290,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
         for (PsiPackage pack : packs) {
           final String packageName = pack.getName();
           if (packageName == null) continue;
-          if (!facade.getNameHelper().isIdentifier(packageName, PsiUtil.getLanguageLevel(this))) {
+          if (!PsiNameHelper.getInstance(myManager.getProject()).isIdentifier(packageName, PsiUtil.getLanguageLevel(this))) {
             continue;
           }
           if (!processor.execute(pack, state)) {

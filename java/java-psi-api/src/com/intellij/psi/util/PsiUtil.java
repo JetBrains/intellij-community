@@ -722,7 +722,7 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   public static void checkIsIdentifier(@NotNull PsiManager manager, String text) throws IncorrectOperationException{
-    if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isIdentifier(text)){
+    if (!PsiNameHelper.getInstance(manager.getProject()).isIdentifier(text)){
       throw new IncorrectOperationException(PsiBundle.message("0.is.not.an.identifier", text) );
     }
   }

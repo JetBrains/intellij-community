@@ -128,7 +128,7 @@ public class GroovyNameSuggestionUtil {
                                            NameValidator validator,
                                            boolean forStaticVariable,
                                            Project project) {
-    if (!JavaPsiFacade.getInstance(project).getNameHelper().isIdentifier(value)) return;
+    if (!PsiNameHelper.getInstance(project).isIdentifier(value)) return;
     if (forStaticVariable) {
       StringBuilder buffer = new StringBuilder(value.length() + 10);
       char[] chars = new char[value.length()];

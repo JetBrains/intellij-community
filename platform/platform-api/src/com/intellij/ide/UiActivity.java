@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,13 @@ import java.util.List;
 
 public class UiActivity implements ComparableObject{
   
-  private List<String> myElements = new ArrayList<String>();
+  private final List<String> myElements = new ArrayList<String>();
 
-  public UiActivity(String ... elements) {
+  public UiActivity(@NotNull String ... elements) {
     this(elements, null);
   }
 
-  protected UiActivity(String[] elements1, @Nullable String[] elements2) {
+  protected UiActivity(@NotNull String[] elements1, @Nullable String[] elements2) {
     myElements.addAll(Arrays.asList(elements1));
     if (elements2 != null) {
       myElements.addAll(Arrays.asList(elements2));

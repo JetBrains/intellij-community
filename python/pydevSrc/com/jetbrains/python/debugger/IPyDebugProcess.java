@@ -23,4 +23,6 @@ public interface IPyDebugProcess extends PyFrameAccessor {
   int handleDebugPort(int port) throws IOException;
 
   void recordSignature(PySignature signature);
+
+  void showConsole(PyThreadInfo thread);
 }

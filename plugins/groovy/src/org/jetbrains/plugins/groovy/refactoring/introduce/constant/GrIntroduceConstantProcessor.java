@@ -155,13 +155,11 @@ public class GrIntroduceConstantProcessor {
       return GroovyRefactoringBundle.message("class.language.is.not.groovy");
     }
 
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(context.getProject());
-
     if (fieldName == null || fieldName.isEmpty()) {
       return RefactoringBundle.message("no.field.name.specified");
     }
 
-    else if (!facade.getNameHelper().isIdentifier(fieldName)) {
+    else if (!PsiNameHelper.getInstance(context.getProject()).isIdentifier(fieldName)) {
       return RefactoringMessageUtil.getIncorrectIdentifierMessage(fieldName);
     }
 

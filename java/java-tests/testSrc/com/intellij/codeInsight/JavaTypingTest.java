@@ -74,6 +74,22 @@ public class JavaTypingTest extends LightPlatformCodeInsightFixtureTestCase {
     myFixture.checkResultByFile(getTestName(true) + "_after.java");
   }
 
+  public void testFixIfByBrace() {
+    doTest('{');
+  }
+
+  public void testFixIfByBraceNewObject() {
+    doTest('{');
+  }
+
+  public void testFixIfByBraceCompositeCondition() {
+    doTest('{');
+  }
+
+  public void testFixWhileByBrace() {
+    doTest('{');
+  }
+  
   private void doTest(char c) {
     myFixture.configureByFile(getTestName(true) + "_before.java");
     myFixture.type(c);

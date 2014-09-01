@@ -19,26 +19,37 @@
  */
 package com.intellij.debugger.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JavaStackFrame;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiTryStatement;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.sun.jdi.InvalidStackFrameException;
 import com.sun.jdi.NativeMethodException;
 import com.sun.jdi.VMDisconnectedException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PopFrameAction extends DebuggerAction {
@@ -54,15 +65,71 @@ public class PopFrameAction extends DebuggerAction {
       if(debugProcess == null) {
         return;
       }
+      if (DebuggerSettings.getInstance().CHECK_FINALLY_ON_POP_FRAME && isInTryWithFinally(debuggerContext.getSourcePosition())) {
+        int res = MessageDialogBuilder
+          .yesNo(UIUtil.removeMnemonic(ActionsBundle.actionText(DebuggerActions.POP_FRAME)),
+                 DebuggerBundle.message("warning.finally.block.detected"))
+          .project(project)
+          .icon(Messages.getWarningIcon())
+          .yesText(DebuggerBundle.message("button.drop.anyway"))
+          .noText(CommonBundle.message("button.cancel"))
+          .doNotAsk(
+            new DialogWrapper.DoNotAskOption() {
+              @Override
+              public boolean isToBeShown() {
+                return DebuggerSettings.getInstance().CHECK_FINALLY_ON_POP_FRAME;
+              }
+
+              @Override
+              public void setToBeShown(boolean value, int exitCode) {
+                DebuggerSettings.getInstance().CHECK_FINALLY_ON_POP_FRAME = false;
+              }
+
+              @Override
+              public boolean canBeHidden() {
+                return true;
+              }
+
+              @Override
+              public boolean shouldSaveOptionsOnCancel() {
+                return false;
+              }
+
+              @NotNull
+              @Override
+              public String getDoNotShowMessage() {
+                return CommonBundle.message("dialog.options.do.not.show");
+              }
+            })
+          .show();
+
+        if (res == Messages.NO) {
+          return;
+        }
+      }
       debugProcess.getManagerThread().schedule(debugProcess.createPopFrameCommand(debuggerContext, stackFrame));
     }
     catch (NativeMethodException e2){
-      Messages.showMessageDialog(project, DebuggerBundle.message("error.native.method.exception"), ActionsBundle.actionText(DebuggerActions.POP_FRAME), Messages.getErrorIcon());
+      Messages.showMessageDialog(project, DebuggerBundle.message("error.native.method.exception"), UIUtil.removeMnemonic(
+        ActionsBundle.actionText(DebuggerActions.POP_FRAME)), Messages.getErrorIcon());
     }
     catch (InvalidStackFrameException ignored) {
     }
     catch(VMDisconnectedException vde) {
     }
+  }
+
+  private static boolean isInTryWithFinally(SourcePosition position) {
+    PsiElement element = position.getFile().findElementAt(position.getOffset());
+    PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class);
+    while (tryStatement != null) {
+      PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
+      if (finallyBlock != null && finallyBlock.getStatements().length > 0) {
+        return true;
+      }
+      tryStatement = PsiTreeUtil.getParentOfType(tryStatement, PsiTryStatement.class);
+    }
+    return false;
   }
 
   @Nullable

@@ -370,12 +370,22 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   public void unloadContent() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    LOG.assertTrue(getTreeElement() != null);
     clearCaches();
     myViewProvider.beforeContentsSynchronized();
     synchronized (PsiLock.LOCK) {
-      myTreeElementPointer = null;
-      clearStub("unloadContent");
+      FileElement treeElement = derefTreeElement();
+      DebugUtil.startPsiModification("unloadContent");
+      try {
+        if (treeElement != null) {
+          myTreeElementPointer = null;
+          treeElement.detachFromFile();
+          DebugUtil.onInvalidated(treeElement);
+        }
+        clearStub("unloadContent");
+      }
+      finally {
+        DebugUtil.finishPsiModification();
+      }
     }
   }
 

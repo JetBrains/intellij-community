@@ -29,6 +29,7 @@ import git4idea.commands.Git;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
+import org.jetbrains.plugins.github.api.GithubConnection;
 import org.jetbrains.plugins.github.api.GithubRepo;
 import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
 import org.jetbrains.plugins.github.util.GithubAuthData;
@@ -62,11 +63,11 @@ public class GithubCheckoutProvider implements CheckoutProvider {
           @Override
           public List<GithubRepo> convert(ProgressIndicator indicator) throws IOException {
             return GithubUtil.runTask(project, GithubAuthDataHolder.createFromSettings(), indicator,
-                                      new ThrowableConvertor<GithubAuthData, List<GithubRepo>, IOException>() {
+                                      new ThrowableConvertor<GithubConnection, List<GithubRepo>, IOException>() {
                                         @NotNull
                                         @Override
-                                        public List<GithubRepo> convert(@NotNull GithubAuthData auth) throws IOException {
-                                          return GithubApiUtil.getAvailableRepos(auth);
+                                        public List<GithubRepo> convert(@NotNull GithubConnection connection) throws IOException {
+                                          return GithubApiUtil.getAvailableRepos(connection);
                                         }
                                       }
             );

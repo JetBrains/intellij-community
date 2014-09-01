@@ -42,7 +42,7 @@ public class FindFunctionalInterfaceTest extends LightCodeInsightFixtureTestCase
     assertEquals("() -> {}", next.getText());
   }
 
-  @Bombed(day = 30, month = Calendar.AUGUST)
+  @Bombed(day = 30, month = Calendar.SEPTEMBER)
   public void testFieldFromAnonymousClassScope() throws Exception {
     myFixture.configureByFile(getTestName(false) + ".java");
     final PsiElement elementAtCaret = myFixture.getElementAtCaret();

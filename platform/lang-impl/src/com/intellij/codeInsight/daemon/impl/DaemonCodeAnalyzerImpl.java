@@ -709,11 +709,20 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOM
     return new Runnable() {
       @Override
       public void run() {
-        if (myDisposed || !myProject.isInitialized()) return;
-        if (PowerSaveMode.isEnabled()) return;
-        Editor activeEditor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
+        ApplicationManager.getApplication().assertIsDispatchThread();
 
+        if (myDisposed || !myProject.isInitialized() || PowerSaveMode.isEnabled()) {
+          return;
+        }
+        if (HeavyProcessLatch.INSTANCE.isRunning()) {
+          if (myAlarm.isEmpty()) {
+            myAlarm.addRequest(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY);
+          }
+          return;
+        }
+        Editor activeEditor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
         final PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject);
+
         Runnable runnable = new Runnable() {
           @Override
           public void run() {
@@ -728,7 +737,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOM
             final Collection<FileEditor> activeEditors = getSelectedEditors();
             if (activeEditors.isEmpty()) return;
 
-            ApplicationManager.getApplication().assertIsDispatchThread();
             if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
               // makes no sense to start from within write action, will cancel anyway
               // we'll restart when write action finish

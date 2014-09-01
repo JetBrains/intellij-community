@@ -17,6 +17,7 @@ package com.intellij.lang.refactoring;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiNameHelper;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,11 +26,11 @@ import org.jetbrains.annotations.NotNull;
 public class JavaNamesValidator implements NamesValidator {
   @Override
   public boolean isKeyword(@NotNull String name, Project project) {
-    return JavaPsiFacade.getInstance(project).getNameHelper().isKeyword(name);
+    return PsiNameHelper.getInstance(project).isKeyword(name);
   }
 
   @Override
   public boolean isIdentifier(@NotNull String name, Project project) {
-    return JavaPsiFacade.getInstance(project).getNameHelper().isIdentifier(name);
+    return PsiNameHelper.getInstance(project).isIdentifier(name);
   }
 }

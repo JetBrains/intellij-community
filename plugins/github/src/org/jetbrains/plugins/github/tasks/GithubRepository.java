@@ -19,6 +19,7 @@ import icons.TasksIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
+import org.jetbrains.plugins.github.api.GithubConnection;
 import org.jetbrains.plugins.github.api.GithubIssue;
 import org.jetbrains.plugins.github.api.GithubIssueComment;
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException;
@@ -122,23 +123,30 @@ public class GithubRepository extends BaseRepositoryImpl {
 
   @NotNull
   private Task[] getIssues(@Nullable String query, int max, boolean withClosed) throws Exception {
-    List<GithubIssue> issues;
-    if (StringUtil.isEmptyOrSpaces(query)) {
-      if (StringUtil.isEmptyOrSpaces(myUser)) {
-        myUser = GithubApiUtil.getCurrentUser(getAuthData()).getLogin();
-      }
-      issues = GithubApiUtil.getIssuesAssigned(getAuthData(), getRepoAuthor(), getRepoName(), myUser, max, withClosed);
-    }
-    else {
-      issues = GithubApiUtil.getIssuesQueried(getAuthData(), getRepoAuthor(), getRepoName(), query, withClosed);
-    }
+    GithubConnection connection = getConnection();
 
-    return ContainerUtil.map2Array(issues, Task.class, new Function<GithubIssue, Task>() {
-      @Override
-      public Task fun(GithubIssue issue) {
-        return createTask(issue);
+    try {
+      List<GithubIssue> issues;
+      if (StringUtil.isEmptyOrSpaces(query)) {
+        if (StringUtil.isEmptyOrSpaces(myUser)) {
+          myUser = GithubApiUtil.getCurrentUser(connection).getLogin();
+        }
+        issues = GithubApiUtil.getIssuesAssigned(connection, getRepoAuthor(), getRepoName(), myUser, max, withClosed);
       }
-    });
+      else {
+        issues = GithubApiUtil.getIssuesQueried(connection, getRepoAuthor(), getRepoName(), query, withClosed);
+      }
+
+      return ContainerUtil.map2Array(issues, Task.class, new Function<GithubIssue, Task>() {
+        @Override
+        public Task fun(GithubIssue issue) {
+          return createTask(issue);
+        }
+      });
+    }
+    finally {
+      connection.close();
+    }
   }
 
   @NotNull
@@ -224,16 +232,22 @@ public class GithubRepository extends BaseRepositoryImpl {
   }
 
   private Comment[] fetchComments(final long id) throws Exception {
-    List<GithubIssueComment> result = GithubApiUtil.getIssueComments(getAuthData(), getRepoAuthor(), getRepoName(), id);
+    GithubConnection connection = getConnection();
+    try {
+      List<GithubIssueComment> result = GithubApiUtil.getIssueComments(connection, getRepoAuthor(), getRepoName(), id);
 
-    return ContainerUtil.map2Array(result, Comment.class, new Function<GithubIssueComment, Comment>() {
-      @Override
-      public Comment fun(GithubIssueComment comment) {
-        return new GithubComment(comment.getCreatedAt(), comment.getUser().getLogin(), comment.getBodyHtml(),
-                                 comment.getUser().getGravatarId(),
-                                 comment.getUser().getHtmlUrl());
-      }
-    });
+      return ContainerUtil.map2Array(result, Comment.class, new Function<GithubIssueComment, Comment>() {
+        @Override
+        public Comment fun(GithubIssueComment comment) {
+          return new GithubComment(comment.getCreatedAt(), comment.getUser().getLogin(), comment.getBodyHtml(),
+                                   comment.getUser().getGravatarId(),
+                                   comment.getUser().getHtmlUrl());
+        }
+      });
+    }
+    finally {
+      connection.close();
+    }
   }
 
   @Nullable
@@ -245,7 +259,13 @@ public class GithubRepository extends BaseRepositoryImpl {
   @Nullable
   @Override
   public Task findTask(@NotNull String id) throws Exception {
-    return createTask(GithubApiUtil.getIssue(getAuthData(), getRepoAuthor(), getRepoName(), id));
+    GithubConnection connection = getConnection();
+    try {
+      return createTask(GithubApiUtil.getIssue(connection, getRepoAuthor(), getRepoName(), id));
+    }
+    finally {
+      connection.close();
+    }
   }
 
   @NotNull
@@ -309,6 +329,10 @@ public class GithubRepository extends BaseRepositoryImpl {
 
   private GithubAuthData getAuthData() {
     return GithubAuthData.createTokenAuth(getUrl(), getToken(), isUseProxy());
+  }
+
+  private GithubConnection getConnection() {
+    return new GithubConnection(getAuthData(), true);
   }
 
   @Override

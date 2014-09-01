@@ -20,15 +20,20 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.SearchTextFieldWithStoredHistory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
+import com.intellij.vcs.log.impl.VcsLogHashFilterImpl;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,6 +47,9 @@ import java.util.List;
 /**
  */
 public class VcsLogClassicFilterUi implements VcsLogFilterUi {
+
+  private static final Logger LOG = Logger.getInstance(VcsLogClassicFilterUi.class);
+  private static final String HASH_PATTERN = "[a-fA-F0-9]{7,}";
 
   @NotNull private final SearchTextField myTextFilter;
   @NotNull private final VcsLogUiImpl myUi;
@@ -104,9 +112,38 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   @NotNull
   @Override
   public VcsLogFilterCollection getFilters() {
-    VcsLogTextFilter textFilter = !myTextFilter.getText().isEmpty() ? new VcsLogTextFilterImpl(myTextFilter.getText().trim()) : null;
+    Pair<VcsLogTextFilter, VcsLogHashFilter> filtersFromText = getFiltersFromTextArea(myTextFilter.getText().trim());
     return new VcsLogFilterCollectionImpl(myBranchFilterComponent.getFilter(), myUserFilterComponent.getFilter(),
-                                          myDateFilterComponent.getFilter(), textFilter, myStructureFilterComponent.getFilter());
+                                          filtersFromText.second, myDateFilterComponent.getFilter(),
+                                          filtersFromText.first, myStructureFilterComponent.getFilter());
+  }
+
+  @NotNull
+  private static Pair<VcsLogTextFilter, VcsLogHashFilter> getFiltersFromTextArea(@NotNull String text) {
+    if (text.isEmpty()) {
+      return Pair.empty();
+    }
+    List<String> hashes = ContainerUtil.newArrayList();
+    for (String word : StringUtil.split(text, " ")) {
+      if (!StringUtil.isEmptyOrSpaces(word) && word.matches(HASH_PATTERN)) {
+        hashes.add(word);
+      }
+      else {
+        break;
+      }
+    }
+
+    VcsLogTextFilter textFilter;
+    VcsLogHashFilterImpl hashFilter;
+    if (!hashes.isEmpty()) { // text is ignored if there are hashes in the text
+      textFilter = null;
+      hashFilter = new VcsLogHashFilterImpl(hashes);
+    }
+    else {
+      textFilter = new VcsLogTextFilterImpl(text);
+      hashFilter = null;
+    }
+    return Pair.<VcsLogTextFilter, VcsLogHashFilter>create(textFilter, hashFilter);
   }
 
   @Override

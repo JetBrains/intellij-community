@@ -27,7 +27,6 @@ import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
@@ -131,13 +130,12 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
   @Override
   protected void preparePackage() throws OperationFailedException {
     final String targetPackageName = getTargetPackageName();
-    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
     final PsiFile containingFile = mySourceClass.getContainingFile();
     final boolean fromDefaultPackage = containingFile instanceof PsiClassOwner && ((PsiClassOwner)containingFile).getPackageName().isEmpty(); 
-    if (!(fromDefaultPackage && StringUtil.isEmpty(targetPackageName)) && !psiFacade.getNameHelper().isQualifiedName(targetPackageName)) {
+    if (!(fromDefaultPackage && StringUtil.isEmpty(targetPackageName)) && !PsiNameHelper.getInstance(myProject).isQualifiedName(targetPackageName)) {
       throw new OperationFailedException("Invalid package name: " + targetPackageName);
     }
-    final PsiPackage aPackage = psiFacade.findPackage(targetPackageName);
+    final PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage(targetPackageName);
     if (aPackage != null) {
       final PsiDirectory[] directories = aPackage.getDirectories(mySourceClass.getResolveScope());
       if (directories.length >= 1) {
@@ -173,7 +171,7 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
   @Nullable
   @Override
   protected String validateName(String name) {
-    return JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(name)
+    return PsiNameHelper.getInstance(myProject).isIdentifier(name)
            ? null
            : RefactoringMessageUtil.getIncorrectIdentifierMessage(name);
   }

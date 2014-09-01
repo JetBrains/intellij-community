@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerContextUtil;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.settings.NodeRendererSettings;
@@ -73,6 +74,12 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
   @SuppressWarnings({"HardCodedStringLiteral"})
   @Nullable
   public SourcePosition getSourcePosition(final Project project, final DebuggerContextImpl context) {
+    return getSourcePosition(project, context, false);
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  @Nullable
+  public SourcePosition getSourcePosition(final Project project, final DebuggerContextImpl context, boolean nearest) {
     if (context.getFrameProxy() == null) {
       return null;
     }
@@ -94,6 +101,9 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
       PsiVariable psiVariable = facade.getResolveHelper().resolveReferencedVariable(varName, aClass);
       if (psiVariable == null) {
         return null;
+      }
+      if (nearest) {
+        return DebuggerContextUtil.findNearest(context, psiVariable, aClass.getContainingFile());
       }
       return SourcePosition.createFromOffset(psiVariable.getContainingFile(), psiVariable.getTextOffset());
     }
@@ -125,6 +135,9 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
         aClass = (PsiClass) aClass.getNavigationElement();
         for (PsiField field : aClass.getFields()) {
           if (fieldName.equals(field.getName())) {
+            if (nearest) {
+              return DebuggerContextUtil.findNearest(context, field, aClass.getContainingFile());
+            }
             return SourcePosition.createFromOffset(field.getContainingFile(), field.getTextOffset());
           }
         }

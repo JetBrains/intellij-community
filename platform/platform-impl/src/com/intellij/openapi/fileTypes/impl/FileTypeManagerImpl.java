@@ -24,6 +24,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.TransferToPooledThreadQueue;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -120,7 +121,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private static final String[] FILE_TYPES_WITH_PREDEFINED_EXTENSIONS = {"JSP", "JSPX", "DTD", "HTML", "Properties", "XHTML"};
   private final SchemesManager<FileType, AbstractFileType> mySchemesManager;
   @NonNls
-  private static final String FILE_SPEC = "$ROOT_CONFIG$/filetypes";
+  private static final String FILE_SPEC = StoragePathMacros.ROOT_CONFIG + "/filetypes";
   private final ConcurrentBitSet autoDetectWasRun = new ConcurrentBitSet();
   private final ConcurrentBitSet autoDetectedAsText = new ConcurrentBitSet();
   private final ConcurrentBitSet autoDetectedAsBinary = new ConcurrentBitSet();

@@ -59,7 +59,7 @@ public abstract class XDebuggerEditorBase {
   private final XDebuggerEditorsProvider myDebuggerEditorsProvider;
   @NotNull private final EvaluationMode myMode;
   @Nullable private final String myHistoryId;
-  private final XSourcePosition mySourcePosition;
+  @Nullable private XSourcePosition mySourcePosition;
   private int myHistoryIndex;
 
   private final JLabel myChooseFactory = new JLabel();
@@ -124,6 +124,13 @@ public abstract class XDebuggerEditorBase {
     return panel;
   }
 
+  public void setSourcePosition(@Nullable XSourcePosition sourcePosition) {
+    if (mySourcePosition != sourcePosition) {
+      mySourcePosition = sourcePosition;
+      setExpression(getExpression(), false);
+    }
+  }
+
   @NotNull
   public EvaluationMode getMode() {
     return myMode;
@@ -137,10 +144,16 @@ public abstract class XDebuggerEditorBase {
   protected abstract void doSetText(XExpression text);
 
   public void setExpression(@Nullable XExpression text) {
+    setExpression(text, true);
+  }
+
+  private void setExpression(@Nullable XExpression text, boolean saveInHistory) {
     if (text == null) {
       text = getMode() == EvaluationMode.EXPRESSION ? XExpressionImpl.EMPTY_EXPRESSION : XExpressionImpl.EMPTY_CODE_FRAGMENT;
     }
-    saveTextInHistory(text);
+    if (saveInHistory) {
+      saveTextInHistory(text);
+    }
     Language language = text.getLanguage();
     if (language == null) {
       if (mySourcePosition != null) {

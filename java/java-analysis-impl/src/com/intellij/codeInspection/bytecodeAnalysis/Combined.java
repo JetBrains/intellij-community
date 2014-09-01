@@ -34,64 +34,116 @@ import java.util.Set;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.*;
 import static org.jetbrains.org.objectweb.asm.Opcodes.*;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
+import static com.intellij.codeInspection.bytecodeAnalysis.CombinedData.*;
 
-final class ParamKey {
-  final Method method;
-  final int i;
-  final boolean stable;
+// additional data structures for combined analysis
+interface CombinedData {
 
+  final class ParamKey {
+    final Method method;
+    final int i;
+    final boolean stable;
 
-  ParamKey(Method method, int i, boolean stable) {
-    this.method = method;
-    this.i = i;
-    this.stable = stable;
+    ParamKey(Method method, int i, boolean stable) {
+      this.method = method;
+      this.i = i;
+      this.stable = stable;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      ParamKey paramKey = (ParamKey)o;
+
+      if (i != paramKey.i) return false;
+      if (stable != paramKey.stable) return false;
+      if (!method.equals(paramKey.method)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = method.hashCode();
+      result = 31 * result + i;
+      result = 31 * result + (stable ? 1 : 0);
+      return result;
+    }
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    ParamKey paramKey = (ParamKey)o;
-
-    if (i != paramKey.i) return false;
-    if (stable != paramKey.stable) return false;
-    if (!method.equals(paramKey.method)) return false;
-
-    return true;
+  // value knowing at which instruction it was created
+  interface Trackable {
+    int getOriginInsnIndex();
   }
 
-  @Override
-  public int hashCode() {
-    int result = method.hashCode();
-    result = 31 * result + i;
-    result = 31 * result + (stable ? 1 : 0);
-    return result;
+  final class TrackableCallValue extends BasicValue implements Trackable {
+    private final int originInsnIndex;
+    final Method method;
+    final List<? extends BasicValue> args;
+    final boolean stableCall;
+    final boolean thisCall;
+
+    TrackableCallValue(int originInsnIndex, Type tp, Method method, List<? extends BasicValue> args, boolean stableCall, boolean thisCall) {
+      super(tp);
+      this.originInsnIndex = originInsnIndex;
+      this.method = method;
+      this.args = args;
+      this.stableCall = stableCall;
+      this.thisCall = thisCall;
+    }
+
+    @Override
+    public int getOriginInsnIndex() {
+      return originInsnIndex;
+    }
   }
+
+  final class NthParamValue extends BasicValue {
+    final int n;
+
+    public NthParamValue(Type type, int n) {
+      super(type);
+      this.n = n;
+    }
+  }
+
+  final class TrackableNullValue extends BasicValue implements Trackable {
+    static final Type NullType = Type.getObjectType("null");
+    private final int originInsnIndex;
+    public TrackableNullValue(int originInsnIndex) {
+      super(NullType);
+      this.originInsnIndex = originInsnIndex;
+    }
+
+    @Override
+    public int getOriginInsnIndex() {
+      return originInsnIndex;
+    }
+  }
+
+  final class TrackableValue extends BasicValue implements Trackable {
+    private final int originInsnIndex;
+
+    public TrackableValue(int originInsnIndex, Type type) {
+      super(type);
+      this.originInsnIndex = originInsnIndex;
+    }
+
+    @Override
+    public int getOriginInsnIndex() {
+      return originInsnIndex;
+    }
+  }
+
+  BasicValue ThisValue = new BasicValue(Type.getObjectType("java/lang/Object"));
 }
 
-final class CombinedCall extends BasicValue {
-  final Method method;
-  final boolean stableCall;
-  final List<? extends BasicValue> args;
+// specialized class for analyzing methods without branching in single pass
+final class CombinedAnalysis {
 
-  CombinedCall(Type tp, Method method, boolean stableCall, List<? extends BasicValue> args) {
-    super(tp);
-    this.method = method;
-    this.stableCall = stableCall;
-    this.args = args;
-  }
-}
-
-final class NParamValue extends BasicValue {
-  final int n;
-  public NParamValue(Type type, int n) {
-    super(type);
-    this.n = n;
-  }
-}
-
-final class CombinedSingleAnalysis {
   private final ControlFlowGraph controlFlow;
   private final Method method;
   private final CombinedInterpreter interpreter;
@@ -99,11 +151,11 @@ final class CombinedSingleAnalysis {
   private boolean exception;
   private final MethodNode methodNode;
 
-  CombinedSingleAnalysis(Method method, ControlFlowGraph controlFlow) {
+  CombinedAnalysis(Method method, ControlFlowGraph controlFlow) {
     this.method = method;
     this.controlFlow = controlFlow;
     methodNode = controlFlow.methodNode;
-    interpreter = new CombinedInterpreter(Type.getArgumentTypes(methodNode.desc).length);
+    interpreter = new CombinedInterpreter(methodNode.instructions, Type.getArgumentTypes(methodNode.desc).length);
   }
 
   final void analyze() throws AnalyzerException {
@@ -144,11 +196,11 @@ final class CombinedSingleAnalysis {
   final Equation<Key, Value> notNullParamEquation(int i, boolean stable) {
     final Key key = new Key(method, new In(i, In.NOT_NULL), stable);
     final Result<Key, Value> result;
-    if (interpreter.dereferenced[i]) {
+    if (interpreter.dereferencedParams[i]) {
       result = new Final<Key, Value>(Value.NotNull);
     }
     else {
-      Set<ParamKey> calls = interpreter.callDerefs[i];
+      Set<ParamKey> calls = interpreter.parameterFlow[i];
       if (calls == null || calls.isEmpty()) {
         result = new Final<Key, Value>(Value.Top);
       }
@@ -166,11 +218,11 @@ final class CombinedSingleAnalysis {
   final Equation<Key, Value> nullableParamEquation(int i, boolean stable) {
     final Key key = new Key(method, new In(i, In.NULLABLE), stable);
     final Result<Key, Value> result;
-    if (interpreter.dereferenced[i] || interpreter.notNullable[i] || returnValue instanceof NParamValue && ((NParamValue)returnValue).n == i) {
+    if (interpreter.dereferencedParams[i] || interpreter.notNullableParams[i] || returnValue instanceof NthParamValue && ((NthParamValue)returnValue).n == i) {
       result = new Final<Key, Value>(Value.Top);
     }
     else {
-      Set<ParamKey> calls = interpreter.callDerefs[i];
+      Set<ParamKey> calls = interpreter.parameterFlow[i];
       if (calls == null || calls.isEmpty()) {
         result = new Final<Key, Value>(Value.Null);
       }
@@ -188,7 +240,7 @@ final class CombinedSingleAnalysis {
   final Equation<Key, Value> contractEquation(int i, Value inValue, boolean stable) {
     final Key key = new Key(method, new InOut(i, inValue), stable);
     final Result<Key, Value> result;
-    if (exception || (inValue == Value.Null && interpreter.dereferenced[i])) {
+    if (exception || (inValue == Value.Null && interpreter.dereferencedParams[i])) {
       result = new Final<Key, Value>(Value.Bot);
     }
     else if (FalseValue == returnValue) {
@@ -197,29 +249,29 @@ final class CombinedSingleAnalysis {
     else if (TrueValue == returnValue) {
       result = new Final<Key, Value>(Value.True);
     }
-    else if (NullValue == returnValue) {
+    else if (returnValue instanceof TrackableNullValue) {
       result = new Final<Key, Value>(Value.Null);
     }
-    else if (returnValue instanceof NotNullValue) {
+    else if (returnValue instanceof NotNullValue || ThisValue == returnValue) {
       result = new Final<Key, Value>(Value.NotNull);
     }
-    else if (returnValue instanceof NParamValue && ((NParamValue)returnValue).n == i) {
+    else if (returnValue instanceof NthParamValue && ((NthParamValue)returnValue).n == i) {
       result = new Final<Key, Value>(inValue);
     }
-    else if (returnValue instanceof CombinedCall) {
-      CombinedCall call = (CombinedCall)returnValue;
+    else if (returnValue instanceof TrackableCallValue) {
+      TrackableCallValue call = (TrackableCallValue)returnValue;
       HashSet<Key> keys = new HashSet<Key>();
       for (int argI = 0; argI < call.args.size(); argI++) {
         BasicValue arg = call.args.get(argI);
-        if (arg instanceof NParamValue) {
-          NParamValue npv = (NParamValue)arg;
+        if (arg instanceof NthParamValue) {
+          NthParamValue npv = (NthParamValue)arg;
           if (npv.n == i) {
             keys.add(new Key(call.method, new InOut(argI, inValue), call.stableCall));
           }
         }
       }
       if (ASMUtils.isReferenceType(call.getType())) {
-        keys.add(new Key(call.method, new Out(), call.stableCall));
+        keys.add(new Key(call.method, Out, call.stableCall));
       }
       if (keys.isEmpty()) {
         result = new Final<Key, Value>(Value.Top);
@@ -234,7 +286,7 @@ final class CombinedSingleAnalysis {
   }
 
   final Equation<Key, Value> outContractEquation(boolean stable) {
-    final Key key = new Key(method, new Out(), stable);
+    final Key key = new Key(method, Out, stable);
     final Result<Key, Value> result;
     if (exception) {
       result = new Final<Key, Value>(Value.Bot);
@@ -245,20 +297,42 @@ final class CombinedSingleAnalysis {
     else if (TrueValue == returnValue) {
       result = new Final<Key, Value>(Value.True);
     }
-    else if (NullValue == returnValue) {
+    else if (returnValue instanceof TrackableNullValue) {
       result = new Final<Key, Value>(Value.Null);
     }
-    else if (returnValue instanceof NotNullValue) {
+    else if (returnValue instanceof NotNullValue || returnValue == ThisValue) {
       result = new Final<Key, Value>(Value.NotNull);
     }
-    else if (returnValue instanceof CombinedCall) {
-      CombinedCall call = (CombinedCall)returnValue;
-      Key callKey = new Key(call.method, new Out(), call.stableCall);
+    else if (returnValue instanceof TrackableCallValue) {
+      TrackableCallValue call = (TrackableCallValue)returnValue;
+      Key callKey = new Key(call.method, Out, call.stableCall);
       Set<Key> keys = new SingletonSet<Key>(callKey);
       result = new Pending<Key, Value>(new SingletonSet<Product<Key, Value>>(new Product<Key, Value>(Value.Top, keys)));
     }
     else {
       result = new Final<Key, Value>(Value.Top);
+    }
+    return new Equation<Key, Value>(key, result);
+  }
+
+  final Equation<Key, Value> nullableResultEquation(boolean stable) {
+    final Key key = new Key(method, NullableOut, stable);
+    final Result<Key, Value> result;
+    if (exception ||
+        returnValue instanceof Trackable && interpreter.dereferencedValues[((Trackable)returnValue).getOriginInsnIndex()]) {
+      result = new Final<Key, Value>(Value.Bot);
+    }
+    else if (returnValue instanceof TrackableCallValue) {
+      TrackableCallValue call = (TrackableCallValue)returnValue;
+      Key callKey = new Key(call.method, NullableOut, call.stableCall || call.thisCall);
+      Set<Key> keys = new SingletonSet<Key>(callKey);
+      result = new Pending<Key, Value>(new SingletonSet<Product<Key, Value>>(new Product<Key, Value>(Value.Null, keys)));
+    }
+    else if (returnValue instanceof TrackableNullValue) {
+      result = new Final<Key, Value>(Value.Null);
+    }
+    else {
+      result = new Final<Key, Value>(Value.Bot);
     }
     return new Equation<Key, Value>(key, result);
   }
@@ -272,10 +346,10 @@ final class CombinedSingleAnalysis {
     Type[] args = Type.getArgumentTypes(methodNode.desc);
     int local = 0;
     if ((methodNode.access & Opcodes.ACC_STATIC) == 0) {
-      frame.setLocal(local++, new AbstractValues.NotNullValue(Type.getObjectType(controlFlow.className)));
+      frame.setLocal(local++, ThisValue);
     }
     for (int i = 0; i < args.length; i++) {
-      BasicValue value = new NParamValue(args[i], i);
+      BasicValue value = new NthParamValue(args[i], i);
       frame.setLocal(local++, value);
       if (args[i].getSize() == 2) {
         frame.setLocal(local++, BasicValue.UNINITIALIZED_VALUE);
@@ -289,25 +363,47 @@ final class CombinedSingleAnalysis {
 }
 
 final class CombinedInterpreter extends BasicInterpreter {
-  final boolean[] dereferenced;
-  final boolean[] notNullable;
-  final Set<ParamKey>[] callDerefs;
+  // Parameters dereferenced during execution of a method, tracked by parameter's indices.
+  // Dereferenced parameters are @NotNull.
+  final boolean[] dereferencedParams;
+  // Parameters, that are written to something or passed to an interface methods.
+  // This parameters cannot be @Nullable.
+  final boolean[] notNullableParams;
+  // parameterFlow(i) for i-th parameter stores a set parameter positions it is passed to
+  // parameter is @NotNull if any of its usages are @NotNull
+  final Set<ParamKey>[] parameterFlow;
 
-  CombinedInterpreter(int arity) {
-    dereferenced = new boolean[arity];
-    notNullable = new boolean[arity];
-    callDerefs = new Set[arity];
+  // Trackable values that were dereferenced during execution of a method
+  // Values are are identified by `origin` index
+  final boolean[] dereferencedValues;
+  private final InsnList insns;
+
+  CombinedInterpreter(InsnList insns, int arity) {
+    dereferencedParams = new boolean[arity];
+    notNullableParams = new boolean[arity];
+    parameterFlow = new Set[arity];
+    this.insns = insns;
+    dereferencedValues = new boolean[insns.size()];
+  }
+
+  private int insnIndex(AbstractInsnNode insn) {
+    return insns.indexOf(insn);
+  }
+
+  private static BasicValue track(int origin, BasicValue basicValue) {
+    return basicValue == null ? null : new TrackableValue(origin, basicValue.getType());
   }
 
   @Override
   public BasicValue newOperation(AbstractInsnNode insn) throws AnalyzerException {
+    int origin = insnIndex(insn);
     switch (insn.getOpcode()) {
       case ICONST_0:
         return FalseValue;
       case ICONST_1:
         return TrueValue;
       case ACONST_NULL:
-        return NullValue;
+        return new TrackableNullValue(origin);
       case LDC:
         Object cst = ((LdcInsnNode)insn).cst;
         if (cst instanceof Type) {
@@ -330,22 +426,26 @@ final class CombinedInterpreter extends BasicInterpreter {
         return new NotNullValue(Type.getObjectType(((TypeInsnNode)insn).desc));
       default:
     }
-    return super.newOperation(insn);
+    return track(origin, super.newOperation(insn));
   }
 
   @Override
   public BasicValue unaryOperation(AbstractInsnNode insn, BasicValue value) throws AnalyzerException {
+    int origin = insnIndex(insn);
     switch (insn.getOpcode()) {
       case GETFIELD:
       case ARRAYLENGTH:
       case MONITORENTER:
-        if (value instanceof NParamValue) {
-          dereferenced[((NParamValue)value).n] = true;
+        if (value instanceof NthParamValue) {
+          dereferencedParams[((NthParamValue)value).n] = true;
         }
-        return super.unaryOperation(insn, value);
+        if (value instanceof Trackable) {
+          dereferencedValues[((Trackable)value).getOriginInsnIndex()] = true;
+        }
+        return track(origin, super.unaryOperation(insn, value));
       case CHECKCAST:
-        if (value instanceof NParamValue) {
-          return new NParamValue(Type.getObjectType(((TypeInsnNode)insn).desc), ((NParamValue)value).n);
+        if (value instanceof NthParamValue) {
+          return new NthParamValue(Type.getObjectType(((TypeInsnNode)insn).desc), ((NthParamValue)value).n);
         }
         break;
       case NEWARRAY:
@@ -353,12 +453,23 @@ final class CombinedInterpreter extends BasicInterpreter {
         return new NotNullValue(super.unaryOperation(insn, value).getType());
       default:
     }
-    return super.unaryOperation(insn, value);
+    return track(origin, super.unaryOperation(insn, value));
   }
 
   @Override
   public BasicValue binaryOperation(AbstractInsnNode insn, BasicValue value1, BasicValue value2) throws AnalyzerException {
     switch (insn.getOpcode()) {
+      case PUTFIELD:
+        if (value1 instanceof NthParamValue) {
+          dereferencedParams[((NthParamValue)value1).n] = true;
+        }
+        if (value1 instanceof Trackable) {
+          dereferencedValues[((Trackable)value1).getOriginInsnIndex()] = true;
+        }
+        if (value2 instanceof NthParamValue) {
+          notNullableParams[((NthParamValue)value2).n] = true;
+        }
+        break;
       case IALOAD:
       case LALOAD:
       case FALOAD:
@@ -367,21 +478,16 @@ final class CombinedInterpreter extends BasicInterpreter {
       case BALOAD:
       case CALOAD:
       case SALOAD:
-        if (value1 instanceof NParamValue) {
-          dereferenced[((NParamValue)value1).n] = true;
+        if (value1 instanceof NthParamValue) {
+          dereferencedParams[((NthParamValue)value1).n] = true;
         }
-        break;
-      case PUTFIELD:
-        if (value1 instanceof NParamValue) {
-          dereferenced[((NParamValue)value1).n] = true;
-        }
-        if (value2 instanceof NParamValue) {
-          notNullable[((NParamValue)value2).n] = true;
+        if (value1 instanceof Trackable) {
+          dereferencedValues[((Trackable)value1).getOriginInsnIndex()] = true;
         }
         break;
       default:
     }
-    return super.binaryOperation(insn, value1, value2);
+    return track(insnIndex(insn), super.binaryOperation(insn, value1, value2));
   }
 
   @Override
@@ -395,35 +501,46 @@ final class CombinedInterpreter extends BasicInterpreter {
       case BASTORE:
       case CASTORE:
       case SASTORE:
-        if (value1 instanceof NParamValue) {
-          dereferenced[((NParamValue)value1).n] = true;
+        if (value1 instanceof NthParamValue) {
+          dereferencedParams[((NthParamValue)value1).n] = true;
+        }
+        if (value1 instanceof Trackable) {
+          dereferencedValues[((Trackable)value1).getOriginInsnIndex()] = true;
         }
         break;
       case AASTORE:
-        if (value1 instanceof NParamValue) {
-          dereferenced[((NParamValue)value1).n] = true;
+        if (value1 instanceof NthParamValue) {
+          dereferencedParams[((NthParamValue)value1).n] = true;
         }
-        if (value3 instanceof NParamValue) {
-          notNullable[((NParamValue)value3).n] = true;
+        if (value1 instanceof Trackable) {
+          dereferencedValues[((Trackable)value1).getOriginInsnIndex()] = true;
+        }
+        if (value3 instanceof NthParamValue) {
+          notNullableParams[((NthParamValue)value3).n] = true;
         }
         break;
       default:
     }
-    return super.ternaryOperation(insn, value1, value2, value3);
+    return null;
   }
 
   @Override
   public BasicValue naryOperation(AbstractInsnNode insn, List<? extends BasicValue> values) throws AnalyzerException {
     int opCode = insn.getOpcode();
     int shift = opCode == INVOKESTATIC ? 0 : 1;
-
+    int origin = insnIndex(insn);
     switch (opCode) {
       case INVOKESPECIAL:
       case INVOKEINTERFACE:
       case INVOKEVIRTUAL:
-        if (values.get(0) instanceof NParamValue) {
-          dereferenced[((NParamValue)values.get(0)).n] = true;
+        BasicValue receiver = values.get(0);
+        if (receiver instanceof NthParamValue) {
+          dereferencedParams[((NthParamValue)receiver).n] = true;
         }
+        if (receiver instanceof Trackable) {
+          dereferencedValues[((Trackable)receiver).getOriginInsnIndex()] = true;
+        }
+      default:
     }
 
     switch (opCode) {
@@ -437,29 +554,31 @@ final class CombinedInterpreter extends BasicInterpreter {
         Type retType = Type.getReturnType(mNode.desc);
 
         for (int i = shift; i < values.size(); i++) {
-          if (values.get(i) instanceof NParamValue) {
-            int n = ((NParamValue)values.get(i)).n;
+          if (values.get(i) instanceof NthParamValue) {
+            int n = ((NthParamValue)values.get(i)).n;
             if (opCode == INVOKEINTERFACE) {
-              notNullable[n] = true;
+              notNullableParams[n] = true;
             }
             else {
-              Set<ParamKey> npKeys = callDerefs[n];
+              Set<ParamKey> npKeys = parameterFlow[n];
               if (npKeys == null) {
                 npKeys = new HashSet<ParamKey>();
-                callDerefs[n] = npKeys;
+                parameterFlow[n] = npKeys;
               }
               npKeys.add(new ParamKey(method, i - shift, stable));
             }
           }
         }
+        BasicValue receiver = null;
         if (shift == 1) {
-          values.remove(0);
+          receiver = values.remove(0);
         }
-        return new CombinedCall(retType, method, stable, values);
+        boolean thisCall = (opCode == INVOKEINTERFACE || opCode == INVOKEVIRTUAL) && receiver == ThisValue;
+        return new TrackableCallValue(origin, retType, method, values, stable, thisCall);
       case MULTIANEWARRAY:
         return new NotNullValue(super.naryOperation(insn, values).getType());
       default:
     }
-    return super.naryOperation(insn, values);
+    return track(origin, super.naryOperation(insn, values));
   }
 }

@@ -264,7 +264,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
       return RefactoringBundle.message("no.destination.class.specified");
     }
     else {
-      if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isQualifiedName(fqName)) {
+      if (!PsiNameHelper.getInstance(manager.getProject()).isQualifiedName(fqName)) {
         return RefactoringBundle.message("0.is.not.a.legal.fq.name", fqName);
       }
       else {

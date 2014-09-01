@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,26 @@
  */
 package com.intellij.debugger.impl;
 
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass;
+import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.SuspendManagerUtil;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class DebuggerContextUtil {
   public static void setStackFrame(DebuggerStateManager manager, final StackFrameProxyImpl stackFrame) {
@@ -52,5 +66,44 @@ public class DebuggerContextUtil {
 
   public static DebuggerContextImpl createDebuggerContext(@NotNull DebuggerSession session, SuspendContextImpl suspendContext){
     return DebuggerContextImpl.createDebuggerContext(session, suspendContext, suspendContext != null ? suspendContext.getThread() : null, null);
+  }
+
+  public static SourcePosition findNearest(@NotNull DebuggerContextImpl context, @NotNull PsiElement psi, @NotNull PsiFile file) {
+    final DebuggerSession session = context.getDebuggerSession();
+    if (session != null) {
+      try {
+        final XDebugSession debugSession = session.getXDebugSession();
+        if (debugSession != null) {
+          final XSourcePosition position = debugSession.getCurrentPosition();
+          final Editor editor = PsiUtilBase.findEditor(psi);
+          if (editor != null && position != null && file.getVirtualFile().equals(position.getFile())) {
+            final Couple<Collection<TextRange>> usages = IdentifierHighlighterPass.getHighlightUsages(psi, file);
+            final List<TextRange> ranges = new ArrayList<TextRange>();
+            ranges.addAll(usages.first);
+            ranges.addAll(usages.second);
+            final int breakPointLine = position.getLine();
+            int bestLine = -1;
+            boolean hasSameLine = false;
+            for (TextRange range : ranges) {
+              final int line = editor.offsetToLogicalPosition(range.getStartOffset()).line;
+              if (line > bestLine && line < breakPointLine) {
+                bestLine = line;
+              } else if (line == breakPointLine) {
+                hasSameLine = true;
+              }
+            }
+            if (bestLine > 0) {
+              if (hasSameLine && breakPointLine - bestLine > 4) {
+                return SourcePosition.createFromLine(file, breakPointLine);
+              }
+              return SourcePosition.createFromLine(file, bestLine);
+            }
+          }
+        }
+      }
+      catch (Exception ignore) {
+      }
+    }
+    return SourcePosition.createFromOffset(file, psi.getTextOffset());
   }
 }

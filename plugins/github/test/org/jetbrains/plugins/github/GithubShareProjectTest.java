@@ -4,6 +4,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.components.ServiceManager;
 import git4idea.commands.Git;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
+import org.jetbrains.plugins.github.api.GithubConnection;
 import org.jetbrains.plugins.github.api.GithubRepoDetailed;
 import org.jetbrains.plugins.github.util.GithubAuthData;
 
@@ -100,7 +101,7 @@ public class GithubShareProjectTest extends GithubShareProjectTestBase {
 
   protected void checkGithubExists() throws IOException {
     GithubAuthData auth = myGitHubSettings.getAuthData();
-    GithubRepoDetailed githubInfo = GithubApiUtil.getDetailedRepoInfo(auth, myLogin1, PROJECT_NAME);
+    GithubRepoDetailed githubInfo = GithubApiUtil.getDetailedRepoInfo(new GithubConnection(auth), myLogin1, PROJECT_NAME);
     assertNotNull("GitHub repository does not exist", githubInfo);
   }
 }

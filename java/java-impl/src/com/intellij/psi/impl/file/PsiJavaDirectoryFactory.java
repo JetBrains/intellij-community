@@ -72,6 +72,6 @@ public class PsiJavaDirectoryFactory extends PsiDirectoryFactory {
 
   @Override
   public boolean isValidPackageName(String name) {
-    return JavaPsiFacade.getInstance(myManager.getProject()).getNameHelper().isQualifiedName(name);
+    return PsiNameHelper.getInstance(myManager.getProject()).isQualifiedName(name);
   }
 }

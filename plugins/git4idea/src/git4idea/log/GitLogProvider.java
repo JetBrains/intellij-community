@@ -308,7 +308,7 @@ public class GitLogProvider implements VcsLogProvider {
     }
 
     if (filterCollection.getTextFilter() != null) {
-      String textFilter = StringUtil.escapeBackSlashes(filterCollection.getTextFilter().getText());
+      String textFilter = filterCollection.getTextFilter().getText();
       filterParameters.add(prepareParameter("grep", textFilter));
     }
 

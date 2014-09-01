@@ -29,10 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClassOwner;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.psi.search.scope.packageSet.PatternPackageSet;
 import org.jetbrains.annotations.NonNls;
@@ -101,7 +98,7 @@ public class PackagePatternProvider extends PatternDialectProvider {
         final String packageName =
           ProjectRootManager.getInstance(element.getProject()).getFileIndex().getPackageNameByDirectory(virtualFile.getParent());
         final String name = virtualFile.getNameWithoutExtension();
-        if (!JavaPsiFacade.getInstance(element.getProject()).getNameHelper().isIdentifier(name)) return null;
+        if (!PsiNameHelper.getInstance(element.getProject()).isIdentifier(name)) return null;
         qName = StringUtil.getQualifiedName(packageName, name);
       }
       if (qName != null) {

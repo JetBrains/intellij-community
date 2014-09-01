@@ -19,10 +19,12 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileDescription;
 import com.intellij.util.xml.DomUtil;
@@ -32,6 +34,7 @@ import com.intellij.util.xml.highlighting.DomElementsAnnotator;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.*;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import javax.swing.*;
 import java.util.List;
@@ -44,7 +47,10 @@ public class PluginXmlDomFileDescription extends DomFileDescription<IdeaPlugin> 
   private static final DomElementsAnnotator ANNOTATOR = new DomElementsAnnotator() {
     @Override
     public void annotate(DomElement element, DomElementAnnotationHolder holder) {
-      if (element instanceof Extension) {
+      if (element instanceof IdeaPlugin) {
+        checkJetBrainsPlugin((IdeaPlugin)element, holder);
+      }
+      else if (element instanceof Extension) {
         annotateExtension((Extension)element, holder);
       }
       else if (element instanceof Vendor) {
@@ -56,6 +62,30 @@ public class PluginXmlDomFileDescription extends DomFileDescription<IdeaPlugin> 
       else if (element instanceof Extensions) {
         annotateExtensions((Extensions)element, holder);
       }
+    }
+
+    private void checkJetBrainsPlugin(IdeaPlugin ideaPlugin, DomElementAnnotationHolder holder) {
+      final Module module = ideaPlugin.getModule();
+      if (module == null) return;
+      if (!PsiUtil.isIdeaProject(module.getProject())) return;
+
+      if (ideaPlugin.getPluginId() == null) return;
+
+      final Vendor vendor = ContainerUtil.getFirstItem(ideaPlugin.getVendors());
+      if (vendor == null) return;
+      if (!"JetBrains".equals(vendor.getValue())) return;
+
+      for (Extensions extensions : ideaPlugin.getExtensions()) {
+        for (Extension extension : extensions.getExtensions()) {
+          final ExtensionPoint extensionPoint = extension.getExtensionPoint();
+          if (extensionPoint == null) continue;
+          if ("com.intellij.errorHandler".equals(extensionPoint.getEffectiveQualifiedName())) {
+            return;
+          }
+        }
+      }
+
+      holder.createAnnotation(ideaPlugin, HighlightSeverity.WARNING, "Plugin should provide <errorHandler>");
     }
 
     private void annotateExtensions(Extensions extensions, DomElementAnnotationHolder holder) {

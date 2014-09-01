@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,30 +15,37 @@
  */
 package com.siyeh.ipp.equality;
 
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiBinaryExpression;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
+import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceEqualityWithEqualsIntention extends Intention {
+public class ReplaceEqualityWithEqualsIntention extends MutablyNamedIntention {
+
+  @Override
+  protected String getTextForElement(PsiElement element) {
+    final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)element;
+    final IElementType tokenType = binaryExpression.getOperationTokenType();
+    if (JavaTokenType.NE.equals(tokenType)) {
+      return IntentionPowerPackBundle.message("replace.equality.with.not.equals.intention.name");
+    }
+    else {
+      return IntentionPowerPackBundle.message("replace.equality.with.equals.intention.name");
+    }
+  }
 
   @NotNull
   public PsiElementPredicate getElementPredicate() {
     return new ObjectEqualityPredicate();
   }
 
-  public void processIntention(PsiElement element)
-    throws IncorrectOperationException {
-    final PsiBinaryExpression exp =
-      (PsiBinaryExpression)element;
+  public void processIntention(PsiElement element) {
+    final PsiBinaryExpression exp = (PsiBinaryExpression)element;
     final PsiExpression lhs = exp.getLOperand();
     final PsiExpression rhs = exp.getROperand();
     if (rhs == null) {

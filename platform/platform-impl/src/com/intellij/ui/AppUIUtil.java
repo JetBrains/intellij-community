@@ -90,19 +90,19 @@ public class AppUIUtil {
     invokeOnEdt(runnable, null);
   }
 
-  public static void invokeOnEdt(Runnable runnable, @Nullable Condition condition) {
+  public static void invokeOnEdt(Runnable runnable, @Nullable Condition expired) {
     Application application = ApplicationManager.getApplication();
     if (application.isDispatchThread()) {
       //noinspection unchecked
-      if (condition == null || !condition.value(null)) {
+      if (expired == null || !expired.value(null)) {
         runnable.run();
       }
     }
-    else if (condition == null) {
+    else if (expired == null) {
       application.invokeLater(runnable);
     }
     else {
-      application.invokeLater(runnable, condition);
+      application.invokeLater(runnable, expired);
     }
   }
 

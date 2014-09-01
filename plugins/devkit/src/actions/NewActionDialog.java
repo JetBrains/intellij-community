@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiNameHelper;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SimpleTextAttributes;
@@ -247,7 +248,7 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
     setOKActionEnabled(myActionIdEdit.getText().length() > 0 &&
                        myActionNameEdit.getText().length() > 0 &&
                        myActionTextEdit.getText().length() > 0 &&
-                       (!myActionNameEdit.isEditable() || JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(myActionNameEdit.getText())));
+                       (!myActionNameEdit.isEditable() || PsiNameHelper.getInstance(myProject).isIdentifier(myActionNameEdit.getText())));
 
     myAnchorBeforeRadio.setEnabled(myActionList.getSelectedValue() != null);
     myAnchorAfterRadio.setEnabled(myActionList.getSelectedValue() != null);

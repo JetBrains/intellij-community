@@ -189,7 +189,7 @@ class IntroduceFieldDialog extends DialogWrapper {
   }
 
   private void updateButtons() {
-    setOKActionEnabled(JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(getEnteredName()));
+    setOKActionEnabled(PsiNameHelper.getInstance(myProject).isIdentifier(getEnteredName()));
   }
 
   private String getTypeLabel() {
@@ -240,7 +240,7 @@ class IntroduceFieldDialog extends DialogWrapper {
     String errorString = null;
     if ("".equals(fieldName)) {
       errorString = RefactoringBundle.message("no.field.name.specified");
-    } else if (!JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(fieldName)) {
+    } else if (!PsiNameHelper.getInstance(myProject).isIdentifier(fieldName)) {
       errorString = RefactoringMessageUtil.getIncorrectIdentifierMessage(fieldName);
     }
     if (errorString != null) {

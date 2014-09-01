@@ -34,6 +34,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.ProgressIndicatorListenerAdapter;
 import com.intellij.openapi.progress.util.ProgressWindowWithNotification;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.SimpleColoredComponent;
@@ -62,8 +63,11 @@ public class JavaValueModifier extends XValueModifier {
   @Override
   public String getInitialValueEditorText() {
     Value value = myJavaValue.getDescriptor().getValue();
-    if (value instanceof PrimitiveValue || value instanceof StringReference) {
+    if (value instanceof PrimitiveValue) {
       return myJavaValue.getValueString();
+    }
+    else if (value instanceof StringReference) {
+      return StringUtil.wrapWithDoubleQuote(DebuggerUtils.translateStringValue(myJavaValue.getValueString()));
     }
     return null;
   }

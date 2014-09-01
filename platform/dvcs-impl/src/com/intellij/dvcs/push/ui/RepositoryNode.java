@@ -25,7 +25,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.ArrayList;
 
-public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode {
+public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode, Comparable<RepositoryNode> {
   @NotNull private final RepositoryWithBranchPanel myRepositoryPanel;
   @NotNull protected SimpleColoredText myTargetPresentation;
   private ProgressIndicator myCurrentIndicator;
@@ -61,7 +61,6 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode 
     ArrayList<String> strings = myTargetPresentation.getTexts();
     ArrayList<SimpleTextAttributes> attributes = myTargetPresentation.getAttributes();
     for (int i = 0; i < strings.size(); i++) {
-      //todo check that all texts belong to editable component!!!
       renderer.append(strings.get(i), attributes.get(i), textField);
     }
   }
@@ -103,5 +102,11 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode 
   @NotNull
   public ProgressIndicator startLoading() {
     return myCurrentIndicator = new EmptyProgressIndicator();
+  }
+
+  public int compareTo(@NotNull RepositoryNode repositoryNode) {
+    String name = myRepositoryPanel.getRepositoryName();
+    RepositoryWithBranchPanel panel = (RepositoryWithBranchPanel)repositoryNode.getUserObject();
+    return name.compareTo(panel.getRepositoryName());
   }
 }

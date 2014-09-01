@@ -229,13 +229,13 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
 
     final String baseName = settings.FIELD_NAME_PREFIX.length() == 0 ? StringUtil.decapitalize(newClassName) : newClassName;
     String name = settings.FIELD_NAME_PREFIX + baseName + settings.FIELD_NAME_SUFFIX;
-    if (!existsFieldWithName(name) && !JavaPsiFacade.getInstance(project).getNameHelper().isKeyword(name)) {
+    if (!existsFieldWithName(name) && !PsiNameHelper.getInstance(project).isKeyword(name)) {
       return name;
     }
     int counter = 1;
     while (true) {
       name = settings.FIELD_NAME_PREFIX + baseName + counter + settings.FIELD_NAME_SUFFIX;
-      if (!existsFieldWithName(name) && !JavaPsiFacade.getInstance(project).getNameHelper().isKeyword(name)) {
+      if (!existsFieldWithName(name) && !PsiNameHelper.getInstance(project).isKeyword(name)) {
         return name;
       }
       counter++;

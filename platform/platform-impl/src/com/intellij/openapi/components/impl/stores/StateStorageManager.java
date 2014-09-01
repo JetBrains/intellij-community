@@ -58,7 +58,7 @@ public interface StateStorageManager {
   StateStorage getOldStorage(Object component, String componentName, StateStorageOperation operation) throws StateStorageException;
 
   @Nullable
-  String expandMacros(String file);
+  String expandMacros(@NotNull String file);
 
   @Deprecated
   void registerStreamProvider(@SuppressWarnings("deprecation") StreamProvider streamProvider, final RoamingType type);

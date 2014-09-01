@@ -19,6 +19,7 @@ package com.intellij.psi.impl.source.tree;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.util.Getter;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -28,6 +29,17 @@ import org.jetbrains.annotations.NotNull;
 
 public class FileElement extends LazyParseableElement implements FileASTNode, Getter<FileElement> {
   private volatile CharTable myCharTable = new CharTableImpl();
+  private volatile boolean myDetached;
+
+  @Override
+  protected PsiElement createPsiNoLock() {
+    return myDetached ? null : super.createPsiNoLock();
+  }
+
+  public void detachFromFile() {
+    myDetached = true;
+    clearPsi();
+  }
 
   @Override
   @NotNull

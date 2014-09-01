@@ -61,8 +61,19 @@ public interface XDebugSession extends AbstractDebuggerSession {
 
   XSuspendContext getSuspendContext();
 
+  /**
+   * Position from the current frame
+   * @return
+   */
   @Nullable
   XSourcePosition getCurrentPosition();
+
+  /**
+   * Position from the top frame
+   * @return
+   */
+  @Nullable
+  XSourcePosition getTopFramePosition();
 
   void stepOver(boolean ignoreBreakpoints);
 

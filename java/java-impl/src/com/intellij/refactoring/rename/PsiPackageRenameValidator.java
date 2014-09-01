@@ -21,6 +21,7 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.util.ProcessingContext;
@@ -41,7 +42,7 @@ public class PsiPackageRenameValidator implements RenameInputValidatorEx {
       if (!PsiDirectoryFactory.getInstance(project).isValidPackageName(newName)) {
         return "Not a valid package name";
       }
-      if (!JavaPsiFacade.getInstance(project).getNameHelper().isIdentifier(newName)) {
+      if (!PsiNameHelper.getInstance(project).isIdentifier(newName)) {
         return "Not a valid identifier name";
       }
     }

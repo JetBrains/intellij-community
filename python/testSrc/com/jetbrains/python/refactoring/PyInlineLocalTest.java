@@ -18,6 +18,10 @@ package com.jetbrains.python.refactoring;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.refactoring.inline.PyInlineLocalHandler;
 
@@ -89,5 +93,24 @@ public class PyInlineLocalTest extends PyTestCase {
   // PY-13114
   public void testReferenceInParenthesis() {
     doTest();
+  }
+
+  // PY-12409
+  public void testResultExceedsRightMargin() {
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myFixture.getProject());
+    final CommonCodeStyleSettings commonSettings = settings.getCommonSettings(PythonLanguage.getInstance());
+
+    final int oldRightMargin = settings.getRightMargin(PythonLanguage.getInstance());
+    final boolean oldWrapLongLines = commonSettings.WRAP_LONG_LINES;
+
+    settings.setRightMargin(PythonLanguage.getInstance(), 80);
+    commonSettings.WRAP_LONG_LINES = true;
+    try {
+      doTest();
+    }
+    finally {
+      commonSettings.WRAP_LONG_LINES = oldWrapLongLines;
+      settings.setRightMargin(PythonLanguage.getInstance(), oldRightMargin);
+    }
   }
 }

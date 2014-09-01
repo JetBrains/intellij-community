@@ -40,6 +40,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.Value;
@@ -1036,7 +1037,8 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       final PsiType castType = expression.getCastType().getType();
       final PsiType operandType = operandExpr.getType();
 
-      if (castType != null && operandType != null && !TypeConversionUtil.areTypesConvertible(operandType, castType)) {
+      // if operand type can not be resolved in current context - leave it for runtime checks
+      if (castType != null && operandType != null && !TypeConversionUtil.areTypesConvertible(operandType, castType) && PsiUtil.resolveClassInType(operandType) != null) {
         throw new EvaluateRuntimeException(
           new EvaluateException(JavaErrorMessages.message("inconvertible.type.cast", JavaHighlightUtil.formatType(operandType), JavaHighlightUtil
             .formatType(castType)))

@@ -796,6 +796,10 @@ public class CompositeElement extends TreeElement {
     myWrapper = psi;
   }
 
+  protected void clearPsi() {
+    myWrapper = null;
+  }
+
   public final void rawAddChildren(@NotNull TreeElement first) {
     rawAddChildrenWithoutNotifications(first);
 

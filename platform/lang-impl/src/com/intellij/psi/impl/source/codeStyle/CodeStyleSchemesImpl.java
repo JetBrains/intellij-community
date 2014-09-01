@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
@@ -44,10 +44,10 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes implements E
 
   public String CURRENT_SCHEME_NAME = DEFAULT_SCHEME_NAME;
   private boolean myIsInitialized = false;
-  @NonNls static final String CODESTYLES_DIRECTORY = "codestyles";
+  @NonNls static final String CODE_STYLES_DIRECTORY = "codestyles";
 
   private final SchemesManager<CodeStyleScheme, CodeStyleSchemeImpl> mySchemesManager;
-  @NonNls private static final String FILE_SPEC = "$ROOT_CONFIG$/" + CODESTYLES_DIRECTORY;
+  @NonNls private static final String FILE_SPEC = StoragePathMacros.ROOT_CONFIG + "/" + CODE_STYLES_DIRECTORY;
 
   public CodeStyleSchemesImpl(SchemesManagerFactory schemesManagerFactory) {
     SchemeProcessor<CodeStyleSchemeImpl> processor = new BaseSchemeProcessor<CodeStyleSchemeImpl>() {
@@ -97,6 +97,7 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes implements E
     CURRENT_SCHEME_NAME = schemeName;
   }
 
+  @SuppressWarnings("ForLoopThatDoesntUseLoopVariable")
   @Override
   public CodeStyleScheme createNewScheme(String preferredName, CodeStyleScheme parentScheme) {
     String name;
@@ -154,10 +155,6 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes implements E
     mySchemesManager.addNewScheme(scheme, true);
   }
 
-  protected void removeScheme(CodeStyleScheme scheme) {
-    mySchemesManager.removeScheme(scheme);
-  }
-
   protected void init() {
     if (myIsInitialized) return;
     myIsInitialized = true;
@@ -173,6 +170,4 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes implements E
   public SchemesManager<CodeStyleScheme, CodeStyleSchemeImpl> getSchemesManager() {
     return mySchemesManager;
   }
-
-
 }

@@ -313,6 +313,11 @@ public class PyQuickFixTest extends PyTestCase {
                      PyBundle.message("QFIX.default.argument"), true, true);
   }
 
+  public void testDefaultArgumentEmptyList() {
+    doInspectionTest("DefaultArgumentEmptyList.py", PyDefaultArgumentInspection.class,
+                     PyBundle.message("QFIX.default.argument"), true, true);
+  }
+
   public void testPyArgumentEqualDefault() {                      //PY-3125
     doInspectionTest("ArgumentEqualDefault.py", PyArgumentEqualDefaultInspection.class,
                      PyBundle.message("QFIX.remove.argument.equal.default"), true, true);

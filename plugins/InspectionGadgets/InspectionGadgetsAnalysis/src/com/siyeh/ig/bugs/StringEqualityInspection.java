@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.siyeh.ig.bugs;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiJavaToken;
-import com.intellij.psi.PsiKeyword;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -73,12 +72,7 @@ public class StringEqualityInspection extends BaseInspection {
       if (rhs == null || !ExpressionUtils.hasStringType(rhs)) {
         return;
       }
-      final String lhsText = lhs.getText();
-      if (PsiKeyword.NULL.equals(lhsText)) {
-        return;
-      }
-      final String rhsText = rhs.getText();
-      if (PsiKeyword.NULL.equals(rhsText)) {
+      if (ExpressionUtils.isNullLiteral(lhs) || ExpressionUtils.isNullLiteral(rhs)) {
         return;
       }
       final PsiJavaToken sign = expression.getOperationSign();

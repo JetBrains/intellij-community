@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
@@ -28,26 +29,29 @@ import org.jetbrains.idea.svn.auth.SvnAuthenticationProvider;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.browse.DirectoryEntryConsumer;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
-import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Queue;
+import java.util.TreeSet;
 
 class RepositoryLoader extends Loader {
   // may be several requests if: several same-level nodes are expanded simultaneosly; or browser can be opening into some expanded state
-  private final Queue<Pair<RepositoryTreeNode, Expander>> myLoadQueue;
+  @NotNull private final Queue<Pair<RepositoryTreeNode, Expander>> myLoadQueue;
   private boolean myQueueProcessorActive;
 
-  RepositoryLoader(final SvnRepositoryCache cache) {
+  RepositoryLoader(@NotNull SvnRepositoryCache cache) {
     super(cache);
 
-    myLoadQueue = new LinkedList<Pair<RepositoryTreeNode, Expander>>();
+    myLoadQueue = ContainerUtil.newLinkedList();
     myQueueProcessorActive = false;
   }
 
-  public void load(final RepositoryTreeNode node, final Expander afterRefreshExpander) {
+  public void load(@NotNull RepositoryTreeNode node, @NotNull Expander afterRefreshExpander) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     final Pair<RepositoryTreeNode, Expander> data = Pair.create(node, afterRefreshExpander);
@@ -59,12 +63,12 @@ class RepositoryLoader extends Loader {
     }
   }
 
-  private void setResults(final Pair<RepositoryTreeNode, Expander> data, final List<DirectoryEntry> children) {
+  private void setResults(@NotNull Pair<RepositoryTreeNode, Expander> data, @NotNull List<DirectoryEntry> children) {
     myCache.put(data.first.getURL().toString(), children);
     refreshNode(data.first, children, data.second);
   }
 
-  private void setError(final Pair<RepositoryTreeNode, Expander> data, final String message) {
+  private void setError(@NotNull Pair<RepositoryTreeNode, Expander> data, @NotNull String message) {
     myCache.put(data.first.getURL().toString(), message);
     refreshNodeError(data.first, message);
   }
@@ -85,7 +89,7 @@ class RepositoryLoader extends Loader {
     }
   }
 
-  private void startLoadTask(final Pair<RepositoryTreeNode, Expander> data) {
+  private void startLoadTask(@NotNull final Pair<RepositoryTreeNode, Expander> data) {
     final ModalityState state = ModalityState.current();
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
@@ -101,18 +105,16 @@ class RepositoryLoader extends Loader {
     });
   }
 
-  public void forceRefresh(final String repositoryRootUrl) {
-    // ? remove
-  }
-
+  @NotNull
   protected NodeLoadState getNodeLoadState() {
     return NodeLoadState.REFRESHED;
   }
 
   private class LoadTask implements Runnable {
-    private final Pair<RepositoryTreeNode, Expander> myData;
 
-    private LoadTask(final Pair<RepositoryTreeNode, Expander> data) {
+    @NotNull private final Pair<RepositoryTreeNode, Expander> myData;
+
+    private LoadTask(@NotNull Pair<RepositoryTreeNode, Expander> data) {
       myData = data;
     }
 
@@ -147,7 +149,7 @@ class RepositoryLoader extends Loader {
 
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          setResults(myData, new ArrayList<DirectoryEntry>(entries));
+          setResults(myData, ContainerUtil.newArrayList(entries));
           startNext();
         }
       });

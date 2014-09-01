@@ -75,6 +75,7 @@ public abstract class MethodSignatureBase implements MethodSignature {
     return myTypeParameters;
   }
 
+  @NotNull
   public PsiType[] getErasedParameterTypes() {
     PsiType[] result = myErasedParameterTypes;
     if (result == null) {

@@ -159,8 +159,8 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       }
 
       @Override
-      public String expandMacros(final String file) {
-        throw new UnsupportedOperationException("Method expandMacroses not implemented in " + getClass());
+      public String expandMacros(@NotNull String file) {
+        throw new UnsupportedOperationException("Method expandMacros not implemented in " + getClass());
       }
 
       @Override

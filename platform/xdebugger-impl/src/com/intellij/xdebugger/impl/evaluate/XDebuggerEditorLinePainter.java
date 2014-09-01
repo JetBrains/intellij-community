@@ -25,9 +25,14 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredText;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
+import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.frame.XVariablesView;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueTextRendererImpl;
@@ -67,6 +72,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
     }
     Set<XValueNodeImpl> values = map.get(Pair.create(file, lineNumber));
     if (values != null && !values.isEmpty()) {
+      final int bpLine = getCurrentBreakPointLine(values);
       ArrayList<LineExtensionInfo> result = new ArrayList<LineExtensionInfo>();
       for (XValueNodeImpl value : values) {
         SimpleColoredText text = new SimpleColoredText();
@@ -79,10 +85,17 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
           } else {
             presentation.renderValue(renderer);
           }
+          if (StringUtil.isEmpty(text.toString())) {
+            final String type = value.getValuePresentation().getType();
+            if (!StringUtil.isEmpty(type)) {
+              text.append(type, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            }
+          }
         } catch (Exception e) {
           continue;
         }
-        final Color color = getForeground();
+        final Color color = bpLine == lineNumber ? new JBColor(Gray._180, new Color(147, 217, 186)) : getForeground();
+
         final String name = value.getName();
         if (StringUtil.isEmpty(text.toString())) {
           continue;
@@ -113,6 +126,20 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
     }
 
     return null;
+  }
+
+  private static int getCurrentBreakPointLine(Set<XValueNodeImpl> values) {
+    try {
+      final XValueNodeImpl node = values.iterator().next();
+      final XDebugSession session = XDebugView.getSession(node.getTree());
+      if (session != null) {
+        final XSourcePosition position = session.getCurrentPosition();
+        if (position != null) {
+          return position.getLine();
+        }
+      }
+    } catch (Exception ignore){}
+    return -1;
   }
 
   public static JBColor getForeground() {

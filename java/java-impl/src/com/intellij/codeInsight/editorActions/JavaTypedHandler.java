@@ -18,6 +18,9 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.JavaClassReferenceCompletionContributor;
+import com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -125,10 +128,23 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
       if (iterator.atEnd() || iterator.getTokenType() == JavaTokenType.RBRACKET || iterator.getTokenType() == JavaTokenType.EQ) {
         return Result.CONTINUE;
       }
-      PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+      Document doc = editor.getDocument();
+      PsiDocumentManager.getInstance(project).commitDocument(doc);
       final PsiElement leaf = file.findElementAt(offset);
       if (PsiTreeUtil.getParentOfType(leaf, PsiArrayInitializerExpression.class, false, PsiCodeBlock.class, PsiMember.class) != null) {
         return Result.CONTINUE;
+      }
+      PsiElement st = leaf != null ? leaf.getParent() : null;
+      PsiElement prev = offset > 1 ? file.findElementAt(offset - 1) : null;
+      if (CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET && isRparenth(leaf) &&
+          (st instanceof PsiWhileStatement || st instanceof PsiIfStatement) && shouldInsertStatementBody(st, doc, prev)) {
+        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+          @Override
+          public void run() {
+            new JavaSmartEnterProcessor().process(project, editor, file);
+          }
+        }, "Insert block statement", null);
+        return Result.STOP;
       }
       if (PsiTreeUtil.getParentOfType(leaf, PsiCodeBlock.class, false, PsiMember.class) != null) {
         EditorModificationUtil.insertStringAtCaret(editor, "{");
@@ -138,6 +154,26 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     }
 
     return Result.CONTINUE;
+  }
+
+  private static boolean shouldInsertStatementBody(@NotNull PsiElement statement, @NotNull Document doc, @Nullable PsiElement prev) {
+    PsiStatement block = statement instanceof PsiWhileStatement ? ((PsiWhileStatement)statement).getBody() : ((PsiIfStatement)statement).getThenBranch();
+    PsiExpression condition = PsiTreeUtil.getChildOfType(statement, PsiExpression.class);
+    PsiExpression latestExpression = PsiTreeUtil.getParentOfType(prev, PsiExpression.class);
+    if (latestExpression instanceof PsiNewExpression && ((PsiNewExpression)latestExpression).getAnonymousClass() == null) return false;
+    return !(block instanceof PsiBlockStatement) && (block == null || startLine(doc, block) != startLine(doc, statement) || condition == null);
+  }
+
+  private static boolean isRparenth(@Nullable PsiElement leaf) {
+    if (leaf == null) return false;
+    if (leaf.getNode().getElementType() == JavaTokenType.RPARENTH) return true;
+    PsiElement next = PsiTreeUtil.nextVisibleLeaf(leaf);
+    if (next == null) return false;
+    return next.getNode().getElementType() == JavaTokenType.RPARENTH;
+  }
+
+  private static int startLine(@NotNull Document doc, @NotNull PsiElement psiElement) {
+    return doc.getLineNumber(psiElement.getTextRange().getStartOffset());
   }
 
   @Override

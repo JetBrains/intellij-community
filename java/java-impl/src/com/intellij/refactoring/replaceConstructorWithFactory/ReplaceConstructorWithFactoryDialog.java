@@ -202,7 +202,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
   @Override
   protected void canRun() throws ConfigurationException {
     final String name = myNameField.getEnteredName();
-    final PsiNameHelper nameHelper = JavaPsiFacade.getInstance(myContainingClass.getProject()).getNameHelper();
+    final PsiNameHelper nameHelper = PsiNameHelper.getInstance(myContainingClass.getProject());
     if (!nameHelper.isIdentifier(name)) {
       throw new ConfigurationException("\'" + name + "\' is invalid factory method name");
     }

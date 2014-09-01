@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class ProfileChangeAdapter {
   public void profileChanged(Profile profile){}
-  public void profileActivated(@NotNull Profile oldProfile, Profile profile){}
+  public void profileActivated(Profile oldProfile, Profile profile){}
   public void profilesInitialized() {}
   public void profilesShutdown(){}
 }
