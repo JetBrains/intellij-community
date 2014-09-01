@@ -57,11 +57,12 @@ import java.util.Set;
  * @author mike
  */
 public class StorageUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StorageUtil");
+  private static final Logger LOG = Logger.getInstance(StorageUtil.class);
 
   private static final boolean DUMP_COMPONENT_STATES = SystemProperties.getBooleanProperty("idea.log.externally.changed.component.states", false);
   @SuppressWarnings("SpellCheckingInspection")
   private static final SimpleDateFormat LOG_DIR_FORMAT = new SimpleDateFormat("yyyyMMdd-HHmmss");
+  private static final Pair<byte[], String> NON_EXISTENT_FILE_DATA = Pair.create(null, SystemProperties.getLineSeparator());
 
   private StorageUtil() { }
 
@@ -182,9 +183,10 @@ public class StorageUtil {
   /**
    * @return pair.first - file contents (null if file does not exist), pair.second - file line separators
    */
+  @NotNull
   private static Pair<byte[], String> loadFile(@Nullable final VirtualFile file) throws IOException {
     if (file == null || !file.exists()) {
-      return Pair.create(null, SystemProperties.getLineSeparator());
+      return NON_EXISTENT_FILE_DATA;
     }
 
     byte[] bytes = file.contentsToByteArray();
