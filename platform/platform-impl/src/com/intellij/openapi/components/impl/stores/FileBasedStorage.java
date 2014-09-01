@@ -28,6 +28,8 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
@@ -315,21 +317,15 @@ public class FileBasedStorage extends XmlElementStorage {
     super.setDefaultState(element);
   }
 
-  protected boolean physicalContentNeedsSave(final Document doc) {
-    VirtualFile file = getVirtualFile();
-    return file == null || !file.exists() || !StorageUtil.contentEquals(doc, file);
-  }
-
   @Nullable
   public File updateFileExternallyFromStreamProviders() throws IOException {
-    StorageData loadedData = loadData(true);
-    Document document = getDocument(loadedData);
-    if (physicalContentNeedsSave(document)) {
-      File file = new File(myFile.getAbsolutePath());
-      JDOMUtil.writeDocument(document, file, "\n");
-      return file;
+    BufferExposingByteArrayOutputStream out = StorageUtil.newContentIfDiffers(getDocument(loadData(true)), getVirtualFile());
+    if (out == null) {
+      return null;
     }
 
-    return null;
+    File file = new File(myFile.getAbsolutePath());
+    FileUtil.writeToFile(file, out.getInternalBuffer(), 0, out.size());
+    return file;
   }
 }

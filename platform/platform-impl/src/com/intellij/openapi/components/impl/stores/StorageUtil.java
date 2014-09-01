@@ -200,17 +200,23 @@ public class StorageUtil {
   }
 
   public static boolean contentEquals(@NotNull Parent element, @NotNull VirtualFile file) {
+    return newContentIfDiffers(element, file) == null;
+  }
+
+  @Nullable
+  public static BufferExposingByteArrayOutputStream newContentIfDiffers(@NotNull Parent element, @Nullable VirtualFile file) {
     try {
       Pair<byte[], String> pair = loadFile(file);
-      return pair.first != null && equal(pair.first, writeToBytes(element, pair.second));
+      BufferExposingByteArrayOutputStream out = writeToBytes(element, pair.second);
+      return pair.first != null && equal(pair.first, out) ? null : out;
     }
     catch (IOException e) {
       LOG.debug(e);
-      return false;
+      return null;
     }
   }
 
-  private static boolean equal(byte[] a1, @NotNull BufferExposingByteArrayOutputStream out) {
+  public static boolean equal(byte[] a1, @NotNull BufferExposingByteArrayOutputStream out) {
     int length = out.size();
     if (a1.length != length) {
       return false;
