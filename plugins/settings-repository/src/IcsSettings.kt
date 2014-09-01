@@ -16,20 +16,14 @@ import java.io.IOException
 
 class IcsSettings {
   class object {
-    private val DEFAULT_COMMIT_DELAY = Time.MINUTE * 5
-    private val DEFAULT_UPDATE_ON_ACTIVITY_DELAY = Time.HOUR * 2
-
+    private val DEFAULT_COMMIT_DELAY = 10 * Time.MINUTE
     private val DEFAULT_FILTER = SkipDefaultValuesSerializationFilters()
   }
 
   Tag
   public var shareProjectWorkspace: Boolean = false
   Tag
-  public var updateOnStart: Boolean = true
-
-  SuppressWarnings("UnusedDeclaration")
-  Tag
-  public var updateOnActivityDelay: Int = DEFAULT_UPDATE_ON_ACTIVITY_DELAY
+  public var updateOnStart: Boolean = false
 
   Tag
   public var commitDelay: Int = DEFAULT_COMMIT_DELAY
@@ -66,9 +60,6 @@ class IcsSettings {
 
     if (commitDelay < 0) {
       commitDelay = DEFAULT_COMMIT_DELAY
-    }
-    if (updateOnActivityDelay < 0) {
-      updateOnActivityDelay = DEFAULT_UPDATE_ON_ACTIVITY_DELAY
     }
   }
 }
