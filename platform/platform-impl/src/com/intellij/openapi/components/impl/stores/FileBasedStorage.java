@@ -319,7 +319,7 @@ public class FileBasedStorage extends XmlElementStorage {
 
   @Nullable
   public File updateFileExternallyFromStreamProviders() throws IOException {
-    BufferExposingByteArrayOutputStream out = StorageUtil.newContentIfDiffers(getDocument(loadData(true)), getVirtualFile());
+    BufferExposingByteArrayOutputStream out = StorageUtil.newContentIfDiffers(getDocument(loadData(true, null)), getVirtualFile());
     if (out == null) {
       return null;
     }

@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.SafeWriteRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.fs.IFile;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import gnu.trove.TObjectLongHashMap;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -131,12 +132,12 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       return myLoadedData;
     }
 
-    myLoadedData = loadData(myFileSpec.equals(StoragePathMacros.WORKSPACE_FILE) || myComponentRoamingManager.getRoamingType(componentName) != RoamingType.DISABLED);
+    myLoadedData = loadData(true, myFileSpec.equals(StoragePathMacros.WORKSPACE_FILE) ? null : myComponentRoamingManager.getRoamingType(componentName));
     return myLoadedData;
   }
 
   @NotNull
-  protected StorageData loadData(boolean useProvidersData) throws StateStorageException {
+  protected StorageData loadData(boolean useProvidersData, @Nullable RoamingType roamingType) throws StateStorageException {
     Document document = loadDocument();
     StorageData result = createStorageData();
 
@@ -145,23 +146,29 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     }
 
     if (useProvidersData && myStreamProvider != null && myStreamProvider.isEnabled()) {
-      for (RoamingType roamingType : RoamingType.values()) {
-        if (roamingType != RoamingType.DISABLED && roamingType != RoamingType.GLOBAL) {
-          try {
-            Document sharedDocument = StorageUtil.loadDocument(myStreamProvider.loadContent(myFileSpec, roamingType));
-            if (sharedDocument != null) {
-              filterOutOfDate(sharedDocument.getRootElement());
-              loadState(result, sharedDocument.getRootElement());
-            }
-          }
-          catch (Exception e) {
-            LOG.warn(e);
-          }
-        }
+      if (roamingType == null) {
+        loadDataFromStreamProvider(result, RoamingType.PER_USER);
+        loadDataFromStreamProvider(result, RoamingType.PER_PLATFORM);
+      }
+      else if (roamingType != RoamingType.DISABLED) {
+        loadDataFromStreamProvider(result, roamingType);
       }
     }
-
     return result;
+  }
+
+  private void loadDataFromStreamProvider(@NotNull StorageData result, @NotNull RoamingType roamingType) {
+    assert myStreamProvider != null;
+    try {
+      Document sharedDocument = StorageUtil.loadDocument(myStreamProvider.loadContent(myFileSpec, roamingType));
+      if (sharedDocument != null) {
+        filterOutOfDate(sharedDocument.getRootElement());
+        loadState(result, sharedDocument.getRootElement());
+      }
+    }
+    catch (Exception e) {
+      LOG.warn(e);
+    }
   }
 
   protected void loadState(final StorageData result, final Element element) throws StateStorageException {
@@ -545,12 +552,10 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
   @Override
   public void reload(@NotNull final Set<String> changedComponents) throws StateStorageException {
-    final StorageData storageData = loadData(false);
-
+    final StorageData storageData = loadData(false, null);
     final StorageData oldLoadedData = myLoadedData;
-
     if (oldLoadedData != null) {
-      Set<String> componentsToRetain = new HashSet<String>(oldLoadedData.myComponentStates.keySet());
+      Set<String> componentsToRetain = new THashSet<String>(oldLoadedData.myComponentStates.keySet());
       componentsToRetain.addAll(changedComponents);
 
       // add empty configuration tags for removed components
