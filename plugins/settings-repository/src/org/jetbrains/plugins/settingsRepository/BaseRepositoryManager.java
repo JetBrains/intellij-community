@@ -77,6 +77,11 @@ public abstract class BaseRepositoryManager implements RepositoryManager {
     try {
       synchronized (lock) {
         File file = new File(dir, path);
+        // delete could be called for non-existent file
+        if (!file.exists()) {
+          return;
+        }
+
         boolean isFile = file.isFile();
         FileUtil.delete(file);
         if (isFile) {
