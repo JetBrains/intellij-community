@@ -15,23 +15,15 @@
  */
 package com.intellij.openapi.options.ex;
 
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurableGroup;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.OptionsBundle;
-import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.*;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
+import javax.swing.*;
+import java.util.*;
 import java.util.Map.Entry;
-import javax.swing.JComponent;
 
-public final class MixedConfigurableGroup implements SearchableConfigurable, ConfigurableGroup {
+public final class MixedConfigurableGroup implements SearchableConfigurable, ConfigurableGroup, Configurable.NoScroll {
   private final String myGroupId;
   private Configurable[] myConfigurables;
 
