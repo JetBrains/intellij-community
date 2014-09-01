@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectType;
 import com.intellij.openapi.project.ProjectTypeService;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -64,5 +65,10 @@ public class ChameleonAction extends AnAction {
     if (action == null) action = myActions.get(null);
     if (action == null) action = myActions.values().iterator().next();
     return action;
+  }
+
+  @TestOnly
+  public Map<ProjectType, AnAction> getActions() {
+    return myActions;
   }
 }
