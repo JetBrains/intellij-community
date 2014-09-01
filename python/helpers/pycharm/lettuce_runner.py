@@ -109,4 +109,5 @@ class _LettuceRunner(_bdd_utils.BddRunner):
 
 if __name__ == "__main__":
     (base_dir, what_to_run) = _bdd_utils.get_path_by_args(sys.argv)
+    _bdd_utils.fix_win_drive(what_to_run)
     _LettuceRunner(base_dir, what_to_run).run()

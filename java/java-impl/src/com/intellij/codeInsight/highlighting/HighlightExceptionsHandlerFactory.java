@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -29,11 +29,9 @@ import java.util.Collection;
 /**
  * @author yole
  */
-public class HighlightExceptionsHandlerFactory implements HighlightUsagesHandlerFactory {
+public class HighlightExceptionsHandlerFactory extends HighlightUsagesHandlerFactoryBase {
   @Override
-  public HighlightUsagesHandlerBase createHighlightUsagesHandler(final Editor editor, final PsiFile file) {
-    int offset = TargetElementUtilBase.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
-    PsiElement target = file.findElementAt(offset);
+  public HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target) {
     if (target instanceof PsiKeyword) {
       PsiElement parent = target.getParent();
       if (PsiKeyword.TRY.equals(target.getText()) && parent instanceof PsiTryStatement) {

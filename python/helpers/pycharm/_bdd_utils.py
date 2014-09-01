@@ -15,6 +15,20 @@ import tcmessages
 __author__ = 'Ilya.Kazakevich'
 
 
+def fix_win_drive(feature_path):
+    """
+    Workaround to fix issues like http://bugs.python.org/issue7195 on windows.
+    Pass feature dir or file path as argument.
+    This function does nothing on non-windows platforms, so it could be run safely.
+
+    :param feature_path: path to feature (c:/fe.feature or /my/features)
+    """
+    current_disk = (os.path.splitdrive(os.getcwd()))[0]
+    feature_disk = (os.path.splitdrive(feature_path))[0]
+    if current_disk and feature_disk and current_disk != feature_disk:
+        os.chdir(feature_disk)
+
+
 def get_path_by_args(arguments):
     """
     :type arguments list

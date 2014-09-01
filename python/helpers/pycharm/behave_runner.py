@@ -228,6 +228,8 @@ if __name__ == "__main__":
         pass
 
     command_args = list(filter(None, sys.argv[1:]))
+    if command_args:
+        _bdd_utils.fix_win_drive(command_args[0])
     my_config = configuration.Configuration(command_args=command_args)
     formatters.register_as(_Null, "com.intellij.python.null")
     my_config.format = ["com.intellij.python.null"]  # To prevent output to stdout

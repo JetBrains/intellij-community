@@ -70,7 +70,7 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
     if (refEntity instanceof RefModule) {
       final RefModule refModule = (RefModule)refEntity;
       final Module module = refModule.getModule();
-      if (module.isDisposed()) return CommonProblemDescriptor.EMPTY_ARRAY;
+      if (module.isDisposed() || !scope.containsModule(module)) return CommonProblemDescriptor.EMPTY_ARRAY;
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       final Set<VirtualFile> usedRoots = refModule.getUserData(UnusedLibraryGraphAnnotator.USED_LIBRARY_ROOTS);
 

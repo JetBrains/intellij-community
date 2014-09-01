@@ -370,12 +370,6 @@ class ContractInferenceInterpreter {
       else if (statement instanceof PsiDoWhileStatement) {
         result.addAll(visitStatements(states, ((PsiDoWhileStatement)statement).getBody()));
       }
-      else if (statement instanceof PsiTryStatement) {
-        PsiCodeBlock block = ((PsiTryStatement)statement).getTryBlock();
-        if (block != null) {
-          result.addAll(visitStatements(states, block.getStatements()));
-        }
-      }
 
       break; // visit only the first statement unless it's 'if' whose 'then' always returns and the next statement is effectively 'else'
     }

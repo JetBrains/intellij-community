@@ -22,7 +22,7 @@
         </constraints>
         <properties>
           <autoscrolls value="true"/>
-          <text value="Text"/>
+          <text value=""/>
         </properties>
       </component>
       <component id="94f42" class="javax.swing.JProgressBar" binding="myProgressBar" default-binding="true">
@@ -54,7 +54,7 @@
           </grid>
         </constraints>
         <properties>
-          <text value="Text 2"/>
+          <text value=""/>
         </properties>
       </component>
       <vspacer id="8e674">

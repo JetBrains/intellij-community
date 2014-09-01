@@ -16,7 +16,6 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -28,8 +27,6 @@ import java.util.ArrayList;
 import java.util.Set;
 
 abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.BaseFileConfigurableStoreImpl");
-
   @NonNls protected static final String VERSION_OPTION = "version";
   @NonNls public static final String ATTRIBUTE_NAME = "name";
   private final ComponentManager myComponentManager;
@@ -119,6 +116,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     return (BaseStorageData) getMainStorage().getStorageData(false);
   }
 
+  @Nullable
   @Override
   protected StateStorage getDefaultsStorage() {
     return myDefaultsStateStorage;

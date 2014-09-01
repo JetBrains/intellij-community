@@ -254,12 +254,11 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     HeavyProcessLatch.INSTANCE.addListener(this, new HeavyProcessLatch.HeavyProcessListener() {
       @Override
       public void processStarted() {
-        disable();
       }
 
       @Override
       public void processFinished() {
-        enable();
+        wakeUp();
       }
     });
 
@@ -397,7 +396,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
       synchronized (filesToResolve) {
         isEmpty = filesToResolve.isEmpty();
       }
-      if (enableVetoes.get() > 0 || isEmpty || !resolveProcess.isDone()) {
+      if (enableVetoes.get() > 0 || isEmpty || !resolveProcess.isDone() || HeavyProcessLatch.INSTANCE.isRunning()) {
         try {
           waitForQueue();
         }
@@ -426,6 +425,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
                 }
                 catch (RuntimeInterruptedException ignore) {
                   // see future.cancel() in disable()
+                  int i = 0;
                 }
               }
             }
@@ -574,8 +574,8 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
   }
 
   private void disable() {
-    resolveIndicator.cancel();
-    resolveProcess.cancel(true);
+    //resolveIndicator.cancel();
+    //resolveProcess.cancel(true);
     enableVetoes.incrementAndGet();
     wakeUp();
   }

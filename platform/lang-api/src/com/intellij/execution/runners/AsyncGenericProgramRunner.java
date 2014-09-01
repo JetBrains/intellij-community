@@ -21,6 +21,7 @@ import com.intellij.execution.RunProfileStarter;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
@@ -61,7 +62,17 @@ public abstract class AsyncGenericProgramRunner<Settings extends RunnerSettings>
    * @return RunProfileStarter async result
    */
   @NotNull
-  protected abstract AsyncResult<RunProfileStarter> prepare(@NotNull ExecutionEnvironment environment, @NotNull RunProfileState state) throws ExecutionException;
+  protected AsyncResult<RunProfileStarter> prepare(@NotNull ExecutionEnvironment environment, @NotNull RunProfileState state) throws ExecutionException {
+    return prepare(environment.getProject(), environment, state);
+  }
+
+  /**
+   * @deprecated override {@link #prepare(ExecutionEnvironment, com.intellij.execution.configurations.RunProfileState)} instead
+   */
+  @Deprecated
+  protected AsyncResult<RunProfileStarter> prepare(@NotNull Project project, @NotNull ExecutionEnvironment environment, @NotNull RunProfileState state) throws ExecutionException {
+    throw new UnsupportedOperationException();
+  }
 
   private static void startRunProfile(@NotNull ExecutionEnvironment environment,
                                       @NotNull RunProfileState state,

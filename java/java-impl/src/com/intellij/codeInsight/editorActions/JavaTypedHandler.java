@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.JavaClassReferenceCompletionContributor;
 import com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
@@ -134,9 +135,15 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
         return Result.CONTINUE;
       }
       PsiElement st = leaf != null ? leaf.getParent() : null;
+      PsiElement prev = offset > 1 ? file.findElementAt(offset - 1) : null;
       if (CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET && isRparenth(leaf) &&
-          (st instanceof PsiWhileStatement || st instanceof PsiIfStatement) && noBody(st, doc)) {
-        new JavaSmartEnterProcessor().process(project, editor, file);
+          (st instanceof PsiWhileStatement || st instanceof PsiIfStatement) && shouldInsertStatementBody(st, doc, prev)) {
+        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+          @Override
+          public void run() {
+            new JavaSmartEnterProcessor().process(project, editor, file);
+          }
+        }, "Insert block statement", null);
         return Result.STOP;
       }
       if (PsiTreeUtil.getParentOfType(leaf, PsiCodeBlock.class, false, PsiMember.class) != null) {
@@ -149,9 +156,11 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     return Result.CONTINUE;
   }
 
-  private static boolean noBody(@NotNull PsiElement statement, @NotNull Document doc) {
+  private static boolean shouldInsertStatementBody(@NotNull PsiElement statement, @NotNull Document doc, @Nullable PsiElement prev) {
     PsiStatement block = statement instanceof PsiWhileStatement ? ((PsiWhileStatement)statement).getBody() : ((PsiIfStatement)statement).getThenBranch();
     PsiExpression condition = PsiTreeUtil.getChildOfType(statement, PsiExpression.class);
+    PsiExpression latestExpression = PsiTreeUtil.getParentOfType(prev, PsiExpression.class);
+    if (latestExpression instanceof PsiNewExpression && ((PsiNewExpression)latestExpression).getAnonymousClass() == null) return false;
     return !(block instanceof PsiBlockStatement) && (block == null || startLine(doc, block) != startLine(doc, statement) || condition == null);
   }
 

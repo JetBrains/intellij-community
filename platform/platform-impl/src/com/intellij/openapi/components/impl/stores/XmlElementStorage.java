@@ -382,11 +382,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       try {
         if (myStreamProvider != null && myStreamProvider.isEnabled() && (myProviderUpToDateHash == -1 || myProviderUpToDateHash != hash)) {
           try {
-            //noinspection IfStatementWithIdenticalBranches
-            if (saveForProvider(myStreamProvider)) {
-              //noinspection UnnecessaryReturnStatement
-              return;
-            }
+            saveForProvider(myStreamProvider);
           }
           finally {
             myProviderUpToDateHash = hash;
@@ -409,15 +405,15 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       }
     }
 
-    private boolean saveForProvider(@NotNull StreamProvider streamProvider) {
+    private void saveForProvider(@NotNull StreamProvider streamProvider) {
       if (!streamProvider.isApplicable(myFileSpec, RoamingType.PER_USER)) {
-        return false;
+        return;
       }
 
       Document document = getDocumentToSave();
       Element rootElement = document.getRootElement();
       if (rootElement.getChildren().isEmpty()) {
-        return false;
+        return;
       }
 
       // skip the whole document if some component has disabled roaming type
@@ -427,27 +423,29 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       // but this project id must not be shared
       if (!myFileSpec.equals(StoragePathMacros.WORKSPACE_FILE) &&
           rootElement.getContent(new RoamingElementFilter(RoamingType.DISABLED)).iterator().hasNext()) {
-        return false;
+        return;
       }
 
       RoamingElementFilter perPlatformFilter = new RoamingElementFilter(RoamingType.PER_PLATFORM);
       if (rootElement.getContent(perPlatformFilter).iterator().hasNext()) {
-        return doSaveForProvider(rootElement, new RoamingElementFilter(RoamingType.PER_USER)) ||
-               doSaveForProvider(rootElement, perPlatformFilter);
+        doSaveForProvider(rootElement, new RoamingElementFilter(RoamingType.PER_USER));
+        doSaveForProvider(rootElement, perPlatformFilter);
       }
       else {
-        return doSaveForProvider(document, RoamingType.PER_USER, streamProvider);
+        doSaveForProvider(document, RoamingType.PER_USER, streamProvider);
       }
     }
 
-    private boolean doSaveForProvider(Element element, RoamingElementFilter filter) {
+    private void doSaveForProvider(Element element, RoamingElementFilter filter) {
       Element copiedElement = JDOMUtil.cloneElement(element, filter);
-      return copiedElement != null && doSaveForProvider(new Document(copiedElement), filter.myRoamingType, myStreamProvider);
+      if (copiedElement != null) {
+        doSaveForProvider(new Document(copiedElement), filter.myRoamingType, myStreamProvider);
+      }
     }
 
-    private boolean doSaveForProvider(Document actualDocument, RoamingType roamingType, StreamProvider streamProvider) {
+    private void doSaveForProvider(Document actualDocument, RoamingType roamingType, StreamProvider streamProvider) {
       try {
-        boolean result = StorageUtil.doSendContent(streamProvider, myFileSpec, actualDocument, roamingType, true);
+        StorageUtil.doSendContent(streamProvider, myFileSpec, actualDocument, roamingType, true);
         if (streamProvider.isVersioningRequired()) {
           TObjectLongHashMap<String> versions = loadVersions(actualDocument.getRootElement().getChildren(StorageData.COMPONENT));
           if (!versions.isEmpty()) {
@@ -455,11 +453,9 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
             StorageUtil.doSendContent(streamProvider, myFileSpec + VERSION_FILE_SUFFIX, versionDoc, roamingType, true);
           }
         }
-        return result;
       }
       catch (IOException e) {
         LOG.warn(e);
-        return false;
       }
     }
 

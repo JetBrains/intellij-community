@@ -31,7 +31,6 @@ import org.jdom.Element;
   }
 )
 public class LegacyCodeStyleSettingsManager implements PersistentStateComponent<Element> {
-  
   private Element myState;
   
   @Override

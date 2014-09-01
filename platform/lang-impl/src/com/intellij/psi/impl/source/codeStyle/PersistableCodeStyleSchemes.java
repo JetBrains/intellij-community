@@ -18,8 +18,6 @@ package com.intellij.psi.impl.source.codeStyle;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.options.SchemesManagerFactory;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.psi.PsiBundle;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.util.xmlb.Accessor;
 import com.intellij.util.xmlb.SerializationFilter;
@@ -99,23 +97,7 @@ public class PersistableCodeStyleSchemes extends CodeStyleSchemesImpl implements
   @Override
   @NotNull
   public File[] getExportFiles() {
-    File schemesFile = new File(PathManager.getOptionsPath() + File.separator + CODE_STYLE_SCHEMES_FILE);
-    return new File[]{getDir(true), schemesFile};
+    return new File[]{new File(PathManager.getConfigPath() + File.separator + CODE_STYLES_DIRECTORY),
+      new File(PathManager.getOptionsPath() + File.separator + CODE_STYLE_SCHEMES_FILE)};
   }
-
-  @Nullable
-  private static File getDir(boolean create) {
-    String directoryPath = PathManager.getConfigPath() + File.separator + CODESTYLES_DIRECTORY;
-    File directory = new File(directoryPath);
-    if (!directory.exists()) {
-      if (!create) return null;
-      if (!directory.mkdir()) {
-        Messages.showErrorDialog(PsiBundle.message("codestyle.cannot.save.settings.directory.cant.be.created.message", directoryPath),
-                                 PsiBundle.message("codestyle.cannot.save.settings.directory.cant.be.created.title"));
-        return null;
-      }
-    }
-    return directory;
-  }
-
 }

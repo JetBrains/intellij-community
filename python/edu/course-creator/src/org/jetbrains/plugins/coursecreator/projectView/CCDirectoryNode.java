@@ -26,6 +26,8 @@ public class CCDirectoryNode extends PsiDirectoryNode {
 
   @Override
   protected void updateImpl(PresentationData data) {
+    //TODO:change presentable name for files with suffix _answer
+
     String valueName = myValue.getName();
     final Course course = CCProjectService.getInstance(myProject).getCourse();
     if (course == null) return;

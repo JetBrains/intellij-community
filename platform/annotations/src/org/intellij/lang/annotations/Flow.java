@@ -19,14 +19,14 @@ import org.jetbrains.annotations.NonNls;
 
 import java.lang.annotation.*;
 
-@Retention(RetentionPolicy.CLASS)
-@Target({ElementType.PARAMETER, ElementType.METHOD})
 /**
  * This annotation assists the 'Data flow to this' feature by describing data flow
  * from the method parameter to the corresponding container (e.g. <code>ArrayList.add(item)</code>)
  * or from the container to the method return value (e.g. <code>Set.toArray()</code>)
  * or between method parameters (e.g. <code>System.arraycopy(array1, 0, array2, length)</code>)
  */
+@Retention(RetentionPolicy.CLASS)
+@Target({ElementType.PARAMETER, ElementType.METHOD})
 public @interface Flow {
   /**
    * Denotes the source of the data flow.<br>
@@ -66,7 +66,7 @@ public @interface Flow {
   /**
    * true if the data source is container and we should track not the expression but its contents.<br>
    * E.g. the java.util.ArrayList constructor takes the collection and stores its contents:<br>
-   *   {@code ArrayList(@Flow(sourceIsContainer=true, targetIsContainer=true) Collection<? extends E> collection)}<br>
+   * ArrayList(<tt><pre>{@code @Flow(sourceIsContainer=true, targetIsContainer=true) Collection<? extends E> collection }</pre></tt>) <br>
    * By default it's false.
    */
   boolean sourceIsContainer() default false;

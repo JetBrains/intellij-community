@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.coursecreator.format.*;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -131,8 +132,52 @@ public class CCProjectService implements PersistentStateComponent<Element> {
     myDocumentListeners.remove(document);
   }
 
-  public static boolean indexIsValid(int index, List<TaskWindow> collection) {
+  public static boolean indexIsValid(int index, Collection collection) {
     int size = collection.size();
     return index >= 0 && index < size;
+  }
+
+  public boolean isTaskFile(VirtualFile file) {
+    if (myCourse == null) {
+      return false;
+    }
+    VirtualFile taskDir = file.getParent();
+    if (taskDir != null) {
+      String taskDirName = taskDir.getName();
+      if (taskDirName.contains("task")) {
+        VirtualFile lessonDir = taskDir.getParent();
+        if (lessonDir != null) {
+          String lessonDirName = lessonDir.getName();
+          int lessonIndex = getIndex(lessonDirName, "lesson");
+          List<Lesson> lessons = myCourse.getLessons();
+          if (!indexIsValid(lessonIndex, lessons)) {
+            return false;
+          }
+          Lesson lesson = lessons.get(lessonIndex);
+          int taskIndex = getIndex(taskDirName, "task");
+          List<Task> tasks = lesson.getTasklist();
+          if (!indexIsValid(taskIndex, tasks)) {
+            return false;
+          }
+          Task task = tasks.get(taskIndex);
+          return task.isTaskFile(file.getName());
+        }
+      }
+    }
+    return false;
+  }
+
+  public static int getIndex(@NotNull final String fullName, @NotNull final String logicalName) {
+    if (!fullName.contains(logicalName)) {
+      throw new IllegalArgumentException();
+    }
+    return Integer.parseInt(fullName.substring(logicalName.length())) - 1;
+  }
+  public static String getRealTaskFileName(String name) {
+    if (!name.contains(".answer")) {
+      return null;
+    }
+    int nameEnd = name.indexOf(".answer");
+    return name.substring(0, nameEnd) + ".py";
   }
 }

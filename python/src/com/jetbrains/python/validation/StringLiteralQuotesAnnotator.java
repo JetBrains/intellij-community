@@ -18,8 +18,10 @@ package com.jetbrains.python.validation;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -29,17 +31,16 @@ import java.util.List;
  * @author dcheryasov
  */
 public class StringLiteralQuotesAnnotator extends PyAnnotator {
-  public static final String MISSING_Q = "Missing closing quote";
   private static final String TRIPLE_QUOTES = "\"\"\"";
   private static final String TRIPLE_APOS = "'''";
 
   public void visitPyStringLiteralExpression(final PyStringLiteralExpression node) {
-    List<ASTNode> stringNodes = node.getStringNodes();
+    final List<ASTNode> stringNodes = node.getStringNodes();
     for (ASTNode stringNode : stringNodes) {
-      boolean foundError;
-      String nodeText = stringNode.getText();
-      int index = PyStringLiteralExpressionImpl.getPrefixLength(nodeText);
-      String unprefixed = nodeText.substring(index);
+      final String nodeText = stringNode.getText();
+      final int index = PyStringLiteralExpressionImpl.getPrefixLength(nodeText);
+      final String unprefixed = nodeText.substring(index);
+      final boolean foundError;
       if (StringUtil.startsWith(unprefixed, TRIPLE_QUOTES)) {
         foundError = checkTripleQuotedString(stringNode, unprefixed, TRIPLE_QUOTES);
       }
@@ -49,23 +50,33 @@ public class StringLiteralQuotesAnnotator extends PyAnnotator {
       else {
         foundError = checkQuotedString(stringNode, unprefixed);
       }
-      if (foundError) break;
+      if (foundError) {
+        break;
+      }
     }
   }
 
-  private boolean checkQuotedString(ASTNode stringNode, String nodeText) {
-    char firstQuote = nodeText.charAt(0);
-    int lastChar = nodeText.length()-1;
-    if (lastChar == 0 || nodeText.charAt(lastChar) != firstQuote ||
-        (nodeText.charAt(lastChar-1) == '\\' && (lastChar == 1 || nodeText.charAt(lastChar-2) != '\\'))) {
-      getHolder().createErrorAnnotation(stringNode, MISSING_Q + " [" + firstQuote + "]");
+  private boolean checkQuotedString(@NotNull ASTNode stringNode, @NotNull String nodeText) {
+    final char firstQuote = nodeText.charAt(0);
+    final char lastChar = nodeText.charAt(nodeText.length() - 1);
+    int precedingBackslashCount = 0;
+    for (int i = nodeText.length() - 2; i >= 0; i--) {
+      if (nodeText.charAt(i) == '\\') {
+        precedingBackslashCount++;
+      }
+      else {
+        break;
+      }
+    }
+    if (nodeText.length() == 1 || lastChar != firstQuote || precedingBackslashCount % 2 != 0) {
+      getHolder().createErrorAnnotation(stringNode, PyBundle.message("ANN.missing.closing.quote", firstQuote));
       return true;
     }
     return false;
   }
 
-  private boolean checkTripleQuotedString(ASTNode stringNode, String text, final String quotes) {
-    if (text.length() < 6  || !text.endsWith(quotes)) {
+  private boolean checkTripleQuotedString(@NotNull ASTNode stringNode, @NotNull String text, @NotNull String quotes) {
+    if (text.length() < 6 || !text.endsWith(quotes)) {
       int startOffset = StringUtil.trimTrailing(stringNode.getText()).lastIndexOf('\n');
       if (startOffset < 0) {
         startOffset = stringNode.getTextRange().getStartOffset();
@@ -73,8 +84,8 @@ public class StringLiteralQuotesAnnotator extends PyAnnotator {
       else {
         startOffset = stringNode.getTextRange().getStartOffset() + startOffset + 1;
       }
-      TextRange highlightRange = new TextRange(startOffset, stringNode.getTextRange().getEndOffset());
-      getHolder().createErrorAnnotation(highlightRange, "Missing closing triple quotes");
+      final TextRange highlightRange = new TextRange(startOffset, stringNode.getTextRange().getEndOffset());
+      getHolder().createErrorAnnotation(highlightRange, PyBundle.message("ANN.missing.closing.triple.quotes"));
       return true;
     }
     return false;

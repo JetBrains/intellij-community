@@ -29,8 +29,7 @@ import java.util.*;
 
 
 public abstract class AbstractSchemesManager<T extends Scheme, E extends ExternalizableScheme> implements SchemesManager<T,E> {
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.options.AbstractSchemesManager");
+  private static final Logger LOG = Logger.getInstance(AbstractSchemesManager.class);
 
   protected final List<T> mySchemes = new ArrayList<T>();
   private volatile T myCurrentScheme;

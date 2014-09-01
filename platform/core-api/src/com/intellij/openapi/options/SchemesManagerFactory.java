@@ -19,14 +19,16 @@ import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.ServiceBean;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class SchemesManagerFactory {
-  public static ExtensionPointName<ServiceBean> SCHEME_OWNER = ExtensionPointName.create("com.intellij.schemeOwner");  
+  public static final ExtensionPointName<ServiceBean> SCHEME_OWNER = ExtensionPointName.create("com.intellij.schemeOwner");
 
-  public abstract <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T,E> createSchemesManager(String fileSpec, SchemeProcessor<E> processor,
-                                                                            RoamingType roamingType);
+  public abstract <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T, E> createSchemesManager(@NotNull String fileSpec,
+                                                                                                               @NotNull SchemeProcessor<E> processor,
+                                                                                                               @NotNull RoamingType roamingType);
 
-  public static SchemesManagerFactory getInstance(){
+  public static SchemesManagerFactory getInstance() {
     return ServiceManager.getService(SchemesManagerFactory.class);
   }
 

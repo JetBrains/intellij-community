@@ -143,9 +143,12 @@ public class Messages {
 
     try {
       if (canShowMacSheetPanel()) {
-        Window parentWindow = WindowManager.getInstance().suggestParentWindow(project);
-        return MacMessages.getInstance()
-          .showMessageDialog(title, message, options, false, parentWindow, defaultOptionIndex, defaultOptionIndex, doNotAskOption);
+        WindowManager windowManager = WindowManager.getInstance();
+        if (windowManager != null) {
+          Window parentWindow = windowManager.suggestParentWindow(project);
+          return MacMessages.getInstance()
+            .showMessageDialog(title, message, options, false, parentWindow, defaultOptionIndex, defaultOptionIndex, doNotAskOption);
+        }
       }
     }
     catch (Exception exception) {

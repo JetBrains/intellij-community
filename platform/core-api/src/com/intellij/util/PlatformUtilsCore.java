@@ -22,7 +22,7 @@ public class PlatformUtilsCore {
   public static final String IDEA_PREFIX = "idea";
   public static final String COMMUNITY_PREFIX = "Idea";
   public static final String APPCODE_PREFIX = "AppCode";
-  public static final String CPP_PREFIX = "CppIde";
+  public static final String CLION_PREFIX = "CLion";
   public static final String PYCHARM_PREFIX = "Python";
   public static final String PYCHARM_PREFIX2 = "PyCharmCore";
   public static final String RUBY_PREFIX = "Ruby";
@@ -59,8 +59,8 @@ public class PlatformUtilsCore {
     return APPCODE_PREFIX.equals(getPlatformPrefix());
   }
 
-  public static boolean isCppIde() {
-    return CPP_PREFIX.equals(getPlatformPrefix());
+  public static boolean isCLion() {
+    return CLION_PREFIX.equals(getPlatformPrefix());
   }
 
   public static boolean isPyCharm() {

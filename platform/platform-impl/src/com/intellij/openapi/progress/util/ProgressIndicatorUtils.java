@@ -22,7 +22,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.ui.AppUIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.ide.PooledThreadExecutor;
+
+import java.util.concurrent.Executor;
 
 /**
  * @author gregsh
@@ -44,96 +48,76 @@ public class ProgressIndicatorUtils {
     return progress;
   }
 
-  public static void runWithWriteActionPriority(@NotNull final Runnable action) {
-    runWithWriteActionPriority(new ReadTask() {
-      @Override
-      public void computeInReadAction(@NotNull ProgressIndicator indicator) {
-        action.run();
-      }
-
-      @Override
-      public void onCanceled(@NotNull ProgressIndicator indicator) {
-      }
-    });
+  public static void scheduleWithWriteActionPriority(@NotNull ReadTask task) {
+    scheduleWithWriteActionPriority(new ProgressIndicatorBase(), task);
   }
 
-  public static void runWithWriteActionPriority(@NotNull final ReadTask task) {
-    runWithWriteActionPriority(new ProgressIndicatorBase(), task);
+  public static void scheduleWithWriteActionPriority(@NotNull ProgressIndicator progressIndicator, @NotNull ReadTask readTask) {
+    scheduleWithWriteActionPriority(progressIndicator, PooledThreadExecutor.INSTANCE, readTask);
   }
 
-  private static void surroundWithListener(@NotNull final ProgressIndicator progressIndicator, @NotNull Runnable runnable) {
-    final ApplicationAdapter listener = new ApplicationAdapter() {
-      @Override
-      public void beforeWriteActionStart(Object action) {
-        progressIndicator.cancel();
-      }
-    };
-    final Application application = ApplicationManager.getApplication();
-    application.addApplicationListener(listener);
-    try {
-      runnable.run();
-    }
-    finally {
-      application.removeApplicationListener(listener);
-    }
-  }
-
-
-  public static void runWithWriteActionPriority(@NotNull final ProgressIndicator progressIndicator, @NotNull final ReadTask task) {
-    surroundWithListener(progressIndicator, new Runnable() {
+  public static void scheduleWithWriteActionPriority(@NotNull final ProgressIndicator progressIndicator,
+                                                     @NotNull final Executor executor,
+                                                     @NotNull final ReadTask readTask) {
+    AppUIUtil.invokeOnEdt(new Runnable() {
       @Override
       public void run() {
-        runUnderProgress(progressIndicator, task);
+        final Application application = ApplicationManager.getApplication();
+        application.assertIsDispatchThread();
+        final ApplicationAdapter listener = new ApplicationAdapter() {
+          @Override
+          public void beforeWriteActionStart(Object action) {
+            progressIndicator.cancel();
+          }
+        };
+        application.addApplicationListener(listener);
+        try {
+          executor.execute(new Runnable() {
+            @Override
+            public void run() {
+              try {
+                runUnderProgress(progressIndicator, readTask);
+              }
+              finally {
+                application.removeApplicationListener(listener);
+              }
+            }
+          });
+        }
+        catch (RuntimeException e) {
+          application.removeApplicationListener(listener);
+          throw e;
+        }
+        catch (Error e) {
+          application.removeApplicationListener(listener);
+          throw e;
+        }
       }
     });
   }
 
   private static void runUnderProgress(@NotNull final ProgressIndicator progressIndicator, @NotNull final ReadTask task) {
     ProgressManager.getInstance().runProcess(new Runnable() {
-        @Override
-        public void run() {
-          // This read action can possible last for a long time, we want it to stop immediately on the first write access.
-          // For this purpose we launch it under empty progress and invoke progressIndicator#cancel on write access to avoid possible write lock delays.
-          try {
-            ApplicationManager.getApplication().runReadAction(new Runnable() {
-              @Override
-              public void run() {
-                task.computeInReadAction(progressIndicator);
-              }
-            });
-          }
-          catch (ProcessCanceledException ignore) {
-          }
-          finally {
-            if (progressIndicator.isCanceled()) {
-              task.onCanceled(progressIndicator);
-            }
-          }
-        }
-      }, progressIndicator);
-  }
-
-  public static void scheduleWithWriteActionPriority(@NotNull final ReadTask task) {
-    scheduleWithWriteActionPriority(new ProgressIndicatorBase(), task);
-  }
-
-  public static void scheduleWithWriteActionPriority(@NotNull final ProgressIndicator indicator, @NotNull final ReadTask task) {
-    // we have to attach listeners in EDT to avoid "fire write action started while attach listeners from another thread" race condition
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        surroundWithListener(indicator, new Runnable() {
-          @Override
-          public void run() {
-            ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-              @Override
-              public void run() {
-                runUnderProgress(indicator, task);
-              }
-            });
+        // This read action can possible last for a long time, we want it to stop immediately on the first write access.
+        // For this purpose we launch it under empty progress and invoke progressIndicator#cancel on write access to avoid possible write lock delays.
+        try {
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            @Override
+            public void run() {
+              task.computeInReadAction(progressIndicator);
+            }
+          });
+        }
+        catch (ProcessCanceledException ignore) {
+        }
+        finally {
+          if (progressIndicator.isCanceled()) {
+            task.onCanceled(progressIndicator);
           }
-        });
+        }
       }
-    });
+    }, progressIndicator);
   }
 }

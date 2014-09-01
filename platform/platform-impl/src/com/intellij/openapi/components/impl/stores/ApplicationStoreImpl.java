@@ -24,6 +24,7 @@ import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -36,12 +37,13 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
   private static final String XML_EXTENSION = ".xml";
   private static final String DEFAULT_STORAGE_SPEC = StoragePathMacros.APP_CONFIG + "/" + PathManager.DEFAULT_OPTIONS_FILE_NAME + XML_EXTENSION;
   private static final String OPTIONS_MACRO = "OPTIONS";
-  private static final String CONFIG_MACRO = "ROOT_CONFIG";
   private static final String ROOT_ELEMENT_NAME = "application";
 
   private final ApplicationImpl myApplication;
   private final StateStorageManager myStateStorageManager;
   private final DefaultsStateStorage myDefaultsStateStorage;
+
+  private String myConfigPath;
 
   // created from PicoContainer
   @SuppressWarnings({"UnusedDeclaration"})
@@ -53,23 +55,24 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
         return new FileBasedStorage.FileStorageData(ROOT_ELEMENT_NAME);
       }
 
+      @Nullable
       @Override
       protected String getOldStorageSpec(Object component, final String componentName, final StateStorageOperation operation) {
-        final String fileName;
-
         if (component instanceof NamedJDOMExternalizable) {
-          fileName = StoragePathMacros.APP_CONFIG + "/" + ((NamedJDOMExternalizable)component).getExternalFileName() + XML_EXTENSION;
+          return StoragePathMacros.APP_CONFIG + "/" + ((NamedJDOMExternalizable)component).getExternalFileName() + XML_EXTENSION;
         }
         else {
-          fileName = DEFAULT_STORAGE_SPEC;
+          return DEFAULT_STORAGE_SPEC;
         }
-
-        return fileName;
       }
 
       @Override
       protected String getVersionsFilePath() {
-        return PathManager.getConfigPath() + "/options/appComponentVersions.xml";
+        String configPath = myConfigPath;
+        if (configPath == null) {
+          configPath = PathManager.getConfigPath();
+        }
+        return configPath + "/options/appComponentVersions.xml";
       }
 
       @Override
@@ -97,7 +100,8 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
 
   @Override
   public void setConfigPath(@NotNull final String configPath) {
-    myStateStorageManager.addMacro(CONFIG_MACRO, configPath);
+    myStateStorageManager.addMacro(StoragePathMacros.getMacroName(StoragePathMacros.ROOT_CONFIG), configPath);
+    myConfigPath = configPath;
   }
 
   @Override
@@ -150,6 +154,7 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
     return myStateStorageManager;
   }
 
+  @Nullable
   @Override
   protected StateStorage getDefaultsStorage() {
     return myDefaultsStateStorage;

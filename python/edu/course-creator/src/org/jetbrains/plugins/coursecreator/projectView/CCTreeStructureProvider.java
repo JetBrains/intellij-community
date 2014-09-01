@@ -2,9 +2,11 @@ package org.jetbrains.plugins.coursecreator.projectView;
 
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,11 +29,21 @@ public class CCTreeStructureProvider implements TreeStructureProvider, DumbAware
       Project project = node.getProject();
       if (project != null) {
         if (node.getValue() instanceof PsiDirectory) {
-          PsiDirectory directory = (PsiDirectory) node.getValue();
+          PsiDirectory directory = (PsiDirectory)node.getValue();
           nodes.add(new CCDirectoryNode(project, directory, settings));
-        } else {
-          nodes.add(node);
+          continue;
         }
+        if (node instanceof PsiFileNode) {
+          PsiFileNode fileNode = (PsiFileNode)node;
+          VirtualFile virtualFile = fileNode.getVirtualFile();
+          if (virtualFile == null) {
+            continue;
+          }
+          if (CCProjectService.getInstance(project).isTaskFile(virtualFile)) {
+            continue;
+          }
+        }
+        nodes.add(node);
       }
     }
     return nodes;

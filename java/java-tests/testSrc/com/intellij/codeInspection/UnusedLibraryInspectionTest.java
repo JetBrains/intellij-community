@@ -25,6 +25,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.magicConstant.MagicConstantInspection;
 import com.intellij.codeInspection.unusedLibraries.UnusedLibrariesInspection;
@@ -37,6 +38,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.InspectionTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class UnusedLibraryInspectionTest extends InspectionTestCase {
   @Override
@@ -52,6 +54,12 @@ public class UnusedLibraryInspectionTest extends InspectionTestCase {
 
   private void doTest() throws Exception {
     doTest("/" + getTestName(true), new UnusedLibrariesInspection());
+  }
+
+  @NotNull
+  @Override
+  protected AnalysisScope createAnalysisScope(VirtualFile sourceDir) {
+    return new AnalysisScope(getProject());
   }
 
   public void testSimple() throws Exception { doTest(); }
