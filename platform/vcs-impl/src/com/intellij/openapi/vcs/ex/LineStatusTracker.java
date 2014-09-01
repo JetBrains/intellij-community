@@ -295,6 +295,23 @@ public class LineStatusTracker {
     }
   }
 
+  private void markFileUnchanged() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        FileDocumentManager.getInstance().saveDocument(myDocument);
+        boolean stillEmpty;
+        synchronized (myLock) {
+          stillEmpty = myRanges.isEmpty();
+        }
+        if (stillEmpty) {
+          // file was modified, and now it's not -> dirty local change
+          myVcsDirtyScopeManager.fileDirty(myVirtualFile);
+        }
+      }
+    });
+  }
+
   private class MyDocumentListener extends DocumentAdapter {
     // We have 3 document versions:
     // * VCS version
@@ -457,20 +474,7 @@ public class LineStatusTracker {
         }
 
         if (myRanges.isEmpty() && myVirtualFile != null) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              FileDocumentManager.getInstance().saveDocument(myDocument);
-              boolean stillEmpty;
-              synchronized (myLock) {
-                stillEmpty = myRanges.isEmpty();
-              }
-              if (stillEmpty) {
-                // file was modified, and now it's not -> dirty local change
-                myVcsDirtyScopeManager.fileDirty(myVirtualFile);
-              }
-            }
-          });
+          markFileUnchanged();
         }
       }
     }
@@ -815,6 +819,34 @@ public class LineStatusTracker {
 
           doUpdateRanges(beforeChangedLine1, beforeChangedLine2, shift, beforeTotalLines);
         }
+      }
+      catch (Throwable e) {
+        reinstallRanges();
+        if (e instanceof Error) throw ((Error)e);
+        if (e instanceof RuntimeException) throw ((RuntimeException)e);
+        throw new RuntimeException(e);
+      }
+      finally {
+        mySuppressUpdate = false;
+      }
+    }
+  }
+
+  public void rollbackChanges() {
+    myApplication.assertWriteAccessAllowed();
+
+    synchronized (myLock) {
+      if (myBulkUpdate) return;
+
+      try {
+        mySuppressUpdate = true;
+
+        myDocument.setText(myVcsDocument.getText());
+
+        removeAnathema();
+        removeHighlightersFromMarkupModel();
+
+        markFileUnchanged();
       }
       catch (Throwable e) {
         reinstallRanges();
