@@ -19,15 +19,18 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SortedComboBoxModel;
-import com.intellij.util.ui.AsyncProcessIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.api.GithubFullPath;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.util.Collection;
 import java.util.Comparator;
+
+import static org.jetbrains.plugins.github.GithubCreatePullRequestWorker.BranchInfo;
+import static org.jetbrains.plugins.github.GithubCreatePullRequestWorker.ForkInfo;
 
 /**
  * @author Aleksey Pivovarov
@@ -36,24 +39,34 @@ public class GithubCreatePullRequestPanel {
   private JTextField myTitleTextField;
   private JTextArea myDescriptionTextArea;
   private ComboBox myBranchComboBox;
-  private SortedComboBoxModel<String> myBranchModel;
+  private SortedComboBoxModel<ForkInfo> myForkModel;
+  private SortedComboBoxModel<BranchInfo> myBranchModel;
   private JPanel myPanel;
   private JButton myShowDiffButton;
   private JButton mySelectForkButton;
   private JLabel myForkLabel;
-  private AsyncProcessIcon myBusyIcon;
+  private ComboBox myForkComboBox;
 
   private boolean myTitleDescriptionUserModified = false;
 
   public GithubCreatePullRequestPanel() {
     myDescriptionTextArea.setBorder(BorderFactory.createEtchedBorder());
-    myBranchModel = new SortedComboBoxModel<String>(new Comparator<String>() {
+
+    myBranchModel = new SortedComboBoxModel<BranchInfo>(new Comparator<BranchInfo>() {
       @Override
-      public int compare(String o1, String o2) {
-        return StringUtil.naturalCompare(o1, o2);
+      public int compare(BranchInfo o1, BranchInfo o2) {
+        return StringUtil.naturalCompare(o1.getRemoteName(), o2.getRemoteName());
       }
     });
     myBranchComboBox.setModel(myBranchModel);
+
+    myForkModel = new SortedComboBoxModel<ForkInfo>(new Comparator<ForkInfo>() {
+      @Override
+      public int compare(ForkInfo o1, ForkInfo o2) {
+        return StringUtil.naturalCompare(o1.getPath().getUser(), o2.getPath().getUser());
+      }
+    });
+    myForkComboBox.setModel(myForkModel);
 
     DocumentListener userModifiedDocumentListener = new DocumentAdapter() {
       @Override
@@ -75,63 +88,50 @@ public class GithubCreatePullRequestPanel {
     return myDescriptionTextArea.getText();
   }
 
-  @NotNull
-  public String getBranch() {
-    return myBranchComboBox.getSelectedItem().toString();
+  @Nullable
+  public ForkInfo getSelectedFork() {
+    return myForkModel.getSelectedItem();
   }
 
-  public void setDiffEnabled(boolean enabled) {
-    myShowDiffButton.setEnabled(enabled);
+  @Nullable
+  public BranchInfo getSelectedBranch() {
+    return myBranchModel.getSelectedItem();
+  }
+
+  public void setSelectedFork(@Nullable GithubFullPath path) {
+    if (path != null) {
+      for (ForkInfo info : myForkModel.getItems()) {
+        if (path.equals(info.getPath())) {
+          myForkModel.setSelectedItem(info);
+          return;
+        }
+      }
+    }
+
+    if (myForkModel.getSize() > 0) myForkModel.setSelectedItem(myForkModel.get(0));
   }
 
   public void setSelectedBranch(@Nullable String branch) {
-    if (StringUtil.isEmptyOrSpaces(branch)) {
-      return;
+    if (branch != null) {
+      for (BranchInfo info : myBranchModel.getItems()) {
+        if (branch.equals(info.getRemoteName())) {
+          myBranchModel.setSelectedItem(info);
+          return;
+        }
+      }
     }
 
-    myBranchComboBox.setSelectedItem(branch);
+    if (myBranchModel.getSize() > 0) myBranchModel.setSelectedItem(myBranchModel.get(0));
   }
 
-  public void setBranches(@NotNull Collection<String> branches) {
-    myBranchModel.clear();
-    myBranchModel.addAll(branches);
-    if (branches.size() > 0) {
-      myBranchComboBox.setSelectedIndex(0);
-    }
+  public void setForks(@NotNull Collection<ForkInfo> forks) {
+    myForkModel.setSelectedItem(null);
+    myForkModel.setAll(forks);
   }
 
-  public JPanel getPanel() {
-    return myPanel;
-  }
-
-  @NotNull
-  public JComponent getPreferredComponent() {
-    return myTitleTextField;
-  }
-
-  @NotNull
-  public JComponent getBranchEditor() {
-    return myBranchComboBox;
-  }
-
-  @NotNull
-  public JComponent getTitleTextField() {
-    return myTitleTextField;
-  }
-
-  @NotNull
-  public JButton getShowDiffButton() {
-    return myShowDiffButton;
-  }
-
-  @NotNull
-  public JButton getSelectForkButton() {
-    return mySelectForkButton;
-  }
-
-  @NotNull
-  public ComboBox getBranchComboBox() {
-    return myBranchComboBox;
+  public void setBranches(@NotNull Collection<BranchInfo> branches) {
+    myBranchModel.setSelectedItem(null);
+    myBranchModel.setAll(branches);
   }
 
   public void setTitle(@Nullable String title) {
@@ -149,21 +149,41 @@ public class GithubCreatePullRequestPanel {
            (StringUtil.isEmptyOrSpaces(myTitleTextField.getText()) && StringUtil.isEmptyOrSpaces(myDescriptionTextArea.getText()));
   }
 
-  public void setForkName(@NotNull String forkName) {
-    myForkLabel.setText(forkName);
+  public void setDiffEnabled(boolean enabled) {
+    myShowDiffButton.setEnabled(enabled);
   }
 
-  public void setBusy(boolean enabled) {
-    if (enabled) {
-      myBusyIcon.resume();
-    }
-    else {
-      myBusyIcon.suspend();
-    }
+  @NotNull
+  public JComponent getTitleTextField() {
+    return myTitleTextField;
   }
 
-  private void createUIComponents() {
-    myBusyIcon = new AsyncProcessIcon("Loading diff...");
-    myBusyIcon.suspend();
+  @NotNull
+  public JButton getSelectForkButton() {
+    return mySelectForkButton;
+  }
+
+  @NotNull
+  public JButton getShowDiffButton() {
+    return myShowDiffButton;
+  }
+
+  @NotNull
+  public ComboBox getForkComboBox() {
+    return myForkComboBox;
+  }
+
+  @NotNull
+  public ComboBox getBranchComboBox() {
+    return myBranchComboBox;
+  }
+
+  public JPanel getPanel() {
+    return myPanel;
+  }
+
+  @NotNull
+  public JComponent getPreferredComponent() {
+    return myTitleTextField;
   }
 }

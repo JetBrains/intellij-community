@@ -22,6 +22,7 @@ import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
 import git4idea.test.TestDialogHandler;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
+import org.jetbrains.plugins.github.api.GithubConnection;
 import org.jetbrains.plugins.github.test.GithubTest;
 import org.jetbrains.plugins.github.ui.GithubShareDialog;
 
@@ -48,7 +49,7 @@ public abstract class GithubShareProjectTestBase extends GithubTest {
   }
 
   protected void deleteGithubRepo() throws IOException {
-    GithubApiUtil.deleteGithubRepository(myGitHubSettings.getAuthData(), myLogin1, PROJECT_NAME);
+    GithubApiUtil.deleteGithubRepository(new GithubConnection(myGitHubSettings.getAuthData()), myLogin1, PROJECT_NAME);
   }
 
   protected void registerDefaultShareDialogHandler() {

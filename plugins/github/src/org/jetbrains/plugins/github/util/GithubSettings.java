@@ -22,6 +22,7 @@ import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
@@ -60,6 +61,7 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     public boolean SAVE_PASSWORD = true;
     public int CONNECTION_TIMEOUT = 5000;
     public boolean VALID_GIT_AUTH = true;
+    public ThreeState CREATE_PULL_REQUEST_CREATE_REMOTE = ThreeState.UNSURE;
   }
 
   public static GithubSettings getInstance() {
@@ -128,6 +130,15 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
   public boolean isSavePasswordMakesSense() {
     final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
     return passwordSafe.getSettings().getProviderType() == PasswordSafeSettings.ProviderType.MASTER_PASSWORD;
+  }
+
+  @NotNull
+  public ThreeState getCreatePullRequestCreateRemote() {
+    return myState.CREATE_PULL_REQUEST_CREATE_REMOTE;
+  }
+
+  public void setCreatePullRequestCreateRemote(@NotNull ThreeState value) {
+    myState.CREATE_PULL_REQUEST_CREATE_REMOTE = value;
   }
 
   public void setAnonymousGist(final boolean anonymousGist) {

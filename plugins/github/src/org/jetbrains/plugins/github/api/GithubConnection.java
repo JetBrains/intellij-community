@@ -1,0 +1,491 @@
+package org.jetbrains.plugins.github.api;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonParser;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.net.ssl.CertificateManager;
+import org.apache.http.*;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.Credentials;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.*;
+import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.config.ConnectionConfig;
+import org.apache.http.conn.ssl.X509HostnameVerifier;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.auth.BasicScheme;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicHeader;
+import org.apache.http.protocol.HttpContext;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.plugins.github.exceptions.*;
+import org.jetbrains.plugins.github.util.GithubAuthData;
+import org.jetbrains.plugins.github.util.GithubSettings;
+import org.jetbrains.plugins.github.util.GithubUrlUtil;
+import org.jetbrains.plugins.github.util.GithubUtil;
+import sun.security.validator.ValidatorException;
+
+import javax.net.ssl.SSLHandshakeException;
+import java.awt.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.util.*;
+import java.util.List;
+
+import static org.jetbrains.plugins.github.api.GithubApiUtil.createDataFromRaw;
+import static org.jetbrains.plugins.github.api.GithubApiUtil.fromJson;
+
+public class GithubConnection {
+  private static final Logger LOG = GithubUtil.LOG;
+
+  private static final HttpRequestInterceptor PREEMPTIVE_BASIC_AUTH = new PreemptiveBasicAuthInterceptor();
+
+  @NotNull private final String myHost;
+  @NotNull private final CloseableHttpClient myClient;
+  private final boolean myReusable;
+
+  private volatile HttpUriRequest myRequest;
+  private volatile boolean myAborted;
+
+  @TestOnly
+  public GithubConnection(@NotNull GithubAuthData auth) {
+    this(auth, false);
+  }
+
+  public GithubConnection(@NotNull GithubAuthData auth, boolean reusable) {
+    myHost = auth.getHost();
+    myClient = createClient(auth);
+    myReusable = reusable;
+  }
+
+  private enum HttpVerb {
+    GET, POST, DELETE, HEAD, PATCH
+  }
+
+  @Nullable
+  public JsonElement getRequest(@NotNull String path,
+                                @NotNull Header... headers) throws IOException {
+    return request(path, null, Arrays.asList(headers), HttpVerb.GET).getJsonElement();
+  }
+
+  @Nullable
+  public JsonElement postRequest(@NotNull String path,
+                                 @Nullable String requestBody,
+                                 @NotNull Header... headers) throws IOException {
+    return request(path, requestBody, Arrays.asList(headers), HttpVerb.POST).getJsonElement();
+  }
+
+  @Nullable
+  public JsonElement patchRequest(@NotNull String path,
+                                  @Nullable String requestBody,
+                                  @NotNull Header... headers) throws IOException {
+    return request(path, requestBody, Arrays.asList(headers), HttpVerb.PATCH).getJsonElement();
+  }
+
+  @Nullable
+  public JsonElement deleteRequest(@NotNull String path,
+                                   @NotNull Header... headers) throws IOException {
+    return request(path, null, Arrays.asList(headers), HttpVerb.DELETE).getJsonElement();
+  }
+
+  @NotNull
+  public Header[] headRequest(@NotNull String path,
+                              @NotNull Header... headers) throws IOException {
+    return request(path, null, Arrays.asList(headers), HttpVerb.HEAD).getHeaders();
+  }
+
+  public void abort() {
+    if (myAborted) return;
+    myAborted = true;
+
+    HttpUriRequest request = myRequest;
+    if (request != null) request.abort();
+  }
+
+  public void close() throws IOException {
+    myClient.close();
+  }
+
+  @NotNull
+  private static CloseableHttpClient createClient(@NotNull GithubAuthData auth) {
+    HttpClientBuilder builder = HttpClients.custom();
+
+    return builder
+      .setDefaultRequestConfig(createRequestConfig(auth))
+      .setDefaultConnectionConfig(createConnectionConfig(auth))
+      .setDefaultCredentialsProvider(createCredentialsProvider(auth))
+      .setDefaultHeaders(createHeaders(auth))
+      .addInterceptorFirst(PREEMPTIVE_BASIC_AUTH)
+      .setSslcontext(CertificateManager.getInstance().getSslContext())
+      .setHostnameVerifier((X509HostnameVerifier)CertificateManager.HOSTNAME_VERIFIER)
+      .build();
+  }
+
+  @NotNull
+  private static RequestConfig createRequestConfig(@NotNull GithubAuthData auth) {
+    RequestConfig.Builder builder = RequestConfig.custom();
+
+    int timeout = GithubSettings.getInstance().getConnectionTimeout();
+    builder
+      .setConnectTimeout(timeout)
+      .setSocketTimeout(timeout);
+
+    final HttpConfigurable proxySettings = HttpConfigurable.getInstance();
+    if (auth.isUseProxy() && proxySettings.USE_HTTP_PROXY && !StringUtil.isEmptyOrSpaces(proxySettings.PROXY_HOST)) {
+      builder
+        .setProxy(new HttpHost(proxySettings.PROXY_HOST, proxySettings.PROXY_PORT));
+    }
+
+    return builder.build();
+  }
+
+  @NotNull
+  private static ConnectionConfig createConnectionConfig(@NotNull GithubAuthData auth) {
+    return ConnectionConfig.custom()
+      .setCharset(Consts.UTF_8)
+      .build();
+  }
+
+
+  @NotNull
+  private static CredentialsProvider createCredentialsProvider(@NotNull GithubAuthData auth) {
+    CredentialsProvider provider = new BasicCredentialsProvider();
+    // Basic authentication
+    GithubAuthData.BasicAuth basicAuth = auth.getBasicAuth();
+    if (basicAuth != null) {
+      provider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(basicAuth.getLogin(), basicAuth.getPassword()));
+    }
+
+    final HttpConfigurable proxySettings = HttpConfigurable.getInstance();
+    //proxySettings.USE_HTTP_PROXY
+    if (auth.isUseProxy() && proxySettings.USE_HTTP_PROXY && !StringUtil.isEmptyOrSpaces(proxySettings.PROXY_HOST)) {
+      if (proxySettings.PROXY_AUTHENTICATION) {
+        provider.setCredentials(new AuthScope(proxySettings.PROXY_HOST, proxySettings.PROXY_PORT),
+                                new UsernamePasswordCredentials(proxySettings.PROXY_LOGIN, proxySettings.getPlainProxyPassword()));
+      }
+    }
+    return provider;
+  }
+
+  @NotNull
+  private static Collection<? extends Header> createHeaders(@NotNull GithubAuthData auth) {
+    List<Header> headers = new ArrayList<Header>();
+    GithubAuthData.TokenAuth tokenAuth = auth.getTokenAuth();
+    if (tokenAuth != null) {
+      headers.add(new BasicHeader("Authorization", "token " + tokenAuth.getToken()));
+    }
+    GithubAuthData.BasicAuth basicAuth = auth.getBasicAuth();
+    if (basicAuth != null && basicAuth.getCode() != null) {
+      headers.add(new BasicHeader("X-GitHub-OTP", basicAuth.getCode()));
+    }
+    return headers;
+  }
+
+  @NotNull
+  private ResponsePage request(@NotNull String path,
+                               @Nullable String requestBody,
+                               @NotNull Collection<Header> headers,
+                               @NotNull HttpVerb verb) throws IOException {
+    if (myAborted) throw new GithubOperationCanceledException();
+
+    if (EventQueue.isDispatchThread() && !ApplicationManager.getApplication().isUnitTestMode()) {
+      LOG.warn("Network operation in EDT"); // TODO: fix
+    }
+
+    CloseableHttpResponse response = null;
+    try {
+      String uri = GithubUrlUtil.getApiUrl(myHost) + path;
+      response = doREST(uri, requestBody, headers, verb);
+
+      if (myAborted) throw new GithubOperationCanceledException();
+
+      checkStatusCode(response, requestBody);
+
+      HttpEntity entity = response.getEntity();
+      if (entity == null) {
+        return createResponse(response);
+      }
+
+      JsonElement ret = parseResponse(entity.getContent());
+      if (ret.isJsonNull()) {
+        return createResponse(response);
+      }
+
+      String newPath = null;
+      Header pageHeader = response.getFirstHeader("Link");
+      if (pageHeader != null) {
+        for (HeaderElement element : pageHeader.getElements()) {
+          NameValuePair rel = element.getParameterByName("rel");
+          if (rel != null && "next".equals(rel.getValue())) {
+            String urlString = element.toString();
+            int begin = urlString.indexOf('<');
+            int end = urlString.lastIndexOf('>');
+            if (begin == -1 || end == -1) {
+              LOG.error("Invalid 'Link' header", "{" + pageHeader.toString() + "}");
+              break;
+            }
+
+            String url = urlString.substring(begin + 1, end);
+            String newUrl = GithubUrlUtil.removeProtocolPrefix(url);
+            int index = newUrl.indexOf('/');
+            newPath = newUrl.substring(index);
+            break;
+          }
+        }
+      }
+
+      return createResponse(ret, newPath, response);
+    }
+    catch (SSLHandshakeException e) { // User canceled operation from CertificateManager
+      if (e.getCause() instanceof ValidatorException) {
+        LOG.info("Host SSL certificate is not trusted", e);
+        throw new GithubOperationCanceledException("Host SSL certificate is not trusted", e);
+      }
+      throw e;
+    }
+    catch (IOException e) {
+      if (myAborted) throw new GithubOperationCanceledException("Operation canceled", e);
+      throw e;
+    }
+    finally {
+      myRequest = null;
+      if (response != null) {
+        response.close();
+      }
+      if (!myReusable) {
+        myClient.close();
+      }
+    }
+  }
+
+  @NotNull
+  private CloseableHttpResponse doREST(@NotNull final String uri,
+                                       @Nullable final String requestBody,
+                                       @NotNull final Collection<Header> headers,
+                                       @NotNull final HttpVerb verb) throws IOException {
+    HttpRequestBase request;
+    switch (verb) {
+      case POST:
+        request = new HttpPost(uri);
+        if (requestBody != null) {
+          ((HttpPost)request).setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
+        }
+        break;
+      case PATCH:
+        request = new HttpPatch(uri);
+        if (requestBody != null) {
+          ((HttpPatch)request).setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
+        }
+        break;
+      case GET:
+        request = new HttpGet(uri);
+        break;
+      case DELETE:
+        request = new HttpDelete(uri);
+        break;
+      case HEAD:
+        request = new HttpHead(uri);
+        break;
+      default:
+        throw new IllegalStateException("Unknown HttpVerb: " + verb.toString());
+    }
+
+    for (Header header : headers) {
+      request.addHeader(header);
+    }
+
+    myRequest = request;
+    return myClient.execute(request);
+  }
+
+  private static void checkStatusCode(@NotNull CloseableHttpResponse response, @Nullable String body) throws IOException {
+    int code = response.getStatusLine().getStatusCode();
+    switch (code) {
+      case HttpStatus.SC_OK:
+      case HttpStatus.SC_CREATED:
+      case HttpStatus.SC_ACCEPTED:
+      case HttpStatus.SC_NO_CONTENT:
+        return;
+      case HttpStatus.SC_UNAUTHORIZED:
+      case HttpStatus.SC_PAYMENT_REQUIRED:
+      case HttpStatus.SC_FORBIDDEN:
+        String message = getErrorMessage(response);
+
+        Header headerOTP = response.getFirstHeader("X-GitHub-OTP");
+        if (headerOTP != null) {
+          for (HeaderElement element : headerOTP.getElements()) {
+            if ("required".equals(element.getName())) {
+              throw new GithubTwoFactorAuthenticationException(message);
+            }
+          }
+        }
+
+        if (message.contains("API rate limit exceeded")) {
+          throw new GithubRateLimitExceededException(message);
+        }
+
+        throw new GithubAuthenticationException("Request response: " + message);
+      case HttpStatus.SC_BAD_REQUEST:
+      case HttpStatus.SC_UNPROCESSABLE_ENTITY:
+        if (body != null) {
+          LOG.info(body);
+        }
+        throw new GithubStatusCodeException(code + ": " + getErrorMessage(response), code);
+      default:
+        throw new GithubStatusCodeException(code + ": " + getErrorMessage(response), code);
+    }
+  }
+
+  @NotNull
+  private static String getErrorMessage(@NotNull CloseableHttpResponse response) {
+    try {
+      HttpEntity entity = response.getEntity();
+      if (entity != null) {
+        GithubErrorMessageRaw error = fromJson(parseResponse(entity.getContent()), GithubErrorMessageRaw.class);
+        return response.getStatusLine().getReasonPhrase() + " - " + error.getMessage();
+      }
+    }
+    catch (IOException e) {
+      LOG.info(e);
+    }
+    return response.getStatusLine().getReasonPhrase();
+  }
+
+  @NotNull
+  private static JsonElement parseResponse(@NotNull InputStream githubResponse) throws IOException {
+    Reader reader = new InputStreamReader(githubResponse, "UTF-8");
+    try {
+      return new JsonParser().parse(reader);
+    }
+    catch (JsonParseException jse) {
+      throw new GithubJsonException("Couldn't parse GitHub response", jse);
+    }
+    finally {
+      reader.close();
+    }
+  }
+
+  public static class PagedRequest<T> {
+    @Nullable private String myNextPage;
+    @NotNull private final Collection<Header> myHeaders;
+    @NotNull private final Class<T> myResult;
+    @NotNull private final Class<? extends DataConstructor[]> myRawArray;
+
+    @SuppressWarnings("NullableProblems")
+    public PagedRequest(@NotNull String path,
+                        @NotNull Class<T> result,
+                        @NotNull Class<? extends DataConstructor[]> rawArray,
+                        @NotNull Header... headers) {
+      myNextPage = path;
+      myResult = result;
+      myRawArray = rawArray;
+      myHeaders = Arrays.asList(headers);
+    }
+
+    @NotNull
+    public List<T> next(@NotNull GithubConnection connection) throws IOException {
+      if (myNextPage == null) {
+        throw new NoSuchElementException();
+      }
+
+      String page = myNextPage;
+      myNextPage = null;
+
+      ResponsePage response = connection.request(page, null, myHeaders, HttpVerb.GET);
+
+      if (response.getJsonElement() == null) {
+        throw new GithubConfusingException("Empty response");
+      }
+
+      if (!response.getJsonElement().isJsonArray()) {
+        throw new GithubJsonException("Wrong json type: expected JsonArray", new Exception(response.getJsonElement().toString()));
+      }
+
+      myNextPage = response.getNextPage();
+
+      List<T> result = new ArrayList<T>();
+      for (DataConstructor raw : fromJson(response.getJsonElement().getAsJsonArray(), myRawArray)) {
+        result.add(createDataFromRaw(raw, myResult));
+      }
+      return result;
+    }
+
+    public boolean hasNext() {
+      return myNextPage != null;
+    }
+
+    @NotNull
+    public List<T> getAll(@NotNull GithubConnection connection) throws IOException {
+      List<T> result = new ArrayList<T>();
+      while (hasNext()) {
+        result.addAll(next(connection));
+      }
+      return result;
+    }
+  }
+
+  private ResponsePage createResponse(@NotNull CloseableHttpResponse response) throws GithubOperationCanceledException {
+    if (myAborted) throw new GithubOperationCanceledException();
+
+    return new ResponsePage(null, null, response.getAllHeaders());
+  }
+
+  private ResponsePage createResponse(@NotNull JsonElement ret, @Nullable String path, @NotNull CloseableHttpResponse response)
+    throws GithubOperationCanceledException {
+    if (myAborted) throw new GithubOperationCanceledException();
+
+    return new ResponsePage(ret, path, response.getAllHeaders());
+  }
+
+  private static class ResponsePage {
+    @Nullable private final JsonElement myResponse;
+    @Nullable private final String myNextPage;
+    @NotNull private final Header[] myHeaders;
+
+    public ResponsePage(@Nullable JsonElement response, @Nullable String next, @NotNull Header[] headers) {
+      myResponse = response;
+      myNextPage = next;
+      myHeaders = headers;
+    }
+
+    @Nullable
+    public JsonElement getJsonElement() {
+      return myResponse;
+    }
+
+    @Nullable
+    public String getNextPage() {
+      return myNextPage;
+    }
+
+    @NotNull
+    public Header[] getHeaders() {
+      return myHeaders;
+    }
+  }
+
+  private static class PreemptiveBasicAuthInterceptor implements HttpRequestInterceptor {
+    @Override
+    public void process(HttpRequest request, HttpContext context) throws HttpException, IOException {
+      CredentialsProvider provider = (CredentialsProvider)context.getAttribute(HttpClientContext.CREDS_PROVIDER);
+      Credentials credentials = provider.getCredentials(AuthScope.ANY);
+      if (credentials != null) {
+        request.addHeader(new BasicScheme(Consts.UTF_8).authenticate(credentials, request, context));
+      }
+    }
+  }
+}
