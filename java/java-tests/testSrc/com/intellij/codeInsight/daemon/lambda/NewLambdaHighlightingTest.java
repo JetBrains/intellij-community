@@ -76,7 +76,6 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA122616() { doTest(); }
   public void testIDEA122700() { doTest(); }
   public void testIDEA122406() { doTest(); }
-  @Bombed(day = 30, month = Calendar.SEPTEMBER)
   public void testNestedCallsInsideLambdaReturnExpression() { doTest(); }
   @Bombed(day = 30, month = Calendar.SEPTEMBER)
   public void testIDEA123731() { doTest(); }
@@ -95,6 +94,7 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA126809() { doTest(); }
   public void testIDEA124424() { doTest(); }
   public void testNestedLambdaExpressions1() { doTest(); }
+  public void testNestedLambdaExpressionsNoFormalParams() { doTest(); }
 
   public void testIDEA127596() throws Exception {
     doTest();

@@ -267,11 +267,9 @@ public class InferenceSession {
                                             boolean varargs, boolean toplevel) {
     for (int i = 0; i < args.length; i++) {
       if (args[i] != null) {
-        InferenceSession session = myNestedSessions.get(PsiTreeUtil.getParentOfType(args[i], PsiCallExpression.class));
-        if (session == null) {
-          session = this;
-        }
-        PsiType parameterType = session.substituteWithInferenceVariables(getParameterType(parameters, i, siteSubstitutor, varargs));
+        final InferenceSession nestedCallSession = findNestedCallSession(args[i]);
+        final PsiType parameterType =
+          nestedCallSession.substituteWithInferenceVariables(getParameterType(parameters, i, siteSubstitutor, varargs));
         if (!isPertinentToApplicability(args[i], parentMethod)) {
           additionalConstraints.add(new ExpressionCompatibilityConstraint(args[i], parameterType));
         }
@@ -881,45 +879,66 @@ public class InferenceSession {
       //extract subset of constraints
       final Set<ConstraintFormula> subset = buildSubset(additionalConstraints);
 
-      //collect all input variables of selection 
+      //collect all input variables of selection
       final Set<InferenceVariable> varsToResolve = new LinkedHashSet<InferenceVariable>();
       for (ConstraintFormula formula : subset) {
         if (formula instanceof InputOutputConstraintFormula) {
-          final Set<InferenceVariable> inputVariables = ((InputOutputConstraintFormula)formula).getInputVariables(this);
-          if (inputVariables != null) {
-            for (InferenceVariable inputVariable : inputVariables) {
-              varsToResolve.addAll(inputVariable.getDependencies(this));
-            }
-            varsToResolve.addAll(inputVariables);
-          }
+          collectVarsToResolve(varsToResolve, (InputOutputConstraintFormula)formula);
         }
       }
 
-      //resolve input variables
-      PsiSubstitutor substitutor = resolveSubset(varsToResolve, siteSubstitutor);
-      if (substitutor == null) {
+      for (ConstraintFormula formula : subset) {
+        if (!processOneConstraint(formula, siteSubstitutor, varsToResolve)) return false;
+      }
+    }
+    return true;
+  }
+
+  private void collectVarsToResolve(Set<InferenceVariable> varsToResolve, InputOutputConstraintFormula formula) {
+    final Set<InferenceVariable> inputVariables = formula.getInputVariables(this);
+    if (inputVariables != null) {
+      for (InferenceVariable inputVariable : inputVariables) {
+        varsToResolve.addAll(inputVariable.getDependencies(this));
+      }
+      varsToResolve.addAll(inputVariables);
+    }
+  }
+
+  private boolean processOneConstraint(ConstraintFormula formula, PsiSubstitutor siteSubstitutor, Set<InferenceVariable> varsToResolve) {
+    if (formula instanceof ExpressionCompatibilityConstraint) {
+      final PsiExpression expression = ((ExpressionCompatibilityConstraint)formula).getExpression();
+      final PsiCallExpression callExpression = PsiTreeUtil.getParentOfType(expression, PsiCallExpression.class, false);
+      if (callExpression != null) {
+        final InferenceSession session = myNestedSessions.get(callExpression);
+        if (session != null) {
+          formula.apply(session.myInferenceSubstitution, true);
+          collectVarsToResolve(varsToResolve, (InputOutputConstraintFormula)formula);
+        }
+      }
+    }
+
+    //resolve input variables
+    PsiSubstitutor substitutor = resolveSubset(varsToResolve, siteSubstitutor);
+    if (substitutor == null) {
+      return false;
+    }
+
+    if (myContext instanceof PsiCallExpression) {
+      PsiExpressionList argumentList = ((PsiCallExpression)myContext).getArgumentList();
+      LOG.assertTrue(argumentList != null);
+      MethodCandidateInfo.updateSubstitutor(argumentList, substitutor);
+    }
+
+    try {
+      formula.apply(substitutor, true);
+
+      myConstraints.add(formula);
+      if (!repeatInferencePhases(true)) {
         return false;
       }
-
-      if (myContext instanceof PsiCallExpression) {
-        PsiExpressionList argumentList = ((PsiCallExpression)myContext).getArgumentList();
-        LOG.assertTrue(argumentList != null);
-        MethodCandidateInfo.updateSubstitutor(argumentList, substitutor);
-      }
-
-      try {
-        for (ConstraintFormula additionalConstraint : subset) {
-          additionalConstraint.apply(substitutor, true);
-        }
-
-        myConstraints.addAll(subset);
-        if (!repeatInferencePhases(true)) {
-          return false;
-        }
-      }
-      finally {
-        LambdaUtil.ourFunctionTypes.set(null);
-      }
+    }
+    finally {
+      LambdaUtil.ourFunctionTypes.set(null);
     }
     return true;
   }
@@ -1314,6 +1333,14 @@ public class InferenceSession {
 
   public PsiType substituteWithInferenceVariables(PsiType type) {
     return myInferenceSubstitution.substitute(type);
+  }
+
+  public InferenceSession findNestedCallSession(PsiExpression arg) {
+    InferenceSession session = myNestedSessions.get(PsiTreeUtil.getParentOfType(arg, PsiCallExpression.class));
+    if (session == null) {
+      session = this;
+    }
+    return session;
   }
 
   public PsiType startWithFreshVars(PsiType type) {
