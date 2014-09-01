@@ -125,24 +125,25 @@ public class StorageUtil {
   }
 
   @Nullable
-  static VirtualFile save(@NotNull IFile file, @Nullable Parent element, Object requestor) throws StateStorageException {
+  static VirtualFile save(@NotNull IFile file, @Nullable Parent element, Object requestor, boolean wrapAsDocument) throws StateStorageException {
     if (isEmpty(element)) {
       file.delete();
       return null;
     }
 
+    Parent document = !wrapAsDocument || element instanceof Document ? element : new Document((Element)element);
     try {
       BufferExposingByteArrayOutputStream byteOut;
       if (file.exists()) {
         Pair<byte[], String> pair = loadFile(LocalFileSystem.getInstance().findFileByIoFile(file));
-        byteOut = writeToBytes(element, pair.second);
+        byteOut = writeToBytes(document, pair.second);
         if (equal(pair.first, byteOut)) {
           return null;
         }
       }
       else {
         file.createParentDirs();
-        byteOut = writeToBytes(element, SystemProperties.getLineSeparator());
+        byteOut = writeToBytes(document, SystemProperties.getLineSeparator());
       }
 
       // mark this action as modifying the file which daemon analyzer should ignore

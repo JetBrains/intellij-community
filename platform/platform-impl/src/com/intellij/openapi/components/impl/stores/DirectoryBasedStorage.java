@@ -205,7 +205,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
               myDir.mkDir();
             }
 
-            StorageUtil.save(file, element, MySaveSession.this);
+            StorageUtil.save(file, element, MySaveSession.this, false);
             myStorageData.updateLastTimestamp(file);
           }
         }

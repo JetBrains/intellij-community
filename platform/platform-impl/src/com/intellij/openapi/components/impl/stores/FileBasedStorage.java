@@ -173,7 +173,7 @@ public class FileBasedStorage extends XmlElementStorage {
       }
 
       LOG.assertTrue(myFile != null);
-      myCachedVirtualFile = StorageUtil.save(myFile, getElementToSave(), this);
+      myCachedVirtualFile = StorageUtil.save(myFile, getElementToSave(), this, true);
     }
 
     @NotNull
