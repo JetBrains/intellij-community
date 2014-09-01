@@ -116,8 +116,11 @@ public final class IcsManager implements ApplicationLoadListener, Disposable {
   }
 
   @TestOnly
-  void setRepositoryManager(@NotNull RepositoryManager repositoryManager) {
+  void setRepositoryManager(@Nullable RepositoryManager repositoryManager) {
     this.repositoryManager = repositoryManager;
+    if (repositoryManager != null && !(((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager().getStreamProvider() instanceof IcsStreamProvider)) {
+      registerApplicationLevelProviders(ApplicationManager.getApplication());
+    }
   }
 
   private void scheduleCommit() {
@@ -136,7 +139,8 @@ public final class IcsManager implements ApplicationLoadListener, Disposable {
 
     connectAndUpdateRepository(application);
 
-    IcsStreamProvider streamProvider = new IcsStreamProvider(null) {
+    StateStorageManager storageManager = ((ApplicationImpl)application).getStateStore().getStateStorageManager();
+    storageManager.setStreamProvider(new IcsStreamProvider(null) {
       @NotNull
       @Override
       public Collection<String> listSubFiles(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
@@ -152,14 +156,14 @@ public final class IcsManager implements ApplicationLoadListener, Disposable {
         repositoryManager.delete(IcsUrlBuilder.buildPath(fileSpec, roamingType, null));
         scheduleCommit();
       }
-    };
-    StateStorageManager storageManager = ((ApplicationImpl)application).getStateStore().getStateStorageManager();
-    storageManager.setStreamProvider(streamProvider);
+    });
 
-    Collection<String> storageFileNames = storageManager.getStorageFileNames();
-    if (!storageFileNames.isEmpty()) {
-      updateStoragesFromStreamProvider(storageManager, storageFileNames);
-      SchemesManagerFactory.getInstance().updateConfigFilesFromStreamProviders();
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      Collection<String> storageFileNames = storageManager.getStorageFileNames();
+      if (!storageFileNames.isEmpty()) {
+        updateStoragesFromStreamProvider(storageManager, storageFileNames);
+        SchemesManagerFactory.getInstance().updateConfigFilesFromStreamProviders();
+      }
     }
   }
 
@@ -347,6 +351,10 @@ public final class IcsManager implements ApplicationLoadListener, Disposable {
 
   @Override
   public void beforeApplicationLoaded(Application application) {
+    if (application.isUnitTestMode()) {
+      return;
+    }
+
     registerApplicationLevelProviders(application);
 
     application.getMessageBus().connect().subscribe(ProjectLifecycleListener.TOPIC,

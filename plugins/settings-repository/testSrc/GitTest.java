@@ -90,23 +90,31 @@ public class GitTest {
   @After
   public void tearDown() throws Exception {
     try {
-      if (fixture != null) {
-        SwingUtilities.invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              fixture.tearDown();
-            }
-            catch (Exception e) {
-              throw new RuntimeException(e);
-            }
-          }
-        });
+      IcsManager icsManager = IcsManager.getInstance();
+      if (icsManager != null) {
+        icsManager.setRepositoryManager(null);
       }
     }
     finally {
-      if (ICS_DIR != null) {
-        FileUtil.delete(ICS_DIR);
+      try {
+        if (fixture != null) {
+          SwingUtilities.invokeAndWait(new Runnable() {
+            @Override
+            public void run() {
+              try {
+                fixture.tearDown();
+              }
+              catch (Exception e) {
+                throw new RuntimeException(e);
+              }
+            }
+          });
+        }
+      }
+      finally {
+        if (ICS_DIR != null) {
+          FileUtil.delete(ICS_DIR);
+        }
       }
     }
   }
