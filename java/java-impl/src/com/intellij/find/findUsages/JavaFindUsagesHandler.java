@@ -331,8 +331,14 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     if (options instanceof JavaClassFindUsagesOptions) {
       final JavaClassFindUsagesOptions classOptions = (JavaClassFindUsagesOptions)options;
       final PsiClass psiClass = (PsiClass)element;
+      PsiManager manager = ApplicationManager.getApplication().runReadAction(new Computable<PsiManager>() {
+        @Override
+        public PsiManager compute() {
+          return psiClass.getManager();
+        }
+      });
       if (classOptions.isMethodsUsages){
-        if (!addMethodsUsages(psiClass, processor, classOptions)) return false;
+        if (!addMethodsUsages(psiClass, manager, processor, classOptions)) return false;
       }
       if (classOptions.isFieldsUsages){
         if (!addFieldsUsages(psiClass, processor, classOptions)) return false;
@@ -495,22 +501,34 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
   }
 
   private static boolean addMethodsUsages(@NotNull final PsiClass aClass,
+                                          @NotNull final PsiManager manager,
                                           @NotNull final Processor<UsageInfo> processor,
                                           @NotNull final JavaClassFindUsagesOptions options) {
     if (options.isIncludeInherited) {
-      final PsiManager manager = aClass.getManager();
-      PsiMethod[] methods = aClass.getAllMethods();
-      MethodsLoop:
+      final PsiMethod[] methods = ApplicationManager.getApplication().runReadAction(new Computable<PsiMethod[]>() {
+        @Override
+        public PsiMethod[] compute() {
+          return aClass.getAllMethods();
+        }
+      });
       for(int i = 0; i < methods.length; i++){
         final PsiMethod method = methods[i];
-        // filter overriden methods
-        MethodSignature methodSignature = method.getSignature(PsiSubstitutor.EMPTY);
-        for(int j = 0; j < i; j++){
-          if (methodSignature.equals(methods[j].getSignature(PsiSubstitutor.EMPTY))) continue MethodsLoop;
-        }
-        final PsiClass methodClass = method.getContainingClass();
-        if (methodClass != null && manager.areElementsEquivalent(methodClass, aClass)){
-          if (!addElementUsages(methods[i], processor, options)) return false;
+        // filter overridden methods
+        final int finalI = i;
+        final PsiClass methodClass =
+        ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+          @Override
+          public PsiClass compute() {
+            MethodSignature methodSignature = method.getSignature(PsiSubstitutor.EMPTY);
+            for (int j = 0; j < finalI; j++) {
+              if (methodSignature.equals(methods[j].getSignature(PsiSubstitutor.EMPTY))) return null;
+            }
+            return method.getContainingClass();
+          }
+        });
+        if (methodClass == null) continue;
+        if (manager.areElementsEquivalent(methodClass, aClass)){
+          if (!addElementUsages(method, processor, options)) return false;
         }
         else {
           MethodReferencesSearch.SearchParameters parameters =
@@ -528,7 +546,13 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
       }
     }
     else {
-      for (PsiMethod method : aClass.getMethods()) {
+      PsiMethod[] methods = ApplicationManager.getApplication().runReadAction(new Computable<PsiMethod[]>() {
+        @Override
+        public PsiMethod[] compute() {
+          return aClass.getMethods();
+        }
+      });
+      for (PsiMethod method : methods) {
         if (!addElementUsages(method, processor, options)) return false;
       }
     }
