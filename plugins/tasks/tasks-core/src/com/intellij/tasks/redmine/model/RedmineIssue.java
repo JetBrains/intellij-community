@@ -19,7 +19,7 @@ public class RedmineIssue {
   private IssueStatus status;
   @Mandatory
   private String subject;
-  @Mandatory
+  // IDEA-126470 May be missing if issue was not created via web-interface
   private String description;
   @SerializedName("done_ratio")
   private int doneRatio;
@@ -45,7 +45,7 @@ public class RedmineIssue {
     return subject;
   }
 
-  @NotNull
+  @Nullable
   public String getDescription() {
     return description;
   }
