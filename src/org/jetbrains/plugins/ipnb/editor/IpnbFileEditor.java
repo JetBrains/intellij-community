@@ -17,8 +17,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.components.JBScrollBar;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,7 +79,10 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
 
     final JPanel controlPanel = createControlPanel();
     myEditorPanel.add(controlPanel, BorderLayout.NORTH);
-    myEditorPanel.add(new MyScrollPane(myIpnbFilePanel), BorderLayout.CENTER);
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myIpnbFilePanel);
+    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
+    myEditorPanel.add(scrollPane, BorderLayout.CENTER);
   }
 
   private JPanel createControlPanel() {
@@ -413,35 +415,6 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor, Te
       }
     }
     return null;
-  }
-
-  private class MyScrollPane extends JBScrollPane {
-    private MyScrollPane(Component view) {
-      super(view);
-    }
-
-    @Override
-    public JScrollBar createVerticalScrollBar() {
-      return new MyScrollBar(this);
-    }
-  }
-
-  private class MyScrollBar extends JBScrollBar {
-    private MyScrollPane myScrollPane;
-
-    public MyScrollBar(MyScrollPane scrollPane) {
-      myScrollPane = scrollPane;
-    }
-
-    @Override
-    public int getUnitIncrement(int direction) {
-      return myEditor.getEditor().getLineHeight();
-    }
-
-    @Override
-    public int getBlockIncrement(int direction) {
-      return myEditor.getEditor().getLineHeight();
-    }
   }
 
   public abstract class CellSelectionListener {

@@ -22,7 +22,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-public class IpnbFilePanel extends JPanel {
+public class IpnbFilePanel extends JPanel implements Scrollable {
 
   public static final int INSET_Y = 10;
   public static final int INSET_X = 5;
@@ -36,6 +36,7 @@ public class IpnbFilePanel extends JPanel {
 
   private IpnbEditablePanel mySelectedCell;
   private IpnbEditablePanel myBufferPanel;
+  private int myIncrement = 10;
 
   public IpnbFilePanel(@NotNull final Project project, @Nullable final Disposable parent, @NotNull final IpnbFile file,
                        @NotNull final IpnbFileEditor.CellSelectionListener listener) {
@@ -239,17 +240,35 @@ public class IpnbFilePanel extends JPanel {
       if (e.getKeyCode() == KeyEvent.VK_ENTER) {
         mySelectedCell.switchToEditing();
       }
+      int index = myIpnbPanels.indexOf(mySelectedCell);
+      final Rectangle rect = getVisibleRect();
+
+
       if (e.getKeyCode() == KeyEvent.VK_UP) {
         selectPrev(mySelectedCell);
+        if (index > 0) {
+          final Rectangle cellBounds = mySelectedCell.getBounds();
+          if (cellBounds.getY() + cellBounds.getHeight() <= rect.getY()) {
+            myIncrement = rect.y - cellBounds.y;
+            getParent().dispatchEvent(e);
+          }
+        }
       }
-
       else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
         selectNext(mySelectedCell);
+        if (index < myIpnbPanels.size() - 1) {
+          final Rectangle cellBounds = mySelectedCell.getBounds();
+          if (cellBounds.getY() > rect.getY() + rect.getHeight()) {
+            myIncrement = cellBounds.y + cellBounds.height - rect.y - rect.height;
+            getParent().dispatchEvent(e);
+          }
+        }
+
       }
     }
   }
 
-  private void selectPrev(@NotNull IpnbEditablePanel cell) {
+  public void selectPrev(@NotNull IpnbEditablePanel cell) {
     int index = myIpnbPanels.indexOf(cell);
     if (index > 0) {
       setSelectedCell(myIpnbPanels.get(index - 1));
@@ -325,5 +344,31 @@ public class IpnbFilePanel extends JPanel {
 
   public IpnbFile getIpnbFile() {
     return myIpnbFile;
+  }
+
+  @Override
+  public Dimension getPreferredScrollableViewportSize() {
+    return null;
+  }
+
+  @Override
+  public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+    return myIncrement;
+
+  }
+
+  @Override
+  public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
+    return 100;
+  }
+
+  @Override
+  public boolean getScrollableTracksViewportWidth() {
+    return false;
+  }
+
+  @Override
+  public boolean getScrollableTracksViewportHeight() {
+    return false;
   }
 }
