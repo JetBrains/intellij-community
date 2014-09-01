@@ -332,7 +332,7 @@ public final class IcsManager implements ApplicationLoadListener, Disposable {
     }
 
     @Override
-    public final boolean saveContent(@NotNull String fileSpec, @NotNull byte[] content, int size, @NotNull RoamingType roamingType, boolean async) {
+    public final void saveContent(@NotNull String fileSpec, @NotNull byte[] content, int size, @NotNull RoamingType roamingType, boolean async) {
       if (writeAndDeleteProhibited) {
         throw new IllegalStateException("Save is prohibited now");
       }
@@ -341,7 +341,6 @@ public final class IcsManager implements ApplicationLoadListener, Disposable {
       if (isAutoCommit(fileSpec, roamingType)) {
         scheduleCommit();
       }
-      return false;
     }
 
     protected boolean isAutoCommit(String fileSpec, RoamingType roamingType) {
