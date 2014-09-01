@@ -77,7 +77,7 @@ public class RedmineIntegrationTest extends TaskManagerTestCase {
     final Task issue = myRepository.findTask("8");
     assertNotNull(issue);
     assertNull(issue.getDescription());
-    assertEquals(issue.getSummary(), "Artificial issue with no description created via REST API");
+    assertEquals(issue.getSummary(), "Artificial issue with no description created via REST API. Do not update it!");
   }
 
   @Override
