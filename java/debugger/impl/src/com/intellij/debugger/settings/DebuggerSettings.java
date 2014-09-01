@@ -74,6 +74,8 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   public volatile boolean AUTO_VARIABLES_MODE = false;
   public volatile boolean SHOW_LIBRARY_STACKFRAMES = true;
 
+  public boolean CHECK_FINALLY_ON_POP_FRAME = true;
+
   private ClassFilter[] mySteppingFilters = ClassFilter.EMPTY_ARRAY;
 
   private Map<String, ContentState> myContentStates = new LinkedHashMap<String, ContentState>();
@@ -142,6 +144,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
     return
       TRACING_FILTERS_ENABLED == secondSettings.TRACING_FILTERS_ENABLED &&
       DEBUGGER_TRANSPORT == secondSettings.DEBUGGER_TRANSPORT &&
+      CHECK_FINALLY_ON_POP_FRAME == secondSettings.CHECK_FINALLY_ON_POP_FRAME &&
       FORCE_CLASSIC_VM == secondSettings.FORCE_CLASSIC_VM &&
       DISABLE_JIT == secondSettings.DISABLE_JIT &&
       HOTSWAP_IN_BACKGROUND == secondSettings.HOTSWAP_IN_BACKGROUND &&
