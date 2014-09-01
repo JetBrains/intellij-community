@@ -282,18 +282,39 @@ public class InferenceSession {
           final PsiCallExpression callExpression = (PsiCallExpression)args[i];
           collectAdditionalConstraints(additionalConstraints, callExpression);
         } else if (args[i] instanceof PsiLambdaExpression && toplevel) {
-          final PsiType interfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(parameterType);
-          if (interfaceReturnType != null) {
-            final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions((PsiLambdaExpression)args[i]);
-            for (PsiExpression returnExpression : returnExpressions) {
-              if (returnExpression instanceof PsiCallExpression) {
-                final PsiCallExpression callExpression = (PsiCallExpression)returnExpression;
-                collectAdditionalConstraints(additionalConstraints, callExpression);
-              }
-            }
-          }
+          collectLambdaReturnExpression(additionalConstraints, (PsiLambdaExpression)args[i], parameterType);
         }
       }
+    }
+  }
+
+  private void collectLambdaReturnExpression(Set<ConstraintFormula> additionalConstraints,
+                                             PsiLambdaExpression lambdaExpression,
+                                             PsiType parameterType) {
+    final PsiType interfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(parameterType);
+    if (interfaceReturnType != null) {
+      final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(lambdaExpression);
+      for (PsiExpression returnExpression : returnExpressions) {
+        processReturnExpression(additionalConstraints, returnExpression, interfaceReturnType);
+      }
+    }
+  }
+
+  private void processReturnExpression(Set<ConstraintFormula> additionalConstraints,
+                                       PsiExpression returnExpression,
+                                       PsiType functionalType) {
+    if (returnExpression instanceof PsiCallExpression) {
+      collectAdditionalConstraints(additionalConstraints, (PsiCallExpression)returnExpression);
+    }
+    else if (returnExpression instanceof PsiParenthesizedExpression) {
+      processReturnExpression(additionalConstraints, ((PsiParenthesizedExpression)returnExpression).getExpression(), functionalType);
+    }
+    else if (returnExpression instanceof PsiConditionalExpression) {
+      processReturnExpression(additionalConstraints, ((PsiConditionalExpression)returnExpression).getThenExpression(), functionalType);
+      processReturnExpression(additionalConstraints, ((PsiConditionalExpression)returnExpression).getElseExpression(), functionalType);
+    }
+    else if (returnExpression instanceof PsiLambdaExpression) {
+      collectLambdaReturnExpression(additionalConstraints, (PsiLambdaExpression)returnExpression, functionalType);
     }
   }
 
