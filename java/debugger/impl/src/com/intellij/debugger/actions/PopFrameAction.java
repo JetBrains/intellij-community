@@ -23,95 +23,149 @@ import com.intellij.CommonBundle;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.engine.JavaStackFrame;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.debugger.ui.impl.watch.*;
+import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
+import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
+import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiTryStatement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.evaluation.EvaluationMode;
+import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.sun.jdi.InvalidStackFrameException;
 import com.sun.jdi.NativeMethodException;
 import com.sun.jdi.VMDisconnectedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class PopFrameAction extends DebuggerAction {
   public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(CommonDataKeys.PROJECT);
-    StackFrameProxyImpl stackFrame = getStackFrameProxy(e);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
+    final JavaStackFrame stackFrame = getStackFrame(e);
     if(stackFrame == null) {
       return;
     }
     try {
-      DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
-      DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
+      final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
+      final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
       if(debugProcess == null) {
         return;
       }
-      if (DebuggerSettings.getInstance().CHECK_FINALLY_ON_POP_FRAME && isInTryWithFinally(debuggerContext.getSourcePosition())) {
-        int res = MessageDialogBuilder
-          .yesNo(UIUtil.removeMnemonic(ActionsBundle.actionText(DebuggerActions.POP_FRAME)),
-                 DebuggerBundle.message("warning.finally.block.detected"))
-          .project(project)
-          .icon(Messages.getWarningIcon())
-          .yesText(DebuggerBundle.message("button.drop.anyway"))
-          .noText(CommonBundle.message("button.cancel"))
-          .doNotAsk(
-            new DialogWrapper.DoNotAskOption() {
-              @Override
-              public boolean isToBeShown() {
-                return DebuggerSettings.getInstance().CHECK_FINALLY_ON_POP_FRAME;
-              }
+      if (DebuggerSettings.getInstance().CHECK_FINALLY_ON_POP_FRAME) {
+        List<PsiStatement> statements = getFinallyStatements(debuggerContext.getSourcePosition());
+        if (!statements.isEmpty()) {
+          StringBuilder sb = new StringBuilder();
+          for (PsiStatement statement : statements) {
+            sb.append("\n").append(statement.getText());
+          }
+          int res = MessageDialogBuilder
+            .yesNoCancel(UIUtil.removeMnemonic(ActionsBundle.actionText(DebuggerActions.POP_FRAME)),
+                   DebuggerBundle.message("warning.finally.block.detected") + sb)
+            .project(project)
+            .icon(Messages.getWarningIcon())
+            .yesText(DebuggerBundle.message("button.drop.anyway"))
+            .noText(DebuggerBundle.message("button.execute.finally"))
+            .cancelText(CommonBundle.message("button.cancel"))
+            .doNotAsk(
+              new DialogWrapper.DoNotAskOption() {
+                @Override
+                public boolean isToBeShown() {
+                  return DebuggerSettings.getInstance().CHECK_FINALLY_ON_POP_FRAME;
+                }
 
-              @Override
-              public void setToBeShown(boolean value, int exitCode) {
-                DebuggerSettings.getInstance().CHECK_FINALLY_ON_POP_FRAME = false;
-              }
+                @Override
+                public void setToBeShown(boolean value, int exitCode) {
+                  DebuggerSettings.getInstance().CHECK_FINALLY_ON_POP_FRAME = value;
+                }
 
-              @Override
-              public boolean canBeHidden() {
-                return true;
-              }
+                @Override
+                public boolean canBeHidden() {
+                  return true;
+                }
 
-              @Override
-              public boolean shouldSaveOptionsOnCancel() {
-                return false;
-              }
+                @Override
+                public boolean shouldSaveOptionsOnCancel() {
+                  return false;
+                }
 
-              @NotNull
-              @Override
-              public String getDoNotShowMessage() {
-                return CommonBundle.message("dialog.options.do.not.show");
-              }
-            })
-          .show();
+                @NotNull
+                @Override
+                public String getDoNotShowMessage() {
+                  return CommonBundle.message("dialog.options.do.not.show");
+                }
+              })
+            .show();
 
-        if (res == Messages.NO) {
-          return;
+          switch (res) {
+            case Messages.CANCEL : return;
+            case Messages.OK : break; // drop frame
+            case Messages.NO : // evaluate
+              JavaDebugProcess process = debugProcess.getXdebugProcess();
+              XExpressionImpl expression = XExpressionImpl.fromText(sb.toString());
+              expression = XExpressionImpl.changeMode(expression, EvaluationMode.CODE_FRAGMENT);
+              XDebuggerEvaluator evaluator = stackFrame.getEvaluator();
+              if (evaluator != null) {
+                evaluator.evaluate(expression, new XDebuggerEvaluator.XEvaluationCallback() {
+                  @Override
+                  public void evaluated(@NotNull XValue result) {
+                    debugProcess.getManagerThread().schedule(debugProcess.createPopFrameCommand(debuggerContext, stackFrame.getStackFrameProxy()));
+                  }
+
+                  @Override
+                  public void errorOccurred(@NotNull final String errorMessage) {
+                    ApplicationManager.getApplication().invokeLater(new Runnable() {
+                      @Override
+                      public void run() {
+                        Messages
+                          .showMessageDialog(project, DebuggerBundle.message("error.executing.finally", errorMessage),
+                                             UIUtil.removeMnemonic(ActionsBundle.actionText(DebuggerActions.POP_FRAME)), Messages.getErrorIcon());
+                      }
+                    });
+                  }
+                }, stackFrame.getSourcePosition());
+                return;
+              }
+              else {
+                Messages.showMessageDialog(project, XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.not.evaluator"),
+                                           UIUtil.removeMnemonic(ActionsBundle.actionText(DebuggerActions.POP_FRAME)),
+                                           Messages.getErrorIcon());
+              }
+          }
         }
       }
-      debugProcess.getManagerThread().schedule(debugProcess.createPopFrameCommand(debuggerContext, stackFrame));
+      debugProcess.getManagerThread().schedule(debugProcess.createPopFrameCommand(debuggerContext, stackFrame.getStackFrameProxy()));
     }
     catch (NativeMethodException e2){
-      Messages.showMessageDialog(project, DebuggerBundle.message("error.native.method.exception"), UIUtil.removeMnemonic(
-        ActionsBundle.actionText(DebuggerActions.POP_FRAME)), Messages.getErrorIcon());
+      Messages.showMessageDialog(project, DebuggerBundle.message("error.native.method.exception"),
+                                 UIUtil.removeMnemonic(ActionsBundle.actionText(DebuggerActions.POP_FRAME)), Messages.getErrorIcon());
     }
     catch (InvalidStackFrameException ignored) {
     }
@@ -119,35 +173,36 @@ public class PopFrameAction extends DebuggerAction {
     }
   }
 
-  private static boolean isInTryWithFinally(SourcePosition position) {
+  private static List<PsiStatement> getFinallyStatements(SourcePosition position) {
+    List<PsiStatement> res = new ArrayList<PsiStatement>();
     PsiElement element = position.getFile().findElementAt(position.getOffset());
     PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class);
     while (tryStatement != null) {
       PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
-      if (finallyBlock != null && finallyBlock.getStatements().length > 0) {
-        return true;
+      if (finallyBlock != null) {
+        ContainerUtil.addAll(res, finallyBlock.getStatements());
       }
       tryStatement = PsiTreeUtil.getParentOfType(tryStatement, PsiTryStatement.class);
     }
-    return false;
+    return res;
   }
 
   @Nullable
-  private static StackFrameProxyImpl getStackFrameProxy(AnActionEvent e) {
-    DebuggerTreeNodeImpl selectedNode = getSelectedNode(e.getDataContext());
-    if(selectedNode != null) {
-      NodeDescriptorImpl descriptor = selectedNode.getDescriptor();
-      if(descriptor instanceof StackFrameDescriptorImpl) {
-        if(selectedNode.getNextSibling() != null) {
-          StackFrameDescriptorImpl frameDescriptor = ((StackFrameDescriptorImpl)descriptor);
-          return frameDescriptor.getFrameProxy();
-        }
-        return null;
-      }
-      else if(descriptor instanceof ThreadDescriptorImpl || descriptor instanceof ThreadGroupDescriptorImpl) {
-        return null;
-      }
-    }
+  private static JavaStackFrame getStackFrame(AnActionEvent e) {
+    //DebuggerTreeNodeImpl selectedNode = getSelectedNode(e.getDataContext());
+    //if(selectedNode != null) {
+    //  NodeDescriptorImpl descriptor = selectedNode.getDescriptor();
+    //  if(descriptor instanceof StackFrameDescriptorImpl) {
+    //    if(selectedNode.getNextSibling() != null) {
+    //      StackFrameDescriptorImpl frameDescriptor = ((StackFrameDescriptorImpl)descriptor);
+    //      return frameDescriptor.getFrameProxy();
+    //    }
+    //    return null;
+    //  }
+    //  else if(descriptor instanceof ThreadDescriptorImpl || descriptor instanceof ThreadGroupDescriptorImpl) {
+    //    return null;
+    //  }
+    //}
 
     Project project = e.getProject();
     if (project != null) {
@@ -156,18 +211,19 @@ public class PopFrameAction extends DebuggerAction {
         XStackFrame frame = session.getCurrentStackFrame();
         if (frame instanceof JavaStackFrame) {
           StackFrameProxyImpl proxy = ((JavaStackFrame)frame).getStackFrameProxy();
-          return !proxy.isBottom() ? proxy : null;
+          return !proxy.isBottom() ? ((JavaStackFrame)frame) : null;
         }
       }
     }
 
-    DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
-    StackFrameProxyImpl frameProxy = debuggerContext.getFrameProxy();
-
-    if(frameProxy == null || frameProxy.isBottom()) {
-      return null;
-    }
-    return frameProxy;
+    //DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
+    //StackFrameProxyImpl frameProxy = debuggerContext.getFrameProxy();
+    //
+    //if(frameProxy == null || frameProxy.isBottom()) {
+    //  return null;
+    //}
+    //return frameProxy;
+    return null;
   }
 
   private static boolean isAtBreakpoint(AnActionEvent e) {
@@ -185,10 +241,10 @@ public class PopFrameAction extends DebuggerAction {
 
   public void update(AnActionEvent e) {
     boolean enable = false;
-    StackFrameProxyImpl stackFrameProxy = getStackFrameProxy(e);
+    JavaStackFrame stackFrame = getStackFrame(e);
 
-    if(stackFrameProxy != null && isAtBreakpoint(e)) {
-      VirtualMachineProxyImpl virtualMachineProxy = stackFrameProxy.getVirtualMachine();
+    if(stackFrame != null && isAtBreakpoint(e)) {
+      VirtualMachineProxyImpl virtualMachineProxy = stackFrame.getStackFrameProxy().getVirtualMachine();
       enable = virtualMachineProxy.canPopFrames();
     }
 
