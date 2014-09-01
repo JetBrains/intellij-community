@@ -176,9 +176,8 @@ public class FileBasedStorage extends XmlElementStorage {
 
     @NotNull
     @Override
-    public Collection<IFile> getStorageFilesToSave() throws StateStorageException {
-      boolean needsSave = needsSave();
-      if (needsSave) {
+    public Collection<IFile> getStorageFilesToSave() {
+      if (needsSave()) {
         if (LOG.isDebugEnabled()) {
           LOG.info("File " + myFileSpec + " needs save; hash=" + myUpToDateHash + "; currentHash=" + calcHash() + "; " +
                    "content needs save=" + physicalContentNeedsSave());

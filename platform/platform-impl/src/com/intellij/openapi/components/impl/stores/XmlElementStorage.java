@@ -326,7 +326,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       myStorageData = externalizationSession.myStorageData;
     }
 
-    public final boolean needsSave() throws StateStorageException {
+    public final boolean needsSave() {
       assert mySession == this;
       return _needsSave(calcHash());
     }
