@@ -210,8 +210,10 @@ public class ProjectBytecodeAnalysis {
   private ParameterAnnotations loadParameterAnnotations(@NotNull HKey notNullKey)
     throws EquationsLimitException {
 
+    Map<Bytes, List<HEquations>> equationsCache = new HashMap<Bytes, List<HEquations>>();
+
     final Solver notNullSolver = new Solver(new ELattice<Value>(Value.NotNull, Value.Top), Value.Top);
-    collectEquations(Collections.singletonList(notNullKey), notNullSolver);
+    collectEquations(Collections.singletonList(notNullKey), notNullSolver, equationsCache);
 
     HashMap<HKey, Value> notNullSolutions = notNullSolver.solve();
     boolean notNull =
@@ -219,7 +221,7 @@ public class ProjectBytecodeAnalysis {
 
     final Solver nullableSolver = new Solver(new ELattice<Value>(Value.Null, Value.Top), Value.Top);
     final HKey nullableKey = new HKey(notNullKey.key, notNullKey.dirKey + 1, true);
-    collectEquations(Collections.singletonList(nullableKey), nullableSolver);
+    collectEquations(Collections.singletonList(nullableKey), nullableSolver, equationsCache);
     HashMap<HKey, Value> nullableSolutions = nullableSolver.solve();
     boolean nullable =
       (Value.Null == nullableSolutions.get(nullableKey)) || (Value.Null == nullableSolutions.get(nullableKey.mkUnstable()));
@@ -229,17 +231,17 @@ public class ProjectBytecodeAnalysis {
   private MethodAnnotations loadMethodAnnotations(@NotNull PsiMethod owner, @NotNull HKey key, ArrayList<HKey> allKeys)
     throws EquationsLimitException {
     MethodAnnotations result = new MethodAnnotations();
+    Map<Bytes, List<HEquations>> equationsCache = new HashMap<Bytes, List<HEquations>>();
 
     final Solver outSolver = new Solver(new ELattice<Value>(Value.Bot, Value.Top), Value.Top);
-    collectEquations(allKeys, outSolver);
+    collectEquations(allKeys, outSolver, equationsCache);
     HashMap<HKey, Value> solutions = outSolver.solve();
     int arity = owner.getParameterList().getParameters().length;
     BytecodeAnalysisConverter.addMethodAnnotations(solutions, result, key, arity);
 
-
     final Solver nullableMethodSolver = new Solver(new ELattice<Value>(Value.Bot, Value.Null), Value.Bot);
     HKey nullableKey = key.updateDirection(BytecodeAnalysisConverter.mkDirectionKey(NullableOut));
-    collectEquations(Collections.singletonList(nullableKey), nullableMethodSolver);
+    collectEquations(Collections.singletonList(nullableKey), nullableMethodSolver, equationsCache);
 
     HashMap<HKey, Value> nullableSolutions = nullableMethodSolver.solve();
     if (nullableSolutions.get(nullableKey) == Value.Null || nullableSolutions.get(nullableKey.negate()) == Value.Null) {
@@ -248,7 +250,8 @@ public class ProjectBytecodeAnalysis {
     return result;
   }
 
-  private void collectEquations(List<HKey> keys, Solver solver) throws EquationsLimitException {
+  private void collectEquations(List<HKey> keys, Solver solver, @NotNull Map<Bytes, List<HEquations>> cache) throws EquationsLimitException {
+
     GlobalSearchScope librariesScope = ProjectScope.getLibrariesScope(myProject);
     HashSet<HKey> queued = new HashSet<HKey>();
     Stack<HKey> queue = new Stack<HKey>();
@@ -258,7 +261,6 @@ public class ProjectBytecodeAnalysis {
       queued.add(key);
     }
 
-    HashMap<Bytes, List<HEquations>> cache = new HashMap<Bytes, List<HEquations>>();
     FileBasedIndex index = FileBasedIndex.getInstance();
 
     while (!queue.empty()) {
