@@ -48,8 +48,6 @@ public final class IcsManager implements ApplicationLoadListener, Disposable {
 
   private RepositoryManager repositoryManager;
 
-  private IcsStatus status;
-
   private final AtomicNotNullLazyValue<CredentialsStore> credentialsStore = new AtomicNotNullLazyValue<CredentialsStore>() {
     @NotNull
     @Override
@@ -114,18 +112,6 @@ public final class IcsManager implements ApplicationLoadListener, Disposable {
     }
     else {
       return new File(FileUtil.expandUserHome(customPath));
-    }
-  }
-
-  @NotNull
-  public IcsStatus getStatus() {
-    return status;
-  }
-
-  private void setStatus(@NotNull IcsStatus value) {
-    if (status != value) {
-      status = value;
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(StatusListener.TOPIC).statusChanged(value);
     }
   }
 
@@ -218,7 +204,6 @@ public final class IcsManager implements ApplicationLoadListener, Disposable {
 
     try {
       repositoryManager = new GitRepositoryManager(credentialsStore);
-      setStatus(IcsStatus.OPENED);
       if (settings.getUpdateOnStart() && repositoryManager.hasUpstream()) {
         // todo progress
         repositoryManager.updateRepository(new EmptyProgressIndicator());
@@ -229,9 +214,6 @@ public final class IcsManager implements ApplicationLoadListener, Disposable {
     }
     catch (Exception e) {
       BaseRepositoryManager.LOG.error(e);
-    }
-    finally {
-      setStatus(getStatus() == IcsStatus.OPENED ? IcsStatus.UPDATE_FAILED : IcsStatus.OPEN_FAILED);
     }
   }
 
@@ -355,7 +337,7 @@ public final class IcsManager implements ApplicationLoadListener, Disposable {
 
     @Override
     public boolean isEnabled() {
-      return status == IcsStatus.OPENED;
+      return true;
     }
 
     @Override
