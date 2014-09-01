@@ -65,7 +65,7 @@ public class TestClassLambda {
       return null;
    }
 
-   public static String function(Supplier var0) {
+   public static String function(Supplier<String> var0) {
       return (String)var0.get();
    }
 

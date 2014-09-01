@@ -16,10 +16,8 @@
 package org.jetbrains.java.decompiler;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,33 +44,6 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
     assertTrue(decompiled, decompiled.contains("private static class CaseInsensitiveComparator"));
     assertFalse(decompiled, decompiled.contains("{ /* compiled code */ }"));
     assertFalse(decompiled, decompiled.contains("synthetic"));
-  }
-
-  public void testEnum() { doTestDecompiler(); }
-  public void testDeprecations() { doTestDecompiler(); }
-  public void testExtendsList() { doTestDecompiler(); }
-  public void testParameters() { doTestDecompiler(); }
-  public void testConstants() { doTestDecompiler(); }
-  public void testAnonymous() { doTestDecompiler(); }
-  public void testCodeConstructs() { doTestDecompiler(); }
-
-  private void doTestDecompiler() {
-    String name = PluginPathManager.getPluginHomePath("java-decompiler") + "/testData/" + getName().substring(4);
-    String path = name + ".class";
-    VirtualFile file = StandardFileSystems.local().findFileByPath(path);
-    assertNotNull(path, file);
-    file.getParent().getChildren();
-    file.getParent().refresh(false, true);
-
-    try {
-      CharSequence text = new IdeaDecompiler().getText(file);
-      assertNotNull(text);
-      String expected = FileUtil.loadFile(new File(name + ".txt"), "UTF-8");
-      assertEquals(StringUtil.convertLineSeparators(expected), text.toString());
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   public void testStubCompatibilityRt() {

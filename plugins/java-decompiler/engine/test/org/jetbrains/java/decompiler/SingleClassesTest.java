@@ -37,15 +37,11 @@ public class SingleClassesTest {
     assertTrue(tempDir.delete());
     assertTrue(tempDir.mkdirs());
     decompiler = new ConsoleDecompiler(new HashMap<String, Object>() {{
-      boolean win = System.getProperty("os.name", "").startsWith("Windows");
       put(IFernflowerPreferences.LOG_LEVEL, "warn");
-      put(IFernflowerPreferences.RENAME_ENTITIES, "1");
-      put(IFernflowerPreferences.HIDE_DEFAULT_CONSTRUCTOR, "1");
-      put(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES, "0");
-      put(IFernflowerPreferences.IDEA_NOT_NULL_ANNOTATION, "1");
-      put(IFernflowerPreferences.LAMBDA_TO_ANONYMOUS_CLASS, "0");
-      put(IFernflowerPreferences.USE_DEBUG_VAR_NAMES, "0");
-      put(IFernflowerPreferences.NEW_LINE_SEPARATOR, (win ? "0" : "1"));
+      put(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES, "1");
+      put(IFernflowerPreferences.REMOVE_SYNTHETIC, "1");
+      put(IFernflowerPreferences.REMOVE_BRIDGE, "1");
+      put(IFernflowerPreferences.LITERALS_AS_IS, "1");
     }});
   }
 
@@ -62,8 +58,14 @@ public class SingleClassesTest {
   @Test public void testClassSwitch() { doTest("TestClassSwitch"); }
   @Test public void testClassTypes() { doTest("TestClassTypes"); }
   @Test public void testClassVar() { doTest("TestClassVar"); }
+  @Test public void testDeprecations() { doTest("TestDeprecations"); }
+  @Test public void testExtendsList() { doTest("TestExtendsList"); }
+  @Test public void testMethodParameters() { doTest("TestMethodParameters"); }
+  @Test public void testCodeConstructs() { doTest("TestCodeConstructs"); }
+  @Test public void testConstants() { doTest("TestConstants"); }
+  //@Test public void testEnum() { doTest("TestEnum"); }
 
-  private void doTest(String testName) {
+  private void doTest(final String testName) {
     try {
       File testDataDir = new File("testData");
       if (!isTestDataDir(testDataDir)) testDataDir = new File("community/plugins/java-decompiler/engine/testData");
@@ -73,6 +75,16 @@ public class SingleClassesTest {
       File classFile = new File(testDataDir, "/classes/pkg/" + testName + ".class");
       assertTrue(classFile.isFile());
       decompiler.addSpace(classFile, true);
+      File[] innerClasses = classFile.getParentFile().listFiles(new FilenameFilter() {
+        @Override
+        public boolean accept(File dir, String name) {
+          return name.matches(testName + "\\$.+\\.class");
+        }
+      });
+      for (File inner : innerClasses) {
+        decompiler.addSpace(inner, true);
+      }
+
       decompiler.decompileContext(tempDir);
 
       File decompiledFile = new File(tempDir, testName + ".java");
