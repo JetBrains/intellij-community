@@ -274,17 +274,16 @@ public class StorageUtil {
     return writeToBytes(document, useSystemLineSeparator ? SystemProperties.getLineSeparator() : "\n");
   }
 
-  public static boolean sendContent(@NotNull StreamProvider provider, @NotNull String fileSpec, @NotNull Document copy, @NotNull RoamingType type, boolean async) {
+  public static void sendContent(@NotNull StreamProvider provider, @NotNull String fileSpec, @NotNull Document copy, @NotNull RoamingType type, boolean async) {
     if (!provider.isApplicable(fileSpec, type)) {
-      return false;
+      return;
     }
 
     try {
-      return doSendContent(provider, fileSpec, copy, type, async);
+      doSendContent(provider, fileSpec, copy, type, async);
     }
     catch (IOException e) {
       LOG.warn(e);
-      return false;
     }
   }
 
@@ -297,10 +296,10 @@ public class StorageUtil {
   /**
    * You must call {@link StreamProvider#isApplicable(String, com.intellij.openapi.components.RoamingType)} before
    */
-  public static boolean doSendContent(StreamProvider provider, String fileSpec, Document copy, RoamingType type, boolean async) throws IOException {
+  public static void doSendContent(StreamProvider provider, String fileSpec, Document copy, RoamingType type, boolean async) throws IOException {
     // we should use standard line-separator (\n) - stream provider can share file content on any OS
     BufferExposingByteArrayOutputStream content = documentToBytes(copy, false);
-    return provider.saveContent(fileSpec, content.getInternalBuffer(), content.size(), type, async);
+    provider.saveContent(fileSpec, content.getInternalBuffer(), content.size(), type, async);
   }
 
   public static void logStateDiffInfo(Set<Pair<VirtualFile, StateStorage>> changedFiles, Set<String> componentNames) {
