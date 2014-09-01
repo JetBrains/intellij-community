@@ -22,6 +22,7 @@ import com.intellij.ui.classFilter.ClassFilterEditor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -33,7 +34,9 @@ class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
   private JCheckBox myCbSkipClassLoaders;
   private ClassFilterEditor mySteppingFilterEditor;
   private JCheckBox myCbSkipSimpleGetters;
-  private JCheckBox myCbCheckFinallyOnPopFrame;
+  private JRadioButton myRbEvaluateFinallyAlways;
+  private JRadioButton myRbEvaluateFinallyNever;
+  private JRadioButton myRbEvaluateFinallyAsk;
 
   @Override
   public void reset(@NotNull DebuggerSettings settings) {
@@ -47,7 +50,15 @@ class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
     mySteppingFilterEditor.setFilters(settings.getSteppingFilters());
     mySteppingFilterEditor.setEnabled(settings.TRACING_FILTERS_ENABLED);
 
-    myCbCheckFinallyOnPopFrame.setSelected(settings.CHECK_FINALLY_ON_POP_FRAME);
+    if (DebuggerSettings.EVALUATE_FINALLY_ALWAYS.equals(settings.EVALUATE_FINALLY_ON_POP_FRAME)) {
+      myRbEvaluateFinallyAlways.setSelected(true);
+    }
+    else if (DebuggerSettings.EVALUATE_FINALLY_NEVER.equals(settings.EVALUATE_FINALLY_ON_POP_FRAME)) {
+      myRbEvaluateFinallyNever.setSelected(true);
+    }
+    else {
+      myRbEvaluateFinallyAsk.setSelected(true);
+    }
   }
 
   @Override
@@ -62,7 +73,15 @@ class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
     settings.SKIP_CLASSLOADERS = myCbSkipClassLoaders.isSelected();
     settings.TRACING_FILTERS_ENABLED = myCbStepInfoFiltersEnabled.isSelected();
 
-    settings.CHECK_FINALLY_ON_POP_FRAME = myCbCheckFinallyOnPopFrame.isSelected();
+    if (myRbEvaluateFinallyAlways.isSelected()) {
+      settings.EVALUATE_FINALLY_ON_POP_FRAME = DebuggerSettings.EVALUATE_FINALLY_ALWAYS;
+    }
+    else if (myRbEvaluateFinallyNever.isSelected()) {
+      settings.EVALUATE_FINALLY_ON_POP_FRAME = DebuggerSettings.EVALUATE_FINALLY_NEVER;
+    }
+    else {
+      settings.EVALUATE_FINALLY_ON_POP_FRAME = DebuggerSettings.EVALUATE_FINALLY_ASK;
+    }
 
     mySteppingFilterEditor.stopEditing();
     settings.setSteppingFilters(mySteppingFilterEditor.getFilters());
@@ -83,13 +102,11 @@ class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
     myCbSkipConstructors = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.constructors"));
     myCbSkipClassLoaders = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.classLoaders"));
     myCbSkipSimpleGetters = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.simple.getters"));
-    myCbCheckFinallyOnPopFrame = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.check.finally.on.pop"));
     myCbStepInfoFiltersEnabled = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.step.filters.list.header"));
     panel.add(myCbSkipSyntheticMethods, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0),0, 0));
     panel.add(myCbSkipConstructors, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0),0, 0));
     panel.add(myCbSkipClassLoaders, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0),0, 0));
     panel.add(myCbSkipSimpleGetters, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0),0, 0));
-    panel.add(myCbCheckFinallyOnPopFrame, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0),0, 0));
     panel.add(myCbStepInfoFiltersEnabled, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(8, 0, 0, 0),0, 0));
 
     mySteppingFilterEditor = new ClassFilterEditor(JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables(), null, "reference.viewBreakpoints.classFilters.newPattern");
@@ -101,6 +118,33 @@ class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
         mySteppingFilterEditor.setEnabled(myCbStepInfoFiltersEnabled.isSelected());
       }
     });
+
+    myRbEvaluateFinallyAlways = new JRadioButton(DebuggerBundle.message("label.debugger.general.configurable.evaluate.finally.always"));
+    myRbEvaluateFinallyNever = new JRadioButton(DebuggerBundle.message("label.debugger.general.configurable.evaluate.finally.never"));
+    myRbEvaluateFinallyAsk = new JRadioButton(DebuggerBundle.message("label.debugger.general.configurable.evaluate.finally.ask"));
+
+    int cbLeftOffset = 0;
+    final Border border = myCbSkipSimpleGetters.getBorder();
+    if (border != null) {
+      final Insets insets = border.getBorderInsets(myCbSkipSimpleGetters);
+      if (insets != null) {
+        cbLeftOffset = insets.left;
+      }
+    }
+
+    final ButtonGroup group = new ButtonGroup();
+    group.add(myRbEvaluateFinallyAlways);
+    group.add(myRbEvaluateFinallyNever);
+    group.add(myRbEvaluateFinallyAsk);
+    final Box box = Box.createHorizontalBox();
+    box.add(myRbEvaluateFinallyAlways);
+    box.add(myRbEvaluateFinallyNever);
+    box.add(myRbEvaluateFinallyAsk);
+    final JPanel evalFinallyPanel = new JPanel(new BorderLayout());
+    evalFinallyPanel.add(box, BorderLayout.CENTER);
+    evalFinallyPanel.add(new JLabel(DebuggerBundle.message("label.debugger.general.configurable.evaluate.finally.on.pop")), BorderLayout.WEST);
+    panel.add(evalFinallyPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(4, cbLeftOffset, 0, 0), 0, 0));
+
     return panel;
   }
 }
