@@ -527,6 +527,7 @@ public class FileManagerImpl implements FileManager {
   }
 
   void reloadFromDisk(@NotNull PsiFile file, boolean ignoreDocument) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
     VirtualFile vFile = file.getVirtualFile();
     assert vFile != null;
 
