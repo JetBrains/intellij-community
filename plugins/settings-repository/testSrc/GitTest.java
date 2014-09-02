@@ -22,6 +22,7 @@ import org.eclipse.jgit.lib.IndexDiff;
 import org.eclipse.jgit.lib.Repository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.settingsRepository.git.AddFile;
 import org.jetbrains.plugins.settingsRepository.git.GitPackage;
 import org.jetbrains.plugins.settingsRepository.git.GitRepositoryManager;
 import org.junit.*;
@@ -285,7 +286,8 @@ public class GitTest {
 
   @NotNull
   private File createFileRemote(@Nullable String branchName) throws IOException, GitAPIException {
-    Git git = new Git(testWatcher.getRepository(ICS_DIR));
+    Repository repository = testWatcher.getRepository(ICS_DIR);
+    Git git = new Git(repository);
 
     if (branchName != null) {
       // jgit cannot checkout&create branch if no HEAD (no commits in our empty repository), so we create initial empty commit
@@ -295,9 +297,9 @@ public class GitTest {
     }
 
     String addedFile = "$APP_CONFIG$/encoding.xml";
-    File workTree = git.getRepository().getWorkTree();
+    File workTree = repository.getWorkTree();
     FileUtil.copy(new File(getTestDataPath(), "encoding.xml"), new File(workTree, addedFile));
-    git.add().addFilepattern(addedFile).call();
+    GitPackage.edit(repository, new AddFile(addedFile));
     git.commit().setMessage("").call();
     return workTree;
   }

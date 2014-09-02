@@ -42,17 +42,12 @@ public class GitRepositoryManager(private val credentialsStore: NotNullLazyValue
     }
   }
 
-  TestOnly
-  public fun testOnlyGetGit(): Git {
-    return git
-  }
-
   override fun initRepository(dir: File) {
     createBareRepository(dir)
   }
 
   override fun getRemoteRepositoryUrl(): String? {
-    return StringUtil.nullize(git.getRepository().getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, Constants.DEFAULT_REMOTE_NAME, ConfigConstants.CONFIG_KEY_URL))
+    return StringUtil.nullize(repository.getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, Constants.DEFAULT_REMOTE_NAME, ConfigConstants.CONFIG_KEY_URL))
   }
 
   override fun setUpstream(url: String?, branch: String?) {
@@ -60,17 +55,17 @@ public class GitRepositoryManager(private val credentialsStore: NotNullLazyValue
   }
 
   fun createCommitCommand(): CommitCommand {
-    val author = PersonIdent(git.getRepository())
+    val author = PersonIdent(repository)
     val committer = PersonIdent(ApplicationInfoEx.getInstanceEx()!!.getFullApplicationName(), author.getEmailAddress())
     return git.commit().setAuthor(author).setCommitter(committer)
   }
 
   override fun hasUpstream(): Boolean {
-    return !StringUtil.isEmptyOrSpaces(git.getRepository().getConfig().getString("remote", "origin", "url"))
+    return !StringUtil.isEmptyOrSpaces(repository.getConfig().getString("remote", "origin", "url"))
   }
 
   override fun addToIndex(file: File, path: String, content: ByteArray, size: Int) {
-    repository.edit(AddPath(path, content, size, file.lastModified(), git.getRepository()))
+    repository.edit(AddLoadedFile(path, content, size, file.lastModified()))
   }
 
   override fun deleteFromIndex(path: String, isFile: Boolean) {

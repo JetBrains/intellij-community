@@ -1,17 +1,19 @@
 package org.jetbrains.plugins.settingsRepository.git
 
 import com.intellij.openapi.progress.ProgressIndicator
-import org.eclipse.jgit.api.AddCommand
 import org.eclipse.jgit.lib.IndexDiff
 import org.eclipse.jgit.lib.ProgressMonitor
 import org.jetbrains.plugins.settingsRepository.IcsUrlBuilder
 import org.jetbrains.plugins.settingsRepository.LOG
+import java.util.ArrayList
+import org.eclipse.jgit.dircache.DirCacheEditor.PathEdit
 
 fun commit(manager: GitRepositoryManager, indicator: ProgressIndicator) {
   val index = manager.repository.computeIndexDiff()
   val changed = index.diff(JGitProgressMonitor(indicator), ProgressMonitor.UNKNOWN, ProgressMonitor.UNKNOWN, "Commit")
 
   if (LOG.isDebugEnabled()) {
+    LOG.debug("Commit")
     LOG.debug(indexDiffToString(index))
   }
 
@@ -22,21 +24,20 @@ fun commit(manager: GitRepositoryManager, indicator: ProgressIndicator) {
       return
     }
 
-    var addCommand: AddCommand? = null
+    var edits: MutableList<PathEdit>? = null
     for (path in index.getModified()) {
       if (!path.startsWith(IcsUrlBuilder.PROJECTS_DIR_NAME)) {
-        if (addCommand == null) {
-          addCommand = manager.git.add()
+        if (edits == null) {
+          edits = ArrayList()
         }
-        addCommand!!.addFilepattern(path)
+        edits!!.add(AddFile(path))
       }
     }
-    if (addCommand != null) {
-      addCommand!!.call()
+    if (edits != null) {
+      manager.repository.edit(edits!!)
     }
   }
 
-  LOG.debug("Commit")
   manager.createCommitCommand().setMessage("").call()
 }
 

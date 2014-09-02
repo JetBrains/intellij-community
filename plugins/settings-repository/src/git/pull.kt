@@ -58,7 +58,7 @@ fun pull(manager: GitRepositoryManager, indicator: ProgressIndicator) {
 }
 
 private fun fetch(manager: GitRepositoryManager, indicator: ProgressIndicator, prevRefUpdateResult: RefUpdate.Result?): MergeResult? {
-  val repository = manager.git.getRepository()
+  val repository = manager.repository
   val repositoryState = repository.getRepositoryState()
   if (repositoryState != RepositoryState.SAFE) {
     LOG.warn(MessageFormat.format(JGitText.get().cannotPullOnARepoWithState, repositoryState.name()))

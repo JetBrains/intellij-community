@@ -47,6 +47,9 @@
   <item name='org.eclipse.jgit.lib.Ref org.eclipse.jgit.lib.Ref getTarget()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='org.eclipse.jgit.lib.Repository java.io.File getWorkTree()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='org.eclipse.jgit.lib.Repository org.eclipse.jgit.dircache.DirCache lockDirCache()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
