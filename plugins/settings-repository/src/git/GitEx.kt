@@ -14,17 +14,15 @@ import java.io.File
 import java.io.IOException
 import org.jetbrains.plugins.settingsRepository.LOG
 
+fun Repository.disableAutoCrLf(): Unit {
+  val config = getConfig()
+  config.setString(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOCRLF, ConfigConstants.CONFIG_KEY_FALSE)
+  config.save()
+}
+
 public class GitEx(repo: Repository) : Git(repo) {
-  private var treeWalk: TreeWalk? = null
-
-  public fun disableAutoCrLf() {
-    val config = getRepository().getConfig()
-    config.setString(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOCRLF, ConfigConstants.CONFIG_KEY_FALSE)
-    config.save()
-  }
-
   throws(javaClass<IOException>())
-  public fun setUpstream(url: String?, branchName: String? = Constants.MASTER) {
+  public fun setUpstream(url: String?, branchName: String = Constants.MASTER) {
     // our local branch named 'master' in any case
     val localBranchName = Constants.MASTER
 
@@ -51,17 +49,14 @@ public class GitEx(repo: Repository) : Git(repo) {
 
   public fun add(path: String): Boolean {
     val repository = getRepository()
-    if (treeWalk == null) {
-      treeWalk = TreeWalk(repository)
-      treeWalk!!.setRecursive(false)
-    }
+    val treeWalk = TreeWalk(repository)
+    treeWalk.setRecursive(false)
 
     try {
-      return doAdd(treeWalk!!, path, repository, FileTreeIterator(getRepository()))
+      return doAdd(treeWalk, path, repository, FileTreeIterator(repository))
     }
     finally {
-      treeWalk!!.release()
-      treeWalk!!.reset()
+      treeWalk.release()
     }
   }
 

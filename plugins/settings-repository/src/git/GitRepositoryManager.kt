@@ -36,7 +36,7 @@ public class GitRepositoryManager(private val credentialsStore: NotNullLazyValue
     git = GitEx(repository)
     if (!dir.exists()) {
       repository.create()
-      git.disableAutoCrLf()
+      repository.disableAutoCrLf()
     }
   }
 
@@ -54,7 +54,7 @@ public class GitRepositoryManager(private val credentialsStore: NotNullLazyValue
   }
 
   override fun setUpstream(url: String?, branch: String?) {
-    git.setUpstream(url, branch)
+    git.setUpstream(url, branch ?: Constants.MASTER)
   }
 
   fun createCommitCommand(): CommitCommand {
