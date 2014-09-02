@@ -25,20 +25,19 @@ import java.net.URLEncoder;
 public class RunCustomOperationCommand<T> extends AbstractCommand<T> {
   private static final Logger LOG = Logger.getInstance(RunCustomOperationCommand.class);
 
-  private String encodedCodeOrFile;
-  private String operationFnName;
-  private PyVariableLocator locator;
-  private String style;
-  private String responsePayload;
+  private String myEncodedCodeOrFile;
+  private String myOperationFnName;
+  private PyVariableLocator myLocator;
+  private String myStyle;
 
   private RunCustomOperationCommand(RemoteDebugger target, PyVariableLocator locator,
                                     String style, String codeOrFile, String operationFnName) {
     super(target, CMD_RUN_CUSTOM_OPERATION);
 
-    this.locator = locator;
-    this.style = style;
-    this.encodedCodeOrFile = encode(codeOrFile);
-    this.operationFnName = operationFnName;
+    this.myLocator = locator;
+    this.myStyle = style;
+    this.myEncodedCodeOrFile = encode(codeOrFile);
+    this.myOperationFnName = operationFnName;
   }
 
   /**
@@ -54,36 +53,15 @@ public class RunCustomOperationCommand<T> extends AbstractCommand<T> {
     this(target, locator, "EXEC", operationSource, operationFnName);
   }
 
-  /**
-   * Create a new command to run with the function defined in a file.
-   *
-   * @param target Debug Target to run on
-   * @param locator Location of variable or expression.
-   * @param operationPyFile Definition of the function to be run (this file is "execfile"d by the target)
-   * @param operationFnName Function to call, must be defined by operationSource
-   */
-  public RunCustomOperationCommand(RemoteDebugger target, PyVariableLocator locator,
-                                   File operationPyFile, String operationFnName) {
-    this(target, locator, "EXECFILE", operationPyFile.toString(), operationFnName);
-  }
-
 
   @Override
   protected void buildPayload(Payload payload) {
-    payload.add(locator.getPyDBLocation() + "||" + style).add(encodedCodeOrFile).add(operationFnName);
+    payload.add(myLocator.getPyDBLocation() + "||" + myStyle).add(myEncodedCodeOrFile).add(myOperationFnName);
   }
 
   @Override
   public boolean isResponseExpected() {
     return true;
-  }
-
-  /**
-   * Return the response received from the custom command
-   * @return the response or <code>null</code> if an error or no response has been received.
-   */
-  public String getResponsePayload() {
-    return responsePayload;
   }
 
   private static String encode(String in) {
