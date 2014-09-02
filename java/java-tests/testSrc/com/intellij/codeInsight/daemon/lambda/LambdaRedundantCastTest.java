@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,6 @@ public class LambdaRedundantCastTest extends LightDaemonAnalyzerTestCase {
   public void testIntersection() { doTest(); }
   public void testSer() { doTest(); }
   private void doTest() {
-    doTestNewInference(BASE_PATH + "/" + getTestName(false) + ".java", true, false);
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, false);
   }
 }
