@@ -29,6 +29,7 @@ import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import org.jdom.Document;
 import org.jdom.JDOMException;
+import org.jdom.Parent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,7 +58,7 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes implements E
       }
 
       @Override
-      public Document writeScheme(@NotNull final CodeStyleSchemeImpl scheme) throws WriteExternalException {
+      public Parent writeScheme(@NotNull final CodeStyleSchemeImpl scheme) throws WriteExternalException {
         return scheme.saveToDocument();
       }
 

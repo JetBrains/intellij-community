@@ -19,18 +19,22 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Document;
 import org.jdom.JDOMException;
+import org.jdom.Parent;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
 public interface SchemeProcessor<T extends ExternalizableScheme> {
   T readScheme(@NotNull Document schemeContent) throws InvalidDataException, IOException, JDOMException;
-  Document writeScheme(@NotNull T scheme) throws WriteExternalException;
+
+  Parent writeScheme(@NotNull T scheme) throws WriteExternalException;
 
   boolean shouldBeSaved(@NotNull T scheme);
+
   void initScheme(@NotNull T scheme);
 
   void onSchemeAdded(@NotNull T scheme);
+
   void onSchemeDeleted(@NotNull T scheme);
 
   void onCurrentSchemeChanged(final Scheme oldCurrentScheme);

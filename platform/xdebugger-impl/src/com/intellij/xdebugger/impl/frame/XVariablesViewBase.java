@@ -15,34 +15,41 @@
  */
 package com.intellij.xdebugger.impl.frame;
 
-import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl;
+import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleColoredText;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.evaluation.ExpressionInfo;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValue;
-import com.intellij.xdebugger.frame.XValuePlace;
-import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import com.intellij.xdebugger.impl.evaluate.quick.XValueHint;
+import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeRestorer;
@@ -50,11 +57,11 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XStackFrameNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.HashMap;
 import java.util.Set;
 
@@ -88,68 +95,92 @@ public abstract class XVariablesViewBase extends XDebugView {
       myTreeRestorer = myTreeState.restoreState(tree);
     }
     if (position != null && Registry.is("ide.debugger.inline")) {
-      final VirtualFile file = position.getFile();
-      final FileEditor fileEditor = FileEditorManagerEx.getInstanceEx(project).getSelectedEditor(file);
-      if (fileEditor instanceof PsiAwareTextEditorImpl) {
-        final Editor editor = ((PsiAwareTextEditorImpl)fileEditor).getEditor();
-        final SelectionListener listener = new SelectionListener() {
-          @Override
-          public void selectionChanged(SelectionEvent e) {
-            final String text = editor.getDocument().getText(e.getNewRange());
-            final XDebuggerEvaluator evaluator = stackFrame.getEvaluator();
-            if (evaluator != null && !StringUtil.isEmpty(text)
-                && !(text.contains("exec(") || text.contains("++") || text.contains("--") || text.contains("="))) {
-              evaluator.evaluate(text, new XEvaluationCallbackBase() {
-                @Override
-                public void evaluated(@NotNull XValue result) {
-                  result.computePresentation(new XValueNodePresentationConfigurator.ConfigurableXValueNodeImpl() {
+      registerInlineEvaluator(stackFrame, tree, position, project);
+    }
+  }
+
+  private void registerInlineEvaluator(final XStackFrame stackFrame,
+                                       XDebuggerTree tree,
+                                       final XSourcePosition position,
+                                       final Project project) {
+    final VirtualFile file = position.getFile();
+    final FileEditor fileEditor = FileEditorManagerEx.getInstanceEx(project).getSelectedEditor(file);
+    if (fileEditor instanceof PsiAwareTextEditorImpl) {
+      final Editor editor = ((PsiAwareTextEditorImpl)fileEditor).getEditor();
+      final SelectionListener listener = new SelectionListener() {
+        @Override
+        public void selectionChanged(final SelectionEvent e) {
+          final String text = editor.getDocument().getText(e.getNewRange());
+          final XDebuggerEvaluator evaluator = stackFrame.getEvaluator();
+          if (evaluator != null && !StringUtil.isEmpty(text)
+              && !(text.contains("exec(") || text.contains("++") || text.contains("--") || text.contains("="))) {
+            evaluator.evaluate(text, new XEvaluationCallbackBase() {
+              @Override
+              public void evaluated(@NotNull XValue result) {
+                final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
+                try {
+                  final XDebugSession session = getSession(getTree());
+                  if (session == null) return;
+                  final TextRange range = e.getNewRange();
+                  final ExpressionInfo info = new ExpressionInfo(range);
+                  final int offset = range.getStartOffset();
+                  final LogicalPosition pos = editor.offsetToLogicalPosition(offset);
+                  final Point point = editor.logicalPositionToXY(pos);
+                  final Point fullPopupPoint = new Point(point.x, point.y + editor.getLineHeight());
+                  final Disposable disposable = Disposer.newDisposable();
+                  final CustomShortcutSet expandShortcut = CustomShortcutSet.fromString("F2");//todo[kb] remove hardcoded shortcut
+                  new DumbAwareAction() {
                     @Override
-                    public void applyPresentation(@Nullable Icon icon,
-                                                  @NotNull XValuePresentation valuePresenter,
-                                                  boolean hasChildren) {
-                      SimpleColoredText text = new SimpleColoredText();
-                      XValueNodeImpl.buildText(valuePresenter, text, false);
-                      SimpleColoredComponent component = HintUtil.createInformationComponent();
-                      text.appendToComponent(component);
-                      String str = text.toString();
-                      if ("undefined".equals(str) || str.startsWith("Cannot find local variable")
-                          || str.startsWith("Invalid expression")) {
-                        return; //todo[kb] this is temporary solution
+                    public void actionPerformed(AnActionEvent e) {
+
+                      new XValueHint(project, editor, fullPopupPoint, ValueHintType.MOUSE_CLICK_HINT, info, evaluator,
+                                     session).invokeHint(new Runnable() {
+                        public void run() {
+                        }
+                      });
+                    }
+                  }.registerCustomShortcutSet(expandShortcut, editor.getComponent(), disposable);
+
+                  new XValueHint(project, editor, point, ValueHintType.MOUSE_OVER_HINT, info, evaluator, session) {
+                    @Override
+                    protected JComponent createExpandableHintComponent(SimpleColoredText text, Runnable expand) {
+                      final SimpleColoredText patched = new SimpleColoredText();
+                      patched.append("(Press " + KeymapUtil.getShortcutsText(expandShortcut.getShortcuts()) + ") ", SimpleTextAttributes.GRAY_ATTRIBUTES);
+                      for (int i = 0; i < text.getTexts().size(); i++) {
+                        patched.append(text.getTexts().get(i), text.getAttributes().get(i));
                       }
-                      HintManager.getInstance().hideAllHints();
-                      HintManager.getInstance().showInformationHint(editor, component);
+                      return super.createExpandableHintComponent(patched, expand);
                     }
-
-                    @Override
-                    public void setFullValueEvaluator(@NotNull XFullValueEvaluator fullValueEvaluator) {
-                    }
-
-                    @Override
-                    public boolean isObsolete() {
-                      return true;
-                    }
-                  }, XValuePlace.TOOLTIP);
+                  }.invokeHint(
+                    new Runnable() {
+                      @Override
+                      public void run() {
+                        Disposer.dispose(disposable);
+                      }
+                    });
                 }
-
-                @Override
-                public void errorOccurred(@NotNull String errorMessage) {
-                  System.out.println(errorMessage);
+                finally {
+                  token.finish();
                 }
-              }, position);
-            }
+              }
+
+              @Override
+              public void errorOccurred(@NotNull String errorMessage) {
+              }
+            }, position);
           }
-        };
-        editor.getSelectionModel().addSelectionListener(listener);
-        Disposer.register(tree, new Disposable() {
-          @Override
-          public void dispose() {
-            final FileEditor fileEditor = FileEditorManagerEx.getInstanceEx(project).getSelectedEditor(file);
-            if (fileEditor instanceof PsiAwareTextEditorImpl) {
-              ((PsiAwareTextEditorImpl)fileEditor).getEditor().getSelectionModel().removeSelectionListener(listener);
-            }
+        }
+      };
+      editor.getSelectionModel().addSelectionListener(listener);
+      Disposer.register(tree, new Disposable() {
+        @Override
+        public void dispose() {
+          final FileEditor fileEditor = FileEditorManagerEx.getInstanceEx(project).getSelectedEditor(file);
+          if (fileEditor instanceof PsiAwareTextEditorImpl) {
+            ((PsiAwareTextEditorImpl)fileEditor).getEditor().getSelectionModel().removeSelectionListener(listener);
           }
-        });
-      }
+        }
+      });
     }
   }
 

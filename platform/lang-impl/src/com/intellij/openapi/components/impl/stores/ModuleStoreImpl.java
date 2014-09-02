@@ -116,7 +116,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     }
 
     @Override
-    public void load(@NotNull final Element rootElement) throws IOException {
+    public void load(@NotNull final Element rootElement) {
       super.load(rootElement);
 
       for (Attribute attribute : rootElement.getAttributes()) {
@@ -132,8 +132,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     @Override
     @NotNull
     protected Element save() {
-      final Element root = super.save();
-
+      Element root = super.save();
       myOptions.put(VERSION_OPTION, Integer.toString(myVersion));
       String[] options = ArrayUtil.toStringArray(myOptions.keySet());
       Arrays.sort(options);

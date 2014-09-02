@@ -159,7 +159,16 @@ public class ConfigurableWrapper implements SearchableConfigurable {
   @NotNull
   @Override
   public String getId() {
-    return myEp.id == null ? myEp.instanceClass == null ? myEp.providerClass : myEp.instanceClass : myEp.id;
+    if (myEp.id != null) {
+      return myEp.id;
+    }
+    UnnamedConfigurable configurable = getConfigurable();
+    if (configurable instanceof SearchableConfigurable) {
+      return ((SearchableConfigurable)configurable).getId();
+    }
+    return myEp.instanceClass != null
+           ? myEp.instanceClass
+           : myEp.providerClass;
   }
 
   @NotNull

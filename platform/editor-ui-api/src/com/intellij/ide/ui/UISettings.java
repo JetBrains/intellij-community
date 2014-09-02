@@ -121,6 +121,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public boolean MARK_MODIFIED_TABS_WITH_ASTERISK = false;
   public boolean SHOW_TABS_TOOLTIPS = true;
   public boolean SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES = true;
+  public boolean NAVIGATE_TO_PREVIEW = false;
 
   private final EventDispatcher<UISettingsListener> myDispatcher = EventDispatcher.create(UISettingsListener.class);
 

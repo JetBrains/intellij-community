@@ -554,14 +554,7 @@ public def layoutCommunityPlugins(String home) {
       }
     }
 
-    pluginDir("java-decompiler") {
-      dir("lib") {
-        jar("java-decompiler.jar") {
-          module("java-decompiler")
-        }
-        fileset(file: "$home/plugins/java-decompiler/lib/fernflower.jar")
-      }
-    }
+    layoutPlugin("java-decompiler")
   }
 }
 

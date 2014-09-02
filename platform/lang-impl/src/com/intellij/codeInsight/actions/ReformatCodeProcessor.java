@@ -18,6 +18,10 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.formatting.FormattingProgressTask;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -27,6 +31,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,6 +95,17 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
           CodeStyleManager.getInstance(myProject).reformatText(file, ranges);
           return !FormattingProgressTask.FORMATTING_CANCELLED_FLAG.get();
         }
+        catch (FilesTooBigForDiffException e) {
+          LOG.info("Error while calculating changed ranges for: " + file.getVirtualFile(), e);
+          if (!ApplicationManager.getApplication().isUnitTestMode()) {
+            Notification notification = new Notification(ApplicationBundle.message("reformat.changed.text.file.too.big.notification.groupId"),
+                                                         ApplicationBundle.message("reformat.changed.text.file.too.big.notification.title"),
+                                                         ApplicationBundle.message("reformat.changed.text.file.too.big.notification.text", file.getName()),
+                                                         NotificationType.INFORMATION);
+            notification.notify(file.getProject());
+          }
+          return false;
+        } 
         catch (IncorrectOperationException e) {
           LOG.error(e);
           return false;
@@ -102,7 +118,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
   }
 
   @NotNull
-  private Collection<TextRange> getRangesToFormat(boolean processChangedTextOnly, PsiFile file) {
+  private Collection<TextRange> getRangesToFormat(boolean processChangedTextOnly, PsiFile file) throws FilesTooBigForDiffException {
     if (processChangedTextOnly) {
       return FormatChangedTextUtil.getChangedTextRanges(myProject, file);
     }
