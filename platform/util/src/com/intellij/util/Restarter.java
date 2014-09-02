@@ -136,7 +136,6 @@ public class Restarter {
     final String homePath = PathManager.getHomePath().substring(0, PathManager.getHomePath().indexOf( ".app" ) + 4);
     if (!StringUtil.endsWithIgnoreCase(homePath, ".app")) throw new IOException("Application bundle not found: " + homePath);
 
-    System.out.println("homePath " + homePath);
     doScheduleRestart(new File(PathManager.getBinPath(), "restarter"), new Consumer<List<String>>() {
       @Override
       public void consume(List<String> commands) {
@@ -154,28 +153,18 @@ public class Restarter {
   }
 
   public static File createTempExecutable(File executable) throws IOException {
-    File copy = new File(System.getProperty("user.home") + "/." + System.getProperty("idea.paths.selector") + "/restart/" + executable.getName());
-    System.out.println("createTempExecutable: " + copy.getPath());
-    if (FileUtilRt.ensureCanCreateFile(copy)) {
-      FileUtilRt.copy(executable, copy);
-      if (!copy.setExecutable(executable.canExecute())){
-        System.out.println("Cannot make file executable: " + copy.getPath());
-        throw new IOException("Cannot make file executable: " + copy);
-      }
-    } else {
-      System.out.println("File " + copy.getPath() + " already exists.");
+    File executableDir = new File(System.getProperty("user.home") + "/." + System.getProperty("idea.paths.selector") + "/restart");
+    File copy = new File(executableDir.getPath() + "/" + executable.getName());
+    if (! FileUtilRt.ensureCanCreateFile(copy)) {
+       String ext = FileUtilRt.getExtension(executable.getName());
+       copy = FileUtilRt.createTempFile(executableDir, FileUtilRt.getNameWithoutExtension(copy.getName()),
+                                            StringUtil.isEmptyOrSpaces(ext) ? ".tmp" : ("." + ext),
+                                            false);
     }
-    return copy;
-  }
-
-/*  public static File createTempExecutable(File executable) throws IOException {
-    File copy = new File(getRestarterDir() + executable.getName() );
-    System.out.println("launcher " + executable.getPath());
-    System.out.println("copy launcher " + copy.getPath());
     FileUtilRt.copy(executable, copy);
     if (!copy.setExecutable(executable.canExecute())) throw new IOException("Cannot make file executable: " + copy);
     return copy;
-  }*/
+  }
 
   private interface Kernel32 extends StdCallLibrary {
     int GetCurrentProcessId();
