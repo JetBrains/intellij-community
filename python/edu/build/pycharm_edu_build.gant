@@ -31,7 +31,7 @@ def jdk_bundled_version = p("jdk_bundled_mac") == "1.8" ? "jdk8_mac_redist.tar" 
 ant.copy(file: "${home}/build/jdk/${jdk_bundled_version}", tofile: "${home}/build/jdk/jdk_mac_redist_for_${buildNumber}.tar")
 
 // load ApplicationInfo.xml properties
-ant.xmlproperty(file: "$pythonEduHome/resources/idea/PyCharmEduApplicationInfo.xml", collapseAttributes: "true")
+ant.xmlproperty(file: "$pythonEduHome/resources/idea/PyCharmPEApplicationInfo.xml", collapseAttributes: "true")
 setProperty("system_selector", "PyCharmEdu${p("component.version.major")}0")
 setProperty("dryRun", false)
 setProperty("jdk16", guessJdk())
@@ -223,7 +223,7 @@ private layoutPlugins(layouts) {
 }
 
 private String appInfoFile() {
-  return "$pythonEduHome/resources/idea/PyCharmEduApplicationInfo.xml"
+  return "$pythonEduHome/resources/idea/PyCharmPEApplicationInfo.xml"
 }
 
 private layoutFull(Map args, String target, Set usedJars) {
