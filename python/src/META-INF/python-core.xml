@@ -137,6 +137,7 @@
     <gotoTargetRendererProvider implementation="com.jetbrains.python.codeInsight.PyGotoTargetRendererProvider"/>
 
     <typeHierarchyProvider language="Python" implementationClass="com.jetbrains.python.hierarchy.PyTypeHierachyProvider"/>
+    <callHierarchyProvider language="Python" implementationClass="com.jetbrains.python.hierarchy.call.PyCallHierarchyProvider"/>
     <highlightUsagesHandlerFactory implementation="com.jetbrains.python.codeInsight.highlighting.PyHighlightExitPointsHandlerFactory"/>
 
     <joinLinesHandler implementation="com.jetbrains.python.editor.PyJoinLinesHandler"/>
@@ -476,6 +477,9 @@
     <projectService serviceInterface="com.jetbrains.python.debugger.PySignatureCacheManager"
                     serviceImplementation="com.jetbrains.python.debugger.PySignatureCacheManagerImpl"/>
 
+    <projectService serviceInterface="com.jetbrains.python.hierarchy.call.PyStaticCallDataManager"
+                    serviceImplementation="com.jetbrains.python.hierarchy.call.PyStaticCallDataManagerImpl"/>
+
     <projectService serviceInterface="com.jetbrains.python.psi.PyPsiFacade"
                     serviceImplementation="com.jetbrains.python.psi.impl.PyPsiFacadeImpl"/>
     <applicationService serviceInterface="com.jetbrains.python.packaging.PyPackageManagers"
@@ -647,7 +651,29 @@
       <reference ref="CompareFileWithEditor"/>
     </group>
 
+    <group id="PyCallHierarchyPopupMenu">
+      <action id="CallHierarchy.BaseOnThisType" text="Base On This Function" class="com.jetbrains.python.hierarchy.call.PyCallHierarchyBrowser$BaseOnThisFunctionAction" description="Show call hierarchy for selected method"/>
+      <reference ref="EditSource"/>
+      <separator/>
+      <reference ref="FindUsages"/>
+      <reference ref="RefactoringMenu"/>
+      <separator/>
+      <reference ref="AddToFavorites"/>
+      <separator/>
+      <reference ref="RunContextPopupGroup"/>
+      <separator/>
 
+      <reference ref="ReformatCode"/>
+      <reference ref="OptimizeImports"/>
+      <separator/>
+      <reference ref="VersionControlsGroup"/>
+
+      <separator/>
+      <reference ref="ExternalToolsGroup"/>
+      <separator/>
+      <reference ref="CompareTwoFiles"/>
+      <reference ref="CompareFileWithEditor"/>
+    </group>
 
     <action id="com.jetbrains.python.console.PyOpenDebugConsoleAction"
             class="com.jetbrains.python.console.PyOpenDebugConsoleAction"
