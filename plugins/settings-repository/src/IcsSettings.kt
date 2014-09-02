@@ -22,8 +22,6 @@ class IcsSettings {
 
   Tag
   public var shareProjectWorkspace: Boolean = false
-  Tag
-  public var updateOnStart: Boolean = false
 
   Tag
   public var commitDelay: Int = DEFAULT_COMMIT_DELAY
@@ -34,7 +32,7 @@ class IcsSettings {
   private val settingsFile: File
 
   {
-    settingsFile = File(IcsManager.getPluginSystemDir(), "state.xml")
+    settingsFile = File(getPluginSystemDir(), "state.xml")
   }
 
   public fun save() {
@@ -47,7 +45,7 @@ class IcsSettings {
       }
     }
     catch (e: IOException) {
-      IcsManager.LOG.error(e)
+      LOG.error(e)
     }
   }
 

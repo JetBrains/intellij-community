@@ -80,7 +80,7 @@ public class GitTest {
       }
     });
 
-    IcsManager.getInstance().setRepositoryManager(new GitRepositoryManager(new NotNullLazyValue<CredentialsStore>() {
+    IcsManager.OBJECT$.getInstance()._setRepositoryManager(new GitRepositoryManager(new NotNullLazyValue<CredentialsStore>() {
       @NotNull
       @Override
       protected CredentialsStore compute() {
@@ -92,31 +92,23 @@ public class GitTest {
   @After
   public void tearDown() throws Exception {
     try {
-      IcsManager icsManager = IcsManager.getInstance();
-      if (icsManager != null) {
-        icsManager.setRepositoryManager(null);
+      if (fixture != null) {
+        SwingUtilities.invokeAndWait(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              fixture.tearDown();
+            }
+            catch (Exception e) {
+              throw new RuntimeException(e);
+            }
+          }
+        });
       }
     }
     finally {
-      try {
-        if (fixture != null) {
-          SwingUtilities.invokeAndWait(new Runnable() {
-            @Override
-            public void run() {
-              try {
-                fixture.tearDown();
-              }
-              catch (Exception e) {
-                throw new RuntimeException(e);
-              }
-            }
-          });
-        }
-      }
-      finally {
-        if (ICS_DIR != null) {
-          FileUtil.delete(ICS_DIR);
-        }
+      if (ICS_DIR != null) {
+        FileUtil.delete(ICS_DIR);
       }
     }
   }
@@ -128,7 +120,7 @@ public class GitTest {
 
   @NotNull
   private static GitRepositoryManager getRepositoryManager() {
-    return ((GitRepositoryManager)IcsManager.getInstance().getRepositoryManager());
+    return ((GitRepositoryManager)IcsManager.OBJECT$.getInstance().getRepositoryManager());
   }
 
   @Test
@@ -199,7 +191,7 @@ public class GitTest {
   public void setUpstream() throws Exception {
     String url = "https://github.com/user/repo.git";
     getRepositoryManager().setUpstream(url, null);
-    assertThat(getRepositoryManager().getRemoteRepositoryUrl(), equalTo(url));
+    assertThat(getRepositoryManager().getUpstream(), equalTo(url));
   }
 
   @Test

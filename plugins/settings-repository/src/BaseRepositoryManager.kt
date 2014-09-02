@@ -11,16 +11,10 @@ import java.io.InputStream
 import java.util.Arrays
 import java.util.Collections
 
-public val LOG: Logger = Logger.getInstance(javaClass<BaseRepositoryManager>())
-
 public abstract class BaseRepositoryManager protected() : RepositoryManager {
-  protected var dir: File
+  protected var dir: File = File(getPluginSystemDir(), "repository")
 
   protected val lock: Any = Object();
-
-  {
-    dir = File(IcsManager.getPluginSystemDir(), "repository")
-  }
 
   override fun listSubFileNames(path: String): Collection<String> {
     val files = File(dir, path).list()
@@ -96,13 +90,6 @@ public abstract class BaseRepositoryManager protected() : RepositoryManager {
 
   throws(javaClass<Exception>())
   protected abstract fun deleteFromIndex(path: String, isFile: Boolean)
-
-  throws(javaClass<Exception>())
-  override fun updateRepository(indicator: ProgressIndicator) {
-    if (hasUpstream()) {
-      pull(indicator)
-    }
-  }
 
   override fun has(path: String): Boolean {
     return File(dir, path).exists()

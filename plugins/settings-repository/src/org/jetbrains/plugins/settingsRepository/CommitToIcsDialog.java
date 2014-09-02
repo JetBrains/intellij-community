@@ -50,7 +50,7 @@ public class CommitToIcsDialog extends DialogWrapper {
     StateStorageManager storageManager = ((ProjectEx)project).getStateStore().getStateStorageManager();
     TrackingPathMacroSubstitutor macroSubstitutor = storageManager.getMacroSubstitutor();
     assert macroSubstitutor != null;
-    IcsManager icsManager = IcsManager.getInstance();
+    IcsManager icsManager = IcsManager.OBJECT$.getInstance();
 
     SmartList<String> addToIcs = new SmartList<String>();
     for (Change change : changes) {

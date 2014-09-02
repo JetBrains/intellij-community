@@ -8,7 +8,7 @@ import org.jetbrains.plugins.settingsRepository.IcsSettingsPanel;
 class ConfigureIcsAction extends DumbAwareAction {
   @Override
   public void actionPerformed(final AnActionEvent e) {
-    IcsManager.getInstance().runInAutoCommitDisabledMode(new Runnable() {
+    IcsManager.OBJECT$.getInstance().runInAutoCommitDisabledMode(new Runnable() {
       @Override
       public void run() {
         new IcsSettingsPanel(e.getProject()).show();

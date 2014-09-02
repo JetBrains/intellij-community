@@ -35,7 +35,7 @@ class OsXCredentialsStore : CredentialsStore {
       val errorMessage = e.getMessage()
       if (errorMessage == null || (!errorMessage.contains("The specified item could not be found in the keychain.") &&
         !errorMessage.contains("The user name or passphrase you entered is not correct.") /* if user press "Deny" we also get this error, so, we don't try to show again */)) {
-        IcsManager.LOG.error(e)
+        LOG.error(e)
       }
       return null
     }

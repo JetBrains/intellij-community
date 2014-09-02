@@ -82,7 +82,7 @@ public class SyncRepositoriesDialog extends DialogWrapper {
 
     if (syncType != null) {
       try {
-        IcsManager.getInstance().sync(syncType, project);
+        IcsManager.OBJECT$.getInstance().sync(syncType, project);
       }
       catch (Exception e) {
         Messages.showErrorDialog(parent, StringUtil.notNullize(e.getMessage(), "Internal error"), IcsBundle.message("sync.rejected.title"));

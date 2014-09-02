@@ -27,19 +27,17 @@ import java.util.concurrent.Callable;
 public class IcsSettingsPanel extends DialogWrapper {
   private JPanel panel;
   private TextFieldWithBrowseButton urlTextField;
-  private JCheckBox updateOnStartCheckBox;
   private JCheckBox shareProjectWorkspaceCheckBox;
   private final JButton syncButton;
 
   public IcsSettingsPanel(@Nullable final Project project) {
     super(project, true);
 
-    IcsManager icsManager = IcsManager.getInstance();
+    IcsManager icsManager = IcsManager.OBJECT$.getInstance();
     IcsSettings settings = icsManager.getSettings();
 
-    updateOnStartCheckBox.setSelected(settings.getUpdateOnStart());
     shareProjectWorkspaceCheckBox.setSelected(settings.getShareProjectWorkspace());
-    urlTextField.setText(icsManager.getRepositoryManager().getRemoteRepositoryUrl());
+    urlTextField.setText(icsManager.getRepositoryManager().getUpstream());
     urlTextField.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFolderDescriptor()));
 
     // todo TextComponentUndoProvider should not depends on app settings
@@ -108,13 +106,8 @@ public class IcsSettingsPanel extends DialogWrapper {
   }
 
   private boolean apply() {
-    IcsSettings settings = IcsManager.getInstance().getSettings();
+    IcsSettings settings = IcsManager.OBJECT$.getInstance().getSettings();
     boolean settingsModified = false;
-    boolean updateOnStart = updateOnStartCheckBox.isSelected();
-    if (updateOnStart != settings.getUpdateOnStart()) {
-      settings.setUpdateOnStart(updateOnStart);
-      settingsModified = true;
-    }
     boolean shareProjectWorkspace = shareProjectWorkspaceCheckBox.isSelected();
     if (shareProjectWorkspace != settings.getShareProjectWorkspace()) {
       settings.setShareProjectWorkspace(shareProjectWorkspace);
@@ -129,7 +122,7 @@ public class IcsSettingsPanel extends DialogWrapper {
       ApplicationManager.getApplication().executeOnPooledThread(new Callable<Object>() {
         @Override
         public Object call() throws Exception {
-          IcsManager.getInstance().getSettings().save();
+          IcsManager.OBJECT$.getInstance().getSettings().save();
           return null;
         }
       });
@@ -139,7 +132,7 @@ public class IcsSettingsPanel extends DialogWrapper {
   }
 
   private boolean saveRemoteRepositoryUrl() {
-    RepositoryManager repositoryManager = IcsManager.getInstance().getRepositoryManager();
+    RepositoryManager repositoryManager = IcsManager.OBJECT$.getInstance().getRepositoryManager();
     String url = StringUtil.nullize(urlTextField.getText());
     if (url != null) {
       boolean isFile;

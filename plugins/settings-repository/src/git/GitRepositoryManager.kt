@@ -19,7 +19,7 @@ import java.io.IOException
 import org.jetbrains.plugins.settingsRepository.LOG
 import org.eclipse.jgit.api.Git
 
-public class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<CredentialsStore>) : BaseRepositoryManager() {
+class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<CredentialsStore>) : BaseRepositoryManager() {
   val git: Git
   val repository: Repository
 
@@ -46,7 +46,7 @@ public class GitRepositoryManager(private val credentialsStore: NotNullLazyValue
     createBareRepository(dir)
   }
 
-  override fun getRemoteRepositoryUrl(): String? {
+  override fun getUpstream(): String? {
     return StringUtil.nullize(repository.getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, Constants.DEFAULT_REMOTE_NAME, ConfigConstants.CONFIG_KEY_URL))
   }
 
@@ -60,9 +60,7 @@ public class GitRepositoryManager(private val credentialsStore: NotNullLazyValue
     return git.commit().setAuthor(author).setCommitter(committer)
   }
 
-  override fun hasUpstream(): Boolean {
-    return !StringUtil.isEmptyOrSpaces(repository.getConfig().getString("remote", "origin", "url"))
-  }
+  override fun hasUpstream() = getUpstream() != null
 
   override fun addToIndex(file: File, path: String, content: ByteArray, size: Int) {
     repository.edit(AddLoadedFile(path, content, size, file.lastModified()))
@@ -122,6 +120,7 @@ public class GitRepositoryManager(private val credentialsStore: NotNullLazyValue
     if (File(file, Constants.DOT_GIT).exists()) {
       return true
     }
+
     // existing bare repository
     try {
       FileRepositoryBuilder().setGitDir(file).setMustExist(true).build()

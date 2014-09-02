@@ -7,7 +7,7 @@ import java.io.IOException
 import java.io.InputStream
 
 public trait RepositoryManager {
-  public fun getRemoteRepositoryUrl(): String?
+  public fun getUpstream(): String?
 
   public fun hasUpstream(): Boolean
 
@@ -28,9 +28,6 @@ public trait RepositoryManager {
   public fun delete(path: String)
 
   public fun listSubFileNames(path: String): Collection<String>
-
-  throws(javaClass<Exception>())
-  public fun updateRepository(indicator: ProgressIndicator)
 
   /**
    * Not all implementations support progress indicator (will not be updated on progress)
