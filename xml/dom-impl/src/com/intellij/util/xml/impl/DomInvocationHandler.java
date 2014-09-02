@@ -170,7 +170,10 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       @Override
       public void run() {
         ensureXmlElementExists();
-        final DomGenericInfoEx genericInfo = getGenericInfo();
+        final DomInvocationHandler otherInvocationHandler = DomManagerImpl.getDomInvocationHandler(other);
+        assert otherInvocationHandler != null : other;
+
+        final DomGenericInfoEx genericInfo = otherInvocationHandler.getGenericInfo();
         for (final AttributeChildDescriptionImpl description : genericInfo.getAttributeChildrenDescriptions()) {
           description.getDomAttributeValue(DomInvocationHandler.this).setStringValue(description.getDomAttributeValue(other).getStringValue());
         }
@@ -197,7 +200,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
           }
         }
 
-        final String stringValue = DomManagerImpl.getDomInvocationHandler(other).getValue();
+        final String stringValue = otherInvocationHandler.getValue();
         if (StringUtil.isNotEmpty(stringValue)) {
           setValue(stringValue);
         }
@@ -659,12 +662,12 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       return new AttributeChildInvocationHandler(evaluatedXmlName, description, myManager, strategy, stub);
     }
     final XmlTag tag = getXmlTag();
-    
+
     if (tag != null) {
       // TODO: this seems ugly
       String ns = evaluatedXmlName.getNamespace(tag, getFile());
       final XmlAttribute attribute = tag.getAttribute(description.getXmlName().getLocalName(), ns.equals(tag.getNamespace())? null:ns);
-      
+
       if (attribute != null) {
         PsiUtilCore.ensureValid(attribute);
         AttributeChildInvocationHandler semElement =

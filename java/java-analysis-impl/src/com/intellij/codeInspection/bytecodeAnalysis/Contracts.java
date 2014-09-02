@@ -34,6 +34,7 @@ import java.util.Set;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.*;
 import static org.jetbrains.org.objectweb.asm.Opcodes.*;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
 
 class InOutAnalysis extends Analysis<Result<Key, Value>> {
 
@@ -396,7 +397,7 @@ class InOutInterpreter extends BasicInterpreter {
         }
       default:
     }
-    return super.ternaryOperation(insn, value1, value2, value3);
+    return null;
   }
 
   @Override
@@ -436,7 +437,7 @@ class InOutInterpreter extends BasicInterpreter {
                 }
               }
               if (isRefRetType) {
-                keys.add(new Key(method, new Out(), stable));
+                keys.add(new Key(method, Out, stable));
               }
               if (!keys.isEmpty()) {
                 return new CallResultValue(retType, keys);
@@ -444,7 +445,7 @@ class InOutInterpreter extends BasicInterpreter {
             }
             else if (isRefRetType) {
               HashSet<Key> keys = new HashSet<Key>();
-              keys.add(new Key(method, new Out(), stable));
+              keys.add(new Key(method, Out, stable));
               return new CallResultValue(retType, keys);
             }
           }

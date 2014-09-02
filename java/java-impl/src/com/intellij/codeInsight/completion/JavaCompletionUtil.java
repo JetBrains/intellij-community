@@ -544,7 +544,7 @@ public class JavaCompletionUtil {
         return JavaClassNameCompletionContributor.createClassLookupItems((PsiClass)completion,
                                                                          JavaClassNameCompletionContributor.AFTER_NEW.accepts(reference),
                                                                          JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER,
-                                                                         Condition.TRUE);
+                                                                         Conditions.<PsiClass>alwaysTrue());
       }
     }
 

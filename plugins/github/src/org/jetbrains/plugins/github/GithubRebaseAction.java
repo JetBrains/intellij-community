@@ -41,6 +41,7 @@ import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
+import org.jetbrains.plugins.github.api.GithubConnection;
 import org.jetbrains.plugins.github.api.GithubFullPath;
 import org.jetbrains.plugins.github.api.GithubRepoDetailed;
 import org.jetbrains.plugins.github.util.*;
@@ -197,11 +198,11 @@ public class GithubRebaseAction extends DumbAwareAction {
 
     try {
       return GithubUtil.runTask(project, GithubAuthDataHolder.createFromSettings(), indicator,
-                                new ThrowableConvertor<GithubAuthData, GithubRepoDetailed, IOException>() {
+                                new ThrowableConvertor<GithubConnection, GithubRepoDetailed, IOException>() {
                                   @NotNull
                                   @Override
-                                  public GithubRepoDetailed convert(@NotNull GithubAuthData auth) throws IOException {
-                                    return GithubApiUtil.getDetailedRepoInfo(auth, userAndRepo.getUser(), userAndRepo.getRepository());
+                                  public GithubRepoDetailed convert(@NotNull GithubConnection connection) throws IOException {
+                                    return GithubApiUtil.getDetailedRepoInfo(connection, userAndRepo.getUser(), userAndRepo.getRepository());
                                   }
                                 });
     }

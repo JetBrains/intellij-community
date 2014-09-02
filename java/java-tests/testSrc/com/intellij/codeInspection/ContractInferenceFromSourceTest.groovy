@@ -346,6 +346,31 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == ['null -> null', '!null -> !null']
   }
 
+  public void "test use delegated method notnull"() {
+    def c = inferContracts("""
+    final Object foo(Object bar) {
+        return doo();
+    }
+
+    @org.jetbrains.annotations.NotNull Object doo() {}
+    """)
+    assert c == ['_ -> !null']
+  }
+
+  public void "test use delegated method notnull with contracts"() {
+    def c = inferContracts("""
+    final Object foo(Object bar, Object o2) {
+        return doo(o2);
+    }
+
+    @org.jetbrains.annotations.NotNull Object doo(Object o) {
+      if (o == null) throw new RuntimeException();
+      return smth();
+    }
+    """)
+    assert c == ['_, null -> fail', '_, _ -> !null']
+  }
+
   private String inferContract(String method) {
     return assertOneElement(inferContracts(method))
   }

@@ -19,10 +19,8 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
@@ -65,16 +63,14 @@ class JavaWithTryFinallySurrounder extends JavaStatementsSurrounder{
     if (finallyBlock == null) {
       return null;
     }
-    int offset = finallyBlock.getTextRange().getStartOffset() + 2;
-    editor.getCaretModel().moveToOffset(offset);
-    final Document document = editor.getDocument();
+    Document document = editor.getDocument();
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
+    TextRange finallyBlockRange = finallyBlock.getTextRange();
+    int newLineOffset = finallyBlockRange.getStartOffset() + 2;
+    editor.getCaretModel().moveToOffset(newLineOffset);
     editor.getSelectionModel().removeSelection();
-    final PsiStatement[] tryBlockStatements = tryBlock.getStatements();
-    LOG.assertTrue(tryBlockStatements.length > 0, tryBlock.getText());
-    final PsiStatement firstTryStmt = tryBlockStatements[0];
-    final int indent = firstTryStmt.getTextOffset() - document.getLineStartOffset(document.getLineNumber(firstTryStmt.getTextOffset()));
-    EditorModificationUtil.insertStringAtCaret(editor, StringUtil.repeat(" ", indent), false, true);
+    CodeStyleManager.getInstance(project).adjustLineIndent(document, newLineOffset);
+    PsiDocumentManager.getInstance(project).commitDocument(document);
     return new TextRange(editor.getCaretModel().getOffset(), editor.getCaretModel().getOffset());
   }
 }

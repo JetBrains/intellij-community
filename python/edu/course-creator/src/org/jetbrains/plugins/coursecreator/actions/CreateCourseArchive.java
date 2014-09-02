@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.io.ZipUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.coursecreator.CCProjectService;
 import org.jetbrains.plugins.coursecreator.StudyDocumentListener;
 import org.jetbrains.plugins.coursecreator.format.*;
@@ -29,8 +30,8 @@ import java.util.zip.ZipOutputStream;
 
 public class CreateCourseArchive extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(CreateCourseArchive.class.getName());
-  String myZipName;
-  String myLocationDir;
+  private String myZipName;
+  private String myLocationDir;
 
   public void setZipName(String zipName) {
     myZipName = zipName;
@@ -60,8 +61,8 @@ public class CreateCourseArchive extends DumbAwareAction {
     }
     final VirtualFile baseDir = project.getBaseDir();
     final Map<String, Lesson> lessons = course.getLessonsMap();
-    //List<FileEditor> editorList = new ArrayList<FileEditor>();
-    Map<VirtualFile, TaskFile> taskFiles = new HashMap<VirtualFile, TaskFile>();
+    //map to store initial task file
+    Map<TaskFile, TaskFile> taskFiles = new HashMap<TaskFile, TaskFile>();
     for (Map.Entry<String, Lesson> lesson : lessons.entrySet()) {
       final VirtualFile lessonDir = baseDir.findChild(lesson.getKey());
       if (lessonDir == null) continue;
@@ -69,37 +70,115 @@ public class CreateCourseArchive extends DumbAwareAction {
         final VirtualFile taskDir = lessonDir.findChild(task.getKey());
         if (taskDir == null) continue;
         for (Map.Entry<String, TaskFile> entry : task.getValue().task_files.entrySet()) {
-          final VirtualFile file = taskDir.findChild(entry.getKey());
-          if (file == null) continue;
-          final Document document = FileDocumentManager.getInstance().getDocument(file);
-          if (document == null) continue;
-          final TaskFile taskFile = entry.getValue();
-          document.addDocumentListener(new InsertionListener(taskFile));
-          taskFiles.put(file, taskFile);
-          taskFile.setTrackChanges(false);
-          Collections.sort(taskFile.getTaskWindows());
-          for (int i = taskFile.getTaskWindows().size() - 1; i >=0 ; i--) {
-            final TaskWindow taskWindow = taskFile.getTaskWindows().get(i);
-            final String taskText = taskWindow.getTaskText();
-            final int lineStartOffset = document.getLineStartOffset(taskWindow.line);
-            final int offset = lineStartOffset + taskWindow.start;
-            CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-              @Override
-              public void run() {
-                ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                  @Override
-                  public void run() {
-                    document.replaceString(offset, offset + taskWindow.getReplacementLength(), taskText);
-                    FileDocumentManager.getInstance().saveDocument(document);
-                  }
-                });
-              }
-            }, "x", "qwe");
-          }
+          createUserFile(project, taskFiles, taskDir, entry);
         }
       }
     }
     generateJson(project);
+    packCourse(baseDir, lessons);
+    resetTaskFiles(taskFiles);
+    synchronize(project);
+  }
+
+  private void createUserFile(@NotNull final Project project,
+                              @NotNull final Map<TaskFile, TaskFile> taskFiles,
+                              @NotNull final VirtualFile taskDir,
+                              @NotNull final Map.Entry<String, TaskFile> entry) {
+    final String name = entry.getKey();
+    VirtualFile file = taskDir.findChild(name);
+    if (file != null) {
+      final VirtualFile finalFile = file;
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            finalFile.delete(this);
+          }
+          catch (IOException e) {
+            LOG.error(e);
+          }
+        }
+      });
+    }
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          taskDir.createChildData(this, name);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }
+    });
+    file = taskDir.findChild(name);
+    assert file != null;
+    String answerFileName = file.getNameWithoutExtension() + ".answer";
+    VirtualFile answerFile = taskDir.findChild(answerFileName);
+    if (answerFile == null) {
+      return;
+    }
+    final Document answerDocument = FileDocumentManager.getInstance().getDocument(answerFile);
+    if (answerDocument == null) {
+      return;
+    }
+    final Document document = FileDocumentManager.getInstance().getDocument(file);
+    if (document == null) return;
+    final TaskFile taskFile = entry.getValue();
+    TaskFile taskFileSaved = new TaskFile();
+    taskFile.copy(taskFileSaved);
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            document.replaceString(0, document.getTextLength(), answerDocument.getText());
+          }
+        });
+      }
+    }, "x", "qwe");
+    document.addDocumentListener(new InsertionListener(taskFile));
+    taskFiles.put(taskFile, taskFileSaved);
+    Collections.sort(taskFile.getTaskWindows());
+    for (int i = taskFile.getTaskWindows().size() - 1; i >= 0; i--) {
+      final TaskWindow taskWindow = taskFile.getTaskWindows().get(i);
+      replaceTaskWindow(project, document, taskWindow);
+    }
+  }
+
+  private void replaceTaskWindow(@NotNull final Project project, @NotNull final Document document, @NotNull final TaskWindow taskWindow) {
+    final String taskText = taskWindow.getTaskText();
+    final int lineStartOffset = document.getLineStartOffset(taskWindow.line);
+    final int offset = lineStartOffset + taskWindow.start;
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            document.replaceString(offset, offset + taskWindow.getReplacementLength(), taskText);
+            FileDocumentManager.getInstance().saveDocument(document);
+          }
+        });
+      }
+    }, "x", "qwe");
+  }
+
+  private void synchronize(@NotNull final Project project) {
+    VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
+    ProjectView.getInstance(project).refresh();
+  }
+
+  private void resetTaskFiles(@NotNull final Map<TaskFile, TaskFile> taskFiles) {
+    for (Map.Entry<TaskFile, TaskFile> entry: taskFiles.entrySet()) {
+      TaskFile realTaskFile = entry.getKey();
+      TaskFile savedTaskFile = entry.getValue();
+      realTaskFile.update(savedTaskFile);
+    }
+  }
+
+  private void packCourse(@NotNull final VirtualFile baseDir, @NotNull final Map<String, Lesson> lessons) {
     try {
       File zipFile = new File(myLocationDir, myZipName + ".zip");
       ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
@@ -108,7 +187,12 @@ public class CreateCourseArchive extends DumbAwareAction {
         final VirtualFile lessonDir = baseDir.findChild(entry.getKey());
         if (lessonDir == null) continue;
 
-        ZipUtil.addFileOrDirRecursively(zos, null, new File(lessonDir.getPath()), lessonDir.getName(), null, null);
+        ZipUtil.addFileOrDirRecursively(zos, null, new File(lessonDir.getPath()), lessonDir.getName(), new FileFilter() {
+          @Override
+          public boolean accept(File pathname) {
+            return !pathname.getName().contains(".answer");
+          }
+        }, null);
       }
       ZipUtil.addFileOrDirRecursively(zos, null, new File(baseDir.getPath(), "hints"), "hints", null, null);
       ZipUtil.addFileOrDirRecursively(zos, null, new File(baseDir.getPath(), "course.json"), "course.json", null, null);
@@ -119,36 +203,9 @@ public class CreateCourseArchive extends DumbAwareAction {
     catch (IOException e1) {
       LOG.error(e1);
     }
-
-    for (Map.Entry<VirtualFile, TaskFile> entry: taskFiles.entrySet()) {
-      TaskFile value = entry.getValue();
-      final Document document = FileDocumentManager.getInstance().getDocument(entry.getKey());
-      if (document == null) {
-        continue;
-      }
-      for (final TaskWindow taskWindow : value.getTaskWindows()){
-        final int lineStartOffset = document.getLineStartOffset(taskWindow.line);
-        final int offset = lineStartOffset + taskWindow.start;
-        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-          @Override
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              @Override
-              public void run() {
-                document.replaceString(offset, offset + taskWindow.length, taskWindow.getPossibleAnswer());
-                FileDocumentManager.getInstance().saveDocument(document);
-              }
-            });
-          }
-        }, "x", "qwe");
-      }
-      value.setTrackChanges(true);
-    }
-    VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
-    ProjectView.getInstance(project).refresh();
   }
 
-  private void generateJson(Project project) {
+  private void generateJson(@NotNull final Project project) {
     final CCProjectService service = CCProjectService.getInstance(project);
     final Course course = service.getCourse();
     final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
@@ -187,12 +244,7 @@ public class CreateCourseArchive extends DumbAwareAction {
 
     @Override
     protected void updateTaskWindowLength(CharSequence fragment, TaskWindow taskWindow, int change) {
-    //we don't need to update task window length
-    }
-
-    @Override
-    protected boolean needModify() {
-      return true;
+      //we don't need to update task window length
     }
   }
 }

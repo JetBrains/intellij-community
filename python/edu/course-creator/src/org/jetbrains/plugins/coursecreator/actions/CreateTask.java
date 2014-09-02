@@ -29,7 +29,7 @@ public class CreateTask extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(final AnActionEvent e) {
     final IdeView view = e.getData(LangDataKeys.IDE_VIEW);
     final Project project = e.getData(CommonDataKeys.PROJECT);
 
@@ -54,17 +54,16 @@ public class CreateTask extends DumbAwareAction {
         if (taskDirectory != null) {
           final FileTemplate template = FileTemplateManager.getInstance().getInternalTemplate("task.html");
           final FileTemplate testsTemplate = FileTemplateManager.getInstance().getInternalTemplate("tests");
-          final FileTemplate taskTemplate = FileTemplateManager.getInstance().getInternalTemplate("task.py");
+          final FileTemplate taskTemplate = FileTemplateManager.getInstance().getInternalTemplate("task.answer");
           try {
             final PsiElement taskFile = FileTemplateUtil.createFromTemplate(template, "task.html", null, taskDirectory);
             final PsiElement testsFile = FileTemplateUtil.createFromTemplate(testsTemplate, "tests.py", null, taskDirectory);
-            final PsiElement taskPyFile = FileTemplateUtil.createFromTemplate(taskTemplate, "file1" + ".py", null, taskDirectory);
+            final PsiElement taskPyFile = FileTemplateUtil.createFromTemplate(taskTemplate, "file1", null, taskDirectory);
 
             final Task task = new Task(taskName);
-            task.addTaskFile(taskPyFile.getContainingFile().getName(), size + 1);
+            task.addTaskFile("file1.py", size + 1);
             task.setIndex(size + 1);
             lesson.addTask(task, taskDirectory);
-
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               @Override
               public void run() {

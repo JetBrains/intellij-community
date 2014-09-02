@@ -31,6 +31,7 @@ import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -130,12 +131,13 @@ class ContractInferenceInterpreter {
     return RecursionManager.doPreventingRecursion(myMethod, true, new Computable<List<MethodContract>>() {
       @Override
       public List<MethodContract> compute() {
-        List<MethodContract> delegateContracts = ControlFlowAnalyzer.getMethodContracts(targetMethod);
-        return ContainerUtil.mapNotNull(delegateContracts, new NullableFunction<MethodContract, MethodContract>() {
+        final boolean notNull = NullableNotNullManager.isNotNull(targetMethod);
+        final ValueConstraint[] emptyConstraints = MethodContract.createConstraintArray(myMethod.getParameterList().getParametersCount());
+        List<MethodContract> fromDelegate = ContainerUtil.mapNotNull(ControlFlowAnalyzer.getMethodContracts(targetMethod), new NullableFunction<MethodContract, MethodContract>() {
           @Nullable
           @Override
           public MethodContract fun(MethodContract delegateContract) {
-            ValueConstraint[] answer = MethodContract.createConstraintArray(myMethod.getParameterList().getParametersCount());
+            ValueConstraint[] answer = emptyConstraints;
             for (int i = 0; i < delegateContract.arguments.length; i++) {
               if (i >= arguments.length) return null;
 
@@ -155,9 +157,17 @@ class ContractInferenceInterpreter {
                 }
               }
             }
-            return answer == null ? null : new MethodContract(answer, negated ? negateConstraint(delegateContract.returnValue) : delegateContract.returnValue);
+            ValueConstraint returnValue = negated ? negateConstraint(delegateContract.returnValue) : delegateContract.returnValue;
+            if (notNull && returnValue != THROW_EXCEPTION) {
+              returnValue = NOT_NULL_VALUE;
+            }
+            return answer == null ? null : new MethodContract(answer, returnValue);
           }
         });
+        if (notNull) {
+          return ContainerUtil.concat(fromDelegate, Arrays.asList(new MethodContract(emptyConstraints, NOT_NULL_VALUE)));
+        }
+        return fromDelegate;
       }
     });
   }

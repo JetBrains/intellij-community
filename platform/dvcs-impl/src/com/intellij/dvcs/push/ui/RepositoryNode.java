@@ -15,29 +15,25 @@
  */
 package com.intellij.dvcs.push.ui;
 
+import com.intellij.dvcs.push.TargetEditor;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.ui.*;
+import com.intellij.ui.CheckedTreeNode;
+import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.util.ArrayList;
 
 public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode, Comparable<RepositoryNode> {
   @NotNull private final RepositoryWithBranchPanel myRepositoryPanel;
-  @NotNull protected SimpleColoredText myTargetPresentation;
   private ProgressIndicator myCurrentIndicator;
 
-  public RepositoryNode(@NotNull RepositoryWithBranchPanel repositoryPanel, @NotNull SimpleColoredText targetPresentation) {
+  public RepositoryNode(@NotNull RepositoryWithBranchPanel repositoryPanel) {
     super(repositoryPanel);
     myRepositoryPanel = repositoryPanel;
-    myTargetPresentation = targetPresentation;
-  }
-
-  public void setTargetPresentation(@NotNull SimpleColoredText targetPresentation) {
-    myTargetPresentation = targetPresentation;
   }
 
   public boolean isCheckboxVisible() {
@@ -51,29 +47,15 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
     renderer.appendFixedTextFragmentWidth(120);
     renderer.append(myRepositoryPanel.getSourceName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     renderer.append(myRepositoryPanel.getArrow(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    EditorTextField textField = myRepositoryPanel.getRemoteTextFiled();
-    renderTargetName(renderer, textField);
-    Insets insets = BorderFactory.createEmptyBorder().getBorderInsets(textField);
+    TargetEditor targetEditor = myRepositoryPanel.getTargetEditor();
+    targetEditor.render(renderer);
+    Insets insets = BorderFactory.createEmptyBorder().getBorderInsets(targetEditor);
     renderer.setBorder(new EmptyBorder(insets));
-  }
-
-  protected void renderTargetName(@NotNull ColoredTreeCellRenderer renderer, @NotNull EditorTextField textField) {
-    ArrayList<String> strings = myTargetPresentation.getTexts();
-    ArrayList<SimpleTextAttributes> attributes = myTargetPresentation.getAttributes();
-    for (int i = 0; i < strings.size(); i++) {
-      renderer.append(strings.get(i), attributes.get(i), textField);
-    }
   }
 
   @Override
   public Object getUserObject() {
     return myRepositoryPanel;
-  }
-
-  @Override
-  @NotNull
-  public String getValue() {
-    return myRepositoryPanel.getRemoteTargetName();
   }
 
   @Override

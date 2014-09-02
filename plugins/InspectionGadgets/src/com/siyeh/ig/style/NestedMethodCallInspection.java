@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.IntroduceVariableFix;
@@ -26,8 +26,11 @@ public class NestedMethodCallInspection extends NestedMethodCallInspectionBase {
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("nested.method.call.ignore.option"),
-      this, "m_ignoreFieldInitializations");
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox(InspectionGadgetsBundle.message("nested.method.call.ignore.option"), "m_ignoreFieldInitializations");
+    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.calls.to.static.methods"), "ignoreStaticMethods");
+    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.calls.to.property.getters"), "ignoreGetterCalls");
+    return panel;
   }
 
   @Override

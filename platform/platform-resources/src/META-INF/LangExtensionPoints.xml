@@ -385,7 +385,8 @@
                     interface="com.intellij.execution.configurations.ConfigurationType"/>
 
     <extensionPoint name="runConfigurationsSettings"
-                    interface="com.intellij.execution.configurations.RunConfigurationsSettings"/>
+                    interface="com.intellij.execution.configurations.RunConfigurationsSettings"
+                    area="IDEA_PROJECT"/>
 
     <extensionPoint name="programRunner"
                     interface="com.intellij.execution.runners.ProgramRunner"/>

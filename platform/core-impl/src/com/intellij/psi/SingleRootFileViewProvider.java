@@ -53,6 +53,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.util.Collections;
 import java.util.List;
@@ -68,7 +69,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   private final boolean myPhysical;
   private final AtomicReference<PsiFile> myPsiFile = new AtomicReference<PsiFile>();
   private volatile Content myContent;
-  private volatile SoftReference<Document> myDocument;
+  private volatile Reference<Document> myDocument;
   @NotNull private final Language myBaseLanguage;
 
   public SingleRootFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile file) {
@@ -213,10 +214,11 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
 
-  public PsiFile getCachedPsi(Language target) {
+  public PsiFile getCachedPsi(@NotNull Language target) {
     return myPsiFile.get();
   }
 
+  @NotNull
   public FileElement[] getKnownTreeRoots() {
     PsiFile psiFile = myPsiFile.get();
     if (psiFile == null || !(psiFile instanceof PsiFileImpl)) return new FileElement[0];
@@ -257,8 +259,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   protected boolean isIgnored() {
     final VirtualFile file = getVirtualFile();
-    if (file instanceof LightVirtualFile) return false;
-    return FileTypeRegistry.getInstance().isFileIgnored(file);
+    return !(file instanceof LightVirtualFile) && FileTypeRegistry.getInstance().isFileIgnored(file);
   }
 
   @Nullable
@@ -357,7 +358,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     Document document = com.intellij.reference.SoftReference.dereference(myDocument);
     if (document == null/* TODO[ik] make this change && isEventSystemEnabled()*/) {
       document = FileDocumentManager.getInstance().getDocument(getVirtualFile());
-      myDocument = new SoftReference<Document>(document);
+      myDocument = document == null ? null : new SoftReference<Document>(document);
     }
     if (document != null && getContent() instanceof VirtualFileContent) {
       setContent(new DocumentContent());
@@ -446,16 +447,17 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     return null;
   }
 
-  public void forceCachedPsi(final PsiFile psiFile) {
+  public void forceCachedPsi(@NotNull PsiFile psiFile) {
     myPsiFile.set(psiFile);
     ((PsiManagerEx)myManager).getFileManager().setViewProvider(getVirtualFile(), this);
   }
 
+  @NotNull
   private Content getContent() {
     return myContent;
   }
 
-  private void setContent(final Content content) {
+  private void setContent(@NotNull Content content) {
     // temporarily commented
     //if (myPhysical) {
     //  final Content oldContent = myContent;

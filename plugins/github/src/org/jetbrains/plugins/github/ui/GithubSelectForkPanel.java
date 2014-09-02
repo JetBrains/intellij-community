@@ -57,14 +57,6 @@ public class GithubSelectForkPanel {
     return myComboBox.getSelectedItem().toString();
   }
 
-  public void setSelectedUser(@Nullable String user) {
-    if (StringUtil.isEmptyOrSpaces(user)) {
-      return;
-    }
-
-    myComboBox.setSelectedItem(user);
-  }
-
   public JPanel getPanel() {
     return myPanel;
   }

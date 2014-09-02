@@ -15,142 +15,159 @@
  */
 package org.jetbrains.plugins.github.ui;
 
+import com.intellij.CommonBundle;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Consumer;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.github.GithubCreatePullRequestWorker;
 import org.jetbrains.plugins.github.api.GithubFullPath;
+import org.jetbrains.plugins.github.util.GithubNotifications;
 import org.jetbrains.plugins.github.util.GithubProjectSettings;
+import org.jetbrains.plugins.github.util.GithubSettings;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.Collection;
 import java.util.Collections;
+
+import static org.jetbrains.plugins.github.GithubCreatePullRequestWorker.BranchInfo;
+import static org.jetbrains.plugins.github.GithubCreatePullRequestWorker.ForkInfo;
 
 /**
  * @author Aleksey Pivovarov
  */
 public class GithubCreatePullRequestDialog extends DialogWrapper {
-  @NotNull private final GithubCreatePullRequestPanel myGithubCreatePullRequestPanel;
+  @NotNull private final GithubCreatePullRequestPanel myPanel;
   @NotNull private final GithubCreatePullRequestWorker myWorker;
   @NotNull private final GithubProjectSettings myProjectSettings;
+  @NotNull private static final CreateRemoteDoNotAskOption ourDoNotAskOption = new CreateRemoteDoNotAskOption();
 
-  public GithubCreatePullRequestDialog(@NotNull GithubCreatePullRequestWorker worker) {
-    super(worker.getProject(), true);
+  public GithubCreatePullRequestDialog(@NotNull final Project project, @NotNull GithubCreatePullRequestWorker worker) {
+    super(project, true);
     myWorker = worker;
 
-    myProjectSettings = GithubProjectSettings.getInstance(myWorker.getProject());
+    myProjectSettings = GithubProjectSettings.getInstance(project);
 
-    myGithubCreatePullRequestPanel = new GithubCreatePullRequestPanel();
-
-    myGithubCreatePullRequestPanel.getShowDiffButton().addActionListener(new ActionListener() {
+    myPanel = new GithubCreatePullRequestPanel();
+    myPanel.getShowDiffButton().addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        myWorker.showDiffDialog(myGithubCreatePullRequestPanel.getBranch());
+        myWorker.showDiffDialog(myPanel.getSelectedBranch());
       }
     });
-    myGithubCreatePullRequestPanel.getSelectForkButton().addActionListener(new ActionListener() {
+    myPanel.getSelectForkButton().addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        showTargetDialog();
+        ForkInfo fork = myWorker.showTargetDialog();
+        if (fork != null) {
+          myPanel.setForks(myWorker.getForks());
+          myPanel.setSelectedFork(fork.getPath());
+        }
       }
     });
-    myGithubCreatePullRequestPanel.getBranchComboBox().addItemListener(new ItemListener() {
+
+    myPanel.getForkComboBox().addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
+        if (e.getStateChange() == ItemEvent.DESELECTED) {
+          myPanel.setBranches(Collections.<BranchInfo>emptyList());
+        }
         if (e.getStateChange() == ItemEvent.SELECTED) {
-          if (myWorker.canShowDiff()) {
-            myGithubCreatePullRequestPanel.setBusy(true);
-            myWorker.getDiffDescriptionInPooledThread(getTargetBranch(), new Consumer<GithubCreatePullRequestWorker.DiffDescription>() {
-              @Override
-              public void consume(final GithubCreatePullRequestWorker.DiffDescription info) {
-                UIUtil.invokeLaterIfNeeded(new Runnable() {
-                  @Override
-                  public void run() {
-                    if (info == null) {
-                      myGithubCreatePullRequestPanel.setBusy(false);
-                      return;
-                    }
-                    if (getTargetBranch().equals(info.getBranch())) {
-                      myGithubCreatePullRequestPanel.setBusy(false);
-                      if (myGithubCreatePullRequestPanel.isTitleDescriptionEmptyOrNotModified()) {
-                        myGithubCreatePullRequestPanel.setTitle(info.getTitle());
-                        myGithubCreatePullRequestPanel.setDescription(info.getDescription());
-                      }
-                    }
-                  }
-                });
-              }
-            });
+          final ForkInfo fork = (ForkInfo)e.getItem();
+          if (fork == null) return;
+
+          myPanel.setBranches(fork.getBranches());
+          myPanel.setSelectedBranch(fork.getDefaultBranch());
+
+          if (fork.getRemoteName() == null && !fork.isProposedToCreateRemote()) {
+            fork.setProposedToCreateRemote(true);
+            boolean createRemote = false;
+
+            switch (GithubSettings.getInstance().getCreatePullRequestCreateRemote()) {
+              case YES:
+                createRemote = true;
+                break;
+              case NO:
+                createRemote = false;
+                break;
+              case UNSURE:
+                createRemote = GithubNotifications.showYesNoDialog(project,
+                                                                   "Can't Find Remote",
+                                                                   "Configure remote for '" + fork.getPath().getUser() + "'?",
+                                                                   ourDoNotAskOption) == Messages.YES;
+                break;
+            }
+
+            if (createRemote) {
+              myWorker.configureRemote(fork);
+            }
+          }
+
+          if (fork.getRemoteName() == null) {
+            myPanel.setDiffEnabled(false);
+          }
+          else {
+            myPanel.setDiffEnabled(true);
+            myWorker.launchFetchRemote(fork);
           }
         }
       }
     });
+
+    myPanel.getBranchComboBox().addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        if (e.getStateChange() == ItemEvent.SELECTED) {
+          BranchInfo branch = (BranchInfo)e.getItem();
+          if (branch == null) return;
+
+          if (branch.getForkInfo().getRemoteName() != null) {
+            if (branch.getDiffInfoTask() != null && branch.getDiffInfoTask().isDone() && branch.getDiffInfoTask().safeGet() == null) {
+              myPanel.setDiffEnabled(false);
+            }
+            else {
+              myPanel.setDiffEnabled(true);
+            }
+          }
+
+          if (myPanel.isTitleDescriptionEmptyOrNotModified()) {
+            Pair<String, String> description = myWorker.getDefaultDescriptionMessage(branch);
+            myPanel.setTitle(description.getFirst());
+            myPanel.setDescription(description.getSecond());
+          }
+
+          myWorker.launchLoadDiffInfo(branch);
+        }
+      }
+    });
+
+    myPanel.setForks(myWorker.getForks());
+    myPanel.setSelectedFork(myProjectSettings.getCreatePullRequestDefaultRepo());
+    myPanel.setSelectedBranch(myProjectSettings.getCreatePullRequestDefaultBranch());
 
     setTitle("Create Pull Request - " + myWorker.getCurrentBranch());
     init();
   }
 
   @Override
-  public void show() {
-    GithubFullPath defaultForkPath = myProjectSettings.getCreatePullRequestDefaultRepo();
-    if (defaultForkPath != null) {
-      setTarget(defaultForkPath);
-    }
-    else {
-      if (!showTargetDialog(true)) {
-        close(CANCEL_EXIT_CODE);
-        return;
-      }
-    }
-    super.show();
-  }
-
-  private boolean showTargetDialog() {
-    return showTargetDialog(false);
-  }
-
-  private boolean showTargetDialog(boolean firstTime) {
-    GithubFullPath forkPath = myWorker.showTargetDialog(firstTime);
-    if (forkPath == null) {
-      return false;
-    }
-    return setTarget(forkPath);
-  }
-
-  private boolean setTarget(@NotNull GithubFullPath forkPath) {
-    GithubCreatePullRequestWorker.GithubTargetInfo forkInfo = myWorker.setTarget(forkPath);
-    if (forkInfo == null) {
-      return false;
-    }
-    myProjectSettings.setCreatePullRequestDefaultRepo(forkPath);
-    myGithubCreatePullRequestPanel.setDiffEnabled(myWorker.canShowDiff());
-    updateBranches(forkInfo.getBranches(), forkPath);
-    return true;
-  }
-
-  private void updateBranches(@NotNull Collection<String> branches, @NotNull GithubFullPath forkPath) {
-    myGithubCreatePullRequestPanel.setBranches(branches);
-
-    String configBranch = myProjectSettings.getCreatePullRequestDefaultBranch();
-    if (configBranch != null) myGithubCreatePullRequestPanel.setSelectedBranch(configBranch);
-
-    myGithubCreatePullRequestPanel.setForkName(forkPath.getFullName());
-  }
-
-  @Override
   protected void doOKAction() {
-    if (myWorker.checkAction(getTargetBranch())) {
-      myProjectSettings.setCreatePullRequestDefaultBranch(getTargetBranch());
-      myWorker.performAction(getRequestTitle(), getDescription(), getTargetBranch());
+    BranchInfo branch = myPanel.getSelectedBranch();
+    if (myWorker.checkAction(branch)) {
+      assert branch != null;
+      myWorker.createPullRequest(branch, getRequestTitle(), getDescription());
+
+      myProjectSettings.setCreatePullRequestDefaultBranch(branch.getRemoteName());
+      myProjectSettings.setCreatePullRequestDefaultRepo(branch.getForkInfo().getPath());
+
       super.doOKAction();
     }
   }
@@ -158,13 +175,13 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
   @Nullable
   @Override
   protected JComponent createCenterPanel() {
-    return myGithubCreatePullRequestPanel.getPanel();
+    return myPanel.getPanel();
   }
 
   @Nullable
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myGithubCreatePullRequestPanel.getPreferredComponent();
+    return myPanel.getPreferredComponent();
   }
 
   @Override
@@ -179,50 +196,76 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
 
   @NotNull
   private String getRequestTitle() {
-    return myGithubCreatePullRequestPanel.getTitle();
+    return myPanel.getTitle();
   }
 
   @NotNull
   private String getDescription() {
-    return myGithubCreatePullRequestPanel.getDescription();
-  }
-
-  @NotNull
-  private String getTargetBranch() {
-    return myGithubCreatePullRequestPanel.getBranch();
+    return myPanel.getDescription();
   }
 
   @Nullable
   @Override
   protected ValidationInfo doValidate() {
     if (StringUtil.isEmptyOrSpaces(getRequestTitle())) {
-      return new ValidationInfo("Title can't be empty'", myGithubCreatePullRequestPanel.getTitleTextField());
+      return new ValidationInfo("Title can't be empty'", myPanel.getTitleTextField());
     }
     return null;
   }
 
   @TestOnly
   public void testSetRequestTitle(String title) {
-    myGithubCreatePullRequestPanel.setTitle(title);
+    myPanel.setTitle(title);
   }
 
   @TestOnly
   public void testSetBranch(String branch) {
-    myGithubCreatePullRequestPanel.setBranches(Collections.singleton(branch));
+    myPanel.setSelectedBranch(branch);
   }
 
   @TestOnly
   public void testCreatePullRequest() {
-    myWorker.performAction(getRequestTitle(), getDescription(), getTargetBranch());
+    myWorker.createPullRequest(myPanel.getSelectedBranch(), getRequestTitle(), getDescription());
   }
 
   @TestOnly
-  public void testSetTarget(@NotNull GithubFullPath forkPath) {
-    GithubCreatePullRequestWorker.GithubTargetInfo forkInfo = myWorker.setTarget(forkPath);
-    if (forkInfo == null) {
-      doCancelAction();
-      return;
+  public void testSetFork(@NotNull GithubFullPath forkPath) {
+    myPanel.setSelectedFork(forkPath);
+  }
+
+  private static class CreateRemoteDoNotAskOption implements DoNotAskOption {
+    @Override
+    public boolean isToBeShown() {
+      return true;
     }
-    myGithubCreatePullRequestPanel.setDiffEnabled(myWorker.canShowDiff());
+
+    @Override
+    public void setToBeShown(boolean value, int exitCode) {
+      if (value) {
+        GithubSettings.getInstance().setCreatePullRequestCreateRemote(ThreeState.UNSURE);
+      }
+      else if (exitCode == DialogWrapper.OK_EXIT_CODE) {
+        GithubSettings.getInstance().setCreatePullRequestCreateRemote(ThreeState.YES);
+      }
+      else {
+        GithubSettings.getInstance().setCreatePullRequestCreateRemote(ThreeState.NO);
+      }
+    }
+
+    @Override
+    public boolean canBeHidden() {
+      return true;
+    }
+
+    @Override
+    public boolean shouldSaveOptionsOnCancel() {
+      return false;
+    }
+
+    @NotNull
+    @Override
+    public String getDoNotShowMessage() {
+      return CommonBundle.message("dialog.options.do.not.ask");
+    }
   }
 }

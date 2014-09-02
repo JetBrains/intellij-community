@@ -30,12 +30,12 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.compiled.ClassFileDecompilers;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.util.containers.ContainerUtil;
-import de.fernflower.main.decompiler.IdeDecompiler;
-import de.fernflower.main.extern.IBytecodeProvider;
-import de.fernflower.main.extern.IDecompilatSaver;
-import de.fernflower.main.extern.IFernflowerLogger;
-import de.fernflower.main.extern.IFernflowerPreferences;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.java.decompiler.main.decompiler.IdeDecompiler;
+import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
+import org.jetbrains.java.decompiler.main.extern.IDecompilatSaver;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.Opcodes;
@@ -51,10 +51,10 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
   private static final Logger LOG = Logger.getInstance(IdeaDecompiler.class);
 
   private static final String BANNER =
-      "//\n" +
-      "// Source code recreated from a .class file by IntelliJ IDEA\n" +
-      "// (powered by Fernflower decompiler)\n" +
-      "//\n\n";
+    "//\n" +
+    "// Source code recreated from a .class file by IntelliJ IDEA\n" +
+    "// (powered by Fernflower decompiler)\n" +
+    "//\n\n";
 
   private final IFernflowerLogger myLogger = new IdeaLogger();
   private final HashMap<String, Object> myOptions = new HashMap<String, Object>();

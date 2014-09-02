@@ -79,7 +79,11 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
         public void run() {
           myLife.born();
-          markEverythingDirty();
+          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+            public void run() {
+              markEverythingDirty();
+            }
+          });
         }
       });
     }

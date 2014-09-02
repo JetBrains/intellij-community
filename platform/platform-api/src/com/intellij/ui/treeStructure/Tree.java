@@ -20,6 +20,7 @@ import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.*;
@@ -143,7 +144,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   @SuppressWarnings("unchecked")
   @NotNull
   protected Condition<Integer> getWideSelectionBackgroundCondition() {
-    return Condition.TRUE;
+    return Conditions.alwaysTrue();
   }
   
   @Override

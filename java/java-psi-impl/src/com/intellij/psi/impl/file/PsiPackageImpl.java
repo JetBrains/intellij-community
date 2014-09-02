@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiFacadeImpl;
@@ -46,7 +47,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Queryable {
-  public static boolean DEBUG = false;
   private volatile CachedValue<PsiModifierList> myAnnotationList;
   private volatile CachedValue<Collection<PsiDirectory>> myDirectories;
   private volatile CachedValue<Collection<PsiDirectory>> myDirectoriesWithLibSources;
@@ -72,6 +72,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     }
   }
 
+  @NotNull
   private CachedValue<Collection<PsiDirectory>> createCachedDirectories(final boolean includeLibrarySources) {
     return CachedValuesManager.getManager(myManager.getProject()).createCachedValue(new CachedValueProvider<Collection<PsiDirectory>>() {
       @Override
@@ -131,6 +132,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     }
   }
 
+  @Override
   public String toString() {
     return "PsiPackage:" + getQualifiedName();
   }
@@ -141,6 +143,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return getClasses(allScope());
   }
 
+  @NotNull
   protected GlobalSearchScope allScope() {
     return PsiPackageImplementationHelper.getInstance().adjustAllScope(this, GlobalSearchScope.allScope(getProject()));
   }
@@ -177,7 +180,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   }
 
   @NotNull
-  private PsiClass[] getCachedClassesByName(String name) {
+  private PsiClass[] getCachedClassesByName(@NotNull String name) {
     if (DumbService.getInstance(getProject()).isDumb()) {
       return getCachedClassInDumbMode(name);
     }
@@ -215,7 +218,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   }
 
   @Override
-  public boolean containsClassNamed(String name) {
+  public boolean containsClassNamed(@NotNull String name) {
     return getCachedClassesByName(name).length > 0;
   }
 
@@ -247,7 +250,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   }
 
   @Nullable
-  private PsiPackage findSubPackageByName(String name) {
+  private PsiPackage findSubPackageByName(@NotNull String name) {
     final String qName = getQualifiedName();
     final String subpackageQName = qName.isEmpty() ? name : qName + "." + name;
     return getFacade().findPackage(subpackageQName);
@@ -270,11 +273,11 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       if (nameHint != null) {
         final String shortName = nameHint.getName(state);
         final PsiClass[] classes = findClassByShortName(shortName, scope);
-        if (!processClasses(processor, state, classes, Condition.TRUE)) return false;
+        if (!processClasses(processor, state, classes, Conditions.<String>alwaysTrue())) return false;
       }
       else {
         PsiClass[] classes = getClasses(scope);
-        if (!processClasses(processor, state, classes, nameCondition != null ? nameCondition : Condition.TRUE)) return false;
+        if (!processClasses(processor, state, classes, nameCondition != null ? nameCondition : Conditions.<String>alwaysTrue())) return false;
       }
     }
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.PACKAGE)) {
@@ -302,7 +305,9 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return true;
   }
 
-  private static boolean processClasses(PsiScopeProcessor processor, ResolveState state, PsiClass[] classes, 
+  private static boolean processClasses(@NotNull PsiScopeProcessor processor,
+                                        @NotNull ResolveState state,
+                                        @NotNull PsiClass[] classes,
                                         @NotNull Condition<String> nameCondition) {
     for (PsiClass aClass : classes) {
       String name = aClass.getName();

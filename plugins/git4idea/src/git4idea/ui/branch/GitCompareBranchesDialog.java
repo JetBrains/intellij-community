@@ -17,35 +17,46 @@ package git4idea.ui.branch;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.diff.impl.dir.FrameDialogWrapper;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.ui.TabbedPaneImpl;
 import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitCommitCompareInfo;
 import icons.Git4ideaIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 /**
  * Dialog for comparing two Git branches.
  */
-public class GitCompareBranchesDialog extends FrameWrapper {
+public class GitCompareBranchesDialog extends FrameDialogWrapper {
 
   @NotNull private final Project myProject;
-  @NotNull private final String myBranchName;
-  @NotNull private final String myCurrentBranchName;
-  @NotNull private final GitCommitCompareInfo myCompareInfo;
-  @NotNull private final JPanel myLogPanel;
 
-  public GitCompareBranchesDialog(@NotNull Project project, @NotNull String branchName, @NotNull String currentBranchName,
-                                  @NotNull GitCommitCompareInfo compareInfo, @NotNull GitRepository initialRepo) {
-    super(project, GitCompareBranchesDialog.class.getName());
-    myCurrentBranchName = currentBranchName;
-    myCompareInfo = compareInfo;
+  @NotNull private final JPanel myLogPanel;
+  @NotNull private final TabbedPaneImpl myTabbedPane;
+  @NotNull private final String myTitle;
+
+  @NotNull private final Mode myMode;
+
+  public GitCompareBranchesDialog(@NotNull Project project,
+                                  @NotNull String branchName,
+                                  @NotNull String currentBranchName,
+                                  @NotNull GitCommitCompareInfo compareInfo,
+                                  @NotNull GitRepository initialRepo) {
+    this(project, branchName, currentBranchName, compareInfo, initialRepo, false);
+  }
+
+  public GitCompareBranchesDialog(@NotNull Project project,
+                                  @NotNull String branchName,
+                                  @NotNull String currentBranchName,
+                                  @NotNull GitCommitCompareInfo compareInfo,
+                                  @NotNull GitRepository initialRepo,
+                                  boolean dialog) {
     myProject = project;
-    myBranchName = branchName;
 
     String rootString;
     if (compareInfo.getRepositories().size() == 1 && GitUtil.getRepositoryManager(myProject).moreThanOneRoot()) {
@@ -54,23 +65,51 @@ public class GitCompareBranchesDialog extends FrameWrapper {
     else {
       rootString = "";
     }
-    setTitle(String.format("Comparing %s with %s%s", currentBranchName, branchName, rootString));
+    myTitle = String.format("Comparing %s with %s%s", currentBranchName, branchName, rootString);
+    myMode = dialog ? Mode.MODAL : Mode.FRAME;
 
-    myLogPanel = new GitCompareBranchesLogPanel(myProject, myBranchName, myCurrentBranchName, myCompareInfo, initialRepo);
-    setPreferredFocusedComponent(myLogPanel);
-    setComponent(createCenterPanel());
-    closeOnEsc();
+    JPanel diffPanel = new GitCompareBranchesDiffPanel(myProject, branchName, currentBranchName, compareInfo);
+    myLogPanel = new GitCompareBranchesLogPanel(myProject, branchName, currentBranchName, compareInfo, initialRepo);
+
+    myTabbedPane = new TabbedPaneImpl(SwingConstants.TOP);
+    myTabbedPane.addTab("Log", Git4ideaIcons.Branch, myLogPanel);
+    myTabbedPane.addTab("Diff", AllIcons.Actions.Diff, diffPanel);
+    myTabbedPane.setKeyboardNavigation(TabbedPaneImpl.DEFAULT_PREV_NEXT_SHORTCUTS);
   }
 
   @NotNull
-  protected JComponent createCenterPanel() {
-    JPanel diffPanel = new GitCompareBranchesDiffPanel(myProject, myBranchName, myCurrentBranchName, myCompareInfo);
-
-    TabbedPaneImpl tabbedPane = new TabbedPaneImpl(SwingConstants.TOP);
-    tabbedPane.addTab("Log", Git4ideaIcons.Branch, myLogPanel);
-    tabbedPane.addTab("Diff", AllIcons.Actions.Diff, diffPanel);
-    tabbedPane.setKeyboardNavigation(TabbedPaneImpl.DEFAULT_PREV_NEXT_SHORTCUTS);
-    return tabbedPane;
+  @Override
+  protected JComponent getPanel() {
+    return myTabbedPane;
   }
 
+  @Nullable
+  @Override
+  protected JComponent getPreferredFocusedComponent() {
+    return myLogPanel;
+  }
+
+  @Nullable
+  @Override
+  protected String getDimensionServiceKey() {
+    return GitCompareBranchesDialog.class.getName();
+  }
+
+  @NotNull
+  @Override
+  protected String getTitle() {
+    return myTitle;
+  }
+
+  @NotNull
+  @Override
+  protected Project getProject() {
+    return myProject;
+  }
+
+  @NotNull
+  @Override
+  protected Mode getMode() {
+    return myMode;
+  }
 }

@@ -1228,15 +1228,17 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       return null; // description is not set
     }
     if (searchable instanceof Configurable.Composite) {
-      box.add(Box.createVerticalStrut(10));
+      box.add(Box.createVerticalStrut(9));
       Configurable.Composite composite = (Configurable.Composite)searchable;
       for (final Configurable configurable : composite.getConfigurables()) {
-        box.add(new LinkLabel(configurable.getDisplayName(), AllIcons.Ide.Link) {
+        LinkLabel label = new LinkLabel(configurable.getDisplayName(), null) {
           @Override
           public void doClick() {
             select(configurable, null);
           }
-        });
+        };
+        label.setBorder(BorderFactory.createEmptyBorder(1, 17, 1, 1));
+        box.add(label);
       }
     }
     return box;

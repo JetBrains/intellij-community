@@ -15,9 +15,9 @@
  */
 package com.intellij.dvcs.push;
 
-public interface RepositoryNodeListener {
+public interface RepositoryNodeListener<T extends PushTarget> {
 
-  void onTargetChanged(String newValue);
+  void onTargetChanged(T newTarget);
 
   void onSelectionChanged(boolean isSelected);
 }

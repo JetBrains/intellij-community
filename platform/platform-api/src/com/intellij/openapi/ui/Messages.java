@@ -377,6 +377,33 @@ public class Messages {
    * @return {@link #YES} if user pressed "Yes" or {@link #NO} if user pressed "No" button.
    */
   @YesNoResult
+  public static int showYesNoDialog(@Nullable Project project,
+                                    String message,
+                                    @NotNull String title,
+                                    @NotNull String yesText,
+                                    @NotNull String noText,
+                                    @Nullable Icon icon,
+                                    @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
+    try {
+      if (canShowMacSheetPanel()) {
+        return MacMessages.getInstance()
+          .showYesNoDialog(title, message, yesText, noText, WindowManager.getInstance().suggestParentWindow(project), doNotAskOption);
+      }
+    }
+    catch (Exception exception) {
+      LOG.error(exception);
+    }
+
+    int result = showDialog(project, message, title, new String[]{yesText, noText}, 0, icon, doNotAskOption) == 0 ? YES : NO;
+    //noinspection ConstantConditions
+    LOG.assertTrue(result == YES || result == NO, result);
+    return result;
+  }
+
+  /**
+   * @return {@link #YES} if user pressed "Yes" or {@link #NO} if user pressed "No" button.
+   */
+  @YesNoResult
   public static int showYesNoDialog(@Nullable Project project, String message, @NotNull String title, @Nullable Icon icon) {
     try {
       if (canShowMacSheetPanel()) {
@@ -389,6 +416,31 @@ public class Messages {
     }
 
     int result = showYesNoDialog(project, message, title, YES_BUTTON, NO_BUTTON, icon);
+
+    LOG.assertTrue(result == YES || result == NO, result);
+    return result;
+  }
+
+  /**
+   * @return {@link #YES} if user pressed "Yes" or {@link #NO} if user pressed "No" button.
+   */
+  @YesNoResult
+  public static int showYesNoDialog(@Nullable Project project,
+                                    String message,
+                                    @NotNull String title,
+                                    @Nullable Icon icon,
+                                    @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
+    try {
+      if (canShowMacSheetPanel()) {
+        return MacMessages.getInstance().showYesNoDialog(title, message, YES_BUTTON, NO_BUTTON,
+                                                         WindowManager.getInstance().suggestParentWindow(project), doNotAskOption);
+      }
+    }
+    catch (Exception exception) {
+      LOG.error(exception);
+    }
+
+    int result = showYesNoDialog(project, message, title, YES_BUTTON, NO_BUTTON, icon, doNotAskOption);
 
     LOG.assertTrue(result == YES || result == NO, result);
     return result;

@@ -30,6 +30,4 @@ public interface EditableTreeNode extends CustomRenderedTreeNode {
 
   @NotNull
   ProgressIndicator startLoading();
-
-  String getValue();
 }

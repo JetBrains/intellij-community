@@ -70,7 +70,7 @@ public class FileElement extends LazyParseableElement implements FileASTNode, Ge
     return psiElementCopy.getTreeElement();
   }
 
-  public void setCharTable(CharTable table) {
+  public void setCharTable(@NotNull CharTable table) {
     myCharTable = table;
   }
 

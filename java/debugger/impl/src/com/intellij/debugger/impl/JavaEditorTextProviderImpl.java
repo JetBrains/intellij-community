@@ -86,6 +86,10 @@ public class JavaEditorTextProviderImpl implements EditorTextProvider {
   public Pair<PsiElement, TextRange> findExpression(PsiElement element, boolean allowMethodCalls) {
     PsiElement expression = null;
     PsiElement parent = element.getParent();
+    if (parent instanceof PsiLiteralExpression) {
+      element = parent;
+      parent = parent.getParent();
+    }
     if (parent instanceof PsiVariable) {
       expression = element;
     }
@@ -107,12 +111,7 @@ public class JavaEditorTextProviderImpl implements EditorTextProvider {
     else if (parent instanceof PsiThisExpression) {
       expression = parent;
     }
-    else if (parent instanceof PsiInstanceOfExpression
-             || parent instanceof PsiBinaryExpression
-             || parent instanceof PsiPolyadicExpression
-             || parent instanceof PsiPrefixExpression
-             || parent instanceof PsiConditionalExpression
-      ) {
+    else if (parent instanceof PsiExpression && !(parent instanceof PsiNewExpression)) {
       if (allowMethodCalls || !DebuggerUtils.hasSideEffects(parent)) {
         expression = parent;
       }

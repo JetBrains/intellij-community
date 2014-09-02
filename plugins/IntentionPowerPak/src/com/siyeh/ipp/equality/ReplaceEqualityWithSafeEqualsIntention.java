@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,25 +17,36 @@ package com.siyeh.ipp.equality;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.util.PsiUtil;
+import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceEqualityWithSafeEqualsIntention extends Intention {
+public class ReplaceEqualityWithSafeEqualsIntention extends MutablyNamedIntention {
+
+  @Override
+  protected String getTextForElement(PsiElement element) {
+    final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)element;
+    if (JavaTokenType.NE.equals(binaryExpression.getOperationTokenType())) {
+      return IntentionPowerPackBundle.message("replace.equality.with.safe.not.equals.intention.name");
+    }
+    else {
+      return IntentionPowerPackBundle.message("replace.equality.with.safe.equals.intention.name");
+    }
+  }
 
   @NotNull
   public PsiElementPredicate getElementPredicate() {
     return new ObjectEqualityPredicate();
   }
 
-  public void processIntention(PsiElement element)
-    throws IncorrectOperationException {
-    final PsiBinaryExpression exp =
-      (PsiBinaryExpression)element;
+  public void processIntention(PsiElement element) {
+    final PsiBinaryExpression exp = (PsiBinaryExpression)element;
     final PsiExpression lhs = exp.getLOperand();
     final PsiExpression rhs = exp.getROperand();
     if (rhs == null) {
@@ -56,26 +67,26 @@ public class ReplaceEqualityWithSafeEqualsIntention extends Intention {
     final PsiJavaToken operationSign = exp.getOperationSign();
     final IElementType tokenType = operationSign.getTokenType();
     final String signText = operationSign.getText();
-    @NonNls final StringBuilder buffer = new StringBuilder(lhsText);
-    buffer.append("==null?");
-    buffer.append(rhsText);
-    buffer.append(signText);
-    buffer.append(" null:");
-    if (tokenType.equals(JavaTokenType.NE)) {
-      buffer.append('!');
-    }
-    if (ParenthesesUtils.getPrecedence(strippedLhs) >
-        ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
-      buffer.append('(');
-      buffer.append(lhsText);
-      buffer.append(')');
+    @NonNls final StringBuilder newExpression = new StringBuilder();
+    if (PsiUtil.isLanguageLevel7OrHigher(element) && ClassUtils.findClass("java.util.Objects", element) != null) {
+      if (tokenType.equals(JavaTokenType.NE)) {
+        newExpression.append('!');
+      }
+      newExpression.append("java.util.Objects.equals(").append(lhsText).append(',').append(rhsText).append(')');
     }
     else {
-      buffer.append(lhsText);
+      newExpression.append(lhsText).append("==null?").append(rhsText).append(signText).append(" null:");
+      if (tokenType.equals(JavaTokenType.NE)) {
+        newExpression.append('!');
+      }
+      if (ParenthesesUtils.getPrecedence(strippedLhs) > ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
+        newExpression.append('(').append(lhsText).append(')');
+      }
+      else {
+        newExpression.append(lhsText);
+      }
+      newExpression.append(".equals(").append(rhsText).append(')');
     }
-    buffer.append(".equals(");
-    buffer.append(rhsText);
-    buffer.append(')');
-    PsiReplacementUtil.replaceExpression(exp, buffer.toString());
+    PsiReplacementUtil.replaceExpressionAndShorten(exp, newExpression.toString());
   }
 }

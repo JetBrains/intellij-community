@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class ObjectEqualityPredicate implements PsiElementPredicate {
 
@@ -34,44 +33,15 @@ class ObjectEqualityPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiExpression lhs = expression.getLOperand();
-    final String lhsText = lhs.getText();
-    if (PsiKeyword.NULL.equals(lhsText)) {
-      return false;
-    }
     final PsiType lhsType = lhs.getType();
-    if (lhsType == null) {
+    if (lhsType == null || lhsType instanceof PsiPrimitiveType || TypeConversionUtil.isEnumType(lhsType)) {
       return false;
     }
     final PsiExpression rhs = expression.getROperand();
     if (rhs == null) {
       return false;
     }
-    final String rhsText = rhs.getText();
-    if (PsiKeyword.NULL.equals(rhsText)) {
-      return false;
-    }
     final PsiType rhsType = rhs.getType();
-    if (rhsType == null) {
-      return false;
-    }
-    if (TypeConversionUtil.isPrimitiveAndNotNull(lhsType) ||
-        TypeConversionUtil.isPrimitiveAndNotNull(rhsType)) {
-      return false;
-    }
-    if (rhsType instanceof PsiClassType) {
-      final PsiClassType rhsClassType = (PsiClassType)rhsType;
-      final PsiClass rhsClass = rhsClassType.resolve();
-      if (rhsClass != null && rhsClass.isEnum()) {
-        return false;
-      }
-    }
-    if (lhsType instanceof PsiClassType) {
-      final PsiClassType lhsClassType = (PsiClassType)lhsType;
-      final PsiClass lhsClass = lhsClassType.resolve();
-      if (lhsClass != null && lhsClass.isEnum()) {
-        return false;
-      }
-    }
-    return !ErrorUtil.containsError(element);
+    return !(rhsType == null || rhsType instanceof PsiPrimitiveType || TypeConversionUtil.isEnumType(rhsType));
   }
 }

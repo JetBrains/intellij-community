@@ -1305,7 +1305,7 @@ public class AbstractTreeUi {
         }
 
         if (isSelectionInside(node)) {
-          addSelectionPath(getPathFor(node), true, Condition.TRUE, null);
+          addSelectionPath(getPathFor(node), true, Conditions.alwaysTrue(), null);
         }
 
         processInnerChange(new Runnable() {
@@ -4853,7 +4853,7 @@ public class AbstractTreeUi {
       }
 
       if (pathToSelect != null && myTree.isSelectionEmpty()) {
-        addSelectionPath(pathToSelect, true, Condition.FALSE, null);
+        addSelectionPath(pathToSelect, true, Conditions.alwaysFalse(), null);
       }
     }
   }

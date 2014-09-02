@@ -88,10 +88,6 @@ public abstract class XDebuggerEvaluator {
     evaluate(expression, callback, expressionPosition);
   }
 
-  public void evaluate(@NotNull XExpression expression, @NotNull XEvaluationCallback callback, @Nullable XSourcePosition expressionPosition, @NotNull EvaluationMode mode) {
-    evaluate(expression, callback, expressionPosition);
-  }
-
   /**
    * If this method returns {@code true} 'Code Fragment Mode' button will be shown in 'Evaluate' dialog allowing user to execute a set of
    * statements

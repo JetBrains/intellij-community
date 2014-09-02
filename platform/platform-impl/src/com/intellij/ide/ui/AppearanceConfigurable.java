@@ -174,6 +174,9 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     update |= settings.SHOW_EDITOR_TOOLTIP != myComponent.myEditorTooltipCheckBox.isSelected();
     settings.SHOW_EDITOR_TOOLTIP = myComponent.myEditorTooltipCheckBox.isSelected();
 
+    update |= settings.NAVIGATE_TO_PREVIEW != myComponent.myNavigateToPreviewCheckBox.isSelected();
+    settings.NAVIGATE_TO_PREVIEW = myComponent.myNavigateToPreviewCheckBox.isSelected();
+
     update |= settings.DISABLE_MNEMONICS_IN_CONTROLS != myComponent.myDisableMnemonicInControlsCheckBox.isSelected();
     settings.DISABLE_MNEMONICS_IN_CONTROLS = myComponent.myDisableMnemonicInControlsCheckBox.isSelected();
 
@@ -280,6 +283,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myLeftLayoutCheckBox.setSelected(settings.LEFT_HORIZONTAL_SPLIT);
     myComponent.myRightLayoutCheckBox.setSelected(settings.RIGHT_HORIZONTAL_SPLIT);
     myComponent.myEditorTooltipCheckBox.setSelected(settings.SHOW_EDITOR_TOOLTIP);
+    myComponent.myNavigateToPreviewCheckBox.setSelected(settings.NAVIGATE_TO_PREVIEW);
     myComponent.myDisableMnemonicInControlsCheckBox.setSelected(settings.DISABLE_MNEMONICS_IN_CONTROLS);
 
     boolean alphaModeEnabled = WindowManagerEx.getInstanceEx().isAlphaModeSupported();
@@ -325,6 +329,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     isModified |= myComponent.myLeftLayoutCheckBox.isSelected() != settings.LEFT_HORIZONTAL_SPLIT;
     isModified |= myComponent.myRightLayoutCheckBox.isSelected() != settings.RIGHT_HORIZONTAL_SPLIT;
     isModified |= myComponent.myEditorTooltipCheckBox.isSelected() != settings.SHOW_EDITOR_TOOLTIP;
+    isModified |= myComponent.myNavigateToPreviewCheckBox.isSelected() != settings.NAVIGATE_TO_PREVIEW;
 
     isModified |= myComponent.myHideIconsInQuickNavigation.isSelected() != settings.SHOW_ICONS_IN_QUICK_NAVIGATION;
 
@@ -397,6 +402,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     private JSlider myInitialTooltipDelaySlider;
     private ComboBox myPresentationModeFontSize;
     private JCheckBox myEditorTooltipCheckBox;
+    private JCheckBox myNavigateToPreviewCheckBox;
     private JCheckBox myAllowStatusBar;
     private JCheckBox myAllowLineNumbers;
     private JCheckBox myAllowAnnotations;

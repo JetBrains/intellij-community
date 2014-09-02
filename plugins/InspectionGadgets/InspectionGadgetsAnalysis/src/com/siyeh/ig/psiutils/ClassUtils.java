@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
@@ -80,7 +81,7 @@ public class ClassUtils {
   private ClassUtils() {}
 
   @Nullable
-  public static PsiClass findClass(String fqClassName, PsiElement context) {
+  public static PsiClass findClass(@NonNls String fqClassName, PsiElement context) {
     return JavaPsiFacade.getInstance(context.getProject()).findClass(fqClassName, context.getResolveScope());
   }
 

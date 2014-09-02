@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +29,7 @@ public abstract class ElseExpressionPostfixTemplateBase extends SurroundPostfixT
 
   @SuppressWarnings("unchecked")
   protected ElseExpressionPostfixTemplateBase(@NotNull PostfixTemplatePsiInfo psiInfo) {
-    super("else", "if (!expr)", psiInfo, Condition.TRUE);
+    super("else", "if (!expr)", psiInfo, Conditions.<PsiElement>alwaysTrue());
   }
 
 

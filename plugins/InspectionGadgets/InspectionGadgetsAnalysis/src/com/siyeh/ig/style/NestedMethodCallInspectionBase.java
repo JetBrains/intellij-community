@@ -16,6 +16,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -28,6 +29,12 @@ public class NestedMethodCallInspectionBase extends BaseInspection {
    * @noinspection PublicField
    */
   public boolean m_ignoreFieldInitializations = true;
+
+  @SuppressWarnings("PublicField")
+  public boolean ignoreStaticMethods = false;
+
+  @SuppressWarnings("PublicField")
+  public boolean ignoreGetterCalls = false;
 
   @Override
   @NotNull
@@ -79,6 +86,18 @@ public class NestedMethodCallInspectionBase extends BaseInspection {
       if (m_ignoreFieldInitializations) {
         final PsiElement field = PsiTreeUtil.getParentOfType(expression, PsiField.class);
         if (field != null) {
+          return;
+        }
+      }
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) {
+        return;
+      }
+      if (ignoreStaticMethods || ignoreGetterCalls) {
+        if (ignoreStaticMethods && method.hasModifierProperty(PsiModifier.STATIC)) {
+          return;
+        }
+        if (ignoreGetterCalls && PropertyUtil.isSimpleGetter(method)) {
           return;
         }
       }

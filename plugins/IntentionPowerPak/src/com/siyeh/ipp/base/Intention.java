@@ -123,14 +123,6 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
     codeStyleManager.reformat(insertedElement);
   }
 
-  protected static void addStatementBefore(String newStatementText, PsiReturnStatement anchor) {
-    final Project project = anchor.getProject();
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    final PsiStatement newStatement = factory.createStatementFromText(newStatementText, anchor);
-    final PsiElement addedStatement = anchor.getParent().addBefore(newStatement, anchor);
-    CodeStyleManager.getInstance(project).reformat(addedStatement);
-  }
-
   @Nullable
   PsiElement findMatchingElement(@Nullable PsiElement element, Editor editor) {
     while (element != null) {

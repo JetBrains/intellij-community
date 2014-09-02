@@ -179,7 +179,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
   public Set<EditorsSplitters> getAllSplitters() {
     HashSet<EditorsSplitters> all = new LinkedHashSet<EditorsSplitters>();
-    if (Registry.is("editor.use.preview")) {
+    if (PreviewPanel.isAvailable()) {
       initUI();
       all.add(myPreviewPanel.getWindow().getOwner());
     }
@@ -255,7 +255,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         }
       }
     }
-    if (myPreviewPanel == null && Registry.is("editor.use.preview")) {
+    if (myPreviewPanel == null && PreviewPanel.isAvailable()) {
       synchronized (myInitLock) {
         myPreviewPanel = new PreviewPanel(myProject, this, myDockManager);
       }
@@ -661,10 +661,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   @Nullable
   private EditorWindow getPreviewWindow(@NotNull VirtualFile virtualFile, final boolean focusEditor, final boolean searchForSplitter) {
     EditorWindow wndToOpenIn = null;
-    if (Registry.is("editor.use.preview") && !myPreviewBlocker.get()) {
+    if (PreviewPanel.isAvailable() && !myPreviewBlocker.get()) {
       wndToOpenIn = myPreviewPanel.getWindow();
-      if (virtualFile.equals(myPreviewPanel.getCurrentFile())) return wndToOpenIn;
-      final VirtualFile modifiedFile = myPreviewPanel.closeCurrentFile();
+      if (myPreviewPanel.hasCurrentFile(virtualFile)) return wndToOpenIn;
+      final VirtualFile modifiedFile = myPreviewPanel.getCurrentModifiedFile();
       ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PREVIEW).activate(null, false);
       if (modifiedFile != null) {
         CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {

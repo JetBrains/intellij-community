@@ -44,9 +44,6 @@ public abstract class StudyDocumentListener extends DocumentAdapter {
   @Override
   public void documentChanged(DocumentEvent e) {
     if (e instanceof DocumentEventImpl) {
-      if (!needModify()) {
-        return;
-      }
       DocumentEventImpl event = (DocumentEventImpl)e;
       Document document = e.getDocument();
       int offset = e.getOffset();
@@ -65,7 +62,5 @@ public abstract class StudyDocumentListener extends DocumentAdapter {
   }
 
   protected abstract void updateTaskWindowLength(CharSequence fragment, TaskWindow taskWindow, int change);
-
-  protected  abstract boolean needModify();
 }
 

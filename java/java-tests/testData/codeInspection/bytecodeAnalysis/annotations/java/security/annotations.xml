@@ -45,6 +45,12 @@
   <item name="java.security.Provider java.lang.String[] getTypeAndAlgorithm(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.security.Provider java.lang.String[] getTypeAndAlgorithm(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.security.Provider java.security.Provider.Service getService(java.lang.String, java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.security.Provider java.util.Collection values()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -120,6 +126,9 @@
   <item name="java.security.Security java.lang.String getAlgorithmProperty(java.lang.String, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="java.security.Security java.lang.String getAlgorithmProperty(java.lang.String, java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.security.Security java.lang.String getProviderProperty(java.lang.String, java.security.Provider) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -135,8 +144,17 @@
   <item name="java.security.Security java.security.Provider[] getProviders(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.security.Security java.security.Provider[] getProviders(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.security.Security java.security.Provider[] getProviders(java.util.Map) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.security.Security java.security.Provider[] getProviders(java.util.Map)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.security.Security java.security.Security.ProviderProperty getProviderProperty(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.security.Security java.util.LinkedHashSet getAllQualifyingCandidates(java.lang.String, java.lang.String, java.security.Provider[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>

@@ -19,7 +19,9 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -163,7 +165,8 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
     oStream.close();
 
     for (VirtualFile child : fileOrDir.getChildren()) {
-      if (!child.isDirectory() && PythonFileType.INSTANCE.equals(child.getFileType())) {
+      final FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(child.getName());
+      if (!child.isDirectory() && PythonFileType.INSTANCE.equals(fileType)) {
         PushedFilePropertiesUpdater.getInstance(project).filePropertiesChanged(child);
       }
     }
