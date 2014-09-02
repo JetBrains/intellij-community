@@ -196,7 +196,7 @@ public class ConfigurableWrapper implements SearchableConfigurable {
     return configurable instanceof SearchableConfigurable ? ((SearchableConfigurable)configurable).enableSearch(option) : null;
   }
 
-  private static class CompositeWrapper extends ConfigurableWrapper implements Configurable.Composite {
+  private static class CompositeWrapper extends ConfigurableWrapper implements SearchableConfigurable.Parent {
 
     private Configurable[] myKids;
 
@@ -240,6 +240,42 @@ public class ConfigurableWrapper implements SearchableConfigurable {
     public ConfigurableWrapper addChild(Configurable configurable) {
       myKids = ArrayUtil.append(myKids, configurable);
       return this;
+    }
+
+    @Override
+    public boolean hasOwnContent() {
+      UnnamedConfigurable configurable = getConfigurable();
+      if (configurable instanceof SearchableConfigurable.Parent) {
+        SearchableConfigurable.Parent parent = (SearchableConfigurable.Parent)configurable;
+        return parent.hasOwnContent();
+      }
+      return false;
+    }
+
+    @Override
+    public boolean isVisible() {
+      if (super.myConfigurable == null) {
+        String name = super.myEp.instanceClass;
+        if (name == null) {
+          name = super.myEp.implementationClass;
+        }
+        if (name != null) {
+          try {
+            if (!SearchableConfigurable.Parent.class.isAssignableFrom(super.myEp.findClass(name))) {
+              return true; // do not instantiate wrapped configurable if not needed
+            }
+          }
+          catch (ClassNotFoundException exception) {
+            return true; // ignore unexpected exception from findClass
+          }
+        }
+      }
+      UnnamedConfigurable configurable = getConfigurable();
+      if (configurable instanceof SearchableConfigurable.Parent) {
+        SearchableConfigurable.Parent parent = (SearchableConfigurable.Parent)configurable;
+        return parent.isVisible();
+      }
+      return true;
     }
   }
 
