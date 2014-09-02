@@ -34,7 +34,6 @@ import com.jetbrains.python.console.pydev.*;
 import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.pydev.GetVariableCommand;
 import com.jetbrains.python.debugger.pydev.ProtocolParser;
-import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 import org.apache.xmlrpc.WebServer;
 import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.XmlRpcHandler;
@@ -526,9 +525,10 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     }
   }
 
+  @Nullable
   @Override
-  public void loadReferrers(PyReferringObjectsValue value, PyDebugCallback<XValueChildrenList> callback) {
-
+  public PyReferrersLoader getReferrersLoader() {
+    return null;
   }
 
   /**

@@ -87,6 +87,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private boolean myWaitingForConnection = false;
   private PyStackFrame myStackFrameBeforeResume;
   private PyStackFrame myConsoleContextFrame = null;
+  private PyReferrersLoader myReferrersProvider;
 
   public PyDebugProcess(final @NotNull XDebugSession session,
                         @NotNull final ServerSocket serverSocket,
@@ -553,6 +554,15 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     final PyStackFrame frame = currentFrame();
     PyDebugValue newValue = myDebugger.changeVariable(frame.getThreadId(), frame.getFrameId(), var, value);
     myNewVariableValue.put(frame.getThreadFrameId(), newValue);
+  }
+
+  @Nullable
+  @Override
+  public PyReferrersLoader getReferrersLoader() {
+    if (myReferrersProvider == null) {
+      myReferrersProvider = new PyReferrersLoader(this);
+    }
+    return myReferrersProvider;
   }
 
   @Nullable

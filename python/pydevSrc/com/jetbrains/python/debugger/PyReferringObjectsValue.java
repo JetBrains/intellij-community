@@ -29,11 +29,14 @@ public class PyReferringObjectsValue extends PyDebugValue {
   private String myId;
   private String myFoundAs;
 
+  private final @NotNull PyReferrersLoader myReferrersLoader;
+
   public PyReferringObjectsValue(@NotNull String name,
                                  String type,
                                  String value,
                                  boolean container, boolean errorOnEval, PyFrameAccessor frameAccessor) {
     super(name, type, value, container, errorOnEval, frameAccessor);
+    myReferrersLoader = frameAccessor.getReferrersLoader();
   }
 
   public PyReferringObjectsValue(PyDebugValue debugValue) {
@@ -50,7 +53,7 @@ public class PyReferringObjectsValue extends PyDebugValue {
   public void computeChildren(@NotNull final XCompositeNode node) {
     if (node.isObsolete()) return;
 
-    myFrameAccessor.loadReferrers(this, new PyDebugCallback<XValueChildrenList>() {
+    myReferrersLoader.loadReferrers(this, new PyDebugCallback<XValueChildrenList>() {
       @Override
       public void ok(XValueChildrenList value) {
         if (!node.isObsolete()) {

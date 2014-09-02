@@ -24,7 +24,7 @@ public class PyDebugValue extends XNamedValue {
   private final PyDebugValue myParent;
   private String myId = null;
 
-  protected final PyFrameAccessor myFrameAccessor;
+  private final PyFrameAccessor myFrameAccessor;
 
   private PyVariableLocator myVariableLocator;
 
@@ -183,12 +183,16 @@ public class PyDebugValue extends XNamedValue {
   @Nullable
   @Override
   public XReferrersProvider getReferrersProvider() {
-    return new XReferrersProvider() {
-      @Override
-      public XValue getReferringObjectsValue() {
-        return new PyReferringObjectsValue(PyDebugValue.this);
-      }
-    };
+    if (myFrameAccessor.getReferrersLoader() != null) {
+      return new XReferrersProvider() {
+        @Override
+        public XValue getReferringObjectsValue() {
+          return new PyReferringObjectsValue(PyDebugValue.this);
+        }
+      };
+    } else {
+      return null;
+    }
   }
 
   public PyFrameAccessor getFrameAccessor() {

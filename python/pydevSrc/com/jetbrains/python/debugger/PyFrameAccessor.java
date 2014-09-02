@@ -1,8 +1,6 @@
 package com.jetbrains.python.debugger;
 
-import com.intellij.util.Consumer;
 import com.intellij.xdebugger.frame.XValueChildrenList;
-import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -20,5 +18,6 @@ public interface PyFrameAccessor {
 
   void changeVariable(PyDebugValue variable, String expression) throws PyDebuggerException;
 
-  void loadReferrers(PyReferringObjectsValue value, PyDebugCallback<XValueChildrenList> callback);
+  @Nullable
+  PyReferrersLoader getReferrersLoader();
 }
