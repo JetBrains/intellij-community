@@ -18,6 +18,6 @@ package com.intellij.xdebugger.frame;
 /**
  * @author traff
  */
-public abstract class XReferrersProvider<T extends XValue> {
-  public abstract T getReferringObjectsValue();
+public abstract class XReferrersProvider {
+  public abstract XValue getReferringObjectsValue();
 }
