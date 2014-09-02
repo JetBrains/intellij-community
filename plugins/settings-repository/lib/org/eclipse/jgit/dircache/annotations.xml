@@ -5,4 +5,7 @@
   <item name='org.eclipse.jgit.dircache.DirCache org.eclipse.jgit.dircache.DirCacheEditor editor()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='org.eclipse.jgit.dircache.DirCacheEditor.PathEdit void apply(org.eclipse.jgit.dircache.DirCacheEntry) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
 </root>

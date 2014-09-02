@@ -47,7 +47,7 @@ public abstract class BaseRepositoryManager protected() : RepositoryManager {
       FileUtil.writeToFile(file, content, 0, size)
 
       synchronized (lock) {
-        addToIndex(file, path)
+        addToIndex(file, path, content, size)
       }
     }
     catch (e: Exception) {
@@ -59,7 +59,7 @@ public abstract class BaseRepositoryManager protected() : RepositoryManager {
    * path relative to repository root
    */
   throws(javaClass<Exception>())
-  protected abstract fun addToIndex(file: File, path: String)
+  protected abstract fun addToIndex(file: File, path: String, content: ByteArray, size: Int)
 
   override fun delete(path: String) {
     if (LOG.isDebugEnabled()) {

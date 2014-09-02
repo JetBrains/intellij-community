@@ -8,7 +8,7 @@ import org.jetbrains.plugins.settingsRepository.IcsUrlBuilder
 import org.jetbrains.plugins.settingsRepository.LOG
 
 fun commit(manager: GitRepositoryManager, indicator: ProgressIndicator) {
-  val index = manager.git.computeIndexDiff()
+  val index = manager.repository.computeIndexDiff()
   val changed = index.diff(JGitProgressMonitor(indicator), ProgressMonitor.UNKNOWN, ProgressMonitor.UNKNOWN, "Commit")
 
   if (LOG.isDebugEnabled()) {

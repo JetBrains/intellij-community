@@ -15,13 +15,14 @@ import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.util.ArrayUtil;
+import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.IndexDiff;
 import org.eclipse.jgit.lib.Repository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.settingsRepository.git.GitEx;
+import org.jetbrains.plugins.settingsRepository.git.GitPackage;
 import org.jetbrains.plugins.settingsRepository.git.GitRepositoryManager;
 import org.junit.*;
 
@@ -135,8 +136,7 @@ public class GitTest {
     String addedFile = "$APP_CONFIG$/encoding.xml";
     getProvider().saveContent(addedFile, data, data.length, RoamingType.PER_USER, false);
 
-    GitEx git = getRepositoryManager().getGit();
-    IndexDiff diff = git.computeIndexDiff();
+    IndexDiff diff = GitPackage.computeIndexDiff(getRepositoryManager().getRepository());
     assertThat(diff.diff(), equalTo(true));
     assertThat(diff.getAdded(), contains(equalTo(addedFile)));
     assertThat(diff.getChanged(), empty());
@@ -149,12 +149,13 @@ public class GitTest {
   @Test
   public void addSeveral() throws IOException {
     byte[] data = FileUtil.loadFileBytes(new File(getTestDataPath(), "encoding.xml"));
+    byte[] data2 = FileUtil.loadFileBytes(new File(getTestDataPath(), "crucibleConnector.xml"));
     String addedFile = "$APP_CONFIG$/encoding.xml";
     String addedFile2 = "$APP_CONFIG$/crucibleConnector.xml";
     getProvider().saveContent(addedFile, data, data.length, RoamingType.PER_USER, false);
+    getProvider().saveContent(addedFile2, data2, data2.length, RoamingType.PER_USER, false);
 
-    GitEx git = getRepositoryManager().getGit();
-    IndexDiff diff = git.computeIndexDiff();
+    IndexDiff diff = GitPackage.computeIndexDiff(getRepositoryManager().getRepository());
     assertThat(diff.diff(), equalTo(true));
     assertThat(diff.getAdded(), contains(equalTo(addedFile), equalTo(addedFile2)));
     assertThat(diff.getChanged(), empty());
@@ -176,8 +177,7 @@ public class GitTest {
     getProvider().saveContent(addedFile, data, data.length, RoamingType.PER_USER, true);
     getProvider().delete(directory ? "$APP_CONFIG$" : addedFile, RoamingType.PER_USER);
 
-    GitEx git = getRepositoryManager().getGit();
-    IndexDiff diff = git.computeIndexDiff();
+    IndexDiff diff = GitPackage.computeIndexDiff(getRepositoryManager().getRepository());
     assertThat(diff.diff(), equalTo(false));
     assertThat(diff.getAdded(), empty());
     assertThat(diff.getChanged(), empty());
@@ -280,12 +280,12 @@ public class GitTest {
 
   @NotNull
   private static Repository getRepository() {
-    return getRepositoryManager().getGit().getRepository();
+    return getRepositoryManager().getRepository();
   }
 
   @NotNull
   private File createFileRemote(@Nullable String branchName) throws IOException, GitAPIException {
-    GitEx git = new GitEx(testWatcher.getRepository(ICS_DIR));
+    Git git = new Git(testWatcher.getRepository(ICS_DIR));
 
     if (branchName != null) {
       // jgit cannot checkout&create branch if no HEAD (no commits in our empty repository), so we create initial empty commit
@@ -297,7 +297,7 @@ public class GitTest {
     String addedFile = "$APP_CONFIG$/encoding.xml";
     File workTree = git.getRepository().getWorkTree();
     FileUtil.copy(new File(getTestDataPath(), "encoding.xml"), new File(workTree, addedFile));
-    git.add(addedFile);
+    git.add().addFilepattern(addedFile).call();
     git.commit().setMessage("").call();
     return workTree;
   }

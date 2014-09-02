@@ -50,6 +50,9 @@
   <item name='org.eclipse.jgit.lib.Repository org.eclipse.jgit.dircache.DirCache lockDirCache()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='org.eclipse.jgit.lib.Repository org.eclipse.jgit.lib.ObjectInserter newObjectInserter()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='org.eclipse.jgit.lib.Repository org.eclipse.jgit.lib.Ref peel(org.eclipse.jgit.lib.Ref)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>

@@ -17,23 +17,25 @@ import org.jetbrains.plugins.settingsRepository.CredentialsStore
 import java.io.File
 import java.io.IOException
 import org.jetbrains.plugins.settingsRepository.LOG
+import org.eclipse.jgit.api.Git
 
 public class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<CredentialsStore>) : BaseRepositoryManager() {
-  val git: GitEx
+  val git: Git
+  val repository: Repository
 
   private var _credentialsProvider: CredentialsProvider? = null
 
   val credentialsProvider: CredentialsProvider
     get() {
       if (_credentialsProvider == null) {
-        _credentialsProvider = JGitCredentialsProvider(credentialsStore, git.getRepository())
+        _credentialsProvider = JGitCredentialsProvider(credentialsStore, repository)
       }
       return _credentialsProvider!!
     }
 
   {
-    val repository = FileRepositoryBuilder().setWorkTree(dir).build()
-    git = GitEx(repository)
+    repository = FileRepositoryBuilder().setWorkTree(dir).build()
+    git = Git(repository)
     if (!dir.exists()) {
       repository.create()
       repository.disableAutoCrLf()
@@ -41,7 +43,7 @@ public class GitRepositoryManager(private val credentialsStore: NotNullLazyValue
   }
 
   TestOnly
-  public fun testOnlyGetGit(): GitEx {
+  public fun testOnlyGetGit(): Git {
     return git
   }
 
@@ -54,7 +56,7 @@ public class GitRepositoryManager(private val credentialsStore: NotNullLazyValue
   }
 
   override fun setUpstream(url: String?, branch: String?) {
-    git.setUpstream(url, branch ?: Constants.MASTER)
+    repository.setUpstream(url, branch ?: Constants.MASTER)
   }
 
   fun createCommitCommand(): CommitCommand {
@@ -67,12 +69,12 @@ public class GitRepositoryManager(private val credentialsStore: NotNullLazyValue
     return !StringUtil.isEmptyOrSpaces(git.getRepository().getConfig().getString("remote", "origin", "url"))
   }
 
-  override fun addToIndex(file: File, path: String) {
-    git.add(path)
+  override fun addToIndex(file: File, path: String, content: ByteArray, size: Int) {
+    repository.edit(AddPath(path, content, size, file.lastModified(), git.getRepository()))
   }
 
   override fun deleteFromIndex(path: String, isFile: Boolean) {
-    git.remove(path, isFile)
+    repository.remove(path, isFile)
   }
 
   override fun commit(indicator: ProgressIndicator) {
@@ -87,7 +89,6 @@ public class GitRepositoryManager(private val credentialsStore: NotNullLazyValue
   override fun push(indicator: ProgressIndicator) {
     LOG.debug("Push")
 
-    val repository = git.getRepository()
     val refSpecs = SmartList(RemoteConfig(repository.getConfig(), Constants.DEFAULT_REMOTE_NAME).getPushRefSpecs())
     if (refSpecs.isEmpty()) {
       val head = repository.getRef(Constants.HEAD)
