@@ -1,0 +1,3 @@
+<node text="target_func(file_1.py)" base="true">
+  <node text="nothing(main.py)"/>
+</node>

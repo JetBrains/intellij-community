@@ -1,0 +1,8 @@
+<node text="target_func(main.py)" base="true">
+  <node text="func8(file_1.py)"/>
+  <node text="func13(file_1.py)"/>
+  <node text="func15(file_1.py)"/>
+  <node text="inner(main.py)">
+    <node text="func11(file_1.py)"/>
+  </node>
+</node>

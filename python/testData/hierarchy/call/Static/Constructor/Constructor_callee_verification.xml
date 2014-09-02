@@ -1,0 +1,8 @@
+<node text="A.__init__(main.py)" base="true">
+  <node text="invoke1(main.py)">
+    <node text="A.method1(main.py)"/>
+  </node>
+  <node text="invoke2(main.py)">
+    <node text="A.method2(main.py)"/>
+  </node>
+</node>
