@@ -37,10 +37,12 @@ public class RecentProjectsManager extends RecentProjectsManagerBase {
     super(messageBus);
   }
 
+  @Override
   protected String getProjectPath(@NotNull Project project) {
     return project.getPresentableUrl();
   }
 
+  @Override
   protected void doOpenProject(@NotNull String projectPath, Project projectToClose, boolean forceOpenInNewFrame) {
     ProjectUtil.openProject(projectPath, projectToClose, forceOpenInNewFrame);
   }
