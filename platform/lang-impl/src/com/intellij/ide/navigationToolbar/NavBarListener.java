@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.intellij.ide.navigationToolbar;
 import com.intellij.ProjectTopics;
 import com.intellij.ide.actions.CopyAction;
 import com.intellij.ide.actions.CutAction;
+import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -57,7 +59,8 @@ import java.util.List;
  */
 public class NavBarListener extends WolfTheProblemSolver.ProblemListener
   implements ActionListener, FocusListener, FileStatusListener, AnActionListener, FileEditorManagerListener,
-             PsiTreeChangeListener, ModuleRootListener, NavBarModelListener, PropertyChangeListener, KeyListener, WindowFocusListener {
+             PsiTreeChangeListener, ModuleRootListener, NavBarModelListener, PropertyChangeListener, KeyListener, WindowFocusListener,
+             LafManagerListener {
   private static final String LISTENER = "NavBarListener";
   private static final String BUS = "NavBarMessageBus";
   private final NavBarPanel myPanel;
@@ -89,6 +92,8 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
       if (window != null) {
         window.addWindowFocusListener(listener);
       }
+    } else {
+      LafManager.getInstance().addLafManagerListener(listener);
     }
   }
 
@@ -107,6 +112,7 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
       if (connection != null) {
         connection.disconnect();
       }
+      LafManager.getInstance().removeLafManagerListener(listener);
     }
   }
 
@@ -354,6 +360,14 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
       }
     });
   }
+
+  @Override
+  public void lookAndFeelChanged(LafManager source) {
+    myPanel.getNavBarUI().clearItems();
+    myPanel.revalidate();
+    myPanel.repaint();
+  }
+
 
   @Override
   public void windowLostFocus(WindowEvent e) {
