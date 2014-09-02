@@ -233,7 +233,7 @@ public abstract class SourcePosition implements Navigatable{
             }
           }
 
-          PsiElement element;
+          PsiElement element = null;
           int offset = startOffset;
           while (true) {
             final CharSequence charsSequence = document.getCharsSequence();
@@ -243,6 +243,8 @@ public abstract class SourcePosition implements Navigatable{
                 break;
               }
             }
+            if (offset >= charsSequence.length()) break;
+
             element = rootElement.findElementAt(offset);
 
             if (element instanceof PsiComment) {
