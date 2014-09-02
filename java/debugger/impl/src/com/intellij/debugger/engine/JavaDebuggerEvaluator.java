@@ -82,9 +82,11 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator {
           return;
         }
         JavaDebugProcess process = myDebugProcess.getXdebugProcess();
-        if (process != null) {
-          callback.evaluated(JavaValue.create(null, descriptor, evalContext, process.getNodeManager(), true));
+        if (process == null) {
+          callback.errorOccurred("No debug process");
+          return;
         }
+        callback.evaluated(JavaValue.create(null, descriptor, evalContext, process.getNodeManager(), true));
       }
     });
   }
