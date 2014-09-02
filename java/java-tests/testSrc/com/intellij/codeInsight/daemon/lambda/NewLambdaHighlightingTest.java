@@ -117,6 +117,10 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testParenthesizedExpressionsDuringConstrainsCollection() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }
