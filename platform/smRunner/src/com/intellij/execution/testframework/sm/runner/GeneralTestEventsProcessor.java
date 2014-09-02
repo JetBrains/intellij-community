@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
 import com.intellij.testIntegration.TestLocationProvider;
 import com.intellij.util.Processor;
@@ -110,7 +111,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   }
 
   public Condition getDisposedCondition() {
-    return Condition.FALSE;
+    return Conditions.alwaysFalse();
   }
 
   /**

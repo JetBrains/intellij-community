@@ -16,6 +16,7 @@ import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
@@ -23,6 +24,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -107,28 +110,36 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
     return new RedmineRepository(this);
   }
 
+  @Nullable
   @Override
-  public void testConnection() throws Exception {
-    // Strangely, Redmine doesn't return 401 or 403 error codes, if client sent wrong credentials, and instead
-    // merely returns empty array of issues with status code of 200. This means that we should attempt to fetch
-    // something more specific than issues to test proper configuration, e.g. current user information at
-    // /users/current.json. Unfortunately this endpoint may be unavailable on some old servers (see IDEA-122845)
-    // and in this case we have to come back to requesting issues in this case to test anything at all.
-    HttpClient client = getHttpClient();
-    URIBuilder uriBuilder = new URIBuilder(getRestApiUrl("users", "current.json"));
-    if (isUseApiKeyAuthentication()) {
-      uriBuilder.addParameter("key", getAPIKey());
-    }
-    HttpResponse response = client.execute(new HttpGet(uriBuilder.build()));
-    //TaskUtil.prettyFormatResponseToLog(LOG, response);
-    int code = response.getStatusLine().getStatusCode();
-    if (code == HttpStatus.SC_NOT_FOUND) {
-      getIssues("", 0, 1, true);
-      return;
-    }
-    if (code != HttpStatus.SC_OK) {
-      throw RequestFailedException.forStatusCode(code);
-    }
+  public CancellableConnection createCancellableConnection() {
+    return new NewBaseRepositoryImpl.HttpTestConnection(new HttpGet()) {
+      @Override
+      protected void test() throws Exception {
+        // Strangely, Redmine doesn't return 401 or 403 error codes, if client sent wrong credentials, and instead
+        // merely returns empty array of issues with status code of 200. This means that we should attempt to fetch
+        // something more specific than issues to test proper configuration, e.g. current user information at
+        // /users/current.json. Unfortunately this endpoint may be unavailable on some old servers (see IDEA-122845)
+        // and in this case we have to come back to requesting issues in this case to test anything at all.
+
+        URIBuilder uriBuilder = new URIBuilder(getRestApiUrl("users", "current.json"));
+        if (isUseApiKeyAuthentication()) {
+          uriBuilder.addParameter("key", getAPIKey());
+        }
+        myCurrentRequest.setURI(uriBuilder.build());
+        HttpClient client = getHttpClient();
+
+        HttpResponse httpResponse = client.execute(myCurrentRequest);
+        StatusLine statusLine = httpResponse.getStatusLine();
+        if (statusLine != null && statusLine.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+          myCurrentRequest = new HttpGet(getIssuesUrl(0, 1, true));
+          statusLine = client.execute(myCurrentRequest).getStatusLine();
+        }
+        if (statusLine != null && statusLine.getStatusCode() != HttpStatus.SC_OK) {
+          throw RequestFailedException.forStatusCode(statusLine.getStatusCode(), statusLine.getReasonPhrase());
+        }
+      }
+    };
   }
 
   @Override
@@ -144,12 +155,6 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
 
   public List<RedmineIssue> fetchIssues(String query, int offset, int limit, boolean withClosed) throws Exception {
     ensureProjectsDiscovered();
-    URIBuilder builder = new URIBuilder(getRestApiUrl("issues.json"))
-      .addParameter("offset", String.valueOf(offset))
-      .addParameter("limit", String.valueOf(limit))
-      .addParameter("status_id", withClosed ? "*" : "open")
-      .addParameter("assigned_to_id", "me");
-
     // Legacy API, can't find proper documentation
     //if (StringUtil.isNotEmpty(query)) {
     //  builder.addParameter("fields[]", "subject").addParameter("operators[subject]", "~").addParameter("values[subject][]", query);
@@ -158,13 +163,22 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
     //if (myCurrentProject != null && myCurrentProject != UNSPECIFIED_PROJECT) {
     //  builder.addParameter("project_id", String.valueOf(myCurrentProject.getId()));
     //}
+    HttpClient client = getHttpClient();
+    HttpGet method = new HttpGet(getIssuesUrl(offset, limit, withClosed));
+    IssuesWrapper wrapper = client.execute(method, new GsonSingleObjectDeserializer<IssuesWrapper>(GSON, IssuesWrapper.class));
+    return wrapper == null ? Collections.<RedmineIssue>emptyList() : wrapper.getIssues();
+  }
+
+  private URI getIssuesUrl(int offset, int limit, boolean withClosed) throws URISyntaxException {
+    URIBuilder builder = new URIBuilder(getRestApiUrl("issues.json"))
+      .addParameter("offset", String.valueOf(offset))
+      .addParameter("limit", String.valueOf(limit))
+      .addParameter("status_id", withClosed ? "*" : "open")
+      .addParameter("assigned_to_id", "me");
     if (isUseApiKeyAuthentication()) {
       builder.addParameter("key", myAPIKey);
     }
-    HttpClient client = getHttpClient();
-    HttpGet method = new HttpGet(builder.toString());
-    IssuesWrapper wrapper = client.execute(method, new GsonSingleObjectDeserializer<IssuesWrapper>(GSON, IssuesWrapper.class));
-    return wrapper == null ? Collections.<RedmineIssue>emptyList() : wrapper.getIssues();
+    return builder.build();
   }
 
   public List<RedmineProject> fetchProjects() throws Exception {

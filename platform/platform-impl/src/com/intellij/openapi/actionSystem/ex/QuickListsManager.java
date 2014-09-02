@@ -70,10 +70,10 @@ public class QuickListsManager implements ExportableApplicationComponent, NamedJ
             return loadListFromDocument(schemeContent);
           }
 
-          public Document writeScheme(@NotNull final QuickList scheme) throws WriteExternalException {
+          public Element writeScheme(@NotNull final QuickList scheme) throws WriteExternalException {
             Element element = new Element(LIST_TAG);
             scheme.writeExternal(element);
-            return new Document(element);
+            return element;
           }
 
           public boolean shouldBeSaved(@NotNull final QuickList scheme) {

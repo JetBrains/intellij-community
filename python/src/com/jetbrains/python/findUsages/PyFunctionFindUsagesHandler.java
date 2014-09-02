@@ -27,12 +27,12 @@ import java.util.List;
 public class PyFunctionFindUsagesHandler extends FindUsagesHandler {
   private final List<PsiElement> myAllElements;
 
-  protected PyFunctionFindUsagesHandler(@NotNull PsiElement psiElement) {
+  public PyFunctionFindUsagesHandler(@NotNull PsiElement psiElement) {
     super(psiElement);
     myAllElements = null;
   }
 
-  protected PyFunctionFindUsagesHandler(@NotNull PsiElement psiElement, List<PsiElement> allElements) {
+  public PyFunctionFindUsagesHandler(@NotNull PsiElement psiElement, List<PsiElement> allElements) {
     super(psiElement);
     myAllElements = allElements;
   }

@@ -33,6 +33,7 @@ public abstract class AbstractCommand<T> {
   public static final int SMART_STEP_INTO = 128;
   public static final int EXIT = 129;
   public static final int CALL_SIGNATURE_TRACE = 130;
+  public static final int CMD_RUN_CUSTOM_OPERATION = 135;
   public static final int SHOW_CONSOLE = 142;
   public static final int ERROR = 901;
 
@@ -41,7 +42,7 @@ public abstract class AbstractCommand<T> {
   public static final String TAB_CHAR = "@_@TAB_CHAR@_@";
 
 
-  @NotNull protected final RemoteDebugger myDebugger;
+  @NotNull private final RemoteDebugger myDebugger;
   private final int myCommandCode;
 
   private final ResponseProcessor<T> myResponseProcessor;
@@ -107,7 +108,7 @@ public abstract class AbstractCommand<T> {
     }
   }
 
-  public void execute(final ProcessDebugger.DebugCallback<T> callback) {
+  public void execute(final PyDebugCallback<T> callback) {
     final int sequence = myDebugger.getNextSequence();
 
     final ResponseProcessor<T> processor = getResponseProcessor();
@@ -184,6 +185,11 @@ public abstract class AbstractCommand<T> {
 
   public static boolean isErrorEvent(int command) {
     return command == ERROR;
+  }
+
+  @NotNull
+  public RemoteDebugger getDebugger() {
+    return myDebugger;
   }
 
   protected static class Payload {

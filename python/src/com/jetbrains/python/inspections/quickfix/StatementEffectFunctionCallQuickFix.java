@@ -88,7 +88,13 @@ public class StatementEffectFunctionCallQuickFix implements LocalQuickFix {
     if (next instanceof PyExpressionStatement) {
       final PyExpression expr = ((PyExpressionStatement)next).getExpression();
       if (expr instanceof PyBinaryExpression) {
-        addInArguments(stringBuilder, (PyBinaryExpression)expr);
+        final PsiElement operator = ((PyBinaryExpression)expr).getPsiOperator();
+        if (operator instanceof LeafPsiElement && ((LeafPsiElement)operator).getElementType() == PyTokenTypes.IN_KEYWORD) {
+          addInArguments(stringBuilder, (PyBinaryExpression)expr);
+        }
+        else {
+          stringBuilder.append(next.getText());
+        }
       }
       else if (expr instanceof PyTupleExpression) {
         final PyExpression[] elements = ((PyTupleExpression)expr).getElements();
@@ -114,14 +120,11 @@ public class StatementEffectFunctionCallQuickFix implements LocalQuickFix {
   }
 
   private static void addInArguments(@NotNull final StringBuilder stringBuilder, @NotNull final PyBinaryExpression binaryExpression) {
-    final PsiElement operator = binaryExpression.getPsiOperator();
-    if (operator instanceof LeafPsiElement && ((LeafPsiElement)operator).getElementType() == PyTokenTypes.IN_KEYWORD) {
-      stringBuilder.append(binaryExpression.getLeftExpression().getText());
-      stringBuilder.append(", ");
-      final PyExpression rightExpression = binaryExpression.getRightExpression();
-      if (rightExpression != null)
-        stringBuilder.append(rightExpression.getText());
-    }
+    stringBuilder.append(binaryExpression.getLeftExpression().getText());
+    stringBuilder.append(", ");
+    final PyExpression rightExpression = binaryExpression.getRightExpression();
+    if (rightExpression != null)
+      stringBuilder.append(rightExpression.getText());
   }
 
   private static void replacePrint(@NotNull final PsiElement expression) {

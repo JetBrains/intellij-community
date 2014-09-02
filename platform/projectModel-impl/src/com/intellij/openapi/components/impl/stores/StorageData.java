@@ -32,11 +32,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.*;
 
 public class StorageData {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StorageData");
+  private static final Logger LOG = Logger.getInstance(StorageData.class);
   @NonNls public static final String COMPONENT = "component";
   @NonNls public static final String NAME = "name";
 
@@ -54,7 +53,7 @@ public class StorageData {
     myComponentStates = new THashMap<String, Element>(storageData.myComponentStates);
   }
 
-  public void load(@NotNull Element rootElement) throws IOException {
+  public void load(@NotNull Element rootElement) {
     for (Iterator<Element> iterator = rootElement.getChildren(COMPONENT).iterator(); iterator.hasNext(); ) {
       Element element = iterator.next();
       String name = element.getAttributeValue(NAME);
@@ -88,8 +87,12 @@ public class StorageData {
     return element1;
   }
 
-  @NotNull
+  @Nullable
   protected Element save() {
+    if (myComponentStates.isEmpty()) {
+      return null;
+    }
+
     Element rootElement = new Element(myRootElementName);
     String[] componentNames = ArrayUtil.toStringArray(myComponentStates.keySet());
     Arrays.sort(componentNames);
@@ -101,7 +104,6 @@ public class StorageData {
 
       rootElement.addContent(element.clone());
     }
-
     return rootElement;
   }
 
@@ -197,7 +199,7 @@ public class StorageData {
     return myComponentStates.isEmpty();
   }
 
-  public boolean hasState(final String componentName) {
+  public boolean hasState(@NotNull String componentName) {
       return myComponentStates.containsKey(componentName);
   }
 

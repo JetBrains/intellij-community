@@ -19,6 +19,7 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +58,7 @@ public class HighlightExceptionsHandlerFactory extends HighlightUsagesHandlerFac
     final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
     if (tryBlock == null) return null;
     final Collection<PsiClassType> psiClassTypes = ExceptionUtil.collectUnhandledExceptions(tryBlock, tryBlock);
-    return new HighlightExceptionsHandler(editor, file, target, psiClassTypes.toArray(new PsiClassType[psiClassTypes.size()]), tryBlock, Condition.TRUE);
+    return new HighlightExceptionsHandler(editor, file, target, psiClassTypes.toArray(new PsiClassType[psiClassTypes.size()]), tryBlock, Conditions.<PsiType>alwaysTrue());
   }
 
   @Nullable
@@ -112,6 +113,6 @@ public class HighlightExceptionsHandlerFactory extends HighlightUsagesHandlerFac
 
     final Collection<PsiClassType> psiClassTypes = ExceptionUtil.collectUnhandledExceptions(method.getBody(), method.getBody());
 
-    return new HighlightExceptionsHandler(editor, file, target, psiClassTypes.toArray(new PsiClassType[psiClassTypes.size()]), method.getBody(), Condition.TRUE);
+    return new HighlightExceptionsHandler(editor, file, target, psiClassTypes.toArray(new PsiClassType[psiClassTypes.size()]), method.getBody(), Conditions.<PsiType>alwaysTrue());
   }
 }

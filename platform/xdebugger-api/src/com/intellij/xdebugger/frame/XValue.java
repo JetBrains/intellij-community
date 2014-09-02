@@ -88,6 +88,12 @@ public abstract class XValue extends XValueContainer {
     navigatable.setSourcePosition(null);
   }
 
+  /**
+   * This enables showing referrers for the value
+   *
+   * @return provider that creates an XValue returning objects that refer to the current value
+   * or null if showing referrers for the value is disabled
+   */
   @Nullable
   public XReferrersProvider getReferrersProvider() {
     return null;

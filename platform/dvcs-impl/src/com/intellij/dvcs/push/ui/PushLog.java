@@ -15,6 +15,7 @@
  */
 package com.intellij.dvcs.push.ui;
 
+import com.intellij.dvcs.push.TargetEditor;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
@@ -25,7 +26,10 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
-import com.intellij.ui.*;
+import com.intellij.ui.CheckboxTree;
+import com.intellij.ui.CheckedTreeNode;
+import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -88,6 +92,17 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
           return ((TooltipNode)node).getTooltip();
         }
         return "";
+      }
+
+      @Override
+      public boolean stopEditing() {
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTree.getLastSelectedPathComponent();
+        if (node instanceof EditableTreeNode) {
+          JComponent editedComponent = (JComponent)node.getUserObject();
+          InputVerifier verifier = editedComponent.getInputVerifier();
+          if (verifier != null && !verifier.verify(editedComponent)) return false;
+        }
+        return super.stopEditing();
       }
     };
     myTree.setEditable(true);
@@ -239,7 +254,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
         Object tag = me.getClickCount() >= clickCountToStart
                      ? PushLogTreeUtil.getTagAtForRenderer(myTreeCellRenderer, me)
                      : null;
-        return tag instanceof EditorTextField;
+        return tag instanceof TargetEditor;
       }
       //if keyboard event - then anEvent will be null =( See BasicTreeUi
       TreePath treePath = myTree.getAnchorSelectionPath();
@@ -251,7 +266,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
 
     //Implement the one CellEditor method that AbstractCellEditor doesn't.
     public Object getCellEditorValue() {
-      return ((RepositoryWithBranchPanel)editorComponent).getRemoteTargetName();
+      return ((RepositoryWithBranchPanel)editorComponent).getEditableValue();
     }
   }
 

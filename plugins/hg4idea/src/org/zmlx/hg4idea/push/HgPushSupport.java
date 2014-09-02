@@ -15,28 +15,19 @@
  */
 package org.zmlx.hg4idea.push;
 
-import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.*;
 import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.ui.SimpleColoredText;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;
 
-import java.util.List;
-
 public class HgPushSupport extends PushSupport<HgRepository, HgPushSource, HgTarget> {
 
-  private final static String ENTER_REMOTE = "Enter Remote";
   @NotNull private final Project myProject;
   @NotNull private final HgVcs myVcs;
 
@@ -72,26 +63,9 @@ public class HgPushSupport extends PushSupport<HgRepository, HgPushSource, HgTar
 
   @NotNull
   @Override
-  public List<String> getTargetNames(@NotNull HgRepository repository) {
-    return ContainerUtil.sorted(ContainerUtil.map(repository.getRepositoryConfig().getPaths(), new Function<String, String>() {
-      @Override
-      public String fun(String s) {
-        return HgUtil.removePasswordIfNeeded(s);
-      }
-    }));
-  }
-
-  @NotNull
-  @Override
   public HgPushSource getSource(@NotNull HgRepository repository) {
     String localBranch = HgUtil.getActiveBranchName(repository);
     return new HgPushSource(localBranch);
-  }
-
-  @Override
-  @NotNull
-  public HgTarget createTarget(@NotNull HgRepository repository, @NotNull String targetName) {
-    return new HgTarget(targetName);
   }
 
   @NotNull
@@ -106,18 +80,8 @@ public class HgPushSupport extends PushSupport<HgRepository, HgPushSource, HgTar
   }
 
   @Override
-  @Nullable
-  public VcsError validate(@NotNull HgRepository repository, @Nullable String targetToValidate) {
-    return StringUtil.isEmptyOrSpaces(targetToValidate)
-           ? VcsError.createEmptyTargetError(DvcsUtil.getShortRepositoryName(repository))
-           : null;
-  }
-
-  @Override
-  public SimpleColoredText renderTarget(@Nullable HgTarget target) {
-    if (target == null || StringUtil.isEmptyOrSpaces(target.getPresentation())) {
-      return new SimpleColoredText(ENTER_REMOTE, SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
-    }
-    return new SimpleColoredText(target.getPresentation(), SimpleTextAttributes.SYNTHETIC_ATTRIBUTES);
+  @NotNull
+  public TargetEditor<HgTarget> createTargetEditor(@NotNull HgRepository repository, @NotNull String defaultTargetName) {
+    return new HgTargetEditor(repository, defaultTargetName);
   }
 }

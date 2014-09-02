@@ -61,7 +61,7 @@ public class PyDefaultArgumentQuickFix implements LocalQuickFix {
       PyStatementList list = function.getStatementList();
       PyParameterList paramList = function.getParameterList();
 
-      final StringBuilder functionText = new StringBuilder("def foo(");
+      final StringBuilder functionText = new StringBuilder("def " + function.getName() + "(");
       int size = paramList.getParameters().length;
       for (int i = 0; i != size; ++i) {
         PyParameter p = paramList.getParameters()[i];

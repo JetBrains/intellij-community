@@ -16,6 +16,7 @@
 package com.intellij.util.ui.tree;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -53,7 +54,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
 
   @SuppressWarnings("unchecked")
   public WideSelectionTreeUI() {
-    this(true, Condition.TRUE);
+    this(true, Conditions.<Integer>alwaysTrue());
   }
 
   /**

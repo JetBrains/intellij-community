@@ -709,7 +709,6 @@
 
     <group id="XDebugger.ValueGroup" popup="false">
       <reference ref="XDebugger.Inspect"/>
-      <reference ref="Debugger.ShowReferring"/>
       <reference ref="Debugger.MarkObject"/>
       <reference ref="XDebugger.SetValue"/>
       <reference ref="XDebugger.CopyValue"/>
@@ -719,6 +718,7 @@
       <reference ref="EvaluateExpression"/>
       <reference ref="Debugger.Tree.EvaluateInConsole"/>
       <reference ref="Debugger.Tree.AddToWatches"/>
+      <reference ref="Debugger.ShowReferring"/>
       <separator/>
       <reference ref="XDebugger.JumpToSource"/>
       <reference ref="XDebugger.JumpToTypeSource"/>

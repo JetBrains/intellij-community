@@ -64,8 +64,9 @@ public class RedmineIntegrationTest extends TaskManagerTestCase {
   public void testCredentialsCheck() throws Exception {
     myRepository.setPassword("wrong-password");
     try {
-      myRepository.testConnection();
-      fail("testConnection() should fails, when wrong credentials specified");
+      //noinspection ConstantConditions
+      final Exception exception = myRepository.createCancellableConnection().call();
+      assertNotNull("Test connection must fail when wrong credentials specified", exception);
     }
     catch (Exception e) {
       assertEquals(TaskBundle.message("failure.login"), e.getMessage());

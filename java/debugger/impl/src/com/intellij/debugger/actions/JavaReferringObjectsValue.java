@@ -61,6 +61,7 @@ public class JavaReferringObjectsValue extends JavaValue {
 
   @Override
   public void computeChildren(@NotNull final XCompositeNode node) {
+    if (checkContextNotResumed(node)) return;
     getEvaluationContext().getDebugProcess().getManagerThread().schedule(
       new SuspendContextCommandImpl(getEvaluationContext().getSuspendContext()) {
         @Override

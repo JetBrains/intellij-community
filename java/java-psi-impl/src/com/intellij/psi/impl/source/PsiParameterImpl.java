@@ -324,4 +324,24 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
     final PsiElement declarationScope = getDeclarationScope();
     return new LocalSearchScope(declarationScope);
   }
+
+  @Override
+  public PsiElement getOriginalElement() {
+    PsiElement parent = getParent();
+    if (parent instanceof PsiParameterList) {
+      PsiElement gParent = parent.getParent();
+      if (gParent instanceof PsiMethod) {
+        PsiElement originalMethod = gParent.getOriginalElement();
+        if (originalMethod instanceof PsiMethod) {
+          int index = ((PsiParameterList)parent).getParameterIndex(this);
+          PsiParameter[] originalParameters = ((PsiMethod)originalMethod).getParameterList().getParameters();
+          if (index < originalParameters.length) {
+            return originalParameters[index];
+          }
+        }
+      }
+    }
+    return this;
+  }
+
 }

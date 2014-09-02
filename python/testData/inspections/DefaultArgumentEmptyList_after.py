@@ -1,3 +1,3 @@
-def foo(args=None):
+def bar(args=None):
     if not args:
         args = []

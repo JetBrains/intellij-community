@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ public class ClassUtil {
     return null;
   }
 
+  @NotNull
   public static String extractClassName(@NotNull String fqName) {
     int i = fqName.lastIndexOf('.');
     return i == -1 ? fqName : fqName.substring(i + 1);
@@ -58,7 +59,7 @@ public class ClassUtil {
     return null;
   }
 
-  public static void formatClassName(@NotNull final PsiClass aClass, final StringBuilder buf) {
+  public static void formatClassName(@NotNull final PsiClass aClass, @NotNull StringBuilder buf) {
     final String qName = aClass.getQualifiedName();
     if (qName != null) {
       buf.append(qName);
@@ -78,7 +79,7 @@ public class ClassUtil {
   }
 
   @Nullable
-  private static PsiClass getContainerClass(final PsiClass aClass) {
+  private static PsiClass getContainerClass(@NotNull PsiClass aClass) {
     PsiElement parent = aClass.getContext();
     while (parent != null && !(parent instanceof PsiClass)) {
       parent = parent.getContext();
@@ -113,11 +114,11 @@ public class ClassUtil {
     return result[0];
   }
 
-  public static PsiClass findNonQualifiedClassByIndex(final String indexName, @NotNull final PsiClass containingClass) {
+  public static PsiClass findNonQualifiedClassByIndex(@NotNull String indexName, @NotNull final PsiClass containingClass) {
     return findNonQualifiedClassByIndex(indexName, containingClass, false);
   }
 
-  public static PsiClass findNonQualifiedClassByIndex(final String indexName, @NotNull final PsiClass containingClass,
+  public static PsiClass findNonQualifiedClassByIndex(@NotNull String indexName, @NotNull final PsiClass containingClass,
                                                       final boolean jvmCompatible) {
     String prefix = getDigitPrefix(indexName);
     final int idx = !prefix.isEmpty() ? Integer.parseInt(prefix) : -1;
@@ -167,6 +168,7 @@ public class ClassUtil {
     return result[0];
   }
 
+  @NotNull
   private static String getDigitPrefix(@NotNull String indexName) {
     int i;
     for (i = 0; i < indexName.length(); i++) {
@@ -186,24 +188,24 @@ public class ClassUtil {
    * @return found psiClass
    */
   @Nullable
-  public static PsiClass findPsiClass(final PsiManager psiManager, String externalName){
+  public static PsiClass findPsiClass(@NotNull PsiManager psiManager, @NotNull String externalName){
     return findPsiClass(psiManager, externalName, null, false);
   }
 
   @Nullable
-  public static PsiClass findPsiClass(final PsiManager psiManager,
-                                      String externalName,
+  public static PsiClass findPsiClass(@NotNull PsiManager psiManager,
+                                      @NotNull String externalName,
                                       PsiClass psiClass,
                                       boolean jvmCompatible) {
     return findPsiClass(psiManager, externalName, psiClass, jvmCompatible, GlobalSearchScope.allScope(psiManager.getProject()));
   }
 
   @Nullable
-  public static PsiClass findPsiClass(final PsiManager psiManager,
-                                      String externalName,
+  public static PsiClass findPsiClass(@NotNull PsiManager psiManager,
+                                      @NotNull String externalName,
                                       @Nullable PsiClass psiClass,
                                       boolean jvmCompatible, 
-                                      final GlobalSearchScope scope) {
+                                      @NotNull GlobalSearchScope scope) {
     for (int pos = 0; pos < externalName.length(); pos++) {
       if (externalName.charAt(pos) == '$') {
         PsiClass parentClass = psiClass;
@@ -220,8 +222,8 @@ public class ClassUtil {
   }
 
   @Nullable
-  private static PsiClass findSubclass(final PsiManager psiManager,
-                                       final String externalName,
+  private static PsiClass findSubclass(@NotNull PsiManager psiManager,
+                                       @NotNull String externalName,
                                        final PsiClass psiClass,
                                        final boolean jvmCompatible) {
     for (int pos = 0; pos < externalName.length(); pos++) {
@@ -251,7 +253,7 @@ public class ClassUtil {
 
 
   @Nullable
-  public static PsiClass findPsiClassByJVMName(final PsiManager manager, final String jvmClassName) {
+  public static PsiClass findPsiClassByJVMName(@NotNull PsiManager manager, @NotNull String jvmClassName) {
     return findPsiClass(manager, jvmClassName.replace('/', '.'), null, true);
   }
 }

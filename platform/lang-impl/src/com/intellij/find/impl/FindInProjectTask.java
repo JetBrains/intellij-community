@@ -38,6 +38,7 @@ import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TrigramBuilder;
@@ -105,7 +106,7 @@ class FindInProjectTask {
     final Pattern pattern = FindInProjectUtil.createFileMaskRegExp(filter);
 
     //noinspection unchecked
-    myFileMask = pattern == null ? Condition.TRUE : new Condition<VirtualFile>() {
+    myFileMask = pattern == null ? Conditions.<VirtualFile>alwaysTrue() : new Condition<VirtualFile>() {
       @Override
       public boolean value(VirtualFile file) {
         return file != null && pattern.matcher(file.getName()).matches();

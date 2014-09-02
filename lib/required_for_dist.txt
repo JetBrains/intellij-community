@@ -30,7 +30,7 @@ jgoodies-looks-2.4.2.jar
 jh.jar
 jna-utils.jar
 jna.jar
-jsch-0.1.50.jar
+jsch-0.1.51.jar
 jsch.agentproxy.connector-factory.jar
 jsch.agentproxy.core.jar
 jsch.agentproxy.pageant.jar

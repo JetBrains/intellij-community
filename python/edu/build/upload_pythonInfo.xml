@@ -20,7 +20,7 @@
         </fileset>
         <fileset dir="${home}/community/lib">
           <include name="commons-net-3.1.jar"/>
-          <include name="jsch-0.1.50.jar"/>
+          <include name="jsch-0.1.51.jar"/>
         </fileset>
       </classpath>
 

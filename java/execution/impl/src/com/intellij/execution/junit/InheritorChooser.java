@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiClassUtil;
@@ -59,7 +60,7 @@ public class InheritorChooser {
                                           final Runnable performRunnable,
                                           final PsiMethod psiMethod,
                                           final PsiClass containingClass) {
-    return runMethodInAbstractClass(context, performRunnable, psiMethod, containingClass, Condition.TRUE);
+    return runMethodInAbstractClass(context, performRunnable, psiMethod, containingClass, Conditions.<PsiClass>alwaysTrue());
   }
 
   public boolean runMethodInAbstractClass(final ConfigurationContext context,

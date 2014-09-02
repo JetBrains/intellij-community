@@ -33,6 +33,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jdom.Parent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,8 +76,8 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
         }
 
         @Override
-        public Document writeScheme(@NotNull final KeymapImpl scheme) throws WriteExternalException {
-          return new Document(scheme.writeExternal());
+        public Element writeScheme(@NotNull final KeymapImpl scheme) throws WriteExternalException {
+          return scheme.writeExternal();
         }
 
         @Override
