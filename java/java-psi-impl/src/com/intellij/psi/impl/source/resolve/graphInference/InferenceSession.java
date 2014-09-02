@@ -275,11 +275,14 @@ public class InferenceSession {
           additionalConstraints.add(new ExpressionCompatibilityConstraint(arg, parameterType));
         }
         additionalConstraints.add(new CheckedExceptionCompatibilityConstraint(arg, parameterType));
-        if (arg instanceof PsiCallExpression && PsiPolyExpressionUtil.isPolyExpression(arg)) {
+        if (arg instanceof PsiCallExpression) {
           //If the expression is a poly class instance creation expression (15.9) or a poly method invocation expression (15.12), 
           //the set contains all constraint formulas that would appear in the set C when determining the poly expression's invocation type.
-          final PsiCallExpression callExpression = (PsiCallExpression)arg;
-          collectAdditionalConstraints(additionalConstraints, callExpression);
+          final JavaResolveResult resolveResult = getMethodResult((PsiCallExpression)arg);
+          final PsiMethod calledMethod = resolveResult instanceof MethodCandidateInfo ? (PsiMethod)resolveResult.getElement() : null;
+          if (PsiPolyExpressionUtil.isMethodCallPolyExpression(arg, calledMethod)) {
+            collectAdditionalConstraints(additionalConstraints, (PsiCallExpression)arg);
+          }
         } else if (arg instanceof PsiLambdaExpression) {
           collectLambdaReturnExpression(additionalConstraints, (PsiLambdaExpression)arg, parameterType);
         }
@@ -303,7 +306,11 @@ public class InferenceSession {
                                        PsiExpression returnExpression,
                                        PsiType functionalType) {
     if (returnExpression instanceof PsiCallExpression) {
-      collectAdditionalConstraints(additionalConstraints, (PsiCallExpression)returnExpression);
+      final JavaResolveResult resolveResult = getMethodResult((PsiCallExpression)returnExpression);
+      final PsiMethod calledMethod = resolveResult instanceof MethodCandidateInfo ? (PsiMethod)resolveResult.getElement() : null;
+      if (PsiPolyExpressionUtil.isMethodCallPolyExpression(returnExpression, calledMethod)) {
+        collectAdditionalConstraints(additionalConstraints, (PsiCallExpression)returnExpression);
+      }
     }
     else if (returnExpression instanceof PsiParenthesizedExpression) {
       processReturnExpression(additionalConstraints, ((PsiParenthesizedExpression)returnExpression).getExpression(), functionalType);
@@ -321,18 +328,8 @@ public class InferenceSession {
                                             final PsiCallExpression callExpression) {
     PsiExpressionList argumentList = callExpression.getArgumentList();
     if (argumentList != null) {
-      final PsiLambdaExpression expression = PsiTreeUtil.getParentOfType(argumentList, PsiLambdaExpression.class);
-      final Computable<JavaResolveResult> computableResolve = new Computable<JavaResolveResult>() {
-        @Override
-        public JavaResolveResult compute() {
-          return callExpression.resolveMethodGenerics();
-        }
-      };
+      final JavaResolveResult result = getMethodResult(callExpression);
       MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(argumentList);
-      final JavaResolveResult result = properties != null ? null :
-                                       expression == null
-                                       ? computableResolve.compute()
-                                       : PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, false, computableResolve);
       final PsiMethod method = result instanceof MethodCandidateInfo ? ((MethodCandidateInfo)result).getElement() : properties != null ? properties.getMethod() : null;
       if (method != null) {
         final PsiExpression[] newArgs = argumentList.getExpressions();
@@ -343,6 +340,23 @@ public class InferenceSession {
         }
       }
     }
+  }
+
+  private static JavaResolveResult getMethodResult(final PsiCallExpression callExpression) {
+    final PsiExpressionList argumentList = callExpression.getArgumentList();
+
+    final PsiLambdaExpression expression = PsiTreeUtil.getParentOfType(argumentList, PsiLambdaExpression.class);
+    final Computable<JavaResolveResult> computableResolve = new Computable<JavaResolveResult>() {
+      @Override
+      public JavaResolveResult compute() {
+        return callExpression.resolveMethodGenerics();
+      }
+    };
+    MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(argumentList);
+    return properties != null ? null :
+           expression == null
+           ? computableResolve.compute()
+           : PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, false, computableResolve);
   }
 
   public PsiSubstitutor retrieveNonPrimitiveEqualsBounds(Collection<InferenceVariable> variables) {
