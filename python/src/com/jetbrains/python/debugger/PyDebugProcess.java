@@ -17,7 +17,6 @@ package com.jetbrains.python.debugger;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.intellij.execution.console.DuplexConsoleView;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
@@ -88,6 +87,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private boolean myWaitingForConnection = false;
   private PyStackFrame myStackFrameBeforeResume;
   private PyStackFrame myConsoleContextFrame = null;
+  private PyReferrersLoader myReferrersProvider;
 
   public PyDebugProcess(final @NotNull XDebugSession session,
                         @NotNull final ServerSocket serverSocket,
@@ -489,7 +489,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     return myDebugger.evaluate(frame.getThreadId(), frame.getFrameId(), expression, execute, trimResult);
   }
 
-  public void consoleExec(String command, ProcessDebugger.DebugCallback<String> callback) {
+  public void consoleExec(String command, PyDebugCallback<String> callback) {
     dropFrameCaches();
     try {
       final PyStackFrame frame = currentFrame();
@@ -539,10 +539,30 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
+  public void loadReferrers(PyReferringObjectsValue var, PyDebugCallback<XValueChildrenList> callback) {
+    try {
+      final PyStackFrame frame = currentFrame();
+      myDebugger.loadReferrers(frame.getThreadId(), frame.getFrameId(), var, callback);
+    }
+    catch (PyDebuggerException e) {
+      callback.error(e);
+    }
+  }
+
+  @Override
   public void changeVariable(final PyDebugValue var, final String value) throws PyDebuggerException {
     final PyStackFrame frame = currentFrame();
     PyDebugValue newValue = myDebugger.changeVariable(frame.getThreadId(), frame.getFrameId(), var, value);
     myNewVariableValue.put(frame.getThreadFrameId(), newValue);
+  }
+
+  @Nullable
+  @Override
+  public PyReferrersLoader getReferrersLoader() {
+    if (myReferrersProvider == null) {
+      myReferrersProvider = new PyReferrersLoader(this);
+    }
+    return myReferrersProvider;
   }
 
   @Nullable

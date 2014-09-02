@@ -133,7 +133,7 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
-  public void consoleExec(String threadId, String frameId, String expression, DebugCallback<String> callback) {
+  public void consoleExec(String threadId, String frameId, String expression, PyDebugCallback<String> callback) {
     final ConsoleExecCommand command = new ConsoleExecCommand(this, threadId, frameId, expression);
     command.execute(callback);
   }
@@ -153,6 +153,65 @@ public class RemoteDebugger implements ProcessDebugger {
     command.execute();
     return command.getVariables();
   }
+
+
+  @Override
+  public void loadReferrers(final String threadId,
+                            final String frameId,
+                            final PyReferringObjectsValue var,
+                            final PyDebugCallback<XValueChildrenList> callback) {
+    RunCustomOperationCommand cmd = new RunCustomOperationCommand<List<PyDebugValue>>(this, createVariableLocator(threadId, frameId, var),
+                                                                                      "from pydevd_referrers import get_referrer_info",
+                                                                                      "get_referrer_info") {
+
+      @Override
+      protected ResponseProcessor<List<PyDebugValue>> createResponseProcessor() {
+        return new ResponseProcessor<List<PyDebugValue>>() {
+          @Override
+          protected List<PyDebugValue> parseResponse(ProtocolFrame response) throws PyDebuggerException {
+            return ProtocolParser.parseReferrers(decode(response.getPayload()), RemoteDebugger.this.getDebugProcess());
+          }
+        };
+      }
+    };
+    cmd.execute(new PyDebugCallback<List<PyDebugValue>>() {
+      @Override
+      public void ok(List<PyDebugValue> value) {
+        XValueChildrenList list = new XValueChildrenList();
+        for (PyDebugValue v: value) {
+          list.add(v);
+        }
+        callback.ok(list);
+      }
+
+      @Override
+      public void error(PyDebuggerException exception) {
+         callback.error(exception);
+      }
+    });
+  }
+
+  private PyVariableLocator createVariableLocator(final String threadId, final String frameId, final PyReferringObjectsValue var) {
+    return new PyVariableLocator() {
+      @Override
+      public String getThreadId() {
+        return threadId;
+      }
+
+
+      @Override
+      public String getPyDBLocation() {
+        if (var.getId() == null) {
+          return threadId + "\t" + frameId + "\tFRAME\t" + var.getName();
+        }
+        //Ok, this only happens when we're dealing with references with no proper scope given and we need to get
+        //things by id (which is usually not ideal). In this case we keep the proper thread id and set the frame id
+        //as the id of the object to be searched later on based on the list of all alive objects.
+        return getThreadId() + "\t" + var.getId() + "\tBY_ID";
+      }
+    };
+  }
+
 
   @Override
   public PyDebugValue changeVariable(final String threadId, final String frameId, final PyDebugValue var, final String value)
@@ -475,10 +534,10 @@ public class RemoteDebugger implements ProcessDebugger {
         else if (AbstractCommand.isCallSignatureTrace(frame.getCommand())) {
           recordCallSignature(ProtocolParser.parseCallSignature(frame.getPayload()));
         }
-        else if (AbstractCommand.isErrorEvent(frame.getCommand())) {
-          LOG.error("Error response from debugger: " + frame.getPayload());
-        }
         else {
+          if (AbstractCommand.isErrorEvent(frame.getCommand())) {
+            LOG.error("Error response from debugger: " + frame.getPayload());
+          }
           placeResponse(frame.getSequence(), frame);
         }
       }
