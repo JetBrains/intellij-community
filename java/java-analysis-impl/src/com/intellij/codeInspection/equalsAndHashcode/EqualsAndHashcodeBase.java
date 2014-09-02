@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package com.intellij.codeInspection.equalsAndHashcode;
 
-import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -36,10 +33,10 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author max
  */
-public class EqualsAndHashcode extends BaseJavaBatchLocalInspectionTool {
+public class EqualsAndHashcodeBase extends BaseJavaBatchLocalInspectionTool {
   @Override
   @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     final Project project = holder.getProject();
     Pair<PsiMethod, PsiMethod> pair = CachedValuesManager.getManager(project).getCachedValue(project, new CachedValueProvider<Pair<PsiMethod, PsiMethod>>() {
       @Override
@@ -92,7 +89,7 @@ public class EqualsAndHashcode extends BaseJavaBatchLocalInspectionTool {
                                  hasEquals[0]
                                   ? InspectionsBundle.message("inspection.equals.hashcode.only.one.defined.problem.descriptor", "<code>equals()</code>", "<code>hashCode()</code>")
                                   : InspectionsBundle.message("inspection.equals.hashcode.only.one.defined.problem.descriptor","<code>hashCode()</code>", "<code>equals()</code>"),
-                                 (LocalQuickFix[])null);
+                                  buildFixes(isOnTheFly, hasEquals[0]));
         }
       }
     };
@@ -129,5 +126,9 @@ public class EqualsAndHashcode extends BaseJavaBatchLocalInspectionTool {
   @NotNull
   public String getShortName() {
     return "EqualsAndHashcode";
+  }
+
+  protected LocalQuickFix[] buildFixes(boolean isOnTheFly, boolean hasEquals) {
+    return LocalQuickFix.EMPTY_ARRAY;
   }
 }
