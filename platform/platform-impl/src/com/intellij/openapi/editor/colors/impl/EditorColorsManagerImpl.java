@@ -382,7 +382,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
     }
 
     @Override
-    public Document writeScheme(@NotNull final EditorColorsSchemeImpl scheme) {
+    public Element writeScheme(@NotNull final EditorColorsSchemeImpl scheme) {
       Element root = new Element(SCHEME_NODE_NAME);
       try {
         scheme.writeExternal(root);
@@ -392,7 +392,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
         return null;
       }
 
-      return new Document(root);
+      return root;
     }
 
     @Override

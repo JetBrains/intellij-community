@@ -12,6 +12,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.beans.beancontext.BeanContextServicesSupport java.beans.beancontext.BeanContextServicesSupport.BCSSServiceProvider createBCSSServiceProvider(java.lang.Class, java.beans.beancontext.BeanContextServiceProvider)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -31,8 +32,14 @@
   <item name="java.beans.beancontext.BeanContextServicesSupport java.lang.Object getService(java.beans.beancontext.BeanContextChild, java.lang.Object, java.lang.Class, java.lang.Object, java.beans.beancontext.BeanContextServiceRevokedListener) 4">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.beans.beancontext.BeanContextServicesSupport java.lang.Object getService(java.beans.beancontext.BeanContextChild, java.lang.Object, java.lang.Class, java.lang.Object, java.beans.beancontext.BeanContextServiceRevokedListener)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.beans.beancontext.BeanContextServicesSupport java.util.Iterator getCurrentServiceClasses()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.beans.beancontext.BeanContextServicesSupport java.util.Iterator getCurrentServiceSelectors(java.lang.Class)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.beans.beancontext.BeanContextServicesSupport void addBeanContextServicesListener(java.beans.beancontext.BeanContextServicesListener) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>

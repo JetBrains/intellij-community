@@ -5,13 +5,22 @@
   <item name="org.apache.velocity.util.ClassUtils java.io.InputStream getResourceAsStream(java.lang.Class, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.velocity.util.ClassUtils java.lang.Object getNewInstance(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.velocity.util.ClassUtils org.apache.velocity.util.introspection.VelMethod getMethod(java.lang.String, java.lang.Object[], java.lang.Class[], java.lang.Object, org.apache.velocity.context.InternalContextAdapter, org.apache.velocity.runtime.parser.node.SimpleNode, boolean) 4">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.util.ClassUtils org.apache.velocity.util.introspection.VelMethod getMethod(java.lang.String, java.lang.Object[], java.lang.Class[], java.lang.Object, org.apache.velocity.context.InternalContextAdapter, org.apache.velocity.runtime.parser.node.SimpleNode, boolean)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.util.ExceptionUtils java.lang.Throwable createWithCause(java.lang.Class, java.lang.String, java.lang.Throwable)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_-&gt;null&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.velocity.util.SimplePool java.lang.Object get()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.util.StringUtils boolean allEmpty(java.util.List) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -68,6 +77,9 @@
   <item name="org.apache.velocity.util.StringUtils java.lang.String normalizePath(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.velocity.util.StringUtils java.lang.String normalizePath(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.velocity.util.StringUtils java.lang.String nullTrim(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
@@ -75,6 +87,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.util.StringUtils java.lang.String removeAndHump(java.lang.String)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -89,6 +102,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.util.StringUtils java.lang.String sub(java.lang.String, java.lang.String, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -114,5 +128,6 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
 </root>

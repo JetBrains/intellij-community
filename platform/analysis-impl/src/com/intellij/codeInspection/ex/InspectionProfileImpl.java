@@ -772,18 +772,17 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     return InspectionProfileImplHolder.DEFAULT_PROFILE;
   }
 
-  public Document saveToDocument() throws WriteExternalException {
+  public Element saveToDocument() throws WriteExternalException {
     if (isLocal()) {
       Element root = new Element(ROOT_ELEMENT_TAG);
       root.setAttribute(PROFILE_NAME_TAG, myName);
       writeExternal(root);
       //myVisibleTreeState.writeExternal(root);
-      return new Document(root);
+      return root;
     }
     else {
       return null;
     }
-
   }
 
   @Override

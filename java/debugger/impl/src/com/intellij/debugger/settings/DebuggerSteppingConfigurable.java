@@ -22,6 +22,7 @@ import com.intellij.ui.classFilter.ClassFilterEditor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -33,6 +34,9 @@ class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
   private JCheckBox myCbSkipClassLoaders;
   private ClassFilterEditor mySteppingFilterEditor;
   private JCheckBox myCbSkipSimpleGetters;
+  private JRadioButton myRbEvaluateFinallyAlways;
+  private JRadioButton myRbEvaluateFinallyNever;
+  private JRadioButton myRbEvaluateFinallyAsk;
 
   @Override
   public void reset(@NotNull DebuggerSettings settings) {
@@ -45,6 +49,16 @@ class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
 
     mySteppingFilterEditor.setFilters(settings.getSteppingFilters());
     mySteppingFilterEditor.setEnabled(settings.TRACING_FILTERS_ENABLED);
+
+    if (DebuggerSettings.EVALUATE_FINALLY_ALWAYS.equals(settings.EVALUATE_FINALLY_ON_POP_FRAME)) {
+      myRbEvaluateFinallyAlways.setSelected(true);
+    }
+    else if (DebuggerSettings.EVALUATE_FINALLY_NEVER.equals(settings.EVALUATE_FINALLY_ON_POP_FRAME)) {
+      myRbEvaluateFinallyNever.setSelected(true);
+    }
+    else {
+      myRbEvaluateFinallyAsk.setSelected(true);
+    }
   }
 
   @Override
@@ -58,6 +72,16 @@ class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
     settings.SKIP_CONSTRUCTORS = myCbSkipConstructors.isSelected();
     settings.SKIP_CLASSLOADERS = myCbSkipClassLoaders.isSelected();
     settings.TRACING_FILTERS_ENABLED = myCbStepInfoFiltersEnabled.isSelected();
+
+    if (myRbEvaluateFinallyAlways.isSelected()) {
+      settings.EVALUATE_FINALLY_ON_POP_FRAME = DebuggerSettings.EVALUATE_FINALLY_ALWAYS;
+    }
+    else if (myRbEvaluateFinallyNever.isSelected()) {
+      settings.EVALUATE_FINALLY_ON_POP_FRAME = DebuggerSettings.EVALUATE_FINALLY_NEVER;
+    }
+    else {
+      settings.EVALUATE_FINALLY_ON_POP_FRAME = DebuggerSettings.EVALUATE_FINALLY_ASK;
+    }
 
     mySteppingFilterEditor.stopEditing();
     settings.setSteppingFilters(mySteppingFilterEditor.getFilters());
@@ -94,6 +118,33 @@ class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
         mySteppingFilterEditor.setEnabled(myCbStepInfoFiltersEnabled.isSelected());
       }
     });
+
+    myRbEvaluateFinallyAlways = new JRadioButton(DebuggerBundle.message("label.debugger.general.configurable.evaluate.finally.always"));
+    myRbEvaluateFinallyNever = new JRadioButton(DebuggerBundle.message("label.debugger.general.configurable.evaluate.finally.never"));
+    myRbEvaluateFinallyAsk = new JRadioButton(DebuggerBundle.message("label.debugger.general.configurable.evaluate.finally.ask"));
+
+    int cbLeftOffset = 0;
+    final Border border = myCbSkipSimpleGetters.getBorder();
+    if (border != null) {
+      final Insets insets = border.getBorderInsets(myCbSkipSimpleGetters);
+      if (insets != null) {
+        cbLeftOffset = insets.left;
+      }
+    }
+
+    final ButtonGroup group = new ButtonGroup();
+    group.add(myRbEvaluateFinallyAlways);
+    group.add(myRbEvaluateFinallyNever);
+    group.add(myRbEvaluateFinallyAsk);
+    final Box box = Box.createHorizontalBox();
+    box.add(myRbEvaluateFinallyAlways);
+    box.add(myRbEvaluateFinallyNever);
+    box.add(myRbEvaluateFinallyAsk);
+    final JPanel evalFinallyPanel = new JPanel(new BorderLayout());
+    evalFinallyPanel.add(box, BorderLayout.CENTER);
+    evalFinallyPanel.add(new JLabel(DebuggerBundle.message("label.debugger.general.configurable.evaluate.finally.on.pop")), BorderLayout.WEST);
+    panel.add(evalFinallyPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(4, cbLeftOffset, 0, 0), 0, 0));
+
     return panel;
   }
 }

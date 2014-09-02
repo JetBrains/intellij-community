@@ -184,14 +184,13 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
   }
 
   private void checkCompoundId(Method method, PsiMethod psiMethod, boolean noKey) throws IOException {
-    Direction direction = new Out();
     System.out.println();
     System.out.println(method.internalClassName);
     System.out.println(method.methodName);
     System.out.println(method.methodDesc);
 
 
-    HKey psiKey = BytecodeAnalysisConverter.psiKey(psiMethod, direction, myMessageDigest);
+    HKey psiKey = BytecodeAnalysisConverter.psiKey(psiMethod, Direction.Out, myMessageDigest);
     if (noKey) {
       assertTrue(null == psiKey);
       return;
@@ -199,7 +198,7 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
     else {
       assertFalse(null == psiKey);
     }
-    HKey asmKey = BytecodeAnalysisConverter.asmKey(new Key(method, direction, true), myMessageDigest);
+    HKey asmKey = BytecodeAnalysisConverter.asmKey(new Key(method, Direction.Out, true), myMessageDigest);
     Assert.assertEquals(asmKey, psiKey);
   }
 

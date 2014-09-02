@@ -161,12 +161,11 @@ public class CodeStyleSchemeImpl implements JDOMExternalizable, CodeStyleScheme,
     }
   }
 
-  public Document saveToDocument() throws WriteExternalException {
+  public Element saveToDocument() throws WriteExternalException {
     Element newElement = new Element(CODE_SCHEME);
     newElement.setAttribute(NAME, getName());
     writeExternal(newElement);
-
-    return new Document(newElement);
+    return newElement;
   }
 
   @Override

@@ -426,12 +426,10 @@ public abstract class ComponentStoreImpl implements IComponentStore {
 
     protected void commit() throws StateStorageException {
       final StateStorageManager storageManager = getStateStorageManager();
-
       final StateStorageManager.ExternalizationSession session = storageManager.startExternalization();
 
       String[] names = ArrayUtil.toStringArray(myComponents.keySet());
       Arrays.sort(names);
-
       for (String name : names) {
         Object component = myComponents.get(name);
         if (component instanceof PersistentStateComponent) {

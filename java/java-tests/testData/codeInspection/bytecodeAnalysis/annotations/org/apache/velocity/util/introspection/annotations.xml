@@ -1,6 +1,21 @@
 <root>
+  <item name="org.apache.velocity.util.introspection.AbstractChainableUberspector java.util.Iterator getIterator(java.lang.Object, org.apache.velocity.util.introspection.Info)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.util.introspection.AbstractChainableUberspector org.apache.velocity.util.introspection.VelMethod getMethod(java.lang.Object, java.lang.String, java.lang.Object[], org.apache.velocity.util.introspection.Info)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.util.introspection.AbstractChainableUberspector org.apache.velocity.util.introspection.VelPropertyGet getPropertyGet(java.lang.Object, java.lang.String, org.apache.velocity.util.introspection.Info)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.util.introspection.AbstractChainableUberspector org.apache.velocity.util.introspection.VelPropertySet getPropertySet(java.lang.Object, java.lang.String, java.lang.Object, org.apache.velocity.util.introspection.Info)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.velocity.util.introspection.ClassMap java.lang.reflect.Method findMethod(java.lang.String, java.lang.Object[]) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.util.introspection.ClassMap java.lang.reflect.Method findMethod(java.lang.String, java.lang.Object[])">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.util.introspection.ClassMap void populateMethodCacheWithInterface(org.apache.velocity.util.introspection.ClassMap.MethodCache, java.lang.Class) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -16,6 +31,9 @@
   </item>
   <item name="org.apache.velocity.util.introspection.ClassMap.MethodCache java.lang.reflect.Method get(java.lang.String, java.lang.Object[]) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.util.introspection.ClassMap.MethodCache java.lang.reflect.Method get(java.lang.String, java.lang.Object[])">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.util.introspection.ClassMap.MethodCache void access$100(org.apache.velocity.util.introspection.ClassMap.MethodCache, java.lang.reflect.Method) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -48,6 +66,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.util.introspection.IntrospectorBase java.lang.reflect.Method getMethod(java.lang.Class, java.lang.String, java.lang.Object[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -86,6 +105,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;_,null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.util.introspection.MethodMap java.lang.reflect.Method getBestMatch(java.util.List, java.lang.Class[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -100,6 +120,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;_,_,null-&gt;null;null,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.util.introspection.SecureUberspector java.util.Iterator getIterator(java.lang.Object, org.apache.velocity.util.introspection.Info) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -111,11 +132,15 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.util.introspection.UberspectImpl java.util.Iterator getIterator(java.lang.Object, org.apache.velocity.util.introspection.Info) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.velocity.util.introspection.UberspectImpl java.util.Iterator getIterator(java.lang.Object, org.apache.velocity.util.introspection.Info) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.velocity.util.introspection.UberspectImpl java.util.Iterator getIterator(java.lang.Object, org.apache.velocity.util.introspection.Info)">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.util.introspection.UberspectImpl org.apache.velocity.util.introspection.VelMethod getMethod(java.lang.Object, java.lang.String, java.lang.Object[], org.apache.velocity.util.introspection.Info) 0">
@@ -128,6 +153,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.util.introspection.UberspectImpl org.apache.velocity.util.introspection.VelPropertyGet getPropertyGet(java.lang.Object, java.lang.String, org.apache.velocity.util.introspection.Info) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -139,6 +165,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.util.introspection.UberspectImpl org.apache.velocity.util.introspection.VelPropertySet getPropertySet(java.lang.Object, java.lang.String, java.lang.Object, org.apache.velocity.util.introspection.Info) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -150,11 +177,18 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.velocity.util.introspection.UberspectImpl void setRuntimeLogger(org.apache.velocity.runtime.RuntimeLogger) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.velocity.util.introspection.UberspectImpl.VelGetterImpl java.lang.String getMethodName()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.velocity.util.introspection.UberspectImpl.VelMethodImpl java.lang.Object[] handleVarArg(java.lang.Class, int, java.lang.Object[]) 2">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.util.introspection.UberspectImpl.VelSetterImpl java.lang.String getMethodName()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
 </root>

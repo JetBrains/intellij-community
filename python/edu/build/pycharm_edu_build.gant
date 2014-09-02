@@ -22,7 +22,7 @@ includeTargets << new File("$home/community/build/scripts/libLicenses.gant")
 includeTargets << new File("$home/build/scripts/ultimate_utils.gant")
 
 requireProperty("buildNumber", requireProperty("build.number", snapshot))
-setProperty("buildName", "EDU-$buildNumber")
+setProperty("buildName", "PE-$buildNumber")
 setProperty("ch", "$home/community")
 setProperty("pythonCommunityHome", "$ch/python")
 setProperty("pythonEduHome", "$ch/python/edu")
@@ -31,7 +31,7 @@ def jdk_bundled_version = p("jdk_bundled_mac") == "1.8" ? "jdk8_mac_redist.tar" 
 ant.copy(file: "${home}/build/jdk/${jdk_bundled_version}", tofile: "${home}/build/jdk/jdk_mac_redist_for_${buildNumber}.tar")
 
 // load ApplicationInfo.xml properties
-ant.xmlproperty(file: "$pythonEduHome/resources/idea/PyCharmEduApplicationInfo.xml", collapseAttributes: "true")
+ant.xmlproperty(file: "$pythonEduHome/resources/idea/PyCharmPEApplicationInfo.xml", collapseAttributes: "true")
 setProperty("system_selector", "PyCharmEdu${p("component.version.major")}0")
 setProperty("dryRun", false)
 setProperty("jdk16", guessJdk())
@@ -164,7 +164,7 @@ public layoutEducational(String classesPath, Set usedJars) {
     projectBuilder.moduleRuntimeClasspath(findModule("main_pycharm_edu"), false).each {
       ant.pathelement(location: it)
     }
-  }, "-Didea.platform.prefix=PyCharmEdu -Didea.no.jre.check=true")
+  }, "-Didea.platform.prefix=PyCharmPE -Didea.no.jre.check=true")
 
   if (!dryRun) {
     wireBuildDate("PE-${buildNumber}", appInfo)
@@ -173,7 +173,7 @@ public layoutEducational(String classesPath, Set usedJars) {
   Map args = [
     buildNumber: "PE-${buildNumber}",
     system_selector: system_selector,
-    ide_jvm_args: "-Didea.platform.prefix=PyCharmEdu -Didea.no.jre.check=true"]
+    ide_jvm_args: "-Didea.platform.prefix=PyCharmPE -Didea.no.jre.check=true"]
 
   LayoutInfo layoutInfo = layoutFull(args, paths.distAll, usedJars)
   generateLicensesTable("$paths.artifacts/third-party-libraries.txt", layoutInfo.usedModules);
@@ -198,9 +198,9 @@ public layoutEducational(String classesPath, Set usedJars) {
 
   buildNSIS([paths.distAll, paths.distWin],
             "$pythonEduHome/build/strings.nsi", "$pythonEduHome/build/paths.nsi",
-            "pycharmEDU-", false, true, ".py", system_selector)
+            "pycharmPE-", false, true, ".py", system_selector)
 
-  String tarRoot = isEap() ? "pycharm-edu-$buildNumber" : "pycharm-edu-${p("component.version.major")}.${p("component.version.minor")}"
+  String tarRoot = isEap() ? "pycharm-pe-$buildNumber" : "pycharm-pe-${p("component.version.major")}.${p("component.version.minor")}"
   buildTarGz(tarRoot, "$paths.artifacts/pycharm${buildName}.tar", [paths.distAll, paths.distUnix])
 
   String macAppRoot = isEap() ? "PyCharm Educational ${p("component.version.major")}.${p("component.version.minor")} EAP.app/Contents" : "PyCharm Educational.app/Contents"
@@ -223,7 +223,7 @@ private layoutPlugins(layouts) {
 }
 
 private String appInfoFile() {
-  return "$pythonEduHome/resources/idea/PyCharmEduApplicationInfo.xml"
+  return "$pythonEduHome/resources/idea/PyCharmPEApplicationInfo.xml"
 }
 
 private layoutFull(Map args, String target, Set usedJars) {
@@ -404,7 +404,7 @@ private layoutMac(Map _args, String target) {
   Map args = new HashMap(_args)
   args.icns = "$pythonCommunityHome/resources/PyCharmCore.icns"
   args.bundleIdentifier = "com.jetbrains.pycharm"
-  args.platform_prefix = "PyCharmEdu"
+  args.platform_prefix = "PyCharmPE"
   args.help_id = "PY"
   args."idea.properties.path" = "${paths.distAll}/bin/idea.properties"
   args."idea.properties" = ["idea.no.jre.check": true, "ide.mac.useNativeClipboard": "false"];

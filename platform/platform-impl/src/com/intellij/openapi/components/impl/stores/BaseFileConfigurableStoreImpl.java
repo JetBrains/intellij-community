@@ -59,7 +59,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     }
 
     @Override
-    public void load(@NotNull final Element rootElement) throws IOException {
+    public void load(@NotNull final Element rootElement) {
       super.load(rootElement);
 
       final String v = rootElement.getAttributeValue(VERSION_OPTION);
@@ -74,7 +74,11 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     @Override
     @NotNull
     protected Element save() {
-      final Element root = super.save();
+      Element root = super.save();
+      if (root == null) {
+        root = new Element(myRootElementName);
+      }
+
       root.setAttribute(VERSION_OPTION, Integer.toString(myVersion));
       return root;
     }
@@ -113,7 +117,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   }
 
   public BaseStorageData getMainStorageData() throws StateStorageException {
-    return (BaseStorageData) getMainStorage().getStorageData(false);
+    return (BaseStorageData) getMainStorage().getStorageData();
   }
 
   @Nullable

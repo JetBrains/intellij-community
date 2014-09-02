@@ -22,6 +22,7 @@ import com.intellij.util.text.DateFormatUtil;
 import git4idea.test.TestDialogHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
+import org.jetbrains.plugins.github.api.GithubConnection;
 import org.jetbrains.plugins.github.api.GithubGist;
 import org.jetbrains.plugins.github.test.GithubTest;
 import org.jetbrains.plugins.github.ui.GithubLoginDialog;
@@ -59,7 +60,7 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
 
   protected void deleteGist() throws IOException {
     if (GIST_ID != null) {
-      GithubApiUtil.deleteGist(myGitHubSettings.getAuthData(), GIST_ID);
+      GithubApiUtil.deleteGist(new GithubConnection(myGitHubSettings.getAuthData()), GIST_ID);
       GIST = null;
       GIST_ID = null;
     }
@@ -82,7 +83,7 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
 
     if (GIST == null) {
       try {
-        GIST = GithubApiUtil.getGist(myGitHubSettings.getAuthData(), GIST_ID);
+        GIST = GithubApiUtil.getGist(new GithubConnection(myGitHubSettings.getAuthData()), GIST_ID);
       }
       catch (IOException e) {
         System.err.println(e.getMessage());

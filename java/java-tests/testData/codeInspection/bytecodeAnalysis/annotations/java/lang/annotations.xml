@@ -250,6 +250,15 @@
       <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
   </item>
+  <item name="java.lang.Class T newInstance()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.lang.Class T newInstance0()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.lang.Class T[] getEnumConstants()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.lang.Class boolean access$100(java.lang.Object[], java.lang.Object[]) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
@@ -275,6 +284,9 @@
   <item name="java.lang.Class boolean isAnnotationPresent(java.lang.Class&lt;? extends java.lang.annotation.Annotation&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.lang.Class java.io.InputStream getResourceAsStream(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.lang.Class java.lang.Class toClass(java.lang.reflect.Type)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
@@ -286,11 +298,23 @@
   <item name="java.lang.Class java.lang.Class&lt;? extends U&gt; asSubclass(java.lang.Class&lt;U&gt;)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.lang.Class java.lang.Class.EnclosingMethodInfo getEnclosingMethodInfo()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.lang.Class java.lang.ClassLoader getClassLoader()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.lang.Class java.lang.String argumentTypesToString(java.lang.Class[]) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.lang.Class java.lang.String argumentTypesToString(java.lang.Class[])">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.lang.Class java.lang.String getCanonicalName()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.lang.Class java.lang.String getSimpleBinaryName()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.lang.Class java.lang.String getSimpleName()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -302,6 +326,9 @@
   </item>
   <item name="java.lang.Class java.lang.String toString()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.lang.Class java.lang.reflect.Constructor&lt;?&gt; getEnclosingConstructor()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.lang.Class java.lang.reflect.Constructor&lt;T&gt; getConstructor(java.lang.Class...) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -324,11 +351,17 @@
   <item name="java.lang.Class java.lang.reflect.Field getField0(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.lang.Class java.lang.reflect.Field getField0(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.lang.Class java.lang.reflect.Field searchFields(java.lang.reflect.Field[], java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Class java.lang.reflect.Field searchFields(java.lang.reflect.Field[], java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.lang.Class java.lang.reflect.Field searchFields(java.lang.reflect.Field[], java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.lang.Class java.lang.reflect.Field[] copyFields(java.lang.reflect.Field[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -342,11 +375,17 @@
   <item name="java.lang.Class java.lang.reflect.Method getDeclaredMethod(java.lang.String, java.lang.Class...) 1">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="java.lang.Class java.lang.reflect.Method getEnclosingMethod()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.lang.Class java.lang.reflect.Method getMethod(java.lang.String, java.lang.Class...) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Class java.lang.reflect.Method getMethod0(java.lang.String, java.lang.Class[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.lang.Class java.lang.reflect.Method getMethod0(java.lang.String, java.lang.Class[])">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.lang.Class java.lang.reflect.Method searchMethods(java.lang.reflect.Method[], java.lang.String, java.lang.Class[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -359,6 +398,12 @@
   </item>
   <item name="java.lang.Class java.lang.reflect.Method[] copyMethods(java.lang.reflect.Method[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.lang.Class java.lang.reflect.Type getGenericSuperclass()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.lang.Class java.net.URL getResource(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.lang.Class void addAll(java.util.Collection, java.lang.reflect.Field[]) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -380,6 +425,21 @@
       <val val="&quot;_,null-&gt;false&quot;"/>
     </annotation>
   </item>
+  <item name="java.lang.ClassLoader java.io.InputStream getResourceAsStream(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.lang.ClassLoader java.io.InputStream getSystemResourceAsStream(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.lang.ClassLoader java.lang.ClassLoader getCallerClassLoader()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.lang.ClassLoader java.lang.ClassLoader getParent()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.lang.ClassLoader java.lang.ClassLoader getSystemClassLoader()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.lang.ClassLoader java.lang.Package definePackage(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.net.URL)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -390,6 +450,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;null;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.lang.ClassLoader java.lang.String[] initializePath(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -401,6 +462,16 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;null;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.lang.ClassLoader java.net.URL getBootstrapResource(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.lang.ClassLoader java.net.URL getResource(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.lang.ClassLoader java.net.URL getSystemResource(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.lang.ClassLoader java.util.Enumeration findResources(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -1465,6 +1536,12 @@
   <item name="java.lang.StringBuilder void writeObject(java.io.ObjectOutputStream) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.lang.System java.io.InputStream nullInputStream()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.lang.System java.io.PrintStream nullPrintStream()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.lang.System java.lang.String clearProperty(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -1484,6 +1561,9 @@
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.lang.System void setSecurityManager0(java.lang.SecurityManager) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.lang.System.1 java.lang.Object run()">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.lang.System.2 sun.reflect.ConstantPool getConstantPool(java.lang.Class) 0">
@@ -1525,6 +1605,9 @@
   <item name="java.lang.Thread Thread(java.lang.ThreadGroup, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.lang.Thread java.lang.ClassLoader getContextClassLoader()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.lang.Thread java.lang.String getName()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -1541,6 +1624,15 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.ThreadLocal T childValue(T) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.lang.ThreadLocal T get()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.lang.ThreadLocal T initialValue()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.lang.ThreadLocal T setInitialValue()">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.lang.ThreadLocal int access$400(java.lang.ThreadLocal) 0">
@@ -1576,8 +1668,14 @@
   <item name="java.lang.ThreadLocal.ThreadLocalMap java.lang.ThreadLocal.ThreadLocalMap.Entry access$000(java.lang.ThreadLocal.ThreadLocalMap, java.lang.ThreadLocal) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.lang.ThreadLocal.ThreadLocalMap java.lang.ThreadLocal.ThreadLocalMap.Entry access$000(java.lang.ThreadLocal.ThreadLocalMap, java.lang.ThreadLocal)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.lang.ThreadLocal.ThreadLocalMap java.lang.ThreadLocal.ThreadLocalMap.Entry getEntry(java.lang.ThreadLocal) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.lang.ThreadLocal.ThreadLocalMap java.lang.ThreadLocal.ThreadLocalMap.Entry getEntry(java.lang.ThreadLocal)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.lang.ThreadLocal.ThreadLocalMap java.lang.ThreadLocal.ThreadLocalMap.Entry getEntryAfterMiss(java.lang.ThreadLocal, int, java.lang.ThreadLocal.ThreadLocalMap.Entry) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -1589,6 +1687,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;_,_,null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.lang.ThreadLocal.ThreadLocalMap void access$100(java.lang.ThreadLocal.ThreadLocalMap, java.lang.ThreadLocal, java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -1607,6 +1706,9 @@
   </item>
   <item name="java.lang.ThreadLocal.ThreadLocalMap void set(java.lang.ThreadLocal, java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.lang.Throwable java.lang.Throwable getCause()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.lang.Throwable java.lang.Throwable initCause(java.lang.Throwable)">
     <annotation name="org.jetbrains.annotations.NotNull"/>

@@ -515,6 +515,41 @@ public class GitHistoryUtils {
     });
   }
 
+  @Nullable
+  public static List<VcsCommitMetadata> readLastCommits(@NotNull Project project,
+                                                        @NotNull final VirtualFile root,
+                                                        @NotNull String... refs)
+    throws VcsException {
+    final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
+    if (factory == null) {
+      return null;
+    }
+
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
+    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, COMMIT_TIME, SUBJECT, AUTHOR_NAME,
+                                           AUTHOR_EMAIL, RAW_BODY, COMMITTER_NAME, COMMITTER_EMAIL, AUTHOR_TIME);
+
+    h.setSilent(true);
+    // git show can show either -p, or --name-status, or --name-only, but we need nothing, just details => using git log --no-walk
+    h.addParameters("--no-walk");
+    h.addParameters(parser.getPretty(), "--encoding=UTF-8");
+    h.addParameters(refs);
+
+    String output = h.run();
+    List<GitLogRecord> records = parser.parse(output);
+    if (records.size() != refs.length) return null;
+
+    return ContainerUtil.map(records, new Function<GitLogRecord, VcsCommitMetadata>() {
+      @Override
+      public VcsCommitMetadata fun(GitLogRecord record) {
+        return factory.createCommitMetadata(factory.createHash(record.getHash()), getParentHashes(factory, record), record.getCommitTime(),
+                                            root, record.getSubject(), record.getAuthorName(), record.getAuthorEmail(),
+                                            record.getFullMessage(), record.getCommitterName(), record.getCommitterEmail(),
+                                            record.getAuthorTimeStamp());
+      }
+    });
+  }
+
   @NotNull
   public static List<TimedVcsCommit> readCommits(@NotNull final Project project,
                                                  @NotNull VirtualFile root,

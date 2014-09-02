@@ -2001,12 +2001,19 @@ public abstract class DialogWrapper {
    */
   public interface DoNotAskOption {
 
+    /**
+     * @return default selection state of checkbox (false -> checkbox selected)
+     */
     boolean isToBeShown();
 
-    void setToBeShown(boolean value, int exitCode);
+    /**
+     * @param toBeShown - if dialog should be shown next time (checkbox selected -> false)
+     * @param exitCode of corresponding DialogWrapper
+     */
+    void setToBeShown(boolean toBeShown, int exitCode);
 
     /**
-     * Should be 'true' for checkbox to be visible.
+     * @return true if checkbox should be shown
      */
     boolean canBeHidden();
 

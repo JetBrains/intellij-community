@@ -132,14 +132,31 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;_,null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.awt.Component java.awt.Color getBackground()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.awt.Component java.awt.Color getForeground()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.awt.Component java.awt.Component findUnderMouseInWindow(java.awt.PointerInfo)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.awt.Component java.awt.Component getComponentAt(int, int)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.awt.Component java.awt.Component getComponentAt(java.awt.Point) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Component java.awt.Component getComponentAt(java.awt.Point)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.awt.Component java.awt.Component locate(int, int)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.awt.Component java.awt.Dimension getMaximumSize()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -161,6 +178,24 @@
   <item name="java.awt.Component java.awt.Dimension size()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.awt.Component java.awt.Font getFont()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.awt.Component java.awt.Font getFont_NoClientCode()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.awt.Component java.awt.Graphics getGraphics()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.awt.Component java.awt.GraphicsConfiguration getGraphicsConfiguration()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.awt.Component java.awt.Image createImage(int, int)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.awt.Component java.awt.Image getBackBuffer()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.awt.Component java.awt.Point getLocation(java.awt.Point) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
@@ -168,6 +203,9 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
     </annotation>
+  </item>
+  <item name="java.awt.Component java.awt.Point getMousePosition()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.awt.Component java.awt.Point location()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -194,7 +232,22 @@
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
   </item>
+  <item name="java.awt.Component java.awt.im.InputContext getInputContext()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.awt.Component java.awt.im.InputMethodRequests getInputMethodRequests()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.awt.Component java.awt.image.VolatileImage createVolatileImage(int, int)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.awt.Component java.awt.image.VolatileImage createVolatileImage(int, int, java.awt.ImageCapabilities) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.awt.Component java.awt.image.VolatileImage createVolatileImage(int, int, java.awt.ImageCapabilities)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.awt.Component java.lang.String constructComponentName()">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.awt.Component java.lang.String paramString()">
@@ -369,11 +422,35 @@
       <val val="&quot;_,!null-&gt;!null;_,null-&gt;null&quot;"/>
     </annotation>
   </item>
+  <item name="java.awt.Container java.awt.Component findComponentAt(int, int)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.awt.Container java.awt.Component findComponentAt(int, int, boolean)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.awt.Container java.awt.Component findComponentAt(java.awt.Point) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.awt.Container java.awt.Component findComponentAt(java.awt.Point)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.awt.Container java.awt.Component findComponentAtImpl(int, int, boolean)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.awt.Container java.awt.Component getComponentAt(int, int)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.awt.Container java.awt.Component getComponentAt(java.awt.Point) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Container java.awt.Component getComponentAt(java.awt.Point)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.awt.Container java.awt.Component getMouseEventTargetImpl(int, int, boolean, java.awt.Container.EventTargetFilter, boolean, boolean)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.awt.Container java.awt.Component locate(int, int)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.awt.Container java.awt.Component[] getComponents()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -381,8 +458,20 @@
   <item name="java.awt.Container java.awt.Component[] getComponents_NoClientCode()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.awt.Container java.awt.FocusTraversalPolicy getFocusTraversalPolicy()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.awt.Container java.awt.Point getMousePosition(boolean)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.awt.Container java.lang.String paramString()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Container javax.accessibility.Accessible getAccessibleAt(java.awt.Point)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.awt.Container javax.accessibility.Accessible getAccessibleChild(int)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.awt.Container void addContainerListener(java.awt.event.ContainerListener) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -503,6 +592,15 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;false&quot;"/>
     </annotation>
+  </item>
+  <item name="java.awt.Window java.awt.Component getFocusOwner()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.awt.Window java.awt.Component getMostRecentFocusOwner()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.awt.Window java.awt.Container getFocusCycleRootAncestor()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.awt.Window java.lang.Object access$000(java.awt.Window) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>

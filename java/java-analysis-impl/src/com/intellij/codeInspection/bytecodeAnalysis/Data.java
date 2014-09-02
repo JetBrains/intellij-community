@@ -52,103 +52,109 @@ enum Value {
   Bot, NotNull, Null, True, False, Top
 }
 
-interface Direction {}
+interface Direction {
+  final class In implements Direction {
+    static final int NOT_NULL = 0;
+    static final int NULLABLE = 1;
+    final int paramIndex;
+    final int nullityMask;
 
-final class In implements Direction {
-  static final int NOT_NULL = 0;
-  static final int NULLABLE = 1;
-  final int paramIndex;
-  final int nullityMask;
+    In(int paramIndex, int nullityMask) {
+      this.paramIndex = paramIndex;
+      this.nullityMask = nullityMask;
+    }
 
-  In(int paramIndex, int nullityMask) {
-    this.paramIndex = paramIndex;
-    this.nullityMask = nullityMask;
+    @Override
+    public String toString() {
+      return "In " + paramIndex;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      In in = (In)o;
+      if (paramIndex != in.paramIndex) return false;
+      if (nullityMask != in.nullityMask) return false;
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 31 * paramIndex + nullityMask;
+    }
+
+    public int paramId() {
+      return paramIndex;
+    }
   }
 
-  @Override
-  public String toString() {
-    return "In " + paramIndex;
+  final class InOut implements Direction {
+    final int paramIndex;
+    final Value inValue;
+
+    InOut(int paramIndex, Value inValue) {
+      this.paramIndex = paramIndex;
+      this.inValue = inValue;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      InOut inOut = (InOut)o;
+
+      if (paramIndex != inOut.paramIndex) return false;
+      if (inValue != inOut.inValue) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = paramIndex;
+      result = 31 * result + inValue.ordinal();
+      return result;
+    }
+
+    @Override
+    public String toString() {
+      return "InOut " + paramIndex + " " + inValue.toString();
+    }
+
+    public int paramId() {
+      return paramIndex;
+    }
+
+    public int valueId() {
+      return inValue.ordinal();
+    }
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    In in = (In) o;
-    if (paramIndex != in.paramIndex) return false;
-    if (nullityMask != in.nullityMask) return false;
-    return true;
-  }
+  Direction Out = new Direction() {
+    @Override
+    public String toString() {
+      return "Out";
+    }
 
-  @Override
-  public int hashCode() {
-    return 31*paramIndex + nullityMask;
-  }
+    @Override
+    public int hashCode() {
+      return -1;
+    }
+  };
 
-  public int paramId() {
-    return paramIndex;
-  }
+  Direction NullableOut = new Direction() {
+    @Override
+    public String toString() {
+      return "NullableOut";
+    }
 
-}
-
-final class InOut implements Direction {
-  final int paramIndex;
-  final Value inValue;
-
-  InOut(int paramIndex, Value inValue) {
-    this.paramIndex = paramIndex;
-    this.inValue = inValue;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    InOut inOut = (InOut) o;
-
-    if (paramIndex != inOut.paramIndex) return false;
-    if (inValue != inOut.inValue) return false;
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = paramIndex;
-    result = 31 * result + inValue.ordinal();
-    return result;
-  }
-
-  @Override
-  public String toString() {
-    return "InOut " + paramIndex + " " + inValue.toString();
-  }
-
-  public int paramId() {
-    return paramIndex;
-  }
-
-  public int valueId() {
-    return inValue.ordinal();
-  }
-}
-
-final class Out implements Direction {
-  @Override
-  public String toString() {
-    return "Out";
-  }
-
-  @Override
-  public int hashCode() {
-    return 1;
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    return obj instanceof Out;
-  }
+    @Override
+    public int hashCode() {
+      return -2;
+    }
+  };
 }
 
 final class Key {

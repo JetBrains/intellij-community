@@ -20,6 +20,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assert.assertThat;
+
 public class ApplicationStoreTest extends LightPlatformLangTestCase {
   private File testAppConfig;
   private MyComponentStore componentStore;
@@ -63,7 +66,31 @@ public class ApplicationStoreTest extends LightPlatformLangTestCase {
     componentStore.getStateStorageManager().setStreamProvider(streamProvider);
 
     componentStore.initComponent(component, false);
+    component.foo = "newValue";
     StoreUtil.doSave(componentStore);
+
+    assertThat(streamProvider.data.get(RoamingType.PER_USER).get(StoragePathMacros.APP_CONFIG + "/proxy.settings.xml"), equalTo("<application>\n" +
+                                                                                                                                "  <component name=\"HttpConfigurable\">\n" +
+                                                                                                                                "    <option name=\"foo\" value=\"newValue\" />\n" +
+                                                                                                                                "  </component>\n" +
+                                                                                                                                "</application>"));
+  }
+
+  public void testLoadFromStreamProvider() throws Exception {
+    SeveralStoragesConfigured component = new SeveralStoragesConfigured();
+
+    MyStreamProvider streamProvider = new MyStreamProvider();
+    THashMap<String, String> map = new THashMap<String, String>();
+    map.put(StoragePathMacros.APP_CONFIG + "/proxy.settings.xml", "<application>\n" +
+                                                                  "  <component name=\"HttpConfigurable\">\n" +
+                                                                  "    <option name=\"foo\" value=\"newValue\" />\n" +
+                                                                  "  </component>\n" +
+                                                                  "</application>");
+    streamProvider.data.put(RoamingType.PER_USER, map);
+
+    componentStore.getStateStorageManager().setStreamProvider(streamProvider);
+    componentStore.initComponent(component, false);
+    assertThat(component.foo, equalTo("newValue"));
   }
 
   private static class MyStreamProvider extends StreamProvider {
@@ -192,7 +219,6 @@ public class ApplicationStoreTest extends LightPlatformLangTestCase {
     @Nullable
     @Override
     public SeveralStoragesConfigured getState() {
-      foo = "newValue";
       return this;
     }
 

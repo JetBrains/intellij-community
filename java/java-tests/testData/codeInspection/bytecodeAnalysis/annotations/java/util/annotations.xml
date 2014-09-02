@@ -61,6 +61,9 @@
   <item name="java.util.AbstractMap V get(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="java.util.AbstractMap V get(java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.util.AbstractMap V put(K, V) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
@@ -68,6 +71,9 @@
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.util.AbstractMap V remove(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.util.AbstractMap V remove(java.lang.Object)">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.util.AbstractMap boolean containsKey(java.lang.Object) 0">
@@ -1101,6 +1107,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;null;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.util.Collections.EmptyMap boolean containsKey(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -1170,6 +1177,9 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.Collections.SingletonMap V get(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.util.Collections.SingletonMap V get(java.lang.Object)">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.util.Collections.SingletonMap boolean containsKey(java.lang.Object) 0">
@@ -1392,6 +1402,9 @@
   <item name="java.util.Date int compareTo(java.util.Date) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.util.Date java.lang.Object clone()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.util.Date long parse(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -1442,11 +1455,21 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.util.HashMap V get(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="java.util.HashMap V get(java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.util.HashMap V put(K, V) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.util.HashMap V put(K, V)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.util.HashMap V remove(java.lang.Object)">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.util.HashMap boolean containsKey(java.lang.Object) 0">
@@ -1476,6 +1499,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.util.HashMap java.util.Iterator&lt;K&gt; newKeyIterator()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -1510,14 +1534,23 @@
   <item name="java.util.Hashtable V get(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.util.Hashtable V get(java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.util.Hashtable V put(K, V) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.Hashtable V put(K, V) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.util.Hashtable V put(K, V)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.util.Hashtable V remove(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.Hashtable V remove(java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.util.Hashtable boolean contains(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -1615,10 +1648,19 @@
   <item name="java.util.IdentityHashMap V get(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="java.util.IdentityHashMap V get(java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.util.IdentityHashMap V put(K, V) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="java.util.IdentityHashMap V put(K, V)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.util.IdentityHashMap V remove(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.util.IdentityHashMap V remove(java.lang.Object)">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.util.IdentityHashMap boolean access$1500(java.util.IdentityHashMap, java.lang.Object, java.lang.Object) 0">
@@ -1676,6 +1718,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.util.IdentityHashMap java.lang.Object maskNull(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -1689,6 +1732,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.util.IdentityHashMap java.lang.Object[] access$100(java.util.IdentityHashMap) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -1709,6 +1753,9 @@
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.util.IdentityHashMap.EntryIterator.Entry Entry(java.util.IdentityHashMap.EntryIterator, int, java.util.IdentityHashMap.1) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.util.IdentityHashMap.EntryIterator.Entry K getKey()">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.util.IdentityHashMap.EntryIterator.Entry boolean equals(java.lang.Object) 0">
@@ -1749,6 +1796,9 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.IdentityHashMap.IdentityHashMapIterator IdentityHashMapIterator(java.util.IdentityHashMap, java.util.IdentityHashMap.1) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.util.IdentityHashMap.KeyIterator K next()">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.util.IdentityHashMap.KeyIterator KeyIterator(java.util.IdentityHashMap, java.util.IdentityHashMap.1) 1">
@@ -1835,6 +1885,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;_,null-&gt;!null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.util.Locale java.lang.String toLowerCase(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -1944,6 +1995,15 @@
   <item name="java.util.TreeMap TreeMap(java.util.SortedMap&lt;K,? extends V&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.util.TreeMap V get(java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.util.TreeMap V put(K, V)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.util.TreeMap V remove(java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.util.TreeMap boolean access$500(java.lang.Object, java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
@@ -1997,11 +2057,17 @@
   <item name="java.util.TreeMap java.util.TreeMap.Entry access$1100(java.util.TreeMap, java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.util.TreeMap java.util.TreeMap.Entry access$1100(java.util.TreeMap, java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.util.TreeMap java.util.TreeMap.Entry access$1300(java.util.TreeMap) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.TreeMap java.util.TreeMap.Entry access$1400(java.util.TreeMap, java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.TreeMap java.util.TreeMap.Entry access$1400(java.util.TreeMap, java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.util.TreeMap java.util.TreeMap.Entry access$300(java.util.TreeMap) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -2016,9 +2082,25 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;_,null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.util.TreeMap java.util.TreeMap.Entry access$800(java.util.TreeMap, java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.util.TreeMap java.util.TreeMap.Entry access$800(java.util.TreeMap, java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.util.TreeMap java.util.TreeMap.Entry&lt;K,V&gt; buildFromSorted(int, int, int, int, java.util.Iterator, java.io.ObjectInputStream, V)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.util.TreeMap java.util.TreeMap.Entry&lt;K,V&gt; getCeilEntry(K)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.util.TreeMap java.util.TreeMap.Entry&lt;K,V&gt; getEntry(java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.util.TreeMap java.util.TreeMap.Entry&lt;K,V&gt; getPrecedingEntry(K)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.util.TreeMap java.util.TreeMap.Entry&lt;K,V&gt; leftOf(java.util.TreeMap.Entry&lt;K,V&gt;) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -2027,6 +2109,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.util.TreeMap java.util.TreeMap.Entry&lt;K,V&gt; parentOf(java.util.TreeMap.Entry&lt;K,V&gt;) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -2035,6 +2118,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.util.TreeMap java.util.TreeMap.Entry&lt;K,V&gt; rightOf(java.util.TreeMap.Entry&lt;K,V&gt;) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -2043,6 +2127,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.util.TreeMap java.util.TreeMap.Entry&lt;K,V&gt; successor(java.util.TreeMap.Entry&lt;K,V&gt;) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -2051,6 +2136,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.util.TreeMap void access$600(java.util.TreeMap, java.util.TreeMap.Entry) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>

@@ -14,8 +14,7 @@ import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
-import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
-import org.jetbrains.plugins.github.util.GithubAuthData;
+import org.jetbrains.plugins.github.api.GithubConnection;
 import org.jetbrains.plugins.github.util.GithubAuthDataHolder;
 import org.jetbrains.plugins.github.util.GithubNotifications;
 import org.jetbrains.plugins.github.util.GithubUtil;
@@ -126,12 +125,12 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
           public String convert(ProgressIndicator indicator) throws IOException {
             return GithubUtil
               .runTaskWithBasicAuthForHost(myProject, GithubAuthDataHolder.createFromSettings(), indicator, getHost(),
-                                           new ThrowableConvertor<GithubAuthData, String, IOException>() {
+                                           new ThrowableConvertor<GithubConnection, String, IOException>() {
                                              @NotNull
                                              @Override
-                                             public String convert(@NotNull GithubAuthData auth) throws IOException {
+                                             public String convert(@NotNull GithubConnection connection) throws IOException {
                                                return GithubApiUtil
-                                                 .getReadOnlyToken(auth, getRepoAuthor(), getRepoName(), "IntelliJ tasks plugin");
+                                                 .getReadOnlyToken(connection, getRepoAuthor(), getRepoName(), "IntelliJ tasks plugin");
                                              }
                                            }
               );

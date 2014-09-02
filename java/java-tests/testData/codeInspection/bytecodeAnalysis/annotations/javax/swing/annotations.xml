@@ -5,8 +5,14 @@
   <item name="javax.swing.AbstractButton boolean isListener(java.lang.Class, java.awt.event.ActionListener) 1">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="javax.swing.AbstractButton java.awt.Insets getMargin()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="javax.swing.AbstractButton java.beans.PropertyChangeListener createActionPropertyChangeListener(javax.swing.Action)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.AbstractButton java.lang.Object[] getSelectedObjects()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="javax.swing.AbstractButton java.lang.String paramString()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -63,6 +69,9 @@
   <item name="javax.swing.JComponent byte getWriteObjCounter(javax.swing.JComponent) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="javax.swing.JComponent java.awt.Container getTopLevelAncestor()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="javax.swing.JComponent java.awt.Dimension getSize(java.awt.Dimension) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
@@ -94,6 +103,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;null;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="javax.swing.JComponent java.awt.Point getToolTipLocation(java.awt.event.MouseEvent) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -102,6 +112,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;null;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="javax.swing.JComponent java.awt.Rectangle getBounds(java.awt.Rectangle) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -114,6 +125,12 @@
   <item name="javax.swing.JComponent java.awt.Rectangle getVisibleRect()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="javax.swing.JComponent java.awt.event.ActionListener getActionForKeyStroke(javax.swing.KeyStroke)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="javax.swing.JComponent java.lang.Object getClientProperty(java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="javax.swing.JComponent java.lang.String getToolTipText(java.awt.event.MouseEvent) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
@@ -122,6 +139,27 @@
   </item>
   <item name="javax.swing.JComponent java.lang.String paramString()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JComponent javax.swing.ActionMap getActionMap()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="javax.swing.JComponent javax.swing.ActionMap getActionMap(boolean)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="javax.swing.JComponent javax.swing.InputMap getInputMap()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="javax.swing.JComponent javax.swing.InputMap getInputMap(int)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="javax.swing.JComponent javax.swing.InputMap getInputMap(int, boolean)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="javax.swing.JComponent javax.swing.JPopupMenu getPopupMenu()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="javax.swing.JComponent javax.swing.JRootPane getRootPane()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="javax.swing.JComponent javax.swing.JToolTip createToolTip()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -178,9 +216,19 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="javax.swing.JComponent.AccessibleJComponent java.lang.String getTitledBorderText()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="javax.swing.JComponent.AccessibleJComponent java.lang.String getToolTipText()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="javax.swing.JComponent.AccessibleJComponent javax.accessibility.AccessibleExtendedComponent getAccessibleExtendedComponent()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JComponent.AccessibleJComponent javax.accessibility.AccessibleKeyBinding getAccessibleKeyBinding()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="javax.swing.JComponent.AccessibleJComponent javax.swing.JComponent access$100(javax.swing.JComponent.AccessibleJComponent) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -244,6 +292,9 @@
   </item>
   <item name="javax.swing.JScrollPane java.awt.Component getCorner(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JScrollPane java.awt.Component getCorner(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="javax.swing.JScrollPane java.awt.Rectangle getViewportBorderBounds()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -343,6 +394,9 @@
   <item name="javax.swing.JTable javax.swing.table.JTableHeader createDefaultTableHeader()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="javax.swing.JTable javax.swing.table.TableCellEditor getCellEditor(int, int)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="javax.swing.JTable javax.swing.table.TableCellEditor getDefaultEditor(java.lang.Class) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
@@ -350,6 +404,10 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="javax.swing.JTable javax.swing.table.TableCellRenderer getCellRenderer(int, int)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="javax.swing.JTable javax.swing.table.TableCellRenderer getDefaultRenderer(java.lang.Class) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -358,6 +416,10 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="javax.swing.JTable javax.swing.table.TableColumn getResizingColumn()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="javax.swing.JTable javax.swing.table.TableColumnModel createDefaultColumnModel()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -521,10 +583,19 @@
   <item name="javax.swing.SwingUtilities java.awt.Component findFocusOwner(java.awt.Component) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="javax.swing.SwingUtilities java.awt.Component findFocusOwner(java.awt.Component)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="javax.swing.SwingUtilities java.awt.Component getDeepestComponentAt(java.awt.Component, int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="javax.swing.SwingUtilities java.awt.Component getDeepestComponentAt(java.awt.Component, int, int)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="javax.swing.SwingUtilities java.awt.Component getRoot(java.awt.Component) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="javax.swing.SwingUtilities java.awt.Component getRoot(java.awt.Component)">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="javax.swing.SwingUtilities java.awt.Container getAncestorNamed(java.lang.String, java.awt.Component) 0">
@@ -537,6 +608,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;_,null-&gt;null;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="javax.swing.SwingUtilities java.awt.Container getAncestorOfClass(java.lang.Class, java.awt.Component) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -548,6 +620,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;_,null-&gt;null;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="javax.swing.SwingUtilities java.awt.Point convertPoint(java.awt.Component, int, int, java.awt.Component)">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -575,6 +648,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="javax.swing.SwingUtilities java.awt.Rectangle computeIntersection(int, int, int, int, java.awt.Rectangle) 4">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -613,8 +687,14 @@
   <item name="javax.swing.SwingUtilities java.awt.Window getWindowAncestor(java.awt.Component) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="javax.swing.SwingUtilities java.awt.Window getWindowAncestor(java.awt.Component)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="javax.swing.SwingUtilities java.awt.Window windowForComponent(java.awt.Component) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities java.awt.Window windowForComponent(java.awt.Component)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="javax.swing.SwingUtilities java.awt.event.MouseEvent convertMouseEvent(java.awt.Component, java.awt.event.MouseEvent, java.awt.Component) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -686,6 +766,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="javax.swing.SwingUtilities javax.accessibility.Accessible getAccessibleChild(java.awt.Component, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -696,11 +777,17 @@
   <item name="javax.swing.SwingUtilities javax.swing.ActionMap getUIActionMap(javax.swing.JComponent) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="javax.swing.SwingUtilities javax.swing.ActionMap getUIActionMap(javax.swing.JComponent)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="javax.swing.SwingUtilities javax.swing.CellRendererPane getCellRendererPane(java.awt.Component, java.awt.Container) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="javax.swing.SwingUtilities javax.swing.InputMap getUIInputMap(javax.swing.JComponent, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.SwingUtilities javax.swing.InputMap getUIInputMap(javax.swing.JComponent, int)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="javax.swing.SwingUtilities javax.swing.JRootPane getRootPane(java.awt.Component) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
@@ -709,6 +796,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="javax.swing.SwingUtilities void convertPointFromScreen(java.awt.Point, java.awt.Component) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
