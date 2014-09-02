@@ -29,7 +29,7 @@ public class PyReferringObjectsValue extends PyDebugValue {
   public PyReferringObjectsValue(@NotNull String name,
                                  String type,
                                  String value,
-                                 boolean container, boolean errorOnEval, PyFrameAccessor frameAccessor) {
+                                 boolean container, boolean errorOnEval, @NotNull PyFrameAccessor frameAccessor) {
     super(name, type, value, container, errorOnEval, frameAccessor);
     myReferrersLoader = frameAccessor.getReferrersLoader();
   }
