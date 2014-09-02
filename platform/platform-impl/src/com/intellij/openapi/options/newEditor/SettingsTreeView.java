@@ -76,6 +76,8 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
   private JLabel mySeparator;
   private final MyRenderer myRenderer = new MyRenderer();
   private final IdentityHashMap<Configurable, MyNode> myConfigurableToNodeMap = new IdentityHashMap<Configurable, MyNode>();
+  private final IdentityHashMap<UnnamedConfigurable, ConfigurableWrapper> myConfigurableToWrapperMap
+    = new IdentityHashMap<UnnamedConfigurable, ConfigurableWrapper>();
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("SettingsTreeView", 150, false, this, this, this)
     .setRestartTimerOnAdd(true);
 
@@ -139,7 +141,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
   @NotNull
   String[] getPathNames(Configurable configurable) {
     ArrayDeque<String> path = new ArrayDeque<String>();
-    MyNode node = myConfigurableToNodeMap.get(configurable);
+    MyNode node = findNode(configurable);
     while (node != null) {
       path.push(node.myDisplayName);
       SimpleNode parent = node.getParent();
@@ -157,8 +159,9 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
   }
 
   @Nullable
-  SimpleNode findNode(Configurable configurable) {
-    return myConfigurableToNodeMap.get(configurable);
+  MyNode findNode(Configurable configurable) {
+    ConfigurableWrapper wrapper = myConfigurableToWrapperMap.get(configurable);
+    return myConfigurableToNodeMap.get(wrapper != null ? wrapper : configurable);
   }
 
   @Nullable
@@ -180,6 +183,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
       if (configurable instanceof ConfigurableWrapper) {
         ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
         configurable = wrapper.getConfigurable();
+        myConfigurableToWrapperMap.put(configurable, wrapper);
       }
       if (type.isInstance(configurable)) {
         return type.cast(configurable);
@@ -194,7 +198,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
       ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
       return wrapper.getExtensionPoint().getProject();
     }
-    return findConfigurableProject(myConfigurableToNodeMap.get(configurable));
+    return findConfigurableProject(findNode(configurable));
   }
 
   @Nullable
@@ -319,7 +323,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
               public void run() {
                 if (configurable != myQueuedConfigurable) return;
 
-                MyNode editorNode = myConfigurableToNodeMap.get(configurable);
+                MyNode editorNode = findNode(configurable);
                 FilteringTreeStructure.FilteringNode editorUiNode = myBuilder.getVisibleNodeFor(editorNode);
                 if (editorUiNode == null) return;
 
@@ -353,7 +357,8 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
   }
 
   private void fireSelected(Configurable configurable, ActionCallback callback) {
-    myFilter.myContext.fireSelected(configurable, this).doWhenProcessed(callback.createSetDoneRunnable());
+    ConfigurableWrapper wrapper = myConfigurableToWrapperMap.get(configurable);
+    myFilter.myContext.fireSelected(wrapper != null ? wrapper : configurable, this).doWhenProcessed(callback.createSetDoneRunnable());
   }
 
   @Override
