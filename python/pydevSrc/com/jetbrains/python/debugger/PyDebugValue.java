@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.xdebugger.frame.XNamedValue;
 import com.intellij.xdebugger.frame.*;
+import com.jetbrains.python.debugger.pydev.PyVariableLocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,14 +22,13 @@ public class PyDebugValue extends XNamedValue {
   private final String myValue;
   private final boolean myContainer;
   private final PyDebugValue myParent;
+  private String myId = null;
 
-  private final PyFrameAccessor myFrameAccessor;
+  protected final PyFrameAccessor myFrameAccessor;
+
+  private PyVariableLocator myVariableLocator;
 
   private final boolean myErrorOnEval;
-
-  public PyDebugValue(@NotNull final String name, final String type, final String value, final boolean container, boolean errorOnEval) {
-    this(name, type, value, container, errorOnEval, null, null);
-  }
 
   public PyDebugValue(@NotNull final String name, final String type, final String value, final boolean container,
                       boolean errorOnEval, final PyFrameAccessor frameAccessor) {
@@ -178,5 +178,36 @@ public class PyDebugValue extends XNamedValue {
   
   public PyDebugValue setName(String newName) {
     return new PyDebugValue(newName, myType, myValue, myContainer, myErrorOnEval, myParent, myFrameAccessor);
+  }
+
+  @Nullable
+  @Override
+  public XReferrersProvider getReferrersProvider() {
+    return new XReferrersProvider() {
+      @Override
+      public XValue getReferringObjectsValue() {
+        return new PyReferringObjectsValue(PyDebugValue.this);
+      }
+    };
+  }
+
+  public PyFrameAccessor getFrameAccessor() {
+    return myFrameAccessor;
+  }
+
+  public PyVariableLocator getVariableLocator() {
+    return myVariableLocator;
+  }
+
+  public void setVariableLocator(PyVariableLocator variableLocator) {
+    myVariableLocator = variableLocator;
+  }
+
+  public String getId() {
+    return myId;
+  }
+
+  public void setId(String id) {
+    myId = id;
   }
 }

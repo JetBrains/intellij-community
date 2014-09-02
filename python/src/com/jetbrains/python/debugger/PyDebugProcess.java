@@ -17,7 +17,6 @@ package com.jetbrains.python.debugger;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.intellij.execution.console.DuplexConsoleView;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
@@ -489,7 +488,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     return myDebugger.evaluate(frame.getThreadId(), frame.getFrameId(), expression, execute, trimResult);
   }
 
-  public void consoleExec(String command, ProcessDebugger.DebugCallback<String> callback) {
+  public void consoleExec(String command, PyDebugCallback<String> callback) {
     dropFrameCaches();
     try {
       final PyStackFrame frame = currentFrame();
@@ -536,6 +535,17 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   public XValueChildrenList loadVariable(final PyDebugValue var) throws PyDebuggerException {
     final PyStackFrame frame = currentFrame();
     return myDebugger.loadVariable(frame.getThreadId(), frame.getFrameId(), var);
+  }
+
+  @Override
+  public void loadReferrers(PyReferringObjectsValue var, PyDebugCallback<XValueChildrenList> callback) {
+    try {
+      final PyStackFrame frame = currentFrame();
+      myDebugger.loadReferrers(frame.getThreadId(), frame.getFrameId(), var, callback);
+    }
+    catch (PyDebuggerException e) {
+      callback.error(e);
+    }
   }
 
   @Override

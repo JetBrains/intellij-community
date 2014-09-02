@@ -122,6 +122,32 @@ public class ProtocolParser {
   }
 
   @NotNull
+  public static List<PyDebugValue> parseReferrers(final String text, final PyFrameAccessor frameAccessor) throws PyDebuggerException {
+    final List<PyDebugValue> values = new LinkedList<PyDebugValue>();
+
+    final XppReader reader = openReader(text, false);
+
+    while (reader.hasMoreChildren()) {
+      reader.moveDown();
+      if (reader.getNodeName().equals("var")) {
+        PyDebugValue value = parseValue(reader, frameAccessor);
+        value.setId(readString(reader, "id", null));
+        values.add(value);
+      }
+      else if (reader.getNodeName().equals("for")) {
+        //TODO
+      }
+      else {
+        throw new PyDebuggerException("Expected <var> or <for>, found " + reader.getNodeName());
+      }
+      reader.moveUp();
+    }
+
+    return values;
+  }
+
+
+  @NotNull
   public static List<PyDebugValue> parseValues(final String text, final PyFrameAccessor frameAccessor) throws PyDebuggerException {
     final List<PyDebugValue> values = new LinkedList<PyDebugValue>();
 

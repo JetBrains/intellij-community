@@ -31,12 +31,10 @@ import com.intellij.util.Function;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.console.parsing.PythonConsoleData;
 import com.jetbrains.python.console.pydev.*;
-import com.jetbrains.python.debugger.PyDebugValue;
-import com.jetbrains.python.debugger.PyDebuggerException;
-import com.jetbrains.python.debugger.PyFrameAccessor;
-import com.jetbrains.python.debugger.PydevXmlUtils;
+import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.pydev.GetVariableCommand;
 import com.jetbrains.python.debugger.pydev.ProtocolParser;
+import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 import org.apache.xmlrpc.WebServer;
 import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.XmlRpcHandler;
@@ -528,6 +526,10 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     }
   }
 
+  @Override
+  public void loadReferrers(PyReferringObjectsValue value, PyDebugCallback<XValueChildrenList> callback) {
+
+  }
 
   /**
    * Request that pydevconsole connect (with pydevd) to the specified port
