@@ -42,6 +42,6 @@ public class VcsError {
   }
 
   public static VcsError createEmptyTargetError(@NotNull String name) {
-    return new VcsError("Please, specify remote push path for repository " + name + ".");
+    return new VcsError("Please, specify not empty remote push path for repository " + name + ".");
   }
 }
