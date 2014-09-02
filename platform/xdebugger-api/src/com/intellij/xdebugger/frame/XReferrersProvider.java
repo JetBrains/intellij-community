@@ -16,6 +16,8 @@
 package com.intellij.xdebugger.frame;
 
 /**
+ * Provides an XValue that returns instead of children a set of objects that refer to it.
+ *
  * @author traff
  */
 public abstract class XReferrersProvider {
