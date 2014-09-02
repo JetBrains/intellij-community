@@ -67,9 +67,9 @@ public class StorageData {
       if (element.getAttributes().size() > 1 || !element.getChildren().isEmpty()) {
         assert element.getAttributeValue(NAME) != null : "No name attribute for component: " + name + " in " + this;
 
-        Element existingElement = myComponentStates.get(name);
-        if (existingElement != null) {
-          element = mergeElements(name, element, existingElement);
+        Element serverElement = myComponentStates.get(name);
+        if (serverElement != null) {
+          element = mergeElements(name, element, serverElement);
         }
 
         myComponentStates.put(name, element);
@@ -77,14 +77,15 @@ public class StorageData {
     }
   }
 
-  private static Element mergeElements(final String name, final Element element1, final Element element2) {
+  @NotNull
+  private static Element mergeElements(@NotNull String name, @NotNull Element localElement, @NotNull Element serverElement) {
     ExtensionPoint<XmlConfigurationMerger> point = Extensions.getRootArea().getExtensionPoint("com.intellij.componentConfigurationMerger");
     for (XmlConfigurationMerger merger : point.getExtensions()) {
       if (merger.getComponentName().equals(name)) {
-        return merger.merge(element1, element2);
+        return merger.merge(serverElement, localElement);
       }
     }
-    return element1;
+    return localElement;
   }
 
   @Nullable
