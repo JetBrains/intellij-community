@@ -109,6 +109,28 @@ public class AssignmentExprent extends Exprent {
     VarType leftType = left.getExprType();
     VarType rightType = right.getExprType();
 
+    boolean fieldInStatInit = false;
+    if (left.type == Exprent.EXPRENT_FIELD) { // first assignment to a final field. Field name without "this" in front of it
+      FieldExprent field = (FieldExprent)left;
+      ClassNode node = ((ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE));
+      if (node != null) {
+        StructClass cl = node.classStruct;
+        StructField fd = cl.getField(field.getName(), field.getDescriptor().descriptorString);
+        if (fd != null && field.isStatic() && fd.hasModifier(CodeConstants.ACC_FINAL)) {
+          fieldInStatInit = true;
+        }
+      }
+    }
+
+    StringBuilder buffer = new StringBuilder();
+
+    if (fieldInStatInit) {
+      buffer.append(((FieldExprent)left).getName());
+    }
+    else {
+      buffer.append(left.toJava(indent));
+    }
+
     String res = right.toJava(indent);
 
     if (condtype == CONDITION_NONE &&
@@ -119,31 +141,6 @@ public class AssignmentExprent extends Exprent {
       }
 
       res = "(" + ExprProcessor.getCastTypeName(leftType) + ")" + res;
-    }
-
-    StringBuilder buffer = new StringBuilder();
-
-    boolean finstat_init = false;
-    if (left.type == Exprent.EXPRENT_FIELD) { // first assignment to a final field. Field name without "this" in front of it
-      FieldExprent field = (FieldExprent)left;
-      if (field.isStatic()) {
-        ClassNode node = ((ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE));
-        if (node != null) {
-          StructClass cl = node.classStruct;
-          StructField fd = cl.getField(field.getName(), field.getDescriptor().descriptorString);
-
-          if (fd != null && (fd.access_flags & CodeConstants.ACC_FINAL) != 0) {
-            finstat_init = true;
-          }
-        }
-      }
-    }
-
-    if (finstat_init) {
-      buffer.append(((FieldExprent)left).getName());
-    }
-    else {
-      buffer.append(left.toJava(indent));
     }
 
     buffer.append(condtype == CONDITION_NONE ? " = " : funceq[condtype]).append(res);

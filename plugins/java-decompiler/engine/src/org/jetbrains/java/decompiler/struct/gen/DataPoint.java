@@ -65,7 +65,7 @@ public class DataPoint {
     MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
 
     int k = 0;
-    if ((mt.getAccessFlags() & CodeConstants.ACC_STATIC) == 0) {
+    if (!mt.hasModifier(CodeConstants.ACC_STATIC)) {
       point.setVariable(k++, new VarType(CodeConstants.TYPE_OBJECT, 0, null));
     }
 

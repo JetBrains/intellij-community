@@ -18,6 +18,7 @@ package org.jetbrains.java.decompiler.struct;
 import org.jetbrains.java.decompiler.main.extern.IDecompilatSaver;
 import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
 import org.jetbrains.java.decompiler.struct.lazy.LazyLoader.Link;
+import org.jetbrains.java.decompiler.util.DataInputFullStream;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -98,7 +99,15 @@ public class ContextUnit {
     List<StructClass> lstClasses = new ArrayList<StructClass>();
     for (StructClass cl : classes) {
       String oldname = cl.qualifiedName;
-      StructClass newcl = new StructClass(loader.getClassStream(oldname), cl.isOwn(), loader);
+
+      StructClass newcl;
+      DataInputFullStream in = loader.getClassStream(oldname);
+      try {
+        newcl = new StructClass(in, cl.isOwn(), loader);
+      }
+      finally {
+        in.close();
+      }
 
       lstClasses.add(newcl);
 

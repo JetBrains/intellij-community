@@ -33,10 +33,7 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 import java.util.Map.Entry;
 
 public class ClassReference14Processor {
@@ -105,7 +102,7 @@ public class ClassReference14Processor {
 
     // find the synthetic method Class class$(String) if present
     HashMap<ClassWrapper, MethodWrapper> mapClassMeths = new HashMap<ClassWrapper, MethodWrapper>();
-    findClassMethod(node, mapClassMeths);
+    mapClassMethods(node, mapClassMeths);
 
     if (mapClassMeths.isEmpty()) {
       return;
@@ -176,37 +173,33 @@ public class ClassReference14Processor {
     }
   }
 
-  private void findClassMethod(ClassNode node, HashMap<ClassWrapper, MethodWrapper> mapClassMeths) {
-
-    boolean nosynthflag = DecompilerContext.getOption(IFernflowerPreferences.SYNTHETIC_NOT_SET);
+  private void mapClassMethods(ClassNode node, Map<ClassWrapper, MethodWrapper> map) {
+    boolean noSynthFlag = DecompilerContext.getOption(IFernflowerPreferences.SYNTHETIC_NOT_SET);
 
     ClassWrapper wrapper = node.wrapper;
 
-    for (MethodWrapper meth : wrapper.getMethods()) {
-      StructMethod mt = meth.methodStruct;
+    for (MethodWrapper method : wrapper.getMethods()) {
+      StructMethod mt = method.methodStruct;
 
-      if (((mt.getAccessFlags() & CodeConstants.ACC_SYNTHETIC) != 0 || mt.getAttributes().containsKey("Synthetic")
-           || nosynthflag) &&
+      if ((noSynthFlag || mt.isSynthetic()) &&
           mt.getDescriptor().equals("(Ljava/lang/String;)Ljava/lang/Class;") &&
-          (mt.getAccessFlags() & CodeConstants.ACC_STATIC) != 0) {
+          mt.hasModifier(CodeConstants.ACC_STATIC)) {
 
-        RootStatement root = meth.root;
-        if (root != null) {
-          if (root.getFirst().type == Statement.TYPE_TRYCATCH) {
-            CatchStatement cst = (CatchStatement)root.getFirst();
-            if (cst.getStats().size() == 2 && cst.getFirst().type == Statement.TYPE_BASICBLOCK &&
-                cst.getStats().get(1).type == Statement.TYPE_BASICBLOCK &&
-                cst.getVars().get(0).getVartype().equals(new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/ClassNotFoundException"))) {
+        RootStatement root = method.root;
+        if (root != null && root.getFirst().type == Statement.TYPE_TRYCATCH) {
+          CatchStatement cst = (CatchStatement)root.getFirst();
+          if (cst.getStats().size() == 2 && cst.getFirst().type == Statement.TYPE_BASICBLOCK &&
+              cst.getStats().get(1).type == Statement.TYPE_BASICBLOCK &&
+              cst.getVars().get(0).getVartype().equals(new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/ClassNotFoundException"))) {
 
-              BasicBlockStatement body = (BasicBlockStatement)cst.getFirst();
-              BasicBlockStatement handler = (BasicBlockStatement)cst.getStats().get(1);
+            BasicBlockStatement body = (BasicBlockStatement)cst.getFirst();
+            BasicBlockStatement handler = (BasicBlockStatement)cst.getStats().get(1);
 
-              if (body.getExprents().size() == 1 && handler.getExprents().size() == 1) {
-                if (bodyexprent.equals(body.getExprents().get(0)) &&
-                    handlerexprent.equals(handler.getExprents().get(0))) {
-                  mapClassMeths.put(wrapper, meth);
-                  break;
-                }
+            if (body.getExprents().size() == 1 && handler.getExprents().size() == 1) {
+              if (bodyexprent.equals(body.getExprents().get(0)) &&
+                  handlerexprent.equals(handler.getExprents().get(0))) {
+                map.put(wrapper, method);
+                break;
               }
             }
           }
@@ -216,7 +209,7 @@ public class ClassReference14Processor {
 
     // iterate nested classes
     for (ClassNode nd : node.nested) {
-      findClassMethod(nd, mapClassMeths);
+      mapClassMethods(nd, map);
     }
   }
 
@@ -269,9 +262,8 @@ public class ClassReference14Processor {
                 StructField fd =
                   wrapper.getClassStruct().getField(field.getName(), field.getDescriptor().descriptorString);  // FIXME: can be null! why??
 
-                if (fd != null && (fd.access_flags & CodeConstants.ACC_STATIC) != 0 &&
-                    ((fd.access_flags & CodeConstants.ACC_SYNTHETIC) != 0 || fd.getAttributes().containsKey("Synthetic")
-                     || DecompilerContext.getOption(IFernflowerPreferences.SYNTHETIC_NOT_SET))) {
+                if (fd != null && fd.hasModifier(CodeConstants.ACC_STATIC) &&
+                    (fd.isSynthetic() || DecompilerContext.getOption(IFernflowerPreferences.SYNTHETIC_NOT_SET))) {
 
                   if (fexpr.getLstOperands().get(1).type == Exprent.EXPRENT_ASSIGNMENT && fexpr.getLstOperands().get(2).equals(field)) {
                     AssignmentExprent asexpr = (AssignmentExprent)fexpr.getLstOperands().get(1);

@@ -33,9 +33,11 @@ public class SingleClassesTest {
 
   @Before
   public void setUp() throws IOException {
+    //noinspection SSBasedInspection
     tempDir = File.createTempFile("decompiler_test_", "_dir");
     assertTrue(tempDir.delete());
     assertTrue(tempDir.mkdirs());
+
     decompiler = new ConsoleDecompiler(new HashMap<String, Object>() {{
       put(IFernflowerPreferences.LOG_LEVEL, "warn");
       put(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES, "1");

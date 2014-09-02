@@ -330,20 +330,19 @@ public class InvocationExprent extends Exprent {
     List<VarVersionPaar> sigFields = null;
     boolean isEnum = false;
     if (functype == TYP_INIT) {
-      ClassNode newnode = DecompilerContext.getClassProcessor().getMapRootClasses().get(classname);
+      ClassNode newNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(classname);
 
-      if (newnode != null) {  // own class
-        if (newnode.wrapper != null) {
-          sigFields = newnode.wrapper.getMethodWrapper("<init>", stringDescriptor).signatureFields;
+      if (newNode != null) {  // own class
+        if (newNode.wrapper != null) {
+          sigFields = newNode.wrapper.getMethodWrapper("<init>", stringDescriptor).signatureFields;
         }
         else {
-          if (newnode.type == ClassNode.CLASS_MEMBER && (newnode.access & CodeConstants.ACC_STATIC) == 0) { // non-static member class
+          if (newNode.type == ClassNode.CLASS_MEMBER && (newNode.access & CodeConstants.ACC_STATIC) == 0) { // non-static member class
             sigFields = new ArrayList<VarVersionPaar>(Collections.nCopies(lstParameters.size(), (VarVersionPaar)null));
             sigFields.set(0, new VarVersionPaar(-1, 0));
           }
         }
-        isEnum = (newnode.classStruct.access_flags & CodeConstants.ACC_ENUM) != 0 &&
-                 DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
+        isEnum = newNode.classStruct.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
       }
     }
 

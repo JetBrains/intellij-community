@@ -15,96 +15,44 @@
  */
 package org.jetbrains.java.decompiler.struct;
 
-import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
-import org.jetbrains.java.decompiler.util.VBStyleCollection;
+import org.jetbrains.java.decompiler.util.DataInputFullStream;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
 
 /*
-         field_info {
-    	u2 access_flags;
-    	u2 name_index;
-    	u2 descriptor_index;
-    	u2 attributes_count;
-    	attribute_info attributes[attributes_count];
-    }
+  field_info {
+    u2 access_flags;
+    u2 name_index;
+    u2 descriptor_index;
+    u2 attributes_count;
+    attribute_info attributes[attributes_count];
+   }
 */
+public class StructField extends StructMember {
 
-public class StructField {
+  private final String name;
+  private final String descriptor;
 
-  // *****************************************************************************
-  // public fields
-  // *****************************************************************************
 
-  public int access_flags;
-  public int name_index;
-  public int descriptor_index;
+  public StructField(DataInputFullStream in, StructClass clStruct) throws IOException {
+    accessFlags = in.readUnsignedShort();
+    int nameIndex = in.readUnsignedShort();
+    int descriptorIndex = in.readUnsignedShort();
 
-  private String name;
-  private String descriptor;
-
-  // *****************************************************************************
-  // private fields
-  // *****************************************************************************
-
-  private VBStyleCollection<StructGeneralAttribute, String> attributes;
-
-  // *****************************************************************************
-  // constructors
-  // *****************************************************************************
-
-  public StructField() {
-  }
-
-  // *****************************************************************************
-  // public methods
-  // *****************************************************************************
-
-  public void writeToStream(DataOutputStream out) throws IOException {
-
-    out.writeShort(access_flags);
-    out.writeShort(name_index);
-    out.writeShort(descriptor_index);
-
-    out.writeShort(attributes.size());
-    for (StructGeneralAttribute attr : attributes) {
-      attr.writeToStream(out);
-    }
-  }
-
-  public void initStrings(ConstantPool pool, int class_index) {
-    String[] values = pool.getClassElement(ConstantPool.FIELD, class_index, name_index, descriptor_index);
+    ConstantPool pool = clStruct.getPool();
+    String[] values = pool.getClassElement(ConstantPool.FIELD, clStruct.qualifiedName, nameIndex, descriptorIndex);
     name = values[0];
     descriptor = values[1];
-  }
 
-  // *****************************************************************************
-  // getter and setter methods
-  // *****************************************************************************
-
-  public VBStyleCollection<StructGeneralAttribute, String> getAttributes() {
-    return attributes;
-  }
-
-  public void setAttributes(VBStyleCollection<StructGeneralAttribute, String> attributes) {
-    this.attributes = attributes;
-  }
-
-  public String getDescriptor() {
-    return descriptor;
-  }
-
-  public void setDescriptor(String descriptor) {
-    this.descriptor = descriptor;
+    attributes = readAttributes(in, pool);
   }
 
   public String getName() {
     return name;
   }
 
-  public void setName(String name) {
-    this.name = name;
+  public String getDescriptor() {
+    return descriptor;
   }
 }

@@ -69,7 +69,7 @@ public class AssertProcessor {
 
     ClassWrapper wrapper = node.wrapper;
 
-    boolean nosynthflag = DecompilerContext.getOption(IFernflowerPreferences.SYNTHETIC_NOT_SET);
+    boolean noSynthFlag = DecompilerContext.getOption(IFernflowerPreferences.SYNTHETIC_NOT_SET);
 
     for (StructField fd : wrapper.getClassStruct().getFields()) {
 
@@ -78,12 +78,8 @@ public class AssertProcessor {
       // initializer exists
       if (wrapper.getStaticFieldInitializers().containsKey(keyField)) {
 
-        int flags = fd.access_flags;
-        boolean isSynthetic = (flags & CodeConstants.ACC_SYNTHETIC) != 0 || fd.getAttributes().containsKey("Synthetic");
-
         // access flags set
-        if ((flags & CodeConstants.ACC_STATIC) != 0 && (flags & CodeConstants.ACC_FINAL) != 0 &&
-            (isSynthetic || nosynthflag)) {
+        if (fd.hasModifier(CodeConstants.ACC_STATIC) && fd.hasModifier(CodeConstants.ACC_FINAL) && (noSynthFlag || fd.isSynthetic())) {
 
           // field type boolean
           FieldDescriptor fdescr = FieldDescriptor.parseDescriptor(fd.getDescriptor());
@@ -100,8 +96,7 @@ public class AssertProcessor {
 
                 if (invexpr.getInstance() != null &&
                     invexpr.getInstance().type == Exprent.EXPRENT_CONST &&
-                    "desiredAssertionStatus".equals(invexpr.getName())
-                    &&
+                    "desiredAssertionStatus".equals(invexpr.getName()) &&
                     "java/lang/Class".equals(invexpr.getClassname()) &&
                     invexpr.getLstParameters().isEmpty()) {
 

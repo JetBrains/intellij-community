@@ -82,7 +82,7 @@ public class IdeaNotNullHelper {
           if (first_param.type == Exprent.EXPRENT_VAR) {
             VarExprent var = (VarExprent)first_param;
 
-            boolean thisvar = (mt.getAccessFlags() & CodeConstants.ACC_STATIC) == 0;
+            boolean thisvar = !mt.hasModifier(CodeConstants.ACC_STATIC);
 
             MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
             VBStyleCollection<StructGeneralAttribute, String> attributes = mt.getAttributes();
