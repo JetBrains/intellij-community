@@ -290,9 +290,16 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     myFilters = new CompositeFilter(project);
     if (usePredefinedMessageFilter) {
       for (ConsoleFilterProvider eachProvider : Extensions.getExtensions(ConsoleFilterProvider.FILTER_PROVIDERS)) {
-        Filter[] filters = eachProvider instanceof ConsoleFilterProviderEx
-                           ? ((ConsoleFilterProviderEx)eachProvider).getDefaultFilters(project, searchScope)
-                           : eachProvider.getDefaultFilters(project);
+        Filter[] filters;
+        if (eachProvider instanceof ConsoleDependentFilterProvider) {
+          filters = ((ConsoleDependentFilterProvider)eachProvider).getDefaultFilters(this, project, searchScope);
+        }
+        else if (eachProvider instanceof ConsoleFilterProviderEx) {
+          filters = ((ConsoleFilterProviderEx)eachProvider).getDefaultFilters(project, searchScope);
+        }
+        else {
+          filters = eachProvider.getDefaultFilters(project);
+        }
         for (Filter filter : filters) {
           myFilters.addFilter(filter);
         }
