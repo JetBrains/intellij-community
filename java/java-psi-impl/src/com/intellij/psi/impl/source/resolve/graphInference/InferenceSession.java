@@ -234,7 +234,7 @@ public class InferenceSession {
           !MethodCandidateInfo.ourOverloadGuard.currentStack().contains(PsiUtil.skipParenthesizedExprUp(parent.getParent()))) {
         final Set<ConstraintFormula> additionalConstraints = new LinkedHashSet<ConstraintFormula>();
         if (parameters.length > 0) {
-          collectAdditionalConstraints(parameters, args, properties.getMethod(), PsiSubstitutor.EMPTY, additionalConstraints, properties.isVarargs(), true);
+          collectAdditionalConstraints(parameters, args, properties.getMethod(), PsiSubstitutor.EMPTY, additionalConstraints, properties.isVarargs());
         }
 
         if (!additionalConstraints.isEmpty() && !proceedWithAdditionalConstraints(additionalConstraints)) {
@@ -264,23 +264,24 @@ public class InferenceSession {
                                             PsiMethod parentMethod,
                                             PsiSubstitutor siteSubstitutor,
                                             Set<ConstraintFormula> additionalConstraints,
-                                            boolean varargs, boolean toplevel) {
+                                            boolean varargs) {
     for (int i = 0; i < args.length; i++) {
-      if (args[i] != null) {
-        final InferenceSession nestedCallSession = findNestedCallSession(args[i]);
+      final PsiExpression arg = PsiUtil.skipParenthesizedExprDown(args[i]);
+      if (arg != null) {
+        final InferenceSession nestedCallSession = findNestedCallSession(arg);
         final PsiType parameterType =
           nestedCallSession.substituteWithInferenceVariables(getParameterType(parameters, i, siteSubstitutor, varargs));
-        if (!isPertinentToApplicability(args[i], parentMethod)) {
-          additionalConstraints.add(new ExpressionCompatibilityConstraint(args[i], parameterType));
+        if (!isPertinentToApplicability(arg, parentMethod)) {
+          additionalConstraints.add(new ExpressionCompatibilityConstraint(arg, parameterType));
         }
-        additionalConstraints.add(new CheckedExceptionCompatibilityConstraint(args[i], parameterType));
-        if (args[i] instanceof PsiCallExpression && PsiPolyExpressionUtil.isPolyExpression(args[i])) {
+        additionalConstraints.add(new CheckedExceptionCompatibilityConstraint(arg, parameterType));
+        if (arg instanceof PsiCallExpression && PsiPolyExpressionUtil.isPolyExpression(arg)) {
           //If the expression is a poly class instance creation expression (15.9) or a poly method invocation expression (15.12), 
           //the set contains all constraint formulas that would appear in the set C when determining the poly expression's invocation type.
-          final PsiCallExpression callExpression = (PsiCallExpression)args[i];
+          final PsiCallExpression callExpression = (PsiCallExpression)arg;
           collectAdditionalConstraints(additionalConstraints, callExpression);
-        } else if (args[i] instanceof PsiLambdaExpression && toplevel) {
-          collectLambdaReturnExpression(additionalConstraints, (PsiLambdaExpression)args[i], parameterType);
+        } else if (arg instanceof PsiLambdaExpression) {
+          collectLambdaReturnExpression(additionalConstraints, (PsiLambdaExpression)arg, parameterType);
         }
       }
     }
@@ -338,7 +339,7 @@ public class InferenceSession {
         final PsiParameter[] newParams = method.getParameterList().getParameters();
         if (newParams.length > 0) {
           collectAdditionalConstraints(newParams, newArgs, method, result != null ? ((MethodCandidateInfo)result).getSiteSubstitutor() : properties.getSubstitutor(),
-                                       additionalConstraints, result != null ?  ((MethodCandidateInfo)result).isVarargs() : properties.isVarargs(), false);
+                                       additionalConstraints, result != null ?  ((MethodCandidateInfo)result).isVarargs() : properties.isVarargs());
         }
       }
     }

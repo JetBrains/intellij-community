@@ -181,7 +181,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     HashSet<EditorsSplitters> all = new LinkedHashSet<EditorsSplitters>();
     if (PreviewPanel.isAvailable()) {
       initUI();
-      all.add(myPreviewPanel.getWindow().getOwner());
+      if (!myProject.isDisposed()) {
+        all.add(myPreviewPanel.getWindow().getOwner());
+      }
     }
     all.add(getMainSplitters());
     Set<DockContainer> dockContainers = myDockManager.getContainers();

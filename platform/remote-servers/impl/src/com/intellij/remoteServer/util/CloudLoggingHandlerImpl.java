@@ -15,11 +15,14 @@
  */
 package com.intellij.remoteServer.util;
 
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.remoteServer.agent.util.CloudAgentLoggingHandler;
 import com.intellij.remoteServer.agent.util.log.LogListener;
 import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
 import com.intellij.remoteServer.runtime.log.LoggingHandler;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.OutputStream;
 import java.util.HashMap;
 
 /**
@@ -59,5 +62,41 @@ public class CloudLoggingHandlerImpl implements CloudAgentLoggingHandler {
       myPipeName2LogListener.put(pipeName, logListener);
     }
     return logListener;
+  }
+
+  @Override
+  public LogListener createConsole(String pipeName, final OutputStream consoleInput) {
+    final LoggingHandler loggingHandler = myLogManager.addAdditionalLog(pipeName);
+    loggingHandler.attachToProcess(new ProcessHandler() {
+
+      @Override
+      protected void destroyProcessImpl() {
+
+      }
+
+      @Override
+      protected void detachProcessImpl() {
+
+      }
+
+      @Override
+      public boolean detachIsDefault() {
+        return false;
+      }
+
+      @Nullable
+      @Override
+      public OutputStream getProcessInput() {
+        return consoleInput;
+      }
+    });
+
+    return new LogListener() {
+
+      @Override
+      public void lineLogged(String line) {
+        loggingHandler.print(line);
+      }
+    };
   }
 }

@@ -4,6 +4,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.remoteServer.agent.util.CloudAgentLoggingHandler;
 import com.intellij.remoteServer.agent.util.log.LogListener;
 
+import java.io.OutputStream;
+
 /**
  * @author michael.golubev
  */
@@ -18,6 +20,11 @@ public class CloudSilentLoggingHandlerImpl implements CloudAgentLoggingHandler {
 
   @Override
   public LogListener getOrCreateLogListener(String pipeName) {
+    return LogListener.NULL;
+  }
+
+  @Override
+  public LogListener createConsole(String pipeName, OutputStream consoleInput) {
     return LogListener.NULL;
   }
 }
