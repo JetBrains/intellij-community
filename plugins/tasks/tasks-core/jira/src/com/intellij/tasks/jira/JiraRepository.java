@@ -227,12 +227,17 @@ public class JiraRepository extends BaseRepositoryImpl {
     HttpClient client = getHttpClient();
     // Fix for https://jetbrains.zendesk.com/agent/#/tickets/24566
     // See https://confluence.atlassian.com/display/ONDEMANDKB/Getting+randomly+logged+out+of+OnDemand for details
-    if (BASIC_AUTH_ONLY) {
+    // IDEA-128824, IDEA-128706 Use cookie authentication only for JIRA on-Demand
+    // TODO Make JiraVersion more suitable for such checks
+    final boolean isJiraOnDemand = StringUtil.notNullize(myJiraVersion).contains("OD");
+    if (isJiraOnDemand) {
+      LOG.info("Connecting to JIRA on-Demand. Cookie authentication is enabled unless 'tasks.jira.basic.auth.only' VM flag is used.");
+    }
+    if (BASIC_AUTH_ONLY || !isJiraOnDemand) {
       // to override persisted settings
       setUseHttpAuthentication(true);
     }
     else {
-      // disable subsequent basic authorization attempts if user already was authenticated
       boolean enableBasicAuthentication = !(isRestApiSupported() && containsCookie(client, AUTH_COOKIE_NAME));
       if (enableBasicAuthentication != isUseHttpAuthentication()) {
         LOG.info("Basic authentication for subsequent requests was " + (enableBasicAuthentication ? "enabled" : "disabled"));

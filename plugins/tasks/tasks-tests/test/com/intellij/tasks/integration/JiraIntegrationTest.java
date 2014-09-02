@@ -119,14 +119,15 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
     }
   }
 
-  public void testBasicAuthenticationDisabling() throws Exception {
-    assertTrue("Basic authentication should be enabled at first", myRepository.isUseHttpAuthentication());
-    myRepository.findTask("PRJONE-1");
-    assertFalse("Basic authentication should be disabled once JSESSIONID cookie was received", myRepository.isUseHttpAuthentication());
-    HttpClient client = myRepository.getHttpClient();
-    assertFalse(client.getParams().isAuthenticationPreemptive());
-    assertNull(client.getState().getCredentials(AuthScope.ANY));
-  }
+  // TODO move to on-Demand-specific tests
+  //public void testBasicAuthenticationDisabling() throws Exception {
+  //  assertTrue("Basic authentication should be enabled at first", myRepository.isUseHttpAuthentication());
+  //  myRepository.findTask("PRJONE-1");
+  //  assertFalse("Basic authentication should be disabled once JSESSIONID cookie was received", myRepository.isUseHttpAuthentication());
+  //  HttpClient client = myRepository.getHttpClient();
+  //  assertFalse(client.getParams().isAuthenticationPreemptive());
+  //  assertNull(client.getState().getCredentials(AuthScope.ANY));
+  //}
 
   public void testSetTaskState() throws Exception {
     changeStateAndCheck(JIRA_4_TEST_SERVER_URL, "PRJONE-8");
