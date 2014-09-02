@@ -331,6 +331,9 @@ public abstract class ComponentStoreImpl implements IComponentStore {
     if (storageChooserClass == defaultClass) {
       return defaultStateStorageChooser.selectStorages(storages, persistentStateComponent, operation);
     }
+    else if (storageChooserClass == LastStorageChooserForWrite.class) {
+      return LastStorageChooserForWrite.INSTANCE.selectStorages(storages, persistentStateComponent, operation);
+    }
     else {
       try {
         @SuppressWarnings("unchecked")
