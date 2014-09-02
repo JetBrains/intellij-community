@@ -369,16 +369,12 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
   }
 
 
-  @Override
-  public void windowLostFocus(WindowEvent e) {
-    final Window window = e.getWindow();
-    final Window oppositeWindow = e.getOppositeWindow();
-  }
-
   //---- Ignored
   @Override
-  public void windowGainedFocus(WindowEvent e) {
-  }
+  public void windowLostFocus(WindowEvent e) {}
+
+  @Override
+  public void windowGainedFocus(WindowEvent e) {}
 
   @Override
   public void keyTyped(KeyEvent e) {}
