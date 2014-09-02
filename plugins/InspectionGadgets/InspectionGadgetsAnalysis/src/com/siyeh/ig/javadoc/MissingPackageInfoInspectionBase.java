@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-public class MissingPackageInfoInspection extends BaseGlobalInspection {
+public class MissingPackageInfoInspectionBase extends BaseGlobalInspection {
 
   @Nls
   @NotNull
@@ -105,12 +105,12 @@ public class MissingPackageInfoInspection extends BaseGlobalInspection {
   @Nullable
   @Override
   public LocalInspectionTool getSharedLocalInspectionTool() {
-    return new LocalMissingPackageInfoInspection(this);
+    return new LocalMissingPackageInfoInspectionBase(this);
   }
 
-  private static class LocalMissingPackageInfoInspection extends BaseSharedLocalInspection<MissingPackageInfoInspection> {
+  protected static class LocalMissingPackageInfoInspectionBase extends BaseSharedLocalInspection<MissingPackageInfoInspectionBase> {
 
-    public LocalMissingPackageInfoInspection(MissingPackageInfoInspection settingsDelegate) {
+    public LocalMissingPackageInfoInspectionBase(MissingPackageInfoInspectionBase settingsDelegate) {
       super(settingsDelegate);
     }
 

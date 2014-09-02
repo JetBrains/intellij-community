@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
  */
 public class CreatePackageInfoAction extends CreateFromTemplateActionBase implements DumbAware {
 
-  protected CreatePackageInfoAction() {
+  public CreatePackageInfoAction() {
     super(IdeBundle.message("action.create.new.package-info.title"),
           IdeBundle.message("action.create.new.package-info.description"), AllIcons.FileTypes.Java);
   }
