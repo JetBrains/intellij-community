@@ -97,11 +97,6 @@ public class ApplicationStoreTest extends LightPlatformLangTestCase {
     public final Map<RoamingType, Map<String, String>> data = new THashMap<RoamingType, Map<String, String>>();
 
     @Override
-    public boolean isEnabled() {
-      return true;
-    }
-
-    @Override
     public void saveContent(@NotNull String fileSpec,
                             @NotNull byte[] content,
                             int size,

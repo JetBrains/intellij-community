@@ -229,7 +229,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    *
    * @param e Carries information on the invocation place and data available
    */
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
   }
 
   /**
@@ -268,7 +268,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    *
    * @param e Carries information on the invocation place
    */
-  public abstract void actionPerformed(AnActionEvent e);
+  public abstract void actionPerformed(@NotNull AnActionEvent e);
 
   protected void setShortcutSet(ShortcutSet shortcutSet) {
     myShortcutSet = shortcutSet;

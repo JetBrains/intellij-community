@@ -34,6 +34,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
     private static final ProgressManager ourInstance = ServiceManager.getService(ProgressManager.class);
   }
 
+  @NotNull
   public static ProgressManager getInstance() {
     return ProgressManagerHolder.ourInstance;
   }

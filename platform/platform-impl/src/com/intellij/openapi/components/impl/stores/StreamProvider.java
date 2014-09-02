@@ -12,7 +12,9 @@ import java.util.Collections;
 public abstract class StreamProvider {
   public static final StreamProvider[] EMPTY_ARRAY = new StreamProvider[0];
 
-  public abstract boolean isEnabled();
+  public boolean isEnabled() {
+    return true;
+  }
 
   /**
    * If true, special version file per storage file will keep version of component.

@@ -42,6 +42,7 @@ public interface StateStorageManager {
   @Nullable
   StateStorage getFileStateStorage(@NotNull String fileSpec);
 
+  @NotNull
   Collection<String> getStorageFileNames();
 
   void clearStateStorage(@NotNull String file);

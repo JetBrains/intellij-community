@@ -54,18 +54,22 @@ public final class NotificationGroup {
     ourRegisteredGroups.put(displayId, this);
   }
 
+  @NotNull
   public static NotificationGroup balloonGroup(@NotNull String displayId) {
     return new NotificationGroup(displayId, NotificationDisplayType.BALLOON, true);
   }
 
+  @NotNull
   public static NotificationGroup logOnlyGroup(@NotNull String displayId) {
     return new NotificationGroup(displayId, NotificationDisplayType.NONE, true);
   }
 
+  @NotNull
   public static NotificationGroup toolWindowGroup(@NotNull String displayId, @NotNull String toolWindowId, final boolean logByDefault) {
     return new NotificationGroup(displayId, NotificationDisplayType.TOOL_WINDOW, logByDefault, toolWindowId);
   }
 
+  @NotNull
   public static NotificationGroup toolWindowGroup(@NotNull String displayId, @NotNull String toolWindowId) {
     return toolWindowGroup(displayId, toolWindowId, true);
   }
@@ -78,10 +82,12 @@ public final class NotificationGroup {
     return createNotification(content, type.toNotificationType());
   }
 
+  @NotNull
   public Notification createNotification(@NotNull final String content, @NotNull final NotificationType type) {
     return createNotification("", content, type, null);
   }
 
+  @NotNull
   public Notification createNotification(@NotNull final String title,
                                          @NotNull final String content,
                                          @NotNull final NotificationType type,

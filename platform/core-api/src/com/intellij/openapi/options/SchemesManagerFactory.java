@@ -25,9 +25,8 @@ public abstract class SchemesManagerFactory {
   public static final ExtensionPointName<ServiceBean> SCHEME_OWNER = ExtensionPointName.create("com.intellij.schemeOwner");
 
   public abstract <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T, E> createSchemesManager(@NotNull String fileSpec,
-                                                                                                               @NotNull SchemeProcessor<E> processor,
-                                                                                                               @NotNull RoamingType roamingType);
-
+                                                                                                               @NotNull SchemeProcessor<E> processor, @NotNull RoamingType roamingType);
+  @NotNull
   public static SchemesManagerFactory getInstance() {
     return ServiceManager.getService(SchemesManagerFactory.class);
   }
