@@ -17,6 +17,8 @@ package com.intellij.remoteServer.agent.util;
 
 import com.intellij.remoteServer.agent.util.log.LogListener;
 
+import java.io.OutputStream;
+
 /**
  * @author michael.golubev
  */
@@ -25,4 +27,6 @@ public interface CloudAgentLoggingHandler {
   void println(String message);
 
   LogListener getOrCreateLogListener(String pipeName);
+
+  LogListener createConsole(String pipeName, OutputStream consoleInput);
 }
