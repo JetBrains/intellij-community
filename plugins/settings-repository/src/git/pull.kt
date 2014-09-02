@@ -21,15 +21,14 @@ import org.jetbrains.plugins.settingsRepository.AuthenticationException
 
 import java.io.IOException
 import java.text.MessageFormat
-import java.util.*
 
-import org.jetbrains.plugins.settingsRepository.BaseRepositoryManager.LOG
 import org.eclipse.jgit.api.MergeResult
 import org.eclipse.jgit.merge.MergeConfig
 import org.eclipse.jgit.merge.MergeStrategy
 import org.eclipse.jgit.merge.SquashMessageFormatter
 import org.eclipse.jgit.merge.MergeMessageFormatter
 import org.eclipse.jgit.merge.ResolveMerger
+import org.jetbrains.plugins.settingsRepository.LOG
 
 fun wrapIfNeedAndReThrow(e: TransportException) {
   val message = e.getMessage()!!

@@ -1,55 +1,55 @@
-package org.jetbrains.plugins.settingsRepository;
+package org.jetbrains.plugins.settingsRepository
 
-import com.intellij.openapi.progress.ProgressIndicator;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.progress.ProgressIndicator
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Collection;
-import java.util.List;
+import java.io.File
+import java.io.IOException
+import java.io.InputStream
 
-public interface RepositoryManager {
-  @Nullable
-  String getRemoteRepositoryUrl();
+public trait RepositoryManager {
+  public fun getRemoteRepositoryUrl(): String?
 
-  boolean hasUpstream();
+  public fun hasUpstream(): Boolean
 
   /**
    * Return error message if failed
    */
-  void setUpstream(@Nullable String url, @Nullable String branch) throws Exception;
+  throws(javaClass<Exception>())
+  public fun setUpstream(url: String?, branch: String?)
 
-  @Nullable
-  InputStream read(@NotNull String path) throws IOException;
+  throws(javaClass<IOException>())
+  public fun read(path: String): InputStream?
 
   /**
    * @param async Write postpone or immediately
    */
-  void write(@NotNull String path, @NotNull byte[] content, int size, boolean async);
+  public fun write(path: String, content: ByteArray, size: Int, async: Boolean)
 
-  void delete(@NotNull String path);
+  public fun delete(path: String)
 
-  @NotNull
-  Collection<String> listSubFileNames(@NotNull String path);
+  public fun listSubFileNames(path: String): Collection<String>
 
-  void updateRepository(@NotNull ProgressIndicator indicator) throws Exception;
+  throws(javaClass<Exception>())
+  public fun updateRepository(indicator: ProgressIndicator)
 
   /**
    * Not all implementations support progress indicator (will not be updated on progress)
    */
-  void commit(@NotNull ProgressIndicator indicator) throws Exception;
+  throws(javaClass<Exception>())
+  public fun commit(indicator: ProgressIndicator)
 
-  void commit(@NotNull List<String> paths);
+  public fun commit(paths: List<String>)
 
-  void push(@NotNull ProgressIndicator indicator) throws Exception;
+  throws(javaClass<Exception>())
+  public fun push(indicator: ProgressIndicator)
 
-  void pull(@NotNull ProgressIndicator indicator) throws Exception;
+  throws(javaClass<Exception>())
+  public fun pull(indicator: ProgressIndicator)
 
-  void initRepository(@NotNull File dir) throws IOException;
+  throws(javaClass<IOException>())
+  public fun initRepository(dir: File)
 
-  boolean has(@NotNull String path);
+  public fun has(path: String): Boolean
 
-  boolean isValidRepository(@NotNull File file);
+  public fun isValidRepository(file: File): Boolean
 }

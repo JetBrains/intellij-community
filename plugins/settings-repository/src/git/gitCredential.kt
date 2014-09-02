@@ -4,9 +4,9 @@ import org.eclipse.jgit.transport.URIish
 import org.jetbrains.plugins.settingsRepository.Credentials
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.plugins.settingsRepository.BaseRepositoryManager
 import com.intellij.execution.process.ProcessNotCreatedException
 import org.eclipse.jgit.lib.Repository
+import org.jetbrains.plugins.settingsRepository.LOG
 
 private var canUseGitExe = true
 
@@ -58,7 +58,7 @@ fun getCredentialsUsingGit(uri: URIish, repository: Repository): Credentials? {
 
   val errorText = process.getErrorStream().reader().readText()
   if (!StringUtil.isEmpty(errorText)) {
-    BaseRepositoryManager.LOG.warn(errorText)
+    LOG.warn(errorText)
   }
   return if (username == null && password == null) null else Credentials(username, password)
 }

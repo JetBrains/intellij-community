@@ -147,6 +147,24 @@ public class GitTest {
   }
 
   @Test
+  public void addSeveral() throws IOException {
+    byte[] data = FileUtil.loadFileBytes(new File(getTestDataPath(), "encoding.xml"));
+    String addedFile = "$APP_CONFIG$/encoding.xml";
+    String addedFile2 = "$APP_CONFIG$/crucibleConnector.xml";
+    getProvider().saveContent(addedFile, data, data.length, RoamingType.PER_USER, false);
+
+    GitEx git = getRepositoryManager().getGit();
+    IndexDiff diff = git.computeIndexDiff();
+    assertThat(diff.diff(), equalTo(true));
+    assertThat(diff.getAdded(), contains(equalTo(addedFile), equalTo(addedFile2)));
+    assertThat(diff.getChanged(), empty());
+    assertThat(diff.getRemoved(), empty());
+    assertThat(diff.getModified(), empty());
+    assertThat(diff.getUntracked(), empty());
+    assertThat(diff.getUntrackedFolders(), empty());
+  }
+
+  @Test
   public void delete() throws IOException {
     byte[] data = FileUtil.loadFileBytes(new File(getTestDataPath(), "encoding.xml"));
     delete(data, false);

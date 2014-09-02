@@ -1,117 +1,110 @@
-package org.jetbrains.plugins.settingsRepository;
+package org.jetbrains.plugins.settingsRepository
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.io.FileUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.util.io.FileUtil
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
+import java.io.File
+import java.io.FileInputStream
+import java.io.IOException
+import java.io.InputStream
+import java.util.Arrays
+import java.util.Collections
 
-public abstract class BaseRepositoryManager implements RepositoryManager {
-  public static final Logger LOG = Logger.getInstance(BaseRepositoryManager.class);
+public val LOG: Logger = Logger.getInstance(javaClass<BaseRepositoryManager>())
 
-  @NotNull
-  protected final File dir;
+public abstract class BaseRepositoryManager protected() : RepositoryManager {
+  protected var dir: File
 
-  @NotNull
-  protected final Object lock = new Object();
+  protected val lock: Any = Object();
 
-  protected BaseRepositoryManager() {
-    dir = new File(IcsManager.getPluginSystemDir(), "repository");
+  {
+    dir = File(IcsManager.getPluginSystemDir(), "repository")
   }
 
-  @NotNull
-  @Override
-  public Collection<String> listSubFileNames(@NotNull String path) {
-    String[] files = new File(dir, path).list();
-    if (files == null || files.length == 0) {
-      return Collections.emptyList();
+  override fun listSubFileNames(path: String): Collection<String> {
+    val files = File(dir, path).list()
+    if (files == null || files.size == 0) {
+      return listOf()
     }
-    return Arrays.asList(files);
+    return listOf(*files)
   }
 
-  @Override
-  @Nullable
-  public InputStream read(@NotNull String path) throws IOException {
-    File file = new File(dir, path);
+  throws(javaClass<IOException>())
+  override fun read(path: String): InputStream? {
+    val file = File(dir, path)
     //noinspection IOResourceOpenedButNotSafelyClosed
-    return file.exists() ? new FileInputStream(file) : null;
+    return if (file.exists()) FileInputStream(file) else null
   }
 
-  @Override
-  public void write(@NotNull final String path, @NotNull final byte[] content, final int size, final boolean async) {
+  override fun write(path: String, content: ByteArray, size: Int, async: Boolean) {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Write " + path);
+      LOG.debug("Write " + path)
     }
 
     try {
+      val file = File(dir, path)
+      FileUtil.writeToFile(file, content, 0, size)
+
       synchronized (lock) {
-        File file = new File(dir, path);
-        FileUtil.writeToFile(file, content, 0, size);
-        addToIndex(file, path);
+        addToIndex(file, path)
       }
     }
-    catch (Exception e) {
-      LOG.error(e);
+    catch (e: Exception) {
+      LOG.error(e)
     }
   }
 
   /**
    * path relative to repository root
    */
-  protected abstract void addToIndex(@NotNull File file, @NotNull String path) throws Exception;
+  throws(javaClass<Exception>())
+  protected abstract fun addToIndex(file: File, path: String)
 
-  @Override
-  public final void delete(@NotNull String path) {
+  override fun delete(path: String) {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Remove " + path);
+      LOG.debug("Remove " + path)
     }
 
     try {
+      val file = File(dir, path)
+      // delete could be called for non-existent file
+      if (!file.exists()) {
+        return
+      }
+
+      val isFile = file.isFile()
+      FileUtil.delete(file)
+
+      if (isFile) {
+        // remove empty directories
+        var parent: File? = file.getParentFile()
+        //noinspection FileEqualsUsage
+        while (parent != null && parent != dir && parent!!.delete()) {
+          parent = parent!!.getParentFile()
+        }
+      }
+
       synchronized (lock) {
-        File file = new File(dir, path);
-        // delete could be called for non-existent file
-        if (!file.exists()) {
-          return;
-        }
-
-        boolean isFile = file.isFile();
-        FileUtil.delete(file);
-        if (isFile) {
-          // remove empty directories
-          File parent = file.getParentFile();
-          //noinspection FileEqualsUsage
-          while (parent != null && !parent.equals(dir) && parent.delete()) {
-            parent = parent.getParentFile();
-          }
-        }
-
-        deleteFromIndex(path, isFile);
+        deleteFromIndex(path, isFile)
       }
     }
-    catch (Exception e) {
-      LOG.error(e);
+    catch (e: Exception) {
+      LOG.error(e)
     }
   }
 
-  protected abstract void deleteFromIndex(@NotNull String path, boolean isFile) throws Exception;
+  throws(javaClass<Exception>())
+  protected abstract fun deleteFromIndex(path: String, isFile: Boolean)
 
-  @Override
-  public final void updateRepository(@NotNull ProgressIndicator indicator) throws Exception {
+  throws(javaClass<Exception>())
+  override fun updateRepository(indicator: ProgressIndicator) {
     if (hasUpstream()) {
-      pull(indicator);
+      pull(indicator)
     }
   }
 
-  @Override
-  public boolean has(@NotNull String path) {
-    return new File(dir, path).exists();
+  override fun has(path: String): Boolean {
+    return File(dir, path).exists()
   }
 }

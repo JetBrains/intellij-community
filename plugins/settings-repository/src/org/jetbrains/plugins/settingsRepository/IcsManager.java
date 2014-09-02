@@ -90,7 +90,7 @@ public final class IcsManager implements ApplicationLoadListener, Disposable {
             repositoryManager.commit(indicator);
           }
           catch (Exception e) {
-            BaseRepositoryManager.LOG.error(e);
+            LOG.error(e);
           }
         }
       });
@@ -214,10 +214,10 @@ public final class IcsManager implements ApplicationLoadListener, Disposable {
       }
     }
     catch (AuthenticationException e) {
-      BaseRepositoryManager.LOG.warn(e);
+      LOG.warn(e);
     }
     catch (Exception e) {
-      BaseRepositoryManager.LOG.error(e);
+      LOG.error(e);
     }
   }
 
@@ -278,7 +278,7 @@ public final class IcsManager implements ApplicationLoadListener, Disposable {
           catch (Exception e) {
             //noinspection InstanceofCatchParameter
             if (!(e instanceof AuthenticationException)) {
-              BaseRepositoryManager.LOG.error(e);
+              LOG.error(e);
             }
             exceptionRef.set(e);
           }

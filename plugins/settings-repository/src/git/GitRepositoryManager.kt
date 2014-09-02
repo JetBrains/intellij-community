@@ -16,6 +16,7 @@ import org.jetbrains.plugins.settingsRepository.CredentialsStore
 
 import java.io.File
 import java.io.IOException
+import org.jetbrains.plugins.settingsRepository.LOG
 
 public class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<CredentialsStore>) : BaseRepositoryManager() {
   val git: GitEx
@@ -44,16 +45,14 @@ public class GitRepositoryManager(private val credentialsStore: NotNullLazyValue
     return git
   }
 
-  throws(javaClass<IOException>())
   override fun initRepository(dir: File) {
-    GitEx.createBareRepository(dir)
+    createBareRepository(dir)
   }
 
   override fun getRemoteRepositoryUrl(): String? {
     return StringUtil.nullize(git.getRepository().getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, Constants.DEFAULT_REMOTE_NAME, ConfigConstants.CONFIG_KEY_URL))
   }
 
-  throws(javaClass<Exception>())
   override fun setUpstream(url: String?, branch: String?) {
     git.setUpstream(url, branch)
   }
@@ -86,7 +85,7 @@ public class GitRepositoryManager(private val credentialsStore: NotNullLazyValue
   }
 
   override fun push(indicator: ProgressIndicator) {
-    BaseRepositoryManager.LOG.debug("Push")
+    LOG.debug("Push")
 
     val repository = git.getRepository()
     val refSpecs = SmartList(RemoteConfig(repository.getConfig(), Constants.DEFAULT_REMOTE_NAME).getPushRefSpecs())
@@ -102,11 +101,11 @@ public class GitRepositoryManager(private val credentialsStore: NotNullLazyValue
 
       try {
         val result = transport.push(monitor, transport.findRemoteRefUpdatesFor(refSpecs))
-        if (BaseRepositoryManager.LOG.isDebugEnabled()) {
+        if (LOG.isDebugEnabled()) {
           printMessages(result)
 
           for (refUpdate in result.getRemoteUpdates()) {
-            BaseRepositoryManager.LOG.debug(refUpdate.toString())
+            LOG.debug(refUpdate.toString())
           }
         }
       }
@@ -140,10 +139,10 @@ public class GitRepositoryManager(private val credentialsStore: NotNullLazyValue
 }
 
 fun printMessages(fetchResult: OperationResult) {
-  if (BaseRepositoryManager.LOG.isDebugEnabled()) {
+  if (LOG.isDebugEnabled()) {
     val messages = fetchResult.getMessages()
     if (!StringUtil.isEmptyOrSpaces(messages)) {
-      BaseRepositoryManager.LOG.debug(messages)
+      LOG.debug(messages)
     }
   }
 }

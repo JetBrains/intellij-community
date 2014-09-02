@@ -4,21 +4,21 @@ import com.intellij.openapi.progress.ProgressIndicator
 import org.eclipse.jgit.api.AddCommand
 import org.eclipse.jgit.lib.IndexDiff
 import org.eclipse.jgit.lib.ProgressMonitor
-import org.jetbrains.plugins.settingsRepository.BaseRepositoryManager
 import org.jetbrains.plugins.settingsRepository.IcsUrlBuilder
+import org.jetbrains.plugins.settingsRepository.LOG
 
 fun commit(manager: GitRepositoryManager, indicator: ProgressIndicator) {
   val index = manager.git.computeIndexDiff()
   val changed = index.diff(JGitProgressMonitor(indicator), ProgressMonitor.UNKNOWN, ProgressMonitor.UNKNOWN, "Commit")
 
-  if (BaseRepositoryManager.LOG.isDebugEnabled()) {
-    BaseRepositoryManager.LOG.debug(indexDiffToString(index))
+  if (LOG.isDebugEnabled()) {
+    LOG.debug(indexDiffToString(index))
   }
 
   // don't worry about untracked/modified only in the FS files
   if (!changed || (index.getAdded().isEmpty() && index.getChanged().isEmpty() && index.getRemoved().isEmpty())) {
     if (index.getModified().isEmpty()) {
-      BaseRepositoryManager.LOG.debug("Skip scheduled commit, nothing to commit")
+      LOG.debug("Skip scheduled commit, nothing to commit")
       return
     }
 
@@ -36,7 +36,7 @@ fun commit(manager: GitRepositoryManager, indicator: ProgressIndicator) {
     }
   }
 
-  BaseRepositoryManager.LOG.debug("Commit")
+  LOG.debug("Commit")
   manager.createCommitCommand().setMessage("").call()
 }
 

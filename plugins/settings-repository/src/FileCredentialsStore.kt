@@ -35,7 +35,7 @@ class FileCredentialsStore(private val storeFile: File) : CredentialsStore {
         }
       }
       catch (e: IOException) {
-        BaseRepositoryManager.LOG.error(e)
+        LOG.error(e)
       }
     }
   }
@@ -70,7 +70,7 @@ class FileCredentialsStore(private val storeFile: File) : CredentialsStore {
       }
     }
     catch (e: IOException) {
-      BaseRepositoryManager.LOG.error(e)
+      LOG.error(e)
     }
   }
 }

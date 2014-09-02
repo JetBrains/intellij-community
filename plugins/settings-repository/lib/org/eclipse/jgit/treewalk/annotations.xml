@@ -1,0 +1,5 @@
+<root>
+  <item name='org.eclipse.jgit.treewalk.WorkingTreeIterator java.io.InputStream openEntryStream()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+</root>

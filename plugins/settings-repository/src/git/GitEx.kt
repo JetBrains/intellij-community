@@ -1,183 +1,169 @@
-package org.jetbrains.plugins.settingsRepository.git;
+package org.jetbrains.plugins.settingsRepository.git
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.dircache.*;
-import org.eclipse.jgit.lib.*;
-import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
-import org.eclipse.jgit.treewalk.FileTreeIterator;
-import org.eclipse.jgit.treewalk.TreeWalk;
-import org.eclipse.jgit.treewalk.WorkingTreeIterator;
-import org.eclipse.jgit.treewalk.filter.PathFilter;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.text.StringUtil
+import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.dircache.*
+import org.eclipse.jgit.lib.*
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder
+import org.eclipse.jgit.treewalk.FileTreeIterator
+import org.eclipse.jgit.treewalk.TreeWalk
+import org.eclipse.jgit.treewalk.WorkingTreeIterator
+import org.eclipse.jgit.treewalk.filter.PathFilter
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.File
+import java.io.IOException
+import org.jetbrains.plugins.settingsRepository.LOG
 
-public class GitEx extends Git {
-  private static final Logger LOG = Logger.getInstance(GitEx.class);
+public class GitEx(repo: Repository) : Git(repo) {
+  private var treeWalk: TreeWalk? = null
 
-  private TreeWalk treeWalk;
-
-  public GitEx(Repository repo) {
-    super(repo);
+  public fun disableAutoCrLf() {
+    val config = getRepository().getConfig()
+    config.setString(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOCRLF, ConfigConstants.CONFIG_KEY_FALSE)
+    config.save()
   }
 
-  public static void createBareRepository(@NotNull File dir) throws IOException {
-    new FileRepositoryBuilder().setBare().setGitDir(dir).build().create(true);
-  }
-
-  public void disableAutoCrLf() throws IOException {
-    StoredConfig config = getRepository().getConfig();
-    config.setString(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOCRLF, ConfigConstants.CONFIG_KEY_FALSE);
-    config.save();
-  }
-
-  public void setUpstream(@Nullable String url, @Nullable String branchName) throws IOException {
+  throws(javaClass<IOException>())
+  public fun setUpstream(url: String?, branchName: String? = Constants.MASTER) {
     // our local branch named 'master' in any case
-    String localBranchName = Constants.MASTER;
+    val localBranchName = Constants.MASTER
 
-    StoredConfig config = getRepository().getConfig();
-    String remoteName = Constants.DEFAULT_REMOTE_NAME;
+    val config = getRepository().getConfig()
+    val remoteName = Constants.DEFAULT_REMOTE_NAME
     if (StringUtil.isEmptyOrSpaces(url)) {
-      LOG.debug("Unset remote");
-      config.unsetSection(ConfigConstants.CONFIG_REMOTE_SECTION, remoteName);
-      config.unsetSection(ConfigConstants.CONFIG_BRANCH_SECTION, localBranchName);
+      LOG.debug("Unset remote")
+      config.unsetSection(ConfigConstants.CONFIG_REMOTE_SECTION, remoteName)
+      config.unsetSection(ConfigConstants.CONFIG_BRANCH_SECTION, localBranchName)
     }
     else {
-      if (branchName == null) {
-        branchName = Constants.MASTER;
-      }
-
-      LOG.debug("Set remote " + url);
-      config.setString(ConfigConstants.CONFIG_REMOTE_SECTION, remoteName, ConfigConstants.CONFIG_KEY_URL, url);
+      LOG.debug("Set remote " + url)
+      config.setString(ConfigConstants.CONFIG_REMOTE_SECTION, remoteName, ConfigConstants.CONFIG_KEY_URL, url)
       // http://git-scm.com/book/en/Git-Internals-The-Refspec
-      config.setString(ConfigConstants.CONFIG_REMOTE_SECTION, remoteName, ConfigConstants.CONFIG_FETCH_SECTION, '+' + Constants.R_HEADS + branchName + ':' + Constants.R_REMOTES + remoteName + '/' + branchName);
+      config.setString(ConfigConstants.CONFIG_REMOTE_SECTION, remoteName, ConfigConstants.CONFIG_FETCH_SECTION, '+' + Constants.R_HEADS + branchName + ':' + Constants.R_REMOTES + remoteName + '/' + branchName)
       // todo should we set it if fetch specified (kirill.likhodedov suggestion)
       //config.setString(ConfigConstants.CONFIG_REMOTE_SECTION, remoteName, "push", Constants.R_HEADS + localBranchName + ':' + Constants.R_HEADS + branchName);
 
-      config.setString(ConfigConstants.CONFIG_BRANCH_SECTION, localBranchName, ConfigConstants.CONFIG_KEY_REMOTE, remoteName);
-      config.setString(ConfigConstants.CONFIG_BRANCH_SECTION, localBranchName, ConfigConstants.CONFIG_KEY_MERGE, Constants.R_HEADS + branchName);
+      config.setString(ConfigConstants.CONFIG_BRANCH_SECTION, localBranchName, ConfigConstants.CONFIG_KEY_REMOTE, remoteName)
+      config.setString(ConfigConstants.CONFIG_BRANCH_SECTION, localBranchName, ConfigConstants.CONFIG_KEY_MERGE, Constants.R_HEADS + branchName)
     }
-    config.save();
+    config.save()
   }
 
-  public boolean add(@NotNull String path) throws IOException {
-    Repository repository = getRepository();
+  public fun add(path: String): Boolean {
+    val repository = getRepository()
     if (treeWalk == null) {
-      treeWalk = new TreeWalk(repository);
-      treeWalk.setRecursive(false);
+      treeWalk = TreeWalk(repository)
+      treeWalk!!.setRecursive(false)
     }
 
     try {
-      return doAdd(treeWalk, path, repository, new FileTreeIterator(getRepository()));
+      return doAdd(treeWalk!!, path, repository, FileTreeIterator(getRepository()))
     }
     finally {
-      treeWalk.release();
-      treeWalk.reset();
+      treeWalk!!.release()
+      treeWalk!!.reset()
     }
   }
 
-  public void remove(@NotNull String path, boolean isFile) throws IOException {
-    Repository repository = getRepository();
-    DirCache dirCache = repository.lockDirCache();
+  public fun remove(path: String, isFile: Boolean) {
+    val repository = getRepository()
+    val dirCache = repository.lockDirCache()
     try {
-      DirCacheEditor editor = dirCache.editor();
-      editor.add(isFile ? new DirCacheEditor.DeletePath(path) : new DirCacheEditor.DeleteTree(path));
-      editor.commit();
+      val editor = dirCache.editor()
+      editor.add(if (isFile) DirCacheEditor.DeletePath(path) else DirCacheEditor.DeleteTree(path))
+      editor.commit()
     }
     finally {
-      dirCache.unlock();
+      dirCache.unlock()
     }
   }
 
-  @NotNull
-  public IndexDiff computeIndexDiff() throws IOException {
-    WorkingTreeIterator workingTreeIterator = new FileTreeIterator(getRepository());
+  public fun computeIndexDiff(): IndexDiff {
+    val workingTreeIterator = FileTreeIterator(getRepository())
     try {
-      return new IndexDiff(getRepository(), Constants.HEAD, workingTreeIterator);
+      return IndexDiff(getRepository(), Constants.HEAD, workingTreeIterator)
     }
     finally {
-      workingTreeIterator.reset();
+      workingTreeIterator.reset()
     }
   }
+}
 
-  private static boolean doAdd(@NotNull TreeWalk treeWalk, @NotNull String path, @NotNull Repository repository, @NotNull WorkingTreeIterator workingTreeIterator)
-    throws IOException {
-    PathFilter pathFilter = PathFilter.create(path);
-    treeWalk.setFilter(pathFilter);
+public fun createBareRepository(dir: File) {
+  FileRepositoryBuilder().setBare().setGitDir(dir).build().create(true)
+}
 
-    DirCache dirCache = repository.lockDirCache();
-    try {
-      DirCacheBuilder builder = dirCache.builder();
-      treeWalk.addTree(new DirCacheBuildIterator(builder));
-      treeWalk.addTree(workingTreeIterator);
+private fun doAdd(treeWalk: TreeWalk, path: String, repository: Repository, workingTreeIterator: WorkingTreeIterator): Boolean {
+  val pathFilter = PathFilter.create(path)
+  treeWalk.setFilter(pathFilter)
 
-      while (treeWalk.next()) {
-        if (pathFilter.isDone(treeWalk)) {
-          break;
-        }
-        else if (treeWalk.isSubtree()) {
-          treeWalk.enterSubtree();
-        }
+  val dirCache = repository.lockDirCache()
+  try {
+    val builder = dirCache.builder()
+    treeWalk.addTree(DirCacheBuildIterator(builder))
+    treeWalk.addTree(workingTreeIterator)
+
+    while (treeWalk.next()) {
+      if (pathFilter.isDone(treeWalk)) {
+        break
       }
+      else if (treeWalk.isSubtree()) {
+        treeWalk.enterSubtree()
+      }
+    }
 
-      return doAdd(treeWalk, path, repository, builder);
-    }
-    finally {
-      dirCache.unlock();
-      workingTreeIterator.reset();
-    }
+    return doAdd(treeWalk, path, repository, builder)
+  }
+  finally {
+    dirCache.unlock()
+    workingTreeIterator.reset()
+  }
+}
+
+private fun doAdd(treeWalk: TreeWalk, path: String, repository: Repository, builder: DirCacheBuilder): Boolean {
+  val workingTree = treeWalk.getTree<WorkingTreeIterator>(1, javaClass<WorkingTreeIterator>())
+  val dirCacheTree = treeWalk.getTree<DirCacheIterator>(0, javaClass<DirCacheIterator>())
+  if (dirCacheTree == null && workingTree != null && workingTree.isEntryIgnored()) {
+    // file is not in index but is ignored, do nothing
+    return true
   }
 
-  private static boolean doAdd(@NotNull TreeWalk treeWalk, @NotNull String path, @NotNull Repository repository, @NotNull DirCacheBuilder builder) throws IOException {
-    WorkingTreeIterator workingTree = treeWalk.getTree(1, WorkingTreeIterator.class);
-    DirCacheIterator dirCacheTree = treeWalk.getTree(0, DirCacheIterator.class);
-    if (dirCacheTree == null && workingTree != null && workingTree.isEntryIgnored()) {
-      // file is not in index but is ignored, do nothing
-      return true;
-    }
-
-    if (workingTree != null) {
-      // the file exists
-      if (dirCacheTree == null || dirCacheTree.getDirCacheEntry() == null || !dirCacheTree.getDirCacheEntry().isAssumeValid()) {
-        FileMode mode = workingTree.getIndexFileMode(dirCacheTree);
-        DirCacheEntry entry = new DirCacheEntry(path);
-        entry.setFileMode(mode);
-        if (mode == FileMode.GITLINK) {
-          entry.setObjectId(workingTree.getEntryObjectId());
-        }
-        else {
-          entry.setLength(workingTree.getEntryLength());
-          entry.setLastModified(workingTree.getEntryLastModified());
-          ObjectInserter inserter = null;
-          InputStream in = workingTree.openEntryStream();
-          try {
-            inserter = repository.newObjectInserter();
-            entry.setObjectId(inserter.insert(Constants.OBJ_BLOB, workingTree.getEntryContentLength(), in));
-            inserter.flush();
-          }
-          finally {
-            in.close();
-            if (inserter != null) {
-              inserter.release();
-            }
-          }
-        }
-        builder.add(entry);
+  if (workingTree != null) {
+    // the file exists
+    if (dirCacheTree == null || dirCacheTree.getDirCacheEntry() == null || !dirCacheTree.getDirCacheEntry()!!.isAssumeValid()) {
+      val mode = workingTree.getIndexFileMode(dirCacheTree)
+      val entry = DirCacheEntry(path)
+      entry.setFileMode(mode)
+      if (mode == FileMode.GITLINK) {
+        entry.setObjectId(workingTree.getEntryObjectId())
       }
       else {
-        builder.add(dirCacheTree.getDirCacheEntry());
+        entry.setLength(workingTree.getEntryLength())
+        entry.setLastModified(workingTree.getEntryLastModified())
+        var inserter: ObjectInserter? = null
+        val `in` = workingTree.openEntryStream()
+        try {
+          inserter = repository.newObjectInserter()
+          entry.setObjectId(inserter!!.insert(Constants.OBJ_BLOB, workingTree.getEntryContentLength(), `in`))
+          inserter!!.flush()
+        }
+        finally {
+          `in`.close()
+          if (inserter != null) {
+            inserter!!.release()
+          }
+        }
       }
+      builder.add(entry)
     }
-    else if (dirCacheTree != null) {
-      builder.add(dirCacheTree.getDirCacheEntry());
+    else {
+      builder.add(dirCacheTree.getDirCacheEntry())
     }
-
-    builder.commit();
-    return false;
   }
+  else if (dirCacheTree != null) {
+    builder.add(dirCacheTree.getDirCacheEntry())
+  }
+
+  builder.commit()
+  return false
 }
