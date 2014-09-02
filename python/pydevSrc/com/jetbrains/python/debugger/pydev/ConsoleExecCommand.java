@@ -28,7 +28,7 @@ public class ConsoleExecCommand extends AbstractFrameCommand<String> {
     return new ResponseProcessor<String>() {
       @Override
       protected String parseResponse(ProtocolFrame response) throws PyDebuggerException {
-        final PyDebugValue value = ProtocolParser.parseValue(response.getPayload(), myDebugger.getDebugProcess());
+        final PyDebugValue value = ProtocolParser.parseValue(response.getPayload(), getDebugger().getDebugProcess());
         return value.getValue();
       }
     };

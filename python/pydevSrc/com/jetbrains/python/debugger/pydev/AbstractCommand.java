@@ -42,7 +42,7 @@ public abstract class AbstractCommand<T> {
   public static final String TAB_CHAR = "@_@TAB_CHAR@_@";
 
 
-  @NotNull protected final RemoteDebugger myDebugger;
+  @NotNull private final RemoteDebugger myDebugger;
   private final int myCommandCode;
 
   private final ResponseProcessor<T> myResponseProcessor;
@@ -185,6 +185,11 @@ public abstract class AbstractCommand<T> {
 
   public static boolean isErrorEvent(int command) {
     return command == ERROR;
+  }
+
+  @NotNull
+  public RemoteDebugger getDebugger() {
+    return myDebugger;
   }
 
   protected static class Payload {
