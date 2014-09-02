@@ -18,6 +18,7 @@ package com.intellij.codeInsight.template.postfix.templates;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,7 @@ public abstract class SurroundPostfixTemplateBase extends StatementWrapPostfixTe
   protected SurroundPostfixTemplateBase(@NotNull String name,
                                         @NotNull String descr,
                                         @NotNull PostfixTemplatePsiInfo psiInfo) {
-    super(name, descr, psiInfo, Condition.TRUE);
+    super(name, descr, psiInfo, Conditions.<PsiElement>alwaysTrue());
   }
 
 

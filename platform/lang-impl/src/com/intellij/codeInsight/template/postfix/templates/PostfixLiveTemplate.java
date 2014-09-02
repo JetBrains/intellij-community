@@ -32,6 +32,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -266,15 +267,13 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     PsiFile copyFile = copyFile(file, fileContentWithoutKey);
     Document copyDocument = copyFile.getViewProvider().getDocument();
     if (copyDocument == null) {
-      //noinspection unchecked
-      return Condition.FALSE;
+      return Conditions.alwaysFalse();
     }
 
     copyFile = provider.preCheck(copyFile, editor, newOffset);
     copyDocument = copyFile.getViewProvider().getDocument();
     if (copyDocument == null) {
-      //noinspection unchecked
-      return Condition.FALSE;
+      return Conditions.alwaysFalse();
     }
 
     final PsiElement context = CustomTemplateCallback.getContext(copyFile, positiveOffset(newOffset));

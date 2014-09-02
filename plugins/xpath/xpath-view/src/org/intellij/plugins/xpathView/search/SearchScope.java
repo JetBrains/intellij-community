@@ -22,10 +22,7 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -189,12 +186,12 @@ public class SearchScope implements JDOMExternalizable {
         switch (getScopeType()) {
             case PROJECT:
                 //noinspection unchecked
-                ProjectRootManager.getInstance(project).getFileIndex().iterateContent(new MyFileIterator(processor, Condition.TRUE));
+                ProjectRootManager.getInstance(project).getFileIndex().iterateContent(new MyFileIterator(processor, Conditions.<VirtualFile>alwaysTrue()));
                 break;
             case MODULE:
                 final Module module = ModuleManager.getInstance(project).findModuleByName(getModuleName());
                 //noinspection unchecked
-                ModuleRootManager.getInstance(module).getFileIndex().iterateContent(new MyFileIterator(processor, Condition.TRUE));
+                ModuleRootManager.getInstance(module).getFileIndex().iterateContent(new MyFileIterator(processor, Conditions.<VirtualFile>alwaysTrue()));
                 break;
             case DIRECTORY:
                 final String dirName = getPath();

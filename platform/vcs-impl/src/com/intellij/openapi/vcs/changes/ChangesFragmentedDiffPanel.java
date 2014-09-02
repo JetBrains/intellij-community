@@ -187,7 +187,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
           current = range;
         }
         if (current == null) return null;
-        final Fragment at = fragments.getFragmentAt(offset, FragmentSide.SIDE1, Condition.TRUE);
+        final Fragment at = fragments.getFragmentAt(offset, FragmentSide.SIDE1, Conditions.<Fragment>alwaysTrue());
         if (at == null) return null;
         final TextRange opposite = at.getRange(FragmentSide.SIDE2);
 

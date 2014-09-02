@@ -16,6 +16,7 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.Semaphore;
 import gnu.trove.Equality;
@@ -80,7 +81,7 @@ public class TransferToEDTQueue<T> {
         runnable.run();
         return true;
       }
-    }, Condition.FALSE, maxUnitOfWorkThresholdMs);
+    }, Conditions.alwaysFalse(), maxUnitOfWorkThresholdMs);
   }
 
   private boolean isEmpty() {

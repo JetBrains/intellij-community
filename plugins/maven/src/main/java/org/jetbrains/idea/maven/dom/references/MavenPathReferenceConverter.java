@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.dom.references;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -44,7 +45,7 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
   private final Condition<PsiFileSystemItem> myCondition;
 
   public MavenPathReferenceConverter() {
-    this(Condition.TRUE);
+    this(Conditions.<PsiFileSystemItem>alwaysTrue());
   }
 
   public MavenPathReferenceConverter(@NotNull Condition<PsiFileSystemItem> condition) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,11 +36,13 @@ public class CachedValuesManagerImpl extends CachedValuesManager {
     myFactory = factory == null ? new DefaultCachedValuesFactory(project) : factory;
   }
 
+  @NotNull
   @Override
   public <T> CachedValue<T> createCachedValue(@NotNull CachedValueProvider<T> provider, boolean trackValue) {
     return myFactory.createCachedValue(provider, trackValue);
   }
 
+  @NotNull
   @Override
   public <T,P> ParameterizedCachedValue<T,P> createParameterizedCachedValue(@NotNull ParameterizedCachedValueProvider<T,P> provider, boolean trackValue) {
     return myFactory.createParameterizedCachedValue(provider, trackValue);

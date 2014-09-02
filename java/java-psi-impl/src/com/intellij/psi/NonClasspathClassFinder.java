@@ -248,7 +248,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   }
 
   @NotNull
-  public static GlobalSearchScope addNonClasspathScope(Project project, GlobalSearchScope base) {
+  public static GlobalSearchScope addNonClasspathScope(@NotNull Project project, @NotNull GlobalSearchScope base) {
     GlobalSearchScope scope = base;
     for (PsiElementFinder finder : Extensions.getExtensions(EP_NAME, project)) {
       if (finder instanceof NonClasspathClassFinder) {
