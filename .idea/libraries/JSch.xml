@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="JSch">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/jsch-0.1.50.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jsch-0.1.51.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/jsch-0.1.50.zip!/jsch-0.1.50/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/lib/src/jsch-0.1.50.zip!/jsch-0.1.50/examples" />
+      <root url="jar://$PROJECT_DIR$/lib/src/jsch-0.1.51.zip!/jsch-0.1.51/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/jsch-0.1.51.zip!/jsch-0.1.51/examples" />
     </SOURCES>
   </library>
 </component>
