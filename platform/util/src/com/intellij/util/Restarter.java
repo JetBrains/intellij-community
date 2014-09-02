@@ -27,10 +27,7 @@ import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.win32.StdCallLibrary;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -152,16 +149,22 @@ public class Restarter {
     Runtime.getRuntime().exec(commands.toArray(new String[commands.size()]));
   }
 
+
   public static File createTempExecutable(File executable) throws IOException {
     File executableDir = new File(System.getProperty("user.home") + "/." + System.getProperty("idea.paths.selector") + "/restart");
     File copy = new File(executableDir.getPath() + "/" + executable.getName());
+    System.out.println("copy " + copy.getName());
     if (! FileUtilRt.ensureCanCreateFile(copy)) {
+       System.out.println("will be created one more copy of the executable " + executable.getName());
        String ext = FileUtilRt.getExtension(executable.getName());
+       System.out.println("ext " + ext);
        copy = FileUtilRt.createTempFile(executableDir, FileUtilRt.getNameWithoutExtension(copy.getName()),
                                             StringUtil.isEmptyOrSpaces(ext) ? ".tmp" : ("." + ext),
                                             false);
+      System.out.println("nex copy " + copy.getName());
     }
     FileUtilRt.copy(executable, copy);
+    System.out.println("copy done");
     if (!copy.setExecutable(executable.canExecute())) throw new IOException("Cannot make file executable: " + copy);
     return copy;
   }
