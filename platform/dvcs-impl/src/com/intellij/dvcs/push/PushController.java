@@ -26,14 +26,13 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.ui.CheckedTreeNode;
-import com.intellij.ui.SimpleColoredText;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
@@ -41,6 +40,7 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -162,33 +162,30 @@ public class PushController implements Disposable {
     if (target == null) {
       model.setError(VcsError.createEmptyTargetError(repoName));
     }
-    RepositoryWithBranchPanel repoPanel = new RepositoryWithBranchPanel(myProject, repoName,
-                                                                        support.getSource(repository).getPresentation(),
-                                                                        target == null ? "" : target.getPresentation(),
-                                                                        support.getTargetNames(repository));
+    final TargetEditor<T> targetEditor = support.createTargetEditor(repository, target == null ? "" : target.getPresentation());
+    RepositoryWithBranchPanel<T> repoPanel =
+      new RepositoryWithBranchPanel<T>(repoName, support.getSource(repository).getPresentation(), targetEditor);
+    repoPanel.setInputVerifier(new InputVerifier() {
+      @Override
+      public boolean verify(JComponent input) {
+        VcsError error = targetEditor.verify();
+        if (error != null) {
+          PopupUtil.showBalloonForComponent(targetEditor.getVerifiedComponent(), error.getText(), MessageType.WARNING, false, myProject);
+        }
+        return error == null;
+      }
+    });
     final RepositoryNode repoNode = isSingleRepositoryProject
-                                    ? new SingleRepositoryNode(repoPanel, support.renderTarget(target))
-                                    : new RepositoryNode(repoPanel, support.renderTarget(target));
+                                    ? new SingleRepositoryNode(repoPanel)
+                                    : new RepositoryNode(repoPanel);
     myView2Model.put(repoNode, model);
     repoNode.setChecked(model.isSelected());
-    repoPanel.addRepoNodeListener(new RepositoryNodeListener() {
+    repoPanel.addRepoNodeListener(new RepositoryNodeListener<T>() {
       @Override
-      public void onTargetChanged(String newValue) {
-        VcsError validationError = support.validate(model.getRepository(), newValue);
-        if (validationError == null) {
-          T newTarget = support.createTarget(repository, newValue);
-          repoNode.setTargetPresentation(support.renderTarget(newTarget));
-          model.setTarget(newTarget);
-          model.clearErrors();
-          loadCommits(model, repoNode, false);
-        }
-        else {
-          repoNode.setTargetPresentation(StringUtil.isEmptyOrSpaces(newValue)
-                                         ? support.renderTarget(null)
-                                         : new SimpleColoredText(newValue, SimpleTextAttributes.ERROR_ATTRIBUTES));
-          model.setError(validationError);   // todo may be should accept and store errors collection,  now store one major target error
-          model.setTarget(null);
-        }
+      public void onTargetChanged(T newTarget) {
+        model.setTarget(newTarget);
+        model.clearErrors();
+        loadCommits(model, repoNode, false);
         myDialog.updateButtons();
       }
 

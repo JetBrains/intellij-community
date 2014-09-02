@@ -13,21 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.dvcs.push.ui;
+package com.intellij.dvcs.push;
 
-import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.ui.ColoredTreeCellRenderer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public interface EditableTreeNode extends CustomRenderedTreeNode {
+import javax.swing.*;
+import java.awt.*;
 
-  void fireOnChange();
+public abstract class TargetEditor<T extends PushTarget> extends JPanel {
 
-  void fireOnCancel();
+  protected TargetEditor(BorderLayout layout) {
+    super(layout);
+  }
 
-  void fireOnSelectionChange(boolean isSelected);
-
-  void stopLoading();
+  abstract public void render(@NotNull ColoredTreeCellRenderer renderer);
 
   @NotNull
-  ProgressIndicator startLoading();
+  abstract public T getValue();
+
+  public abstract void fireOnCancel();
+
+  public abstract void fireOnChange();
+
+  @Nullable
+  public abstract VcsError verify();
+
+  @NotNull
+  public abstract JComponent getVerifiedComponent();
 }

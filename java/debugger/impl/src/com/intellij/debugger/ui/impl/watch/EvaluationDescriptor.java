@@ -27,12 +27,14 @@ import com.intellij.debugger.engine.evaluation.expression.Modifier;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionCodeFragment;
+import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
@@ -106,7 +108,11 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
 
       final Value value = evaluator.evaluate(thisEvaluationContext);
       if (value instanceof ObjectReference) {
-        thisEvaluationContext.getSuspendContext().keep(((ObjectReference)value));
+        ObjectReference objRef = (ObjectReference)value;
+        if (VirtualMachineProxyImpl.isCollected(objRef)) {
+          throw EvaluateExceptionUtil.OBJECT_WAS_COLLECTED;
+        }
+        thisEvaluationContext.getSuspendContext().keep(objRef);
       }
       myModifier = evaluator.getModifier();
       setLvalue(myModifier != null);
@@ -115,6 +121,9 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
     }
     catch (final EvaluateException ex) {
       throw new EvaluateException(ex.getLocalizedMessage(), ex);
+    }
+    catch (ObjectCollectedException ex) {
+      throw EvaluateExceptionUtil.OBJECT_WAS_COLLECTED;
     }
   }
 

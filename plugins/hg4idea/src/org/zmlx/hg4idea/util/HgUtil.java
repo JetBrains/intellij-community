@@ -41,6 +41,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.ui.GuiUtils;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -715,5 +716,15 @@ public abstract class HgUtil {
       email = "";
     }
     return Couple.of(userName, email);
+  }
+
+  @NotNull
+  public static List<String> getTargetNames(@NotNull HgRepository repository) {
+    return ContainerUtil.sorted(ContainerUtil.map(repository.getRepositoryConfig().getPaths(), new Function<String, String>() {
+      @Override
+      public String fun(String s) {
+        return removePasswordIfNeeded(s);
+      }
+    }));
   }
 }
