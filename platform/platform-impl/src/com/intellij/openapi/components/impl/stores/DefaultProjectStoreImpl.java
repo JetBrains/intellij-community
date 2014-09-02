@@ -73,7 +73,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
                                                             ComponentVersionProvider.EMPTY) {
       @Override
       @Nullable
-      protected Element loadDocument() {
+      protected Element loadLocalData() {
         return element;
       }
 

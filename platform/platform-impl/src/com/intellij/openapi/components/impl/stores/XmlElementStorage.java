@@ -93,7 +93,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   }
 
   @Nullable
-  protected abstract Element loadDocument();
+  protected abstract Element loadLocalData();
 
   @Nullable
   public synchronized Element getState(@NotNull String componentName) {
@@ -136,7 +136,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
   @NotNull
   protected StorageData loadData(boolean useProvidersData, @Nullable RoamingType roamingType) {
-    Element element = loadDocument();
+    Element element = loadLocalData();
     StorageData result = createStorageData();
 
     if (element != null) {
@@ -484,7 +484,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     @Nullable
     public Set<String> analyzeExternalChanges(@NotNull final Set<Pair<VirtualFile,StateStorage>> changedFiles) {
       try {
-        Element element = loadDocument();
+        Element element = loadLocalData();
         StorageData storageData = createStorageData();
         if (element == null) {
           return Collections.emptySet();

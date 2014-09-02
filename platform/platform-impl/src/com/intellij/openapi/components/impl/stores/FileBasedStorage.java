@@ -248,7 +248,7 @@ public class FileBasedStorage extends XmlElementStorage {
 
   @Override
   @Nullable
-  protected Element loadDocument() {
+  protected Element loadLocalData() {
     myBlockSavingTheContent = false;
     try {
       VirtualFile file = getVirtualFile();
@@ -259,7 +259,7 @@ public class FileBasedStorage extends XmlElementStorage {
       if (file.getLength() == 0) {
         return processReadException(null);
       }
-      return loadDocumentImpl(file);
+      return doLoadLocalData(file);
     }
     catch (final JDOMException e) {
       return processReadException(e);
@@ -295,7 +295,7 @@ public class FileBasedStorage extends XmlElementStorage {
   }
 
   @Nullable
-  private static Element loadDocumentImpl(@NotNull VirtualFile file) throws IOException, JDOMException {
+  private static Element doLoadLocalData(@NotNull VirtualFile file) throws IOException, JDOMException {
     InputStream stream = file.getInputStream();
     try {
       Document document = JDOMUtil.loadDocument(stream);

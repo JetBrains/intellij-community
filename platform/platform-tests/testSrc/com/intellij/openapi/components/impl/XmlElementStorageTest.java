@@ -93,7 +93,7 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
     }
 
     @Override
-    protected Element loadDocument() {
+    protected Element loadLocalData() {
       return myElement;
     }
 
