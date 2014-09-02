@@ -156,7 +156,7 @@ public class PopFrameAction extends DebuggerAction {
     }
     catch (InvalidStackFrameException ignored) {
     }
-    catch(VMDisconnectedException vde) {
+    catch(VMDisconnectedException ignored) {
     }
   }
 
@@ -164,28 +164,29 @@ public class PopFrameAction extends DebuggerAction {
                                      final JavaStackFrame stackFrame,
                                      final DebuggerContextImpl debuggerContext,
                                      final DebugProcessImpl debugProcess, StringBuilder sb) {
-    XExpressionImpl expression = XExpressionImpl.fromText(sb.toString());
-    expression = XExpressionImpl.changeMode(expression, EvaluationMode.CODE_FRAGMENT);
     XDebuggerEvaluator evaluator = stackFrame.getEvaluator();
     if (evaluator != null) {
-      evaluator.evaluate(expression, new XDebuggerEvaluator.XEvaluationCallback() {
-        @Override
-        public void evaluated(@NotNull XValue result) {
-          debugProcess.getManagerThread().schedule(debugProcess.createPopFrameCommand(debuggerContext, stackFrame.getStackFrameProxy()));
-        }
+      evaluator.evaluate(XExpressionImpl.fromText(sb.toString(), EvaluationMode.CODE_FRAGMENT),
+                         new XDebuggerEvaluator.XEvaluationCallback() {
+                           @Override
+                           public void evaluated(@NotNull XValue result) {
+                             debugProcess.getManagerThread()
+                               .schedule(debugProcess.createPopFrameCommand(debuggerContext, stackFrame.getStackFrameProxy()));
+                           }
 
-        @Override
-        public void errorOccurred(@NotNull final String errorMessage) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              Messages
-                .showMessageDialog(project, DebuggerBundle.message("error.executing.finally", errorMessage),
-                                   UIUtil.removeMnemonic(ActionsBundle.actionText(DebuggerActions.POP_FRAME)), Messages.getErrorIcon());
-            }
-          });
-        }
-      }, stackFrame.getSourcePosition());
+                           @Override
+                           public void errorOccurred(@NotNull final String errorMessage) {
+                             ApplicationManager.getApplication().invokeLater(new Runnable() {
+                               @Override
+                               public void run() {
+                                 Messages
+                                   .showMessageDialog(project, DebuggerBundle.message("error.executing.finally", errorMessage),
+                                                      UIUtil.removeMnemonic(ActionsBundle.actionText(DebuggerActions.POP_FRAME)),
+                                                      Messages.getErrorIcon());
+                               }
+                             });
+                           }
+                         }, stackFrame.getSourcePosition());
     }
     else {
       Messages.showMessageDialog(project, XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.not.evaluator"),
