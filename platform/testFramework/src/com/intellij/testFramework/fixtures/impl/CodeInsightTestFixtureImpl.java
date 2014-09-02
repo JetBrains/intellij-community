@@ -185,7 +185,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
 
     VirtualFile result;
-    final String path = fromFile.getPath();
+    final String path = fromFile.getAbsolutePath();
     if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
       VfsRootAccess.allowRootAccess(path);
       Disposer.register(myTestRootDisposable, new Disposable() {
