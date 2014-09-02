@@ -164,7 +164,7 @@ public layoutEducational(String classesPath, Set usedJars) {
     projectBuilder.moduleRuntimeClasspath(findModule("main_pycharm_edu"), false).each {
       ant.pathelement(location: it)
     }
-  }, "-Didea.platform.prefix=PyCharmEdu -Didea.no.jre.check=true")
+  }, "-Didea.platform.prefix=PyCharmPE -Didea.no.jre.check=true")
 
   if (!dryRun) {
     wireBuildDate("PE-${buildNumber}", appInfo)
@@ -173,7 +173,7 @@ public layoutEducational(String classesPath, Set usedJars) {
   Map args = [
     buildNumber: "PE-${buildNumber}",
     system_selector: system_selector,
-    ide_jvm_args: "-Didea.platform.prefix=PyCharmEdu -Didea.no.jre.check=true"]
+    ide_jvm_args: "-Didea.platform.prefix=PyCharmPE -Didea.no.jre.check=true"]
 
   LayoutInfo layoutInfo = layoutFull(args, paths.distAll, usedJars)
   generateLicensesTable("$paths.artifacts/third-party-libraries.txt", layoutInfo.usedModules);
