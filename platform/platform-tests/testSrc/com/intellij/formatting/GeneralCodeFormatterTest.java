@@ -109,7 +109,7 @@ import java.io.IOException;
     indentOptions.INDENT_SIZE = 4;
     indentOptions.LABEL_INDENT_SIZE = 1;
     final CodeStyleSettings settings = new CodeStyleSettings(false);
-    settings.RIGHT_MARGIN = myRightMargin;
+    settings.setDefaultRightMargin(myRightMargin);
     try {
       FormatterEx.getInstanceEx().adjustLineIndent(model, settings, indentOptions, initialText.length() - 1, new TextRange(0, initialText.length()));
     }
@@ -200,7 +200,7 @@ import java.io.IOException;
     indentOptions.INDENT_SIZE = 4;
     indentOptions.LABEL_INDENT_SIZE = 1;
     final CodeStyleSettings settings = new CodeStyleSettings(false);
-    settings.RIGHT_MARGIN = myRightMargin;
+    settings.setDefaultRightMargin(myRightMargin);
     try {
       FormatterEx.getInstanceEx().format(model, settings, indentOptions, indentOptions, null);
     }
