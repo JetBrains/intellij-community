@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.tasks.Task;
-import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.gitlab.model.GitlabIssue;
 import com.intellij.tasks.gitlab.model.GitlabProject;
@@ -14,7 +13,9 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
-import org.apache.http.*;
+import org.apache.http.HttpException;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.protocol.HttpContext;
@@ -118,24 +119,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   @Nullable
   @Override
   public CancellableConnection createCancellableConnection() {
-    return new CancellableConnection() {
-      private HttpGet myRequest = new HttpGet(getIssuesUrl());
-
-      @Override
-      protected void doTest() throws Exception {
-        HttpResponse response = getHttpClient().execute(myRequest);
-        StatusLine statusLine = response.getStatusLine();
-        if (statusLine != null && statusLine.getStatusCode() != HttpStatus.SC_OK) {
-          throw new Exception(TaskBundle.message("failure.http.error", statusLine.getStatusCode(), statusLine.getReasonPhrase()));
-        }
-      }
-
-      // TODO: find more about proper request aborting in HttpClient4.x
-      @Override
-      public void cancel() {
-        myRequest.abort();
-      }
-    };
+    return new HttpTestConnection(new HttpGet(getIssuesUrl()));
   }
 
   /**
