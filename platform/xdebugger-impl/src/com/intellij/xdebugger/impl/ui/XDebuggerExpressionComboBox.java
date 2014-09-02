@@ -114,7 +114,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
 
   @Override
   protected void onHistoryChanged() {
-    //fillComboBox();
+    fillComboBox();
   }
 
   private void fillComboBox() {
