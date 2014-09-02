@@ -234,7 +234,7 @@ public class InferenceSession {
           !MethodCandidateInfo.ourOverloadGuard.currentStack().contains(PsiUtil.skipParenthesizedExprUp(parent.getParent()))) {
         final Set<ConstraintFormula> additionalConstraints = new LinkedHashSet<ConstraintFormula>();
         if (parameters.length > 0) {
-          collectAdditionalConstraints(parameters, args, properties.getMethod(), PsiSubstitutor.EMPTY, additionalConstraints, properties.isVarargs(), true);
+          collectAdditionalConstraints(parameters, args, properties.getMethod(), PsiSubstitutor.EMPTY, additionalConstraints, properties.isVarargs());
         }
 
         if (!additionalConstraints.isEmpty() && !proceedWithAdditionalConstraints(additionalConstraints)) {
@@ -264,7 +264,7 @@ public class InferenceSession {
                                             PsiMethod parentMethod,
                                             PsiSubstitutor siteSubstitutor,
                                             Set<ConstraintFormula> additionalConstraints,
-                                            boolean varargs, boolean toplevel) {
+                                            boolean varargs) {
     for (int i = 0; i < args.length; i++) {
       final PsiExpression arg = PsiUtil.skipParenthesizedExprDown(args[i]);
       if (arg != null) {
@@ -280,7 +280,7 @@ public class InferenceSession {
           //the set contains all constraint formulas that would appear in the set C when determining the poly expression's invocation type.
           final PsiCallExpression callExpression = (PsiCallExpression)arg;
           collectAdditionalConstraints(additionalConstraints, callExpression);
-        } else if (arg instanceof PsiLambdaExpression && toplevel) {
+        } else if (arg instanceof PsiLambdaExpression) {
           collectLambdaReturnExpression(additionalConstraints, (PsiLambdaExpression)arg, parameterType);
         }
       }
@@ -339,7 +339,7 @@ public class InferenceSession {
         final PsiParameter[] newParams = method.getParameterList().getParameters();
         if (newParams.length > 0) {
           collectAdditionalConstraints(newParams, newArgs, method, result != null ? ((MethodCandidateInfo)result).getSiteSubstitutor() : properties.getSubstitutor(),
-                                       additionalConstraints, result != null ?  ((MethodCandidateInfo)result).isVarargs() : properties.isVarargs(), false);
+                                       additionalConstraints, result != null ?  ((MethodCandidateInfo)result).isVarargs() : properties.isVarargs());
         }
       }
     }
