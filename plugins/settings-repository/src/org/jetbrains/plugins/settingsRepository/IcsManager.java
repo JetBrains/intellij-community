@@ -341,7 +341,7 @@ public final class IcsManager implements ApplicationLoadListener, Disposable {
 
     @Override
     public boolean isEnabled() {
-      return true;
+      return repositoryManager != null;
     }
 
     @Override

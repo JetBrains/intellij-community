@@ -133,7 +133,7 @@ public class GitTest {
   public void add() throws IOException {
     byte[] data = FileUtil.loadFileBytes(new File(getTestDataPath(), "encoding.xml"));
     String addedFile = "$APP_CONFIG$/encoding.xml";
-    getProvider().saveContent(addedFile, data, data.length, RoamingType.GLOBAL, false);
+    getProvider().saveContent(addedFile, data, data.length, RoamingType.PER_USER, false);
 
     GitEx git = getRepositoryManager().getGit();
     IndexDiff diff = git.computeIndexDiff();
@@ -155,8 +155,8 @@ public class GitTest {
 
   private static void delete(byte[] data, boolean directory) throws IOException {
     String addedFile = "$APP_CONFIG$/encoding.xml";
-    getProvider().saveContent(addedFile, data, data.length, RoamingType.GLOBAL, true);
-    getProvider().delete(directory ? "$APP_CONFIG$" : addedFile, RoamingType.GLOBAL);
+    getProvider().saveContent(addedFile, data, data.length, RoamingType.PER_USER, true);
+    getProvider().delete(directory ? "$APP_CONFIG$" : addedFile, RoamingType.PER_USER);
 
     GitEx git = getRepositoryManager().getGit();
     IndexDiff diff = git.computeIndexDiff();
@@ -218,7 +218,7 @@ public class GitTest {
 
     byte[] data = FileUtil.loadFileBytes(new File(getTestDataPath(), "crucibleConnector.xml"));
     String addedFile = "$APP_CONFIG$/crucibleConnector.xml";
-    getProvider().saveContent(addedFile, data, data.length, RoamingType.GLOBAL, false);
+    getProvider().saveContent(addedFile, data, data.length, RoamingType.PER_USER, false);
 
     EmptyProgressIndicator progressIndicator = new EmptyProgressIndicator();
     repositoryManager.commit(progressIndicator);
