@@ -24,11 +24,6 @@ import org.jetbrains.annotations.NotNull;
 public class PyReferringObjectsValue extends PyDebugValue {
   private static final Logger LOG = Logger.getInstance(PyReferringObjectsValue.class);
 
-  //private final boolean myIsField;
-
-  private String myId;
-  private String myFoundAs;
-
   private final @NotNull PyReferrersLoader myReferrersLoader;
 
   public PyReferringObjectsValue(@NotNull String name,
@@ -41,7 +36,6 @@ public class PyReferringObjectsValue extends PyDebugValue {
 
   public PyReferringObjectsValue(PyDebugValue debugValue) {
     this(debugValue.getName(), debugValue.getType(), debugValue.getValue(), debugValue.isContainer(), debugValue.isErrorOnEval(), debugValue.getFrameAccessor());
-    //myIsField = isField;
   }
 
   @Override
@@ -73,14 +67,5 @@ public class PyReferringObjectsValue extends PyDebugValue {
 
   public boolean isField() {
     return false; //TODO
-  }
-
-  public String getId() {
-    return myId;
-  }
-
-  public void setReferrerFoundInfo(String id, String foundAs) {
-    myId = id;
-    myFoundAs = foundAs;
   }
 }
