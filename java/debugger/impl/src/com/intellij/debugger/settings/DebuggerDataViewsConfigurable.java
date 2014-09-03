@@ -53,7 +53,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
   private JCheckBox myCbShowObjectId;
 
   private StateRestoringCheckBox myCbShowStaticFinalFields;
-  private final ArrayRendererConfigurable myArrayRendererConfigurable;
+  //private final ArrayRendererConfigurable myArrayRendererConfigurable;
   private JCheckBox myCbEnableAlternateViews;
 
   private JCheckBox myCbEnableToString;
@@ -66,12 +66,12 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
 
   public DebuggerDataViewsConfigurable(@Nullable Project project) {
     myProject = project;
-    myArrayRendererConfigurable = new ArrayRendererConfigurable(NodeRendererSettings.getInstance().getArrayRenderer());
+    //myArrayRendererConfigurable = new ArrayRendererConfigurable(NodeRendererSettings.getInstance().getArrayRenderer());
   }
 
   @Override
   public void disposeUIResources() {
-    myArrayRendererConfigurable.disposeUIResources();
+    //myArrayRendererConfigurable.disposeUIResources();
     myToStringFilterEditor = null;
     myProject = null;
   }
@@ -165,13 +165,14 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
 
     panel.add(showPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(4, 0, 0, 0), 0, 0));
 
-    final JPanel arraysPanel = new JPanel(new BorderLayout(0, UIUtil.DEFAULT_VGAP));
-    final JComponent arraysComponent = myArrayRendererConfigurable.createComponent();
-    assert arraysComponent != null;
-    arraysPanel.add(arraysComponent, BorderLayout.CENTER);
-    arraysPanel.add(myCbHideNullArrayElements, BorderLayout.SOUTH);
-    arraysPanel.setBorder(IdeBorderFactory.createTitledBorder("Arrays", true));
-    panel.add(arraysPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    //final JPanel arraysPanel = new JPanel(new BorderLayout(0, UIUtil.DEFAULT_VGAP));
+    //final JComponent arraysComponent = myArrayRendererConfigurable.createComponent();
+    //assert arraysComponent != null;
+    //arraysPanel.add(arraysComponent, BorderLayout.CENTER);
+    //arraysPanel.add(myCbHideNullArrayElements, BorderLayout.SOUTH);
+    //arraysPanel.setBorder(IdeBorderFactory.createTitledBorder("Arrays", true));
+    //panel.add(arraysPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    panel.add(myCbHideNullArrayElements, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
 
     panel.add(myCbEnableAlternateViews, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 10), 0, 0));
     // starting 4-th row
@@ -209,7 +210,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
 
     myAutoTooltip.save();
 
-    myArrayRendererConfigurable.apply();
+    //myArrayRendererConfigurable.apply();
 
     rendererSettings.fireRenderersChanged();
   }
@@ -250,7 +251,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     myRbFromList.setEnabled(toStringEnabled);
     myRbAllThatOverride.setEnabled(toStringEnabled);
 
-    myArrayRendererConfigurable.reset();
+    //myArrayRendererConfigurable.reset();
   }
 
   @Override
@@ -266,9 +267,9 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
   }
 
   private boolean areDefaultRenderersModified() {
-    if (myArrayRendererConfigurable.isModified()) {
-      return true;
-    }
+    //if (myArrayRendererConfigurable.isModified()) {
+    //  return true;
+    //}
 
     final NodeRendererSettings rendererSettings = NodeRendererSettings.getInstance();
 

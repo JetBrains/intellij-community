@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zmlx.hg4idea.action;
+package org.zmlx.hg4idea.branch;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.Repository;
@@ -35,6 +35,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
 import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.action.HgAbstractGlobalAction;
+import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgBookmarkCommand;
 import org.zmlx.hg4idea.command.HgBranchCreateCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
@@ -73,7 +75,7 @@ public class HgBranchPopupActions {
     List<String> bookmarkNames = getNamesWithoutHashes(myRepository.getBookmarks());
     String currentBookmark = myRepository.getCurrentBookmark();
     for (String bookmark : bookmarkNames) {
-      AnAction bookmarkAction = new BookmarkActions(myProject, myRepository, bookmark);
+      AnAction bookmarkAction = new BookmarkActions(myProject, Collections.singletonList(myRepository), bookmark);
       if (bookmark.equals(currentBookmark)) {
         bookmarkAction.getTemplatePresentation().setIcon(PlatformIcons.CHECK_ICON);
       }
@@ -85,13 +87,13 @@ public class HgBranchPopupActions {
     Collections.sort(branchNamesList);
     for (String branch : branchNamesList) {
       if (!branch.equals(myRepository.getCurrentBranch())) { // don't show current branch in the list
-        popupGroup.add(new HgCommonBranchActions(myProject, myRepository, branch));
+        popupGroup.add(new HgCommonBranchActions(myProject, Collections.singletonList(myRepository), branch));
       }
     }
     return popupGroup;
   }
 
-  private static class HgNewBranchAction extends NewBranchAction<HgRepository> {
+  public static class HgNewBranchAction extends NewBranchAction<HgRepository> {
     @NotNull final HgRepository myPreselectedRepo;
 
     HgNewBranchAction(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull HgRepository preselectedRepo) {
@@ -105,25 +107,27 @@ public class HgBranchPopupActions {
       if (name == null) {
         return;
       }
-      try {
-        new HgBranchCreateCommand(myProject, myPreselectedRepo.getRoot(), name).execute(new HgCommandResultHandler() {
-          @Override
-          public void process(@Nullable HgCommandResult result) {
-            myPreselectedRepo.update();
-            if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
-              new HgCommandResultNotifier(myProject)
-                .notifyError(result, "Creation failed", "Branch creation [" + name + "] failed");
+      for (final HgRepository repository : myRepositories) {
+        try {
+          new HgBranchCreateCommand(myProject, repository.getRoot(), name).execute(new HgCommandResultHandler() {
+            @Override
+            public void process(@Nullable HgCommandResult result) {
+              repository.update();
+              if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
+                new HgCommandResultNotifier(myProject)
+                  .notifyError(result, "Creation failed", "Branch creation [" + name + "] failed");
+              }
             }
-          }
-        });
-      }
-      catch (HgCommandException exception) {
-        HgAbstractGlobalAction.handleException(myProject, "Can't create new branch: ", exception);
+          });
+        }
+        catch (HgCommandException exception) {
+          HgAbstractGlobalAction.handleException(myProject, "Can't create new branch: ", exception);
+        }
       }
     }
   }
 
-  private static class HgNewBookmarkAction extends DumbAwareAction {
+  public static class HgNewBookmarkAction extends DumbAwareAction {
     @NotNull protected final List<HgRepository> myRepositories;
     @NotNull protected Project myProject;
     @NotNull final HgRepository myPreselectedRepo;
@@ -149,18 +153,20 @@ public class HgBranchPopupActions {
       final HgBookmarkDialog bookmarkDialog = new HgBookmarkDialog(myPreselectedRepo);
       bookmarkDialog.show();
       if (bookmarkDialog.isOK()) {
-        try {
-          final String name = bookmarkDialog.getName();
-          new HgBookmarkCommand(myProject, myPreselectedRepo.getRoot(), name).createBookmark(bookmarkDialog.isActive());
-        }
-        catch (HgCommandException exception) {
-          HgAbstractGlobalAction.handleException(myProject, exception);
+        final String name = bookmarkDialog.getName();
+        for (HgRepository repository : myRepositories) {
+          try {
+            new HgBookmarkCommand(myProject, repository.getRoot(), name).createBookmark(bookmarkDialog.isActive());
+          }
+          catch (HgCommandException exception) {
+            HgAbstractGlobalAction.handleException(myProject, exception);
+          }
         }
       }
     }
   }
 
-  static private class HgShowUnnamedHeadsForCurrentBranchAction extends ActionGroup {
+  public static class HgShowUnnamedHeadsForCurrentBranchAction extends ActionGroup {
     @NotNull final Project myProject;
     @NotNull final HgRepository myRepository;
     @NotNull final String myCurrentBranchName;
@@ -210,7 +216,7 @@ public class HgBranchPopupActions {
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
       List<AnAction> branchHeadActions = new ArrayList<AnAction>();
       for (Hash hash : myHeads) {
-        branchHeadActions.add(new HgCommonBranchActions(myProject, myRepository, hash.toShortString()));
+        branchHeadActions.add(new HgCommonBranchActions(myProject, Collections.singletonList(myRepository), hash.toShortString()));
       }
       return ContainerUtil.toArray(branchHeadActions, new AnAction[branchHeadActions.size()]);
     }
@@ -232,29 +238,31 @@ public class HgBranchPopupActions {
    */
   static class BookmarkActions extends HgCommonBranchActions {
 
-    BookmarkActions(@NotNull Project project, @NotNull HgRepository selectedRepository, @NotNull String branchName) {
-      super(project, selectedRepository, branchName);
+    BookmarkActions(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
+      super(project, repositories, branchName);
     }
 
     @NotNull
     @Override
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
-      return ArrayUtil.append(super.getChildren(e), new DeleteBookmarkAction(myProject, mySelectedRepository, myBranchName));
+      return ArrayUtil.append(super.getChildren(e), new DeleteBookmarkAction(myProject, myRepositories, myBranchName));
     }
 
     private static class DeleteBookmarkAction extends HgBranchAbstractAction {
 
-      DeleteBookmarkAction(@NotNull Project project, @NotNull HgRepository selectedRepository, @NotNull String branchName) {
-        super(project, "Delete", selectedRepository, branchName);
+      DeleteBookmarkAction(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
+        super(project, "Delete", repositories, branchName);
       }
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        try {
-          new HgBookmarkCommand(myProject, mySelectedRepository.getRoot(), myBranchName).deleteBookmark();
-        }
-        catch (HgCommandException exception) {
-          HgAbstractGlobalAction.handleException(myProject, exception);
+        for (HgRepository repository : myRepositories) {
+          try {
+            new HgBookmarkCommand(myProject, repository.getRoot(), myBranchName).deleteBookmark();
+          }
+          catch (HgCommandException exception) {
+            HgAbstractGlobalAction.handleException(myProject, exception);
+          }
         }
       }
     }

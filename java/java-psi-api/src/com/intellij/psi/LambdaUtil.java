@@ -484,7 +484,8 @@ public class LambdaUtil {
            (((PsiPrefixExpression)body).getOperationTokenType() == JavaTokenType.PLUSPLUS ||
             ((PsiPrefixExpression)body).getOperationTokenType() == JavaTokenType.MINUSMINUS) ||
            body instanceof PsiPostfixExpression ||
-           body instanceof PsiCallExpression;
+           body instanceof PsiCallExpression ||
+           body instanceof PsiReferenceExpression && !body.isPhysical();
   }
 
   public static class TypeParamsChecker extends PsiTypeVisitor<Boolean> {

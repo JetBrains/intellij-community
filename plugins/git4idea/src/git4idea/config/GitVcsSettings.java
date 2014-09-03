@@ -15,12 +15,13 @@
  */
 package git4idea.config;
 
+import com.intellij.dvcs.branch.DvcsBranchSync;
+import com.intellij.dvcs.branch.DvcsSyncBranchSettings;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import git4idea.reset.GitResetMode;
-import git4idea.ui.branch.GitBranchSyncSetting;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,7 @@ import java.util.Map;
  * Git VCS settings
  */
 @State(name = "Git.Settings", roamingType = RoamingType.DISABLED, storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)})
-public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.State> {
+public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.State>, DvcsSyncBranchSettings {
 
   private static final int PREVIOUS_COMMIT_AUTHORS_LIMIT = 16; // Limit for previous commit authors
 
@@ -56,7 +57,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public UpdateChangesPolicy UPDATE_CHANGES_POLICY = UpdateChangesPolicy.STASH;
     public UpdateMethod UPDATE_TYPE = UpdateMethod.BRANCH_DEFAULT;
     public boolean PUSH_AUTO_UPDATE = false;
-    public GitBranchSyncSetting SYNC_SETTING = GitBranchSyncSetting.NOT_DECIDED;
+    public DvcsBranchSync SYNC_SETTING = DvcsBranchSync.NOT_DECIDED;
     public String RECENT_GIT_ROOT_PATH = null;
     public Map<String, String> RECENT_BRANCH_BY_REPOSITORY = new HashMap<String, String>();
     public String RECENT_COMMON_BRANCH = null;
@@ -128,11 +129,11 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
   }
 
   @NotNull
-  public GitBranchSyncSetting getSyncSetting() {
+  public DvcsBranchSync getSyncSetting() {
     return myState.SYNC_SETTING;
   }
 
-  public void setSyncSetting(@NotNull GitBranchSyncSetting syncSetting) {
+  public void setSyncSetting(@NotNull DvcsBranchSync syncSetting) {
     myState.SYNC_SETTING = syncSetting;
   }
 

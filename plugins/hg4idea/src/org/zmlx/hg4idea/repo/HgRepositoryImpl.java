@@ -21,6 +21,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -95,6 +96,19 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
   @Override
   public State getState() {
     return myInfo.getState();
+  }
+
+  @Nullable
+  @Override
+  /**
+   * Return active bookmark name if exist or heavy branch name otherwise
+   */
+  public String getCurrentBranchName() {
+    String branchOrBookMarkName = getCurrentBookmark();
+    if (StringUtil.isEmptyOrSpaces(branchOrBookMarkName)) {
+      branchOrBookMarkName = getCurrentBranch();
+    }
+    return branchOrBookMarkName;
   }
 
   @Nullable
