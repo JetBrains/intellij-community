@@ -23,6 +23,7 @@ import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.LinearGraphWithCommitInfo;
 import com.intellij.vcs.log.graph.api.LinearGraphWithElementInfo;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
+import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.api.printer.PrintElementWithGraphElement;
@@ -40,18 +41,18 @@ public abstract class AbstractPrintElementsManager<CommitId> implements PrintEle
   public static GraphEdge containedCollapsedEdge(@NotNull GraphElement element, @NotNull LinearGraphWithElementInfo graphWithElementsInfo) {
     if (element instanceof GraphEdge) {
       GraphEdge edge = (GraphEdge)element;
-      if (edge.getType() == GraphEdge.Type.HIDE)
+      if (edge.getType() == GraphEdgeType.DOTTED)
         return edge;
 
     } else {
       int nodeIndex = ((GraphNode)element).getNodeIndex();
       for (int upNode : graphWithElementsInfo.getUpNodes(nodeIndex)) {
-        if (graphWithElementsInfo.getEdgeType(upNode, nodeIndex) == GraphEdge.Type.HIDE)
-          return new GraphEdge(upNode, nodeIndex, GraphEdge.Type.HIDE);
+        if (graphWithElementsInfo.getEdgeType(upNode, nodeIndex) == GraphEdgeType.DOTTED)
+          return new GraphEdge(upNode, nodeIndex, GraphEdgeType.DOTTED);
       }
       for (int downNode : graphWithElementsInfo.getDownNodes(nodeIndex)) {
-        if (graphWithElementsInfo.getEdgeType(nodeIndex, downNode) == GraphEdge.Type.HIDE)
-          return new GraphEdge(nodeIndex, downNode, GraphEdge.Type.HIDE);
+        if (graphWithElementsInfo.getEdgeType(nodeIndex, downNode) == GraphEdgeType.DOTTED)
+          return new GraphEdge(nodeIndex, downNode, GraphEdgeType.DOTTED);
       }
     }
 

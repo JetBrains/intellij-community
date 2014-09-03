@@ -18,8 +18,8 @@ package com.intellij.vcs.log.graph.impl.visible.adapters;
 
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.LinearGraphWithHiddenNodes;
-import com.intellij.vcs.log.graph.api.elements.GraphEdge;
-import com.intellij.vcs.log.graph.api.elements.GraphNode;
+import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
+import com.intellij.vcs.log.graph.api.elements.GraphNodeType;
 import com.intellij.vcs.log.graph.utils.Flags;
 import com.intellij.vcs.log.graph.utils.IdFlags;
 import com.intellij.vcs.log.graph.utils.ListenerController;
@@ -59,14 +59,14 @@ public class LinearGraphAsGraphWithHiddenNodes implements LinearGraphWithHiddenN
 
   @NotNull
   @Override
-  public GraphNode.Type getNodeType(int nodeIndex) {
-    return GraphNode.Type.USUAL;
+  public GraphNodeType getNodeType(int nodeIndex) {
+    return GraphNodeType.USUAL;
   }
 
   @NotNull
   @Override
-  public GraphEdge.Type getEdgeType(int upNodeIndex, int downNodeIndex) {
-    return GraphEdge.Type.USUAL;
+  public GraphEdgeType getEdgeType(int upNodeIndex, int downNodeIndex) {
+    return GraphEdgeType.USUAL;
   }
 
   @NotNull
