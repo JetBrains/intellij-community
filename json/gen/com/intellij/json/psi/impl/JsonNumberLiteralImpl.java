@@ -17,7 +17,7 @@ public class JsonNumberLiteralImpl extends JsonLiteralImpl implements JsonNumber
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof JsonVisitor) ((JsonVisitor)visitor).visitNumberLiteral(this);
+    if (visitor instanceof JsonElementVisitor) ((JsonElementVisitor)visitor).visitNumberLiteral(this);
     else super.accept(visitor);
   }
 

@@ -17,7 +17,7 @@ public class JsonValueImpl extends JsonElementImpl implements JsonValue {
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof JsonVisitor) ((JsonVisitor)visitor).visitValue(this);
+    if (visitor instanceof JsonElementVisitor) ((JsonElementVisitor)visitor).visitValue(this);
     else super.accept(visitor);
   }
 

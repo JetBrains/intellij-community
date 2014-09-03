@@ -17,7 +17,7 @@ public class JsonStringLiteralImpl extends JsonLiteralImpl implements JsonString
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof JsonVisitor) ((JsonVisitor)visitor).visitStringLiteral(this);
+    if (visitor instanceof JsonElementVisitor) ((JsonElementVisitor)visitor).visitStringLiteral(this);
     else super.accept(visitor);
   }
 

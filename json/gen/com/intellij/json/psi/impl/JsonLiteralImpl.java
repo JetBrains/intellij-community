@@ -17,7 +17,7 @@ public class JsonLiteralImpl extends JsonLiteralMixin implements JsonLiteral {
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof JsonVisitor) ((JsonVisitor)visitor).visitLiteral(this);
+    if (visitor instanceof JsonElementVisitor) ((JsonElementVisitor)visitor).visitLiteral(this);
     else super.accept(visitor);
   }
 

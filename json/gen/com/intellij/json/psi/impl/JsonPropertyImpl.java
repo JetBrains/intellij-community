@@ -17,7 +17,7 @@ public class JsonPropertyImpl extends JsonPropertyMixin implements JsonProperty 
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof JsonVisitor) ((JsonVisitor)visitor).visitProperty(this);
+    if (visitor instanceof JsonElementVisitor) ((JsonElementVisitor)visitor).visitProperty(this);
     else super.accept(visitor);
   }
 

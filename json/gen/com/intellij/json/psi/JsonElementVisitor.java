@@ -5,7 +5,7 @@ import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiNamedElement;
 
-public class JsonVisitor extends PsiElementVisitor {
+public class JsonElementVisitor extends PsiElementVisitor {
 
   public void visitArray(@NotNull JsonArray o) {
     visitValue(o);
