@@ -13,24 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zmlx.hg4idea.action;
+package org.zmlx.hg4idea.branch;
 
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.repo.HgRepository;
 
+import java.util.List;
+
 public abstract class HgBranchAbstractAction extends DumbAwareAction {
   @NotNull protected final Project myProject;
-  @NotNull protected final HgRepository mySelectedRepository;
+  @NotNull protected final List<HgRepository> myRepositories;
   @NotNull protected final String myBranchName;
 
   public HgBranchAbstractAction(@NotNull Project project, @NotNull String title,
-                                @NotNull HgRepository selectedRepository,
+                                @NotNull List<HgRepository> repositories,
                                 @NotNull String branchName) {
     super(title);
     myProject = project;
-    mySelectedRepository = selectedRepository;
+    myRepositories = repositories;
     myBranchName = branchName;
   }
 }

@@ -15,8 +15,8 @@
  */
 package git4idea.ui.branch;
 
+import com.intellij.dvcs.branch.DvcsMultiRootBranchConfig;
 import com.intellij.util.containers.ContainerUtil;
-import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.branch.GitBranchUtil;
@@ -32,54 +32,17 @@ import java.util.Collections;
 /**
  * @author Kirill Likhodedov
  */
-public class GitMultiRootBranchConfig {
-  
-  private final Collection<GitRepository> myRepositories;
+public class GitMultiRootBranchConfig extends DvcsMultiRootBranchConfig<GitRepository> {
 
   public GitMultiRootBranchConfig(@NotNull Collection<GitRepository> repositories) {
-    myRepositories = repositories;
+    super(repositories);
   }
 
-  boolean diverged() {
-    return getCurrentBranch() == null;
-  }
-  
-  @Nullable
-  public String getCurrentBranch() {
-    String commonBranch = null;
-    for (GitRepository repository : myRepositories) {
-      GitBranch branch = repository.getCurrentBranch();
-      if (branch == null) {
-        return null;
-      }
-      // NB: if all repositories are in the rebasing state on the same branches, this branch is returned
-      if (commonBranch == null) {
-        commonBranch = branch.getName();
-      } else if (!commonBranch.equals(branch.getName())) {
-        return null;
-      }
-    }
-    return commonBranch;
-  }
-  
-  @Nullable
-  GitRepository.State getState() {
-    GitRepository.State commonState = null;
-    for (GitRepository repository : myRepositories) {
-      GitRepository.State state = repository.getState();
-      if (commonState == null) {
-        commonState = state;
-      } else if (!commonState.equals(state)) {
-        return null;
-      }
-    }
-    return commonState;
-  }
-  
+  @Override
   @NotNull
-  Collection<String> getLocalBranches() {
+  public Collection<String> getLocalBranchNames() {
     return GitBranchUtil.getCommonBranches(myRepositories, true);
-  }  
+  }
 
   @NotNull
   Collection<String> getRemoteBranches() {
