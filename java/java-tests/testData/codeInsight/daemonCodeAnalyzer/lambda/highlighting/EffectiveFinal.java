@@ -142,3 +142,11 @@ class IDEA128196 {
     new Thread(() -> System.out.println(value));
   }
 }
+
+class FinalAssignmentInInitializer {
+  private final String x;
+  {
+    Runnable r = () -> <error descr="Cannot assign a value to final variable 'x'">x</error> = "";
+    x = "";
+  }
+}
