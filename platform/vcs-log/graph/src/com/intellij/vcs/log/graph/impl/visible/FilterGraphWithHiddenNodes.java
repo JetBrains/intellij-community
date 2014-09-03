@@ -19,17 +19,18 @@ package com.intellij.vcs.log.graph.impl.visible;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.LinearGraphWithHiddenNodes;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.utils.Flags;
+import com.intellij.vcs.log.graph.utils.IntIntMultiMap;
 import com.intellij.vcs.log.graph.utils.ListenerController;
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
 import com.intellij.vcs.log.graph.utils.impl.SetListenerController;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 public class FilterGraphWithHiddenNodes implements LinearGraphWithHiddenNodes {
@@ -40,7 +41,7 @@ public class FilterGraphWithHiddenNodes implements LinearGraphWithHiddenNodes {
   private final Flags myVisibleNodes;
 
   @NotNull
-  private final DottedEdges myDottedEdges;
+  private final IntIntMultiMap myDottedEdges;
 
   @NotNull
   private final SetListenerController<UpdateListener> myListenerController = new SetListenerController<UpdateListener>();
@@ -52,8 +53,7 @@ public class FilterGraphWithHiddenNodes implements LinearGraphWithHiddenNodes {
       myVisibleNodes.set(i, delegateGraph.nodeIsVisible(i) && isVisibleNode.value(i)); // todo: think about it: may be drop myVisibleNodes
     }
 
-    MultiMap<Integer, Integer> edges = DottedEdgesComputer.compute(myDelegateGraph, myVisibleNodes);
-    myDottedEdges = DottedEdges.newInstance(edges);
+    myDottedEdges = DottedEdgesComputer.compute(myDelegateGraph, myVisibleNodes);
 
     addUpdateListener();
   }
@@ -86,7 +86,7 @@ public class FilterGraphWithHiddenNodes implements LinearGraphWithHiddenNodes {
   @NotNull
   @Override
   public GraphEdge.Type getEdgeType(int upNodeIndex, int downNodeIndex) {
-    if (myDottedEdges.getAdjacentNodes(upNodeIndex).contains(downNodeIndex))
+    if (myDottedEdges.get(upNodeIndex).contains(downNodeIndex))
       return GraphEdge.Type.HIDE;
     else
       return GraphEdge.Type.USUAL;
@@ -106,12 +106,15 @@ public class FilterGraphWithHiddenNodes implements LinearGraphWithHiddenNodes {
   @NotNull
   @Override
   public List<Integer> getUpNodes(int nodeIndex) {
+    if (!nodeIsVisible(nodeIndex))
+      return Collections.emptyList();
+
     List<Integer> upNodes = new SmartList<Integer>();
     for (int upNode : myDelegateGraph.getUpNodes(nodeIndex)) {
       if (nodeIsVisible(upNode))
         upNodes.add(upNode);
     }
-    for (int adjNode : myDottedEdges.getAdjacentNodes(nodeIndex)) {
+    for (int adjNode : myDottedEdges.get(nodeIndex)) {
       if (adjNode < nodeIndex)
         upNodes.add(adjNode);
     }
@@ -121,12 +124,15 @@ public class FilterGraphWithHiddenNodes implements LinearGraphWithHiddenNodes {
   @NotNull
   @Override
   public List<Integer> getDownNodes(int nodeIndex) {
+    if (!nodeIsVisible(nodeIndex))
+      return Collections.emptyList();
+
     List<Integer> downNodes = new SmartList<Integer>();
     for (int downNode : myDelegateGraph.getDownNodes(nodeIndex)) {
       if (downNode != LinearGraph.NOT_LOAD_COMMIT && nodeIsVisible(downNode))
         downNodes.add(downNode);
     }
-    for (int adjNode : myDottedEdges.getAdjacentNodes(nodeIndex)) {
+    for (int adjNode : myDottedEdges.get(nodeIndex)) {
       if (adjNode > nodeIndex)
         downNodes.add(adjNode);
     }

@@ -15,14 +15,14 @@
  */
 package com.intellij.vcs.log.graph.impl.visible;
 
-import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.utils.Flags;
+import com.intellij.vcs.log.graph.utils.IntIntMultiMap;
 import org.jetbrains.annotations.NotNull;
 
 public class DottedEdgesComputer {
   @NotNull
-  public static MultiMap<Integer, Integer> compute(@NotNull LinearGraph delegateGraph, @NotNull Flags visibleNodes) {
+  public static IntIntMultiMap compute(@NotNull LinearGraph delegateGraph, @NotNull Flags visibleNodes) {
     DottedEdgesComputer dottedEdgesComputer = new DottedEdgesComputer(delegateGraph, visibleNodes);
     dottedEdgesComputer.compute();
     return dottedEdgesComputer.myDottedEdges;
@@ -35,7 +35,7 @@ public class DottedEdgesComputer {
   private final Flags myVisibleNodes;
 
   @NotNull
-  private final MultiMap<Integer, Integer> myDottedEdges;
+  private final IntIntMultiMap myDottedEdges;
 
   @NotNull
   private final int[] myNumbers;
@@ -44,7 +44,7 @@ public class DottedEdgesComputer {
     assert delegateGraph.nodesCount() == visibleNodes.size();
     myDelegateGraph = delegateGraph;
     myVisibleNodes = visibleNodes;
-    myDottedEdges = MultiMap.create();
+    myDottedEdges = new IntIntMultiMap();
     myNumbers = new int[myDelegateGraph.nodesCount()];
   }
 
