@@ -150,3 +150,29 @@ class FinalAssignmentInInitializer {
     x = "";
   }
 }
+
+class AssignmentToFinalInsideLambda {
+  boolean isTrue() {
+    return true;
+  }
+
+  Runnable r = () -> {
+    final int i;
+    if (isTrue()) {
+      i = 1;
+    } else {
+      i = 0;
+    }
+  };
+
+  void a() {
+    Runnable r = () -> {
+      final int i;
+      if (isTrue()) {
+        i = 1;
+      } else {
+        i = 0;
+      }
+    };
+  }
+}
