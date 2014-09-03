@@ -21,8 +21,8 @@ import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.LinearGraphWithHiddenNodes;
-import com.intellij.vcs.log.graph.api.elements.GraphEdge;
-import com.intellij.vcs.log.graph.api.elements.GraphNode;
+import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
+import com.intellij.vcs.log.graph.api.elements.GraphNodeType;
 import com.intellij.vcs.log.graph.utils.Flags;
 import com.intellij.vcs.log.graph.utils.IntIntMultiMap;
 import com.intellij.vcs.log.graph.utils.ListenerController;
@@ -79,17 +79,17 @@ public class FilterGraphWithHiddenNodes implements LinearGraphWithHiddenNodes {
 
   @NotNull
   @Override
-  public GraphNode.Type getNodeType(int nodeIndex) {
-    return GraphNode.Type.USUAL;
+  public GraphNodeType getNodeType(int nodeIndex) {
+    return GraphNodeType.USUAL;
   }
 
   @NotNull
   @Override
-  public GraphEdge.Type getEdgeType(int upNodeIndex, int downNodeIndex) {
+  public GraphEdgeType getEdgeType(int upNodeIndex, int downNodeIndex) {
     if (myDottedEdges.get(upNodeIndex).contains(downNodeIndex))
-      return GraphEdge.Type.HIDE;
+      return GraphEdgeType.DOTTED;
     else
-      return GraphEdge.Type.USUAL;
+      return GraphEdgeType.USUAL;
   }
 
   @NotNull

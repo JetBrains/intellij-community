@@ -22,7 +22,8 @@ import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.LinearGraphWithElementInfo;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
-import com.intellij.vcs.log.graph.api.elements.GraphNode;
+import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
+import com.intellij.vcs.log.graph.api.elements.GraphNodeType;
 import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo;
 import com.intellij.vcs.log.graph.impl.facade.ContainingBranchesGetter;
 import com.intellij.vcs.log.graph.impl.print.EdgesInRowGenerator;
@@ -151,7 +152,7 @@ public class GraphStrUtils {
     return s.toString();
   }
   
-  private static char toChar(GraphNode.Type type) {
+  private static char toChar(GraphNodeType type) {
     switch (type) {
       case USUAL:
         return 'U';
@@ -160,11 +161,11 @@ public class GraphStrUtils {
     }
   }
   
-  private static char toChar(GraphEdge.Type type) {
+  private static char toChar(GraphEdgeType type) {
     switch (type) {
       case USUAL:
         return 'U';
-      case HIDE:
+      case DOTTED:
         return 'H';
       default:
         throw new IllegalStateException("Unexpected graph edge type: " + type);

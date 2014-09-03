@@ -22,9 +22,9 @@ public final class GraphEdge implements GraphElement {
   private final int myUpNodeIndex;
   private final int myDownNodeIndex;
   @NotNull
-  private final Type myType;
+  private final GraphEdgeType myType;
 
-  public GraphEdge(int upNodeIndex, int downNodeIndex, @NotNull Type type) {
+  public GraphEdge(int upNodeIndex, int downNodeIndex, @NotNull GraphEdgeType type) {
     myUpNodeIndex = upNodeIndex;
     myDownNodeIndex = downNodeIndex;
     myType = type;
@@ -39,7 +39,7 @@ public final class GraphEdge implements GraphElement {
   }
 
   @NotNull
-  public Type getType() {
+  public GraphEdgeType getType() {
     return myType;
   }
 
@@ -65,8 +65,4 @@ public final class GraphEdge implements GraphElement {
     return result;
   }
 
-  public enum Type {
-    USUAL,
-    HIDE
-  }
 }

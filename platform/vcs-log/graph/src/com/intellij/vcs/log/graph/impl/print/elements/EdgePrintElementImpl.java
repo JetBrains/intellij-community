@@ -18,16 +18,17 @@ package com.intellij.vcs.log.graph.impl.print.elements;
 
 import com.intellij.vcs.log.graph.EdgePrintElement;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
+import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.printer.PrintElementsManager;
 import org.jetbrains.annotations.NotNull;
 
 public class EdgePrintElementImpl extends AbstractPrintElement implements EdgePrintElement {
   @NotNull
-  public static EdgePrintElement.LineStyle convertToLineStyle(@NotNull GraphEdge.Type edgeType) {
+  public static EdgePrintElement.LineStyle convertToLineStyle(@NotNull GraphEdgeType edgeType) {
     switch (edgeType) {
       case USUAL:
         return EdgePrintElement.LineStyle.SOLID;
-      case HIDE:
+      case DOTTED:
         return EdgePrintElement.LineStyle.DASHED;
       default:
         throw new IllegalStateException("Edge type not supported: " + edgeType);

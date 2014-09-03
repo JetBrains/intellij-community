@@ -15,8 +15,8 @@
  */
 package com.intellij.vcs.log.graph.api;
 
-import com.intellij.vcs.log.graph.api.elements.GraphEdge;
-import com.intellij.vcs.log.graph.api.elements.GraphNode;
+import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
+import com.intellij.vcs.log.graph.api.elements.GraphNodeType;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -24,8 +24,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface LinearGraphWithElementInfo extends LinearGraph {
   @NotNull
-  GraphNode.Type getNodeType(int nodeIndex);
+  GraphNodeType getNodeType(int nodeIndex);
 
   @NotNull
-  GraphEdge.Type getEdgeType(int upNodeIndex, int downNodeIndex);
+  GraphEdgeType getEdgeType(int upNodeIndex, int downNodeIndex);
 }

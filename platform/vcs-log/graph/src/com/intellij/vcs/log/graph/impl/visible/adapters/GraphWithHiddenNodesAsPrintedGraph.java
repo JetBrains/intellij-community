@@ -17,15 +17,15 @@
 package com.intellij.vcs.log.graph.impl.visible.adapters;
 
 import com.intellij.util.BooleanFunction;
+import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.LinearGraphWithHiddenNodes;
 import com.intellij.vcs.log.graph.api.PrintedLinearGraph;
-import com.intellij.vcs.log.graph.api.elements.GraphEdge;
-import com.intellij.vcs.log.graph.api.elements.GraphNode;
+import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
+import com.intellij.vcs.log.graph.api.elements.GraphNodeType;
 import com.intellij.vcs.log.graph.utils.IntToIntMap;
 import com.intellij.vcs.log.graph.utils.UpdatableIntToIntMap;
 import com.intellij.vcs.log.graph.utils.impl.ListIntToIntMap;
-import com.intellij.vcs.log.graph.api.GraphLayout;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.AbstractList;
@@ -74,16 +74,16 @@ public class GraphWithHiddenNodesAsPrintedGraph implements PrintedLinearGraph {
 
   @NotNull
   @Override
-  public GraphNode.Type getNodeType(int nodeIndex) {
+  public GraphNodeType getNodeType(int nodeIndex) {
     return myDelegateGraph.getNodeType(getIndexInPermanentGraph(nodeIndex));
   }
 
   @NotNull
   @Override
-  public GraphEdge.Type getEdgeType(int upNodeIndex, int downNodeIndex) {
+  public GraphEdgeType getEdgeType(int upNodeIndex, int downNodeIndex) {
     int upIndex = getIndexInPermanentGraph(upNodeIndex);
     if (downNodeIndex == LinearGraph.NOT_LOAD_COMMIT)
-      return GraphEdge.Type.USUAL;
+      return GraphEdgeType.USUAL;
 
     int downIndex = getIndexInPermanentGraph(downNodeIndex);
     return myDelegateGraph.getEdgeType(upIndex, downIndex);
@@ -124,6 +124,7 @@ public class GraphWithHiddenNodesAsPrintedGraph implements PrintedLinearGraph {
       this.longIndexNodes = longIndexNodes;
     }
 
+    @NotNull
     @Override
     public Integer get(int index) {
       Integer longIndex = longIndexNodes.get(index);
