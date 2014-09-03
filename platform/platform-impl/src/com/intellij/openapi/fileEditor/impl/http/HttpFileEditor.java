@@ -20,6 +20,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.BaseRemoteFileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
+import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,14 +29,16 @@ import javax.swing.*;
 /**
  * @author nik
  */
-public class HttpFileEditor extends BaseRemoteFileEditor {
+class HttpFileEditor extends BaseRemoteFileEditor {
   private final RemoteFilePanel myPanel;
 
   public HttpFileEditor(@NotNull Project project, @NotNull HttpVirtualFile virtualFile) {
     super(project);
 
     myPanel = new RemoteFilePanel(project, virtualFile, this);
-    virtualFile.getFileInfo().download().doWhenDone(new Runnable() {
+    RemoteFileInfo fileInfo = virtualFile.getFileInfo();
+    assert fileInfo != null;
+    fileInfo.download().doWhenDone(new Runnable() {
       @Override
       public void run() {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
