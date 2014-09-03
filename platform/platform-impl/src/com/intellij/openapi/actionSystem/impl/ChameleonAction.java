@@ -47,12 +47,12 @@ public class ChameleonAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     getAction(e).actionPerformed(e);
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     AnAction action = getAction(e);
     action.update(e);
     getTemplatePresentation().setEnabled(e.getPresentation().isEnabled());
