@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -44,13 +46,11 @@ public class FileUtilRt {
   private static final boolean USE_FILE_CHANNELS = "true".equalsIgnoreCase(System.getProperty("idea.fs.useChannels"));
 
   public static final FileFilter ALL_FILES = new FileFilter() {
-    @Override
     public boolean accept(File file) {
       return true;
     }
   };
   public static final FileFilter ALL_DIRECTORIES = new FileFilter() {
-    @Override
     public boolean accept(File file) {
       return file.isDirectory();
     }
@@ -72,6 +72,13 @@ public class FileUtilRt {
     return fileName.substring(index + 1);
   }
 
+  @NotNull
+  public static CharSequence getExtension(@NotNull CharSequence fileName) {
+    int index = StringUtilRt.lastIndexOf(fileName, '.', 0, fileName.length());
+    if (index < 0) return "";
+    return fileName.subSequence(index + 1, fileName.length());
+  }
+
   public static boolean extensionEquals(@NotNull String fileName, @NotNull String extension) {
     int extLen = extension.length();
     if (extLen == 0) {
@@ -83,18 +90,18 @@ public class FileUtilRt {
   }
 
   @NotNull
-  public static String toSystemDependentName(@NonNls @NotNull String aFileName) {
-    return toSystemDependentName(aFileName, File.separatorChar);
+  public static String toSystemDependentName(@NonNls @NotNull String fileName) {
+    return toSystemDependentName(fileName, File.separatorChar);
   }
 
   @NotNull
-  public static String toSystemDependentName(@NonNls @NotNull String aFileName, final char separatorChar) {
-    return aFileName.replace('/', separatorChar).replace('\\', separatorChar);
+  public static String toSystemDependentName(@NonNls @NotNull String fileName, final char separatorChar) {
+    return fileName.replace('/', separatorChar).replace('\\', separatorChar);
   }
 
   @NotNull
-  public static String toSystemIndependentName(@NonNls @NotNull String aFileName) {
-    return aFileName.replace('\\', '/');
+  public static String toSystemIndependentName(@NonNls @NotNull String fileName) {
+    return fileName.replace('\\', '/');
   }
 
   @Nullable
@@ -170,8 +177,8 @@ public class FileUtilRt {
     return createTempDirectory(prefix, suffix, true);
   }
 
-  public static File createTempDirectory(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix,
-                                         boolean deleteOnExit) throws IOException {
+  @NotNull
+  public static File createTempDirectory(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix, boolean deleteOnExit) throws IOException {
     final File dir = new File(getTempDirectory());
     return createTempDirectory(dir, prefix, suffix, deleteOnExit);
   }
@@ -186,14 +193,11 @@ public class FileUtilRt {
   public static File createTempDirectory(@NotNull File dir,
                                          @NotNull @NonNls String prefix, @Nullable @NonNls String suffix,
                                          boolean deleteOnExit) throws IOException {
-    File file = doCreateTempFile(dir, prefix, suffix);
+    File file = doCreateTempFile(dir, prefix, suffix, true);
     if (deleteOnExit) {
       file.deleteOnExit();
     }
-    if (!file.delete() && file.exists()) {
-      throw new IOException("Cannot delete file: " + file);
-    }
-    if (!file.mkdir() && !file.isDirectory()) {
+    if (!file.isDirectory()) {
       throw new IOException("Cannot create directory: " + file);
     }
     return file;
@@ -228,7 +232,7 @@ public class FileUtilRt {
   public static File createTempFile(@NonNls File dir,
                                     @NotNull @NonNls String prefix, @Nullable @NonNls String suffix,
                                     boolean create, boolean deleteOnExit) throws IOException {
-    File file = doCreateTempFile(dir, prefix, suffix);
+    File file = doCreateTempFile(dir, prefix, suffix, false);
     if (deleteOnExit) {
       file.deleteOnExit();
     }
@@ -242,19 +246,23 @@ public class FileUtilRt {
 
   @NotNull
   private static File doCreateTempFile(@NotNull File dir,
-                                       @NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
+                                       @NotNull @NonNls String prefix,
+                                       @Nullable @NonNls String suffix,
+                                       boolean isDirectory) throws IOException {
     //noinspection ResultOfMethodCallIgnored
     dir.mkdirs();
 
     if (prefix.length() < 3) {
       prefix = (prefix + "___").substring(0, 3);
     }
+    if (suffix == null) {
+      suffix = ".tmp";
+    }
 
     int exceptionsCount = 0;
     while (true) {
       try {
-        //noinspection SSBasedInspection
-        final File temp = File.createTempFile(prefix, suffix, dir);
+        final File temp = createTemp(prefix, suffix, dir, isDirectory);
         return normalizeFile(temp);
       }
       catch (IOException e) { // Win32 createFileExclusively access denied
@@ -265,7 +273,33 @@ public class FileUtilRt {
     }
   }
 
-  private static File normalizeFile(File temp) throws IOException {
+  @NotNull
+  private static File createTemp(@NotNull String prefix, @NotNull String suffix, @NotNull File directory, boolean isDirectory) throws IOException {
+    // normalize and use only the file name from the prefix
+    prefix = new File(prefix).getName();
+
+    File f;
+    int i = 0;
+    do {
+      String name = prefix + i + suffix;
+      f = new File(directory, name);
+      if (!name.equals(f.getName())) {
+        throw new IOException("Unable to create temporary file " + f + " for name " + name);
+      }
+      i++;
+    }
+    while (f.exists());
+
+    boolean success = isDirectory ? f.mkdir() : f.createNewFile();
+    if (!success) {
+      throw new IOException("Unable to create temporary file " + f);
+    }
+
+    return f;
+  }
+
+  @NotNull
+  private static File normalizeFile(@NotNull File temp) throws IOException {
     final File canonical = temp.getCanonicalFile();
     return SystemInfoRt.isWindows && canonical.getAbsolutePath().contains(" ") ? temp.getAbsoluteFile() : canonical;
   }
@@ -278,6 +312,7 @@ public class FileUtilRt {
     return ourCanonicalTempPathCache;
   }
 
+  @NotNull
   private static String calcCanonicalTempPath() {
     final File file = new File(System.getProperty("java.io.tmpdir"));
     try {
@@ -382,6 +417,50 @@ public class FileUtilRt {
   }
 
   @NotNull
+  public static List<String> loadLines(@NotNull File file) throws IOException {
+    return loadLines(file.getPath());
+  }
+
+  @NotNull
+  public static List<String> loadLines(@NotNull File file, @Nullable @NonNls String encoding) throws IOException {
+    return loadLines(file.getPath(), encoding);
+  }
+
+  @NotNull
+  public static List<String> loadLines(@NotNull String path) throws IOException {
+    return loadLines(path, null);
+  }
+
+  @NotNull
+  public static List<String> loadLines(@NotNull String path, @Nullable @NonNls String encoding) throws IOException {
+    InputStream stream = new FileInputStream(path);
+    try {
+      @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+      InputStreamReader in = encoding == null ? new InputStreamReader(stream) : new InputStreamReader(stream, encoding);
+      BufferedReader reader = new BufferedReader(in);
+      try {
+        return loadLines(reader);
+      }
+      finally {
+        reader.close();
+      }
+    }
+    finally {
+      stream.close();
+    }
+  }
+
+  @NotNull
+  public static List<String> loadLines(@NotNull BufferedReader reader) throws IOException {
+    List<String> lines = new ArrayList<String>();
+    String line;
+    while ((line = reader.readLine()) != null) {
+      lines.add(line);
+    }
+    return lines;
+  }
+
+  @NotNull
   public static byte[] loadBytes(@NotNull InputStream stream) throws IOException {
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     final byte[] bytes = BUFFER.get();
@@ -444,26 +523,23 @@ public class FileUtilRt {
 
   public static boolean delete(@NotNull File file) {
     if (file.isDirectory()) {
-      if (!deleteChildren(file)) return false;
-    }
-    return deleteFile(file);
-  }
-
-  protected static boolean deleteChildren(@NotNull File file) {
-    File[] files = file.listFiles();
-    if (files != null) {
-      for (File child : files) {
-        if (!delete(child)) return false;
+      File[] files = file.listFiles();
+      if (files != null) {
+        for (File child : files) {
+          if (!delete(child)) return false;
+        }
       }
     }
-    return true;
+
+    return deleteFile(file);
   }
 
   public interface RepeatableIOOperation<T, E extends Throwable> {
     @Nullable T execute(boolean lastAttempt) throws E;
   }
 
-  public static @Nullable <T, E extends Throwable> T doIOOperation(@NotNull RepeatableIOOperation<T, E> ioTask) throws E {
+  @Nullable
+  public static <T, E extends Throwable> T doIOOperation(@NotNull RepeatableIOOperation<T, E> ioTask) throws E {
     for (int i = MAX_FILE_IO_ATTEMPTS; i > 0; i--) {
       T result = ioTask.execute(i == 1);
       if (result != null) return result;
@@ -479,7 +555,6 @@ public class FileUtilRt {
 
   protected static boolean deleteFile(@NotNull final File file) {
     Boolean result = doIOOperation(new RepeatableIOOperation<Boolean, RuntimeException>() {
-      @Override
       public Boolean execute(boolean lastAttempt) {
         if (file.delete() || !file.exists()) return Boolean.TRUE;
         else if (lastAttempt) return Boolean.FALSE;
@@ -490,8 +565,11 @@ public class FileUtilRt {
   }
 
   public static boolean ensureCanCreateFile(@NotNull File file) {
+    System.out.println(" ensureCanCreateFile " + file.getPath());
     if (file.exists()) return file.canWrite();
+    System.out.println(" ensureCanCreateFile " + file.getPath() + " rewritable" );
     if (!createIfNotExists(file)) return false;
+    System.out.println(" ensureCanCreateFile " + file.getPath() + " created");
     return delete(file);
   }
 
