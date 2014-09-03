@@ -79,6 +79,12 @@ public class ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
+  public static <K, V> Map<K, V> newHashMap(int initialCapacity) {
+    return new com.intellij.util.containers.HashMap<K, V>(initialCapacity);
+  }
+
+  @NotNull
+  @Contract(pure=true)
   public static <K extends Comparable, V> TreeMap<K, V> newTreeMap() {
     return new TreeMap<K, V>();
   }
