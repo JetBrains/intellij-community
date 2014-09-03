@@ -40,12 +40,12 @@ public class EnumProcessor {
 
       if ("values".equals(name)) {
         if (descriptor.equals("()[L" + cl.qualifiedName + ";")) {
-          wrapper.getHideMembers().add(InterpreterUtil.makeUniqueKey(name, descriptor));
+          wrapper.getHiddenMembers().add(InterpreterUtil.makeUniqueKey(name, descriptor));
         }
       }
       else if ("valueOf".equals(name)) {
         if (descriptor.equals("(Ljava/lang/String;)L" + cl.qualifiedName + ";")) {
-          wrapper.getHideMembers().add(InterpreterUtil.makeUniqueKey(name, descriptor));
+          wrapper.getHiddenMembers().add(InterpreterUtil.makeUniqueKey(name, descriptor));
         }
       }
       else if ("<init>".equals(name)) {
@@ -66,7 +66,7 @@ public class EnumProcessor {
     for (StructField fd : cl.getFields()) {
       String descriptor = fd.getDescriptor();
       if (fd.isSynthetic() && descriptor.equals("[L" + cl.qualifiedName + ";")) {
-        wrapper.getHideMembers().add(InterpreterUtil.makeUniqueKey(fd.getName(), descriptor));
+        wrapper.getHiddenMembers().add(InterpreterUtil.makeUniqueKey(fd.getName(), descriptor));
       }
     }
   }

@@ -239,7 +239,7 @@ public class ClassWriter {
 
       if ((!isSynthetic || !DecompilerContext.getOption(IFernflowerPreferences.REMOVE_SYNTHETIC)) &&
           (!isBridge || !DecompilerContext.getOption(IFernflowerPreferences.REMOVE_BRIDGE)) &&
-          !wrapper.getHideMembers().contains(InterpreterUtil.makeUniqueKey(mt.getName(), mt.getDescriptor()))) {
+          !wrapper.getHiddenMembers().contains(InterpreterUtil.makeUniqueKey(mt.getName(), mt.getDescriptor()))) {
         if (!mthidden && (!firstmt || node.type != ClassNode.CLASS_ANONYMOUS)) {
           bufstrwriter.write(DecompilerContext.getNewLineSeparator());
           firstmt = false;
@@ -260,7 +260,7 @@ public class ClassWriter {
     // fields
     for (StructField fd : cl.getFields()) {
       boolean hide = fd.isSynthetic() && DecompilerContext.getOption(IFernflowerPreferences.REMOVE_SYNTHETIC) ||
-                     wrapper.getHideMembers().contains(InterpreterUtil.makeUniqueKey(fd.getName(), fd.getDescriptor()));
+                     wrapper.getHiddenMembers().contains(InterpreterUtil.makeUniqueKey(fd.getName(), fd.getDescriptor()));
       if (!hide) {
         boolean isEnum = fd.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
         if (isEnum) {
@@ -308,7 +308,7 @@ public class ClassWriter {
         StructClass innerCl = inner.classStruct;
         boolean isSynthetic = (inner.access & CodeConstants.ACC_SYNTHETIC) != 0 || innerCl.isSynthetic();
         boolean hide = isSynthetic && DecompilerContext.getOption(IFernflowerPreferences.REMOVE_SYNTHETIC) ||
-                       wrapper.getHideMembers().contains(innerCl.qualifiedName);
+                       wrapper.getHiddenMembers().contains(innerCl.qualifiedName);
         if (!hide) {
           writer.write(DecompilerContext.getNewLineSeparator());
           classToJava(inner, writer, indent + 1);

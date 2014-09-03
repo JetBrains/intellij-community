@@ -128,7 +128,7 @@ public class ConsoleDecompiler implements IBytecodeProvider, IDecompilatSaver {
   }
 
   public void addSpace(File file, boolean isOwn) throws IOException {
-    fernflower.getStructcontext().addSpace(file, isOwn);
+    fernflower.getStructContext().addSpace(file, isOwn);
   }
 
   public void decompileContext(File root) {
@@ -213,7 +213,7 @@ public class ConsoleDecompiler implements IBytecodeProvider, IDecompilatSaver {
           ZipOutputStream out = mapArchiveStreams.get(filename);
           out.putNextEntry(new ZipEntry(entryName));
 
-          InterpreterUtil.copyInputStream(in, out);
+          InterpreterUtil.copyStream(in, out);
           in.close();
         }
       }
