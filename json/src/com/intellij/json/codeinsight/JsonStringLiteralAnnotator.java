@@ -1,22 +1,18 @@
 package com.intellij.json.codeinsight;
 
+import com.intellij.json.JsonBundle;
+import com.intellij.json.psi.JsonStringLiteral;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.json.psi.JsonStringLiteral;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mikhail Golubev
  */
 public class JsonStringLiteralAnnotator implements Annotator {
-
-  @NonNls public static final String MISSING_CLOSING_QUOTE = "Missing closing quote";
-  @NonNls public static final String ILLEGAL_ESCAPE_SEQUENCE = "Illegal escape sequence";
-  @NonNls public static final String ILLEGAL_UNICODE_ESCAPE_SEQUENCE = "Illegal unicode escape sequence";
 
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
@@ -25,8 +21,8 @@ public class JsonStringLiteralAnnotator implements Annotator {
       int offset = element.getTextOffset();
       int length = text.length();
       // Check that string literal closed properly
-      if (length <= 1 || text.charAt(length - 1) != '\"' || quoteEscaped(text, length - 1)) {
-        holder.createErrorAnnotation(element.getTextRange(), MISSING_CLOSING_QUOTE);
+      if (length <= 1 || text.charAt(0) != text.charAt(length - 1) || quoteEscaped(text, length - 1)) {
+        holder.createErrorAnnotation(element.getTextRange(), JsonBundle.message("missing.closing.quote"));
       }
       // Check escape sequences validity
       int pos = 1;
@@ -34,7 +30,7 @@ public class JsonStringLiteralAnnotator implements Annotator {
         if (text.charAt(pos) == '\\') {
           if (pos >= length - 1) {
             TextRange range = new TextRange(offset + pos, offset + pos + 1);
-            holder.createErrorAnnotation(range, ILLEGAL_ESCAPE_SEQUENCE);
+            holder.createErrorAnnotation(range, JsonBundle.message("illegal.escape.sequence"));
             break;
           }
           char next = text.charAt(pos + 1);
@@ -54,7 +50,7 @@ public class JsonStringLiteralAnnotator implements Annotator {
               for (; i < pos + 6; i++) {
                 if (i == length || !StringUtil.isHexDigit(text.charAt(i))) {
                   TextRange range = new TextRange(offset + pos, offset + i);
-                  holder.createErrorAnnotation(range, ILLEGAL_UNICODE_ESCAPE_SEQUENCE);
+                  holder.createErrorAnnotation(range, JsonBundle.message("illegal.unicode.escape.sequence"));
                   break;
                 }
               }
@@ -62,7 +58,7 @@ public class JsonStringLiteralAnnotator implements Annotator {
               break;
             default:
               TextRange range = new TextRange(offset + pos, offset + pos + 2);
-              holder.createErrorAnnotation(range, ILLEGAL_ESCAPE_SEQUENCE);
+              holder.createErrorAnnotation(range, JsonBundle.message("illegal.escape.sequence"));
               pos += 2;
           }
         }

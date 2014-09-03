@@ -1,6 +1,7 @@
 // This is a generated file. Not intended for manual editing.
 package com.intellij.json.psi;
 
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiNamedElement;
@@ -45,7 +46,7 @@ public class JsonElementVisitor extends PsiElementVisitor {
   }
 
   public void visitElement(@NotNull JsonElement o) {
-    visitElement(o);
+    visitElement((PsiElement)o);
   }
 
 }
