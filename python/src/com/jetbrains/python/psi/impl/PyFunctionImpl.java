@@ -315,32 +315,30 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     final PyBuiltinCache cache = PyBuiltinCache.getInstance(this);
     final PyStatementList statements = getStatementList();
     final Set<PyType> types = new LinkedHashSet<PyType>();
-    if (statements != null) {
-      statements.accept(new PyRecursiveElementVisitor() {
-        @Override
-        public void visitPyYieldExpression(PyYieldExpression node) {
-          final PyType type = context.getType(node);
-          if (node.isDelegating() && type instanceof PyCollectionType) {
-            final PyCollectionType collectionType = (PyCollectionType)type;
-            types.add(collectionType.getElementType(context));
-          }
-          else {
-            types.add(type);
-          }
+    statements.accept(new PyRecursiveElementVisitor() {
+      @Override
+      public void visitPyYieldExpression(PyYieldExpression node) {
+        final PyType type = context.getType(node);
+        if (node.isDelegating() && type instanceof PyCollectionType) {
+          final PyCollectionType collectionType = (PyCollectionType)type;
+          types.add(collectionType.getElementType(context));
         }
+        else {
+          types.add(type);
+        }
+      }
 
-        @Override
-        public void visitPyFunction(PyFunction node) {
-          // Ignore nested functions
-        }
-      });
-      final int n = types.size();
-      if (n == 1) {
-        elementType = Ref.create(types.iterator().next());
+      @Override
+      public void visitPyFunction(PyFunction node) {
+        // Ignore nested functions
       }
-      else if (n > 0) {
-        elementType = Ref.create(PyUnionType.union(types));
-      }
+    });
+    final int n = types.size();
+    if (n == 1) {
+      elementType = Ref.create(types.iterator().next());
+    }
+    else if (n > 0) {
+      elementType = Ref.create(PyUnionType.union(types));
     }
     if (elementType != null) {
       final PyClass generator = cache.getClass(PyNames.FAKE_GENERATOR);
@@ -358,14 +356,12 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   public PyType getReturnStatementType(TypeEvalContext typeEvalContext) {
     ReturnVisitor visitor = new ReturnVisitor(this, typeEvalContext);
     final PyStatementList statements = getStatementList();
-    if (statements != null) {
-      statements.accept(visitor);
-      if (isGeneratedStub() && !visitor.myHasReturns) {
-        if (PyNames.INIT.equals(getName())) {
-          return PyNoneType.INSTANCE;
-        }
-        return null;
+    statements.accept(visitor);
+    if (isGeneratedStub() && !visitor.myHasReturns) {
+      if (PyNames.INIT.equals(getName())) {
+        return PyNoneType.INSTANCE;
       }
+      return null;
     }
     return visitor.result();
   }
@@ -399,9 +395,6 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   @Nullable
   public String extractDeprecationMessage() {
     PyStatementList statementList = getStatementList();
-    if (statementList == null) {
-      return null;
-    }
     return extractDeprecationMessage(Arrays.asList(statementList.getStatements()));
   }
 
@@ -550,7 +543,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   public PyStringLiteralExpression getDocStringExpression() {
     final PyStatementList stmtList = getStatementList();
-    return stmtList != null ? DocStringUtil.findDocStringExpression(stmtList) : null;
+    return DocStringUtil.findDocStringExpression(stmtList);
   }
 
   @NotNull
