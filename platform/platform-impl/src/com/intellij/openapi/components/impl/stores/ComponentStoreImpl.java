@@ -46,12 +46,6 @@ public abstract class ComponentStoreImpl implements IComponentStore {
   private final List<SettingsSavingComponent> mySettingsSavingComponents = Collections.synchronizedList(new ArrayList<SettingsSavingComponent>());
   @Nullable private SaveSessionImpl mySession;
 
-  @Deprecated
-  @Nullable
-  private StateStorage getStateStorage(@NotNull final Storage storageSpec) throws StateStorageException {
-    return getStateStorageManager().getStateStorage(storageSpec);
-  }
-
   @Nullable
   protected abstract StateStorage getDefaultsStorage();
 
@@ -255,9 +249,10 @@ public abstract class ComponentStoreImpl implements IComponentStore {
 
     Storage[] storageSpecs = getComponentStorageSpecs(component, StateStorageOperation.READ);
     for (Storage storageSpec : storageSpecs) {
-      StateStorage stateStorage = getStateStorage(storageSpec);
-      if (stateStorage == null || !stateStorage.hasState(component, name, stateClass, reloadData)) continue;
-      state = stateStorage.getState(component, name, stateClass, state);
+      StateStorage stateStorage = getStateStorageManager().getStateStorage(storageSpec);
+      if (stateStorage != null && stateStorage.hasState(component, name, stateClass, reloadData)) {
+        state = stateStorage.getState(component, name, stateClass, state);
+      }
     }
 
     if (state != null) {
