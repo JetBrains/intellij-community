@@ -25,6 +25,8 @@ import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectType;
+import com.intellij.openapi.project.ProjectTypeService;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -56,12 +58,12 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   public static final ExtensionPointName<ModuleBuilderFactory> EP_NAME = ExtensionPointName.create("com.intellij.moduleBuilder");
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.ModuleBuilder");
+  private final Set<ModuleConfigurationUpdater> myUpdaters = new HashSet<ModuleConfigurationUpdater>();
+  private final EventDispatcher<ModuleBuilderListener> myDispatcher = EventDispatcher.create(ModuleBuilderListener.class);
   protected Sdk myJdk;
   private String myName;
   @NonNls private String myModuleFilePath;
   private String myContentEntryPath;
-  private final Set<ModuleConfigurationUpdater> myUpdaters = new HashSet<ModuleConfigurationUpdater>();
-  private final EventDispatcher<ModuleBuilderListener> myDispatcher = EventDispatcher.create(ModuleBuilderListener.class);
 
   @NotNull
   public static List<ModuleBuilder> getAllBuilders() {
@@ -81,6 +83,17 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     });
   }
 
+  public static void deleteModuleFile(String moduleFilePath) {
+    final File moduleFile = new File(moduleFilePath);
+    if (moduleFile.exists()) {
+      FileUtil.delete(moduleFile);
+    }
+    final VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(moduleFile);
+    if (file != null) {
+      file.refresh(false, false);
+    }
+  }
+
   protected boolean isAvailable() {
     return true;
   }
@@ -92,6 +105,11 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
 
   public String getName() {
     return myName;
+  }
+
+  @Override
+  public void setName(String name) {
+    myName = acceptParameter(name);
   }
 
   @Override
@@ -167,22 +185,17 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     return Collections.emptyList();
   }
 
-  @Override
-  public void setName(String name) {
-    myName = acceptParameter(name);
-  }
-
   public String getModuleFilePath() {
     return myModuleFilePath;
-  }
-
-  public void addModuleConfigurationUpdater(ModuleConfigurationUpdater updater) {
-    myUpdaters.add(updater);
   }
 
   @Override
   public void setModuleFilePath(@NonNls String path) {
     myModuleFilePath = acceptParameter(path);
+  }
+
+  public void addModuleConfigurationUpdater(ModuleConfigurationUpdater updater) {
+    myUpdaters.add(updater);
   }
 
   @Nullable
@@ -259,6 +272,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
       updater.update(module, modifiableModel);
     }
     modifiableModel.commit();
+    setProjectType(module);
   }
 
   private void onModuleInitialized(final Module module) {
@@ -268,6 +282,17 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   public abstract void setupRootModel(ModifiableRootModel modifiableRootModel) throws ConfigurationException;
 
   public abstract ModuleType getModuleType();
+
+  protected ProjectType getProjectType() {
+    return null;
+  }
+
+  protected void setProjectType(Module module) {
+    ProjectType projectType = getProjectType();
+    if (projectType != null && ProjectTypeService.getProjectType(module.getProject()) == null) {
+      ProjectTypeService.setProjectType(module.getProject(), projectType);
+    }
+  }
 
   @NotNull
   public Module createAndCommitIfNeeded(@NotNull Project project, @Nullable ModifiableModuleModel model, boolean runFromProjectWizard)
@@ -294,7 +319,6 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     }
     return module;
   }
-
 
   public void addListener(ModuleBuilderListener listener) {
     myDispatcher.addListener(listener);
@@ -338,17 +362,6 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
       }
     }
     return null;
-  }
-
-  public static void deleteModuleFile(String moduleFilePath) {
-    final File moduleFile = new File(moduleFilePath);
-    if (moduleFile.exists()) {
-      FileUtil.delete(moduleFile);
-    }
-    final VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(moduleFile);
-    if (file != null) {
-      file.refresh(false, false);
-    }
   }
 
   public Icon getBigIcon() {
@@ -396,12 +409,12 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     myModuleFilePath = from.getModuleFilePath();
   }
 
-  public void setModuleJdk(Sdk jdk) {
-    myJdk = jdk;
-  }
-
   public Sdk getModuleJdk() {
     return myJdk;
+  }
+
+  public void setModuleJdk(Sdk jdk) {
+    myJdk = jdk;
   }
 
   @NotNull

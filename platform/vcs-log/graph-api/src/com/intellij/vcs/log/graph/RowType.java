@@ -15,24 +15,13 @@
  */
 package com.intellij.vcs.log.graph;
 
-import org.jetbrains.annotations.NotNull;
+public enum RowType {
 
-import java.util.Collection;
+  NORMAL,
 
-/**
- */
-public interface RowInfo<CommitId> {
-
-  @NotNull
-  CommitId getCommit();
-
-  @NotNull
-  CommitId getOneOfHeads();
-
-  @NotNull
-  Collection<PrintElement> getPrintElements();
-
-  @NotNull
-  RowType getRowType();
+  /**
+   * Indicates that the commit on this row doesn't match current filters.
+   */
+  UNMATCHED
 
 }

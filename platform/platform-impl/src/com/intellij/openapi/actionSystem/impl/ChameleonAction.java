@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectType;
 import com.intellij.openapi.project.ProjectTypeService;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.HashMap;
@@ -47,24 +48,30 @@ public class ChameleonAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    getAction(e).actionPerformed(e);
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    AnAction action = getAction(e);
+    assert action != null;
+    action.actionPerformed(e);
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     AnAction action = getAction(e);
-    action.update(e);
-    getTemplatePresentation().setEnabled(e.getPresentation().isEnabled());
-    getTemplatePresentation().setVisible(e.getPresentation().isVisible());
+    if (action != null) {
+      e.getPresentation().setVisible(true);
+      action.update(e);
+    }
+    else {
+      e.getPresentation().setVisible(false);
+    }
   }
 
+  @Nullable
   private AnAction getAction(AnActionEvent e) {
     Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     ProjectType projectType = ProjectTypeService.getProjectType(project);
     AnAction action = myActions.get(projectType);
     if (action == null) action = myActions.get(null);
-    if (action == null) action = myActions.values().iterator().next();
     return action;
   }
 

@@ -142,3 +142,37 @@ class IDEA128196 {
     new Thread(() -> System.out.println(value));
   }
 }
+
+class FinalAssignmentInInitializer {
+  private final String x;
+  {
+    Runnable r = () -> <error descr="Cannot assign a value to final variable 'x'">x</error> = "";
+    x = "";
+  }
+}
+
+class AssignmentToFinalInsideLambda {
+  boolean isTrue() {
+    return true;
+  }
+
+  Runnable r = () -> {
+    final int i;
+    if (isTrue()) {
+      i = 1;
+    } else {
+      i = 0;
+    }
+  };
+
+  void a() {
+    Runnable r = () -> {
+      final int i;
+      if (isTrue()) {
+        i = 1;
+      } else {
+        i = 0;
+      }
+    };
+  }
+}

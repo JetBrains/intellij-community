@@ -16,10 +16,12 @@
 package com.intellij.openapi.vfs.impl.http;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
  */
 public abstract class HttpVirtualFile extends VirtualFile {
+  @Nullable
   public abstract RemoteFileInfo getFileInfo();
 }

@@ -87,6 +87,7 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testLiftedIntersectionType() { doTest(); }
   public void testInferenceFromReturnStatements() { doTest(); }
   public void testDownUpThroughLambdaReturnStatements() { doTest(); }
+  @Bombed(day = 30, month = Calendar.SEPTEMBER)
   public void testIDEA124547() { doTest(); }
   public void testIDEA118362() { doTest(); }
   public void testIDEA126056() { doTest(); }
@@ -126,6 +127,7 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  @Bombed(day = 30, month = Calendar.SEPTEMBER)
   public void testIDEA126778() throws Exception {
     doTest();
   }
@@ -136,7 +138,7 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   private void doTest(boolean warnings) {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
-    doTestNewInference(BASE_PATH + "/" + getTestName(false) + ".java", warnings, false);
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", warnings, false);
   }
 
   @Override
