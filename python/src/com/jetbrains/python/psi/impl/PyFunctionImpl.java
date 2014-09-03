@@ -446,7 +446,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   @Nullable
   @Override
   public StructuredDocString getStructuredDocString() {
-    return CachedValuesManager.getManager(getProject()).getCachedValue(this, myCachedStructuredDocStringProvider);
+    return CachedValuesManager.getCachedValue(this, myCachedStructuredDocStringProvider);
   }
 
   private boolean isGeneratedStub() {
