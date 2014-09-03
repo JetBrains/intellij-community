@@ -35,7 +35,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @State(
   name = "PathMacrosImpl",
-  roamingType = RoamingType.DISABLED,
+  roamingType = RoamingType.PER_PLATFORM,
   storages = {
     @Storage(file = StoragePathMacros.APP_CONFIG + "/path.macros.xml")
   }
