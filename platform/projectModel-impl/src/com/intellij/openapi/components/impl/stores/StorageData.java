@@ -85,7 +85,7 @@ public class StorageData {
         return merger.merge(serverElement, localElement);
       }
     }
-    return localElement;
+    return serverElement;
   }
 
   @Nullable

@@ -99,7 +99,7 @@ public class ClassWriter {
       ref14processor.processClassReferences(node);
     }
 
-    if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM) && (cl.access_flags & CodeConstants.ACC_ENUM) != 0) {
+    if (cl.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM)) {
       EnumProcessor.clearEnum(wrapper);
     }
 
@@ -234,11 +234,8 @@ public class ClassWriter {
     boolean mthidden = false;
 
     for (StructMethod mt : cl.getMethods()) {
-
-      int flags = mt.getAccessFlags();
-
-      boolean isSynthetic = (flags & CodeConstants.ACC_SYNTHETIC) != 0 || mt.getAttributes().containsKey("Synthetic");
-      boolean isBridge = (flags & CodeConstants.ACC_BRIDGE) != 0;
+      boolean isSynthetic = mt.isSynthetic();
+      boolean isBridge = mt.hasModifier(CodeConstants.ACC_BRIDGE);
 
       if ((!isSynthetic || !DecompilerContext.getOption(IFernflowerPreferences.REMOVE_SYNTHETIC)) &&
           (!isBridge || !DecompilerContext.getOption(IFernflowerPreferences.REMOVE_BRIDGE)) &&
@@ -262,12 +259,10 @@ public class ClassWriter {
 
     // fields
     for (StructField fd : cl.getFields()) {
-      int flags = fd.access_flags;
-      boolean isSynthetic = (flags & CodeConstants.ACC_SYNTHETIC) != 0 || fd.getAttributes().containsKey("Synthetic");
-      if ((!isSynthetic || !DecompilerContext.getOption(IFernflowerPreferences.REMOVE_SYNTHETIC))
-          && !wrapper.getHideMembers().contains(InterpreterUtil.makeUniqueKey(fd.getName(), fd.getDescriptor()))) {
-
-        boolean isEnum = DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM) && (flags & CodeConstants.ACC_ENUM) != 0;
+      boolean hide = fd.isSynthetic() && DecompilerContext.getOption(IFernflowerPreferences.REMOVE_SYNTHETIC) ||
+                     wrapper.getHideMembers().contains(InterpreterUtil.makeUniqueKey(fd.getName(), fd.getDescriptor()));
+      if (!hide) {
+        boolean isEnum = fd.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
         if (isEnum) {
           if (enumfields) {
             bufstrwriter1.write(",");
@@ -310,12 +305,11 @@ public class ClassWriter {
     // member classes
     for (ClassNode inner : node.nested) {
       if (inner.type == ClassNode.CLASS_MEMBER) {
-        StructClass innercl = inner.classStruct;
-
-        boolean isSynthetic =
-          ((inner.access | innercl.access_flags) & CodeConstants.ACC_SYNTHETIC) != 0 || innercl.getAttributes().containsKey("Synthetic");
-        if ((!isSynthetic || !DecompilerContext.getOption(IFernflowerPreferences.REMOVE_SYNTHETIC))
-            && !wrapper.getHideMembers().contains(innercl.qualifiedName)) {
+        StructClass innerCl = inner.classStruct;
+        boolean isSynthetic = (inner.access & CodeConstants.ACC_SYNTHETIC) != 0 || innerCl.isSynthetic();
+        boolean hide = isSynthetic && DecompilerContext.getOption(IFernflowerPreferences.REMOVE_SYNTHETIC) ||
+                       wrapper.getHideMembers().contains(innerCl.qualifiedName);
+        if (!hide) {
           writer.write(DecompilerContext.getNewLineSeparator());
           classToJava(inner, writer, indent + 1);
         }
@@ -347,7 +341,7 @@ public class ClassWriter {
       ClassWrapper wrapper = node.wrapper;
       StructClass cl = wrapper.getClassStruct();
 
-      int flags = node.type == ClassNode.CLASS_ROOT ? cl.access_flags : node.access;
+      int flags = node.type == ClassNode.CLASS_ROOT ? cl.getAccessFlags() : node.access;
       boolean isInterface = (flags & CodeConstants.ACC_INTERFACE) != 0;
       boolean isAnnotation = (flags & CodeConstants.ACC_ANNOTATION) != 0;
       boolean isEnum = DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM) && (flags & CodeConstants.ACC_ENUM) != 0;
@@ -486,8 +480,7 @@ public class ClassWriter {
 
     String indstr = InterpreterUtil.getIndentString(indent);
 
-    boolean isInterface = (cl.access_flags & CodeConstants.ACC_INTERFACE) != 0;
-    int flags = fd.access_flags;
+    boolean isInterface = cl.hasModifier(CodeConstants.ACC_INTERFACE);
 
     if (interceptor != null) {
       String oldname = interceptor.getOldName(cl.qualifiedName + " " + fd.getName() + " " + fd.getDescriptor());
@@ -515,8 +508,8 @@ public class ClassWriter {
       writer.write(DecompilerContext.getNewLineSeparator());
     }
 
-    boolean isSynthetic = (flags & CodeConstants.ACC_SYNTHETIC) != 0 || fd.getAttributes().containsKey("Synthetic");
-    boolean isEnum = DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM) && (flags & CodeConstants.ACC_ENUM) != 0;
+    boolean isSynthetic = fd.isSynthetic();
+    boolean isEnum = fd.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
 
     if (isSynthetic) {
       writer.write(indstr);
@@ -529,7 +522,7 @@ public class ClassWriter {
     if (!isEnum) {
       for (int i = 0; i < modval_field.length; i++) {
         if (!isInterface || !mod_notinterface_fields.contains(modval_field[i])) {
-          if ((flags & modval_field[i]) != 0) {
+          if (fd.hasModifier(modval_field[i])) {
             writer.write(modstr_field[i]);
           }
         }
@@ -559,7 +552,7 @@ public class ClassWriter {
     writer.write(fd.getName());
 
     Exprent initializer;
-    if ((flags & CodeConstants.ACC_STATIC) != 0) {
+    if (fd.hasModifier(CodeConstants.ACC_STATIC)) {
       initializer = wrapper.getStaticFieldInitializers().getWithKey(InterpreterUtil.makeUniqueKey(fd.getName(), fd.getDescriptor()));
     }
     else {
@@ -577,7 +570,7 @@ public class ClassWriter {
         writer.write(initializer.toJava(indent));
       }
     }
-    else if ((flags & CodeConstants.ACC_FINAL) != 0 && (flags & CodeConstants.ACC_STATIC) != 0) {
+    else if (fd.hasModifier(CodeConstants.ACC_FINAL) && fd.hasModifier(CodeConstants.ACC_STATIC)) {
       StructConstantValueAttribute attr =
         (StructConstantValueAttribute)fd.getAttributes().getWithKey(StructGeneralAttribute.ATTRIBUTE_CONSTANT_VALUE);
       if (attr != null) {
@@ -704,9 +697,9 @@ public class ClassWriter {
     MethodWrapper methold = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
     DecompilerContext.setProperty(DecompilerContext.CURRENT_METHOD_WRAPPER, meth);
 
-    boolean isInterface = (cl.access_flags & CodeConstants.ACC_INTERFACE) != 0;
-    boolean isAnnotation = (cl.access_flags & CodeConstants.ACC_ANNOTATION) != 0;
-    boolean isEnum = (cl.access_flags & CodeConstants.ACC_ENUM) != 0 && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
+    boolean isInterface = cl.hasModifier(CodeConstants.ACC_INTERFACE);
+    boolean isAnnotation = cl.hasModifier(CodeConstants.ACC_ANNOTATION);
+    boolean isEnum = cl.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
     boolean isDeprecated = mt.getAttributes().containsKey("Deprecated");
 
     String indstr = InterpreterUtil.getIndentString(indent);
@@ -721,9 +714,8 @@ public class ClassWriter {
     if ((flags & CodeConstants.ACC_NATIVE) != 0) {
       flags &= ~CodeConstants.ACC_STRICT; // compiler bug: a strictfp class sets all methods to strictfp
     }
-
     if ("<clinit>".equals(mt.getName())) {
-      flags &= CodeConstants.ACC_STATIC; // ingnore all modifiers except 'static' in a static initializer
+      flags &= CodeConstants.ACC_STATIC; // ignore all modifiers except 'static' in a static initializer
     }
 
     if (interceptor != null) {
@@ -816,7 +808,7 @@ public class ClassWriter {
 
     if (!clinit && !dinit) {
 
-      boolean thisvar = (mt.getAccessFlags() & CodeConstants.ACC_STATIC) == 0;
+      boolean thisvar = !mt.hasModifier(CodeConstants.ACC_STATIC);
 
       // formal type parameters
       if (descriptor != null && !descriptor.fparameters.isEmpty()) {
@@ -900,8 +892,7 @@ public class ClassWriter {
           if (descriptor != null) {
             GenericType partype = descriptor.params.get(i);
 
-            boolean isVarArgs = (i == lastparam_index && (mt.getAccessFlags() & CodeConstants.ACC_VARARGS) != 0
-                                 && partype.arraydim > 0);
+            boolean isVarArgs = (i == lastparam_index && mt.hasModifier(CodeConstants.ACC_VARARGS) && partype.arraydim > 0);
 
             if (isVarArgs) {
               partype.arraydim--;
@@ -922,8 +913,7 @@ public class ClassWriter {
           else {
             VarType partype = md.params[i].copy();
 
-            boolean isVarArgs = (i == lastparam_index && (mt.getAccessFlags() & CodeConstants.ACC_VARARGS) != 0
-                                 && partype.arraydim > 0);
+            boolean isVarArgs = (i == lastparam_index && mt.hasModifier(CodeConstants.ACC_VARARGS) && partype.arraydim > 0);
 
             if (isVarArgs) {
               partype.decArrayDim();

@@ -24,11 +24,11 @@ import org.jetbrains.java.decompiler.util.DataInputFullStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.Map;
 
 public class LazyLoader {
 
-  private HashMap<String, Link> mapClassLinks = new HashMap<String, Link>();
-
+  private Map<String, Link> mapClassLinks = new HashMap<String, Link>();
   private IBytecodeProvider provider;
 
   public LazyLoader(IBytecodeProvider provider) {
@@ -47,98 +47,88 @@ public class LazyLoader {
     return mapClassLinks.get(classname);
   }
 
-
   public ConstantPool loadPool(String classname) {
-
     try {
-
       DataInputFullStream in = getClassStream(classname);
-      if (in == null) {
-        return null;
+      if (in == null) return null;
+
+      try {
+        in.discard(8);
+        return new ConstantPool(in);
       }
-
-      in.skip(8);
-
-      return new ConstantPool(in);
+      finally {
+        in.close();
+      }
     }
     catch (IOException ex) {
       throw new RuntimeException(ex);
     }
   }
 
-  public byte[] loadBytecode(StructMethod mt, int code_fulllength) {
+  public byte[] loadBytecode(StructMethod mt, int codeFullLength) {
+    String className = mt.getClassStruct().qualifiedName;
 
     try {
+      DataInputFullStream in = getClassStream(className);
+      if (in == null) return null;
 
-      DataInputFullStream in = getClassStream(mt.getClassStruct().qualifiedName);
-      if (in == null) {
-        return null;
-      }
+      try {
+        in.discard(8);
 
-      byte[] res = null;
-
-      in.skip(8);
-
-      ConstantPool pool = mt.getClassStruct().getPool();
-      if (pool == null) {
-        pool = new ConstantPool(in);
-      }
-      else {
-        ConstantPool.skipPool(in);
-      }
-
-      in.skip(2);
-      int this_class = in.readUnsignedShort();
-      in.skip(2);
-
-      // interfaces
-      in.skip(in.readUnsignedShort() * 2);
-
-      // fields
-      int size = in.readUnsignedShort();
-      for (int i = 0; i < size; i++) {
-        in.skip(6);
-        skipAttributes(in);
-      }
-
-      // methods
-      size = in.readUnsignedShort();
-      for (int i = 0; i < size; i++) {
-        in.skip(2);
-
-        int name_index = in.readUnsignedShort();
-        int descriptor_index = in.readUnsignedShort();
-
-        String[] elem_arr = pool.getClassElement(ConstantPool.METHOD, this_class, name_index, descriptor_index);
-        String name = elem_arr[0];
-
-        if (mt.getName().equals(name)) {
-          String descriptor = elem_arr[1];
-          if (mt.getDescriptor().equals(descriptor)) {
-
-            int len = in.readUnsignedShort();
-            for (int j = 0; j < len; j++) {
-
-              int attr_nameindex = in.readUnsignedShort();
-              String attrname = pool.getPrimitiveConstant(attr_nameindex).getString();
-
-              if (StructGeneralAttribute.ATTRIBUTE_CODE.equals(attrname)) {
-                in.skip(12);
-
-                res = new byte[code_fulllength];
-                in.readFull(res);
-                return res;
-              }
-              else {
-                in.skip(in.readInt());
-              }
-            }
-
-            return null;
-          }
+        ConstantPool pool = mt.getClassStruct().getPool();
+        if (pool == null) {
+          pool = new ConstantPool(in);
+        }
+        else {
+          ConstantPool.skipPool(in);
         }
 
-        skipAttributes(in);
+        in.discard(6);
+
+        // interfaces
+        in.discard(in.readUnsignedShort() * 2);
+
+        // fields
+        int size = in.readUnsignedShort();
+        for (int i = 0; i < size; i++) {
+          in.discard(6);
+          skipAttributes(in);
+        }
+
+        // methods
+        size = in.readUnsignedShort();
+        for (int i = 0; i < size; i++) {
+          in.discard(2);
+
+          int nameIndex = in.readUnsignedShort();
+          int descriptorIndex = in.readUnsignedShort();
+
+          String[] values = pool.getClassElement(ConstantPool.METHOD, className, nameIndex, descriptorIndex);
+          if (!mt.getName().equals(values[0]) || !mt.getDescriptor().equals(values[1])) {
+            skipAttributes(in);
+            continue;
+          }
+
+          int attrSize = in.readUnsignedShort();
+          for (int j = 0; j < attrSize; j++) {
+            int attrNameIndex = in.readUnsignedShort();
+            String attrName = pool.getPrimitiveConstant(attrNameIndex).getString();
+            if (!StructGeneralAttribute.ATTRIBUTE_CODE.equals(attrName)) {
+              in.discard(in.readInt());
+              continue;
+            }
+
+            in.discard(12);
+            byte[] code = new byte[codeFullLength];
+            in.readFull(code);
+            return code;
+          }
+
+          break;
+        }
+      }
+      finally {
+        in.close();
       }
 
       return null;
@@ -148,39 +138,38 @@ public class LazyLoader {
     }
   }
 
-  public DataInputFullStream getClassStream(String externPath, String internPath) throws IOException {
-    InputStream instream = provider.getBytecodeStream(externPath, internPath);
-    return instream == null ? null : new DataInputFullStream(instream);
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  public DataInputFullStream getClassStream(String externalPath, String internalPath) throws IOException {
+    InputStream stream = provider.getBytecodeStream(externalPath, internalPath);
+    return stream == null ? null : new DataInputFullStream(stream);
   }
 
   public DataInputFullStream getClassStream(String qualifiedClassName) throws IOException {
     Link link = mapClassLinks.get(qualifiedClassName);
-    return link == null ? null : getClassStream(link.externPath, link.internPath);
+    return link == null ? null : getClassStream(link.externalPath, link.internalPath);
   }
 
-  private static void skipAttributes(DataInputFullStream in) throws IOException {
-
+  public static void skipAttributes(DataInputFullStream in) throws IOException {
     int length = in.readUnsignedShort();
     for (int i = 0; i < length; i++) {
-      in.skip(2);
-      in.skip(in.readInt());
+      in.discard(2);
+      in.discard(in.readInt());
     }
   }
 
 
   public static class Link {
-
     public static final int CLASS = 1;
     public static final int ENTRY = 2;
 
     public int type;
-    public String externPath;
-    public String internPath;
+    public String externalPath;
+    public String internalPath;
 
-    public Link(int type, String externPath, String internPath) {
+    public Link(int type, String externalPath, String internalPath) {
       this.type = type;
-      this.externPath = externPath;
-      this.internPath = internPath;
+      this.externalPath = externalPath;
+      this.internalPath = internalPath;
     }
   }
 }

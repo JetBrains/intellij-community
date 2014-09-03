@@ -32,26 +32,25 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Map;
 
 public class NestedMemberAccess {
 
   private static final int METHOD_ACCESS_NORMAL = 1;
-  private static final int METHOD_ACCESS_FIELDGET = 2;
-  private static final int METHOD_ACCESS_FIELDSET = 3;
+  private static final int METHOD_ACCESS_FIELD_GET = 2;
+  private static final int METHOD_ACCESS_FIELD_SET = 3;
   private static final int METHOD_ACCESS_METHOD = 4;
 
-  private boolean notSetSync;
-
-  private HashMap<MethodWrapper, Integer> mapMethodType = new HashMap<MethodWrapper, Integer>();
+  private boolean noSynthFlag;
+  private Map<MethodWrapper, Integer> mapMethodType = new HashMap<MethodWrapper, Integer>();
 
 
   public void propagateMemberAccess(ClassNode root) {
-
     if (root.nested.isEmpty()) {
       return;
     }
 
-    notSetSync = DecompilerContext.getOption(IFernflowerPreferences.SYNTHETIC_NOT_SET);
+    noSynthFlag = DecompilerContext.getOption(IFernflowerPreferences.SYNTHETIC_NOT_SET);
 
     computeMethodTypes(root);
 
@@ -60,7 +59,6 @@ public class NestedMemberAccess {
 
 
   private void computeMethodTypes(ClassNode node) {
-
     if (node.type == ClassNode.CLASS_LAMBDA) {
       return;
     }
@@ -69,27 +67,24 @@ public class NestedMemberAccess {
       computeMethodTypes(nd);
     }
 
-    for (MethodWrapper meth : node.wrapper.getMethods()) {
-      computeMethodType(node, meth);
+    for (MethodWrapper method : node.wrapper.getMethods()) {
+      computeMethodType(node, method);
     }
   }
 
-  private void computeMethodType(ClassNode node, MethodWrapper meth) {
-
+  private void computeMethodType(ClassNode node, MethodWrapper method) {
     int type = METHOD_ACCESS_NORMAL;
 
-    if (meth.root != null) {
+    if (method.root != null) {
+      DirectGraph graph = method.getOrBuildGraph();
 
-      DirectGraph graph = meth.getOrBuildGraph();
-
-      int flags = meth.methodStruct.getAccessFlags();
-      if (((flags & CodeConstants.ACC_SYNTHETIC) != 0 || meth.methodStruct.getAttributes().containsKey("Synthetic") || notSetSync) &&
-          (flags & CodeConstants.ACC_STATIC) != 0) {
+      StructMethod mt = method.methodStruct;
+      if ((noSynthFlag || mt.isSynthetic()) && mt.hasModifier(CodeConstants.ACC_STATIC)) {
         if (graph.nodes.size() == 2) {  // incl. dummy exit node
           if (graph.first.exprents.size() == 1) {
             Exprent exprent = graph.first.exprents.get(0);
 
-            MethodDescriptor mtdesc = MethodDescriptor.parseDescriptor(meth.methodStruct.getDescriptor());
+            MethodDescriptor mtdesc = MethodDescriptor.parseDescriptor(mt.getDescriptor());
             int parcount = mtdesc.params.length;
 
             Exprent exprCore = exprent;
@@ -109,7 +104,7 @@ public class NestedMemberAccess {
                   if (fexpr.getClassname().equals(node.classStruct.qualifiedName)) {  // FIXME: check for private flag of the field
                     if (fexpr.isStatic() ||
                         (fexpr.getInstance().type == Exprent.EXPRENT_VAR && ((VarExprent)fexpr.getInstance()).getIndex() == 0)) {
-                      type = METHOD_ACCESS_FIELDGET;
+                      type = METHOD_ACCESS_FIELD_GET;
                     }
                   }
                 }
@@ -118,7 +113,7 @@ public class NestedMemberAccess {
                 if (parcount == 1) {
                   // this or final variable
                   if (((VarExprent)exprCore).getIndex() != 0) {
-                    type = METHOD_ACCESS_FIELDGET;
+                    type = METHOD_ACCESS_FIELD_GET;
                   }
                 }
 
@@ -136,7 +131,7 @@ public class NestedMemberAccess {
                       if (fexpras.isStatic() ||
                           (fexpras.getInstance().type == Exprent.EXPRENT_VAR && ((VarExprent)fexpras.getInstance()).getIndex() == 0)) {
                         if (((VarExprent)asexpr.getRight()).getIndex() == parcount - 1) {
-                          type = METHOD_ACCESS_FIELDSET;
+                          type = METHOD_ACCESS_FIELD_SET;
                         }
                       }
                     }
@@ -179,7 +174,7 @@ public class NestedMemberAccess {
             if (exprentFirst.type == Exprent.EXPRENT_ASSIGNMENT &&
                 exprentSecond.type == Exprent.EXPRENT_EXIT) {
 
-              MethodDescriptor mtdesc = MethodDescriptor.parseDescriptor(meth.methodStruct.getDescriptor());
+              MethodDescriptor mtdesc = MethodDescriptor.parseDescriptor(mt.getDescriptor());
               int parcount = mtdesc.params.length;
 
               AssignmentExprent asexpr = (AssignmentExprent)exprentFirst;
@@ -196,7 +191,7 @@ public class NestedMemberAccess {
                         if (exexpr.getExittype() == ExitExprent.EXIT_RETURN && exexpr.getValue() != null) {
                           if (exexpr.getValue().type == Exprent.EXPRENT_VAR &&
                               ((VarExprent)asexpr.getRight()).getIndex() == parcount - 1) {
-                            type = METHOD_ACCESS_FIELDSET;
+                            type = METHOD_ACCESS_FIELD_SET;
                           }
                         }
                       }
@@ -211,10 +206,10 @@ public class NestedMemberAccess {
     }
 
     if (type != METHOD_ACCESS_NORMAL) {
-      mapMethodType.put(meth, type);
+      mapMethodType.put(method, type);
     }
     else {
-      mapMethodType.remove(meth);
+      mapMethodType.remove(method);
     }
   }
 
@@ -365,7 +360,7 @@ public class NestedMemberAccess {
     Exprent retexprent = null;
 
     switch (type) {
-      case METHOD_ACCESS_FIELDGET:
+      case METHOD_ACCESS_FIELD_GET:
         ExitExprent exsource = (ExitExprent)source;
         if (exsource.getValue().type == Exprent.EXPRENT_VAR) { // qualified this
           VarExprent var = (VarExprent)exsource.getValue();
@@ -393,7 +388,7 @@ public class NestedMemberAccess {
           retexprent = ret;
         }
         break;
-      case METHOD_ACCESS_FIELDSET:
+      case METHOD_ACCESS_FIELD_SET:
         AssignmentExprent ret;
         if (source.type == Exprent.EXPRENT_EXIT) {
           ExitExprent extex = (ExitExprent)source;
@@ -440,7 +435,7 @@ public class NestedMemberAccess {
 
       if (node.type == ClassNode.CLASS_ROOT || (node.access & CodeConstants.ACC_STATIC) != 0) {
         StructMethod mt = methsource.methodStruct;
-        if ((mt.getAccessFlags() & CodeConstants.ACC_SYNTHETIC) == 0 && !mt.getAttributes().containsKey("Synthetic")) {
+        if (!mt.isSynthetic()) {
           hide = false;
         }
       }

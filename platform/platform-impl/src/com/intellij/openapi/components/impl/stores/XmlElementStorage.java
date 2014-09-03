@@ -19,6 +19,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.CurrentUserHolder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
@@ -31,11 +32,13 @@ import gnu.trove.THashSet;
 import gnu.trove.TObjectLongHashMap;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jdom.filter.ElementFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 
 public abstract class XmlElementStorage implements StateStorage, Disposable {
@@ -139,17 +142,23 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     StorageData result = createStorageData();
 
     if (useProvidersData && myStreamProvider != null && myStreamProvider.isEnabled()) {
+      boolean wasLoaded = false;
       try {
         if (roamingType == null) {
-          loadDataFromStreamProvider(result, RoamingType.PER_USER);
-          loadDataFromStreamProvider(result, RoamingType.PER_PLATFORM);
+          wasLoaded = loadDataFromStreamProvider(result, RoamingType.PER_USER) || loadDataFromStreamProvider(result, RoamingType.PER_PLATFORM);
         }
         else if (roamingType != RoamingType.DISABLED) {
-          loadDataFromStreamProvider(result, roamingType);
+          wasLoaded = loadDataFromStreamProvider(result, roamingType);
         }
       }
       catch (Exception e) {
         LOG.warn(e);
+      }
+
+      //noinspection deprecation
+      if (wasLoaded && !myStreamProvider.isVersioningRequired() && !(myStreamProvider instanceof OldStreamProviderAdapter || myStreamProvider instanceof CurrentUserHolder)) {
+        // we don't use local data if stream provider has one (to preserve backward compatibility, we don't use this logic for old stream providers)
+        return result;
       }
     }
 
@@ -161,13 +170,17 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     return result;
   }
 
-  private void loadDataFromStreamProvider(@NotNull StorageData result, @NotNull RoamingType roamingType) throws IOException {
+  private boolean loadDataFromStreamProvider(@NotNull StorageData result, @NotNull RoamingType roamingType) throws IOException, JDOMException {
     assert myStreamProvider != null;
-    Document sharedDocument = StorageUtil.loadDocument(myStreamProvider.loadContent(myFileSpec, roamingType));
-    if (sharedDocument != null) {
-      filterOutOfDate(sharedDocument.getRootElement());
-      loadState(result, sharedDocument.getRootElement());
+    InputStream inputStream = myStreamProvider.loadContent(myFileSpec, roamingType);
+    if (inputStream == null) {
+      return false;
     }
+
+    Document sharedDocument = JDOMUtil.loadDocument(inputStream);
+    filterOutOfDate(sharedDocument.getRootElement());
+    loadState(result, sharedDocument.getRootElement());
+    return true;
   }
 
   protected void loadState(@NotNull StorageData result, @NotNull Element element) {
@@ -563,7 +576,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     myLoadedData = storageData;
   }
 
-  private void filterOutOfDate(Element element) {
+  private void filterOutOfDate(@NotNull Element element) {
     if (myRemoteVersionProvider == null) {
       return;
     }

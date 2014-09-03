@@ -40,6 +40,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.apache.oro.text.regex.*;
@@ -492,7 +493,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   @NotNull
   @Override
   public SortedSet<Object> sort(@NotNull Set<Object> elements) {
-    TreeSet<Object> objects = ContainerUtil.newTreeSet(this);
+    TreeSet<Object> objects = ContainerUtilRt.newTreeSet(this);
     objects.addAll(elements);
     return objects;
   }

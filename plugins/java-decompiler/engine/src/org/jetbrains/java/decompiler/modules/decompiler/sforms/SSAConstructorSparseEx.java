@@ -487,8 +487,7 @@ public class SSAConstructorSparseEx {
   }
 
   private SFormsFastMapDirect createFirstMap(StructMethod mt) {
-
-    boolean thisvar = (mt.getAccessFlags() & CodeConstants.ACC_STATIC) == 0;
+    boolean thisvar = !mt.hasModifier(CodeConstants.ACC_STATIC);
 
     MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
 

@@ -17,31 +17,39 @@ package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.compiler.JavacQuirksInspection;
+import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class LightAdvHighlightingJdk8Test extends LightDaemonAnalyzerTestCase {
-  @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/advHighlighting";
+public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
+  @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/overloadResolution";
 
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
-      new JavacQuirksInspection(),
+      new UnusedSymbolLocalInspection(),
     };
   }
 
-  public void testUnderscore() throws Exception {
+  public void testPertinentToApplicabilityOfExplicitlyTypedLambda() throws Exception {
+    doTest();
+  }
+
+  public void testVoidValueCompatibilityOfImplicitlyTypedLambda() throws Exception {
     doTest();
   }
 
   private void doTest() {
+    doTest(true);
+  }
+
+  private void doTest(boolean warnings) {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, false);
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", warnings, false);
   }
 
   @Override

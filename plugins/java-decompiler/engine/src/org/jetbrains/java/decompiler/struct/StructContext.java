@@ -19,6 +19,7 @@ import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.extern.IDecompilatSaver;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
+import org.jetbrains.java.decompiler.util.DataInputFullStream;
 
 import java.io.File;
 import java.io.IOException;
@@ -136,7 +137,15 @@ public class StructContext {
 
         if (filename.endsWith(".class")) {
           try {
-            StructClass cl = new StructClass(loader.getClassStream(file.getAbsolutePath(), null), isOwn, loader);
+            StructClass cl;
+
+            DataInputFullStream in = loader.getClassStream(file.getAbsolutePath(), null);
+            try {
+              cl = new StructClass(in, isOwn, loader);
+            }
+            finally {
+              in.close();
+            }
 
             classes.put(cl.qualifiedName, cl);
             unit.addClass(cl, filename);
@@ -145,8 +154,8 @@ public class StructContext {
             isClass = true;
           }
           catch (IOException ex) {
-            DecompilerContext.getLogger()
-              .writeMessage("Invalid class file: " + (path.length() > 0 ? path + "/" : "") + filename, IFernflowerLogger.ERROR);
+            DecompilerContext.getLogger().writeMessage("Invalid class file: " + (path.length() > 0 ? path + "/" : "") + filename,
+                                                       IFernflowerLogger.ERROR);
           }
         }
 

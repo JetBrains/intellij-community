@@ -49,7 +49,7 @@ public class VarTypeProcessor {
     StructMethod mt = (StructMethod)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD);
 
     // method descriptor
-    boolean thisvar = (mt.getAccessFlags() & CodeConstants.ACC_STATIC) == 0;
+    boolean thisvar = !mt.hasModifier(CodeConstants.ACC_STATIC);
 
     MethodDescriptor md = (MethodDescriptor)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_DESCRIPTOR);
 

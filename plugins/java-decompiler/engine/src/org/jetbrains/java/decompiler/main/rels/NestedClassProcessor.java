@@ -71,7 +71,7 @@ public class NestedClassProcessor {
       // ensure not-empty class name
       if ((child.type == ClassNode.CLASS_LOCAL || child.type == ClassNode.CLASS_MEMBER) && child.simpleName == null) {
         StructClass cl = child.classStruct;
-        if (((child.access | cl.access_flags) & CodeConstants.ACC_SYNTHETIC) != 0 || cl.getAttributes().containsKey("Synthetic")) {
+        if ((child.access & CodeConstants.ACC_SYNTHETIC) != 0 || cl.isSynthetic()) {
           child.simpleName = "SyntheticClass_" + (++synthetics);
         }
         else {
@@ -675,7 +675,7 @@ public class NestedClassProcessor {
       return null;
     }
 
-    boolean notsynth = DecompilerContext.getOption(IFernflowerPreferences.SYNTHETIC_NOT_SET);
+    boolean noSynthFlag = DecompilerContext.getOption(IFernflowerPreferences.SYNTHETIC_NOT_SET);
 
     // no loop at the begin
     DirectNode firstnode = graph.first;
@@ -692,10 +692,8 @@ public class NestedClassProcessor {
 
               if (fd != null) { // local (== not inherited) field
                 if (cl.qualifiedName.equals(left.getClassname()) &&
-                    (fd.access_flags & CodeConstants.ACC_FINAL) != 0 &&
-                    ((fd.access_flags & CodeConstants.ACC_SYNTHETIC) != 0 ||
-                     fd.getAttributes().containsKey("Synthetic") ||
-                     (notsynth && (fd.access_flags & CodeConstants.ACC_PRIVATE) != 0))) {
+                    fd.hasModifier(CodeConstants.ACC_FINAL) &&
+                    (fd.isSynthetic() || (noSynthFlag && fd.hasModifier(CodeConstants.ACC_PRIVATE)))) {
                   field = InterpreterUtil.makeUniqueKey(left.getName(), left.getDescriptor().descriptorString);
                   break;
                 }

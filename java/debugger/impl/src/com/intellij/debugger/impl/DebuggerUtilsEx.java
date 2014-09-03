@@ -37,6 +37,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -403,17 +404,25 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   public abstract CompletionEditor createEditor(Project project, PsiElement context, @NonNls String recentsId);
 
-  @Nullable
-  public static CodeFragmentFactory getEffectiveCodeFragmentFactory(final PsiElement psiContext) {
-    final CodeFragmentFactory factory = ApplicationManager.getApplication().runReadAction(new Computable<CodeFragmentFactory>() {
+  @NotNull
+  public static CodeFragmentFactory findAppropriateCodeFragmentFactory(final TextWithImports text, final PsiElement context) {
+    CodeFragmentFactory factory = ApplicationManager.getApplication().runReadAction(new Computable<CodeFragmentFactory>() {
       @Override
       public CodeFragmentFactory compute() {
-        final List<CodeFragmentFactory> codeFragmentFactories = getCodeFragmentFactories(psiContext);
-        // the list always contains at least DefaultCodeFragmentFactory
-        return codeFragmentFactories.get(0);
+        final FileType fileType = text.getFileType();
+        final List<CodeFragmentFactory> factories = getCodeFragmentFactories(context);
+        if (fileType == null) {
+          return factories.get(0);
+        }
+        for (CodeFragmentFactory factory : factories) {
+          if (factory.getFileType().equals(fileType)) {
+            return factory;
+          }
+        }
+        return DefaultCodeFragmentFactory.getInstance();
       }
     });
-    return factory != null? new CodeFragmentFactoryContextWrapper(factory) : null;
+    return new CodeFragmentFactoryContextWrapper(factory);
   }
 
   private static class SigReader {

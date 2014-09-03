@@ -76,7 +76,7 @@ public class InitializerProcessor {
               FieldExprent fexpr = (FieldExprent)asexpr.getLeft();
               if (fexpr.getClassname().equals(wrapper.getClassStruct().qualifiedName)) {
                 StructField structField = wrapper.getClassStruct().getField(fexpr.getName(), fexpr.getDescriptor().descriptorString);
-                if (structField != null && (structField.access_flags & CodeConstants.ACC_FINAL) != 0) {
+                if (structField != null && structField.hasModifier(CodeConstants.ACC_FINAL)) {
                   action = 1;
                 }
               }

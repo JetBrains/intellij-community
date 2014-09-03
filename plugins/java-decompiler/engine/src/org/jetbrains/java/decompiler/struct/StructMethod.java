@@ -17,267 +17,106 @@ package org.jetbrains.java.decompiler.struct;
 
 import org.jetbrains.java.decompiler.code.*;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
-import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
+import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.jetbrains.java.decompiler.code.CodeConstants.*;
+
 /*
-    method_info {
-    	u2 access_flags;
-    	u2 name_index;
-    	u2 descriptor_index;
-    	u2 attributes_count;
-    	attribute_info attributes[attributes_count];
-    }
+  method_info {
+    u2 access_flags;
+    u2 name_index;
+    u2 descriptor_index;
+    u2 attributes_count;
+    attribute_info attributes[attributes_count];
+  }
 */
+public class StructMethod extends StructMember {
 
-public class StructMethod implements CodeConstants {
+  private static final int[] opr_iconst = {-1, 0, 1, 2, 3, 4, 5};
+  private static final int[] opr_loadstore = {0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3};
+  private static final int[] opcs_load = {opc_iload, opc_lload, opc_fload, opc_dload, opc_aload};
+  private static final int[] opcs_store = {opc_istore, opc_lstore, opc_fstore, opc_dstore, opc_astore};
 
-  // *****************************************************************************
-  // public fields
-  // *****************************************************************************
-
-  public int name_index;
-
-  public int descriptor_index;
-
-  // *****************************************************************************
-  // private fields
-  // *****************************************************************************
-
-  private static final int[] opr_iconst = new int[]{-1, 0, 1, 2, 3, 4, 5};
-
-  private static final int[] opr_loadstore = new int[]{0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3};
-
-  private static final int[] opcs_load = new int[]{opc_iload, opc_lload, opc_fload, opc_dload, opc_aload};
-
-  private static final int[] opcs_store = new int[]{opc_istore, opc_lstore, opc_fstore, opc_dstore, opc_astore};
-
-
-  private int accessFlags;
-
-  private VBStyleCollection<StructGeneralAttribute, String> attributes;
-
-  private int localVariables;
-
-  private int maxStack;
-
-  private String name;
-
-  private String descriptor;
-
-  private InstructionSequence seq;
+  private final StructClass classStruct;
+  private final String name;
+  private final String descriptor;
 
   private boolean containsCode = false;
+  private int localVariables = 0;
+  private int codeLength = 0;
+  private int codeFullLength = 0;
+  private InstructionSequence seq;
+  private boolean expanded = false;
 
-  private StructClass classStruct;
 
-
-  // lazy properties
-  private boolean lazy;
-
-  private boolean expanded;
-
-  private byte[] code_content;
-
-  private int code_length = 0;
-
-  private int code_fulllength = 0;
-
-  // *****************************************************************************
-  // constructors
-  // *****************************************************************************
-
-  public StructMethod(DataInputFullStream in, boolean own, StructClass clstruct) throws IOException {
-    this(in, true, own, clstruct);
-  }
-
-  public StructMethod(DataInputFullStream in, boolean lazy, boolean own, StructClass clstruct) throws IOException {
-
-    this.lazy = lazy;
-    this.expanded = !lazy;
-    this.classStruct = clstruct;
+  public StructMethod(DataInputFullStream in, StructClass clStruct) throws IOException {
+    classStruct = clStruct;
 
     accessFlags = in.readUnsignedShort();
-    name_index = in.readUnsignedShort();
-    descriptor_index = in.readUnsignedShort();
+    int nameIndex = in.readUnsignedShort();
+    int descriptorIndex = in.readUnsignedShort();
 
-    ConstantPool pool = clstruct.getPool();
-
-    initStrings(pool, clstruct.this_class);
-
-    VBStyleCollection<StructGeneralAttribute, String> lstAttribute = new VBStyleCollection<StructGeneralAttribute, String>();
-    int len = in.readUnsignedShort();
-    for (int i = 0; i < len; i++) {
-
-      int attr_nameindex = in.readUnsignedShort();
-      String attrname = pool.getPrimitiveConstant(attr_nameindex).getString();
-
-      if (StructGeneralAttribute.ATTRIBUTE_CODE.equals(attrname)) {
-        if (!own) {
-          // skip code in foreign classes
-          in.skip(8);
-          in.skip(in.readInt());
-          in.skip(8 * in.readUnsignedShort());
-        }
-        else {
-          containsCode = true;
-
-          in.skip(4);
-
-          maxStack = in.readUnsignedShort();
-          localVariables = in.readUnsignedShort();
-
-          if (lazy) {
-            code_length = in.readInt();
-
-            in.skip(code_length);
-
-            int exc_length = in.readUnsignedShort();
-            code_fulllength = code_length + exc_length * 8 + 2;
-
-            in.skip(exc_length * 8);
-          }
-          else {
-            seq = parseBytecode(in, in.readInt(), pool);
-          }
-        }
-
-        // code attributes
-        int length = in.readUnsignedShort();
-        for (int j = 0; j < length; j++) {
-          int codeattr_nameindex = in.readUnsignedShort();
-          String codeattrname = pool.getPrimitiveConstant(codeattr_nameindex).getString();
-
-          readAttribute(in, pool, lstAttribute, codeattr_nameindex, codeattrname);
-        }
-      }
-      else {
-        readAttribute(in, pool, lstAttribute, attr_nameindex, attrname);
-      }
-    }
-
-    attributes = lstAttribute;
-  }
-
-
-  // *****************************************************************************
-  // public methods
-  // *****************************************************************************
-
-  public void writeToStream(DataOutputStream out) throws IOException {
-
-    out.writeShort(accessFlags);
-    out.writeShort(name_index);
-    out.writeShort(descriptor_index);
-
-    out.writeShort(attributes.size());
-
-    for (StructGeneralAttribute attr : attributes) {
-      if (StructGeneralAttribute.ATTRIBUTE_CODE.equals(attr.getName())) {
-        out.writeShort(attr.getAttribute_name_index());
-
-        if (lazy && !expanded) {
-          out.writeInt(10 + code_content.length);
-          out.writeShort(maxStack);
-          out.writeShort(localVariables);
-          out.writeInt(code_length);
-          out.write(code_content);
-        }
-        else {
-          ByteArrayOutputStream codeout = new ByteArrayOutputStream();
-          seq.writeCodeToStream(new DataOutputStream(codeout));
-
-          ByteArrayOutputStream excout = new ByteArrayOutputStream();
-          seq.writeExceptionsToStream(new DataOutputStream(excout));
-
-          out.writeInt(10 + codeout.size() + excout.size());
-
-          out.writeShort(maxStack);
-          out.writeShort(localVariables);
-          out.writeInt(codeout.size());
-          codeout.writeTo(out);
-          excout.writeTo(out);
-        }
-        // no attributes
-        out.writeShort(0);
-      }
-      else {
-        attr.writeToStream(out);
-      }
-    }
-  }
-
-  private static void readAttribute(DataInputFullStream in,
-                                    ConstantPool pool,
-                                    VBStyleCollection<StructGeneralAttribute, String> lstAttribute,
-                                    int attr_nameindex,
-                                    String attrname) throws IOException {
-
-    StructGeneralAttribute attribute = StructGeneralAttribute.getMatchingAttributeInstance(attr_nameindex, attrname);
-
-    if (attribute != null) {
-      attrname = attribute.getName();
-
-      byte[] arr = new byte[in.readInt()];
-      in.readFull(arr);
-      attribute.setInfo(arr);
-
-      attribute.initContent(pool);
-
-      if (StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TABLE.equals(attrname) &&
-          lstAttribute.containsKey(attrname)) {
-        // merge all variable tables
-        StructLocalVariableTableAttribute oldattr = (StructLocalVariableTableAttribute)lstAttribute.getWithKey(attrname);
-        oldattr.addLocalVariableTable((StructLocalVariableTableAttribute)attribute);
-      }
-      else {
-        lstAttribute.addWithKey(attribute, attribute.getName());
-      }
-    }
-    else {
-      in.skip(in.readInt());
-    }
-  }
-
-  private void initStrings(ConstantPool pool, int class_index) {
-    String[] values = pool.getClassElement(ConstantPool.METHOD, class_index, name_index, descriptor_index);
+    ConstantPool pool = clStruct.getPool();
+    String[] values = pool.getClassElement(ConstantPool.METHOD, clStruct.qualifiedName, nameIndex, descriptorIndex);
     name = values[0];
     descriptor = values[1];
+
+    attributes = readAttributes(in, pool);
+  }
+
+  @Override
+  protected StructGeneralAttribute readAttribute(DataInputFullStream in, ConstantPool pool, String name) throws IOException {
+    if (StructGeneralAttribute.ATTRIBUTE_CODE.equals(name)) {
+      if (!classStruct.isOwn()) {
+        // skip code in foreign classes
+        in.discard(8);
+        in.discard(in.readInt());
+        in.discard(8 * in.readUnsignedShort());
+      }
+      else {
+        containsCode = true;
+        in.discard(6);
+        localVariables = in.readUnsignedShort();
+        codeLength = in.readInt();
+        in.discard(codeLength);
+        int exc_length = in.readUnsignedShort();
+        in.discard(exc_length * 8);
+        codeFullLength = codeLength + exc_length * 8 + 2;
+      }
+
+      LazyLoader.skipAttributes(in);
+
+      return null;
+    }
+
+    return super.readAttribute(in, pool, name);
   }
 
   public void expandData() throws IOException {
-    if (containsCode && lazy && !expanded) {
-
-      byte[] codearr = classStruct.getLoader().loadBytecode(this, code_fulllength);
-
-      seq = parseBytecode(new DataInputFullStream(new ByteArrayInputStream(codearr)), code_length, classStruct.getPool());
+    if (containsCode && !expanded) {
+      byte[] code = classStruct.getLoader().loadBytecode(this, codeFullLength);
+      seq = parseBytecode(new DataInputFullStream(new ByteArrayInputStream(code)), codeLength, classStruct.getPool());
       expanded = true;
     }
   }
 
   public void releaseResources() throws IOException {
-    if (containsCode && lazy && expanded) {
+    if (containsCode && expanded) {
       seq = null;
       expanded = false;
     }
   }
 
-  // *****************************************************************************
-  // private methods
-  // *****************************************************************************
-
   private InstructionSequence parseBytecode(DataInputFullStream in, int length, ConstantPool pool) throws IOException {
-
-    VBStyleCollection<Instruction, Integer> collinstr = new VBStyleCollection<Instruction, Integer>();
+    VBStyleCollection<Instruction, Integer> instructions = new VBStyleCollection<Instruction, Integer>();
 
     int bytecode_version = classStruct.getBytecodeVersion();
 
@@ -370,7 +209,7 @@ public class StructMethod implements CodeConstants {
           case opc_invokedynamic:
             if (classStruct.isVersionGE_1_7()) { // instruction unused in Java 6 and before
               operands.add(new Integer(in.readUnsignedShort()));
-              in.skip(2);
+              in.discard(2);
               group = GROUP_INVOCATION;
               i += 4;
             }
@@ -420,7 +259,7 @@ public class StructMethod implements CodeConstants {
           case opc_invokeinterface:
             operands.add(new Integer(in.readUnsignedShort()));
             operands.add(new Integer(in.readUnsignedByte()));
-            in.skip(1);
+            in.discard(1);
             group = GROUP_INVOCATION;
             i += 4;
             break;
@@ -430,7 +269,7 @@ public class StructMethod implements CodeConstants {
             i += 3;
             break;
           case opc_tableswitch:
-            in.skip((4 - (i + 1) % 4) % 4);
+            in.discard((4 - (i + 1) % 4) % 4);
             i += ((4 - (i + 1) % 4) % 4); // padding
             operands.add(new Integer(in.readInt()));
             i += 4;
@@ -449,7 +288,7 @@ public class StructMethod implements CodeConstants {
 
             break;
           case opc_lookupswitch:
-            in.skip((4 - (i + 1) % 4) % 4);
+            in.discard((4 - (i + 1) % 4) % 4);
             i += ((4 - (i + 1) % 4) % 4); // padding
             operands.add(new Integer(in.readInt()));
             i += 4;
@@ -483,7 +322,7 @@ public class StructMethod implements CodeConstants {
 
       Instruction instr = ConstantsUtil.getInstructionInstance(opcode, wide, group, bytecode_version, ops);
 
-      collinstr.addWithKey(instr, new Integer(offset));
+      instructions.addWithKey(instr, new Integer(offset));
 
       i++;
     }
@@ -507,7 +346,7 @@ public class StructMethod implements CodeConstants {
       lstHandlers.add(handler);
     }
 
-    InstructionSequence seq = new FullInstructionSequence(collinstr, new ExceptionTable(lstHandlers));
+    InstructionSequence seq = new FullInstructionSequence(instructions, new ExceptionTable(lstHandlers));
 
     // initialize instructions
     int i = seq.length() - 1;
@@ -524,41 +363,27 @@ public class StructMethod implements CodeConstants {
     return seq;
   }
 
-  // *****************************************************************************
-  // getter and setter methods
-  // *****************************************************************************
-
-  public InstructionSequence getInstructionSequence() {
-    return seq;
-  }
-
-  public String getDescriptor() {
-    return descriptor;
+  public StructClass getClassStruct() {
+    return classStruct;
   }
 
   public String getName() {
     return name;
   }
 
-  public int getAccessFlags() {
-    return accessFlags;
+  public String getDescriptor() {
+    return descriptor;
+  }
+
+  public boolean containsCode() {
+    return containsCode;
   }
 
   public int getLocalVariables() {
     return localVariables;
   }
 
-  public VBStyleCollection<StructGeneralAttribute, String> getAttributes() {
-    return attributes;
-  }
-
-  public StructClass getClassStruct() {
-    return classStruct;
-  }
-
-  public boolean containsCode() {
-    return containsCode;
+  public InstructionSequence getInstructionSequence() {
+    return seq;
   }
 }
-
-

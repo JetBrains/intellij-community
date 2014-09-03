@@ -477,6 +477,16 @@ public class LambdaUtil {
     return true;
   }
 
+  //JLS 14.8 Expression Statements
+  public static boolean isExpressionStatementExpression(PsiElement body) {
+    return body instanceof PsiAssignmentExpression ||
+           body instanceof PsiPrefixExpression &&
+           (((PsiPrefixExpression)body).getOperationTokenType() == JavaTokenType.PLUSPLUS ||
+            ((PsiPrefixExpression)body).getOperationTokenType() == JavaTokenType.MINUSMINUS) ||
+           body instanceof PsiPostfixExpression ||
+           body instanceof PsiCallExpression;
+  }
+
   public static class TypeParamsChecker extends PsiTypeVisitor<Boolean> {
     private PsiMethod myMethod;
     private final PsiClass myClass;

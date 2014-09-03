@@ -82,7 +82,7 @@ public class EnumProcessor {
 
     // hide dummy synthetic fields of enum constants
     for (StructField fd : cl.getFields()) {
-      if ((fd.access_flags & CodeConstants.ACC_ENUM) != 0) {
+      if (fd.hasModifier(CodeConstants.ACC_ENUM)) {
         Exprent initializer =
           wrapper.getStaticFieldInitializers().getWithKey(InterpreterUtil.makeUniqueKey(fd.getName(), fd.getDescriptor()));
         if (initializer != null && initializer.type == Exprent.EXPRENT_NEW) {
@@ -97,10 +97,9 @@ public class EnumProcessor {
   }
 
   private static void hideDummyFieldInConstant(ClassWrapper wrapper) {
-
     StructClass cl = wrapper.getClassStruct();
     for (StructField fd : cl.getFields()) {
-      if ((fd.access_flags & CodeConstants.ACC_SYNTHETIC) != 0) {
+      if (fd.isSynthetic()) {
         FieldDescriptor descr = FieldDescriptor.parseDescriptor(fd.getDescriptor());
         VarType ret = descr.type;
 

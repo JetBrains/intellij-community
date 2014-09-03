@@ -21,9 +21,9 @@ import org.jetbrains.java.decompiler.modules.renamer.PoolInterceptor;
 import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.util.DataInputFullStream;
 
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,25 +31,14 @@ import java.util.List;
 public class ConstantPool {
 
   public static final int FIELD = 1;
-
   public static final int METHOD = 2;
 
-  // *****************************************************************************
-  // private fields
-  // *****************************************************************************
-
   private List<PooledConstant> pool = new ArrayList<PooledConstant>();
-
   private PoolInterceptor interceptor;
 
-  // *****************************************************************************
-  // constructors
-  // *****************************************************************************
 
   public ConstantPool(DataInputStream in) throws IOException {
-
     int size = in.readUnsignedShort();
-
     int[] pass = new int[size];
 
     // first dummy constant
@@ -57,7 +46,6 @@ public class ConstantPool {
 
     // first pass: read the elements
     for (int i = 1; i < size; i++) {
-
       byte tag = (byte)in.readUnsignedByte();
 
       switch (tag) {
@@ -106,11 +94,10 @@ public class ConstantPool {
       }
     }
 
-
     // resolving complex pool elements
-    for (int pass_index = 1; pass_index <= 3; pass_index++) {
+    for (int passIndex = 1; passIndex <= 3; passIndex++) {
       for (int i = 1; i < size; i++) {
-        if (pass[i] == pass_index) {
+        if (pass[i] == passIndex) {
           pool.get(i).resolveConstant(this);
         }
       }
@@ -120,23 +107,7 @@ public class ConstantPool {
     interceptor = DecompilerContext.getPoolInterceptor();
   }
 
-  // *****************************************************************************
-  // public methods
-  // *****************************************************************************
-
-  public void writeToOutputStream(DataOutputStream out) throws IOException {
-
-    out.writeShort(pool.size());
-    for (int i = 1; i < pool.size(); i++) {
-      PooledConstant cnst = pool.get(i);
-      if (cnst != null) {
-        cnst.writeToStream(out);
-      }
-    }
-  }
-
-  public static void skipPool(DataInputStream in) throws IOException {
-
+  public static void skipPool(DataInputFullStream in) throws IOException {
     int size = in.readUnsignedShort();
 
     for (int i = 1; i < size; i++) {
@@ -151,20 +122,20 @@ public class ConstantPool {
         case CodeConstants.CONSTANT_InterfaceMethodref:
         case CodeConstants.CONSTANT_NameAndType:
         case CodeConstants.CONSTANT_InvokeDynamic:
-          in.skip(4);
+          in.discard(4);
           break;
         case CodeConstants.CONSTANT_Long:
         case CodeConstants.CONSTANT_Double:
-          in.skip(8);
+          in.discard(8);
           i++;
           break;
         case CodeConstants.CONSTANT_Class:
         case CodeConstants.CONSTANT_String:
         case CodeConstants.CONSTANT_MethodType:
-          in.skip(2);
+          in.discard(2);
           break;
         case CodeConstants.CONSTANT_MethodHandle:
-          in.skip(3);
+          in.discard(3);
       }
     }
   }
@@ -173,27 +144,24 @@ public class ConstantPool {
     return pool.size();
   }
 
-  public String[] getClassElement(int element_type, int class_index, int name_index, int descriptor_index) {
-
-    String classname = ((PrimitiveConstant)getConstant(class_index)).getString();
-    String elementname = ((PrimitiveConstant)getConstant(name_index)).getString();
-    String descriptor = ((PrimitiveConstant)getConstant(descriptor_index)).getString();
+  public String[] getClassElement(int elementType, String className, int nameIndex, int descriptorIndex) {
+    String elementName = ((PrimitiveConstant)getConstant(nameIndex)).getString();
+    String descriptor = ((PrimitiveConstant)getConstant(descriptorIndex)).getString();
 
     if (interceptor != null) {
-      String new_element = interceptor.getName(classname + " " + elementname + " " + descriptor);
-
-      if (new_element != null) {
-        elementname = new_element.split(" ")[1];
+      String newElement = interceptor.getName(className + " " + elementName + " " + descriptor);
+      if (newElement != null) {
+        elementName = newElement.split(" ")[1];
       }
 
-      String new_descriptor = buildNewDescriptor(element_type == FIELD ? CodeConstants.CONSTANT_Fieldref : CodeConstants.CONSTANT_Methodref,
-                                                 descriptor);
-      if (new_descriptor != null) {
-        descriptor = new_descriptor;
+      int type = elementType == FIELD ? CodeConstants.CONSTANT_Fieldref : CodeConstants.CONSTANT_Methodref;
+      String newDescriptor = buildNewDescriptor(type, descriptor);
+      if (newDescriptor != null) {
+        descriptor = newDescriptor;
       }
     }
 
-    return new String[]{elementname, descriptor};
+    return new String[]{elementName, descriptor};
   }
 
   public PooledConstant getConstant(int index) {
@@ -205,9 +173,9 @@ public class ConstantPool {
 
     if (cn != null && interceptor != null) {
       if (cn.type == CodeConstants.CONSTANT_Class) {
-        String newname = buildNewClassname(cn.getString());
-        if (newname != null) {
-          cn = new PrimitiveConstant(CodeConstants.CONSTANT_Class, newname);
+        String newName = buildNewClassname(cn.getString());
+        if (newName != null) {
+          cn = new PrimitiveConstant(CodeConstants.CONSTANT_Class, newName);
         }
       }
     }
@@ -218,33 +186,30 @@ public class ConstantPool {
   public LinkConstant getLinkConstant(int index) {
     LinkConstant ln = (LinkConstant)getConstant(index);
 
-    if (ln != null && interceptor != null) {
-      if (ln.type == CodeConstants.CONSTANT_Fieldref ||
-          ln.type == CodeConstants.CONSTANT_Methodref ||
-          ln.type == CodeConstants.CONSTANT_InterfaceMethodref) {
+    if (ln != null && interceptor != null &&
+        (ln.type == CodeConstants.CONSTANT_Fieldref ||
+         ln.type == CodeConstants.CONSTANT_Methodref ||
+         ln.type == CodeConstants.CONSTANT_InterfaceMethodref)) {
+      String newClassName = buildNewClassname(ln.classname);
+      String newElement = interceptor.getName(ln.classname + " " + ln.elementname + " " + ln.descriptor);
+      String newDescriptor = buildNewDescriptor(ln.type, ln.descriptor);
 
-        String new_classname = buildNewClassname(ln.classname);
-        String new_element = interceptor.getName(ln.classname + " " + ln.elementname + " " + ln.descriptor);
-        String new_descriptor = buildNewDescriptor(ln.type, ln.descriptor);
-
-        if (new_classname != null || new_element != null || new_descriptor != null) {
-
-          ln = new LinkConstant(ln.type, new_classname == null ? ln.classname : new_classname,
-                                new_element == null ? ln.elementname : new_element.split(" ")[1],
-                                new_descriptor == null ? ln.descriptor : new_descriptor);
-        }
+      if (newClassName != null || newElement != null || newDescriptor != null) {
+        String className = newClassName == null ? ln.classname : newClassName;
+        String elementName = newElement == null ? ln.elementname : newElement.split(" ")[1];
+        String descriptor = newDescriptor == null ? ln.descriptor : newDescriptor;
+        ln = new LinkConstant(ln.type, className, elementName, descriptor);
       }
     }
 
     return ln;
   }
 
-  private String buildNewClassname(String classname) {
+  private String buildNewClassname(String className) {
+    VarType vt = new VarType(className, true);
 
-    VarType vt = new VarType(classname, true);
-
-    String newname = interceptor.getName(vt.value);
-    if (newname != null) {
+    String newName = interceptor.getName(vt.value);
+    if (newName != null) {
       StringBuilder buffer = new StringBuilder();
 
       if (vt.arraydim > 0) {
@@ -252,10 +217,10 @@ public class ConstantPool {
           buffer.append("[");
         }
 
-        buffer.append("L").append(newname).append(";");
+        buffer.append("L").append(newName).append(";");
       }
       else {
-        buffer.append(newname);
+        buffer.append(newName);
       }
 
       return buffer.toString();
@@ -265,17 +230,16 @@ public class ConstantPool {
   }
 
   private String buildNewDescriptor(int type, String descriptor) {
-
     boolean updated = false;
 
     if (type == CodeConstants.CONSTANT_Fieldref) {
       FieldDescriptor fd = FieldDescriptor.parseDescriptor(descriptor);
 
-      VarType ftype = fd.type;
-      if (ftype.type == CodeConstants.TYPE_OBJECT) {
-        String newclname = buildNewClassname(ftype.value);
-        if (newclname != null) {
-          ftype.value = newclname;
+      VarType fType = fd.type;
+      if (fType.type == CodeConstants.TYPE_OBJECT) {
+        String newClassName = buildNewClassname(fType.value);
+        if (newClassName != null) {
+          fType.value = newClassName;
           updated = true;
         }
       }
@@ -285,14 +249,14 @@ public class ConstantPool {
       }
     }
     else {
-
       MethodDescriptor md = MethodDescriptor.parseDescriptor(descriptor);
-      // params
-      for (VarType partype : md.params) {
-        if (partype.type == CodeConstants.TYPE_OBJECT) {
-          String newclname = buildNewClassname(partype.value);
-          if (newclname != null) {
-            partype.value = newclname;
+
+      // parameters
+      for (VarType paramType : md.params) {
+        if (paramType.type == CodeConstants.TYPE_OBJECT) {
+          String newClassName = buildNewClassname(paramType.value);
+          if (newClassName != null) {
+            paramType.value = newClassName;
             updated = true;
           }
         }
@@ -300,9 +264,9 @@ public class ConstantPool {
 
       // return value
       if (md.ret.type == CodeConstants.TYPE_OBJECT) {
-        String newclname = buildNewClassname(md.ret.value);
-        if (newclname != null) {
-          md.ret.value = newclname;
+        String newClassName = buildNewClassname(md.ret.value);
+        if (newClassName != null) {
+          md.ret.value = newClassName;
           updated = true;
         }
       }

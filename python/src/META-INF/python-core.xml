@@ -637,8 +637,6 @@
       <separator/>
       <reference ref="AddToFavorites"/>
       <separator/>
-      <reference ref="RunContextPopupGroup"/>
-      <separator/>
       <reference ref="ReformatCode"/>
       <reference ref="OptimizeImports"/>
       <reference ref="$Delete"/>
@@ -652,15 +650,12 @@
     </group>
 
     <group id="PyCallHierarchyPopupMenu">
-      <action id="CallHierarchy.BaseOnThisType" text="Base On This Function" class="com.jetbrains.python.hierarchy.call.PyCallHierarchyBrowser$BaseOnThisFunctionAction" description="Show call hierarchy for selected method"/>
       <reference ref="EditSource"/>
       <separator/>
       <reference ref="FindUsages"/>
       <reference ref="RefactoringMenu"/>
       <separator/>
       <reference ref="AddToFavorites"/>
-      <separator/>
-      <reference ref="RunContextPopupGroup"/>
       <separator/>
 
       <reference ref="ReformatCode"/>

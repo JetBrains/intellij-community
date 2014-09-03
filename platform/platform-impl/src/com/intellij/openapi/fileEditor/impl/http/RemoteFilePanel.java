@@ -83,6 +83,7 @@ public class RemoteFilePanel {
 
     final RemoteFileInfo remoteFileInfo = virtualFile.getFileInfo();
     myDownloadingListener = new MyDownloadingListener();
+    assert remoteFileInfo != null;
     remoteFileInfo.addDownloadingListener(myDownloadingListener);
     myCancelButton.addActionListener(new ActionListener() {
       @Override

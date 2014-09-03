@@ -17,9 +17,6 @@ package org.jetbrains.java.decompiler.struct.attr;
 
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,30 +33,6 @@ public class StructExceptionsAttribute extends StructGeneralAttribute {
       int index = ((info[i] & 0xFF) << 8) | (info[i + 1] & 0xFF);
       throwsExceptions.add(index);
     }
-  }
-
-  public void writeToStream(DataOutputStream out) throws IOException {
-
-    out.writeShort(attribute_name_index);
-
-    ByteArrayOutputStream codeout = new ByteArrayOutputStream();
-    DataOutputStream dataout = new DataOutputStream(codeout);
-
-    int len = throwsExceptions.size();
-    dataout.writeShort(len);
-
-    if (len > 0) {
-      info = new byte[len * 2];
-      for (int i = 0, j = 0; i < len; i++, j += 2) {
-        int index = throwsExceptions.get(i).intValue();
-        info[j] = (byte)(index >> 8);
-        info[j + 1] = (byte)(index & 0xFF);
-      }
-      dataout.write(info);
-    }
-
-    out.writeInt(codeout.size());
-    out.write(codeout.toByteArray());
   }
 
   public String getExcClassname(int index, ConstantPool pool) {

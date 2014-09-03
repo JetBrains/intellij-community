@@ -53,7 +53,7 @@ public class VarDefinitionHelper {
 
     VarNamesCollector vc = DecompilerContext.getVarNamesCollector();
 
-    boolean thisvar = (mt.getAccessFlags() & CodeConstants.ACC_STATIC) == 0;
+    boolean thisvar = !mt.hasModifier(CodeConstants.ACC_STATIC);
 
     MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
 

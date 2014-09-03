@@ -25,20 +25,19 @@ public class DataInputFullStream extends DataInputStream {
     super(in);
   }
 
-  public final int readFull(byte[] b) throws IOException {
-
+  public int readFull(byte[] b) throws IOException {
     int length = b.length;
-    byte[] btemp = new byte[length];
+    byte[] temp = new byte[length];
     int pos = 0;
 
-    int bytes_read = -1;
+    int bytes_read;
     while (true) {
-      bytes_read = read(btemp, 0, length - pos);
+      bytes_read = read(temp, 0, length - pos);
       if (bytes_read == -1) {
         return -1;
       }
 
-      System.arraycopy(btemp, 0, b, pos, bytes_read);
+      System.arraycopy(temp, 0, b, pos, bytes_read);
       pos += bytes_read;
       if (pos == length) {
         break;
@@ -46,5 +45,11 @@ public class DataInputFullStream extends DataInputStream {
     }
 
     return length;
+  }
+
+  public void discard(int n) throws IOException {
+    if (super.skip(n) != n) {
+      throw new IOException("Skip failed");
+    }
   }
 }

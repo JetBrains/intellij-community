@@ -139,7 +139,7 @@ public class ClassesProcessor {
         }
 
         ClassNode node = new ClassNode(ClassNode.CLASS_ROOT, cl);
-        node.access = cl.access_flags;
+        node.access = cl.getAccessFlags();
         mapRootClasses.put(cl.qualifiedName, node);
       }
     }
@@ -394,12 +394,9 @@ public class ClassesProcessor {
       anonimousClassType = new VarType(lambda_class_name, true);
 
       boolean is_method_reference = (content_class_name != classStruct.qualifiedName);
-      StructMethod mt = null;
-
       if (!is_method_reference) { // content method in the same class, check synthetic flag
-        mt = classStruct.getMethod(content_method_name, content_method_descriptor);
-        is_method_reference = !((mt.getAccessFlags() & CodeConstants.ACC_SYNTHETIC) != 0 ||
-                                mt.getAttributes().containsKey("Synthetic")); // if not synthetic -> method reference
+        StructMethod mt = classStruct.getMethod(content_method_name, content_method_descriptor);
+        is_method_reference = !mt.isSynthetic(); // if not synthetic -> method reference
       }
 
       lambda_information.is_method_reference = is_method_reference;

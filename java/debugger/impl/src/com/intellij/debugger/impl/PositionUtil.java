@@ -41,6 +41,7 @@ public class PositionUtil extends ContextUtil {
     return ContextUtil.getSourcePosition(context);
   }
 
+  @Nullable
   public static PsiElement getContextElement(final StackFrameContext context) {
     if(context instanceof DebuggerContextImpl) return ((DebuggerContextImpl) context).getContextElement();
 

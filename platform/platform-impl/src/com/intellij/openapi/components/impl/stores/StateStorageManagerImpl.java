@@ -24,10 +24,10 @@ import com.intellij.openapi.options.CurrentUserHolder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.PathUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.io.fs.IFile;
 import gnu.trove.THashMap;
@@ -140,6 +140,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
   }
 
+  @NotNull
   @Override
   public Collection<String> getStorageFileNames() {
     myStorageLock.lock();
@@ -176,19 +177,19 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   @Nullable
   private StateStorage createStateStorage(Storage storageSpec) throws StateStorageException {
-    if (!storageSpec.storageClass().equals(StorageAnnotationsDefaultValues.NullStateStorage.class)) {
+    if (!storageSpec.storageClass().equals(StateStorage.class)) {
       String key = UUID.randomUUID().toString();
       ((MutablePicoContainer)myPicoContainer).registerComponentImplementation(key, storageSpec.storageClass());
       return (StateStorage)myPicoContainer.getComponentInstance(key);
     }
-    if (!storageSpec.stateSplitter().equals(StorageAnnotationsDefaultValues.NullStateSplitter.class)) {
+    if (!storageSpec.stateSplitter().equals(StateSplitter.class)) {
       return createDirectoryStateStorage(storageSpec.file(), storageSpec.stateSplitter());
     }
     return createFileStateStorage(storageSpec.file());
   }
 
   private static String getStorageSpecId(Storage storageSpec) {
-    if (!storageSpec.storageClass().equals(StorageAnnotationsDefaultValues.NullStateStorage.class)) {
+    if (!storageSpec.storageClass().equals(StateStorage.class)) {
       return storageSpec.storageClass().getName();
     }
     else {
@@ -237,8 +238,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       return null;
     }
 
-    String extension = FileUtilRt.getExtension(new File(expandedFile).getName());
-    if (!ourHeadlessEnvironment && extension.isEmpty()) {
+    if (!ourHeadlessEnvironment && PathUtilRt.getFileName(expandedFile).lastIndexOf('.') < 0) {
       throw new IllegalArgumentException("Extension is missing for storage file: " + expandedFile);
     }
 

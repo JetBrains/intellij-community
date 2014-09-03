@@ -17,17 +17,13 @@ package org.jetbrains.java.decompiler.struct.attr;
 
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 
-import java.io.DataOutputStream;
-import java.io.IOException;
-
 /*
-    attribute_info {
-    	u2 attribute_name_index;
-    	u4 attribute_length;
-    	u1 info[attribute_length];
-    }
+  attribute_info {
+    u2 attribute_name_index;
+    u4 attribute_length;
+    u1 info[attribute_length];
+  }
 */
-
 public class StructGeneralAttribute {
 
   public static final String ATTRIBUTE_CODE = "Code";
@@ -48,74 +44,51 @@ public class StructGeneralAttribute {
   public static final String ATTRIBUTE_SYNTHETIC = "Synthetic";
   public static final String ATTRIBUTE_DEPRECATED = "Deprecated";
 
-
-  // *****************************************************************************
-  // private fields
-  // *****************************************************************************
-
-  protected int attribute_name_index;
-
+  protected String name;
   protected byte[] info;
 
-  protected String name;
 
-  // *****************************************************************************
-  // public methods
-  // *****************************************************************************
-
-  public void writeToStream(DataOutputStream out) throws IOException {
-    out.writeShort(attribute_name_index);
-    out.writeInt(info.length);
-    if (info.length > 0) {
-      out.write(info);
-    }
-  }
-
-  public void initContent(ConstantPool pool) {
-    name = pool.getPrimitiveConstant(attribute_name_index).getString();
-  }
-
-  public static StructGeneralAttribute getMatchingAttributeInstance(int nameindex, String attrname) {
-
+  public static StructGeneralAttribute createAttribute(String name) {
     StructGeneralAttribute attr;
 
-    if (ATTRIBUTE_INNER_CLASSES.equals(attrname)) {
+    if (ATTRIBUTE_INNER_CLASSES.equals(name)) {
       attr = new StructInnerClassesAttribute();
     }
-    else if (ATTRIBUTE_CONSTANT_VALUE.equals(attrname)) {
+    else if (ATTRIBUTE_CONSTANT_VALUE.equals(name)) {
       attr = new StructConstantValueAttribute();
     }
-    else if (ATTRIBUTE_SIGNATURE.equals(attrname)) {
+    else if (ATTRIBUTE_SIGNATURE.equals(name)) {
       attr = new StructGenericSignatureAttribute();
     }
-    else if (ATTRIBUTE_ANNOTATION_DEFAULT.equals(attrname)) {
+    else if (ATTRIBUTE_ANNOTATION_DEFAULT.equals(name)) {
       attr = new StructAnnDefaultAttribute();
     }
-    else if (ATTRIBUTE_EXCEPTIONS.equals(attrname)) {
+    else if (ATTRIBUTE_EXCEPTIONS.equals(name)) {
       attr = new StructExceptionsAttribute();
     }
-    else if (ATTRIBUTE_ENCLOSING_METHOD.equals(attrname)) {
+    else if (ATTRIBUTE_ENCLOSING_METHOD.equals(name)) {
       attr = new StructEnclosingMethodAttribute();
     }
-    else if (ATTRIBUTE_RUNTIME_VISIBLE_ANNOTATIONS.equals(attrname) ||
-             ATTRIBUTE_RUNTIME_INVISIBLE_ANNOTATIONS.equals(attrname)) {
+    else if (ATTRIBUTE_RUNTIME_VISIBLE_ANNOTATIONS.equals(name) ||
+             ATTRIBUTE_RUNTIME_INVISIBLE_ANNOTATIONS.equals(name)) {
       attr = new StructAnnotationAttribute();
     }
-    else if (ATTRIBUTE_RUNTIME_VISIBLE_PARAMETER_ANNOTATIONS.equals(attrname) ||
-             ATTRIBUTE_RUNTIME_INVISIBLE_PARAMETER_ANNOTATIONS.equals(attrname)) {
+    else if (ATTRIBUTE_RUNTIME_VISIBLE_PARAMETER_ANNOTATIONS.equals(name) ||
+             ATTRIBUTE_RUNTIME_INVISIBLE_PARAMETER_ANNOTATIONS.equals(name)) {
       attr = new StructAnnotationParameterAttribute();
     }
-    else if (ATTRIBUTE_RUNTIME_VISIBLE_TYPE_ANNOTATIONS.equals(attrname) ||
-             ATTRIBUTE_RUNTIME_INVISIBLE_TYPE_ANNOTATIONS.equals(attrname)) {
+    else if (ATTRIBUTE_RUNTIME_VISIBLE_TYPE_ANNOTATIONS.equals(name) ||
+             ATTRIBUTE_RUNTIME_INVISIBLE_TYPE_ANNOTATIONS.equals(name)) {
       attr = new StructAnnotationTypeAttribute();
     }
-    else if (ATTRIBUTE_LOCAL_VARIABLE_TABLE.equals(attrname)) {
+    else if (ATTRIBUTE_LOCAL_VARIABLE_TABLE.equals(name)) {
       attr = new StructLocalVariableTableAttribute();
     }
-    else if (ATTRIBUTE_BOOTSTRAP_METHODS.equals(attrname)) {
+    else if (ATTRIBUTE_BOOTSTRAP_METHODS.equals(name)) {
       attr = new StructBootstrapMethodsAttribute();
     }
-    else if (ATTRIBUTE_SYNTHETIC.equals(attrname) || ATTRIBUTE_DEPRECATED.equals(attrname)) {
+    else if (ATTRIBUTE_SYNTHETIC.equals(name) ||
+             ATTRIBUTE_DEPRECATED.equals(name)) {
       attr = new StructGeneralAttribute();
     }
     else {
@@ -123,17 +96,11 @@ public class StructGeneralAttribute {
       return null;
     }
 
-    attr.setAttribute_name_index(nameindex);
+    attr.name = name;
     return attr;
   }
 
-  // *****************************************************************************
-  // getter and setter methods
-  // *****************************************************************************
-
-  public byte[] getInfo() {
-    return info;
-  }
+  public void initContent(ConstantPool pool) { }
 
   public void setInfo(byte[] info) {
     this.info = info;
@@ -141,17 +108,5 @@ public class StructGeneralAttribute {
 
   public String getName() {
     return name;
-  }
-
-  public void setName(String name) {
-    this.name = name;
-  }
-
-  public int getAttribute_name_index() {
-    return attribute_name_index;
-  }
-
-  public void setAttribute_name_index(int attribute_name_index) {
-    this.attribute_name_index = attribute_name_index;
   }
 }

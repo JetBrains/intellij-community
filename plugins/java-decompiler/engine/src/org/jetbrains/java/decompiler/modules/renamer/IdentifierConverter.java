@@ -232,11 +232,10 @@ public class IdentifierConverter {
       StructMethod mt = methods.get(i);
       String key = methods.getKey(i);
 
-      int access_flags = mt.getAccessFlags();
-      boolean isPrivate = ((access_flags & CodeConstants.ACC_PRIVATE) != 0);
+      boolean isPrivate = mt.hasModifier(CodeConstants.ACC_PRIVATE);
 
       String name = mt.getName();
-      if (!cl.isOwn() || (access_flags & CodeConstants.ACC_NATIVE) != 0) {
+      if (!cl.isOwn() || mt.hasModifier(CodeConstants.ACC_NATIVE)) {
         // external and native methods must not be renamed
         if (!isPrivate) {
           names.put(key, name);
@@ -426,8 +425,7 @@ public class IdentifierConverter {
           break;
         }
         else {
-
-          boolean isInterface = ((clstr.access_flags & CodeConstants.ACC_INTERFACE) != 0);
+          boolean isInterface = clstr.hasModifier(CodeConstants.ACC_INTERFACE);
           boolean found_parent = false;
 
           if (isInterface) {

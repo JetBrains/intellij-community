@@ -378,6 +378,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                                  final PsiElement originalElement,
                                  @Nullable final Runnable closeCallback) {
     Project project = getProject(element);
+    if (!project.isOpen()) return;
+
     storeOriginalElement(project, originalElement, element);
 
     myPreviouslyFocused = WindowManagerEx.getInstanceEx().getFocusedComponent(project);

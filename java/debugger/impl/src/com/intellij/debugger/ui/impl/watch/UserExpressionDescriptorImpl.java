@@ -21,19 +21,18 @@
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.StackFrameContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.UserExpressionDescriptor;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeFragment;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
@@ -78,16 +77,13 @@ public class UserExpressionDescriptorImpl extends EvaluationDescriptor implement
     if(value instanceof ObjectReference) {
       final String typeName = value.type().name();
 
-      final PsiClass psiClass = DebuggerUtilsEx.findClass(myTypeName, myProject, context.getDebugProcess().getSearchScope());
+      final PsiClass psiClass = DebuggerUtils.findClass(myTypeName, myProject, context.getDebugProcess().getSearchScope());
 
       if (psiClass == null) {
         throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.type.name", typeName));
       }
 
-      final PsiCodeFragment fragment =
-        getEffectiveCodeFragmentFactory(psiClass).createCodeFragment(getEvaluationText(), psiClass, myProject);
-      fragment.forceResolveScope(GlobalSearchScope.allScope(myProject));
-      return fragment;
+      return createCodeFragment(psiClass);
     }
     else {
       throw EvaluateExceptionUtil.createEvaluateException(

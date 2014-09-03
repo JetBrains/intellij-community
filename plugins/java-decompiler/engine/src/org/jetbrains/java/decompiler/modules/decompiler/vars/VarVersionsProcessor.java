@@ -170,7 +170,7 @@ public class VarVersionsProcessor {
       }
     }
 
-    boolean is_method_static = (mt.getAccessFlags() & CodeConstants.ACC_STATIC) != 0;
+    boolean is_method_static = mt.hasModifier(CodeConstants.ACC_STATIC);
 
     final HashMap<VarVersionPaar, Integer> mapMergedVersions = new HashMap<VarVersionPaar, Integer>();
 

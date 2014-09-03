@@ -31,7 +31,7 @@ import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JVMName;
 import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.*;
-import com.intellij.debugger.ui.DebuggerEditorImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -66,8 +66,8 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     final Project project = contextElement.getProject();
 
-    CodeFragmentFactory factory = DebuggerEditorImpl.findAppropriateFactory(text, contextElement);
-    PsiCodeFragment codeFragment = new CodeFragmentFactoryContextWrapper(factory).createCodeFragment(text, contextElement, project);
+    CodeFragmentFactory factory = DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, contextElement);
+    PsiCodeFragment codeFragment = factory.createCodeFragment(text, contextElement, project);
     if (codeFragment == null) {
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", text.getText()));
     }
