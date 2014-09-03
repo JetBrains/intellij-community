@@ -21,12 +21,12 @@ import java.util.Map;
 public class HashMap<K, V> extends java.util.HashMap<K, V> {
   public HashMap() { }
 
-  public HashMap(int i, float v) {
-    super(i, v);
+  public HashMap(int initialCapacity, float loadFactor) {
+    super(initialCapacity, loadFactor);
   }
 
-  public HashMap(int i) {
-    super(i);
+  public HashMap(int initialCapacity) {
+    super(initialCapacity);
   }
 
   public <K1 extends K, V1 extends V> HashMap(Map<K1, V1> map) {
