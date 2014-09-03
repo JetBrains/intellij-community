@@ -58,7 +58,6 @@ import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
@@ -91,7 +90,6 @@ import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Anton Katilin
@@ -113,7 +111,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   private final Project myProject;
   private final List<Pair<VirtualFile, EditorWindow>> mySelectionHistory = new ArrayList<Pair<VirtualFile, EditorWindow>>();
   private WeakReference<EditorComposite> myLastSelectedComposite = new WeakReference<EditorComposite>(null);
-  private final AtomicBoolean myPreviewBlocker = new AtomicBoolean(false);
 
 
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("FileEditorManagerUpdateQueue", 50, true, null);
@@ -181,8 +178,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     HashSet<EditorsSplitters> all = new LinkedHashSet<EditorsSplitters>();
     if (PreviewPanel.isAvailable()) {
       initUI();
-      if (!myProject.isDisposed()) {
-        all.add(myPreviewPanel.getWindow().getOwner());
+      EditorWindow window = myPreviewPanel.getWindow();
+      if (window != null) {
+        all.add(window.getOwner());
       }
     }
     all.add(getMainSplitters());
@@ -644,7 +642,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     }
 
     if (wndToOpenIn == null || !wndToOpenIn.isFileOpen(file)) {
-      EditorWindow previewWindow = getPreviewWindow(file, focusEditor, searchForSplitter);
+      initUI();
+      EditorWindow previewWindow = myPreviewPanel.getWindow();
       if (previewWindow != null) {
         wndToOpenIn = previewWindow;
       }
@@ -658,31 +657,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
     openAssociatedFile(file, wndToOpenIn, splitters);
     return openFileImpl2(wndToOpenIn, file, focusEditor);
-  }
-
-  @Nullable
-  private EditorWindow getPreviewWindow(@NotNull VirtualFile virtualFile, final boolean focusEditor, final boolean searchForSplitter) {
-    EditorWindow wndToOpenIn = null;
-    if (PreviewPanel.isAvailable() && !myPreviewBlocker.get()) {
-      wndToOpenIn = myPreviewPanel.getWindow();
-      if (myPreviewPanel.hasCurrentFile(virtualFile)) return wndToOpenIn;
-      final VirtualFile modifiedFile = myPreviewPanel.getCurrentModifiedFile();
-      ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PREVIEW).activate(null, false);
-      if (modifiedFile != null) {
-        CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-          @Override
-          public void run() {
-            myPreviewBlocker.set(true);
-            try {
-              openFileWithProviders(modifiedFile, focusEditor, searchForSplitter);
-            } finally {
-              myPreviewBlocker.set(false);
-            }
-          }
-        }, "", null);
-      }
-    }
-    return wndToOpenIn;
   }
 
   public Pair<FileEditor[], FileEditorProvider[]> openFileInNewWindow(@NotNull VirtualFile file) {

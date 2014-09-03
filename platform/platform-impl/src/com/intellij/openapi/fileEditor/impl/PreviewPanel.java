@@ -17,8 +17,11 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
@@ -41,8 +44,11 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.EnumSet;
 
 class PreviewPanel extends JPanel {
+  enum ContentType {Files, Usages, Diagrams, Documentation}
+
   private static final Key<VirtualFile> FILE_KEY = Key.create("v_file");
   private static final int HISTORY_LIMIT = 10;
 
@@ -57,6 +63,9 @@ class PreviewPanel extends JPanel {
   private VirtualFile myAwaitingForOpen = null;
   private ContentManager myContentManager;
   private Content myStubContent;
+  private boolean myBlocked = false;
+
+  private EnumSet<ContentType> myTypes = EnumSet.noneOf(ContentType.class);
 
   static boolean isAvailable() {
     return UISettings.getInstance().NAVIGATE_TO_PREVIEW;
@@ -68,28 +77,37 @@ class PreviewPanel extends JPanel {
     myDockManager = dockManager;
   }
 
-  // package-private API
-
+  /*
+  * @return null if preview is not avalable
+   */
+  @Nullable
   EditorWindow getWindow() {
+    if (!isAvailable() || isBlocked() || myProject.isDisposed()) return null;
     initToolWindowIfNeed();
     return myWindow;
   }
 
-  boolean hasCurrentFile(@NotNull VirtualFile file) {
-    return file.equals(getCurrentFile());
-  }
-
-  @Nullable
-  VirtualFile getCurrentModifiedFile() {
-    VirtualFile file = getCurrentFile();
-    return file != null && file.equals(myModifiedFile) ? file : null;
+  boolean isBlocked() {
+    return myBlocked;
   }
 
   private void initToolWindowIfNeed() {
-    if (ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PREVIEW) != null) return;
+    if (!isAvailable() || ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PREVIEW) != null) return;
 
     myToolWindow = (ToolWindowImpl)ToolWindowManager.getInstance(myProject)
       .registerToolWindow(ToolWindowId.PREVIEW, this, ToolWindowAnchor.RIGHT, myProject, false);
+    UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
+      @Override
+      public void uiSettingsChanged(UISettings source) {
+        if (!isAvailable()) {
+          VirtualFile[] files = myWindow.getFiles();
+          for (VirtualFile file : files) {
+            close(file);
+          }
+          ToolWindowManager.getInstance(myProject).unregisterToolWindow(ToolWindowId.PREVIEW);
+        }
+      }
+    }, myProject);
     myToolWindow.setIcon(AllIcons.Actions.PreviewDetails);
     myToolWindow.setContentUiType(ToolWindowContentUiType.COMBO, null);
     myContentManager = myToolWindow.getContentManager();
@@ -147,6 +165,11 @@ class PreviewPanel extends JPanel {
     setLayout(new GridLayout(1, 1));
     add(myEditorsSplitters);
     myToolWindow.setTitleActions(new MoveToEditorTabsAction(), new CloseFileAction());
+    ArrayList<AnAction> myGearActions = new ArrayList<AnAction>();
+    for (ContentType contentType : ContentType.values()) {
+      myGearActions.add(new ContentTypeToggleAction(contentType));
+    }
+    myToolWindow.setAdditionalGearActions(new DefaultActionGroup("Preview", myGearActions));
     myToolWindow.hide(null);
   }
 
@@ -204,7 +227,7 @@ class PreviewPanel extends JPanel {
         @Override
         public void run() {
           if (myContentManager.getIndexOfContent(myStubContent) != -1) {
-            ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PREVIEW).hide(null);
+            toggleToolWindow(false);
           }
         }
       });
@@ -224,6 +247,13 @@ class PreviewPanel extends JPanel {
       myAwaitingForOpen = null;
     }
     if (file.equals(myModifiedFile)) {
+      myBlocked = true;
+      try {
+        myManager.openFileWithProviders(myModifiedFile, false, true);
+      }
+      finally {
+        myBlocked = false;
+      }
       myModifiedFile = null;
     }
     Content content = getContent(file);
@@ -233,9 +263,22 @@ class PreviewPanel extends JPanel {
     }
   }
 
+  private void toggleToolWindow(boolean activate) {
+    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PREVIEW);
+    if (toolWindow != null) {
+      if (activate) {
+        toolWindow.activate(null, false);
+      }
+      else {
+        toolWindow.hide(null);
+      }
+    }
+  }
+
   private class MoveToEditorTabsAction extends AnAction {
+
     public MoveToEditorTabsAction() {
-      super(null, "Move to main tabs", AllIcons.Duplicates.SendToTheLeftGrayed);
+      super("Move to main tabs", "Move to main tabs", AllIcons.Duplicates.SendToTheLeftGrayed);
     }
 
     @Override
@@ -252,20 +295,44 @@ class PreviewPanel extends JPanel {
       }
       myManager.openFileWithProviders(virtualFile, true, window);
       close(virtualFile);
-      ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PREVIEW).hide(null);
+      toggleToolWindow(false);
     }
   }
 
 
   private class CloseFileAction extends AnAction {
     public CloseFileAction() {
-      super(null, "Close", AllIcons.Actions.Close);
+      super("Close", "Close", AllIcons.Actions.Close);
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
       for (VirtualFile file : myHistory.toArray(new VirtualFile[myHistory.size()])) {
         close(file);
+      }
+      toggleToolWindow(false);
+    }
+  }
+
+  private class ContentTypeToggleAction extends ToggleAction {
+    private final ContentType myContentType;
+
+    ContentTypeToggleAction(ContentType contentType) {
+      super(contentType.toString());
+      myContentType = contentType;
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return myTypes.contains(myContentType);
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      if (state) {
+        myTypes.add(myContentType);
+      } else {
+        myTypes.remove(myContentType);
       }
     }
   }
@@ -294,6 +361,28 @@ class PreviewPanel extends JPanel {
       if (composite != null && composite.isModified()) {
         myModifiedFile = file;
       }
+    }
+
+    @Override
+    protected EditorWindow createEditorWindow() {
+      return new EditorWindow(this) {
+        @Override
+        protected void onBeforeSetEditor(VirtualFile file) {
+          VirtualFile currentFile = getCurrentFile();
+          if (currentFile != null && currentFile.equals(myModifiedFile)) {
+            myBlocked = true;
+            try {
+              myManager.openFileWithProviders(myModifiedFile, false, true);
+            }
+            finally {
+              myBlocked = false;
+            }
+          }
+          else {
+            toggleToolWindow(true);
+          }
+        }
+      };
     }
 
     @Override
