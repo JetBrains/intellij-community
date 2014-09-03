@@ -97,10 +97,6 @@ public class ShortcutPromoterManager implements ApplicationComponent, AnActionLi
   @Nullable
   @Override
   public Element getState() {
-    if (myState.isEmpty()) {
-      return null;
-    }
-
     final Element actions = new Element("actions");
     for (String id : myState.keySet()) {
       final Element action = new Element("action");
