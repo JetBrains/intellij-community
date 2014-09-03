@@ -97,10 +97,11 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
 
 
   @Override
-  public PsiFile getCachedPsi(Language target) {
+  public PsiFile getCachedPsi(@NotNull Language target) {
     return myRoots.get(target);
   }
 
+  @NotNull
   @Override
   public FileElement[] getKnownTreeRoots() {
     List<FileElement> files = new ArrayList<FileElement>(myRoots.size());

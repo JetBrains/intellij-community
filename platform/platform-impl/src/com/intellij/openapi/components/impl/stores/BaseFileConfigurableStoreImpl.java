@@ -16,7 +16,6 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -28,8 +27,6 @@ import java.util.ArrayList;
 import java.util.Set;
 
 abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.BaseFileConfigurableStoreImpl");
-
   @NonNls protected static final String VERSION_OPTION = "version";
   @NonNls public static final String ATTRIBUTE_NAME = "name";
   private final ComponentManager myComponentManager;
@@ -62,7 +59,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     }
 
     @Override
-    public void load(@NotNull final Element rootElement) throws IOException {
+    public void load(@NotNull final Element rootElement) {
       super.load(rootElement);
 
       final String v = rootElement.getAttributeValue(VERSION_OPTION);
@@ -77,7 +74,11 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     @Override
     @NotNull
     protected Element save() {
-      final Element root = super.save();
+      Element root = super.save();
+      if (root == null) {
+        root = new Element(myRootElementName);
+      }
+
       root.setAttribute(VERSION_OPTION, Integer.toString(myVersion));
       return root;
     }
@@ -116,9 +117,10 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   }
 
   public BaseStorageData getMainStorageData() throws StateStorageException {
-    return (BaseStorageData) getMainStorage().getStorageData(false);
+    return (BaseStorageData) getMainStorage().getStorageData();
   }
 
+  @Nullable
   @Override
   protected StateStorage getDefaultsStorage() {
     return myDefaultsStateStorage;

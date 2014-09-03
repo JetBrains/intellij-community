@@ -30,11 +30,13 @@ import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.NamedScriptableDefinition;
 import com.intellij.structuralsearch.ReplacementVariableDefinition;
 import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.EditorTextField;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,6 +49,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -223,7 +226,10 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
     customScriptCode.getButton().addActionListener(new ActionListener() {
       public void actionPerformed(@NotNull final ActionEvent e) {
-        final EditScriptDialog dialog = new EditScriptDialog(project, customScriptCode.getChildComponent().getText());
+        Set<String> strings = ContainerUtil.collectSet(model.getConfig().getMatchOptions().getVariableConstraintNames());
+        strings.remove(current.getName());
+        strings.remove(CompiledPattern.ALL_CLASS_UNMATCHED_CONTENT_VAR_ARTIFICIAL_NAME);
+        EditScriptDialog dialog = new EditScriptDialog(project, customScriptCode.getChildComponent().getText(), strings);
         dialog.show();
         if (dialog.getExitCode() == OK_EXIT_CODE) {
           customScriptCode.getChildComponent().setText(dialog.getScriptText());
@@ -585,11 +591,13 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
   private static class EditScriptDialog extends DialogWrapper {
     private final Editor editor;
+    private final String title;
 
-    public EditScriptDialog(final Project project, String text) {
+    public EditScriptDialog(Project project, String text, Set<String> names) {
       super(project, true);
       setTitle(SSRBundle.message("edit.groovy.script.constraint.title"));
       editor = createEditor(project, text, "1.groovy");
+      title = names.size() > 0 ? "Available variables: " + StringUtil.join(names, ", ") : "";
       init();
     }
 
@@ -604,7 +612,15 @@ class EditVarConstraintsDialog extends DialogWrapper {
     }
 
     protected JComponent createCenterPanel() {
-      return editor.getComponent();
+      JPanel panel = new JPanel(new BorderLayout());
+      panel.add(editor.getComponent(), BorderLayout.CENTER);
+      if (!title.isEmpty()) {
+        JTextField f=new JTextField(title);
+        f.setEditable(false);
+        f.setBorder(null);
+        panel.add(f, BorderLayout.SOUTH);
+      }
+      return panel;
     }
 
     String getScriptText() {

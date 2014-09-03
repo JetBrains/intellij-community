@@ -21,7 +21,7 @@ import java.util.List;
  * which is visible to student in project view
  */
 
-public class TaskFile implements Stateful{
+public class TaskFile implements Stateful {
   public List<TaskWindow> taskWindows = new ArrayList<TaskWindow>();
   private Task myTask;
   @Transient
@@ -173,7 +173,18 @@ public class TaskFile implements Stateful{
     for (TaskWindow w : taskWindows) {
       if ((w.getLine() == line) && (w.getStart() >= oldEndOffsetInLine)) {
         int distance = w.getStart() - oldEndOffsetInLine;
-        if (lineChange != 0 || newEndOffsetInLine <= w.getStart()) {
+        boolean coveredByPrevTW = false;
+        int prevIndex = w.getIndex() - 1;
+        if (StudyUtils.indexIsValid(prevIndex, taskWindows)) {
+          TaskWindow prevTW = taskWindows.get(prevIndex);
+          if (prevTW.getLine() == line) {
+            int endOffset = prevTW.getStart() + prevTW.getLength();
+            if (endOffset >= newEndOffsetInLine) {
+              coveredByPrevTW = true;
+            }
+          }
+        }
+        if (lineChange != 0 || newEndOffsetInLine <= w.getStart() || coveredByPrevTW) {
           w.setStart(distance + newEndOffsetInLine);
           w.setLine(line + lineChange);
         }
@@ -217,12 +228,33 @@ public class TaskFile implements Stateful{
   public void navigateToFirstTaskWindow(@NotNull final Editor editor) {
     if (!taskWindows.isEmpty()) {
       TaskWindow firstTaskWindow = StudyUtils.getFirst(taskWindows);
-      mySelectedTaskWindow = firstTaskWindow;
-      LogicalPosition taskWindowStart = new LogicalPosition(firstTaskWindow.getLine(), firstTaskWindow.getStart());
-      editor.getCaretModel().moveToLogicalPosition(taskWindowStart);
-      int startOffset = firstTaskWindow.getRealStartOffset(editor.getDocument());
-      int endOffset = startOffset + firstTaskWindow.getLength();
-      editor.getSelectionModel().setSelection(startOffset, endOffset);
+      navigateToTaskWindow(editor, firstTaskWindow);
     }
+  }
+
+  private void navigateToTaskWindow(@NotNull final Editor editor, @NotNull final TaskWindow firstTaskWindow) {
+    if (!firstTaskWindow.isValid(editor.getDocument())) {
+      return;
+    }
+    mySelectedTaskWindow = firstTaskWindow;
+    LogicalPosition taskWindowStart = new LogicalPosition(firstTaskWindow.getLine(), firstTaskWindow.getStart());
+    editor.getCaretModel().moveToLogicalPosition(taskWindowStart);
+    int startOffset = firstTaskWindow.getRealStartOffset(editor.getDocument());
+    int endOffset = startOffset + firstTaskWindow.getLength();
+    editor.getSelectionModel().setSelection(startOffset, endOffset);
+  }
+
+  public void navigateToFirstFailedTaskWindow(@NotNull final Editor editor) {
+    for (TaskWindow taskWindow : taskWindows) {
+      if (taskWindow.getStatus() != StudyStatus.Failed) {
+        continue;
+      }
+      navigateToTaskWindow(editor, taskWindow);
+      break;
+    }
+  }
+
+  public boolean hasFailedTaskWindows() {
+    return taskWindows.size() > 0 && getStatus() == StudyStatus.Failed;
   }
 }

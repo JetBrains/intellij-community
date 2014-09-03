@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,11 @@
 package com.intellij.psi.search.searches;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.*;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -98,11 +100,12 @@ public static void searchOptimized(final PsiMethod method, SearchScope scope, fi
 
     final SearchRequestCollector requests = parameters.getOptimizer();
 
-    return uniqueResults(new MergeQuery<PsiReference>(result, new SearchRequestQuery(parameters.getMethod().getProject(), requests)));
+    Project project = PsiUtilCore.getProjectInReadAction(parameters.getMethod());
+    return uniqueResults(new MergeQuery<PsiReference>(result, new SearchRequestQuery(project, requests)));
   }
 
   public static Query<PsiReference> search(final PsiMethod method, final boolean strictSignatureSearch) {
-    return search(method, GlobalSearchScope.allScope(method.getProject()), strictSignatureSearch);
+    return search(method, GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(method)), strictSignatureSearch);
   }
 
   public static Query<PsiReference> search(final PsiMethod method) {

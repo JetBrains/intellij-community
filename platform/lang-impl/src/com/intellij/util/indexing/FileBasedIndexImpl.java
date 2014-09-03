@@ -1727,7 +1727,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   private static void cleanFileContent(@NotNull FileContentImpl fc, PsiFile psiFile) {
-    if (psiFile != null) psiFile.putUserData(PsiFileImpl.BUILDING_STUB, false);
+    if (psiFile != null) psiFile.putUserData(PsiFileImpl.BUILDING_STUB, null);
     fc.putUserData(IndexingDataKeys.PSI_FILE, null);
   }
 

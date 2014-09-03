@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
 
   void waitBuilderToCome()  {
     try {
-      waitBuilderToCome(Condition.TRUE);
+      waitBuilderToCome(Conditions.alwaysTrue());
     }
     catch (Exception e) {
       throw new AssertionError(e);
@@ -375,7 +375,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   }
 
   void doAndWaitForBuilder(final Runnable runnable) throws Exception {
-    doAndWaitForBuilder(runnable, Condition.TRUE);
+    doAndWaitForBuilder(runnable, Conditions.alwaysTrue());
   }
 
 

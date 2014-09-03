@@ -33,7 +33,6 @@ import com.intellij.util.IncorrectOperationException;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectProcedure;
 
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.Set;
@@ -45,7 +44,7 @@ import java.util.Set;
 public class BindingFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeCook.deductive.resolver.BindingFactory");
 
-  private final HashSet<PsiTypeVariable> myBoundVariables;
+  private final Set<PsiTypeVariable> myBoundVariables;
   private final Project myProject;
   private final PsiTypeVariableFactory myFactory;
 
@@ -95,7 +94,7 @@ public class BindingFactory {
       myBindings.put(index, type);
 
       if (type instanceof Bottom) {
-        final HashSet<PsiTypeVariable> cluster = myFactory.getClusterOf(index);
+        final Set<PsiTypeVariable> cluster = myFactory.getClusterOf(index);
 
         if (cluster != null) {
           for (PsiTypeVariable var : cluster) {
@@ -540,7 +539,7 @@ public class BindingFactory {
 
           if (removeObject &&
               javaLangObject.equals(type)) {
-            final HashSet<PsiTypeVariable> cluster = myFactory.getClusterOf(var.getIndex());
+            final Set<PsiTypeVariable> cluster = myFactory.getClusterOf(var.getIndex());
 
             if (cluster != null) {
               for (final PsiTypeVariable war : cluster) {
@@ -560,7 +559,7 @@ public class BindingFactory {
       }
     }
 
-    public HashSet<PsiTypeVariable> getBoundVariables() {
+    public Set<PsiTypeVariable> getBoundVariables() {
       return myBoundVariables;
     }
 
@@ -663,7 +662,7 @@ public class BindingFactory {
     Binding unify(PsiType x, PsiType y);
   }
 
-  public Binding balance(final PsiType x, final PsiType y, final Balancer balancer, final HashSet<Constraint> constraints) {
+  public Binding balance(final PsiType x, final PsiType y, final Balancer balancer, final Set<Constraint> constraints) {
     final int indicator = (x instanceof PsiTypeVariable ? 1 : 0) + (y instanceof PsiTypeVariable ? 2 : 0);
 
     switch (indicator) {
@@ -878,7 +877,7 @@ public class BindingFactory {
     }
   }
 
-  public Binding riseWithWildcard(final PsiType x, final PsiType y, final HashSet<Constraint> constraints) {
+  public Binding riseWithWildcard(final PsiType x, final PsiType y, final Set<Constraint> constraints) {
     final Binding binding = balance(x, y, new Balancer() {
                                       public Binding varType(final PsiTypeVariable x, final PsiType y) {
                                         if (y instanceof Bottom) {
@@ -941,7 +940,7 @@ public class BindingFactory {
     return binding != null ? binding.reduceRecursive() : null;
   }
 
-  public Binding rise(final PsiType x, final PsiType y, final HashSet<Constraint> constraints) {
+  public Binding rise(final PsiType x, final PsiType y, final Set<Constraint> constraints) {
     final Binding binding = balance(x, y, new Balancer() {
                                       public Binding varType(final PsiTypeVariable x, final PsiType y) {
                                         if (y instanceof Bottom || y instanceof PsiWildcardType) {
@@ -977,7 +976,7 @@ public class BindingFactory {
     return binding != null ? binding.reduceRecursive() : null;
   }
 
-  public Binding sink(final PsiType x, final PsiType y, final HashSet<Constraint> constraints) {
+  public Binding sink(final PsiType x, final PsiType y, final Set<Constraint> constraints) {
     return balance(x, y, new Balancer() {
                      public Binding varType(final PsiTypeVariable x, final PsiType y) {
                        return create(x, y);
@@ -1141,7 +1140,7 @@ public class BindingFactory {
     return new BindingImpl();
   }
 
-  public HashSet<PsiTypeVariable> getBoundVariables() {
+  public Set<PsiTypeVariable> getBoundVariables() {
     return myBoundVariables;
   }
 }

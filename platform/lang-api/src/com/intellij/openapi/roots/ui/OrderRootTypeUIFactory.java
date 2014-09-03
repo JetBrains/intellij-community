@@ -23,6 +23,7 @@ import com.intellij.openapi.projectRoots.ui.SdkPathEditor;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.KeyedExtensionFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -41,6 +42,7 @@ public interface OrderRootTypeUIFactory {
       }
     };
 
+  @Nullable
   SdkPathEditor createPathEditor(Sdk sdk);
 
   Icon getIcon();

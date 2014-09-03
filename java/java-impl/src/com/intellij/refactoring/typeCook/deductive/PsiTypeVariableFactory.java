@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,23 +21,21 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.*;
 
 /**
  * @author db
  */
 public class PsiTypeVariableFactory {
   private int myCurrent = 0;
-  private final LinkedList<HashSet<PsiTypeVariable>> myClusters = new LinkedList<HashSet<PsiTypeVariable>>();
-  private final HashMap<Integer, HashSet<PsiTypeVariable>> myVarCluster = new HashMap<Integer, HashSet<PsiTypeVariable>>();
+  private final List<Set<PsiTypeVariable>> myClusters = new LinkedList<Set<PsiTypeVariable>>();
+  private final Map<Integer, Set<PsiTypeVariable>> myVarCluster = new HashMap<Integer, Set<PsiTypeVariable>>();
 
   public final int getNumber() {
     return myCurrent;
   }
 
-  public final void registerCluster(final HashSet<PsiTypeVariable> cluster) {
+  public final void registerCluster(final Set<PsiTypeVariable> cluster) {
     myClusters.add(cluster);
 
     for (final PsiTypeVariable aCluster : cluster) {
@@ -45,11 +43,11 @@ public class PsiTypeVariableFactory {
     }
   }
 
-  public final LinkedList<HashSet<PsiTypeVariable>> getClusters() {
+  public final List<Set<PsiTypeVariable>> getClusters() {
     return myClusters;
   }
 
-  public final HashSet<PsiTypeVariable> getClusterOf(final int var) {
+  public final Set<PsiTypeVariable> getClusterOf(final int var) {
     return myVarCluster.get(new Integer(var));
   }
 

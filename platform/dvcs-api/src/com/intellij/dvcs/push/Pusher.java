@@ -24,16 +24,19 @@ import java.util.Map;
 /**
  * Base class to execute push command.
  */
-public abstract class Pusher {
+public abstract class Pusher<Repo extends Repository, Source extends PushSource, Target extends PushTarget> {
+
   /**
-   * Perform push command for all repositories belonged to one vcs.
+   * Perform push for all given repositories.
    *
-   * @param pushSpecs          specify push from and to params
-   * @param vcsPushOptionValue specify additional options to push, null if not supported
-   * @param force              if true  then execute force push
+   * @param pushSpecs        push specs for each repository telling what to push and where.
+   * @param additionalOption some additional push option(s), which are received from
+   *                         {@link PushSupport#getVcsPushOptionsPanel() the additional panel} if the plugin has one.
+   * @param force            if true then force push should be performed.
    */
-  public abstract void push(@NotNull Map<Repository, PushSpec> pushSpecs,
-                            @Nullable VcsPushOptionValue vcsPushOptionValue,
+  public abstract void push(@NotNull Map<Repo, PushSpec<Source, Target>> pushSpecs,
+                            @Nullable VcsPushOptionValue additionalOption,
                             boolean force);
+
 }
 

@@ -36,7 +36,7 @@ public class FunctionalInterfaceParameterizationUtil {
     }
     if (classType instanceof PsiClassType) {
       for (PsiType type : ((PsiClassType)classType).getParameters()) {
-        if (type instanceof PsiWildcardType || type instanceof PsiCapturedWildcardType) {
+        if (type instanceof PsiWildcardType) {
           return true;
         }
       }
@@ -94,7 +94,8 @@ public class FunctionalInterfaceParameterizationUtil {
       final InferenceSession session = new InferenceSession(typeParameters, PsiSubstitutor.EMPTY, expr.getManager(), expr);
 
       for (int i = 0; i < targetMethodParams.length; i++) {
-        session.addConstraint(new TypeEqualityConstraint(lambdaParams[i].getType(), targetMethodParams[i].getType()));
+        session.addConstraint(new TypeEqualityConstraint(lambdaParams[i].getType(),
+                                                         session.substituteWithInferenceVariables(targetMethodParams[i].getType())));
       }
 
       if (!session.repeatInferencePhases(false)) {

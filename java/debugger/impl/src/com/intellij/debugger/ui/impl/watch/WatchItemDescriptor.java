@@ -28,8 +28,6 @@ import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiCodeFragment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.Nullable;
 
@@ -85,9 +83,6 @@ public class WatchItemDescriptor extends EvaluationDescriptor {
   }
 
   protected PsiCodeFragment getEvaluationCode(StackFrameContext context) throws EvaluateException {
-    final PsiElement psiContext = PositionUtil.getContextElement(context);
-    final PsiCodeFragment fragment = getEffectiveCodeFragmentFactory(psiContext).createCodeFragment(getEvaluationText(), psiContext, myProject);
-    fragment.forceResolveScope(GlobalSearchScope.allScope(myProject));
-    return fragment;
+    return createCodeFragment(PositionUtil.getContextElement(context));
   }
 }

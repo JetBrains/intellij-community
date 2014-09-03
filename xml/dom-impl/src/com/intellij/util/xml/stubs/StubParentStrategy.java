@@ -20,6 +20,7 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.impl.*;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +33,11 @@ import java.util.List;
 public class StubParentStrategy implements DomParentStrategy {
 
   private final static Logger LOG = Logger.getInstance(StubParentStrategy.class);
+  protected final DomStub myStub;
+
+  public StubParentStrategy(@NotNull DomStub stub) {
+    myStub = stub;
+  }
 
   public static StubParentStrategy createAttributeStrategy(@Nullable AttributeStub stub, @NotNull final DomStub parent) {
     if (stub == null) {
@@ -59,12 +65,6 @@ public class StubParentStrategy implements DomParentStrategy {
     }
   }
 
-  protected final DomStub myStub;
-
-  public StubParentStrategy(@NotNull DomStub stub) {
-    myStub = stub;
-  }
-
   @Override
   public DomInvocationHandler getParentHandler() {
     DomStub parentStub = myStub.getParentStub();
@@ -82,7 +82,14 @@ public class StubParentStrategy implements DomParentStrategy {
 
     // for custom elements, namespace information is lost
     // todo: propagate ns info through DomChildDescriptions
-    XmlTag[] tags = parentTag.getSubTags();
+    XmlTag[] tags;
+    try {
+      XmlUtil.BUILDING_DOM_STUBS.set(true);
+      tags = parentTag.getSubTags();
+    }
+    finally {
+      XmlUtil.BUILDING_DOM_STUBS.set(false);
+    }
 
     int i = 0;
     String nameToFind = myStub.getName();

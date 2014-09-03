@@ -30,10 +30,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -1045,13 +1042,13 @@ public class RefactoringUtil {
   }
 
   public static void fixJavadocsForParams(PsiMethod method, Set<PsiParameter> newParameters) throws IncorrectOperationException {
-    fixJavadocsForParams(method, newParameters, Condition.FALSE);
+    fixJavadocsForParams(method, newParameters, Conditions.<Pair<PsiParameter,String>>alwaysFalse());
   }
 
   public static void fixJavadocsForParams(PsiMethod method,
                                         Set<PsiParameter> newParameters,
                                         Condition<Pair<PsiParameter, String>> eqCondition) throws IncorrectOperationException {
-    fixJavadocsForParams(method, newParameters, eqCondition, Condition.TRUE);
+    fixJavadocsForParams(method, newParameters, eqCondition, Conditions.<String>alwaysTrue());
   }
 
   public static void fixJavadocsForParams(PsiMethod method,
@@ -1245,7 +1242,7 @@ public class RefactoringUtil {
   @Nullable
   public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(@Nullable final PsiTypeParameterList fromList,
                                                                                    @NotNull final PsiElement... elements) {
-    return createTypeParameterListWithUsedTypeParameters(fromList, Condition.TRUE, elements);
+    return createTypeParameterListWithUsedTypeParameters(fromList, Conditions.<PsiTypeParameter>alwaysTrue(), elements);
   }
 
   @Nullable
@@ -1290,7 +1287,7 @@ public class RefactoringUtil {
   }
 
   public static void collectTypeParameters(final Set<PsiTypeParameter> used, final PsiElement element) {
-    collectTypeParameters(used, element, Condition.TRUE);
+    collectTypeParameters(used, element, Conditions.<PsiTypeParameter>alwaysTrue());
   }
   public static void collectTypeParameters(final Set<PsiTypeParameter> used, final PsiElement element,
                                            final Condition<PsiTypeParameter> filter) {

@@ -1,4 +1,5 @@
 import unittest
+from _pydev_imps import _pydev_thread
 try:
     import Queue
 except:
@@ -282,13 +283,9 @@ class ClientThread(threading.Thread):
             if False:
                 proc = subprocess.Popen(args, env=os.environ, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 
-                stdout_thread = threading.Thread(target=self._reader_thread,args=(proc.stdout, sys.stdout))
-                stdout_thread.setDaemon(True)
-                stdout_thread.start()
+                _pydev_thread.start_new_thread(self._reader_thread,(proc.stdout, sys.stdout))
     
-                stderr_thread = threading.Thread(target=self._reader_thread,args=(proc.stderr, sys.stderr))
-                stderr_thread.setDaemon(True)
-                stderr_thread.start()
+                _pydev_thread.start_new_thread(target=self._reader_thread,args=(proc.stderr, sys.stderr))
             else:
                 proc = subprocess.Popen(args, env=os.environ, shell=False)
                 proc.wait()

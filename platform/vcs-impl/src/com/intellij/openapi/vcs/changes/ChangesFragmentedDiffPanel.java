@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -55,6 +56,7 @@ import com.intellij.util.BeforeAfter;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -152,87 +154,87 @@ public class ChangesFragmentedDiffPanel implements Disposable {
 
   private void createNavigateAction() {
     myNavigateAction = new DumbAwareAction("Edit Source", "Edit Source", AllIcons.Actions.EditSource) {
+      @Nullable
+      private OpenFileDescriptor createDescriptor() {
+        if (myFragmentedContent == null || myFragmentedContent.getFile() == null) return null;
+
+        final DiffPanel panel = myCurrentHorizontal ? myHorizontal : myVertical;
+        final DiffSideView side = ((DiffPanelImpl)panel).getCurrentSide();
+        if (side == null || side.getEditor() == null) return null;
+
+        final boolean isAfter = FragmentSide.SIDE2.equals(side.getSide());
+        if (isAfter) {
+          final LogicalPosition position = side.getEditor().getCaretModel().getLogicalPosition();
+          final int line = position.line;
+          final int converted = myFragmentedContent.getNewConvertor().execute(line);
+          return new OpenFileDescriptor(myProject, myFragmentedContent.getFile(), converted, position.column);
+        }
+
+        if (((DiffPanelImpl)panel).getEditor1().getDocument().getTextLength() == 0) {
+          return new OpenFileDescriptor(myProject, myFragmentedContent.getFile(), 0);
+        }
+
+        final CaretModel model = side.getEditor().getCaretModel();
+        final FragmentList fragments = ((DiffPanelImpl)panel).getFragments();
+        final int line = model.getLogicalPosition().line;
+        //final int offset = side.getEditor().getDocument().getLineStartOffset(line);
+        final int offset = model.getOffset();
+
+        BeforeAfter<Integer> current = null;
+        final List<BeforeAfter<Integer>> ranges = myFragmentedContent.getLineRanges();
+        for (BeforeAfter<Integer> range : ranges) {
+          if (range.getBefore() > line) break;
+          current = range;
+        }
+        if (current == null) return null;
+        final Fragment at = fragments.getFragmentAt(offset, FragmentSide.SIDE1, Conditions.<Fragment>alwaysTrue());
+        if (at == null) return null;
+        final TextRange opposite = at.getRange(FragmentSide.SIDE2);
+
+        final int lineInNew = ((DiffPanelImpl)panel).getEditor2().getDocument().getLineNumber(opposite.getStartOffset());
+
+        int correctLine;
+        int column;
+        if (at.getType() == null || TextDiffTypeEnum.NONE.equals(at.getType())) {
+          column = model.getLogicalPosition().column;
+          final int startIn1 =
+            ((DiffPanelImpl)panel).getEditor1().getDocument().getLineNumber(at.getRange(FragmentSide.SIDE1).getStartOffset());
+          correctLine = lineInNew + line - startIn1;
+        }
+        else {
+          column = 0;
+          correctLine = Math.max(lineInNew, current.getAfter());
+        }
+
+        int converted = myFragmentedContent.getNewConvertor().execute(correctLine);
+        return new OpenFileDescriptor(myProject, myFragmentedContent.getFile(), converted, column);
+      }
+
       @Override
       public void actionPerformed(AnActionEvent e) {
-        final boolean enabled = getEnabled();
-        if (enabled) {
-          OpenFileDescriptor descriptor = null;
-          if (myFragmentedContent != null && myFragmentedContent.getFile() != null) {
-            final DiffPanel panel = myCurrentHorizontal ? myHorizontal : myVertical;
+        if (!getEnabled()) return;
+        final OpenFileDescriptor descriptor = createDescriptor();
+        if (descriptor == null) return;
 
-            final DiffSideView side = ((DiffPanelImpl)panel).getCurrentSide();
-            if (side == null || side.getEditor() == null) return;
-
-            final boolean isAfter = FragmentSide.SIDE2.equals(side.getSide());
-            if (isAfter) {
-              final LogicalPosition position = side.getEditor().getCaretModel().getLogicalPosition();
-              final int line = position.line;
-              final int converted = myFragmentedContent.getNewConvertor().execute(line);
-              descriptor = new OpenFileDescriptor(myProject, myFragmentedContent.getFile(), converted, position.column);
-            } else {
-              if (((DiffPanelImpl) panel).getEditor1().getDocument().getTextLength() == 0) {
-                FileEditorManager.getInstance(myProject).openTextEditor(new OpenFileDescriptor(myProject, myFragmentedContent.getFile(), 0),
-                                                                        true);
-                return;
-              }
-
-              final CaretModel model = side.getEditor().getCaretModel();
-              final FragmentList fragments = ((DiffPanelImpl)panel).getFragments();
-              final int line = model.getLogicalPosition().line;
-              //final int offset = side.getEditor().getDocument().getLineStartOffset(line);
-              final int offset =  model.getOffset();
-
-              BeforeAfter<Integer> current = null;
-              final List<BeforeAfter<Integer>> ranges = myFragmentedContent.getLineRanges();
-              for (BeforeAfter<Integer> range : ranges) {
-                if (range.getBefore() > line) break;
-                current = range;
-              }
-              if (current == null) return;
-              final Fragment at = fragments.getFragmentAt(offset, FragmentSide.SIDE1, Condition.TRUE);
-              if (at == null) return;
-              final TextRange opposite = at.getRange(FragmentSide.SIDE2);
-
-              final int lineInNew = ((DiffPanelImpl)panel).getEditor2().getDocument().getLineNumber(opposite.getStartOffset());
-
-              int correctLine;
-              int column;
-              if (at.getType() == null || TextDiffTypeEnum.NONE.equals(at.getType())) {
-                column = model.getLogicalPosition().column;
-                final int startIn1 =
-                  ((DiffPanelImpl)panel).getEditor1().getDocument().getLineNumber(at.getRange(FragmentSide.SIDE1).getStartOffset());
-                correctLine = lineInNew + line - startIn1;
-              }
-              else {
-                column = 0;
-                correctLine = Math.max(lineInNew, current.getAfter());
-              }
-
-              int converted = myFragmentedContent.getNewConvertor().execute(correctLine);
-              descriptor = new OpenFileDescriptor(myProject, myFragmentedContent.getFile(), converted, column);
-            }
+        final Runnable runnable = new Runnable() {
+          @Override
+          public void run() {
+            FileEditorManager.getInstance(myProject).openTextEditor(descriptor, true);
           }
-          if (descriptor == null) return;
-          final OpenFileDescriptor finalDescriptor = descriptor;
-          final Runnable runnable = new Runnable() {
-            @Override
-            public void run() {
-              FileEditorManager.getInstance(myProject).openTextEditor(finalDescriptor, true);
-            }
-          };
-          if (! ModalityState.NON_MODAL.equals(ModalityState.current())) {
-            final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-            if (window instanceof DialogWrapperDialog) {
-              final DialogWrapper wrapper = ((DialogWrapperDialog)window).getDialogWrapper();
-              if (wrapper != null) {
-                Disposer.dispose(wrapper.getDisposable());
-                wrapper.close(DialogWrapper.CANCEL_EXIT_CODE);
-                ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL, myProject.getDisposed());
-                return;
-              }
-            }
-          }
+        };
+
+        if (ModalityState.NON_MODAL.equals(ModalityState.current())) {
           runnable.run();
+        }
+        else {
+          final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+          if (window instanceof DialogWrapperDialog) {
+            final DialogWrapper wrapper = ((DialogWrapperDialog)window).getDialogWrapper();
+            if (wrapper != null) {
+              wrapper.doCancelAction();
+              ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL, myProject.getDisposed());
+            }
+          }
         }
       }
 
@@ -280,21 +282,44 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     myTitleLabel.setText(titleText((DiffPanelImpl)currentPanel));
     myLeftLines = state.getLeftLines();
 
+    EditorEx hEditor1 = (EditorEx)((DiffPanelImpl)myHorizontal).getEditor1();
+    EditorEx vEditor1 = (EditorEx)((DiffPanelImpl)myVertical).getEditor1();
+    EditorEx hEditor2 = (EditorEx)((DiffPanelImpl)myHorizontal).getEditor2();
+    EditorEx vEditor2 = (EditorEx)((DiffPanelImpl)myVertical).getEditor2();
+
+    assert  hEditor1 != null;
+    assert  vEditor1 != null;
+    assert  hEditor2 != null;
+    assert  vEditor2 != null;
+
     FragmentedEditorHighlighter bh = fragmentedContent.getBeforeHighlighter();
     if (bh != null) {
-      ((EditorEx) ((DiffPanelImpl) myHorizontal).getEditor1()).setHighlighter(bh);
-      ((EditorEx) ((DiffPanelImpl) myVertical).getEditor1()).setHighlighter(bh);
+      hEditor1.setHighlighter(bh);
+      vEditor1.setHighlighter(bh);
     }
     FragmentedEditorHighlighter ah = fragmentedContent.getAfterHighlighter();
     if (ah != null) {
-      ((EditorEx) ((DiffPanelImpl) myHorizontal).getEditor2()).setHighlighter(ah);
-      ((EditorEx) ((DiffPanelImpl) myVertical).getEditor2()).setHighlighter(ah);
+      hEditor2.setHighlighter(ah);
+      vEditor2.setHighlighter(ah);
     }
     if (((DiffPanelImpl) currentPanel).getEditor1() != null) {
       highlightTodo(true, fragmentedContent.getBeforeTodoRanges());
     }
     if (((DiffPanelImpl) currentPanel).getEditor2() != null) {
       highlightTodo(false, fragmentedContent.getAfterTodoRanges());
+    }
+    if (fragmentedContent.getFileType() != null && myProject != null && !myProject.isDisposed()) {
+      CodeStyleFacade codeStyleFacade = CodeStyleFacade.getInstance(myProject);
+      int tabSize = codeStyleFacade.getTabSize(fragmentedContent.getFileType());
+      boolean useTabCharacter = codeStyleFacade.useTabCharacter(fragmentedContent.getFileType());
+      hEditor1.getSettings().setTabSize(tabSize);
+      vEditor1.getSettings().setTabSize(tabSize);
+      hEditor2.getSettings().setTabSize(tabSize);
+      vEditor2.getSettings().setTabSize(tabSize);
+      hEditor1.getSettings().setUseTabCharacter(useTabCharacter);
+      vEditor1.getSettings().setUseTabCharacter(useTabCharacter);
+      hEditor2.getSettings().setUseTabCharacter(useTabCharacter);
+      vEditor2.getSettings().setUseTabCharacter(useTabCharacter);
     }
     ensurePresentation();
     softWraps(myConfiguration.SOFT_WRAPS_IN_SHORT_DIFF);

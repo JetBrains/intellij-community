@@ -218,7 +218,8 @@ public class AnalysisScope {
   }
 
   public boolean contains(@NotNull PsiElement psiElement) {
-    return contains(psiElement.getContainingFile().getVirtualFile());
+    VirtualFile file = psiElement.getContainingFile().getVirtualFile();
+    return file != null && contains(file);
   }
 
   public boolean contains(@NotNull VirtualFile file) {
@@ -295,6 +296,7 @@ public class AnalysisScope {
             @Override
             public Boolean compute() {
               if (!myIncludeTestSource && projectFileIndex.isInTestSourceContent(fileOrDir)) return false;
+              if (isInGeneratedSources(fileOrDir, myProject)) return false;
               return ((GlobalSearchScope)myScope).contains(fileOrDir);
             }
           }).booleanValue();
@@ -457,11 +459,14 @@ public class AnalysisScope {
     final Project project = dir.getProject();
     final PsiManager psiManager = PsiManager.getInstance(project);
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
+    //we should analyze generated source files only if the action is explicitly invoked for a directory located under generated roots
+    final boolean processGeneratedFiles = isInGeneratedSources(dir.getVirtualFile(), project);
     VfsUtilCore.iterateChildrenRecursively(dir.getVirtualFile(), VirtualFileFilter.ALL, new ContentIterator() {
       @Override
       @SuppressWarnings({"SimplifiableIfStatement"})
       public boolean processFile(@NotNull final VirtualFile fileOrDir) {
         if (!myIncludeTestSource && index.isInTestSourceContent(fileOrDir)) return true;
+        if (!processGeneratedFiles && isInGeneratedSources(fileOrDir, project)) return true;
         if (!fileOrDir.isDirectory()) {
           return AnalysisScope.processFile(fileOrDir, visitor, psiManager, needReadAction);
         }

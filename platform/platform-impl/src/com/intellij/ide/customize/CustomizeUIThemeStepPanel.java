@@ -22,6 +22,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.IconUtil;
@@ -46,7 +47,7 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
   private Map<String, Icon> myLafNames = new LinkedHashMap<String, Icon>();
 
   public CustomizeUIThemeStepPanel() {
-    setLayout(new BorderLayout(10, 10));
+    setLayout(createSmallBorderLayout());
     IconLoader.activate();
 
     initLafs();
@@ -65,13 +66,13 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
         radioButton.setSelected(true);
         myDefaultLafName = lafName;
       }
-      final JPanel panel = createBigButtonPanel(new BorderLayout(10, 10), radioButton, new Runnable() {
+      final JPanel panel = createBigButtonPanel(createSmallBorderLayout(), radioButton, new Runnable() {
         @Override
         public void run() {
           applyLaf(lafName, CustomizeUIThemeStepPanel.this);
         }
       });
-      panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+      panel.setBorder(createSmallEmptyBorder());
       panel.add(radioButton, myColumnMode ? BorderLayout.WEST : BorderLayout.NORTH);
       final JLabel label = new JLabel(myColumnMode ? IconUtil.scale(IconUtil.cropIcon(icon, icon.getIconWidth() * 2 / 3, icon.getIconHeight() * 2 / 3), .5) : icon);
       label.setVerticalAlignment(SwingConstants.TOP);
@@ -139,7 +140,10 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
 
   @Override
   public String getHTMLFooter() {
-    return "UI theme can be changed later in " + CommonBundle.settingsTitle() + " | Appearance";
+    return "UI theme can be changed later in " +
+           CommonBundle.settingsTitle()
+           + " | " + OptionsBundle.message("configurable.group.appearance.settings.display.name")
+           + " | " + "Appearance";
   }
 
   private void applyLaf(String lafName, Component component) {

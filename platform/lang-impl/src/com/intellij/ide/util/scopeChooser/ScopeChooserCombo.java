@@ -71,6 +71,8 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   private NamedScopesHolder.ScopeListener myScopeListener;
   private NamedScopeManager myNamedScopeManager;
   private DependencyValidationManager myValidationManager;
+  private boolean myCurrentSelection = true;
+  private boolean myUsageView = true;
 
   public ScopeChooserCombo() {
     super(new IgnoringComboBox(){
@@ -116,6 +118,14 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     rebuildModel();
 
     selectScope(preselect);
+  }
+
+  public void setCurrentSelection(boolean currentSelection) {
+    myCurrentSelection = currentSelection;
+  }
+
+  public void setUsageView(boolean usageView) {
+    myUsageView = usageView;
   }
 
   @Override
@@ -220,7 +230,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
 
   private void createPredefinedScopeDescriptors(DefaultComboBoxModel model) {
     @SuppressWarnings("deprecation") final DataContext context = DataManager.getInstance().getDataContext();
-    for (SearchScope scope : getPredefinedScopes(myProject, context, mySuggestSearchInLibs, myPrevSearchFiles, true, true)) {
+    for (SearchScope scope : getPredefinedScopes(myProject, context, mySuggestSearchInLibs, myPrevSearchFiles, myCurrentSelection, myUsageView)) {
       model.addElement(new ScopeDescriptor(scope));
     }
     for (ScopeDescriptorProvider provider : Extensions.getExtensions(ScopeDescriptorProvider.EP_NAME)) {

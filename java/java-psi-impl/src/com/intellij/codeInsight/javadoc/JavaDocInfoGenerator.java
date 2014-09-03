@@ -45,6 +45,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -720,14 +721,21 @@ public class JavaDocInfoGenerator {
                                           boolean generateLink, boolean splitAnnotations) {
     PsiManager manager = owner.getManager();
 
+    Set<String> shownAnnotations = ContainerUtil.newHashSet();
+
     for (PsiAnnotation annotation : annotations) {
       final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
       if (nameReferenceElement == null) continue;
       final PsiElement resolved = nameReferenceElement.resolve();
       boolean inferred = AnnotationUtil.isInferredAnnotation(annotation);
+
+      if (!(shownAnnotations.add(annotation.getQualifiedName()) || isRepeatableAnnotationType(resolved))) {
+        continue;
+      }
+
       if (resolved instanceof PsiClass) {
         final PsiClass annotationType = (PsiClass)resolved;
-        if (AnnotationUtil.isAnnotated(annotationType, "java.lang.annotation.Documented", false)) {
+        if (isDocumentedAnnotationType(annotationType)) {
           if (inferred) buffer.append("<i>");
           final PsiClassType type = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(annotationType, PsiSubstitutor.EMPTY);
           buffer.append("@");
@@ -768,6 +776,14 @@ public class JavaDocInfoGenerator {
       }
       if (splitAnnotations) buffer.append("\n");
     }
+  }
+
+  public static boolean isDocumentedAnnotationType(@Nullable PsiElement annotationType) {
+    return annotationType instanceof PsiClass && AnnotationUtil.isAnnotated((PsiClass)annotationType, "java.lang.annotation.Documented", false);
+  }
+
+  public static boolean isRepeatableAnnotationType(@Nullable PsiElement annotationType) {
+    return annotationType instanceof PsiClass && AnnotationUtil.isAnnotated((PsiClass)annotationType, CommonClassNames.JAVA_LANG_ANNOTATION_REPEATABLE, false, true);
   }
 
   private void generateMethodParameterJavaDoc(@NonNls StringBuilder buffer, PsiParameter parameter, boolean generatePrologueAndEpilogue) {

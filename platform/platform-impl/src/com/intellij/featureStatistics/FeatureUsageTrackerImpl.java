@@ -15,10 +15,7 @@
  */
 package com.intellij.featureStatistics;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
@@ -30,9 +27,10 @@ import java.util.Set;
 
 @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext"})
 @State(
-    name = "FeatureUsageStatistics",
-    storages = {@Storage(
-        file = StoragePathMacros.APP_CONFIG + "/feature.usage.statistics.xml")})
+  name = "FeatureUsageStatistics",
+  roamingType = RoamingType.DISABLED,
+  storages = {@Storage(
+    file = StoragePathMacros.APP_CONFIG + "/feature.usage.statistics.xml")})
 public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements PersistentStateComponent<Element> {
   private static final int HOUR = 1000 * 60 * 60;
   private static final long DAY = HOUR * 24;

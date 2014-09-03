@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.DumbService;
@@ -40,7 +41,6 @@ import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Eugene Zhuravlev
@@ -66,19 +66,23 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
     //noinspection EnumSwitchStatementWhichMissesCases
     switch (msg.getType()) {
       case BUILD_EVENT:
-        handleBuildEvent(sessionId, msg.getBuildEvent());
+        final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent event = msg.getBuildEvent();
+        if (event.getEventType() == CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Type.CUSTOM_BUILDER_MESSAGE && event.hasCustomBuilderMessage()) {
+          final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage message = event.getCustomBuilderMessage();
+          if (!myProject.isDisposed()) {
+            myProject.getMessageBus().syncPublisher(CustomBuilderMessageHandler.TOPIC).messageReceived(
+              message.getBuilderId(), message.getMessageType(), message.getMessageText()
+            );
+          }
+        }
+        handleBuildEvent(sessionId, event);
         break;
       case COMPILE_MESSAGE:
         handleCompileMessage(sessionId, msg.getCompileMessage());
         break;
       case CONSTANT_SEARCH_TASK:
         final CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask task = msg.getConstantSearchTask();
-        myTaskExecutor.submit(new Runnable() {
-          @Override
-          public void run() {
-            handleConstantSearchTask(channel, sessionId, task);
-          }
-        });
+        handleConstantSearchTask(channel, sessionId, task);
         break;
     }
   }
@@ -88,30 +92,29 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
   protected abstract void handleBuildEvent(UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage.BuildEvent event);
 
   private void handleConstantSearchTask(final Channel channel, final UUID sessionId, final CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask task) {
-    while (true) {
-      final AtomicBoolean canceled = new AtomicBoolean(false);
-      DumbService.getInstance(myProject).waitForSmartMode();
-      ProgressIndicatorUtils.runWithWriteActionPriority(new ReadTask() {
-        @Override
-        public void computeInReadAction(@NotNull ProgressIndicator indicator) {
-          if (DumbService.isDumb(myProject)) {
-            canceled.set(true);
-            return;
-          }
-
+    ProgressIndicatorUtils.scheduleWithWriteActionPriority(new ProgressIndicatorBase(), myTaskExecutor, new ReadTask() {
+      @Override
+      public void computeInReadAction(@NotNull ProgressIndicator indicator) {
+        if (DumbService.isDumb(myProject)) {
+          onCanceled(indicator);
+        }
+        else {
           doHandleConstantSearchTask(channel, sessionId, task);
         }
-  
-        @Override
-        public void onCanceled(@NotNull ProgressIndicator indicator) {
-          canceled.set(true);
-        }
-      });
-      if (!canceled.get()) {
-        break;
       }
-    }
+
+      @Override
+      public void onCanceled(@NotNull ProgressIndicator indicator) {
+        DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
+          @Override
+          public void run() {
+            handleConstantSearchTask(channel, sessionId, task);
+          }
+        });
+      }
+    });
   }
+
   private void doHandleConstantSearchTask(Channel channel, UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask task) {
     final String ownerClassName = task.getOwnerClassName();
     final String fieldName = task.getFieldName();

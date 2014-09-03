@@ -19,6 +19,10 @@
     </component>
   </application-components>
 
+  <extensions defaultExtensionNs="com.intellij">
+      <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.edu.PyExecuteFileLineMarkerProvider"/>
+  </extensions>
+
   <actions>
     <group overrides="true" class="com.intellij.openapi.actionSystem.EmptyActionGroup" id="ToolsMenu"/>
 
@@ -36,6 +40,12 @@
     <action overrides="true" class="com.intellij.openapi.actionSystem.EmptyAction" id="RemoveFromFavorites"/>
 
     <action overrides="true" class="com.intellij.openapi.actionSystem.EmptyAction" id="NewHtmlFile"/>
+
+
+    <group id="PyRunMenu">
+      <action id="runCurrentFile" class="com.jetbrains.python.edu.PyRunCurrentFileAction"/>
+      <add-to-group group-id="RunMenu" anchor="first"/>
+    </group>
 
 
   </actions>

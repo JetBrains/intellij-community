@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +43,7 @@ public class MockApplicationEx extends MockApplication implements ApplicationEx 
   }
 
   @Override
-  public void load(String path) throws IOException, InvalidDataException {
+  public void load(String path) throws IOException {
   }
 
   @Override

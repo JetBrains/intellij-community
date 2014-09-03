@@ -44,6 +44,13 @@ public class PluginXmlDomStubsTest extends DomStubTest {
     );
   }
 
+  public void testXInclude() throws Exception {
+    prepareFile("pluginWithXInclude-extensionPoints.xml");
+    prepareFile("pluginWithXInclude-main.xml");
+    prepareFile("pluginWithXInclude.xml");
+    myFixture.testHighlighting("pluginWithXInclude.xml");
+  }
+
   @Override
   protected String getBasePath() {
     return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/pluginXmlDomStubs";

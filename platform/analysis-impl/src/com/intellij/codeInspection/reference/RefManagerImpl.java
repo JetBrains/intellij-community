@@ -102,10 +102,7 @@ public class RefManagerImpl extends RefManager {
     }
     if (scope != null) {
       for (Module module : ModuleManager.getInstance(getProject()).getModules()) {
-        //init all ref modules in scope
-        if (scope.containsModule(module)) {
-          getRefModule(module);
-        }
+        getRefModule(module);
       }
     }
   }

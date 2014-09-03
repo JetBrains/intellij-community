@@ -777,6 +777,11 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     myFixture.assertPreferredCompletionItems(0, "i", "z", "zz", "i, z, zz");
   }
 
+  public void testSuggestTypeParametersInTypeArgumentList() {
+    configureByTestName();
+    myFixture.assertPreferredCompletionItems(0, "T", "String");
+  }
+
   public void testWrongAnonymous() throws Throwable {
     configureByTestName();
     select();

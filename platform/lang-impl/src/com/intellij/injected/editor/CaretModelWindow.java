@@ -212,13 +212,24 @@ public class CaretModelWindow implements CaretModel {
 
   @Override
   public void setCaretsAndSelections(@NotNull List<CaretState> caretStates) {
+    List<CaretState> convertedStates = convertCaretStates(caretStates);
+    myDelegate.setCaretsAndSelections(convertedStates);
+  }
+
+  @Override
+  public void setCaretsAndSelections(@NotNull List<CaretState> caretStates, boolean updateSystemSelection) {
+    List<CaretState> convertedStates = convertCaretStates(caretStates);
+    myDelegate.setCaretsAndSelections(convertedStates, updateSystemSelection);
+  }
+
+  private List<CaretState> convertCaretStates(List<CaretState> caretStates) {
     List<CaretState> convertedStates = new ArrayList<CaretState>(caretStates.size());
     for (CaretState state : caretStates) {
       convertedStates.add(new CaretState(injectedToHost(state.getCaretPosition()),
                                          injectedToHost(state.getSelectionStart()),
                                          injectedToHost(state.getSelectionEnd())));
     }
-    myDelegate.setCaretsAndSelections(convertedStates);
+    return convertedStates;
   }
 
   private LogicalPosition injectedToHost(@Nullable LogicalPosition position) {

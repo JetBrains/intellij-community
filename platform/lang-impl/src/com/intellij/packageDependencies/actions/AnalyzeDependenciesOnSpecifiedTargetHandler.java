@@ -36,7 +36,7 @@ import java.util.*;
  */
 public class AnalyzeDependenciesOnSpecifiedTargetHandler extends DependenciesHandlerBase {
   private static final NotificationGroup NOTIFICATION_GROUP =
-    NotificationGroup.toolWindowGroup("Dependencies", ToolWindowId.DEPENDENCIES, true);
+    NotificationGroup.toolWindowGroup("Dependencies", ToolWindowId.DEPENDENCIES);
   private final GlobalSearchScope myTargetScope;
 
   public AnalyzeDependenciesOnSpecifiedTargetHandler(@NotNull Project project, @NotNull AnalysisScope scope, @NotNull GlobalSearchScope targetScope) {

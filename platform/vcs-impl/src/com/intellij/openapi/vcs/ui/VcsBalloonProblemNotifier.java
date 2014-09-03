@@ -37,7 +37,7 @@ import javax.swing.event.HyperlinkEvent;
  */
 public class VcsBalloonProblemNotifier implements Runnable {
   public static final NotificationGroup
-    NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("Common Version Control Messages", ChangesViewContentManager.TOOLWINDOW_ID, true);
+    NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("Common Version Control Messages", ChangesViewContentManager.TOOLWINDOW_ID);
   private final Project myProject;
   private final String myMessage;
   private final MessageType myMessageType;

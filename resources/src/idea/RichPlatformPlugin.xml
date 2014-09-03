@@ -239,10 +239,10 @@
 
     <!-- Errors -->
     <!-- Show full error options configurable only in full IDEA - platform supports only default IDE profile for now -->
-    <projectConfigurable groupId="editor" displayName="Inspections" provider="com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurableProvider"/>
+    <projectConfigurable groupId="editor" groupWeight="160" displayName="Inspections" provider="com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurableProvider"/>
 
     <!-- Compiler -->
-    <projectConfigurable groupId="build" instance="com.intellij.compiler.options.CompilerConfigurable" id="project.propCompiler" order="after project"
+    <projectConfigurable groupId="build" groupWeight="130" instance="com.intellij.compiler.options.CompilerConfigurable" id="project.propCompiler" order="after project"
                          key="compiler.configurable.display.name" bundle="messages.CompilerBundle" childrenEPName="com.intellij.compilerSettingsFactory">
       <configurable instance="com.intellij.openapi.compiler.options.ExcludedEntriesConfigurable" id="reference.projectsettings.compiler.excludes"
                     displayName="Excludes"/>
@@ -312,6 +312,8 @@
                      implementationClass="com.intellij.openapi.roots.ui.configuration.libraryEditor.JavadocOrderRootTypeUIFactory"/>
     <OrderRootTypeUI key="ANNOTATIONS"
                      implementationClass="com.intellij.openapi.roots.ui.configuration.libraryEditor.AnnotationsOrderRootTypeUIFactory"/>
+    <OrderRootTypeUI key="NATIVE"
+                     implementationClass="com.intellij.openapi.roots.ui.configuration.libraryEditor.NativeLibraryOrderRootTypeUIFactory"/>
     <OrderRootTypeUI key="CLASSES"
                      implementationClass="com.intellij.openapi.roots.ui.configuration.libraryEditor.ClassesOrderRootTypeUIFactory"/>
     <OrderRootTypeUI key="SOURCES"
@@ -332,6 +334,7 @@
     <moduleExtension implementation="com.intellij.openapi.roots.impl.JavaModuleExternalPathsImpl"/>
 
     <orderRootType implementation="com.intellij.openapi.roots.AnnotationOrderRootType"/>
+    <orderRootType implementation="com.intellij.openapi.roots.NativeLibraryOrderRootType"/>
     <orderRootType implementation="com.intellij.openapi.roots.JavadocOrderRootType"/>
 
 

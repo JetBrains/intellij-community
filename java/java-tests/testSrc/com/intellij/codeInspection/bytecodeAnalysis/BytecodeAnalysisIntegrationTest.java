@@ -133,28 +133,59 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
       return;
     }
 
-    // not null-result
-    String externalOutAnnotation =
-      myExternalAnnotationsManager.findExternalAnnotation(method, AnnotationUtil.NOT_NULL) == null ? "null" : "@NotNull";
-    String inferredOutAnnotation =
-      myInferredAnnotationsManager.findInferredAnnotation(method, AnnotationUtil.NOT_NULL) == null ? "null" : "@NotNull";
     String methodKey = PsiFormatUtil.getExternalName(method, false, Integer.MAX_VALUE);
 
-    if (!externalOutAnnotation.equals(inferredOutAnnotation)) {
-      diffs.add(methodKey + ": " + externalOutAnnotation + " != " + inferredOutAnnotation);
+    {
+      // @NotNull method
+      String externalNotNullMethodAnnotation =
+        myExternalAnnotationsManager.findExternalAnnotation(method, AnnotationUtil.NOT_NULL) == null ? "null" : "@NotNull";
+      String inferredNotNullMethodAnnotation =
+        myInferredAnnotationsManager.findInferredAnnotation(method, AnnotationUtil.NOT_NULL) == null ? "null" : "@NotNull";
+
+      if (!externalNotNullMethodAnnotation.equals(inferredNotNullMethodAnnotation)) {
+        diffs.add(methodKey + ": " + externalNotNullMethodAnnotation + " != " + inferredNotNullMethodAnnotation);
+      }
+    }
+
+    {
+      // @Nullable method
+      String externalNullableMethodAnnotation =
+        myExternalAnnotationsManager.findExternalAnnotation(method, AnnotationUtil.NULLABLE) == null ? "null" : "@Nullable";
+      String inferredNullableMethodAnnotation =
+        myInferredAnnotationsManager.findInferredAnnotation(method, AnnotationUtil.NULLABLE) == null ? "null" : "@Nullable";
+
+      if (!externalNullableMethodAnnotation.equals(inferredNullableMethodAnnotation)) {
+        diffs.add(methodKey + ": " + externalNullableMethodAnnotation + " != " + inferredNullableMethodAnnotation);
+      }
     }
 
     for (PsiParameter parameter : method.getParameterList().getParameters()) {
       String parameterKey = PsiFormatUtil.getExternalName(parameter, false, Integer.MAX_VALUE);
-      String externalParameterAnnotation =
-        myExternalAnnotationsManager.findExternalAnnotation(parameter, AnnotationUtil.NOT_NULL) == null ? "null" : "@NotNull";
-      String inferredParameterAnnotation =
-        myInferredAnnotationsManager.findInferredAnnotation(parameter, AnnotationUtil.NOT_NULL) == null ? "null" : "@NotNull";
-      if (!externalParameterAnnotation.equals(inferredParameterAnnotation)) {
-        diffs.add(parameterKey + ": " + externalParameterAnnotation + " != " + inferredParameterAnnotation);
+
+      {
+        // @NotNull parameter
+        String externalNotNull =
+          myExternalAnnotationsManager.findExternalAnnotation(parameter, AnnotationUtil.NOT_NULL) == null ? "null" : "@NotNull";
+        String inferredNotNull =
+          myInferredAnnotationsManager.findInferredAnnotation(parameter, AnnotationUtil.NOT_NULL) == null ? "null" : "@NotNull";
+        if (!externalNotNull.equals(inferredNotNull)) {
+          diffs.add(parameterKey + ": " + externalNotNull + " != " + inferredNotNull);
+        }
+      }
+
+      {
+        // @Nullable parameter
+        String externalNullable =
+          myExternalAnnotationsManager.findExternalAnnotation(parameter, AnnotationUtil.NULLABLE) == null ? "null" : "@Nullable";
+        String inferredNullable =
+          myInferredAnnotationsManager.findInferredAnnotation(parameter, AnnotationUtil.NULLABLE) == null ? "null" : "@Nullable";
+        if (!externalNullable.equals(inferredNullable)) {
+          diffs.add(parameterKey + ": " + externalNullable + " != " + inferredNullable);
+        }
       }
     }
 
+    // @Contract
     PsiAnnotation externalContractAnnotation =
       myExternalAnnotationsManager.findExternalAnnotation(method, ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
     PsiAnnotation inferredContractAnnotation =

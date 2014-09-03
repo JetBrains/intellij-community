@@ -203,14 +203,17 @@ public class EditorFactoryImpl extends EditorFactory implements ApplicationCompo
   @Override
   public void releaseEditor(@NotNull Editor editor) {
     try {
-      ((EditorImpl)editor).release();
+      myEditorFactoryEventDispatcher.getMulticaster().editorReleased(new EditorFactoryEvent(this, editor));
     }
     finally {
-      myEditors.remove(editor);
-      myEditorFactoryEventDispatcher.getMulticaster().editorReleased(new EditorFactoryEvent(this, editor));
-
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("number of Editor's:" + myEditors.size());
+      try {
+        ((EditorImpl)editor).release();
+      }
+      finally {
+        myEditors.remove(editor);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("number of Editor's:" + myEditors.size());
+        }
       }
     }
   }

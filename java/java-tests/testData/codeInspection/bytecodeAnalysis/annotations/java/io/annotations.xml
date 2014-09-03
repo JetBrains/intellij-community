@@ -11,6 +11,12 @@
   <item name="java.io.BufferedReader int read(char[], int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.io.BufferedReader java.lang.String readLine()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.io.BufferedReader java.lang.String readLine(boolean)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.io.BufferedWriter BufferedWriter(java.io.Writer) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -50,6 +56,9 @@
   <item name="java.io.DataInputStream int read(byte[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.io.DataInputStream java.lang.String readLine()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.io.DataInputStream java.lang.String readUTF()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -62,6 +71,9 @@
   <item name="java.io.DataInputStream void readFully(byte[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.io.File File(java.io.File, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.io.File File(java.io.File, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -71,11 +83,20 @@
   <item name="java.io.File File(java.lang.String, java.io.File) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.io.File File(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.io.File File(java.lang.String, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.io.File File(java.net.URI) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.io.File boolean checkAndCreate(java.lang.String, java.lang.SecurityManager) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.io.File boolean equals(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.io.File boolean equals(java.lang.Object)">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -85,14 +106,32 @@
   <item name="java.io.File java.io.File createTempFile(java.lang.String, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.io.File java.io.File createTempFile(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.io.File java.io.File createTempFile(java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.io.File java.io.File createTempFile(java.lang.String, java.lang.String, java.io.File) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.io.File java.io.File createTempFile(java.lang.String, java.lang.String, java.io.File) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.io.File java.io.File createTempFile(java.lang.String, java.lang.String, java.io.File) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.io.File java.io.File createTempFile(java.lang.String, java.lang.String, java.io.File)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.io.File java.io.File generateFile(java.lang.String, java.lang.String, java.io.File) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.io.File java.io.File generateFile(java.lang.String, java.lang.String, java.io.File) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.io.File java.io.File generateFile(java.lang.String, java.lang.String, java.io.File) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.io.File java.io.File generateFile(java.lang.String, java.lang.String, java.io.File)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -103,8 +142,29 @@
   <item name="java.io.File java.io.File getCanonicalFile()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.io.File java.io.File getParentFile()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.io.File java.io.File[] listFiles()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.io.File java.io.File[] listFiles(java.io.FileFilter) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.io.File java.io.File[] listFiles(java.io.FileFilter)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.io.File java.io.File[] listFiles(java.io.FilenameFilter) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.io.File java.io.File[] listFiles(java.io.FilenameFilter)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.io.File java.lang.String getName()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.io.File java.lang.String getParent()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.io.File java.lang.String slashify(java.lang.String, boolean) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -113,6 +173,9 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_-&gt;!null&quot;"/>
     </annotation>
+  </item>
+  <item name="java.io.File java.lang.String[] list(java.io.FilenameFilter) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.io.File java.net.URI toURI()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -129,11 +192,26 @@
   <item name="java.io.FileInputStream FileInputStream(java.io.FileDescriptor) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.io.FileInputStream FileInputStream(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.io.FileInputStream int read(byte[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.io.FileNotFoundException FileNotFoundException(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.io.FileNotFoundException FileNotFoundException(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.io.FileOutputStream FileOutputStream(java.io.FileDescriptor) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.io.FileOutputStream FileOutputStream(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.io.FileOutputStream FileOutputStream(java.lang.String, boolean) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.io.FileOutputStream void write(byte[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -141,8 +219,17 @@
   <item name="java.io.FileReader FileReader(java.io.FileDescriptor) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.io.FileReader FileReader(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.io.FileWriter FileWriter(java.io.FileDescriptor) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.io.FileWriter FileWriter(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.io.FileWriter FileWriter(java.lang.String, boolean) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.io.FilterOutputStream void write(byte[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -207,8 +294,32 @@
   <item name="java.io.ObjectInputStream java.lang.Class resolveProxyClass(java.lang.String[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.io.ObjectInputStream java.lang.Enum readEnum(boolean)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.io.ObjectInputStream java.lang.Object access$300(java.io.ObjectInputStream, boolean) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.io.ObjectInputStream java.lang.Object access$300(java.io.ObjectInputStream, boolean)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.io.ObjectInputStream java.lang.Object readArray(boolean)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.io.ObjectInputStream java.lang.Object readNull()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.io.ObjectInputStream java.lang.Object readObject()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.io.ObjectInputStream java.lang.Object readObject0(boolean)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.io.ObjectInputStream java.lang.Object readObjectOverride()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.io.ObjectInputStream java.lang.Object readUnshared()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.io.ObjectInputStream java.lang.Object resolveObject(java.lang.Object)">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -217,6 +328,9 @@
   </item>
   <item name="java.io.ObjectInputStream void access$500(java.io.ObjectInputStream) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.io.ObjectInputStream void defaultReadFields(java.lang.Object, java.io.ObjectStreamClass) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.io.ObjectInputStream void defaultReadFields(java.lang.Object, java.io.ObjectStreamClass) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -229,6 +343,9 @@
   </item>
   <item name="java.io.ObjectInputStream void readFully(byte[], int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.io.ObjectInputStream void readSerialData(java.lang.Object, java.io.ObjectStreamClass) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.io.ObjectInputStream void readSerialData(java.lang.Object, java.io.ObjectStreamClass) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -243,6 +360,12 @@
   </item>
   <item name="java.io.ObjectOutputStream void access$100(java.io.ObjectOutputStream, java.lang.Object, boolean) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.io.ObjectOutputStream void annotateClass(java.lang.Class) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.io.ObjectOutputStream void annotateProxyClass(java.lang.Class) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.io.ObjectOutputStream void defaultWriteFields(java.lang.Object, java.io.ObjectStreamClass) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -259,6 +382,9 @@
   <item name="java.io.ObjectOutputStream void writeArray(java.lang.Object, java.io.ObjectStreamClass, boolean) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.io.ObjectOutputStream void writeClassDesc(java.io.ObjectStreamClass, boolean) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.io.ObjectOutputStream void writeClassDescriptor(java.io.ObjectStreamClass) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -274,6 +400,9 @@
   <item name="java.io.ObjectOutputStream void writeNonProxyDesc(java.io.ObjectStreamClass, boolean) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.io.ObjectOutputStream void writeObjectOverride(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.io.ObjectOutputStream void writeOrdinaryObject(java.lang.Object, java.io.ObjectStreamClass, boolean) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -282,6 +411,9 @@
   </item>
   <item name="java.io.ObjectOutputStream void writeSerialData(java.lang.Object, java.io.ObjectStreamClass) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.io.ObjectOutputStream void writeTypeString(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.io.OutputStream void write(byte[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -328,14 +460,26 @@
   <item name="java.io.PrintStream PrintStream(java.io.OutputStream, boolean, java.lang.String) 2">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.io.PrintStream PrintStream(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.io.PrintStream PrintStream(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.io.PrintStream PrintStream(java.lang.String, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.io.PrintStream java.io.PrintStream append(char)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.io.PrintStream java.io.PrintStream append(java.lang.CharSequence) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.io.PrintStream java.io.PrintStream append(java.lang.CharSequence)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.io.PrintStream java.io.PrintStream append(java.lang.CharSequence, int, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.io.PrintStream java.io.PrintStream append(java.lang.CharSequence, int, int)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -349,14 +493,29 @@
   <item name="java.io.PrintStream void init(java.io.OutputStreamWriter) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.io.PrintStream void print(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.io.PrintStream void print(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="java.io.PrintStream void println(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.io.RandomAccessFile RandomAccessFile(java.io.File, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.io.RandomAccessFile RandomAccessFile(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.io.RandomAccessFile RandomAccessFile(java.lang.String, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.io.RandomAccessFile int read(byte[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.io.RandomAccessFile java.lang.String readLine()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.io.RandomAccessFile java.lang.String readUTF()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -388,8 +547,14 @@
   <item name="java.io.Writer java.io.Writer append(char)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.io.Writer java.io.Writer append(java.lang.CharSequence) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="java.io.Writer java.io.Writer append(java.lang.CharSequence)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.io.Writer java.io.Writer append(java.lang.CharSequence, int, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="java.io.Writer java.io.Writer append(java.lang.CharSequence, int, int)">
     <annotation name="org.jetbrains.annotations.NotNull"/>

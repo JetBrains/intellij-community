@@ -638,7 +638,7 @@ interface TxANotAnno {}
   }
 
   public void testPreferThrownExceptionsInCatch() {
-    checkPreferredItems 0, 'FileNotFoundException', 'File'
+    checkPreferredItems 0, 'final', 'FileNotFoundException', 'File'
   }
 
   public void testHonorFirstLetterCase() {

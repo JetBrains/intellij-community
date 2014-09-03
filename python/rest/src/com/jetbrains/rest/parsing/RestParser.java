@@ -95,7 +95,7 @@ public class RestParser implements PsiParser {
       listMarker.drop();
   }
 
-  private void parseMarkup(PsiBuilder builder) {
+  private static void parseMarkup(PsiBuilder builder) {
     PsiBuilder.Marker marker = builder.mark();
     IElementType type = builder.getTokenType();
     if (type == RestTokenTypes.SUBSTITUTION) {
@@ -131,19 +131,19 @@ public class RestParser implements PsiParser {
     }
   }
 
-  private void gotoNextWhiteSpaces(PsiBuilder builder) {
+  private static void gotoNextWhiteSpaces(PsiBuilder builder) {
      while(!"\n".equals(builder.getTokenText()) && !(builder.getTokenType() == RestTokenTypes.TITLE) && !builder.eof() && (builder.getTokenType() != null)) {
        builder.advanceLexer();
     }
   }
 
-  private void skipBlankLines(PsiBuilder builder) {
+  private static void skipBlankLines(PsiBuilder builder) {
      while("\n".equals(builder.getTokenText()) && !builder.eof() && (builder.getTokenType() != null)) {
        builder.advanceLexer();
     }
   }
 
-  private void parseDirective(PsiBuilder builder, String white, PsiBuilder.Marker marker) {
+  private static void parseDirective(PsiBuilder builder, String white, PsiBuilder.Marker marker) {
     gotoNextWhiteSpaces(builder);
     if (builder.getTokenType() != RestTokenTypes.WHITESPACE) {
       builder.advanceLexer();
@@ -157,7 +157,6 @@ public class RestParser implements PsiParser {
     }
     else {
       marker.done(RestElementTypes.DIRECTIVE_BLOCK);
-      return;
     }
   }
 }

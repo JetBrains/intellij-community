@@ -148,7 +148,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   }
 
 
-  private boolean showEmptyText() {
+  protected boolean showEmptyText() {
     return myCurrentWindow == null || myCurrentWindow.getFiles().length == 0;
   }
 
@@ -741,6 +741,10 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   }
 
   public boolean isFloating() {
+    return false;
+  }
+
+  public boolean isPreview() {
     return false;
   }
 

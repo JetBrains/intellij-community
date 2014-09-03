@@ -29,6 +29,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.SideEffectChecker;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -232,7 +233,7 @@ public class PointlessArithmeticExpressionInspection
       for (int i = 0; i < expressions.length; i++) {
         PsiExpression expression = expressions[i];
         if (previousExpression != null &&
-            (isZero(expression) || i == 1 && EquivalenceChecker.expressionsAreEquivalent(previousExpression, expression))) {
+            (isZero(expression) || areExpressionsIdenticalWithoutSideEffects(previousExpression, expression, i))) {
           return true;
         }
         previousExpression = expression;
@@ -260,9 +261,10 @@ public class PointlessArithmeticExpressionInspection
 
     private boolean divideExpressionIsPointless(PsiExpression[] expressions) {
       PsiExpression previousExpression = null;
-      for (PsiExpression expression : expressions) {
+      for (int i = 0; i < expressions.length; i++) {
+        final PsiExpression expression = expressions[i];
         if (previousExpression != null &&
-            (isOne(expression) || EquivalenceChecker.expressionsAreEquivalent(previousExpression, expression))) {
+            (isOne(expression) || areExpressionsIdenticalWithoutSideEffects(previousExpression, expression, i))) {
           return true;
         }
         previousExpression = expression;
@@ -272,14 +274,20 @@ public class PointlessArithmeticExpressionInspection
 
     private boolean modExpressionIsPointless(PsiExpression[] expressions) {
       PsiExpression previousExpression = null;
-      for (PsiExpression expression : expressions) {
+      for (int i = 0; i < expressions.length; i++) {
+        final PsiExpression expression = expressions[i];
         if (previousExpression != null &&
-            (isOne(expression) || EquivalenceChecker.expressionsAreEquivalent(previousExpression, expression))) {
+            (isOne(expression) || areExpressionsIdenticalWithoutSideEffects(previousExpression, expression, i))) {
           return true;
         }
         previousExpression = expression;
       }
       return false;
+    }
+
+    private boolean areExpressionsIdenticalWithoutSideEffects(PsiExpression expression1, PsiExpression expression2, int index) {
+      return index == 1 && EquivalenceChecker.expressionsAreEquivalent(expression1, expression2) &&
+             !SideEffectChecker.mayHaveSideEffects(expression1);
     }
   }
 

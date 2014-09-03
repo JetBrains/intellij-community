@@ -848,9 +848,10 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static boolean isFilePathAcceptable(@NotNull File root, @Nullable FileFilter fileFilter) {
+    if (fileFilter == null) return true;
     File file = root;
     do {
-      if (fileFilter != null && !fileFilter.accept(file)) return false;
+      if (!fileFilter.accept(file)) return false;
       file = file.getParentFile();
     }
     while (file != null);

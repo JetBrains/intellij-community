@@ -153,7 +153,7 @@ public class GenericsUtil {
                                                         PsiType type2,
                                                         Set<Couple<PsiType>> compared,
                                                         PsiManager manager,
-                                                        PsiClass nestedLayer, 
+                                                        PsiClass nestedLayer,
                                                         PsiTypeParameter parameter) {
     Couple<PsiType> types = Couple.of(type1, type2);
     if (compared.contains(types)) {
@@ -549,6 +549,14 @@ public class GenericsUtil {
         return false;
       }
     }
+
+    final PsiClass extendsBoundClass = PsiUtil.resolveClassInClassTypeOnly(extendsBound);
+    final PsiClass boundBoundClass = PsiUtil.resolveClassInClassTypeOnly(boundBound);
+    if (boundBoundClass != null && extendsBoundClass != null && !boundBoundClass.isInterface() && !extendsBoundClass.isInterface()) {
+      return !InheritanceUtil.isInheritorOrSelf(boundBoundClass, extendsBoundClass, true) &&
+             !InheritanceUtil.isInheritorOrSelf(extendsBoundClass, boundBoundClass, true);
+    }
+
     return !TypeConversionUtil.areTypesConvertible(boundBound, extendsBound) &&
            !TypeConversionUtil.areTypesConvertible(extendsBound, boundBound);
   }

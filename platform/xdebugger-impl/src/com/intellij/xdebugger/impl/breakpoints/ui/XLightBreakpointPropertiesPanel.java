@@ -180,8 +180,15 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpointBase<?,?,?>> i
     myMainPanel.addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent event) {
-        if (myConditionComboBox != null) {
-          IdeFocusManager.findInstance().requestFocus(myConditionComboBox.getEditorComponent(), false);
+        JComponent compToFocus;
+        if (myConditionComboBox != null && myConditionComboBox.getComboBox().isEnabled()) {
+          compToFocus = myConditionComboBox.getEditorComponent();
+        }
+        else {
+          compToFocus = myActionsPanel.getDefaultFocusComponent();
+        }
+        if (compToFocus != null) {
+          IdeFocusManager.findInstance().requestFocus(compToFocus, false);
         }
       }
     });

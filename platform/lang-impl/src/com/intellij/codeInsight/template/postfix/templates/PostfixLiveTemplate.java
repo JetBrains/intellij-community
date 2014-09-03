@@ -22,6 +22,7 @@ import com.intellij.codeInsight.template.impl.CustomLiveTemplateLookupElement;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.codeInsight.template.postfix.completion.PostfixTemplateLookupElement;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
+import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,6 +32,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -137,7 +139,8 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
         }
         // don't care about errors in multiCaret mode
         else if (editor.getCaretModel().getAllCarets().size() == 1) {
-          LOG.error("Template not found by key: " + key);
+          LOG.error("Template not found by key: " + key + "; offset = " + callback.getOffset(), 
+                    AttachmentFactory.createAttachment(callback.getFile().getVirtualFile()));
         }
         return;
       }
@@ -145,7 +148,8 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
 
     // don't care about errors in multiCaret mode
     if (editor.getCaretModel().getAllCarets().size() == 1) {
-      LOG.error("Template not found by key: " + key);
+      LOG.error("Template not found by key: " + key + "; offset = " + callback.getOffset(), 
+                    AttachmentFactory.createAttachment(callback.getFile().getVirtualFile()));
     }
   }
 
@@ -263,15 +267,13 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     PsiFile copyFile = copyFile(file, fileContentWithoutKey);
     Document copyDocument = copyFile.getViewProvider().getDocument();
     if (copyDocument == null) {
-      //noinspection unchecked
-      return Condition.FALSE;
+      return Conditions.alwaysFalse();
     }
 
     copyFile = provider.preCheck(copyFile, editor, newOffset);
     copyDocument = copyFile.getViewProvider().getDocument();
     if (copyDocument == null) {
-      //noinspection unchecked
-      return Condition.FALSE;
+      return Conditions.alwaysFalse();
     }
 
     final PsiElement context = CustomTemplateCallback.getContext(copyFile, positiveOffset(newOffset));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013 Bas Leijdekkers
+ * Copyright 2006-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.IteratorUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
@@ -118,8 +119,7 @@ public class LoopConditionNotUpdatedInsideLoopInspection
       if (condition == null) {
         return false;
       }
-      if (PsiUtil.isConstantExpression(condition) ||
-          PsiKeyword.NULL.equals(condition.getText())) {
+      if (PsiUtil.isConstantExpression(condition) || ExpressionUtils.isNullLiteral(condition)) {
         return true;
       }
       if (condition instanceof PsiInstanceOfExpression) {

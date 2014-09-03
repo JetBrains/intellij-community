@@ -771,8 +771,7 @@ public class CompositeElement extends TreeElement {
   }
 
   @Override
-  @Nullable
-  public <T extends PsiElement> T getPsi(Class<T> clazz) {
+  public <T extends PsiElement> T getPsi(@NotNull Class<T> clazz) {
     return LeafElement.getPsi(clazz, getPsi(), LOG);
   }
 
@@ -795,6 +794,10 @@ public class CompositeElement extends TreeElement {
 
   public void setPsi(@NotNull PsiElement psi) {
     myWrapper = psi;
+  }
+
+  protected void clearPsi() {
+    myWrapper = null;
   }
 
   public final void rawAddChildren(@NotNull TreeElement first) {

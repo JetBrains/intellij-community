@@ -31,6 +31,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ObjectUtils;
@@ -65,18 +66,19 @@ public class ExecutionUtil {
                                           @NotNull final String toolWindowId,
                                           @NotNull String taskName,
                                           @NotNull ExecutionException e) {
-    if (e instanceof RunCanceledByUserException) return;
+    if (e instanceof RunCanceledByUserException) {
+      return;
+    }
 
     LOG.debug(e);
 
     String description = e.getMessage();
-    HyperlinkListener listener = null;
-
     if (description == null) {
       LOG.warn("Execution error without description", e);
       description = "Unknown error";
     }
 
+    HyperlinkListener listener = null;
     if ((description.contains("87") || description.contains("111") || description.contains("206")) &&
         e instanceof ProcessNotCreatedException &&
         !PropertiesComponent.getInstance(project).isTrueValue("dynamic.classpath")) {
@@ -110,7 +112,14 @@ public class ExecutionUtil {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        ToolWindowManager.getInstance(project).notifyByBalloon(toolWindowId, MessageType.ERROR, fullMessage, null, finalListener);
+        ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+        if (toolWindowManager.canShowNotification(toolWindowId)) {
+          //noinspection SSBasedInspection
+          toolWindowManager.notifyByBalloon(toolWindowId, MessageType.ERROR, fullMessage, null, finalListener);
+        }
+        else {
+          Messages.showErrorDialog(project, fullMessage, "");
+        }
         NotificationListener notificationListener = ObjectUtils.tryCast(finalListener, NotificationListener.class);
         ourNotificationGroup.createNotification(title, finalDescription, NotificationType.ERROR, notificationListener).notify(project);
       }

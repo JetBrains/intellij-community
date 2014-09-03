@@ -229,10 +229,7 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
 
     //long
     for (final PsiClassType type : expectedClassTypes) {
-      final PsiClass psiClass = type.resolve();
-      if (psiClass != null && !psiClass.hasModifierProperty(PsiModifier.FINAL)) {
-        CodeInsightUtil.processSubTypes(type, parameters.getPosition(), false, matcher, consumer);
-      }
+      CodeInsightUtil.processSubTypes(type, parameters.getPosition(), false, matcher, consumer);
     }
   }
 

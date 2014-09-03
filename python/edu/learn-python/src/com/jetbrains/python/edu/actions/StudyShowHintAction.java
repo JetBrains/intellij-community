@@ -5,19 +5,18 @@ import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.jetbrains.python.edu.StudyState;
 import com.jetbrains.python.edu.StudyTaskManager;
 import com.jetbrains.python.edu.StudyUtils;
 import com.jetbrains.python.edu.course.Course;
-import com.jetbrains.python.edu.course.TaskFile;
 import com.jetbrains.python.edu.course.TaskWindow;
 import com.jetbrains.python.edu.editor.StudyEditor;
 import icons.StudyIcons;
@@ -33,58 +32,56 @@ public class StudyShowHintAction extends DumbAwareAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    Project project = e.getProject();
-    if (project != null) {
+    final Project project = e.getProject();
+    if (project == null) {
+      return;
+    }
+    Course course = StudyTaskManager.getInstance(project).getCourse();
+    if (course == null) {
+      return;
+    }
+    StudyState studyState = new StudyState(StudyEditor.getSelectedStudyEditor(project));
+    if (!studyState.isValid()) {
+      return;
+    }
+    PsiFile file = PsiManager.getInstance(project).findFile(studyState.getVirtualFile());
+    final Editor editor = studyState.getEditor();
+    LogicalPosition pos = editor.getCaretModel().getLogicalPosition();
+    TaskWindow taskWindow = studyState.getTaskFile().getTaskWindow(editor.getDocument(), pos);
+    if (file == null || taskWindow == null) {
+      return;
+    }
+    String hint = taskWindow.getHint();
+    if (hint == null) {
+      return;
+    }
+    File resourceFile = new File(course.getResourcePath());
+    File resourceRoot = resourceFile.getParentFile();
+    if (resourceRoot == null || !resourceRoot.exists()) {
+      return;
+    }
+    File hintsDir = new File(resourceRoot, Course.HINTS_DIR);
+    if (hintsDir.exists()) {
+      String hintText = StudyUtils.getFileText(hintsDir.getAbsolutePath(), hint, true);
+      int offset = editor.getDocument().getLineStartOffset(pos.line) + pos.column;
+      PsiElement element = file.findElementAt(offset);
+      if (hintText == null || element == null) {
+        return;
+      }
+
       DocumentationManager documentationManager = DocumentationManager.getInstance(project);
       DocumentationComponent component = new DocumentationComponent(documentationManager);
-      Editor selectedEditor = StudyEditor.getSelectedEditor(project);
-      FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
-      assert selectedEditor != null;
-      VirtualFile openedFile = fileDocumentManager.getFile(selectedEditor.getDocument());
-      if (openedFile != null) {
-        StudyTaskManager taskManager = StudyTaskManager.getInstance(e.getProject());
-        TaskFile taskFile = taskManager.getTaskFile(openedFile);
-        if (taskFile != null) {
-          PsiFile file = PsiManager.getInstance(project).findFile(openedFile);
-          if (file != null) {
-            LogicalPosition pos = selectedEditor.getCaretModel().getLogicalPosition();
-            TaskWindow taskWindow = taskFile.getTaskWindow(selectedEditor.getDocument(), pos);
-            if (taskWindow != null) {
-              String hint = taskWindow.getHint();
-              if (hint == null) {
-                return;
-              }
-              Course course = taskManager.getCourse();
-              if (course != null) {
-                File resourceFile = new File(course.getResourcePath());
-                File resourceRoot = resourceFile.getParentFile();
-                if (resourceRoot != null && resourceRoot.exists()) {
-                  File hintsDir = new File(resourceRoot, Course.HINTS_DIR);
-                  if (hintsDir.exists()) {
-                    String hintText = StudyUtils.getFileText(hintsDir.getAbsolutePath(), hint, true);
-                    if (hintText != null) {
-                      int offset = selectedEditor.getDocument().getLineStartOffset(pos.line) + pos.column;
-                      PsiElement element = file.findElementAt(offset);
-                      if (element != null) {
-                        component.setData(element, hintText, true, null);
-                        final JBPopup popup =
-                          JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
-                            .setDimensionServiceKey(project, DocumentationManager.JAVADOC_LOCATION_AND_SIZE, false)
-                            .setResizable(true)
-                            .setMovable(true)
-                            .setRequestFocus(true)
-                            .createPopup();
-                        component.setHint(popup);
-                        popup.showInBestPositionFor(selectedEditor);
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+      component.setData(element, hintText, true, null);
+      final JBPopup popup =
+        JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
+          .setDimensionServiceKey(project, DocumentationManager.JAVADOC_LOCATION_AND_SIZE, false)
+          .setResizable(true)
+          .setMovable(true)
+          .setRequestFocus(true)
+          .createPopup();
+      component.setHint(popup);
+      popup.showInBestPositionFor(editor);
+      Disposer.dispose(component);
     }
   }
 

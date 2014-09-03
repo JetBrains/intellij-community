@@ -56,6 +56,13 @@ public abstract class HeavyFileEditorManagerTestCase extends CodeInsightFixtureT
   }
 
   @Override
+  protected void tearDown() throws Exception {
+    myManager = null;
+
+    super.tearDown();
+  }
+
+  @Override
   protected String getBasePath() {
     return "/platform/platform-tests/testData/fileEditorManager";
   }

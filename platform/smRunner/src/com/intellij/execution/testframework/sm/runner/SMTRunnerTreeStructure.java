@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,11 @@ public class SMTRunnerTreeStructure extends AbstractTreeStructure
   public void commit() {
   }
 
+  @Override
+  public boolean hasSomethingToCommit() {
+    return false;
+  }
+
   @NotNull
   @Override
   public SMTRunnerNodeDescriptor createDescriptor(final Object element,
@@ -70,15 +75,10 @@ public class SMTRunnerTreeStructure extends AbstractTreeStructure
     return ((AbstractTestProxy)element).getParent();
   }
 
+
   @Override
   public Object getRootElement() {
     return myRootNode;
-  }
-
-
-  @Override
-  public boolean hasSomethingToCommit() {
-    return false;
   }
 
   public void setFilter(final Filter nodesFilter) {

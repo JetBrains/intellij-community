@@ -12,8 +12,7 @@ import org.jetbrains.annotations.Nullable;
 public interface JavaScriptDebuggerStarter<RC extends RunConfiguration, U> {
   boolean isApplicable(@NotNull RunConfiguration runConfiguration);
 
-  // todo we must pass browser family, otherwise result could be unexpected (by default Chrome will be used, but user can prefer Firefox)
-  void start(@NotNull String url, @NotNull RC runConfiguration, @NotNull U userData);
+  void start(@NotNull String url, @NotNull RC runConfiguration, @NotNull U userData, @Nullable WebBrowser browser);
 
   final class Util {
     static final ExtensionPointName<JavaScriptDebuggerStarter> EP_NAME = ExtensionPointName.create("org.jetbrains.javaScriptDebuggerStarter");
@@ -31,11 +30,15 @@ public interface JavaScriptDebuggerStarter<RC extends RunConfiguration, U> {
     }
 
     public static <RC extends RunConfiguration> boolean start(@NotNull RC runConfiguration, @NotNull String url) {
+      return start(runConfiguration, url, null);
+    }
+
+    public static <RC extends RunConfiguration> boolean start(@NotNull RC runConfiguration, @NotNull String url, @Nullable WebBrowser browser) {
       JavaScriptDebuggerStarter<RC, Object> starter = get(runConfiguration);
       if (starter == null) {
         return false;
       }
-      starter.start(url, runConfiguration, NULL_OBJECT);
+      starter.start(url, runConfiguration, NULL_OBJECT, browser);
       return true;
     }
 
@@ -49,9 +52,13 @@ public interface JavaScriptDebuggerStarter<RC extends RunConfiguration, U> {
                                                                                @NotNull String url,
                                                                                @Nullable WebBrowser browser,
                                                                                boolean startDebugger) {
-      if (!startDebugger || !start(runConfiguration, url)) {
+      if (!startDebugger || !start(runConfiguration, url, browser)) {
         BrowserLauncher.getInstance().browse(url, browser, runConfiguration.getProject());
       }
+    }
+
+    public static boolean hasStarters() {
+      return EP_NAME.getExtensions().length > 0;
     }
   }
 }

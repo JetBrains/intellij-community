@@ -322,7 +322,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   protected void canRun() throws ConfigurationException {
     if (isMoveToPackage()) {
       String name = getTargetPackage().trim();
-      if (name.length() != 0 && !JavaPsiFacade.getInstance(myManager.getProject()).getNameHelper().isQualifiedName(name)) {
+      if (name.length() != 0 && !PsiNameHelper.getInstance(myManager.getProject()).isQualifiedName(name)) {
         throw new ConfigurationException("\'" + name + "\' is invalid destination package name");
       }
     }
@@ -491,7 +491,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   @Nullable
   private MoveDestination selectDestination() {
     final String packageName = getTargetPackage().trim();
-    if (packageName.length() > 0 && !JavaPsiFacade.getInstance(myManager.getProject()).getNameHelper().isQualifiedName(packageName)) {
+    if (packageName.length() > 0 && !PsiNameHelper.getInstance(myManager.getProject()).isQualifiedName(packageName)) {
       Messages.showErrorDialog(myProject, RefactoringBundle.message("please.enter.a.valid.target.package.name"),
                                RefactoringBundle.message("move.title"));
       return null;

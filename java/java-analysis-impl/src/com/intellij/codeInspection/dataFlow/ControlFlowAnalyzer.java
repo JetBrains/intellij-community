@@ -591,12 +591,14 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
       generateBoxingUnboxingInstructionFor(caseExpression, PsiType.INT);
       final PsiClass psiClass = PsiUtil.resolveClassInType(caseExpression.getType());
-      if (psiClass != null && psiClass.isEnum()) {
+      if (psiClass != null) {
         addInstruction(new FieldReferenceInstruction(caseExpression, "switch statement expression"));
-        enumValues = new HashSet<PsiEnumConstant>();
-        for (PsiField f : psiClass.getFields()) {
-          if (f instanceof PsiEnumConstant) {
-            enumValues.add((PsiEnumConstant)f);
+        if (psiClass.isEnum()) {
+          enumValues = new HashSet<PsiEnumConstant>();
+          for (PsiField f : psiClass.getFields()) {
+            if (f instanceof PsiEnumConstant) {
+              enumValues.add((PsiEnumConstant)f);
+            }
           }
         }
       } else {
@@ -1432,6 +1434,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     final PsiAnnotation contractAnno = findContractAnnotation(method);
     final int paramCount = method.getParameterList().getParametersCount();
     if (contractAnno != null) {
+      if (AnnotationUtil.isInferredAnnotation(contractAnno) && PsiUtil.canBeOverriden(method)) {
+        return Collections.emptyList();
+      }
+
       return CachedValuesManager.getCachedValue(contractAnno, new CachedValueProvider<List<MethodContract>>() {
         @Nullable
         @Override

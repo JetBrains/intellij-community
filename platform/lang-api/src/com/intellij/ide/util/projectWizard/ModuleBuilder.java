@@ -32,6 +32,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -39,6 +40,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -70,7 +72,17 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     for (ModuleBuilderFactory factory : EP_NAME.getExtensions()) {
       result.add(factory.createBuilder());
     }
-    return result;
+    return ContainerUtil.filter(result, new Condition<ModuleBuilder>() {
+
+      @Override
+      public boolean value(ModuleBuilder moduleBuilder) {
+        return moduleBuilder.isAvailable();
+      }
+    });
+  }
+
+  protected boolean isAvailable() {
+    return true;
   }
 
   @Nullable

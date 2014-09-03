@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,6 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
@@ -57,9 +56,7 @@ import java.util.List;
 import java.util.Set;
 
 public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
-  private static final Icon IN_PROGRESS_ICON = AllIcons.General.ErrorsInProgress;
   private static final Icon NO_ANALYSIS_ICON = AllIcons.General.NoAnalysis;
-  private static final Icon NO_ICON = new EmptyIcon(IN_PROGRESS_ICON.getIconWidth(), IN_PROGRESS_ICON.getIconHeight());
   private static final Icon STARING_EYE_ICON = AllIcons.General.InspectionInProgress;
 
   private final Project myProject;
@@ -162,6 +159,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     public boolean enabled = true;
 
     public int rootsNumber;
+    @Override
     public String toString() {
       @NonNls String s = "DS: finished=" + errorAnalyzingFinished;
       s += "; pass statuses: " + passStati.size() + "; ";
@@ -175,7 +173,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
 
   @Nullable
   protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus(boolean fillErrorsCount, SeverityRegistrar severityRegistrar) {
-    if (myFile == null || myProject.isDisposed() || !myDaemonCodeAnalyzer.isHighlightingAvailable(myFile)) return null;
+    if (myFile == null || myProject != null && myProject.isDisposed() || !myDaemonCodeAnalyzer.isHighlightingAvailable(myFile)) return null;
 
     List<String> noInspectionRoots = new ArrayList<String>();
     List<String> noHighlightingRoots = new ArrayList<String>();
@@ -243,10 +241,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   }
 
   private Icon getIcon(DaemonCodeAnalyzerStatus status) {
-    if (status == null) {
-      return NO_ICON;
-    }
-    if (status.noHighlightingRoots != null && status.noHighlightingRoots.length == status.rootsNumber) {
+    if (status == null || status.noHighlightingRoots != null && status.noHighlightingRoots.length == status.rootsNumber) {
       return NO_ANALYSIS_ICON;
     }
 

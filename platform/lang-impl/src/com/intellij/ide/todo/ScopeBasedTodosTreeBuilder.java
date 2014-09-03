@@ -19,6 +19,7 @@
  */
 package com.intellij.ide.todo;
 
+import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,9 +27,9 @@ import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 
 public class ScopeBasedTodosTreeBuilder extends TodoTreeBuilder{
-  private final JComboBox myScopes;
+  private final ScopeChooserCombo myScopes;
 
-  public ScopeBasedTodosTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project, JComboBox scopes){
+  public ScopeBasedTodosTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project, ScopeChooserCombo scopes){
     super(tree,treeModel,project);
     myScopes = scopes;
   }

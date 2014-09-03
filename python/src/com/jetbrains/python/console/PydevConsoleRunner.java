@@ -125,10 +125,10 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
   private Sdk mySdk;
   @NotNull private CommandLineArgumentsProvider myCommandLineArgumentsProvider;
-  private int[] myPorts;
+  protected int[] myPorts;
   private PydevConsoleCommunication myPydevConsoleCommunication;
   private PyConsoleProcessHandler myProcessHandler;
-  private PydevConsoleExecuteActionHandler myConsoleExecuteActionHandler;
+  protected PydevConsoleExecuteActionHandler myConsoleExecuteActionHandler;
   private List<ConsoleListener> myConsoleListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final PyConsoleType myConsoleType;
   private Map<String, String> myEnvironmentVariables;
@@ -146,9 +146,9 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   private String myConsoleTitle = null;
 
   public PydevConsoleRunner(@NotNull final Project project,
-                               @NotNull Sdk sdk, @NotNull final PyConsoleType consoleType,
-                               @Nullable final String workingDir,
-                               Map<String, String> environmentVariables, String ... statementsToExecute) {
+                            @NotNull Sdk sdk, @NotNull final PyConsoleType consoleType,
+                            @Nullable final String workingDir,
+                            Map<String, String> environmentVariables, String... statementsToExecute) {
     super(project, consoleType.getTitle(), workingDir);
     mySdk = sdk;
     myConsoleType = consoleType;
@@ -281,6 +281,30 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     return actions;
   }
 
+  public void runSync() {
+    myPorts = findAvailablePorts(getProject(), myConsoleType);
+
+    assert myPorts != null;
+
+    myCommandLineArgumentsProvider = createCommandLineArgumentsProvider(mySdk, myEnvironmentVariables, myPorts);
+
+    try {
+      super.initAndRun();
+    }
+    catch (ExecutionException e) {
+      LOG.warn("Error running console", e);
+      ExecutionHelper.showErrors(getProject(), Arrays.<Exception>asList(e), "Python Console", null);
+    }
+
+    ProgressManager.getInstance().run(new Task.Backgroundable(getProject(), "Connecting to console", false) {
+      @Override
+      public void run(@NotNull final ProgressIndicator indicator) {
+        indicator.setText("Connecting to console...");
+        connect(myStatementsToExecute);
+      }
+    });
+  }
+
   public void run() {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
@@ -337,9 +361,9 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     return ports;
   }
 
-  private static CommandLineArgumentsProvider createCommandLineArgumentsProvider(final Sdk sdk,
-                                                                                 final Map<String, String> environmentVariables,
-                                                                                 int[] ports) {
+  protected CommandLineArgumentsProvider createCommandLineArgumentsProvider(final Sdk sdk,
+                                                                            final Map<String, String> environmentVariables,
+                                                                            int[] ports) {
     final ArrayList<String> args = new ArrayList<String>();
     args.add(sdk.getHomePath());
     final String versionString = sdk.getVersionString();
@@ -518,8 +542,11 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   public void initAndRun(final String... statements2execute) throws ExecutionException {
     super.initAndRun();
 
-    if (handshake()) {
+    connect(statements2execute);
+  }
 
+  public void connect(final String[] statements2execute) {
+    if (handshake()) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
 
         @Override

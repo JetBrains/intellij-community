@@ -25,7 +25,6 @@ import com.intellij.openapi.components.impl.stores.XmlElementStorage;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.LightPlatformLangTestCase;
 import com.intellij.util.io.fs.IFile;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +34,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.openapi.util.JDOMBuilder.*;
+import static com.intellij.openapi.util.JDOMBuilder.attr;
+import static com.intellij.openapi.util.JDOMBuilder.tag;
 
 /**
  * @author mike
@@ -57,7 +57,7 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
 
   public void testGetStateSucceeded() throws Exception {
     MyXmlElementStorage storage =
-        new MyXmlElementStorage(document(tag("root", tag("component", attr("name", "test"), tag("foo")))), myParentDisposable);
+        new MyXmlElementStorage(tag("root", tag("component", attr("name", "test"), tag("foo"))), myParentDisposable);
     Element state = storage.getState(this, "test", Element.class, null);
     assertNotNull(state);
     assertEquals("component", state.getName());
@@ -65,36 +65,36 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
   }
 
   public void testGetStateNotSucceeded() throws Exception {
-    MyXmlElementStorage storage = new MyXmlElementStorage(document(tag("root")), myParentDisposable);
+    MyXmlElementStorage storage = new MyXmlElementStorage(tag("root"), myParentDisposable);
     Element state = storage.getState(this, "test", Element.class, null);
     assertNull(state);
   }
 
   public void testSetStateOverridesOldState() throws Exception {
     MyXmlElementStorage storage =
-        new MyXmlElementStorage(document(tag("root", tag("component", attr("name", "test"), tag("foo")))), myParentDisposable);
+        new MyXmlElementStorage(tag("root", tag("component", attr("name", "test"), tag("foo"))), myParentDisposable);
     Element newState = tag("component", attr("name", "test"), tag("bar"));
     StateStorage.ExternalizationSession externalizationSession = storage.startExternalization();
     externalizationSession.setState(this, "test", newState, null);
     storage.startSave(externalizationSession).save();
-    assertNotNull(storage.mySavedDocument);
-    assertNotNull(storage.mySavedDocument.getRootElement().getChild("component").getChild("bar"));
-    assertNull(storage.mySavedDocument.getRootElement().getChild("component").getChild("foo"));
+    assertNotNull(storage.mySavedElement);
+    assertNotNull(storage.mySavedElement.getChild("component").getChild("bar"));
+    assertNull(storage.mySavedElement.getChild("component").getChild("foo"));
   }
 
 
   private class MyXmlElementStorage extends XmlElementStorage {
-    private final Document myDocument;
-    private Document mySavedDocument;
+    private final Element myElement;
+    private Element mySavedElement;
 
-    public MyXmlElementStorage(final Document document, final Disposable parentDisposable) throws StateStorageException {
+    public MyXmlElementStorage(Element element, final Disposable parentDisposable) throws StateStorageException {
       super(new MyPathMacroManager(), parentDisposable, "root", null, "", ComponentRoamingManager.getInstance(), ComponentVersionProvider.EMPTY);
-      myDocument = document;
+      myElement = element;
     }
 
     @Override
-    protected Document loadDocument() throws StateStorageException {
-      return myDocument;
+    protected Element loadLocalData() {
+      return myElement;
     }
 
     @Override
@@ -102,7 +102,8 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
       return new MySaveSession(externalizationSession) {
         @Override
         protected void doSave() throws StateStorageException {
-          mySavedDocument = getDocumentToSave().clone();
+          Element elementToSave = getElementToSave();
+          mySavedElement = elementToSave == null ? null : elementToSave.clone();
         }
 
         @NotNull

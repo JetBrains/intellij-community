@@ -54,6 +54,8 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiElement;
@@ -518,14 +520,25 @@ public abstract class ChooseByNameBase {
               else {
                 Component oppositeComponent = e.getOppositeComponent();
                 if (oppositeComponent == myCheckBox) {
-                  myTextField.requestFocus();
+                  IdeFocusManager.getInstance(myProject).requestFocus(myTextField, true);
                   return;
                 }
                 if (oppositeComponent != null && !(oppositeComponent instanceof JFrame) &&
                     myList.isShowing() &&
                     (oppositeComponent == myList || SwingUtilities.isDescendingFrom(myList, oppositeComponent))) {
-                  myTextField.requestFocus();// Otherwise me may skip some KeyEvents
+                  IdeFocusManager.getInstance(myProject).requestFocus(myTextField, true);// Otherwise me may skip some KeyEvents
                   return;
+                }
+
+                if (oppositeComponent != null) {
+                  ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+                  ToolWindow toolWindow = toolWindowManager.getToolWindow(toolWindowManager.getActiveToolWindowId());
+                  if (toolWindow != null) {
+                    JComponent toolWindowComponent = toolWindow.getComponent();
+                    if (SwingUtilities.isDescendingFrom(oppositeComponent, toolWindowComponent)) {
+                      return; // Allow toolwindows to gain focus (used by QuickDoc shown in a toolwindow)
+                    }
+                  }
                 }
 
                 EventQueue queue = Toolkit.getDefaultToolkit().getSystemEventQueue();
@@ -533,8 +546,7 @@ public abstract class ChooseByNameBase {
                   if (!((IdeEventQueue)queue).wasRootRecentlyClicked(oppositeComponent)) {
                     Component root = SwingUtilities.getRoot(myTextField);
                     if (root != null && root.isShowing()) {
-                      root.requestFocus();
-                      myTextField.requestFocus();
+                      IdeFocusManager.getInstance(myProject).requestFocus(myTextField, true);
                       return;
                     }
                   }
@@ -641,7 +653,7 @@ public abstract class ChooseByNameBase {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         if (!myTextField.hasFocus()) {
-          myTextField.requestFocus();
+          IdeFocusManager.getInstance(myProject).requestFocus(myTextField, true);
         }
 
         if (clickCount == 2) {

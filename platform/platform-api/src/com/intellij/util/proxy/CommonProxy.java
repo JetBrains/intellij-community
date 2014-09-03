@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,12 +33,6 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 1/21/13
- * Time: 12:39 PM
- */
 public class CommonProxy extends ProxySelector {
   private final static CommonProxy ourInstance = new CommonProxy();
   private final CommonAuthenticator myAuthenticator;
@@ -212,14 +208,12 @@ public class CommonProxy extends ProxySelector {
     }
     try {
       ourReenterDefence.set(Boolean.TRUE);
-      final String host = uri.getHost() == null ? "" : uri.getHost();
-      final int port = correctPortByProtocol(uri);
-      final String protocol = uri.getScheme();
-      if ("localhost".equals(host) || "127.0.0.1".equals(host) || "::1".equals(host)) {
+      String host = StringUtil.notNullize(uri.getHost());
+      if (NetUtils.isLocalhost(host)) {
         return NO_PROXY_LIST;
       }
 
-      final HostInfo info = new HostInfo(protocol, host, port);
+      final HostInfo info = new HostInfo(uri.getScheme(), host, correctPortByProtocol(uri));
       final Map<String, ProxySelector> copy;
       synchronized (myLock) {
         if (myNoProxy.contains(Pair.create(info, Thread.currentThread()))) {
@@ -230,18 +224,19 @@ public class CommonProxy extends ProxySelector {
       }
       for (Map.Entry<String, ProxySelector> entry : copy.entrySet()) {
         final List<Proxy> proxies = entry.getValue().select(uri);
-        if (proxies != null && proxies.size() > 0) {
+        if (!ContainerUtil.isEmpty(proxies)) {
           LOG.debug("CommonProxy.select returns custom proxy for " + uri.toString() + ", " + proxies.toString());
           return proxies;
         }
       }
       return NO_PROXY_LIST;
-    } finally {
+    }
+    finally {
       ourReenterDefence.remove();
     }
   }
 
-  private int correctPortByProtocol(@NotNull URI uri) {
+  private static int correctPortByProtocol(@NotNull URI uri) {
     if (uri.getPort() == -1) {
       if ("http".equals(uri.getScheme())) {
         return ProtocolDefaultPorts.HTTP;
@@ -330,7 +325,8 @@ public class CommonProxy extends ProxySelector {
     if (host == null) {
       if (site != null) {
         host = site.getHostName();
-      } else if (requestingUrl != null) {
+      }
+      else if (requestingUrl != null) {
         host = requestingUrl.getHost();
       }
     }
@@ -351,7 +347,7 @@ public class CommonProxy extends ProxySelector {
     public HostInfo() {
     }
 
-    public HostInfo(String protocol, @NotNull String host, int port) {
+    public HostInfo(@Nullable String protocol, @NotNull String host, int port) {
       myPort = port;
       myHost = host;
       myProtocol = protocol;
@@ -371,16 +367,15 @@ public class CommonProxy extends ProxySelector {
 
     @Override
     public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
 
       HostInfo info = (HostInfo)o;
-
-      if (myPort != info.myPort) return false;
-      if (!myHost.equals(info.myHost)) return false;
-      if (myProtocol != null ? !myProtocol.equals(info.myProtocol) : info.myProtocol != null) return false;
-
-      return true;
+      return myPort == info.myPort && myHost.equals(info.myHost) && Comparing.equal(myProtocol, info.myProtocol);
     }
 
     @Override

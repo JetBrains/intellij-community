@@ -5,11 +5,23 @@
   <item name="org.apache.commons.lang.time.DateFormatUtils java.lang.String format(java.util.Calendar, java.lang.String, java.util.Locale) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.time.DateFormatUtils java.lang.String format(java.util.Calendar, java.lang.String, java.util.Locale) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.time.DateFormatUtils java.lang.String format(java.util.Calendar, java.lang.String, java.util.TimeZone) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.time.DateFormatUtils java.lang.String format(java.util.Calendar, java.lang.String, java.util.TimeZone) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.time.DateFormatUtils java.lang.String format(java.util.Calendar, java.lang.String, java.util.TimeZone, java.util.Locale) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.time.DateFormatUtils java.lang.String format(java.util.Calendar, java.lang.String, java.util.TimeZone, java.util.Locale) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.time.DateFormatUtils java.lang.String format(java.util.Calendar, java.lang.String, java.util.TimeZone, java.util.Locale) 3">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.time.DateFormatUtils java.lang.String format(java.util.Date, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -17,11 +29,23 @@
   <item name="org.apache.commons.lang.time.DateFormatUtils java.lang.String format(java.util.Date, java.lang.String, java.util.Locale) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.time.DateFormatUtils java.lang.String format(java.util.Date, java.lang.String, java.util.Locale) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.time.DateFormatUtils java.lang.String format(java.util.Date, java.lang.String, java.util.TimeZone) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.time.DateFormatUtils java.lang.String format(java.util.Date, java.lang.String, java.util.TimeZone) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.time.DateFormatUtils java.lang.String format(java.util.Date, java.lang.String, java.util.TimeZone, java.util.Locale) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.time.DateFormatUtils java.lang.String format(java.util.Date, java.lang.String, java.util.TimeZone, java.util.Locale) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.time.DateFormatUtils java.lang.String format(java.util.Date, java.lang.String, java.util.TimeZone, java.util.Locale) 3">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.time.DateFormatUtils java.lang.String format(long, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -29,11 +53,23 @@
   <item name="org.apache.commons.lang.time.DateFormatUtils java.lang.String format(long, java.lang.String, java.util.Locale) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.time.DateFormatUtils java.lang.String format(long, java.lang.String, java.util.Locale) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.time.DateFormatUtils java.lang.String format(long, java.lang.String, java.util.TimeZone) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.time.DateFormatUtils java.lang.String format(long, java.lang.String, java.util.TimeZone) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.time.DateFormatUtils java.lang.String format(long, java.lang.String, java.util.TimeZone, java.util.Locale) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.time.DateFormatUtils java.lang.String format(long, java.lang.String, java.util.TimeZone, java.util.Locale) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.time.DateFormatUtils java.lang.String format(long, java.lang.String, java.util.TimeZone, java.util.Locale) 3">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.time.DateFormatUtils java.lang.String formatUTC(java.util.Date, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -41,11 +77,17 @@
   <item name="org.apache.commons.lang.time.DateFormatUtils java.lang.String formatUTC(java.util.Date, java.lang.String, java.util.Locale) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.time.DateFormatUtils java.lang.String formatUTC(java.util.Date, java.lang.String, java.util.Locale) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.time.DateFormatUtils java.lang.String formatUTC(long, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.time.DateFormatUtils java.lang.String formatUTC(long, java.lang.String, java.util.Locale) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.time.DateFormatUtils java.lang.String formatUTC(long, java.lang.String, java.util.Locale) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.time.DateUtils boolean isSameDay(java.util.Calendar, java.util.Calendar) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -320,18 +362,39 @@
   <item name="org.apache.commons.lang.time.DurationFormatUtils.Token boolean containsTokenWithValue(org.apache.commons.lang.time.DurationFormatUtils.Token[], java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.time.DurationFormatUtils.Token boolean containsTokenWithValue(org.apache.commons.lang.time.DurationFormatUtils.Token[], java.lang.Object) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.time.DurationFormatUtils.Token boolean equals(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.time.DurationFormatUtils.Token boolean equals(java.lang.Object)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;false&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.time.DurationFormatUtils.Token java.lang.String toString()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.time.FastDateFormat FastDateFormat(java.lang.String, java.util.TimeZone, java.util.Locale) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.time.FastDateFormat FastDateFormat(java.lang.String, java.util.TimeZone, java.util.Locale) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.time.FastDateFormat FastDateFormat(java.lang.String, java.util.TimeZone, java.util.Locale) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.time.FastDateFormat boolean equals(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.time.FastDateFormat boolean equals(java.lang.Object)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;false&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.commons.lang.time.FastDateFormat java.lang.Object parseObject(java.lang.String, java.text.ParsePosition) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.time.FastDateFormat java.lang.Object parseObject(java.lang.String, java.text.ParsePosition) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -340,6 +403,7 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_-&gt;null;_,!null-&gt;null;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.time.FastDateFormat java.lang.String format(java.util.Calendar)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -370,6 +434,9 @@
   <item name="org.apache.commons.lang.time.FastDateFormat java.lang.StringBuffer format(java.lang.Object, java.lang.StringBuffer, java.text.FieldPosition) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.time.FastDateFormat java.lang.StringBuffer format(java.lang.Object, java.lang.StringBuffer, java.text.FieldPosition) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.time.FastDateFormat java.lang.StringBuffer format(java.util.Date, java.lang.StringBuffer) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -379,11 +446,23 @@
   <item name="org.apache.commons.lang.time.FastDateFormat org.apache.commons.lang.time.FastDateFormat getInstance(java.lang.String, java.util.Locale) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.time.FastDateFormat org.apache.commons.lang.time.FastDateFormat getInstance(java.lang.String, java.util.Locale) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.time.FastDateFormat org.apache.commons.lang.time.FastDateFormat getInstance(java.lang.String, java.util.TimeZone) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.time.FastDateFormat org.apache.commons.lang.time.FastDateFormat getInstance(java.lang.String, java.util.TimeZone) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.time.FastDateFormat org.apache.commons.lang.time.FastDateFormat getInstance(java.lang.String, java.util.TimeZone, java.util.Locale) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.time.FastDateFormat org.apache.commons.lang.time.FastDateFormat getInstance(java.lang.String, java.util.TimeZone, java.util.Locale) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.time.FastDateFormat org.apache.commons.lang.time.FastDateFormat getInstance(java.lang.String, java.util.TimeZone, java.util.Locale) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.time.FastDateFormat org.apache.commons.lang.time.FastDateFormat.NumberRule selectNumberRule(int, int)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -394,6 +473,9 @@
   <item name="org.apache.commons.lang.time.FastDateFormat.CharacterLiteral void appendTo(java.lang.StringBuffer, java.util.Calendar) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.time.FastDateFormat.CharacterLiteral void appendTo(java.lang.StringBuffer, java.util.Calendar) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.time.FastDateFormat.PaddedNumberField void appendTo(java.lang.StringBuffer, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -403,17 +485,26 @@
   <item name="org.apache.commons.lang.time.FastDateFormat.PaddedNumberField void appendTo(java.lang.StringBuffer, java.util.Calendar) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.time.FastDateFormat.Pair boolean equals(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.time.FastDateFormat.Pair java.lang.String toString()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.time.FastDateFormat.StringLiteral void appendTo(java.lang.StringBuffer, java.util.Calendar) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.time.FastDateFormat.StringLiteral void appendTo(java.lang.StringBuffer, java.util.Calendar) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.time.FastDateFormat.TextField void appendTo(java.lang.StringBuffer, java.util.Calendar) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.time.FastDateFormat.TextField void appendTo(java.lang.StringBuffer, java.util.Calendar) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.time.FastDateFormat.TimeZoneDisplayKey boolean equals(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.time.FastDateFormat.TimeZoneNameRule void appendTo(java.lang.StringBuffer, java.util.Calendar) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>

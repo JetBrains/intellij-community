@@ -1,5 +1,7 @@
 import StringIO
 import traceback
+from java.lang import StringBuffer #@UnresolvedImport
+from java.lang import String #@UnresolvedImport
 import java.lang #@UnresolvedImport
 import sys
 from _pydev_tipper_common import DoFind
@@ -17,6 +19,7 @@ except NameError: # version < 2.3 -- didn't have the True/False builtins
 from org.python.core import PyReflectedFunction #@UnresolvedImport
 
 from org.python import core #@UnresolvedImport
+from org.python.core import PyClass #@UnresolvedImport
 
 try:
     xrange

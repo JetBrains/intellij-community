@@ -74,7 +74,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   protected PsiFile myOriginalFile = null;
   private final FileViewProvider myViewProvider;
-  private static final Key<Document> HARD_REFERENCE_TO_DOCUMENT = new Key<Document>("HARD_REFERENCE_TO_DOCUMENT");
   private volatile Reference<StubTree> myStub;
   protected final PsiManagerEx myManager;
   private volatile Getter<FileElement> myTreeElementPointer; // SoftReference/WeakReference to ASTNode or a strong reference to a tree if the file is a DummyHolder
@@ -188,11 +187,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
     Document cachedDocument = FileDocumentManager.getInstance().getCachedDocument(getViewProvider().getVirtualFile());
 
-    final Document document = viewProvider.isEventSystemEnabled() ? viewProvider.getDocument() : null;
     FileElement treeElement = createFileElement(viewProvider.getContents());
-    if (document != null) {
-      treeElement.putUserData(HARD_REFERENCE_TO_DOCUMENT, document);
-    }
     treeElement.setPsi(this);
 
     List<Pair<StubBasedPsiElementBase, CompositeElement>> bindings = calcStubAstBindings(treeElement, cachedDocument);
@@ -375,12 +370,22 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   public void unloadContent() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    LOG.assertTrue(getTreeElement() != null);
     clearCaches();
     myViewProvider.beforeContentsSynchronized();
     synchronized (PsiLock.LOCK) {
-      myTreeElementPointer = null;
-      clearStub("unloadContent");
+      FileElement treeElement = derefTreeElement();
+      DebugUtil.startPsiModification("unloadContent");
+      try {
+        if (treeElement != null) {
+          myTreeElementPointer = null;
+          treeElement.detachFromFile();
+          DebugUtil.onInvalidated(treeElement);
+        }
+        clearStub("unloadContent");
+      }
+      finally {
+        DebugUtil.finishPsiModification();
+      }
     }
   }
 

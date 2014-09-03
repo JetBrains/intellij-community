@@ -3,6 +3,7 @@ package com.jetbrains.python.edu;
 import com.intellij.ide.SaveAndSyncHandlerImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -10,12 +11,12 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.ui.UIUtil;
-import com.jetbrains.python.edu.course.TaskFile;
-import com.jetbrains.python.edu.course.TaskWindow;
+import com.jetbrains.python.edu.course.*;
 import com.jetbrains.python.edu.editor.StudyEditor;
 import com.jetbrains.python.edu.ui.StudyToolWindowFactory;
 import org.jetbrains.annotations.NotNull;
@@ -70,7 +71,7 @@ public class StudyUtils {
       return wrapHTML ? UIUtil.toHtml(taskText.toString()) : taskText.toString();
     }
     catch (IOException e) {
-      LOG.error("Failed to get file text from file " + fileName, e);
+      LOG.info("Failed to get file text from file " + fileName, e);
     }
     finally {
       closeSilently(reader);
@@ -119,14 +120,18 @@ public class StudyUtils {
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  public static VirtualFile flushWindows(Document document, TaskFile taskFile, VirtualFile file) {
+  public static VirtualFile flushWindows(TaskFile taskFile, VirtualFile file) {
     VirtualFile taskDir = file.getParent();
     VirtualFile fileWindows = null;
+    final Document document = FileDocumentManager.getInstance().getDocument(file);
+    if (document == null) {
+      LOG.debug("Couldn't flush windows");
+      return null;
+    }
     if (taskDir != null) {
       String name = file.getNameWithoutExtension() + "_windows";
       PrintWriter printWriter = null;
       try {
-
         fileWindows = taskDir.createChildData(taskFile, name);
         printWriter = new PrintWriter(new FileOutputStream(fileWindows.getPath()));
         for (TaskWindow taskWindow : taskFile.getTaskWindows()) {
@@ -137,6 +142,12 @@ public class StudyUtils {
           String windowDescription = document.getText(new TextRange(start, start + taskWindow.getLength()));
           printWriter.println("#study_plugin_window = " + windowDescription);
         }
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            FileDocumentManager.getInstance().saveDocument(document);
+          }
+        });
       }
       catch (IOException e) {
        LOG.error(e);
@@ -147,5 +158,28 @@ public class StudyUtils {
       }
     }
     return fileWindows;
+  }
+
+  public static void deleteFile(VirtualFile file) {
+    try {
+      file.delete(StudyUtils.class);
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+  }
+
+  public static File copyResourceFile(String sourceName, String copyName, Project project, Task task)
+    throws IOException {
+    StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
+    Course course = taskManager.getCourse();
+    int taskNum = task.getIndex() + 1;
+    int lessonNum = task.getLesson().getIndex() + 1;
+    assert course != null;
+    String pathToResource =
+      FileUtil.join(new File(course.getResourcePath()).getParent(), Lesson.LESSON_DIR + lessonNum, Task.TASK_DIR + taskNum);
+    File resourceFile = new File(pathToResource, copyName);
+    FileUtil.copy(new File(pathToResource, sourceName), resourceFile);
+    return resourceFile;
   }
 }

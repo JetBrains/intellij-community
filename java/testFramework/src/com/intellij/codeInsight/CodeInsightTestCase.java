@@ -77,6 +77,8 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
     Editor editor = instance.openTextEditor(new OpenFileDescriptor(myProject, file, 0), false);
     ((EditorImpl)editor).setCaretActive();
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+
     return editor;
   }
 

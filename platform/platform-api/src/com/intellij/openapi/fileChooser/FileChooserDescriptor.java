@@ -18,6 +18,7 @@ package com.intellij.openapi.fileChooser;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VFileProperty;
@@ -51,6 +52,7 @@ public class FileChooserDescriptor implements Cloneable {
   private boolean myShowFileSystemRoots = true;
   private boolean myTreeRootVisible = false;
   private boolean myShowHiddenFiles = false;
+  private Condition<VirtualFile> myFileFilter = null;
 
   private final Map<String, Object> myUserData = new HashMap<String, Object>();
 
@@ -218,18 +220,15 @@ public class FileChooserDescriptor implements Cloneable {
   }
 
   /**
-   * Defines whether file can be chosen or not
+   * Sets simple boolean condition for use in {@link #isFileVisible(VirtualFile, boolean)} and {@link #isFileSelectable(VirtualFile)}.
    */
-  public boolean isFileSelectable(VirtualFile file) {
-    if (file == null) return false;
-    if (file.isDirectory() && myChooseFolders) return true;
-    if (acceptAsJarFile(file)) return true;
-    if (acceptAsGeneralFile(file)) return true;
-    return false;
+  public FileChooserDescriptor withFileFilter(@Nullable Condition<VirtualFile> filter) {
+    myFileFilter = filter;
+    return this;
   }
 
   /**
-   * Defines whether file is visible in the tree
+   * Defines whether a file is visible in the tree.
    */
   public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
     if (!file.isDirectory()) {
@@ -238,26 +237,45 @@ public class FileChooserDescriptor implements Cloneable {
           return false;
         }
       }
-      else {
-        if (!myChooseFiles) {
-          return false;
-        }
+      else if (!myChooseFiles) {
+        return false;
       }
-    }
-
-    // do not include ignored files
-    if (isHideIgnored() && FileTypeManager.getInstance().isFileIgnored(file)) {
-      return false;
-    }
-
-    // do not include hidden files
-    if (!showHiddenFiles) {
-      if (FileElement.isFileHidden(file)) {
+      if (myFileFilter != null && !myFileFilter.value(file)) {
         return false;
       }
     }
 
+    if (isHideIgnored() && FileTypeManager.getInstance().isFileIgnored(file)) {
+      return false;
+    }
+
+    if (!showHiddenFiles && FileElement.isFileHidden(file)) {
+      return false;
+    }
+
     return true;
+  }
+
+  /**
+   * Defines whether a file can be chosen.
+   */
+  public boolean isFileSelectable(VirtualFile file) {
+    if (file == null) return false;
+
+    if (file.isDirectory() && myChooseFolders) {
+      return true;
+    }
+    if (acceptAsJarFile(file)) {
+      return true;
+    }
+    if (acceptAsGeneralFile(file)) {
+      return true;
+    }
+    if (myFileFilter != null && !file.isDirectory() && myFileFilter.value(file)) {
+      return true;
+    }
+
+    return false;
   }
 
   public Icon getIcon(final VirtualFile file) {

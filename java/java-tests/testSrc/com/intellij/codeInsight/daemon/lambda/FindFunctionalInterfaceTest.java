@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.idea.Bombed;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -24,6 +25,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Calendar;
 import java.util.Collection;
 
 public class FindFunctionalInterfaceTest extends LightCodeInsightFixtureTestCase {
@@ -40,6 +42,7 @@ public class FindFunctionalInterfaceTest extends LightCodeInsightFixtureTestCase
     assertEquals("() -> {}", next.getText());
   }
 
+  @Bombed(day = 30, month = Calendar.SEPTEMBER)
   public void testFieldFromAnonymousClassScope() throws Exception {
     myFixture.configureByFile(getTestName(false) + ".java");
     final PsiElement elementAtCaret = myFixture.getElementAtCaret();

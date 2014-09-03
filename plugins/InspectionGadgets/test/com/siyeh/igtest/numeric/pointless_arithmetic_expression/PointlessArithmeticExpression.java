@@ -1,5 +1,7 @@
 package com.siyeh.igtest.numeric.pointless_arithmetic_expression;
 
+import java.util.Random;
+
 public class PointlessArithmeticExpression
 {
     private static final int ZERO_CONSTANT = 0;
@@ -8,11 +10,11 @@ public class PointlessArithmeticExpression
     public static void main(String[] args)
     {
         final int i = 2;
-        final int j = i + 0;
+        final int j = <warning descr="'i + 0' can be replaced with 'i'">i + 0</warning>;
         System.out.println(j);
-        int k = 0+j;
+        int k = <warning descr="'0+j' can be replaced with 'j'">0+j</warning>;
         System.out.println(k);
-         k = j - 0;
+         k = <warning descr="'j - 0' can be replaced with 'j'">j - 0</warning>;
         System.out.println(k);
         k = 0 - j;
         System.out.println(k);
@@ -20,11 +22,11 @@ public class PointlessArithmeticExpression
         System.out.println(k);
         k = j * ONE_CONSTANT;
         System.out.println(k);
-        k = j / 1;
+        k = <warning descr="'j / 1' can be replaced with 'j'">j / 1</warning>;
         System.out.println(k);
         String string = "foo" + 0;
 
-        k = j%1;
+        k = <warning descr="'j%1' can be replaced with '0'">j%1</warning>;
         System.out.println(k);
                
         if(k<=Integer.MAX_VALUE)
@@ -90,9 +92,9 @@ public class PointlessArithmeticExpression
     }
 
     void more(int i) {
-        System.out.println(i / i);
-        System.out.println(i - i);
-        System.out.println(i % i);
+        System.out.println(<warning descr="'i / i' can be replaced with '1'">i / i</warning>);
+        System.out.println(<warning descr="'i - i' can be replaced with '0'">i - i</warning>);
+        System.out.println(<warning descr="'i % i' can be replaced with '0'">i % i</warning>);
     }
 }
 class Main {
@@ -111,18 +113,29 @@ class Main {
     return (CONST + (new Main(5).i) * 8) - (Main.CONST + new Main(5).i * (8));
   }
 
-  int one = 5/5;
+  int one = <warning descr="'5/5' can be replaced with '1'">5/5</warning>;
 }
 class Expanded {{
-  int m = 1/**/ - (byte)0 - 9; // warn
-  int j = 8 * 0 * 8;
-  int k = 1 + /*a*/0 +/**/ 9;
-  byte l = (byte) (1L - 1L);
+  int m = <warning descr="'1/**/ - (byte)0 - 9' can be replaced with '1/**/ -  9'">1/**/ - (byte)0 - 9</warning>; // warn
+  int j = <warning descr="'8 * 0 * 8' can be replaced with '0'">8 * 0 * 8</warning>;
+  int k = <warning descr="'1 + /*a*/0 +/**/ 9' can be replaced with '1 + /*a*//**/ 9'">1 + /*a*/0 +/**/ 9</warning>;
+  byte l = (byte) (<warning descr="'1L - 1L' can be replaced with '0L'">1L - 1L</warning>);
   byte u = 1;
-  int z = 2 / 1 / 1;
-  System.out.println(u * 1);
-  long g = 8L / 8L;
-  long h = 9L * 0L;
-  int a = 8 * 0 * 8 * ; // don't warn
+  int z = <warning descr="'2 / 1 / 1' can be replaced with '2 /  1'">2 / 1 / 1</warning>;
+  System.out.println(<warning descr="'u * 1' can be replaced with 'u'">u * 1</warning>);
+  long g = <warning descr="'8L / 8L' can be replaced with '1L'">8L / 8L</warning>;
+  long h = <warning descr="'9L * 0L' can be replaced with '0L'">9L * 0L</warning>;
+  int a = 8 * 0 * 8 *<error descr="Expression expected"> </error>; // don't warn
   int minus = 2 - 1 - 1;
+  int div = 3 / 2 / 2;
+  int mod = 3 % 2 % 2;
 }}
+class SideEffects {
+  public static void main( String args[] ){
+    Random rand = new Random();
+    int array[] = {1, 2, 4};
+    int i = 1;
+    int b = array[i++] - array[i++];
+    System.out.println(rand.nextInt(1000) - rand.nextInt(1000));
+  }
+}

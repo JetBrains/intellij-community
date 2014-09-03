@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerContextUtil;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.jdi.LocalVariableProxyImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
@@ -61,6 +62,11 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
 
   @Nullable
   public SourcePosition getSourcePosition(final Project project, final DebuggerContextImpl context) {
+    return getSourcePosition(project, context, false);
+  }
+
+  @Nullable
+  public SourcePosition getSourcePosition(final Project project, final DebuggerContextImpl context, boolean nearest) {
     StackFrameProxyImpl frame = context.getFrameProxy();
     if (frame == null) return null;
 
@@ -77,7 +83,9 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
 
     PsiFile containingFile = psiVariable.getContainingFile();
     if(containingFile == null) return null;
-
+    if (nearest) {
+      return DebuggerContextUtil.findNearest(context, psiVariable, containingFile);
+    }
     return SourcePosition.createFromOffset(containingFile, psiVariable.getTextOffset());
   }
 

@@ -44,6 +44,10 @@ import com.intellij.util.proxy.CommonProxy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.api.ClientFactory;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.info.Info;
+import org.jetbrains.idea.svn.info.InfoClient;
 import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
@@ -172,6 +176,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     }
     log("on state changed ");
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         for (SVNURL key : outdatedRequests) {
           removeLazyNotificationByKey(key);
@@ -223,7 +228,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
   /**
    * Bases on presence of notifications!
    */
-  public ThreeState isAuthenticatedFor(@NotNull VirtualFile vf) {
+  public ThreeState isAuthenticatedFor(@NotNull VirtualFile vf, @Nullable ClientFactory factory) {
     final WorkingCopy wcCopy = myRootsToWorkingCopies.getWcRoot(vf);
     if (wcCopy == null) return ThreeState.UNSURE;
 
@@ -236,9 +241,22 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     if (Boolean.FALSE.equals(keptResult)) return ThreeState.NO;
 
     // check have credentials
-    final boolean calculatedResult = passiveValidation(myVcs.getProject(), wcCopy.getUrl());
+    final boolean calculatedResult =
+      factory == null ? passiveValidation(myVcs.getProject(), wcCopy.getUrl()) : passiveValidation(factory, wcCopy.getUrl());
     myCopiesPassiveResults.put(wcCopy.getUrl(), calculatedResult);
     return calculatedResult ? ThreeState.YES : ThreeState.NO;
+  }
+
+  private static boolean passiveValidation(@NotNull ClientFactory factory, @NotNull SVNURL url) {
+    Info info = null;
+
+    try {
+      info = factory.create(InfoClient.class, false).doInfo(url, SVNRevision.UNDEFINED, SVNRevision.UNDEFINED);
+    }
+    catch (SvnBindException ignore) {
+    }
+
+    return info != null;
   }
 
   @NotNull
@@ -470,6 +488,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     final File authDir = new File(configuration.getConfigurationDirectory(), "auth");
     if (authDir.exists()) {
       final Runnable process = new Runnable() {
+        @Override
         public void run() {
           final ProgressIndicator ind = ProgressManager.getInstance().getProgressIndicator();
           if (ind != null) {
@@ -477,7 +496,8 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
             ind.setText("Clearing stored credentials in " + authDir.getAbsolutePath());
           }
           final File[] files = authDir.listFiles(new FilenameFilter() {
-            public boolean accept(File dir, String name) {
+            @Override
+            public boolean accept(@NotNull File dir, @NotNull String name) {
               return ourAuthKinds.contains(name);
             }
           });

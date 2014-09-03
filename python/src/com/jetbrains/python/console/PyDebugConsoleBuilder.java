@@ -37,7 +37,7 @@ public class PyDebugConsoleBuilder extends TextConsoleBuilder {
 
   public PyDebugConsoleBuilder(final Project project, @Nullable Sdk sdk) {
     myProject = project;
-    this.mySdk = sdk;
+    mySdk = sdk;
   }
 
   public ConsoleView getConsole() {

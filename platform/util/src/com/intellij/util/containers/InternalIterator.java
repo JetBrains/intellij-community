@@ -70,10 +70,10 @@ public interface InternalIterator<T>{
   }
 
   class Filtering<T> implements InternalIterator<T> {
-    private final Condition<T> myFilter;
+    private final Condition<? super T> myFilter;
     private final InternalIterator<T> myIterator;
 
-    public Filtering(InternalIterator<T> iterator, Condition<T> filter) {
+    public Filtering(InternalIterator<T> iterator, Condition<? super T> filter) {
       myIterator = iterator;
       myFilter = filter;
     }

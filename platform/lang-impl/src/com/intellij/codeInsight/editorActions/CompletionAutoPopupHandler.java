@@ -44,13 +44,15 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
 
   @Override
   public Result checkAutoPopup(char charTyped, final Project project, final Editor editor, final PsiFile file) {
-    CompletionPhase oldPhase = CompletionServiceImpl.getCompletionPhase();
+    LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
 
-    if (oldPhase instanceof CompletionPhase.CommittingDocuments && ((CompletionPhase.CommittingDocuments)oldPhase).isRestartingCompletion()) {
-      return Result.STOP;
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("checkAutoPopup: character=" + charTyped + ";");
+      LOG.debug("phase=" + CompletionServiceImpl.getCompletionPhase());
+      LOG.debug("lookup=" + lookup);
+      LOG.debug("currentCompletion=" + CompletionServiceImpl.getCompletionService().getCurrentCompletion());
     }
 
-    LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
     if (lookup != null) {
       if (editor.getSelectionModel().hasSelection()) {
         lookup.performGuardedChange(new Runnable() {
@@ -68,9 +70,6 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
       return Result.STOP;
     }
 
-    if (CompletionServiceImpl.isPhase(CompletionPhase.CommittingDocuments.class)) {
-      CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
-    }
     return Result.CONTINUE;
   }
 

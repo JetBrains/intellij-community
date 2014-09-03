@@ -128,19 +128,23 @@ public class IdeRepaintManager extends RepaintManager {
       final Exception exception = new Exception();
       StackTraceElement[] stackTrace = exception.getStackTrace();
       for (StackTraceElement st : stackTrace) {
-        if (repaint && st.getClassName().startsWith("javax.swing.")) {
+        String className = st.getClassName();
+        String methodName = st.getMethodName();
+
+        if (repaint && className.startsWith("javax.swing.")) {
           fromSwing = true;
         }
-        if (repaint && "imageUpdate".equals(st.getMethodName())) {
+        if (repaint && "imageUpdate".equals(methodName)) {
           swingKnownNonAwtOperations = true;
         }
 
-        if (st.getClassName().startsWith("javax.swing.JEditorPane") && st.getMethodName().equals("read")) {
+        if ("read".equals(methodName) && className.startsWith("javax.swing.JEditorPane") ||
+            "setCharacterAttributes".equals(methodName) && className.startsWith("javax.swing.text.DefaultStyledDocument")) {
           swingKnownNonAwtOperations = true;
           break;
         }
 
-        if ("repaint".equals(st.getMethodName())) {
+        if ("repaint".equals(methodName)) {
           repaint = true;
           fromSwing = false;
         }

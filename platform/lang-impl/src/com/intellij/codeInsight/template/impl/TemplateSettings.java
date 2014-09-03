@@ -105,7 +105,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   private int myMaxKeyLength = 0;
   private char myDefaultShortcutChar = TAB_CHAR;
   private final SchemesManager<TemplateGroup, TemplateGroup> mySchemesManager;
-  private static final String FILE_SPEC = "$ROOT_CONFIG$/templates";
+  private static final String FILE_SPEC = StoragePathMacros.ROOT_CONFIG + "/templates";
 
   public static class TemplateKey {
     private String groupName;
@@ -185,7 +185,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       }
 
       @Override
-      public Document writeScheme(@NotNull final TemplateGroup template) throws WriteExternalException {
+      public Element writeScheme(@NotNull final TemplateGroup template) throws WriteExternalException {
         Element templateSetElement = new Element(TEMPLATE_SET);
         templateSetElement.setAttribute(GROUP, template.getName());
 
@@ -195,7 +195,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
           }
         }
 
-        return new Document(templateSetElement);
+        return templateSetElement;
       }
 
       @Override

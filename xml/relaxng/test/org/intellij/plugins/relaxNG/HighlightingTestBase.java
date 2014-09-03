@@ -139,6 +139,8 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
   @Override
   protected void tearDown() throws Exception {
     myTestFixture.tearDown();
+    myTestFixture = null;
+
     super.tearDown();
   }
 

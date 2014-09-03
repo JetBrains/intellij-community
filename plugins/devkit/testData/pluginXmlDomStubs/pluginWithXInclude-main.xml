@@ -1,0 +1,10 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" version="2">
+
+    <id>com.intellij</id>
+
+    <extensionPoints>
+        <extensionPoint name="bar"/>
+        <xi:include href="/extensionPoints.xml" xpointer="xpointer(/extensionPoints/*)"/>
+    </extensionPoints>
+
+</idea-plugin>

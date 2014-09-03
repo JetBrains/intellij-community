@@ -21,7 +21,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBCardLayout;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -51,6 +51,7 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
   public CustomizeIDEWizardDialog() {
     super(null, true, true);
     setTitle("Customize " + ApplicationNamesInfo.getInstance().getProductName());
+    getPeer().setAppIcons();
     initSteps();
     mySkipButton.addActionListener(this);
     myBackButton.addActionListener(this);
@@ -119,7 +120,7 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     result.add(myContentPanel, BorderLayout.CENTER);
     result.add(myFooterLabel, BorderLayout.SOUTH);
     result.setPreferredSize(new Dimension(700, 600));
-    result.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    result.setBorder(AbstractCustomizeWizardStep.createSmallEmptyBorder());
     return result;
   }
 
@@ -131,8 +132,10 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     gbc.fill = GridBagConstraints.BOTH;
     gbc.gridx = 0;
     gbc.gridy = 0;
-    buttonPanel.add(mySkipButton, gbc);
-    gbc.gridx++;
+    if (!PlatformUtils.isCLion()) {
+      buttonPanel.add(mySkipButton, gbc);
+      gbc.gridx++;
+    }
     buttonPanel.add(myBackButton, gbc);
     gbc.gridx++;
     gbc.weightx = 1;
@@ -218,16 +221,5 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
       if (i == myIndex) navHTML.append("</b>");
     }
     myNavigationLabel.setText(navHTML.toString());
-  }
-
-
-  private static <T extends Component> void getChildren(@NotNull Component c, Class<? extends T> cls, List<T> accumulator) {
-    if (cls.isAssignableFrom(c.getClass())) accumulator.add((T)c);
-    if (c instanceof Container) {
-      Component[] components = ((Container)c).getComponents();
-      for (Component component : components) {
-        getChildren(component, cls, accumulator);
-      }
-    }
   }
 }

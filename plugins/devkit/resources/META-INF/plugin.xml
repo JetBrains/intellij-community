@@ -152,6 +152,7 @@
                                     implementationClass="org.jetbrains.idea.devkit.navigation.DescriptionTypeRelatedItemLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="JAVA"
                                     implementationClass="org.jetbrains.idea.devkit.navigation.ExtensionPointDeclarationRelatedItemLineMarkerProvider"/>
+    <codeInsight.implementedAtRuntime implementation="org.jetbrains.idea.devkit.inspections.DevKitImplementedAtRuntimeCondition"/>
   </extensions>
 
   <project-components>

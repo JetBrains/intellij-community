@@ -109,10 +109,12 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testAssigningClassLiteralToNullable() throws Throwable { doTest(); }
 
   public void testSynchronizingOnNullable() throws Throwable { doTest(); }
+  public void testSwitchOnNullable() { doTest(); }
   public void testReturningNullFromVoidMethod() throws Throwable { doTest(); }
 
   public void testCatchRuntimeException() throws Throwable { doTest(); }
-  public void testCatchThrowable() throws Throwable { doTest(); }
+  // IDEA-129331
+  //public void testCatchThrowable() throws Throwable { doTest(); }
   public void testNotNullCatchParameter() { doTest(); }
 
   public void testAssertFailInCatch() throws Throwable {
@@ -214,6 +216,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testNoConfusionWithAnonymousConstantInitializer() { doTest(); }
   public void testForeachOverWildcards() { doTest(); }
   public void testFinalGetter() { doTest(); }
+  public void testGetterResultsNotSame() { doTest(); }
 
   public void testByteBufferGetter() {
     myFixture.addClass("package java.nio; public class MappedByteBuffer { public int getInt() {} }");

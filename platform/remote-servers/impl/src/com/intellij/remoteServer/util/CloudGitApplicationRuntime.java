@@ -45,11 +45,11 @@ public class CloudGitApplicationRuntime extends CloudApplicationRuntime {
     myDeployment = serverRuntime.getAgent().createDeployment(applicationName, myLoggingHandler);
   }
 
-  protected CloudMultiSourceServerRuntimeInstance getServerRuntime() {
+  public CloudMultiSourceServerRuntimeInstance getServerRuntime() {
     return myServerRuntime;
   }
 
-  protected DeploymentLogManager getLogManager() {
+  public DeploymentLogManager getLogManager() {
     return myLogManager;
   }
 

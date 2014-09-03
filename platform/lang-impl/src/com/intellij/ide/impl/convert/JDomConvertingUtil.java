@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,7 +103,7 @@ public class JDomConvertingUtil extends JDomSerializationUtil {
   }
 
   public static void copyChildren(Element from, Element to) {
-    copyChildren(from, to, Condition.TRUE);
+    copyChildren(from, to, Conditions.<Element>alwaysTrue());
   }
 
   public static void copyChildren(Element from, Element to, Condition<Element> filter) {

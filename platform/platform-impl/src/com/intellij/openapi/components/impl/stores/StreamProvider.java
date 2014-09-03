@@ -12,7 +12,9 @@ import java.util.Collections;
 public abstract class StreamProvider {
   public static final StreamProvider[] EMPTY_ARRAY = new StreamProvider[0];
 
-  public abstract boolean isEnabled();
+  public boolean isEnabled() {
+    return true;
+  }
 
   /**
    * If true, special version file per storage file will keep version of component.
@@ -37,7 +39,7 @@ public abstract class StreamProvider {
    * @param roamingType
    * @param async
    */
-  public abstract boolean saveContent(@NotNull String fileSpec, @NotNull byte[] content, int size, @NotNull RoamingType roamingType, boolean async) throws IOException;
+  public abstract void saveContent(@NotNull String fileSpec, @NotNull byte[] content, int size, @NotNull RoamingType roamingType, boolean async) throws IOException;
 
   @Nullable
   public abstract InputStream loadContent(@NotNull String fileSpec, @NotNull RoamingType roamingType) throws IOException;
@@ -47,5 +49,8 @@ public abstract class StreamProvider {
     return Collections.emptyList();
   }
 
-  public abstract void deleteFile(@NotNull String fileSpec, @NotNull RoamingType roamingType);
+  /**
+   * Delete file or directory
+   */
+  public abstract void delete(@NotNull String fileSpec, @NotNull RoamingType roamingType);
 }

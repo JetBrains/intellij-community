@@ -8,7 +8,6 @@ import com.intellij.execution.runners.DefaultProgramRunner;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
@@ -19,11 +18,6 @@ import org.intellij.plugins.xsltDebugger.impl.XsltDebugProcess;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 16.11.10
-*/
 public class XsltDebuggerRunner extends DefaultProgramRunner {
   static final ThreadLocal<Boolean> ACTIVE = new ThreadLocal<Boolean>();
 
@@ -43,26 +37,20 @@ public class XsltDebuggerRunner extends DefaultProgramRunner {
   }
 
   @Override
-  protected RunContentDescriptor doExecute(@NotNull Project project,
-                                           @NotNull RunProfileState state,
-                                           RunContentDescriptor contentToReuse,
-                                           @NotNull ExecutionEnvironment env) throws ExecutionException {
+  protected RunContentDescriptor doExecute(@NotNull RunProfileState state, @NotNull ExecutionEnvironment env) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
-    return createContentDescriptor(project, state, contentToReuse, env);
+    return createContentDescriptor(state, env);
   }
 
-  protected RunContentDescriptor createContentDescriptor(Project project,
-                                                         final RunProfileState runProfileState,
-                                                         RunContentDescriptor contentToReuse,
-                                                         final ExecutionEnvironment executionEnvironment) throws ExecutionException {
+  protected RunContentDescriptor createContentDescriptor(final RunProfileState runProfileState, final ExecutionEnvironment environment) throws ExecutionException {
     final XDebugSession debugSession =
-      XDebuggerManager.getInstance(project).startSession(this, executionEnvironment, contentToReuse, new XDebugProcessStarter() {
+      XDebuggerManager.getInstance(environment.getProject()).startSession(environment, new XDebugProcessStarter() {
         @NotNull
         public XDebugProcess start(@NotNull final XDebugSession session) throws ExecutionException {
           ACTIVE.set(Boolean.TRUE);
           try {
             final XsltCommandLineState c = (XsltCommandLineState)runProfileState;
-            final ExecutionResult result = runProfileState.execute(executionEnvironment.getExecutor(), XsltDebuggerRunner.this);
+            final ExecutionResult result = runProfileState.execute(environment.getExecutor(), XsltDebuggerRunner.this);
             return new XsltDebugProcess(session, result, c.getExtensionData().getUserData(XsltDebuggerExtension.VERSION));
           } finally {
             ACTIVE.remove();

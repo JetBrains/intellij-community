@@ -8,10 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
-import com.jetbrains.python.debugger.IPyDebugProcess;
-import com.jetbrains.python.debugger.PyDebugValue;
-import com.jetbrains.python.debugger.PyDebuggerException;
-import com.jetbrains.python.debugger.PyThreadInfo;
+import com.jetbrains.python.debugger.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -168,7 +165,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
-  public void consoleExec(String threadId, String frameId, String expression, DebugCallback<String> callback) {
+  public void consoleExec(String threadId, String frameId, String expression, PyDebugCallback<String> callback) {
     debugger(threadId).consoleExec(threadId, frameId, expression, callback);
   }
 
@@ -180,6 +177,11 @@ public class MultiProcessDebugger implements ProcessDebugger {
   @Override
   public XValueChildrenList loadVariable(String threadId, String frameId, PyDebugValue var) throws PyDebuggerException {
     return debugger(threadId).loadVariable(threadId, frameId, var);
+  }
+
+  @Override
+  public void loadReferrers(String threadId, String frameId, PyReferringObjectsValue var, PyDebugCallback<XValueChildrenList> callback) {
+    debugger(threadId).loadReferrers(threadId, frameId, var, callback);
   }
 
   @NotNull

@@ -93,6 +93,9 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
   @Attribute("groupId")
   public String groupId;
 
+  @Attribute("groupWeight")
+  public int groupWeight;
+
   /** Marks project level configurables that do not apply to the default project. */
   @Attribute("nonDefaultProject")
   public boolean nonDefaultProject;

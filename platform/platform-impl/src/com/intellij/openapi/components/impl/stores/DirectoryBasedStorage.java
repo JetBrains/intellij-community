@@ -205,7 +205,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
               myDir.mkDir();
             }
 
-            StorageUtil.save(file, element, MySaveSession.this);
+            StorageUtil.save(file, element, MySaveSession.this, false);
             myStorageData.updateLastTimestamp(file);
           }
         }
@@ -301,7 +301,6 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
               filesToSave.add(file);
             }
           }
-
         }
       });
 
@@ -337,15 +336,17 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
     private void setState(final String componentName, @NotNull Object state, final Storage storageSpec) throws StateStorageException {
       try {
         final Element element = DefaultStateSerializer.serializeState(state, storageSpec);
-        for (Pair<Element, String> pair : mySplitter.splitState(element)) {
-          Element e = pair.first;
-          String name = pair.second;
+        if (element != null) {
+          for (Pair<Element, String> pair : mySplitter.splitState(element)) {
+            Element e = pair.first;
+            String name = pair.second;
 
-          Element statePart = new Element(StorageData.COMPONENT);
-          statePart.setAttribute(StorageData.NAME, componentName);
-          statePart.addContent(e.detach());
+            Element statePart = new Element(StorageData.COMPONENT);
+            statePart.setAttribute(StorageData.NAME, componentName);
+            statePart.addContent(e.detach());
 
-          myStorageData.put(componentName, myDir.getChild(name), statePart, false);
+            myStorageData.put(componentName, myDir.getChild(name), statePart, false);
+          }
         }
       }
       catch (WriteExternalException e) {

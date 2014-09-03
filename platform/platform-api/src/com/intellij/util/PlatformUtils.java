@@ -28,7 +28,7 @@ public class PlatformUtils {
   public static final String IDEA_PREFIX = PlatformUtilsCore.IDEA_PREFIX;
   public static final String IDEA_CE_PREFIX = PlatformUtilsCore.COMMUNITY_PREFIX;
   public static final String APPCODE_PREFIX = PlatformUtilsCore.APPCODE_PREFIX;
-  public static final String CPP_PREFIX = PlatformUtilsCore.CPP_PREFIX;
+  public static final String CLION_PREFIX = PlatformUtilsCore.CLION_PREFIX;
   public static final String PYCHARM_PREFIX = PlatformUtilsCore.PYCHARM_PREFIX;
   public static final String PYCHARM_CE_PREFIX = PlatformUtilsCore.PYCHARM_PREFIX2;
   public static final String RUBY_PREFIX = PlatformUtilsCore.RUBY_PREFIX;
@@ -66,12 +66,12 @@ public class PlatformUtils {
     return PlatformUtilsCore.isAppCode();
   }
 
-  public static boolean isCppIde() {
-    return PlatformUtilsCore.isCppIde();
+  public static boolean isCLion() {
+    return PlatformUtilsCore.isCLion();
   }
 
   public static boolean isCidr() {
-    return isAppCode() || isCppIde();
+    return isAppCode() || isCLion();
   }
 
   public static boolean isPyCharm() {

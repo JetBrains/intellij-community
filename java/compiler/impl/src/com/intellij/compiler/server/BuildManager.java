@@ -34,7 +34,9 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.compiler.CompilationStatusListener;
 import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompilerTopics;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorFactory;
@@ -64,16 +66,14 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.util.Alarm;
-import com.intellij.util.Function;
-import com.intellij.util.PathUtil;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.IntArrayList;
@@ -1115,6 +1115,44 @@ public class BuildManager implements ApplicationComponent{
         @Override
         public void processTerminated(@NotNull RunProfile runProfile, @NotNull ProcessHandler handler) {
           scheduleAutoMake();
+        }
+      });
+      conn.subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
+        private final Set<String> myRootsToRefresh = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+        @Override
+        public void compilationFinished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
+          final String[] roots;
+          synchronized (myRootsToRefresh) {
+            roots = ArrayUtil.toStringArray(myRootsToRefresh);
+            myRootsToRefresh.clear();
+          }
+          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+            @Override
+            public void run() {
+              if (project.isDisposed()) {
+                return;
+              }
+              final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+              final LocalFileSystem lfs = LocalFileSystem.getInstance();
+              final Set<VirtualFile> filesToRefresh = new HashSet<VirtualFile>();
+              for (String root : roots) {
+                final VirtualFile rootFile = lfs.refreshAndFindFileByPath(root);
+                if (rootFile != null && fileIndex.isInSourceContent(rootFile)) {
+                  filesToRefresh.add(rootFile);
+                }
+              }
+              if (!filesToRefresh.isEmpty()) {
+                lfs.refreshFiles(filesToRefresh, true, true, null);
+              }
+            }
+          });
+        }
+
+        @Override
+        public void fileGenerated(String outputRoot, String relativePath) {
+          synchronized (myRootsToRefresh) {
+            myRootsToRefresh.add(outputRoot);
+          }
         }
       });
       final String projectPath = getProjectPath(project);

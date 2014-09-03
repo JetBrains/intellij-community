@@ -251,6 +251,23 @@ public class PyQuickFixTest extends PyTestCase {
                           PyBundle.message("QFIX.statement.effect.introduce.variable"), true, true);
   }
 
+  public void testReplacePrintEnd() {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, new Runnable() {
+      @Override
+      public void run() {
+        doInspectionTest("ReplacePrintEnd.py", PyStatementEffectInspection.class, PyBundle.message("QFIX.statement.effect"), true, true);
+      }});
+  }
+
+  public void testReplacePrintComment() {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, new Runnable() {
+      @Override
+      public void run() {
+        doInspectionTest("ReplacePrintComment.py", PyStatementEffectInspection.class, PyBundle.message("QFIX.statement.effect"), true,
+                         true);
+      }});
+  }
+
   public void testUnresolvedWith() {  // PY-2083
     setLanguageLevel(LanguageLevel.PYTHON25);
     doInspectionTest("UnresolvedWith.py", PyUnresolvedReferencesInspection.class,
@@ -293,6 +310,11 @@ public class PyQuickFixTest extends PyTestCase {
 
   public void testDefaultArgument() {                      //PY-3127
     doInspectionTest("DefaultArgument.py", PyDefaultArgumentInspection.class,
+                     PyBundle.message("QFIX.default.argument"), true, true);
+  }
+
+  public void testDefaultArgumentEmptyList() {
+    doInspectionTest("DefaultArgumentEmptyList.py", PyDefaultArgumentInspection.class,
                      PyBundle.message("QFIX.default.argument"), true, true);
   }
 

@@ -295,7 +295,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       }
     }
     commonRegisterProblem(message, " not support this syntax. Raise with no arguments can only be used in an except block",
-                          len, node, null);
+                          len, node, null, false);
     // raise 1, 2, 3
     len = 0;
     message = new StringBuilder(myCommonMessage);

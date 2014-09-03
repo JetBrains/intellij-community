@@ -163,3 +163,14 @@ interface Foo {
   void bar();
 }
 interface Foo2 extends Foo {}
+class Helper {
+
+  void foo() {
+    class A<T> {
+      void foo() {}
+    }
+    class B<T> extends A<T> {}
+    B<String> <warning descr="Type of variable 'b' may be weakened to 'A'">b</warning> = new B();
+    b.foo();
+  }
+}

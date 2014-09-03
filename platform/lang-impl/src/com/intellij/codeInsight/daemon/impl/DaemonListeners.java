@@ -507,7 +507,7 @@ public class DaemonListeners implements Disposable {
     }
 
     @Override
-    public void profileActivated(@NotNull Profile oldProfile, Profile profile) {
+    public void profileActivated(Profile oldProfile, Profile profile) {
       stopDaemonAndRestartAllFiles();
     }
 
@@ -530,6 +530,7 @@ public class DaemonListeners implements Disposable {
         StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
         myTogglePopupHintsPanel = new TogglePopupHintsPanel(myProject);
         statusBar.addWidget(myTogglePopupHintsPanel, myProject);
+        updateStatusBar();
 
         stopDaemonAndRestartAllFiles();
       }

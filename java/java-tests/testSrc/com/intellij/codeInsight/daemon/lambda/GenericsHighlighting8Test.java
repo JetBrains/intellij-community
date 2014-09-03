@@ -688,7 +688,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testIDEA110869() {
     doTest();
   }
-  /*public void testIDEA110947() { doTest5(false); }*/
+  public void testIDEA110947() { doTest(false); }
   public void testIDEA112122() {
     doTest();
   }
@@ -756,6 +756,10 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testErasure() throws Exception { doTest(); }
 
   public void testWildcardBoundsCombination() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA128333() throws Exception {
     doTest();
   }
 

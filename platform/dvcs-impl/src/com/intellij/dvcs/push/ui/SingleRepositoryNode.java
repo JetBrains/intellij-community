@@ -15,8 +15,8 @@
  */
 package com.intellij.dvcs.push.ui;
 
+import com.intellij.dvcs.push.TargetEditor;
 import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.EditorTextField;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,11 +42,9 @@ public class SingleRepositoryNode extends RepositoryNode {
   public void render(@NotNull ColoredTreeCellRenderer renderer) {
     renderer.append(myRepositoryPanel.getSourceName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     renderer.append(myRepositoryPanel.getArrow(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    EditorTextField textField = myRepositoryPanel.getRemoteTextFiled();
-    String targetName = myRepositoryPanel.getRemoteTargetName();
-    renderTargetName(renderer, textField, targetName);
-    Insets insets = BorderFactory.createEmptyBorder().getBorderInsets(textField);
+    TargetEditor targetEditor = myRepositoryPanel.getTargetEditor();
+    targetEditor.render(renderer);
+    Insets insets = BorderFactory.createEmptyBorder().getBorderInsets(targetEditor);
     renderer.setBorder(new EmptyBorder(insets));
   }
-
 }

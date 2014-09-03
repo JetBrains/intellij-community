@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.content.*;
 import com.intellij.util.Processor;
 import com.intellij.util.SequentialModalProgressTask;
@@ -81,7 +80,7 @@ import java.util.*;
 
 public class GlobalInspectionContextImpl extends GlobalInspectionContextBase implements GlobalInspectionContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.GlobalInspectionContextImpl");
-  private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("Inspection Results", ToolWindowId.INSPECTION, true);
+  private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("Inspection Results", ToolWindowId.INSPECTION);
   private final NotNullLazyValue<ContentManager> myContentManager;
   private InspectionResultsView myView = null;
   private Content myContent = null;
@@ -641,6 +640,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
                        final Project project,
                        final Runnable postRunnable,
                        final String commandName) {
+    final int fileCount = scope.getFileCount();
+    final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     final List<LocalInspectionToolWrapper> lTools = new ArrayList<LocalInspectionToolWrapper>();
 
     final LinkedHashMap<PsiFile, List<HighlightInfo>> results = new LinkedHashMap<PsiFile, List<HighlightInfo>>();
@@ -655,8 +656,12 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       range = null;
     }
     scope.accept(new PsiElementVisitor() {
+      private int myCount = 0;
       @Override
       public void visitFile(PsiFile file) {
+        if (progressIndicator != null) {
+          progressIndicator.setFraction(((double)++ myCount)/fileCount);
+        }
         if (isBinary(file)) return;
         for (final Tools tools : profile.getAllEnabledInspectionTools(project)) {
           if (tools.getTool().getTool() instanceof CleanupLocalInspectionTool) {
@@ -704,7 +709,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
           @Override
           public void run() {
-            CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
+            if (commandName != null) {
+              CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
+            }
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
               @Override
               public void run() {
@@ -718,7 +725,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         }, commandName, null);
       }
     };
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
       runnable.run();
     } else {
       ApplicationManager.getApplication().invokeLater(runnable);

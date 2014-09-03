@@ -28,8 +28,9 @@ import com.intellij.compiler.ModuleCompilerUtil;
 import com.intellij.compiler.ProblemsView;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.compiler.server.BuildManager;
-import com.intellij.compiler.server.CustomBuilderMessageHandler;
 import com.intellij.compiler.server.DefaultMessageHandler;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
@@ -54,10 +55,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.compiler.ArtifactCompilerUtil;
 import com.intellij.packaging.impl.compiler.ArtifactsCompiler;
@@ -69,6 +67,7 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.text.DateFormatUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -80,7 +79,9 @@ import org.jetbrains.jps.api.RequestFuture;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import java.io.File;
+import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -340,13 +341,6 @@ public class CompileDriver {
             }
             compileContext.putUserDataIfAbsent(COMPILE_SERVER_BUILD_STATUS, status);
             break;
-          case CUSTOM_BUILDER_MESSAGE:
-            if (event.hasCustomBuilderMessage()) {
-              CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage message = event.getCustomBuilderMessage();
-              messageBus.syncPublisher(CustomBuilderMessageHandler.TOPIC).messageReceived(message.getBuilderId(), message.getMessageType(),
-                                                                                          message.getMessageText());
-            }
-            break;
         }
       }
     });
@@ -510,9 +504,24 @@ public class CompileDriver {
             if (duration > ONE_MINUTE_MS && CompilerWorkspaceConfiguration.getInstance(myProject).DISPLAY_NOTIFICATION_POPUP) {
               ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.MESSAGES_WINDOW, messageType, statusMessage);
             }
-            CompilerManager.NOTIFICATION_GROUP.createNotification(statusMessage, messageType).notify(myProject);
+
+            final String wrappedMessage = _status != ExitStatus.UP_TO_DATE? "<a href='#'>" + statusMessage + "</a>" : statusMessage;
+            final Notification notification = CompilerManager.NOTIFICATION_GROUP.createNotification(
+              "", wrappedMessage,
+              messageType.toNotificationType(),
+              new MessagesActivationListener(compileContext)
+            );
+            compileContext.getBuildSession().registerCloseAction(new Runnable() {
+              @Override
+              public void run() {
+                notification.expire();
+              }
+            });
+            notification.notify(myProject);
+
             if (_status != ExitStatus.UP_TO_DATE && compileContext.getMessageCount(null) > 0) {
-              compileContext.addMessage(CompilerMessageCategory.INFORMATION, statusMessage, null, -1, -1);
+              final String msg = DateFormatUtil.formatDateTime(new Date()) + " - " + statusMessage;
+              compileContext.addMessage(CompilerMessageCategory.INFORMATION, msg, null, -1, -1);
             }
           }
         }
@@ -792,5 +801,29 @@ public class CompileDriver {
 
   private void showConfigurationDialog(String moduleNameToSelect, String tabNameToSelect) {
     ProjectSettingsService.getInstance(myProject).showModuleConfigurationDialog(moduleNameToSelect, tabNameToSelect);
+  }
+
+  private static class MessagesActivationListener extends NotificationListener.Adapter {
+    private final WeakReference<Project> myProjectRef;
+    private final Object myContentId;
+
+    public MessagesActivationListener(CompileContextImpl compileContext) {
+      myProjectRef = new WeakReference<Project>(compileContext.getProject());
+      myContentId = compileContext.getBuildSession().getContentId();
+    }
+
+    @Override
+    protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+      final Project project = myProjectRef.get();
+      if (project != null && !project.isDisposed() && CompilerTask.showCompilerContent(project, myContentId)) {
+        final ToolWindow tw = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
+        if (tw != null) {
+          tw.activate(null, false);
+        }
+      }
+      else {
+        notification.expire();
+      }
+    }
   }
 }

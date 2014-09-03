@@ -55,7 +55,7 @@ import java.util.*;
 public class CompileContextImpl extends UserDataHolderBase implements CompileContextEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompileContextImpl");
   private final Project myProject;
-  private final CompilerTask myTask;
+  private final CompilerTask myBuildSession;
   private final Map<CompilerMessageCategory, Collection<CompilerMessage>> myMessages = new EnumMap<CompilerMessageCategory, Collection<CompilerMessage>>(CompilerMessageCategory.class);
   private final boolean myShouldUpdateProblemsView;
   private CompileScope myCompileScope;
@@ -77,7 +77,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
                             CompileScope compileScope,
                             boolean isMake, boolean isRebuild) {
     myProject = project;
-    myTask = compilerSession;
+    myBuildSession = compilerSession;
     myCompileScope = compileScope;
     myMake = isMake;
     myIsRebuild = isRebuild;
@@ -97,6 +97,10 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     }
     final CompilerWorkspaceConfiguration workspaceConfig = CompilerWorkspaceConfiguration.getInstance(myProject);
     myShouldUpdateProblemsView = workspaceConfig.MAKE_PROJECT_ON_SAVE;
+  }
+
+  public CompilerTask getBuildSession() {
+    return myBuildSession;
   }
 
   public boolean shouldUpdateProblemsView() {
@@ -154,7 +158,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
       myMessages.put(msg.getCategory(), messages);
     }
     if (messages.add(msg)) {
-      myTask.addMessage(msg);
+      myBuildSession.addMessage(msg);
     }
     if (myShouldUpdateProblemsView && msg.getCategory() == CompilerMessageCategory.ERROR) {
       ProblemsView.SERVICE.getInstance(myProject).addMessage(msg, mySessionId);
@@ -200,7 +204,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   public ProgressIndicator getProgressIndicator() {
-    return myTask.getIndicator();
+    return myBuildSession.getIndicator();
   }
 
   public Module getModuleByFile(VirtualFile file) {

@@ -105,7 +105,9 @@ public class DirectoryStorageData {
 
   public void updateLastTimestamp(final IFile file) {
     myLastTimestamp = Math.max(myLastTimestamp, file.getTimeStamp());
-    if (myOriginalData != null) myOriginalData.myLastTimestamp = myLastTimestamp;
+    if (myOriginalData != null) {
+      myOriginalData.myLastTimestamp = myLastTimestamp;
+    }
   }
 
   public long getLastTimeStamp() {

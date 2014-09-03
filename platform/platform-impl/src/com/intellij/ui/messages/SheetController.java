@@ -70,6 +70,8 @@ public class SheetController {
 
   private static int GAP_BETWEEN_BUTTONS = 5;
 
+  private static String SPACE_OR_LINE_SEPARATOR_PATTERN = "[\\s" + System.getProperty("line.separator") + "]+";
+
   // SHEET
   public int SHEET_WIDTH = 400;
 
@@ -289,7 +291,7 @@ public class SheetController {
 
     int widestWordWidth = 250;
 
-    String [] words = (message == null) ? ArrayUtil.EMPTY_STRING_ARRAY : message.split(" ");
+    String [] words = (message == null) ? ArrayUtil.EMPTY_STRING_ARRAY : message.split(SPACE_OR_LINE_SEPARATOR_PATTERN);
 
     for (String word : words) {
       widestWordWidth = Math.max(fontMetrics.stringWidth(word), widestWordWidth);

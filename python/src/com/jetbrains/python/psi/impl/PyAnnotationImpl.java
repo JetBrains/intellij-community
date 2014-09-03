@@ -16,14 +16,16 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPolyVariantReference;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyAnnotation;
-import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.stubs.PyAnnotationStub;
+import com.jetbrains.python.psi.types.PyClassLikeType;
+import com.jetbrains.python.psi.types.PyNoneType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -37,19 +39,26 @@ public class PyAnnotationImpl extends PyBaseElementImpl<PyAnnotationStub> implem
     super(stub, PyElementTypes.ANNOTATION);
   }
 
+  @Nullable
   @Override
   public PyExpression getValue() {
     return findChildByClass(PyExpression.class);
   }
 
+  @Nullable
   @Override
-  public PyClass resolveToClass() {
-    PyExpression expr = getValue();
-    if (expr instanceof PyReferenceExpression) {
-      final PsiPolyVariantReference reference = ((PyReferenceExpression)expr).getReference();
-      final PsiElement result = reference.resolve();
-      if (result instanceof PyClass) {
-        return (PyClass) result;
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+    final PyExpression value = getValue();
+    if (value != null) {
+      final PyType type = context.getType(value);
+      if (type instanceof PyClassLikeType) {
+        final PyClassLikeType classType = (PyClassLikeType)type;
+        if (classType.isDefinition()) {
+          return classType.toInstance();
+        }
+      }
+      else if (type instanceof PyNoneType) {
+        return type;
       }
     }
     return null;

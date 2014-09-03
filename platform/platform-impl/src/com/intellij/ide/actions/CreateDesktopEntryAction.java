@@ -23,6 +23,7 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -104,11 +105,15 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
 
       final String message = ApplicationBundle.message("desktop.entry.success",
                                                        ApplicationNamesInfo.getInstance().getProductName());
-      Notifications.Bus.notify(
-        new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Desktop entry created", message, NotificationType.INFORMATION)
-      );
+      if (ApplicationManager.getApplication() != null) {
+        Notifications.Bus
+          .notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Desktop entry created", message, NotificationType.INFORMATION));
+      }
     }
     catch (Exception e) {
+      if (ApplicationManager.getApplication() == null) {
+        throw new RuntimeException(e);
+      }
       final String message = e.getMessage();
       if (!StringUtil.isEmptyOrSpaces(message)) {
         LOG.warn(e);

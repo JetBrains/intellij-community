@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.commandLine;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.auth.AuthenticationService;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -24,12 +25,12 @@ import org.jetbrains.idea.svn.SvnVcs;
 public abstract class BaseCommandRuntimeModule implements CommandRuntimeModule {
 
   @NotNull protected final CommandRuntime myRuntime;
-  @NotNull protected final AuthenticationCallback myAuthCallback;
+  @NotNull protected final AuthenticationService myAuthenticationService;
   @NotNull protected final SvnVcs myVcs;
 
   public BaseCommandRuntimeModule(@NotNull CommandRuntime runtime) {
     myRuntime = runtime;
-    myAuthCallback = runtime.getAuthCallback();
+    myAuthenticationService = runtime.getAuthenticationService();
     myVcs = runtime.getVcs();
   }
 

@@ -134,7 +134,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
       EditorTextField field = myOldClassParameterNameFields.get(aClass);
       if (field.isEnabled()) {
         String parameterName = field.getText().trim();
-        if (!JavaPsiFacade.getInstance(myMethod.getProject()).getNameHelper().isIdentifier(parameterName)) {
+        if (!PsiNameHelper.getInstance(myMethod.getProject()).isIdentifier(parameterName)) {
           Messages
             .showErrorDialog(getProject(), RefactoringBundle.message("move.method.enter.a.valid.name.for.parameter"), myRefactoringName);
           return;

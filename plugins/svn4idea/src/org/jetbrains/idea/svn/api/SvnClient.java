@@ -17,4 +17,6 @@ public interface SvnClient {
   void setVcs(@NotNull SvnVcs vcs);
 
   void setFactory(@NotNull ClientFactory factory);
+
+  void setIsActive(boolean isActive);
 }

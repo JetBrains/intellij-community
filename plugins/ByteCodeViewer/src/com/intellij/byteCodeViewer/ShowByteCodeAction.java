@@ -41,7 +41,6 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -138,7 +137,6 @@ public class ShowByteCodeAction extends AnAction {
           };
 
           final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, null)
-            .setRequestFocusCondition(project, NotLookupOrSearchCondition.INSTANCE)
             .setProject(project)
             .setDimensionServiceKey(project, DocumentationManager.JAVADOC_LOCATION_AND_SIZE, false)
             .setResizable(true)

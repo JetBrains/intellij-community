@@ -16,7 +16,7 @@
 package com.intellij.lang.properties.refactoring.rename;
 
 import com.intellij.lang.properties.PropertiesBundle;
-import com.intellij.lang.properties.PropertiesUtil;
+import com.intellij.lang.properties.ResourceBundleManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
@@ -28,7 +28,10 @@ import org.jetbrains.annotations.NonNls;
  */
 public class ResourceBundleRenamer extends AutomaticRenamer {
 
+  private final ResourceBundleManager myResourceBundleManager;
+
   public ResourceBundleRenamer(final PropertiesFile propertiesFile, final String newName) {
+    myResourceBundleManager = ResourceBundleManager.getInstance(propertiesFile.getProject());
     for (final PropertiesFile file : propertiesFile.getResourceBundle().getPropertiesFiles()) {
       if (file.equals(propertiesFile)) {
         continue;
@@ -41,12 +44,12 @@ public class ResourceBundleRenamer extends AutomaticRenamer {
 
   @Override
   protected String nameToCanonicalName(@NonNls final String name, final PsiNamedElement element) {
-    return PropertiesUtil.getBaseName((PsiFile)element);
+    return myResourceBundleManager.getBaseName((PsiFile)element);
   }
 
   @Override
   protected String canonicalNameToName(@NonNls final String canonicalName, final PsiNamedElement element) {
-    final String oldCanonicalName = PropertiesUtil.getBaseName((PsiFile)element);
+    final String oldCanonicalName = myResourceBundleManager.getBaseName((PsiFile)element);
     final String oldName = element.getName();
     assert oldName != null;
     return canonicalName + oldName.substring(oldCanonicalName.length());

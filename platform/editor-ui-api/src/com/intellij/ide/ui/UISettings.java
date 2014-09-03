@@ -64,7 +64,8 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
    */
   public static UISettings getShadowInstance() {
     Application application = ApplicationManager.getApplication();
-    return application != null ? getInstance() : new UISettings();
+    UISettings settings = application == null ? null : application.getComponent(UISettings.class);
+    return settings == null ? new UISettings() : settings;
   }
 
   @Property(filter = FontFilter.class) public String FONT_FACE;
@@ -120,6 +121,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public boolean MARK_MODIFIED_TABS_WITH_ASTERISK = false;
   public boolean SHOW_TABS_TOOLTIPS = true;
   public boolean SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES = true;
+  public boolean NAVIGATE_TO_PREVIEW = false;
 
   private final EventDispatcher<UISettingsListener> myDispatcher = EventDispatcher.create(UISettingsListener.class);
 

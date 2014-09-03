@@ -47,13 +47,17 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
-  @Bombed(day = 20, month = Calendar.AUGUST)
+  @Bombed(day = 30, month = Calendar.SEPTEMBER)
   public void testInferenceFromSiblings() throws Exception {
     doTest();
   }
 
-  @Bombed(day = 20, month = Calendar.AUGUST)
+  @Bombed(day = 30, month = Calendar.SEPTEMBER)
   public void testChainedInferenceTypeParamsOrderIndependent() throws Exception {
+    doTest();
+  }
+
+  public void testCyclicParamsDependency() throws Exception {
     doTest();
   }
 
@@ -214,6 +218,21 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   }
 
   public void testIDEA127928() throws Exception {
+    doTest();
+  }
+  public void testIDEA128766() throws Exception {
+    doTest();
+  }
+
+  public void testSameMethodNestedChainedCallsNearFunctionInterfaces() throws Exception {
+    doTest();
+  }
+
+  public void testInfiniteTypes() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA126163() throws Exception {
     doTest();
   }
 

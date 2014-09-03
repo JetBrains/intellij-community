@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,8 +31,15 @@ public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent 
   protected boolean mySelected;
   protected Color myForeground;
   protected Color mySelectionForeground;
+  @Nullable
+  private final JComboBox myComboBox;
 
   public ColoredListCellRenderer() {
+    this(null);
+  }
+
+  public ColoredListCellRenderer(@Nullable JComboBox comboBox) {
+    myComboBox = comboBox;
     setFocusBorderAroundIcon(true);
     getIpad().left = UIUtil.getListCellHPadding();
     getIpad().right = UIUtil.getListCellHPadding();
@@ -40,6 +48,9 @@ public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent 
   public Component getListCellRendererComponent(JList list, Object value, int index, boolean selected, boolean hasFocus) {
     clear();
 
+    if (myComboBox != null) {
+      setEnabled(myComboBox.isEnabled());
+    }
     setFont(list.getFont());
     mySelected = selected;
     myForeground = list.getForeground();

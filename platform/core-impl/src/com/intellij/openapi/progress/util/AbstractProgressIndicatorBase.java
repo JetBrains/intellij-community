@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.DoubleArrayList;
@@ -89,6 +90,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   @Override
   public void cancel() {
     myCanceled = true;
+    ProgressIndicatorProvider.canceled();
   }
 
   @Override

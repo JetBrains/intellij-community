@@ -69,6 +69,7 @@ public abstract class Logger {
     return ourFactory.getLoggerInstance(category);
   }
 
+  @NotNull
   public static Logger getInstance(Class cl) {
     return getInstance("#" + cl.getName());
   }

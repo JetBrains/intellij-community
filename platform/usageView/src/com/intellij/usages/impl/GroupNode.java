@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -294,8 +294,8 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   protected boolean isDataReadOnly() {
     Enumeration enumeration = children();
     while (enumeration.hasMoreElements()) {
-      Node node = (Node)enumeration.nextElement();
-      if (node.isReadOnly()) return true;
+      Object element = enumeration.nextElement();
+      if (element instanceof Node && ((Node)element).isReadOnly()) return true;
     }
     return false;
   }

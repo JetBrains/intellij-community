@@ -126,7 +126,7 @@ public class PythonPathEditor extends SdkPathEditor {
 
   @Override
   protected void addToolbarButtons(ToolbarDecorator toolbarDecorator) {
-    AnActionButton reloadButton = new AnActionButton("Reload List of Paths", AllIcons.Actions.Refresh) {
+    AnActionButton reloadButton = new AnActionButton("Reload list of paths", AllIcons.Actions.Refresh) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         onReloadButtonClicked();

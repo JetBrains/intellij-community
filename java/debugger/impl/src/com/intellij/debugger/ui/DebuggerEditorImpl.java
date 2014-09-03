@@ -294,7 +294,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
   }
 
   @NotNull
-  public static CodeFragmentFactory findAppropriateFactory(@NotNull TextWithImports text, @NotNull PsiElement context) {
+  private static CodeFragmentFactory findAppropriateFactory(@NotNull TextWithImports text, @Nullable PsiElement context) {
     for (CodeFragmentFactory factory : DebuggerUtilsEx.getCodeFragmentFactories(context)) {
       if (factory.getFileType().equals(text.getFileType())) {
         return factory;

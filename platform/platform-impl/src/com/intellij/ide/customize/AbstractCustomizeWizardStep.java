@@ -21,12 +21,14 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 
 public abstract class AbstractCustomizeWizardStep extends JPanel {
+  protected static final int SMALL_GAP = 10;
   protected static final int GAP = 20;
 
   protected abstract String getTitle();
@@ -38,6 +40,14 @@ public abstract class AbstractCustomizeWizardStep extends JPanel {
   @NotNull
   protected static Color getSelectionBackground() {
     return ColorUtil.mix(UIUtil.getListSelectionBackground(), UIUtil.getLabelBackground(), UIUtil.isUnderDarcula() ? .5 : .75);
+  }
+
+  public static Border createSmallEmptyBorder() {
+    return BorderFactory.createEmptyBorder(SMALL_GAP, SMALL_GAP, SMALL_GAP, SMALL_GAP);
+  }
+
+  public static BorderLayout createSmallBorderLayout() {
+    return new BorderLayout(SMALL_GAP, SMALL_GAP);
   }
 
   protected static JPanel createBigButtonPanel(LayoutManager layout, final JToggleButton anchorButton, final Runnable action) {

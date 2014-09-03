@@ -122,6 +122,13 @@ public class XBreakpointActionsPanel<B extends XBreakpointBase<?,?,?>> extends X
     }
   }
 
+  JComponent getDefaultFocusComponent() {
+    if (myLogExpressionComboBox != null && myLogExpressionComboBox.getComboBox().isEnabled()) {
+      return myLogExpressionComboBox.getEditorComponent();
+    }
+    return null;
+  }
+
   public void dispose() {
   }
 }

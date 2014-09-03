@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.*;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
+import org.intellij.lang.annotations.Language;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1133,6 +1134,24 @@ public class XmlSerializerTest extends TestCase {
       bean);
   }
 
+  public static class BeanWithMapAtTopLevel {
+    @Property(surroundWithTag = false)
+    @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
+    public Map<String, String> map = new HashMap<String, String>();
+
+    public String option;
+  }
+
+  public void testMapAtTopLevel() {
+    BeanWithMapAtTopLevel bean = new BeanWithMapAtTopLevel();
+    bean.map.put("a", "b");
+    bean.option = "xxx";
+    doSerializerTest("<BeanWithMapAtTopLevel>\n" +
+                     "  <entry key=\"a\" value=\"b\" />\n" +
+                     "  <option name=\"option\" value=\"xxx\" />\n" +
+                     "</BeanWithMapAtTopLevel>", bean);
+  }
+
   private static class BeanWithConverter {
     private static class MyConverter extends Converter<Ref<String>> {
       @Nullable
@@ -1193,7 +1212,7 @@ public class XmlSerializerTest extends TestCase {
     return assertSerializer(bean, expected, "Serialization failure", filter);
   }
 
-  private static Object doSerializerTest(String expectedText, Object bean) {
+  private static Object doSerializerTest(@Language("XML") String expectedText, Object bean) {
     try {
       Element element = assertSerializer(bean, expectedText, null);
 

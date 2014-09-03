@@ -185,6 +185,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
 
   protected static void invoke(IntentionAction action) throws IncorrectOperationException {
     ShowIntentionActionsHandler.chooseActionAndInvoke(getFile(), getEditor(), action, action.getText());
+    UIUtil.dispatchAllInvocationEvents();
   }
 
   protected IntentionAction findActionWithText(final String text) {

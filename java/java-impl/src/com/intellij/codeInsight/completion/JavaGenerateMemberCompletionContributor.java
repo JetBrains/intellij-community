@@ -26,6 +26,7 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -98,13 +99,12 @@ public class JavaGenerateMemberCompletionContributor {
       PsiClass baseClass = baseMethod.getContainingClass();
       PsiSubstitutor substitutor = candidate.getSubstitutor();
       if (!baseMethod.isConstructor() && baseClass != null && addedSignatures.add(baseMethod.getSignature(substitutor))) {
-        result.addElement(createOverridingLookupElement(parent, implemented, baseMethod, baseClass, substitutor));
+        result.addElement(createOverridingLookupElement(implemented, baseMethod, baseClass, substitutor));
       }
     }
   }
 
-  private static LookupElementBuilder createOverridingLookupElement(final PsiClass parent,
-                                                                    boolean implemented,
+  private static LookupElementBuilder createOverridingLookupElement(boolean implemented,
                                                                     final PsiMethod baseMethod,
                                                                     PsiClass baseClass, PsiSubstitutor substitutor) {
 
@@ -116,6 +116,9 @@ public class JavaGenerateMemberCompletionContributor {
       @Override
       public void handleInsert(InsertionContext context, LookupElement item) {
         removeLookupString(context);
+
+        final PsiClass parent = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiClass.class, false);
+        if (parent == null) return;
 
         List<PsiMethod> prototypes = OverrideImplementUtil.overrideOrImplementMethod(parent, baseMethod, false);
         insertGenerationInfos(context, OverrideImplementUtil.convert2GenerationInfos(prototypes));

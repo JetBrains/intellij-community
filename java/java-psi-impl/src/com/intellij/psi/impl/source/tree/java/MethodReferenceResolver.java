@@ -68,7 +68,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
           if (interfaceMethod != null) {
             final PsiClassType returnType = composeReturnType(containingClass, substitutor);
             final InferenceSession session = new InferenceSession(containingClass.getTypeParameters(), substitutor, reference.getManager(), null);
-            if (!(session.isProperType(returnType) && session.isProperType(interfaceMethodReturnType))) {
+            if (!(session.isProperType(session.substituteWithInferenceVariables(returnType)) && session.isProperType(interfaceMethodReturnType))) {
               session.registerReturnTypeConstraints(returnType, interfaceMethodReturnType);
               substitutor = session.infer();
             }
@@ -116,13 +116,6 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
                 private PsiSubstitutor inferTypeArguments() {
                   if (interfaceMethod == null) return substitutor;
                   final InferenceSession session = new InferenceSession(method.getTypeParameters(), substitutor, reference.getManager(), reference);
-
-                  //lift parameters from outer call
-                  final CurrentCandidateProperties methodSubstitutorPair = MethodCandidateInfo.getCurrentMethod(reference.getParent());
-                  if (methodSubstitutorPair != null) {
-                    session.initBounds(methodSubstitutorPair.getMethod().getTypeParameters());
-                  }
-
                   final PsiSubstitutor psiSubstitutor = session.collectApplicabilityConstraints(reference, this, functionalInterfaceType);
                   if (psiSubstitutor != null) {
                     return psiSubstitutor;
@@ -133,6 +126,10 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
                   }
 
                   if (interfaceMethodReturnType != PsiType.VOID && interfaceMethodReturnType != null) {
+                    if (method.isConstructor()) {
+                      //todo
+                      session.initBounds(reference, method.getContainingClass().getTypeParameters());
+                    }
                     final PsiType returnType = method.isConstructor() ? composeReturnType(containingClass, substitutor) : method.getReturnType();
                     if (returnType != null) {
                       session.registerReturnTypeConstraints(returnType, interfaceMethodReturnType);

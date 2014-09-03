@@ -18,7 +18,9 @@ package com.intellij.ide.customize;
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginNode;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
@@ -78,7 +80,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
       final String pluginId = s.substring(j + 1);
       IdeaPluginDescriptor foundDescriptor = null;
       for (IdeaPluginDescriptor descriptor : pluginsFromRepository) {
-        if (descriptor.getPluginId().getIdString().equals(pluginId)) {
+        if (descriptor.getPluginId().getIdString().equals(pluginId) && !PluginManagerCore.isBrokenPlugin(descriptor)) {
           foundDescriptor = descriptor;
           isEmptyOrOffline = false;
           break;
@@ -107,11 +109,11 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
       JPanel progressPanel = new JPanel(new VerticalFlowLayout(true, false));
       progressPanel.add(progressBar);
       final LinkLabel cancelLink = new LinkLabel("Cancel", AllIcons.Actions.Cancel);
-      JPanel linkWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER));
+      JPanel linkWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
       linkWrapper.add(cancelLink);
       progressPanel.add(linkWrapper);
 
-      JPanel buttonPanel = new JPanel(new VerticalFlowLayout());
+      JPanel buttonPanel = new JPanel(new VerticalFlowLayout(0, 0));
       buttonPanel.add(installButton);
 
       buttonWrapper.add(buttonPanel, "button");
@@ -218,7 +220,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
       }, null);
       gbc.insets.bottom = -5;
       groupPanel.add(titleLabel, gbc);
-      gbc.insets.bottom = 10;
+      gbc.insets.bottom = SMALL_GAP;
       groupPanel.add(topicLabel, gbc);
       groupPanel.add(descriptionLabel, gbc);
       gbc.weighty = 1;
@@ -238,7 +240,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
           protected Color getColor() {
             return ColorUtil.withAlpha(JBColor.foreground(), .2);
           }
-        }, BorderFactory.createEmptyBorder(GAP, GAP, 0, GAP)));
+        }, BorderFactory.createEmptyBorder(0, SMALL_GAP, 0, SMALL_GAP)));
       cursor++;
     }
 
@@ -260,7 +262,10 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
 
   @Override
   public String getHTMLFooter() {
-    return "New plugins can also be downloaded in " + CommonBundle.settingsTitle() + " | Plugins";
+    return "New plugins can also be downloaded in "
+           + CommonBundle.settingsTitle()
+           + " | " + OptionsBundle.message("configurable.group.appearance.settings.display.name")
+           + " | " + "Plugins";
   }
 
   public static class OfflineException extends Exception {};

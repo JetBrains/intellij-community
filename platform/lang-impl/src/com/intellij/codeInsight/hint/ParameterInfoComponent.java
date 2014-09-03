@@ -22,7 +22,6 @@ import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -296,47 +295,50 @@ public class ParameterInfoComponent extends JPanel {
     public String setup(final String[] texts, final EnumSet<ParameterInfoUIContextEx.Flag>[] flags, final Color background) {
       StringBuilder buf = new StringBuilder();
       removeAll();
-      final String[] lines = UIUtil.splitText(StringUtil.join(texts), getFontMetrics(BOLD_FONT), myWidthLimit, ',');
-
+      setBackground(background);
       int index = 0;
       int curOffset = 0;
-
-      myOneLineComponents = new OneLineComponent[lines.length];
+      final ArrayList<OneLineComponent> components = new ArrayList<OneLineComponent>();
 
       Map<TextRange, ParameterInfoUIContextEx.Flag> flagsMap = new TreeMap<TextRange, ParameterInfoUIContextEx.Flag>(TEXT_RANGE_COMPARATOR);
 
-      int added = 0;
+      String line = "";
       for (int i = 0; i < texts.length; i++) {
-        String line = escapeString(texts[i]);
-        if (lines.length <= index) break;
-        String text = lines[index];
-        final int paramCount = StringUtil.split(text, ", ").size();
+        String paramText = escapeString(texts[i]);
+        if (paramText == null) break;
+        line += texts[i];
         final EnumSet<ParameterInfoUIContextEx.Flag> flag = flags[i];
         if (flag.contains(ParameterInfoUIContextEx.Flag.HIGHLIGHT)) {
-          flagsMap.put(TextRange.create(curOffset, curOffset + line.trim().length()), ParameterInfoUIContextEx.Flag.HIGHLIGHT);
+          flagsMap.put(TextRange.create(curOffset, curOffset + paramText.trim().length()), ParameterInfoUIContextEx.Flag.HIGHLIGHT);
         }
 
         if (flag.contains(ParameterInfoUIContextEx.Flag.DISABLE)) {
-          flagsMap.put(TextRange.create(curOffset, curOffset + line.trim().length()), ParameterInfoUIContextEx.Flag.DISABLE);
+          flagsMap.put(TextRange.create(curOffset, curOffset + paramText.trim().length()), ParameterInfoUIContextEx.Flag.DISABLE);
         }
 
         if (flag.contains(ParameterInfoUIContextEx.Flag.STRIKEOUT)) {
-          flagsMap.put(TextRange.create(curOffset, curOffset + line.trim().length()), ParameterInfoUIContextEx.Flag.STRIKEOUT);
+          flagsMap.put(TextRange.create(curOffset, curOffset + paramText.trim().length()), ParameterInfoUIContextEx.Flag.STRIKEOUT);
         }
 
-        curOffset += line.length();
-        if (i == paramCount + added - 1) {
-          myOneLineComponents[index] = new OneLineComponent();
-          setBackground(background);
-          buf.append(myOneLineComponents[index].setup(escapeString(text), flagsMap, background));
-          add(myOneLineComponents[index], new GridBagConstraints(0, index, 1, 1, 1, 0, GridBagConstraints.WEST,
+        curOffset += paramText.length();
+        if (line.length() >= 50) {
+          final OneLineComponent component = new OneLineComponent();
+          buf.append(component.setup(escapeString(line), flagsMap, background));
+          add(component, new GridBagConstraints(0, index, 1, 1, 1, 0, GridBagConstraints.WEST,
                                                                  GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
           index += 1;
           flagsMap.clear();
-          curOffset = 1;
-          added += paramCount;
+          curOffset = 0;
+          line = "";
+          components.add(component);
         }
       }
+      final OneLineComponent component = new OneLineComponent();
+      buf.append(component.setup(escapeString(line), flagsMap, background));
+      add(component, new GridBagConstraints(0, index, 1, 1, 1, 0, GridBagConstraints.WEST,
+                                            GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+      components.add(component);
+      myOneLineComponents = components.toArray(new OneLineComponent[components.size()]);
       return buf.toString();
     }
   }

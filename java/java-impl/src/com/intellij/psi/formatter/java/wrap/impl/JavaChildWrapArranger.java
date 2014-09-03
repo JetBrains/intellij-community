@@ -20,6 +20,7 @@ import com.intellij.formatting.WrapType;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.java.JavaFormatterUtil;
 import com.intellij.psi.formatter.java.wrap.JavaWrapManager;
@@ -29,6 +30,7 @@ import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.formatter.java.JavaFormatterUtil.getWrapType;
@@ -69,6 +71,7 @@ public class JavaChildWrapArranger {
                       CommonCodeStyleSettings settings,
                       Wrap suggestedWrap,
                       ReservedWrapsProvider reservedWrapsProvider) {
+    final JavaCodeStyleSettings javaSettings = settings.getRootSettings().getCustomSettings(JavaCodeStyleSettings.class);
     ASTNode directParent = child.getTreeParent();
     int role = ((CompositeElement)directParent).getChildRole(child);
 
@@ -153,7 +156,7 @@ public class JavaChildWrapArranger {
       if (prev != null && prev.getElementType() == JavaElementType.MODIFIER_LIST) {
         ASTNode last = prev.getLastChildNode();
         if (last != null && last.getElementType() == JavaElementType.ANNOTATION) {
-          if (isTypeAnnotation(last.getPsi())) {
+          if (isTypeAnnotation(last.getPsi()) || javaSettings.DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION && isFieldModifierListWithSingleAnnotation(prev)) {
             return Wrap.createWrap(WrapType.NONE, false);
           }
           else {
@@ -182,6 +185,10 @@ public class JavaChildWrapArranger {
 
       ASTNode prev = FormatterUtil.getPreviousNonWhitespaceSibling(child);
       if (prev != null && prev.getElementType() == JavaElementType.ANNOTATION) {
+        if (javaSettings.DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION && isFieldModifierListWithSingleAnnotation(parent)) {
+          return Wrap.createWrap(WrapType.NONE, false);
+        }
+
         return Wrap.createWrap(getWrapType(getAnnotationWrapType(parent.getTreeParent(), child, settings)), true);
       }
 
@@ -254,6 +261,23 @@ public class JavaChildWrapArranger {
     }
 
     return suggestedWrap;
+  }
+
+  private static boolean isFieldModifierListWithSingleAnnotation(@NotNull ASTNode elem) {
+    ASTNode parent = elem.getTreeParent();
+    if (parent != null && parent.getElementType() == JavaElementType.FIELD) {
+      return isModifierListWithSingleAnnotation(elem);
+    }
+    return false;
+  }
+
+  private static boolean isModifierListWithSingleAnnotation(@NotNull ASTNode elem) {
+    if (elem.getPsi() instanceof PsiModifierList) {
+      if (((PsiModifierList)elem.getPsi()).getAnnotations().length == 1) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static int getAnnotationWrapType(ASTNode parent, ASTNode child, CommonCodeStyleSettings settings) {

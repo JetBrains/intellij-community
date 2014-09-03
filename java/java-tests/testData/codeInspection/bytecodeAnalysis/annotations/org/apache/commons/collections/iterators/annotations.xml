@@ -1,0 +1,11 @@
+<root>
+  <item name="org.apache.commons.collections.iterators.AbstractEmptyIterator java.lang.Object setValue(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.collections.iterators.AbstractEmptyIterator void add(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.collections.iterators.AbstractEmptyIterator void set(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+</root>

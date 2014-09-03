@@ -204,34 +204,34 @@ public class JDOMUtil {
 
   @NotNull
   private static String intern(@NotNull final StringInterner interner, @NotNull final String s) {
-    synchronized (interner) {
-      return interner.intern(s);
-    }
+    return interner.intern(s);
   }
 
   @NotNull
-  public static String legalizeText(@NotNull final String str) {
-    StringReader reader = new StringReader(str);
-    StringBuilder result = new StringBuilder();
-
-    while(true) {
-      try {
-        int each = reader.read();
-        if (each == -1) break;
-
-        if (Verifier.isXMLCharacter(each)) {
-          result.append((char)each);
-        } else {
-          result.append("0x").append(StringUtil.toUpperCase(Long.toHexString(each)));
-        }
-      }
-      catch (IOException ignored) {
-      }
-    }
-
-    return result.toString().replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+  public static String legalizeText(@NotNull String str) {
+    return legalizeChars(str).toString();
   }
 
+  @NotNull
+  public static CharSequence legalizeChars(@NotNull CharSequence str) {
+    StringBuilder result = new StringBuilder(str.length());
+    for (int i = 0, len = str.length(); i < len; i ++) {
+      appendLegalized(result, str.charAt(i));
+    }
+    return result;
+  }
+
+  public static void appendLegalized(@NotNull StringBuilder sb, char each) {
+    if (each == '<' || each == '>') {
+      sb.append(each == '<' ? "&lt;" : "&gt;");
+    }
+    else if (!Verifier.isXMLCharacter(each)) {
+      sb.append("0x").append(StringUtil.toUpperCase(Long.toHexString(each)));
+    }
+    else {
+      sb.append(each);
+    }
+  }
 
   private static class EmptyTextFilter implements Filter {
     @Override
@@ -398,9 +398,13 @@ public class JDOMUtil {
   }
 
   public static void writeDocument(@NotNull Document document, @NotNull File file, String lineSeparator) throws IOException {
+    writeParent(document, file, lineSeparator);
+  }
+
+  public static void writeParent(@NotNull Parent element, @NotNull File file, String lineSeparator) throws IOException {
     OutputStream stream = new BufferedOutputStream(new FileOutputStream(file));
     try {
-      writeDocument(document, stream, lineSeparator);
+      writeParent(element, stream, lineSeparator);
     }
     finally {
       stream.close();
@@ -408,9 +412,23 @@ public class JDOMUtil {
   }
 
   public static void writeDocument(@NotNull Document document, @NotNull OutputStream stream, String lineSeparator) throws IOException {
-    writeDocument(document, new OutputStreamWriter(stream, CharsetToolkit.UTF8_CHARSET), lineSeparator);
+    writeParent(document, stream, lineSeparator);
   }
 
+  public static void writeParent(@NotNull Parent element, @NotNull OutputStream stream, @NotNull String lineSeparator) throws IOException {
+    OutputStreamWriter writer = new OutputStreamWriter(stream, CharsetToolkit.UTF8_CHARSET);
+    try {
+      if (element instanceof Document) {
+        writeDocument((Document)element, writer, lineSeparator);
+      }
+      else {
+        writeElement((Element) element, writer, lineSeparator);
+      }
+    }
+    finally {
+      writer.close();
+    }
+  }
 
   @NotNull
   public static byte[] printDocument(@NotNull Document document, String lineSeparator) throws IOException {

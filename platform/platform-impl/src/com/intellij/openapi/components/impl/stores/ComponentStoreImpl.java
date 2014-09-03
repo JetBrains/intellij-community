@@ -41,8 +41,7 @@ import java.util.*;
 
 @SuppressWarnings({"deprecation"})
 public abstract class ComponentStoreImpl implements IComponentStore {
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentStoreImpl");
+  private static final Logger LOG = Logger.getInstance(ComponentStoreImpl.class);
   private final Map<String, Object> myComponents = Collections.synchronizedMap(new THashMap<String, Object>());
   private final List<SettingsSavingComponent> mySettingsSavingComponents = Collections.synchronizedList(new ArrayList<SettingsSavingComponent>());
   @Nullable private SaveSessionImpl mySession;
@@ -53,9 +52,8 @@ public abstract class ComponentStoreImpl implements IComponentStore {
     return getStateStorageManager().getStateStorage(storageSpec);
   }
 
-  protected StateStorage getDefaultsStorage() {
-    throw new UnsupportedOperationException("Method getDefaultsStorage is not supported in " + getClass());
-  }
+  @Nullable
+  protected abstract StateStorage getDefaultsStorage();
 
   @Override
   public void initComponent(@NotNull final Object component, final boolean service) {
@@ -143,12 +141,10 @@ public abstract class ComponentStoreImpl implements IComponentStore {
 
   private <T> void commitPersistentComponent(@NotNull final PersistentStateComponent<T> persistentStateComponent,
                                              @NotNull StateStorageManager.ExternalizationSession session) {
-    Storage[] storageSpecs = getComponentStorageSpecs(persistentStateComponent, StateStorageOperation.WRITE);
-
     T state = persistentStateComponent.getState();
     if (state != null) {
-      session
-        .setState(storageSpecs, persistentStateComponent, getComponentName(persistentStateComponent), state);
+      Storage[] storageSpecs = getComponentStorageSpecs(persistentStateComponent, StateStorageOperation.WRITE);
+      session.setState(storageSpecs, persistentStateComponent, getComponentName(persistentStateComponent), state);
     }
   }
 
@@ -276,13 +272,12 @@ public abstract class ComponentStoreImpl implements IComponentStore {
   @NotNull
   private static <T> Class<T> getComponentStateClass(@NotNull final PersistentStateComponent<T> persistentStateComponent) {
     final Class persistentStateComponentClass = PersistentStateComponent.class;
+
     Class componentClass = persistentStateComponent.getClass();
 
     nextSuperClass:
     while (true) {
-      final Class[] interfaces = componentClass.getInterfaces();
-
-      for (Class anInterface : interfaces) {
+      for (Class anInterface : componentClass.getInterfaces()) {
         if (anInterface.equals(persistentStateComponentClass)) {
           break nextSuperClass;
         }
@@ -292,7 +287,7 @@ public abstract class ComponentStoreImpl implements IComponentStore {
     }
 
     final Type type = ReflectionUtil.resolveVariable(persistentStateComponentClass.getTypeParameters()[0], componentClass);
-
+    assert type != null;
     //noinspection unchecked
     return (Class<T>)ReflectionUtil.getRawType(type);
   }
@@ -319,13 +314,11 @@ public abstract class ComponentStoreImpl implements IComponentStore {
   protected <T> Storage[] getComponentStorageSpecs(@NotNull final PersistentStateComponent<T> persistentStateComponent,
                                                    final StateStorageOperation operation) throws StateStorageException {
     final State stateSpec = getStateSpec(persistentStateComponent);
-
     final Storage[] storages = stateSpec.storages();
-
-    if (storages.length == 1) return storages;
-
+    if (storages.length == 1) {
+      return storages;
+    }
     assert storages.length > 0;
-
 
     final Class<StorageAnnotationsDefaultValues.NullStateStorageChooser> defaultClass =
         StorageAnnotationsDefaultValues.NullStateStorageChooser.class;
@@ -338,16 +331,16 @@ public abstract class ComponentStoreImpl implements IComponentStore {
     if (storageChooserClass == defaultClass) {
       return defaultStateStorageChooser.selectStorages(storages, persistentStateComponent, operation);
     }
+    else if (storageChooserClass == LastStorageChooserForWrite.class) {
+      return LastStorageChooserForWrite.INSTANCE.selectStorages(storages, persistentStateComponent, operation);
+    }
     else {
       try {
-        //noinspection unchecked
-        final StateStorageChooser<PersistentStateComponent<T>> storageChooser = storageChooserClass.newInstance();
+        @SuppressWarnings("unchecked")
+        StateStorageChooser<PersistentStateComponent<T>> storageChooser = ReflectionUtil.newInstance(storageChooserClass);
         return storageChooser.selectStorages(storages, persistentStateComponent, operation);
       }
-      catch (InstantiationException e) {
-        throw new StateStorageException(e);
-      }
-      catch (IllegalAccessException e) {
+      catch (RuntimeException e) {
         throw new StateStorageException(e);
       }
     }
@@ -404,7 +397,7 @@ public abstract class ComponentStoreImpl implements IComponentStore {
       }
       catch (StateStorageException e) {
         LOG.info(e);
-        throw new IOException(e.getMessage());
+        throw new IOException(e.getMessage(), e);
       }
 
       return this;
@@ -436,12 +429,10 @@ public abstract class ComponentStoreImpl implements IComponentStore {
 
     protected void commit() throws StateStorageException {
       final StateStorageManager storageManager = getStateStorageManager();
-
       final StateStorageManager.ExternalizationSession session = storageManager.startExternalization();
 
       String[] names = ArrayUtil.toStringArray(myComponents.keySet());
       Arrays.sort(names);
-
       for (String name : names) {
         Object component = myComponents.get(name);
         if (component instanceof PersistentStateComponent) {

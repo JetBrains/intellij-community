@@ -32,9 +32,8 @@ final class OldStreamProviderAdapter extends StreamProvider implements CurrentUs
   }
 
   @Override
-  public boolean saveContent(@NotNull String fileSpec, @NotNull byte[] content, int size, @NotNull RoamingType roamingType, boolean async) throws IOException {
+  public void saveContent(@NotNull String fileSpec, @NotNull byte[] content, int size, @NotNull RoamingType roamingType, boolean async) throws IOException {
     myProvider.saveContent(fileSpec, new BufferExposingByteArrayInputStream(content, size), size, roamingType, async);
-    return false;
   }
 
   @Nullable
@@ -55,7 +54,7 @@ final class OldStreamProviderAdapter extends StreamProvider implements CurrentUs
   }
 
   @Override
-  public void deleteFile(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
+  public void delete(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
     if (myRoamingType == roamingType) {
       myProvider.deleteFile(fileSpec, roamingType);
     }

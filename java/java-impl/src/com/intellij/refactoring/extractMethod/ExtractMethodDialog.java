@@ -221,7 +221,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
     main.add(visibilityAndName, BorderLayout.CENTER);
     setOKActionEnabled(false);
 
-    setOKActionEnabled(JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(myNameField.getText()));
+    setOKActionEnabled(PsiNameHelper.getInstance(myProject).isIdentifier(myNameField.getText()));
     final JPanel options = new JPanel(new BorderLayout());
     options.add(createOptionsPanel(), BorderLayout.WEST);
     main.add(options, BorderLayout.SOUTH);
@@ -347,7 +347,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
       myMakeStatic.setEnabled(!myStaticFlag && myCanBeStatic && !isChainedConstructor());
     }
     updateSignature();
-    setOKActionEnabled(JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(myNameField.getText()) ||
+    setOKActionEnabled(PsiNameHelper.getInstance(myProject).isIdentifier(myNameField.getText()) ||
                        isChainedConstructor());
   }
 

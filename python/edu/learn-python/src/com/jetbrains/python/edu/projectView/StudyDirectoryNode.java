@@ -32,7 +32,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
 
   @Override
   protected void updateImpl(PresentationData data) {
-    data.setIcon(StudyIcons.Unchecked);
+    data.setIcon(StudyIcons.Task);
     String valueName = myValue.getName();
     StudyTaskManager studyTaskManager = StudyTaskManager.getInstance(myProject);
     Course course = studyTaskManager.getCourse();
@@ -41,7 +41,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
     }
     if (valueName.equals(myProject.getName())) {
       data.clearText();
-      data.addText(course.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, JBColor.BLUE));
+      data.addText(course.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.BLACK));
       data.addText(" (" + valueName + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
       return;
     }
@@ -91,15 +91,16 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
     StudyStatus taskStatus = stateful.getStatus();
     switch (taskStatus) {
       case Unchecked: {
-        updatePresentation(data, additionalName, JBColor.blue, StudyIcons.Unchecked);
+        updatePresentation(data, additionalName, JBColor.BLACK, stateful instanceof Lesson ? StudyIcons.Lesson : StudyIcons.Task);
         break;
       }
       case Solved: {
-        updatePresentation(data, additionalName, new JBColor(new Color(0, 134, 0), new Color(98, 150, 85)), StudyIcons.Checked);
+        updatePresentation(data, additionalName, new JBColor(new Color(0, 134, 0), new Color(98, 150, 85)),
+                           stateful instanceof Lesson ? StudyIcons.LessonCompl : StudyIcons.TaskCompl);
         break;
       }
       case Failed: {
-        updatePresentation(data, additionalName, JBColor.RED, StudyIcons.Failed);
+        updatePresentation(data, additionalName, JBColor.RED, stateful instanceof Lesson ? StudyIcons.Lesson : StudyIcons.TaskProbl);
       }
     }
   }

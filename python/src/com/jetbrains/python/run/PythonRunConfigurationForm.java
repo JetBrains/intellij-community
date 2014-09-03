@@ -25,6 +25,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +45,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   private final AbstractPyCommonOptionsForm myCommonOptionsForm;
   private JComponent anchor;
   private final Project myProject;
+  private JBCheckBox myShowCommandLineCheckbox;
 
   public PythonRunConfigurationForm(PythonRunConfiguration configuration) {
     myCommonOptionsForm = PyCommonOptionsFormFactory.getInstance().createForm(configuration.getCommonOptionsFormData());
@@ -102,6 +104,16 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   @Override
   public void setScriptParameters(String scriptParameters) {
     myScriptParametersTextField.setText(scriptParameters);
+  }
+
+  @Override
+  public boolean showCommandLineAfterwards() {
+    return myShowCommandLineCheckbox.isSelected();
+  }
+
+  @Override
+  public void setShowCommandLineAfterwards(boolean showCommandLineAfterwards) {
+    myShowCommandLineCheckbox.setSelected(showCommandLineAfterwards);
   }
 
   @Override

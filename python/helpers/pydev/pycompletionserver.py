@@ -17,23 +17,17 @@ except NameError:
     setattr(__builtin__, 'True', 1)  # Python 3.0 does not accept __builtin__.True = 1 in its syntax
     setattr(__builtin__, 'False', 0)
 
-import pydevd_constants
+from pydevd_constants import IS_JYTHON
 
-try:
-    from java.lang import Thread
-    IS_JYTHON = True
+if IS_JYTHON:
+    import java.lang
     SERVER_NAME = 'jycompletionserver'
     import _pydev_jy_imports_tipper  # as _pydev_imports_tipper #changed to be backward compatible with 1.5
     _pydev_imports_tipper = _pydev_jy_imports_tipper
 
-except ImportError:
+else:
     # it is python
-    IS_JYTHON = False
     SERVER_NAME = 'pycompletionserver'
-    if pydevd_constants.USE_LIB_COPY:
-        from _pydev_threading import Thread
-    else:
-        from threading import Thread
     import _pydev_imports_tipper
 
 
@@ -185,14 +179,16 @@ class Processor:
 
         return '%s(%s)%s' % (MSG_COMPLETIONS, ''.join(compMsg), MSG_END)
 
+class Exit(Exception):
+    pass
 
-class T(Thread):
+class CompletionServer:
 
     def __init__(self, port):
-        Thread.__init__(self)
         self.ended = False
         self.port = port
         self.socket = None  # socket to send messages.
+        self.exit_process_on_kill = True
         self.processor = Processor()
 
 
@@ -266,7 +262,7 @@ class T(Thread):
                 while data.find(MSG_END) == -1:
                     received = self.socket.recv(BUFFER_SIZE)
                     if len(received) == 0:
-                        sys.exit(0)  # ok, connection ended
+                        raise Exit()  # ok, connection ended
                     if IS_PYTHON3K:
                         data = data + received.decode('utf-8')
                     else:
@@ -278,7 +274,7 @@ class T(Thread):
                             dbg(SERVER_NAME + ' kill message received', INFO1)
                             # break if we received kill message.
                             self.ended = True
-                            sys.exit(0)
+                            raise Exit()
 
                         dbg(SERVER_NAME + ' starting keep alive thread', INFO2)
 
@@ -359,7 +355,7 @@ class T(Thread):
 
                             else:
                                 self.send(MSG_INVALID_REQUEST)
-                    except SystemExit:
+                    except Exit:
                         self.send(self.getCompletionsMessage(None, [('Exit:', 'SystemExit', '')]))
                         raise
 
@@ -378,11 +374,12 @@ class T(Thread):
 
             self.socket.close()
             self.ended = True
-            sys.exit(0)  # connection broken
+            raise Exit()  # connection broken
 
 
-        except SystemExit:
-            raise
+        except Exit:
+            if self.exit_process_on_kill:
+                sys.exit(0)
             # No need to log SystemExit error
         except:
             s = StringIO.StringIO()
@@ -399,8 +396,6 @@ if __name__ == '__main__':
 
     port = int(sys.argv[1])  # this is from where we want to receive messages.
 
-    t = T(port)
+    t = CompletionServer(port)
     dbg(SERVER_NAME + ' will start', INFO1)
-    t.start()
-    time.sleep(5)
-    t.join()
+    t.run()

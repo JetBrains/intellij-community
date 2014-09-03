@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -214,7 +215,7 @@ public class UpdaterTreeState {
             if (!children.contains(eachToSelect)) {
               toSelect.remove();
               if (!myToSelect.containsKey(readyElement) && !myUi.getSelectedElements().contains(eachToSelect)) {
-                addAdjustedSelection(eachToSelect, Condition.FALSE, null);
+                addAdjustedSelection(eachToSelect, Conditions.alwaysFalse(), null);
               }
             }
           }

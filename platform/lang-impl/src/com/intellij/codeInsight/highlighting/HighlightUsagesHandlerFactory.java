@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
+ *
+ * @see com.intellij.codeInsight.highlighting.HighlightUsagesHandlerFactoryBase
  */
 public interface HighlightUsagesHandlerFactory {
   ExtensionPointName<HighlightUsagesHandlerFactory> EP_NAME = ExtensionPointName.create("com.intellij.highlightUsagesHandlerFactory");

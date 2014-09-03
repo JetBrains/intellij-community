@@ -56,6 +56,7 @@ public class SearchCommand {
       }
 
       public void matchingFinished() {
+        if (project.isDisposed()) return;
         findEnded();
         progress.setText(SSRBundle.message("found.progress.message", count));
       }
@@ -114,7 +115,7 @@ public class SearchCommand {
         new Runnable() {
           @Override
           public void run() {
-            NotificationGroup.toolWindowGroup("Structural Search", ToolWindowId.FIND, true)
+            NotificationGroup.toolWindowGroup("Structural Search", ToolWindowId.FIND)
               .createNotification(SSRBundle.message("problem", e.getMessage()), MessageType.ERROR).notify(project);
           }
         },
@@ -132,9 +133,7 @@ public class SearchCommand {
   }
 
   protected void findEnded() {
-    if (!project.isDisposed()) {
-      StructuralSearchPlugin.getInstance(project).setSearchInProgress(false);
-    }
+    StructuralSearchPlugin.getInstance(project).setSearchInProgress(false);
   }
 
   protected void foundUsage(MatchResult result, Usage usage) {

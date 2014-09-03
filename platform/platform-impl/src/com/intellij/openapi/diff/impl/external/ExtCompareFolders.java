@@ -18,6 +18,7 @@ package com.intellij.openapi.diff.impl.external;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -31,7 +32,7 @@ class ExtCompareFolders extends BaseExternalTool {
   }
 
   @Override
-  public boolean isAvailable(DiffRequest request) {
+  public boolean isAvailable(@NotNull DiffRequest request) {
     final DiffContent[] contents = request.getContents();
     if (contents.length != 2) return false;
     if (externalize(request, 0) == null) return false;
@@ -40,7 +41,7 @@ class ExtCompareFolders extends BaseExternalTool {
   }
 
   @Nullable
-  protected ContentExternalizer externalize(DiffRequest request, int index) {
+  protected ContentExternalizer externalize(@NotNull DiffRequest request, int index) {
     final VirtualFile file = request.getContents()[index].getFile();
 
     if (!isLocalDirectory(file)) {

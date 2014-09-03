@@ -20,7 +20,7 @@ file.close
 
 # read html5 spec
 generatedTags = Set.new
-result = '<html-property-table baseHelpRef="http://dev.w3.org/html5/spec/">'
+result = "<html-property-table baseHelpRef=\"http://www.w3.org/html/wg/drafts/html/master/\">\n"
 file = File.new("html5.html")
 content = file.read
 offset = 0

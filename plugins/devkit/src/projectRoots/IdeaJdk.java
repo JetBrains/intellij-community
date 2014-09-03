@@ -86,6 +86,15 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     return PathManager.getHomePath().replace(File.separatorChar, '/');
   }
 
+  @Override
+  public String adjustSelectedSdkHome(String homePath) {
+    if (SystemInfo.isMac) {
+      File home = new File(homePath, "Contents");
+      if (home.exists()) return home.getPath();
+    }
+    return super.adjustSelectedSdkHome(homePath);
+  }
+
   public boolean isValidSdkHome(String path) {
     if (isFromIDEAProject(path)) {
       return true;
@@ -152,6 +161,9 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     }
     else if (new File(sdkHome, "license/AppCode_license.txt").exists()) {
       productName = "AppCode ";
+    }
+    else if (new File(sdkHome, "license/CLion_Preview_License.txt").exists()) {
+      productName = "CLion ";
     }
     else {
       productName = "IDEA ";

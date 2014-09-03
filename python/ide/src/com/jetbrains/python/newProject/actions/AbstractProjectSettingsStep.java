@@ -61,6 +61,7 @@ import java.util.List;
 abstract public class AbstractProjectSettingsStep extends AbstractActionWithPanel implements DumbAware {
   protected final DirectoryProjectGenerator myProjectGenerator;
   private final NullableConsumer<AbstractProjectSettingsStep> myCallback;
+  private final boolean myIsWelcomeScreen;
   private PythonSdkChooserCombo mySdkCombo;
   private boolean myInstallFramework;
   private TextFieldWithBrowseButton myLocationField;
@@ -70,10 +71,13 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
   private AnAction myCreateAction;
   private Sdk mySdk;
 
-  public AbstractProjectSettingsStep(DirectoryProjectGenerator projectGenerator, NullableConsumer<AbstractProjectSettingsStep> callback) {
+  public AbstractProjectSettingsStep(DirectoryProjectGenerator projectGenerator,
+                                     NullableConsumer<AbstractProjectSettingsStep> callback,
+                                     boolean isWelcomeScreen) {
     super();
     myProjectGenerator = projectGenerator;
     myCallback = callback;
+    myIsWelcomeScreen = isWelcomeScreen;
     myProjectDirectory = FileUtil.findSequentNonexistentFile(new File(ProjectUtil.getBaseDir()), "untitled", "");
     if (myProjectGenerator instanceof WebProjectTemplate) {
       ((WebProjectTemplate)myProjectGenerator).getPeer().addSettingsStateListener(new WebProjectGenerator.SettingsStateListener() {
@@ -109,17 +113,12 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
   @Override
   public JPanel createPanel() {
     final JPanel basePanel = createBasePanel();
-    final JPanel mainPanel = new JPanel(new BorderLayout()) {
-      @Override
-      protected void paintComponent(Graphics g) {
-        myLocationField.requestFocus();
-      }
-    };
+    final JPanel mainPanel = new JPanel(new BorderLayout());
 
     final JPanel scrollPanel = new JPanel(new BorderLayout());
 
     final DirectoryProjectGenerator[] generators = Extensions.getExtensions(DirectoryProjectGenerator.EP_NAME);
-    final int height = generators.length == 0 ? 150 : 400;
+    final int height = generators.length == 0 && !myIsWelcomeScreen ? 150 : 400;
     mainPanel.setPreferredSize(new Dimension(mainPanel.getPreferredSize().width, height));
     myErrorLabel = new JLabel("");
     myErrorLabel.setForeground(JBColor.RED);
@@ -273,6 +272,7 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
   }
 
   public boolean checkValid() {
+    if (myLocationField == null) return true;
     final String projectName = myLocationField.getText();
     setErrorText(null);
     myInstallFramework = false;
@@ -365,22 +365,6 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
   public void setWarningText(@Nullable String text) {
     myErrorLabel.setText("Note: " + text + "  ");
     myErrorLabel.setForeground(MessageType.WARNING.getTitleForeground());
-  }
-
-  public void selectCompatiblePython() {
-    //DirectoryProjectGenerator generator = getProjectGenerator();
-    //if (generator instanceof PyFrameworkProjectGenerator && !((PyFrameworkProjectGenerator)generator).supportsPython3()) {
-    //  Sdk sdk = getSdk();
-    //  if (sdk != null && PythonSdkType.getLanguageLevelForSdk(sdk).isPy3K()) {
-    //    Sdk python2Sdk = PythonSdkType.findPython2Sdk(null);
-    //    if (python2Sdk != null) {
-    //      mySdkCombo.getComboBox().setSelectedItem(python2Sdk);
-    //      mySdkCombo.getComboBox().revalidate();
-    //      mySdkCombo.getComboBox().repaint();
-    //
-    //    }
-    //  }
-    //}
   }
 
   private static boolean acceptsRemoteSdk(DirectoryProjectGenerator generator) {

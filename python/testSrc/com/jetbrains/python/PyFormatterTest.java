@@ -21,10 +21,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 
 /**
@@ -273,19 +275,19 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testWrapDefinitionWithLongLine() { // IDEA-92081
-    settings().RIGHT_MARGIN = 30;
+    settings().setRightMargin(PythonLanguage.getInstance(), 30);
     settings().WRAP_LONG_LINES = true;
     doTest();
   }
 
   public void testWrapAssignment() {  // PY-8572
-    settings().RIGHT_MARGIN = 120;
+    settings().setRightMargin(PythonLanguage.getInstance(), 120);
     settings().WRAP_LONG_LINES = false;
     doTest();
   }
 
   public void testIndentInSlice() {  // PY-8572
-    settings().RIGHT_MARGIN = 120;
+    settings().setRightMargin(PythonLanguage.getInstance(), 120);
     settings().WRAP_LONG_LINES = false;
     doTest();
   }
@@ -352,7 +354,7 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testWrapInBinaryExpression() {  // PY-9032
-    settings().RIGHT_MARGIN = 80;
+    settings().setRightMargin(PythonLanguage.getInstance(), 80);
     doTest(true);
   }
 
@@ -370,7 +372,7 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testWrapImports() {  // PY-9163
-    settings().RIGHT_MARGIN = 80;
+    settings().setRightMargin(PythonLanguage.getInstance(), 80);
     doTest();
   }
 
@@ -419,6 +421,26 @@ public class PyFormatterTest extends PyTestCase {
         else {
           codeStyleManager.reformat(file);
         }
+      }
+    });
+    myFixture.checkResultByFile("formatter/" + getTestName(true) + "_after.py");
+  }
+
+  /**
+   * This test merely checks that call to {@link com.intellij.psi.codeStyle.CodeStyleManager#reformat(com.intellij.psi.PsiElement)}
+   * is possible for Python sources.
+   */
+  public void testReformatOfSingleElementPossible() {
+    myFixture.configureByFile("formatter/" + getTestName(true) + ".py");
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), new Runnable() {
+      @Override
+      public void run() {
+        final PsiElement elementAtCaret = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
+        assertNotNull(elementAtCaret);
+        final PyStatement statement = PsiTreeUtil.getParentOfType(elementAtCaret, PyStatement.class, false);
+        assertNotNull(statement);
+        final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myFixture.getProject());
+        codeStyleManager.reformat(statement);
       }
     });
     myFixture.checkResultByFile("formatter/" + getTestName(true) + "_after.py");

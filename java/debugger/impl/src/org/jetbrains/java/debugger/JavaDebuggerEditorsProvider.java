@@ -1,11 +1,9 @@
 package org.jetbrains.java.debugger;
 
 import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
-import com.intellij.debugger.engine.evaluation.CodeFragmentFactoryContextWrapper;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.ui.DebuggerEditorImpl;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
@@ -73,16 +71,15 @@ public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase {
                                                  boolean isPhysical) {
     TextWithImports text = TextWithImportsImpl.fromXExpression(expression);
     if (text != null && context != null) {
-      CodeFragmentFactory factory = new CodeFragmentFactoryContextWrapper(DebuggerEditorImpl.findAppropriateFactory(text, context));
+      CodeFragmentFactory factory = DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, context);
       JavaCodeFragment codeFragment = factory.createPresentationCodeFragment(text, context, project);
       codeFragment.forceResolveScope(GlobalSearchScope.allScope(project));
-      if (context != null) {
-        final PsiClass contextClass = PsiTreeUtil.getNonStrictParentOfType(context, PsiClass.class);
-        if (contextClass != null) {
-          final PsiClassType contextType =
-            JavaPsiFacade.getInstance(codeFragment.getProject()).getElementFactory().createType(contextClass);
-          codeFragment.setThisType(contextType);
-        }
+
+      final PsiClass contextClass = PsiTreeUtil.getNonStrictParentOfType(context, PsiClass.class);
+      if (contextClass != null) {
+        final PsiClassType contextType =
+          JavaPsiFacade.getInstance(codeFragment.getProject()).getElementFactory().createType(contextClass);
+        codeFragment.setThisType(contextType);
       }
       return codeFragment;
     }

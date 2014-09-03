@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2013 Bas Leijdekkers
+ * Copyright 2005-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -198,11 +198,8 @@ public class ExpressionUtils {
   }
 
   public static boolean isNullLiteral(@Nullable PsiExpression expression) {
-    if (!(expression instanceof PsiLiteralExpression)) {
-      return false;
-    }
-    final String text = expression.getText();
-    return PsiKeyword.NULL.equals(text);
+    expression = ParenthesesUtils.stripParentheses(expression);
+    return expression != null && PsiType.NULL.equals(expression.getType());
   }
 
   public static boolean isZero(@Nullable PsiExpression expression) {

@@ -55,6 +55,7 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.SideEffectChecker;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -543,7 +544,7 @@ public class JavaCompletionUtil {
         return JavaClassNameCompletionContributor.createClassLookupItems((PsiClass)completion,
                                                                          JavaClassNameCompletionContributor.AFTER_NEW.accepts(reference),
                                                                          JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER,
-                                                                         Condition.TRUE);
+                                                                         Conditions.<PsiClass>alwaysTrue());
       }
     }
 
@@ -606,21 +607,7 @@ public class JavaCompletionUtil {
   }
 
   public static boolean mayHaveSideEffects(@Nullable final PsiElement element) {
-    if (element == null) return false;
-    if (element instanceof PsiMethodCallExpression || element instanceof PsiNewExpression) return true;
-    if (element instanceof PsiTypeCastExpression) {
-      return mayHaveSideEffects(((PsiTypeCastExpression)element).getOperand());
-    }
-    if (element instanceof PsiArrayAccessExpression) {
-      return mayHaveSideEffects(((PsiArrayAccessExpression)element).getArrayExpression());
-    }
-    if (element instanceof PsiJavaCodeReferenceElement) {
-      return mayHaveSideEffects(((PsiJavaCodeReferenceElement)element).getQualifier());
-    }
-    if (element instanceof PsiParenthesizedExpression) {
-      return mayHaveSideEffects(((PsiParenthesizedExpression)element).getExpression());
-    }
-    return true;
+    return element instanceof PsiExpression && SideEffectChecker.mayHaveSideEffects((PsiExpression)element);
   }
 
   public static void insertClassReference(@NotNull PsiClass psiClass, @NotNull PsiFile file, int offset) {
@@ -836,13 +823,16 @@ public class JavaCompletionUtil {
 
   //need to shorten references in type argument list
   public static void shortenReference(final PsiFile file, final int offset) throws IncorrectOperationException {
-    final PsiDocumentManager manager = PsiDocumentManager.getInstance(file.getProject());
-    manager.commitDocument(manager.getDocument(file));
+    Project project = file.getProject();
+    final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
+    Document document = manager.getDocument(file);
+    manager.commitDocument(document);
     final PsiReference ref = file.findReferenceAt(offset);
     if (ref != null) {
       PsiElement element = ref.getElement();
       if (element != null) {
-        JavaCodeStyleManager.getInstance(file.getProject()).shortenClassReferences(element);
+        JavaCodeStyleManager.getInstance(project).shortenClassReferences(element);
+        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
       }
     }
   }

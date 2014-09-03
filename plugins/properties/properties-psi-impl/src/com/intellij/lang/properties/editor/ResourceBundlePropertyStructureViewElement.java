@@ -20,11 +20,8 @@
 package com.intellij.lang.properties.editor;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
-import com.intellij.lang.properties.IProperty;
-import com.intellij.lang.properties.PropertiesHighlighter;
-import com.intellij.lang.properties.PropertiesUtil;
+import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -62,7 +59,7 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
 
   @Override
   public PsiElement[] getPsiElements() {
-    return new PsiElement[] {getProperty().getPsiElement()};
+    return new PsiElement[] {getValue()};
   }
 
   public void setPresentableName(final String presentableName) {
@@ -70,8 +67,8 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
   }
 
   @Override
-  public Property getValue() {
-    return (Property)myProperty.getPsiElement();
+  public PsiElement getValue() {
+    return myProperty.getPsiElement();
   }
 
   @Override

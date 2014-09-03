@@ -63,6 +63,10 @@ final class HKey {
     return stable ? this : new HKey(key, dirKey, true);
   }
 
+  HKey mkUnstable() {
+    return stable ? new HKey(key, dirKey, false) : this;
+  }
+
   public HKey mkBase() {
     return dirKey == 0 ? this : new HKey(key, 0, stable);
   }

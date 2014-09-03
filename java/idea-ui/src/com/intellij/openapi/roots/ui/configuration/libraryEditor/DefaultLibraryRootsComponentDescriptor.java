@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -23,22 +24,22 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ui.Util;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.JavadocOrderRootType;
+import com.intellij.openapi.roots.NativeLibraryOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.ui.*;
 import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 import com.intellij.openapi.roots.ui.configuration.PathUIUtils;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.util.IconUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author nik
@@ -63,7 +64,15 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
                          PathUIUtils.JAVA_SOURCE_ROOT_DETECTOR,
                          new FileTypeBasedRootFilter(OrderRootType.SOURCES, true, StdFileTypes.JAVA, "source archive directory"),
                          new JavadocRootDetector(),
-                         new AnnotationsRootFilter());
+                         new AnnotationsRootFilter(), new NativeLibraryRootFilter());
+  }
+
+  @NotNull
+  @Override
+  public FileChooserDescriptor createAttachFilesChooserDescriptor(@Nullable String libraryName) {
+    FileChooserDescriptor descriptor = super.createAttachFilesChooserDescriptor(libraryName);
+    descriptor.setDescription(ProjectBundle.message("library.java.attach.files.description"));
+    return descriptor;
   }
 
   public static OrderRootTypePresentation getDefaultPresentation(OrderRootType type) {
@@ -107,6 +116,27 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
     @Override
     protected boolean isFileAccepted(VirtualFile virtualFile) {
       return super.isFileAccepted(virtualFile) && virtualFile.getName().equals(ExternalAnnotationsManager.ANNOTATIONS_XML);
+    }
+  }
+
+  private static class NativeLibraryRootFilter extends RootFilter {
+    private static final Set<String> NATIVE_LIBRARY_EXTENSIONS = ContainerUtil.newTroveSet(FileUtil.PATH_HASHING_STRATEGY, "dll", "so", "dylib");
+
+    private NativeLibraryRootFilter() {
+      super(NativeLibraryOrderRootType.getInstance(), false, "external annotations");
+    }
+
+    @Override
+    public boolean isAccepted(@NotNull VirtualFile rootCandidate, @NotNull ProgressIndicator progressIndicator) {
+      if (rootCandidate.isDirectory()) {
+        for (VirtualFile file : rootCandidate.getChildren()) {
+          String extension = file.getExtension();
+          if (extension != null && NATIVE_LIBRARY_EXTENSIONS.contains(extension)) {
+            return true;
+          }
+        }
+      }
+      return false;
     }
   }
 

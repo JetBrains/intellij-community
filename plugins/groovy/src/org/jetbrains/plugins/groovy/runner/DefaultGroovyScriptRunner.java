@@ -60,8 +60,6 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
       ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.NAME);
       return false;
     }
-
-
     return true;
   }
 

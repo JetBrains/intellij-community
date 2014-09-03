@@ -23,7 +23,22 @@ import org.jetbrains.annotations.Nullable;
 
 public interface FileChooserDialog {
   DataKey<Boolean> PREFER_LAST_OVER_TO_SELECT = PathChooserDialog.PREFER_LAST_OVER_EXPLICIT;
-  
+
+  /**
+   * @deprecated Please use {@link #choose(com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile...)} because
+   * it supports several selections
+   */
+  @Deprecated
   @NotNull
   VirtualFile[] choose(@Nullable VirtualFile toSelect, @Nullable Project project);
+
+  /**
+   * Choose one or more files
+   *
+   * @param project  use this project (you may pass null if you already set project in ctor)
+   * @param toSelect files to be selected automatically.
+   * @return files chosen by user
+   */
+  @NotNull
+  VirtualFile[] choose(@Nullable Project project, @NotNull VirtualFile... toSelect);
 }

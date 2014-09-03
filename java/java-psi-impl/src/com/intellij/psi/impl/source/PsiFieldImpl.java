@@ -399,9 +399,14 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
 
   @Override
   public PsiElement getOriginalElement() {
-    PsiClass originalClass = (PsiClass)getContainingClass().getOriginalElement();
-    PsiField originalField = originalClass.findFieldByName(getName(), false);
-    return originalField != null ? originalField : this;
+    PsiClass containingClass = getContainingClass();
+    if (containingClass != null) {
+      PsiField originalField = ((PsiClass)containingClass.getOriginalElement()).findFieldByName(getName(), false);
+      if (originalField != null) {
+        return originalField;
+      }
+    }
+    return this;
   }
 
   @Override

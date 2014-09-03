@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -270,7 +271,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
 
   private void updateOkStatus() {
     String text = getEnteredName();
-    setOKActionEnabled(JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(text));
+    setOKActionEnabled(PsiNameHelper.getInstance(myProject).isIdentifier(text));
   }
 
   public JComponent getPreferredFocusedComponent() {

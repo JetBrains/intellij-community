@@ -1,6 +1,5 @@
 from pydev_imports import xmlrpclib, _queue, Exec
 import sys
-from pydevd_constants import USE_LIB_COPY
 from pydevd_constants import IS_JYTHON
 from _pydev_imps import _pydev_thread as thread
 import pydevd_xml
@@ -418,10 +417,7 @@ class BaseInterpreterInterface:
             try:
                 # Try to import the packages needed to attach the debugger
                 import pydevd
-                if USE_LIB_COPY:
-                    import _pydev_threading as threading
-                else:
-                    import threading
+                import _pydev_threading as threading
 
             except:
                 # This happens on Jython embedded in host eclipse

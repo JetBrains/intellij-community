@@ -170,7 +170,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     TreeElement[] children = myStructureViewComponent.getTreeModel().getRoot().getChildren();
     if (children.length != 0) {
       TreeElement child = children[0];
-      String propName = ((ResourceBundlePropertyStructureViewElement)child).getValue().getUnescapedKey();
+      String propName = ((ResourceBundlePropertyStructureViewElement)child).getProperty().getUnescapedKey();
       setState(new ResourceBundleEditorState(propName));
     }
     myDataProviderPanel = new DataProviderPanel(splitPanel);
@@ -248,7 +248,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       DefaultMutableTreeNode node = toCheck.pop();
       final ResourceBundleEditorViewElement element = getSelectedElement(node);
       String value = element instanceof ResourceBundlePropertyStructureViewElement
-                     ? ((ResourceBundlePropertyStructureViewElement)element).getValue().getUnescapedKey()
+                     ? ((ResourceBundlePropertyStructureViewElement)element).getProperty().getUnescapedKey()
                      : null;
       if (propertyName.equals(value)) {
         nodeToSelect = node;

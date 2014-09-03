@@ -16,18 +16,23 @@
 package com.intellij.psi;
 
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationAdapter;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.RuntimeInterruptedException;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
+import com.intellij.openapi.progress.impl.ProgressManagerImpl;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -37,6 +42,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -71,7 +77,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -87,7 +94,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
   private final ApplicationEx myApplication;
   private volatile boolean myDisposed;
   private volatile boolean upToDate;
-  private volatile boolean enabled = true;
+  private final AtomicInteger enableVetoes = new AtomicInteger();  // number of disable() calls. To enable the service, there should be at least corresponding number of enable() calls.
   private final FileWriter log;
   private final ProjectFileIndex myProjectFileIndex;
 
@@ -99,6 +106,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
                                ApplicationEx application,
                                ProjectFileIndex projectFileIndex) throws IOException {
     super(project);
+    ((FutureTask)resolveProcess).run();
     myApplication = application;
     myProjectFileIndex = projectFileIndex;
     if (ResolveScopeManagerImpl.ENABLED_REF_BACK) {
@@ -154,8 +162,8 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     return toVfString(list);
   }
 
-  private static String toVfString(@NotNull List<VirtualFile> list) {
-    List<VirtualFile> sub = list.subList(0, Math.min(list.size(), 100));
+  private static String toVfString(@NotNull Collection<VirtualFile> list) {
+    List<VirtualFile> sub = new ArrayList<VirtualFile>(list).subList(0, Math.min(list.size(), 100));
     return list.size() + " files: " + StringUtil.join(sub, new Function<VirtualFile, String>() {
       @Override
       public String fun(VirtualFile file) {
@@ -205,6 +213,17 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
         enable();
       }
     });
+    messageBus.connect().subscribe(PowerSaveMode.TOPIC, new PowerSaveMode.Listener() {
+      @Override
+      public void powerSaveStateChanged() {
+        if (PowerSaveMode.isEnabled()) {
+          enable();
+        }
+        else {
+          disable();
+        }
+      }
+    });
     myApplication.addApplicationListener(new ApplicationAdapter() {
       @Override
       public void beforeWriteActionStart(Object action) {
@@ -232,17 +251,16 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
         enable();
       }
     }, this);
-    Disposer.register(this, HeavyProcessLatch.INSTANCE.addListener(new HeavyProcessLatch.HeavyProcessListener() {
+    HeavyProcessLatch.INSTANCE.addListener(this, new HeavyProcessLatch.HeavyProcessListener() {
       @Override
       public void processStarted() {
-        disable();
       }
 
       @Override
       public void processFinished() {
-        enable();
+        wakeUp();
       }
-    }));
+    });
 
     startThread();
   }
@@ -368,6 +386,9 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     fileIsResolved.writeTo(new File(getStorageDirectory(), "bitSet"));
   }
 
+  private volatile Future<?> resolveProcess = new FutureTask<Object>(EmptyRunnable.getInstance(), null); // write from EDT only
+  private volatile ProgressIndicator resolveIndicator = new EmptyProgressIndicator();
+  
   @Override
   public void run() {
     while (!myDisposed) {
@@ -375,7 +396,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
       synchronized (filesToResolve) {
         isEmpty = filesToResolve.isEmpty();
       }
-      if (!enabled || isEmpty) {
+      if (enableVetoes.get() > 0 || isEmpty || !resolveProcess.isDone() || HeavyProcessLatch.INSTANCE.isRunning()) {
         try {
           waitForQueue();
         }
@@ -384,77 +405,70 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
         }
         continue;
       }
+      final Set<VirtualFile> files = countFilesToResolve();
+      if (files.isEmpty()) continue;
+
       upToDate = false;
-      final CountDownLatch batchProcessedLatch = new CountDownLatch(1);
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+
+      myApplication.invokeLater(new Runnable() {
         @Override
         public void run() {
-          new Task.Backgroundable(myProject, "Resolving files...", true) {
+          if (!resolveProcess.isDone()) return;
+          log("Started to resolve " + files.size() + " files");
+
+          Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, "Resolving files...", true) {
             @Override
             public void run(@NotNull final ProgressIndicator indicator) {
-              if (ApplicationManager.getApplication().isDisposed()) return;
-              try {
-                processBatch(indicator);
-              }
-              finally {
-                batchProcessedLatch.countDown();
+              if (!myApplication.isDisposed()) {
+                try {
+                  processBatch(indicator, files);
+                }
+                catch (RuntimeInterruptedException ignore) {
+                  // see future.cancel() in disable()
+                  int i = 0;
+                }
               }
             }
-          }.queue();
+          };
+          ProgressIndicator indicator;
+          if (files.size() > 1) {
+            //show progress
+            indicator = new BackgroundableProcessIndicator(backgroundable);
+          }
+          else {
+            indicator = new MyProgress();
+          }
+          resolveIndicator = indicator;
+          resolveProcess = ProgressManagerImpl.runProcessWithProgressAsynchronously(backgroundable, indicator, null);
         }
       }, myProject.getDisposed());
 
-      try {
-        batchProcessedLatch.await();
-      }
-      catch (InterruptedException e) {
-        break;
-      }
-
-      synchronized (filesToResolve) {
-        upToDate = filesToResolve.isEmpty();
-        log("upToDate = " + upToDate);
-      }
       flushLog();
     }
   }
 
-  private void processBatch(@NotNull final ProgressIndicator indicator) {
-    Set<VirtualFile> set;
-    int queuedSize;
-    synchronized (filesToResolve) {
-      queuedSize = filesToResolve.size();
-      set = new THashSet<VirtualFile>(queuedSize);
-      // someone might have cleared this bit to mark file as processed
-      for (VirtualFile file : filesToResolve) {
-        if (fileIsInQueue.clear(getAbsId(file))) {
-          set.add(file);
-        }
-      }
-      filesToResolve.clear();
-    }
+  private volatile int resolvedInPreviousBatch;
+  private void processBatch(@NotNull final ProgressIndicator indicator, @NotNull Set<VirtualFile> files) {
+    assert !myApplication.isDispatchThread();
+    final int resolvedInPreviousBatch = this.resolvedInPreviousBatch;
+    final int totalSize = files.size() + resolvedInPreviousBatch;
     final ConcurrentIntObjectMap<int[]> fileToForwardIds = new StripedLockIntObjectConcurrentHashMap<int[]>();
-    Set<VirtualFile> files = countAndMarkUnresolved(set, false);
-    if (files.isEmpty()) return;
-    final int size = files.size();
     final Set<VirtualFile> toProcess = Collections.synchronizedSet(files);
-    log("Started to resolve "+ size + " files (was queued "+queuedSize+")");
-
     indicator.setIndeterminate(false);
     ProgressIndicatorUtils.forceWriteActionPriority(indicator, (Disposable)indicator);
     long start = System.currentTimeMillis();
     Processor<VirtualFile> processor = new Processor<VirtualFile>() {
       @Override
       public boolean process(VirtualFile file) {
-        double fraction = 1 - toProcess.size() * 1.0 / size;
+        double fraction = 1 - toProcess.size() * 1.0 / totalSize;
         indicator.setFraction(fraction);
         try {
           if (file.isDirectory() || !toResolve(file, myProject)) {
             return true;
           }
           int fileId = getAbsId(file);
-          int i = size - toProcess.size();
-          indicator.setText(i + "/" + size + ": Resolving " + file.getPresentableUrl());
+          int i = totalSize - toProcess.size();
+          indicator.setText(i + "/" + totalSize + ": Resolving " + file.getPresentableUrl());
           int[] forwardIds = processFile(file, fileId, indicator);
           if (forwardIds == null) {
             //queueUpdate(file);
@@ -475,12 +489,34 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
         .getInstance().invokeConcurrentlyUnderProgress(new ArrayList<VirtualFile>(files), indicator, false, false, processor);
     }
     finally {
+      this.resolvedInPreviousBatch = toProcess.isEmpty() ? 0 : totalSize - toProcess.size();
       queue(toProcess, "re-added after fail. success=" + success);
       storeIds(fileToForwardIds);
 
       long end = System.currentTimeMillis();
-      log("Resolved batch of " + (size - toProcess.size()) + " from " + size + " files in " + ((end - start) / 1000) + "sec. (Gap: " + storage.gap+")");
+      log("Resolved batch of " + (totalSize - toProcess.size()) + " from " + totalSize + " files in " + ((end - start) / 1000) + "sec. (Gap: " + storage.gap+")");
+      synchronized (filesToResolve) {
+        upToDate = filesToResolve.isEmpty();
+        log("upToDate = " + upToDate);
+      }
     }
+  }
+
+  @NotNull
+  private Set<VirtualFile> countFilesToResolve() {
+    Set<VirtualFile> set;
+    synchronized (filesToResolve) {
+      int queuedSize = filesToResolve.size();
+      set = new THashSet<VirtualFile>(queuedSize);
+      // someone might have cleared this bit to mark file as processed
+      for (VirtualFile file : filesToResolve) {
+        if (fileIsInQueue.clear(getAbsId(file))) {
+          set.add(file);
+        }
+      }
+      filesToResolve.clear();
+    }
+    return countAndMarkUnresolved(set, false);
   }
 
   private static int getAbsId(@NotNull VirtualFile file) {
@@ -528,12 +564,19 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
   }
 
   private void enable() {
-    enabled = true;
+    // decrement but only if it's positive
+    int vetoes;
+    do {
+      vetoes = enableVetoes.get();
+      if (vetoes == 0) break;
+    } while(!enableVetoes.compareAndSet(vetoes, vetoes-1));
     wakeUp();
   }
 
   private void disable() {
-    enabled = false;
+    //resolveIndicator.cancel();
+    //resolveProcess.cancel(true);
+    enableVetoes.incrementAndGet();
     wakeUp();
   }
 
@@ -591,7 +634,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     assert forwardSize == backwardSize;
 
     // wrap in read action so that sudden quit (in write action) would not interrupt us
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
+    myApplication.runReadAction(new Runnable() {
       @Override
       public void run() {
         fileToBackwardIds.forEachEntry(new TIntObjectProcedure<TIntArrayList>() {
@@ -644,7 +687,8 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
             psiFile.accept(new JavaRecursiveElementWalkingVisitor() {
               @Override
               public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-                resolveReference(reference, indicator, resolved);
+                indicator.checkCanceled();
+                resolveReference(reference, resolved);
 
                 super.visitReferenceElement(reference);
               }
@@ -655,7 +699,8 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
               @Override
               public void visitXmlElement(XmlElement element) {
                 for (PsiReference reference : element.getReferences()) {
-                  resolveReference(reference, indicator, resolved);
+                  indicator.checkCanceled();
+                  resolveReference(reference, resolved);
                 }
                 super.visitXmlElement(element);
               }
@@ -675,8 +720,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     return forward;
   }
 
-  private void resolveReference(@NotNull PsiReference reference, @NotNull ProgressIndicator indicator, @NotNull Set<PsiElement> resolved) {
-    indicator.checkCanceled();
+  private void resolveReference(@NotNull PsiReference reference, @NotNull Set<PsiElement> resolved) {
     PsiElement element = reference.resolve();
     if (element != null) {
       resolved.add(element);
@@ -769,5 +813,11 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
       flushLog();
     }
     return queued;
+  }
+
+  private static class MyProgress extends ProgressIndicatorBase implements Disposable{
+    @Override
+    public void dispose() {
+    }
   }
 }

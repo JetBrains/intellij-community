@@ -511,7 +511,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       PsiElement prevSibling = PsiTreeUtil.skipSiblingsBackward(myElements[0], PsiWhiteSpace.class);
       if (prevSibling instanceof PsiComment && ((PsiComment)prevSibling).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
         final String text = StringUtil.decapitalize(StringUtil.capitalizeWords(prevSibling.getText().trim().substring(2), true)).replaceAll(" ", "");
-        if (JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(text) && text.length() < 20) {
+        if (PsiNameHelper.getInstance(myProject).isIdentifier(text) && text.length() < 20) {
           return text;
         }
       }

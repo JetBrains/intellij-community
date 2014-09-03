@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,14 +20,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
@@ -104,7 +103,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
     private final InheritanceChecker myInheritanceChecker;
 
     public SearchParameters(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance, boolean includeAnonymous) {
-      this(aClass, scope, checkDeep, checkInheritance, includeAnonymous, Condition.TRUE);
+      this(aClass, scope, checkDeep, checkInheritance, includeAnonymous, Conditions.<String>alwaysTrue());
     }
 
     public SearchParameters(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance,
@@ -188,7 +187,8 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
       }
     });
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(qname)) {
-      return AllClassesSearch.search(searchScope, baseClass.getProject(), parameters.getNameCondition()).forEach(new Processor<PsiClass>() {
+      Project project = PsiUtilCore.getProjectInReadAction(baseClass);
+      return AllClassesSearch.search(searchScope, project, parameters.getNameCondition()).forEach(new Processor<PsiClass>() {
         @Override
         public boolean process(final PsiClass aClass) {
           ProgressIndicatorProvider.checkCanceled();
@@ -250,7 +250,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
       }
     };
     stack.push(Pair.create(createHardReference(baseClass), qname));
-    final GlobalSearchScope projectScope = GlobalSearchScope.allScope(baseClass.getProject());
+    final GlobalSearchScope projectScope = GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(baseClass));
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(projectScope.getProject());
     while (!stack.isEmpty()) {
       ProgressIndicatorProvider.checkCanceled();

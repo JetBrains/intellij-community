@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,10 @@
  */
 package com.siyeh.ipp.junit;
 
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.ig.psiutils.TestUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import org.jetbrains.annotations.NonNls;
 
 class CreateAssertPredicate implements PsiElementPredicate {
 
@@ -41,50 +37,13 @@ class CreateAssertPredicate implements PsiElementPredicate {
     if (!PsiType.BOOLEAN.equals(type)) {
       return false;
     }
-    final PsiMethod containingMethod =
-      PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
-    return isTestMethod(containingMethod);
-  }
-
-  private static boolean isTestMethod(PsiMethod method) {
-    if (method == null) {
-      return false;
+    PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
+    while (containingMethod != null) {
+      if (TestUtils.isJUnitTestMethod(containingMethod)) {
+        return true;
+      }
+      containingMethod = PsiTreeUtil.getParentOfType(containingMethod, PsiMethod.class);
     }
-    if (AnnotationUtil.isAnnotated(method, "org.junit.Test", true)) {
-      return true;
-    }
-    if (method.hasModifierProperty(PsiModifier.ABSTRACT) ||
-        !method.hasModifierProperty(PsiModifier.PUBLIC)) {
-      return false;
-    }
-    final PsiType returnType = method.getReturnType();
-    if (returnType == null) {
-      return false;
-    }
-    if (!returnType.equals(PsiType.VOID)) {
-      return false;
-    }
-    final PsiParameterList parameterList = method.getParameterList();
-    final PsiParameter[] parameters = parameterList.getParameters();
-    if (parameters.length != 0) {
-      return false;
-    }
-    @NonNls final String methodName = method.getName();
-    if (!methodName.startsWith("test")) {
-      return false;
-    }
-    final PsiClass containingClass = method.getContainingClass();
-    return isTestClass(containingClass);
-  }
-
-  private static boolean isTestClass(PsiClass aClass) {
-    if (aClass == null) {
-      return false;
-    }
-    final Project project = aClass.getProject();
-    final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-    final PsiClass ancestorClass = psiFacade.findClass("junit.framework.TestCase", scope);
-    return InheritanceUtil.isInheritorOrSelf(aClass, ancestorClass, true);
+    return false;
   }
 }

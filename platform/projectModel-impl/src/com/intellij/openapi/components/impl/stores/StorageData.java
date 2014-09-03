@@ -32,11 +32,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.*;
 
 public class StorageData {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StorageData");
+  private static final Logger LOG = Logger.getInstance(StorageData.class);
   @NonNls public static final String COMPONENT = "component";
   @NonNls public static final String NAME = "name";
 
@@ -54,7 +53,7 @@ public class StorageData {
     myComponentStates = new THashMap<String, Element>(storageData.myComponentStates);
   }
 
-  public void load(@NotNull Element rootElement) throws IOException {
+  public void load(@NotNull Element rootElement) {
     for (Iterator<Element> iterator = rootElement.getChildren(COMPONENT).iterator(); iterator.hasNext(); ) {
       Element element = iterator.next();
       String name = element.getAttributeValue(NAME);
@@ -68,9 +67,9 @@ public class StorageData {
       if (element.getAttributes().size() > 1 || !element.getChildren().isEmpty()) {
         assert element.getAttributeValue(NAME) != null : "No name attribute for component: " + name + " in " + this;
 
-        Element existingElement = myComponentStates.get(name);
-        if (existingElement != null) {
-          element = mergeElements(name, element, existingElement);
+        Element serverElement = myComponentStates.get(name);
+        if (serverElement != null) {
+          element = mergeElements(name, element, serverElement);
         }
 
         myComponentStates.put(name, element);
@@ -78,18 +77,23 @@ public class StorageData {
     }
   }
 
-  private static Element mergeElements(final String name, final Element element1, final Element element2) {
+  @NotNull
+  private static Element mergeElements(@NotNull String name, @NotNull Element localElement, @NotNull Element serverElement) {
     ExtensionPoint<XmlConfigurationMerger> point = Extensions.getRootArea().getExtensionPoint("com.intellij.componentConfigurationMerger");
     for (XmlConfigurationMerger merger : point.getExtensions()) {
       if (merger.getComponentName().equals(name)) {
-        return merger.merge(element1, element2);
+        return merger.merge(serverElement, localElement);
       }
     }
-    return element1;
+    return localElement;
   }
 
-  @NotNull
+  @Nullable
   protected Element save() {
+    if (myComponentStates.isEmpty()) {
+      return null;
+    }
+
     Element rootElement = new Element(myRootElementName);
     String[] componentNames = ArrayUtil.toStringArray(myComponentStates.keySet());
     Arrays.sort(componentNames);
@@ -101,7 +105,6 @@ public class StorageData {
 
       rootElement.addContent(element.clone());
     }
-
     return rootElement;
   }
 
@@ -197,7 +200,7 @@ public class StorageData {
     return myComponentStates.isEmpty();
   }
 
-  public boolean hasState(final String componentName) {
+  public boolean hasState(@NotNull String componentName) {
       return myComponentStates.containsKey(componentName);
   }
 

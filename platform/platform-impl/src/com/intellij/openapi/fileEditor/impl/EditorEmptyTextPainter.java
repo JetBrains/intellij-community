@@ -54,9 +54,12 @@ public class EditorEmptyTextPainter {
     UIUtil.TextPainter painter = new UIUtil.TextPainter().withLineSpacing(1.5f);
     painter.withShadow(true, new JBColor(Gray._200.withAlpha(100), Gray._0.withAlpha(255)));
 
-    painter.appendLine("No files are open").underlined(new JBColor(Gray._150, Gray._180));
+    painter.appendLine("No files are open");
 
-    advertiseActions(splitters, painter);
+    if (!splitters.isPreview()) {
+      painter.underlined(new JBColor(Gray._150, Gray._180));
+      advertiseActions(splitters, painter);
+    }
 
     painter.draw(g, new PairFunction<Integer, Integer, Couple<Integer>>() {
       @Override

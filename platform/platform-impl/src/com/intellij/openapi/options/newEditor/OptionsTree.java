@@ -37,6 +37,7 @@ import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
@@ -49,33 +50,32 @@ import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.plaf.TreeUI;
-import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
 public class OptionsTree extends JPanel implements Disposable, OptionsEditorColleague {
-  Project myProject;
+  private final SettingsFilter myFilter;
   final SimpleTree myTree;
   List<ConfigurableGroup> myGroups;
   FilteringTreeBuilder myBuilder;
   Root myRoot;
-  OptionsEditorContext myContext;
 
   Map<Configurable, EditorNode> myConfigurable2Node = new HashMap<Configurable, EditorNode>();
 
   MergingUpdateQueue mySelection;
   private final OptionsTree.Renderer myRenderer;
 
-  public OptionsTree(Project project, ConfigurableGroup[] groups, OptionsEditorContext context) {
-    myProject = project;
+  public OptionsTree(SettingsFilter filter, ConfigurableGroup... groups) {
+    myFilter = filter;
     myGroups = Arrays.asList(groups);
-    myContext = context;
-
 
     myRoot = new Root();
     final SimpleTreeStructure structure = new SimpleTreeStructure() {
@@ -132,34 +132,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
         }
       }
     });
-    myTree.addKeyListener(new KeyListener() {
-      public void keyTyped(final KeyEvent e) {
-        _onTreeKeyEvent(e);
-      }
-
-      public void keyPressed(final KeyEvent e) {
-        _onTreeKeyEvent(e);
-      }
-
-      public void keyReleased(final KeyEvent e) {
-        _onTreeKeyEvent(e);
-      }
-    });
   }
-
-  protected void _onTreeKeyEvent(KeyEvent e) {
-    final KeyStroke stroke = KeyStroke.getKeyStrokeForEvent(e);
-
-    final Object action = myTree.getInputMap().get(stroke);
-    if (action == null) {
-      onTreeKeyEvent(e);
-    }
-  }
-
-  protected void onTreeKeyEvent(KeyEvent e) {
-
-  }
-
 
   ActionCallback select(@Nullable Configurable configurable) {
     return queueSelection(configurable);
@@ -191,7 +164,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
         if (configurable == null) {
           myTree.getSelectionModel().clearSelection();
-          myContext.fireSelected(null, OptionsTree.this);
+          myFilter.myContext.fireSelected(null, OptionsTree.this);
         }
         else {
           myBuilder.getReady(this).doWhenDone(new Runnable() {
@@ -232,7 +205,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
   }
 
   private void fireSelected(Configurable configurable, final ActionCallback callback) {
-    myContext.fireSelected(configurable, this).doWhenProcessed(callback.createSetDoneRunnable());
+    myFilter.myContext.fireSelected(configurable, this).doWhenProcessed(callback.createSetDoneRunnable());
   }
 
 
@@ -297,7 +270,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       myRendererComponent.setOpaqueActive(false);
 
       mySeparator = new GroupSeparator();
-      myRendererComponent.add(Registry.is("ide.file.settings.order.new") ? mySeparator : mySeparatorComponent, BorderLayout.NORTH);
+      myRendererComponent.add(Registry.is("ide.new.settings.dialog") ? mySeparator : mySeparatorComponent, BorderLayout.NORTH);
 
       final NonOpaquePanel content = new NonOpaquePanel(new BorderLayout());
       myHandle = new JLabel("", SwingConstants.CENTER);
@@ -401,12 +374,12 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       myTextLabel.setForeground(selected ? UIUtil.getTreeSelectionForeground() : fg);
 
       myTextLabel.setOpaque(selected);
-      if (Registry.is("ide.file.settings.order.new")) {
+      if (Registry.is("ide.new.settings.dialog")) {
         myTextLabel.setBorder(new EmptyBorder(1,2,1,0));
       }
 
       Project project = null;
-      if (base != null && Registry.is("ide.file.settings.order.new")) {
+      if (base != null && Registry.is("ide.new.settings.dialog")) {
         SimpleNode parent = base.getParent();
         if (parent == myRoot) {
           project = getConfigurableProject(base); // show icon for top-level nodes
@@ -432,6 +405,9 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
                                                   : "configurable.current.project.tooltip"));
       } else {
         myProjectIcon.setVisible(false);
+      }
+      if (Registry.is("ide.new.settings.dialog")) {
+        result.setBackground(selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getSidePanelColor());
       }
       return result;
     }
@@ -538,7 +514,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       final List<EditorNode> result = new ArrayList<EditorNode>(kids.length);
       for (Configurable child : kids) {
         result.add(new EditorNode(parent, child, group));
-        myContext.registerKid(configurable, child);
+        myFilter.myContext.registerKid(configurable, child);
       }
       return result; // TODO: DECIDE IF INNERS SHOULD BE SORTED: sort(result);
     }
@@ -602,12 +578,12 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
     @Override
     boolean isModified() {
-      return myContext.getModified().contains(myConfigurable);
+      return myFilter.myContext.getModified().contains(myConfigurable);
     }
 
     @Override
     boolean isError() {
-      return myContext.getErrors().containsKey(myConfigurable);
+      return myFilter.myContext.getErrors().containsKey(myConfigurable);
     }
   }
 
@@ -757,7 +733,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       super.processMouseEvent(e);
     }
 
-    private class MyTreeUi extends BasicTreeUI {
+    private class MyTreeUi extends WideSelectionTreeUI {
 
       @Override
       public void toggleExpandState(final TreePath path) {
@@ -810,7 +786,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     boolean myWasHoldingFilter;
 
     public MyBuilder(SimpleTreeStructure structure) {
-      super(OptionsTree.this.myTree, myContext.getFilter(), structure, new WeightBasedComparator(false));
+      super(myTree, myFilter, structure, new WeightBasedComparator(false));
       myTree.addTreeExpansionListener(new TreeExpansionListener() {
         public void treeExpanded(TreeExpansionEvent event) {
           invalidateExpansions();
@@ -835,7 +811,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
     @Override
     public boolean isAutoExpandNode(final NodeDescriptor nodeDescriptor) {
-      return myContext.isHoldingFilter();
+      return myFilter.myContext.isHoldingFilter();
     }
 
     @Override
@@ -846,21 +822,21 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     @Override
     protected ActionCallback refilterNow(Object preferredSelection, boolean adjustSelection) {
       final List<Object> toRestore = new ArrayList<Object>();
-      if (myContext.isHoldingFilter() && !myWasHoldingFilter && myToExpandOnResetFilter == null) {
+      if (myFilter.myContext.isHoldingFilter() && !myWasHoldingFilter && myToExpandOnResetFilter == null) {
         myToExpandOnResetFilter = myBuilder.getUi().getExpandedElements();
-      } else if (!myContext.isHoldingFilter() && myWasHoldingFilter && myToExpandOnResetFilter != null) {
+      } else if (!myFilter.myContext.isHoldingFilter() && myWasHoldingFilter && myToExpandOnResetFilter != null) {
         toRestore.addAll(myToExpandOnResetFilter);
         myToExpandOnResetFilter = null;
       }
 
-      myWasHoldingFilter = myContext.isHoldingFilter();
+      myWasHoldingFilter = myFilter.myContext.isHoldingFilter();
 
       ActionCallback result = super.refilterNow(preferredSelection, adjustSelection);
       myRefilteringNow = true;
       return result.doWhenDone(new Runnable() {
         public void run() {
           myRefilteringNow = false;
-          if (!myContext.isHoldingFilter() && getSelectedElements().isEmpty()) {
+          if (!myFilter.myContext.isHoldingFilter() && getSelectedElements().isEmpty()) {
             restoreExpandedState(toRestore);
           }
         }
@@ -968,7 +944,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     public void paint(Graphics g) {
       super.paint(g);
 
-      if (Registry.is("ide.file.settings.order.new")) {
+      if (Registry.is("ide.new.settings.dialog")) {
         ConfigurableGroup group = getGroup(GroupSeparator.SPACE + mySeparator.getFont().getSize());
         if (group != null && group == getGroup(-GroupSeparator.SPACE)) {
           mySeparator.configure(group, false);

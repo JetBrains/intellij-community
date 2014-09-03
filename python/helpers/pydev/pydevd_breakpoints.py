@@ -8,10 +8,7 @@ _original_excepthook = None
 _handle_exceptions = None
 
 
-if USE_LIB_COPY:
-    import _pydev_threading as threading
-else:
-    import threading
+import _pydev_threading as threading
 
 threadingCurrentThread = threading.currentThread
 

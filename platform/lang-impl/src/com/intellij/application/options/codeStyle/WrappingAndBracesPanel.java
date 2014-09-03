@@ -43,6 +43,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     addOption("KEEP_SIMPLE_CLASSES_IN_ONE_LINE", ApplicationBundle.message("wrapping.keep.simple.classes.in.one.line"), WRAPPING_KEEP);
 
     addOption("WRAP_LONG_LINES", ApplicationBundle.message("wrapping.long.lines"), null);
+    addOption("WRAP_COMMENTS", ApplicationBundle.message("wrapping.comments.wrap.at.right.margin"), WRAPPING_COMMENTS);
 
     addOption("CLASS_BRACE_STYLE", ApplicationBundle.message("wrapping.brace.placement.class.declaration"), WRAPPING_BRACES, BRACE_PLACEMENT_OPTIONS, BRACE_PLACEMENT_VALUES);
     addOption("METHOD_BRACE_STYLE", ApplicationBundle.message("wrapping.brace.placement.method.declaration"), WRAPPING_BRACES, BRACE_PLACEMENT_OPTIONS, BRACE_PLACEMENT_VALUES);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ public class QueueProcessor<T> {
    * Constructs a QueueProcessor, which will autostart as soon as the first element is added to it.
    */
   public QueueProcessor(@NotNull Consumer<T> processor) {
-    this(processor, Condition.FALSE);
+    this(processor, Conditions.alwaysFalse());
   }
 
   /**

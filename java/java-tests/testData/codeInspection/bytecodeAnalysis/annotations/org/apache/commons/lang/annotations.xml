@@ -1,48 +1,150 @@
 <root>
+  <item name="org.apache.commons.lang.ArrayUtils boolean contains(byte[], byte) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean contains(char[], char) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean contains(int[], int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean contains(java.lang.Object[], java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean contains(java.lang.Object[], java.lang.Object) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean contains(long[], long) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean contains(short[], short) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean isEmpty(boolean[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.ArrayUtils boolean isEmpty(boolean[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;true&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean isEmpty(byte[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils boolean isEmpty(byte[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;true&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean isEmpty(char[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.ArrayUtils boolean isEmpty(char[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;true&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean isEmpty(double[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils boolean isEmpty(double[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;true&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean isEmpty(float[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.ArrayUtils boolean isEmpty(float[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;true&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean isEmpty(int[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils boolean isEmpty(int[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;true&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean isEmpty(java.lang.Object[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.ArrayUtils boolean isEmpty(java.lang.Object[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;true&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean isEmpty(long[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils boolean isEmpty(long[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;true&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean isEmpty(short[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.ArrayUtils boolean isEmpty(short[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;true&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean isSameLength(boolean[], boolean[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean isSameLength(boolean[], boolean[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean isSameLength(byte[], byte[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean isSameLength(byte[], byte[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean isSameLength(char[], char[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean isSameLength(char[], char[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean isSameLength(double[], double[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean isSameLength(double[], double[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean isSameLength(float[], float[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean isSameLength(float[], float[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean isSameLength(int[], int[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean isSameLength(int[], int[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean isSameLength(java.lang.Object[], java.lang.Object[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean isSameLength(java.lang.Object[], java.lang.Object[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean isSameLength(long[], long[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean isSameLength(long[], long[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean isSameLength(short[], short[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean isSameLength(short[], short[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils boolean isSameType(java.lang.Object, java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -50,286 +152,818 @@
   <item name="org.apache.commons.lang.ArrayUtils boolean isSameType(java.lang.Object, java.lang.Object) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean[] add(boolean[], boolean) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean[] addAll(boolean[], boolean[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean[] addAll(boolean[], boolean[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean[] addAll(boolean[], boolean[])">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean[] clone(boolean[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.ArrayUtils boolean[] clone(boolean[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils boolean[] remove(boolean[], int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean[] removeElement(boolean[], boolean)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean[] subarray(boolean[], int, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils boolean[] subarray(boolean[], int, int)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean[] toPrimitive(java.lang.Boolean[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils boolean[] toPrimitive(java.lang.Boolean[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils boolean[] toPrimitive(java.lang.Boolean[], boolean) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils boolean[] toPrimitive(java.lang.Boolean[], boolean)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils byte[] add(byte[], byte) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils byte[] addAll(byte[], byte[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils byte[] addAll(byte[], byte[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils byte[] addAll(byte[], byte[])">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils byte[] clone(byte[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils byte[] clone(byte[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils byte[] remove(byte[], int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils byte[] removeElement(byte[], byte)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils byte[] subarray(byte[], int, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils byte[] subarray(byte[], int, int)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils byte[] toPrimitive(java.lang.Byte[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils byte[] toPrimitive(java.lang.Byte[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils byte[] toPrimitive(java.lang.Byte[], byte) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils byte[] toPrimitive(java.lang.Byte[], byte)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils char[] add(char[], char) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils char[] addAll(char[], char[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils char[] addAll(char[], char[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils char[] addAll(char[], char[])">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils char[] clone(char[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils char[] clone(char[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils char[] remove(char[], int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils char[] removeElement(char[], char)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils char[] subarray(char[], int, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils char[] subarray(char[], int, int)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils char[] toPrimitive(java.lang.Character[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils char[] toPrimitive(java.lang.Character[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils char[] toPrimitive(java.lang.Character[], char) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils char[] toPrimitive(java.lang.Character[], char)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils double[] add(double[], double) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils double[] addAll(double[], double[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils double[] addAll(double[], double[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils double[] addAll(double[], double[])">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils double[] clone(double[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils double[] clone(double[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils double[] remove(double[], int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils double[] removeElement(double[], double)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils double[] subarray(double[], int, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils double[] subarray(double[], int, int)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils double[] toPrimitive(java.lang.Double[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils double[] toPrimitive(java.lang.Double[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils double[] toPrimitive(java.lang.Double[], double) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils double[] toPrimitive(java.lang.Double[], double)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils float[] add(float[], float) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils float[] addAll(float[], float[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils float[] addAll(float[], float[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils float[] addAll(float[], float[])">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils float[] clone(float[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils float[] clone(float[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils float[] remove(float[], int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils float[] removeElement(float[], float)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils float[] subarray(float[], int, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils float[] subarray(float[], int, int)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils float[] toPrimitive(java.lang.Float[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils float[] toPrimitive(java.lang.Float[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils float[] toPrimitive(java.lang.Float[], float) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils float[] toPrimitive(java.lang.Float[], float)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int getLength(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int indexOf(byte[], byte) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int indexOf(byte[], byte, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int indexOf(char[], char) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int indexOf(char[], char, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int indexOf(int[], int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int indexOf(int[], int, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int indexOf(java.lang.Object[], java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int indexOf(java.lang.Object[], java.lang.Object) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int indexOf(java.lang.Object[], java.lang.Object, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int indexOf(java.lang.Object[], java.lang.Object, int) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int indexOf(long[], long) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int indexOf(long[], long, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int indexOf(short[], short) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int indexOf(short[], short, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int lastIndexOf(byte[], byte) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int lastIndexOf(byte[], byte, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int lastIndexOf(char[], char) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int lastIndexOf(char[], char, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int lastIndexOf(int[], int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int lastIndexOf(int[], int, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int lastIndexOf(java.lang.Object[], java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int lastIndexOf(java.lang.Object[], java.lang.Object) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int lastIndexOf(java.lang.Object[], java.lang.Object, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int lastIndexOf(java.lang.Object[], java.lang.Object, int) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int lastIndexOf(long[], long) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int lastIndexOf(long[], long, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int lastIndexOf(short[], short) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int lastIndexOf(short[], short, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int[] add(int[], int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int[] addAll(int[], int[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int[] addAll(int[], int[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int[] addAll(int[], int[])">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int[] clone(int[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils int[] clone(int[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils int[] remove(int[], int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int[] removeElement(int[], int)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int[] subarray(int[], int, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils int[] subarray(int[], int, int)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int[] toPrimitive(java.lang.Integer[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils int[] toPrimitive(java.lang.Integer[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils int[] toPrimitive(java.lang.Integer[], int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils int[] toPrimitive(java.lang.Integer[], int)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils java.lang.Boolean[] toObject(boolean[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils java.lang.Boolean[] toObject(boolean[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils java.lang.Byte[] toObject(byte[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils java.lang.Byte[] toObject(byte[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils java.lang.Character[] toObject(char[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils java.lang.Character[] toObject(char[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils java.lang.Double[] toObject(double[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils java.lang.Double[] toObject(double[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils java.lang.Float[] toObject(float[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils java.lang.Float[] toObject(float[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils java.lang.Integer[] toObject(int[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils java.lang.Integer[] toObject(int[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils java.lang.Long[] toObject(long[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils java.lang.Long[] toObject(long[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils java.lang.Object copyArrayGrow1(java.lang.Object, java.lang.Class) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils java.lang.Object remove(java.lang.Object, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils java.lang.Object[] add(java.lang.Object[], java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils java.lang.Object[] addAll(java.lang.Object[], java.lang.Object[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils java.lang.Object[] addAll(java.lang.Object[], java.lang.Object[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils java.lang.Object[] addAll(java.lang.Object[], java.lang.Object[])">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils java.lang.Object[] clone(java.lang.Object[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils java.lang.Object[] clone(java.lang.Object[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils java.lang.Object[] remove(java.lang.Object[], int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils java.lang.Object[] removeElement(java.lang.Object[], java.lang.Object) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils java.lang.Object[] removeElement(java.lang.Object[], java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils java.lang.Object[] subarray(java.lang.Object[], int, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils java.lang.Object[] subarray(java.lang.Object[], int, int)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils java.lang.Short[] toObject(short[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils java.lang.Short[] toObject(short[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils java.lang.String toString(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils java.lang.String toString(java.lang.Object, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils java.util.Map toMap(java.lang.Object[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils java.util.Map toMap(java.lang.Object[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils long[] add(long[], long) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils long[] addAll(long[], long[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils long[] addAll(long[], long[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils long[] addAll(long[], long[])">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils long[] clone(long[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils long[] clone(long[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils long[] remove(long[], int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils long[] removeElement(long[], long)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils long[] subarray(long[], int, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils long[] subarray(long[], int, int)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils long[] toPrimitive(java.lang.Long[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils long[] toPrimitive(java.lang.Long[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils long[] toPrimitive(java.lang.Long[], long) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils long[] toPrimitive(java.lang.Long[], long)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils short[] add(short[], short) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils short[] addAll(short[], short[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils short[] addAll(short[], short[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils short[] addAll(short[], short[])">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils short[] clone(short[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils short[] clone(short[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils short[] remove(short[], int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils short[] removeElement(short[], short)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils short[] subarray(short[], int, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils short[] subarray(short[], int, int)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils short[] toPrimitive(java.lang.Short[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils short[] toPrimitive(java.lang.Short[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils short[] toPrimitive(java.lang.Short[], short) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ArrayUtils short[] toPrimitive(java.lang.Short[], short)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils void reverse(boolean[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils void reverse(byte[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils void reverse(char[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils void reverse(double[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils void reverse(float[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils void reverse(int[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils void reverse(java.lang.Object[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils void reverse(long[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ArrayUtils void reverse(short[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.BooleanUtils boolean isFalse(java.lang.Boolean) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.BooleanUtils boolean isFalse(java.lang.Boolean)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;false&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.BooleanUtils boolean isNotFalse(java.lang.Boolean) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.BooleanUtils boolean isNotTrue(java.lang.Boolean) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.BooleanUtils boolean isTrue(java.lang.Boolean) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.BooleanUtils boolean isTrue(java.lang.Boolean)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;false&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.commons.lang.BooleanUtils boolean toBoolean(java.lang.Boolean) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.BooleanUtils boolean toBoolean(java.lang.Boolean)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;false&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.BooleanUtils boolean toBoolean(java.lang.Integer, java.lang.Integer, java.lang.Integer) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.BooleanUtils boolean toBoolean(java.lang.Integer, java.lang.Integer, java.lang.Integer) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.BooleanUtils boolean toBoolean(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.BooleanUtils boolean toBoolean(java.lang.String, java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.BooleanUtils boolean toBoolean(java.lang.String, java.lang.String, java.lang.String) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.BooleanUtils boolean toBooleanDefaultIfNull(java.lang.Boolean, boolean) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.BooleanUtils boolean xor(boolean[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.BooleanUtils int toInteger(java.lang.Boolean, int, int, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.BooleanUtils java.lang.Boolean negate(java.lang.Boolean) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.BooleanUtils java.lang.Boolean negate(java.lang.Boolean)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.BooleanUtils java.lang.Boolean toBooleanObject(int, int, int, int)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.BooleanUtils java.lang.Boolean toBooleanObject(java.lang.Integer) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.BooleanUtils java.lang.Boolean toBooleanObject(java.lang.Integer)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.BooleanUtils java.lang.Boolean toBooleanObject(java.lang.Integer, java.lang.Integer, java.lang.Integer, java.lang.Integer) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.BooleanUtils java.lang.Boolean toBooleanObject(java.lang.Integer, java.lang.Integer, java.lang.Integer, java.lang.Integer) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.BooleanUtils java.lang.Boolean toBooleanObject(java.lang.Integer, java.lang.Integer, java.lang.Integer, java.lang.Integer) 3">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.BooleanUtils java.lang.Boolean toBooleanObject(java.lang.Integer, java.lang.Integer, java.lang.Integer, java.lang.Integer)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.BooleanUtils java.lang.Boolean toBooleanObject(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.BooleanUtils java.lang.Boolean toBooleanObject(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.BooleanUtils java.lang.Boolean toBooleanObject(java.lang.String, java.lang.String, java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.BooleanUtils java.lang.Boolean toBooleanObject(java.lang.String, java.lang.String, java.lang.String, java.lang.String) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.BooleanUtils java.lang.Boolean toBooleanObject(java.lang.String, java.lang.String, java.lang.String, java.lang.String) 3">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.BooleanUtils java.lang.Boolean toBooleanObject(java.lang.String, java.lang.String, java.lang.String, java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.BooleanUtils java.lang.Boolean xor(java.lang.Boolean[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.BooleanUtils java.lang.Integer toIntegerObject(java.lang.Boolean) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.BooleanUtils java.lang.Integer toIntegerObject(java.lang.Boolean)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.BooleanUtils java.lang.Integer toIntegerObject(java.lang.Boolean, java.lang.Integer, java.lang.Integer, java.lang.Integer) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.BooleanUtils java.lang.String toString(java.lang.Boolean, java.lang.String, java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.BooleanUtils java.lang.String toStringOnOff(java.lang.Boolean) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.BooleanUtils java.lang.String toStringTrueFalse(java.lang.Boolean) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.BooleanUtils java.lang.String toStringYesNo(java.lang.Boolean) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.CharEncoding boolean isSupported(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.CharEncoding boolean isSupported(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -339,36 +973,69 @@
   <item name="org.apache.commons.lang.CharRange boolean contains(org.apache.commons.lang.CharRange) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.CharRange boolean equals(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.CharSet CharSet(java.lang.String[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.CharSet boolean equals(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.CharSet org.apache.commons.lang.CharSet getInstance(java.lang.String[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.CharSet org.apache.commons.lang.CharSet getInstance(java.lang.String[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.CharSet void add(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.CharSetUtils int count(java.lang.String, java.lang.String[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.CharSetUtils java.lang.String delete(java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_-&gt;!null;null,_-&gt;null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.CharSetUtils java.lang.String delete(java.lang.String, java.lang.String[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.CharSetUtils java.lang.String delete(java.lang.String, java.lang.String[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_-&gt;!null;null,_-&gt;null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.CharSetUtils java.lang.String keep(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.CharSetUtils java.lang.String keep(java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_-&gt;!null;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.CharSetUtils java.lang.String keep(java.lang.String, java.lang.String[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.CharSetUtils java.lang.String keep(java.lang.String, java.lang.String[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.CharSetUtils java.lang.String keep(java.lang.String, java.lang.String[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_-&gt;!null;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.CharSetUtils java.lang.String modify(java.lang.String, java.lang.String[], boolean) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.CharSetUtils java.lang.String modify(java.lang.String, java.lang.String[], boolean) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.CharSetUtils java.lang.String modify(java.lang.String, java.lang.String[], boolean)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -377,6 +1044,9 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_-&gt;!null;null,_-&gt;null&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.commons.lang.CharSetUtils java.lang.String squeeze(java.lang.String, java.lang.String[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.CharSetUtils java.lang.String squeeze(java.lang.String, java.lang.String[])">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -388,13 +1058,20 @@
       <val val="&quot;!null,_,_-&gt;!null;null,_,_-&gt;null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.CharSetUtils org.apache.commons.lang.CharSet evaluateSet(java.lang.String[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.CharSetUtils org.apache.commons.lang.CharSet evaluateSet(java.lang.String[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.CharUtils char toChar(java.lang.Character) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.CharUtils char toChar(java.lang.Character, char) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.CharUtils char toChar(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -402,28 +1079,55 @@
   <item name="org.apache.commons.lang.CharUtils int toIntValue(java.lang.Character) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.CharUtils int toIntValue(java.lang.Character, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.CharUtils java.lang.Character toCharacterObject(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.CharUtils java.lang.String toString(java.lang.Character) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.CharUtils java.lang.String toString(java.lang.Character)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.CharUtils java.lang.String unicodeEscaped(char)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.CharUtils java.lang.String unicodeEscaped(java.lang.Character) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.CharUtils java.lang.String unicodeEscaped(java.lang.Character)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ClassUtils boolean isAssignable(java.lang.Class, java.lang.Class) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ClassUtils boolean isAssignable(java.lang.Class, java.lang.Class) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ClassUtils boolean isAssignable(java.lang.Class, java.lang.Class)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;_,null-&gt;false&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.commons.lang.ClassUtils boolean isAssignable(java.lang.Class[], java.lang.Class[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ClassUtils boolean isAssignable(java.lang.Class[], java.lang.Class[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ClassUtils boolean isInnerClass(java.lang.Class) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ClassUtils boolean isInnerClass(java.lang.Class)">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -435,23 +1139,44 @@
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.ClassUtils java.lang.Class[] primitivesToWrappers(java.lang.Class[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.ClassUtils java.lang.Class[] primitivesToWrappers(java.lang.Class[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ClassUtils java.lang.Class[] toClass(java.lang.Object[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ClassUtils java.lang.Class[] toClass(java.lang.Object[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ClassUtils java.lang.Class[] wrappersToPrimitives(java.lang.Class[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ClassUtils java.lang.Class[] wrappersToPrimitives(java.lang.Class[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ClassUtils java.lang.String getCanonicalName(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ClassUtils java.lang.String getPackageCanonicalName(java.lang.Class) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ClassUtils java.lang.String getPackageCanonicalName(java.lang.Class)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.ClassUtils java.lang.String getPackageCanonicalName(java.lang.Object, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ClassUtils java.lang.String getPackageCanonicalName(java.lang.Object, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -461,19 +1186,34 @@
   <item name="org.apache.commons.lang.ClassUtils java.lang.String getPackageCanonicalName(java.lang.String)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.ClassUtils java.lang.String getPackageName(java.lang.Class) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.ClassUtils java.lang.String getPackageName(java.lang.Class)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.ClassUtils java.lang.String getPackageName(java.lang.Object, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ClassUtils java.lang.String getPackageName(java.lang.Object, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_-&gt;!null;_,!null-&gt;!null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.ClassUtils java.lang.String getPackageName(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.ClassUtils java.lang.String getPackageName(java.lang.String)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.ClassUtils java.lang.String getShortCanonicalName(java.lang.Class) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.ClassUtils java.lang.String getShortCanonicalName(java.lang.Class)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.ClassUtils java.lang.String getShortCanonicalName(java.lang.Object, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ClassUtils java.lang.String getShortCanonicalName(java.lang.Object, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -483,13 +1223,22 @@
   <item name="org.apache.commons.lang.ClassUtils java.lang.String getShortCanonicalName(java.lang.String)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.ClassUtils java.lang.String getShortClassName(java.lang.Class) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.ClassUtils java.lang.String getShortClassName(java.lang.Class)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.ClassUtils java.lang.String getShortClassName(java.lang.Object, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ClassUtils java.lang.String getShortClassName(java.lang.Object, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_-&gt;!null;_,!null-&gt;!null&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.commons.lang.ClassUtils java.lang.String getShortClassName(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ClassUtils java.lang.String getShortClassName(java.lang.String)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -505,25 +1254,41 @@
   <item name="org.apache.commons.lang.ClassUtils java.lang.reflect.Method getPublicMethod(java.lang.Class, java.lang.String, java.lang.Class[]) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.ClassUtils java.util.List convertClassNamesToClasses(java.util.List) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.ClassUtils java.util.List convertClassNamesToClasses(java.util.List)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ClassUtils java.util.List convertClassesToClassNames(java.util.List) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ClassUtils java.util.List convertClassesToClassNames(java.util.List)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ClassUtils java.util.List getAllInterfaces(java.lang.Class) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ClassUtils java.util.List getAllInterfaces(java.lang.Class)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ClassUtils java.util.List getAllSuperclasses(java.lang.Class) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ClassUtils java.util.List getAllSuperclasses(java.lang.Class)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.Entities java.io.StringWriter createStringWriter(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -558,29 +1323,98 @@
   <item name="org.apache.commons.lang.Entities void unescape(java.io.Writer, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.Entities.ArrayEntityMap int value(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.Entities.ArrayEntityMap java.lang.String name(int)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.Entities.BinaryEntityMap java.lang.String name(int)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.IllegalClassException IllegalClassException(java.lang.Class, java.lang.Class) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.IllegalClassException IllegalClassException(java.lang.Class, java.lang.Class) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.IllegalClassException IllegalClassException(java.lang.Class, java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.IllegalClassException IllegalClassException(java.lang.Class, java.lang.Object) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.IllegalClassException java.lang.String safeGetClassName(java.lang.Class) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.IllegalClassException java.lang.String safeGetClassName(java.lang.Class)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.IncompleteArgumentException IncompleteArgumentException(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.IncompleteArgumentException IncompleteArgumentException(java.lang.String, java.lang.String[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.IncompleteArgumentException IncompleteArgumentException(java.lang.String, java.lang.String[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.IncompleteArgumentException java.lang.String safeArrayToString(java.lang.Object[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.IncompleteArgumentException java.lang.String safeArrayToString(java.lang.Object[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.IntHashMap boolean contains(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.IntHashMap java.lang.Object get(int)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.IntHashMap java.lang.Object put(int, java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.IntHashMap java.lang.Object remove(int)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.LocaleUtils java.util.List localeLookupList(java.util.Locale)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.LocaleUtils java.util.List localeLookupList(java.util.Locale, java.util.Locale) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.LocaleUtils java.util.List localeLookupList(java.util.Locale, java.util.Locale)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.LocaleUtils java.util.Locale toLocale(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.LocaleUtils java.util.Locale toLocale(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.NotImplementedException NotImplementedException(java.lang.Class) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.NotImplementedException NotImplementedException(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.NotImplementedException NotImplementedException(java.lang.String, java.lang.Throwable) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.NotImplementedException java.lang.String getMessage()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.NullArgumentException NullArgumentException(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.NumberRange NumberRange(java.lang.Number) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -591,15 +1425,27 @@
   <item name="org.apache.commons.lang.NumberRange NumberRange(java.lang.Number, java.lang.Number) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.NumberRange boolean equals(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.NumberRange boolean includesNumber(java.lang.Number) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.NumberRange boolean includesNumber(java.lang.Number)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;false&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.NumberRange boolean includesRange(org.apache.commons.lang.NumberRange) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.NumberRange boolean includesRange(org.apache.commons.lang.NumberRange)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;false&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.commons.lang.NumberRange boolean overlaps(org.apache.commons.lang.NumberRange) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.NumberRange boolean overlaps(org.apache.commons.lang.NumberRange)">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -609,10 +1455,16 @@
   <item name="org.apache.commons.lang.NumberRange java.lang.String toString()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.NumberUtils boolean isAllZeros(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.NumberUtils boolean isAllZeros(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;true&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.commons.lang.NumberUtils boolean isDigits(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.NumberUtils boolean isDigits(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -642,10 +1494,14 @@
   <item name="org.apache.commons.lang.NumberUtils java.lang.Long createLong(java.lang.String)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.NumberUtils java.lang.Number createNumber(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.NumberUtils java.lang.Number createNumber(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.NumberUtils java.math.BigDecimal createBigDecimal(java.lang.String)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -653,25 +1509,60 @@
   <item name="org.apache.commons.lang.NumberUtils java.math.BigInteger createBigInteger(java.lang.String)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.ObjectUtils boolean equals(java.lang.Object, java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ObjectUtils boolean equals(java.lang.Object, java.lang.Object) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ObjectUtils int hashCode(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ObjectUtils java.lang.Object defaultIfNull(java.lang.Object, java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.ObjectUtils java.lang.Object defaultIfNull(java.lang.Object, java.lang.Object)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_-&gt;!null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.ObjectUtils java.lang.Object max(java.lang.Comparable, java.lang.Comparable) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ObjectUtils java.lang.Object min(java.lang.Comparable, java.lang.Comparable) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ObjectUtils java.lang.String identityToString(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.ObjectUtils java.lang.String identityToString(java.lang.Object)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ObjectUtils java.lang.String toString(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ObjectUtils java.lang.String toString(java.lang.Object)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;!null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.ObjectUtils java.lang.String toString(java.lang.Object, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ObjectUtils java.lang.StringBuffer appendIdentityToString(java.lang.StringBuffer, java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.ObjectUtils java.lang.StringBuffer appendIdentityToString(java.lang.StringBuffer, java.lang.Object) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.ObjectUtils java.lang.StringBuffer appendIdentityToString(java.lang.StringBuffer, java.lang.Object)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;_,!null-&gt;!null;_,null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.ObjectUtils void identityToString(java.lang.StringBuffer, java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -685,17 +1576,29 @@
   <item name="org.apache.commons.lang.RandomStringUtils java.lang.String random(int, boolean, boolean)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.RandomStringUtils java.lang.String random(int, char[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.RandomStringUtils java.lang.String random(int, char[])">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.lang.RandomStringUtils java.lang.String random(int, int, int, boolean, boolean)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.RandomStringUtils java.lang.String random(int, int, int, boolean, boolean, char[]) 5">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.RandomStringUtils java.lang.String random(int, int, int, boolean, boolean, char[])">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.RandomStringUtils java.lang.String random(int, int, int, boolean, boolean, char[], java.util.Random) 5">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.RandomStringUtils java.lang.String random(int, int, int, boolean, boolean, char[], java.util.Random)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.RandomStringUtils java.lang.String random(int, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.RandomStringUtils java.lang.String random(int, java.lang.String)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -712,179 +1615,403 @@
   <item name="org.apache.commons.lang.RandomStringUtils java.lang.String randomNumeric(int)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.SerializationUtils java.lang.Object clone(java.io.Serializable)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.SerializationUtils java.lang.Object deserialize(byte[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.SerializationUtils java.lang.Object deserialize(byte[])">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.SerializationUtils java.lang.Object deserialize(java.io.InputStream) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.SerializationUtils java.lang.Object deserialize(java.io.InputStream)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.SerializationUtils void serialize(java.io.Serializable, java.io.OutputStream) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.StringEscapeUtils java.lang.String escapeCsv(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringEscapeUtils java.lang.String escapeHtml(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringEscapeUtils java.lang.String escapeHtml(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringEscapeUtils java.lang.String escapeJava(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringEscapeUtils java.lang.String escapeJava(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringEscapeUtils java.lang.String escapeJavaScript(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringEscapeUtils java.lang.String escapeJavaScript(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringEscapeUtils java.lang.String escapeJavaStyleString(java.lang.String, boolean) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringEscapeUtils java.lang.String escapeJavaStyleString(java.lang.String, boolean)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringEscapeUtils java.lang.String escapeSql(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringEscapeUtils java.lang.String escapeSql(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringEscapeUtils java.lang.String escapeXml(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringEscapeUtils java.lang.String escapeXml(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringEscapeUtils java.lang.String hex(char)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.StringEscapeUtils java.lang.String unescapeCsv(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringEscapeUtils java.lang.String unescapeCsv(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringEscapeUtils java.lang.String unescapeHtml(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringEscapeUtils java.lang.String unescapeHtml(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringEscapeUtils java.lang.String unescapeJava(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringEscapeUtils java.lang.String unescapeJava(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringEscapeUtils java.lang.String unescapeJavaScript(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringEscapeUtils java.lang.String unescapeJavaScript(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringEscapeUtils java.lang.String unescapeXml(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringEscapeUtils java.lang.String unescapeXml(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringEscapeUtils void escapeHtml(java.io.Writer, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.StringEscapeUtils void escapeHtml(java.io.Writer, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringEscapeUtils void escapeJava(java.io.Writer, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.StringEscapeUtils void escapeJava(java.io.Writer, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringEscapeUtils void escapeJavaScript(java.io.Writer, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.StringEscapeUtils void escapeJavaScript(java.io.Writer, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringEscapeUtils void escapeJavaStyleString(java.io.Writer, java.lang.String, boolean) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.StringEscapeUtils void escapeJavaStyleString(java.io.Writer, java.lang.String, boolean) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringEscapeUtils void escapeXml(java.io.Writer, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.StringEscapeUtils void escapeXml(java.io.Writer, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringEscapeUtils void unescapeCsv(java.io.Writer, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringEscapeUtils void unescapeHtml(java.io.Writer, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.StringEscapeUtils void unescapeHtml(java.io.Writer, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringEscapeUtils void unescapeJava(java.io.Writer, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.StringEscapeUtils void unescapeJava(java.io.Writer, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringEscapeUtils void unescapeJavaScript(java.io.Writer, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.StringEscapeUtils void unescapeJavaScript(java.io.Writer, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringEscapeUtils void unescapeXml(java.io.Writer, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.StringEscapeUtils void unescapeXml(java.io.Writer, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils boolean contains(java.lang.String, char)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_-&gt;false&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.StringUtils boolean contains(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils boolean contains(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringUtils boolean contains(java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;_,null-&gt;false;null,_-&gt;false&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils boolean containsAny(java.lang.String, char[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils boolean containsAny(java.lang.String, char[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils boolean containsAny(java.lang.String, char[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;_,null-&gt;false;null,_-&gt;false&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.StringUtils boolean containsAny(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils boolean containsAny(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringUtils boolean containsAny(java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;_,null-&gt;false;null,_-&gt;false&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils boolean containsIgnoreCase(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils boolean containsIgnoreCase(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils boolean containsIgnoreCase(java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;_,null-&gt;false;null,_-&gt;false&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.StringUtils boolean containsNone(java.lang.String, char[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils boolean containsNone(java.lang.String, char[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringUtils boolean containsNone(java.lang.String, char[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;_,null-&gt;true;null,_-&gt;true&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils boolean containsNone(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils boolean containsNone(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils boolean containsNone(java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;_,null-&gt;true;null,_-&gt;true&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.StringUtils boolean containsOnly(java.lang.String, char[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils boolean containsOnly(java.lang.String, char[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringUtils boolean containsOnly(java.lang.String, char[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;_,null-&gt;false;null,_-&gt;false&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils boolean containsOnly(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils boolean containsOnly(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils boolean containsOnly(java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;_,null-&gt;false;null,_-&gt;false&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.StringUtils boolean endsWith(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils boolean endsWith(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils boolean endsWith(java.lang.String, java.lang.String, boolean) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils boolean endsWith(java.lang.String, java.lang.String, boolean) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils boolean endsWithIgnoreCase(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils boolean endsWithIgnoreCase(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils boolean equals(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils boolean equals(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils boolean equalsIgnoreCase(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils boolean equalsIgnoreCase(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils boolean isAlpha(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringUtils boolean isAlpha(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;false&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils boolean isAlphaSpace(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils boolean isAlphaSpace(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;false&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.StringUtils boolean isAlphanumeric(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringUtils boolean isAlphanumeric(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;false&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils boolean isAlphanumericSpace(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils boolean isAlphanumericSpace(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;false&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.StringUtils boolean isAsciiPrintable(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringUtils boolean isAsciiPrintable(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;false&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils boolean isBlank(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils boolean isBlank(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;true&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.StringUtils boolean isEmpty(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringUtils boolean isEmpty(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;true&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils boolean isNotBlank(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils boolean isNotEmpty(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils boolean isNumeric(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils boolean isNumeric(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;false&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.StringUtils boolean isNumericSpace(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringUtils boolean isNumericSpace(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;false&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.StringUtils boolean isWhitespace(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringUtils boolean isWhitespace(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;false&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils boolean startsWith(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils boolean startsWith(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils boolean startsWith(java.lang.String, java.lang.String, boolean) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils boolean startsWith(java.lang.String, java.lang.String, boolean) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils boolean startsWithIgnoreCase(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils boolean startsWithIgnoreCase(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils int getLevenshteinDistance(java.lang.String, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -892,15 +2019,77 @@
   <item name="org.apache.commons.lang.StringUtils int getLevenshteinDistance(java.lang.String, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.StringUtils int indexOf(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils int indexOf(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils int indexOf(java.lang.String, java.lang.String, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils int indexOf(java.lang.String, java.lang.String, int) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils int indexOfAny(java.lang.String, java.lang.String[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils int indexOfAny(java.lang.String, java.lang.String[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils int indexOfDifference(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils int indexOfDifference(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils int indexOfDifference(java.lang.String[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils int lastIndexOf(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils int lastIndexOf(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils int lastIndexOf(java.lang.String, java.lang.String, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils int lastIndexOf(java.lang.String, java.lang.String, int) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils int lastIndexOfAny(java.lang.String, java.lang.String[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils int lastIndexOfAny(java.lang.String, java.lang.String[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils int length(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils int ordinalIndexOf(java.lang.String, java.lang.String, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils int ordinalIndexOf(java.lang.String, java.lang.String, int) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String abbreviate(java.lang.String, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String abbreviate(java.lang.String, int)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_-&gt;!null;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String abbreviate(java.lang.String, int, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String abbreviate(java.lang.String, int, int)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_,_-&gt;!null;null,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String capitalise(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -921,21 +2110,27 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String center(java.lang.String, int, char)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String center(java.lang.String, int, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String chomp(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String chomp(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String chomp(java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -958,10 +2153,14 @@
       <val val="&quot;!null,_-&gt;!null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String chop(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String chop(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String chopNewline(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -969,38 +2168,64 @@
   <item name="org.apache.commons.lang.StringUtils java.lang.String chopNewline(java.lang.String)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String clean(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String clean(java.lang.String)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String concatenate(java.lang.Object[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String concatenate(java.lang.Object[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String defaultString(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String defaultString(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String defaultString(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String defaultString(java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_-&gt;!null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String deleteSpaces(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String deleteSpaces(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String deleteWhitespace(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String difference(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String difference(java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_-&gt;!null;_,!null-&gt;!null&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String escape(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String escape(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String getChomp(java.lang.String, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -1013,20 +2238,40 @@
       <val val="&quot;_,!null-&gt;!null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String getCommonPrefix(java.lang.String[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String getCommonPrefix(java.lang.String[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;!null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String getNestedString(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String getNestedString(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String getNestedString(java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;_,null-&gt;null;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String getNestedString(java.lang.String, java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String getNestedString(java.lang.String, java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String getNestedString(java.lang.String, java.lang.String, java.lang.String) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String getNestedString(java.lang.String, java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;_,_,null-&gt;null;_,null,_-&gt;null;null,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String getPrechomp(java.lang.String, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -1037,85 +2282,164 @@
   <item name="org.apache.commons.lang.StringUtils java.lang.String getPrechomp(java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String join(java.lang.Object[]) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String join(java.lang.Object[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String join(java.lang.Object[], char) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String join(java.lang.Object[], char)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_-&gt;!null;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String join(java.lang.Object[], char, int, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String join(java.lang.Object[], char, int, int)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_,_,_-&gt;!null;null,_,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String join(java.lang.Object[], java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String join(java.lang.Object[], java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String join(java.lang.Object[], java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_-&gt;!null;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String join(java.lang.Object[], java.lang.String, int, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String join(java.lang.Object[], java.lang.String, int, int) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String join(java.lang.Object[], java.lang.String, int, int)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_,_,_-&gt;!null;null,_,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String join(java.util.Collection, char) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String join(java.util.Collection, char)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String join(java.util.Collection, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String join(java.util.Collection, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String join(java.util.Collection, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String join(java.util.Iterator, char) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String join(java.util.Iterator, char)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String join(java.util.Iterator, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String join(java.util.Iterator, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String join(java.util.Iterator, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String left(java.lang.String, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String left(java.lang.String, int)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_-&gt;!null;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String leftPad(java.lang.String, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String leftPad(java.lang.String, int)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String leftPad(java.lang.String, int, char) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String leftPad(java.lang.String, int, char)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String leftPad(java.lang.String, int, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String leftPad(java.lang.String, int, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String lowerCase(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String lowerCase(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String mid(java.lang.String, int, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String mid(java.lang.String, int, int)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_,_-&gt;!null;null,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String overlay(java.lang.String, java.lang.String, int, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String overlay(java.lang.String, java.lang.String, int, int) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String overlay(java.lang.String, java.lang.String, int, int)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_,_,_-&gt;!null;null,_,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String overlayString(java.lang.String, java.lang.String, int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -1170,115 +2494,211 @@
       <val val="&quot;!null,_-&gt;!null;null,_-&gt;null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String repeat(java.lang.String, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String repeat(java.lang.String, int)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_-&gt;!null;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String replace(java.lang.String, java.lang.String, java.lang.String) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String replace(java.lang.String, java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_,_-&gt;!null;null,_,_-&gt;null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String replace(java.lang.String, java.lang.String, java.lang.String, int) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String replace(java.lang.String, java.lang.String, java.lang.String, int)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_,_,_-&gt;!null;null,_,_,_-&gt;null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String replaceChars(java.lang.String, char, char) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String replaceChars(java.lang.String, char, char)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_,_-&gt;!null;null,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String replaceChars(java.lang.String, java.lang.String, java.lang.String) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String replaceChars(java.lang.String, java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_,_-&gt;!null;null,_,_-&gt;null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String replaceEach(java.lang.String, java.lang.String[], java.lang.String[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String replaceEach(java.lang.String, java.lang.String[], java.lang.String[]) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String replaceEach(java.lang.String, java.lang.String[], java.lang.String[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_-&gt;null&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String replaceEach(java.lang.String, java.lang.String[], java.lang.String[], boolean, int) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String replaceEach(java.lang.String, java.lang.String[], java.lang.String[], boolean, int) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String replaceEach(java.lang.String, java.lang.String[], java.lang.String[], boolean, int)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_,_,_-&gt;null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String replaceEachRepeatedly(java.lang.String, java.lang.String[], java.lang.String[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String replaceEachRepeatedly(java.lang.String, java.lang.String[], java.lang.String[]) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String replaceEachRepeatedly(java.lang.String, java.lang.String[], java.lang.String[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_-&gt;null&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String replaceOnce(java.lang.String, java.lang.String, java.lang.String) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String replaceOnce(java.lang.String, java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_,_-&gt;!null;null,_,_-&gt;null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String reverse(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String reverse(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String reverseDelimited(java.lang.String, char) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String reverseDelimited(java.lang.String, char)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String reverseDelimitedString(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String reverseDelimitedString(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String reverseDelimitedString(java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String right(java.lang.String, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String right(java.lang.String, int)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_-&gt;!null;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String rightPad(java.lang.String, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String rightPad(java.lang.String, int)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String rightPad(java.lang.String, int, char) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String rightPad(java.lang.String, int, char)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String rightPad(java.lang.String, int, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String rightPad(java.lang.String, int, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String strip(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String stripEnd(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String stripEnd(java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_-&gt;!null;null,_-&gt;null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String stripStart(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String stripStart(java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_-&gt;!null;null,_-&gt;null&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String stripToEmpty(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String stripToEmpty(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;!null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String stripToNull(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String stripToNull(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String substring(java.lang.String, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String substring(java.lang.String, int)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_-&gt;!null;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String substring(java.lang.String, int, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String substring(java.lang.String, int, int)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_,_-&gt;!null;null,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String substringAfter(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String substringAfter(java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -1290,6 +2710,9 @@
       <val val="&quot;!null,_-&gt;!null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String substringBefore(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String substringBefore(java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_-&gt;!null&quot;"/>
@@ -1300,33 +2723,61 @@
       <val val="&quot;!null,_-&gt;!null;null,_-&gt;null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String substringBetween(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String substringBetween(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String substringBetween(java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;_,null-&gt;null;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String substringBetween(java.lang.String, java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String substringBetween(java.lang.String, java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String substringBetween(java.lang.String, java.lang.String, java.lang.String) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String substringBetween(java.lang.String, java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;_,_,null-&gt;null;_,null,_-&gt;null;null,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String swapCase(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String trim(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String trim(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String trimToEmpty(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String trimToEmpty(java.lang.String)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String trimToNull(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String trimToNull(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String uncapitalise(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -1338,115 +2789,228 @@
       <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String upperCase(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String upperCase(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String[] split(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String[] split(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String[] split(java.lang.String, char) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String[] split(java.lang.String, char)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String[] split(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String[] split(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String[] split(java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String[] split(java.lang.String, java.lang.String, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String[] split(java.lang.String, java.lang.String, int) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String[] split(java.lang.String, java.lang.String, int)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitByCharacterType(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitByCharacterType(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitByCharacterType(java.lang.String, boolean) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitByCharacterType(java.lang.String, boolean)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitByCharacterTypeCamelCase(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitByCharacterTypeCamelCase(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitByWholeSeparator(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitByWholeSeparator(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitByWholeSeparator(java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitByWholeSeparator(java.lang.String, java.lang.String, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitByWholeSeparator(java.lang.String, java.lang.String, int) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitByWholeSeparator(java.lang.String, java.lang.String, int)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitByWholeSeparatorPreserveAllTokens(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitByWholeSeparatorPreserveAllTokens(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitByWholeSeparatorPreserveAllTokens(java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitByWholeSeparatorPreserveAllTokens(java.lang.String, java.lang.String, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitByWholeSeparatorPreserveAllTokens(java.lang.String, java.lang.String, int) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitByWholeSeparatorPreserveAllTokens(java.lang.String, java.lang.String, int)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitByWholeSeparatorWorker(java.lang.String, java.lang.String, int, boolean) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitByWholeSeparatorWorker(java.lang.String, java.lang.String, int, boolean) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitByWholeSeparatorWorker(java.lang.String, java.lang.String, int, boolean)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitPreserveAllTokens(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitPreserveAllTokens(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitPreserveAllTokens(java.lang.String, char) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitPreserveAllTokens(java.lang.String, char)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitPreserveAllTokens(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitPreserveAllTokens(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitPreserveAllTokens(java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitPreserveAllTokens(java.lang.String, java.lang.String, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitPreserveAllTokens(java.lang.String, java.lang.String, int) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitPreserveAllTokens(java.lang.String, java.lang.String, int)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitWorker(java.lang.String, char, boolean) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitWorker(java.lang.String, char, boolean)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitWorker(java.lang.String, java.lang.String, int, boolean) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitWorker(java.lang.String, java.lang.String, int, boolean) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String[] splitWorker(java.lang.String, java.lang.String, int, boolean)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String[] stripAll(java.lang.String[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String[] stripAll(java.lang.String[], java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String[] stripAll(java.lang.String[], java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_-&gt;null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.StringUtils java.lang.String[] substringsBetween(java.lang.String, java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String[] substringsBetween(java.lang.String, java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.SystemUtils boolean getJavaVersionMatches(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -1470,6 +3034,12 @@
   <item name="org.apache.commons.lang.SystemUtils java.io.File getUserHome()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.SystemUtils java.lang.String getJavaVersionTrimmed()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.SystemUtils java.lang.String getSystemProperty(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.Validate void allElementsOfType(java.util.Collection, java.lang.Class) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -1481,6 +3051,18 @@
   </item>
   <item name="org.apache.commons.lang.Validate void allElementsOfType(java.util.Collection, java.lang.Class, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.Validate void isTrue(boolean, java.lang.String, double) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.Validate void isTrue(boolean, java.lang.String, java.lang.Object) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.Validate void isTrue(boolean, java.lang.String, java.lang.Object) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.Validate void isTrue(boolean, java.lang.String, long) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.Validate void noNullElements(java.lang.Object[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -1524,15 +3106,28 @@
   <item name="org.apache.commons.lang.Validate void notNull(java.lang.Object, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.lang.WordUtils boolean isDelimiter(char, char[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.WordUtils java.lang.String abbreviate(java.lang.String, int, int, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.WordUtils java.lang.String abbreviate(java.lang.String, int, int, java.lang.String) 3">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.WordUtils java.lang.String abbreviate(java.lang.String, int, int, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_,_,_-&gt;!null;null,_,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.WordUtils java.lang.String capitalize(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.commons.lang.WordUtils java.lang.String capitalize(java.lang.String, char[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.WordUtils java.lang.String capitalize(java.lang.String, char[])">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -1544,6 +3139,9 @@
       <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.WordUtils java.lang.String capitalizeFully(java.lang.String, char[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.WordUtils java.lang.String capitalizeFully(java.lang.String, char[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null,_-&gt;null&quot;"/>
@@ -1553,6 +3151,9 @@
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
+  </item>
+  <item name="org.apache.commons.lang.WordUtils java.lang.String initials(java.lang.String, char[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.WordUtils java.lang.String initials(java.lang.String, char[])">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -1569,19 +3170,33 @@
       <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.WordUtils java.lang.String uncapitalize(java.lang.String, char[]) 1">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.WordUtils java.lang.String uncapitalize(java.lang.String, char[])">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_-&gt;!null;null,_-&gt;null&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.WordUtils java.lang.String wrap(java.lang.String, int) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.commons.lang.WordUtils java.lang.String wrap(java.lang.String, int)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_-&gt;!null;null,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.WordUtils java.lang.String wrap(java.lang.String, int, java.lang.String, boolean) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
+  <item name="org.apache.commons.lang.WordUtils java.lang.String wrap(java.lang.String, int, java.lang.String, boolean) 2">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.WordUtils java.lang.String wrap(java.lang.String, int, java.lang.String, boolean)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_,_,_-&gt;!null;null,_,_,_-&gt;null&quot;"/>
     </annotation>
+    <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
 </root>

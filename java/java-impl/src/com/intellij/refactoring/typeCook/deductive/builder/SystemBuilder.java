@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import com.intellij.util.containers.HashMap;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -49,11 +50,11 @@ public class SystemBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeCook.deductive.builder.SystemBuilder");
 
   private final PsiManager myManager;
-  private final HashMap<PsiElement, Boolean> myMethodCache;
-  private final HashMap<PsiParameter, PsiParameter> myParameters;
-  private final HashMap<PsiMethod, PsiMethod> myMethods;
-  private final HashMap<PsiElement, PsiType> myTypes;
-  private final HashSet<PsiAnchor> myVisitedConstructions;
+  private final Map<PsiElement, Boolean> myMethodCache;
+  private final Map<PsiParameter, PsiParameter> myParameters;
+  private final Map<PsiMethod, PsiMethod> myMethods;
+  private final Map<PsiElement, PsiType> myTypes;
+  private final Set<PsiAnchor> myVisitedConstructions;
   private final Settings mySettings;
   private final PsiTypeVariableFactory myTypeVariableFactory;
   private final Project myProject;
@@ -70,11 +71,11 @@ public class SystemBuilder {
     myTypeVariableFactory = new PsiTypeVariableFactory();
   }
 
-  private HashSet<PsiElement> collect(final PsiElement[] scopes) {
+  private Set<PsiElement> collect(final PsiElement[] scopes) {
     return new VictimCollector(scopes, mySettings).getVictims();
   }
 
-  private boolean verifyMethod(final PsiElement element, final HashSet<PsiElement> victims, final PsiSearchHelper helper) {
+  private boolean verifyMethod(final PsiElement element, final Set<PsiElement> victims, final PsiSearchHelper helper) {
     PsiMethod method;
     PsiParameter parameter = null;
     int index = 0;
@@ -352,7 +353,7 @@ public class SystemBuilder {
         final PsiExpression qualifier =
           expr instanceof PsiMethodCallExpression ? ((PsiMethodCallExpression)expr).getMethodExpression().getQualifierExpression() : null;
 
-        final HashSet<PsiTypeParameter> typeParameters = new HashSet<PsiTypeParameter>(Arrays.asList(methodTypeParameters));
+        final Set<PsiTypeParameter> typeParameters = new HashSet<PsiTypeParameter>(Arrays.asList(methodTypeParameters));
 
         PsiSubstitutor qualifierSubstitutor = PsiSubstitutor.EMPTY;
         PsiSubstitutor supertypeSubstitutor = PsiSubstitutor.EMPTY;
@@ -397,7 +398,7 @@ public class SystemBuilder {
           }
         }
 
-        final HashMap<PsiTypeParameter, PsiType> mapping = new HashMap<PsiTypeParameter, PsiType>();
+        final Map<PsiTypeParameter, PsiType> mapping = new HashMap<PsiTypeParameter, PsiType>();
 
         for (int i = 0; i < Math.min(parameters.length, arguments.length); i++) {
           final PsiType argumentType = evaluateType(arguments[i], system);
@@ -913,7 +914,7 @@ public class SystemBuilder {
     return build(collect(scopes));
   }
 
-  public ReductionSystem build(final HashSet<PsiElement> victims) {
+  public ReductionSystem build(final Set<PsiElement> victims) {
     final PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(myManager.getProject());
 
     ReductionSystem system = new ReductionSystem(myProject, victims, myTypes, myTypeVariableFactory, mySettings);

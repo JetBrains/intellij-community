@@ -424,7 +424,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
     if (e instanceof KeyEvent) {
       // do not start editing in autoStartsEdit mode on Ctrl-Z and other non-typed events
-      if (!UIUtil.isReallyTypedEvent((KeyEvent)e)) return false;
+      if (!UIUtil.isReallyTypedEvent((KeyEvent)e) || ((KeyEvent)e).getKeyChar() == KeyEvent.CHAR_UNDEFINED) return false;
 
       SpeedSearchSupply supply = SpeedSearchSupply.getSupply(this);
       if (supply != null && supply.isPopupActive()) {
@@ -743,7 +743,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
     @Override
     public void setColor(Color color) {
-      if (!UIUtil.isUnderDarcula() || !JBTable.this.getBackground().equals(color)) {
+      if (color != null && (!UIUtil.isUnderDarcula() || !JBTable.this.getBackground().equals(color))) {
         //noinspection UseJBColor
         color = new Color(UIUtil.getGrayFilter().filterRGB(0, 0, color.getRGB()));
       }
