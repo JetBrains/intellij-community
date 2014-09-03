@@ -98,7 +98,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private XExecutionStack myCurrentExecutionStack;
   private XStackFrame myCurrentStackFrame;
   private boolean myIsTopFrame;
-  private XSourcePosition myTopFramePosition;
+  private volatile XSourcePosition myTopFramePosition;
   private final AtomicBoolean myPaused = new AtomicBoolean();
   private MyDependentBreakpointListener myDependentBreakpointListener;
   private XValueMarkers<?, ?> myValueMarkers;
