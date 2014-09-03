@@ -19,16 +19,18 @@
         R_CURLY='}'
         L_BRACKET='['
         R_BRACKET=']'
-        
+
         COMMA=','
         COLON=':'
-        // COMMENT='regexp:"//.*|/\*.*?\*/"'
+        LINE_COMMENT='regexp://.*'
+        // "/*" ([^*]|\*+[^*/])* (\*+"/")?
+        BLOCK_COMMENT='regexp:/\*([^*]|\*+[^*/])*(\*+/)?'
         // else /\*(?:[^*]|\*[^/])*\*+/
 
         // unclosed string literal matches till the line's end
         // any escape sequences included, illegal escapes are indicated by SyntaxHighlighter
         // and JsonStringLiteralAnnotator
-        STRING='regexp:"([^\\"\r\n]|\\[^\r\n])*"?'
+        STRING="regexp:\"([^\\\"\r\n]|\\[^\r\n])*\"?|'([^\\\"\r\n]|\\[^\r\n])*'?"
 //        STRING='regexp:"([^\\"\r\n]|\\([\\"/bfnrt]|u[a-fA-F0-9]{4}))*"?'
 
         NUMBER='regexp:-?\d+(\.\d+([eE][+-]?\d+)?)?'

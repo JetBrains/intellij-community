@@ -54,6 +54,15 @@ public class JsonParsingTest extends ParsingTestCase {
   //  doTest();
   //}
 
+
+  public void testComments() {
+    doTest();
+  }
+
+  public void testStringLiterals() {
+    doTest();
+  }
+
   private void doTest() {
     doTest(true);
   }

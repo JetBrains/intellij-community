@@ -18,9 +18,11 @@ public interface JsonElementTypes {
   IElementType STRING_LITERAL = new JsonElementType("STRING_LITERAL");
   IElementType VALUE = new JsonElementType("VALUE");
 
+  IElementType BLOCK_COMMENT = new JsonTokenType("BLOCK_COMMENT");
   IElementType COLON = new JsonTokenType(":");
   IElementType COMMA = new JsonTokenType(",");
   IElementType FALSE = new JsonTokenType("false");
+  IElementType LINE_COMMENT = new JsonTokenType("LINE_COMMENT");
   IElementType L_BRACKET = new JsonTokenType("[");
   IElementType L_CURLY = new JsonTokenType("{");
   IElementType NULL = new JsonTokenType("null");

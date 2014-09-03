@@ -55,7 +55,7 @@ public class JsonParserDefinition implements ParserDefinition {
   @NotNull
   @Override
   public TokenSet getCommentTokens() {
-    return TokenSet.EMPTY;
+    return TokenSet.create(BLOCK_COMMENT, LINE_COMMENT);
   }
 
   @NotNull
@@ -67,7 +67,7 @@ public class JsonParserDefinition implements ParserDefinition {
   @NotNull
   @Override
   public PsiElement createElement(ASTNode astNode) {
-    return JsonElementTypes.Factory.createElement(astNode);
+    return Factory.createElement(astNode);
   }
 
   @Override
