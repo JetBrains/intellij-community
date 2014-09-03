@@ -52,7 +52,7 @@ public class FileChooser {
                                           @Nullable final Project project,
                                           @Nullable final VirtualFile toSelect) {
     final FileChooserDialog chooser = FileChooserFactory.getInstance().createFileChooser(descriptor, project, parent);
-    return chooser.choose(toSelect, project);
+    return chooser.choose(project, toSelect);
   }
 
   @Nullable
