@@ -173,10 +173,6 @@ public abstract class ApplicationStarterBase extends ApplicationStarterEx {
     if (!ioFile.isAbsolute() && currentDirectory != null) {
       ioFile = new File(currentDirectory, path);
     }
-    if (!ioFile.exists()) {
-      final String dir = PathManager.getOriginalWorkingDir();
-      ioFile = new File(dir + File.separator + path);
-    }
     final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
     if (file == null) {
       throw new OperationFailedException("Can't find file " + path);
