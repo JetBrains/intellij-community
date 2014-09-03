@@ -680,12 +680,12 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
     @Override
     public Class<? extends StateStorage> storageClass() {
-      return StorageAnnotationsDefaultValues.NullStateStorage.class;
+      return StateStorage.class;
     }
 
     @Override
     public Class<? extends StateSplitter> stateSplitter() {
-      return StorageAnnotationsDefaultValues.NullStateSplitter.class;
+      return StateSplitter.class;
     }
 
     @Override

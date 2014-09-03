@@ -320,15 +320,10 @@ public abstract class ComponentStoreImpl implements IComponentStore {
     }
     assert storages.length > 0;
 
-    final Class<StorageAnnotationsDefaultValues.NullStateStorageChooser> defaultClass =
-        StorageAnnotationsDefaultValues.NullStateStorageChooser.class;
-
     final Class<? extends StateStorageChooser> storageChooserClass = stateSpec.storageChooser();
-    final StateStorageChooser<PersistentStateComponent<?>> defaultStateStorageChooser = getDefaultStateStorageChooser();
-    assert storageChooserClass != defaultClass || defaultStateStorageChooser != null : "State chooser not specified for: " +
-                                                                                       persistentStateComponent.getClass();
-
-    if (storageChooserClass == defaultClass) {
+    if (storageChooserClass == StateStorageChooser.class) {
+      StateStorageChooser<PersistentStateComponent<?>> defaultStateStorageChooser = getDefaultStateStorageChooser();
+      assert defaultStateStorageChooser != null : "State chooser not specified for: " + persistentStateComponent.getClass();
       return defaultStateStorageChooser.selectStorages(storages, persistentStateComponent, operation);
     }
     else if (storageChooserClass == LastStorageChooserForWrite.class) {

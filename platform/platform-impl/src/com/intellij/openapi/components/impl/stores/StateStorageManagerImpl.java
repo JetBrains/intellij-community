@@ -176,19 +176,19 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   @Nullable
   private StateStorage createStateStorage(Storage storageSpec) throws StateStorageException {
-    if (!storageSpec.storageClass().equals(StorageAnnotationsDefaultValues.NullStateStorage.class)) {
+    if (!storageSpec.storageClass().equals(StateStorage.class)) {
       String key = UUID.randomUUID().toString();
       ((MutablePicoContainer)myPicoContainer).registerComponentImplementation(key, storageSpec.storageClass());
       return (StateStorage)myPicoContainer.getComponentInstance(key);
     }
-    if (!storageSpec.stateSplitter().equals(StorageAnnotationsDefaultValues.NullStateSplitter.class)) {
+    if (!storageSpec.stateSplitter().equals(StateSplitter.class)) {
       return createDirectoryStateStorage(storageSpec.file(), storageSpec.stateSplitter());
     }
     return createFileStateStorage(storageSpec.file());
   }
 
   private static String getStorageSpecId(Storage storageSpec) {
-    if (!storageSpec.storageClass().equals(StorageAnnotationsDefaultValues.NullStateStorage.class)) {
+    if (!storageSpec.storageClass().equals(StateStorage.class)) {
       return storageSpec.storageClass().getName();
     }
     else {
