@@ -97,12 +97,6 @@ public final class MixedConfigurableGroup implements SearchableConfigurable, Con
     ArrayList<ConfigurableGroup> groups = new ArrayList<ConfigurableGroup>();
     HashMap<String, ArrayList<Configurable>> map = new HashMap<String, ArrayList<Configurable>>();
     for (Configurable configurable : configurables) {
-      if (configurable instanceof SearchableConfigurable.Parent) {
-        SearchableConfigurable.Parent parent = (SearchableConfigurable.Parent)configurable;
-        if (!parent.isVisible()) {
-          continue;
-        }
-      }
       if (configurable instanceof ConfigurableGroup) {
         groups.add((ConfigurableGroup)configurable);
       }
