@@ -31,7 +31,8 @@
         // unclosed string literal matches till the line's end
         // any escape sequences included, illegal escapes are indicated by SyntaxHighlighter
         // and JsonStringLiteralAnnotator
-        STRING="regexp:\"([^\\\"\r\n]|\\[^\r\n])*\"?|'([^\\\"\r\n]|\\[^\r\n])*'?"
+        DOUBLE_QUOTED_STRING="regexp:\"([^\\\"\r\n]|\\[^\r\n])*\"?"
+        SINGLE_QUOTED_STRING="regexp:'([^\\\'\r\n]|\\[^\r\n])*'?"
 //        STRING='regexp:"([^\\"\r\n]|\\([\\"/bfnrt]|u[a-fA-F0-9]{4}))*"?'
 
         NUMBER='regexp:-?\d+(\.\d+([eE][+-]?\d+)?)?'
@@ -86,7 +87,7 @@ private array_element ::= value (','|&']') {
   pin=1
 }
 
-string_literal ::= STRING
+string_literal ::= SINGLE_QUOTED_STRING | DOUBLE_QUOTED_STRING
 number_literal ::= NUMBER
 boolean_literal ::= TRUE | FALSE
 null_literal ::= NULL

@@ -18,7 +18,7 @@ import static com.intellij.json.JsonElementTypes.*;
 
 public class JsonParserDefinition implements ParserDefinition {
   public static final TokenSet WHITE_SPACES = TokenSet.create(TokenType.WHITE_SPACE);
-  public static final TokenSet STRING_LITERALS = TokenSet.create(JsonElementTypes.STRING);
+  public static final TokenSet STRING_LITERALS = TokenSet.create(SINGLE_QUOTED_STRING, DOUBLE_QUOTED_STRING);
 
   public static final IFileElementType FILE = new IFileElementType(JsonLanguage.INSTANCE);
 

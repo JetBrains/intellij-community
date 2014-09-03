@@ -21,6 +21,7 @@ public interface JsonElementTypes {
   IElementType BLOCK_COMMENT = new JsonTokenType("BLOCK_COMMENT");
   IElementType COLON = new JsonTokenType(":");
   IElementType COMMA = new JsonTokenType(",");
+  IElementType DOUBLE_QUOTED_STRING = new JsonTokenType("DOUBLE_QUOTED_STRING");
   IElementType FALSE = new JsonTokenType("false");
   IElementType LINE_COMMENT = new JsonTokenType("LINE_COMMENT");
   IElementType L_BRACKET = new JsonTokenType("[");
@@ -29,7 +30,7 @@ public interface JsonElementTypes {
   IElementType NUMBER = new JsonTokenType("NUMBER");
   IElementType R_BRACKET = new JsonTokenType("]");
   IElementType R_CURLY = new JsonTokenType("}");
-  IElementType STRING = new JsonTokenType("STRING");
+  IElementType SINGLE_QUOTED_STRING = new JsonTokenType("SINGLE_QUOTED_STRING");
   IElementType TEXT = new JsonTokenType("TEXT");
   IElementType TRUE = new JsonTokenType("true");
 

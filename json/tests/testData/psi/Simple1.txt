@@ -4,34 +4,34 @@ JsonFile: Simple1.json
     PsiWhiteSpace(' ')
     JsonProperty
       JsonStringLiteral
-        PsiElement(STRING)('"x"')
+        PsiElement(DOUBLE_QUOTED_STRING)('"x"')
       PsiElement(:)(':')
       PsiWhiteSpace(' ')
       JsonStringLiteral
-        PsiElement(STRING)('"x value"')
+        PsiElement(DOUBLE_QUOTED_STRING)('"x value"')
     PsiElement(,)(',')
     PsiWhiteSpace(' ')
     JsonProperty
       JsonStringLiteral
-        PsiElement(STRING)('"y"')
+        PsiElement(DOUBLE_QUOTED_STRING)('"y"')
       PsiElement(:)(':')
       PsiWhiteSpace(' ')
       JsonStringLiteral
-        PsiElement(STRING)('"y value"')
+        PsiElement(DOUBLE_QUOTED_STRING)('"y value"')
     PsiElement(,)(',')
     PsiWhiteSpace(' ')
     JsonProperty
       JsonStringLiteral
-        PsiElement(STRING)('"z"')
+        PsiElement(DOUBLE_QUOTED_STRING)('"z"')
       PsiElement(:)(':')
       PsiWhiteSpace(' ')
       JsonStringLiteral
-        PsiElement(STRING)('"z value"')
+        PsiElement(DOUBLE_QUOTED_STRING)('"z value"')
     PsiElement(,)(',')
     PsiWhiteSpace(' ')
     JsonProperty
       JsonStringLiteral
-        PsiElement(STRING)('"z2"')
+        PsiElement(DOUBLE_QUOTED_STRING)('"z2"')
       PsiElement(:)(':')
       JsonArray
         PsiElement([)('[')

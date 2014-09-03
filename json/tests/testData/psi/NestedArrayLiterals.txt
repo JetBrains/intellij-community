@@ -8,7 +8,7 @@ JsonFile: NestedArrayLiterals.json
     JsonArray
       PsiElement([)('[')
       JsonStringLiteral
-        PsiElement(STRING)('"foo"')
+        PsiElement(DOUBLE_QUOTED_STRING)('"foo"')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
       JsonArray

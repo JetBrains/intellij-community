@@ -17,15 +17,15 @@ public class JsonParsingTest extends ParsingTestCase {
     doTest();
   }
 
-  public void testNestedArrayLiterals() throws Exception {
+  public void testNestedArrayLiterals() {
     doTest();
   }
 
-  public void testNestedObjectLiterals() throws Exception {
+  public void testNestedObjectLiterals() {
     doTest();
   }
 
-  public void testTopLevelStringLiteral() throws Exception {
+  public void testTopLevelStringLiteral() {
     doTest();
   }
 

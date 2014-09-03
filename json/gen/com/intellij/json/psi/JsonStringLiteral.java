@@ -7,7 +7,10 @@ import com.intellij.psi.PsiElement;
 
 public interface JsonStringLiteral extends JsonLiteral {
 
-  @NotNull
-  PsiElement getString();
+  @Nullable
+  PsiElement getDoubleQuotedString();
+
+  @Nullable
+  PsiElement getSingleQuotedString();
 
 }

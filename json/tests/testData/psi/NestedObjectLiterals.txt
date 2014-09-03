@@ -4,7 +4,7 @@ JsonFile: NestedObjectLiterals.json
     PsiWhiteSpace(' ')
     JsonProperty
       JsonStringLiteral
-        PsiElement(STRING)('"foo"')
+        PsiElement(DOUBLE_QUOTED_STRING)('"foo"')
       PsiElement(:)(':')
       PsiWhiteSpace(' ')
       JsonObject
@@ -12,14 +12,14 @@ JsonFile: NestedObjectLiterals.json
         PsiWhiteSpace(' ')
         JsonProperty
           JsonStringLiteral
-            PsiElement(STRING)('"bar"')
+            PsiElement(DOUBLE_QUOTED_STRING)('"bar"')
           PsiElement(:)(':')
           PsiWhiteSpace(' ')
           JsonObject
             PsiElement({)('{')
             JsonProperty
               JsonStringLiteral
-                PsiElement(STRING)('"baz"')
+                PsiElement(DOUBLE_QUOTED_STRING)('"baz"')
               PsiElement(:)(':')
               PsiWhiteSpace(' ')
               JsonNullLiteral

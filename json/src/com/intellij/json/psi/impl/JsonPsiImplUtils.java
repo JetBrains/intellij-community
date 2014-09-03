@@ -1,9 +1,12 @@
 package com.intellij.json.psi.impl;
 
 import com.intellij.json.JsonElementTypes;
+import com.intellij.json.JsonParserDefinition;
+import com.intellij.json.JsonTokenType;
 import com.intellij.json.psi.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +30,7 @@ public class JsonPsiImplUtils {
   }
 
   public static boolean isQuotedString(@NotNull JsonLiteral literal) {
-    return literal.getNode().findChildByType(JsonElementTypes.STRING) != null;
+    return literal.getNode().findChildByType(JsonParserDefinition.STRING_LITERALS) != null;
   }
 
   public static void delete(@NotNull JsonProperty property) {

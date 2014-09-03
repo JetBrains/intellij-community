@@ -37,9 +37,12 @@ public class JsonSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
       fillMap(ourAttributes, DefaultLanguageHighlighterColors.BRACKETS, L_BRACKET, R_BRACKET);
       fillMap(ourAttributes, DefaultLanguageHighlighterColors.COMMA, COMMA);
       fillMap(ourAttributes, DefaultLanguageHighlighterColors.SEMICOLON, COLON);
-      fillMap(ourAttributes, DefaultLanguageHighlighterColors.STRING, STRING);
+      fillMap(ourAttributes, DefaultLanguageHighlighterColors.STRING, DOUBLE_QUOTED_STRING);
+      fillMap(ourAttributes, DefaultLanguageHighlighterColors.STRING, SINGLE_QUOTED_STRING);
       fillMap(ourAttributes, DefaultLanguageHighlighterColors.NUMBER, NUMBER);
       fillMap(ourAttributes, DefaultLanguageHighlighterColors.KEYWORD, TRUE, FALSE, NULL);
+      fillMap(ourAttributes, DefaultLanguageHighlighterColors.LINE_COMMENT, LINE_COMMENT);
+      fillMap(ourAttributes, DefaultLanguageHighlighterColors.BLOCK_COMMENT, BLOCK_COMMENT);
       fillMap(ourAttributes, HighlighterColors.TEXT, TEXT);
       fillMap(ourAttributes, HighlighterColors.BAD_CHARACTER, TokenType.BAD_CHARACTER);
 
@@ -53,8 +56,10 @@ public class JsonSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
     @Override
     public Lexer getHighlightingLexer() {
       LayeredLexer layeredLexer = new LayeredLexer(new JsonLexer());
-      StringLiteralLexer stringLexer = new StringLiteralLexer('\"', STRING, false, "/", false, false);
-      layeredLexer.registerSelfStoppingLayer(stringLexer, new IElementType[]{STRING}, IElementType.EMPTY_ARRAY);
+      layeredLexer.registerSelfStoppingLayer(new StringLiteralLexer('\"', DOUBLE_QUOTED_STRING, false, "/", false, false),
+                                             new IElementType[]{DOUBLE_QUOTED_STRING}, IElementType.EMPTY_ARRAY);
+      layeredLexer.registerSelfStoppingLayer(new StringLiteralLexer('\'', SINGLE_QUOTED_STRING, false, "/", false, false),
+                                             new IElementType[]{SINGLE_QUOTED_STRING}, IElementType.EMPTY_ARRAY);
       return layeredLexer;
     }
 

@@ -3,7 +3,7 @@ JsonFile: Simple2.json
     PsiElement([)('[')
     PsiWhiteSpace(' ')
     JsonStringLiteral
-      PsiElement(STRING)('"x"')
+      PsiElement(DOUBLE_QUOTED_STRING)('"x"')
     PsiElement(,)(',')
     PsiWhiteSpace(' ')
     JsonNumberLiteral
@@ -23,11 +23,11 @@ JsonFile: Simple2.json
     PsiElement(,)(',')
     PsiWhiteSpace(' ')
     JsonStringLiteral
-      PsiElement(STRING)('"z value"')
+      PsiElement(DOUBLE_QUOTED_STRING)('"z value"')
     PsiElement(,)(',')
     PsiWhiteSpace(' ')
     JsonStringLiteral
-      PsiElement(STRING)('"z2"')
+      PsiElement(DOUBLE_QUOTED_STRING)('"z2"')
     PsiElement(,)(',')
     JsonArray
       PsiElement([)('[')
