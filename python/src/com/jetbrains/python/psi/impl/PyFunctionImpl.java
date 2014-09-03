@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -54,6 +55,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.jetbrains.python.psi.PyFunction.Modifier.CLASSMETHOD;
 import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
 import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.interpretAsModifierWrappingCall;
@@ -61,7 +63,7 @@ import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.interpretAsMo
 /**
  * Implements PyFunction.
  */
-public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> implements PyFunction {
+public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements PyFunction {
 
   public PyFunctionImpl(ASTNode astNode) {
     super(astNode);
@@ -257,6 +259,27 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       type = PyUnionType.createWeakType(type);
     }
     return type;
+  }
+
+  @Override
+  public ItemPresentation getPresentation() {
+    return new PyElementPresentation(this) {
+      @Nullable
+      @Override
+      public String getPresentableText() {
+        return notNullize(getName(), PyNames.UNNAMED_ELEMENT) + getParameterList().getPresentableText(true);
+      }
+
+      @Nullable
+      @Override
+      public String getLocationString() {
+        final PyClass containingClass = getContainingClass();
+        if (containingClass != null) {
+          return "(" + containingClass.getName() + " in " + getPackageForFile(getContainingFile()) + ")";
+        }
+        return super.getLocationString();
+      }
+    };
   }
 
   @Nullable
@@ -528,14 +551,6 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   public PyStringLiteralExpression getDocStringExpression() {
     final PyStatementList stmtList = getStatementList();
     return stmtList != null ? DocStringUtil.findDocStringExpression(stmtList) : null;
-  }
-
-  protected String getElementLocation() {
-    final PyClass containingClass = getContainingClass();
-    if (containingClass != null) {
-      return "(" + containingClass.getName() + " in " + getPackageForFile(getContainingFile()) + ")";
-    }
-    return super.getElementLocation();
   }
 
   @NotNull
