@@ -29,12 +29,12 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.io.fs.IFile;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.*;
@@ -45,12 +45,6 @@ public abstract class ComponentStoreImpl implements IComponentStore {
   private final Map<String, Object> myComponents = Collections.synchronizedMap(new THashMap<String, Object>());
   private final List<SettingsSavingComponent> mySettingsSavingComponents = Collections.synchronizedList(new ArrayList<SettingsSavingComponent>());
   @Nullable private SaveSessionImpl mySession;
-
-  @Deprecated
-  @Nullable
-  private StateStorage getStateStorage(@NotNull final Storage storageSpec) throws StateStorageException {
-    return getStateStorageManager().getStateStorage(storageSpec);
-  }
 
   @Nullable
   protected abstract StateStorage getDefaultsStorage();
@@ -255,9 +249,10 @@ public abstract class ComponentStoreImpl implements IComponentStore {
 
     Storage[] storageSpecs = getComponentStorageSpecs(component, StateStorageOperation.READ);
     for (Storage storageSpec : storageSpecs) {
-      StateStorage stateStorage = getStateStorage(storageSpec);
-      if (stateStorage == null || !stateStorage.hasState(component, name, stateClass, reloadData)) continue;
-      state = stateStorage.getState(component, name, stateClass, state);
+      StateStorage stateStorage = getStateStorageManager().getStateStorage(storageSpec);
+      if (stateStorage != null && stateStorage.hasState(component, name, stateClass, reloadData)) {
+        state = stateStorage.getState(component, name, stateClass, state);
+      }
     }
 
     if (state != null) {
@@ -320,15 +315,10 @@ public abstract class ComponentStoreImpl implements IComponentStore {
     }
     assert storages.length > 0;
 
-    final Class<StorageAnnotationsDefaultValues.NullStateStorageChooser> defaultClass =
-        StorageAnnotationsDefaultValues.NullStateStorageChooser.class;
-
     final Class<? extends StateStorageChooser> storageChooserClass = stateSpec.storageChooser();
-    final StateStorageChooser<PersistentStateComponent<?>> defaultStateStorageChooser = getDefaultStateStorageChooser();
-    assert storageChooserClass != defaultClass || defaultStateStorageChooser != null : "State chooser not specified for: " +
-                                                                                       persistentStateComponent.getClass();
-
-    if (storageChooserClass == defaultClass) {
+    if (storageChooserClass == StateStorageChooser.class) {
+      StateStorageChooser<PersistentStateComponent<?>> defaultStateStorageChooser = getDefaultStateStorageChooser();
+      assert defaultStateStorageChooser != null : "State chooser not specified for: " + persistentStateComponent.getClass();
       return defaultStateStorageChooser.selectStorages(storages, persistentStateComponent, operation);
     }
     else if (storageChooserClass == LastStorageChooserForWrite.class) {
@@ -364,7 +354,7 @@ public abstract class ComponentStoreImpl implements IComponentStore {
 
     @NotNull
     @Override
-    public List<IFile> getAllStorageFilesToSave(final boolean includingSubStructures) throws IOException {
+    public List<File> getAllStorageFilesToSave(final boolean includingSubStructures) throws IOException {
       try {
         return myStorageManagerSaveSession.getAllStorageFilesToSave();
       }
@@ -453,10 +443,9 @@ public abstract class ComponentStoreImpl implements IComponentStore {
 
     @NotNull
     @Override
-    public List<IFile> getAllStorageFiles(final boolean includingSubStructures) {
+    public List<File> getAllStorageFiles(final boolean includingSubStructures) {
       return myStorageManagerSaveSession.getAllStorageFiles();
     }
-
   }
 
   @Override

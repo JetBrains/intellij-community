@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,6 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
-import com.intellij.psi.impl.source.resolve.graphInference.PsiGraphInferenceHelper;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
@@ -117,16 +114,9 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testInferFromRawType() throws Exception {
-    final PsiResolveHelperImpl helper = (PsiResolveHelperImpl)JavaPsiFacade.getInstance(getProject()).getResolveHelper();
-    helper.setTestHelper(new PsiGraphInferenceHelper(getPsiManager()));
-    try {
-      configureByFile("/" + getTestName(false) + ".java");
-      assertNotNull(myItems);
-      assertTrue(myItems.length == 0);
-    }
-    finally {
-      helper.setTestHelper(null);
-    }
+    configureByFile("/" + getTestName(false) + ".java");
+    assertNotNull(myItems);
+    assertTrue(myItems.length == 0);
   }
 
   public void testDiamondsInsideMethodCall() throws Exception {

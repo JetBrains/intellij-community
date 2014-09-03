@@ -36,7 +36,6 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
 
   private static final String XML_EXTENSION = ".xml";
   private static final String DEFAULT_STORAGE_SPEC = StoragePathMacros.APP_CONFIG + "/" + PathManager.DEFAULT_OPTIONS_FILE_NAME + XML_EXTENSION;
-  private static final String OPTIONS_MACRO = "OPTIONS";
   private static final String ROOT_ELEMENT_NAME = "application";
 
   private final ApplicationImpl myApplication;
@@ -95,7 +94,6 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
   @Override
   public void setOptionsPath(final String path) {
     myStateStorageManager.addMacro(StoragePathMacros.getMacroName(StoragePathMacros.APP_CONFIG), path);
-    myStateStorageManager.addMacro(OPTIONS_MACRO, path);
   }
 
   @Override

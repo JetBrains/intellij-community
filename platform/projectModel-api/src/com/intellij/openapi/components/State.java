@@ -32,7 +32,7 @@ public @interface State {
 
   Storage[] storages();
 
-  Class<? extends StateStorageChooser> storageChooser() default StorageAnnotationsDefaultValues.NullStateStorageChooser.class;
+  Class<? extends StateStorageChooser> storageChooser() default StateStorageChooser.class;
 
   boolean reloadable() default true;
 }

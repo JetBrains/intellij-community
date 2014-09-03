@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
@@ -64,7 +65,7 @@ class DebuggerTreeWithHistoryPopup<D> extends DebuggerTreeWithHistoryContainer<D
   }
 
   @Override
-  protected void updateContainer(Tree tree, String title) {
+  protected void updateContainer(final Tree tree, String title) {
     if (myPopup != null) {
       myPopup.cancel();
     }
@@ -75,6 +76,21 @@ class DebuggerTreeWithHistoryPopup<D> extends DebuggerTreeWithHistoryContainer<D
       .setResizable(true)
       .setMovable(true)
       .setDimensionServiceKey(myProject, DIMENSION_SERVICE_KEY, false)
+      .setMayBeParent(true)
+      .setCancelCallback(new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          Window parent = SwingUtilities.getWindowAncestor(tree);
+          if (parent != null) {
+            for (Window child : parent.getOwnedWindows()) {
+              if (child.isShowing()) {
+                return false;
+              }
+            }
+          }
+          return true;
+        }
+      })
       .createPopup();
 
     if (tree instanceof Disposable) {

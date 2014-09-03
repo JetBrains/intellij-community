@@ -36,15 +36,15 @@ import org.jetbrains.annotations.Nullable;
   name = "RecentDirectoryProjectsManager",
   roamingType = RoamingType.DISABLED,
   storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/other.xml"
-    )}
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml")
+  }
 )
 public class RecentDirectoryProjectsManager extends RecentProjectsManagerBase {
   public RecentDirectoryProjectsManager(MessageBus messageBus) {
     super(messageBus);
   }
 
+  @Override
   @Nullable
   protected String getProjectPath(@NotNull Project project) {
     final ProjectBaseDirectory baseDir = ProjectBaseDirectory.getInstance(project);
@@ -52,6 +52,7 @@ public class RecentDirectoryProjectsManager extends RecentProjectsManagerBase {
     return baseDirVFile != null ? FileUtil.toSystemDependentName(baseDirVFile.getPath()) : null;
   }
 
+  @Override
   protected void doOpenProject(@NotNull String projectPath, Project projectToClose, boolean forceOpenInNewFrame) {
     final VirtualFile projectDir = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(projectPath));
     if (projectDir != null) {

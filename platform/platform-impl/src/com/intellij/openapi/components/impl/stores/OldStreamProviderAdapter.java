@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+@SuppressWarnings("deprecation")
 final class OldStreamProviderAdapter extends StreamProvider implements CurrentUserHolder {
   final com.intellij.openapi.options.StreamProvider myProvider;
   private final RoamingType myRoamingType;
