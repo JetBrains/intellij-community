@@ -22,7 +22,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 public class JDOMExternalizer {
   private JDOMExternalizer() {
@@ -66,7 +69,7 @@ public class JDOMExternalizer {
     return null;
   }
 
-  public static void writeMap(Element root, Map<String, String>map, @NonNls @Nullable String rootName, @NonNls String entryName) {
+  public static void writeMap(Element root, Map<String, String> map, @NonNls @Nullable String rootName, @NonNls String entryName) {
     Element mapRoot;
     if (StringUtil.isNotEmpty(rootName)) {
       mapRoot = new Element(rootName);
@@ -106,6 +109,26 @@ public class JDOMExternalizer {
     }
   }
 
+  /**
+   * Saves a pack of strings to some attribte. I.e: [tag attr="value"]
+   * @param parent parent element (where to add newly created tags)
+   * @param nodeName node name (tag, in our example)
+   * @param attrName attribute name (attr, in our example)
+   * @param values a pack of values to add
+   * @see #loadStringsList(org.jdom.Element, String, String)
+   */
+  public static void saveStringsList(@NotNull final Element parent,
+                                     @NotNull final String nodeName,
+                                     @NotNull final String attrName,
+                                     @NotNull final String... values) {
+    for (final String value : values) {
+      final Element node = new Element(nodeName);
+      node.setAttribute(attrName, value);
+      parent.addContent(node);
+    }
+  }
+
+  @NotNull
   public static List<String> loadStringsList(Element element, String rootName, String attrName) {
     final List<String> paths = new LinkedList<String>();
     if (element != null) {
