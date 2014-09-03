@@ -214,6 +214,7 @@ public interface CodeStyleSettingsCustomizable {
 
   String WRAPPING_KEEP = ApplicationBundle.message("wrapping.keep.when.reformatting");
   String WRAPPING_BRACES = ApplicationBundle.message("wrapping.brace.placement");
+  String WRAPPING_COMMENTS = ApplicationBundle.message("wrapping.comments");
   String WRAPPING_METHOD_PARAMETERS = ApplicationBundle.message("wrapping.method.parameters");
   String WRAPPING_METHOD_PARENTHESES = ApplicationBundle.message("wrapping.method.parentheses");
   String WRAPPING_METHOD_ARGUMENTS_WRAPPING = ApplicationBundle.message("wrapping.method.arguments");
