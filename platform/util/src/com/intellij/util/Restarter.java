@@ -153,16 +153,19 @@ public class Restarter {
   public static File createTempExecutable(File executable) throws IOException {
     File executableDir = new File(System.getProperty("user.home") + "/." + System.getProperty("idea.paths.selector") + "/restart");
     File copy = new File(executableDir.getPath() + "/" + executable.getName());
-    System.out.println("copy " + copy.getPath() + " name " + copy.getName() );
-    if (! FileUtilRt.ensureCanCreateFile(copy)) {
-       System.out.println("will be created one more copy of the executable " + executable.getName());
+    System.out.println("copy " + copy.getPath());
+    if (!FileUtilRt.ensureCanCreateFile(copy)) {
+      System.out.println("can not create the " + copy.getPath());
+      System.out.println("will be created another one for " + executable.getName());
        String ext = FileUtilRt.getExtension(executable.getName());
        System.out.println("ext " + ext);
        copy = FileUtilRt.createTempFile(executableDir, FileUtilRt.getNameWithoutExtension(copy.getName()),
                                             StringUtil.isEmptyOrSpaces(ext) ? ".tmp" : ("." + ext),
                                             false);
+    } else{
+      System.out.println("can create the " + copy.getPath());
     }
-    System.out.println("coping " + copy.getPath() + " name " + copy.getName() );
+    System.out.println("coping " + copy.getPath());
     FileUtilRt.copy(executable, copy);
     if (!copy.setExecutable(executable.canExecute())) throw new IOException("Cannot make file executable: " + copy);
     return copy;
