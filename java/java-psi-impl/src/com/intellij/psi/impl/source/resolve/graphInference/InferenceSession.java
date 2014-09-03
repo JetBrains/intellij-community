@@ -174,7 +174,6 @@ public class InferenceSession {
           }
         }
       }
-      return true;
     }
     if (expr instanceof PsiLambdaExpression) {
       if (!((PsiLambdaExpression)expr).hasFormalParameterTypes()) {
