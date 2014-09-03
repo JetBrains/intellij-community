@@ -37,7 +37,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.UniqueFileNamesProvider;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.fs.IFile;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -128,9 +127,9 @@ public class StorageUtil {
    * Due to historical reasons files in ROOT_CONFIG don’t wrapped into document (xml prolog) opposite to files in APP_CONFIG
    */
   @Nullable
-  static VirtualFile save(@NotNull IFile file, @Nullable Parent element, Object requestor, boolean wrapAsDocument) throws StateStorageException {
+  static VirtualFile save(@NotNull File file, @Nullable Parent element, Object requestor, boolean wrapAsDocument) throws StateStorageException {
     if (isEmpty(element)) {
-      file.delete();
+      FileUtil.delete(file);
       return null;
     }
 
@@ -145,7 +144,7 @@ public class StorageUtil {
         }
       }
       else {
-        file.createParentDirs();
+        FileUtil.createParentDirs(file);
         byteOut = writeToBytes(document, SystemProperties.getLineSeparator());
       }
 
@@ -179,28 +178,26 @@ public class StorageUtil {
   }
 
   @NotNull
-  static VirtualFile getOrCreateVirtualFile(final Object requestor, final IFile ioFile) throws IOException {
-    VirtualFile vFile = getVirtualFile(ioFile);
-
-    if (vFile == null) {
-      vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
+  static VirtualFile getOrCreateVirtualFile(@Nullable Object requestor, @NotNull File ioFile) throws IOException {
+    VirtualFile virtualFile = getVirtualFile(ioFile);
+    if (virtualFile == null) {
+      virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
     }
 
-    if (vFile == null) {
-      final IFile parentFile = ioFile.getParentFile();
-      final VirtualFile parentVFile =
-        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(parentFile); // need refresh if the directory has just been created
-      if (parentVFile == null) {
-        throw new IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile.getPath()));
+    if (virtualFile == null) {
+      File parentFile = ioFile.getParentFile();
+      // need refresh if the directory has just been created
+      VirtualFile parentVirtualFile = parentFile == null ? null : LocalFileSystem.getInstance().refreshAndFindFileByIoFile(parentFile);
+      if (parentVirtualFile == null) {
+        throw new IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile == null ? "" : parentFile.getPath()));
       }
-      vFile = parentVFile.createChildData(requestor, ioFile.getName());
+      virtualFile = parentVirtualFile.createChildData(requestor, ioFile.getName());
     }
-
-    return vFile;
+    return virtualFile;
   }
 
   @Nullable
-  static VirtualFile getVirtualFile(final IFile ioFile) {
+  static VirtualFile getVirtualFile(@NotNull File ioFile) {
     return LocalFileSystem.getInstance().findFileByIoFile(ioFile);
   }
 

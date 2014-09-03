@@ -33,8 +33,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
-import com.intellij.util.io.fs.FileSystem;
-import com.intellij.util.io.fs.IFile;
 import com.intellij.util.messages.MessageBus;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -52,12 +50,12 @@ import java.util.Collections;
 import java.util.List;
 
 public class FileBasedStorage extends XmlElementStorage {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.FileBasedStorage");
+  private static final Logger LOG = Logger.getInstance(FileBasedStorage.class);
 
   private static boolean ourConfigDirectoryRefreshed = false;
 
   private final String myFilePath;
-  private final IFile myFile;
+  private final File myFile;
   private final String myRootElementName;
   private volatile VirtualFile myCachedVirtualFile;
 
@@ -76,16 +74,13 @@ public class FileBasedStorage extends XmlElementStorage {
 
     myRootElementName = rootElementName;
     myFilePath = filePath;
-    myFile = FileSystem.FILE_SYSTEM.createFile(myFilePath);
+    myFile = new File(filePath);
 
     VirtualFileTracker virtualFileTracker = ServiceManager.getService(VirtualFileTracker.class);
     MessageBus messageBus = (MessageBus)picoContainer.getComponentInstanceOfType(MessageBus.class);
     if (virtualFileTracker != null && messageBus != null) {
-      final String path = myFile.getAbsolutePath();
-      final String fileUrl = LocalFileSystem.PROTOCOL_PREFIX + path.replace(File.separatorChar, '/');
-
       final Listener listener = messageBus.syncPublisher(STORAGE_TOPIC);
-      virtualFileTracker.addTracker(fileUrl, new VirtualFileAdapter() {
+      virtualFileTracker.addTracker(LocalFileSystem.PROTOCOL_PREFIX + myFile.getAbsolutePath().replace(File.separatorChar, '/'), new VirtualFileAdapter() {
         @Override
         public void fileMoved(@NotNull VirtualFileMoveEvent event) {
           myCachedVirtualFile = null;
@@ -178,7 +173,7 @@ public class FileBasedStorage extends XmlElementStorage {
 
     @NotNull
     @Override
-    public Collection<IFile> getStorageFilesToSave() {
+    public Collection<File> getStorageFilesToSave() {
       if (needsSave()) {
         if (LOG.isDebugEnabled()) {
           LOG.info("File " + myFileSpec + " needs save; hash=" + myUpToDateHash + "; currentHash=" + calcHash() + "; " +
@@ -193,7 +188,7 @@ public class FileBasedStorage extends XmlElementStorage {
 
     @NotNull
     @Override
-    public List<IFile> getAllStorageFiles() {
+    public List<File> getAllStorageFiles() {
       return Collections.singletonList(myFile);
     }
   }
@@ -243,7 +238,7 @@ public class FileBasedStorage extends XmlElementStorage {
   }
 
   public File getFile() {
-    return new File(myFile.getPath());
+    return myFile;
   }
 
   @Override
@@ -324,7 +319,7 @@ public class FileBasedStorage extends XmlElementStorage {
   public File updateFileExternallyFromStreamProviders() throws IOException {
     Element element = getElement(loadData(true, null));
     if (element == null) {
-      myFile.delete();
+      FileUtil.delete(myFile);
       return null;
     }
 

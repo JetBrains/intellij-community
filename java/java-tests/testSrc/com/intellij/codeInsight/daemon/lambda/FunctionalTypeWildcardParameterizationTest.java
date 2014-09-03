@@ -38,7 +38,7 @@ public class FunctionalTypeWildcardParameterizationTest extends LightDaemonAnaly
 
   private void doTest() {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
-    doTestNewInference(BASE_PATH + "/" + getTestName(false) + ".java", false, false);
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", false, false);
   }
 
   @Override

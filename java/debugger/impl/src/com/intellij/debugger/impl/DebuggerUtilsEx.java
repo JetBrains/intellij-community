@@ -37,6 +37,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -408,8 +409,13 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     CodeFragmentFactory factory = ApplicationManager.getApplication().runReadAction(new Computable<CodeFragmentFactory>() {
       @Override
       public CodeFragmentFactory compute() {
-        for (CodeFragmentFactory factory : getCodeFragmentFactories(context)) {
-          if (factory.getFileType().equals(text.getFileType())) {
+        final FileType fileType = text.getFileType();
+        final List<CodeFragmentFactory> factories = getCodeFragmentFactories(context);
+        if (fileType == null) {
+          return factories.get(0);
+        }
+        for (CodeFragmentFactory factory : factories) {
+          if (factory.getFileType().equals(fileType)) {
             return factory;
           }
         }

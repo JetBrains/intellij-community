@@ -24,12 +24,12 @@ import com.intellij.openapi.options.CurrentUserHolder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.SmartList;
-import com.intellij.util.io.fs.IFile;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectLongHashMap;
@@ -424,7 +424,8 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   @Override
   @Nullable
   public StateStorage getOldStorage(Object component, String componentName, StateStorageOperation operation) throws StateStorageException {
-    return getFileStateStorage(getOldStorageSpec(component, componentName, operation));
+    String oldStorageSpec = getOldStorageSpec(component, componentName, operation);
+    return oldStorageSpec == null ? null : getFileStateStorage(oldStorageSpec);
   }
 
   @Nullable
@@ -440,14 +441,14 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
     @Override
     @NotNull
-    public List<IFile> getAllStorageFilesToSave() throws StateStorageException {
+    public List<File> getAllStorageFilesToSave() throws StateStorageException {
       assert mySession == this;
       return myCompoundSaveSession.getAllStorageFilesToSave();
     }
 
     @Override
     @NotNull
-    public List<IFile> getAllStorageFiles() {
+    public List<File> getAllStorageFiles() {
       return myCompoundSaveSession.getAllStorageFiles();
     }
 
@@ -506,10 +507,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     if (!isDirty) return;
     String filePath = getNotNullVersionsFilePath();
     if (filePath != null) {
-      File dir = new File(filePath).getParentFile();
-      if (!dir.isDirectory() && !dir.mkdirs()) {
-        LOG.warn("Unable to create: " + dir);
-      }
+      FileUtilRt.createParentDirs(new File(filePath));
       try {
         JDOMUtil.writeDocument(new Document(createComponentVersionsXml(getComponentVersions())), filePath, "\n");
         isDirty = false;
@@ -546,6 +544,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     return root;
   }
 
+  @SuppressWarnings("deprecation")
   private static class OldStreamProviderManager extends StreamProvider implements CurrentUserHolder {
     private final List<OldStreamProviderAdapter> myStreamProviders = new SmartList<OldStreamProviderAdapter>();
 

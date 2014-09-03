@@ -26,7 +26,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.SafeWriteRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.io.fs.IFile;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectLongHashMap;
@@ -37,12 +36,13 @@ import org.jdom.filter.ElementFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
 public abstract class XmlElementStorage implements StateStorage, Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.XmlElementStorage");
+  private static final Logger LOG = Logger.getInstance(XmlElementStorage.class);
 
   private static final String ATTR_NAME = "name";
   private static final String VERSION_FILE_SUFFIX = ".ver";
@@ -235,13 +235,13 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
       @NotNull
       @Override
-      public Collection<IFile> getStorageFilesToSave() throws StateStorageException {
+      public Collection<File> getStorageFilesToSave() throws StateStorageException {
         return Collections.emptySet();
       }
 
       @NotNull
       @Override
-      public List<IFile> getAllStorageFiles() {
+      public List<File> getAllStorageFiles() {
         return Collections.emptyList();
       }
     };

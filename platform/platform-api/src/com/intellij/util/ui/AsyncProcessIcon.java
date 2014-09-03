@@ -28,7 +28,7 @@ public class AsyncProcessIcon extends AnimatedIcon {
   public static final int COUNT = 12;
   public static final int CYCLE_LENGTH = 800;
 
-  private static final Icon[] SMALL_ICONS = findIcons("/process/step_", "/process/step_mask.png");
+  public static final Icon[] SMALL_ICONS = findIcons("/process/step_", "/process/step_mask.png");
   private boolean myUseMask;
 
   public AsyncProcessIcon(@NonNls String name) {

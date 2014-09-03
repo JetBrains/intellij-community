@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkerPresentationDialogBase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,8 +36,8 @@ public class ObjectMarkupPropertiesDialog extends ValueMarkerPresentationDialogB
   private JPanel myAdditionalPropertiesPanel;
   private MultiLineLabel myDescriptionLabel;
 
-  public ObjectMarkupPropertiesDialog(@NotNull final String defaultText, boolean suggestAdditionalMarkup) {
-    super(defaultText);
+  public ObjectMarkupPropertiesDialog(@Nullable Component parent, @NotNull final String defaultText, boolean suggestAdditionalMarkup) {
+    super(parent, defaultText);
     mySuggestAdditionalMarkup = suggestAdditionalMarkup;
     myDescriptionLabel.setText("If the value is referenced by a constant field of an abstract class,\n" +
                                "IDEA could additionally mark all values referenced from this class with the names of referencing fields.");
