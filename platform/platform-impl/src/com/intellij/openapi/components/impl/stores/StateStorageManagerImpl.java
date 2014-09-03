@@ -24,10 +24,10 @@ import com.intellij.openapi.options.CurrentUserHolder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.PathUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.io.fs.IFile;
 import gnu.trove.THashMap;
@@ -237,8 +237,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       return null;
     }
 
-    String extension = FileUtilRt.getExtension(new File(expandedFile).getName());
-    if (!ourHeadlessEnvironment && extension.isEmpty()) {
+    if (!ourHeadlessEnvironment && PathUtilRt.getFileName(expandedFile).lastIndexOf('.') < 0) {
       throw new IllegalArgumentException("Extension is missing for storage file: " + expandedFile);
     }
 
