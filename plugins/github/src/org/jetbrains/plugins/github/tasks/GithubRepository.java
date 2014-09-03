@@ -22,10 +22,7 @@ import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubConnection;
 import org.jetbrains.plugins.github.api.GithubIssue;
 import org.jetbrains.plugins.github.api.GithubIssueComment;
-import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException;
-import org.jetbrains.plugins.github.exceptions.GithubJsonException;
-import org.jetbrains.plugins.github.exceptions.GithubRateLimitExceededException;
-import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException;
+import org.jetbrains.plugins.github.exceptions.*;
 import org.jetbrains.plugins.github.util.GithubAuthData;
 import org.jetbrains.plugins.github.util.GithubUtil;
 
@@ -68,14 +65,20 @@ public class GithubRepository extends BaseRepositoryImpl {
   @Override
   public CancellableConnection createCancellableConnection() {
     return new CancellableConnection() {
+      private final GithubConnection myConnection = new GithubConnection(getAuthData(), false);
+
       @Override
       protected void doTest() throws Exception {
-        getIssues("", 10, false);
+        try {
+          GithubApiUtil.getIssuesQueried(myConnection, getRepoAuthor(), getRepoName(), "", false);
+        }
+        catch (GithubOperationCanceledException ignore) {
+        }
       }
 
       @Override
       public void cancel() {
-        // TODO
+        myConnection.abort();
       }
     };
   }
