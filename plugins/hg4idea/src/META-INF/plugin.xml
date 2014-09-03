@@ -75,7 +75,7 @@
       <action id="hg4idea.merge.files" class="org.zmlx.hg4idea.action.HgMerge" icon="AllIcons.Vcs.MergeSourcesTree"/>
       <separator/>
 
-      <action id="hg4idea.branches" class="org.zmlx.hg4idea.action.HgBranchesAction" text="_Branches..."/>
+      <action id="hg4idea.branches" class="org.zmlx.hg4idea.branch.HgBranchesAction" text="_Branches..."/>
       <action id="hg4idea.tag" class="org.zmlx.hg4idea.action.HgCreateTagAction"/>
       <action id="hg4idea.updateTo" class="org.zmlx.hg4idea.action.HgUpdateToAction"/>
       <action id="hg4idea.resolve.mark" class="org.zmlx.hg4idea.action.HgMarkResolved"/>
