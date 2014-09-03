@@ -140,6 +140,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
   }
 
+  @NotNull
   @Override
   public Collection<String> getStorageFileNames() {
     myStorageLock.lock();
