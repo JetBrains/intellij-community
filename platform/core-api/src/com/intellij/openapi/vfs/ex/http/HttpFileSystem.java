@@ -23,13 +23,6 @@ import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class HttpFileSystem extends DeprecatedVirtualFileSystem {
-  @Deprecated
-  @SuppressWarnings("UnusedDeclaration")
-  /**
-   * @deprecated use {@link com.intellij.util.io.URLUtil#HTTP_PROTOCOL}
-   */
-  public static final String PROTOCOL = URLUtil.HTTP_PROTOCOL;
-
   public static HttpFileSystem getInstance() {
     return (HttpFileSystem)VirtualFileManager.getInstance().getFileSystem(URLUtil.HTTP_PROTOCOL);
   }

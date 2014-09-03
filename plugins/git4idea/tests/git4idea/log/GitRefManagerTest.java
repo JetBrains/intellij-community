@@ -286,6 +286,12 @@ public class GitRefManagerTest extends UsefulTestCase {
 
     @Nullable
     @Override
+    public String getCurrentBranchName() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Nullable
+    @Override
     public AbstractVcs getVcs() {
       return null;
     }

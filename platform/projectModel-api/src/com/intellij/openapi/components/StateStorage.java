@@ -19,11 +19,11 @@ package com.intellij.openapi.components;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.util.io.fs.IFile;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -57,10 +57,10 @@ public interface StateStorage {
     Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles);
 
     @NotNull
-    Collection<IFile> getStorageFilesToSave() throws StateStorageException;
+    Collection<File> getStorageFilesToSave() throws StateStorageException;
 
     @NotNull
-    List<IFile> getAllStorageFiles();
+    List<File> getAllStorageFiles();
   }
 
   interface Listener {

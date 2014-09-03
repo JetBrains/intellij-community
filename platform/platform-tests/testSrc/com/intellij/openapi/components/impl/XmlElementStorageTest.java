@@ -24,11 +24,11 @@ import com.intellij.openapi.components.impl.stores.ComponentVersionProvider;
 import com.intellij.openapi.components.impl.stores.XmlElementStorage;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.LightPlatformLangTestCase;
-import com.intellij.util.io.fs.IFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -108,16 +108,15 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
 
         @NotNull
         @Override
-        public Collection<IFile> getStorageFilesToSave() throws StateStorageException {
-          return needsSave() ? getAllStorageFiles() : Collections.<IFile>emptyList();
+        public Collection<File> getStorageFilesToSave() throws StateStorageException {
+          return needsSave() ? getAllStorageFiles() : Collections.<File>emptyList();
         }
 
         @NotNull
         @Override
-        public List<IFile> getAllStorageFiles() {
+        public List<File> getAllStorageFiles() {
           throw new UnsupportedOperationException("Method getAllStorageFiles not implemented in " + getClass());
         }
-
       };
     }
   }

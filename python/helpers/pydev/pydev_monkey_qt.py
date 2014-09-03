@@ -11,7 +11,7 @@ def set_trace_in_qt():
 _patched_qt = False
 def patch_qt():
     '''
-    This method patches qt (PySide or PyQt4) so that we have hooks to set the tracing for QThread.
+    This method patches qt (PySide, PyQt4, PyQt5) so that we have hooks to set the tracing for QThread.
     '''
     
     # Avoid patching more than once
@@ -27,7 +27,10 @@ def patch_qt():
         try:
             from PyQt4 import QtCore
         except:
-            return
+            try:
+                from PyQt5 import QtCore
+            except:
+                return
     
     _original_thread_init = QtCore.QThread.__init__
     _original_runnable_init = QtCore.QRunnable.__init__

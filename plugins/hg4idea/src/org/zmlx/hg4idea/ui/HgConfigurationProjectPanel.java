@@ -12,14 +12,18 @@
 // limitations under the License.
 package org.zmlx.hg4idea.ui;
 
+import com.intellij.dvcs.branch.DvcsBranchSync;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
+import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgUtil;
 import org.zmlx.hg4idea.util.HgVersion;
 
@@ -36,6 +40,8 @@ public class HgConfigurationProjectPanel {
   private JCheckBox myIgnoredWhitespacesInAnnotationsCbx;
   private TextFieldWithBrowseButton myPathSelector;
   private JButton myTestButton;
+  private JBCheckBox mySyncBranchControl;
+  private JPanel myRepositorySettingsPanel;
   private final HgVcs myVcs;
 
   public HgConfigurationProjectPanel(@NotNull HgProjectSettings projectSettings, @NotNull Project project) {
@@ -58,12 +64,15 @@ public class HgConfigurationProjectPanel {
         );
       }
     });
+    final HgRepositoryManager repositoryManager = ServiceManager.getService(project, HgRepositoryManager.class);
+    myRepositorySettingsPanel.setVisible(repositoryManager != null && repositoryManager.moreThanOneRoot());
   }
 
   public boolean isModified() {
     boolean executableModified = !getCurrentPath().equals(myProjectSettings.getHgExecutable());
     return executableModified ||
            myCheckIncomingOutgoingCbx.isSelected() != myProjectSettings.isCheckIncomingOutgoing() ||
+           ((myProjectSettings.getSyncSetting() == DvcsBranchSync.SYNC) != mySyncBranchControl.isSelected()) ||
            myIgnoredWhitespacesInAnnotationsCbx.isSelected() != myProjectSettings.isWhitespacesIgnoredInAnnotations();
   }
 
@@ -71,6 +80,7 @@ public class HgConfigurationProjectPanel {
     myProjectSettings.setCheckIncomingOutgoing(myCheckIncomingOutgoingCbx.isSelected());
     myProjectSettings.setIgnoreWhitespacesInAnnotations(myIgnoredWhitespacesInAnnotationsCbx.isSelected());
     myProjectSettings.setHgExecutable(getCurrentPath());
+    myProjectSettings.setSyncSetting(mySyncBranchControl.isSelected() ? DvcsBranchSync.SYNC : DvcsBranchSync.DONT);
     myVcs.checkVersion();
   }
 
@@ -82,6 +92,7 @@ public class HgConfigurationProjectPanel {
     myCheckIncomingOutgoingCbx.setSelected(myProjectSettings.isCheckIncomingOutgoing());
     myIgnoredWhitespacesInAnnotationsCbx.setSelected(myProjectSettings.isWhitespacesIgnoredInAnnotations());
     myPathSelector.setText(myProjectSettings.getGlobalSettings().getHgExecutable());
+    mySyncBranchControl.setSelected(myProjectSettings.getSyncSetting() == DvcsBranchSync.SYNC);
   }
 
   public JPanel getPanel() {

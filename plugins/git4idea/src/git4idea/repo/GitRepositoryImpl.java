@@ -139,6 +139,13 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
 
   @Nullable
   @Override
+  public String getCurrentBranchName() {
+    GitLocalBranch currentBranch = getCurrentBranch();
+    return currentBranch == null ? null : currentBranch.getName();
+  }
+
+  @Nullable
+  @Override
   public AbstractVcs getVcs() {
     return GitVcs.getInstance(getProject());
   }
@@ -235,5 +242,4 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
       myBranches = branches;
     }
   }
-
 }
