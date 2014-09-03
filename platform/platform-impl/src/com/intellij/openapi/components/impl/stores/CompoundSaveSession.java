@@ -18,9 +18,9 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorageException;
 import com.intellij.util.SmartList;
-import com.intellij.util.io.fs.IFile;
 import gnu.trove.THashMap;
 
+import java.io.File;
 import java.util.List;
 import java.util.Map;
 
@@ -36,8 +36,8 @@ public class CompoundSaveSession {
     }
   }
 
-  public List<IFile> getAllStorageFilesToSave() throws StateStorageException {
-    List<IFile> result = new SmartList<IFile>();
+  public List<File> getAllStorageFilesToSave() throws StateStorageException {
+    List<File> result = new SmartList<File>();
     for (StateStorage.SaveSession saveSession : mySaveSessions.values()) {
       result.addAll(saveSession.getStorageFilesToSave());
     }
@@ -70,8 +70,8 @@ public class CompoundSaveSession {
     return mySaveSessions.get(storage);
   }
 
-  public List<IFile> getAllStorageFiles() {
-    List<IFile> result = new SmartList<IFile>();
+  public List<File> getAllStorageFiles() {
+    List<File> result = new SmartList<File>();
     for (StateStorage.SaveSession saveSession : mySaveSessions.values()) {
       result.addAll(saveSession.getAllStorageFiles());
     }

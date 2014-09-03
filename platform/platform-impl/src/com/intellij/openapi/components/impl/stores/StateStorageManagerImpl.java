@@ -29,7 +29,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.SmartList;
-import com.intellij.util.io.fs.IFile;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectLongHashMap;
@@ -440,14 +439,14 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
     @Override
     @NotNull
-    public List<IFile> getAllStorageFilesToSave() throws StateStorageException {
+    public List<File> getAllStorageFilesToSave() throws StateStorageException {
       assert mySession == this;
       return myCompoundSaveSession.getAllStorageFilesToSave();
     }
 
     @Override
     @NotNull
-    public List<IFile> getAllStorageFiles() {
+    public List<File> getAllStorageFiles() {
       return myCompoundSaveSession.getAllStorageFiles();
     }
 

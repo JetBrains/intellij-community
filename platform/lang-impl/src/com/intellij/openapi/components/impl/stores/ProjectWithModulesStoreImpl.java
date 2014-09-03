@@ -25,10 +25,10 @@ import com.intellij.openapi.module.impl.ModuleImpl;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.io.fs.IFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -102,15 +102,13 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
 
     @NotNull
     @Override
-    public List<IFile> getAllStorageFiles(final boolean includingSubStructures) {
-      final List<IFile> result = super.getAllStorageFiles(includingSubStructures);
-
+    public List<File> getAllStorageFiles(final boolean includingSubStructures) {
+      List<File> result = super.getAllStorageFiles(includingSubStructures);
       if (includingSubStructures) {
         for (SaveSession moduleSaveSession : myModuleSaveSessions) {
           result.addAll(moduleSaveSession.getAllStorageFiles(true));
         }
       }
-
       return result;
     }
 
@@ -172,10 +170,9 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
     }
 
     @Override
-    protected void collectSubfilesToSave(final List<IFile> result) throws IOException {
+    protected void collectSubFilesToSave(final List<File> result) throws IOException {
       for (SaveSession moduleSaveSession : myModuleSaveSessions) {
-        final List<IFile> moduleFiles = moduleSaveSession.getAllStorageFilesToSave(true);
-        result.addAll(moduleFiles);
+        result.addAll(moduleSaveSession.getAllStorageFilesToSave(true));
       }
     }
   }
