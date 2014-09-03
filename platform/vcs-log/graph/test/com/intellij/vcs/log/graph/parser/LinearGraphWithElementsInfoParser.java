@@ -20,7 +20,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.graph.api.LinearGraphWithElementInfo;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
+import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
+import com.intellij.vcs.log.graph.api.elements.GraphNodeType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -66,21 +68,21 @@ public class LinearGraphWithElementsInfoParser {
         edges.add(new GraphEdge(graphNode.getNodeIndex(), pair.first, parseGraphEdgeType(pair.second)));
       }
     }
-    return new Pair<GraphNode, List<GraphEdge>>(graphNode, edges);
+    return Pair.create(graphNode, edges);
   }
 
-  public static GraphNode.Type parseGraphNodeType(char c) {
+  public static GraphNodeType parseGraphNodeType(char c) {
     if (c == 'U')
-      return GraphNode.Type.USUAL;
+      return GraphNodeType.USUAL;
 
     throw new IllegalStateException("Illegal char for graph node type: " + c);
   }
 
-  public static GraphEdge.Type parseGraphEdgeType(char c) {
+  public static GraphEdgeType parseGraphEdgeType(char c) {
     if (c == 'U')
-      return GraphEdge.Type.USUAL;
+      return GraphEdgeType.USUAL;
     if (c == 'H')
-      return GraphEdge.Type.HIDE;
+      return GraphEdgeType.DOTTED;
 
     throw new IllegalStateException("Illegal char for graph edge type: " + c);
   }
@@ -105,13 +107,13 @@ public class LinearGraphWithElementsInfoParser {
 
     @NotNull
     @Override
-    public GraphNode.Type getNodeType(int nodeIndex) {
+    public GraphNodeType getNodeType(int nodeIndex) {
       return myGraphNodes.get(nodeIndex).getType();
     }
 
     @NotNull
     @Override
-    public GraphEdge.Type getEdgeType(int upNodeIndex, int downNodeIndex) {
+    public GraphEdgeType getEdgeType(int upNodeIndex, int downNodeIndex) {
       for (GraphEdge downEdge : myDownEdges.get(upNodeIndex)) {
         if (downEdge.getDownNodeIndex() == downNodeIndex)
           return downEdge.getType();
