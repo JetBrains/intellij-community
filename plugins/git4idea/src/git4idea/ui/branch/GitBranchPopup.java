@@ -16,23 +16,14 @@
 package git4idea.ui.branch;
 
 import com.intellij.dvcs.DvcsUtil;
-import com.intellij.dvcs.ui.BranchActionGroupPopup;
+import com.intellij.dvcs.branch.DvcsBranchPopup;
+import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.ui.RootAction;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
-import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.ui.popup.list.ListPopupImpl;
-import com.intellij.util.containers.ContainerUtil;
-import git4idea.GitLocalBranch;
 import git4idea.GitUtil;
-import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
@@ -41,51 +32,25 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
 import java.util.List;
 
 /**
  * The popup which allows to quickly switch and control Git branches.
  * <p/>
  */
-class GitBranchPopup {
-
-  private final Project myProject;
-  private final GitRepositoryManager myRepositoryManager;
-  private final GitVcsSettings myVcsSettings;
-  private final GitVcs myVcs;
-  private final GitMultiRootBranchConfig myMultiRootBranchConfig;
-
-  private final GitRepository myCurrentRepository;
-  private final ListPopupImpl myPopup;
-
-  ListPopup asListPopup() {
-    return myPopup;
-  }
+class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
 
   /**
    * @param currentRepository Current repository, which means the repository of the currently open or selected file.
    *                          In the case of synchronized branch operations current repository matter much less, but sometimes is used,
    *                          for example, it is preselected in the repositories combobox in the compare branches dialog.
    */
-  static GitBranchPopup getInstance(@NotNull Project project, @NotNull GitRepository currentRepository) {
-    return new GitBranchPopup(project, currentRepository);
-  }
-
-  private GitBranchPopup(@NotNull Project project, @NotNull GitRepository currentRepository) {
-    myProject = project;
-    myCurrentRepository = currentRepository;
-    myRepositoryManager = GitUtil.getRepositoryManager(project);
-    myVcs = GitVcs.getInstance(project);
-    myVcsSettings = GitVcsSettings.getInstance(myProject);
-
-    myMultiRootBranchConfig = new GitMultiRootBranchConfig(myRepositoryManager.getRepositories());
-
-    String title = createPopupTitle(currentRepository);
-
+  static GitBranchPopup getInstance(@NotNull final Project project, @NotNull GitRepository currentRepository) {
+    final GitVcsSettings vcsSettings = GitVcsSettings.getInstance(project);
     Condition<AnAction> preselectActionCondition = new Condition<AnAction>() {
       @Override
       public boolean value(AnAction action) {
+
         if (action instanceof GitBranchPopupActions.LocalBranchActions) {
           GitBranchPopupActions.LocalBranchActions branchAction = (GitBranchPopupActions.LocalBranchActions)action;
           String branchName = branchAction.getBranchName();
@@ -93,10 +58,10 @@ class GitBranchPopup {
           String recentBranch;
           List<GitRepository> repositories = branchAction.getRepositories();
           if (repositories.size() == 1) {
-            recentBranch = myVcsSettings.getRecentBranchesByRepository().get(repositories.iterator().next().getRoot().getPath());
+            recentBranch = vcsSettings.getRecentBranchesByRepository().get(repositories.iterator().next().getRoot().getPath());
           }
           else {
-            recentBranch = myVcsSettings.getRecentCommonBranch();
+            recentBranch = vcsSettings.getRecentCommonBranch();
           }
 
           if (recentBranch != null && recentBranch.equals(branchName)) {
@@ -106,37 +71,19 @@ class GitBranchPopup {
         return false;
       }
     };
-
-    myPopup = new BranchActionGroupPopup(title, project, preselectActionCondition, createActions());
-
-    initBranchSyncPolicyIfNotInitialized();
-    setCurrentBranchInfo();
-    warnThatBranchesDivergedIfNeeded();
+    return new GitBranchPopup(currentRepository, GitUtil.getRepositoryManager(project), vcsSettings, preselectActionCondition);
   }
 
-  private void initBranchSyncPolicyIfNotInitialized() {
-    if (myRepositoryManager.moreThanOneRoot() && myVcsSettings.getSyncSetting() == GitBranchSyncSetting.NOT_DECIDED) {
-      if (!myMultiRootBranchConfig.diverged()) {
-        notifyAboutSyncedBranches();
-        myVcsSettings.setSyncSetting(GitBranchSyncSetting.SYNC);
-      }
-      else {
-        myVcsSettings.setSyncSetting(GitBranchSyncSetting.DONT);
-      }
-    }
+  private GitBranchPopup(@NotNull GitRepository currentRepository,
+                         @NotNull GitRepositoryManager repositoryManager,
+                         @NotNull GitVcsSettings vcsSettings,
+                         @NotNull Condition<AnAction> preselectActionCondition) {
+    super(currentRepository, repositoryManager, new GitMultiRootBranchConfig(repositoryManager.getRepositories()), vcsSettings,
+          preselectActionCondition);
   }
 
-  @NotNull
-  private String createPopupTitle(@NotNull GitRepository currentRepository) {
-    String title = "Git Branches";
-    if (myRepositoryManager.moreThanOneRoot() &&
-        (myMultiRootBranchConfig.diverged() || myVcsSettings.getSyncSetting() == GitBranchSyncSetting.DONT)) {
-      title += " in " + DvcsUtil.getShortRepositoryName(currentRepository);
-    }
-    return title;
-  }
-
-  private void setCurrentBranchInfo() {
+  @Override
+  protected void setCurrentBranchInfo() {
     String currentBranchText = "Current branch";
     if (myRepositoryManager.moreThanOneRoot()) {
       if (myMultiRootBranchConfig.diverged()) {
@@ -153,55 +100,16 @@ class GitBranchPopup {
     myPopup.setAdText(currentBranchText, SwingConstants.CENTER);
   }
 
-  private void notifyAboutSyncedBranches() {
-    String description = "You have several Git roots in the project and they all are checked out at the same branch. " +
-                         "We've enabled synchronous branch control for the project. <br/>" +
-                         "If you wish to control branches in different roots separately, " +
-                         "you may <a href='settings'>disable</a> the setting.";
-    NotificationListener listener = new NotificationListener() {
-      @Override
-      public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          ShowSettingsUtil.getInstance().showSettingsDialog(myProject, myVcs.getConfigurable().getDisplayName());
-          if (myVcsSettings.getSyncSetting() == GitBranchSyncSetting.DONT) {
-            notification.expire();
-          }
-        }
-      }
-    };
-    VcsNotifier.getInstance(myProject).notifyImportantInfo("Synchronous branch control enabled", description, listener);
-  }
-
-  private ActionGroup createActions() {
-    DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
-    GitRepositoryManager repositoryManager = myRepositoryManager;
-    if (repositoryManager.moreThanOneRoot()) {
-      if (userWantsSyncControl()) {
-        fillWithCommonRepositoryActions(popupGroup, repositoryManager);
-      }
-      else {
-        fillPopupWithCurrentRepositoryActions(popupGroup, createRepositoriesActions());
-      }
-    }
-    else {
-      fillPopupWithCurrentRepositoryActions(popupGroup, null);
-    }
-    popupGroup.addSeparator();
-    return popupGroup;
-  }
-
-  private boolean userWantsSyncControl() {
-    return (myVcsSettings.getSyncSetting() != GitBranchSyncSetting.DONT);
-  }
-
-  private void fillWithCommonRepositoryActions(DefaultActionGroup popupGroup, GitRepositoryManager repositoryManager) {
+  @Override
+  protected void fillWithCommonRepositoryActions(@NotNull DefaultActionGroup popupGroup,
+                                                 @NotNull AbstractRepositoryManager<GitRepository> repositoryManager) {
     List<GitRepository> allRepositories = repositoryManager.getRepositories();
     popupGroup.add(new GitBranchPopupActions.GitNewBranchAction(myProject, allRepositories));
 
     popupGroup.addAll(createRepositoriesActions());
 
     popupGroup.addSeparator("Common Local Branches");
-    for (String branch : myMultiRootBranchConfig.getLocalBranches()) {
+    for (String branch : myMultiRootBranchConfig.getLocalBranchNames()) {
       List<GitRepository> repositories = filterRepositoriesNotOnThisBranch(branch, allRepositories);
       if (!repositories.isEmpty()) {
         popupGroup.add(new GitBranchPopupActions.LocalBranchActions(myProject, repositories, branch, myCurrentRepository));
@@ -209,30 +117,14 @@ class GitBranchPopup {
     }
 
     popupGroup.addSeparator("Common Remote Branches");
-    for (String branch : myMultiRootBranchConfig.getRemoteBranches()) {
+    for (String branch : ((GitMultiRootBranchConfig)myMultiRootBranchConfig).getRemoteBranches()) {
       popupGroup.add(new GitBranchPopupActions.RemoteBranchActions(myProject, allRepositories, branch, myCurrentRepository));
     }
   }
 
   @NotNull
-  private static List<GitRepository> filterRepositoriesNotOnThisBranch(@NotNull final String branch,
-                                                                       @NotNull List<GitRepository> allRepositories) {
-    return ContainerUtil.filter(allRepositories, new Condition<GitRepository>() {
-      @Override
-      public boolean value(GitRepository repository) {
-        GitLocalBranch currentBranch = repository.getCurrentBranch();
-        return currentBranch == null || !branch.equals(currentBranch.getName());
-      }
-    });
-  }
-
-  private void warnThatBranchesDivergedIfNeeded() {
-    if (myRepositoryManager.moreThanOneRoot() && myMultiRootBranchConfig.diverged() && userWantsSyncControl()) {
-      myPopup.setWarning("Branches have diverged");
-    }
-  }
-
-  private DefaultActionGroup createRepositoriesActions() {
+  @Override
+  protected DefaultActionGroup createRepositoriesActions() {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
     popupGroup.addSeparator("Repositories");
     for (GitRepository repository : myRepositoryManager.getRepositories()) {
@@ -243,11 +135,8 @@ class GitBranchPopup {
     return popupGroup;
   }
 
-  private boolean highlightCurrentRepo() {
-    return !userWantsSyncControl() || myMultiRootBranchConfig.diverged();
-  }
-
-  private void fillPopupWithCurrentRepositoryActions(@NotNull DefaultActionGroup popupGroup, @Nullable DefaultActionGroup actions) {
+  @Override
+  protected void fillPopupWithCurrentRepositoryActions(@NotNull DefaultActionGroup popupGroup, @Nullable DefaultActionGroup actions) {
     popupGroup.addAll(new GitBranchPopupActions(myCurrentRepository.getProject(), myCurrentRepository).createActions(actions));
   }
 }

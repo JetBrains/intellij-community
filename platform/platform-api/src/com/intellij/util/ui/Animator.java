@@ -64,7 +64,7 @@ public abstract class Animator implements Disposable {
 
     reset();
 
-    if (ApplicationManager.getApplication() == null) {
+    if (noApplication()) {
       animationDone();
     }
   }
@@ -133,8 +133,7 @@ public abstract class Animator implements Disposable {
   }
 
   public void resume() {
-    final Application app = ApplicationManager.getApplication();
-    if (app == null || app.isUnitTestMode()) {
+    if (noApplication()) {
       animationDone();
       return;
     }
@@ -162,6 +161,11 @@ public abstract class Animator implements Disposable {
         }
       }, 0, myCycleDuration * 1000 / myTotalFrames, TimeUnit.MICROSECONDS);
     }
+  }
+
+  protected boolean noApplication() {
+    Application app = ApplicationManager.getApplication();
+    return app == null || app.isUnitTestMode();
   }
 
   public abstract void paintNow(int frame, int totalFrames, int cycle);

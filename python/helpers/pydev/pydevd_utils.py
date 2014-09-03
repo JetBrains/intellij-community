@@ -6,7 +6,28 @@ except:
     from urllib.parse import quote
 
 import pydevd_constants
-import pydev_log
+import sys
+
+
+def save_main_module(file, module_name):
+        # patch provided by: Scott Schlesier - when script is run, it does not
+        # use globals from pydevd:
+        # This will prevent the pydevd script from contaminating the namespace for the script to be debugged
+        # pretend pydevd is not the main module, and
+        # convince the file to be debugged that it was loaded as main
+        sys.modules[module_name] = sys.modules['__main__']
+        sys.modules[module_name].__name__ = module_name
+        from imp import new_module
+
+        m = new_module('__main__')
+        sys.modules['__main__'] = m
+        if hasattr(sys.modules[module_name], '__loader__'):
+            setattr(m, '__loader__',
+                    getattr(sys.modules[module_name], '__loader__'))
+        m.__file__ = file
+
+        return m
+
 
 def to_number(x):
     if is_string(x):

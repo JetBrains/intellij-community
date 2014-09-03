@@ -21,12 +21,12 @@ import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.io.fs.IFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -101,13 +101,13 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
         @NotNull
         @Override
-        public Collection<IFile> getStorageFilesToSave() throws StateStorageException {
+        public Collection<File> getStorageFilesToSave() throws StateStorageException {
           return Collections.emptyList();
         }
 
         @NotNull
         @Override
-        public List<IFile> getAllStorageFiles() {
+        public List<File> getAllStorageFiles() {
           return Collections.emptyList();
         }
       }
@@ -186,6 +186,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
         throw new UnsupportedOperationException("Method getStreamProviders not implemented in " + getClass());
       }
 
+      @NotNull
       @Override
       public Collection<String> getStorageFileNames() {
         throw new UnsupportedOperationException("Method getStorageFileNames not implemented in " + getClass());
@@ -238,13 +239,13 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
     @NotNull
     @Override
-    public List<IFile> getAllStorageFilesToSave() throws StateStorageException {
+    public List<File> getAllStorageFilesToSave() throws StateStorageException {
       return Collections.emptyList();
     }
 
     @NotNull
     @Override
-    public List<IFile> getAllStorageFiles() {
+    public List<File> getAllStorageFiles() {
       return Collections.emptyList();
     }
 

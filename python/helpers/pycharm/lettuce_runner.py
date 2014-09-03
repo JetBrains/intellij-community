@@ -4,6 +4,7 @@ BDD lettuce framework runner
 TODO: Support other params (like tags) as well.
 Supports only 1 param now: folder to search "features" for.
 """
+import os
 import _bdd_utils
 
 __author__ = 'Ilya.Kazakevich'
@@ -108,6 +109,8 @@ class _LettuceRunner(_bdd_utils.BddRunner):
 
 
 if __name__ == "__main__":
-    (base_dir, what_to_run) = _bdd_utils.get_path_by_args(sys.argv)
-    _bdd_utils.fix_win_drive(what_to_run)
-    _LettuceRunner(base_dir, what_to_run).run()
+    (base_dir, what_to_run) = _bdd_utils.get_path_by_env(os.environ)
+    if len(what_to_run) > 1:
+        raise Exception("Lettuce can't run more than one file now")
+    _bdd_utils.fix_win_drive(what_to_run[0])
+    _LettuceRunner(base_dir, what_to_run[0]).run()

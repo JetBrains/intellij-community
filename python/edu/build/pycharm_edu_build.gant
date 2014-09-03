@@ -405,7 +405,7 @@ private layoutMac(Map _args, String target) {
   args.icns = "$pythonCommunityHome/resources/PyCharmCore.icns"
   args.bundleIdentifier = "com.jetbrains.pycharm"
   args.platform_prefix = "PyCharmEdu"
-  args.help_id = "PY"
+  args.help_id = "PE"
   args."idea.properties.path" = "${paths.distAll}/bin/idea.properties"
   args."idea.properties" = ["idea.no.jre.check": true, "ide.mac.useNativeClipboard": "false"];
   layoutMacApp(target, ch, args)

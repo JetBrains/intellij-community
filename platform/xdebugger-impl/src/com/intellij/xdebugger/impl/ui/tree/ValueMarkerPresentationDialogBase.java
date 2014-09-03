@@ -38,8 +38,8 @@ public abstract class ValueMarkerPresentationDialogBase extends DialogWrapper {
   private FixedSizeButton myChooseColorButton;
   private JPanel mySamplePanel;
 
-  public ValueMarkerPresentationDialogBase(final @Nullable String defaultText) {
-    super(true);
+  public ValueMarkerPresentationDialogBase(@Nullable Component parent, final @Nullable String defaultText) {
+    super(parent, true);
     setTitle("Select Object Label");
     setModal(true);
     myLabelField.getDocument().addDocumentListener(new DocumentAdapter() {

@@ -19,10 +19,10 @@ import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.io.fs.IFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
@@ -54,17 +54,19 @@ public interface IComponentStore {
 
   interface SaveSession {
     @NotNull
-    List<IFile> getAllStorageFilesToSave(final boolean includingSubStructures) throws IOException;
+    List<File> getAllStorageFilesToSave(final boolean includingSubStructures) throws IOException;
+
     @NotNull
     SaveSession save() throws IOException;
+
     void finishSave();
+
     void reset();
 
     @Nullable
-    Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile,StateStorage>> changedFiles);
+    Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles);
 
     @NotNull
-    List<IFile> getAllStorageFiles(final boolean includingSubStructures);
+    List<File> getAllStorageFiles(final boolean includingSubStructures);
   }
-
 }

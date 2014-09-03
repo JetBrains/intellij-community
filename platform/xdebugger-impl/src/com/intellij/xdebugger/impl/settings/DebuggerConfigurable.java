@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.settings.DebuggerConfigurableProvider;
 import com.intellij.xdebugger.settings.DebuggerSettingsCategory;
@@ -159,7 +160,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
 
   @Override
   public boolean isVisible() {
-    return true;
+    return XBreakpointType.EXTENSION_POINT_NAME.getExtensions().length != 0;
   }
 
   @Override

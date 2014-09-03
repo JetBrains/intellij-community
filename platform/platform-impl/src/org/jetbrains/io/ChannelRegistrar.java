@@ -49,7 +49,7 @@ public final class ChannelRegistrar extends ChannelInboundHandlerAdapter {
     }
     finally {
       if (eventLoopGroup != null) {
-        eventLoopGroup.shutdownGracefully();
+        eventLoopGroup.shutdownGracefully(1, 2, TimeUnit.NANOSECONDS);
       }
     }
   }

@@ -21,7 +21,10 @@ import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.EvaluatingComputable;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.StackFrameContext;
-import com.intellij.debugger.engine.evaluation.*;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.Modifier;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -34,11 +37,10 @@ import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionCodeFragment;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author lex
@@ -46,7 +48,6 @@ import org.jetbrains.annotations.Nullable;
 public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
   private Modifier myModifier;
   protected TextWithImports myText;
-  private CodeFragmentFactory myCodeFragmentFactory = null; // used to force specific context, e.g. from evaluation
 
   protected EvaluationDescriptor(TextWithImports text, Project project, Value value) {
     super(project, value);
@@ -59,25 +60,17 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
     myText = text;
   }
 
-  public final void setCodeFragmentFactory(CodeFragmentFactory codeFragmentFactory) {
-    myCodeFragmentFactory = codeFragmentFactory != null? new CodeFragmentFactoryContextWrapper(codeFragmentFactory) : null;
-  }
-
-  @Nullable
-  public final CodeFragmentFactory getCodeFragmentFactory() {
-    return myCodeFragmentFactory;
-  }
-
-  protected final @NotNull CodeFragmentFactory getEffectiveCodeFragmentFactory(final PsiElement psiContext) {
-    if (myCodeFragmentFactory != null) {
-      return myCodeFragmentFactory;
-    }
-    return DebuggerUtilsEx.getEffectiveCodeFragmentFactory(psiContext);
-  }
-
   protected abstract EvaluationContextImpl getEvaluationContext (EvaluationContextImpl evaluationContext);
 
   protected abstract PsiCodeFragment getEvaluationCode(StackFrameContext context) throws EvaluateException;
+
+  protected PsiCodeFragment createCodeFragment(PsiElement context) {
+    TextWithImports text = getEvaluationText();
+    final PsiCodeFragment fragment =
+      DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, context).createCodeFragment(text, context, myProject);
+    fragment.forceResolveScope(GlobalSearchScope.allScope(myProject));
+    return fragment;
+  }
 
   public final Value calcValue(final EvaluationContextImpl evaluationContext) throws EvaluateException {
     try {
@@ -91,9 +84,8 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
         evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject, new EvaluatingComputable<ExpressionEvaluator>() {
           public ExpressionEvaluator compute() throws EvaluateException {
             final PsiElement psiContext = PositionUtil.getContextElement(evaluationContext);
-            return getEffectiveCodeFragmentFactory(psiContext).getEvaluatorBuilder().build(getEvaluationCode(thisEvaluationContext),
-                                                                                           ContextUtil
-                                                                                             .getSourcePosition(thisEvaluationContext));
+            return DebuggerUtilsEx.findAppropriateCodeFragmentFactory(getEvaluationText(), psiContext).getEvaluatorBuilder()
+              .build(getEvaluationCode(thisEvaluationContext), ContextUtil.getSourcePosition(thisEvaluationContext));
           }
         });
       }

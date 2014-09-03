@@ -47,7 +47,7 @@ public class FunctionalExpressionIncompleteHighlightingTest extends LightDaemonA
   }
 
   private void doTest(final boolean checkWarnings) {
-    doTestNewInference(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
   }
 
   @Override

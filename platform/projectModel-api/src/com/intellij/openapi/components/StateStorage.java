@@ -19,11 +19,11 @@ package com.intellij.openapi.components;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.util.io.fs.IFile;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -33,12 +33,15 @@ public interface StateStorage {
 
   @Nullable
   <T> T getState(final Object component, final String componentName, Class<T> stateClass, @Nullable T mergeInto) throws StateStorageException;
+
   boolean hasState(final Object component, final String componentName, final Class<?> aClass, final boolean reloadData) throws StateStorageException;
 
   @NotNull
   ExternalizationSession startExternalization();
+
   @NotNull
   SaveSession startSave(@NotNull ExternalizationSession externalizationSession);
+
   void finishSave(@NotNull SaveSession saveSession);
 
   void reload(@NotNull Set<String> changedComponents) throws StateStorageException;
@@ -51,13 +54,13 @@ public interface StateStorage {
     void save() throws StateStorageException;
 
     @Nullable
-    Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile,StateStorage>> changedFiles);
+    Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles);
 
     @NotNull
-    Collection<IFile> getStorageFilesToSave() throws StateStorageException;
+    Collection<File> getStorageFilesToSave() throws StateStorageException;
 
     @NotNull
-    List<IFile> getAllStorageFiles();
+    List<File> getAllStorageFiles();
   }
 
   interface Listener {

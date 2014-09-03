@@ -23,6 +23,7 @@ import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.ide.impl.dataRules.GetDataRule;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -58,6 +59,8 @@ public class TestLocationDataRule implements GetDataRule {
 
   @NotNull
   protected static List<Location> collectRelativeLocations(Project project, VirtualFile file) {
+    if (DumbService.isDumb(project)) return Collections.emptyList();
+
     final List<Location> locations = new ArrayList<Location>();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     if (fileIndex.isInContent(file) && !fileIndex.isInSource(file) && !fileIndex.isInLibraryClasses(file)) {
