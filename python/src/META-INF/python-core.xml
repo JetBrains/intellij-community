@@ -652,7 +652,6 @@
     </group>
 
     <group id="PyCallHierarchyPopupMenu">
-      <!--<action id="CallHierarchy.BaseOnThisType" text="Base On This Function" class="com.jetbrains.python.hierarchy.call.PyCallHierarchyBrowser$BaseOnThisFunctionAction" description="Show call hierarchy for selected method"/>-->
       <reference ref="EditSource"/>
       <separator/>
       <reference ref="FindUsages"/>
