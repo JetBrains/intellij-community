@@ -15,97 +15,58 @@
  */
 package org.jetbrains.java.decompiler.main;
 
-import org.jetbrains.java.decompiler.code.CodeConstants;
-import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.rels.ClassWrapper;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.InvocationExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.NewExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPaar;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructField;
 import org.jetbrains.java.decompiler.struct.StructMethod;
-import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
-import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 public class EnumProcessor {
 
   public static void clearEnum(ClassWrapper wrapper) {
-
     StructClass cl = wrapper.getClassStruct();
 
-    // hide values() and valueOf()
-    for (StructMethod meth : cl.getMethods()) {
-
-      String name = meth.getName();
-      int flag = 0;
+    // hide values/valueOf methods and super() invocations
+    for (MethodWrapper method : wrapper.getMethods()) {
+      StructMethod mt = method.methodStruct;
+      String name = mt.getName();
+      String descriptor = mt.getDescriptor();
 
       if ("values".equals(name)) {
-        flag = 1;
+        if (descriptor.equals("()[L" + cl.qualifiedName + ";")) {
+          wrapper.getHideMembers().add(InterpreterUtil.makeUniqueKey(name, descriptor));
+        }
       }
       else if ("valueOf".equals(name)) {
-        flag = 2;
-      }
-
-      if (flag > 0) {
-        String[] arr = meth.getDescriptor().split("[()]");
-        String par = arr[1];
-
-        if ((flag == 1 && par.length() == 0) ||
-            flag == 2 && "Ljava/lang/String;".equals(par)) {
-          wrapper.getHideMembers().add(InterpreterUtil.makeUniqueKey(name, meth.getDescriptor()));
+        if (descriptor.equals("(Ljava/lang/String;)L" + cl.qualifiedName + ";")) {
+          wrapper.getHideMembers().add(InterpreterUtil.makeUniqueKey(name, descriptor));
         }
       }
-    }
-
-    // hide all super invocations
-    for (MethodWrapper meth : wrapper.getMethods()) {
-      if ("<init>".equals(meth.methodStruct.getName())) {
-        Statement firstdata = findFirstData(meth.root);
-        if (firstdata == null || firstdata.getExprents().isEmpty()) {
-          return;
-        }
-
-        Exprent exprent = firstdata.getExprents().get(0);
-        if (exprent.type == Exprent.EXPRENT_INVOCATION) {
-          InvocationExprent invexpr = (InvocationExprent)exprent;
-          if (isInvocationSuperConstructor(invexpr, meth, wrapper)) {
-            firstdata.getExprents().remove(0);
+      else if ("<init>".equals(name)) {
+        Statement firstData = findFirstData(method.root);
+        if (firstData != null && !firstData.getExprents().isEmpty()) {
+          Exprent exprent = firstData.getExprents().get(0);
+          if (exprent.type == Exprent.EXPRENT_INVOCATION) {
+            InvocationExprent invexpr = (InvocationExprent)exprent;
+            if (isInvocationSuperConstructor(invexpr, method, wrapper)) {
+              firstData.getExprents().remove(0);
+            }
           }
         }
       }
     }
 
-    // hide dummy synthetic fields of enum constants
+    // hide synthetic fields of enum and it's constants
     for (StructField fd : cl.getFields()) {
-      if (fd.hasModifier(CodeConstants.ACC_ENUM)) {
-        Exprent initializer =
-          wrapper.getStaticFieldInitializers().getWithKey(InterpreterUtil.makeUniqueKey(fd.getName(), fd.getDescriptor()));
-        if (initializer != null && initializer.type == Exprent.EXPRENT_NEW) {
-          NewExprent nexpr = (NewExprent)initializer;
-          if (nexpr.isAnonymous()) {
-            ClassNode child = DecompilerContext.getClassProcessor().getMapRootClasses().get(nexpr.getNewtype().value);
-            hideDummyFieldInConstant(child.wrapper);
-          }
-        }
-      }
-    }
-  }
-
-  private static void hideDummyFieldInConstant(ClassWrapper wrapper) {
-    StructClass cl = wrapper.getClassStruct();
-    for (StructField fd : cl.getFields()) {
-      if (fd.isSynthetic()) {
-        FieldDescriptor descr = FieldDescriptor.parseDescriptor(fd.getDescriptor());
-        VarType ret = descr.type;
-
-        if (ret.type == CodeConstants.TYPE_OBJECT && ret.arraydim == 1 && cl.qualifiedName.equals(ret.value)) {
-          wrapper.getHideMembers().add(InterpreterUtil.makeUniqueKey(fd.getName(), fd.getDescriptor()));
-        }
+      String descriptor = fd.getDescriptor();
+      if (fd.isSynthetic() && descriptor.equals("[L" + cl.qualifiedName + ";")) {
+        wrapper.getHideMembers().add(InterpreterUtil.makeUniqueKey(fd.getName(), descriptor));
       }
     }
   }

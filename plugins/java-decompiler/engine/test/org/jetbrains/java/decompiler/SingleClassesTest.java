@@ -65,7 +65,7 @@ public class SingleClassesTest {
   @Test public void testMethodParameters() { doTest("TestMethodParameters"); }
   @Test public void testCodeConstructs() { doTest("TestCodeConstructs"); }
   @Test public void testConstants() { doTest("TestConstants"); }
-  //@Test public void testEnum() { doTest("TestEnum"); }
+  @Test public void testEnum() { doTest("TestEnum"); }
 
   private void doTest(final String testName) {
     try {
