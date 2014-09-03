@@ -225,13 +225,7 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
         if (body instanceof PsiCodeBlock) {
           return isVoidCompatible();
         } else {
-          //JLS 14.8 Expression Statements
-          return body instanceof PsiAssignmentExpression ||
-                 body instanceof PsiPrefixExpression &&
-                  (((PsiPrefixExpression)body).getOperationTokenType() == JavaTokenType.PLUSPLUS ||
-                   ((PsiPrefixExpression)body).getOperationTokenType() == JavaTokenType.MINUSMINUS) ||
-                 body instanceof PsiPostfixExpression ||
-                 body instanceof PsiCallExpression;
+          return LambdaUtil.isExpressionStatementExpression(body);
         }
       } else {
         if (body instanceof PsiCodeBlock) {
