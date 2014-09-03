@@ -80,7 +80,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
   private boolean myListenerAdded = false;
   private Alarm myRefreshAlarm;
-  
+
   private String mySchemeExtension = DEFAULT_EXT;
   private boolean myUpgradeExtension = false;
 
@@ -897,7 +897,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
   private void saveIfNeeded(E schemeKey, String fileName, Parent element, long newHash, Long oldHash) throws IOException {
     if (oldHash == null || newHash != oldHash.longValue() || myVFSBaseDir.findChild(fileName) == null) {
-      ensureFileText(fileName, StorageUtil.documentToBytes(element, true).toByteArray());
+      ensureFileText(fileName, StorageUtil.elementToBytes(element, true).toByteArray());
       schemeKey.getExternalInfo().setHash(newHash);
       saveFileName(fileName, schemeKey);
       saveOnServer(fileName, element);

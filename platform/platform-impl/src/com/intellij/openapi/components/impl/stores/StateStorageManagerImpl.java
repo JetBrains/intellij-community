@@ -271,8 +271,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     String filePath = getNotNullVersionsFilePath();
     if (filePath != null) {
       try {
-        Document document = JDOMUtil.loadDocument(new File(filePath));
-        loadComponentVersions(result, document);
+        loadComponentVersions(result, JDOMUtil.loadDocument(new File(filePath)));
       }
       catch (JDOMException e) {
         LOG.debug(e);
@@ -294,6 +293,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   public static void loadComponentVersions(TObjectLongHashMap<String> result, Document document) {
     List<Element> componentObjects = document.getRootElement().getChildren("component");
+    result.ensureCapacity(componentObjects.size());
     for (Element component : componentObjects) {
       String name = component.getAttributeValue("name");
       String version = component.getAttributeValue("version");
@@ -504,12 +504,16 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   public void save() {
-    if (!isDirty) return;
+    if (!isDirty) {
+      return;
+    }
+
     String filePath = getNotNullVersionsFilePath();
     if (filePath != null) {
-      FileUtilRt.createParentDirs(new File(filePath));
+      File file = new File(filePath);
+      FileUtilRt.createParentDirs(file);
       try {
-        JDOMUtil.writeDocument(new Document(createComponentVersionsXml(getComponentVersions())), filePath, "\n");
+        JDOMUtil.writeParent(createComponentVersionsXml(getComponentVersions()), file, "\n");
         isDirty = false;
       }
       catch (IOException e) {
