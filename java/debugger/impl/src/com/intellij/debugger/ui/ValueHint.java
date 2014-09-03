@@ -94,9 +94,8 @@ public class ValueHint extends AbstractValueHint {
       return EvaluatorBuilderImpl.getInstance().build(myCurrentExpression, debuggerContext.getSourcePosition());
     }
 
-    CodeFragmentFactory factory = DebuggerUtilsEx.getEffectiveCodeFragmentFactory(myCurrentExpression);
     TextWithImportsImpl textWithImports = new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, myCurrentExpression.getText());
-    if (factory == null) return null;
+    CodeFragmentFactory factory = DebuggerUtilsEx.findAppropriateCodeFragmentFactory(textWithImports, myCurrentExpression);
     JavaCodeFragment codeFragment = factory.createCodeFragment(textWithImports, myCurrentExpression.getContext(), getProject());
     codeFragment.forceResolveScope(GlobalSearchScope.allScope(getProject()));
     return factory.getEvaluatorBuilder().build(codeFragment, debuggerContext.getSourcePosition());

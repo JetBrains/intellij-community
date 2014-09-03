@@ -403,17 +403,20 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   public abstract CompletionEditor createEditor(Project project, PsiElement context, @NonNls String recentsId);
 
-  @Nullable
-  public static CodeFragmentFactory getEffectiveCodeFragmentFactory(final PsiElement psiContext) {
-    final CodeFragmentFactory factory = ApplicationManager.getApplication().runReadAction(new Computable<CodeFragmentFactory>() {
+  @NotNull
+  public static CodeFragmentFactory findAppropriateCodeFragmentFactory(final TextWithImports text, final PsiElement context) {
+    CodeFragmentFactory factory = ApplicationManager.getApplication().runReadAction(new Computable<CodeFragmentFactory>() {
       @Override
       public CodeFragmentFactory compute() {
-        final List<CodeFragmentFactory> codeFragmentFactories = getCodeFragmentFactories(psiContext);
-        // the list always contains at least DefaultCodeFragmentFactory
-        return codeFragmentFactories.get(0);
+        for (CodeFragmentFactory factory : getCodeFragmentFactories(context)) {
+          if (factory.getFileType().equals(text.getFileType())) {
+            return factory;
+          }
+        }
+        return DefaultCodeFragmentFactory.getInstance();
       }
     });
-    return factory != null? new CodeFragmentFactoryContextWrapper(factory) : null;
+    return new CodeFragmentFactoryContextWrapper(factory);
   }
 
   private static class SigReader {
