@@ -42,6 +42,7 @@ import com.jetbrains.python.sdk.flavors.JythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PyPySdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import icons.PythonIcons;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -452,6 +453,10 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
 
   public String getProjectLocation() {
     return myLocationField.getText();
+  }
+
+  public void setLocation(@NotNull final String location) {
+    myLocationField.setText(location);
   }
 
   public boolean installFramework() {
