@@ -48,7 +48,7 @@ public class ConfigurableExtensionPointUtil {
       }
     }
 
-    final Map<String, ConfigurableWrapper> idToConfigurable = new HashMap<String, ConfigurableWrapper>();
+    final Map<String, ConfigurableWrapper> idToConfigurable = new LinkedHashMap<String, ConfigurableWrapper>();
     for (ConfigurableEP<Configurable> ep : extensions) {
       final Configurable configurable = ConfigurableWrapper.wrapConfigurable(ep);
       if (isSuppressed(configurable, filter)) continue;
