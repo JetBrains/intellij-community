@@ -36,9 +36,8 @@ import org.jetbrains.annotations.Nullable;
   name = "RecentDirectoryProjectsManager",
   roamingType = RoamingType.DISABLED,
   storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/other.xml"
-    )}
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml")
+  }
 )
 public class RecentDirectoryProjectsManager extends RecentProjectsManagerBase {
   public RecentDirectoryProjectsManager(MessageBus messageBus) {
