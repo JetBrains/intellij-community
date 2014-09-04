@@ -136,7 +136,7 @@ public final class PyTestSdkTools {
 
     final SkeletonVersionChecker checker = new SkeletonVersionChecker(0);
     final PySkeletonRefresher refresher = new PySkeletonRefresher(project, null, sdk, skeletonsPath, null, null);
-    final List<String> errors = refresher.regenerateSkeletons(checker, null);
+    final List<String> errors = refresher.regenerateSkeletons(checker);
     Assert.assertThat("Errors found", errors, Matchers.empty());
   }
 }
