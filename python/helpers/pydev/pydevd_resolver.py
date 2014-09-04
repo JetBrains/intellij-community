@@ -410,16 +410,15 @@ class NdArrayResolver:
         if attribute == 'size':
             return obj.size
         if attribute.startswith('['):
-            l = len(obj)
             container = NdArrayItemsContainer()
-            if l > MAX_ITEMS_TO_HANDLE:
-                setattr(container, TOO_LARGE_ATTR, TOO_LARGE_MSG)
-            else:
-                i = 0
-                format_str = '%0' + str(int(len(str(l)))) + 'd'
-                for item in obj:
-                    setattr(container, format_str % i, item)
-                    i += 1
+            i = 0
+            format_str = '%0' + str(int(len(str(len(obj))))) + 'd'
+            for item in obj:
+                setattr(container, format_str % i, item)
+                i += 1
+                if i > MAX_ITEMS_TO_HANDLE:
+                    setattr(container, TOO_LARGE_ATTR, TOO_LARGE_MSG)
+                    break
             return container
         return None
 
