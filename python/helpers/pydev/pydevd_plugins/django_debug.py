@@ -316,10 +316,10 @@ def cmd_step_over(mainDebugger, frame, event, args, stop_info):
     return False
 
 
-def stop(mainDebugger, frame, event, args, stop_info, arg):
+def stop(mainDebugger, frame, event, args, stop_info, arg, step_cmd):
     mainDebugger, filename, info, thread = args
     if DictContains(stop_info, 'django_stop') and stop_info['django_stop']:
-        frame = suspend_django(mainDebugger, mainDebugger, thread, frame)
+        frame = suspend_django(mainDebugger, mainDebugger, thread, frame, step_cmd)
         if frame:
             mainDebugger.doWaitSuspend(thread, frame, event, arg)
             return True

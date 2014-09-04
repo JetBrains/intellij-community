@@ -454,7 +454,7 @@ class PyDBFrame:
                     stop_info['stop'] = False
 
                 if True in stop_info.values():
-                    stopped_on_plugin = main_debugger.plugin_function('stop', frame, event, self._args, stop_info, arg)
+                    stopped_on_plugin = main_debugger.plugin_function('stop', frame, event, self._args, stop_info, arg, step_cmd)
                     if DictContains(stop_info, 'stop') and stop_info['stop'] and not stopped_on_plugin:
                         if event == 'line':
                             self.setSuspend(thread, step_cmd)
