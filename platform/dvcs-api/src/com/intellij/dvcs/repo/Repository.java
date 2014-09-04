@@ -54,6 +54,8 @@ import org.jetbrains.annotations.Nullable;
 public interface Repository extends Disposable {
 
 
+
+
   /**
    * Current state of the repository.
    */
@@ -83,9 +85,8 @@ public interface Repository extends Disposable {
     /**
      * Detached HEAD state, but not during rebase (for example, manual checkout of a commit hash).
      */
-    DETACHED
+    DETACHED;
   }
-
   @NotNull
   VirtualFile getRoot();
 
@@ -97,6 +98,9 @@ public interface Repository extends Disposable {
 
   @NotNull
   State getState();
+
+  @Nullable
+  String getCurrentBranchName();
 
   @Nullable
   AbstractVcs getVcs();

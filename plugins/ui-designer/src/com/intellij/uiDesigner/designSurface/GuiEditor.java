@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -61,7 +62,7 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.uiDesigner.radComponents.RadTabbedPane;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.NotNullProducer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -288,7 +289,7 @@ public final class GuiEditor extends JPanel implements DataProvider, ModuleProvi
     readFromFile(false);
 
     JPanel panel = new JPanel(new GridBagLayout());
-    panel.setBackground(Color.LIGHT_GRAY);
+    panel.setBackground(GridCaptionPanel.getGutterColor());
 
     myHorzCaptionPanel = new GridCaptionPanel(this, false);
     myVertCaptionPanel = new GridCaptionPanel(this, true);
@@ -311,7 +312,13 @@ public final class GuiEditor extends JPanel implements DataProvider, ModuleProvi
     gbc.weighty = 1.0;
 
     myScrollPane = ScrollPaneFactory.createScrollPane(myLayeredPane);
-    myScrollPane.setBackground(new JBColor(Color.WHITE, UIUtil.getListBackground()));
+    myScrollPane.setBackground(new JBColor(new NotNullProducer<Color>() {
+      @NotNull
+      @Override
+      public Color produce() {
+        return EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
+      }
+    }));
     panel.add(myScrollPane, gbc);
     myHorzCaptionPanel.attachToScrollPane(myScrollPane);
     myVertCaptionPanel.attachToScrollPane(myScrollPane);

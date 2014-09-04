@@ -39,9 +39,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.OrderedSet;
-import com.intellij.util.io.fs.FileSystem;
-import com.intellij.util.io.fs.IFile;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -67,7 +66,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
   protected ProjectImpl myProject;
   private StorageScheme myScheme = StorageScheme.DEFAULT;
-  private String myCachedLocation;
   private String myPresentableUrl;
 
   ProjectStoreImpl(final ProjectImpl project) {
@@ -202,7 +200,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       }, ModalityState.defaultModalityState());
     }
 
-    myCachedLocation = null;
     myPresentableUrl = null;
   }
 
@@ -479,19 +476,16 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
     @NotNull
     @Override
-    public List<IFile> getAllStorageFilesToSave(final boolean includingSubStructures) throws IOException {
-      List<IFile> result = new ArrayList<IFile>();
-
+    public List<File> getAllStorageFilesToSave(final boolean includingSubStructures) throws IOException {
+      List<File> result = new SmartList<File>();
       if (includingSubStructures) {
-        collectSubfilesToSave(result);
+        collectSubFilesToSave(result);
       }
-
       result.addAll(super.getAllStorageFilesToSave(false));
-
       return result;
     }
 
-    protected void collectSubfilesToSave(final List<IFile> result) throws IOException { }
+    protected void collectSubFilesToSave(final List<File> result) throws IOException { }
 
     @NotNull
     @Override
@@ -523,10 +517,10 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       return ApplicationManager.getApplication().runReadAction(new Computable<ReadonlyStatusHandler.OperationStatus>() {
         @Override
         public ReadonlyStatusHandler.OperationStatus compute() {
-          final List<IFile> filesToSave;
+          final List<File> filesToSave;
           try {
             filesToSave = getAllStorageFilesToSave(true);
-            final Iterator<IFile> iterator = filesToSave.iterator();
+            final Iterator<File> iterator = filesToSave.iterator();
             while (iterator.hasNext()) {
               if (!iterator.next().exists()) {
                 iterator.remove();
@@ -543,14 +537,12 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
           if (myProject.isToSaveProjectName()) {
             final VirtualFile baseDir = getProjectBaseDir();
             if (baseDir != null && baseDir.isValid()) {
-              filesToSave.add(FileSystem.FILE_SYSTEM
-                                .createFile(new File(new File(baseDir.getPath(), Project.DIRECTORY_STORE_FOLDER), ProjectImpl.NAME_FILE).getPath()));
+              filesToSave.add(new File(new File(baseDir.getPath(), Project.DIRECTORY_STORE_FOLDER), ProjectImpl.NAME_FILE));
             }
           }
 
-          for (IFile file : filesToSave) {
+          for (File file : filesToSave) {
             final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
-
             if (virtualFile != null) {
               virtualFile.refresh(false, false);
               if (virtualFile.isValid() && !virtualFile.isWritable()) {
@@ -688,6 +680,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       return StateSplitter.class;
     }
 
+    @NotNull
     @Override
     public Class<? extends Annotation> annotationType() {
       throw new UnsupportedOperationException("Method annotationType not implemented in " + getClass());

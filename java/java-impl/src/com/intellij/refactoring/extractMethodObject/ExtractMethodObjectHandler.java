@@ -20,26 +20,29 @@
  */
 package com.intellij.refactoring.extractMethodObject;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.extractMethod.AbstractExtractDialog;
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
+import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.VariableData;
 import com.intellij.refactoring.util.duplicates.DuplicatesImpl;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +58,10 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler {
     });
   }
 
-  private void invokeOnElements(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file, @NotNull PsiElement[] elements) {
+  private static void invokeOnElements(@NotNull final Project project,
+                                       @NotNull final Editor editor,
+                                       @NotNull PsiFile file,
+                                       @NotNull PsiElement[] elements) {
     if (elements.length == 0) {
         String message = RefactoringBundle
           .getCannotRefactorMessage(RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"));
@@ -63,7 +69,10 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler {
       return;
     }
 
-    final ExtractMethodObjectProcessor processor = new ExtractMethodObjectProcessor(project, editor, elements, "");
+    extractMethodObject(project, editor, file, new ExtractMethodObjectProcessor(project, editor, elements, ""));
+  }
+
+  static void extractMethodObject(Project project, Editor editor, PsiFile file, ExtractMethodObjectProcessor processor) {
     final ExtractMethodObjectProcessor.MyExtractMethodProcessor extractProcessor = processor.getExtractProcessor();
     try {
       if (!extractProcessor.prepare()) return;

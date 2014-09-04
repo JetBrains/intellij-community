@@ -50,7 +50,7 @@ public class NestedClassProcessor {
     if (node.type == ClassNode.CLASS_LAMBDA && !node.lambda_information.is_method_reference) {
       ClassNode node_content = DecompilerContext.getClassProcessor().getMapRootClasses().get(node.classStruct.qualifiedName);
       if (node_content != null && node_content.wrapper != null) {
-        node_content.wrapper.getHideMembers().add(node.lambda_information.content_method_key);
+        node_content.wrapper.getHiddenMembers().add(node.lambda_information.content_method_key);
       }
     }
 
@@ -528,7 +528,7 @@ public class NestedClassProcessor {
             // hide synthetic field
             if (clnode == child) { // fields higher up the chain were already handled with their classes
               StructField fd = child.classStruct.getFields().getWithKey(entr.getKey());
-              child.wrapper.getHideMembers().add(InterpreterUtil.makeUniqueKey(fd.getName(), fd.getDescriptor()));
+              child.wrapper.getHiddenMembers().add(InterpreterUtil.makeUniqueKey(fd.getName(), fd.getDescriptor()));
             }
           }
         }

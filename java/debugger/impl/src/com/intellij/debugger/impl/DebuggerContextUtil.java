@@ -23,11 +23,12 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
@@ -75,7 +76,9 @@ public class DebuggerContextUtil {
         final XDebugSession debugSession = session.getXDebugSession();
         if (debugSession != null) {
           final XSourcePosition position = debugSession.getCurrentPosition();
-          final Editor editor = PsiUtilBase.findEditor(psi);
+          Editor editor = ((FileEditorManagerImpl)FileEditorManager.getInstance(file.getProject())).getSelectedTextEditor(true);
+
+          //final Editor editor = fileEditor instanceof TextEditorImpl ? ((TextEditorImpl)fileEditor).getEditor() : null;
           if (editor != null && position != null && file.getVirtualFile().equals(position.getFile())) {
             final Couple<Collection<TextRange>> usages = IdentifierHighlighterPass.getHighlightUsages(psi, file);
             final List<TextRange> ranges = new ArrayList<TextRange>();

@@ -22,13 +22,11 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
-import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.xdebugger.frame.XValue;
-import com.intellij.xdebugger.frame.XValuePlace;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
@@ -66,7 +64,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
       }
       XValue container = node.getValueContainer();
       if (container instanceof JavaValue) {
-        if (((ValueDescriptorImpl)((JavaValue)container).getDescriptor()).getLastRenderer() != myNodeRenderer) {
+        if (((JavaValue)container).getDescriptor().getLastRenderer() != myNodeRenderer) {
           return false;
         }
       }
@@ -83,11 +81,12 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
           public void threadAction() {
             XValue container = node.getValueContainer();
             if (container instanceof JavaValue) {
-              final ValueDescriptorImpl valueDescriptor = (ValueDescriptorImpl)((JavaValue)container).getDescriptor();
+              final ValueDescriptorImpl valueDescriptor = ((JavaValue)container).getDescriptor();
               if (state) {
                 valueDescriptor.setRenderer(myNodeRenderer);
-                valueDescriptor.updateRepresentation(debuggerContext.createEvaluationContext(), DescriptorLabelListener.DUMMY_LISTENER);
-                container.computePresentation(node, XValuePlace.TREE);
+                DebuggerAction.refreshViews(node);
+                //valueDescriptor.updateRepresentation(debuggerContext.createEvaluationContext(), DescriptorLabelListener.DUMMY_LISTENER);
+                //container.computePresentation(node, XValuePlace.TREE);
               }
             }
           }

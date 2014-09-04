@@ -18,9 +18,12 @@ for i, arg in enumerate(sys.argv[1:]):
         print(('Usage:\n' + \
                '  {0} -h |-? | --help\n' + \
                '  {0} [-l|--line line] file[:line]\n' + \
-               '  {0} diff file1 file2').format(sys.argv[0]))
+               '  {0} diff <left> <right>\n' + \
+               '  {0} merge <left> <right> [base] <result>').format(sys.argv[0]))
         exit(0)
     elif arg == 'diff' and i == 0:
+        args.append(arg)
+    elif arg == 'merge' and i == 0:
         args.append(arg)
     elif arg == '-l' or arg == '--line':
         args.append(arg)

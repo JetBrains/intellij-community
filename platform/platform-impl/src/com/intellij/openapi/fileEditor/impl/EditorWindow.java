@@ -287,7 +287,7 @@ public class EditorWindow {
     }
   }
 
-  public void closeFile(final VirtualFile file, final boolean disposeIfNeeded, final boolean transferFocus) {
+  public void closeFile(@NotNull final VirtualFile file, final boolean disposeIfNeeded, final boolean transferFocus) {
     final FileEditorManagerImpl editorManager = getManager();
     editorManager.runChange(new FileEditorManagerChange() {
       @Override
@@ -525,7 +525,7 @@ public class EditorWindow {
     myOwner.setCurrentWindow(this, requestFocus);
   }
 
-  public void updateFileBackgroundColor(final VirtualFile file) {
+  public void updateFileBackgroundColor(@NotNull VirtualFile file) {
     final int index = findEditorIndex(findFileComposite(file));
     if (index != -1) {
       final Color color = EditorTabbedContainer.calcTabColor(getManager().getProject(), file);
@@ -569,10 +569,10 @@ public class EditorWindow {
   }
 
   protected static class TComp extends JPanel implements DataProvider, EditorWindowHolder {
-    final EditorWithProviderComposite myEditor;
+    @NotNull final EditorWithProviderComposite myEditor;
     protected final EditorWindow myWindow;
 
-    TComp(final EditorWindow window, final EditorWithProviderComposite editor) {
+    TComp(@NotNull EditorWindow window, @NotNull EditorWithProviderComposite editor) {
       super(new BorderLayout());
       myEditor = editor;
       myWindow = window;
@@ -594,6 +594,7 @@ public class EditorWindow {
       });
     }
 
+    @NotNull
     @Override
     public EditorWindow getEditorWindow() {
       return myWindow;
@@ -613,7 +614,7 @@ public class EditorWindow {
   }
 
   protected static class TCompForTablessMode extends TComp implements CloseAction.CloseTarget {
-    TCompForTablessMode(final EditorWindow window, final EditorWithProviderComposite editor) {
+    TCompForTablessMode(@NotNull EditorWindow window, @NotNull EditorWithProviderComposite editor) {
       super(window, editor);
     }
 
@@ -701,6 +702,7 @@ public class EditorWindow {
 
   public void setEditor(@Nullable final EditorWithProviderComposite editor, final boolean selectEditor, final boolean focusEditor) {
     if (editor != null) {
+      onBeforeSetEditor(editor.getFile());
       if (myTabbedPane == null) {
         myPanel.removeAll ();
         myPanel.add (new TCompForTablessMode(this, editor), BorderLayout.CENTER);
@@ -739,6 +741,9 @@ public class EditorWindow {
       myOwner.setCurrentWindow(this, false);
     }
     myOwner.validate();
+  }
+
+  protected void onBeforeSetEditor(VirtualFile file) {
   }
 
   private boolean splitAvailable() {

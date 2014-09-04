@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zmlx.hg4idea.action;
+package org.zmlx.hg4idea.branch;
 
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.action.HgAbstractGlobalSingleRepoAction;
 import org.zmlx.hg4idea.repo.HgRepository;
 
 import java.util.Collection;

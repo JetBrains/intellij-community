@@ -122,6 +122,9 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     if (toSelect.length == 1) {
       restoreSelection(toSelect[0]);
     }
+    else if (toSelect.length == 0) {
+      restoreSelection(null); // select last opened file
+    }
     else {
       selectInTree(toSelect, true);
     }

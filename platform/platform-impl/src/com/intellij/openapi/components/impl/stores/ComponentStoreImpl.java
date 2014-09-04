@@ -29,12 +29,12 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.io.fs.IFile;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.*;
@@ -354,7 +354,7 @@ public abstract class ComponentStoreImpl implements IComponentStore {
 
     @NotNull
     @Override
-    public List<IFile> getAllStorageFilesToSave(final boolean includingSubStructures) throws IOException {
+    public List<File> getAllStorageFilesToSave(final boolean includingSubStructures) throws IOException {
       try {
         return myStorageManagerSaveSession.getAllStorageFilesToSave();
       }
@@ -443,10 +443,9 @@ public abstract class ComponentStoreImpl implements IComponentStore {
 
     @NotNull
     @Override
-    public List<IFile> getAllStorageFiles(final boolean includingSubStructures) {
+    public List<File> getAllStorageFiles(final boolean includingSubStructures) {
       return myStorageManagerSaveSession.getAllStorageFiles();
     }
-
   }
 
   @Override

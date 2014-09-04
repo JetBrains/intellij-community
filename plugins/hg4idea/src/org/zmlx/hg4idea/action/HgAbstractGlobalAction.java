@@ -34,7 +34,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-abstract class HgAbstractGlobalAction extends AnAction {
+public abstract class HgAbstractGlobalAction extends AnAction {
   protected HgAbstractGlobalAction(Icon icon) {
     super(icon);
   }

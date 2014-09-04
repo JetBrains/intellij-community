@@ -28,81 +28,66 @@ import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
 
 import java.io.BufferedWriter;
 import java.io.StringWriter;
-import java.util.HashMap;
+import java.util.Map;
 
 
 public class Fernflower implements IDecompiledData {
 
-  public static final String version = "v0.8.4";
+  private StructContext structContext;
+  private ClassesProcessor classesProcessor;
 
-  private StructContext structcontext;
-
-  private ClassesProcessor clprocessor;
-
-  public Fernflower(IBytecodeProvider provider, IDecompilatSaver saver, HashMap<String, Object> propertiesCustom) {
-
-    structcontext = new StructContext(saver, this, new LazyLoader(provider));
-
+  public Fernflower(IBytecodeProvider provider, IDecompilatSaver saver, Map<String, Object> propertiesCustom) {
+    structContext = new StructContext(saver, this, new LazyLoader(provider));
     DecompilerContext.initContext(propertiesCustom);
     DecompilerContext.setCounterContainer(new CounterContainer());
   }
 
   public void decompileContext() {
-
     if (DecompilerContext.getOption(IFernflowerPreferences.RENAME_ENTITIES)) {
-      new IdentifierConverter().rename(structcontext);
+      new IdentifierConverter().rename(structContext);
     }
 
-    clprocessor = new ClassesProcessor(structcontext);
+    classesProcessor = new ClassesProcessor(structContext);
 
-    DecompilerContext.setClassProcessor(clprocessor);
-    DecompilerContext.setStructContext(structcontext);
+    DecompilerContext.setClassProcessor(classesProcessor);
+    DecompilerContext.setStructContext(structContext);
 
-    structcontext.saveContext();
+    structContext.saveContext();
   }
 
   public void clearContext() {
     DecompilerContext.setCurrentContext(null);
   }
 
-  public String getClassEntryName(StructClass cl, String entryname) {
-
-    ClassNode node = clprocessor.getMapRootClasses().get(cl.qualifiedName);
+  public String getClassEntryName(StructClass cl, String entryName) {
+    ClassNode node = classesProcessor.getMapRootClasses().get(cl.qualifiedName);
     if (node.type != ClassNode.CLASS_ROOT) {
       return null;
     }
     else {
       if (DecompilerContext.getOption(IFernflowerPreferences.RENAME_ENTITIES)) {
         String simple_classname = cl.qualifiedName.substring(cl.qualifiedName.lastIndexOf('/') + 1);
-        return entryname.substring(0, entryname.lastIndexOf('/') + 1) + simple_classname + ".java";
+        return entryName.substring(0, entryName.lastIndexOf('/') + 1) + simple_classname + ".java";
       }
       else {
-        return entryname.substring(0, entryname.lastIndexOf(".class")) + ".java";
+        return entryName.substring(0, entryName.lastIndexOf(".class")) + ".java";
       }
     }
   }
 
-  public StructContext getStructcontext() {
-    return structcontext;
+  public StructContext getStructContext() {
+    return structContext;
   }
 
   public String getClassContent(StructClass cl) {
-
-    String res = null;
-
     try {
-      StringWriter strwriter = new StringWriter();
-      clprocessor.writeClass(structcontext, cl, new BufferedWriter(strwriter));
-
-      res = strwriter.toString();
-    }
-    catch (ThreadDeath ex) {
-      throw ex;
+      StringWriter writer = new StringWriter();
+      classesProcessor.writeClass(cl, new BufferedWriter(writer));
+      return writer.toString();
     }
     catch (Throwable ex) {
       DecompilerContext.getLogger().writeMessage("Class " + cl.qualifiedName + " couldn't be fully decompiled.", ex);
+      return null;
     }
-
-    return res;
   }
 }

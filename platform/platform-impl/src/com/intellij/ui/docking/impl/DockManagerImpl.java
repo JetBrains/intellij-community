@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,6 +94,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
     myProject = project;
   }
 
+  @Override
   public void register(final DockContainer container) {
     myContainers.add(container);
     Disposer.register(container, new Disposable() {
@@ -147,6 +148,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
     return wnd != null ? key + "#" + wnd.myId : key;
   }
 
+  @Override
   public DockContainer getContainerFor(Component c) {
     if (c == null) return null;
 
@@ -401,7 +403,8 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
     });
   }
 
-  public Pair<FileEditor[], FileEditorProvider[]> createNewDockContainerFor(@NotNull VirtualFile file, FileEditorManagerImpl fileEditorManager) {
+  @NotNull
+  public Pair<FileEditor[], FileEditorProvider[]> createNewDockContainerFor(@NotNull VirtualFile file, @NotNull FileEditorManagerImpl fileEditorManager) {
     DockContainer container = getFactory(DockableEditorContainerFactory.TYPE).createContainer(null);
     register(container);
 

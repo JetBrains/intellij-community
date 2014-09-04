@@ -48,7 +48,7 @@ public class ConfigurableExtensionPointUtil {
       }
     }
 
-    final Map<String, ConfigurableWrapper> idToConfigurable = new HashMap<String, ConfigurableWrapper>();
+    final Map<String, ConfigurableWrapper> idToConfigurable = new LinkedHashMap<String, ConfigurableWrapper>();
     for (ConfigurableEP<Configurable> ep : extensions) {
       final Configurable configurable = ConfigurableWrapper.wrapConfigurable(ep);
       if (isSuppressed(configurable, filter)) continue;
@@ -75,16 +75,13 @@ public class ConfigurableExtensionPointUtil {
         }
       }
     }
-    //leave only roots (i.e. configurables without parents)
-    for (final Iterator<String> iterator = idToConfigurable.keySet().iterator(); iterator.hasNext(); ) {
-      final String key = iterator.next();
-      final ConfigurableWrapper wrapper = idToConfigurable.get(key);
-      final String parentId = wrapper.getParentId();
-      if (parentId != null && idToConfigurable.containsKey(parentId)) {
-        iterator.remove(); // remove only processed parents
+    // add roots only (i.e. configurables without parents)
+    for (ConfigurableWrapper wrapper : idToConfigurable.values()) {
+      String parentId = wrapper.getParentId();
+      if (parentId == null || !idToConfigurable.containsKey(parentId)) {
+        result.add(wrapper);
       }
     }
-    ContainerUtil.addAll(result, idToConfigurable.values());
 
     return result;
   }
@@ -164,7 +161,7 @@ public class ConfigurableExtensionPointUtil {
   @NotNull
   private static <T extends Configurable> T findConfigurable(ConfigurableEP<Configurable>[] extensions, Class<T> configurableClass) {
     for (ConfigurableEP<Configurable> extension : extensions) {
-      if (extension.providerClass != null || extension.instanceClass != null || extension.implementationClass != null) {
+      if (extension.canCreateConfigurable()) {
         final Configurable configurable = extension.createConfigurable();
         if (configurableClass.isInstance(configurable)) {
           return configurableClass.cast(configurable);

@@ -13,24 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zmlx.hg4idea.action;
+package com.intellij.openapi.vcs.configurable;
 
-import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurableProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.repo.HgRepository;
 
-public abstract class HgBranchAbstractAction extends DumbAwareAction {
-  @NotNull protected final Project myProject;
-  @NotNull protected final HgRepository mySelectedRepository;
-  @NotNull protected final String myBranchName;
+public final class VcsManagerConfigurableProvider extends ConfigurableProvider {
+  private final Project myProject;
 
-  public HgBranchAbstractAction(@NotNull Project project, @NotNull String title,
-                                @NotNull HgRepository selectedRepository,
-                                @NotNull String branchName) {
-    super(title);
+  public VcsManagerConfigurableProvider(Project project) {
     myProject = project;
-    mySelectedRepository = selectedRepository;
-    myBranchName = branchName;
+  }
+
+  @NotNull
+  @Override
+  public Configurable createConfigurable() {
+    return new VcsManagerConfigurable(myProject);
+  }
+
+  @Override
+  public boolean canCreateConfigurable() {
+    return ProjectLevelVcsManager.getInstance(myProject).getAllVcss().length > 0;
   }
 }

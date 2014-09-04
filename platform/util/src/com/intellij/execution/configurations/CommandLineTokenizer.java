@@ -20,9 +20,9 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 /**
- * Splits input String to tokens being aware of quoted tokens ("foo bar") and escaped spaces (foo\ bar),
+ * Splits input String to tokens being aware of quoted tokens ("foo bar") and escaped spaces & quotes (\"foo\ bar\"),
  * usually used for splitting command line to separate arguments that may contain space symbols.
- * Escaped symbols are not handled so there's no way to get token that itself contains quotation mark.
+ * Space and quote are the only symbols that can be escaped
  */
 public class CommandLineTokenizer extends StringTokenizer {
 
@@ -103,8 +103,10 @@ public class CommandLineTokenizer extends StringTokenizer {
 
         do {
             while ((i = nextToken.indexOf('"')) >= 0) {
-                quotationMarks++;
-                buffer.append(nextToken.substring(0, i));
+                boolean isEscapedQuote = i > 0 && nextToken.charAt(i - 1) == '\\';
+                if (!isEscapedQuote) quotationMarks++;
+                buffer.append(nextToken.substring(0, isEscapedQuote ? i - 1 : i));
+                if (isEscapedQuote) buffer.append('"');
                 nextToken = nextToken.substring(i + 1);
             }
 

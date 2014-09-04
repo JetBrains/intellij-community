@@ -22,6 +22,8 @@ import com.intellij.idea.Bombed;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.IdeaTestUtil;
+import junit.framework.Test;
+import junit.framework.TestSuite;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -107,7 +109,6 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
-  @Bombed(day = 30, month = Calendar.SEPTEMBER)
   public void testIDEA124983() throws Exception {
     doTest();
   }
@@ -145,4 +146,12 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   protected Sdk getProjectJDK() {
     return IdeaTestUtil.getMockJdk18();
   }
+/*
+  public static Test suite() {
+    final TestSuite suite = new TestSuite();
+    for (int i = 0; i < 100; i++) {
+      suite.addTestSuite(NewLambdaHighlightingTest.class);
+    }
+    return suite;
+  }*/
 }

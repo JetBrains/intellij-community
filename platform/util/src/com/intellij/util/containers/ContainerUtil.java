@@ -70,6 +70,12 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
+  public static <K, V> Map<K, V> newHashMap(int initialCapacity) {
+    return ContainerUtilRt.newHashMap(initialCapacity);
+  }
+
+  @NotNull
+  @Contract(pure=true)
   public static <K extends Comparable, V> TreeMap<K, V> newTreeMap() {
     return ContainerUtilRt.newTreeMap();
   }
