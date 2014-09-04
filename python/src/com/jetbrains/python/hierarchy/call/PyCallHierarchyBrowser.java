@@ -19,13 +19,11 @@ import com.intellij.ide.hierarchy.CallHierarchyBrowserBase;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.PopupHandler;
+import com.jetbrains.python.hierarchy.PyHierarchyNodeDescriptor;
 import com.jetbrains.python.hierarchy.PyHierarchyUtils;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
@@ -51,37 +49,28 @@ public class PyCallHierarchyBrowser extends CallHierarchyBrowserBase {
   @Nullable
   @Override
   protected PsiElement getElementFromDescriptor(@NotNull HierarchyNodeDescriptor descriptor) {
-    if (descriptor instanceof PyCallHierarchyNodeDescriptor) {
-      PyCallHierarchyNodeDescriptor nodeDescriptor = (PyCallHierarchyNodeDescriptor)descriptor;
-      return nodeDescriptor.getEnclosingElement();
-    }
-    return null;
-  }
-
-  @Override
-  protected PsiElement getOpenFileElementFromDescriptor(@NotNull HierarchyNodeDescriptor descriptor) {
-    if (descriptor instanceof PyCallHierarchyNodeDescriptor) {
-      PyCallHierarchyNodeDescriptor nodeDescriptor = (PyCallHierarchyNodeDescriptor)descriptor;
-      return nodeDescriptor.getTargetElement();
+    if (descriptor instanceof PyHierarchyNodeDescriptor) {
+      PyHierarchyNodeDescriptor pyDescriptor = (PyHierarchyNodeDescriptor)descriptor;
+      return pyDescriptor.getPsiElement();
     }
     return null;
   }
 
   @Override
   protected void createTrees(@NotNull Map<String, JTree> type2TreeMap) {
-    ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(GROUP_PY_CALL_HIERARCHY_POPUP);
-    final JTree tree1 = createTree(false);
-    PopupHandler.installPopupHandler(tree1, group, ActionPlaces.CALL_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
-    final BaseOnThisFunctionAction baseOnThisFunctionAction = new BaseOnThisFunctionAction();
-    baseOnThisFunctionAction
-      .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_CALL_HIERARCHY).getShortcutSet(), tree1);
-    type2TreeMap.put(CALLER_TYPE, tree1);
+    final ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(GROUP_PY_CALL_HIERARCHY_POPUP);
 
-    final JTree tree2 = createTree(false);
-    PopupHandler.installPopupHandler(tree2, group, ActionPlaces.CALL_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
-    baseOnThisFunctionAction
-      .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_CALL_HIERARCHY).getShortcutSet(), tree2);
-    type2TreeMap.put(CALLEE_TYPE, tree2);
+    final JTree callerTree = createHierarchyTree(group);
+    final JTree calleeTree = createHierarchyTree(group);
+
+    type2TreeMap.put(CALLER_TYPE, callerTree);
+    type2TreeMap.put(CALLEE_TYPE, calleeTree);
+  }
+
+  private JTree createHierarchyTree(ActionGroup group) {
+    final JTree tree = createTree(false);
+    PopupHandler.installPopupHandler(tree, group, ActionPlaces.CALL_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
+    return tree;
   }
 
   @Override
@@ -108,8 +97,5 @@ public class PyCallHierarchyBrowser extends CallHierarchyBrowserBase {
   @Override
   protected Comparator<NodeDescriptor> getComparator() {
     return PyHierarchyUtils.getComparator(myProject);
-  }
-
-  public static final class BaseOnThisFunctionAction extends CallHierarchyBrowserBase.BaseOnThisMethodAction {
   }
 }

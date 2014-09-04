@@ -1,6 +1,6 @@
-<node text="A.__init__(main.py)" base="true">
-  <node text="invokeA(main.py)">
-    <node text="C.bar(main.py)"/>
+<node text="A.__init__(self) (hierarchy.call.Static.Constructor.main)" base="true">
+  <node text="invokeA() (hierarchy.call.Static.Constructor.main)">
+    <node text="C.bar(self) (hierarchy.call.Static.Constructor.main)"/>
   </node>
-  <node text="C.bar(main.py)"/>
+  <node text="C.bar(self) (hierarchy.call.Static.Constructor.main)"/>
 </node>

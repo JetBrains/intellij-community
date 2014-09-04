@@ -1,3 +1,3 @@
-<node text="target_func(file_1.py)" base="true">
-  <node text="foo(file_1.py)"/>
+<node text="target_func() (hierarchy.call.Static.Parentheses.file_1)" base="true">
+  <node text="foo(x=bar()) (hierarchy.call.Static.Parentheses.file_1)"/>
 </node>

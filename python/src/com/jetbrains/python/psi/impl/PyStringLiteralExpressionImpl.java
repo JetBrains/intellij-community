@@ -327,7 +327,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
       @Nullable
       @Override
       public String getLocationString() {
-        return "(" + PyPresentableElementImpl.getPackageForFile(getContainingFile()) + ")";
+        return "(" + PyElementPresentation.getPackageForFile(getContainingFile()) + ")";
       }
 
       @Nullable
