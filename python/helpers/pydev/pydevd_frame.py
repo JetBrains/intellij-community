@@ -48,6 +48,7 @@ class PyDBFrame:
         #args = mainDebugger, filename, base, info, t, frame
         #yeap, much faster than putting in self and then getting it from self later on
         self._args = args[:-1]
+        self._cached_is_django_render_call = None
 
     def setSuspend(self, *args, **kwargs):
         self._args[0].setSuspend(*args, **kwargs)
@@ -56,15 +57,14 @@ class PyDBFrame:
         self._args[0].doWaitSuspend(*args, **kwargs)
 
     def _is_django_render_call(self, frame):
-        try:
-            return self._cached_is_django_render_call
-        except:
+        if self._cached_is_django_render_call is None:
             # Calculate lazily: note that a PyDBFrame always deals with the same
             # frame over and over, so, we can cache this.
             # -- although we can't cache things which change over time (such as
             #    the breakpoints for the file).
-            ret = self._cached_is_django_render_call = is_django_render_call(frame)
-            return ret
+            self._cached_is_django_render_call = is_django_render_call(frame)
+
+        return self._cached_is_django_render_call
 
     def trace_exception(self, frame, event, arg):
         if event == 'exception':
@@ -505,7 +505,7 @@ class PyDBFrame:
                     stop = False
 
                 if django_stop:
-                    frame = suspend_django(self, main_debugger, thread, frame)
+                    frame = suspend_django(self, main_debugger, thread, frame, step_cmd)
                     if frame:
                         self.doWaitSuspend(thread, frame, event, arg)
                 elif stop:
