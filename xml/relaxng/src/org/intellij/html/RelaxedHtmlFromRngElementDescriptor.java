@@ -94,7 +94,9 @@ public class RelaxedHtmlFromRngElementDescriptor implements XmlElementDescriptor
 
   @Override
   public XmlAttributeDescriptor getAttributeDescriptor(String attributeName, final XmlTag context) {
-    final XmlAttributeDescriptor descriptor = myDelegate.getAttributeDescriptor(attributeName.toLowerCase(), context);
+    XmlAttributeDescriptor descriptor = myDelegate.getAttributeDescriptor(attributeName.toLowerCase(), context);
+    // some elements in HTML5 schema (e.g. SVG) are case sensitive
+    descriptor = descriptor == null ? myDelegate.getAttributeDescriptor(attributeName, context) : descriptor;
     if (descriptor != null) return descriptor;
 
     return RelaxedHtmlFromSchemaElementDescriptor.getAttributeDescriptorFromFacelets(attributeName, context);
