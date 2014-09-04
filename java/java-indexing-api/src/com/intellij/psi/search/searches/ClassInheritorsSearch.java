@@ -167,7 +167,12 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
   }
 
   public static Query<PsiClass> search(@NotNull final PsiClass aClass, final boolean checkDeep) {
-    return search(aClass, aClass.getUseScope(), checkDeep);
+    return search(aClass, ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
+      @Override
+      public SearchScope compute() {
+        return aClass.getUseScope();
+      }
+    }), checkDeep);
   }
 
   public static Query<PsiClass> search(@NotNull PsiClass aClass) {
