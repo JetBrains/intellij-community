@@ -40,7 +40,7 @@ public class IdeDecompiler {
   }
 
   public void addSpace(File file, boolean isOwn) throws IOException {
-    fernflower.getStructcontext().addSpace(file, isOwn);
+    fernflower.getStructContext().addSpace(file, isOwn);
   }
 
   public void decompileContext() {

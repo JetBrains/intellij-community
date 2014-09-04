@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -164,7 +165,7 @@ public class Utils{
         }
       }
       else if (child instanceof Separator) {
-        if (!list.isEmpty() && !(list.get(list.size() - 1) instanceof Separator)) {
+        if (!StringUtil.isEmpty(((Separator)child).getText()) || (!list.isEmpty() && !(list.get(list.size() - 1) instanceof Separator))) {
           list.add(child);
         }
       }
@@ -284,8 +285,10 @@ public class Utils{
     for (int i = 0, size = list.size(); i < size; i++) {
       final AnAction action = list.get(i);
       if (action instanceof Separator) {
-        if (i > 0 && i < size - 1) {
+        final String text = ((Separator)action).getText();
+        if (!StringUtil.isEmpty(text) || (i > 0 && i < size - 1)) {
           component.add(new JPopupMenu.Separator() {
+            private final JMenuItem myMenu = !StringUtil.isEmpty(text) ? new JMenuItem(text) : null;
             @Override
             public Insets getInsets() {
               final Insets insets = super.getInsets();
@@ -296,12 +299,29 @@ public class Utils{
             }
 
             @Override
+            public void doLayout() {
+              super.doLayout();
+              if (myMenu != null) {
+                myMenu.setBounds(getBounds());
+              }
+            }
+
+            @Override
             protected void paintComponent(Graphics g) {
               if (UIUtil.isUnderWindowsClassicLookAndFeel() || UIUtil.isUnderDarcula() || UIUtil.isUnderWindowsLookAndFeel()) {
                 g.setColor(component.getBackground());
                 g.fillRect(0, 0, getWidth(), getHeight());
               }
-              super.paintComponent(g);
+              if (myMenu != null) {
+                myMenu.paint(g);
+              } else {
+                super.paintComponent(g);
+              }
+            }
+
+            @Override
+            public Dimension getPreferredSize() {
+              return myMenu != null ? myMenu.getPreferredSize() : super.getPreferredSize();
             }
           });
         }

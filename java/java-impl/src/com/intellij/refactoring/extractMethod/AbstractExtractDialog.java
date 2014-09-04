@@ -20,25 +20,18 @@
  */
 package com.intellij.refactoring.extractMethod;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiModifier;
 import com.intellij.refactoring.util.VariableData;
 
-public abstract class AbstractExtractDialog extends DialogWrapper {
-  protected AbstractExtractDialog(Project project) {
-    super(project, true);
-  }
+public interface AbstractExtractDialog {
 
-
-  public abstract String getChosenMethodName();
-
-  public abstract VariableData[] getChosenParameters();
-
+  String getChosenMethodName();
+  VariableData[] getChosenParameters();
   @PsiModifier.ModifierConstant
-  public abstract String getVisibility();
+  String getVisibility();
+  boolean isMakeStatic();
+  boolean isChainedConstructor();
 
-  public abstract boolean isMakeStatic();
-
-  public abstract boolean isChainedConstructor();
+  void show();
+  boolean isOK();
 }

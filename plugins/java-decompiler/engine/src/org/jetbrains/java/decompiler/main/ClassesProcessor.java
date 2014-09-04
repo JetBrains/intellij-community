@@ -235,7 +235,7 @@ public class ClassesProcessor {
   }
 
 
-  public void writeClass(StructContext context, StructClass cl, BufferedWriter outwriter) throws IOException {
+  public void writeClass(StructClass cl, BufferedWriter writer) throws IOException {
 
     ClassNode root = mapRootClasses.get(cl.qualifiedName);
     if (root.type != ClassNode.CLASS_ROOT) {
@@ -270,20 +270,20 @@ public class ClassesProcessor {
       int index = cl.qualifiedName.lastIndexOf("/");
       if (index >= 0) {
         String packageName = cl.qualifiedName.substring(0, index).replace('/', '.');
-        outwriter.write("package ");
-        outwriter.write(packageName);
-        outwriter.write(";");
-        outwriter.write(DecompilerContext.getNewLineSeparator());
-        outwriter.write(DecompilerContext.getNewLineSeparator());
+        writer.write("package ");
+        writer.write(packageName);
+        writer.write(";");
+        writer.write(DecompilerContext.getNewLineSeparator());
+        writer.write(DecompilerContext.getNewLineSeparator());
       }
 
       DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS_NODE, root);
 
-      DecompilerContext.getImportCollector().writeImports(outwriter);
-      outwriter.write(DecompilerContext.getNewLineSeparator());
+      DecompilerContext.getImportCollector().writeImports(writer);
+      writer.write(DecompilerContext.getNewLineSeparator());
 
-      outwriter.write(strwriter.toString());
-      outwriter.flush();
+      writer.write(strwriter.toString());
+      writer.flush();
     }
     finally {
       destroyWrappers(root);

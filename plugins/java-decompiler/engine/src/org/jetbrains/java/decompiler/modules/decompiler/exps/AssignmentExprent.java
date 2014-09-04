@@ -20,7 +20,6 @@ import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
-import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructField;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -105,26 +104,33 @@ public class AssignmentExprent extends Exprent {
   }
 
   public String toJava(int indent) {
-
     VarType leftType = left.getExprType();
     VarType rightType = right.getExprType();
 
-    boolean fieldInStatInit = false;
+    boolean fieldInClassInit = false, hiddenField = false;
     if (left.type == Exprent.EXPRENT_FIELD) { // first assignment to a final field. Field name without "this" in front of it
       FieldExprent field = (FieldExprent)left;
       ClassNode node = ((ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE));
       if (node != null) {
-        StructClass cl = node.classStruct;
-        StructField fd = cl.getField(field.getName(), field.getDescriptor().descriptorString);
-        if (fd != null && field.isStatic() && fd.hasModifier(CodeConstants.ACC_FINAL)) {
-          fieldInStatInit = true;
+        StructField fd = node.classStruct.getField(field.getName(), field.getDescriptor().descriptorString);
+        if (fd != null) {
+          if (field.isStatic() && fd.hasModifier(CodeConstants.ACC_FINAL)) {
+            fieldInClassInit = true;
+          }
+          if (node.wrapper.getHiddenMembers().contains(InterpreterUtil.makeUniqueKey(fd.getName(), fd.getDescriptor()))) {
+            hiddenField = true;
+          }
         }
       }
     }
 
+    if (hiddenField) {
+      return "";
+    }
+
     StringBuilder buffer = new StringBuilder();
 
-    if (fieldInStatInit) {
+    if (fieldInClassInit) {
       buffer.append(((FieldExprent)left).getName());
     }
     else {

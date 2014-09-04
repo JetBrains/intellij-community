@@ -701,6 +701,7 @@ public class EditorWindow {
 
   public void setEditor(@Nullable final EditorWithProviderComposite editor, final boolean selectEditor, final boolean focusEditor) {
     if (editor != null) {
+      onBeforeSetEditor(editor.getFile());
       if (myTabbedPane == null) {
         myPanel.removeAll ();
         myPanel.add (new TCompForTablessMode(this, editor), BorderLayout.CENTER);
@@ -739,6 +740,9 @@ public class EditorWindow {
       myOwner.setCurrentWindow(this, false);
     }
     myOwner.validate();
+  }
+
+  protected void onBeforeSetEditor(VirtualFile file) {
   }
 
   private boolean splitAvailable() {

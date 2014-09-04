@@ -614,8 +614,12 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   public void createCurrentWindow() {
     LOG.assertTrue(myCurrentWindow == null);
-    setCurrentWindow(new EditorWindow(this));
+    setCurrentWindow(createEditorWindow());
     add(myCurrentWindow.myPanel, BorderLayout.CENTER);
+  }
+
+  protected EditorWindow createEditorWindow() {
+    return new EditorWindow(this);
   }
 
   /**
@@ -832,7 +836,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       UIUtil.invokeAndWaitIfNeeded(new Runnable() {
         @Override
         public void run() {
-          windowRef.set(context == null ? new EditorWindow(EditorsSplitters.this) : findWindowWith(context));
+          windowRef.set(context == null ? createEditorWindow() : findWindowWith(context));
         }
       });
       final EditorWindow window = windowRef.get();

@@ -25,6 +25,10 @@ import java.util.HashSet;
 import java.util.List;
 
 public class InterpreterUtil {
+  public static final boolean IS_WINDOWS = System.getProperty("os.name", "").startsWith("Windows");
+
+  private static final int CHANNEL_WINDOW_SIZE = IS_WINDOWS ? 64 * 1024 * 1024 - (32 * 1024) : 64 * 1024 * 1024;  // magic number for Windows
+  private static final int BUFFER_SIZE = 16* 1024;
 
   public static void copyFile(File in, File out) throws IOException {
     FileInputStream inStream = new FileInputStream(in);
@@ -33,12 +37,9 @@ public class InterpreterUtil {
       try {
         FileChannel inChannel = inStream.getChannel();
         FileChannel outChannel = outStream.getChannel();
-        // magic number for Windows, 64Mb - 32Kb)
-        int maxCount = (64 * 1024 * 1024) - (32 * 1024);
-        long size = inChannel.size();
-        long position = 0;
+        long size = inChannel.size(), position = 0;
         while (position < size) {
-          position += inChannel.transferTo(position, maxCount, outChannel);
+          position += inChannel.transferTo(position, CHANNEL_WINDOW_SIZE, outChannel);
         }
       }
       finally {
@@ -50,11 +51,9 @@ public class InterpreterUtil {
     }
   }
 
-  public static void copyInputStream(InputStream in, OutputStream out) throws IOException {
-
-    byte[] buffer = new byte[1024];
+  public static void copyStream(InputStream in, OutputStream out) throws IOException {
+    byte[] buffer = new byte[BUFFER_SIZE];
     int len;
-
     while ((len = in.read(buffer)) >= 0) {
       out.write(buffer, 0, len);
     }
@@ -69,9 +68,7 @@ public class InterpreterUtil {
     return buf.toString();
   }
 
-
   public static boolean equalSets(Collection<?> c1, Collection<?> c2) {
-
     if (c1 == null) {
       return c2 == null;
     }
@@ -93,7 +90,6 @@ public class InterpreterUtil {
   }
 
   public static boolean equalObjectArrays(Object[] first, Object[] second) {
-
     if (first == null || second == null) {
       return equalObjects(first, second);
     }
@@ -113,12 +109,11 @@ public class InterpreterUtil {
   }
 
   public static boolean equalLists(List<?> first, List<?> second) {
-
     if (first == null) {
       return second == null;
     }
     else if (second == null) {
-      return first == null;
+      return false;
     }
 
     if (first.size() == second.size()) {

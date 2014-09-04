@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
@@ -44,7 +45,7 @@ import java.awt.event.ActionListener;
 import java.util.Enumeration;
 
 
-public class ExtractMethodObjectDialog extends AbstractExtractDialog {
+public class ExtractMethodObjectDialog extends DialogWrapper implements AbstractExtractDialog {
   private final Project myProject;
   private final PsiType myReturnType;
   private final PsiTypeParameterList myTypeParameterList;
@@ -86,7 +87,7 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
   public ExtractMethodObjectDialog(Project project, PsiClass targetClass, final InputVariables inputVariables, PsiType returnType,
                                    PsiTypeParameterList typeParameterList, PsiType[] exceptions, boolean isStatic, boolean canBeStatic,
                                    final PsiElement[] elementsToExtract, final boolean multipleExitPoints) {
-    super(project);
+    super(project, true);
     myProject = project;
     myTargetClass = targetClass;
     myReturnType = returnType;

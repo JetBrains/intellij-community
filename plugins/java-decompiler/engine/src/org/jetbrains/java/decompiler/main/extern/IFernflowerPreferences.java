@@ -15,6 +15,8 @@
  */
 package org.jetbrains.java.decompiler.main.extern;
 
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -75,10 +77,9 @@ public interface IFernflowerPreferences {
     put(IDEA_NOT_NULL_ANNOTATION, "1");
     put(LAMBDA_TO_ANONYMOUS_CLASS, "0");
 
-    boolean win = System.getProperty("os.name", "").startsWith("Windows");
     put(MAX_PROCESSING_METHOD, "0");
     put(RENAME_ENTITIES, "0");
-    put(NEW_LINE_SEPARATOR, (win ? "0" : "1"));
+    put(NEW_LINE_SEPARATOR, (InterpreterUtil.IS_WINDOWS ? "0" : "1"));
     put(INDENT_STRING, "   ");
   }});
 }
