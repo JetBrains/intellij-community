@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.PopupHandler;
+import com.jetbrains.python.hierarchy.PyHierarchyNodeDescriptor;
 import com.jetbrains.python.hierarchy.PyHierarchyUtils;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
@@ -51,18 +52,9 @@ public class PyCallHierarchyBrowser extends CallHierarchyBrowserBase {
   @Nullable
   @Override
   protected PsiElement getElementFromDescriptor(@NotNull HierarchyNodeDescriptor descriptor) {
-    if (descriptor instanceof PyCallHierarchyNodeDescriptor) {
-      PyCallHierarchyNodeDescriptor nodeDescriptor = (PyCallHierarchyNodeDescriptor)descriptor;
-      return nodeDescriptor.getEnclosingElement();
-    }
-    return null;
-  }
-
-  @Override
-  protected PsiElement getOpenFileElementFromDescriptor(@NotNull HierarchyNodeDescriptor descriptor) {
-    if (descriptor instanceof PyCallHierarchyNodeDescriptor) {
-      PyCallHierarchyNodeDescriptor nodeDescriptor = (PyCallHierarchyNodeDescriptor)descriptor;
-      return nodeDescriptor.getTargetElement();
+    if (descriptor instanceof PyHierarchyNodeDescriptor) {
+      PyHierarchyNodeDescriptor pyDescriptor = (PyHierarchyNodeDescriptor)descriptor;
+      return pyDescriptor.getPsiElement();
     }
     return null;
   }
