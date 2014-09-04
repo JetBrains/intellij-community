@@ -75,16 +75,13 @@ public class ConfigurableExtensionPointUtil {
         }
       }
     }
-    //leave only roots (i.e. configurables without parents)
-    for (final Iterator<String> iterator = idToConfigurable.keySet().iterator(); iterator.hasNext(); ) {
-      final String key = iterator.next();
-      final ConfigurableWrapper wrapper = idToConfigurable.get(key);
-      final String parentId = wrapper.getParentId();
-      if (parentId != null && idToConfigurable.containsKey(parentId)) {
-        iterator.remove(); // remove only processed parents
+    // add roots only (i.e. configurables without parents)
+    for (ConfigurableWrapper wrapper : idToConfigurable.values()) {
+      String parentId = wrapper.getParentId();
+      if (parentId == null || !idToConfigurable.containsKey(parentId)) {
+        result.add(wrapper);
       }
     }
-    ContainerUtil.addAll(result, idToConfigurable.values());
 
     return result;
   }
