@@ -209,7 +209,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
   private void attachToSession(@NotNull XDebugSessionImpl session) {
     for (XDebugView view : myViews) {
-      session.addSessionListener(new XDebugViewSessionListener(view, session), this);
+      session.addSessionListener(new XDebugViewSessionListener(view), this);
     }
 
     XDebugTabLayouter layouter = session.getDebugProcess().createTabLayouter();
