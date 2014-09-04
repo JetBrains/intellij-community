@@ -37,6 +37,7 @@ import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -159,8 +160,11 @@ public abstract class DebuggerAction extends AnAction {
     });
   }
 
-  public static void refreshViews(XValueNodeImpl node) {
-    final XDebugSession session = XDebugView.getSession(node.getTree());
+  public static void refreshViews(@NotNull XValueNodeImpl node) {
+    refreshViews(XDebugView.getSession(node.getTree()));
+  }
+
+  public static void refreshViews(@Nullable XDebugSession session) {
     if (session != null) {
       XDebugProcess process = session.getDebugProcess();
       if (process instanceof JavaDebugProcess) {

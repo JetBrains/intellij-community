@@ -33,7 +33,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jdom.Parent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,11 +44,7 @@ import java.util.*;
 
 @State(
   name = "KeymapManager",
-  roamingType = RoamingType.PER_PLATFORM,
-  storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/keymap.xml"
-    )}
+  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/keymap.xml", roamingType = RoamingType.PER_PLATFORM)}
 )
 public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStateComponent<Element>, ExportableApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.keymap.KeymapManager");

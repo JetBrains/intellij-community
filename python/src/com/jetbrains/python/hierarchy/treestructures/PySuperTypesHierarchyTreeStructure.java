@@ -17,8 +17,8 @@ package com.jetbrains.python.hierarchy.treestructures;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
-import com.intellij.openapi.project.Project;
-import com.jetbrains.python.hierarchy.PyTypeHierarchyNodeDescriptor;
+import com.intellij.psi.PsiElement;
+import com.jetbrains.python.hierarchy.PyHierarchyNodeDescriptor;
 import com.jetbrains.python.psi.PyClass;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,20 +32,23 @@ import java.util.List;
  * Time: 7:04:07 PM
  */
 public class PySuperTypesHierarchyTreeStructure extends HierarchyTreeStructure {
-  protected PySuperTypesHierarchyTreeStructure(final Project project, final HierarchyNodeDescriptor baseDescriptor) {
-    super(project, baseDescriptor);
-  }
-
   public PySuperTypesHierarchyTreeStructure(@NotNull final PyClass cl) {
-    super(cl.getProject(), new PyTypeHierarchyNodeDescriptor(null, cl, true));
+    super(cl.getProject(), new PyHierarchyNodeDescriptor(null, cl, true));
   }
 
   @NotNull
   protected Object[] buildChildren(@NotNull HierarchyNodeDescriptor descriptor) {
-    final PyClass[] superClasses = ((PyTypeHierarchyNodeDescriptor)descriptor).getClassElement().getSuperClasses();
-    List<PyTypeHierarchyNodeDescriptor> res = new ArrayList<PyTypeHierarchyNodeDescriptor>();
-    for (PyClass superClass : superClasses) {
-      res.add(new PyTypeHierarchyNodeDescriptor(descriptor, superClass, false));
+    final List<PyHierarchyNodeDescriptor> res = new ArrayList<PyHierarchyNodeDescriptor>();
+    if (descriptor instanceof PyHierarchyNodeDescriptor) {
+      final PyHierarchyNodeDescriptor pyDescriptor = (PyHierarchyNodeDescriptor)descriptor;
+      final PsiElement element = pyDescriptor.getPsiElement();
+      if (element instanceof PyClass) {
+        final PyClass cls = (PyClass)element;
+        final PyClass[] superClasses = cls.getSuperClasses();
+        for (PyClass superClass : superClasses) {
+          res.add(new PyHierarchyNodeDescriptor(descriptor, superClass, false));
+        }
+      }
     }
     return res.toArray();
   }

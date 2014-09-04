@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -48,7 +49,7 @@ import java.util.Map;
 /**
  * @author yole
  */
-public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParameterStub> implements PyNamedParameter {
+public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub> implements PyNamedParameter {
   public PyNamedParameterImpl(ASTNode astNode) {
     super(astNode);
   }
@@ -278,6 +279,11 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
       }
     }
     return null;
+  }
+
+  @Override
+  public ItemPresentation getPresentation() {
+    return new PyElementPresentation(this);
   }
 
   private static void processLocalCalls(@NotNull PyFunction function, @NotNull Processor<PyCallExpression> processor) {

@@ -20,11 +20,9 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.service.SharedThreadPool;
@@ -32,6 +30,7 @@ import org.jetbrains.jps.service.SharedThreadPool;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.Future;
 
 /**
@@ -40,15 +39,15 @@ import java.util.concurrent.Future;
  */
 public class JavacServerBootstrap {
 
-  public static BaseOSProcessHandler launchJavacServer(String sdkHomePath,
-                                                       int heapSize,
-                                                       int port,
-                                                       File workingDir,
-                                                       List<String> vmOptions,
-                                                       JavaCompilingTool compilingTool) throws Exception {
+  public static ExternalJavacProcessHandler launchExternalJavacProcess(UUID uuid, String sdkHomePath,
+                                                                int heapSize,
+                                                                int port,
+                                                                File workingDir,
+                                                                List<String> vmOptions,
+                                                                JavaCompilingTool compilingTool) throws Exception {
     final List<String> cmdLine = new ArrayList<String>();
     appendParam(cmdLine, getVMExecutablePath(sdkHomePath));
-    appendParam(cmdLine, "-XX:MaxPermSize=150m");
+    //appendParam(cmdLine, "-XX:MaxPermSize=150m");
     //appendParam(cmdLine, "-XX:ReservedCodeCacheSize=64m");
     appendParam(cmdLine, "-Djava.awt.headless=true");
     final int xms = heapSize / 2;
@@ -59,7 +58,7 @@ public class JavacServerBootstrap {
 
     // debugging
     //appendParam(cmdLine, "-XX:+HeapDumpOnOutOfMemoryError");
-    //appendParam(cmdLine, "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5009");
+    //appendParam(cmdLine, "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5009");
 
     // javac's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language
     final String encoding = System.getProperty("file.encoding");
@@ -83,18 +82,20 @@ public class JavacServerBootstrap {
       appendParam(cmdLine, "-Duser.region=" + region);
     }
 
-    appendParam(cmdLine, "-D" + JavacServer.JPS_JAVA_COMPILING_TOOL_PROPERTY + "=" + compilingTool.getId());
+    appendParam(cmdLine, "-D" + ExternalJavacProcess.JPS_JAVA_COMPILING_TOOL_PROPERTY + "=" + compilingTool.getId());
 
     // this will disable standard extensions to ensure javac is loaded from the right tools.jar
     appendParam(cmdLine, "-Djava.ext.dirs=");
-
+    
+    appendParam(cmdLine, "-Dlog4j.defaultInitOverride=true");
+    
     for (String option : vmOptions) {
       appendParam(cmdLine, option);
     }
 
     appendParam(cmdLine, "-classpath");
 
-    final List<File> cp = ClasspathBootstrap.getJavacServerClasspath(sdkHomePath, compilingTool);
+    final List<File> cp = ClasspathBootstrap.getExternalJavacProcessClasspath(sdkHomePath, compilingTool);
     final StringBuilder classpath = new StringBuilder();
     for (File file : cp) {
       if (classpath.length() > 0) {
@@ -104,7 +105,9 @@ public class JavacServerBootstrap {
     }
     appendParam(cmdLine, classpath.toString());
 
-    appendParam(cmdLine, org.jetbrains.jps.javac.JavacServer.class.getName());
+    appendParam(cmdLine, org.jetbrains.jps.javac.ExternalJavacProcess.class.getName());
+    appendParam(cmdLine, uuid.toString());
+    appendParam(cmdLine, "127.0.0.1");
     appendParam(cmdLine, Integer.toString(port));
 
     workingDir.mkdirs();
@@ -115,67 +118,30 @@ public class JavacServerBootstrap {
     builder.directory(workingDir);
 
     final Process process = builder.start();
-    final BaseOSProcessHandler processHandler = new BaseOSProcessHandler(process, null, null) {
-      @Override
-      protected Future<?> executeOnPooledThread(Runnable task) {
-        return SharedThreadPool.getInstance().executeOnPooledThread(task);
-      }
-    };
-    configureProcessHandler(processHandler);
-
-    return processHandler;
-  }
-
-  private static void configureProcessHandler(final BaseOSProcessHandler processHandler) throws Exception {
+    final ExternalJavacProcessHandler processHandler = new ExternalJavacProcessHandler(process);
     processHandler.addProcessListener(new ProcessAdapter() {
+      @Override
+      public void processTerminated(ProcessEvent event) {
+        processHandler.setExitCode(event.getExitCode());
+      }
+
       public void onTextAvailable(ProcessEvent event, Key outputType) {
         final String text = event.getText();
         if (!StringUtil.isEmptyOrSpaces(text)) {
           if (outputType == ProcessOutputTypes.STDOUT) {
-            System.out.print("JAVAC_SERVER: " + text);
+            System.out.print("JAVAC_PROCESS: " + text);
           }
-          else if (outputType == ProcessOutputTypes.STDERR){
-            System.err.print("JAVAC_SERVER: " + text);
-          }
-        }
-      }
-    });
-    final Semaphore semaphore  = new Semaphore();
-    semaphore.down();
-    final Ref<String> serverStartMessage = new Ref<String>(null);
-    processHandler.addProcessListener(new ProcessAdapter() {
-      public void processTerminated(ProcessEvent event) {
-        try {
-          processHandler.removeProcessListener(this);
-        }
-        finally {
-          semaphore.up();
-        }
-      }
-
-      public void onTextAvailable(ProcessEvent event, Key outputType) {
-        if (outputType == ProcessOutputTypes.STDERR) {
-          final String text = event.getText();
-          if (text != null && (text.contains(JavacServer.SERVER_SUCCESS_START_MESSAGE) || text.contains(JavacServer.SERVER_ERROR_START_MESSAGE))) {
-            try {
-              processHandler.removeProcessListener(this);
-              serverStartMessage.set(text);
-            }
-            finally {
-              semaphore.up();
-            }
+          else if (outputType == ProcessOutputTypes.STDERR) {
+            System.err.print("JAVAC_PROCESS: " + text);
           }
         }
       }
     });
     processHandler.startNotify();
-    semaphore.waitFor();
-
-    final String startupMsg = serverStartMessage.get();
-    if (startupMsg == null || !startupMsg.contains(JavacServer.SERVER_SUCCESS_START_MESSAGE)) {
-      throw new Exception("Server startup failed: " + startupMsg);
-    }
+    return processHandler;
   }
+
+  
 
   private static void appendParam(List<String> cmdLine, String param) {
     if (SystemInfo.isWindows) {
@@ -191,5 +157,26 @@ public class JavacServerBootstrap {
 
   public static String getVMExecutablePath(String sdkHome) {
     return sdkHome + "/bin/java";
+  }
+
+  public static class ExternalJavacProcessHandler extends BaseOSProcessHandler {
+    private volatile int myExitCode;
+    
+    ExternalJavacProcessHandler(Process process) {
+      super(process, null, null);
+    }
+
+    @Override
+    protected Future<?> executeOnPooledThread(Runnable task) {
+      return SharedThreadPool.getInstance().executeOnPooledThread(task);
+    }
+    
+    void setExitCode(int exitCode) {
+      myExitCode = exitCode;
+    }
+
+    public int getExitCode() {
+      return myExitCode;
+    }
   }
 }

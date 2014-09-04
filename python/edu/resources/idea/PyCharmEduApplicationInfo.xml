@@ -19,5 +19,5 @@
 
   <feedback eap-url="http://www.jetbrains.com/feedback/feedback.jsp?product=PyCharm&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"
             release-url="http://www.jetbrains.com/feedback/feedback.jsp?product=PyCharm&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"/>
-  <help file="pycharm-eduhelp.jar" root="pycharm"/>
+  <help file="pycharm-eduhelp.jar" root="pycharm-edu"/>
 </component>

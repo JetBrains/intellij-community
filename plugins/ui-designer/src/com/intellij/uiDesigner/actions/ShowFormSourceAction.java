@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.hierarchy.call;
+package com.intellij.uiDesigner.actions;
 
-import com.intellij.psi.PsiElement;
-import com.jetbrains.python.psi.PyElement;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 
-import java.util.Collection;
-
+import java.util.List;
 
 /**
- * @author novokrest
+ * @author Alexander Lobas
  */
-public interface PyCallDataManager {
-  Collection<PsiElement> getCallees(@NotNull PyElement pyElement);
-
-  Collection<PsiElement> getCallers(@NotNull PyElement pyElement);
+public class ShowFormSourceAction extends AbstractGuiEditorAction {
+  @Override
+  protected void actionPerformed(GuiEditor editor, List<RadComponent> selection, AnActionEvent e) {
+    editor.showFormSource();
+  }
 }

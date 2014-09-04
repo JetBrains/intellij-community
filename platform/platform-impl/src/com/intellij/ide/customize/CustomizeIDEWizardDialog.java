@@ -182,9 +182,21 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
   }
 
   @Override
+  public void doCancelAction() {
+    doOKAction();
+  }
+
+  @Override
   protected void doOKAction() {
     for (AbstractCustomizeWizardStep step : mySteps) {
-      if (!step.beforeOkAction()) return;
+      if (!step.beforeOkAction()) {
+        int index = mySteps.indexOf(step);
+        if (myIndex != index) {
+          myIndex = index;
+          initCurrentStep(true);
+        }
+        return;
+      }
     }
     super.doOKAction();
   }
