@@ -5,7 +5,7 @@ class Frame:
             f_fileno,
             f_code,
             f_locals,
-            f_globals={},
+            f_globals=None,
             f_trace=None):
         self.f_back = f_back
         self.f_lineno = f_fileno
@@ -14,6 +14,8 @@ class Frame:
         self.f_globals = f_globals
         self.f_trace = f_trace
 
+        if self.f_globals is None:
+            self.f_globals = {}
 
 class FCode:
     def __init__(self, name, filename):
