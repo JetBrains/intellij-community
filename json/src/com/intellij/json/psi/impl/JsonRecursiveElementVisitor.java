@@ -6,7 +6,7 @@ import com.intellij.psi.PsiElement;
 /**
  * @author Mikhail Golubev
  */
-public class JsonRecursiveVisitor extends JsonElementVisitor {
+public class JsonRecursiveElementVisitor extends JsonElementVisitor {
 
   public void visitElement(final PsiElement element) {
     element.acceptChildren(this);
