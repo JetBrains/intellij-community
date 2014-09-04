@@ -1205,9 +1205,6 @@ public class InferenceSession {
       }
 
       final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions((PsiLambdaExpression)arg);
-      if (sReturnType == PsiType.VOID) {
-        return returnExpressions.isEmpty() && session == null;
-      }
 
       if (LambdaUtil.isFunctionalType(sReturnType) && LambdaUtil.isFunctionalType(tReturnType) && 
           !TypeConversionUtil.isAssignable(TypeConversionUtil.erasure(sReturnType), TypeConversionUtil.erasure(tReturnType)) &&
@@ -1261,10 +1258,6 @@ public class InferenceSession {
       final PsiType tReturnType = tSubstitutor.substitute(tInterfaceMethod.getReturnType());
       if (tReturnType == PsiType.VOID) {
         return true;
-      }
-
-      if (sReturnType == PsiType.VOID && session != null) {
-        return false;
       }
 
       final boolean sPrimitive = sReturnType instanceof PsiPrimitiveType && sReturnType != PsiType.VOID;
