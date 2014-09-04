@@ -37,7 +37,7 @@ public abstract class ConfigurableProvider {
    * @return {@code true} if this provider creates configurable,
    *         {@code false} otherwise
    */
-  public boolean isConfigurableProvided() {
+  public boolean canCreateConfigurable() {
     return true;
   }
 }

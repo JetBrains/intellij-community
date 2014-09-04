@@ -47,7 +47,7 @@ public class ConfigurableWrapper implements SearchableConfigurable {
 
   @Nullable
   public static <T extends UnnamedConfigurable> T wrapConfigurable(ConfigurableEP<T> ep) {
-    if (!ep.isConfigurableProvided()) {
+    if (!ep.canCreateConfigurable()) {
       return null;
     }
     if (ep.displayName != null || ep.key != null || ep.groupId != null) {

@@ -28,7 +28,7 @@ public final class DebuggerConfigurableProvider extends ConfigurableProvider {
   }
 
   @Override
-  public boolean isConfigurableProvided() {
+  public boolean canCreateConfigurable() {
     return XBreakpointType.EXTENSION_POINT_NAME.getExtensions().length != 0;
   }
 }
