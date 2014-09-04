@@ -31,7 +31,7 @@ import java.util.Set;
  * @author mike
  */
 public interface StateStorageManager {
-  void addMacro(String macro, String expansion);
+  void addMacro(@NotNull String macro, @NotNull String expansion);
 
   @Nullable
   TrackingPathMacroSubstitutor getMacroSubstitutor();
@@ -40,6 +40,13 @@ public interface StateStorageManager {
   StateStorage getStateStorage(@NotNull Storage storageSpec) throws StateStorageException;
 
   @Nullable
+  StateStorage getStateStorage(@NotNull String fileSpec, @NotNull RoamingType roamingType);
+
+  @Deprecated
+  @Nullable
+  /**
+   * @deprecated Use {@link #getStateStorage(String, com.intellij.openapi.components.RoamingType)}
+    */
   StateStorage getFileStateStorage(@NotNull String fileSpec);
 
   @NotNull
@@ -58,7 +65,7 @@ public interface StateStorageManager {
   @Nullable
   StateStorage getOldStorage(Object component, String componentName, StateStorageOperation operation) throws StateStorageException;
 
-  @Nullable
+  @NotNull
   String expandMacros(@NotNull String file);
 
   @Deprecated

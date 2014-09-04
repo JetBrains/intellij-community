@@ -418,7 +418,7 @@ public class PathManager {
 
   private static String getAbsolutePath(String path) {
     path = FileUtil.expandUserHome(path);
-    return FileUtil.toCanonicalPath(new File(FileUtil.toCanonicalPath(path)).getAbsolutePath());
+    return FileUtil.toCanonicalPath(new File(path).getAbsolutePath());
   }
 
   private static String trimPathQuotes(String path){

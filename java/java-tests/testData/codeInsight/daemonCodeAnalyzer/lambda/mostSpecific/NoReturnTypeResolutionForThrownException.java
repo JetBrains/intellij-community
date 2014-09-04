@@ -7,7 +7,7 @@ class Test {
   void call(I2 p) { }
  
   void test() {
-    call<error descr="Ambiguous method call: both 'Test.call(I1)' and 'Test.call(I2)' match">(() -> { throw new RuntimeException(); })</error>;
+    call(() -> { throw new RuntimeException(); });
     call(() -> { if (true) return ""; throw new RuntimeException(); });
     call(() -> { if (true) return; throw new RuntimeException(); });
   }

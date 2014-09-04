@@ -22,6 +22,7 @@ package com.intellij.debugger.actions;
 
 
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.ui.impl.DebuggerTreePanel;
@@ -32,6 +33,11 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.DoubleClickListener;
+import com.intellij.xdebugger.XDebugProcess;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.impl.frame.XDebugView;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -152,5 +158,19 @@ public abstract class DebuggerAction extends AnAction {
         event.getPresentation().setVisible(true);
       }
     });
+  }
+
+  public static void refreshViews(@NotNull XValueNodeImpl node) {
+    refreshViews(XDebugView.getSession(node.getTree()));
+  }
+
+  public static void refreshViews(@Nullable XDebugSession session) {
+    if (session != null) {
+      XDebugProcess process = session.getDebugProcess();
+      if (process instanceof JavaDebugProcess) {
+        ((JavaDebugProcess)process).saveNodeHistory();
+      }
+      session.rebuildViews();
+    }
   }
 }

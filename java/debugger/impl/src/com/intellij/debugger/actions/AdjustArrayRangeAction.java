@@ -16,6 +16,7 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.settings.ArrayRendererConfigurable;
@@ -27,6 +28,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.Nullable;
 
 public class AdjustArrayRangeAction extends DebuggerAction {
@@ -44,42 +48,48 @@ public class AdjustArrayRangeAction extends DebuggerAction {
 
     final Project project = debuggerContext.getProject();
 
-    final DebuggerTreeNodeImpl selectedNode = getSelectedNode(e.getDataContext());
-    if (selectedNode == null) {
-      return;
-    }
-    NodeDescriptorImpl descriptor = selectedNode.getDescriptor();
-    if(!(descriptor instanceof ValueDescriptorImpl /*&& ((ValueDescriptorImpl)descriptor).isArray()*/)) {
+    final XValueNodeImpl node = XDebuggerTreeActionBase.getSelectedNode(e.getDataContext());
+    if (node == null) {
       return;
     }
 
-    final ArrayRenderer renderer = getArrayRenderer((ValueDescriptorImpl)descriptor)/*(ArrayRenderer)((ValueDescriptorImpl)selectedNode.getDescriptor()).getLastRenderer()*/;
+    XValue container = node.getValueContainer();
+    if (!(container instanceof JavaValue)) {
+      return;
+    }
+
+    final ValueDescriptorImpl descriptor = ((JavaValue)container).getDescriptor();
+    ArrayRenderer renderer = getArrayRenderer(descriptor);
     if (renderer == null) {
       return;
     }
 
-    String title = createNodeTitle("", selectedNode);
-    String label = selectedNode.toString();
-    int index = label.indexOf('=');
-    if (index > 0) {
-      title = title + " " + label.substring(index);
-    }
+    //String title = createNodeTitle("", selectedNode);
+    //String label = selectedNode.toString();
+    //int index = label.indexOf('=');
+    //if (index > 0) {
+    //  title = title + " " + label.substring(index);
+    //}
+    String title = node.getName();
     final ArrayRenderer clonedRenderer = renderer.clone();
+    clonedRenderer.setForced(true);
     if (ShowSettingsUtil.getInstance().editConfigurable(project, new NamedArrayConfigurable(title, clonedRenderer))) {
       debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(debuggerContext.getSuspendContext()) {
         @Override
         public void contextAction() throws Exception {
-          final ValueDescriptorImpl nodeDescriptor = (ValueDescriptorImpl)selectedNode.getDescriptor();
-          final Renderer lastRenderer = nodeDescriptor.getLastRenderer();
+          final Renderer lastRenderer = descriptor.getLastRenderer();
           if (lastRenderer instanceof ArrayRenderer) {
-            selectedNode.setRenderer(clonedRenderer);
+            descriptor.setRenderer(clonedRenderer);
+            refreshViews(node);
+            //selectedNode.setRenderer(clonedRenderer);
           }
           else if (lastRenderer instanceof CompoundNodeRenderer) {
             final CompoundNodeRenderer compoundRenderer = (CompoundNodeRenderer)lastRenderer;
             final ChildrenRenderer childrenRenderer = compoundRenderer.getChildrenRenderer();
             if (childrenRenderer instanceof ExpressionChildrenRenderer) {
-              ExpressionChildrenRenderer.setPreferableChildrenRenderer(nodeDescriptor, clonedRenderer);
-              selectedNode.calcRepresentation();
+              ExpressionChildrenRenderer.setPreferableChildrenRenderer(descriptor, clonedRenderer);
+              refreshViews(node);
+              //selectedNode.calcRepresentation();
             }
           }
         }
@@ -90,10 +100,14 @@ public class AdjustArrayRangeAction extends DebuggerAction {
   @Override
   public void update(AnActionEvent e) {
     boolean enable = false;
-    DebuggerTreeNodeImpl selectedNode = getSelectedNode(e.getDataContext());
-    if(selectedNode != null) {
-      NodeDescriptorImpl descriptor = selectedNode.getDescriptor();
-      enable = descriptor instanceof ValueDescriptorImpl && getArrayRenderer((ValueDescriptorImpl)descriptor) != null;
+    XValueNodeImpl node = XDebuggerTreeActionBase.getSelectedNode(e.getDataContext());
+    if (node == null) {
+      return;
+    }
+    XValue container = node.getValueContainer();
+    if (container instanceof JavaValue) {
+      ValueDescriptorImpl descriptor = ((JavaValue)container).getDescriptor();
+      enable = getArrayRenderer(descriptor) != null;
     }
     e.getPresentation().setVisible(enable);
   }

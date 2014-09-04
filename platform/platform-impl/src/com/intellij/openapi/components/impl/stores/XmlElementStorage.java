@@ -48,7 +48,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   private static final String VERSION_FILE_SUFFIX = ".ver";
 
   protected TrackingPathMacroSubstitutor myPathMacroSubstitutor;
-  @NotNull private final String myRootElementName;
+  @NotNull protected final String myRootElementName;
   private Object mySession;
   private StorageData myLoadedData;
   protected final StreamProvider myStreamProvider;
@@ -78,13 +78,12 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
                               @NotNull String rootElementName,
                               @Nullable StreamProvider streamProvider,
                               String fileSpec,
-                              ComponentRoamingManager componentRoamingManager,
                               ComponentVersionProvider componentVersionProvider) {
     myPathMacroSubstitutor = pathMacroSubstitutor;
     myRootElementName = rootElementName;
     myStreamProvider = streamProvider;
     myFileSpec = fileSpec;
-    myComponentRoamingManager = componentRoamingManager;
+    myComponentRoamingManager = ComponentRoamingManager.getInstance();
     Disposer.register(parentDisposable, this);
 
     myLocalVersionProvider = componentVersionProvider;
@@ -93,6 +92,11 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
   protected boolean isDisposed() {
     return myDisposed;
+  }
+
+  @Nullable
+  protected RoamingType getRoamingType() {
+    return null;
   }
 
   @Nullable
@@ -133,7 +137,8 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       return myLoadedData;
     }
 
-    myLoadedData = loadData(true, myFileSpec.equals(StoragePathMacros.WORKSPACE_FILE) ? null : myComponentRoamingManager.getRoamingType(componentName));
+    RoamingType roamingType = getRoamingType();
+    myLoadedData = loadData(true, roamingType == null ? myComponentRoamingManager.getRoamingType(componentName) : roamingType);
     return myLoadedData;
   }
 
@@ -423,16 +428,31 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     }
 
     private void saveForProvider(@NotNull StreamProvider streamProvider) {
-      if (!streamProvider.isApplicable(myFileSpec, RoamingType.PER_USER)) {
+      RoamingType roamingType = getRoamingType();
+      if (roamingType != null && roamingType == RoamingType.DISABLED) {
+        // todo our old stream provider doesn't share WORKSPACE_FILE, but our new has this feature - are we really want to support it?
+        return;
+      }
+
+      if (!streamProvider.isApplicable(myFileSpec, roamingType == null ? RoamingType.PER_USER : roamingType)) {
         return;
       }
 
       Element element = getElementToSave();
       if (element == null || element.getChildren().isEmpty()) {
-        streamProvider.delete(myFileSpec, RoamingType.PER_USER);
-        streamProvider.delete(myFileSpec, RoamingType.PER_PLATFORM);
+        streamProvider.delete(myFileSpec, roamingType == null ? RoamingType.PER_USER : roamingType);
+        if (roamingType == null) {
+          streamProvider.delete(myFileSpec, RoamingType.PER_PLATFORM);
+        }
         return;
       }
+
+      if (roamingType != null) {
+        doSaveForProvider(element, roamingType, streamProvider);
+        return;
+      }
+
+      // todo check when roamingType is null and remove next code (we fixed platforms and plugins, but next code should not be removed due to backward compatibility)
 
       // skip the whole document if some component has disabled roaming type
       // you must not store components with different roaming types in one document
@@ -554,7 +574,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
   @Override
   public void reload(@NotNull final Set<String> changedComponents) throws StateStorageException {
-    final StorageData storageData = loadData(false, null);
+    final StorageData storageData = loadData(false, getRoamingType());
     final StorageData oldLoadedData = myLoadedData;
     if (oldLoadedData != null) {
       Set<String> componentsToRetain = new THashSet<String>(oldLoadedData.myComponentStates.keySet());

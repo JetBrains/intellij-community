@@ -403,6 +403,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
         if (varargParam != null && pi >= parameters.length) return false;
         PsiType exprType = RefactoringUtil.getTypeByExpression(expression);
         if (exprType == null) return false;
+        exprType = GenericsUtil.getVariableTypeByExpressionType(exprType);
         JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expression.getProject());
         String name = suggestUniqueParameterName(codeStyleManager, expression, exprType, existingNames);
         final ParameterInfoImpl newParameterInfo = new ParameterInfoImpl(-1, name, exprType, expression.getText().replace('\n', ' '));

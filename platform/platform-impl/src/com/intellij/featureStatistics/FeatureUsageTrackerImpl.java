@@ -28,9 +28,8 @@ import java.util.Set;
 @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext"})
 @State(
   name = "FeatureUsageStatistics",
-  roamingType = RoamingType.DISABLED,
-  storages = {@Storage(
-    file = StoragePathMacros.APP_CONFIG + "/feature.usage.statistics.xml")})
+  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/feature.usage.statistics.xml", roamingType = RoamingType.DISABLED)}
+)
 public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements PersistentStateComponent<Element> {
   private static final int HOUR = 1000 * 60 * 60;
   private static final long DAY = HOUR * 24;
@@ -92,7 +91,7 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
     if (descriptor != null && System.currentTimeMillis() - descriptor.getLastTimeUsed() > 10 * DAY) {
       return true;
     }
-    
+
     return isToBeShown(featureId, project, HOUR);
   }
 

@@ -27,10 +27,7 @@ import java.io.File;
  */
 @State(
   name = "libraryTable",
-  roamingType = RoamingType.DISABLED,
-  storages = {
-    @Storage( file = StoragePathMacros.APP_CONFIG + "/applicationLibraries.xml")
-    }
+  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/applicationLibraries.xml", roamingType = RoamingType.DISABLED)}
 )
 public class ExportableApplicationLibraryTable extends ApplicationLibraryTable implements ExportableComponent {
   @Override

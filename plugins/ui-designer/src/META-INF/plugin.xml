@@ -202,6 +202,8 @@
               use-shortcut-of="SurroundWith"/>
       <action id="GuiDesigner.Flatten" class="com.intellij.uiDesigner.actions.FlattenAction"/>
       <separator/>
+      <action id="GuiDesigner.FormSource" class="com.intellij.uiDesigner.actions.ShowFormSourceAction"/>
+      <separator/>
       <reference ref="VersionControlsGroup"/>
       <separator/>
       <reference ref="AddToFavorites"/>

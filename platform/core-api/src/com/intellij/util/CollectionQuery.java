@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,7 @@
 package com.intellij.util;
 
 import com.intellij.concurrency.AsyncFuture;
-import com.intellij.concurrency.AsyncFutureFactory;
-import com.intellij.concurrency.AsyncFutureResult;
+import com.intellij.concurrency.AsyncUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,13 +54,7 @@ public class CollectionQuery<T> implements Query<T> {
   @NotNull
   @Override
   public AsyncFuture<Boolean> forEachAsync(@NotNull Processor<T> consumer) {
-    AsyncFutureResult<Boolean>  result = AsyncFutureFactory.getInstance().createAsyncFutureResult();
-    try {
-      result.set(forEach(consumer));
-    } catch (Throwable t) {
-      result.setException(t);
-    }
-    return result;
+    return AsyncUtil.wrapBoolean(forEach(consumer));
   }
 
   @NotNull

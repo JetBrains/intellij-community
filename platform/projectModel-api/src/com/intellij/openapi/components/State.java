@@ -23,10 +23,9 @@ import java.lang.annotation.RetentionPolicy;
 public @interface State {
   String name();
 
+  @Deprecated
   /**
-   * {@link RoamingType#GLOBAL} will be ignored because it doesn't matter - global or per project depends on file spec (used storage macros).
-   *
-   * You must not store components with different roaming types in one file ({@link com.intellij.openapi.components.Storage#file()}).
+   * @deprecated Use {@link Storage#roamingType()}
    */
   RoamingType roamingType() default RoamingType.PER_USER;
 
