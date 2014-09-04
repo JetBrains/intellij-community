@@ -474,6 +474,7 @@ public class RegistryUi implements Disposable {
         final Color color = ColorChooser.chooseColor(table, "Choose color", myValue.asColor(Color.WHITE));
         if (color != null) {
           myValue.setValue(color.getRed() + "," + color.getGreen() + "," + color.getBlue());
+          keyChanged(myValue.getKey());
         }
         return null;
       } else if (myValue.isBoolean()) {
