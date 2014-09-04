@@ -97,13 +97,16 @@ public class PyDebugValue extends XNamedValue {
       myParent.buildExpression(result);
       if (("dict".equals(myParent.getType()) || "list".equals(myParent.getType()) || "tuple".equals(myParent.getType())) &&
           !isLen(myName)) {
-        result.append('[').append(removeId(myName)).append(']');
+        result.append('[').append(removeLeadingZeros(removeId(myName))).append(']');
       }
       else if (("set".equals(myParent.getType())) && !isLen(myName)) {
         //set doesn't support indexing
       }
       else if (isLen(myName)) {
         result.append('.').append(myName).append("()");
+      }
+      else if (("ndarray".equals(myParent.getType()) || "matrix".equals(myParent.getType())) && myName.startsWith("[")) {
+        result.append(removeLeadingZeros(myName));
       }
       else {
         result.append('.').append(myName);
@@ -117,6 +120,11 @@ public class PyDebugValue extends XNamedValue {
     }
 
     return name;
+  }
+
+  private static String removeLeadingZeros(@NotNull String name) {
+    //bugs.python.org/issue15254: "0" prefix for octal
+    return name.replaceFirst("^0+(?!$)", "");
   }
 
   private static boolean isLen(String name) {

@@ -439,7 +439,7 @@ class NdArrayResolver:
         ret['shape'] = obj.shape
         ret['dtype'] = obj.dtype
         ret['size'] = obj.size
-        ret['[0:%s]' % (len(obj))] = {'items' : str(obj)}
+        ret['[0:%s]' % (len(obj))] = list(obj)
         return ret
 
 class NdArrayItemsContainer: pass
