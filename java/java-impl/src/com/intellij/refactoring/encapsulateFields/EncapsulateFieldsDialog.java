@@ -472,13 +472,13 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
         String name;
         if (isToEncapsulateGet()) {
           name = myGetterNames[idx];
-          if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isIdentifier(name)) {
+          if (!PsiNameHelper.getInstance(manager.getProject()).isIdentifier(name)) {
             return RefactoringMessageUtil.getIncorrectIdentifierMessage(name);
           }
         }
         if (!myFinalMarks[idx] && isToEncapsulateSet()) {
           name = mySetterNames[idx];
-          if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isIdentifier(name)) {
+          if (!PsiNameHelper.getInstance(manager.getProject()).isIdentifier(name)) {
             return RefactoringMessageUtil.getIncorrectIdentifierMessage(name);
           }
         }

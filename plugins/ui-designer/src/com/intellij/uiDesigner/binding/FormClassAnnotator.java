@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ public class FormClassAnnotator implements Annotator {
     }
     else if (psiElement instanceof PsiClass) {
       PsiClass aClass = (PsiClass) psiElement;
-      final List<PsiFile> formsBoundToClass = FormClassIndex.findFormsBoundToClass(aClass);
+      final List<PsiFile> formsBoundToClass = FormClassIndex.findFormsBoundToClass(aClass.getProject(), aClass);
       if (formsBoundToClass.size() > 0) {
         Annotation boundClassAnnotation = holder.createInfoAnnotation(aClass.getNameIdentifier(), null);
         boundClassAnnotation.setGutterIconRenderer(new BoundIconRenderer(aClass));

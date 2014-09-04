@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
@@ -184,9 +185,14 @@ public class RenameProcessor extends BaseRefactoringProcessor {
         final Runnable runnable = new Runnable() {
           @Override
           public void run() {
-            for (Map.Entry<PsiElement, String> entry : renames.entrySet()) {
+            for (final Map.Entry<PsiElement, String> entry : renames.entrySet()) {
               final UsageInfo[] usages =
-                RenameUtil.findUsages(entry.getKey(), entry.getValue(), mySearchInComments, mySearchTextOccurrences, myAllRenames);
+                ApplicationManager.getApplication().runReadAction(new Computable<UsageInfo[]>() {
+                  @Override
+                  public UsageInfo[] compute() {
+                    return RenameUtil.findUsages(entry.getKey(), entry.getValue(), mySearchInComments, mySearchTextOccurrences, myAllRenames);
+                  }
+                });
               Collections.addAll(variableUsages, usages);
             }
           }
@@ -223,9 +229,14 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     final Runnable runnable = new Runnable() {
       @Override
       public void run() {
-        for (final AutomaticRenamer renamer : myRenamers) {
-          renamer.findUsages(variableUsages, mySearchInComments, mySearchTextOccurrences, mySkippedUsages, myAllRenames);
-        }
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            for (final AutomaticRenamer renamer : myRenamers) {
+              renamer.findUsages(variableUsages, mySearchInComments, mySearchTextOccurrences, mySkippedUsages, myAllRenames);
+            }
+          }
+        });
       }
     };
 

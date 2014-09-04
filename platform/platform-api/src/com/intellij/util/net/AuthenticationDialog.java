@@ -23,13 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: stathik
- * Date: Oct 7, 2003
- * Time: 3:56:25 PM
- * To change this template use Options | File Templates.
- */
 public class AuthenticationDialog extends DialogWrapper {
   private final AuthenticationPanel panel;
 
@@ -42,7 +35,7 @@ public class AuthenticationDialog extends DialogWrapper {
 
     final Window window = getWindow();
     if (window instanceof JDialog) {
-      ((JDialog) window).setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+      ((JDialog) window).setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
     }
 
     init();
@@ -57,7 +50,7 @@ public class AuthenticationDialog extends DialogWrapper {
 
     final Window window = getWindow();
     if (window instanceof JDialog) {
-      ((JDialog) window).setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+      ((JDialog) window).setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
     }
 
     init();
@@ -69,6 +62,7 @@ public class AuthenticationDialog extends DialogWrapper {
     return panel.getPreferredFocusedComponent();
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     return panel;

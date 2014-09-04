@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.source.tree.LazyParseableElement;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -275,5 +276,25 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     }
     assertEquals("class A{}", psiClass.getText());
     assertEquals(" class A{}", document.getText());
+  }
+
+  public void testASTBecomesInvalidOnExternalChange() {
+    final String text = "class A{}";
+    final PsiJavaFile file = (PsiJavaFile)myFixture.addFileToProject("a.java", text);
+    PsiElement leaf = file.findElementAt(5);
+
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    assertNull(PsiDocumentManager.getInstance(getProject()).getCachedDocument(file));
+
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        VfsUtil.saveText(file.getVirtualFile(), text + "   ");
+      }
+    }.execute();
+
+    assertTrue(file.isValid());
+    assertFalse(leaf.isValid());
+    assertNotSame(leaf, file.findElementAt(5));
   }
 }

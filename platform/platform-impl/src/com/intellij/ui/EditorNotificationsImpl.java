@@ -102,13 +102,7 @@ public class EditorNotificationsImpl extends EditorNotifications {
           task.computeInReadAction(indicator);
         }
         else {
-          final ProgressIndicator indicator1 = indicator;
-          myExecutor.execute(new Runnable() {
-            @Override
-            public void run() {
-              ProgressIndicatorUtils.runWithWriteActionPriority(indicator1, task);
-            }
-          });
+          ProgressIndicatorUtils.scheduleWithWriteActionPriority(indicator, myExecutor, task);
         }
       }
     });
@@ -165,7 +159,7 @@ public class EditorNotificationsImpl extends EditorNotifications {
       }
 
       @Override
-      public void onCanceled(@NotNull ProgressIndicator _) {
+      public void onCanceled(@NotNull ProgressIndicator ignored) {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {

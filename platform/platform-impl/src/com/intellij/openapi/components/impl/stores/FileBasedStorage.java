@@ -28,11 +28,11 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
-import com.intellij.util.io.fs.FileSystem;
-import com.intellij.util.io.fs.IFile;
 import com.intellij.util.messages.MessageBus;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -50,12 +50,12 @@ import java.util.Collections;
 import java.util.List;
 
 public class FileBasedStorage extends XmlElementStorage {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.FileBasedStorage");
+  private static final Logger LOG = Logger.getInstance(FileBasedStorage.class);
 
   private static boolean ourConfigDirectoryRefreshed = false;
 
   private final String myFilePath;
-  private final IFile myFile;
+  private final File myFile;
   private final String myRootElementName;
   private volatile VirtualFile myCachedVirtualFile;
 
@@ -74,16 +74,13 @@ public class FileBasedStorage extends XmlElementStorage {
 
     myRootElementName = rootElementName;
     myFilePath = filePath;
-    myFile = FileSystem.FILE_SYSTEM.createFile(myFilePath);
+    myFile = new File(filePath);
 
     VirtualFileTracker virtualFileTracker = ServiceManager.getService(VirtualFileTracker.class);
     MessageBus messageBus = (MessageBus)picoContainer.getComponentInstanceOfType(MessageBus.class);
     if (virtualFileTracker != null && messageBus != null) {
-      final String path = myFile.getAbsolutePath();
-      final String fileUrl = LocalFileSystem.PROTOCOL_PREFIX + path.replace(File.separatorChar, '/');
-
       final Listener listener = messageBus.syncPublisher(STORAGE_TOPIC);
-      virtualFileTracker.addTracker(fileUrl, new VirtualFileAdapter() {
+      virtualFileTracker.addTracker(LocalFileSystem.PROTOCOL_PREFIX + myFile.getAbsolutePath().replace(File.separatorChar, '/'), new VirtualFileAdapter() {
         @Override
         public void fileMoved(@NotNull VirtualFileMoveEvent event) {
           myCachedVirtualFile = null;
@@ -145,9 +142,11 @@ public class FileBasedStorage extends XmlElementStorage {
     @Override
     protected boolean physicalContentNeedsSave() {
       VirtualFile file = getVirtualFile();
-      if (file == null || !file.exists())
+      if (file == null || !file.exists()) {
         return !myStorageData.isEmpty();
-      return !StorageUtil.contentEquals(getDocumentToSave(), file);
+      }
+      Element element = getElementToSave();
+      return element == null || !StorageUtil.contentEquals(element, file);
     }
 
     @Override
@@ -169,14 +168,13 @@ public class FileBasedStorage extends XmlElementStorage {
       }
 
       LOG.assertTrue(myFile != null);
-      myCachedVirtualFile = StorageUtil.save(myFile, getDocumentToSave(), this);
+      myCachedVirtualFile = StorageUtil.save(myFile, getElementToSave(), this, true);
     }
 
     @NotNull
     @Override
-    public Collection<IFile> getStorageFilesToSave() throws StateStorageException {
-      boolean needsSave = needsSave();
-      if (needsSave) {
+    public Collection<File> getStorageFilesToSave() {
+      if (needsSave()) {
         if (LOG.isDebugEnabled()) {
           LOG.info("File " + myFileSpec + " needs save; hash=" + myUpToDateHash + "; currentHash=" + calcHash() + "; " +
                    "content needs save=" + physicalContentNeedsSave());
@@ -190,13 +188,13 @@ public class FileBasedStorage extends XmlElementStorage {
 
     @NotNull
     @Override
-    public List<IFile> getAllStorageFiles() {
+    public List<File> getAllStorageFiles() {
       return Collections.singletonList(myFile);
     }
   }
 
   @Override
-  protected void loadState(final StorageData result, final Element element) throws StateStorageException {
+  protected void loadState(@NotNull StorageData result, @NotNull Element element) {
     ((FileStorageData)result).myFilePath = myFile.getAbsolutePath();
     super.loadState(result, element);
   }
@@ -240,12 +238,12 @@ public class FileBasedStorage extends XmlElementStorage {
   }
 
   public File getFile() {
-    return new File(myFile.getPath());
+    return myFile;
   }
 
   @Override
   @Nullable
-  protected Document loadDocument() throws StateStorageException {
+  protected Element loadLocalData() {
     myBlockSavingTheContent = false;
     try {
       VirtualFile file = getVirtualFile();
@@ -256,7 +254,7 @@ public class FileBasedStorage extends XmlElementStorage {
       if (file.getLength() == 0) {
         return processReadException(null);
       }
-      return loadDocumentImpl(file);
+      return doLoadLocalData(file);
     }
     catch (final JDOMException e) {
       return processReadException(e);
@@ -267,7 +265,7 @@ public class FileBasedStorage extends XmlElementStorage {
   }
 
   @Nullable
-  private Document processReadException(@Nullable final Exception e) {
+  private Element processReadException(@Nullable final Exception e) {
     boolean contentTruncated = e == null;
     myBlockSavingTheContent = isProjectOrModuleOrWorkspaceFile() && !contentTruncated;
     if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
@@ -291,10 +289,12 @@ public class FileBasedStorage extends XmlElementStorage {
     return isProjectOrModuleOrWorkspaceFile() && !contentTruncated ? "Please correct the file content" : "File content will be recreated";
   }
 
-  private static Document loadDocumentImpl(final VirtualFile file) throws IOException, JDOMException {
+  @Nullable
+  private static Element doLoadLocalData(@NotNull VirtualFile file) throws IOException, JDOMException {
     InputStream stream = file.getInputStream();
     try {
-      return JDOMUtil.loadDocument(stream);
+      Document document = JDOMUtil.loadDocument(stream);
+      return document.hasRootElement() ? document.getRootElement() : null;
     }
     finally {
       stream.close();
@@ -315,21 +315,21 @@ public class FileBasedStorage extends XmlElementStorage {
     super.setDefaultState(element);
   }
 
-  protected boolean physicalContentNeedsSave(final Document doc) {
-    VirtualFile file = getVirtualFile();
-    return file == null || !file.exists() || !StorageUtil.contentEquals(doc, file);
-  }
-
   @Nullable
   public File updateFileExternallyFromStreamProviders() throws IOException {
-    StorageData loadedData = loadData(true);
-    Document document = getDocument(loadedData);
-    if (physicalContentNeedsSave(document)) {
-      File file = new File(myFile.getAbsolutePath());
-      JDOMUtil.writeDocument(document, file, "\n");
-      return file;
+    Element element = getElement(loadData(true, null));
+    if (element == null) {
+      FileUtil.delete(myFile);
+      return null;
     }
 
-    return null;
+    BufferExposingByteArrayOutputStream out = StorageUtil.newContentIfDiffers(element, getVirtualFile());
+    if (out == null) {
+      return null;
+    }
+
+    File file = new File(myFile.getAbsolutePath());
+    FileUtil.writeToFile(file, out.getInternalBuffer(), 0, out.size());
+    return file;
   }
 }

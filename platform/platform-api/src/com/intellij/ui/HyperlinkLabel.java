@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,11 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.util.NotNullProducer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -42,7 +44,14 @@ import java.util.List;
  * @author Eugene Belyaev
  */
 public class HyperlinkLabel extends HighlightableComponent {
-  private static final TextAttributes BOLD_ATTRIBUTES = new TextAttributes(UIUtil.getLabelTextForeground(), null, null, null, Font.BOLD);
+  private static final TextAttributes BOLD_ATTRIBUTES = new TextAttributes(new JBColor(new NotNullProducer<Color>() {
+    @NotNull
+    @Override
+    public Color produce() {
+      final Color foreground = UIUtil.getLabelTextForeground();
+      return foreground == null ? UIUtil.getLabelForeground() : foreground;
+    }
+  }), null, null, null, Font.BOLD);
 
   private static final Logger LOG = Logger.getInstance(HyperlinkLabel.class.getName());
 
@@ -59,7 +68,13 @@ public class HyperlinkLabel extends HighlightableComponent {
   public HyperlinkLabel(String text) {
     this(text,
          PlatformColors.BLUE,
-         UIUtil.getLabelBackground(),
+         new JBColor(new NotNullProducer<Color>() {
+           @NotNull
+           @Override
+           public Color produce() {
+             return UIUtil.getLabelBackground();
+           }
+         }),
          PlatformColors.BLUE);
   }
 
@@ -209,7 +224,9 @@ public class HyperlinkLabel extends HighlightableComponent {
       LOG.error(e);
     }
     highlightedText.applyToComponent(this);
-    ((JComponent)getParent()).revalidate();
+    final JComponent parent = (JComponent)getParent();
+    parent.revalidate();
+    parent.repaint();
     adjustSize();
   }
 

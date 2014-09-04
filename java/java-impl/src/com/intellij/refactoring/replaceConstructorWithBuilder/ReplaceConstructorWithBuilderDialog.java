@@ -153,7 +153,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
 
   @Override
   protected void canRun() throws ConfigurationException {
-    final PsiNameHelper nameHelper = JavaPsiFacade.getInstance(myProject).getNameHelper();
+    final PsiNameHelper nameHelper = PsiNameHelper.getInstance(myProject);
     for (ParameterData parameterData : myParametersMap.values()) {
       if (!nameHelper.isIdentifier(parameterData.getFieldName())) throw new ConfigurationException("\'" + parameterData.getFieldName() + "\' is not a valid field name");
       if (!nameHelper.isIdentifier(parameterData.getSetterName())) throw new ConfigurationException("\'" + parameterData.getSetterName() + "\' is not a valid setter name");

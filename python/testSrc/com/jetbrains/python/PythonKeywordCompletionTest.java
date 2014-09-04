@@ -199,6 +199,13 @@ public class PythonKeywordCompletionTest extends PyTestCase {
     assertContainsElements(doTestByText("for x i<caret>n y:\n  pass]"), "in");
   }
 
+  // PY-11375
+  public void testYieldExpression() {
+    assertContainsElements(doTestByText("def gen(): x = <caret>"), "yield");
+    assertDoesntContain(doTestByText("def gen(): x = 1 + <caret>"), "yield");
+    assertContainsElements(doTestByText("def gen(): x = 1 + (<caret>"), "yield");
+  }
+
   public void testExceptAfterElse() {
     assertDoesntContain(doTestByText("try:\n" +
                                      "    pass\n" +

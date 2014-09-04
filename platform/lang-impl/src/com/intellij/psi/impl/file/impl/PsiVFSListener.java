@@ -33,6 +33,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.psi.*;
@@ -237,7 +238,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
                 }
               }
               else {
-                if (!isExcludeRoot(vFile) && !myFileTypeManager.isFileIgnored(newName)) {
+                if ((!Registry.is("ide.hide.excluded.files") || !isExcludeRoot(vFile)) && !myFileTypeManager.isFileIgnored(newName)) {
                   myManager.beforeChildAddition(treeEvent);
                 }
               }
@@ -443,7 +444,8 @@ public class PsiVFSListener extends VirtualFileAdapter {
         public void run() {
           PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
 
-          boolean isExcluded = vFile.isDirectory() && myProjectRootManager.getFileIndex().isExcluded(vFile);
+          boolean isExcluded = vFile.isDirectory() &&
+                               Registry.is("ide.hide.excluded.files") && myProjectRootManager.getFileIndex().isExcluded(vFile);
           if (oldParentDir != null && !isExcluded) {
             if (newParentDir != null) {
               treeEvent.setOldParent(oldParentDir);

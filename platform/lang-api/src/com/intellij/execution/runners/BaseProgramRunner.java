@@ -23,7 +23,6 @@ import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,14 +60,12 @@ abstract class BaseProgramRunner<Settings extends RunnerSettings> implements Pro
       return;
     }
 
-    Project project = environment.getProject();
-    RunManager.getInstance(project).refreshUsagesList(environment.getRunProfile());
-    execute(environment, callback, project, state);
+    RunManager.getInstance(environment.getProject()).refreshUsagesList(environment.getRunProfile());
+    execute(environment, callback, state);
   }
 
   protected abstract void execute(@NotNull ExecutionEnvironment environment,
                                   @Nullable Callback callback,
-                                  @NotNull Project project,
                                   @NotNull RunProfileState state) throws ExecutionException;
 
   @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,14 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.typeCook.Settings;
 import com.intellij.refactoring.typeCook.Util;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * @author db
  */
 public class VictimCollector extends Visitor {
-  final HashSet<PsiElement> myVictims = new HashSet<PsiElement>();
+  final Set<PsiElement> myVictims = new LinkedHashSet<PsiElement>();
   final PsiElement[] myElements;
   final Settings mySettings;
 
@@ -106,7 +107,7 @@ public class VictimCollector extends Visitor {
     }
   }
 
-  public HashSet<PsiElement> getVictims() {
+  public Set<PsiElement> getVictims() {
     for (PsiElement element : myElements) {
       element.accept(this);
     }

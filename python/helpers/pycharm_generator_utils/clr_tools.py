@@ -18,10 +18,14 @@ def get_namespace_by_name(object_name):
     first_part = parts[0]
     remain_part = parts[2]
 
-    while remain_part and type(_get_attr_by_name(imported_object, remain_part)) is type: # While we are in class
+    while remain_part and type(_get_attr_by_name(imported_object, remain_part)) is type:  # While we are in class
         remain_part = remain_part.rpartition(".")[0]
 
-    return first_part + "." + remain_part if remain_part else first_part
+    if remain_part:
+        return first_part + "." + remain_part
+    else:
+        return first_part
+
 
 def _import_first(object_name):
     """
@@ -33,11 +37,10 @@ def _import_first(object_name):
     """
     while object_name:
         try:
-            return (__import__(object_name), object_name)
+            return (__import__(object_name, globals=[], locals=[], fromlist=[]), object_name)
         except ImportError:
-            object_name = object_name.rpartition(".")[0] # Remove rightest part
+            object_name = object_name.rpartition(".")[0]  # Remove rightest part
     raise Exception("No module name found in name " + object_name)
-
 
 
 def _get_attr_by_name(obj, name):

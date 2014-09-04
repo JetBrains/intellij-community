@@ -290,9 +290,16 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     myFilters = new CompositeFilter(project);
     if (usePredefinedMessageFilter) {
       for (ConsoleFilterProvider eachProvider : Extensions.getExtensions(ConsoleFilterProvider.FILTER_PROVIDERS)) {
-        Filter[] filters = eachProvider instanceof ConsoleFilterProviderEx
-                           ? ((ConsoleFilterProviderEx)eachProvider).getDefaultFilters(project, searchScope)
-                           : eachProvider.getDefaultFilters(project);
+        Filter[] filters;
+        if (eachProvider instanceof ConsoleDependentFilterProvider) {
+          filters = ((ConsoleDependentFilterProvider)eachProvider).getDefaultFilters(this, project, searchScope);
+        }
+        else if (eachProvider instanceof ConsoleFilterProviderEx) {
+          filters = ((ConsoleFilterProviderEx)eachProvider).getDefaultFilters(project, searchScope);
+        }
+        else {
+          filters = eachProvider.getDefaultFilters(project);
+        }
         for (Filter filter : filters) {
           myFilters.addFilter(filter);
         }
@@ -674,7 +681,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     final Document document = myEditor.getDocument();
     final RangeMarker lastProcessedOutput = document.createRangeMarker(document.getTextLength(), document.getTextLength());
     final int caretOffset = myEditor.getCaretModel().getOffset();
-    final boolean isAtLastLine = document.getLineNumber(caretOffset) >= document.getLineCount() - 1;
+    final boolean isAtLastLine = isCaretAtLastLine();
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       @Override
@@ -1078,6 +1085,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         };
         if (immediately) {
           model.runBatchFoldingOperation(operation);
+          if (isCaretAtLastLine()) {
+            EditorUtil.scrollToTheEnd(myEditor);
+          }
         }
         else {
           model.runBatchFoldingOperationDoNotCollapseCaret(operation);
@@ -1090,6 +1100,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     else {
       myFoldingAlarm.addRequest(runnable, 50);
     }
+  }
+
+  private boolean isCaretAtLastLine() {
+    final Document document = myEditor.getDocument();
+    final int caretOffset = myEditor.getCaretModel().getOffset();
+    return document.getLineNumber(caretOffset) >= document.getLineCount() - 1;
   }
 
   private void addFolding(Document document, CharSequence chars, int line, List<FoldRegion> toAdd) {

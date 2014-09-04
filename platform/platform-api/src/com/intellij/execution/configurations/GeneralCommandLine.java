@@ -197,6 +197,10 @@ public class GeneralCommandLine implements UserDataHolder {
    * @return single-string representation of this command line.
    */
   public String getCommandLineString(@Nullable final String exeName) {
+    return ParametersList.join(getCommandLineList(exeName));
+  }
+
+  public List<String> getCommandLineList(@Nullable final String exeName) {
     final List<String> commands = new ArrayList<String>();
     if (exeName != null) {
       commands.add(exeName);
@@ -208,7 +212,7 @@ public class GeneralCommandLine implements UserDataHolder {
       commands.add("<null>");
     }
     commands.addAll(myProgramParams.getList());
-    return ParametersList.join(commands);
+    return commands;
   }
 
   /**
@@ -224,6 +228,7 @@ public class GeneralCommandLine implements UserDataHolder {
     return StringUtil.join(CommandLineUtil.toCommandLine(exePath, myProgramParams.getList(), platform), "\n");
   }
 
+  @NotNull
   public Process createProcess() throws ExecutionException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Executing [" + getCommandLineString() + "]");
@@ -253,6 +258,7 @@ public class GeneralCommandLine implements UserDataHolder {
     }
   }
 
+  @NotNull
   protected Process startProcess(@NotNull List<String> commands) throws IOException {
     ProcessBuilder builder = new ProcessBuilder(commands);
     setupEnvironment(builder.environment());

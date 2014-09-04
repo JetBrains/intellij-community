@@ -165,22 +165,22 @@ public abstract class GroupedElementsRenderer {
     }
 
     @Override
-    protected final Color getSelectionBackground() {
+    protected Color getSelectionBackground() {
       return UIUtil.getTreeSelectionBackground();
     }
 
     @Override
-    protected final Color getSelectionForeground() {
+    protected Color getSelectionForeground() {
       return UIUtil.getTreeSelectionForeground();
     }
 
     @Override
-    protected final Color getBackground() {
+    protected Color getBackground() {
       return UIUtil.getTreeTextBackground();
     }
 
     @Override
-    protected final Color getForeground() {
+    protected Color getForeground() {
       return UIUtil.getTreeTextForeground();
     }
   }

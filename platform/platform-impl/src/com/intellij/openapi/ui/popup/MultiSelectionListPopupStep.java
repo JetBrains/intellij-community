@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,8 @@ import java.util.List;
 public abstract class MultiSelectionListPopupStep<T> extends BaseListPopupStep<T> {
   private int[] myDefaultOptionIndices = ArrayUtil.EMPTY_INT_ARRAY;
 
-  protected MultiSelectionListPopupStep(@Nullable String aTitle, List<? extends T> aValues) {
-    super(aTitle, aValues);
+  protected MultiSelectionListPopupStep(@Nullable String title, List<? extends T> values) {
+    super(title, values);
   }
 
   public abstract PopupStep<?> onChosen(List<T> selectedValues, boolean finalChoice);
@@ -54,8 +54,8 @@ public abstract class MultiSelectionListPopupStep<T> extends BaseListPopupStep<T
   }
 
   @Override
-  public final void setDefaultOptionIndex(int aDefaultOptionIndex) {
-    myDefaultOptionIndices = new int[]{aDefaultOptionIndex};
+  public final void setDefaultOptionIndex(int defaultOptionIndex) {
+    myDefaultOptionIndices = new int[]{defaultOptionIndex};
   }
 
   public int[] getDefaultOptionIndices() {

@@ -1,13 +1,14 @@
 # coding=utf-8
 """
 Behave BDD runner.
-*FIRST* param now: folder to search "features" for.
-Each "features" folder should have features and "steps" subdir.
+See _bdd_utils#get_path_by_env for information how to pass list of features here.
+Each feature could be file, folder with feature files or folder with "features" subfolder
 
 Other args are tag expressionsin format (--tags=.. --tags=..).
 See https://pythonhosted.org/behave/behave.html#tag-expression
 """
 import functools
+import glob
 import sys
 import os
 import traceback
@@ -228,18 +229,22 @@ if __name__ == "__main__":
         pass
 
     command_args = list(filter(None, sys.argv[1:]))
+    if command_args:
+        _bdd_utils.fix_win_drive(command_args[0])
     my_config = configuration.Configuration(command_args=command_args)
     formatters.register_as(_Null, "com.intellij.python.null")
     my_config.format = ["com.intellij.python.null"]  # To prevent output to stdout
     my_config.reporters = []  # To prevent summary to stdout
     my_config.stdout_capture = False  # For test output
     my_config.stderr_capture = False  # For test output
-    (base_dir, what_to_run) = _bdd_utils.get_path_by_args(sys.argv)
-    if not my_config.paths:  # No path provided, trying to load dit manually
-        if os.path.isfile(what_to_run):  # File is provided, load it
-            my_config.paths = [what_to_run]
-        else:  # Dir is provided, find subdirs ro run
-            my_config.paths = _get_dirs_to_run(base_dir)
+    (base_dir, what_to_run) = _bdd_utils.get_path_by_env(os.environ)
+    features = set()
+    for feature in what_to_run:
+        if os.path.isfile(feature) or glob.glob(os.path.join(feature, "*.feature")):  # File of folder with "features"  provided, load it
+            features.add(feature)
+        elif os.path.isdir(feature):
+            features |= set(_get_dirs_to_run(feature))  # Find "features" subfolder
+    my_config.paths = list(features)
     _BehaveRunner(my_config, base_dir).run()
 
 

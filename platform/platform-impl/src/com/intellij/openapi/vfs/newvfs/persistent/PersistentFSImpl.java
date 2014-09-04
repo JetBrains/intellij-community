@@ -67,15 +67,16 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   private final Object myInputLock = new Object();
 
   private final AtomicBoolean myShutDown = new AtomicBoolean(false);
+  @SuppressWarnings("FieldCanBeLocal")
+  private final LowMemoryWatcher myWatcher = LowMemoryWatcher.register(new Runnable() {
+    @Override
+    public void run() {
+      clearIdCache();
+    }
+  });
 
   public PersistentFSImpl(@NotNull MessageBus bus) {
     myEventBus = bus;
-    LowMemoryWatcher.register(new Runnable() {
-      @Override
-      public void run() {
-        clearIdCache();
-      }
-    });
     ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
       @Override
       public void run() {

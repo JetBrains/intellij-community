@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +30,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 public class TypeCookProcessor extends BaseRefactoringProcessor {
   private PsiElement[] myElements;
@@ -75,7 +72,7 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    final HashSet<PsiElement> changedItems = myResult.getCookedElements();
+    final Set<PsiElement> changedItems = myResult.getCookedElements();
     final UsageInfo[] usages = new UsageInfo[changedItems.size()];
 
     int i = 0;
@@ -100,7 +97,7 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
   }
 
   protected void performRefactoring(UsageInfo[] usages) {
-    final HashSet<PsiElement> victims = new HashSet<PsiElement>();
+    final Set<PsiElement> victims = new HashSet<PsiElement>();
 
     for (UsageInfo usage : usages) {
       victims.add(usage.getElement());

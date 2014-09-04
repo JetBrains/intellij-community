@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,11 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class MethodImplementationsSearch implements QueryExecutor<PsiElement, DefinitionsScopedSearch.SearchParameters> {
   @Override
-  public boolean execute(final @NotNull DefinitionsScopedSearch.SearchParameters queryParameters, final @NotNull Processor<PsiElement> consumer) {
+  public boolean execute(@NotNull final DefinitionsScopedSearch.SearchParameters queryParameters, @NotNull final Processor<PsiElement> consumer) {
     final PsiElement sourceElement = queryParameters.getElement();
     if (sourceElement instanceof PsiMethod) {
       return processImplementations((PsiMethod)sourceElement, consumer, queryParameters.getScope());
@@ -49,12 +50,12 @@ public class MethodImplementationsSearch implements QueryExecutor<PsiElement, De
     })) {
       return false;
     }
-    final ArrayList<PsiMethod> methods = new ArrayList<PsiMethod>();
+    List<PsiMethod> methods = new ArrayList<PsiMethod>();
     getOverridingMethods(psiMethod, methods, searchScope);
     return ContainerUtil.process(methods, consumer);
   }
 
-  public static void getOverridingMethods(PsiMethod method, ArrayList<PsiMethod> list, SearchScope scope) {
+  public static void getOverridingMethods(PsiMethod method, List<PsiMethod> list, SearchScope scope) {
     for (PsiMethod psiMethod : OverridingMethodsSearch.search(method, scope, true)) {
       list.add(psiMethod);
     }
@@ -63,7 +64,7 @@ public class MethodImplementationsSearch implements QueryExecutor<PsiElement, De
   @SuppressWarnings("UnusedDeclaration")
   @Deprecated
   public static PsiMethod[] getMethodImplementations(final PsiMethod method, SearchScope scope) {
-    ArrayList<PsiMethod> result = new ArrayList<PsiMethod>();
+    List<PsiMethod> result = new ArrayList<PsiMethod>();
 
     getOverridingMethods(method, result, scope);
     return result.toArray(new PsiMethod[result.size()]);

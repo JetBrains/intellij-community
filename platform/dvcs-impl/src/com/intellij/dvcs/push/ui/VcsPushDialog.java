@@ -15,11 +15,13 @@
  */
 package com.intellij.dvcs.push.ui;
 
+import com.intellij.CommonBundle;
 import com.intellij.dvcs.push.PushController;
 import com.intellij.dvcs.push.VcsPushOptionsPanel;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.ui.ValidationInfo;
 import net.miginfocom.swing.MigLayout;
@@ -32,8 +34,11 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.openapi.ui.Messages.OK;
+
 public class VcsPushDialog extends DialogWrapper {
 
+  @NotNull private final Project myProject;
   private final PushLog myListPanel;
   private final PushController myController;
   private final Action[] myExecutorActions = {new DvcsPushAction("&Force Push", true)};
@@ -43,8 +48,9 @@ public class VcsPushDialog extends DialogWrapper {
 
   public VcsPushDialog(@NotNull Project project, @NotNull List<? extends Repository> selectedRepositories) {
     super(project);
+    myProject = project;
     myController = new PushController(project, this, selectedRepositories);
-    myListPanel = myController.getPushPanelInfo();
+    myListPanel = myController.getPushPanelLog();
     myAdditionalOptionsFromVcsPanel = new JPanel(new MigLayout("ins 0 0, flowx"));
     init();
     setOKButtonText("Push");
@@ -80,6 +86,12 @@ public class VcsPushDialog extends DialogWrapper {
     actions.add(getCancelAction());
     actions.add(getHelpAction());
     return actions.toArray(new Action[actions.size()]);
+  }
+
+  @Nullable
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myListPanel.getPreferredFocusedComponent();
   }
 
   @NotNull
@@ -127,6 +139,12 @@ public class VcsPushDialog extends DialogWrapper {
 
     @Override
     public void actionPerformed(ActionEvent e) {
+      if (myForce) {
+        int answer = Messages.showOkCancelDialog(myProject, getConfirmationMessage(),
+                                                 "Force Push",
+                                                 "&Force Push", CommonBundle.getCancelButtonText(), Messages.getWarningIcon());
+        if (answer != OK) return;
+      }
       myController.push(myForce);
       close(OK_EXIT_CODE);
     }
@@ -140,5 +158,10 @@ public class VcsPushDialog extends DialogWrapper {
     public void setOptions(Action[] actions) {
       myOptions = actions;
     }
+  }
+
+  @NotNull
+  private static String getConfirmationMessage() {
+    return "You're going to force push. It will overwrite commits at the remote. Are you sure you want to proceed?";
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -217,7 +217,7 @@ public class Util {
     return subst;
   }
 
-  public static boolean bindsTypeParameters(PsiType t, HashSet<PsiTypeParameter> params) {
+  public static boolean bindsTypeParameters(PsiType t, Set<PsiTypeParameter> params) {
     if (t instanceof PsiWildcardType) {
       final PsiWildcardType wct = ((PsiWildcardType)t);
       final PsiType bound = wct.getBound();
@@ -286,7 +286,7 @@ public class Util {
 
       PsiSubstitutor theSubst = PsiSubstitutor.EMPTY;
 
-      final HashSet<PsiTypeVariable> cluster = new HashSet<PsiTypeVariable>();
+      final Set<PsiTypeVariable> cluster = new HashSet<PsiTypeVariable>();
 
       for (final PsiTypeParameter parm : aSubst.getSubstitutionMap().keySet()) {
         final PsiType type = createParameterizedType(aSubst.substitute(parm), factory, false, context);

@@ -27,7 +27,9 @@ import org.jetbrains.plugins.github.api.GithubFullPath;
 import org.jetbrains.plugins.github.util.GithubNotifications;
 
 import javax.swing.*;
-import java.util.Set;
+import java.util.List;
+
+import static org.jetbrains.plugins.github.GithubCreatePullRequestWorker.ForkInfo;
 
 /**
  * @author Aleksey Pivovarov
@@ -35,25 +37,27 @@ import java.util.Set;
 public class GithubSelectForkDialog extends DialogWrapper {
   @NotNull private final GithubSelectForkPanel myPanel;
   @NotNull private final Project myProject;
-  @NotNull private final Convertor<String, GithubFullPath> myCheckFork;
-  private GithubFullPath myFullPath;
+  @NotNull private final Convertor<String, ForkInfo> myCheckFork;
+  private ForkInfo mySelectedFork;
 
 
   public GithubSelectForkDialog(@NotNull Project project,
-                                @NotNull Set<GithubFullPath> forks,
-                                @NotNull Convertor<String, GithubFullPath> checkFork) {
+                                @Nullable List<GithubFullPath> forks,
+                                @NotNull Convertor<String, ForkInfo> checkFork) {
     super(project);
     myProject = project;
     myCheckFork = checkFork;
 
     myPanel = new GithubSelectForkPanel();
 
-    myPanel.setUsers(ContainerUtil.map(forks, new Function<GithubFullPath, String>() {
-      @Override
-      public String fun(GithubFullPath path) {
-        return path.getUser();
-      }
-    }));
+    if (forks != null) {
+      myPanel.setUsers(ContainerUtil.map(forks, new Function<GithubFullPath, String>() {
+        @Override
+        public String fun(GithubFullPath path) {
+          return path.getUser();
+        }
+      }));
+    }
 
     setTitle("Select Base Fork Repository");
     init();
@@ -61,12 +65,12 @@ public class GithubSelectForkDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    GithubFullPath path = myCheckFork.convert(myPanel.getUser());
-    if (path == null) {
+    ForkInfo fork = myCheckFork.convert(myPanel.getUser());
+    if (fork == null) {
       GithubNotifications.showErrorDialog(myProject, "Can't Find Repository", "Can't find fork for selected user");
     }
     else {
-      myFullPath = path;
+      mySelectedFork = fork;
       super.doOKAction();
     }
   }
@@ -78,12 +82,7 @@ public class GithubSelectForkDialog extends DialogWrapper {
   }
 
   @NotNull
-  public GithubFullPath getPath() {
-    return myFullPath;
-  }
-
-  @TestOnly
-  public void testSetUser(@NotNull String user) {
-    myPanel.setSelectedUser(user);
+  public ForkInfo getPath() {
+    return mySelectedFork;
   }
 }

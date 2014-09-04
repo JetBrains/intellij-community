@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,12 @@ package com.intellij.internal;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -49,19 +51,36 @@ public class StaticIconFieldsAction extends AnAction {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Searching icons usages") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-        GlobalSearchScope all = GlobalSearchScope.allScope(project);
-        PsiClass allIcons = facade.findClass("com.intellij.icons.AllIcons", all);
+        final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+        final GlobalSearchScope all = GlobalSearchScope.allScope(project);
+        PsiClass allIcons = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+          @Override
+          public PsiClass compute() {
+            return facade.findClass("com.intellij.icons.AllIcons", all);
+          }
+        });
         searchFields(allIcons, view, indicator);
-        for (PsiClass iconsClass : facade.findPackage("icons").getClasses(all)) {
+        PsiClass[] classes = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
+          @Override
+          public PsiClass[] compute() {
+            return facade.findPackage("icons").getClasses(all);
+          }
+        });
+        for (PsiClass iconsClass : classes) {
           searchFields(iconsClass, view, indicator);
         }
       }
     });
   }
 
-  private static void searchFields(PsiClass allIcons, final UsageView view, ProgressIndicator indicator) {
-    indicator.setText("Searching for: " + allIcons.getQualifiedName());
+  private static void searchFields(final PsiClass allIcons, final UsageView view, final ProgressIndicator indicator) {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        indicator.setText("Searching for: " + allIcons.getQualifiedName());
+      }
+    });
+
     ReferencesSearch.search(allIcons).forEach(new Processor<PsiReference>() {
       @Override
       public boolean process(PsiReference reference) {

@@ -12,10 +12,13 @@ public class TypeMayBeWeakenedFixTest extends IGQuickFixesTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myFixture.enableInspections(new TypeMayBeWeakenedInspection());
+    final TypeMayBeWeakenedInspection inspection = new TypeMayBeWeakenedInspection();
+    inspection.onlyWeakentoInterface = false;
+    myFixture.enableInspections(inspection);
     myRelativePath = "abstraction/type_may_be_weakened";
   }
 
   public void testShorten() { doTest(InspectionGadgetsBundle.message("type.may.be.weakened.quickfix", "java.util.Collection")); }
+  public void testLocalClass() { doTest(InspectionGadgetsBundle.message("type.may.be.weakened.quickfix", "A")); }
 
 }

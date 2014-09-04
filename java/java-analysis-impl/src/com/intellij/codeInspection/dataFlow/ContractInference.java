@@ -27,9 +27,11 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -129,12 +131,13 @@ class ContractInferenceInterpreter {
     return RecursionManager.doPreventingRecursion(myMethod, true, new Computable<List<MethodContract>>() {
       @Override
       public List<MethodContract> compute() {
-        List<MethodContract> delegateContracts = ControlFlowAnalyzer.getMethodContracts(targetMethod);
-        return ContainerUtil.mapNotNull(delegateContracts, new NullableFunction<MethodContract, MethodContract>() {
+        final boolean notNull = NullableNotNullManager.isNotNull(targetMethod);
+        final ValueConstraint[] emptyConstraints = MethodContract.createConstraintArray(myMethod.getParameterList().getParametersCount());
+        List<MethodContract> fromDelegate = ContainerUtil.mapNotNull(ControlFlowAnalyzer.getMethodContracts(targetMethod), new NullableFunction<MethodContract, MethodContract>() {
           @Nullable
           @Override
           public MethodContract fun(MethodContract delegateContract) {
-            ValueConstraint[] answer = MethodContract.createConstraintArray(myMethod.getParameterList().getParametersCount());
+            ValueConstraint[] answer = emptyConstraints;
             for (int i = 0; i < delegateContract.arguments.length; i++) {
               if (i >= arguments.length) return null;
 
@@ -154,9 +157,17 @@ class ContractInferenceInterpreter {
                 }
               }
             }
-            return answer == null ? null : new MethodContract(answer, negated ? negateConstraint(delegateContract.returnValue) : delegateContract.returnValue);
+            ValueConstraint returnValue = negated ? negateConstraint(delegateContract.returnValue) : delegateContract.returnValue;
+            if (notNull && returnValue != THROW_EXCEPTION) {
+              returnValue = NOT_NULL_VALUE;
+            }
+            return answer == null ? null : new MethodContract(answer, returnValue);
           }
         });
+        if (notNull) {
+          return ContainerUtil.concat(fromDelegate, Arrays.asList(new MethodContract(emptyConstraints, NOT_NULL_VALUE)));
+        }
+        return fromDelegate;
       }
     });
   }
@@ -210,6 +221,16 @@ class ContractInferenceInterpreter {
             return contractWithConstraint(state, parameter, paramConstraint, returnValue);
           }
         });
+      }
+    }
+
+    if (expr instanceof PsiNewExpression) {
+      return toContracts(states, NOT_NULL_VALUE);
+    }
+    if (expr instanceof PsiMethodCallExpression) {
+      PsiMethod method = ((PsiMethodCallExpression)expr).resolveMethod();
+      if (method != null && NullableNotNullManager.isNotNull(method)) {
+        return toContracts(states, NOT_NULL_VALUE);
       }
     }
 
@@ -315,7 +336,7 @@ class ContractInferenceInterpreter {
   private List<MethodContract> visitStatements(List<ValueConstraint[]> states, PsiStatement... statements) {
     List<MethodContract> result = ContainerUtil.newArrayList();
     for (PsiStatement statement : statements) {
-      if (statement instanceof PsiBlockStatement && ((PsiBlockStatement)statement).getCodeBlock().getStatements().length == 1) {
+      if (statement instanceof PsiBlockStatement) {
         result.addAll(visitStatements(states, ((PsiBlockStatement)statement).getCodeBlock().getStatements()));
       }
       else if (statement instanceof PsiIfStatement) {
@@ -353,10 +374,28 @@ class ContractInferenceInterpreter {
         List<MethodContract> conditionResults = visitExpression(states, ((PsiAssertStatement)statement).getAssertCondition());
         result.addAll(toContracts(antecedentsOf(filterReturning(conditionResults, FALSE_VALUE)), THROW_EXCEPTION));
       }
+      else if (statement instanceof PsiDeclarationStatement && !mayHaveSideEffects((PsiDeclarationStatement)statement)) {
+        continue;
+      }
+      else if (statement instanceof PsiDoWhileStatement) {
+        result.addAll(visitStatements(states, ((PsiDoWhileStatement)statement).getBody()));
+      }
 
       break; // visit only the first statement unless it's 'if' whose 'then' always returns and the next statement is effectively 'else'
     }
     return result;
+  }
+
+  private static boolean mayHaveSideEffects(PsiDeclarationStatement statement) {
+    for (PsiElement element : statement.getDeclaredElements()) {
+      if (element instanceof PsiVariable) {
+        PsiExpression initializer = ((PsiVariable)element).getInitializer();
+        if (initializer != null && SideEffectChecker.mayHaveSideEffects(initializer)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private static boolean alwaysReturns(@Nullable PsiStatement statement) {
@@ -381,6 +420,7 @@ class ContractInferenceInterpreter {
       if (expr.textMatches(PsiKeyword.TRUE)) return TRUE_VALUE;
       if (expr.textMatches(PsiKeyword.FALSE)) return FALSE_VALUE;
       if (expr.textMatches(PsiKeyword.NULL)) return NULL_VALUE;
+      if (((PsiLiteralExpression)expr).getValue() instanceof String) return NOT_NULL_VALUE;
     }
     return null;
   }

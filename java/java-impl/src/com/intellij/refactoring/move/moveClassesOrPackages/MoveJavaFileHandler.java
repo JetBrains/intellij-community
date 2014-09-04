@@ -95,7 +95,7 @@ public class MoveJavaFileHandler extends MoveFileHandler {
       final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(containingDirectory);
       if (aPackage != null) {
         final String qualifiedName = aPackage.getQualifiedName();
-        final PsiNameHelper helper = JavaPsiFacade.getInstance(file.getProject()).getNameHelper();
+        final PsiNameHelper helper = PsiNameHelper.getInstance(file.getProject());
         final PsiPackageStatement packageStatement = !StringUtil.isEmptyOrSpaces(qualifiedName) && helper.isQualifiedName(qualifiedName)
                                                      ? JavaPsiFacade.getElementFactory(file.getProject()).createPackageStatement(qualifiedName)
                                                      : null;

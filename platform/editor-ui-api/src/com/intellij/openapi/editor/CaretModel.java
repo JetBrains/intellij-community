@@ -222,11 +222,27 @@ public interface CaretModel {
    * selection boundaries will mean that corresponding caret's position and/or selection won't be changed.
    * <p>
    * If multiple carets are not supported, the behaviour is unspecified.
+   * <p>
+   * System selection will be updated, if such feature is supported by current editor.
    *
    * @see #supportsMultipleCarets()
    * @see #getCaretsAndSelections()
    */
   void setCaretsAndSelections(@NotNull List<CaretState> caretStates);
+
+  /**
+   * Sets the number of carets, their positions and selection ranges according to the provided data. Null values for caret position or
+   * selection boundaries will mean that corresponding caret's position and/or selection won't be changed.
+   * <p>
+   * If multiple carets are not supported, the behaviour is unspecified.
+   * <p>
+   * System selection will be updated, if such feature is supported by current editor
+   * and corresponding invocation parameter is set to <code>true</code>.
+   *
+   * @see #supportsMultipleCarets()
+   * @see #getCaretsAndSelections()
+   */
+  void setCaretsAndSelections(@NotNull List<CaretState> caretStates, boolean updateSystemSelection);
 
   /**
    * Returns the current positions of all carets and their selections. The order of entries in the returned list does not necessarily

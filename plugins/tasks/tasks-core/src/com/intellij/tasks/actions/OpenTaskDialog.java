@@ -28,7 +28,6 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsTaskHandler;
-import com.intellij.openapi.vcs.VcsType;
 import com.intellij.tasks.*;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.tasks.impl.TaskUtil;
@@ -106,7 +105,8 @@ public class OpenTaskDialog extends DialogWrapper {
       myCreateBranch.addActionListener(listener);
       myCreateChangelist.setSelected(manager.getState().createChangelist);
 
-      if (vcs.getType() != VcsType.distributed) {
+      VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(project);
+      if (handlers.length == 0) {
         myCreateBranch.setSelected(false);
         myCreateBranch.setVisible(false);
         myBranchName.setVisible(false);
@@ -114,7 +114,6 @@ public class OpenTaskDialog extends DialogWrapper {
         myBranchFrom.setVisible(false);
       }
       else {
-        VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(project);
         for (VcsTaskHandler handler : handlers) {
           VcsTaskHandler.TaskInfo[] tasks = handler.getCurrentTasks();
           if (tasks.length > 0) {

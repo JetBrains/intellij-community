@@ -26,7 +26,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.ContentBasedFileSubstitutor;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -71,13 +70,6 @@ public class FileManagerImpl implements FileManager {
 
   private final FileDocumentManager myFileDocumentManager;
   private final MessageBusConnection myConnection;
-  @SuppressWarnings("UnusedDeclaration")
-  private final LowMemoryWatcher myLowMemoryWatcher = LowMemoryWatcher.register(new Runnable() {
-    @Override
-    public void run() {
-      processQueue();
-    }
-  });
 
   public FileManagerImpl(PsiManagerImpl manager, FileDocumentManager fileDocumentManager, FileIndexFacade fileIndex) {
     myManager = manager;
@@ -98,6 +90,12 @@ public class FileManagerImpl implements FileManager {
       }
     });
     Disposer.register(manager.getProject(), this);
+    LowMemoryWatcher.register(new Runnable() {
+      @Override
+      public void run() {
+        processQueue();
+      }
+    }, this);
   }
 
   private static final VirtualFile NULL = new LightVirtualFile();
@@ -412,7 +410,7 @@ public class FileManagerImpl implements FileManager {
       if (myFileIndex.isExcludedFile(vFile)) return null;
     }
     else {
-      if (FileTypeRegistry.getInstance().isFileIgnored(vFile)) return null;
+      if (myFileIndex.isUnderIgnored(vFile)) return null;
     }
 
     VirtualFile parent = vFile.getParent();
@@ -529,6 +527,7 @@ public class FileManagerImpl implements FileManager {
   }
 
   void reloadFromDisk(@NotNull PsiFile file, boolean ignoreDocument) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
     VirtualFile vFile = file.getVirtualFile();
     assert vFile != null;
 
@@ -538,7 +537,13 @@ public class FileManagerImpl implements FileManager {
     if (document != null && !ignoreDocument){
       fileDocumentManager.reloadFromDisk(document);
     }
-    else{
+    else {
+      FileViewProvider latestProvider = createFileViewProvider(vFile, false);
+      if (latestProvider.getPsi(latestProvider.getBaseLanguage()) instanceof PsiBinaryFile) {
+        forceReload(vFile);
+        return;
+      }
+
       PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(myManager);
       event.setParent(file);
       event.setFile(file);

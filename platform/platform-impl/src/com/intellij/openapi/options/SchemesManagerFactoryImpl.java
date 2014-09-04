@@ -21,6 +21,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.ServiceBean;
 import com.intellij.openapi.components.SettingsSavingComponent;
+import com.intellij.openapi.components.impl.stores.IApplicationStore;
 import com.intellij.openapi.components.impl.stores.StreamProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,21 +33,22 @@ import java.util.Collections;
 import java.util.List;
 
 public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements SettingsSavingComponent {
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.options.SchemesManagerFactoryImpl");
+  private static final Logger LOG = Logger.getInstance(SchemesManagerFactoryImpl.class);
 
   private final List<SchemesManagerImpl> myRegisteredManagers = ContainerUtil.createLockFreeCopyOnWriteList();
 
   @Override
-  public <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T, E> createSchemesManager(final String fileSpec,
-                                                                                                      final SchemeProcessor<E> processor,
-                                                                                                      final RoamingType roamingType) {
+  public <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T, E> createSchemesManager(@NotNull String fileSpec,
+                                                                                                      @NotNull SchemeProcessor<E> processor,
+                                                                                                      @NotNull RoamingType roamingType) {
     final Application application = ApplicationManager.getApplication();
-    if (!(application instanceof ApplicationImpl)) return null;
-    String baseDirPath = ((ApplicationImpl)application).getStateStore().getStateStorageManager().expandMacros(fileSpec);
-
+    if (!(application instanceof ApplicationImpl)) {
+      return null;
+    }
+    IApplicationStore applicationStore = ((ApplicationImpl)application).getStateStore();
+    String baseDirPath = applicationStore.getStateStorageManager().expandMacros(fileSpec);
     if (baseDirPath != null) {
-      StreamProvider provider = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager().getStreamProvider();
+      StreamProvider provider = applicationStore.getStateStorageManager().getStreamProvider();
       SchemesManagerImpl<T, E> manager = new SchemesManagerImpl<T, E>(fileSpec, processor, roamingType, provider, new File(baseDirPath));
       myRegisteredManagers.add(manager);
       return manager;

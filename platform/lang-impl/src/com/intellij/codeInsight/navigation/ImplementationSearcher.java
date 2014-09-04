@@ -125,13 +125,12 @@ public class ImplementationSearcher {
   public static class FirstImplementationsSearcher extends ImplementationSearcher {
     @Override
     protected PsiElement[] searchDefinitions(final PsiElement element, final Editor editor) {
-      final PsiElement[][] result = new PsiElement[1][];
-
       if (canShowPopupWithOneItem(element)) {
         return new PsiElement[]{element};
       }
 
       final PsiElementProcessor.CollectElementsWithLimit<PsiElement> collectProcessor = new PsiElementProcessor.CollectElementsWithLimit<PsiElement>(2, new THashSet<PsiElement>());
+      final PsiElement[][] result = new PsiElement[1][];
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         @Override
         public void run() {
@@ -139,8 +138,7 @@ public class ImplementationSearcher {
             DefinitionsScopedSearch.search(element, getSearchScope(element, editor)).forEach(new PsiElementProcessorAdapter<PsiElement>(collectProcessor){
               @Override
               public boolean processInReadAction(PsiElement element) {
-                if (!accept(element)) return true;
-                return super.processInReadAction(element);
+                return !accept(element) || super.processInReadAction(element);
               }
             });
             result[0] = collectProcessor.toArray();
@@ -165,7 +163,7 @@ public class ImplementationSearcher {
     }
   }
 
-  public static abstract class BackgroundableImplementationSearcher extends ImplementationSearcher {
+  public abstract static class BackgroundableImplementationSearcher extends ImplementationSearcher {
     @Override
     protected PsiElement[] searchDefinitions(final PsiElement element, Editor editor) {
       final CommonProcessors.CollectProcessor<PsiElement> processor = new CommonProcessors.CollectProcessor<PsiElement>() {

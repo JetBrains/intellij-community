@@ -63,8 +63,9 @@ public class PluginsAdvertiser implements StartupActivity {
   private static final String FEATURE_IMPLEMENTATIONS_URL = "http://plugins.jetbrains.com/feature/getImplementations?";
   private static final String CASHED_EXTENSIONS = "extensions.xml";
 
+  public static final String IDEA_ULTIMATE_EDITION = "IntelliJ IDEA Ultimate Edition";
   public static final String ULTIMATE_EDITION_SUGGESTION = "Do not suggest Ultimate Edition";
-  public static final String CHECK_ULTIMATE_EDITION_TITLE = "Check IntelliJ IDEA Ultimate Edition";
+  public static final String CHECK_ULTIMATE_EDITION_TITLE = "Check " + IDEA_ULTIMATE_EDITION;
   public static final String DISPLAY_ID = "Plugins Suggestion";
   public static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup(DISPLAY_ID, NotificationDisplayType.STICKY_BALLOON, true);
 
@@ -198,7 +199,7 @@ public class PluginsAdvertiser implements StartupActivity {
   }
 
   public static void openDownloadPage() {
-    BrowserUtil.open(ApplicationInfo.getInstance().getCompanyURL());
+    BrowserUtil.browse(ApplicationInfo.getInstance().getCompanyURL());
   }
 
   static void enablePlugins(Project project, final Collection<IdeaPluginDescriptor> disabledPlugins) {
@@ -325,7 +326,8 @@ public class PluginsAdvertiser implements StartupActivity {
               message += "<a href=\"ignore\">Ignore All</a>";
             }
             else if (myBundledPlugin != null && !PropertiesComponent.getInstance().isTrueValue(IGNORE_ULTIMATE_EDITION)) {
-              message = "Features covered by IntelliJ IDEA Ultimate Edition (" + StringUtil.join(myBundledPlugin, ", ") + ") are detected.<br>" +
+              message = "Features covered by " + IDEA_ULTIMATE_EDITION +
+                        " (" + StringUtil.join(myBundledPlugin, ", ") + ") are detected.<br>" +
                         "<a href=\"open\">" + CHECK_ULTIMATE_EDITION_TITLE + "</a><br>" +
                         "<a href=\"ignoreUltimate\">" + ULTIMATE_EDITION_SUGGESTION + "</a>";
             }

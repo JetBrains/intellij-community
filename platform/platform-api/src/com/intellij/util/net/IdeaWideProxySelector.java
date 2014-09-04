@@ -17,7 +17,6 @@ package com.intellij.util.net;
 
 import com.btr.proxy.search.ProxySearch;
 import com.btr.proxy.selector.pac.PacProxySelector;
-import com.btr.proxy.selector.pac.PacScriptSource;
 import com.btr.proxy.selector.pac.UrlPacScriptSource;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
@@ -77,8 +76,7 @@ public class IdeaWideProxySelector extends ProxySelector {
     if (myHttpConfigurable.USE_PROXY_PAC) {
       ProxySelector pacProxySelector = myPacProxySelector.get();
       if (myHttpConfigurable.USE_PAC_URL && !StringUtil.isEmpty(myHttpConfigurable.PAC_URL)) {
-        PacScriptSource pacSource = new UrlPacScriptSource(myHttpConfigurable.PAC_URL);
-        myPacProxySelector.set(new PacProxySelector(pacSource));
+        myPacProxySelector.set(new PacProxySelector(new UrlPacScriptSource(myHttpConfigurable.PAC_URL)));
       }
       else if (pacProxySelector == null) {
         ProxySearch proxySearch = ProxySearch.getDefaultProxySearch();

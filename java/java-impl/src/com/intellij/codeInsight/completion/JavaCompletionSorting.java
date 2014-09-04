@@ -278,10 +278,12 @@ public class JavaCompletionSorting {
 
     @NotNull
     @Override
-    public Comparable weigh(@NotNull LookupElement item) {
+    public MyResult weigh(@NotNull LookupElement item) {
       final Object object = item.getObject();
 
       if (object instanceof PsiClass) {
+        if (object instanceof PsiTypeParameter) return MyResult.typeParameter;
+
         if (myTypeParameter != null && object.equals(PsiUtil.resolveClassInType(TypeConversionUtil.typeParameterErasure(myTypeParameter)))) {
           return MyResult.exactlyExpected;
         }
@@ -340,6 +342,7 @@ public class JavaCompletionSorting {
 
     private enum MyResult {
       expectedNoSelect,
+      typeParameter,
       exactlyDefault,
       ofDefaultType,
       exactlyExpected,

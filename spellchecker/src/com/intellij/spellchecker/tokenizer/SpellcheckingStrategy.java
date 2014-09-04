@@ -49,6 +49,9 @@ public class SpellcheckingStrategy {
 
   @NotNull
   public Tokenizer getTokenizer(PsiElement element) {
+    if (element instanceof PsiLanguageInjectionHost && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)element)) {
+      return EMPTY_TOKENIZER;
+    }
     if (element instanceof PsiNameIdentifierOwner) return new PsiIdentifierOwnerTokenizer();
     if (element instanceof PsiComment) {
       if (SuppressionUtil.isSuppressionComment(element)) {

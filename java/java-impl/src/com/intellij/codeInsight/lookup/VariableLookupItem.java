@@ -3,10 +3,13 @@ package com.intellij.codeInsight.lookup;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.daemon.impl.JavaColorProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -15,9 +18,11 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.ColorIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.Collection;
 
 /**
@@ -25,10 +30,12 @@ import java.util.Collection;
 */
 public class VariableLookupItem extends LookupItem<PsiVariable> implements TypedLookupItem, StaticallyImportable {
   @Nullable private final MemberLookupHelper myHelper;
+  private Color myColor;
 
-  public VariableLookupItem(PsiVariable object) {
-    super(object, object.getName());
+  public VariableLookupItem(PsiVariable var) {
+    super(var, var.getName());
     myHelper = null;
+    myColor = getInitializerColor(var);
   }
 
   public VariableLookupItem(PsiField field, boolean shouldImport) {
@@ -37,6 +44,30 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     if (!shouldImport) {
       forceQualify();
     }
+    myColor = getInitializerColor(field);
+  }
+
+  private static Color getInitializerColor(@NotNull PsiVariable var) {
+    PsiElement navigationElement = var.getNavigationElement();
+    if (navigationElement instanceof PsiVariable) {
+      var = (PsiVariable)navigationElement;
+    }
+    return getExpressionColor(var.getInitializer());
+  }
+
+  private static Color getExpressionColor(@Nullable PsiExpression expression) {
+    if (expression instanceof PsiReferenceExpression) {
+      final PsiElement target = ((PsiReferenceExpression)expression).resolve();
+      if (target instanceof PsiVariable) {
+        return RecursionManager.doPreventingRecursion(expression, true, new Computable<Color>() {
+          @Override
+          public Color compute() {
+            return getExpressionColor(((PsiVariable)target).getInitializer());
+          }
+        });
+      }
+    }
+    return JavaColorProvider.getJavaColorFromExpression(expression);
   }
 
   @Override
@@ -75,6 +106,9 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     super.renderElement(presentation);
     if (myHelper != null) {
       myHelper.renderElement(presentation, getAttribute(FORCE_QUALIFY) != null ? Boolean.TRUE : null, getSubstitutor());
+    }
+    if (myColor != null) {
+      presentation.setTypeText("", new ColorIcon(12, myColor));
     }
   }
 

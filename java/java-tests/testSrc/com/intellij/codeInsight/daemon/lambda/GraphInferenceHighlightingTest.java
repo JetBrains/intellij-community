@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,13 +47,17 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
-  @Bombed(day = 30, month = Calendar.AUGUST)
+  @Bombed(day = 30, month = Calendar.SEPTEMBER)
   public void testInferenceFromSiblings() throws Exception {
     doTest();
   }
 
-  @Bombed(day = 30, month = Calendar.AUGUST)
+  @Bombed(day = 30, month = Calendar.SEPTEMBER)
   public void testChainedInferenceTypeParamsOrderIndependent() throws Exception {
+    doTest();
+  }
+
+  public void testCyclicParamsDependency() throws Exception {
     doTest();
   }
 
@@ -216,6 +220,21 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   public void testIDEA127928() throws Exception {
     doTest();
   }
+  public void testIDEA128766() throws Exception {
+    doTest();
+  }
+
+  public void testSameMethodNestedChainedCallsNearFunctionInterfaces() throws Exception {
+    doTest();
+  }
+
+  public void testInfiniteTypes() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA126163() throws Exception {
+    doTest();
+  }
 
   private void doTest() throws Exception {
     doTest(false);
@@ -223,7 +242,7 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
 
   private void doTest(final boolean checkWarnings) throws Exception {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
-    doTestNewInference(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
   }
 
   @Override

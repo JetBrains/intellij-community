@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -48,7 +47,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.popup.AbstractPopup;
-import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.usages.UsageView;
@@ -274,7 +272,6 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
       };
 
       popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component.getPreferredFocusableComponent())
-        .setRequestFocusCondition(project, NotLookupOrSearchCondition.INSTANCE)
         .setProject(project)
         .addListener(updateProcessor)
         .addUserData(updateProcessor)
@@ -370,12 +367,17 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
   }
 
   private static PsiElement[] filterElements(final PsiElement[] targetElements) {
-    Set<PsiElement> unique = new LinkedHashSet<PsiElement>(Arrays.asList(targetElements));
-    for (PsiElement elt : targetElements) {
-      final PsiFile containingFile = elt.getContainingFile();
-      LOG.assertTrue(containingFile != null, elt);
-      PsiFile psiFile = containingFile.getOriginalFile();
-      if (psiFile.getVirtualFile() == null) unique.remove(elt);
+    final Set<PsiElement> unique = new LinkedHashSet<PsiElement>(Arrays.asList(targetElements));
+    for (final PsiElement elt : targetElements) {
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
+        public void run() {
+          final PsiFile containingFile = elt.getContainingFile();
+          LOG.assertTrue(containingFile != null, elt);
+          PsiFile psiFile = containingFile.getOriginalFile();
+          if (psiFile.getVirtualFile() == null) unique.remove(elt);
+        }
+      });
     }
     // special case for Python (PY-237)
     // if the definition is the tree parent of the target element, filter out the target element
@@ -395,9 +397,9 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
   }
 
   private static class ImplementationsUpdaterTask extends BackgroundUpdaterTask<ImplementationViewComponent> {
-    private String myCaption;
-    private Editor myEditor;
-    private PsiElement myElement;
+    private final String myCaption;
+    private final Editor myEditor;
+    private final PsiElement myElement;
     private final boolean myIncludeSelf;
     private PsiElement[] myElements;
 

@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -446,6 +447,10 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
           main.addAction(action).setAsSecondary(true);
         }
       }
+    }
+    String separatorText = group.getTemplatePresentation().getText();
+    if (children.length > 0 && !StringUtil.isEmpty(separatorText)) {
+      main.addAction(new Separator(separatorText), Constraints.FIRST);
     }
   }
 

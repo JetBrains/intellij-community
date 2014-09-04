@@ -265,9 +265,11 @@ final class Solver {
 
   private final HResultUtil resultUtil;
   private final HashMap<CoreHKey, HEquation> equations = new HashMap<CoreHKey, HEquation>();
+  private final Value unstableValue;
 
-  Solver(ELattice<Value> lattice) {
+  Solver(ELattice<Value> lattice, Value unstableValue) {
     this.lattice = lattice;
+    this.unstableValue = unstableValue;
     resultUtil = new HResultUtil(lattice);
   }
 
@@ -324,7 +326,7 @@ final class Solver {
       Value value = solved.get(id);
 
       HKey[] pIds  = id.stable ? new HKey[]{id, id.negate()} : new HKey[]{id.negate(), id};
-      Value[] pVals = id.stable ? new Value[]{value, value} : new Value[]{value, lattice.top};
+      Value[] pVals = id.stable ? new Value[]{value, value} : new Value[]{value, unstableValue};
 
       for (int i = 0; i < pIds.length; i++) {
         HKey pId = pIds[i];

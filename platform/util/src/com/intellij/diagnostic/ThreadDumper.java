@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ import java.io.Writer;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
+import java.util.Arrays;
+import java.util.Comparator;
 
 /**
  * @author yole
@@ -44,7 +46,7 @@ public class ThreadDumper {
     boolean dumpSuccessful = false;
 
     try {
-      ThreadInfo[] threads = threadMXBean.dumpAllThreads(false, false);
+      ThreadInfo[] threads = sort(threadMXBean.dumpAllThreads(false, false));
       for(ThreadInfo info: threads) {
         if (info != null) {
           if (info.getThreadName().equals("AWT-EventQueue-1")) {
@@ -61,7 +63,7 @@ public class ThreadDumper {
 
     if (!dumpSuccessful) {
       final long[] threadIds = threadMXBean.getAllThreadIds();
-      final ThreadInfo[] threadInfo = threadMXBean.getThreadInfo(threadIds, Integer.MAX_VALUE);
+      final ThreadInfo[] threadInfo = sort(threadMXBean.getThreadInfo(threadIds, Integer.MAX_VALUE));
       for (ThreadInfo info : threadInfo) {
         if (info != null) {
           if (info.getThreadName().equals("AWT-EventQueue-1")) {
@@ -73,6 +75,25 @@ public class ThreadDumper {
     }
 
     return edtStack;
+  }
+
+  private static ThreadInfo[] sort(ThreadInfo[] threads) {
+    Arrays.sort(threads, new Comparator<ThreadInfo>() {
+      @Override
+      public int compare(ThreadInfo o1, ThreadInfo o2) {
+        final String t1 = o1.getThreadName();
+        final String t2 = o2.getThreadName();
+        if (t1.startsWith("AWT-EventQueue")) return -1;
+        if (t2.startsWith("AWT-EventQueue")) return 1;
+        final boolean r1 = o1.getThreadState() == Thread.State.RUNNABLE;
+        final boolean r2 = o2.getThreadState() == Thread.State.RUNNABLE;
+        if (r1 && !r2) return -1;
+        if (r2 && !r1) return 1;
+        return 0;
+      }
+    });
+
+    return threads;
   }
 
   private static void dumpThreadInfo(final ThreadInfo info, final Writer f) {

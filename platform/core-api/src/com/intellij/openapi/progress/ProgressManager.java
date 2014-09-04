@@ -34,6 +34,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
     private static final ProgressManager ourInstance = ServiceManager.getService(ProgressManager.class);
   }
 
+  @NotNull
   public static ProgressManager getInstance() {
     return ProgressManagerHolder.ourInstance;
   }
@@ -184,7 +185,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
     throws ProcessCanceledException {
     ProgressIndicator oldIndicator = null;
 
-    boolean set = progress != null && progress != (oldIndicator = myThreadIndicator.get());
+    boolean set = progress != null && progress != (oldIndicator = getProgressIndicator());
     if (set) {
       myThreadIndicator.set(progress);
     }

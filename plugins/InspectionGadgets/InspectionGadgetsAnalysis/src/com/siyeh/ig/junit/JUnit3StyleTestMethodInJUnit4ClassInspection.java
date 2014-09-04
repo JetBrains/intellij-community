@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,70 +72,45 @@ public class JUnit3StyleTestMethodInJUnit4ClassInspection extends BaseInspection
       if (!name.startsWith("test")) {
         return;
       }
-      if (method.hasModifierProperty(PsiModifier.ABSTRACT) || !method.hasModifierProperty(PsiModifier.PUBLIC)) {
+      if (!TestUtils.isRunnable(method)) {
         return;
       }
       if (TestUtils.isJUnit4TestMethod(method)) {
-        return;
-      }
-      final PsiType returnType = method.getReturnType();
-      if (returnType == null || !returnType.equals(PsiType.VOID)) {
-        return;
-      }
-      final PsiParameterList parameterList = method.getParameterList();
-      if (parameterList.getParametersCount() != 0) {
         return;
       }
       final PsiClass containingClass = method.getContainingClass();
       if (TestUtils.isJUnitTestClass(containingClass)) {
         return;
       }
-      if (!containsReferenceToClass(containingClass, "org.junit.Test")) {
+      if (!containsJUnit4Annotation(containingClass)) {
         return;
       }
       registerMethodError(method);
     }
   }
 
-  public static boolean containsReferenceToClass(PsiElement element, String fullyQualifiedName) {
-    final ClassReferenceVisitor visitor = new ClassReferenceVisitor(fullyQualifiedName);
+  public static boolean containsJUnit4Annotation(PsiElement element) {
+    final JUnit4AnnotationVisitor visitor = new JUnit4AnnotationVisitor();
     element.accept(visitor);
-    return visitor.isReferenceFound();
+    return visitor.isJUnit4AnnotationFound();
   }
 
-  private static class ClassReferenceVisitor extends JavaRecursiveElementVisitor {
+  private static class JUnit4AnnotationVisitor extends JavaRecursiveElementWalkingVisitor {
 
-    private final String fullyQualifiedName;
-    private boolean referenceFound = false;
-
-    private ClassReferenceVisitor(String fullyQualifiedName) {
-      this.fullyQualifiedName = fullyQualifiedName;
-    }
+    private boolean myJUnit4AnnotationFound = false;
 
     @Override
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-      super.visitReferenceElement(reference);
-      if (referenceFound) {
+    public void visitAnnotation(PsiAnnotation annotation) {
+      super.visitAnnotation(annotation);
+      @NonNls final String qualifiedName = annotation.getQualifiedName();
+      if (qualifiedName == null || !qualifiedName.startsWith("org.junit.")) {
         return;
       }
-      if (!(reference.getParent() instanceof PsiAnnotation)) {
-        // optimization
-        return;
-      }
-      final PsiElement element = reference.resolve();
-      if (!(element instanceof PsiClass) || element instanceof PsiTypeParameter) {
-        return;
-      }
-      final PsiClass aClass = (PsiClass)element;
-      final String classQualifiedName = aClass.getQualifiedName();
-      if (classQualifiedName == null || !classQualifiedName.equals(fullyQualifiedName)) {
-        return;
-      }
-      referenceFound = true;
+      myJUnit4AnnotationFound = true;
     }
 
-    public boolean isReferenceFound() {
-      return referenceFound;
+    public boolean isJUnit4AnnotationFound() {
+      return myJUnit4AnnotationFound;
     }
   }
 }

@@ -19,6 +19,7 @@ import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
@@ -50,8 +51,7 @@ public class DfaExpressionFactory {
     }
     catch (Exception e) {
       LOG.error(e);
-      //noinspection unchecked
-      return Condition.FALSE;
+      return Conditions.alwaysFalse();
     }
   }
 
@@ -155,7 +155,7 @@ public class DfaExpressionFactory {
   @Nullable
   private PsiVariable getArrayIndexVariable(@Nullable PsiExpression indexExpression) {
     Object constant = JavaConstantExpressionEvaluator.computeConstantExpression(indexExpression, false);
-    if (constant instanceof Integer) {
+    if (constant instanceof Integer && ((Integer)constant).intValue() >= 0) {
       PsiVariable mockVar = myMockIndices.get(constant);
       if (mockVar == null) {
         mockVar = JavaPsiFacade.getElementFactory(indexExpression.getProject()).createField("$array$index$" + constant, PsiType.INT);

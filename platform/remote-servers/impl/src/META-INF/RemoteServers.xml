@@ -42,6 +42,8 @@
       <action id="RemoteServers.EditServer" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.EditConfigurationAction"/>
       <separator/>
       <action id="RemoteServers.DeployAll" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.DeployAllAction"/>
+      <action id="Servers.Deploy" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.DeployAction"/>
+      <action id="Servers.Undeploy" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.UndeployAction"/>
     </group>
   </actions>
 </idea-plugin>

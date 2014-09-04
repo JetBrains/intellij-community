@@ -185,7 +185,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
 
     VirtualFile result;
-    final String path = fromFile.getPath();
+    final String path = fromFile.getAbsolutePath();
     if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
       VfsRootAccess.allowRootAccess(path);
       Disposer.register(myTestRootDisposable, new Disposable() {
@@ -576,6 +576,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public void launchAction(@NotNull final IntentionAction action) {
     ShowIntentionActionsHandler.chooseActionAndInvoke(getFile(), getEditor(), action, action.getText());
+    UIUtil.dispatchAllInvocationEvents();
   }
 
   @Override
@@ -1424,6 +1425,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
             module.getMessageBus().syncPublisher(FacetManager.FACETS_TOPIC).facetConfigurationChanged(facet);
           }
         }
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+
         if (myCaresAboutInjection) {
           setupEditorForInjectedLanguage();
         }

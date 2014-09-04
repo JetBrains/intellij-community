@@ -15,17 +15,14 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
-import com.intellij.CommonBundle;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
 
 public class SvnRepositoryTreeCellRenderer extends ColoredTreeCellRenderer {
 
@@ -56,13 +53,11 @@ public class SvnRepositoryTreeCellRenderer extends ColoredTreeCellRenderer {
                 ? FileTypeManager.getInstance().getFileTypeByFileName(name).getIcon()
                 : PlatformIcons.DIRECTORY_CLOSED_ICON);
       }
-    } else if (value instanceof DefaultMutableTreeNode) {
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
-      if (node.getUserObject() instanceof String) {
-        append(CommonBundle.getLoadingTreeNodeText(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      } else if (node.getUserObject() instanceof SVNErrorMessage) {
-        append(node.getUserObject().toString(), SimpleTextAttributes.ERROR_ATTRIBUTES);
-      }
+    }
+    else if (value instanceof SimpleTextNode) {
+      SimpleTextNode node = (SimpleTextNode)value;
+
+      append(node.getText(), node.isError() ? SimpleTextAttributes.ERROR_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
   }
 

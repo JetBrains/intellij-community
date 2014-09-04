@@ -132,12 +132,12 @@ public class EditMigrationEntryDialog extends DialogWrapper{
     String text = myOldNameField.getText();
     text = text.trim();
     PsiManager manager = PsiManager.getInstance(myProject);
-    if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isQualifiedName(text)){
+    if (!PsiNameHelper.getInstance(manager.getProject()).isQualifiedName(text)){
       isEnabled = false;
     }
     text = myNewNameField.getText();
     text = text.trim();
-    if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isQualifiedName(text)){
+    if (!PsiNameHelper.getInstance(manager.getProject()).isQualifiedName(text)){
       isEnabled = false;
     }
     setOKActionEnabled(isEnabled);

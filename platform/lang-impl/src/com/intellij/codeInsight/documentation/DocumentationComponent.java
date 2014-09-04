@@ -32,6 +32,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
@@ -67,10 +68,9 @@ import javax.swing.event.HyperlinkListener;
 import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Collections;
+import java.net.URL;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Stack;
 
 public class DocumentationComponent extends JPanel implements Disposable, DataProvider {
 
@@ -102,6 +102,13 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private final MyShowSettingsButton myShowSettingsButton;
   private boolean myIgnoreFontSizeSliderChange;
   private String myEffectiveExternalUrl;
+  private final MyDictionary<String, Image> myImageProvider = new MyDictionary<String, Image>() {
+    @Override
+    public Image get(Object key) {
+      PsiElement element = getElement();
+      return element == null ? null : myManager.getElementImage(element, ((URL)key).toExternalForm());
+    }
+  };
 
   private static class Context {
     final SmartPsiElementPointer element;
@@ -178,6 +185,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       protected void paintComponent(Graphics g) {
         GraphicsUtil.setupAntialiasing(g);
         super.paintComponent(g);
+      }
+
+      @Override
+      public void setDocument(Document doc) {
+        super.setDocument(doc);
+        if (doc instanceof StyledDocument) {
+          doc.putProperty("imageCache", myImageProvider);
+        }
       }
     };
     DataProvider helpDataProvider = new DataProvider() {
@@ -309,6 +324,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     if (additionalActions != null) {
       for (final AnAction action : additionalActions) {
         actions.add(action);
+        ShortcutSet shortcutSet = action.getShortcutSet();
+        if (shortcutSet != null) {
+          action.registerCustomShortcutSet(shortcutSet, this);
+        }
       }
     }
 
@@ -547,7 +566,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       return;
     }
 
-    StyledDocument styledDocument = (StyledDocument)document;
+    final StyledDocument styledDocument = (StyledDocument)document;
     if (myFontSizeStyle == null) {
       myFontSizeStyle = styledDocument.addStyle("active", null);
     }
@@ -558,7 +577,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     if (Registry.is("documentation.component.editor.font")) {
       StyleConstants.setFontFamily(myFontSizeStyle, scheme.getEditorFontName());
     }
-    styledDocument.setCharacterAttributes(0, document.getLength(), myFontSizeStyle, false);
+
+    final Style sizeStyle = myFontSizeStyle;
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        styledDocument.setCharacterAttributes(0, styledDocument.getLength(), sizeStyle, false);
+      }
+    });
   }
 
   private void goBack() {
@@ -634,15 +660,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private class EditDocumentationSourceAction extends BaseNavigateToSourceAction {
 
-    protected EditDocumentationSourceAction() {
+    EditDocumentationSourceAction() {
       super(true);
-    }
-
-    @Override
-    public void update(AnActionEvent event) {
-      super.update(event);
-      event.getPresentation().setIcon(AllIcons.Actions.EditSource);
-      event.getPresentation().setText("Edit Source");
+      getTemplatePresentation().setIcon(AllIcons.Actions.EditSource);
+      getTemplatePresentation().setText("Edit Source");
     }
 
     @Override
@@ -875,6 +896,38 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       EditorColorsScheme scheme = colorsManager.getGlobalScheme();
       setFontSizeSliderSize(scheme.getQuickDocFontSize());
       mySettingsPanel.setVisible(true);
+    }
+  }
+
+  private static abstract class MyDictionary<K, V> extends Dictionary<K, V> {
+    @Override
+    public int size() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean isEmpty() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Enumeration<K> keys() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Enumeration<V> elements() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public V put(K key, V value) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public V remove(Object key) {
+      throw new UnsupportedOperationException();
     }
   }
 }

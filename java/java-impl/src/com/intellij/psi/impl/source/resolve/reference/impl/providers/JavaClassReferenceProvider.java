@@ -141,8 +141,8 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
       @Override
       public PsiPackage fun(final PsiPackage psiPackage) {
         final String packageName = psiPackage.getName();
-        return JavaPsiFacade.getInstance(psiPackage.getProject()).getNameHelper()
-            .isIdentifier(packageName, PsiUtil.getLanguageLevel(psiPackage)) ? psiPackage : null;
+        return PsiNameHelper.getInstance(psiPackage.getProject())
+                 .isIdentifier(packageName, PsiUtil.getLanguageLevel(psiPackage)) ? psiPackage : null;
       }
     });
   }

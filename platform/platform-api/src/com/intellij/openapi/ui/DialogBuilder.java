@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
@@ -55,18 +56,26 @@ public class DialogBuilder implements Disposable {
     return showImpl(true).getExitCode();
   }
 
+  public boolean showAndGet() {
+    return showImpl(true).isOK();
+  }
+
   public void showNotModal() {
     showImpl(false);
   }
 
-  public DialogBuilder(Project project) {
+  public DialogBuilder(@Nullable Project project) {
     myDialogWrapper = new MyDialogWrapper(project, true);
     Disposer.register(myDialogWrapper.getDisposable(), this);
   }
 
-  public DialogBuilder(Component parent) {
+  public DialogBuilder(@Nullable Component parent) {
     myDialogWrapper = new MyDialogWrapper(parent, true);
     Disposer.register(myDialogWrapper.getDisposable(), this);
+  }
+
+  public DialogBuilder() {
+    this(((Project)null));
   }
 
   @Override
@@ -74,7 +83,7 @@ public class DialogBuilder implements Disposable {
   }
 
   private MyDialogWrapper showImpl(boolean isModal) {
-    LOG.assertTrue(myTitle != null && myTitle.trim().length() != 0,
+    LOG.assertTrue(!StringUtil.isEmptyOrSpaces(myTitle),
                    String.format("Dialog title shouldn't be empty or null: [%s]", myTitle));
     myDialogWrapper.setTitle(myTitle);
     myDialogWrapper.init();
@@ -91,6 +100,12 @@ public class DialogBuilder implements Disposable {
   }
 
   @NotNull
+  public DialogBuilder centerPanel(@NotNull JComponent centerPanel) {
+    myCenterPanel = centerPanel;
+    return this;
+  }
+
+  @NotNull
   public DialogBuilder setNorthPanel(@NotNull JComponent northPanel) {
     myNorthPanel = northPanel;
     return this;
@@ -100,6 +115,7 @@ public class DialogBuilder implements Disposable {
     myTitle = title;
   }
 
+  @NotNull
   public DialogBuilder title(@NotNull String title) {
     myTitle = title;
     return this;
@@ -196,6 +212,18 @@ public class DialogBuilder implements Disposable {
     myDialogWrapper.setOKActionEnabled(isEnabled);
   }
 
+  @NotNull
+  public DialogBuilder okActionEnabled(boolean isEnabled) {
+    myDialogWrapper.setOKActionEnabled(isEnabled);
+    return this;
+  }
+
+  @NotNull
+  public DialogBuilder resizable(boolean resizable) {
+    myDialogWrapper.setResizable(resizable);
+    return this;
+  }
+
   public CustomizableAction getOkAction() {
     return get(getActionDescriptors(), OkActionDescriptor.class);
   }
@@ -267,7 +295,7 @@ public class DialogBuilder implements Disposable {
     protected Action createAction(final DialogWrapper dialogWrapper) {
       return new AbstractAction(){
         @Override
-        public void actionPerformed(ActionEvent e) {
+        public void actionPerformed(@NotNull ActionEvent e) {
           dialogWrapper.close(myExitCode);
         }
       };
@@ -325,7 +353,7 @@ public class DialogBuilder implements Disposable {
 
   private class MyDialogWrapper extends DialogWrapper {
     private String myHelpId = null;
-    private MyDialogWrapper(Project project, boolean canBeParent) {
+    private MyDialogWrapper(@Nullable Project project, boolean canBeParent) {
       super(project, canBeParent);
     }
 

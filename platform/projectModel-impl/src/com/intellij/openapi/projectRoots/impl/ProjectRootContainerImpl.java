@@ -23,10 +23,7 @@ import com.intellij.openapi.projectRoots.ex.ProjectRoot;
 import com.intellij.openapi.projectRoots.ex.ProjectRootContainer;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.PersistentOrderRootType;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -223,7 +220,8 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
   }
 
   private void read(Element element, PersistentOrderRootType type) throws InvalidDataException {
-    Element child = element.getChild(type.getSdkRootName());
+    String sdkRootName = type.getSdkRootName();
+    Element child = sdkRootName != null ? element.getChild(sdkRootName) : null;
     if (child == null) {
       myRoots.put(type, new CompositeProjectRoot());
       return;
@@ -236,11 +234,14 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
   }
 
   private void write(Element roots, PersistentOrderRootType type) throws WriteExternalException {
-    Element e = new Element(type.getSdkRootName());
-    roots.addContent(e);
-    final Element root = ProjectRootUtil.write(myRoots.get(type));
-    if (root != null) {
-      e.addContent(root);
+    String sdkRootName = type.getSdkRootName();
+    if (sdkRootName != null) {
+      Element e = new Element(sdkRootName);
+      roots.addContent(e);
+      final Element root = ProjectRootUtil.write(myRoots.get(type));
+      if (root != null) {
+        e.addContent(root);
+      }
     }
   }
 

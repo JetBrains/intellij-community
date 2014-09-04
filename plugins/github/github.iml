@@ -11,7 +11,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="vcs-api" />
     <orderEntry type="module" module-name="git4idea" />
-    <orderEntry type="library" name="http-client-3.1" level="project" />
+    <orderEntry type="library" name="http-client" level="project" />
     <orderEntry type="module" module-name="vcs-impl" />
     <orderEntry type="module" module-name="tasks-core" exported="" />
     <orderEntry type="module" module-name="tasks-api" exported="" />

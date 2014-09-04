@@ -1,3 +1,5 @@
+from _pydev_imps._pydev_thread import start_new_thread
+
 try:
     from code import InteractiveConsole
 except ImportError:
@@ -9,12 +11,7 @@ from code import InteractiveInterpreter
 import os
 import sys
 
-from pydevd_constants import USE_LIB_COPY
-
-if USE_LIB_COPY:
-    import _pydev_threading as threading
-else:
-    import threading
+import _pydev_threading as threading
 
 import traceback
 import fix_getpass
@@ -61,13 +58,14 @@ class Command:
         self.code_fragment = code_fragment
         self.more = None
 
-    @staticmethod
+    
     def symbol_for_fragment(code_fragment):
         if code_fragment.is_single_line:
             symbol = 'single'
         else:
             symbol = 'exec' # Jython doesn't support this
         return symbol
+    symbol_for_fragment = staticmethod(symbol_for_fragment) 
 
     def run(self):
         text = self.code_fragment.text
@@ -82,9 +80,17 @@ try:
         from pydev_imports import execfile
 
         __builtin__.execfile = execfile
-
 except:
     pass
+
+# Pull in runfile, the interface to UMD that wraps execfile
+from pydev_umd import runfile, _set_globals_function
+try:
+    import builtins
+    builtins.runfile = runfile
+except:
+    import __builtin__
+    __builtin__.runfile = runfile
 
 
 #=======================================================================================================================
@@ -228,7 +234,7 @@ except:
 #=======================================================================================================================
 # _DoExit
 #=======================================================================================================================
-def _DoExit(*args):
+def DoExit(*args):
     '''
         We have to override the exit because calling sys.exit will only actually exit the main thread,
         and as we're in a Xml-rpc server, that won't work.
@@ -266,6 +272,9 @@ def start_server(host, port, interpreter):
         sys.stderr.write('Error starting server with host: %s, port: %s, client_port: %s\n' % (host, port, client_port))
         raise
 
+    # Tell UMD the proper default namespace
+    _set_globals_function(interpreter.getNamespace)
+
     server.register_function(interpreter.execLine)
     server.register_function(interpreter.execMultipleLines)
     server.register_function(interpreter.getCompletions)
@@ -300,15 +309,11 @@ def start_server(host, port, interpreter):
 def StartServer(host, port, client_port):
     #replace exit (see comments on method)
     #note that this does not work in jython!!! (sys method can't be replaced).
-    sys.exit = _DoExit
+    sys.exit = DoExit
 
     interpreter = InterpreterInterface(host, client_port, threading.currentThread())
 
-    server_thread = threading.Thread(target=start_server,
-                                     name='ServerThread',
-                                     args=(host, port, interpreter))
-    server_thread.setDaemon(True)
-    server_thread.start()
+    start_new_thread(start_server,(host, port, interpreter))
 
     process_exec_queue(interpreter)
 

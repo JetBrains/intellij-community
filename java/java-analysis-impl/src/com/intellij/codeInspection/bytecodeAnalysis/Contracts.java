@@ -34,20 +34,14 @@ import java.util.Set;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.*;
 import static org.jetbrains.org.objectweb.asm.Opcodes.*;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
 
 class InOutAnalysis extends Analysis<Result<Key, Value>> {
-
-  private static final ThreadLocal<State[]> ourPending = new ThreadLocal<State[]>() {
-    @Override
-    protected State[] initialValue() {
-      return new State[Analysis.STEPS_LIMIT];
-    }
-  };
 
   static final ResultUtil<Key, Value> resultUtil =
     new ResultUtil<Key, Value>(new ELattice<Value>(Value.Bot, Value.Top));
 
-  final private State[] pending = ourPending.get();
+  final private State[] pending = ourPendingStates.get();
   private final InOutInterpreter interpreter;
   private final Value inValue;
   private final int generalizeShift;
@@ -403,7 +397,7 @@ class InOutInterpreter extends BasicInterpreter {
         }
       default:
     }
-    return super.ternaryOperation(insn, value1, value2, value3);
+    return null;
   }
 
   @Override
@@ -443,7 +437,7 @@ class InOutInterpreter extends BasicInterpreter {
                 }
               }
               if (isRefRetType) {
-                keys.add(new Key(method, new Out(), stable));
+                keys.add(new Key(method, Out, stable));
               }
               if (!keys.isEmpty()) {
                 return new CallResultValue(retType, keys);
@@ -451,7 +445,7 @@ class InOutInterpreter extends BasicInterpreter {
             }
             else if (isRefRetType) {
               HashSet<Key> keys = new HashSet<Key>();
-              keys.add(new Key(method, new Out(), stable));
+              keys.add(new Key(method, Out, stable));
               return new CallResultValue(retType, keys);
             }
           }

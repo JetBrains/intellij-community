@@ -20,6 +20,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -47,6 +48,7 @@ class ProjectStateStorageManager extends StateStorageManagerImpl {
     return new ProjectStoreImpl.IprStorageData(ROOT_TAG_NAME, myProject);
   }
 
+  @Nullable
   @Override
   protected String getOldStorageSpec(Object component, final String componentName, final StateStorageOperation operation) throws
                                                                                                                           StateStorageException {

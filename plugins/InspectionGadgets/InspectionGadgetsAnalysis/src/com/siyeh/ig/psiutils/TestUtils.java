@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,34 +66,37 @@ public class TestUtils {
   }
 
   public static boolean isJUnitTestMethod(@Nullable PsiMethod method) {
+    return isRunnable(method) && (isJUnit3TestMethod(method) || isJUnit4TestMethod(method));
+  }
+
+  public static boolean isRunnable(PsiMethod method) {
     if (method == null) {
       return false;
     }
-    if (isJUnit4TestMethod(method)) {
-      return true;
+    if (method.hasModifierProperty(PsiModifier.ABSTRACT) ||
+        method.hasModifierProperty(PsiModifier.STATIC) ||
+        !method.hasModifierProperty(PsiModifier.PUBLIC)) {
+      return false;
+    }
+    final PsiType returnType = method.getReturnType();
+    if (!PsiType.VOID.equals(returnType)) {
+      return false;
+    }
+    final PsiParameterList parameterList = method.getParameterList();
+    return parameterList.getParametersCount() == 0;
+  }
+
+  public static boolean isJUnit3TestMethod(@Nullable PsiMethod method) {
+    if (method == null) {
+      return false;
     }
     final String methodName = method.getName();
     @NonNls final String test = "test";
     if (!methodName.startsWith(test)) {
       return false;
     }
-    if (method.hasModifierProperty(PsiModifier.ABSTRACT) ||
-        !method.hasModifierProperty(PsiModifier.PUBLIC)) {
-      return false;
-    }
-    final PsiType returnType = method.getReturnType();
-    if (returnType == null) {
-      return false;
-    }
-    if (!returnType.equals(PsiType.VOID)) {
-      return false;
-    }
-    final PsiParameterList parameterList = method.getParameterList();
-    if (parameterList.getParametersCount() != 0) {
-      return false;
-    }
-    final PsiClass targetClass = method.getContainingClass();
-    return isJUnitTestClass(targetClass);
+    final PsiClass containingClass = method.getContainingClass();
+    return isJUnitTestClass(containingClass);
   }
 
   public static boolean isJUnit4TestMethod(@Nullable PsiMethod method) {

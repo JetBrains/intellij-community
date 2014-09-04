@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.jetbrains.python.edu.StudyDocumentListener;
@@ -94,7 +95,7 @@ public class StudyCheckAction extends DumbAwareAction {
           @Override
           public void run() {
             final StudyEditor selectedEditor = StudyEditor.getSelectedStudyEditor(project);
-            StudyState studyState = new StudyState(selectedEditor);
+            final StudyState studyState = new StudyState(selectedEditor);
             if (!studyState.isValid()) {
               LOG.error("StudyCheckAction was invokes outside study editor");
               return;
@@ -108,6 +109,12 @@ public class StudyCheckAction extends DumbAwareAction {
             if (runAction != null && taskFiles.size() == 1) {
               runAction.run(project);
             }
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                IdeFocusManager.getInstance(project).requestFocus(studyState.getEditor().getComponent(), true);
+              }
+            });
             final StudyTestRunner testRunner = new StudyTestRunner(task, taskDir);
             Process testProcess = null;
             try {
@@ -184,7 +191,6 @@ public class StudyCheckAction extends DumbAwareAction {
         IdeFocusManager.getInstance(project).requestFocus(editorToNavigate.getContentComponent(), true);
       }
     });
-
     taskFileToNavigate.navigateToFirstFailedTaskWindow(editor);
   }
 
@@ -252,11 +258,12 @@ public class StudyCheckAction extends DumbAwareAction {
   private static void createTestResultPopUp(final String text, Color color, @NotNull final Project project) {
     BalloonBuilder balloonBuilder =
       JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(text, null, color, null);
-    Balloon balloon = balloonBuilder.createBalloon();
+    final Balloon balloon = balloonBuilder.createBalloon();
     StudyEditor studyEditor = StudyEditor.getSelectedStudyEditor(project);
     assert studyEditor != null;
     JButton checkButton = studyEditor.getCheckButton();
     balloon.showInCenterOf(checkButton);
+    Disposer.register(project, balloon);
   }
 
   @Override

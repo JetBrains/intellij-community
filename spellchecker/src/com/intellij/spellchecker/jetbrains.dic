@@ -302,6 +302,7 @@ namespaces
 nchar
 nclob
 ndbcluster
+nmtoken
 noarchivelog
 noaudit
 nocache
@@ -538,6 +539,8 @@ taglib
 teamcity
 temptable
 throwable
+thymeleaf
+thymes
 timestamp
 tinyblob
 tinyint

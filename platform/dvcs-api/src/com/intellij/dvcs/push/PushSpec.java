@@ -16,28 +16,32 @@
 package com.intellij.dvcs.push;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
- * Specified a push from-to settings for one repository
+ * For a single repository, specifies what is pushed and where.
  */
-public class PushSpec {
+public class PushSpec<S extends PushSource, T extends PushTarget> {
 
-  @NotNull private PushSource mySource;
-  @Nullable private PushTarget myTarget;
+  @NotNull private S mySource;
+  @NotNull private T myTarget;
 
-  public PushSpec(@NotNull PushSource source, @Nullable PushTarget target) {
+  public PushSpec(@NotNull S source, @NotNull T target) {
     mySource = source;
     myTarget = target;
   }
 
   @NotNull
-  public PushSource getSource() {
+  public S getSource() {
     return mySource;
   }
 
-  @Nullable
-  public PushTarget getTarget() {
+  @NotNull
+  public T getTarget() {
     return myTarget;
+  }
+
+  @Override
+  public String toString() {
+    return mySource + "->" + myTarget;
   }
 }

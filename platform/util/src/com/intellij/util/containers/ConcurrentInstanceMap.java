@@ -29,10 +29,10 @@ public class ConcurrentInstanceMap<T> extends ConcurrentFactoryMap<Class<? exten
       return key.newInstance();
     }
     catch (InstantiationException e) {
-      throw new RuntimeException(e);
+      throw new RuntimeException("Couldn't instantiate " + key, e);
     }
     catch (IllegalAccessException e) {
-      throw new RuntimeException(e);
+      throw new RuntimeException("Couldn't instantiate " + key, e);
     }
   }
 }

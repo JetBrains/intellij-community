@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,9 @@
  */
 package com.intellij.util;
 
-import org.jetbrains.annotations.NotNull;
 import com.intellij.util.containers.ContainerUtilRt;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -44,6 +45,7 @@ public class ArrayUtilRt {
   public static final Runnable[] EMPTY_RUNNABLE_ARRAY = new Runnable[0];
 
   @NotNull
+  @Contract(pure=true)
   public static String[] toStringArray(@Nullable Collection<String> collection) {
     return collection == null || collection.isEmpty()
            ? EMPTY_STRING_ARRAY : ContainerUtilRt.toArray(collection, new String[collection.size()]);
@@ -57,6 +59,7 @@ public class ArrayUtilRt {
    *         <code>equals</code> of arrays elements to compare <code>obj</code> with
    *         these elements.
    */
+  @Contract(pure=true)
   public static <T> int find(@NotNull final T[] src, final T obj) {
     for (int i = 0; i < src.length; i++) {
       final T o = src[i];

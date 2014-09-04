@@ -194,11 +194,16 @@ bool LocateJVM()
 		return result;
 	}
 
-	std::string jreDir = GetAdjacentDir(need64BitJRE ? "jre64":"jre");
-	if (FindValidJVM(jreDir.c_str()) && Is64BitJRE(jvmPath) == need64BitJRE)
-	{
-		return true;
-	}
+
+        std::vector<std::string> jrePaths;
+        if(need64BitJRE) jrePaths.push_back(GetAdjacentDir("jre64"));
+        jrePaths.push_back(GetAdjacentDir("jre"));
+        for(std::vector<std::string>::iterator it = jrePaths.begin(); it != jrePaths.end(); ++it) {
+          if (FindValidJVM((*it).c_str()) && Is64BitJRE(jvmPath) == need64BitJRE)
+          {
+                  return true;
+          }
+        }
 
 	if (FindJVMInRegistry())
 	{

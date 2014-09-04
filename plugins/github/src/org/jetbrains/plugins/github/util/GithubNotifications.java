@@ -18,6 +18,7 @@ package org.jetbrains.plugins.github.util;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsNotifier;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +40,12 @@ public class GithubNotifications {
   public static void showWarning(@NotNull Project project, @NotNull String title, @NotNull String message) {
     LOG.info(title + "; " + message);
     VcsNotifier.getInstance(project).notifyImportantWarning(title, message);
+  }
+
+  public static void showWarning(@NotNull Project project, @NotNull String title, @NotNull Exception e) {
+    LOG.info(title + "; ", e);
+    if (e instanceof GithubOperationCanceledException) return;
+    VcsNotifier.getInstance(project).notifyImportantWarning(title, getErrorTextFromException(e));
   }
 
   public static void showError(@NotNull Project project, @NotNull String title, @NotNull String message) {
@@ -116,19 +123,28 @@ public class GithubNotifications {
     Messages.showErrorDialog(project, getErrorTextFromException(e), title);
   }
 
-  public static void showErrorDialog(@NotNull Component component, @NotNull String title, @NotNull String message) {
-    LOG.info(title + "; " + message);
-    Messages.showErrorDialog(component, message, title);
-  }
-
   public static void showErrorDialog(@NotNull Component component, @NotNull String title, @NotNull Exception e) {
     LOG.info(title, e);
     if (e instanceof GithubOperationCanceledException) return;
     Messages.showErrorDialog(component, getErrorTextFromException(e), title);
   }
 
+  public static void showErrorDialog(@NotNull Component component, @NotNull String title, @NotNull String prefix, @NotNull Exception e) {
+    LOG.info(title, e);
+    if (e instanceof GithubOperationCanceledException) return;
+    Messages.showErrorDialog(component, prefix + getErrorTextFromException(e), title);
+  }
+
   @Messages.YesNoResult
   public static int showYesNoDialog(@Nullable Project project, @NotNull String title, @NotNull String message) {
     return Messages.showYesNoDialog(project, message, title, Messages.getQuestionIcon());
+  }
+
+  @Messages.YesNoResult
+  public static int showYesNoDialog(@Nullable Project project,
+                                    @NotNull String title,
+                                    @NotNull String message,
+                                    @NotNull DialogWrapper.DoNotAskOption doNotAskOption) {
+    return Messages.showYesNoDialog(project, message, title, Messages.getQuestionIcon(), doNotAskOption);
   }
 }

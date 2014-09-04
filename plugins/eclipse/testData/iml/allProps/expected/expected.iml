@@ -92,7 +92,7 @@
     <orderEntry type="module-library">
       <library name="junit3">
         <CLASSES>
-          <root url="jar://$JUNIT$/lib/junit.jar!/" />
+          <root url="jar://$JUNIT$/junit.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -101,7 +101,7 @@
     <orderEntry type="module-library">
       <library name="junit4">
         <CLASSES>
-          <root url="jar://$JUNIT$/lib/junit-4.11.jar!/" />
+          <root url="jar://$JUNIT$/junit-4.11.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

@@ -20,6 +20,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
@@ -55,6 +56,10 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   @NonNls public static final String RUN_HOTSWAP_NEVER = "RunHotswapNever";
   @NonNls public static final String RUN_HOTSWAP_ASK = "RunHotswapAsk";
 
+  @NonNls public static final String EVALUATE_FINALLY_ALWAYS = "EvaluateFinallyAlways";
+  @NonNls public static final String EVALUATE_FINALLY_NEVER = "EvaluateFinallyNever";
+  @NonNls public static final String EVALUATE_FINALLY_ASK = "EvaluateFinallyAsk";
+
   public boolean TRACING_FILTERS_ENABLED;
   public int DEBUGGER_TRANSPORT;
   public boolean FORCE_CLASSIC_VM;
@@ -73,6 +78,8 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   public volatile boolean WATCH_RETURN_VALUES = false;
   public volatile boolean AUTO_VARIABLES_MODE = false;
   public volatile boolean SHOW_LIBRARY_STACKFRAMES = true;
+
+  public String EVALUATE_FINALLY_ON_POP_FRAME = EVALUATE_FINALLY_ASK;
 
   private ClassFilter[] mySteppingFilters = ClassFilter.EMPTY_ARRAY;
 
@@ -142,6 +149,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
     return
       TRACING_FILTERS_ENABLED == secondSettings.TRACING_FILTERS_ENABLED &&
       DEBUGGER_TRANSPORT == secondSettings.DEBUGGER_TRANSPORT &&
+      StringUtil.equals(EVALUATE_FINALLY_ON_POP_FRAME, secondSettings.EVALUATE_FINALLY_ON_POP_FRAME) &&
       FORCE_CLASSIC_VM == secondSettings.FORCE_CLASSIC_VM &&
       DISABLE_JIT == secondSettings.DISABLE_JIT &&
       HOTSWAP_IN_BACKGROUND == secondSettings.HOTSWAP_IN_BACKGROUND &&

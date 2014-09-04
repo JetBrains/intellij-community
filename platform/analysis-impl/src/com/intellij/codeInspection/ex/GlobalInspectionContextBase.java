@@ -21,6 +21,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.lang.GlobalInspectionContextExtension;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -35,10 +36,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.Function;
@@ -419,10 +417,35 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     globalContext.codeCleanup(project, scope, profile, null, runnable, false);
   }
 
-  public static void cleanupElements(Project project, Runnable runnable, PsiElement... scope) {
-    GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)InspectionManager.getInstance(project).createNewGlobalContext(false);
-    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
-    globalContext.codeCleanup(project, new AnalysisScope(new LocalSearchScope(scope), project), profile, null, runnable, true);
+  public static void cleanupElements(final Project project, final Runnable runnable, final PsiElement... scope) {
+    final List<SmartPsiElementPointer<PsiElement>> elements = new ArrayList<SmartPsiElementPointer<PsiElement>>();
+    final SmartPointerManager manager = SmartPointerManager.getInstance(project);
+    for (PsiElement element : scope) {
+      elements.add(manager.createSmartPsiElementPointer(element));
+    }
+
+    Runnable cleanupRunnable = new Runnable() {
+      public void run() {
+        final List<PsiElement> psiElements = new ArrayList<PsiElement>();
+        for (SmartPsiElementPointer<PsiElement> element : elements) {
+          PsiElement psiElement = element.getElement();
+          if (psiElement != null) {
+            psiElements.add(psiElement);
+          }
+        }
+        GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)InspectionManager.getInstance(project).createNewGlobalContext(false);
+        final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+        AnalysisScope analysisScope = new AnalysisScope(new LocalSearchScope(psiElements.toArray(new PsiElement[psiElements.size()])), project);
+        globalContext.codeCleanup(project, analysisScope, profile, null, runnable, true);
+      }
+    };
+
+    Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode() || !application.isWriteAccessAllowed()) {
+      cleanupRunnable.run();
+    } else {
+      application.invokeLater(cleanupRunnable);
+    }
   }
 
    public void close(boolean noSuspisiousCodeFound) {

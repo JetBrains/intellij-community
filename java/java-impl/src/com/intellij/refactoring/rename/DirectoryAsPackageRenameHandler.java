@@ -18,10 +18,7 @@ package com.intellij.refactoring.rename;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaDirectoryService;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesProcessor;
@@ -38,7 +35,7 @@ public class DirectoryAsPackageRenameHandler extends DirectoryAsPackageRenameHan
 
   @Override
   protected boolean isIdentifier(String name, Project project) {
-    return JavaPsiFacade.getInstance(project).getNameHelper().isIdentifier(name);
+    return PsiNameHelper.getInstance(project).isIdentifier(name);
   }
 
   @Override

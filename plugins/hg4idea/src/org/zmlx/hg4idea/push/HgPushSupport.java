@@ -16,23 +16,17 @@
 package org.zmlx.hg4idea.push;
 
 import com.intellij.dvcs.push.*;
-import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;
 
-import java.util.Collection;
-
-public class HgPushSupport extends PushSupport<HgRepository> {
+public class HgPushSupport extends PushSupport<HgRepository, HgPushSource, HgTarget> {
 
   @NotNull private final Project myProject;
   @NotNull private final HgVcs myVcs;
@@ -50,13 +44,13 @@ public class HgPushSupport extends PushSupport<HgRepository> {
 
   @NotNull
   @Override
-  public Pusher getPusher() {
+  public Pusher<HgRepository, HgPushSource, HgTarget> getPusher() {
     return new HgPusher();
   }
 
   @NotNull
   @Override
-  public OutgoingCommitsProvider getOutgoingCommitsProvider() {
+  public OutgoingCommitsProvider<HgRepository, HgPushSource, HgTarget> getOutgoingCommitsProvider() {
     return new HgOutgoingCommitsProvider();
   }
 
@@ -69,25 +63,9 @@ public class HgPushSupport extends PushSupport<HgRepository> {
 
   @NotNull
   @Override
-  public Collection<String> getTargetNames(@NotNull HgRepository repository) {
-    return ContainerUtil.map(repository.getRepositoryConfig().getPaths(), new Function<String, String>() {
-      @Override
-      public String fun(String s) {
-        return HgUtil.removePasswordIfNeeded(s);
-      }
-    });
-  }
-
-  @NotNull
-  @Override
   public HgPushSource getSource(@NotNull HgRepository repository) {
-    String localBranch = HgUtil.getActiveBranchName(repository);
+    String localBranch = repository.getCurrentBranchName();
     return new HgPushSource(localBranch);
-  }
-
-  @Override
-  public HgTarget createTarget(@NotNull HgRepository repository, @NotNull String targetName) {
-    return new HgTarget(targetName);
   }
 
   @NotNull
@@ -102,8 +80,8 @@ public class HgPushSupport extends PushSupport<HgRepository> {
   }
 
   @Override
-  @Nullable
-  public VcsError validate(@NotNull Repository repository, @Nullable String targetToValidate) {
-    return StringUtil.isEmptyOrSpaces(targetToValidate) ? new VcsError("Please, specify remote push path for repository!") : null;
+  @NotNull
+  public TargetEditor<HgTarget> createTargetEditor(@NotNull HgRepository repository, @NotNull String defaultTargetName) {
+    return new HgTargetEditor(repository, defaultTargetName);
   }
 }

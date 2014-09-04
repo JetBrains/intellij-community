@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package com.intellij.codeInsight.completion
+
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
@@ -24,10 +25,7 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.template.*
-import com.intellij.codeInsight.template.impl.LiveTemplateDocumentationProvider
-import com.intellij.codeInsight.template.impl.TemplateImpl
-import com.intellij.codeInsight.template.impl.TemplateManagerImpl
-import com.intellij.codeInsight.template.impl.TemplateSettings
+import com.intellij.codeInsight.template.impl.*
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
@@ -53,6 +51,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 import com.intellij.testFramework.EditorTestUtil
@@ -60,6 +59,7 @@ import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.NotNull
 
 import java.awt.event.KeyEvent
+
 /**
  * @author peter
  */
@@ -974,8 +974,15 @@ class Foo {
             return ((PsiJavaFile)myFixture.file).getClasses()[0];
           }
     });
-    def foo = cls.methods[0]
-    def goo = cls.methods[2]
+
+    PsiMethod[] methods = ApplicationManager.getApplication().runReadAction(new Computable<PsiMethod[]>() {
+              @Override
+              public PsiMethod[] compute() {
+                return cls.methods;
+              }
+        })
+    def foo = methods[0]
+    def goo = methods[2]
     type('x')
     assertContains 'x__foo', 'x__goo'
     edt {
@@ -1292,7 +1299,7 @@ class Foo {{
     type '.'
     assert myFixture.lookupElementStrings == ['Util.bar', 'Util.CONSTANT', 'Util.foo']
 
-    def p = LookupElementPresentation.renderElement(myFixture.lookupElements[1])
+    def p = ApplicationManager.application.runReadAction ({ LookupElementPresentation.renderElement(myFixture.lookupElements[1]) } as Computable)
     assert p.itemText == 'Util.CONSTANT'
     assert p.tailText == ' (foo)'
     assert p.typeText == 'int'
@@ -1652,5 +1659,26 @@ class Foo {{
     edt { ((EditorEx)myFixture.editor).setColumnMode(true) }
     type 'toStr'
     assert lookup
+  }
+  
+  public void "test show popup with single live template if show_live_tempate_in_completion option is enabled"() {
+    def oldValue = LiveTemplateCompletionContributor.ourShowTemplatesInTests
+    try {
+      LiveTemplateCompletionContributor.ourShowTemplatesInTests = false
+      myFixture.configureByText "a.java", """
+class Foo {{
+  ita<caret>
+"""
+      type 'r'
+      assert lookup == null
+      
+      LiveTemplateCompletionContributor.ourShowTemplatesInTests = true
+      type '\br'
+      assert lookup
+      assert myFixture.lookupElementStrings == ['itar']
+    }
+    finally {
+      LiveTemplateCompletionContributor.ourShowTemplatesInTests = oldValue
+    }
   }
 }

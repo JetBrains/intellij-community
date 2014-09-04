@@ -24,5 +24,6 @@ import org.jetbrains.annotations.NotNull;
 public interface PushTarget {
 
   @NotNull
+    //todo rename - > getName or smth
   String getPresentation();
 }

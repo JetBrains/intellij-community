@@ -86,6 +86,7 @@ public abstract class RecentProjectsManagerBase implements ProjectManagerListene
     messageBus.connect().subscribe(AppLifecycleListener.TOPIC, new MyAppLifecycleListener());
   }
 
+  @Override
   public State getState() {
     synchronized (myStateLock) {
       myState.validateRecentProjects();
@@ -93,6 +94,7 @@ public abstract class RecentProjectsManagerBase implements ProjectManagerListene
     }
   }
 
+  @Override
   public void loadState(final State state) {
     synchronized (myStateLock) {
       myState = state;
@@ -212,7 +214,7 @@ public abstract class RecentProjectsManagerBase implements ProjectManagerListene
     if (addClearListItem) {
       AnAction clearListAction = new DumbAwareAction(IdeBundle.message("action.clear.list")) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           String message = IdeBundle.message("action.clear.list.message");
           String title = IdeBundle.message("action.clear.list.title");
           if (Messages.showOkCancelDialog(e.getProject(), message, title, Messages.getQuestionIcon()) == Messages.OK) {
@@ -249,6 +251,7 @@ public abstract class RecentProjectsManagerBase implements ProjectManagerListene
     return file.exists() && (!file.isDirectory() || new File(file, Project.DIRECTORY_STORE_FOLDER).exists());
   }
 
+  @Override
   public void projectOpened(final Project project) {
     String path = getProjectPath(project);
     if (path != null) {
@@ -269,6 +272,7 @@ public abstract class RecentProjectsManagerBase implements ProjectManagerListene
     }
   }
 
+  @Override
   public void projectClosed(final Project project) {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     if (openProjects.length > 0) {
@@ -347,6 +351,7 @@ public abstract class RecentProjectsManagerBase implements ProjectManagerListene
   }
 
   private class MyAppLifecycleListener extends AppLifecycleListener.Adapter {
+    @Override
     public void appFrameCreated(final String[] commandLineArgs, @NotNull final Ref<Boolean> willOpenProject) {
       if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
         ProjectManager.getInstance().addProjectManagerListener(RecentProjectsManagerBase.this);
@@ -356,19 +361,23 @@ public abstract class RecentProjectsManagerBase implements ProjectManagerListene
       }
     }
 
+    @Override
     public void appStarting(Project projectFromCommandLine) {
       if (projectFromCommandLine != null) return;
       doReopenLastProject();
     }
 
+    @Override
     public void projectFrameClosed() {
       updateLastProjectPath();
     }
 
+    @Override
     public void projectOpenFailed() {
       updateLastProjectPath();
     }
 
+    @Override
     public void appClosing() {
       updateLastProjectPath();
     }

@@ -18,7 +18,6 @@ package org.zmlx.hg4idea.push;
 import com.intellij.dvcs.push.PushSpec;
 import com.intellij.dvcs.push.Pusher;
 import com.intellij.dvcs.push.VcsPushOptionValue;
-import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -37,7 +36,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class HgPusher extends Pusher {
+public class HgPusher extends Pusher<HgRepository, HgPushSource, HgTarget> {
 
   private static final Logger LOG = Logger.getInstance(HgPusher.class);
   private static final String ONE = "one";
@@ -48,22 +47,19 @@ public class HgPusher extends Pusher {
   static int NOTHING_TO_PUSH_EXIT_VALUE = 1;
 
   @Override
-  public void push(@NotNull Map<Repository, PushSpec> pushSpecs, @Nullable VcsPushOptionValue vcsPushOptionValue, boolean force) {
-    for (Map.Entry<Repository, PushSpec> entry : pushSpecs.entrySet()) {
-      Repository repository = entry.getKey();
-      HgRepository hgRepository = (HgRepository)repository;
-      PushSpec hgSpec = entry.getValue();
-      HgTarget destination = (HgTarget)hgSpec.getTarget();
-      if (destination == null) {
-        continue;
-      }
-      HgPushSource source = (HgPushSource)hgSpec.getSource();
+  public void push(@NotNull Map<HgRepository, PushSpec<HgPushSource, HgTarget>> pushSpecs,
+                   @Nullable VcsPushOptionValue vcsPushOptionValue, boolean force) {
+    for (Map.Entry<HgRepository, PushSpec<HgPushSource, HgTarget>> entry : pushSpecs.entrySet()) {
+      HgRepository repository = entry.getKey();
+      PushSpec<HgPushSource, HgTarget> hgSpec = entry.getValue();
+      HgTarget destination = hgSpec.getTarget();
+      HgPushSource source = hgSpec.getSource();
       Project project = repository.getProject();
       final HgPushCommand pushCommand = new HgPushCommand(project, repository.getRoot(), destination.myTarget);
       pushCommand.setIsNewBranch(true); // set always true, because it just allow mercurial to create a new one if needed
       pushCommand.setForce(force);
       String branchName = source.getBranch();
-      if (branchName.equals(hgRepository.getCurrentBookmark())) {
+      if (branchName.equals(repository.getCurrentBookmark())) {
         if (vcsPushOptionValue == HgVcsPushOptionValue.Current) {
           pushCommand.setBookmarkName(branchName);
         }

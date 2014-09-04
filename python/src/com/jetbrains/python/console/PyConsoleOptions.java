@@ -146,6 +146,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
       form.setUseModuleSdk(myUseModuleSdk);
       form.addContentRoots(myAddContentRoots);
       form.addSourceRoots(myAddSourceRoots);
+
       boolean moduleWasAutoselected = false;
       if (form.isUseModuleSdk() != myUseModuleSdk) {
         myUseModuleSdk = form.isUseModuleSdk();

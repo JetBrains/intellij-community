@@ -28,6 +28,13 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
     myFactory = myJavaFacade.getElementFactory();
   }
 
+  @Override
+  public void tearDown() throws Exception {
+    myFactory = null;
+
+    super.tearDown();
+  }
+
   public void testT07() {
     doTestFieldType("f",
                     PsiType.INT.createArrayType(),

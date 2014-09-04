@@ -17,6 +17,7 @@ package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -30,16 +31,21 @@ public class VcsFullCommitDetailsNode extends DefaultMutableTreeNode implements 
   @NotNull private final Project myProject;
   private final VcsFullCommitDetails myCommit;
 
-  public VcsFullCommitDetailsNode(@NotNull Project project, VcsFullCommitDetails commit) {
+  public VcsFullCommitDetailsNode(@NotNull Project project, @NotNull VcsFullCommitDetails commit) {
     super(commit, false);
     myProject = project;
     myCommit = commit;
   }
 
   @Override
+  public VcsFullCommitDetails getUserObject() {
+    return myCommit;
+  }
+
+  @Override
   public void render(@NotNull ColoredTreeCellRenderer renderer) {
-    renderer
-      .append(myCommit.getSubject(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, renderer.getForeground()));
+    String subject = StringUtil.shortenTextWithEllipsis(myCommit.getSubject(), 80, 0);
+    renderer.append(subject, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, renderer.getForeground()));
   }
 
   public String getTooltip() {

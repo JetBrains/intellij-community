@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,14 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileElement;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -34,7 +34,6 @@ import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -47,54 +46,20 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class OpenFileAction extends AnAction implements DumbAware {
+  @Override
   public void actionPerformed(AnActionEvent e) {
-    @Nullable final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = e.getProject();
     final boolean showFiles = project != null || PlatformProjectOpenProcessor.getInstanceIfItExists() != null;
+    final FileChooserDescriptor descriptor = showFiles ? new ProjectOrFileChooserDescriptor() : new ProjectOnlyFileChooserDescriptor();
+    descriptor.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, showFiles);
 
-    final FileChooserDescriptor descriptor = new OpenProjectFileChooserDescriptor(true) {
-      @Override
-      public boolean isFileSelectable(VirtualFile file) {
-        if (super.isFileSelectable(file)) {
-          return true;
-        }
-        if (file.isDirectory()) {
-          return false;
-        }
-        return showFiles && !FileElement.isArchive(file);
-      }
-
-      @Override
-      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-        if (!file.isDirectory() && isFileSelectable(file)) {
-          if (!showHiddenFiles && FileElement.isFileHidden(file)) return false;
-          return true;
-        }
-        return super.isFileVisible(file, showHiddenFiles);
-      }
-
-      @Override
-      public boolean isChooseMultiple() {
-        return showFiles;
-      }
-    };
-    descriptor.setTitle(showFiles ? "Open File or Project" : "Open Project");
-
-    VirtualFile userHomeDir = null;
-    if (SystemInfo.isUnix) {
-      userHomeDir = VfsUtil.getUserHomeDir();
-    }
-
-    descriptor.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, Boolean.TRUE);
-
-    FileChooser.chooseFiles(descriptor, project, userHomeDir, new Consumer<List<VirtualFile>>() {
+    FileChooser.chooseFiles(descriptor, project, VfsUtil.getUserHomeDir(), new Consumer<List<VirtualFile>>() {
       @Override
       public void consume(final List<VirtualFile> files) {
         for (VirtualFile file : files) {
-          if (!descriptor.isFileSelectable(file)) { // on Mac, it could be selected anyway
-            Messages.showInfoMessage(project,
-                                     file.getPresentableUrl() + " contains no " +
-                                     ApplicationNamesInfo.getInstance().getFullProductName() + " project",
-                                     "Cannot Open Project");
+          if (!descriptor.isFileSelectable(file)) {
+            String message = IdeBundle.message("error.dir.contains.no.project", file.getPresentableUrl());
+            Messages.showInfoMessage(project, message, IdeBundle.message("title.cannot.open.project"));
             return;
           }
         }
@@ -103,9 +68,8 @@ public class OpenFileAction extends AnAction implements DumbAware {
     });
   }
 
-  private static void doOpenFile(@Nullable final Project project,
-                                 @NotNull final List<VirtualFile> result) {
-    for (final VirtualFile file : result) {
+  private static void doOpenFile(@Nullable Project project, @NotNull List<VirtualFile> result) {
+    for (VirtualFile file : result) {
       if (file.isDirectory()) {
         Project openedProject;
         if (ProjectAttachProcessor.canAttachToProject()) {
@@ -118,9 +82,8 @@ public class OpenFileAction extends AnAction implements DumbAware {
         return;
       }
 
-      if (OpenProjectFileChooserDescriptor.isProjectFile(file) &&
-          // if the ipr-based project is already open, just open the ipr file
-          (project == null || !file.equals(project.getProjectFile()))) {
+      // try to open as a project - unless the file is an .ipr of the current one
+      if ((project == null || !file.equals(project.getProjectFile())) && OpenProjectFileChooserDescriptor.isProjectFile(file)) {
         Project openedProject = ProjectUtil.openOrImport(file.getPath(), project, false);
         if (openedProject != null) {
           FileChooserUtil.setLastOpenedFile(openedProject, file);
@@ -143,26 +106,54 @@ public class OpenFileAction extends AnAction implements DumbAware {
     }
   }
 
-  public static void openFile(final String filePath, final Project project) {
-    final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(filePath);
+  public static void openFile(String filePath, @NotNull Project project) {
+    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(filePath);
     if (file != null && file.isValid()) {
       openFile(file, project);
     }
   }
 
-  public static void openFile(final VirtualFile virtualFile, final Project project) {
-    FileEditorProviderManager editorProviderManager = FileEditorProviderManager.getInstance();
-    if (editorProviderManager.getProviders(project, virtualFile).length == 0) {
-      Messages.showMessageDialog(project,
-                                 IdeBundle.message("error.files.of.this.type.cannot.be.opened",
-                                                   ApplicationNamesInfo.getInstance().getProductName()),
-                                 IdeBundle.message("title.cannot.open.file"),
-                                 Messages.getErrorIcon());
+  public static void openFile(VirtualFile file, @NotNull Project project) {
+    FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(project, file);
+    if (providers.length == 0) {
+      String message = IdeBundle.message("error.files.of.this.type.cannot.be.opened", ApplicationNamesInfo.getInstance().getProductName());
+      Messages.showErrorDialog(project, message, IdeBundle.message("title.cannot.open.file"));
       return;
     }
 
-    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, virtualFile);
+    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file);
     FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
   }
 
+  private static class ProjectOnlyFileChooserDescriptor extends OpenProjectFileChooserDescriptor {
+    public ProjectOnlyFileChooserDescriptor() {
+      super(true);
+      setTitle(IdeBundle.message("title.open.project"));
+    }
+  }
+
+  // vanilla OpenProjectFileChooserDescriptor only accepts project files; this on is overridden to accept any files
+  private static class ProjectOrFileChooserDescriptor extends OpenProjectFileChooserDescriptor {
+    private final FileChooserDescriptor myStandardDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
+
+    public ProjectOrFileChooserDescriptor() {
+      super(true);
+      setTitle(IdeBundle.message("title.open.file.or.project"));
+    }
+
+    @Override
+    public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
+      return file.isDirectory() ? super.isFileVisible(file, showHiddenFiles) : myStandardDescriptor.isFileVisible(file, showHiddenFiles);
+    }
+
+    @Override
+    public boolean isFileSelectable(VirtualFile file) {
+      return file.isDirectory() ? super.isFileSelectable(file) :  myStandardDescriptor.isFileSelectable(file);
+    }
+
+    @Override
+    public boolean isChooseMultiple() {
+      return true;
+    }
+  }
 }

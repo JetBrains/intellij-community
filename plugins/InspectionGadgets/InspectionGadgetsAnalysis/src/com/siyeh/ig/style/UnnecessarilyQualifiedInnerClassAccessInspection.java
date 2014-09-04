@@ -99,13 +99,30 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspec
       }
       final PsiClass aClass = (PsiClass)target;
       ImportUtils.addImportIfNeeded(aClass, element);
-      element.delete();
+      final String shortName = aClass.getName();
+      if (isReferenceToTarget(shortName, aClass, parent)) {
+        element.delete();
+      }
     }
   }
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new UnnecessarilyQualifiedInnerClassAccessVisitor();
+  }
+
+  private static boolean isReferenceToTarget(String referenceText, @NotNull PsiClass target, PsiElement context) {
+    final PsiJavaCodeReferenceElement reference =
+      JavaPsiFacade.getElementFactory(target.getProject()).createReferenceFromText(referenceText, context);
+    final JavaResolveResult[] results = reference.multiResolve(false);
+    if (results.length == 0) {
+      return true;
+    }
+    if (results.length > 1) {
+      return false;
+    }
+    final JavaResolveResult result = results[0];
+    return result.isAccessible() && target.equals(result.getElement());
   }
 
   private class UnnecessarilyQualifiedInnerClassAccessVisitor
@@ -173,20 +190,6 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspec
     public void visitReferenceExpression(
       PsiReferenceExpression expression) {
       visitReferenceElement(expression);
-    }
-
-    private boolean isReferenceToTarget(String referenceText, @NotNull PsiClass target, PsiElement context) {
-      final PsiJavaCodeReferenceElement reference =
-        JavaPsiFacade.getElementFactory(target.getProject()).createReferenceFromText(referenceText, context);
-      final JavaResolveResult[] results = reference.multiResolve(false);
-      if (results.length == 0) {
-        return true;
-      }
-      if (results.length > 1) {
-        return false;
-      }
-      final JavaResolveResult result = results[0];
-      return result.isAccessible() && target.equals(result.getElement());
     }
 
     private boolean isInImportOrPackage(PsiElement element) {

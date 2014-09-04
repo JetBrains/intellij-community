@@ -71,7 +71,8 @@ public class JavaMarkObjectActionHandler extends MarkObjectActionHandler {
     
     final DebuggerTree tree = node.getTree();
     tree.saveState(node);
-    
+
+    final Component parent = event.getInputEvent().getComponent();
     final ValueDescriptorImpl valueDescriptor = ((ValueDescriptorImpl)descriptor);
     final DebuggerContextImpl debuggerContext = tree.getDebuggerContext();
     final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
@@ -93,7 +94,7 @@ public class JavaMarkObjectActionHandler extends MarkObjectActionHandler {
               final boolean suggestAdditionalMarkup = canSuggestAdditionalMarkup(debugProcess, valueDescriptor.getValue());
               SwingUtilities.invokeAndWait(new Runnable() {
                 public void run() {
-                  ObjectMarkupPropertiesDialog dialog = new ObjectMarkupPropertiesDialog(defaultText, suggestAdditionalMarkup);
+                  ObjectMarkupPropertiesDialog dialog = new ObjectMarkupPropertiesDialog(parent, defaultText, suggestAdditionalMarkup);
                   dialog.show();
                   if (dialog.isOK()) {
                     result.set(Pair.create(dialog.getConfiguredMarkup(), dialog.isMarkAdditionalFields()));

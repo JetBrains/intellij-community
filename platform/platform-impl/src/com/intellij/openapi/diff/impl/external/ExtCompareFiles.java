@@ -19,6 +19,7 @@ import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
@@ -30,7 +31,7 @@ class ExtCompareFiles extends BaseExternalTool {
     super(DiffManagerImpl.ENABLE_FILES, DiffManagerImpl.FILES_TOOL);
   }
 
-  public boolean isAvailable(DiffRequest request) {
+  public boolean isAvailable(@NotNull DiffRequest request) {
     final DiffContent[] contents = request.getContents();
     for (DiffContent content : contents) {
       final VirtualFile file = getLocalFile(content.getFile());

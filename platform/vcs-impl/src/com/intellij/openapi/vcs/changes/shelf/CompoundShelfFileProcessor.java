@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.components.impl.stores.StreamProvider;
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,6 +37,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class CompoundShelfFileProcessor {
+  public static final String SHELF_DIR_NAME = "shelf";
+
   private final String mySubdirName;
   private final StreamProvider myServerStreamProvider;
   private final String FILE_SPEC;
@@ -43,19 +46,20 @@ public class CompoundShelfFileProcessor {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.CompoundShelfFileProcessor");
 
-  public CompoundShelfFileProcessor(final String subdirName) {
-    mySubdirName = subdirName;
-    myServerStreamProvider = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager().getStreamProvider();
+  public CompoundShelfFileProcessor() {
+    this(PathManager.getConfigPath());
+  }
 
-    FILE_SPEC = "$ROOT_CONFIG$/" + subdirName + "/";
-    myShelfPath = PathManager.getConfigPath() + File.separator + mySubdirName;
+  public CompoundShelfFileProcessor(String shelfBaseDirPath) {
+    this(((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager().getStreamProvider(),
+         shelfBaseDirPath + File.separator + SHELF_DIR_NAME);
   }
 
   public CompoundShelfFileProcessor(@Nullable StreamProvider serverStreamProvider, String shelfPath) {
     myServerStreamProvider = serverStreamProvider;
     myShelfPath = shelfPath;
     mySubdirName = new File(myShelfPath).getName();
-    FILE_SPEC = "$ROOT_CONFIG$/" + mySubdirName + "/";
+    FILE_SPEC = StoragePathMacros.ROOT_CONFIG +  "/" + mySubdirName + "/";
   }
 
   /*
@@ -150,7 +154,7 @@ public class CompoundShelfFileProcessor {
       if (stream != null) {
         File file = new File(myShelfPath + "/" + newName);
         copyFileToStream(stream, file);
-        serverStreamProvider.deleteFile(oldFilePath, RoamingType.PER_USER);
+        serverStreamProvider.delete(oldFilePath, RoamingType.PER_USER);
         copyFileContentToProviders(newFilePath, serverStreamProvider, file);
       }
     }
@@ -221,7 +225,7 @@ public class CompoundShelfFileProcessor {
   public void delete(final String name) {
     FileUtil.delete(new File(getBaseIODir(), name));
     if (myServerStreamProvider != null && myServerStreamProvider.isEnabled()) {
-      StorageUtil.deleteContent(myServerStreamProvider, FILE_SPEC + name, RoamingType.PER_USER);
+      StorageUtil.delete(myServerStreamProvider, FILE_SPEC + name, RoamingType.PER_USER);
     }
   }
 }

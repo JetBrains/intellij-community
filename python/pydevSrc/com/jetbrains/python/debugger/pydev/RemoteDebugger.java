@@ -133,7 +133,7 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
-  public void consoleExec(String threadId, String frameId, String expression, DebugCallback<String> callback) {
+  public void consoleExec(String threadId, String frameId, String expression, PyDebugCallback<String> callback) {
     final ConsoleExecCommand command = new ConsoleExecCommand(this, threadId, frameId, expression);
     command.execute(callback);
   }
@@ -152,6 +152,31 @@ public class RemoteDebugger implements ProcessDebugger {
     final GetVariableCommand command = new GetVariableCommand(this, threadId, frameId, var);
     command.execute();
     return command.getVariables();
+  }
+
+
+  @Override
+  public void loadReferrers(final String threadId,
+                            final String frameId,
+                            final PyReferringObjectsValue var,
+                            final PyDebugCallback<XValueChildrenList> callback) {
+    RunCustomOperationCommand cmd = new GetReferrersCommand(this, threadId, frameId, var);
+
+    cmd.execute(new PyDebugCallback<List<PyDebugValue>>() {
+      @Override
+      public void ok(List<PyDebugValue> value) {
+        XValueChildrenList list = new XValueChildrenList();
+        for (PyDebugValue v: value) {
+          list.add(v);
+        }
+        callback.ok(list);
+      }
+
+      @Override
+      public void error(PyDebuggerException exception) {
+         callback.error(exception);
+      }
+    });
   }
 
   @Override
@@ -396,7 +421,8 @@ public class RemoteDebugger implements ProcessDebugger {
     if (type != null) {
       final RemoveBreakpointCommand command = new RemoveBreakpointCommand(this, type, file, line);
       execute(command);  // remove temp. breakpoint
-    } else {
+    }
+    else {
       LOG.error("Temp breakpoint not found for " + file + ":" + line);
     }
   }
@@ -475,6 +501,9 @@ public class RemoteDebugger implements ProcessDebugger {
           recordCallSignature(ProtocolParser.parseCallSignature(frame.getPayload()));
         }
         else {
+          if (AbstractCommand.isErrorEvent(frame.getCommand())) {
+            LOG.error("Error response from debugger: " + frame.getPayload());
+          }
           placeResponse(frame.getSequence(), frame);
         }
       }
@@ -528,6 +557,19 @@ public class RemoteDebugger implements ProcessDebugger {
             thread.updateState(PyThreadInfo.State.KILLED, null);
             myThreads.remove(id);
           }
+          break;
+        }
+        case AbstractCommand.SHOW_CONSOLE: {
+          final PyThreadInfo event = parseThreadEvent(frame);
+          PyThreadInfo thread = myThreads.get(event.getId());
+          if (thread == null) {
+            myThreads.put(event.getId(), event);
+            thread = event;
+          }
+          thread.updateState(PyThreadInfo.State.SUSPENDED, event.getFrames());
+          thread.setStopReason(event.getStopReason());
+          thread.setMessage(event.getMessage());
+          myDebugProcess.showConsole(thread);
           break;
         }
       }

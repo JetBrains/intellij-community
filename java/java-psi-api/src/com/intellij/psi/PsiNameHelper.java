@@ -31,8 +31,6 @@ import static com.intellij.util.ObjectUtils.notNull;
 
 /**
  * Service for validating and parsing Java identifiers.
- *
- * @see com.intellij.psi.JavaPsiFacade#getNameHelper()
  */
 public abstract class PsiNameHelper {
 

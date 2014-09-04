@@ -21,6 +21,7 @@ import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.MergeQuery;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
@@ -58,6 +59,6 @@ public class AnnotationTargetsSearch {
   }
 
   public static Query<PsiModifierListOwner> search(@NotNull PsiClass annotationClass) {
-    return search(annotationClass, GlobalSearchScope.allScope(annotationClass.getProject()));
+    return search(annotationClass, GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(annotationClass)));
   }
 }

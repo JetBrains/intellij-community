@@ -52,14 +52,14 @@ public class FindInProjectManager {
 
   public void findInProject(@NotNull DataContext dataContext) {
     final boolean isOpenInNewTabEnabled;
-    final boolean[] toOpenInNewTab = new boolean[1];
+    final boolean toOpenInNewTab;
     Content selectedContent = UsageViewManager.getInstance(myProject).getSelectedContent(true);
     if (selectedContent != null && selectedContent.isPinned()) {
-      toOpenInNewTab[0] = true;
+      toOpenInNewTab = true;
       isOpenInNewTabEnabled = false;
     }
     else {
-      toOpenInNewTab[0] = FindSettings.getInstance().isShowResultsInSeparateView();
+      toOpenInNewTab = FindSettings.getInstance().isShowResultsInSeparateView();
       isOpenInNewTabEnabled = UsageViewManager.getInstance(myProject).getReusableContentsCount() > 0;
     }
 
@@ -68,7 +68,7 @@ public class FindInProjectManager {
     findModel.setReplaceState(false);
     findModel.setOpenInNewTabVisible(true);
     findModel.setOpenInNewTabEnabled(isOpenInNewTabEnabled);
-    findModel.setOpenInNewTab(toOpenInNewTab[0]);
+    findModel.setOpenInNewTab(toOpenInNewTab);
     FindInProjectUtil.setDirectoryName(findModel, dataContext);
 
     String text = PlatformDataKeys.PREDEFINED_TEXT.getData(dataContext);
@@ -85,7 +85,7 @@ public class FindInProjectManager {
       public void run() {
         findModel.setOpenInNewTabVisible(false);
         if (isOpenInNewTabEnabled) {
-          FindSettings.getInstance().setShowResultsInSeparateView(toOpenInNewTab[0] = findModel.isOpenInNewTab());
+          FindSettings.getInstance().setShowResultsInSeparateView(findModel.isOpenInNewTab());
         }
 
         startFindInProject(findModel);

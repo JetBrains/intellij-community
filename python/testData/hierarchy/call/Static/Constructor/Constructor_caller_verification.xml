@@ -1,0 +1,6 @@
+<node text="A.__init__(main.py)" base="true">
+  <node text="invokeA(main.py)">
+    <node text="C.bar(main.py)"/>
+  </node>
+  <node text="C.bar(main.py)"/>
+</node>

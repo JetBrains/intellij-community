@@ -4,6 +4,7 @@ import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
+import com.jetbrains.python.debugger.PyReferringObjectsValue;
 import com.jetbrains.python.debugger.PyThreadInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,14 +27,16 @@ public interface ProcessDebugger {
                         String expression,
                         boolean execute,
                         boolean trimResult)
-                                 throws PyDebuggerException;
+    throws PyDebuggerException;
 
-  void consoleExec(String threadId, String frameId, String expression, DebugCallback<String> callback);
+  void consoleExec(String threadId, String frameId, String expression, PyDebugCallback<String> callback);
 
   XValueChildrenList loadFrame(String threadId, String frameId) throws PyDebuggerException;
 
   // todo: don't generate temp variables for qualified expressions - just split 'em
   XValueChildrenList loadVariable(String threadId, String frameId, PyDebugValue var) throws PyDebuggerException;
+
+  void loadReferrers(String threadId, String frameId, PyReferringObjectsValue var, PyDebugCallback<XValueChildrenList> callback);
 
   PyDebugValue changeVariable(String threadId, String frameId, PyDebugValue var, String value)
     throws PyDebuggerException;
@@ -50,7 +53,7 @@ public interface ProcessDebugger {
   void suspendThread(String threadId);
 
   /**
-   *  Disconnects current debug process. Closes all resources.
+   * Disconnects current debug process. Closes all resources.
    */
   void close();
 
@@ -84,12 +87,4 @@ public interface ProcessDebugger {
   void addExceptionBreakpoint(ExceptionBreakpointCommandFactory factory);
 
   void removeExceptionBreakpoint(ExceptionBreakpointCommandFactory factory);
-
-  /**
-  * @author traff
-  */
-  interface DebugCallback<T> {
-    void ok(T value);
-    void error(PyDebuggerException exception);
-  }
 }

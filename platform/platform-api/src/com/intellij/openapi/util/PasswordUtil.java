@@ -15,13 +15,17 @@
  */
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.Nullable;
+
 public class PasswordUtil {
   private PasswordUtil() { }
 
   // weak encryption just to avoid plain text passwords in text files
-  public static String encodePassword(String password) {
+  public static String encodePassword(@Nullable String password) {
     String result = "";
-    if (password == null) return result;
+    if (password == null) {
+      return result;
+    }
     for (int i = 0; i < password.length(); i++) {
       int c = password.charAt(i);
       c ^= 0xdfaa;
@@ -30,9 +34,11 @@ public class PasswordUtil {
     return result;
   }
 
-  public static String decodePassword(String password) throws NumberFormatException {
+  public static String decodePassword(@Nullable String password) throws NumberFormatException {
     String result = "";
-    if (password == null) return result;
+    if (password == null) {
+      return result;
+    }
     for (int i = 0; i < password.length(); i += 4) {
       String s = password.substring(i, i + 4);
       int c = Integer.parseInt(s, 16);

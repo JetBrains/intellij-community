@@ -11,7 +11,7 @@
     <depends optional="true" config-file="java.xml">com.intellij.modules.java</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-      <projectConfigurable groupId="editor" dynamic="true" displayName="Copyright" instance="com.maddyhome.idea.copyright.ui.CopyrightProjectConfigurable"/>
+      <projectConfigurable groupId="editor" groupWeight="110" dynamic="true" displayName="Copyright" instance="com.maddyhome.idea.copyright.ui.CopyrightProjectConfigurable"/>
       <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
       <checkinHandlerFactory implementation="com.maddyhome.idea.copyright.actions.UpdateCopyrightCheckinHandlerFactory"/>
       <applicationService serviceInterface="com.maddyhome.idea.copyright.util.FileTypeUtil"

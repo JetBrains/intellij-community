@@ -36,7 +36,9 @@ public class ConstructorParameterOnFieldRenameRenamer extends AutomaticRenamer {
   }
 
   protected String nameToCanonicalName(@NonNls final String name, final PsiNamedElement element) {
-    return JavaCodeStyleManager.getInstance(element.getProject()).variableNameToPropertyName(name, VariableKind.FIELD);
+    final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(element.getProject());
+    final VariableKind variableKind = element instanceof PsiVariable ? javaCodeStyleManager.getVariableKind((PsiVariable)element) : VariableKind.FIELD;
+    return javaCodeStyleManager.variableNameToPropertyName(name, variableKind);
   }
 
   public ConstructorParameterOnFieldRenameRenamer(PsiField aField, String newFieldName) {

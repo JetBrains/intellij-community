@@ -3,7 +3,6 @@ package com.intellij.structuralsearch.plugin.ui;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.codeInsight.template.TemplateContextType;
-import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -77,12 +76,8 @@ public class UIUtil {
     else {
       ((EditorEx)editor).setEmbeddedIntoDialogWrapper(true);
     }
-
-    if (contextType != null) {
-      TemplateContext context = new TemplateContext();
-      context.setEnabled(contextType, true);
-      TemplateEditorUtil.setHighlighter(editor, context);
-    }
+  
+    TemplateEditorUtil.setHighlighter(editor, contextType);
 
     if (addToolTipForVariableHandler) {
       SubstitutionShortInfoHandler handler = new SubstitutionShortInfoHandler(editor);
@@ -222,11 +217,6 @@ public class UIUtil {
   }
 
   public static void updateHighlighter(Editor editor, StructuralSearchProfile profile) {
-    final TemplateContextType contextType = profile.getTemplateContextType();
-    if (contextType != null) {
-      TemplateContext context = new TemplateContext();
-      context.setEnabled(contextType, true);
-      TemplateEditorUtil.setHighlighter(editor, context);
-    }
+    TemplateEditorUtil.setHighlighter(editor, profile.getTemplateContextType());
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.usageView.UsageInfo;
@@ -68,7 +69,12 @@ public class SliceUsage extends UsageInfo2UsageAdapter {
   }
 
   public void processChildren(@NotNull Processor<SliceUsage> processor) {
-    final PsiElement element = getElement();
+    final PsiElement element = ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
+      @Override
+      public PsiElement compute() {
+        return getElement();
+      }
+    });
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     indicator.checkCanceled();
 

@@ -278,11 +278,16 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   
   public void selectAll() {
     if (myEditor != null) {
-      myEditor.getSelectionModel().setSelection(0, myDocument.getTextLength());
+      doSelectAll(myEditor);
     }
     else {
       myWholeTextSelected = true;
     }
+  }
+
+  private static void doSelectAll(@NotNull Editor editor) {
+    editor.getCaretModel().removeSecondaryCarets();
+    editor.getCaretModel().getPrimaryCaret().setSelection(0, editor.getDocument().getTextLength(), false);
   }
 
   public void removeSelection() {
@@ -514,7 +519,8 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       editor.getSelectionModel().removeSelection();
     }
     else if (myWholeTextSelected) {
-      editor.getSelectionModel().setSelection(0, myDocument.getTextLength());
+      doSelectAll(editor);
+      myWholeTextSelected = false;
     }
 
     editor.putUserData(SUPPLEMENTARY_KEY, myIsSupplementary);

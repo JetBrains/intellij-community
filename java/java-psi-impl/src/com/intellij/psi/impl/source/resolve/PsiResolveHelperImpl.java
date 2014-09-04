@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.source.resolve;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -211,16 +210,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       .getSubstitutionForTypeParameter(typeParam, param, arg, isContraVariantPosition, languageLevel);
   }
 
-  private PsiInferenceHelper myTestHelper;
-
-  public void setTestHelper(PsiInferenceHelper testHelper) {
-    myTestHelper = testHelper;
-  }
-
-  public PsiInferenceHelper getInferenceHelper(LanguageLevel languageLevel) {
-    if (ApplicationManager.getApplication().isUnitTestMode() && myTestHelper != null) {
-      return myTestHelper;
-    }
+  @NotNull
+  public PsiInferenceHelper getInferenceHelper(@NotNull LanguageLevel languageLevel) {
     if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
       return new PsiGraphInferenceHelper(myManager);
     }

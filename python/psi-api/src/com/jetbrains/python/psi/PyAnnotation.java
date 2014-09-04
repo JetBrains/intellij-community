@@ -22,9 +22,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public interface PyAnnotation extends PyElement, StubBasedPsiElement<PyAnnotationStub> {
-  PyExpression getValue();
-
+public interface PyAnnotation extends PyTypedElement, StubBasedPsiElement<PyAnnotationStub> {
   @Nullable
-  PyClass resolveToClass();
+  PyExpression getValue();
 }

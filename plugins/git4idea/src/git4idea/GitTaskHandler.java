@@ -54,6 +54,11 @@ public class GitTaskHandler extends VcsTaskHandler {
   }
 
   @Override
+  public boolean isEnabled(Project project) {
+    return !myRepositoryManager.getRepositories().isEmpty();
+  }
+
+  @Override
   public TaskInfo startNewTask(final String taskName) {
     List<GitRepository> repositories = myRepositoryManager.getRepositories();
     List<GitRepository> problems = ContainerUtil.filter(repositories, new Condition<GitRepository>() {

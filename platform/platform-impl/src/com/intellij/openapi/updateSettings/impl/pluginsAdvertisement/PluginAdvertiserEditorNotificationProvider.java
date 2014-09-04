@@ -15,7 +15,8 @@
  */
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
-import com.intellij.ide.plugins.*;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.RepositoryHelper;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
@@ -24,7 +25,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.updateSettings.impl.*;
+import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
@@ -94,7 +95,8 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
   @Nullable
   private EditorNotificationPanel createPanel(final String extension, final Set<PluginsAdvertiser.Plugin> plugins) {
     final EditorNotificationPanel panel = new EditorNotificationPanel();
-    panel.setText("Plugins supporting files with " + extension + " are found");
+    
+    panel.setText("Plugins supporting " + extension + " files are found");
     final IdeaPluginDescriptor disabledPlugin = PluginsAdvertiser.getDisabledPlugin(plugins);
     if (disabledPlugin != null) {
       panel.createActionLabel("Enable " + disabledPlugin.getName() + " plugin", new Runnable() {
@@ -143,6 +145,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
       if (PropertiesComponent.getInstance().isTrueValue(PluginsAdvertiser.IGNORE_ULTIMATE_EDITION)) {
         return null;
       }
+      panel.setText(extension + " files are supported by " + PluginsAdvertiser.IDEA_ULTIMATE_EDITION);
 
       panel.createActionLabel(PluginsAdvertiser.CHECK_ULTIMATE_EDITION_TITLE, new Runnable() {
         @Override

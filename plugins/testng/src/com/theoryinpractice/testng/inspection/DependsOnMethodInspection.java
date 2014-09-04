@@ -18,14 +18,19 @@ package com.theoryinpractice.testng.inspection;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSet;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -35,7 +40,7 @@ import java.util.regex.Pattern;
 public class DependsOnMethodInspection extends BaseJavaLocalInspectionTool
 {
     private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
-    private static final Pattern PATTERN = Pattern.compile("\"([a-zA-Z1-9_\\(\\)]*)\"");
+    private static final Pattern PATTERN = Pattern.compile("\"([a-zA-Z1-9_\\(\\)\\*]*)\"");
 
   @NotNull
     @Override
@@ -63,17 +68,13 @@ public class DependsOnMethodInspection extends BaseJavaLocalInspectionTool
     @Nullable
     public ProblemDescriptor[] checkClass(@NotNull PsiClass psiClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
 
-        //LOGGER.info("Looking for dependsOnMethods problems in " + psiClass.getName());
-
-        if (!psiClass.getContainingFile().isWritable()) return null;
-
         PsiAnnotation[] annotations = TestNGUtil.getTestNGAnnotations(psiClass);
         if(annotations.length == 0) return ProblemDescriptor.EMPTY_ARRAY;
         List<ProblemDescriptor> problemDescriptors = new ArrayList<ProblemDescriptor>();
 
         for (PsiAnnotation annotation : annotations) {
           final PsiAnnotationMemberValue value = annotation.findDeclaredAttributeValue("dependsOnMethods");
-          if (value != null) {
+          if (value != null && !TestNGUtil.isDisabled(annotation)) {
             String text = value.getText();
             if (value instanceof PsiReferenceExpression) {
               final PsiElement resolve = ((PsiReferenceExpression)value).resolve();
@@ -84,10 +85,25 @@ public class DependsOnMethodInspection extends BaseJavaLocalInspectionTool
                 }
               }
             }
-            Matcher matcher = PATTERN.matcher(text);
+            final Set<String> names = new HashSet<String>();
+            final Matcher matcher = PATTERN.matcher(text);
+            int idx = 0;
             while (matcher.find()) {
-                String methodName = matcher.group(1);
+              String methodName = matcher.group(1);
+              if (!names.add(methodName)) {
+                PsiAnnotationMemberValue element2Highlight = value;
+                if (value instanceof PsiArrayInitializerMemberValue) {
+                  final PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)value).getInitializers();
+                  if (idx < initializers.length) {
+                    element2Highlight = initializers[idx];
+                  }
+                }
+                problemDescriptors.add(manager.createProblemDescriptor(element2Highlight, "Duplicated method name: " + methodName,
+                                                                       (LocalQuickFix)null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                                                       isOnTheFly));
+              }
                 checkMethodNameDependency(manager, psiClass, methodName, value, problemDescriptors, isOnTheFly);
+                idx++;
             }
           }
         }
@@ -111,7 +127,19 @@ public class DependsOnMethodInspection extends BaseJavaLocalInspectionTool
 
         } else {
             final String configAnnotation = TestNGUtil.getConfigAnnotation(PsiTreeUtil.getParentOfType(value, PsiMethod.class));
-            PsiMethod[] foundMethods = psiClass.findMethodsByName(methodName, true);
+            final PsiMethod[] foundMethods;
+            if (methodName.endsWith("*")) {
+              final String methodNameMask = StringUtil.trimEnd(methodName, "*");
+              final List<PsiMethod> methods = ContainerUtil.filter(psiClass.getMethods(), new Condition<PsiMethod>() {
+                @Override
+                public boolean value(PsiMethod method) {
+                  return method.getName().startsWith(methodNameMask);
+                }
+              });
+              foundMethods = methods.toArray(new PsiMethod[methods.size()]);
+            } else {
+              foundMethods = psiClass.findMethodsByName(methodName, true);
+            }
             if (foundMethods.length == 0) {
                 LOGGER.debug("dependsOnMethods method doesn't exist:" + methodName);
                 ProblemDescriptor descriptor = manager.createProblemDescriptor(value,

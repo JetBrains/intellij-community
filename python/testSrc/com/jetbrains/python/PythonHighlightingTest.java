@@ -174,6 +174,10 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(true, false);
   }
 
+  public void testMultipleEscapedBackslashes() {
+    doTest(true, false);
+  }
+
   public void testUnsupportedFeaturesInPython3() {
     doTest(LanguageLevel.PYTHON30, true, false);
   }

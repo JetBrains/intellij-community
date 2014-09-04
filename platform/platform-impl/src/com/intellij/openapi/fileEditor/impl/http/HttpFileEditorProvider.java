@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author nik
  */
-public class HttpFileEditorProvider implements FileEditorProvider, DumbAware {
+class HttpFileEditorProvider implements FileEditorProvider, DumbAware {
   @Override
   public boolean accept(@NotNull final Project project, @NotNull final VirtualFile file) {
     return file instanceof HttpVirtualFile && !file.isDirectory();

@@ -97,7 +97,9 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
 
   @Override
   public void languageLevelsChanged() {
-    JavaLanguageLevelPusher.pushLanguageLevel(myProject);
+    if (!myProject.isDefault()) {
+      JavaLanguageLevelPusher.pushLanguageLevel(myProject);
+    }
   }
 
   @Override

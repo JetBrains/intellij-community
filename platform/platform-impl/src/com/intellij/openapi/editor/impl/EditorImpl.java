@@ -743,12 +743,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myGutterComponent.repaint(0, y, myGutterComponent.getWidth(), myGutterComponent.getHeight() - y);
     }
     // make sure carets won't appear at invalid positions (e.g. on Tab width change)
-    getCaretModel().runForEachCaret(new CaretAction() {
-      @Override
-      public void perform(Caret caret) {
-        caret.moveToOffset(caret.getOffset());
-      }
-    });
+    for (Caret caret : getCaretModel().getAllCarets()) {
+      caret.moveToOffset(caret.getOffset());
+    }
   }
 
   private void initTabPainter() {
@@ -1153,8 +1150,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int textLength = myDocument.getTextLength();
     LogicalPosition logicalPosition = visualToLogicalPosition(new VisualPosition(line, 0));
     int offset = logicalPositionToOffset(logicalPosition);
+    int plainSpaceSize = EditorUtil.getSpaceWidth(Font.PLAIN, this);
 
-    if (offset >= textLength) return new VisualPosition(line, EditorUtil.columnsNumber(p.x, EditorUtil.getSpaceWidth(Font.PLAIN, this)));
+    if (offset >= textLength) return new VisualPosition(line, EditorUtil.columnsNumber(p.x, plainSpaceSize));
 
     // There is a possible case that starting logical line is split by soft-wraps and it's part after the split should be drawn.
     // We mark that we're under such circumstances then.
@@ -1172,12 +1170,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         + "to offset %d (end offset). State: %s",
         p, line, line, 0, logicalPosition, offset, line + 1, 0, endLogicalPosition, endOffset, dumpState()
       ));
-      return new VisualPosition(line, EditorUtil.columnsNumber(p.x, EditorUtil.getSpaceWidth(Font.PLAIN, this)));
+      return new VisualPosition(line, EditorUtil.columnsNumber(p.x, plainSpaceSize));
     }
     IterationState state = new IterationState(this, offset, endOffset, false);
 
     int fontType = state.getMergedAttributes().getFontType();
-    int spaceSize = EditorUtil.getSpaceWidth(fontType, this);
 
     int x = 0;
     int charWidth;
@@ -1221,7 +1218,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             if (x >= px) {
               break outer;
             }
-            column += EditorUtil.columnsNumber(c, x, prevX, spaceSize);
+            column += EditorUtil.columnsNumber(c, x, prevX, plainSpaceSize);
           }
 
           // Process 'after soft wrap' sign.
@@ -1261,7 +1258,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (x >= px) {
           break;
         }
-        column += EditorUtil.columnsNumber(c, x, prevX, spaceSize);
+        column += EditorUtil.columnsNumber(c, x, prevX, plainSpaceSize);
 
         offset++;
       }
@@ -1272,16 +1269,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     if (charWidth < 0) {
-      charWidth = spaceSize;
+      charWidth = plainSpaceSize;
     }
 
     if (x >= px && c == '\t' && !onSoftWrapDrawing) {
       if (mySettings.isCaretInsideTabs()) {
-        column += (px - prevX) / spaceSize;
-        if ((px - prevX) % spaceSize > spaceSize / 2) column++;
+        column += (px - prevX) / plainSpaceSize;
+        if ((px - prevX) % plainSpaceSize > plainSpaceSize / 2) column++;
       }
       else if ((x - px) * 2 < x - prevX) {
-        column += EditorUtil.columnsNumber(c, x, prevX, spaceSize);
+        column += EditorUtil.columnsNumber(c, x, prevX, plainSpaceSize);
       }
     }
     else {
@@ -1290,8 +1287,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       else {
         int diff = px - x;
-        column += diff / spaceSize;
-        if (diff % spaceSize * 2 >= spaceSize) {
+        column += diff / plainSpaceSize;
+        if (diff % plainSpaceSize * 2 >= plainSpaceSize) {
           column++;
         }
       }
@@ -1549,7 +1546,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     // so, we can't just use 'startOffset + targetColumn' as a max end offset.
     IterationState state = new IterationState(this, startOffset, calcEndOffset(startOffset, targetColumn), false);
     int fontType = state.getMergedAttributes().getFontType();
-    int spaceSize = EditorUtil.getSpaceWidth(fontType, this);
+    int plainSpaceSize = EditorUtil.getSpaceWidth(Font.PLAIN, this);
 
     int column = 0;
     outer:
@@ -1588,8 +1585,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (c == '\t') {
           int prevX = x;
           x = EditorUtil.nextTabStop(x, this);
-          int columnDiff = (x - prevX) / spaceSize;
-          if ((x - prevX) % spaceSize > 0) {
+          int columnDiff = (x - prevX) / plainSpaceSize;
+          if ((x - prevX) % plainSpaceSize > 0) {
             // There is a possible case that tabulation symbol takes more than one visual column to represent and it's shown at
             // soft-wrapped line. Soft wrap sign width may be not divisible by space size, hence, part of tabulation symbol represented
             // as a separate visual column may take less space than space width.
@@ -2895,7 +2892,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
            + ", soft wraps: " + (mySoftWrapModel.isSoftWrappingEnabled() ? "on" : "off")
            + ", soft wraps data: " + getSoftWrapModel().dumpState()
            + "\n\nfolding data: " + getFoldingModel().dumpState()
-           + (myDocument instanceof DocumentImpl ? "\n\ndocument info: " + ((DocumentImpl)myDocument).dumpState() : "");
+           + (myDocument instanceof DocumentImpl ? "\n\ndocument info: " + ((DocumentImpl)myDocument).dumpState() : "")
+           + "\nfont preferences: " + myScheme.getFontPreferences();
   }
 
   private class CachedFontContent {
@@ -4824,22 +4822,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int getDecScrollButtonHeight() {
       ScrollBarUI barUI = getUI();
       Insets insets = getInsets();
+      int top = Math.max(0, insets.top);
       if (barUI instanceof ButtonlessScrollBarUI) {
-        return insets.top + ((ButtonlessScrollBarUI)barUI).getDecrementButtonHeight();
+        return top + ((ButtonlessScrollBarUI)barUI).getDecrementButtonHeight();
       }
-      else if (barUI instanceof BasicScrollBarUI) {
+      if (barUI instanceof BasicScrollBarUI) {
         try {
           JButton decrButtonValue = (JButton)decrButtonField.get(barUI);
           LOG.assertTrue(decrButtonValue != null);
-          return insets.top + decrButtonValue.getHeight();
+          return top + decrButtonValue.getHeight();
         }
         catch (Exception exc) {
           throw new IllegalStateException(exc);
         }
       }
-      else {
-        return insets.top + 15;
-      }
+      return top + 15;
     }
 
     /**
@@ -6623,7 +6620,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int fontType = state.getMergedAttributes().getFontType();
     int column = 0;
     int x = 0;
-    int spaceSize = EditorUtil.getSpaceWidth(fontType, this);
+    int plainSpaceSize = EditorUtil.getSpaceWidth(Font.PLAIN, this);
     for (int i = start; i < offset; i++) {
       if (i >= state.getEndOffset()) {
         state.advance();
@@ -6639,7 +6636,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (c == '\t') {
         int prevX = x;
         x = EditorUtil.nextTabStop(x, this);
-        column += EditorUtil.columnsNumber(c, x, prevX, spaceSize);
+        column += EditorUtil.columnsNumber(c, x, prevX, plainSpaceSize);
       }
       else {
         x += EditorUtil.charWidth(c, fontType, this);

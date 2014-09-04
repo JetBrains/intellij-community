@@ -588,7 +588,7 @@ class RunConfigurable extends BaseConfigurable {
 
   @Override
   public JComponent createComponent() {
-    for (RunConfigurationsSettings each : Extensions.getExtensions(RunConfigurationsSettings.EXTENSION_POINT)) {
+    for (RunConfigurationsSettings each : Extensions.getExtensions(RunConfigurationsSettings.EXTENSION_POINT, myProject)) {
       UnnamedConfigurable configurable = each.createConfigurable();
       myAdditionalSettings.add(Pair.create(configurable, configurable.createComponent()));
     }

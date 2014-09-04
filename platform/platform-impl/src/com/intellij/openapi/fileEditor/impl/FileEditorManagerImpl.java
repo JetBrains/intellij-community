@@ -106,6 +106,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   public static final String FILE_EDITOR_MANAGER = "FileEditorManager";
 
   private volatile JPanel myPanels;
+  private PreviewPanel myPreviewPanel;
   private EditorsSplitters mySplitters;
   private final Project myProject;
   private final List<Pair<VirtualFile, EditorWindow>> mySelectionHistory = new ArrayList<Pair<VirtualFile, EditorWindow>>();
@@ -174,7 +175,14 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   public Set<EditorsSplitters> getAllSplitters() {
-    HashSet<EditorsSplitters> all = new HashSet<EditorsSplitters>();
+    HashSet<EditorsSplitters> all = new LinkedHashSet<EditorsSplitters>();
+    if (PreviewPanel.isAvailable()) {
+      initUI();
+      EditorWindow window = myPreviewPanel.getWindow();
+      if (window != null) {
+        all.add(window.getOwner());
+      }
+    }
     all.add(getMainSplitters());
     Set<DockContainer> dockContainers = myDockManager.getContainers();
     for (DockContainer each : dockContainers) {
@@ -245,6 +253,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
           mySplitters = new EditorsSplitters(this, myDockManager, true);
           myPanels.add(mySplitters, BorderLayout.CENTER);
         }
+      }
+    }
+    if (myPreviewPanel == null && PreviewPanel.isAvailable()) {
+      synchronized (myInitLock) {
+        myPreviewPanel = new PreviewPanel(myProject, this, myDockManager);
       }
     }
   }
@@ -595,7 +608,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   @NotNull
   public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull final VirtualFile file,
                                                                         final boolean focusEditor,
-                                                                        boolean searchForSplitter) {
+                                                                        final boolean searchForSplitter) {
     if (!file.isValid()) {
       throw new IllegalArgumentException("file is not valid: " + file);
     }
@@ -626,6 +639,14 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     }
     else {
       wndToOpenIn = getSplitters().getCurrentWindow();
+    }
+
+    if (wndToOpenIn == null || !wndToOpenIn.isFileOpen(file)) {
+      initUI();
+      EditorWindow previewWindow = myPreviewPanel.getWindow();
+      if (previewWindow != null) {
+        wndToOpenIn = previewWindow;
+      }
     }
 
     EditorsSplitters splitters = getSplitters();

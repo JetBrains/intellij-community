@@ -16,6 +16,7 @@
 package org.jetbrains.idea.devkit.dom.generator;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileTypeDescriptor;
 import com.intellij.openapi.project.Project;
@@ -101,7 +102,8 @@ public class DomGenPanel {
       }
     });
     myOutputDir = new TextFieldWithBrowseButton();
-    myOutputDir.addBrowseFolderListener("Select Output For Generated Files", "", myProject, FileChooserDescriptorFactory.getDirectoryChooserDescriptor("Output For Generated Files"));
+    FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+    myOutputDir.addBrowseFolderListener("Select Output Directory For Generated Files", "", myProject, descriptor);
   }
 
   public JComponent getComponent() {

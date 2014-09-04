@@ -154,7 +154,7 @@ final class BeanStep extends StepAdapter{
         throw new CommitStepException(UIDesignerBundle.message("error.please.specify.class.name.of.the.bean.to.be.created"));
       }
       final PsiManager psiManager = PsiManager.getInstance(myData.myProject);
-      if(!JavaPsiFacade.getInstance(psiManager.getProject()).getNameHelper().isIdentifier(shortClassName)){
+      if(!PsiNameHelper.getInstance(psiManager.getProject()).isIdentifier(shortClassName)){
         throw new CommitStepException(UIDesignerBundle.message("error.X.is.not.a.valid.class.name", shortClassName));
       }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.lexer.CompositeLexer;
 import com.intellij.lexer.FlexAdapter;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.MergingLexerAdapter;
@@ -38,7 +37,8 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
+import com.intellij.openapi.editor.ex.util.LayerDescriptor;
+import com.intellij.openapi.editor.ex.util.LayeredLexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileTypes.*;
@@ -99,7 +99,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
   private URL myDefaultDescriptionUrl;
   private final Project myProject;
 
-  private final List<ChangeListener> myChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();;
+  private final List<ChangeListener> myChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private Splitter mySplitter;
   private final FileType myVelocityFileType = FileTypeManager.getInstance().getFileTypeByExtension("ft");
   private JPanel myDescriptionPanel;
@@ -205,13 +205,13 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
 
     myNameField.addFocusListener(new FocusAdapter() {
       @Override
-      public void focusLost(FocusEvent e) {
+      public void focusLost(@NotNull FocusEvent e) {
         onNameChanged();
       }
     });
     myExtensionField.addFocusListener(new FocusAdapter() {
       @Override
-      public void focusLost(FocusEvent e) {
+      public void focusLost(@NotNull FocusEvent e) {
         onNameChanged();
       }
     });
@@ -221,8 +221,11 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
 
   private Editor createEditor() {
     EditorFactory editorFactory = EditorFactory.getInstance();
-    Document doc = myFile == null ? editorFactory.createDocument(myTemplate == null ? "" : myTemplate.getText()) : PsiDocumentManager.getInstance(myFile.getProject()).getDocument(myFile);
-    Editor editor = myProject == null ? editorFactory.createEditor(doc) : editorFactory.createEditor(doc, myProject);
+    Document doc = myFile == null
+                   ? editorFactory.createDocument(myTemplate == null ? "" : myTemplate.getText())
+                   : PsiDocumentManager.getInstance(myFile.getProject()).getDocument(myFile);
+    assert doc != null;
+    Editor editor = editorFactory.createEditor(doc, myProject);
 
     EditorSettings editorSettings = editor.getSettings();
     editorSettings.setVirtualSpace(false);
@@ -367,7 +370,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
 
   @Nullable
   private PsiFile createFile(final String text, final String name) {
-    if (myTemplate == null || myProject == null) return null;
+    if (myTemplate == null) return null;
 
     final FileType fileType = myVelocityFileType;
     if (fileType == FileTypes.UNKNOWN) return null;
@@ -388,7 +391,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
   }
 
   private EditorHighlighter createHighlighter() {
-    if (myTemplate != null && myProject != null && myVelocityFileType != FileTypes.UNKNOWN) {
+    if (myTemplate != null && myVelocityFileType != FileTypes.UNKNOWN) {
       return EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, new LightVirtualFile("aaa." + myTemplate.getExtension() + ".ft"));
     }
 
@@ -399,38 +402,27 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     if (fileType == null) {
       fileType = FileTypes.PLAIN_TEXT;
     }
+    
     SyntaxHighlighter originalHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(fileType, null, null);
-    if (originalHighlighter == null) originalHighlighter = new PlainSyntaxHighlighter();
-    return new LexerEditorHighlighter(new TemplateHighlighter(originalHighlighter), EditorColorsManager.getInstance().getGlobalScheme());
+    if (originalHighlighter == null) {
+      originalHighlighter = new PlainSyntaxHighlighter();
+    }
+    
+    final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    LayeredLexerEditorHighlighter highlighter = new LayeredLexerEditorHighlighter(new TemplateHighlighter(), scheme);
+    highlighter.registerLayer(FileTemplateTokenType.TEXT, new LayerDescriptor(originalHighlighter, ""));
+    return highlighter;
   }
-
-  private final static TokenSet TOKENS_TO_MERGE = TokenSet.create(FileTemplateTokenType.TEXT);
 
   private static class TemplateHighlighter extends SyntaxHighlighterBase {
     private final Lexer myLexer;
-    private final SyntaxHighlighter myOriginalHighlighter;
 
-    public TemplateHighlighter(SyntaxHighlighter original) {
-      myOriginalHighlighter = original;
-      Lexer originalLexer = original.getHighlightingLexer();
-      Lexer templateLexer = new FlexAdapter(new FileTemplateTextLexer());
-      templateLexer = new MergingLexerAdapter(templateLexer, TOKENS_TO_MERGE);
-
-      myLexer = new CompositeLexer(originalLexer, templateLexer) {
-        @Override
-        protected IElementType getCompositeTokenType(IElementType type1, IElementType type2) {
-          if (type2 == FileTemplateTokenType.MACRO || type2 == FileTemplateTokenType.DIRECTIVE) {
-            return type2;
-          }
-          else {
-            return type1;
-          }
-        }
-      };
+    public TemplateHighlighter() {
+      myLexer = new MergingLexerAdapter(new FlexAdapter(new FileTemplateTextLexer()), TokenSet.create(FileTemplateTokenType.TEXT));
     }
 
-    @Override
     @NotNull
+    @Override
     public Lexer getHighlightingLexer() {
       return myLexer;
     }
@@ -438,14 +430,11 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     @Override
     @NotNull
     public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
-      if (tokenType == FileTemplateTokenType.MACRO) {
-        return pack(myOriginalHighlighter.getTokenHighlights(tokenType), TemplateColors.TEMPLATE_VARIABLE_ATTRIBUTES);
-      }
-      else if (tokenType == FileTemplateTokenType.DIRECTIVE) {
-        return pack(myOriginalHighlighter.getTokenHighlights(tokenType), TemplateColors.TEMPLATE_VARIABLE_ATTRIBUTES);
+      if (tokenType == FileTemplateTokenType.MACRO || tokenType == FileTemplateTokenType.DIRECTIVE) {
+        return pack(TemplateColors.TEMPLATE_VARIABLE_ATTRIBUTES);
       }
 
-      return myOriginalHighlighter.getTokenHighlights(tokenType);
+      return EMPTY;
     }
   }
 

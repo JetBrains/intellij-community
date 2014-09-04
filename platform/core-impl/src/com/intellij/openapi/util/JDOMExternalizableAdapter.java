@@ -20,8 +20,10 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jdom.Element;
 
+@Deprecated
 /**
  * @author Dmitry Avdeev
+ * @deprecated to remove in IDEA 14
  */
 public class JDOMExternalizableAdapter implements PersistentStateComponent<Element> {
 

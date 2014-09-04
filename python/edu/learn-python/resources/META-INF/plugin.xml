@@ -40,7 +40,7 @@
 
   <actions>
     <action id="CheckAction" class="com.jetbrains.python.edu.actions.StudyCheckAction" text="check"
-            description="Runs tests for current tasks" icon="/icons/icon.jpg">
+            description="Runs tests for current tasks">
     </action>
     <action id="PrevWindowAction" class="com.jetbrains.python.edu.actions.StudyPrevWindowAction" text="PrevWindowAction" description="prev">
     </action>
@@ -50,7 +50,7 @@
     <action id="NextTaskAction" class="com.jetbrains.python.edu.actions.StudyNextStudyTaskAction" text="NextTaskAction" description="Next Task"/>
     <action id="PreviousTaskAction" class="com.jetbrains.python.edu.actions.StudyPreviousStudyTaskAction" text="PreviousTaskAction"
             description="Previous Task"/>
-    <action id="RefreshTaskAction" class="com.jetbrains.python.edu.actions.StudyRefreshTaskAction" text="RefreshTaskAction"
+    <action id="RefreshTaskAction" class="com.jetbrains.python.edu.actions.StudyRefreshTaskFileAction" text="RefreshTaskAction"
             description="Refresh current task"/>
     <action id="WatchInputAction" class="com.jetbrains.python.edu.actions.StudyEditInputAction" text="WatchInputAction"
             description="watch input"/>

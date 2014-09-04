@@ -181,7 +181,7 @@ public class JavaElementSignatureProvider extends AbstractElementSignatureProvid
     else if (type.equals("class")) {
       String name = tokenizer.nextToken();
 
-      PsiNameHelper nameHelper = JavaPsiFacade.getInstance(file.getProject()).getNameHelper();
+      PsiNameHelper nameHelper = PsiNameHelper.getInstance(file.getProject());
       if (nameHelper.isIdentifier(name)) {
         int index = 0;
         try {

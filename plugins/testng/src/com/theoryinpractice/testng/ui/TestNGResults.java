@@ -378,7 +378,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     rootNode.setStarted(true);
   }
 
-  public void finish() {
+  public void finish(final boolean started) {
     if (start > 0) {
       end = System.currentTimeMillis();
     }
@@ -409,6 +409,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
           }
         }
         tree.repaint();
+        TestsUIUtil.notifyByBalloon(project, started, rootNode, getProperties(), "in " + getTime());
       }
     });
   }
@@ -464,6 +465,10 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
 
   public void setFailedToStart(TestProxy failedToStart) {
     this.failedToStart = failedToStart;
+  }
+
+  public boolean hasFinishedTests() {
+    return count > 0;
   }
 
   private class OpenSourceSelectionListener implements TreeSelectionListener {

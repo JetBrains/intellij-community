@@ -862,6 +862,14 @@ public class TypeConversionUtil {
     if (left instanceof PsiPrimitiveType && !PsiType.NULL.equals(left)) {
       return right instanceof PsiClassType && isAssignable(left, right);
     }
+
+    if (left instanceof PsiIntersectionType) {
+      for (PsiType lConjunct : ((PsiIntersectionType)left).getConjuncts()) {
+        if (!boxingConversionApplicable(lConjunct, right)) return false;
+      }
+      return true;
+    }
+
     return left instanceof PsiClassType
               && right instanceof PsiPrimitiveType
               && !PsiType.NULL.equals(right)

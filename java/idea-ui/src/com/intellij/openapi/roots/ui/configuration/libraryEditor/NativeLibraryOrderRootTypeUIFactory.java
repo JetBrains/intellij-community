@@ -29,10 +29,9 @@ import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 import javax.swing.*;
 
 public class NativeLibraryOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
-
   @Override
   public Icon getIcon() {
-    return AllIcons.Modules.Library;
+    return AllIcons.Nodes.NativeLibrariesFolder;
   }
 
   @Override

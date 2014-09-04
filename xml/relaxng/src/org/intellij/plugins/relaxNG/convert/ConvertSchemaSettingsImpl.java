@@ -131,7 +131,7 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
     final int indent = styleSettings.getIndentSize(type);
     myIndent.setText(String.valueOf(indent));
 
-    myLineLength.setText(String.valueOf(styleSettings.RIGHT_MARGIN));
+    myLineLength.setText(String.valueOf(styleSettings.getDefaultRightMargin()));
     final SchemaType outputType = getOutputType();
     myLineLength.setEnabled(outputType == SchemaType.DTD || outputType == SchemaType.RNC);
 

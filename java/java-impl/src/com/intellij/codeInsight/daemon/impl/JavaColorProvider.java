@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.ElementColorProvider;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
@@ -32,7 +31,12 @@ import java.awt.*;
 public class JavaColorProvider implements ElementColorProvider {
   @Override
   public Color getColorFrom(@NotNull PsiElement element) {
-    if (element instanceof PsiNewExpression && element.getLanguage() == JavaLanguage.INSTANCE) {
+    return getJavaColorFromExpression(element);
+  }
+
+  @Nullable
+  public static Color getJavaColorFromExpression(@Nullable PsiElement element) {
+    if (element instanceof PsiNewExpression) {
       final PsiNewExpression expr = (PsiNewExpression)element;
       final PsiType type = expr.getType();
       if (type != null) {

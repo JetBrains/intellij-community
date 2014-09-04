@@ -43,13 +43,11 @@ public class PsiEventsTest extends PsiTestCase {
 
   private VirtualFile myPrjDir1;
   private VirtualFile myPrjDir2;
-  private VirtualFile myPrjDir3;
   private VirtualFile mySrcDir1;
   private VirtualFile mySrcDir2;
   private VirtualFile mySrcDir3;
-  private VirtualFile mySrcDir4;
   private VirtualFile myClsDir1;
-  private VirtualFile myExcludedDir1;
+  private VirtualFile myIgnoredDir;
 
   @Override
   protected void setUp() throws Exception {
@@ -76,13 +74,12 @@ public class PsiEventsTest extends PsiTestCase {
 
           myClsDir1 = myPrjDir1.createChildDirectory(null, "cls1");
 
-          myExcludedDir1 = mySrcDir1.createChildDirectory(null, "excluded");
+          myIgnoredDir = mySrcDir1.createChildDirectory(null, "CVS");
 
           PsiTestUtil.addContentRoot(myModule, myPrjDir1);
           PsiTestUtil.addSourceRoot(myModule, mySrcDir1);
           PsiTestUtil.addSourceRoot(myModule, mySrcDir2);
           PsiTestUtil.addContentRoot(myModule, myPrjDir2);
-          PsiTestUtil.addExcludedRoot(myModule, myExcludedDir1);
           ModuleRootModificationUtil.addModuleLibrary(myModule, myClsDir1.getUrl());
           PsiTestUtil.addSourceRoot(myModule, mySrcDir3);
         } catch (IOException e) {
@@ -106,7 +103,7 @@ public class PsiEventsTest extends PsiTestCase {
     String expected =
             "beforeChildAddition\n" +
             "childAdded\n";
-    assertEquals(expected, string);
+    assertEquals(psiDir.getName(), expected, string);
   }
 
   public void testCreateDirectory() throws Exception {
@@ -121,7 +118,7 @@ public class PsiEventsTest extends PsiTestCase {
     String expected =
             "beforeChildAddition\n" +
             "childAdded\n";
-    assertEquals(expected, string);
+    assertEquals(psiDir.getName(), expected, string);
   }
 
   public void testDeleteFile() throws Exception {
@@ -139,7 +136,7 @@ public class PsiEventsTest extends PsiTestCase {
     String expected =
             "beforeChildRemoval\n" +
             "childRemoved\n";
-    assertEquals(expected, string);
+    assertEquals(psiFile.getName(), expected, string);
   }
 
   public void testDeleteDirectory() throws Exception {
@@ -157,10 +154,10 @@ public class PsiEventsTest extends PsiTestCase {
     String expected =
             "beforeChildRemoval\n" +
             "childRemoved\n";
-    assertEquals(expected, string);
+    assertEquals(psiDirectory.getName(), expected, string);
   }
 
-  public void testRenameFile1() throws Exception {
+  public void testRenameFile() throws Exception {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = myPrjDir1.createChildData(null, "a.txt");
     PsiFile psiFile = fileManager.findFile(file);
@@ -174,10 +171,10 @@ public class PsiEventsTest extends PsiTestCase {
     String expected =
             "beforePropertyChange\n" +
             "propertyChanged\n";
-    assertEquals(expected, string);
+    assertEquals(psiFile.getName(), expected, string);
   }
 
-  public void testRenameFile2() throws Exception {
+  public void testRenameFileChangingExtension() throws Exception {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = myPrjDir1.createChildData(null, "a.txt");
     PsiFile psiFile = fileManager.findFile(file);
@@ -191,10 +188,10 @@ public class PsiEventsTest extends PsiTestCase {
     String expected =
             "beforeChildReplacement\n" +
             "childReplaced\n";
-    assertEquals(expected, string);
+    assertEquals(psiFile.getName(), expected, string);
   }
 
-  public void testRenameFile3() throws Exception {
+  public void testRenameFileToIgnored() throws Exception {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = myPrjDir1.createChildData(null, "a.txt");
     PsiFile psiFile = fileManager.findFile(file);
@@ -208,11 +205,11 @@ public class PsiEventsTest extends PsiTestCase {
     String expected =
             "beforeChildRemoval\n" +
             "childRemoved\n";
-    assertEquals(expected, string);
+    assertEquals(psiFile.getName(), expected, string);
     assertNull(fileManager.findFile(file));
   }
 
-  public void testRenameFile4() throws Exception {
+  public void testRenameFileFromIgnored() throws Exception {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = myPrjDir1.createChildData(null, "CVS");
     PsiDirectory psiDirectory = fileManager.findDirectory(file.getParent());
@@ -226,10 +223,10 @@ public class PsiEventsTest extends PsiTestCase {
     String expected =
             "beforeChildAddition\n" +
             "childAdded\n";
-    assertEquals(expected, string);
+    assertEquals(psiDirectory.getName(), expected, string);
   }
 
-  public void testRenameDirectory1() throws Exception {
+  public void testRenameDirectory() throws Exception {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = myPrjDir1.createChildDirectory(null, "dir1");
     PsiDirectory psiDirectory = fileManager.findDirectory(file);
@@ -243,10 +240,10 @@ public class PsiEventsTest extends PsiTestCase {
     String expected =
             "beforePropertyChange\n" +
             "propertyChanged\n";
-    assertEquals(expected, string);
+    assertEquals(psiDirectory.getName(), expected, string);
   }
 
-  public void testRenameDirectory2() throws Exception {
+  public void testRenameDirectoryToIgnored() throws Exception {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = myPrjDir1.createChildDirectory(null, "dir1");
     PsiDirectory psiDirectory = fileManager.findDirectory(file);
@@ -260,11 +257,11 @@ public class PsiEventsTest extends PsiTestCase {
     String expected =
             "beforeChildRemoval\n" +
             "childRemoved\n";
-    assertEquals(expected, string);
+    assertEquals(psiDirectory.getName(), expected, string);
     assertNull(fileManager.findDirectory(file));
   }
 
-  public void testRenameDirectory3() throws Exception {
+  public void testRenameDirectoryFromIgnored() throws Exception {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = myPrjDir1.createChildDirectory(null, "CVS");
     PsiDirectory psiDirectory = fileManager.findDirectory(file.getParent());
@@ -278,7 +275,7 @@ public class PsiEventsTest extends PsiTestCase {
     String expected =
             "beforeChildAddition\n" +
             "childAdded\n";
-    assertEquals(expected, string);
+    assertEquals(psiDirectory.getName(), expected, string);
   }
 
   public void testMakeFileReadOnly() throws Exception {
@@ -291,7 +288,6 @@ public class PsiEventsTest extends PsiTestCase {
 
     ReadOnlyAttributeUtil.setReadOnlyAttribute(file, true);
 
-    String string = listener.getEventsString();
     final String expected =
             "beforePropertyChange\n" +
             "propertyChanged\n";
@@ -306,7 +302,7 @@ public class PsiEventsTest extends PsiTestCase {
     ReadOnlyAttributeUtil.setReadOnlyAttribute(file, false);
   }
 
-  public void testMoveFile1() throws Exception {
+  public void testMoveFile() throws Exception {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = myPrjDir1.createChildData(null, "a.txt");
     PsiFile psiFile = fileManager.findFile(file);
@@ -320,10 +316,10 @@ public class PsiEventsTest extends PsiTestCase {
     String expected =
             "beforeChildMovement\n" +
             "childMoved\n";
-    assertEquals(expected, string);
+    assertEquals(psiFile.getName(), expected, string);
   }
 
-  public void testMoveFile2() throws Exception {
+  public void testMoveFileToIgnoredDir() throws Exception {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = myPrjDir1.createChildData(null, "a.txt");
     PsiFile psiFile = fileManager.findFile(file);
@@ -331,19 +327,18 @@ public class PsiEventsTest extends PsiTestCase {
     EventsTestListener listener = new EventsTestListener();
     myPsiManager.addPsiTreeChangeListener(listener,getTestRootDisposable());
 
-    file.move(null, myExcludedDir1);
+    file.move(null, myIgnoredDir);
 
     String string = listener.getEventsString();
     String expected =
             "beforeChildRemoval\n" +
             "childRemoved\n";
-    assertEquals(expected, string);
+    assertEquals(psiFile.getName(), expected, string);
     assertNull(fileManager.findFile(file));
   }
 
-  public void testMoveFile3() throws Exception {
-    FileManager fileManager = myPsiManager.getFileManager();
-    VirtualFile file = myExcludedDir1.createChildData(null, "a.txt");
+  public void testMoveFileFromIgnoredDir() throws Exception {
+    VirtualFile file = myIgnoredDir.createChildData(null, "a.txt");
 
     EventsTestListener listener = new EventsTestListener();
     myPsiManager.addPsiTreeChangeListener(listener,getTestRootDisposable());
@@ -357,10 +352,9 @@ public class PsiEventsTest extends PsiTestCase {
     assertEquals(expected, string);
   }
 
-  public void testMoveFile4() throws Exception {
-    FileManager fileManager = myPsiManager.getFileManager();
-    VirtualFile file = myExcludedDir1.createChildData(null, "a.txt");
-    VirtualFile subdir = myExcludedDir1.createChildDirectory(null, "subdir");
+  public void testMoveFileInsideIgnoredDir() throws Exception {
+    VirtualFile file = myIgnoredDir.createChildData(null, "a.txt");
+    VirtualFile subdir = myIgnoredDir.createChildDirectory(null, "subdir");
 
     EventsTestListener listener = new EventsTestListener();
     myPsiManager.addPsiTreeChangeListener(listener,getTestRootDisposable());
@@ -372,7 +366,7 @@ public class PsiEventsTest extends PsiTestCase {
     assertEquals(expected, string);
   }
 
-  public void testMoveDirectory1() throws Exception {
+  public void testMoveDirectory() throws Exception {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = myPrjDir1.createChildDirectory(null, "dir");
     PsiDirectory psiDirectory = fileManager.findDirectory(file);
@@ -386,10 +380,10 @@ public class PsiEventsTest extends PsiTestCase {
     String expected =
             "beforeChildMovement\n" +
             "childMoved\n";
-    assertEquals(expected, string);
+    assertEquals(psiDirectory.getName(), expected, string);
   }
 
-  public void testMoveDirectory2() throws Exception {
+  public void testMoveDirectoryToIgnored() throws Exception {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = myPrjDir1.createChildDirectory(null, "dir");
     PsiDirectory psiDirectory = fileManager.findDirectory(file);
@@ -397,19 +391,18 @@ public class PsiEventsTest extends PsiTestCase {
     EventsTestListener listener = new EventsTestListener();
     myPsiManager.addPsiTreeChangeListener(listener,getTestRootDisposable());
 
-    file.move(null, myExcludedDir1);
+    file.move(null, myIgnoredDir);
 
     String string = listener.getEventsString();
     String expected =
             "beforeChildRemoval\n" +
             "childRemoved\n";
-    assertEquals(expected, string);
+    assertEquals(psiDirectory.getName(), expected, string);
     assertNull(fileManager.findDirectory(file));
   }
 
-  public void testMoveDirectory3() throws Exception {
-    FileManager fileManager = myPsiManager.getFileManager();
-    VirtualFile file = myExcludedDir1.createChildDirectory(null, "dir");
+  public void testMoveDirectoryFromIgnored() throws Exception {
+    VirtualFile file = myIgnoredDir.createChildDirectory(null, "dir");
 
     EventsTestListener listener = new EventsTestListener();
     myPsiManager.addPsiTreeChangeListener(listener,getTestRootDisposable());
@@ -423,10 +416,9 @@ public class PsiEventsTest extends PsiTestCase {
     assertEquals(expected, string);
   }
 
-  public void testMoveDirectory4() throws Exception {
-    FileManager fileManager = myPsiManager.getFileManager();
-    VirtualFile file = myExcludedDir1.createChildDirectory(null, "dir");
-    VirtualFile subdir = myExcludedDir1.createChildDirectory(null, "subdir");
+  public void testMoveDirectoryInsideIgnored() throws Exception {
+    VirtualFile file = myIgnoredDir.createChildDirectory(null, "dir");
+    VirtualFile subdir = myIgnoredDir.createChildDirectory(null, "subdir");
 
     EventsTestListener listener = new EventsTestListener();
     myPsiManager.addPsiTreeChangeListener(listener,getTestRootDisposable());
@@ -497,7 +489,6 @@ public class PsiEventsTest extends PsiTestCase {
   }
 
   public void testModifyFileTypes() throws Exception {
-    FileManager fileManager = myPsiManager.getFileManager();
     EventsTestListener listener = new EventsTestListener();
     myPsiManager.addPsiTreeChangeListener(listener,getTestRootDisposable());
 

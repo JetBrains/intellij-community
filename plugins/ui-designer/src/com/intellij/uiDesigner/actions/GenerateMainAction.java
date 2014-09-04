@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -146,7 +145,7 @@ public class GenerateMainAction extends AnAction {
     PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
     if (psiClass == null) return false;
     if (PsiMethodUtil.findMainMethod(psiClass) != null) return false;
-    if (FormClassIndex.findFormsBoundToClass(psiClass).isEmpty()) return false;
+    if (FormClassIndex.findFormsBoundToClass(project, psiClass).isEmpty()) return false;
     return true;
   }
 }

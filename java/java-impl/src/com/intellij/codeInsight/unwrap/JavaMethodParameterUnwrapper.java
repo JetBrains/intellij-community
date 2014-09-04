@@ -31,7 +31,10 @@ public class JavaMethodParameterUnwrapper extends JavaUnwrapper {
 
   private static PsiElement adjustElementToTheLeft(PsiElement element) {
     if (element instanceof PsiJavaToken && ((PsiJavaToken)element).getTokenType() == JavaTokenType.RPARENTH) {
-      return element.getPrevSibling();
+      PsiElement prevSibling = element.getPrevSibling();
+      if (prevSibling != null) {
+        return prevSibling;
+      }
     }
     return element;
   }

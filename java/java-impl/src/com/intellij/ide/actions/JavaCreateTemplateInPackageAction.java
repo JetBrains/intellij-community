@@ -37,6 +37,6 @@ public abstract class JavaCreateTemplateInPackageAction<T extends PsiElement> ex
     }
 
     String name = pkg.getQualifiedName();
-    return StringUtil.isEmpty(name) || JavaPsiFacade.getInstance(directory.getProject()).getNameHelper().isQualifiedName(name);
+    return StringUtil.isEmpty(name) || PsiNameHelper.getInstance(directory.getProject()).isQualifiedName(name);
   }
 }

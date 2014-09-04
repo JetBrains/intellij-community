@@ -27,13 +27,7 @@ Here are some of the useful functions provided by this module:
 __author__ = 'Ka-Ping Yee <ping@lfw.org>'
 __date__ = '1 Jan 2001'
 
-import sys
-import os
-import types
-import string
-import re
-import imp
-import tokenize
+import sys, os, types, string, re, imp, tokenize
 
 # ----------------------------------------------------------- type-checking
 def ismodule(object):

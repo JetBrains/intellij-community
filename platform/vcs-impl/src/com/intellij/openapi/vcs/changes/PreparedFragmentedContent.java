@@ -398,4 +398,8 @@ public class PreparedFragmentedContent {
   public VirtualFile getFile() {
     return myFile;
   }
+
+  public FileType getFileType() {
+    return myFileType;
+  }
 }

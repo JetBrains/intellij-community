@@ -15,51 +15,52 @@
  */
 package org.jetbrains.idea.svn.dialogs.browserCache;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
 
 import java.util.List;
 
 public abstract class Loader {
-  protected final SvnRepositoryCache myCache;
 
-  protected Loader(final SvnRepositoryCache cache) {
+  @NotNull protected final SvnRepositoryCache myCache;
+
+  protected Loader(@NotNull SvnRepositoryCache cache) {
     myCache = cache;
   }
 
-  public abstract void load(final RepositoryTreeNode node, final Expander afterRefreshExpander);
-  public abstract void forceRefresh(final String repositoryRootUrl);
+  public abstract void load(@NotNull RepositoryTreeNode node, @NotNull Expander afterRefreshExpander);
+
+  @NotNull
   protected abstract NodeLoadState getNodeLoadState();
 
-  protected void refreshNodeError(final RepositoryTreeNode node, final String text) {
-    if (node.isDisposed()) {
-      return;
-    }
-    final RepositoryTreeNode existingNode = node.getNodeWithSamePathUnderModelRoot();
-    if (existingNode == null) {
-      return;
-    }
-    if (existingNode.isDisposed()) {
-      return;
-    }
+  protected void refreshNodeError(@NotNull RepositoryTreeNode node, @NotNull String text) {
+    RepositoryTreeNode existingNode = findExistingNode(node);
 
-    existingNode.setErrorNode(text, getNodeLoadState());
+    if (existingNode != null) {
+      existingNode.setErrorNode(text);
+    }
   }
 
-  protected void refreshNode(final RepositoryTreeNode node, final List<DirectoryEntry> data, final Expander expander) {
-    if (node.isDisposed()) {
-      return;
+  protected void refreshNode(@NotNull RepositoryTreeNode node, @NotNull List<DirectoryEntry> data, @NotNull Expander expander) {
+    RepositoryTreeNode existingNode = findExistingNode(node);
+
+    if (existingNode != null) {
+      expander.onBeforeRefresh(existingNode);
+      existingNode.setChildren(data, getNodeLoadState());
+      expander.onAfterRefresh(existingNode);
     }
-    final RepositoryTreeNode existingNode = node.getNodeWithSamePathUnderModelRoot();
-    if (existingNode == null) {
-      return;
+  }
+
+  @Nullable
+  private static RepositoryTreeNode findExistingNode(@NotNull RepositoryTreeNode node) {
+    RepositoryTreeNode result = null;
+
+    if (!node.isDisposed()) {
+      result = node.getNodeWithSamePathUnderModelRoot();
     }
 
-    if (existingNode.isDisposed()) {
-      return;
-    }
-    expander.onBeforeRefresh(existingNode);
-    existingNode.setChildren(data, getNodeLoadState());
-    expander.onAfterRefresh(existingNode);
+    return result == null || result.isDisposed() ? null : result;
   }
 }

@@ -80,14 +80,14 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
   }
 
   private boolean containsInMap(PsiTypeParameter typeParameter) {
-    if (typeParameter instanceof LightTypeParameter) {
+    if (typeParameter instanceof LightTypeParameter && ((LightTypeParameter)typeParameter).useDelegateToSubstitute()) {
       typeParameter = ((LightTypeParameter)typeParameter).getDelegate();
     }
     return mySubstitutionMap.containsKey(typeParameter);
   }
 
   private PsiType getFromMap(@NotNull PsiTypeParameter typeParameter) {
-    if (typeParameter instanceof LightTypeParameter) {
+    if (typeParameter instanceof LightTypeParameter && ((LightTypeParameter)typeParameter).useDelegateToSubstitute()) {
       typeParameter = ((LightTypeParameter)typeParameter).getDelegate();
     }
     return mySubstitutionMap.get(typeParameter);
@@ -394,7 +394,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
           }
         }
       }
-    } else if (substituted instanceof PsiWildcardType && ((PsiWildcardType)substituted).isSuper()) {
+    } else if (substituted instanceof PsiWildcardType && ((PsiWildcardType)substituted).isSuper() && !(oldSubstituted instanceof PsiCapturedWildcardType)) {
       final PsiType erasure = TypeConversionUtil.erasure(((PsiWildcardType)substituted).getBound());
       if (erasure != null) {
         final PsiType[] boundTypes = typeParameter.getExtendsListTypes();

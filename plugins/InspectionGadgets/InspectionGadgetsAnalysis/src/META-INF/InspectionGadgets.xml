@@ -202,6 +202,10 @@
                      key="equals.between.inconvertible.types.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.EqualsBetweenInconvertibleTypesInspection"/>
+    <localInspection language="JAVA" shortName="EqualsWithItself" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="equals.with.itself.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.bugs.EqualsWithItselfInspection"/>
     <localInspection language="JAVA" suppressId="NonFinalFieldReferenceInEquals" shortName="EqualsUsesNonFinalVariable"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="non.final.field.in.equals.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
@@ -1379,6 +1383,14 @@
                      key="junit3.style.test.method.in.junit4.class.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.JUnit3StyleTestMethodInJUnit4ClassInspection"/>
+    <localInspection language="JAVA" shortName="JUnit3MethodNamingConvention"
+                     bundle="com.siyeh.InspectionGadgetsBundle" key="junit3.method.naming.convention.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false"
+                     level="WARNING" implementationClass="com.siyeh.ig.junit.JUnit3MethodNamingConventionInspection"/>
+    <localInspection language="JAVA" shortName="JUnit4MethodNamingConvention"
+                     bundle="com.siyeh.InspectionGadgetsBundle" key="junit4.method.naming.convention.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false"
+                     level="WARNING" implementationClass="com.siyeh.ig.junit.JUnit4MethodNamingConventionInspection"/>
     <localInspection language="JAVA" shortName="JUnit4AnnotatedMethodInJUnit3TestCase" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="junit4.test.method.in.class.extending.junit3.testcase.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"

@@ -50,6 +50,8 @@ class LibNotifyWrapper implements SystemNotificationsImpl.Notifier {
 
   private final LibNotify myLibNotify;
   private final String myIcon;
+  private final Object myLock = new Object();
+  private boolean myDisposed = false;
 
   private LibNotifyWrapper() {
     myLibNotify = (LibNotify)Native.loadLibrary("libnotify.so.4", LibNotify.class);
@@ -66,14 +68,21 @@ class LibNotifyWrapper implements SystemNotificationsImpl.Notifier {
     connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
       @Override
       public void appClosing() {
-        myLibNotify.notify_uninit();
+        synchronized (myLock) {
+          myDisposed = true;
+          myLibNotify.notify_uninit();
+        }
       }
     });
   }
 
   @Override
   public void notify(@NotNull Set<String> allNames, @NotNull String name, @NotNull String title, @NotNull String description) {
-    Pointer notification = myLibNotify.notify_notification_new(title, description, myIcon);
-    myLibNotify.notify_notification_show(notification, null);
+    synchronized (myLock) {
+      if (!myDisposed) {
+        Pointer notification = myLibNotify.notify_notification_new(title, description, myIcon);
+        myLibNotify.notify_notification_show(notification, null);
+      }
+    }
   }
 }

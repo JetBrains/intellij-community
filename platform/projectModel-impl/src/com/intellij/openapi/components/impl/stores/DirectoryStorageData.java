@@ -23,8 +23,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairConsumer;
-import com.intellij.util.io.fs.FileSystem;
-import com.intellij.util.io.fs.IFile;
 import gnu.trove.THashMap;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -37,9 +35,9 @@ import java.io.IOException;
 import java.util.*;
 
 public class DirectoryStorageData {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.DirectoryStorageData");
+  private static final Logger LOG = Logger.getInstance(DirectoryStorageData.class);
 
-  private Map<String, Map<IFile, Element>> myStates = new HashMap<String, Map<IFile, Element>>();
+  private Map<String, Map<File, Element>> myStates = new THashMap<String, Map<File, Element>>();
   private long myLastTimestamp = 0;
   private DirectoryStorageData myOriginalData;
 
@@ -79,7 +77,7 @@ public class DirectoryStorageData {
           pathMacroSubstitutor.addUnknownMacros(componentName, unknownMacros);
         }
 
-        put(componentName, FileSystem.FILE_SYSTEM.createFile(file.getPath()), element, true);
+        put(componentName, new File(file.getPath()), element, true);
       }
       catch (IOException e) {
         LOG.info("Unable to load state", e);
@@ -90,44 +88,48 @@ public class DirectoryStorageData {
     }
   }
 
-  public void put(final String componentName, final IFile file, final Element element, final boolean updateTimestamp) {
+  public void put(final String componentName, File file, final Element element, final boolean updateTimestamp) {
     LOG.assertTrue(componentName != null, String.format("Component name should not be null for file: %s", file == null ? "NULL!" : file.getPath()));
 
-    Map<IFile, Element> stateMap = myStates.get(componentName);
+    Map<File, Element> stateMap = myStates.get(componentName);
     if (stateMap == null) {
-      stateMap = new HashMap<IFile, Element>();
+      stateMap = new THashMap<File, Element>();
       myStates.put(componentName, stateMap);
     }
 
     stateMap.put(file, element);
-    if (updateTimestamp) updateLastTimestamp(file);
+    if (updateTimestamp) {
+      updateLastTimestamp(file);
+    }
   }
 
-  public void updateLastTimestamp(final IFile file) {
-    myLastTimestamp = Math.max(myLastTimestamp, file.getTimeStamp());
-    if (myOriginalData != null) myOriginalData.myLastTimestamp = myLastTimestamp;
+  public void updateLastTimestamp(File file) {
+    myLastTimestamp = Math.max(myLastTimestamp, file.lastModified());
+    if (myOriginalData != null) {
+      myOriginalData.myLastTimestamp = myLastTimestamp;
+    }
   }
 
   public long getLastTimeStamp() {
     return myLastTimestamp;
   }
 
-  public Map<IFile, Long> getAllStorageFiles() {
-    final Map<IFile, Long> allStorageFiles = new THashMap<IFile, Long>();
+  public Map<File, Long> getAllStorageFiles() {
+    final Map<File, Long> allStorageFiles = new THashMap<File, Long>();
     process(new StorageDataProcessor() {
       @Override
-      public void process(final String componentName, final IFile file, final Element element) {
-        allStorageFiles.put(file, file.getTimeStamp());
+      public void process(final String componentName, final File file, final Element element) {
+        allStorageFiles.put(file, file.lastModified());
       }
     });
 
     return allStorageFiles;
   }
 
-  public void processComponent(@NotNull final String componentName, @NotNull final PairConsumer<IFile, Element> consumer) {
-    final Map<IFile, Element> map = myStates.get(componentName);
+  public void processComponent(@NotNull final String componentName, @NotNull final PairConsumer<File, Element> consumer) {
+    final Map<File, Element> map = myStates.get(componentName);
     if (map != null) {
-      for (IFile file : map.keySet()) {
+      for (File file : map.keySet()) {
         consumer.consume(file, map.get(file));
       }
     }
@@ -135,10 +137,10 @@ public class DirectoryStorageData {
 
   public void process(@NotNull final StorageDataProcessor processor) {
     for (final String componentName : myStates.keySet()) {
-      processComponent(componentName, new PairConsumer<IFile, Element>() {
+      processComponent(componentName, new PairConsumer<File, Element>() {
         @Override
-        public void consume(final IFile iFile, final Element element) {
-          processor.process(componentName, iFile, element);
+        public void consume(File file, Element element) {
+          processor.process(componentName, file, element);
         }
       });
     }
@@ -147,7 +149,7 @@ public class DirectoryStorageData {
   @Override
   protected DirectoryStorageData clone() {
     final DirectoryStorageData result = new DirectoryStorageData();
-    result.myStates = new HashMap<String, Map<IFile, Element>>(myStates);
+    result.myStates = new HashMap<String, Map<File, Element>>(myStates);
     result.myLastTimestamp = myLastTimestamp;
     result.myOriginalData = this;
     return result;
@@ -169,9 +171,9 @@ public class DirectoryStorageData {
   @Nullable
   public <T> T getMergedState(String componentName, Class<T> stateClass, StateSplitter splitter, @Nullable T mergeInto) {
     final List<Element> subElements = new ArrayList<Element>();
-    processComponent(componentName, new PairConsumer<IFile, Element>() {
+    processComponent(componentName, new PairConsumer<File, Element>() {
       @Override
-      public void consume(final IFile iFile, final Element element) {
+      public void consume(File file, Element element) {
         final List children = element.getChildren();
         assert children.size() == 1 : JDOMUtil.writeElement(element, File.separator);
         final Element subElement = (Element)children.get(0);
@@ -188,6 +190,6 @@ public class DirectoryStorageData {
   }
 
   interface StorageDataProcessor {
-    void process(String componentName, IFile file, Element element);
+    void process(String componentName, File file, Element element);
   }
 }

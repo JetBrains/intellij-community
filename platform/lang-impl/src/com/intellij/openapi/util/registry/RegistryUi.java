@@ -17,6 +17,7 @@
 package com.intellij.openapi.util.registry;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -27,6 +28,7 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ShadowAction;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.PlatformIcons;
@@ -54,6 +56,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class RegistryUi implements Disposable {
+  private static final String RECENT_PROPERTIES_KEY = "RegistryRecentKeys";
 
   private final JBTable myTable;
   private final JTextArea myDescriptionLabel;
@@ -143,6 +146,7 @@ public class RegistryUi implements Disposable {
           RegistryValue rv = myModel.getRegistryValue(row);
           if (rv.isBoolean()) {
             rv.setValue(!rv.asBoolean());
+            keyChanged(rv.getKey());
             for (int i : new int[]{0, 1, 2}) myModel.fireTableCellUpdated(row, i);
             revaliateActions();
             if (search.isPopupActive()) search.hidePopup();
@@ -217,10 +221,21 @@ public class RegistryUi implements Disposable {
 
     private MyTableModel() {
       myAll = Registry.getAll();
+      final List<String> recent = getRecent();
+
       Collections.sort(myAll, new Comparator<RegistryValue>() {
         @Override
         public int compare(@NotNull RegistryValue o1, @NotNull RegistryValue o2) {
-          return o1.getKey().compareTo(o2.getKey());
+          final String key1 = o1.getKey();
+          final String key2 = o2.getKey();
+          final int i1 = recent.indexOf(key1);
+          final int i2 = recent.indexOf(key2);
+          final boolean c1 = i1 != -1;
+          final boolean c2 = i2 != -1;
+          if (c1 && !c2) return -1;
+          if (!c1 && c2) return 1;
+          if (c1 && c2) return i1 - i2;
+          return key1.compareToIgnoreCase(key2);
         }
       });
     }
@@ -262,6 +277,19 @@ public class RegistryUi implements Disposable {
     public boolean isCellEditable(int rowIndex, int columnIndex) {
       return columnIndex == 2;
     }
+  }
+
+  private static List<String> getRecent() {
+    String value = PropertiesComponent.getInstance().getValue(RECENT_PROPERTIES_KEY);
+    return StringUtil.isEmpty(value) ? new ArrayList<String>(0) : StringUtil.split(value, "=");
+  }
+
+  private static void keyChanged(String key) {
+    final List<String> recent = getRecent();
+    recent.remove(key);
+    recent.add(0, key);
+    final String newValue = StringUtil.join(recent, "=");
+    PropertiesComponent.getInstance().setValue(RECENT_PROPERTIES_KEY, newValue);
   }
 
   public boolean show() {
@@ -468,6 +496,7 @@ public class RegistryUi implements Disposable {
         } else {
           myValue.setValue(myField.getText().trim());
         }
+        keyChanged(myValue.getKey());
       }
       revaliateActions();
       return super.stopCellEditing();

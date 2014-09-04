@@ -21,6 +21,7 @@ import com.intellij.conversion.ConversionService;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.Disposable;
@@ -56,7 +57,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.io.fs.IFile;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -354,7 +354,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
             myDefaultProjectRootElement = null;
           }
           catch (Throwable t) {
-            LOG.error(t);
+            PluginManager.processException(t);
           }
         }
       });
@@ -362,6 +362,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return myDefaultProject;
   }
 
+  @Nullable
   public Element getDefaultProjectRootElement() {
     return myDefaultProjectRootElement;
   }
@@ -920,9 +921,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         IProjectStore projectStore = projectImpl.getStateStore();
         final String location = projectImpl.getPresentableUrl();
 
-        final List<IFile> original;
+        final List<File> original;
         try {
-          final IComponentStore.SaveSession saveSession = projectStore.startSave();
+          IComponentStore.SaveSession saveSession = projectStore.startSave();
           original = saveSession.getAllStorageFiles(true);
           saveSession.finishSave();
         }
@@ -935,7 +936,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           application.runWriteAction(new Runnable() {
             @Override
             public void run() {
-              for (final IFile originalFile : original) {
+              for (File originalFile : original) {
                 restoreCopy(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(originalFile));
               }
             }
@@ -1126,33 +1127,27 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   @Override
-  public void writeExternal(Element parentNode) throws WriteExternalException {
+  public void writeExternal(Element parentNode) {
     if (myDefaultProject != null) {
       myDefaultProject.save();
     }
 
-    if (myDefaultProjectRootElement == null) { //read external isn't called if config folder is absent
-      myDefaultProjectRootElement = new Element(ELEMENT_DEFAULT_PROJECT);
+    if (myDefaultProjectRootElement != null) {
+      myDefaultProjectRootElement.detach();
+      parentNode.addContent(myDefaultProjectRootElement);
     }
-
-    myDefaultProjectRootElement.detach();
-    parentNode.addContent(myDefaultProjectRootElement);
   }
-
 
   public void setDefaultProjectRootElement(final Element defaultProjectRootElement) {
     myDefaultProjectRootElement = defaultProjectRootElement;
   }
 
   @Override
-  public void readExternal(Element parentNode) throws InvalidDataException {
+  public void readExternal(Element parentNode)  {
     myDefaultProjectRootElement = parentNode.getChild(ELEMENT_DEFAULT_PROJECT);
-
-    if (myDefaultProjectRootElement == null) {
-      myDefaultProjectRootElement = new Element(ELEMENT_DEFAULT_PROJECT);
+    if (myDefaultProjectRootElement != null) {
+      myDefaultProjectRootElement.detach();
     }
-
-    myDefaultProjectRootElement.detach();
   }
 
   @Override

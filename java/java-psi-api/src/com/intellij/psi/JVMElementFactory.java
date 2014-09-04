@@ -307,3 +307,4 @@ public interface JVMElementFactory {
    */
   boolean isValidLocalVariableName(@NotNull String name);
 }
+

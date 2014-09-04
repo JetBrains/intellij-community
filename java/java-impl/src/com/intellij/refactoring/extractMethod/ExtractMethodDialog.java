@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.text.StringUtil;
@@ -59,7 +60,7 @@ import java.awt.event.*;
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings("MethodMayBeStatic")
-public class ExtractMethodDialog extends AbstractExtractDialog {
+public class ExtractMethodDialog extends DialogWrapper implements AbstractExtractDialog {
   public static final String EXTRACT_METHOD_DEFAULT_VISIBILITY = "extract.method.default.visibility";
   private final Project myProject;
   private final PsiType myReturnType;
@@ -96,7 +97,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
                              String title,
                              String helpId,
                              final PsiElement[] elementsToExtract) {
-    super(project);
+    super(project, true);
     myProject = project;
     myTargetClass = targetClass;
     myReturnType = returnType;
@@ -221,7 +222,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
     main.add(visibilityAndName, BorderLayout.CENTER);
     setOKActionEnabled(false);
 
-    setOKActionEnabled(JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(myNameField.getText()));
+    setOKActionEnabled(PsiNameHelper.getInstance(myProject).isIdentifier(myNameField.getText()));
     final JPanel options = new JPanel(new BorderLayout());
     options.add(createOptionsPanel(), BorderLayout.WEST);
     main.add(options, BorderLayout.SOUTH);
@@ -347,7 +348,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
       myMakeStatic.setEnabled(!myStaticFlag && myCanBeStatic && !isChainedConstructor());
     }
     updateSignature();
-    setOKActionEnabled(JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(myNameField.getText()) ||
+    setOKActionEnabled(PsiNameHelper.getInstance(myProject).isIdentifier(myNameField.getText()) ||
                        isChainedConstructor());
   }
 

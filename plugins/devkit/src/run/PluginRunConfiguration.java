@@ -163,10 +163,10 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
               prefix = PlatformUtils.WEB_PREFIX;
             }
             else if (buildNumber.startsWith("OC")) {
-              prefix = buildNumber.contains("121") ? "CIDR" : PlatformUtils.APPCODE_PREFIX;
+              prefix = PlatformUtils.APPCODE_PREFIX;
             }
-            else if (buildNumber.startsWith("CP")) {
-              prefix = PlatformUtils.CPP_PREFIX;
+            else if (buildNumber.startsWith("CL")) {
+              prefix = PlatformUtils.CLION_PREFIX;
             }
             else if (buildNumber.startsWith("DB")) {
               prefix = PlatformUtils.DBE_PREFIX;

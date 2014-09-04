@@ -17,8 +17,7 @@ package git4idea;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
-import com.intellij.dvcs.test.MockVcsHelper;
-import com.intellij.dvcs.test.MockVirtualFile;
+import com.intellij.mock.MockVirtualFile;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,6 +39,7 @@ import cucumber.annotation.en.Then;
 import cucumber.annotation.en.When;
 import git4idea.cherrypick.GitCherryPicker;
 import git4idea.config.GitVersionSpecialty;
+import git4idea.test.MockVcsHelper;
 
 import java.util.*;
 

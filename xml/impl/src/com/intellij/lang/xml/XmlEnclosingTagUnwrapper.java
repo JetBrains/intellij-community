@@ -16,18 +16,18 @@
 package com.intellij.lang.xml;
 
 import com.intellij.codeInsight.unwrap.Unwrapper;
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.xml.XmlBundle;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.ASTNode;
+import com.intellij.xml.XmlBundle;
 
-import java.util.Set;
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public class XmlEnclosingTagUnwrapper implements Unwrapper {
   @Override
@@ -45,8 +45,21 @@ public class XmlEnclosingTagUnwrapper implements Unwrapper {
   }
 
   @Override
-  public PsiElement collectAffectedElements(PsiElement e, List<PsiElement> toExtract) {
-    return e;
+  public PsiElement collectAffectedElements(PsiElement element, List<PsiElement> toExtract) {
+    final TextRange range = element.getTextRange();
+    final ASTNode startTagNameEnd = XmlChildRole.START_TAG_END_FINDER.findChild(element.getNode());
+    final ASTNode endTagNameStart = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(element.getNode());
+
+    int start = startTagNameEnd != null ? startTagNameEnd.getTextRange().getEndOffset() : range.getStartOffset();
+    int end = endTagNameStart != null ? endTagNameStart.getTextRange().getStartOffset() : range.getEndOffset();
+
+    for (PsiElement child : element.getChildren()) {
+      final TextRange childRange = child.getTextRange();
+      if (childRange.getStartOffset() >= start && childRange.getEndOffset() <= end) {
+        toExtract.add(child);
+      }
+    }
+    return element;
   }
 
   @Override

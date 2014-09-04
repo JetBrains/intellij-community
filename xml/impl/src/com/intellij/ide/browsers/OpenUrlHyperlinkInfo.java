@@ -40,15 +40,15 @@ public final class OpenUrlHyperlinkInfo implements HyperlinkWithPopupMenuInfo {
     this(url, Conditions.<WebBrowser>alwaysTrue(), null);
   }
 
-  public OpenUrlHyperlinkInfo(@NotNull String url, @Nullable WebBrowser browser) {
-    this(url, null, browser);
+  public OpenUrlHyperlinkInfo(@NotNull String url, @Nullable final WebBrowser browser) {
+    this(url, browser == null ? Conditions.<WebBrowser>alwaysTrue() : Conditions.is(browser));
   }
 
   public OpenUrlHyperlinkInfo(@NotNull String url, @NotNull Condition<WebBrowser> browserCondition) {
     this(url, browserCondition, null);
   }
 
-  private OpenUrlHyperlinkInfo(@NotNull String url, @Nullable Condition<WebBrowser> browserCondition, @Nullable WebBrowser browser) {
+  private OpenUrlHyperlinkInfo(@NotNull String url, @NotNull Condition<WebBrowser> browserCondition, @Nullable WebBrowser browser) {
     this.url = url;
     this.browserCondition = browserCondition;
     this.browser = browser;
@@ -58,7 +58,7 @@ public final class OpenUrlHyperlinkInfo implements HyperlinkWithPopupMenuInfo {
   public ActionGroup getPopupMenuGroup(@NotNull MouseEvent event) {
     DefaultActionGroup group = new DefaultActionGroup();
     for (final WebBrowser browser : WebBrowserManager.getInstance().getActiveBrowsers()) {
-      if (browserCondition == null ? (this.browser == null || browser.equals(this.browser)) : browserCondition.value(browser)) {
+      if (browserCondition.value(browser)) {
         group.add(new AnAction("Open in " + browser.getName(), "Open URL in " + browser.getName(), browser.getIcon()) {
           @Override
           public void actionPerformed(AnActionEvent e) {

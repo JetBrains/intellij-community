@@ -5,6 +5,9 @@
   <item name="org.apache.velocity.texen.util.FileUtil java.io.File file(java.lang.String)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.velocity.texen.util.FileUtil java.io.File file(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="org.apache.velocity.texen.util.FileUtil java.io.File file(java.lang.String, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>

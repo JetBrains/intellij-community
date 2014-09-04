@@ -28,6 +28,8 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.Frame;
 
 import java.util.*;
 
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
+
 class AbstractValues {
   static final class ParamValue extends BasicValue {
     ParamValue(Type tp) {
@@ -200,6 +202,14 @@ abstract class Analysis<Res> {
 
   public static final int STEPS_LIMIT = 30000;
   public static final int EQUATION_SIZE_LIMIT = 30;
+
+  protected static final ThreadLocal<State[]> ourPendingStates = new ThreadLocal<State[]>() {
+    @Override
+    protected State[] initialValue() {
+      return new State[STEPS_LIMIT];
+    }
+  };
+
   final RichControlFlow richControlFlow;
   final Direction direction;
   final ControlFlowGraph controlFlow;
@@ -266,10 +276,8 @@ abstract class Analysis<Res> {
     }
     for (int i = 0; i < args.length; i++) {
       BasicValue value;
-      if (direction instanceof InOut && ((InOut)direction).paramIndex == i) {
-        value = new AbstractValues.ParamValue(args[i]);
-      }
-      else if (direction instanceof In && ((In)direction).paramIndex == i) {
+      if (direction instanceof InOut && ((InOut)direction).paramIndex == i ||
+          direction instanceof In && ((In)direction).paramIndex == i) {
         value = new AbstractValues.ParamValue(args[i]);
       }
       else {

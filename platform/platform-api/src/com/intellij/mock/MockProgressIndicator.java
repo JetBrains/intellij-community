@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,97 +15,11 @@
  */
 package com.intellij.mock;
 
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.progress.ProgressIndicator;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import org.jetbrains.annotations.TestOnly;
 
-public class MockProgressIndicator implements ProgressIndicator {
-  private boolean myIsRunning = false;
-  private boolean myIsCanceled = false;
-
-  public void start() {
-    myIsRunning = true;
-    myIsCanceled = false;
-  }
-
-  public void stop() {
-    myIsRunning = false;
-  }
-
-  public boolean isRunning() {
-    return myIsRunning;
-  }
-
-  public void cancel() {
-    myIsCanceled = true;
-  }
-
-  public boolean isCanceled() {
-    return myIsCanceled;
-  }
-
-  public void setText(String text) {
-  }
-
-  public String getText() {
-    return "";
-  }
-
-  public void setText2(String text) {
-  }
-
-  public String getText2() {
-    return "";
-  }
-
-  public double getFraction() {
-    return 1;
-  }
-
-  public void setFraction(double fraction) {
-  }
-
-  public void pushState() {
-  }
-
-  public void popState() {
-  }
-
-  public void startNonCancelableSection() {
-  }
-
-  public void finishNonCancelableSection() {
-  }
-
-  public boolean isModal() {
-    return false;
-  }
-
-  @NotNull
-  public ModalityState getModalityState() {
-    return ModalityState.NON_MODAL;
-  }
-
-  public void setModalityProgress(ProgressIndicator modalityProgress) {
-  }
-
-  public boolean isIndeterminate() {
-    return false;
-  }
-
-  public void setIndeterminate(boolean indeterminate) {
-  }
-
-  public void checkCanceled() {
-  }
-
-  @Override
-  public boolean isPopupWasShown() {
-    return false;
-  }
-
-  @Override
-  public boolean isShowing() {
-    return false;
+public class MockProgressIndicator extends EmptyProgressIndicator {
+  @TestOnly
+  public MockProgressIndicator() {
   }
 }

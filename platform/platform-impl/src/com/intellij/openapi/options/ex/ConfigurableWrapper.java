@@ -47,6 +47,9 @@ public class ConfigurableWrapper implements SearchableConfigurable {
 
   @Nullable
   public static <T extends UnnamedConfigurable> T wrapConfigurable(ConfigurableEP<T> ep) {
+    if (!ep.isConfigurableProvided()) {
+      return null;
+    }
     if (ep.displayName != null || ep.key != null || ep.groupId != null) {
       T configurable = null;
       if (ep.providerClass != null) {
@@ -55,9 +58,11 @@ public class ConfigurableWrapper implements SearchableConfigurable {
           return null; // it is allowed to return null from provider
         }
       }
-      return ep.children != null || ep.childrenEPName != null || ep.dynamic
-             ? (T)new CompositeWrapper(ep, configurable)
-             : (T)new ConfigurableWrapper(ep, configurable);
+      return !ep.dynamic && ep.children == null && ep.childrenEPName == null
+             ? (T)new ConfigurableWrapper(ep, configurable)
+             : "itself".equals(ep.groupId)
+               ? (T)new GroupWrapper(ep, configurable)
+               : (T)new CompositeWrapper(ep, configurable);
     }
     else {
       return ep.createConfigurable();
@@ -157,16 +162,21 @@ public class ConfigurableWrapper implements SearchableConfigurable {
   @NotNull
   @Override
   public String getId() {
-    return myEp.id == null ? myEp.instanceClass == null ? myEp.providerClass : myEp.instanceClass : myEp.id;
+    if (myEp.id != null) {
+      return myEp.id;
+    }
+    UnnamedConfigurable configurable = getConfigurable();
+    if (configurable instanceof SearchableConfigurable) {
+      return ((SearchableConfigurable)configurable).getId();
+    }
+    return myEp.instanceClass != null
+           ? myEp.instanceClass
+           : myEp.providerClass;
   }
 
   @NotNull
   public ConfigurableEP getExtensionPoint() {
     return myEp;
-  }
-
-  public String getGroupId() {
-    return myEp.groupId;
   }
 
   public String getParentId() {
@@ -233,6 +243,17 @@ public class ConfigurableWrapper implements SearchableConfigurable {
     public ConfigurableWrapper addChild(Configurable configurable) {
       myKids = ArrayUtil.append(myKids, configurable);
       return this;
+    }
+  }
+
+  private static final class GroupWrapper extends CompositeWrapper implements ConfigurableGroup {
+    private GroupWrapper(@NotNull ConfigurableEP ep, @Nullable UnnamedConfigurable configurable, Configurable... kids) {
+      super(ep, configurable, kids);
+    }
+
+    @Override
+    public String getShortName() {
+      return getDisplayName();
     }
   }
 }

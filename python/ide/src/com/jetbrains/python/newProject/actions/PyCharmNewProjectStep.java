@@ -34,11 +34,15 @@ import java.util.List;
 public class PyCharmNewProjectStep extends DefaultActionGroup implements DumbAware {
 
   public PyCharmNewProjectStep(@NotNull final String name, @Nullable final Runnable runnable) {
+    this(name, runnable, false);
+  }
+
+  public PyCharmNewProjectStep(@NotNull final String name, @Nullable final Runnable runnable, boolean isWelcomeScreen) {
     super(name, true);
 
     final NullableConsumer<AbstractProjectSettingsStep> callback = new GenerateProjectCallback(runnable);
 
-    final ProjectSpecificAction action = new ProjectSpecificAction(callback, new PythonBaseProjectGenerator());
+    final ProjectSpecificAction action = new ProjectSpecificAction(callback, new PythonBaseProjectGenerator(), isWelcomeScreen);
     add(action);
 
     final DirectoryProjectGenerator[] generators = Extensions.getExtensions(DirectoryProjectGenerator.EP_NAME);
@@ -57,19 +61,17 @@ public class PyCharmNewProjectStep extends DefaultActionGroup implements DumbAwa
     List<DirectoryProjectGenerator> pluginSpecificGenerators = Lists.newArrayList();
     for (DirectoryProjectGenerator generator : generators) {
       if (generator instanceof PythonProjectGenerator)
-        add(new ProjectSpecificAction(callback, generator));
+        add(new ProjectSpecificAction(callback, generator, isWelcomeScreen));
       else
         pluginSpecificGenerators.add(generator);
     }
 
     if (!pluginSpecificGenerators.isEmpty()) {
-      add(new PluginSpecificProjectsStep(callback, pluginSpecificGenerators));
+      add(new PluginSpecificProjectsStep(callback, pluginSpecificGenerators, isWelcomeScreen));
     }
   }
 
   public PyCharmNewProjectStep() {
-    this("Select Project Type", null);
-
+    this("Select Project Type", null, true);
   }
-
 }

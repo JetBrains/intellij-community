@@ -13,7 +13,7 @@ import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.debugger.PyExceptionBreakpointProperties;
 import com.jetbrains.python.debugger.PyExceptionBreakpointType;
-import com.jetbrains.python.debugger.pydev.ProcessDebugger;
+import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 
 import java.util.List;
@@ -128,7 +128,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       }
 
       private void consoleExec(String command) {
-        myDebugProcess.consoleExec(command, new ProcessDebugger.DebugCallback<String>() {
+        myDebugProcess.consoleExec(command, new PyDebugCallback<String>() {
           @Override
           public void ok(String value) {
 

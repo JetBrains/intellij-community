@@ -443,6 +443,11 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   @Override
   public void setCaretsAndSelections(@NotNull final List<CaretState> caretStates) {
+    setCaretsAndSelections(caretStates, true);
+  }
+
+  @Override
+  public void setCaretsAndSelections(@NotNull final List<CaretState> caretStates, final boolean updateSystemSelection) {
     myEditor.assertIsDispatchThread();
     if (caretStates.isEmpty()) {
       throw new IllegalArgumentException("At least one caret should exist");
@@ -474,9 +479,11 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
             caret.moveToLogicalPosition(caretState.getCaretPosition());
           }
           if (caretState != null && caretState.getSelectionStart() != null && caretState.getSelectionEnd() != null) {
-            caret.setSelection(myEditor.logicalToVisualPosition(caretState.getSelectionStart()), myEditor.logicalPositionToOffset(caretState.getSelectionStart()),
-                               myEditor.logicalToVisualPosition(caretState.getSelectionEnd()), myEditor.logicalPositionToOffset(
-              caretState.getSelectionEnd()));
+            caret.setSelection(myEditor.logicalToVisualPosition(caretState.getSelectionStart()),
+                               myEditor.logicalPositionToOffset(caretState.getSelectionStart()),
+                               myEditor.logicalToVisualPosition(caretState.getSelectionEnd()),
+                               myEditor.logicalPositionToOffset(caretState.getSelectionEnd()),
+                               updateSystemSelection);
           }
         }
         int caretsToRemove = myCarets.size() - caretStates.size();

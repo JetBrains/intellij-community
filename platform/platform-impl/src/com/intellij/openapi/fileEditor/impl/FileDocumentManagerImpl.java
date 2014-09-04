@@ -550,12 +550,16 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       if (document != null) {
         // a file is linked to a document - chances are it is an "unknown text file" now
         if (isBinaryWithoutDecompiler(file)) {
-          myDocuments.remove(file);
-          file.putUserData(HARD_REF_TO_DOCUMENT_KEY, null);
-          document.putUserData(FILE_KEY, null);
+          unbindFileFromDocument(file, document);
         }
       }
     }
+  }
+
+  private void unbindFileFromDocument(@NotNull VirtualFile file, @NotNull Document document) {
+    myDocuments.remove(file);
+    file.putUserData(HARD_REF_TO_DOCUMENT_KEY, null);
+    document.putUserData(FILE_KEY, null);
   }
 
   private static boolean isBinaryWithDecompiler(@NotNull VirtualFile file) {
@@ -609,6 +613,13 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       return;
     }
 
+    if (file.getLength() > FileUtilRt.LARGE_FOR_CONTENT_LOADING) {
+      unbindFileFromDocument(file, document);
+      myUnsavedDocuments.remove(document);
+      myMultiCaster.fileWithNoDocumentChanged(file);
+      return;
+    }
+
     final Project project = ProjectLocator.getInstance().guessProjectForFile(file);
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       @Override
@@ -640,7 +651,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     public boolean process(final VirtualFile file, final Document document) {
       String message = UIBundle.message("file.cache.conflict.message.text", file.getPresentableUrl());
 
-      final DialogBuilder builder = new DialogBuilder((Project)null);
+      final DialogBuilder builder = new DialogBuilder();
       builder.setCenterPanel(new JLabel(message, Messages.getQuestionIcon(), SwingConstants.CENTER));
       builder.addOkAction().setText(UIBundle.message("file.cache.conflict.load.fs.changes.button"));
       builder.addCancelAction().setText(UIBundle.message("file.cache.conflict.keep.memory.changes.button"));

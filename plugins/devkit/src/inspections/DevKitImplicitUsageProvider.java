@@ -50,7 +50,7 @@ public class DevKitImplicitUsageProvider implements ImplicitUsageProvider {
     return false;
   }
 
-  private static boolean isDomElementClass(PsiClass psiClass) {
+  static boolean isDomElementClass(PsiClass psiClass) {
     if (psiClass.isEnum() ||
         psiClass.isAnnotationType() ||
         psiClass.hasModifierProperty(PsiModifier.PRIVATE)) {

@@ -310,7 +310,7 @@ public abstract class ParameterTablePanel extends JPanel {
         case PARAMETER_NAME_COLUMN: {
           VariableData data = getVariableData()[rowIndex];
           String name = (String)aValue;
-          if (JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(name)) {
+          if (PsiNameHelper.getInstance(myProject).isIdentifier(name)) {
             data.name = name;
           }
           updateSignature();

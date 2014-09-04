@@ -1233,6 +1233,7 @@ public abstract class DialogWrapper {
     if (SystemInfo.isWindows) {
       installEnterHook(root);
     }
+    myErrorTextAlarm.setActivationComponent(root);
   }
 
   @NotNull
@@ -1838,15 +1839,14 @@ public abstract class DialogWrapper {
       return;
     }
     myLastErrorText = text;
-    if (myActualSize == null && !StringUtil.isEmpty(text)) {
-      myActualSize = getSize();
-    }
-
     myErrorTextAlarm.cancelAllRequests();
     myErrorTextAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
         final String text = myLastErrorText;
+        if (myActualSize == null && !StringUtil.isEmpty(text)) {
+          myActualSize = getSize();
+        }
         myErrorText.setError(text);
         if (text != null && text.length() > myMaxErrorTextLength) {
           // during the first update, resize only for growing. during a subsequent update,
@@ -2001,12 +2001,19 @@ public abstract class DialogWrapper {
    */
   public interface DoNotAskOption {
 
+    /**
+     * @return default selection state of checkbox (false -> checkbox selected)
+     */
     boolean isToBeShown();
 
-    void setToBeShown(boolean value, int exitCode);
+    /**
+     * @param toBeShown - if dialog should be shown next time (checkbox selected -> false)
+     * @param exitCode of corresponding DialogWrapper
+     */
+    void setToBeShown(boolean toBeShown, int exitCode);
 
     /**
-     * Should be 'true' for checkbox to be visible.
+     * @return true if checkbox should be shown
      */
     boolean canBeHidden();
 

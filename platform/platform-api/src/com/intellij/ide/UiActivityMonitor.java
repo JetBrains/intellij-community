@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,11 @@ import com.intellij.openapi.util.BusyObject;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class UiActivityMonitor {
+  @NotNull
+  public abstract BusyObject getBusy(@NotNull Project project, @NotNull UiActivity ... toWatch);
 
-  public abstract BusyObject getBusy(@NotNull Project project, UiActivity ... toWatch);
-
-  public abstract BusyObject getBusy(UiActivity ... toWatch);
+  @NotNull
+  public abstract BusyObject getBusy(@NotNull UiActivity ... toWatch);
 
   public abstract void addActivity(@NotNull Project project, @NotNull UiActivity activity);
 

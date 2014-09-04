@@ -162,14 +162,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
         @Override
         public void consume(Value value, String error) {
           if (!node.isObsolete()) {
-            value = getViewSupport().transformErrorOnGetUsedReferenceValue(value, error);
-            if (value == null) {
-              node.setPresentation(AllIcons.Debugger.Db_primitive, null, error, false);
-            }
-            else {
-              VariableView.this.value = value;
-              computePresentation(value, node);
-            }
+            setEvaluatedValue(getViewSupport().transformErrorOnGetUsedReferenceValue(value, error), error, node);
           }
         }
       });
@@ -187,16 +180,27 @@ public final class VariableView extends XNamedValue implements VariableContext {
       public void startEvaluation(@NotNull final XFullValueEvaluationCallback callback) {
         ValueModifier valueModifier = variable.getValueModifier();
         assert valueModifier != null;
-        ObsolescentAsyncResults.consume(valueModifier.evaluateGet(variable, getEvaluateContext()), node, new PairConsumer<Value, XValueNode>() {
+        valueModifier.evaluateGet(variable, getEvaluateContext()).doWhenProcessed(new Consumer<Value>() {
           @Override
-          public void consume(Value value, XValueNode node) {
-            callback.evaluated("");
-            VariableView.this.value = value;
-            computePresentation(value, node);
+          public void consume(Value value) {
+            if (!node.isObsolete()) {
+              callback.evaluated("");
+              setEvaluatedValue(value, null, node);
+            }
           }
         });
       }
     }.setShowValuePopup(false));
+  }
+
+  private void setEvaluatedValue(@Nullable Value value, @Nullable String error, @NotNull XValueNode node) {
+    if (value == null) {
+      node.setPresentation(AllIcons.Debugger.Db_primitive, null, error == null ? "Internal Error" : error, false);
+    }
+    else {
+      this.value = value;
+      computePresentation(value, node);
+    }
   }
 
   @NotNull

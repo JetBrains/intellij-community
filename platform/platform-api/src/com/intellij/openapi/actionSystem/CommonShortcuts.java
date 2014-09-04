@@ -15,9 +15,11 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -148,9 +150,13 @@ public class CommonShortcuts {
     return shortcutsById(IdeActions.ACTION_DELETE);
   }
 
+  @NotNull
   private static CustomShortcutSet shortcutsById(String actionId) {
-    if (ApplicationManager.getApplication() == null) return new CustomShortcutSet(Shortcut.EMPTY_ARRAY);
-
-    return new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId));
+    Application application = ApplicationManager.getApplication();
+    KeymapManager keymapManager = application == null ? null : application.getComponent(KeymapManager.class);
+    if (keymapManager == null) {
+      return new CustomShortcutSet(Shortcut.EMPTY_ARRAY);
+    }
+    return new CustomShortcutSet(keymapManager.getActiveKeymap().getShortcuts(actionId));
   }
 }

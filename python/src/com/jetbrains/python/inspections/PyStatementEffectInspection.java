@@ -72,9 +72,6 @@ public class PyStatementEffectInspection extends PyInspection {
       final PyTryPart tryPart = PsiTreeUtil.getParentOfType(node, PyTryPart.class);
       if (tryPart != null) {
         final PyStatementList statementList = tryPart.getStatementList();
-        if (statementList == null) {
-          return;
-        }
         if (statementList.getStatements().length == 1 && statementList.getStatements()[0] == node) {
           return;
         }

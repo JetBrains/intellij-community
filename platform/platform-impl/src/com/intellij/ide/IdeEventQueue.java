@@ -130,9 +130,9 @@ public class IdeEventQueue extends EventQueue {
 
 
   private final Set<EventDispatcher> myDispatchers = new LinkedHashSet<EventDispatcher>();
-  private final Set<EventDispatcher> myPostprocessors = new LinkedHashSet<EventDispatcher>();
-
+  private final Set<EventDispatcher> myPostProcessors = new LinkedHashSet<EventDispatcher>();
   private final Set<Runnable> myReady = new HashSet<Runnable>();
+
   private boolean myKeyboardBusy;
   private boolean myDispatchingFocusEvent;
 
@@ -148,16 +148,14 @@ public class IdeEventQueue extends EventQueue {
 
   private IdeEventQueue() {
     addIdleTimeCounterRequest();
-    final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
 
-    //noinspection HardCodedStringLiteral
+    final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     keyboardFocusManager.addPropertyChangeListener("permanentFocusOwner", new PropertyChangeListener() {
 
       @Override
       public void propertyChange(final PropertyChangeEvent e) {
         final Application application = ApplicationManager.getApplication();
         if (application == null) {
-
           // We can get focus event before application is initialized
           return;
         }
@@ -171,6 +169,12 @@ public class IdeEventQueue extends EventQueue {
     });
 
     addDispatcher(new WindowsAltSupressor(), null);
+
+    Application app = ApplicationManager.getApplication();
+    if (app != null && app.isUnitTestMode()) {
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
+      ourAppIsLoaded = true;
+    }
   }
 
 
@@ -289,11 +293,11 @@ public class IdeEventQueue extends EventQueue {
   }
 
   public void addPostprocessor(EventDispatcher dispatcher, @Nullable Disposable parent) {
-    _addProcessor(dispatcher, parent, myPostprocessors);
+    _addProcessor(dispatcher, parent, myPostProcessors);
   }
 
   public void removePostprocessor(EventDispatcher dispatcher) {
-    myPostprocessors.remove(dispatcher);
+    myPostProcessors.remove(dispatcher);
   }
 
   private static void _addProcessor(final EventDispatcher dispatcher, Disposable parent, final Set<EventDispatcher> set) {
@@ -344,8 +348,26 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
+  private static boolean ourAppIsLoaded = false;
+
+  private static boolean appIsLoaded() {
+    if (ourAppIsLoaded) return true;
+    boolean loaded = IdeaApplication.isLoaded();
+    if (loaded) ourAppIsLoaded = true;
+    return loaded;
+  }
+
   @Override
   public void dispatchEvent(AWTEvent e) {
+    if (!appIsLoaded()) {
+      try {
+        super.dispatchEvent(e);
+      }
+      catch (Throwable t) {
+        processException(t);
+      }
+      return;
+    }
 
     fixNonEnglishKeyboardLayouts(e);
 
@@ -362,21 +384,25 @@ public class IdeEventQueue extends EventQueue {
       _dispatchEvent(e, false);
     }
     catch (Throwable t) {
-      if (!myToolkitBugsProcessor.process(t)) {
-        PluginManager.processException(t);
-      }
+      processException(t);
     }
     finally {
       myIsInInputEvent = wasInputEvent;
       myCurrentEvent = oldEvent;
 
-      for (EventDispatcher each : myPostprocessors) {
+      for (EventDispatcher each : myPostProcessors) {
         each.dispatch(e);
       }
 
       if (e instanceof KeyEvent) {
         maybeReady();
       }
+    }
+  }
+
+  private void processException(Throwable t) {
+    if (!myToolkitBugsProcessor.process(t)) {
+      PluginManager.processException(t);
     }
   }
 
@@ -722,9 +748,7 @@ public class IdeEventQueue extends EventQueue {
       super.dispatchEvent(e);
     }
     catch (Throwable t) {
-      if (!myToolkitBugsProcessor.process(t)) {
-        PluginManager.processException(t);
-      }
+      processException(t);
     }
     finally {
       myDispatchingFocusEvent = false;
@@ -760,7 +784,7 @@ public class IdeEventQueue extends EventQueue {
   }
 
   private static boolean typeAheadDispatchToFocusManager(AWTEvent e) {
-    if (e instanceof KeyEvent && appIsLoaded()) {
+    if (e instanceof KeyEvent) {
       final KeyEvent event = (KeyEvent)e;
       if (!event.isConsumed()) {
         final IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(event.getComponent());
@@ -769,15 +793,6 @@ public class IdeEventQueue extends EventQueue {
     }
 
     return false;
-  }
-
-  private static boolean ourAppIsLoaded = false;
-
-  private static boolean appIsLoaded() {
-    if (ourAppIsLoaded) return true;
-    boolean loaded = IdeaApplication.isLoaded();
-    if (loaded) ourAppIsLoaded = true;
-    return loaded;
   }
 
   public void flushQueue() {

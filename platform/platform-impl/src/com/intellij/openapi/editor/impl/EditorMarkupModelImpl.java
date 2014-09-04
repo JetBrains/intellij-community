@@ -42,6 +42,7 @@ import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
@@ -127,9 +128,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
   void recalcEditorDimensions() {
     EditorImpl.MyScrollBar scrollBar = myEditor.getVerticalScrollBar();
-    int scrollBarHeight = scrollBar.getSize().height;
+    int scrollBarHeight = Math.max(0, scrollBar.getSize().height);
 
     myEditorScrollbarTop = scrollBar.getDecScrollButtonHeight()/* + 1*/;
+    assert myEditorScrollbarTop>=0;
     int editorScrollbarBottom = scrollBar.getIncScrollButtonHeight();
     myEditorTargetHeight = scrollBarHeight - myEditorScrollbarTop - editorScrollbarBottom;
     myEditorSourceHeight = myEditor.getPreferredHeight();
@@ -758,20 +760,32 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                           Color color,
                           boolean drawTopDecoration,
                           boolean drawBottomDecoration) {
+      GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
       int x = isMirrored() ? 3 : 5;
       int paintWidth = width;
       boolean flatStyle = Registry.is("ide.new.markup.markers");
       if (thinErrorStripeMark) {
         paintWidth /= 2;
-        paintWidth += flatStyle ? 0 : 1;
+        paintWidth += flatStyle ? -2 : 1;
         x = isMirrored() ? width + 2 : 0;
+        if (yEnd - yStart < 6) {
+          yStart -= 1;
+          yEnd += yEnd-yStart - 1;
+        }
       }
       if (color == null) return;
-      Color darker = UIUtil.isUnderDarcula()? color : ColorUtil.shift(color, 0.75);
+      Color darker = color;
+      if (!UIUtil.isUnderDarcula()) {
+        float[] hsb = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
+        hsb[2] = Math.min(1f, hsb[2] * 0.85f);
+        //noinspection UseJBColor
+        darker = new Color(Color.HSBtoRGB(hsb[0], hsb[1], hsb[2]));
+      }
 
       if (flatStyle) {
         g.setColor(darker);
-        g.fillRect(x, yStart, paintWidth, yEnd - yStart + 1);
+        g.fillRoundRect(x, yStart, paintWidth, yEnd - yStart, 3,3);
+        config.restore();
         return;
       }
 
@@ -794,6 +808,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       }
       //right decoration
       UIUtil.drawLine(g, x + paintWidth - 2, yStart, x + paintWidth - 2, yEnd/* - 1*/);
+      config.restore();
     }
 
     // mouse events
@@ -1056,29 +1071,30 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     int startLineNumber = end == -1 ? 0 : offsetToLine(start, document);
     int startY;
     int lineCount;
-    if (myEditorSourceHeight < myEditorTargetHeight) {
+    int editorTargetHeight = Math.max(0, myEditorTargetHeight);
+    if (myEditorSourceHeight < editorTargetHeight) {
       lineCount = 0;
       startY = myEditorScrollbarTop + startLineNumber * myEditor.getLineHeight();
     }
     else {
       lineCount = myEditorSourceHeight / myEditor.getLineHeight();
-      startY = myEditorScrollbarTop + (int)((float)startLineNumber / lineCount * myEditorTargetHeight);
+      startY = myEditorScrollbarTop + (int)((float)startLineNumber / lineCount * editorTargetHeight);
     }
 
     int endY;
     int endLineNumber = offsetToLine(end, document);
     if (end == -1 || start == -1) {
-      endY = Math.min(myEditorSourceHeight, myEditorTargetHeight);
+      endY = Math.min(myEditorSourceHeight, editorTargetHeight);
     }
     else if (start == end || offsetToLine(start, document) == endLineNumber) {
       endY = startY; // both offsets are on the same line, no need to recalc Y position
     }
     else {
-      if (myEditorSourceHeight < myEditorTargetHeight) {
+      if (myEditorSourceHeight < editorTargetHeight) {
         endY = myEditorScrollbarTop + endLineNumber * myEditor.getLineHeight();
       }
       else {
-        endY = myEditorScrollbarTop + (int)((float)endLineNumber / lineCount * myEditorTargetHeight);
+        endY = myEditorScrollbarTop + (int)((float)endLineNumber / lineCount * editorTargetHeight);
       }
     }
     if (endY < startY) endY = startY;

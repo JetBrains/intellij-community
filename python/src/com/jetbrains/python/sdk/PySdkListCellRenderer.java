@@ -20,6 +20,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -113,7 +114,7 @@ public class PySdkListCellRenderer extends ListCellRendererWrapper<Object> {
       }
     }
     else if (new File(name).exists()) {
-      name = "..." + File.separator + new File(name).getParentFile().getParentFile().getName();
+      name = FileUtil.getLocationRelativeToUserHome(name);
     }
     return name;
   }

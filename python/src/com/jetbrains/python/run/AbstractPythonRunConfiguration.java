@@ -37,10 +37,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.PathMappingSettings;
 import com.intellij.util.PlatformUtils;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonModuleTypeBase;
-import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -64,6 +64,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
   private boolean myUseModuleSdk;
   private boolean myAddContentRoots = true;
   private boolean myAddSourceRoots = true;
+
   protected PathMappingSettings myMappingSettings;
 
   public AbstractPythonRunConfiguration(Project project, final ConfigurationFactory factory) {

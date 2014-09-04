@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -244,7 +244,7 @@ public class SliceLeafAnalyzer {
     final SliceNodeGuide guide = new SliceNodeGuide(treeStructure);
     WalkingState<SliceNode> walkingState = new WalkingState<SliceNode>(guide) {
       @Override
-      public void visit(@NotNull SliceNode element) {
+      public void visit(@NotNull final SliceNode element) {
         element.calculateDupNode();
         node(element, map).clear();
         SliceNode duplicate = element.getDuplicate();
@@ -252,20 +252,21 @@ public class SliceLeafAnalyzer {
           node(element, map).addAll(node(duplicate, map));
         }
         else {
-          final SliceUsage sliceUsage = element.getValue();
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            @Override
+            public void run() {
+              final SliceUsage sliceUsage = element.getValue();
 
-          Collection<? extends AbstractTreeNode> children = element.getChildren();
-          if (children.isEmpty()) {
-            PsiElement value = ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
-              @Override
-              public PsiElement compute() {
-                return sliceUsage.indexNesting == 0 ? sliceUsage.getElement() : null;
+              Collection<? extends AbstractTreeNode> children = element.getChildren();
+              if (children.isEmpty()) {
+                PsiElement value = sliceUsage.indexNesting == 0 ? sliceUsage.getElement() : null;
+                if (value != null) {
+                  node(element, map).addAll(ContainerUtil.singleton(value, LEAF_ELEMENT_EQUALITY));
+                }
               }
-            });
-            if (value != null) {
-              node(element, map).addAll(ContainerUtil.singleton(value, LEAF_ELEMENT_EQUALITY));
             }
-          }
+          });
+
           super.visit(element);
         }
       }

@@ -53,9 +53,9 @@ except:
     from pydevd_exec2 import Exec
 
 try:
-    from urllib import quote
+    from urllib import quote, quote_plus, unquote_plus
 except:
-    from urllib.parse import quote #@UnresolvedImport
+    from urllib.parse import quote, quote_plus, unquote_plus #@UnresolvedImport
 
 
 import os

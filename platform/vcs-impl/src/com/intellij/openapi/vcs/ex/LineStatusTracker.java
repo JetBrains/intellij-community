@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,13 +39,11 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 
 /**
@@ -297,6 +295,23 @@ public class LineStatusTracker {
     }
   }
 
+  private void markFileUnchanged() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        FileDocumentManager.getInstance().saveDocument(myDocument);
+        boolean stillEmpty;
+        synchronized (myLock) {
+          stillEmpty = myRanges.isEmpty();
+        }
+        if (stillEmpty) {
+          // file was modified, and now it's not -> dirty local change
+          myVcsDirtyScopeManager.fileDirty(myVirtualFile);
+        }
+      }
+    });
+  }
+
   private class MyDocumentListener extends DocumentAdapter {
     // We have 3 document versions:
     // * VCS version
@@ -459,20 +474,7 @@ public class LineStatusTracker {
         }
 
         if (myRanges.isEmpty() && myVirtualFile != null) {
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              FileDocumentManager.getInstance().saveDocument(myDocument);
-              boolean stillEmpty;
-              synchronized (myLock) {
-                stillEmpty = myRanges.isEmpty();
-              }
-              if (stillEmpty) {
-                // file was modified, and now it's not -> dirty local change
-                myVcsDirtyScopeManager.fileDirty(myVirtualFile);
-              }
-            }
-          });
+          markFileUnchanged();
         }
       }
     }
@@ -817,6 +819,34 @@ public class LineStatusTracker {
 
           doUpdateRanges(beforeChangedLine1, beforeChangedLine2, shift, beforeTotalLines);
         }
+      }
+      catch (Throwable e) {
+        reinstallRanges();
+        if (e instanceof Error) throw ((Error)e);
+        if (e instanceof RuntimeException) throw ((RuntimeException)e);
+        throw new RuntimeException(e);
+      }
+      finally {
+        mySuppressUpdate = false;
+      }
+    }
+  }
+
+  public void rollbackChanges() {
+    myApplication.assertWriteAccessAllowed();
+
+    synchronized (myLock) {
+      if (myBulkUpdate) return;
+
+      try {
+        mySuppressUpdate = true;
+
+        myDocument.setText(myVcsDocument.getText());
+
+        removeAnathema();
+        removeHighlightersFromMarkupModel();
+
+        markFileUnchanged();
       }
       catch (Throwable e) {
         reinstallRanges();

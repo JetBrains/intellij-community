@@ -19,10 +19,10 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.io.fs.IFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -42,6 +42,7 @@ public interface StateStorageManager {
   @Nullable
   StateStorage getFileStateStorage(@NotNull String fileSpec);
 
+  @NotNull
   Collection<String> getStorageFileNames();
 
   void clearStateStorage(@NotNull String file);
@@ -58,7 +59,7 @@ public interface StateStorageManager {
   StateStorage getOldStorage(Object component, String componentName, StateStorageOperation operation) throws StateStorageException;
 
   @Nullable
-  String expandMacros(String file);
+  String expandMacros(@NotNull String file);
 
   @Deprecated
   void registerStreamProvider(@SuppressWarnings("deprecation") StreamProvider streamProvider, final RoamingType type);
@@ -81,10 +82,10 @@ public interface StateStorageManager {
     Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile, StateStorage>> files);
 
     @NotNull
-    List<IFile> getAllStorageFilesToSave() throws StateStorageException;
+    List<File> getAllStorageFilesToSave() throws StateStorageException;
 
     @NotNull
-    List<IFile> getAllStorageFiles();
+    List<File> getAllStorageFiles();
 
     void save() throws StateStorageException;
   }

@@ -1156,7 +1156,13 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
 
   @Override
   public void setSelection(int startOffset, int endOffset) {
-    doSetSelection(myEditor.offsetToVisualPosition(startOffset), startOffset, myEditor.offsetToVisualPosition(endOffset), endOffset, false);
+    setSelection(startOffset, endOffset, true);
+  }
+
+  @Override
+  public void setSelection(int startOffset, int endOffset, boolean updateSystemSelection) {
+    doSetSelection(myEditor.offsetToVisualPosition(startOffset), startOffset, myEditor.offsetToVisualPosition(endOffset), endOffset, false,
+                   updateSystemSelection);
   }
 
   @Override
@@ -1173,16 +1179,22 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
 
   @Override
   public void setSelection(@Nullable VisualPosition startPosition, int startOffset, @Nullable VisualPosition endPosition, int endOffset) {
+    setSelection(startPosition, startOffset, endPosition, endOffset, true);
+  }
+
+  @Override
+  public void setSelection(@Nullable VisualPosition startPosition, int startOffset, @Nullable VisualPosition endPosition, int endOffset, boolean updateSystemSelection) {
     VisualPosition startPositionToUse = startPosition == null ? myEditor.offsetToVisualPosition(startOffset) : startPosition;
     VisualPosition endPositionToUse = endPosition == null ? myEditor.offsetToVisualPosition(endOffset) : endPosition;
-    doSetSelection(startPositionToUse, startOffset, endPositionToUse, endOffset, true);
+    doSetSelection(startPositionToUse, startOffset, endPositionToUse, endOffset, true, updateSystemSelection);
   }
 
   private void doSetSelection(@NotNull final VisualPosition startPosition,
                               final int _startOffset,
                               @NotNull final VisualPosition endPosition,
                               final int _endOffset,
-                              final boolean visualPositionAware)
+                              final boolean visualPositionAware,
+                              final boolean updateSystemSelection)
   {
     myEditor.getCaretModel().doWithCaretMerging(new Runnable() {
       public void run() {
@@ -1278,7 +1290,9 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
 
         myEditor.getSelectionModel().fireSelectionChanged(oldSelectionStart, oldSelectionEnd, startOffset, endOffset);
 
-        updateSystemSelection();
+        if (updateSystemSelection) {
+          updateSystemSelection();
+        }
       }
     });
   }

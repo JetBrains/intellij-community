@@ -23,6 +23,7 @@ import com.intellij.openapi.components.impl.stores.StateStorageManagerImpl;
 import com.intellij.openapi.components.impl.stores.StorageData;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.LightPlatformLangTestCase;
+import org.jetbrains.annotations.Nullable;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -43,6 +44,7 @@ public class StateStorageManagerImplTest extends LightPlatformLangTestCase {
         throw new UnsupportedOperationException("Method createStorageData not implemented in " + getClass());
       }
 
+      @Nullable
       @Override
       protected String getOldStorageSpec(Object component, String componentName, StateStorageOperation operation) throws StateStorageException {
         throw new UnsupportedOperationException("Method getOldStorageSpec not implemented in " + getClass());

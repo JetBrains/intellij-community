@@ -316,7 +316,6 @@ public class CodeCompletionHandlerBase {
       final LookupElement[] allItems = data.get();
       if (allItems != null && !indicator.isRunning() && !indicator.isCanceled()) { // the completion is really finished, now we may auto-insert or show lookup
         completionFinished(initContext.getStartOffset(), initContext.getSelectionEndOffset(), indicator, allItems, hasModifiers);
-        checkNotSync(indicator, allItems);
         return;
       }
     }
@@ -424,18 +423,18 @@ public class CodeCompletionHandlerBase {
     LOG.assertTrue(!indicator.isRunning(), "running");
     LOG.assertTrue(!indicator.isCanceled(), "canceled");
 
-    indicator.getLookup().refreshUi(true, false);
-    final AutoCompletionDecision decision = shouldAutoComplete(indicator, items);
-    if (decision == AutoCompletionDecision.SHOW_LOOKUP) {
-      CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(indicator));
-      indicator.getLookup().setCalculating(false);
-      indicator.showLookup();
-    }
-    else if (decision instanceof AutoCompletionDecision.InsertItem) {
-      final Runnable restorePrefix = rememberDocumentState(indicator.getEditor());
+    try {
+      indicator.getLookup().refreshUi(true, false);
+      final AutoCompletionDecision decision = shouldAutoComplete(indicator, items);
+      if (decision == AutoCompletionDecision.SHOW_LOOKUP) {
+        CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(indicator));
+        indicator.getLookup().setCalculating(false);
+        indicator.showLookup();
+      }
+      else if (decision instanceof AutoCompletionDecision.InsertItem) {
+        final Runnable restorePrefix = rememberDocumentState(indicator.getEditor());
 
-      final LookupElement item = ((AutoCompletionDecision.InsertItem)decision).getElement();
-      try {
+        final LookupElement item = ((AutoCompletionDecision.InsertItem)decision).getElement();
         CommandProcessor.getInstance().executeCommand(indicator.getProject(), new Runnable() {
           @Override
           public void run() {
@@ -443,22 +442,22 @@ public class CodeCompletionHandlerBase {
             indicator.getLookup().finishLookup(Lookup.AUTO_INSERT_SELECT_CHAR, item);
           }
         }, "Autocompletion", null);
-      }
-      catch (Throwable e) {
-        CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
-        LOG.error(e);
-        return;
-      }
 
-      // the insert handler may have started a live template with completion
-      if (CompletionService.getCompletionService().getCurrentCompletion() == null &&
-          // ...or scheduled another autopopup
-          !CompletionServiceImpl.isPhase(CompletionPhase.CommittingDocuments.class)) {
-        CompletionServiceImpl.setCompletionPhase(hasModifiers? new CompletionPhase.InsertedSingleItem(indicator, restorePrefix) : CompletionPhase.NoCompletion);
+        // the insert handler may have started a live template with completion
+        if (CompletionService.getCompletionService().getCurrentCompletion() == null &&
+            // ...or scheduled another autopopup
+            !CompletionServiceImpl.isPhase(CompletionPhase.CommittingDocuments.class)) {
+          CompletionServiceImpl.setCompletionPhase(hasModifiers? new CompletionPhase.InsertedSingleItem(indicator, restorePrefix) : CompletionPhase.NoCompletion);
+        }
+      } else if (decision == AutoCompletionDecision.CLOSE_LOOKUP) {
+        LookupManager.getInstance(indicator.getProject()).hideActiveLookup();
       }
-      checkNotSync(indicator, items);
-    } else if (decision == AutoCompletionDecision.CLOSE_LOOKUP) {
-      LookupManager.getInstance(indicator.getProject()).hideActiveLookup();
+    }
+    catch (Throwable e) {
+      CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+      LOG.error(e);
+    }
+    finally {
       checkNotSync(indicator, items);
     }
   }

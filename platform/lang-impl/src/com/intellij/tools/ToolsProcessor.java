@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jdom.Parent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -134,7 +135,7 @@ abstract public class ToolsProcessor<T extends Tool> extends BaseSchemeProcessor
   protected abstract T createTool();
 
   @Override
-  public Document writeScheme(@NotNull final ToolsGroup<T> scheme) throws WriteExternalException {
+  public Element writeScheme(@NotNull final ToolsGroup<T> scheme) throws WriteExternalException {
     Element groupElement = new Element(TOOL_SET);
     if (scheme.getName() != null) {
       groupElement.setAttribute(ATTRIBUTE_NAME, scheme.getName());
@@ -144,7 +145,7 @@ abstract public class ToolsProcessor<T extends Tool> extends BaseSchemeProcessor
       saveTool(tool, groupElement);
     }
 
-    return new Document(groupElement);
+    return groupElement;
   }
 
   @Override

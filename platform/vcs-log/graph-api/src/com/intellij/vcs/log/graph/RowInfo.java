@@ -32,4 +32,7 @@ public interface RowInfo<CommitId> {
   @NotNull
   Collection<PrintElement> getPrintElements();
 
+  @NotNull
+  RowType getRowType();
+
 }

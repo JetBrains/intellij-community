@@ -20,6 +20,7 @@ import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.siyeh.ig.inheritance.AbstractClassNeverImplementedInspection;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/implicitUsage")
 public class DevKitImplicitUsageProviderTest extends LightCodeInsightFixtureTestCase {
@@ -37,14 +38,35 @@ public class DevKitImplicitUsageProviderTest extends LightCodeInsightFixtureTest
     myFixture.addClass("package com.intellij.util.xml; public interface DomElementVisitor {}");
     myFixture.addClass("package com.intellij.util.xml; public interface GenericAttributeValue<T> extends DomElement {}");
 
-    myFixture.enableInspections(new UnusedSymbolLocalInspection(), new UnusedDeclarationInspection());
+    myFixture.addClass("package com.intellij.jam; public interface JamElement {}");
   }
 
   public void testImplicitUsagesDomElement() {
+    enableImplicitUsageInspections();
     myFixture.testHighlighting("ImplicitUsagesDomElement.java");
   }
 
   public void testImplicitUsagesDomElementVisitor() {
+    enableImplicitUsageInspections();
     myFixture.testHighlighting("ImplicitUsagesDomElementVisitor.java");
+  }
+
+  private void enableImplicitUsageInspections() {
+    myFixture.enableInspections(new UnusedSymbolLocalInspection(), new UnusedDeclarationInspection());
+  }
+
+
+  public void testImplementedAtRuntimeDomElementImpl() {
+    enableImplementedAtRuntimeInspections();
+    myFixture.testHighlighting("ImplementedAtRuntimeDomElementImpl.java");
+  }
+
+  public void testImplementedAtRuntimeJamElementImpl() {
+    enableImplementedAtRuntimeInspections();
+    myFixture.testHighlighting("ImplementedAtRuntimeJamElementImpl.java");
+  }
+
+  private void enableImplementedAtRuntimeInspections() {
+    myFixture.enableInspections(new AbstractClassNeverImplementedInspection());
   }
 }
