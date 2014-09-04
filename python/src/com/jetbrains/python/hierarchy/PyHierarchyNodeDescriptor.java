@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -35,14 +36,14 @@ import java.awt.*;
  * Date: Jul 31, 2009
  * Time: 6:26:37 PM
  */
-public class PyTypeHierarchyNodeDescriptor extends HierarchyNodeDescriptor {
-
-  public PyTypeHierarchyNodeDescriptor(final NodeDescriptor parentDescriptor, @NotNull final PsiElement element, final boolean isBase) {
+public class PyHierarchyNodeDescriptor extends HierarchyNodeDescriptor {
+  public PyHierarchyNodeDescriptor(final NodeDescriptor parentDescriptor, @NotNull final PsiElement element, final boolean isBase) {
     super(element.getProject(), parentDescriptor, element, isBase);
   }
 
-  public PyClass getClassElement() {
-    return (PyClass)myElement;
+  @NotNull
+  public PsiElement getPsiElement() {
+    return myElement;
   }
 
   public boolean isValid() {
@@ -71,10 +72,14 @@ public class PyTypeHierarchyNodeDescriptor extends HierarchyNodeDescriptor {
 
     final ItemPresentation presentation = element.getPresentation();
     if (presentation != null) {
-      final PyClass cl = getClassElement();
-      myHighlightedText.getEnding().addText(cl.getName(), classNameAttributes);
-      myHighlightedText.getEnding()
-        .addText(" (" + cl.getContainingFile().getName() + ")", HierarchyNodeDescriptor.getPackageNameAttributes());
+      if (element instanceof PyFunction) {
+        final PyClass cls = ((PyFunction)element).getContainingClass();
+        if (cls != null) {
+          myHighlightedText.getEnding().addText(cls.getName() + ".");
+        }
+      }
+      myHighlightedText.getEnding().addText(presentation.getPresentableText(), classNameAttributes);
+      myHighlightedText.getEnding().addText(" " + presentation.getLocationString(), HierarchyNodeDescriptor.getPackageNameAttributes());
     }
     myName = myHighlightedText.getText();
 
