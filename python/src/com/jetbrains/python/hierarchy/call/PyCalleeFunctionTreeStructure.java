@@ -35,13 +35,8 @@ public class PyCalleeFunctionTreeStructure extends PyCallHierarchyTreeStructureB
   @Override
   protected List<PsiElement> getChildren(@NotNull PyElement element) {
     final List<PsiElement> callees = new ArrayList<PsiElement>();
-    final PyCallDataManager[] functionManagers = {
-      // TODO: Add dynamic call data manager
-      PyStaticCallDataManager.getInstance(myProject),
-    };
-    for (PyCallDataManager functionManager : functionManagers) {
-      callees.addAll(functionManager.getCallees(element));
-    }
+    // TODO: Add callees from the dynamic call data manager
+    callees.addAll(PyStaticCallHierarchyUtil.getCallees(element));
     return callees;
   }
 }
