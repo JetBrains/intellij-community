@@ -343,7 +343,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     final Matcher matcher = MACRO_PATTERN.matcher(expanded);
     while (matcher.find()) {
       String m = matcher.group(1);
-      if (!myMacros.containsKey(m)) {
+      if (m != null && !myMacros.containsKey(m) && (!ApplicationManager.getApplication().isUnitTestMode() || !m.contains("\\com.jetbrains.php."))) {
         throw new IllegalArgumentException("Unknown macro: " + m + " in storage file spec: " + file);
       }
     }
