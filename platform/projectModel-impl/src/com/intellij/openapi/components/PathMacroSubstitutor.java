@@ -16,6 +16,7 @@
 package com.intellij.openapi.components;
 
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface PathMacroSubstitutor {
@@ -23,7 +24,7 @@ public interface PathMacroSubstitutor {
 
   String collapsePath(@Nullable String path);
 
-  void expandPaths(Element element);
+  void expandPaths(@NotNull Element element);
 
-  void collapsePaths(Element element);
+  void collapsePaths(@NotNull Element element);
 }

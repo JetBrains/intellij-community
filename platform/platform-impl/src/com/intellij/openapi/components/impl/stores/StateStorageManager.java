@@ -40,6 +40,13 @@ public interface StateStorageManager {
   StateStorage getStateStorage(@NotNull Storage storageSpec) throws StateStorageException;
 
   @Nullable
+  StateStorage getStateStorage(@NotNull String fileSpec, @NotNull RoamingType roamingType);
+
+  @Deprecated
+  @Nullable
+  /**
+   * @deprecated Use {@link #getStateStorage(String, com.intellij.openapi.components.RoamingType)}
+    */
   StateStorage getFileStateStorage(@NotNull String fileSpec);
 
   @NotNull

@@ -24,6 +24,7 @@ import com.intellij.openapi.options.CurrentUserHolder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.RoamingTypeDisabled;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -123,21 +124,27 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
   }
 
-  @Override
   @Nullable
-  public StateStorage getFileStateStorage(@NotNull String fileName) {
+  @Override
+  public StateStorage getStateStorage(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
     myStorageLock.lock();
     try {
-      StateStorage stateStorage = myStorages.get(fileName);
+      StateStorage stateStorage = myStorages.get(fileSpec);
       if (stateStorage == null) {
-        stateStorage = createFileStateStorage(fileName);
-        putStorageToMap(fileName, stateStorage);
+        stateStorage = createFileStateStorage(fileSpec, roamingType);
+        putStorageToMap(fileSpec, stateStorage);
       }
       return stateStorage;
     }
     finally {
       myStorageLock.unlock();
     }
+  }
+
+  @Override
+  @Nullable
+  public StateStorage getFileStateStorage(@NotNull String fileSpec) {
+    return getStateStorage(fileSpec, RoamingType.PER_USER);
   }
 
   @NotNull
@@ -185,7 +192,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     if (!storageSpec.stateSplitter().equals(StateSplitter.class)) {
       return createDirectoryStateStorage(storageSpec.file(), storageSpec.stateSplitter());
     }
-    return createFileStateStorage(storageSpec.file());
+    return createFileStateStorage(storageSpec.file(), storageSpec.roamingType());
   }
 
   private static String getStorageSpecId(Storage storageSpec) {
@@ -231,7 +238,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   @Nullable
-  private StateStorage createFileStateStorage(@NotNull final String fileSpec) {
+  private StateStorage createFileStateStorage(@NotNull final String fileSpec, @Nullable RoamingType roamingType) {
     String expandedFile = expandMacros(fileSpec);
     if (expandedFile == null) {
       myStorages.put(fileSpec, null);
@@ -242,8 +249,12 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       throw new IllegalArgumentException("Extension is missing for storage file: " + expandedFile);
     }
 
-    return new FileBasedStorage(getMacroSubstitutor(fileSpec), getStreamProvider(), expandedFile, fileSpec, myRootTagName, this,
-                                myPicoContainer, ComponentRoamingManager.getInstance(), this) {
+    if (fileSpec.equals(StoragePathMacros.WORKSPACE_FILE)) {
+      roamingType = RoamingType.DISABLED;
+    }
+
+    return new FileBasedStorage(expandedFile, fileSpec, roamingType, getMacroSubstitutor(fileSpec), myRootTagName, this,
+                                myPicoContainer, getStreamProvider(), this) {
       @Override
       @NotNull
       protected StorageData createStorageData() {
@@ -425,7 +436,8 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   @Nullable
   public StateStorage getOldStorage(Object component, String componentName, StateStorageOperation operation) throws StateStorageException {
     String oldStorageSpec = getOldStorageSpec(component, componentName, operation);
-    return oldStorageSpec == null ? null : getFileStateStorage(oldStorageSpec);
+    //noinspection deprecation
+    return oldStorageSpec == null ? null : getStateStorage(oldStorageSpec, component instanceof RoamingTypeDisabled ? RoamingType.DISABLED : RoamingType.PER_USER);
   }
 
   @Nullable

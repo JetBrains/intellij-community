@@ -29,11 +29,7 @@ import org.jetbrains.annotations.NotNull;
  */
 @State(
   name = "RecentDirectoryProjectsManager",
-  roamingType = RoamingType.DISABLED,
-  storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/other.xml"
-    )}
+  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", roamingType = RoamingType.DISABLED)}
 )
 public class RecentDirectoryProjectsManagerEx extends RecentDirectoryProjectsManager {
   public RecentDirectoryProjectsManagerEx(MessageBus messageBus) {

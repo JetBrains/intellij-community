@@ -38,7 +38,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleStore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.ModuleStoreImpl");
@@ -56,8 +59,8 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
   }
 
   @Override
-  protected XmlElementStorage getMainStorage() {
-    final XmlElementStorage storage = (XmlElementStorage)getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE);
+  protected FileBasedStorage getMainStorage() {
+    FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getStateStorage(DEFAULT_STATE_STORAGE, RoamingType.PER_USER);
     assert storage != null;
     return storage;
   }
@@ -192,25 +195,19 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
   @Override
   @Nullable
   public VirtualFile getModuleFile() {
-    final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE);
-    assert storage != null;
-    return storage.getVirtualFile();
+    return getMainStorage().getVirtualFile();
   }
 
   @Override
   @NotNull
   public String getModuleFilePath() {
-    final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE);
-    assert storage != null;
-    return storage.getFilePath();
+    return getMainStorage().getFilePath();
   }
 
   @Override
   @NotNull
   public String getModuleFileName() {
-    final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE);
-    assert storage != null;
-    return storage.getFileName();
+    return getMainStorage().getFile().getName();
   }
 
   @Override

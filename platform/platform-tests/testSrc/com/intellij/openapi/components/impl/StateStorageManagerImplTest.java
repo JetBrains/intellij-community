@@ -16,6 +16,7 @@
 package com.intellij.openapi.components.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.StateStorageOperation;
@@ -65,13 +66,13 @@ public class StateStorageManagerImplTest extends LightPlatformLangTestCase {
   }
 
   public void testCreateFileStateStorageMacroSubstituted() {
-    StateStorage data = myStateStorageManager.getFileStateStorage("$MACRO1$/test.xml");
+    StateStorage data = myStateStorageManager.getStateStorage("$MACRO1$/test.xml", RoamingType.PER_USER);
     assertThat(data, is(notNullValue()));
   }
 
   public void testCreateStateStorageAssertionThrownWhenUnknownMacro() {
     try {
-      myStateStorageManager.getFileStateStorage("$UNKNOWN_MACRO$/test.xml");
+      myStateStorageManager.getStateStorage("$UNKNOWN_MACRO$/test.xml", RoamingType.PER_USER);
       fail("Exception expected");
     }
     catch (IllegalArgumentException e) {
@@ -81,7 +82,7 @@ public class StateStorageManagerImplTest extends LightPlatformLangTestCase {
 
   public void testCreateFileStateStorageMacroSubstitutedWhenExpansionHas$() {
     myStateStorageManager.addMacro("DOLLAR_MACRO", "/temp/d$");
-    StateStorage data = myStateStorageManager.getFileStateStorage("$DOLLAR_MACRO$/test.xml");
+    StateStorage data = myStateStorageManager.getStateStorage("$DOLLAR_MACRO$/test.xml", RoamingType.PER_USER);
     assertThat(data, is(notNullValue()));
   }
 }
