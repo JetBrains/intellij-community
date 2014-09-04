@@ -166,15 +166,15 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
       final File dirStore = file.isDirectory() ? new File(file, Project.DIRECTORY_STORE_FOLDER)
                                                : new File(file.getParentFile(), Project.DIRECTORY_STORE_FOLDER);
-      stateStorageManager.addMacro(StoragePathMacros.getMacroName(StoragePathMacros.PROJECT_FILE), new File(dirStore, "misc.xml").getPath());
+      stateStorageManager.addMacro(StoragePathMacros.PROJECT_FILE, new File(dirStore, "misc.xml").getPath());
 
       final File ws = new File(dirStore, "workspace.xml");
-      stateStorageManager.addMacro(StoragePathMacros.getMacroName(StoragePathMacros.WORKSPACE_FILE), ws.getPath());
+      stateStorageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, ws.getPath());
       if (!ws.exists() && !file.isDirectory()) {
         useOldWsContent(filePath, ws);
       }
 
-      stateStorageManager.addMacro(StoragePathMacros.getMacroName(StoragePathMacros.PROJECT_CONFIG_DIR), dirStore.getPath());
+      stateStorageManager.addMacro(StoragePathMacros.PROJECT_CONFIG_DIR, dirStore.getPath());
 
       ApplicationManager.getApplication().invokeAndWait(new Runnable() {
         @Override
@@ -186,10 +186,10 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     else {
       myScheme = StorageScheme.DEFAULT;
 
-      stateStorageManager.addMacro(StoragePathMacros.getMacroName(StoragePathMacros.PROJECT_FILE), filePath);
+      stateStorageManager.addMacro(StoragePathMacros.PROJECT_FILE, filePath);
 
       final String workspacePath = composeWsPath(filePath);
-      stateStorageManager.addMacro(StoragePathMacros.getMacroName(StoragePathMacros.WORKSPACE_FILE), workspacePath);
+      stateStorageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, workspacePath);
 
       ApplicationManager.getApplication().invokeAndWait(new Runnable() {
         @Override

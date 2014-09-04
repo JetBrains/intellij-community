@@ -30,6 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtilRt;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -100,9 +101,14 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   @Override
-  public synchronized void addMacro(String macro, String expansion) {
-    // avoid hundreds of $MODULE_FILE$ instances
-    myMacros.put(("$" + macro + "$").intern(), expansion);
+  public synchronized void addMacro(@NotNull String macro, @NotNull String expansion) {
+    assert !macro.isEmpty();
+    // backward compatibility
+    if (macro.charAt(0) != '$') {
+      LOG.warn("Add macros instead of macro name: " + macro);
+      expansion = '$' + macro + '$';
+    }
+    myMacros.put(macro, expansion);
   }
 
   @Override
@@ -217,33 +223,19 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   @Nullable
   private StateStorage createDirectoryStateStorage(String file, Class<? extends StateSplitter> splitterClass) throws StateStorageException {
-    String expandedFile = expandMacros(file);
-    if (expandedFile == null) {
-      myStorages.put(file, null);
-      return null;
-    }
-
     final StateSplitter splitter;
     try {
-      splitter = splitterClass.newInstance();
+      splitter = ReflectionUtil.newInstance(splitterClass);
     }
-    catch (InstantiationException e) {
+    catch (RuntimeException e) {
       throw new StateStorageException(e);
     }
-    catch (IllegalAccessException e) {
-      throw new StateStorageException(e);
-    }
-
-    return new DirectoryBasedStorage(myPathMacroSubstitutor, expandedFile, splitter, this, myPicoContainer);
+    return new DirectoryBasedStorage(myPathMacroSubstitutor, expandMacros(file), splitter, this, myPicoContainer);
   }
 
   @Nullable
   private StateStorage createFileStateStorage(@NotNull final String fileSpec, @Nullable RoamingType roamingType) {
     String expandedFile = expandMacros(fileSpec);
-    if (expandedFile == null) {
-      myStorages.put(fileSpec, null);
-      return null;
-    }
 
     if (!ourHeadlessEnvironment && PathUtilRt.getFileName(expandedFile).lastIndexOf('.') < 0) {
       throw new IllegalArgumentException("Extension is missing for storage file: " + expandedFile);
@@ -341,26 +333,22 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   private static final Pattern MACRO_PATTERN = Pattern.compile("(\\$[^\\$]*\\$)");
 
   @Override
-  @Nullable
+  @NotNull
   public synchronized String expandMacros(@NotNull String file) {
-    final Matcher matcher = MACRO_PATTERN.matcher(file);
+    String expanded = file;
+    for (String macro : myMacros.keySet()) {
+      expanded = StringUtil.replace(expanded, macro, myMacros.get(macro));
+    }
+
+    final Matcher matcher = MACRO_PATTERN.matcher(expanded);
     while (matcher.find()) {
       String m = matcher.group(1);
-      if (!myMacros.containsKey(m) || !ApplicationManager.getApplication().isUnitTestMode() && myMacros.get(m) == null) {
-        throw new IllegalArgumentException("Unknown macro: " + m + " in storage spec: " + file);
+      if (!myMacros.containsKey(m)) {
+        throw new IllegalArgumentException("Unknown macro: " + m + " in storage file spec: " + file);
       }
     }
 
-    String actualFile = file;
-
-    for (String macro : myMacros.keySet()) {
-      final String replacement = myMacros.get(macro);
-      if (replacement != null) {
-        actualFile = StringUtil.replace(actualFile, macro, replacement);
-      }
-    }
-
-    return actualFile;
+    return expanded;
   }
 
   @NotNull

@@ -92,13 +92,13 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
   }
 
   @Override
-  public void setOptionsPath(final String path) {
-    myStateStorageManager.addMacro(StoragePathMacros.getMacroName(StoragePathMacros.APP_CONFIG), path);
+  public void setOptionsPath(@NotNull String path) {
+    myStateStorageManager.addMacro(StoragePathMacros.APP_CONFIG, path);
   }
 
   @Override
   public void setConfigPath(@NotNull final String configPath) {
-    myStateStorageManager.addMacro(StoragePathMacros.getMacroName(StoragePathMacros.ROOT_CONFIG), configPath);
+    myStateStorageManager.addMacro(StoragePathMacros.ROOT_CONFIG, configPath);
     myConfigPath = configPath;
   }
 

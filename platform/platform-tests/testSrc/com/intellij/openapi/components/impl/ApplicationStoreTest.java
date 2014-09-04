@@ -161,7 +161,7 @@ public class ApplicationStoreTest extends LightPlatformLangTestCase {
         }
       };
 
-      stateStorageManager.addMacro(StoragePathMacros.getMacroName(StoragePathMacros.APP_CONFIG), testAppConfigPath);
+      stateStorageManager.addMacro(StoragePathMacros.APP_CONFIG, testAppConfigPath);
     }
 
     @Override

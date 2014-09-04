@@ -56,7 +56,7 @@ public class StateStorageManagerImplTest extends LightPlatformLangTestCase {
         return null;
       }
     };
-    myStateStorageManager.addMacro("MACRO1", "/temp/m1");
+    myStateStorageManager.addMacro("$MACRO1$", "/temp/m1");
   }
 
   @Override
@@ -76,12 +76,12 @@ public class StateStorageManagerImplTest extends LightPlatformLangTestCase {
       fail("Exception expected");
     }
     catch (IllegalArgumentException e) {
-      assertEquals("Unknown macro: $UNKNOWN_MACRO$ in storage spec: $UNKNOWN_MACRO$/test.xml", e.getMessage());
+      assertEquals("Unknown macro: $UNKNOWN_MACRO$ in storage file spec: $UNKNOWN_MACRO$/test.xml", e.getMessage());
     }
   }
 
   public void testCreateFileStateStorageMacroSubstitutedWhenExpansionHas$() {
-    myStateStorageManager.addMacro("DOLLAR_MACRO", "/temp/d$");
+    myStateStorageManager.addMacro("$DOLLAR_MACRO$", "/temp/d$");
     StateStorage data = myStateStorageManager.getStateStorage("$DOLLAR_MACRO$/test.xml", RoamingType.PER_USER);
     assertThat(data, is(notNullValue()));
   }

@@ -31,7 +31,7 @@ import java.util.Set;
  * @author mike
  */
 public interface StateStorageManager {
-  void addMacro(String macro, String expansion);
+  void addMacro(@NotNull String macro, @NotNull String expansion);
 
   @Nullable
   TrackingPathMacroSubstitutor getMacroSubstitutor();
@@ -65,7 +65,7 @@ public interface StateStorageManager {
   @Nullable
   StateStorage getOldStorage(Object component, String componentName, StateStorageOperation operation) throws StateStorageException;
 
-  @Nullable
+  @NotNull
   String expandMacros(@NotNull String file);
 
   @Deprecated

@@ -28,8 +28,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements SettingsSavingComponent {
@@ -47,63 +45,10 @@ public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements 
     }
     IApplicationStore applicationStore = ((ApplicationImpl)application).getStateStore();
     String baseDirPath = applicationStore.getStateStorageManager().expandMacros(fileSpec);
-    if (baseDirPath != null) {
-      StreamProvider provider = applicationStore.getStateStorageManager().getStreamProvider();
-      SchemesManagerImpl<T, E> manager = new SchemesManagerImpl<T, E>(fileSpec, processor, roamingType, provider, new File(baseDirPath));
-      myRegisteredManagers.add(manager);
-      return manager;
-    }
-    else {
-      return new AbstractSchemesManager<T, E>() {
-        @Override
-        @NotNull
-        public Collection<E> loadSchemes() {
-          return Collections.emptyList();
-        }
-
-        @Override
-        @NotNull
-        public Collection<SharedScheme<E>> loadSharedSchemes(final Collection<T> currentSchemeList) {
-          return Collections.emptyList();
-        }
-
-        @Override
-        public void exportScheme(@NotNull final E scheme, final String name, final String description) {
-        }
-
-        @Override
-        public boolean isImportAvailable() {
-          return false;
-        }
-
-        @Override
-        public boolean isShared(final Scheme scheme) {
-          return false;
-        }
-
-        @Override
-        public void save() {
-        }
-
-        @Override
-        protected void onSchemeDeleted(final Scheme toDelete) {
-        }
-
-        @Override
-        protected void onSchemeAdded(final T scheme) {
-        }
-
-        @Override
-        public boolean isExportAvailable() {
-          return false;
-        }
-
-        @Override
-        public File getRootDirectory() {
-          return null;
-        }
-      };
-    }
+    StreamProvider provider = applicationStore.getStateStorageManager().getStreamProvider();
+    SchemesManagerImpl<T, E> manager = new SchemesManagerImpl<T, E>(fileSpec, processor, roamingType, provider, new File(baseDirPath));
+    myRegisteredManagers.add(manager);
+    return manager;
   }
 
   @Override

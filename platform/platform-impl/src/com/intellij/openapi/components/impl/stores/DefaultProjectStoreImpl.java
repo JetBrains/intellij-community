@@ -114,7 +114,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
     return new StateStorageManager() {
       @Override
-      public void addMacro(String macro, String expansion) {
+      public void addMacro(@NotNull String macro, @NotNull String expansion) {
         throw new UnsupportedOperationException("Method addMacro not implemented in " + getClass());
       }
 
@@ -163,6 +163,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
         storage.finishSave(((MySaveSession)saveSession).saveSession);
       }
 
+      @NotNull
       @Override
       public String expandMacros(@NotNull String file) {
         throw new UnsupportedOperationException("Method expandMacros not implemented in " + getClass());

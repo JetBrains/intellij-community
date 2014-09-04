@@ -32,7 +32,6 @@ import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
 import org.jdom.Attribute;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,12 +44,10 @@ import java.util.Set;
 
 public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleStore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.ModuleStoreImpl");
-  @NonNls private static final String MODULE_FILE_MACRO = "MODULE_FILE";
 
   private final ModuleImpl myModule;
 
-  public static final String DEFAULT_STATE_STORAGE = "$" + MODULE_FILE_MACRO + "$";
-
+  public static final String DEFAULT_STATE_STORAGE = "$MODULE_FILE$";
 
   @SuppressWarnings({"UnusedDeclaration"})
   public ModuleStoreImpl(final ComponentManagerImpl componentManager, final ModuleImpl module) {
@@ -189,7 +186,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
     final StateStorageManager storageManager = getStateStorageManager();
     storageManager.clearStateStorage(DEFAULT_STATE_STORAGE);
-    storageManager.addMacro(MODULE_FILE_MACRO, path);
+    storageManager.addMacro(DEFAULT_STATE_STORAGE, path);
   }
 
   @Override
