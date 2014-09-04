@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.*;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.List;
 
@@ -87,7 +88,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
   private static void checkJetBrainsPlugin(IdeaPlugin ideaPlugin, DomElementAnnotationHolder holder) {
     final Module module = ideaPlugin.getModule();
     if (module == null) return;
-    //    if (!PsiUtil.isIdeaProject(module.getProject())) return;
+    if (!PsiUtil.isIdeaProject(module.getProject())) return;
 
     if (ideaPlugin.getPluginId() == null) return;
 
