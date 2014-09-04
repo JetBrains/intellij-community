@@ -19,9 +19,6 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.execution.ExecutionException;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,7 +28,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -116,7 +112,6 @@ public class PySkeletonRefresher {
   public static void refreshSkeletonsOfSdk(@Nullable Project project,
                                            Component ownerComponent,
                                            String skeletonsPath,
-                                           @Nullable Ref<Boolean> migrationFlag,
                                            @NotNull Sdk sdk)
     throws InvalidSdkException {
     final Map<String, List<String>> errors = new TreeMap<String, List<String>>();
@@ -133,7 +128,7 @@ public class PySkeletonRefresher {
 
       changeGeneratingSkeletons(1);
       try {
-        List<String> sdkErrors = refresher.regenerateSkeletons(checker, migrationFlag);
+        List<String> sdkErrors = refresher.regenerateSkeletons(checker);
         if (sdkErrors.size() > 0) {
           String sdkName = sdk.getName();
           List<String> knownErrors = errors.get(sdkName);
@@ -282,8 +277,7 @@ public class PySkeletonRefresher {
     return mySkeletonsPath;
   }
 
-  public List<String> regenerateSkeletons(@Nullable SkeletonVersionChecker cachedChecker,
-                                          @Nullable Ref<Boolean> migrationFlag) throws InvalidSdkException {
+  public List<String> regenerateSkeletons(@Nullable SkeletonVersionChecker cachedChecker) throws InvalidSdkException {
     final List<String> errorList = new SmartList<String>();
     final String homePath = mySdk.getHomePath();
     final String skeletonsPath = getSkeletonsPath();
@@ -320,17 +314,6 @@ public class PySkeletonRefresher {
 
     final SkeletonHeader oldHeader = readSkeletonHeader(builtinsFile);
     final boolean oldOrNonExisting = oldHeader == null || oldHeader.getVersion() == 0;
-
-    if (migrationFlag != null && !migrationFlag.get() && oldOrNonExisting) {
-      migrationFlag.set(true);
-      Notifications.Bus.notify(
-        new Notification(
-          PythonSdkType.SKELETONS_TOPIC, PyBundle.message("sdk.gen.notify.converting.old.skels"),
-          PyBundle.message("sdk.gen.notify.converting.text"),
-          NotificationType.INFORMATION
-        )
-      );
-    }
 
     if (myPregeneratedSkeletons != null && oldOrNonExisting) {
       indicate("Unpacking pregenerated skeletons...");
