@@ -18,20 +18,18 @@ package com.intellij.debugger.engine;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.*;
+import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.impl.ThreadsPanel;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
-import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
-import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.ExecutionConsoleEx;
@@ -150,25 +148,36 @@ public class JavaDebugProcess extends XDebugProcess {
     };
     session.addSessionListener(new XDebugSessionAdapter() {
       @Override
-      public void beforeSessionResume() {
-        myJavaSession.getProcess().getManagerThread().schedule(new DebuggerCommandImpl() {
-          @Override
-          protected void action() throws Exception {
-            myNodeManager.setHistoryByContext(getDebuggerStateManager().getContext());
-          }
-          @Override
-          public Priority getPriority() {
-            return Priority.NORMAL;
-          }
-        });
+      public void sessionPaused() {
+        saveNodeHistory();
       }
 
       @Override
       public void stackFrameChanged() {
         XStackFrame frame = session.getCurrentStackFrame();
         if (frame instanceof JavaStackFrame) {
-          DebuggerContextUtil.setStackFrame(javaSession.getContextManager(), ((JavaStackFrame)frame).getStackFrameProxy());
+          StackFrameProxyImpl frameProxy = ((JavaStackFrame)frame).getStackFrameProxy();
+          DebuggerContextUtil.setStackFrame(javaSession.getContextManager(), frameProxy);
+          saveNodeHistory(frameProxy);
         }
+      }
+    });
+  }
+
+  public void saveNodeHistory() {
+    saveNodeHistory(getDebuggerStateManager().getContext().getFrameProxy());
+  }
+
+  private void saveNodeHistory(final StackFrameProxyImpl frameProxy) {
+    myJavaSession.getProcess().getManagerThread().invoke(new DebuggerCommandImpl() {
+      @Override
+      protected void action() throws Exception {
+        myNodeManager.setHistoryByContext(frameProxy);
+      }
+
+      @Override
+      public Priority getPriority() {
+        return Priority.NORMAL;
       }
     });
   }

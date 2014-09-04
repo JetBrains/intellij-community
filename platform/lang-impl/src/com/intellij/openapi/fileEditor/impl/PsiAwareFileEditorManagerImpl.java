@@ -102,8 +102,9 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
     return myProblemSolver.isProblemFile(file);
   }
 
+  @NotNull
   @Override
-  public String getFileTooltipText(final VirtualFile file) {
+  public String getFileTooltipText(@NotNull final VirtualFile file) {
     final StringBuilder tooltipText = new StringBuilder();
     final Module module = ModuleUtilCore.findModuleForFile(file, getProject());
     if (module != null) {
@@ -116,7 +117,7 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
   }
 
   @Override
-  protected Editor getOpenedEditor(final Editor editor, final boolean focusEditor) {
+  protected Editor getOpenedEditor(@NotNull final Editor editor, final boolean focusEditor) {
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
     Document document = editor.getDocument();
     PsiFile psiFile = documentManager.getPsiFile(document);
@@ -200,7 +201,7 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
       updateFile(file);
     }
 
-    private void updateFile(final VirtualFile file) {
+    private void updateFile(@NotNull VirtualFile file) {
       queueUpdateFile(file);
     }
   }

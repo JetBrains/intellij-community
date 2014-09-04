@@ -145,14 +145,10 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
   }
 
   public static class RecentlyChangedFilesState {
-    @Transient private List<String> CHANGED_PATHS = new ArrayList<String>();
+    @Transient private final List<String> CHANGED_PATHS = new ArrayList<String>();
 
     public List<String> getChangedFiles() {
       return CHANGED_PATHS;
-    }
-
-    public void setChangedFiles(List<String> changed) {
-      CHANGED_PATHS = changed;
     }
 
     public void register(VirtualFile file) {
@@ -275,7 +271,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
 
       myCurrentChangePlace = placeInfo;
       if (!myChangePlaces.isEmpty()) {
-        final PlaceInfo lastInfo = myChangePlaces.get(myChangePlaces.size() - 1);
+        final PlaceInfo lastInfo = myChangePlaces.getLast();
         if (isSame(placeInfo, lastInfo)) {
           myChangePlaces.removeLast();
         }
@@ -430,7 +426,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     }
   }
 
-  private static boolean removeInvalidFilesFrom(final LinkedList<PlaceInfo> backPlaces) {
+  private static boolean removeInvalidFilesFrom(@NotNull List<PlaceInfo> backPlaces) {
     boolean removed = false;
     for (Iterator<PlaceInfo> iterator = backPlaces.iterator(); iterator.hasNext();) {
       PlaceInfo info = iterator.next();
@@ -456,7 +452,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
 
     myEditorManager.setSelectedEditor(info.getFile(), info.getEditorTypeId());
 
-    final FileEditor        [] editors   = editorsWithProviders.getFirst();
+    final FileEditor[] editors = editorsWithProviders.getFirst();
     final FileEditorProvider[] providers = editorsWithProviders.getSecond();
     for (int i = 0; i < editors.length; i++) {
       String typeId = providers [i].getEditorTypeId();
@@ -483,7 +479,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     return new PlaceInfo(file, state, fileProvider.getEditorTypeId(), myEditorManager.getCurrentWindow());
   }
 
-  private static void clearPlaceList(LinkedList<PlaceInfo> list) {
+  private static void clearPlaceList(@NotNull List<PlaceInfo> list) {
     list.clear();
   }
 
@@ -494,9 +490,9 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     return "IdeDocumentHistory";
   }
 
-  private static void putLastOrMerge(LinkedList<PlaceInfo> list, PlaceInfo next, int limitSizeLimit) {
+  private static void putLastOrMerge(@NotNull LinkedList<PlaceInfo> list, @NotNull PlaceInfo next, int limitSizeLimit) {
     if (!list.isEmpty()) {
-      PlaceInfo prev = list.get(list.size() - 1);
+      PlaceInfo prev = list.getLast();
       if (isSame(prev, next)) {
         list.removeLast();
       }
@@ -522,7 +518,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     private final String myEditorTypeId;
     private final WeakReference<EditorWindow> myWindow;
 
-    public PlaceInfo(@NotNull VirtualFile file, FileEditorState navigationState, String editorTypeId, @Nullable EditorWindow window) {
+    public PlaceInfo(@NotNull VirtualFile file, @NotNull FileEditorState navigationState, @NotNull String editorTypeId, @Nullable EditorWindow window) {
       myNavigationState = navigationState;
       myFile = file;
       myEditorTypeId = editorTypeId;
@@ -533,6 +529,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
       return myWindow.get();
     }
 
+    @NotNull
     public FileEditorState getNavigationState() {
       return myNavigationState;
     }
@@ -542,22 +539,21 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
       return myFile;
     }
 
+    @NotNull
     public String getEditorTypeId() {
       return myEditorTypeId;
     }
 
+    @Override
     public String toString() {
       return getFile().getName() + " " + getNavigationState();
     }
 
   }
 
-  public LinkedList<PlaceInfo> getBackPlaces() {
+  @NotNull
+  public List<PlaceInfo> getBackPlaces() {
     return myBackPlaces;
-  }
-
-  public LinkedList<PlaceInfo> getForwardPlaces() {
-    return myForwardPlaces;
   }
 
   @Override
@@ -572,7 +568,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     myCmdProcessor.executeCommand(myProject, runnable, name, groupId);
   }
 
-  private static boolean isSame(PlaceInfo first, PlaceInfo second) {
+  private static boolean isSame(@NotNull PlaceInfo first, @NotNull PlaceInfo second) {
     if (first.getFile().equals(second.getFile())) {
       FileEditorState firstState = first.getNavigationState();
       FileEditorState secondState = second.getNavigationState();

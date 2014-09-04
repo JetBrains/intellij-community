@@ -36,7 +36,7 @@ public interface SearchableConfigurable extends Configurable {
     boolean hasOwnContent();
 
     /**
-     * @deprecated use {@link ConfigurableProvider#isConfigurableProvided()} instead
+     * @deprecated use {@link ConfigurableProvider#canCreateConfigurable()} instead
      *             to specify configurables which should not be visible
      */
     @Deprecated

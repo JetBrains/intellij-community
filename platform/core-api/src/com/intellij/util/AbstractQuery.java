@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.concurrency.AsyncFuture;
-import com.intellij.concurrency.AsyncFutureFactory;
-import com.intellij.concurrency.AsyncFutureResult;
-import com.intellij.concurrency.FinallyFuture;
+import com.intellij.concurrency.AsyncUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,26 +82,13 @@ public abstract class AbstractQuery<Result> implements Query<Result> {
   @NotNull
   @Override
   public AsyncFuture<Boolean> forEachAsync(@NotNull Processor<Result> consumer) {
-    assertNotProcessing();
-    myIsProcessing = true;
-    return new FinallyFuture<Boolean>(processResultsAsync(consumer), new Runnable() {
-      @Override
-      public void run() {
-        myIsProcessing = false;
-      }
-    });
+    return AsyncUtil.wrapBoolean(forEach(consumer));
   }
 
   protected abstract boolean processResults(@NotNull Processor<Result> consumer);
 
   @NotNull
   protected AsyncFuture<Boolean> processResultsAsync(@NotNull Processor<Result> consumer) {
-    final AsyncFutureResult<Boolean> result = AsyncFutureFactory.getInstance().createAsyncFutureResult();
-    try {
-      result.set(processResults(consumer));
-    } catch (Throwable t) {
-      result.setException(t);
-    }
-    return result;
+    return AsyncUtil.wrapBoolean(processResults(consumer));
   }
 }

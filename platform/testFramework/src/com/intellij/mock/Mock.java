@@ -435,7 +435,7 @@ public class Mock {
     }
 
     @Override
-    public void setSelectedEditor(@NotNull VirtualFile file, String fileEditorProviderId) {
+    public void setSelectedEditor(@NotNull VirtualFile file, @NotNull String fileEditorProviderId) {
     }
   }
 

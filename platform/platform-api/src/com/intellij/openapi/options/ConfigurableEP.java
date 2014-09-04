@@ -175,13 +175,13 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
     return getDisplayName();
   }
 
-  public boolean isConfigurableProvided() {
+  public boolean canCreateConfigurable() {
     if (providerClass == null) {
       return implementationClass != null || instanceClass != null;
     }
     try {
       ConfigurableProvider provider = instantiate(providerClass, myPicoContainer);
-      return provider.isConfigurableProvided(); // do not load heavy configurables
+      return provider.canCreateConfigurable(); // do not load heavy configurables
     }
     catch (Exception ignored) {
       return true; // see InstanceFromProviderFactory#compute
@@ -191,7 +191,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
   private class InstanceFromProviderFactory extends AtomicNotNullLazyValue<ConfigurableProvider> implements NullableFactory<T> {
     public T create() {
       ConfigurableProvider provider = getValue();
-      return provider.isConfigurableProvided()
+      return provider.canCreateConfigurable()
              ? (T)provider.createConfigurable()
              : null;
     }
