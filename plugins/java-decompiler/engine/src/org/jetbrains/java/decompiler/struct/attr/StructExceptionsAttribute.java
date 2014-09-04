@@ -17,21 +17,28 @@ package org.jetbrains.java.decompiler.struct.attr;
 
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 
+import java.io.DataInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class StructExceptionsAttribute extends StructGeneralAttribute {
 
-  private List<Integer> throwsExceptions = new ArrayList<Integer>();
+  private List<Integer> throwsExceptions;
 
-  public void initContent(ConstantPool pool) {
-
-    name = ATTRIBUTE_EXCEPTIONS;
-
-    int length = 2 + (((info[0] & 0xFF) << 8) | (info[1] & 0xFF)) * 2;
-    for (int i = 2; i < length; i += 2) {
-      int index = ((info[i] & 0xFF) << 8) | (info[i + 1] & 0xFF);
-      throwsExceptions.add(index);
+  @Override
+  public void initContent(ConstantPool pool) throws IOException {
+    DataInputStream data = stream();
+    int len = data.readUnsignedShort();
+    if (len > 0) {
+      throwsExceptions = new ArrayList<Integer>(len);
+      for (int i = 0; i < len; i++) {
+        throwsExceptions.add(data.readUnsignedShort());
+      }
+    }
+    else {
+      throwsExceptions = Collections.emptyList();
     }
   }
 
@@ -41,9 +48,5 @@ public class StructExceptionsAttribute extends StructGeneralAttribute {
 
   public List<Integer> getThrowsExceptions() {
     return throwsExceptions;
-  }
-
-  public void setThrowsExceptions(List<Integer> throwsExceptions) {
-    this.throwsExceptions = throwsExceptions;
   }
 }

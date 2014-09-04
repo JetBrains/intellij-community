@@ -16,25 +16,44 @@
 package org.jetbrains.java.decompiler.struct.attr;
 
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
+import org.jetbrains.java.decompiler.util.DataInputFullStream;
 
+import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 
+/*
+  u2 local_variable_table_length;
+  local_variable {
+    u2 start_pc;
+    u2 length;
+    u2 name_index;
+    u2 descriptor_index;
+    u2 index;
+  }
+*/
 public class StructLocalVariableTableAttribute extends StructGeneralAttribute {
 
-  private HashMap<Integer, String> mapVarNames = new HashMap<Integer, String>();
+  private Map<Integer, String> mapVarNames = new HashMap<Integer, String>();
 
-  public void initContent(ConstantPool pool) {
+  @Override
+  public void initContent(ConstantPool pool) throws IOException {
+    DataInputFullStream data = stream();
 
-    name = ATTRIBUTE_LOCAL_VARIABLE_TABLE;
-
-    int len = ((info[0] & 0xFF) << 8) | (info[1] & 0xFF);
-
-    int ind = 6;
-    for (int i = 0; i < len; i++, ind += 10) {
-      int nindex = ((info[ind] & 0xFF) << 8) | (info[ind + 1] & 0xFF);
-      int vindex = ((info[ind + 4] & 0xFF) << 8) | (info[ind + 5] & 0xFF);
-
-      mapVarNames.put(vindex, pool.getPrimitiveConstant(nindex).getString());
+    int len = data.readUnsignedShort();
+    if (len > 0) {
+      mapVarNames = new HashMap<Integer, String>(len);
+      for (int i = 0; i < len; i++) {
+        data.discard(4);
+        int nameIndex = data.readUnsignedShort();
+        data.discard(2);
+        int varIndex = data.readUnsignedShort();
+        mapVarNames.put(varIndex, pool.getPrimitiveConstant(nameIndex).getString());
+      }
+    }
+    else {
+      mapVarNames = Collections.emptyMap();
     }
   }
 
@@ -42,7 +61,7 @@ public class StructLocalVariableTableAttribute extends StructGeneralAttribute {
     mapVarNames.putAll(attr.getMapVarNames());
   }
 
-  public HashMap<Integer, String> getMapVarNames() {
+  public Map<Integer, String> getMapVarNames() {
     return mapVarNames;
   }
 }

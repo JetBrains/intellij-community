@@ -19,7 +19,6 @@ import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
 import org.jetbrains.java.decompiler.struct.consts.PooledConstant;
 
-import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -27,49 +26,41 @@ import java.util.List;
 
 public class StructBootstrapMethodsAttribute extends StructGeneralAttribute {
 
-  private List<LinkConstant> method_refs = new ArrayList<LinkConstant>();
-  private List<List<PooledConstant>> method_arguments = new ArrayList<List<PooledConstant>>();
+  private List<LinkConstant> methodRefs = new ArrayList<LinkConstant>();
+  private List<List<PooledConstant>> methodArguments = new ArrayList<List<PooledConstant>>();
 
-  public void initContent(ConstantPool pool) {
+  @Override
+  public void initContent(ConstantPool pool) throws IOException {
+    DataInputStream data = stream();
 
-    name = ATTRIBUTE_BOOTSTRAP_METHODS;
+    int method_number = data.readUnsignedShort();
 
-    try {
+    for (int i = 0; i < method_number; ++i) {
+      int bootstrap_method_ref = data.readUnsignedShort();
+      int num_bootstrap_arguments = data.readUnsignedShort();
 
-      DataInputStream data = new DataInputStream(new ByteArrayInputStream(info, 0, info.length));
+      List<PooledConstant> list_arguments = new ArrayList<PooledConstant>();
 
-      int method_number = data.readUnsignedShort();
+      for (int j = 0; j < num_bootstrap_arguments; ++j) {
+        int bootstrap_argument_ref = data.readUnsignedShort();
 
-      for (int i = 0; i < method_number; ++i) {
-        int bootstrap_method_ref = data.readUnsignedShort();
-        int num_bootstrap_arguments = data.readUnsignedShort();
-
-        List<PooledConstant> list_arguments = new ArrayList<PooledConstant>();
-
-        for (int j = 0; j < num_bootstrap_arguments; ++j) {
-          int bootstrap_argument_ref = data.readUnsignedShort();
-
-          list_arguments.add(pool.getConstant(bootstrap_argument_ref));
-        }
-
-        method_refs.add(pool.getLinkConstant(bootstrap_method_ref));
-        method_arguments.add(list_arguments);
+        list_arguments.add(pool.getConstant(bootstrap_argument_ref));
       }
-    }
-    catch (IOException ex) {
-      throw new RuntimeException(ex);
+
+      methodRefs.add(pool.getLinkConstant(bootstrap_method_ref));
+      methodArguments.add(list_arguments);
     }
   }
 
   public int getMethodsNumber() {
-    return method_refs.size();
+    return methodRefs.size();
   }
 
   public LinkConstant getMethodReference(int index) {
-    return method_refs.get(index);
+    return methodRefs.get(index);
   }
 
   public List<PooledConstant> getMethodArguments(int index) {
-    return method_arguments.get(index);
+    return methodArguments.get(index);
   }
 }

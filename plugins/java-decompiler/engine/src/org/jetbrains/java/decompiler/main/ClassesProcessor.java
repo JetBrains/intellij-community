@@ -61,10 +61,10 @@ public class ClassesProcessor {
           StructInnerClassesAttribute inner = (StructInnerClassesAttribute)cl.getAttributes().getWithKey("InnerClasses");
           if (inner != null) {
 
-            for (int i = 0; i < inner.getClassentries().size(); i++) {
+            for (int i = 0; i < inner.getClassEntries().size(); i++) {
 
-              int[] entry = inner.getClassentries().get(i);
-              String[] strentry = inner.getStringentries().get(i);
+              int[] entry = inner.getClassEntries().get(i);
+              String[] strentry = inner.getStringEntries().get(i);
 
               Object[] arr = new Object[4]; // arr[0] not used
 
@@ -165,8 +165,8 @@ public class ClassesProcessor {
 
               StructClass scl = supernode.classStruct;
               StructInnerClassesAttribute inner = (StructInnerClassesAttribute)scl.getAttributes().getWithKey("InnerClasses");
-              for (int i = 0; i < inner.getStringentries().size(); i++) {
-                String nestedClass = inner.getStringentries().get(i)[0];
+              for (int i = 0; i < inner.getStringEntries().size(); i++) {
+                String nestedClass = inner.getStringEntries().get(i)[0];
                 if (!setNestedClasses.contains(nestedClass)) {
                   continue;
                 }

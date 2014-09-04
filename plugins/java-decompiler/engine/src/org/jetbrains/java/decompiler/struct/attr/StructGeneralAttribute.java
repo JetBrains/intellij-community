@@ -16,6 +16,10 @@
 package org.jetbrains.java.decompiler.struct.attr;
 
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
+import org.jetbrains.java.decompiler.util.DataInputFullStream;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 
 /*
   attribute_info {
@@ -44,9 +48,8 @@ public class StructGeneralAttribute {
   public static final String ATTRIBUTE_SYNTHETIC = "Synthetic";
   public static final String ATTRIBUTE_DEPRECATED = "Deprecated";
 
-  protected String name;
-  protected byte[] info;
-
+  private String name;
+  private byte[] info;
 
   public static StructGeneralAttribute createAttribute(String name) {
     StructGeneralAttribute attr;
@@ -100,7 +103,11 @@ public class StructGeneralAttribute {
     return attr;
   }
 
-  public void initContent(ConstantPool pool) { }
+  protected DataInputFullStream stream() {
+    return new DataInputFullStream(new ByteArrayInputStream(info));
+  }
+
+  public void initContent(ConstantPool pool) throws IOException { }
 
   public void setInfo(byte[] info) {
     this.info = info;

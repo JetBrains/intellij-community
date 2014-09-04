@@ -201,7 +201,7 @@ public class NestedClassProcessor {
           StructEnclosingMethodAttribute attr =
             (StructEnclosingMethodAttribute)child.classStruct.getAttributes().getWithKey("EnclosingMethod");
           if (attr != null && attr.getMethodName() != null) {
-            if (node.classStruct.qualifiedName.equals(attr.getClassname()) &&
+            if (node.classStruct.qualifiedName.equals(attr.getClassName()) &&
                 node.classStruct.getMethod(attr.getMethodName(), attr.getMethodDescriptor()) != null) {
               child.enclosingMethod = InterpreterUtil.makeUniqueKey(attr.getMethodName(), attr.getMethodDescriptor());
               continue;

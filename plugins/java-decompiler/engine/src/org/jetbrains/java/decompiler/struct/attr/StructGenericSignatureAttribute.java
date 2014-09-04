@@ -17,14 +17,16 @@ package org.jetbrains.java.decompiler.struct.attr;
 
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 
+import java.io.IOException;
+
 public class StructGenericSignatureAttribute extends StructGeneralAttribute {
 
   private String signature;
 
-  public void initContent(ConstantPool pool) {
-
-    name = ATTRIBUTE_SIGNATURE;
-    signature = pool.getPrimitiveConstant(((info[0] & 0xFF) << 8) | (info[1] & 0xFF)).getString();
+  @Override
+  public void initContent(ConstantPool pool) throws IOException {
+    int index = stream().readUnsignedShort();
+    signature = pool.getPrimitiveConstant(index).getString();
   }
 
   public String getSignature() {
