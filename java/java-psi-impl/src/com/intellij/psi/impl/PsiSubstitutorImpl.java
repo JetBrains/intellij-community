@@ -389,7 +389,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
             }
             else {
               //unbounded
-              substituted = PsiWildcardType.createExtends(manager, substitutedBoundType);
+              substituted = substitutedBoundType instanceof PsiCapturedWildcardType ? ((PsiCapturedWildcardType)substitutedBoundType).getWildcard() : PsiWildcardType.createExtends(manager, substitutedBoundType);
             }
           }
         }

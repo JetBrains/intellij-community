@@ -351,6 +351,9 @@ public class GenericsUtil {
   @Nullable
   public static PsiType getVariableTypeByExpressionType(@Nullable PsiType type, final boolean openCaptured) {
     if (type == null) return null;
+    if (type instanceof PsiDisjunctionType) {
+      type = ((PsiDisjunctionType)type).getLeastUpperBound();
+    }
     if (type instanceof PsiCapturedWildcardType) {
       type = ((PsiCapturedWildcardType)type).getWildcard();
     }
