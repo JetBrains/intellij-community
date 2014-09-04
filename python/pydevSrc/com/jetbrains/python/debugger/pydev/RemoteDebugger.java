@@ -368,7 +368,7 @@ public class RemoteDebugger implements ProcessDebugger {
       }
     }
     if (myDebuggerReader != null) {
-      myDebuggerReader.close();
+      myDebuggerReader.stop();
     }
     fireCloseEvent();
   }
