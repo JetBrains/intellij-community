@@ -20,8 +20,6 @@ import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.struct.StructContext;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -30,12 +28,9 @@ public class ImportCollector {
 
   private static final String JAVA_LANG_PACKAGE = "java.lang";
 
-  private HashMap<String, String> mapSimpleNames = new HashMap<String, String>();
-
-  private HashSet<String> setNotImportedNames = new HashSet<String>();
-
+  private Map<String, String> mapSimpleNames = new HashMap<String, String>();
+  private Set<String> setNotImportedNames = new HashSet<String>();
   private String currentPackageSlash = "";
-
   private String currentPackagePoint = "";
 
   public ImportCollector(ClassNode root) {
@@ -77,7 +72,7 @@ public class ImportCollector {
         return retname;
       }
     }
-    else if (node == null || !node.classStruct.isOwn()) {
+    else {
       fullname = fullname.replace('$', '.');
     }
 
@@ -112,18 +107,20 @@ public class ImportCollector {
     return retname == null ? nshort : retname;
   }
 
-  public void writeImports(BufferedWriter writer) throws IOException {
+  public boolean writeImports(StringBuilder buffer) {
+    List<String> imports = packImports();
 
-    for (String s : packImports()) {
-      writer.write("import ");
-      writer.write(s);
-      writer.write(";");
-      writer.write(DecompilerContext.getNewLineSeparator());
+    for (String s : imports) {
+      buffer.append("import ");
+      buffer.append(s);
+      buffer.append(";");
+      buffer.append(DecompilerContext.getNewLineSeparator());
     }
+
+    return imports.size() > 0;
   }
 
   private List<String> packImports() {
-
     List<Entry<String, String>> lst = new ArrayList<Entry<String, String>>(mapSimpleNames.entrySet());
 
     Collections.sort(lst, new Comparator<Entry<String, String>>() {
@@ -138,12 +135,11 @@ public class ImportCollector {
 
     List<String> res = new ArrayList<String>();
     for (Entry<String, String> ent : lst) {
-      if (!setNotImportedNames.contains(ent.getKey()) // not the current class or one of the nested ones. Also not the empty package.
-          && !JAVA_LANG_PACKAGE.equals(ent.getValue())
-          && ent.getValue().length() > 0) {
-
-        String imp = ent.getValue() + "." + ent.getKey();
-        res.add(imp);
+      // exclude a current class or one of the nested ones, java.lang and empty packages
+      if (!setNotImportedNames.contains(ent.getKey()) &&
+          !JAVA_LANG_PACKAGE.equals(ent.getValue()) &&
+          !ent.getValue().isEmpty()) {
+        res.add(ent.getValue() + "." + ent.getKey());
       }
     }
 

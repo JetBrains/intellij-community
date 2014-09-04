@@ -1,8 +1,6 @@
 package pkg;
 
-
 public class TestMethodParameters {
-
    TestMethodParameters(@Deprecated int var1) {
    }
 
@@ -14,7 +12,6 @@ public class TestMethodParameters {
 
    void local() {
       class Local {
-
          Local(@Deprecated int var2) {
          }
 
@@ -25,7 +22,6 @@ public class TestMethodParameters {
    }
 
    static class C2 {
-
       C2(@Deprecated int var1) {
       }
 
@@ -37,7 +33,6 @@ public class TestMethodParameters {
    }
 
    class C1 {
-
       C1(@Deprecated int var2) {
       }
 

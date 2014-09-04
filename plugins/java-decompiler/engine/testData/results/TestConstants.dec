@@ -3,7 +3,6 @@ package pkg;
 import java.util.Date;
 
 public class TestConstants {
-
    static final boolean T = true;
    static final boolean F = false;
    static final char C0 = '\n';
@@ -27,7 +26,6 @@ public class TestConstants {
    static final double DPos = 1.0D / 0.0;
    static final double DMin = 4.9E-324D;
    static final double DMax = 1.7976931348623157E308D;
-
 
    @TestConstants.A(byte.class)
    void m1() {
@@ -70,7 +68,6 @@ public class TestConstants {
    }
 
    @interface A {
-
       Class<?> value();
    }
 }

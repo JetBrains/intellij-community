@@ -1,11 +1,8 @@
 package pkg;
 
-
 public class TestClassVar {
-
    private boolean field_boolean = Math.random() > 0.0D;
    public int field_int = 0;
-
 
    public void testFieldSSAU() {
       for(int var1 = 0; var1 < 10; ++var1) {

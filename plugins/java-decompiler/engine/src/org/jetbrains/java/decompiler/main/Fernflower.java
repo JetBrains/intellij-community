@@ -26,8 +26,6 @@ import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructContext;
 import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
 
-import java.io.BufferedWriter;
-import java.io.StringWriter;
 import java.util.Map;
 
 
@@ -81,9 +79,9 @@ public class Fernflower implements IDecompiledData {
 
   public String getClassContent(StructClass cl) {
     try {
-      StringWriter writer = new StringWriter();
-      classesProcessor.writeClass(cl, new BufferedWriter(writer));
-      return writer.toString();
+      StringBuilder buffer = new StringBuilder();
+      classesProcessor.writeClass(cl, buffer);
+      return buffer.toString();
     }
     catch (Throwable ex) {
       DecompilerContext.getLogger().writeMessage("Class " + cl.qualifiedName + " couldn't be fully decompiled.", ex);

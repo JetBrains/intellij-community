@@ -60,12 +60,16 @@ public class InterpreterUtil {
   }
 
   public static String getIndentString(int length) {
-    String indent = (String)DecompilerContext.getProperty(IFernflowerPreferences.INDENT_STRING);
     StringBuilder buf = new StringBuilder();
-    while (length-- > 0) {
-      buf.append(indent);
-    }
+    appendIndent(buf, length);
     return buf.toString();
+  }
+
+  public static void appendIndent(StringBuilder buffer, int length) {
+    String indent = (String)DecompilerContext.getProperty(IFernflowerPreferences.INDENT_STRING);
+    while (length-- > 0) {
+      buffer.append(indent);
+    }
   }
 
   public static boolean equalSets(Collection<?> c1, Collection<?> c2) {

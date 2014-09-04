@@ -34,15 +34,13 @@ import org.jetbrains.java.decompiler.struct.attr.StructInnerClassesAttribute;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.*;
 import java.util.Map.Entry;
 
 public class ClassesProcessor {
 
-  private HashMap<String, ClassNode> mapRootClasses = new HashMap<String, ClassNode>();
+  private Map<String, ClassNode> mapRootClasses = new HashMap<String, ClassNode>();
 
   public ClassesProcessor(StructContext context) {
 
@@ -96,7 +94,7 @@ public class ClassesProcessor {
               arr[3] = entry[3];
 
               // enclosing class
-              String enclClassName = null;
+              String enclClassName;
               if (entry[1] != 0) {
                 enclClassName = strentry[1];
               }
@@ -186,9 +184,9 @@ public class ClassesProcessor {
 
                 Object[] arr = mapInnerClasses.get(nestedClass);
 
-                if ((Integer)arr[2] == ClassNode.CLASS_MEMBER) {
+                //if ((Integer)arr[2] == ClassNode.CLASS_MEMBER) {
                   // FIXME: check for consistent naming
-                }
+                //}
 
                 nestednode.type = (Integer)arr[2];
                 nestednode.simpleName = (String)arr[1];
@@ -234,56 +232,49 @@ public class ClassesProcessor {
     }
   }
 
-
-  public void writeClass(StructClass cl, BufferedWriter writer) throws IOException {
-
+  public void writeClass(StructClass cl, StringBuilder buffer) throws IOException {
     ClassNode root = mapRootClasses.get(cl.qualifiedName);
     if (root.type != ClassNode.CLASS_ROOT) {
       return;
     }
 
     try {
-      DecompilerContext.setImportCollector(new ImportCollector(root));
+      ImportCollector importCollector = new ImportCollector(root);
+      DecompilerContext.setImportCollector(importCollector);
       DecompilerContext.setCounterContainer(new CounterContainer());
 
-      // lambda processing
-      LambdaProcessor lambda_proc = new LambdaProcessor();
-      lambda_proc.processClass(root);
+      new LambdaProcessor().processClass(root);
 
       // add simple class names to implicit import
-      addClassnameToImport(root, DecompilerContext.getImportCollector());
-      // build wrappers for all nested classes
-      // that's where the actual processing takes place
+      addClassnameToImport(root, importCollector);
+
+      // build wrappers for all nested classes (that's where actual processing takes place)
       initWrappers(root);
 
-      NestedClassProcessor nestedproc = new NestedClassProcessor();
-      nestedproc.processClass(root, root);
+      new NestedClassProcessor().processClass(root, root);
 
-      NestedMemberAccess nstmember = new NestedMemberAccess();
-      nstmember.propagateMemberAccess(root);
+      new NestedMemberAccess().propagateMemberAccess(root);
 
-      ClassWriter clwriter = new ClassWriter();
+      StringBuilder classBuffer = new StringBuilder();
+      new ClassWriter().classToJava(root, classBuffer, 0);
 
-      StringWriter strwriter = new StringWriter();
-      clwriter.classToJava(root, new BufferedWriter(strwriter), 0);
+      String lineSeparator = DecompilerContext.getNewLineSeparator();
 
       int index = cl.qualifiedName.lastIndexOf("/");
       if (index >= 0) {
         String packageName = cl.qualifiedName.substring(0, index).replace('/', '.');
-        writer.write("package ");
-        writer.write(packageName);
-        writer.write(";");
-        writer.write(DecompilerContext.getNewLineSeparator());
-        writer.write(DecompilerContext.getNewLineSeparator());
+        buffer.append("package ");
+        buffer.append(packageName);
+        buffer.append(";");
+        buffer.append(lineSeparator);
+        buffer.append(lineSeparator);
       }
 
-      DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS_NODE, root);
+      if (importCollector.writeImports(buffer)) {
+        buffer.append(lineSeparator);
+      }
 
-      DecompilerContext.getImportCollector().writeImports(writer);
-      writer.write(DecompilerContext.getNewLineSeparator());
-
-      writer.write(strwriter.toString());
-      writer.flush();
+      buffer.append(classBuffer);
     }
     finally {
       destroyWrappers(root);
@@ -327,7 +318,7 @@ public class ClassesProcessor {
     }
   }
 
-  public HashMap<String, ClassNode> getMapRootClasses() {
+  public Map<String, ClassNode> getMapRootClasses() {
     return mapRootClasses;
   }
 
@@ -369,7 +360,7 @@ public class ClassesProcessor {
     public ClassNode(String content_class_name,
                      String content_method_name,
                      String content_method_descriptor,
-                     int content_method_invokation_type,
+                     int content_method_invocation_type,
                      String lambda_class_name,
                      String lambda_method_name,
                      String lambda_method_descriptor,
@@ -386,7 +377,7 @@ public class ClassesProcessor {
       lambda_information.content_class_name = content_class_name;
       lambda_information.content_method_name = content_method_name;
       lambda_information.content_method_descriptor = content_method_descriptor;
-      lambda_information.content_method_invokation_type = content_method_invokation_type;
+      lambda_information.content_method_invocation_type = content_method_invocation_type;
 
       lambda_information.content_method_key =
         InterpreterUtil.makeUniqueKey(lambda_information.content_method_name, lambda_information.content_method_descriptor);
@@ -401,7 +392,7 @@ public class ClassesProcessor {
 
       lambda_information.is_method_reference = is_method_reference;
       lambda_information.is_content_method_static =
-        (lambda_information.content_method_invokation_type == CodeConstants.CONSTANT_MethodHandle_REF_invokeStatic); // FIXME: redundant?
+        (lambda_information.content_method_invocation_type == CodeConstants.CONSTANT_MethodHandle_REF_invokeStatic); // FIXME: redundant?
     }
 
     public ClassNode(int type, StructClass classStruct) {
@@ -428,7 +419,7 @@ public class ClassesProcessor {
       public String content_class_name;
       public String content_method_name;
       public String content_method_descriptor;
-      public int content_method_invokation_type; // values from CONSTANT_MethodHandle_REF_*
+      public int content_method_invocation_type; // values from CONSTANT_MethodHandle_REF_*
 
       public String content_method_key;
 

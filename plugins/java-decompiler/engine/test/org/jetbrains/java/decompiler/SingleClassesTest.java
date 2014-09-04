@@ -28,11 +28,17 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class SingleClassesTest {
+  private File testDataDir;
   private File tempDir;
   private ConsoleDecompiler decompiler;
 
   @Before
   public void setUp() throws IOException {
+    testDataDir = new File("testData");
+    if (!isTestDataDir(testDataDir)) testDataDir = new File("community/plugins/java-decompiler/engine/testData");
+    if (!isTestDataDir(testDataDir)) testDataDir = new File("plugins/java-decompiler/engine/testData");
+    assertTrue(isTestDataDir(testDataDir));
+
     //noinspection SSBasedInspection
     tempDir = File.createTempFile("decompiler_test_", "_dir");
     assertTrue(tempDir.delete());
@@ -52,6 +58,7 @@ public class SingleClassesTest {
     decompiler = null;
     delete(tempDir);
     tempDir = null;
+    testDataDir = null;
   }
 
   @Test public void testClassFields() { doTest("TestClassFields"); }
@@ -69,13 +76,9 @@ public class SingleClassesTest {
 
   private void doTest(final String testName) {
     try {
-      File testDataDir = new File("testData");
-      if (!isTestDataDir(testDataDir)) testDataDir = new File("community/plugins/java-decompiler/engine/testData");
-      if (!isTestDataDir(testDataDir)) testDataDir = new File("plugins/java-decompiler/engine/testData");
-      assertTrue(isTestDataDir(testDataDir));
-
       File classFile = new File(testDataDir, "/classes/pkg/" + testName + ".class");
       assertTrue(classFile.isFile());
+
       decompiler.addSpace(classFile, true);
       File[] innerClasses = classFile.getParentFile().listFiles(new FilenameFilter() {
         @Override
