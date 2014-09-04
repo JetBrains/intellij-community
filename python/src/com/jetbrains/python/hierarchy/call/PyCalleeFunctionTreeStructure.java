@@ -71,13 +71,13 @@ public class PyCalleeFunctionTreeStructure extends HierarchyTreeStructure {
       PsiElement baseClass = element instanceof PyFunction ? ((PyFunction)element).getContainingClass() : null;
 
       for (PsiElement callee : callees) {
-        if (baseClass != null && !isInScope(baseClass, callee, myScopeType)) continue;
-
-        PyHierarchyNodeDescriptor calleeDescriptor = calleeToDescriptorMap.get(callee);
-        if (calleeDescriptor == null) {
-          calleeDescriptor = new PyHierarchyNodeDescriptor(descriptor, callee, false);
-          calleeToDescriptorMap.put(callee, calleeDescriptor);
-          descriptors.add(calleeDescriptor);
+        if (isInScope(baseClass, callee, myScopeType)) {
+          PyHierarchyNodeDescriptor calleeDescriptor = calleeToDescriptorMap.get(callee);
+          if (calleeDescriptor == null) {
+            calleeDescriptor = new PyHierarchyNodeDescriptor(descriptor, callee, false);
+            calleeToDescriptorMap.put(callee, calleeDescriptor);
+            descriptors.add(calleeDescriptor);
+          }
         }
       }
 

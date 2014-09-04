@@ -70,13 +70,13 @@ public class PyCallerFunctionTreeStructure extends HierarchyTreeStructure {
       PsiElement baseClass = element instanceof PyFunction ? ((PyFunction)element).getContainingClass() : null;
 
       for (PsiElement caller : callers) {
-        if (baseClass != null && !isInScope(baseClass, caller, myScopeType)) continue;
-
-        PyHierarchyNodeDescriptor callerDescriptor = callerToDescriptorMap.get(caller);
-        if (callerDescriptor == null) {
-          callerDescriptor = new PyHierarchyNodeDescriptor(descriptor, caller, false);
-          callerToDescriptorMap.put(caller, callerDescriptor);
-          descriptors.add(callerDescriptor);
+        if (isInScope(baseClass, caller, myScopeType)) {
+          PyHierarchyNodeDescriptor callerDescriptor = callerToDescriptorMap.get(caller);
+          if (callerDescriptor == null) {
+            callerDescriptor = new PyHierarchyNodeDescriptor(descriptor, caller, false);
+            callerToDescriptorMap.put(caller, callerDescriptor);
+            descriptors.add(callerDescriptor);
+          }
         }
       }
 
