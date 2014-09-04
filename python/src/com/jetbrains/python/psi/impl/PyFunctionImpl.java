@@ -269,16 +269,6 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       public String getPresentableText() {
         return notNullize(getName(), PyNames.UNNAMED_ELEMENT) + getParameterList().getPresentableText(true);
       }
-
-      @Nullable
-      @Override
-      public String getLocationString() {
-        final PyClass containingClass = getContainingClass();
-        if (containingClass != null) {
-          return "(" + containingClass.getName() + " in " + getPackageForFile(getContainingFile()) + ")";
-        }
-        return super.getLocationString();
-      }
     };
   }
 
