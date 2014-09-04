@@ -596,6 +596,12 @@ public class RemoteDebugger implements ProcessDebugger {
     }
 
     @Override
+    public void stop() {
+      super.stop();
+      close();
+    }
+
+    @Override
     protected void onTextAvailable(@NotNull String text) {
       processResponse(text);
     }
