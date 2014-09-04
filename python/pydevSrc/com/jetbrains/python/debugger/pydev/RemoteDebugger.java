@@ -453,7 +453,6 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   private class DebuggerReader extends BaseOutputReader {
-    private boolean myClosing = false;
     private Reader myReader;
 
     private DebuggerReader(final Reader reader) throws IOException {
@@ -467,7 +466,7 @@ public class RemoteDebugger implements ProcessDebugger {
         while (true) {
           boolean read = readAvailable();
 
-          if (myClosing) {
+          if (isStopped) {
             break;
           }
 
@@ -478,7 +477,7 @@ public class RemoteDebugger implements ProcessDebugger {
         fireCommunicationError();
       }
       finally {
-        closeReader(myReader);
+        close();
         fireExitEvent();
       }
     }
@@ -593,7 +592,7 @@ public class RemoteDebugger implements ProcessDebugger {
     }
 
     public void close() {
-      myClosing = true;
+      closeReader(myReader);
     }
 
     @Override
