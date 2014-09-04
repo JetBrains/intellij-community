@@ -176,12 +176,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
   public Set<EditorsSplitters> getAllSplitters() {
     HashSet<EditorsSplitters> all = new LinkedHashSet<EditorsSplitters>();
-    if (PreviewPanel.isAvailable()) {
-      initUI();
-      EditorWindow window = myPreviewPanel.getWindow();
-      if (window != null) {
-        all.add(window.getOwner());
-      }
+    EditorWindow previewWindow = getPreviewWindow();
+    if (previewWindow != null) {
+      all.add(previewWindow.getOwner());
     }
     all.add(getMainSplitters());
     Set<DockContainer> dockContainers = myDockManager.getContainers();
@@ -260,6 +257,13 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         myPreviewPanel = new PreviewPanel(myProject, this, myDockManager);
       }
     }
+  }
+
+  @Nullable
+  private EditorWindow getPreviewWindow() {
+    if (!PreviewPanel.isAvailable()) return null;
+    initUI();
+    return myPreviewPanel.getWindow();
   }
 
   private static class MyBorder implements Border {
@@ -643,8 +647,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     }
 
     if (wndToOpenIn == null || !wndToOpenIn.isFileOpen(file)) {
-      initUI();
-      EditorWindow previewWindow = PreviewPanel.isAvailable() && myPreviewPanel != null ? myPreviewPanel.getWindow() : null;
+      EditorWindow previewWindow = getPreviewWindow();
       if (previewWindow != null) {
         wndToOpenIn = previewWindow;
       }
