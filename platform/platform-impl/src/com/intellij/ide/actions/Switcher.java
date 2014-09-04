@@ -94,7 +94,7 @@ public class Switcher extends AnAction implements DumbAware {
     public void run() {
       synchronized (Switcher.class) {
         if (SWITCHER != null) {
-          SWITCHER.navigate();
+          SWITCHER.navigate(false);
         }
       }
     }
@@ -200,7 +200,7 @@ public class Switcher extends AnAction implements DumbAware {
             jList.setSelectedIndex(jList.getAnchorSelectionIndex());
           }
           if (jList.getSelectedIndex() != -1) {
-            navigate();
+            navigate(false);
           }
         }
         return true;
@@ -590,17 +590,17 @@ public class Switcher extends AnAction implements DumbAware {
       return ((KeyboardShortcut)shortcutSet.getShortcuts()[0]).getFirstKeyStroke().getModifiers();
     }
 
-    public void keyTyped(KeyEvent e) {
+    public void keyTyped(@NotNull KeyEvent e) {
     }
 
     public void keyReleased(KeyEvent e) {
-      if ((e.getKeyCode() == CTRL_KEY && isAutoHide())
-          || e.getKeyCode() == VK_ENTER) {
-        navigate();
-      } else
-      if (e.getKeyCode() == VK_LEFT) {
+      if (e.getKeyCode() == CTRL_KEY && isAutoHide() || e.getKeyCode() == VK_ENTER) {
+        navigate(e.isShiftDown());
+      } 
+      else if (e.getKeyCode() == VK_LEFT) {
         goLeft();
-      } else if (e.getKeyCode() == VK_RIGHT) {
+      } 
+      else if (e.getKeyCode() == VK_RIGHT) {
         goRight();
       }
     }
@@ -836,7 +836,7 @@ public class Switcher extends AnAction implements DumbAware {
       }
     }
 
-    void navigate() {
+    void navigate(final boolean openInNewWindow) {
       final Object[] values = getSelectedList().getSelectedValues();
       myPopup.closeOk(null);
       if (values.length > 0 && values[0] instanceof ToolWindow) {
@@ -850,14 +850,19 @@ public class Switcher extends AnAction implements DumbAware {
               if (value instanceof FileInfo) {
                 final FileInfo info = (FileInfo)value;
 
-                if (info.second != null) {
+                VirtualFile file = info.first;
+                if (openInNewWindow) {
+                  manager.openFileInNewWindow(file);
+                }
+                else if (info.second != null) {
                   EditorWindow wnd = findAppropriateWindow(info);
                   if (wnd != null) {
-                    manager.openFileImpl2(wnd, info.first, true);
-                    manager.addSelectionRecord(info.first, wnd);
+                    manager.openFileImpl2(wnd, file, true);
+                    manager.addSelectionRecord(file, wnd);
                   }
-                } else {
-                  manager.openFile(info.first, true, true);
+                } 
+                else {
+                  manager.openFile(file, true, true);
                 }
               }
             }
