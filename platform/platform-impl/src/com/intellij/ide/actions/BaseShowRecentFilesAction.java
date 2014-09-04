@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -53,11 +54,11 @@ import java.io.File;
 public abstract class BaseShowRecentFilesAction extends AnAction implements DumbAware {
   private static final Color BORDER_COLOR = Gray._135;
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     show(CommonDataKeys.PROJECT.getData(e.getDataContext()));
   }
 
-  public void update(AnActionEvent event){
+  public void update(@NotNull AnActionEvent event){
     Presentation presentation = event.getPresentation();
     Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
     presentation.setEnabled(project != null);
@@ -93,7 +94,7 @@ public abstract class BaseShowRecentFilesAction extends AnAction implements Dumb
     final JList list = new JBList(model);
     list.addKeyListener(
       new KeyAdapter() {
-        public void keyPressed(KeyEvent e) {
+        public void keyPressed(@NotNull KeyEvent e) {
           if (e.getKeyCode() == KeyEvent.VK_DELETE) {
             int index = list.getSelectedIndex();
             if (index == -1 || index >= list.getModel().getSize()){
@@ -150,7 +151,7 @@ public abstract class BaseShowRecentFilesAction extends AnAction implements Dumb
 
     JPanel footerPanel = new JPanel(new BorderLayout()) {
       @Override
-      protected void paintComponent(Graphics g) {
+      protected void paintComponent(@NotNull Graphics g) {
         super.paintComponent(g);
         g.setColor(BORDER_COLOR);
         g.drawLine(0, 0, getWidth(), 0);
@@ -237,7 +238,7 @@ public abstract class BaseShowRecentFilesAction extends AnAction implements Dumb
     }
 
     @Override
-    public void actionPerformed(ActionEvent e) {
+    public void actionPerformed(@NotNull ActionEvent e) {
       if (myPopup != null) {
         myPopup.cancel();
       }
@@ -272,7 +273,7 @@ public abstract class BaseShowRecentFilesAction extends AnAction implements Dumb
       return fullText;
     }
 
-    public void valueChanged(final ListSelectionEvent e) {
+    public void valueChanged(@NotNull final ListSelectionEvent e) {
       //noinspection SSBasedInspection
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {

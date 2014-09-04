@@ -262,7 +262,9 @@ public class GenericsUtil {
     for (PsiTypeParameter typeParameter : typeParams) {
       PsiType substituted = substitutor.substitute(typeParameter);
       if (substituted == null) return null;
-      substituted = PsiUtil.captureToplevelWildcards(substituted, context);
+      if (context != null) {
+        substituted = PsiUtil.captureToplevelWildcards(substituted, context);
+      }
 
       PsiClassType[] extendsTypes = typeParameter.getExtendsListTypes();
       for (PsiClassType type : extendsTypes) {
@@ -349,6 +351,9 @@ public class GenericsUtil {
   @Nullable
   public static PsiType getVariableTypeByExpressionType(@Nullable PsiType type, final boolean openCaptured) {
     if (type == null) return null;
+    if (type instanceof PsiDisjunctionType) {
+      type = ((PsiDisjunctionType)type).getLeastUpperBound();
+    }
     if (type instanceof PsiCapturedWildcardType) {
       type = ((PsiCapturedWildcardType)type).getWildcard();
     }

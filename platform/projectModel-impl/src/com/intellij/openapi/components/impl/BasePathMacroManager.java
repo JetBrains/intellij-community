@@ -182,12 +182,12 @@ public class BasePathMacroManager extends PathMacroManager {
     }
 
     @Override
-    public void expandPaths(final Element element) {
+    public void expandPaths(@NotNull final Element element) {
       getExpandMacroMap().substitute(element, SystemInfo.isFileSystemCaseSensitive);
     }
 
     @Override
-    public void collapsePaths(final Element element) {
+    public void collapsePaths(@NotNull final Element element) {
       getReplacePathMap().substitute(element, SystemInfo.isFileSystemCaseSensitive, false, ourFilter);
     }
 

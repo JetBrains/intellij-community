@@ -30,13 +30,19 @@ public class CommandLineTokenizerTest extends TestCase {
 
   public void testEscape() throws Exception {
     assertTokens("a\\ b", true, "a b");
+    assertTokens("a\\ b", false, "a\\", "b");
+
     assertTokens("\"a\\ b\"", true, "a\\ b");
+    assertTokens("\"a\\ b\"", false, "a\\ b");
+
     assertTokens("a\\ ", true, "a ");
+    assertTokens("a\\ ", false, "a\\");
 
     assertTokens("\\\"", "\"");
     assertTokens("\"\\\" a \\\"\"", "\" a \"");
     assertTokens("\\\"a b\\\"", "\"a", "b\"");
     assertTokens("\\\"a\\ b\\\"", true, "\"a b\"");
+    assertTokens("\\\"a\\ b\\\"", false, "\"a\\", "b\"");
   }
 
   private static void assertTokens(String cmd, String... tokens) {

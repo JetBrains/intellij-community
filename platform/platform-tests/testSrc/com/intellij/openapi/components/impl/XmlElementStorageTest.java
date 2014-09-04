@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
-import com.intellij.openapi.components.impl.stores.ComponentRoamingManager;
 import com.intellij.openapi.components.impl.stores.ComponentVersionProvider;
 import com.intellij.openapi.components.impl.stores.XmlElementStorage;
 import com.intellij.openapi.util.Disposer;
@@ -88,7 +87,7 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
     private Element mySavedElement;
 
     public MyXmlElementStorage(Element element, final Disposable parentDisposable) throws StateStorageException {
-      super(new MyPathMacroManager(), parentDisposable, "root", null, "", ComponentRoamingManager.getInstance(), ComponentVersionProvider.EMPTY);
+      super(new MyPathMacroManager(), parentDisposable, "root", null, "", ComponentVersionProvider.EMPTY);
       myElement = element;
     }
 
@@ -123,7 +122,7 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
 
   private static class MyPathMacroManager implements TrackingPathMacroSubstitutor {
     @Override
-    public void expandPaths(final Element element) {
+    public void expandPaths(@NotNull final Element element) {
     }
 
     @Override
@@ -136,7 +135,7 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
     }
 
     @Override
-    public void collapsePaths(final Element element) {
+    public void collapsePaths(@NotNull final Element element) {
     }
 
     @Override

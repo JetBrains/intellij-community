@@ -17,6 +17,7 @@ package com.intellij.debugger.engine;
 
 import com.intellij.Patches;
 import com.intellij.debugger.*;
+import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.apiAdapters.ConnectionServiceWrapper;
 import com.intellij.debugger.engine.evaluation.*;
@@ -170,10 +171,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
               final DebuggerSession session = mySession;
               if (session != null && session.isAttached()) {
                 session.refresh(true);
-                XDebugSession xDebugSession = mySession.getXDebugSession();
-                if (xDebugSession != null) {
-                  xDebugSession.rebuildViews();
-                }
+                DebuggerAction.refreshViews(mySession.getXDebugSession());
               }
             }
           });

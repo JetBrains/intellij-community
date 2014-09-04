@@ -36,7 +36,6 @@ import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.TimingLog;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.api.GlobalOptions;
-import org.jetbrains.jps.api.RequestFuture;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.impl.BuildOutputConsumerImpl;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
@@ -50,12 +49,12 @@ import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.BuildRunner;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
-import org.jetbrains.jps.incremental.java.ExternalJavacDescriptor;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.BuildTargetConfiguration;
 import org.jetbrains.jps.incremental.storage.OneToManyPathsMapping;
 import org.jetbrains.jps.incremental.storage.OutputToTargetRegistry;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
+import org.jetbrains.jps.javac.ExternalJavacServer;
 import org.jetbrains.jps.javac.JavacMain;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
@@ -313,17 +312,10 @@ public class IncProjectBuilder {
       pd.timestamps.getStorage().force();
       pd.dataManager.flush(false);
     }
-    final ExternalJavacDescriptor descriptor = ExternalJavacDescriptor.KEY.get(context);
-    if (descriptor != null) {
-      try {
-        final RequestFuture future = descriptor.client.sendShutdownRequest();
-        future.waitFor(500L, TimeUnit.MILLISECONDS);
-      }
-      finally {
-        // ensure process is not running
-        descriptor.process.destroyProcess();
-      }
-      ExternalJavacDescriptor.KEY.set(context, null);
+    final ExternalJavacServer server = ExternalJavacServer.KEY.get(context);
+    if (server != null) {
+      server.stop();
+      ExternalJavacServer.KEY.set(context, null);
     }
   }
 

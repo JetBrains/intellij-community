@@ -38,6 +38,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -195,7 +196,7 @@ public class TestEditorManagerImpl extends FileEditorManagerEx implements Applic
     return openTextEditor(descriptor, false);
   }
 
-  private FileEditorProvider getProvider(FileEditor editor) {
+  private static FileEditorProvider getProvider(FileEditor editor) {
     return new FileEditorProvider() {
       @Override
       public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
@@ -205,18 +206,17 @@ public class TestEditorManagerImpl extends FileEditorManagerEx implements Applic
       @Override
       @NotNull
       public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
-        return null;
+        throw new IncorrectOperationException();
       }
 
       @Override
       public void disposeEditor(@NotNull FileEditor editor) {
-        //Disposer.dispose(editor);
       }
 
       @Override
       @NotNull
       public FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
-        return null;
+        throw new IncorrectOperationException();
       }
 
       @Override
@@ -233,7 +233,7 @@ public class TestEditorManagerImpl extends FileEditorManagerEx implements Applic
       @Override
       @NotNull
       public FileEditorPolicy getPolicy() {
-        return null;
+        throw new IncorrectOperationException();
       }
     };
   }
@@ -482,7 +482,7 @@ public class TestEditorManagerImpl extends FileEditorManagerEx implements Applic
   @NotNull
   @Override
   public EditorsSplitters getSplitters() {
-    return null;
+    throw new IncorrectOperationException();
   }
 
   @NotNull
@@ -492,6 +492,6 @@ public class TestEditorManagerImpl extends FileEditorManagerEx implements Applic
   }
 
   @Override
-  public void setSelectedEditor(@NotNull VirtualFile file, String fileEditorProviderId) {
+  public void setSelectedEditor(@NotNull VirtualFile file, @NotNull String fileEditorProviderId) {
   }
 }

@@ -68,6 +68,7 @@ public class StoragePathMacros {
    * @throws IllegalArgumentException   if given macro definition has unexpected format
    */
   @NotNull
+  @Deprecated
   public static String getMacroName(@NotNull String macro) throws IllegalArgumentException {
     if (macro.length() < 3 || macro.charAt(0) != '$' || macro.charAt(macro.length() - 1) != '$') {
       throw new IllegalArgumentException("Malformed macro definition (" + macro + ")");

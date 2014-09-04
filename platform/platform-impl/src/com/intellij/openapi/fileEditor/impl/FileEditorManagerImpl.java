@@ -264,7 +264,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
   private static class MyBorder implements Border {
     @Override
-    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+    public void paintBorder(@NotNull Component c, @NotNull Graphics g, int x, int y, int width, int height) {
       if (UIUtil.isUnderAquaLookAndFeel()) {
         g.setColor(JBTabsImpl.MAC_AQUA_BG_COLOR);
         final Insets insets = getBorderInsets(c);
@@ -274,6 +274,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       }
     }
 
+    @NotNull
     @Override
     public Insets getBorderInsets(Component c) {
       return JBInsets.NONE;
@@ -643,7 +644,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
     if (wndToOpenIn == null || !wndToOpenIn.isFileOpen(file)) {
       initUI();
-      EditorWindow previewWindow = myPreviewPanel.getWindow();
+      EditorWindow previewWindow = PreviewPanel.isAvailable() && myPreviewPanel != null ? myPreviewPanel.getWindow() : null;
       if (previewWindow != null) {
         wndToOpenIn = previewWindow;
       }
@@ -781,7 +782,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
           final FileEditorProvider provider = newProviders[i];
           LOG.assertTrue(provider != null, "Provider for file "+file+" is null. All providers: "+Arrays.asList(newProviders));
           LOG.assertTrue(provider.accept(myProject, file), "Provider " + provider + " doesn't accept file " + file);
-          if ((provider instanceof AsyncFileEditorProvider)) {
+          if (provider instanceof AsyncFileEditorProvider) {
             builders[i] = ((AsyncFileEditorProvider)provider).createEditorAsync(myProject, file);
           }
         }
@@ -920,7 +921,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     return Pair.create(compositeRef.get().getEditors(), compositeRef.get().getProviders());
   }
 
-  private void clearWindowIfNeeded(EditorWindow window) {
+  private static void clearWindowIfNeeded(EditorWindow window) {
     if (UISettings.getInstance().EDITOR_TAB_PLACEMENT == UISettings.TABS_NONE || UISettings.getInstance().PRESENTATION_MODE) {
       for (EditorWithProviderComposite composite : window.getEditors()) {
         Disposer.dispose(composite);
@@ -1153,9 +1154,15 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
   @Override
   public Editor getSelectedTextEditor() {
-    assertReadAccess();
+    return getSelectedTextEditor(false);
+  }
 
-    final EditorWindow currentWindow = getSplitters().getCurrentWindow();
+  public Editor getSelectedTextEditor(boolean lockfree) {
+    if (!lockfree) {
+      assertDispatchThread();
+    }
+
+    final EditorWindow currentWindow = lockfree ? getMainSplitters().getCurrentWindow() : getSplitters().getCurrentWindow();
     if (currentWindow != null) {
       final EditorWithProviderComposite selectedEditor = currentWindow.getSelectedEditor();
       if (selectedEditor != null && selectedEditor.getSelectedEditor() instanceof TextEditor) {
@@ -1165,6 +1172,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
     return null;
   }
+
 
 
   @Override
@@ -1736,7 +1744,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
   private final class MyEditorPropertyChangeListener implements PropertyChangeListener {
     @Override
-    public void propertyChange(final PropertyChangeEvent e) {
+    public void propertyChange(@NotNull final PropertyChangeEvent e) {
       assertDispatchThread();
 
       final String propertyName = e.getPropertyName();
@@ -1975,6 +1983,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     mySelectionHistory.remove(Pair.create(file, window));
   }
 
+  @NotNull
   @Override
   public ActionCallback getReady(@NotNull Object requestor) {
     return myBusyObject.getReady(requestor);

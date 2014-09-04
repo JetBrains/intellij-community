@@ -31,11 +31,7 @@ import java.util.*;
  */
 @State(
   name = "AbbreviationManager",
-  roamingType = RoamingType.PER_PLATFORM,
-  storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/abbreviations.xml"
-    )}
+  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/abbreviations.xml", roamingType = RoamingType.PER_PLATFORM)}
 )
 public class AbbreviationManagerImpl extends AbbreviationManager implements
                                                                  ExportableComponent, PersistentStateComponent<Element> {
