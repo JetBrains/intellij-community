@@ -1154,9 +1154,13 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
   @Override
   public Editor getSelectedTextEditor() {
-    assertReadAccess();
+    return getSelectedTextEditor(false);
+  }
 
-    final EditorWindow currentWindow = getSplitters().getCurrentWindow();
+  public Editor getSelectedTextEditor(boolean lockfree) {
+    assertDispatchThread();
+
+    final EditorWindow currentWindow = lockfree ? getMainSplitters().getCurrentWindow() : getSplitters().getCurrentWindow();
     if (currentWindow != null) {
       final EditorWithProviderComposite selectedEditor = currentWindow.getSelectedEditor();
       if (selectedEditor != null && selectedEditor.getSelectedEditor() instanceof TextEditor) {
@@ -1166,6 +1170,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
     return null;
   }
+
 
 
   @Override
