@@ -406,6 +406,9 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
           try {
             saveForProvider(myStreamProvider);
           }
+          catch (IOException e) {
+            LOG.warn(e);
+          }
           finally {
             myProviderUpToDateHash = hash;
           }
@@ -427,7 +430,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       }
     }
 
-    private void saveForProvider(@NotNull StreamProvider streamProvider) {
+    private void saveForProvider(@NotNull StreamProvider streamProvider) throws IOException {
       RoamingType roamingType = getRoamingType();
       if (roamingType != null && roamingType == RoamingType.DISABLED) {
         // todo our old stream provider doesn't share WORKSPACE_FILE, but our new has this feature - are we really want to support it?
@@ -474,7 +477,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       }
     }
 
-    private void doSaveForProvider(Element element, RoamingElementFilter filter) {
+    private void doSaveForProvider(Element element, RoamingElementFilter filter) throws IOException {
       Element copiedElement = JDOMUtil.cloneElement(element, filter);
       if (copiedElement != null) {
         assert myStreamProvider != null;
@@ -482,19 +485,14 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       }
     }
 
-    private void doSaveForProvider(@NotNull Element element, @NotNull RoamingType roamingType, @NotNull StreamProvider streamProvider) {
-      try {
-        StorageUtil.doSendContent(streamProvider, myFileSpec, element, roamingType, true);
-        if (streamProvider.isVersioningRequired()) {
-          TObjectLongHashMap<String> versions = loadVersions(element.getChildren(StorageData.COMPONENT));
-          if (!versions.isEmpty()) {
-            Element versionDoc = StateStorageManagerImpl.createComponentVersionsXml(versions);
-            StorageUtil.doSendContent(streamProvider, myFileSpec + VERSION_FILE_SUFFIX, versionDoc, roamingType, true);
-          }
+    private void doSaveForProvider(@NotNull Element element, @NotNull RoamingType roamingType, @NotNull StreamProvider streamProvider) throws IOException {
+      StorageUtil.doSendContent(streamProvider, myFileSpec, element, roamingType, true);
+      if (streamProvider.isVersioningRequired()) {
+        TObjectLongHashMap<String> versions = loadVersions(element.getChildren(StorageData.COMPONENT));
+        if (!versions.isEmpty()) {
+          Element versionDoc = StateStorageManagerImpl.createComponentVersionsXml(versions);
+          StorageUtil.doSendContent(streamProvider, myFileSpec + VERSION_FILE_SUFFIX, versionDoc, roamingType, true);
         }
-      }
-      catch (IOException e) {
-        LOG.warn(e);
       }
     }
 
