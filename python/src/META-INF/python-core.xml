@@ -721,7 +721,7 @@
       <add-to-group group-id="RefactoringMenu" anchor="last" />
     </action>
 
-    <action id="PyDebugger.ViewArray" class="com.jetbrains.python.actions.PyViewArrayAction">
+    <action id="PyDebugger.ViewArray" class="com.jetbrains.python.actions.view.array.PyViewArrayAction">
       <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.Tree.AddToWatches"/>
     </action>
 
