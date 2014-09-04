@@ -1,13 +1,11 @@
 package org.jetbrains.plugins.settingsRepository
 
 import com.intellij.ide.ApplicationLoadListener
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.stores.FileBasedStorage
 import com.intellij.openapi.components.impl.stores.StateStorageManager
@@ -15,7 +13,6 @@ import com.intellij.openapi.components.impl.stores.StorageUtil
 import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.options.SchemesManagerFactory
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -23,7 +20,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
 import com.intellij.openapi.util.AtomicNotNullLazyValue
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SingleAlarm
@@ -32,9 +28,7 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.settingsRepository.git.GitRepositoryManager
 
 import java.io.File
-import java.io.IOException
 import java.io.InputStream
-import java.net.URL
 
 public val PLUGIN_NAME: String = "Settings Repository"
 
@@ -174,7 +168,7 @@ public class IcsManager : ApplicationLoadListener {
 
   private fun registerProjectLevelProviders(project: Project) {
     val storageManager = (project as ProjectEx).getStateStore().getStateStorageManager()
-    val projectId = storageManager.getFileStateStorage(StoragePathMacros.WORKSPACE_FILE)!!.getState(ProjectId(), "IcsProjectId", javaClass<ProjectId>(), null)
+    val projectId = storageManager.getStateStorage(StoragePathMacros.WORKSPACE_FILE, RoamingType.DISABLED)!!.getState(ProjectId(), "IcsProjectId", javaClass<ProjectId>(), null)
     if (projectId == null || projectId.uid == null) {
       // not mapped, if user wants, he can map explicitly, we don't suggest
       // we cannot suggest "map to ICS" for any project that user opens, it will be annoying
