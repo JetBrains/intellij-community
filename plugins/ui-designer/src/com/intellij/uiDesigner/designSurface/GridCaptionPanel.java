@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,10 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.dnd.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.LightColors;
 import com.intellij.uiDesigner.CaptionSelection;
 import com.intellij.uiDesigner.FormEditingUtil;
@@ -33,7 +36,9 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.NotNullProducer;
 import com.intellij.util.ui.PlatformColors;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,7 +77,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
         myEditor.fireSelectedComponentChanged();
       }
     });
-    setBackground(Color.LIGHT_GRAY);
+    setBackground(getGutterColor());
     editor.addComponentSelectionListener(this);
 
     final MyMouseListener listener = new MyMouseListener();
@@ -97,6 +102,17 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
 
       @Override public void focusLost(FocusEvent e) {
         repaint();
+      }
+    });
+  }
+
+  public static JBColor getGutterColor() {
+    return new JBColor(new NotNullProducer<Color>() {
+      @NotNull
+      @Override
+      public Color produce() {
+        Color color = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.GUTTER_BACKGROUND);
+        return color == null ? UIUtil.getPanelBackground() : color;
       }
     });
   }
