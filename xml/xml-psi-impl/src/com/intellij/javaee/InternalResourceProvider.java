@@ -63,5 +63,6 @@ public class InternalResourceProvider implements StandardResourceProvider{
     // svg and mathML
     impl.addIgnoredResource(HtmlUtil.MATH_ML_NAMESPACE);
     impl.addIgnoredResource(HtmlUtil.SVG_NAMESPACE);
+    impl.addInternalResource("http://www.w3.org/1999/xlink", "xlink.dtd");
   }
 }
