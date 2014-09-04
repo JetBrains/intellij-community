@@ -29,6 +29,7 @@ import com.intellij.openapi.fileTypes.FileTypeEditorHighlighterProviders;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -107,6 +108,7 @@ public class HighlightingOutputConsole extends AdditionalTabComponent implements
         }
     }
 
+    @NotNull
     public String getTabTitle() {
         return TAB_TITLE;
     }

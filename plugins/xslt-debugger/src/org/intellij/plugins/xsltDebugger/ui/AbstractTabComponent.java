@@ -1,6 +1,7 @@
 package org.intellij.plugins.xsltDebugger.ui;
 
 import com.intellij.diagnostic.logging.AdditionalTabComponent;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -16,6 +17,7 @@ abstract class AbstractTabComponent extends AdditionalTabComponent {
     myTabTitle = tabTitle;
   }
 
+  @NotNull
   @Override
   public String getTabTitle() {
     return myTabTitle;

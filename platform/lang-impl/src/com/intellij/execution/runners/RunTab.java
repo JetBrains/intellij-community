@@ -117,7 +117,7 @@ public abstract class RunTab implements DataProvider, Disposable {
     if (runConfiguration instanceof RunConfigurationBase && processHandler != null) {
       RunConfigurationBase configuration = (RunConfigurationBase)runConfiguration;
       if (myManager == null) {
-        myManager = new LogFilesManager(myProject, getLogConsoleManager(), contentDescriptor);
+        myManager = new LogFilesManager(getLogConsoleManager());
       }
       myManager.addLogConsoles(configuration, processHandler);
       OutputFileUtil.attachDumpListener(configuration, processHandler, console);
