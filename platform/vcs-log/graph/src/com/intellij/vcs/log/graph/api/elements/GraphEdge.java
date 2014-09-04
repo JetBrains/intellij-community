@@ -17,25 +17,42 @@
 package com.intellij.vcs.log.graph.api.elements;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class GraphEdge implements GraphElement {
-  private final int myUpNodeIndex;
-  private final int myDownNodeIndex;
+  @Nullable
+  private final Integer myUpNodeIndex;
+  @Nullable
+  private final Integer myDownNodeIndex;
+  @Nullable
+  private final Integer myAdditionInfo;
   @NotNull
   private final GraphEdgeType myType;
 
-  public GraphEdge(int upNodeIndex, int downNodeIndex, @NotNull GraphEdgeType type) {
+  public GraphEdge(@Nullable Integer upNodeIndex, @Nullable Integer downNodeIndex, @NotNull GraphEdgeType type) {
+    this(upNodeIndex, downNodeIndex, null, type);
+  }
+
+  public GraphEdge(@Nullable Integer upNodeIndex, @Nullable Integer downNodeIndex, @Nullable Integer additionInfo, @NotNull GraphEdgeType type) {
     myUpNodeIndex = upNodeIndex;
     myDownNodeIndex = downNodeIndex;
+    myAdditionInfo = additionInfo;
     myType = type;
   }
 
-  public int getUpNodeIndex() {
+  @Nullable
+  public Integer getUpNodeIndex() {
     return myUpNodeIndex;
   }
 
-  public int getDownNodeIndex() {
+  @Nullable
+  public Integer getDownNodeIndex() {
     return myDownNodeIndex;
+  }
+
+  @Nullable
+  public Integer getAdditionInfo() {
+    return myAdditionInfo;
   }
 
   @NotNull
@@ -50,19 +67,20 @@ public final class GraphEdge implements GraphElement {
 
     GraphEdge graphEdge = (GraphEdge)o;
 
-    if (myDownNodeIndex != graphEdge.myDownNodeIndex) return false;
-    if (myUpNodeIndex != graphEdge.myUpNodeIndex) return false;
     if (myType != graphEdge.myType) return false;
+    if (myUpNodeIndex != null ? !myUpNodeIndex.equals(graphEdge.myUpNodeIndex) : graphEdge.myUpNodeIndex != null) return false;
+    if (myDownNodeIndex != null ? !myDownNodeIndex.equals(graphEdge.myDownNodeIndex) : graphEdge.myDownNodeIndex != null) return false;
+    if (myAdditionInfo != null ? !myAdditionInfo.equals(graphEdge.myAdditionInfo) : graphEdge.myAdditionInfo != null) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = myUpNodeIndex;
-    result = 31 * result + myDownNodeIndex;
+    int result = myUpNodeIndex != null ? myUpNodeIndex.hashCode() : 0;
+    result = 31 * result + (myDownNodeIndex != null ? myDownNodeIndex.hashCode() : 0);
+    result = 31 * result + (myAdditionInfo != null ? myAdditionInfo.hashCode() : 0);
     result = 31 * result + myType.hashCode();
     return result;
   }
-
 }

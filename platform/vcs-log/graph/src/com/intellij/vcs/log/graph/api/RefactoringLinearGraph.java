@@ -31,7 +31,7 @@ public abstract class RefactoringLinearGraph implements LinearGraph {
     List<GraphEdge> result = new SmartList<GraphEdge>();
     for (int node : getDownNodes(nodeIndex)) {
       if (node == LinearGraph.NOT_LOAD_COMMIT) {
-        result.add(new GraphEdge(nodeIndex, 0, GraphEdgeType.NOT_LOAD_COMMIT));
+        result.add(new GraphEdge(nodeIndex, null, GraphEdgeType.NOT_LOAD_COMMIT));
       } else {
         result.add(new GraphEdge(nodeIndex, node, GraphEdgeType.USUAL));
       }
