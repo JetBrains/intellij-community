@@ -143,11 +143,13 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
   }
 
   public static JBColor getForeground() {
-    return new JBColor(new Color(61, 128, 101), new Color(61, 128, 101));
+    return new JBColor(Registry.getColor("ide.debugger.inline.fg.color", new Color(0x3d8065)),
+                       Registry.getColor("ide.debugger.inline.dark.fg.color", new Color(0x3d8065)));
   }
 
   public static JBColor getChangedForeground() {
-    return new JBColor(new Color(202, 128, 33), new Color(161, 131, 10));
+    return new JBColor(Registry.getColor("ide.debugger.inline.fg.modified.color", new Color(0xca8021)),
+                       Registry.getColor("ide.debugger.inline.dark.fg.modified.color", new Color(0xa1830a)));
   }
 
   static class Variable {
