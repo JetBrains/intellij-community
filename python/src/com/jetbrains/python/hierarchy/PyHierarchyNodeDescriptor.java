@@ -19,7 +19,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.NavigatablePsiElement;
@@ -28,8 +27,6 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.awt.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -57,10 +54,6 @@ public class PyHierarchyNodeDescriptor extends HierarchyNodeDescriptor {
     final CompositeAppearance oldText = myHighlightedText;
 
     myHighlightedText = new CompositeAppearance();
-    TextAttributes classNameAttributes = null;
-    if (myColor != null) {
-      classNameAttributes = new TextAttributes(myColor, null, null, null, Font.PLAIN);
-    }
 
     NavigatablePsiElement element = (NavigatablePsiElement)myElement;
     if (element == null) {
@@ -79,7 +72,7 @@ public class PyHierarchyNodeDescriptor extends HierarchyNodeDescriptor {
           myHighlightedText.getEnding().addText(cls.getName() + ".");
         }
       }
-      myHighlightedText.getEnding().addText(presentation.getPresentableText(), classNameAttributes);
+      myHighlightedText.getEnding().addText(presentation.getPresentableText());
       myHighlightedText.getEnding().addText(" " + presentation.getLocationString(), HierarchyNodeDescriptor.getPackageNameAttributes());
     }
     myName = myHighlightedText.getText();
