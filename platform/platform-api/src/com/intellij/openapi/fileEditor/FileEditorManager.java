@@ -197,5 +197,5 @@ public abstract class FileEditorManager {
    * @param fileEditorProviderId the ID of the file editor to open; matches the return value of
    * {@link com.intellij.openapi.fileEditor.FileEditorProvider#getEditorTypeId()}
    */
-  public abstract void setSelectedEditor(@NotNull VirtualFile file, String fileEditorProviderId);
+  public abstract void setSelectedEditor(@NotNull VirtualFile file, @NotNull String fileEditorProviderId);
 }
