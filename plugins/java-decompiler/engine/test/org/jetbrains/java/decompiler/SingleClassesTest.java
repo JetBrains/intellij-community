@@ -73,6 +73,7 @@ public class SingleClassesTest {
   @Test public void testCodeConstructs() { doTest("TestCodeConstructs"); }
   @Test public void testConstants() { doTest("TestConstants"); }
   @Test public void testEnum() { doTest("TestEnum"); }
+  @Test public void testDebugSymbols() { doTest("TestDebugSymbols"); }
 
   private void doTest(final String testName) {
     try {
