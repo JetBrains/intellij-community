@@ -25,6 +25,8 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.project.Project;
@@ -33,11 +35,19 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class RunTab extends LogConsoleManagerBase implements DataProvider {
+import javax.swing.*;
+
+public abstract class RunTab implements DataProvider, Disposable {
   @NotNull
   protected final RunnerLayoutUi myUi;
   private LogFilesManager myManager;
   protected RunContentDescriptor myRunContentDescriptor;
+
+  protected ExecutionEnvironment myEnvironment;
+  protected final Project myProject;
+  private final GlobalSearchScope mySearchScope;
+
+  private LogConsoleManagerBase logConsoleManager;
 
   protected RunTab(@NotNull ExecutionEnvironment environment, @NotNull String runnerType) {
     this(environment.getProject(),
@@ -46,13 +56,21 @@ public abstract class RunTab extends LogConsoleManagerBase implements DataProvid
          environment.getExecutor().getId(),
          environment.getRunProfile().getName());
 
-    setEnvironment(environment);
+    myEnvironment = environment;
+  }
+
+  @Override
+  public void dispose() {
+    myRunContentDescriptor = null;
+    myEnvironment = null;
+    logConsoleManager = null;
   }
 
   protected RunTab(@NotNull Project project, @NotNull GlobalSearchScope searchScope, @NotNull String runnerType, @NotNull String runnerTitle, @NotNull String sessionName) {
-    super(project, searchScope);
+    myProject = project;
+    mySearchScope = searchScope;
 
-    myUi = RunnerLayoutUi.Factory.getInstance(getProject()).create(runnerType, runnerTitle, sessionName, this);
+    myUi = RunnerLayoutUi.Factory.getInstance(project).create(runnerType, runnerTitle, sessionName, this);
     myUi.getContentManager().addDataProvider(this);
   }
 
@@ -60,11 +78,10 @@ public abstract class RunTab extends LogConsoleManagerBase implements DataProvid
   @Override
   public Object getData(@NonNls String dataId) {
     if (LangDataKeys.RUN_PROFILE.is(dataId)) {
-      ExecutionEnvironment environment = getEnvironment();
-      return environment == null ? null : environment.getRunProfile();
+      return myEnvironment == null ? null : myEnvironment.getRunProfile();
     }
     else if (LangDataKeys.EXECUTION_ENVIRONMENT.is(dataId)) {
-      return getEnvironment();
+      return myEnvironment;
     }
     else if (LangDataKeys.RUN_CONTENT_DESCRIPTOR.is(dataId)) {
       return myRunContentDescriptor;
@@ -72,17 +89,27 @@ public abstract class RunTab extends LogConsoleManagerBase implements DataProvid
     return null;
   }
 
-  @Override
-  public final void setEnvironment(@NotNull ExecutionEnvironment environment) {
-    super.setEnvironment(environment);
+  @NotNull
+  public LogConsoleManagerBase getLogConsoleManager() {
+    if (logConsoleManager == null) {
+      logConsoleManager = new LogConsoleManagerBase(myProject, mySearchScope) {
+        @Override
+        protected Icon getDefaultIcon() {
+          return AllIcons.Debugger.Console;
+        }
 
-    RunProfile profile = environment.getRunProfile();
-    if (profile instanceof RunConfigurationBase) {
-      if (myManager == null) {
-        myManager = new LogFilesManager(getProject(), this, this);
-      }
-      myManager.registerFileMatcher((RunConfigurationBase)profile);
+        @Override
+        protected RunnerLayoutUi getUi() {
+          return myUi;
+        }
+
+        @Override
+        public ProcessHandler getProcessHandler() {
+          return myRunContentDescriptor == null ? null : myRunContentDescriptor.getProcessHandler();
+        }
+      };
     }
+    return logConsoleManager;
   }
 
   protected final void initLogConsoles(@NotNull RunProfile runConfiguration, @NotNull RunContentDescriptor contentDescriptor, @Nullable ExecutionConsole console) {
@@ -90,9 +117,9 @@ public abstract class RunTab extends LogConsoleManagerBase implements DataProvid
     if (runConfiguration instanceof RunConfigurationBase && processHandler != null) {
       RunConfigurationBase configuration = (RunConfigurationBase)runConfiguration;
       if (myManager == null) {
-        myManager = new LogFilesManager(getProject(), this, contentDescriptor);
+        myManager = new LogFilesManager(myProject, getLogConsoleManager(), contentDescriptor);
       }
-      myManager.initLogConsoles(configuration, processHandler);
+      myManager.addLogConsoles(configuration, processHandler);
       OutputFileUtil.attachDumpListener(configuration, processHandler, console);
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 package com.intellij.diagnostic.logging;
 
 import com.intellij.execution.configurations.RunConfigurationBase;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
@@ -29,6 +29,7 @@ import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
@@ -37,27 +38,12 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created by IntelliJ IDEA.
- * User: michael.golubev
- */
 public abstract class LogConsoleManagerBase implements LogConsoleManager, Disposable {
-
   private final Project myProject;
 
   private final Map<AdditionalTabComponent, Content> myAdditionalContent = new HashMap<AdditionalTabComponent, Content>();
 
-  private ExecutionEnvironment myEnvironment;
   private final GlobalSearchScope mySearchScope;
-
-  /**
-   * @deprecated use {@link #LogConsoleManagerBase(com.intellij.openapi.project.Project, com.intellij.psi.search.GlobalSearchScope)}
-   * to remove in IDEA 15
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  protected LogConsoleManagerBase(@NotNull Project project) {
-    this(project, GlobalSearchScope.allScope(project));
-  }
 
   protected LogConsoleManagerBase(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
     myProject = project;
@@ -68,35 +54,22 @@ public abstract class LogConsoleManagerBase implements LogConsoleManager, Dispos
     return myProject;
   }
 
-  public void setEnvironment(@NotNull ExecutionEnvironment environment) {
-    myEnvironment = environment;
-  }
-
-  protected final ExecutionEnvironment getEnvironment() {
-    return myEnvironment;
-  }
-
   @Override
-  public void addLogConsole(final String name, final String path, @NotNull Charset charset, final long skippedContent) {
-    addLogConsole(name, path, charset, skippedContent, getDefaultIcon());
+  public void addLogConsole(final String name, final String path, @NotNull Charset charset, final long skippedContent, @NotNull RunConfigurationBase runConfiguration) {
+    addLogConsole(name, path, charset, skippedContent, getDefaultIcon(), runConfiguration);
   }
 
-  public void addLogConsole(final String name, final String path, @NotNull Charset charset, final long skippedContent, Icon icon) {
+  public void addLogConsole(final String name, final String path, @NotNull Charset charset, final long skippedContent, Icon icon, @Nullable RunProfile runProfile) {
     doAddLogConsole(new LogConsoleImpl(myProject, new File(path), charset, skippedContent, name, false, mySearchScope) {
 
       @Override
       public boolean isActive() {
         return isConsoleActive(path);
       }
-    }, path, icon);
+    }, path, icon, runProfile);
   }
 
-  @Override
-  public void addLogConsole(String name, Reader reader, final String id) {
-    addLogConsole(name, reader, id, getDefaultIcon());
-  }
-
-  public void addLogConsole(String name, Reader reader, final String id, Icon icon) {
+  public void addLogConsole(String name, Reader reader, final String id, Icon icon, @Nullable RunProfile runProfile) {
     doAddLogConsole(new LogConsoleBase(myProject,
                                        reader,
                                        name,
@@ -107,14 +80,14 @@ public abstract class LogConsoleManagerBase implements LogConsoleManager, Dispos
       public boolean isActive() {
         return isConsoleActive(id);
       }
-    }, id, icon);
+    }, id, icon, runProfile);
   }
 
   private void doAddLogConsole(final LogConsoleBase log,
                                final String id,
-                               Icon icon) {
-    if (myEnvironment != null && myEnvironment.getRunProfile() instanceof RunConfigurationBase) {
-      ((RunConfigurationBase)myEnvironment.getRunProfile()).customizeLogConsole(log);
+                               Icon icon, @Nullable RunProfile runProfile) {
+    if (runProfile instanceof RunConfigurationBase) {
+      ((RunConfigurationBase)runProfile).customizeLogConsole(log);
     }
     log.attachStopLogConsoleTrackingListener(getProcessHandler());
     addAdditionalTabComponent(log, id, icon);

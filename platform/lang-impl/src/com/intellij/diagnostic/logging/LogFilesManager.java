@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.diagnostic.logging;
 
 import com.intellij.execution.configurations.LogFileOptions;
@@ -23,108 +22,57 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.util.Alarm;
-import com.intellij.util.SingleAlarm;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.File;
-import java.util.*;
+import java.util.Set;
+import java.util.TreeMap;
 
 public class LogFilesManager {
-  private final Map<LogFileOptions, Set<String>> myLogFileManagerMap = new LinkedHashMap<LogFileOptions, Set<String>>();
   private final LogConsoleManager myManager;
-  private final SingleAlarm myUpdateAlarm;
 
   public LogFilesManager(@NotNull final Project project, @NotNull LogConsoleManager manager, @NotNull Disposable parentDisposable) {
     myManager = manager;
-
-    myUpdateAlarm = new SingleAlarm(new Runnable() {
-      @Override
-      public void run() {
-        if (project.isDisposed()) {
-          return;
-        }
-
-        myUpdateAlarm.cancelAllRequests();
-        for (final LogFileOptions logFile : myLogFileManagerMap.keySet()) {
-          final Set<String> oldFiles = myLogFileManagerMap.get(logFile);
-          final Set<String> newFiles = logFile.getPaths(); // should not be called in UI thread
-          myLogFileManagerMap.put(logFile, newFiles);
-
-          final Set<String> obsoleteFiles = new THashSet<String>(oldFiles);
-          obsoleteFiles.removeAll(newFiles);
-
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              if (project.isDisposed()) {
-                return;
-              }
-
-              addConfigurationConsoles(logFile, new Condition<String>() {
-                @Override
-                public boolean value(final String file) {
-                  return !oldFiles.contains(file);
-                }
-              }, newFiles);
-              for (String each : obsoleteFiles) {
-                myManager.removeLogConsole(each);
-              }
-              myUpdateAlarm.request();
-            }
-          });
-        }
-      }
-    }, 500, Alarm.ThreadToUse.POOLED_THREAD, parentDisposable);
   }
 
-  public void registerFileMatcher(@NotNull RunConfigurationBase runConfiguration) {
-    final ArrayList<LogFileOptions> logFiles = runConfiguration.getAllLogFiles();
-    for (LogFileOptions logFile : logFiles) {
-      if (logFile.isEnabled()) {
-        myLogFileManagerMap.put(logFile, logFile.getPaths());
+  public void addLogConsoles(@NotNull RunConfigurationBase runConfiguration, @Nullable ProcessHandler startedProcess) {
+    for (LogFileOptions logFileOptions : runConfiguration.getAllLogFiles()) {
+      if (logFileOptions.isEnabled()) {
+        addConfigurationConsoles(logFileOptions, Conditions.<String>alwaysTrue(), logFileOptions.getPaths(), runConfiguration);
       }
     }
-    myUpdateAlarm.request();
+    runConfiguration.createAdditionalTabComponents(myManager, startedProcess);
   }
 
-  public void initLogConsoles(@NotNull RunConfigurationBase base, ProcessHandler startedProcess) {
-    List<LogFileOptions> logFiles = base.getAllLogFiles();
-    for (LogFileOptions logFile : logFiles) {
-      if (logFile.isEnabled()) {
-        addConfigurationConsoles(logFile, Conditions.<String>alwaysTrue(), logFile.getPaths());
+  private void addConfigurationConsoles(@NotNull LogFileOptions logFile, @NotNull Condition<String> shouldInclude, @NotNull Set<String> paths, @NotNull RunConfigurationBase runConfiguration) {
+    if (paths.isEmpty()) {
+      return;
+    }
+
+    TreeMap<String, String> titleToPath = new TreeMap<String, String>();
+    if (paths.size() == 1) {
+      String path = paths.iterator().next();
+      if (shouldInclude.value(path)) {
+        titleToPath.put(logFile.getName(), path);
       }
     }
-    base.createAdditionalTabComponents(myManager, startedProcess);
-  }
-
-  private void addConfigurationConsoles(final LogFileOptions logFile, Condition<String> shouldInclude, final Set<String> paths) {
-    if (!paths.isEmpty()) {
-      final TreeMap<String, String> title2Path = new TreeMap<String, String>();
-      if (paths.size() == 1) {
-        final String path = paths.iterator().next();
+    else {
+      for (String path : paths) {
         if (shouldInclude.value(path)) {
-          title2Path.put(logFile.getName(), path);
-        }
-      }
-      else {
-        for (String path : paths) {
-          if (shouldInclude.value(path)) {
-            String title = new File(path).getName();
-            if (title2Path.containsKey(title)) {
-              title = path;
-            }
-            title2Path.put(title, path);
+          String title = new File(path).getName();
+          if (titleToPath.containsKey(title)) {
+            title = path;
           }
+          titleToPath.put(title, path);
         }
       }
-      for (final String title : title2Path.keySet()) {
-        final String path = title2Path.get(title);
-        assert path != null;
-        myManager.addLogConsole(title, path, logFile.getCharset(), logFile.isSkipContent() ? new File(path).length() : 0);
-      }
+    }
+
+    for (String title : titleToPath.keySet()) {
+      String path = titleToPath.get(title);
+      assert path != null;
+      myManager.addLogConsole(title, path, logFile.getCharset(), logFile.isSkipContent() ? new File(path).length() : 0, runConfiguration);
     }
   }
 }

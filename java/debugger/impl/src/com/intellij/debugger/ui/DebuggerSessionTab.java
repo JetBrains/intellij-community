@@ -41,7 +41,6 @@ import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsoleEx;
-import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.icons.AllIcons;
@@ -109,7 +108,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
 
               if (XDebuggerSettingsManager.getInstanceImpl().getGeneralSettings().isHideDebuggerOnProcessTermination()) {
                 try {
-                  ExecutionManager.getInstance(getProject()).getContentManager().hideRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), myRunContentDescriptor);
+                  ExecutionManager.getInstance(project).getContentManager().hideRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), myRunContentDescriptor);
                 }
                 catch (NullPointerException e) {
                   //if we can get closeProcess after the project have been closed
@@ -130,8 +129,8 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     topToolbar.add(Separator.getInstance(), new Constraints(Anchor.AFTER, DebuggerActions.POP_FRAME));
     myUi.getOptions().setTopToolbar(topToolbar, ActionPlaces.DEBUGGER_TOOLBAR);
 
-    myWatchPanel = new MainWatchPanel(getProject(), getContextManager());
-    myFramesPanel = new FramesPanel(getProject(), getContextManager());
+    myWatchPanel = new MainWatchPanel(project, getContextManager());
+    myFramesPanel = new FramesPanel(project, getContextManager());
 
     final AlertIcon breakpointAlert = new AlertIcon(AllIcons.Debugger.BreakpointAlert);
 
@@ -151,7 +150,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     myUi.addContent(framesContent, 0, PlaceInGrid.left, false);
 
     // variables
-    myVariablesPanel = new VariablesPanel(getProject(), myStateManager, this);
+    myVariablesPanel = new VariablesPanel(project, myStateManager, this);
     myVariablesPanel.getFrameTree().setAutoVariablesMode(debuggerSettings.AUTO_VARIABLES_MODE);
     Content vars = myUi.createContent(DebuggerContentInfo.VARIABLES_CONTENT, myVariablesPanel, XDebuggerBundle.message("debugger.session.tab.variables.title"),
                                       AllIcons.Debugger.Value, null);
@@ -202,8 +201,8 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
 
     ExecutionResult executionResult = debuggerSession.getProcess().getExecutionResult();
     myConsole = executionResult.getExecutionConsole();
-    myRunContentDescriptor = new RunContentDescriptor(myConsole, executionResult.getProcessHandler(), myUi.getComponent(), getSessionName(),
-                                                      environment.getIcon());
+//    myRunContentDescriptor = new RunContentDescriptor(myConsole, executionResult.getProcessHandler(), myUi.getComponent(), getSessionName(),
+//                                                      environment.getIcon());
     initUI(executionResult);
   }
 
@@ -224,11 +223,6 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
 
   public MainWatchPanel getWatchPanel() {
     return myWatchPanel;
-  }
-
-  @Override
-  public RunContentDescriptor getRunContentDescriptor() {
-    return myRunContentDescriptor;
   }
 
   private void initUI(ExecutionResult executionResult) {

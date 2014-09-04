@@ -15,7 +15,6 @@
  */
 package com.intellij.debugger;
 
-import com.intellij.diagnostic.logging.LogFilesManager;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -36,8 +35,6 @@ public interface DebugUIEnvironment {
 
   @Nullable
   Icon getIcon();
-
-  void initLogs(RunContentDescriptor content, LogFilesManager logFilesManager);
 
   void initActions(RunContentDescriptor content, DefaultActionGroup actionGroup);
 
