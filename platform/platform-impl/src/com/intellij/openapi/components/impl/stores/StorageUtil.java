@@ -291,7 +291,7 @@ public class StorageUtil {
   }
 
   @NotNull
-  public static BufferExposingByteArrayOutputStream documentToBytes(@NotNull Parent element, boolean useSystemLineSeparator) throws IOException {
+  public static BufferExposingByteArrayOutputStream elementToBytes(@NotNull Parent element, boolean useSystemLineSeparator) throws IOException {
     return writeToBytes(element, useSystemLineSeparator ? SystemProperties.getLineSeparator() : "\n");
   }
 
@@ -319,7 +319,7 @@ public class StorageUtil {
    */
   public static void doSendContent(@NotNull StreamProvider provider, @NotNull String fileSpec, @NotNull Parent element, @NotNull RoamingType type, boolean async) throws IOException {
     // we should use standard line-separator (\n) - stream provider can share file content on any OS
-    BufferExposingByteArrayOutputStream content = documentToBytes(element, false);
+    BufferExposingByteArrayOutputStream content = elementToBytes(element, false);
     provider.saveContent(fileSpec, content.getInternalBuffer(), content.size(), type, async);
   }
 

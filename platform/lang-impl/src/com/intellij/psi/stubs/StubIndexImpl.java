@@ -63,11 +63,7 @@ import java.util.concurrent.locks.Lock;
 
 @State(
   name = "FileBasedIndex",
-  roamingType = RoamingType.DISABLED,
-  storages = {
-  @Storage(
-    file = StoragePathMacros.APP_CONFIG + "/stubIndex.xml")
-    }
+  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/stubIndex.xml", roamingType = RoamingType.DISABLED)}
 )
 public class StubIndexImpl extends StubIndex implements ApplicationComponent, PersistentStateComponent<StubIndexState> {
   private static final AtomicReference<Boolean> ourForcedClean = new AtomicReference<Boolean>(null);
@@ -109,7 +105,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
     myStubProcessingHelper = new StubProcessingHelper(fileBasedIndex);
   }
-  
+
   @Nullable
   public static StubIndexImpl getInstanceOrInvalidate() {
     if (ourForcedClean.compareAndSet(null, Boolean.TRUE)) {

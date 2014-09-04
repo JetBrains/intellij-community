@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.jps.api;
+package com.intellij.uiDesigner.actions;
+
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+
+import java.util.List;
 
 /**
- * @author Eugene Zhuravlev
- *         Date: 1/24/12
+ * @author Alexander Lobas
  */
-public interface GlobalOptions {
-  String USE_MEMORY_TEMP_CACHE_OPTION = "use.memory.temp.cache";
-  String GENERATE_CLASSPATH_INDEX_OPTION = "generate.classpath.index";
-  String COMPILE_PARALLEL_OPTION = "compile.parallel";
-  String COMPILE_PARALLEL_MAX_THREADS_OPTION = "compile.parallel.max.threads";
-  String REBUILD_ON_DEPENDENCY_CHANGE_OPTION = "rebuild.on.dependency.change";
-  String LOG_DIR_OPTION = "jps.log.dir";
+public class ShowFormSourceAction extends AbstractGuiEditorAction {
+  @Override
+  protected void actionPerformed(GuiEditor editor, List<RadComponent> selection, AnActionEvent e) {
+    editor.showFormSource();
+  }
 }

@@ -94,7 +94,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
 
   @Override
   @Nullable
-  public <T> T getState(final Object component, final String componentName, Class<T> stateClass, @Nullable T mergeInto)
+  public <T> T getState(final Object component, @NotNull final String componentName, Class<T> stateClass, @Nullable T mergeInto)
     throws StateStorageException {
     if (myStorageData == null) myStorageData = loadState();
 

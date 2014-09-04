@@ -1158,7 +1158,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   public Editor getSelectedTextEditor(boolean lockfree) {
-    assertDispatchThread();
+    if (!lockfree) {
+      assertDispatchThread();
+    }
 
     final EditorWindow currentWindow = lockfree ? getMainSplitters().getCurrentWindow() : getSplitters().getCurrentWindow();
     if (currentWindow != null) {

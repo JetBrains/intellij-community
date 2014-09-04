@@ -32,7 +32,7 @@ import net.n3.nanoxml.IXMLBuilder;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
-import org.jetbrains.jps.javac.JavacServer;
+import org.jetbrains.jps.javac.ExternalJavacProcess;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.impl.JpsModelImpl;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
@@ -145,6 +145,8 @@ public class ClasspathBootstrap {
     cp.add(getResourcePath(NotNullVerifyingInstrumenter.class));  // not-null
     cp.add(getResourcePath(IXMLBuilder.class));  // nano-xml
     cp.add(getResourcePath(SequenceLock.class));  // jsr166
+    cp.add(getJpsPluginSystemClassesPath().getAbsolutePath().replace('\\', '/'));
+    
     //don't forget to update layoutCommunityJps() in layouts.gant accordingly
 
     if (!isLauncherUsed) {
@@ -176,9 +178,9 @@ public class ClasspathBootstrap {
     }
   }
 
-  public static List<File> getJavacServerClasspath(String sdkHome, JavaCompilingTool compilingTool) {
+  public static List<File> getExternalJavacProcessClasspath(String sdkHome, JavaCompilingTool compilingTool) {
     final Set<File> cp = new LinkedHashSet<File>();
-    cp.add(getResourceFile(JavacServer.class)); // self
+    cp.add(getResourceFile(ExternalJavacProcess.class)); // self
     // util
     for (String path : PathManager.getUtilClassPath()) {
       cp.add(new File(path));
@@ -187,7 +189,8 @@ public class ClasspathBootstrap {
     cp.add(getResourceFile(JpsModelImpl.class));  // jps-model-impl
     cp.add(getResourceFile(Message.class)); // protobuf
     cp.add(getResourceFile(NetUtil.class)); // netty
-
+    cp.add(getJpsPluginSystemClassesPath());
+    
     final Class<StandardJavaFileManager> optimizedFileManagerClass = getOptimizedFileManagerClass();
     if (optimizedFileManagerClass != null) {
       cp.add(getResourceFile(optimizedFileManagerClass));  // optimizedFileManager, if applicable
@@ -201,38 +204,33 @@ public class ClasspathBootstrap {
       LOG.info(th);
     }
 
-    final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
-    if (systemCompiler != null) {
-      try {
-        final String localJarPath = FileUtil.toSystemIndependentName(getResourceFile(systemCompiler.getClass()).getPath());
-        final String localJavaHome = FileUtil.toSystemIndependentName(SystemProperties.getJavaHome());
-        if (FileUtil.pathsEqual(localJavaHome, FileUtil.toSystemIndependentName(sdkHome))) {
-          cp.add(new File(localJarPath));
-        }
-        else {
-          // sdkHome is not the same as the sdk used to run this process
-          final File candidate = new File(sdkHome, "lib/tools.jar");
-          if (candidate.exists()) {
-            cp.add(candidate);
-          }
-          else {
-            // last resort
-            String relPath = FileUtil.getRelativePath(localJavaHome, localJarPath, '/');
+    try {
+      final String localJavaHome = FileUtil.toSystemIndependentName(SystemProperties.getJavaHome());
+      // sdkHome is not the same as the sdk used to run this process
+      final File candidate = new File(sdkHome, "lib/tools.jar");
+      if (candidate.exists()) {
+        cp.add(candidate);
+      }
+      else {
+        // last resort
+        final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
+        if (systemCompiler != null) {
+          final String localJarPath = FileUtil.toSystemIndependentName(getResourceFile(systemCompiler.getClass()).getPath());
+          String relPath = FileUtil.getRelativePath(localJavaHome, localJarPath, '/');
+          if (relPath != null) {
+            if (relPath.contains("..")) {
+              relPath = FileUtil.getRelativePath(FileUtil.toSystemIndependentName(new File(localJavaHome).getParent()), localJarPath, '/');
+            }
             if (relPath != null) {
-              if (relPath.contains("..")) {
-                relPath = FileUtil.getRelativePath(FileUtil.toSystemIndependentName(new File(localJavaHome).getParent()), localJarPath, '/');
-              }
-              if (relPath != null) {
-                final File targetFile = new File(sdkHome, relPath);
-                cp.add(targetFile);  // tools.jar
-              }
+              final File targetFile = new File(sdkHome, relPath);
+              cp.add(targetFile);  // tools.jar
             }
           }
         }
       }
-      catch (Throwable th) {
-        LOG.info(th);
-      }
+    }
+    catch (Throwable th) {
+      LOG.info(th);
     }
 
     cp.addAll(compilingTool.getAdditionalClasspath());
@@ -286,4 +284,16 @@ public class ClasspathBootstrap {
   public static File getResourceFile(Class aClass) {
     return new File(getResourcePath(aClass));
   }
+  
+  private static File getJpsPluginSystemClassesPath() {
+    File classesRoot = new File(getResourcePath(ClasspathBootstrap.class));
+    if (classesRoot.isDirectory()) {
+      //running from sources: load classes from .../out/production/jps-plugin-system
+      return new File(classesRoot.getParentFile(), "jps-plugin-system");
+    }
+    else {
+      return new File(classesRoot.getParentFile(), "rt/jps-plugin-system.jar");
+    }
+  }
+  
 }

@@ -15,15 +15,13 @@
  */
 package com.intellij.ide.util;
 
-import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 
 @State(
-    name = "PropertiesComponent",
-    roamingType = RoamingType.DISABLED,
-    storages = {@Storage(
-        file = StoragePathMacros.WORKSPACE_FILE)})
+  name = "PropertiesComponent",
+  storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)}
+)
 public class ProjectPropertiesComponentImpl extends PropertiesComponentImpl {
 }

@@ -15,18 +15,18 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.openapi.components.StateStorageException;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
-import java.util.Collection;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Set;
 
 public interface IApplicationStore extends IComponentStore {
-  void setOptionsPath(String path);
+  void setOptionsPath(@NotNull String path);
 
   void setConfigPath(@NotNull String configPath);
 

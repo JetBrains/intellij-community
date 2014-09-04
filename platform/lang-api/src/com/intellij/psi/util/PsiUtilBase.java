@@ -40,7 +40,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiUtilBase");
@@ -235,6 +237,9 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
    */
   @Nullable
   public static Editor findEditor(@NotNull PsiElement element) {
+    if (!EventQueue.isDispatchThread()) {
+      LOG.warn("Invoke findEditor() from EDT only. Otherwise, it causes deadlocks.");
+    }
     PsiFile psiFile = element.getContainingFile();
     VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
     if (virtualFile == null) {

@@ -15,7 +15,6 @@
  */
 package org.jetbrains.jps.incremental.java;
 
-import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -32,8 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
-import org.jetbrains.jps.api.GlobalOptions;
-import org.jetbrains.jps.api.RequestFuture;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
@@ -63,13 +60,11 @@ import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleType;
 import org.jetbrains.jps.service.JpsServiceManager;
 
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.*;
 import java.net.ServerSocket;
 import java.util.*;
 import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -81,7 +76,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
   public static final String BUILDER_NAME = "java";
   private static final String JAVA_EXTENSION = "java";
   private static final String DOT_JAVA_EXTENSION = "." + JAVA_EXTENSION;
-  public static final boolean USE_EMBEDDED_JAVAC = System.getProperty(GlobalOptions.USE_EXTERNAL_JAVAC_OPTION) == null;
   private static final Key<Integer> JAVA_COMPILER_VERSION_KEY = Key.create("_java_compiler_version_");
   public static final Key<Boolean> IS_ENABLED = Key.create("_java_compiler_enabled_");
   private static final Key<JavaCompilingTool> COMPILING_TOOL = Key.create("_java_compiling_tool_");
@@ -396,7 +390,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
     try {
       final boolean rc;
-      if (USE_EMBEDDED_JAVAC) {
+      if (!shouldForkCompilerProcess(context, chunk, compilingTool)) {
         final Collection<File> _platformCp = calcEffectivePlatformCp(platformCp, options, compilingTool);
         if (_platformCp == null) {
           diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, 
@@ -409,22 +403,38 @@ public class JavaBuilder extends ModuleLevelBuilder {
         );
       }
       else {
-        final JavacServerClient client = ensureJavacServerLaunched(context, compilingTool);
-        final RequestFuture<JavacServerResponseHandler> future = client.sendCompileRequest(
-          options, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer
-        );
-        while (!future.waitFor(100L, TimeUnit.MILLISECONDS)) {
-          if (context.getCancelStatus().isCanceled()) {
-            future.cancel(false);
-          }
+        // fork external javac
+        final String sdkHome = getChunkSdkHome(chunk);
+        if (sdkHome == null) {
+          diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Cannot start javac process for " + chunk.getName() + ": unknown JDK home path.\nPlease check project configuration."));
+          return true;
         }
-        rc = future.getMessageHandler().isTerminatedSuccessfully();
+
+        final List<String> vmOptions = getCompilationVMOptions(context, compilingTool);
+        final ExternalJavacServer server = ensureJavacServerStarted(context);
+        rc = server.forkJavac(
+          context, options, vmOptions, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer, sdkHome, compilingTool
+        );
       }
       return rc;
     }
     finally {
       counter.await();
     }
+  }
+                                                                            
+  private static boolean shouldForkCompilerProcess(CompileContext context, ModuleChunk chunk, JavaCompilingTool tool) {
+    final int compilerSdkVersion = getCompilerSdkVersion(context);
+    if (compilerSdkVersion < 9) {
+      // javac up to version 9 supports all previous releases
+      return false;
+    }
+    final int chunkSdkVersion = getChunkSdkVersion(chunk);
+    if (chunkSdkVersion < 0) {
+      return false; // was not able to determine jdk version, assuming in-process compiler
+    }
+    // according to JEP 182: Retiring javac "one plus three back" policy
+    return Math.abs(compilerSdkVersion - chunkSdkVersion) > 3; 
   }
 
   // If platformCp of the build process is the same as the target plafform, do not specify platformCp explicitly
@@ -482,31 +492,16 @@ public class JavaBuilder extends ModuleLevelBuilder {
     });
   }
 
-  private static synchronized JavacServerClient ensureJavacServerLaunched(@NotNull CompileContext context, @NotNull JavaCompilingTool compilingTool) throws Exception {
-    final ExternalJavacDescriptor descriptor = ExternalJavacDescriptor.KEY.get(context);
-    if (descriptor != null) {
-      return descriptor.client;
+  private static synchronized ExternalJavacServer ensureJavacServerStarted(@NotNull CompileContext context) throws Exception {
+    ExternalJavacServer server = ExternalJavacServer.KEY.get(context);
+    if (server != null) {
+      return server;
     }
-    // start server here
-    final int port = findFreePort();
-    final int heapSize = getJavacServerHeapSize(context);
-
-    // use the same jdk that used to run the build process
-    final String javaHome = SystemProperties.getJavaHome();
-
-    final BaseOSProcessHandler processHandler = JavacServerBootstrap.launchJavacServer(
-      javaHome, heapSize, port, Utils.getSystemRoot(), getCompilationVMOptions(context, compilingTool), compilingTool
-    );
-    final JavacServerClient client = new JavacServerClient();
-    try {
-      client.connect("127.0.0.1", port);
-    }
-    catch (Throwable ex) {
-      processHandler.destroyProcess();
-      throw new Exception("Failed to connect to external javac process: ", ex);
-    }
-    ExternalJavacDescriptor.KEY.set(context, new ExternalJavacDescriptor(processHandler, client));
-    return client;
+    final int listenPort = findFreePort();
+    server = new ExternalJavacServer();
+    server.start(listenPort);
+    ExternalJavacServer.KEY.set(context, server);
+    return server;
   }
 
   private static int convertToNumber(String ver) {
@@ -564,15 +559,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
     catch (IOException e) {
       e.printStackTrace(System.err);
-      return JavacServer.DEFAULT_SERVER_PORT;
+      return ExternalJavacServer.DEFAULT_SERVER_PORT;
     }
-  }
-
-  private static int getJavacServerHeapSize(CompileContext context) {
-    final JpsProject project = context.getProjectDescriptor().getProject();
-    final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
-    final JpsJavaCompilerOptions options = config.getCurrentCompilerOptions();
-    return options.MAXIMUM_HEAP_SIZE;
   }
 
   private static final Key<List<String>> JAVAC_OPTIONS = Key.create("_javac_options_");
@@ -628,19 +616,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
       options.add(langLevel);
     }
 
-    JpsJavaCompilerConfiguration compilerConfiguration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(
-      context.getProjectDescriptor().getProject());
-    String bytecodeTarget = null;
-    int chunkSdkVersion = -1;
-    for (JpsModule module : chunk.getModules()) {
-      final JpsSdk<JpsDummyElement> sdk = module.getSdk(JpsJavaSdkType.INSTANCE);
-      if (sdk != null) {
-        final int moduleSdkVersion = convertToNumber(sdk.getVersionString());
-        if (moduleSdkVersion != 0 /*could determine the version*/&& (chunkSdkVersion < 0 || chunkSdkVersion > moduleSdkVersion)) {
-          chunkSdkVersion = moduleSdkVersion;
-        }
-      }
+    final JpsJavaCompilerConfiguration compilerConfiguration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(
+      context.getProjectDescriptor().getProject()
+    );
 
+    String bytecodeTarget = null;
+    for (JpsModule module : chunk.getModules()) {
       final String moduleTarget = compilerConfiguration.getByteCodeTargetLevel(module.getName());
       if (moduleTarget == null) {
         continue;
@@ -662,6 +643,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     final int compilerSdkVersion = getCompilerSdkVersion(context);
+    final int chunkSdkVersion = getChunkSdkVersion(chunk);
     
     if (bytecodeTarget != null) {
       options.add("-target");
@@ -721,17 +703,19 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
   private static String getLanguageLevel(JpsModule module) {
-    LanguageLevel level = JpsJavaExtensionService.getInstance().getLanguageLevel(module);
-    if (level == null) return null;
-    switch (level) {
-      case JDK_1_3: return "1.3";
-      case JDK_1_4: return "1.4";
-      case JDK_1_5: return "1.5";
-      case JDK_1_6: return "1.6";
-      case JDK_1_7: return "1.7";
-      case JDK_1_8: return "8";
-      default: return null;
+    final LanguageLevel level = JpsJavaExtensionService.getInstance().getLanguageLevel(module);
+    if (level != null) {
+      switch (level) {
+        case JDK_1_3: return "1.3";
+        case JDK_1_4: return "1.4";
+        case JDK_1_5: return "1.5";
+        case JDK_1_6: return "1.6";
+        case JDK_1_7: return "1.7";
+        case JDK_1_8: return "8";
+        case JDK_1_9: return "9";
+      }
     }
+    return null;
   }
 
   private static boolean isEncodingSet(List<String> options) {
@@ -743,7 +727,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return false;
   }
 
-
   private static int getCompilerSdkVersion(CompileContext context) {
     final Integer cached = JAVA_COMPILER_VERSION_KEY.get(context);
     if (cached != null) {
@@ -752,6 +735,30 @@ public class JavaBuilder extends ModuleLevelBuilder {
     int javaVersion = convertToNumber(SystemProperties.getJavaVersion());
     JAVA_COMPILER_VERSION_KEY.set(context, javaVersion);
     return javaVersion;
+  }
+
+  private static int getChunkSdkVersion(ModuleChunk chunk) {
+    int chunkSdkVersion = -1;
+    for (JpsModule module : chunk.getModules()) {
+      final JpsSdk<JpsDummyElement> sdk = module.getSdk(JpsJavaSdkType.INSTANCE);
+      if (sdk != null) {
+        final int moduleSdkVersion = convertToNumber(sdk.getVersionString());
+        if (moduleSdkVersion != 0 /*could determine the version*/&& (chunkSdkVersion < 0 || chunkSdkVersion > moduleSdkVersion)) {
+          chunkSdkVersion = moduleSdkVersion;
+        }
+      }
+    }
+    return chunkSdkVersion;
+  }
+
+  private static String getChunkSdkHome(ModuleChunk chunk) {
+    for (JpsModule module : chunk.getModules()) {
+      final JpsSdk<JpsDummyElement> sdk = module.getSdk(JpsJavaSdkType.INSTANCE);
+      if (sdk != null) {
+        return sdk.getHomePath();
+      }
+    }
+    return null;
   }
 
   private static void loadCommonJavacOptions(@NotNull CompileContext context, @NotNull JavaCompilingTool compilingTool) {
