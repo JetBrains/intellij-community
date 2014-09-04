@@ -199,6 +199,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
     ValueLookupManager.getInstance(getProject()).startListening();
   }
 
+  @NotNull
   public DebuggerStateManager getContextManager() {
     return myContextManager;
   }

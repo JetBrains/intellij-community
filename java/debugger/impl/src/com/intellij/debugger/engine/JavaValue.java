@@ -103,6 +103,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   }
 
   @Override
+  @NotNull
   public ValueDescriptorImpl getDescriptor() {
     return myValueDescriptor;
   }
