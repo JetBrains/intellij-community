@@ -27,6 +27,7 @@ import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -41,7 +42,7 @@ public class PyHierarchyNodeDescriptor extends HierarchyNodeDescriptor {
     super(element.getProject(), parentDescriptor, element, isBase);
   }
 
-  @NotNull
+  @Nullable
   public PsiElement getPsiElement() {
     return myElement;
   }
