@@ -133,13 +133,6 @@ public class FileBasedStorage extends XmlElementStorage {
     return new FileSaveSession(externalizationSession);
   }
 
-  public void resetProviderCache() {
-    myProviderUpToDateHash = -1;
-    if (myRemoteVersionProvider != null) {
-      myRemoteVersionProvider.myProviderVersions = null;
-    }
-  }
-
   private class FileSaveSession extends MySaveSession {
     protected FileSaveSession(MyExternalizationSession externalizationSession) {
       super(externalizationSession);

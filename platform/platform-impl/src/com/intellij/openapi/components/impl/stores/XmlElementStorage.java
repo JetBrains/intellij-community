@@ -56,7 +56,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   private final ComponentRoamingManager myComponentRoamingManager;
   protected boolean myBlockSavingTheContent = false;
   protected int myUpToDateHash = -1;
-  protected int myProviderUpToDateHash = -1;
+  private int myProviderUpToDateHash = -1;
   private boolean mySavingDisabled = false;
 
   private final Map<String, Object> myStorageComponentStates = new THashMap<String, Object>(); // at load we store Element, on setState Integer of hash
@@ -416,9 +416,9 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       }
     }
 
-    private void saveLocally(final Integer hash) {
+    private void saveLocally(int hash) {
       try {
-        if (!isHashUpToDate(hash) && _needsSave(hash)) {
+        if (!(myUpToDateHash != -1 && myUpToDateHash == hash) && _needsSave(hash)) {
           doSave();
         }
       }
@@ -496,10 +496,6 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       catch (IOException e) {
         LOG.warn(e);
       }
-    }
-
-    private boolean isHashUpToDate(final Integer hash) {
-      return myUpToDateHash != -1 && myUpToDateHash == hash;
     }
 
     @Nullable
@@ -619,8 +615,15 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     return mySession instanceof MySaveSession ? getElement(((MySaveSession)mySession).myStorageData) : null;
   }
 
-  protected class RemoteComponentVersionProvider implements ComponentVersionProvider {
-    protected TObjectLongHashMap<String> myProviderVersions;
+  public void resetProviderCache() {
+    myProviderUpToDateHash = -1;
+    if (myRemoteVersionProvider != null) {
+      myRemoteVersionProvider.myProviderVersions = null;
+    }
+  }
+
+  private final class RemoteComponentVersionProvider implements ComponentVersionProvider {
+    private TObjectLongHashMap<String> myProviderVersions;
 
     @Override
     public long getVersion(String name) {
