@@ -23,6 +23,7 @@ else:
 if IS_PY3K:
     import pkgutil
 else:
+    import pkgutil_old as pkgutil
 
 import errno
 try:
