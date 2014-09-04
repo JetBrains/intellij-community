@@ -2,11 +2,14 @@ package com.intellij.json.codeinsight;
 
 import com.intellij.json.JsonBundle;
 import com.intellij.json.psi.JsonElementVisitor;
+import com.intellij.json.psi.JsonFile;
+import com.intellij.json.psi.JsonLiteral;
 import com.intellij.json.psi.JsonStringLiteral;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -22,9 +25,18 @@ public class JsonStandardComplianceAnnotator implements Annotator {
       }
 
       @Override
-      public void visitStringLiteral(@NotNull JsonStringLiteral literal) {
-        if (literal.getText().startsWith("'")) {
-          holder.createErrorAnnotation(literal, JsonBundle.message("compliance.problem.single.quoted.strings"));
+      public void visitStringLiteral(@NotNull JsonStringLiteral stringLiteral) {
+        if (stringLiteral.getText().startsWith("'")) {
+          holder.createErrorAnnotation(stringLiteral, JsonBundle.message("compliance.problem.single.quoted.strings"));
+        }
+        super.visitStringLiteral(stringLiteral);
+      }
+
+      @Override
+      public void visitLiteral(@NotNull JsonLiteral literal) {
+        final PsiFile psiFile = literal.getContainingFile();
+        if (psiFile instanceof JsonFile && literal == ((JsonFile)psiFile).getTopLevelValue()) {
+          holder.createErrorAnnotation(literal, JsonBundle.message("compliance.problem.illegal.top.level.value"));
         }
       }
     });

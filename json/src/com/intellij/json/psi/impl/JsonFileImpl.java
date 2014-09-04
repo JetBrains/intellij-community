@@ -3,9 +3,7 @@ package com.intellij.json.psi.impl;
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.json.JsonFileType;
 import com.intellij.json.JsonLanguage;
-import com.intellij.json.psi.JsonArray;
 import com.intellij.json.psi.JsonFile;
-import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonValue;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,7 +27,7 @@ public class JsonFileImpl extends PsiFileBase implements JsonFile {
   @Nullable
   @Override
   public JsonValue getTopLevelValue() {
-    return PsiTreeUtil.getChildOfAnyType(this, JsonObject.class, JsonArray.class);
+    return PsiTreeUtil.getChildOfType(this, JsonValue.class);
   }
 
   @Override

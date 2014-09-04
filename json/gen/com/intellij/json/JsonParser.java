@@ -142,16 +142,9 @@ public class JsonParser implements PsiParser {
   }
 
   /* ********************************************************** */
-  // object | array
+  // value
   static boolean json(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "json")) return false;
-    if (!nextTokenIs(builder_, "", L_BRACKET, L_CURLY)) return false;
-    boolean result_;
-    Marker marker_ = enter_section_(builder_);
-    result_ = object(builder_, level_ + 1);
-    if (!result_) result_ = array(builder_, level_ + 1);
-    exit_section_(builder_, marker_, null, result_);
-    return result_;
+    return value(builder_, level_ + 1);
   }
 
   /* ********************************************************** */

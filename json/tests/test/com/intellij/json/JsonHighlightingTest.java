@@ -17,4 +17,8 @@ public class JsonHighlightingTest extends JsonTestCase {
   public void testCompliance() {
     doTest();
   }
+
+  public void testComplianceTopLevelValues() {
+    doTest();
+  }
 }

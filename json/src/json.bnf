@@ -52,7 +52,8 @@
     ]
 }
 
-json ::= object | array
+// For compatibility we allow any value at root level (see JsonStandardComplianceAnnotator)
+json ::= value
 
 object ::= '{' object_element* '}' {
   pin=1
