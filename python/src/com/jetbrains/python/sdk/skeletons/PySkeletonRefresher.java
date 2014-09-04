@@ -105,10 +105,6 @@ public class PySkeletonRefresher {
 
   private PySkeletonGenerator mySkeletonsGenerator;
 
-  public static void refreshSkeletonsOfSdk(@NotNull Project project, @NotNull Sdk sdk) throws InvalidSdkException {
-    refreshSkeletonsOfSdk(project, null, PythonSdkType.findSkeletonsPath(sdk), new Ref<Boolean>(false), sdk);
-  }
-
   public static synchronized boolean isGeneratingSkeletons() {
     return ourGeneratingCount > 0;
   }
