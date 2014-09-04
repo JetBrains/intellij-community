@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,11 @@ import com.intellij.execution.configurations.LogFileOptions;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
+import com.intellij.util.SingleAlarm;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,29 +32,21 @@ import javax.swing.*;
 import java.io.File;
 import java.util.*;
 
-/**
- * User: anna
- * Date: 01-Feb-2006
- */
-public class LogFilesManager implements Disposable {
-  public static final Logger LOG = Logger.getInstance(LogFilesManager.class);
-
-  private static final int UPDATE_INTERVAL = 500;
-
+public class LogFilesManager {
   private final Map<LogFileOptions, Set<String>> myLogFileManagerMap = new LinkedHashMap<LogFileOptions, Set<String>>();
-  private final Runnable myUpdateRequest;
   private final LogConsoleManager myManager;
-  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
-  private boolean myDisposed;
+  private final SingleAlarm myUpdateAlarm;
 
-  public LogFilesManager(@NotNull final Project project, LogConsoleManager manager, Disposable parentDisposable) {
+  public LogFilesManager(@NotNull final Project project, @NotNull LogConsoleManager manager, @NotNull Disposable parentDisposable) {
     myManager = manager;
-    Disposer.register(parentDisposable, this);
 
-    myUpdateRequest = new Runnable() {
+    myUpdateAlarm = new SingleAlarm(new Runnable() {
       @Override
       public void run() {
-        if (project.isDisposed() || myDisposed) return;
+        if (project.isDisposed()) {
+          return;
+        }
+
         myUpdateAlarm.cancelAllRequests();
         for (final LogFileOptions logFile : myLogFileManagerMap.keySet()) {
           final Set<String> oldFiles = myLogFileManagerMap.get(logFile);
@@ -68,7 +59,9 @@ public class LogFilesManager implements Disposable {
           SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-              if (project.isDisposed() || myDisposed) return;
+              if (project.isDisposed()) {
+                return;
+              }
 
               addConfigurationConsoles(logFile, new Condition<String>() {
                 @Override
@@ -79,12 +72,12 @@ public class LogFilesManager implements Disposable {
               for (String each : obsoleteFiles) {
                 myManager.removeLogConsole(each);
               }
-              myUpdateAlarm.addRequest(myUpdateRequest, UPDATE_INTERVAL);
+              myUpdateAlarm.request();
             }
           });
         }
       }
-    };
+    }, 500, Alarm.ThreadToUse.POOLED_THREAD, parentDisposable);
   }
 
   public void registerFileMatcher(@NotNull RunConfigurationBase runConfiguration) {
@@ -94,18 +87,7 @@ public class LogFilesManager implements Disposable {
         myLogFileManagerMap.put(logFile, logFile.getPaths());
       }
     }
-    Alarm updateAlarm = myUpdateAlarm;
-    if (updateAlarm != null) {
-      updateAlarm.addRequest(myUpdateRequest, UPDATE_INTERVAL);
-    }
-  }
-
-  @Override
-  public void dispose() {
-    myDisposed = true;
-    if (myUpdateAlarm != null) {
-      myUpdateAlarm.cancelAllRequests();
-    }
+    myUpdateAlarm.request();
   }
 
   public void initLogConsoles(@NotNull RunConfigurationBase base, ProcessHandler startedProcess) {
@@ -140,6 +122,7 @@ public class LogFilesManager implements Disposable {
       }
       for (final String title : title2Path.keySet()) {
         final String path = title2Path.get(title);
+        assert path != null;
         myManager.addLogConsole(title, path, logFile.getCharset(), logFile.isSkipContent() ? new File(path).length() : 0);
       }
     }

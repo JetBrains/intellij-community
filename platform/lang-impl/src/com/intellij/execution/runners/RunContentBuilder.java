@@ -121,6 +121,7 @@ public class RunContentBuilder extends RunTab {
     }
 
     final ExecutionConsole console = myExecutionResult.getExecutionConsole();
+    RunContentDescriptor contentDescriptor = new RunContentDescriptor(profile, myExecutionResult, myUi);
     if (console != null) {
       if (console instanceof ExecutionConsoleEx) {
         ((ExecutionConsoleEx)console).buildUi(myUi);
@@ -128,9 +129,8 @@ public class RunContentBuilder extends RunTab {
       else {
         buildConsoleUiDefault(myUi, console);
       }
-      initLogConsoles(profile, myExecutionResult.getProcessHandler(), console);
+      initLogConsoles(profile, contentDescriptor, console);
     }
-    RunContentDescriptor contentDescriptor = new RunContentDescriptor(profile, myExecutionResult, myUi);
     Disposer.register(contentDescriptor, this);
     myUi.getOptions().setLeftToolbar(createActionToolbar(contentDescriptor), ActionPlaces.UNKNOWN);
 

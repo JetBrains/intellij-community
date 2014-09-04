@@ -270,7 +270,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     }
     console.setActions(consoleActions, ActionPlaces.DEBUGGER_TOOLBAR, myConsole.getPreferredFocusableComponent());
 
-    myDebugUIEnvironment.initLogs(myRunContentDescriptor, myManager);
+//    myDebugUIEnvironment.initLogs(myRunContentDescriptor, myManager);
 
     DefaultActionGroup leftToolbar = new DefaultActionGroup();
 

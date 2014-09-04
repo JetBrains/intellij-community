@@ -287,7 +287,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     myUi.getOptions().setTopToolbar(topToolbar, ActionPlaces.DEBUGGER_TOOLBAR);
 
     if (environment != null) {
-      initLogConsoles(environment.getRunProfile(), myRunContentDescriptor.getProcessHandler(), myConsole);
+      initLogConsoles(environment.getRunProfile(), myRunContentDescriptor, myConsole);
     }
   }
 

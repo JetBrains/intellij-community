@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class RunTab extends LogConsoleManagerBase implements DataProvider {
   @NotNull
   protected final RunnerLayoutUi myUi;
-  protected final LogFilesManager myManager;
+  private LogFilesManager myManager;
   protected RunContentDescriptor myRunContentDescriptor;
 
   protected RunTab(@NotNull ExecutionEnvironment environment, @NotNull String runnerType) {
@@ -51,8 +51,6 @@ public abstract class RunTab extends LogConsoleManagerBase implements DataProvid
 
   protected RunTab(@NotNull Project project, @NotNull GlobalSearchScope searchScope, @NotNull String runnerType, @NotNull String runnerTitle, @NotNull String sessionName) {
     super(project, searchScope);
-
-    myManager = new LogFilesManager(project, this, this);
 
     myUi = RunnerLayoutUi.Factory.getInstance(getProject()).create(runnerType, runnerTitle, sessionName, this);
     myUi.getContentManager().addDataProvider(this);
@@ -80,13 +78,20 @@ public abstract class RunTab extends LogConsoleManagerBase implements DataProvid
 
     RunProfile profile = environment.getRunProfile();
     if (profile instanceof RunConfigurationBase) {
+      if (myManager == null) {
+        myManager = new LogFilesManager(getProject(), this, this);
+      }
       myManager.registerFileMatcher((RunConfigurationBase)profile);
     }
   }
 
-  protected final void initLogConsoles(@NotNull RunProfile runConfiguration, @Nullable ProcessHandler processHandler, @Nullable ExecutionConsole console) {
+  protected final void initLogConsoles(@NotNull RunProfile runConfiguration, @NotNull RunContentDescriptor contentDescriptor, @Nullable ExecutionConsole console) {
+    ProcessHandler processHandler = contentDescriptor.getProcessHandler();
     if (runConfiguration instanceof RunConfigurationBase && processHandler != null) {
       RunConfigurationBase configuration = (RunConfigurationBase)runConfiguration;
+      if (myManager == null) {
+        myManager = new LogFilesManager(getProject(), this, contentDescriptor);
+      }
       myManager.initLogConsoles(configuration, processHandler);
       OutputFileUtil.attachDumpListener(configuration, processHandler, console);
     }
