@@ -20,6 +20,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.refactoring.rename.PreferrableNameSuggestionProvider;
 import com.intellij.spellchecker.SpellCheckerManager;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.Set;
 
@@ -54,7 +55,7 @@ public class DictionarySuggestionProvider extends PreferrableNameSuggestionProvi
 
     SpellCheckerManager manager = SpellCheckerManager.getInstance(element.getProject());
 
-    result.addAll(manager.getSuggestions(text));
+    ContainerUtil.addAllNotNull(result, manager.getSuggestions(text));
     return SuggestedNameInfo.NULL_INFO;
   }
 }
