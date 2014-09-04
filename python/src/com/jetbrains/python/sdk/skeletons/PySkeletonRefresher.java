@@ -831,7 +831,7 @@ public class PySkeletonRefresher {
       return null;
     }
     LOG.info("Pregenerated skeletons root is " + root);
-    final String versionString = mySdk.getVersionString();
+    @NonNls final String versionString = mySdk.getVersionString();
     if (versionString == null) {
       return null;
     }
