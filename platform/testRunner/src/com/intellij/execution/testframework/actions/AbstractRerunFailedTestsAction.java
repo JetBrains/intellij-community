@@ -57,6 +57,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -311,18 +312,18 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     }
 
     @Override
-    public List<PredefinedLogFile> getPredefinedLogFiles() {
+    public ArrayList<PredefinedLogFile> getPredefinedLogFiles() {
       return myConfiguration.getPredefinedLogFiles();
     }
 
     @NotNull
     @Override
-    public List<LogFileOptions> getAllLogFiles() {
+    public ArrayList<LogFileOptions> getAllLogFiles() {
       return myConfiguration.getAllLogFiles();
     }
 
     @Override
-    public List<LogFileOptions> getLogFiles() {
+    public ArrayList<LogFileOptions> getLogFiles() {
       return myConfiguration.getLogFiles();
     }
   }
