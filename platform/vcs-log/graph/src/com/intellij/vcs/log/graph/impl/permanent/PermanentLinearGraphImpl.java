@@ -16,19 +16,22 @@
 
 package com.intellij.vcs.log.graph.impl.permanent;
 
-import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.api.LinearGraph;
-import com.intellij.vcs.log.graph.api.RefactoringLinearGraph;
+import com.intellij.vcs.log.graph.api.elements.GraphEdge;
+import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.utils.Flags;
 import com.intellij.vcs.log.graph.utils.IntList;
+import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import com.intellij.vcs.log.graph.utils.impl.CompressedIntList;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.List;
 
-public class PermanentLinearGraphImpl extends RefactoringLinearGraph implements LinearGraph {
+import static com.intellij.vcs.log.graph.api.elements.GraphEdgeType.USUAL;
+
+public class PermanentLinearGraphImpl implements LinearGraph {
   private final Flags mySimpleNodes;
 
   // myNodeToEdgeIndex.length = nodesCount() + 1.
@@ -49,33 +52,37 @@ public class PermanentLinearGraphImpl extends RefactoringLinearGraph implements 
   @NotNull
   @Override
   public List<Integer> getUpNodes(int nodeIndex) {
-    List<Integer> result = new SmartList<Integer>();
-    if (nodeIndex != 0 && mySimpleNodes.get(nodeIndex - 1)) {
-      result.add(nodeIndex - 1);
-    }
-
-    for (int i = myNodeToEdgeIndex.get(nodeIndex); i < myNodeToEdgeIndex.get(nodeIndex + 1); i++) {
-      int node = myLongEdges.get(i);
-      if (node < nodeIndex)
-        result.add(node);
-    }
-
-    return result;
+    return LinearGraphUtils.getUpNodes(this, nodeIndex);
   }
 
   @NotNull
   @Override
   public List<Integer> getDownNodes(int nodeIndex) {
-    if (mySimpleNodes.get(nodeIndex)) {
-      return Collections.singletonList(nodeIndex + 1);
-    }
+    return LinearGraphUtils.getDownNodes(this, nodeIndex);
+  }
 
-    List<Integer> result = new SmartList<Integer>();
+
+  // upEdges come firstly
+  @NotNull
+  @Override
+  public List<GraphEdge> getAdjacentEdges(int nodeIndex) {
+    List<GraphEdge> result = ContainerUtil.newArrayList();
+
+    if (nodeIndex != 0 && mySimpleNodes.get(nodeIndex - 1))
+      result.add(new GraphEdge(nodeIndex - 1, nodeIndex, USUAL));
+
     for (int i = myNodeToEdgeIndex.get(nodeIndex); i < myNodeToEdgeIndex.get(nodeIndex + 1); i++) {
       int node = myLongEdges.get(i);
-      if (nodeIndex < node)
-        result.add(node);
+      if (node < 0)
+        result.add(new GraphEdge(nodeIndex, null, node, GraphEdgeType.NOT_LOAD_COMMIT));
+      else if (nodeIndex < node)
+        result.add(new GraphEdge(nodeIndex, node, USUAL));
+      else
+        result.add(new GraphEdge(node, nodeIndex, USUAL));
     }
+
+    if (mySimpleNodes.get(nodeIndex))
+      result.add(new GraphEdge(nodeIndex, nodeIndex + 1, USUAL));
 
     return result;
   }

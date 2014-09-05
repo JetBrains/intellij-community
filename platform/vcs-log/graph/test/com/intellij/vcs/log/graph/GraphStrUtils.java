@@ -20,11 +20,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
 import com.intellij.vcs.log.graph.api.GraphLayout;
-import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
-import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
-import com.intellij.vcs.log.graph.api.elements.GraphNodeType;
 import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo;
 import com.intellij.vcs.log.graph.impl.facade.ContainingBranchesGetter;
 import com.intellij.vcs.log.graph.impl.print.EdgesInRowGenerator;
@@ -35,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 import static com.intellij.vcs.log.graph.parser.EdgeNodeCharConverter.toChar;
-import static org.junit.Assert.assertEquals;
 
 public class GraphStrUtils {
 
@@ -47,68 +43,6 @@ public class GraphStrUtils {
     }
   });
 
-  public static <T extends Comparable<? super T>> void appendSortList(List<T> list, StringBuilder s) {
-    ArrayList<T> sorted = new ArrayList<T>(list);
-    Collections.sort(sorted);
-    appendList(sorted, s);
-  }
-
-  public static <T> void appendList(List<T> list, StringBuilder s) {
-
-    boolean first = true;
-    for (T element : list) {
-      if (first) {
-        first = false;
-      } else {
-        s.append(" ");
-      }
-
-      s.append(element);
-    }
-  }
-
-  public static String linearGraphToStr(LinearGraph graph) {
-    StringBuilder s = new StringBuilder();
-    for (int nodeIndex = 0; nodeIndex < graph.nodesCount(); nodeIndex++) {
-      if (nodeIndex != 0)
-        s.append("\n");
-
-      s.append(nodeIndex);
-
-      s.append(CommitParser.SEPARATOR);
-      appendSortList(graph.getUpNodes(nodeIndex), s);
-
-      s.append(CommitParser.SEPARATOR);
-      appendList(graph.getDownNodes(nodeIndex), s);
-    }
-    return s.toString();
-  }
-
-  public static <CommitId extends Comparable<CommitId>> String commitsWithNotLoadParentMapToStr(Map<CommitId, GraphCommit<CommitId>> commitMap,
-                                                                                                Function<CommitId, String> toStr) {
-    List<CommitId> hashes = new ArrayList<CommitId>(commitMap.keySet());
-    Collections.sort(hashes);
-
-    StringBuilder s = new StringBuilder();
-    for (int i = 0; i < hashes.size(); i++) {
-      if (i != 0)
-        s.append("\n");
-
-      CommitId hash = hashes.get(i);
-      GraphCommit<CommitId> commit = commitMap.get(hash);
-      assertEquals(toStr.fun(hash), toStr.fun(commit.getId()));
-
-      s.append(toStr.fun(hash)).append(CommitParser.SEPARATOR);
-      List<CommitId> parentIndices = commit.getParents();
-      for (int j = 0 ; j < parentIndices.size(); j++) {
-        if (j > 0)
-          s.append(" ");
-        s.append(toStr.fun(parentIndices.get(j)));
-      }
-    }
-    return s.toString();
-  }
-
   public static <CommitId> String commitsInfoToStr(PermanentCommitsInfo<CommitId> commitsInfo, int size, Function<CommitId, String> toStr) {
     StringBuilder s = new StringBuilder();
     for (int i = 0; i < size; i++) {
@@ -116,7 +50,7 @@ public class GraphStrUtils {
         s.append("\n");
 
       CommitId commitId = commitsInfo.getCommitId(i);
-      int commitIndex = commitsInfo.getPermanentNodeIndex(commitId);
+      int commitIndex = commitsInfo.getNodeId(commitId);
       long timestamp = commitsInfo.getTimestamp(i);
 
       s.append(commitIndex).append(CommitParser.SEPARATOR);

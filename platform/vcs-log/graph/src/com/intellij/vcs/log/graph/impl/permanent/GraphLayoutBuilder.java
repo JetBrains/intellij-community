@@ -26,6 +26,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getDownNodes;
+import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getUpNodes;
+
 public class GraphLayoutBuilder {
 
   private static final Logger LOG = Logger.getInstance(GraphLayoutBuilder.class);
@@ -34,7 +37,7 @@ public class GraphLayoutBuilder {
   public static GraphLayoutImpl build(@NotNull LinearGraph graph, @NotNull Comparator<Integer> headerNodeIndexComparator) {
     List<Integer> heads = new ArrayList<Integer>();
     for (int i = 0; i < graph.nodesCount(); i++) {
-      if (graph.getUpNodes(i).size() == 0) {
+      if (getUpNodes(graph, i).size() == 0) {
         heads.add(i);
       }
     }
@@ -83,8 +86,8 @@ public class GraphLayoutBuilder {
           myLayoutIndex[currentNode] = currentLayoutIndex;
 
         int childWithoutLayoutIndex = -1;
-        for (int childNodeIndex : myGraph.getDownNodes(currentNode)) {
-          if (childNodeIndex != LinearGraph.NOT_LOAD_COMMIT && myLayoutIndex[childNodeIndex] == 0) {
+        for (int childNodeIndex : getDownNodes(myGraph, currentNode)) {
+          if (myLayoutIndex[childNodeIndex] == 0) {
             childWithoutLayoutIndex = childNodeIndex;
             break;
           }

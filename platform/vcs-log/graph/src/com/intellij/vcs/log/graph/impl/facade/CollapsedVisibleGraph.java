@@ -77,7 +77,7 @@ public class CollapsedVisibleGraph<CommitId> extends AbstractVisibleGraph<Commit
                                 @NotNull CollapsedGraphWithHiddenNodes collapsedGraph,
                                 @NotNull PrintElementsManager printElementsManager,
                                 @NotNull FragmentGenerator fragmentGeneratorForPrinterGraph, @NotNull PermanentGraphInfo<CommitId> permanentGraph) {
-    super(graphWithCommitInfo, permanentGraph.getCommitsWithNotLoadParent(), printElementsManager);
+    super(graphWithCommitInfo, printElementsManager);
     myCollapsedGraph = collapsedGraph;
     myFragmentGeneratorForPrinterGraph = fragmentGeneratorForPrinterGraph;
     myPermanentGraph = permanentGraph;

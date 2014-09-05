@@ -21,7 +21,6 @@ import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.graph.actions.ActionController;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.graph.actions.GraphMouseAction;
-import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.LinearGraphWithCommitInfo;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
@@ -41,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Map;
 import java.util.Set;
 
 public abstract class AbstractVisibleGraph<CommitId> implements VisibleGraph<CommitId> {
@@ -70,14 +68,9 @@ public abstract class AbstractVisibleGraph<CommitId> implements VisibleGraph<Com
   protected PrintElementGenerator myPrintElementGenerator;
   @NotNull
   protected final PrintElementsManager myPrintElementsManager;
-  @NotNull
-  protected final Map<CommitId, GraphCommit<CommitId>> myCommitsWithNotLoadParent;
 
-  protected AbstractVisibleGraph(@NotNull final LinearGraphWithCommitInfo<CommitId> linearGraphWithCommitInfo,
-                                 @NotNull Map<CommitId, GraphCommit<CommitId>> commitsWithNotLoadParent,
-                                 @NotNull PrintElementsManager printElementsManager) {
+  protected AbstractVisibleGraph(@NotNull final LinearGraphWithCommitInfo<CommitId> linearGraphWithCommitInfo, @NotNull PrintElementsManager printElementsManager) {
     myLinearGraphWithCommitInfo = linearGraphWithCommitInfo;
-    myCommitsWithNotLoadParent = commitsWithNotLoadParent;
     myPrintElementsManager = printElementsManager;
     myGraphElementComparator = new GraphElementComparatorByLayoutIndex(new NotNullFunction<Integer, Integer>() {
       @NotNull
@@ -151,7 +144,7 @@ public abstract class AbstractVisibleGraph<CommitId> implements VisibleGraph<Com
     if (printElement instanceof SimplePrintElement) {
       SimplePrintElement simplePrintElement = (SimplePrintElement)printElement;
 
-      int upNodeIndex, downNodeIndex;
+      Integer upNodeIndex, downNodeIndex;
       @NotNull GraphElement graphElement = printElement.getGraphElement();
       switch (simplePrintElement.getType()) {
         case NODE:
@@ -160,20 +153,16 @@ public abstract class AbstractVisibleGraph<CommitId> implements VisibleGraph<Com
         case UP_ARROW:
           assert graphElement instanceof GraphEdge;
           upNodeIndex = ((GraphEdge)graphElement).getUpNodeIndex();
+          assert upNodeIndex != null;
           return createJumpAnswer(upNodeIndex);
         case DOWN_ARROW:
           assert graphElement instanceof GraphEdge;
           downNodeIndex = ((GraphEdge)graphElement).getDownNodeIndex();
-          if (downNodeIndex != LinearGraph.NOT_LOAD_COMMIT)
+          if (downNodeIndex != null)
             return createJumpAnswer(downNodeIndex);
           else {
-            upNodeIndex = ((GraphEdge)graphElement).getUpNodeIndex();
-            int edgeIndex = myLinearGraphWithCommitInfo.getDownNodes(upNodeIndex).indexOf(LinearGraph.NOT_LOAD_COMMIT);
-
-            GraphCommit<CommitId> commitIdGraphCommit =
-              myCommitsWithNotLoadParent.get(myLinearGraphWithCommitInfo.getHashIndex(upNodeIndex));
-            CommitId jumpTo = commitIdGraphCommit.getParents().get(edgeIndex);
-            return createJumpAnswer(jumpTo);
+            Integer nodeId = ((GraphEdge)graphElement).getAdditionInfo();
+            return createJumpAnswer(0); // todo
           }
         default:
           throw new IllegalStateException("Unsupported SimplePrintElement type: " + simplePrintElement.getType());

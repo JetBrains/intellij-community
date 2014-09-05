@@ -19,7 +19,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.GraphColorManager;
-import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.RefactoringLinearGraph;
@@ -29,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public class DelegatedPermanentGraphInfo<CommitId> implements PermanentGraphInfo<CommitId> {
@@ -51,24 +49,24 @@ public class DelegatedPermanentGraphInfo<CommitId> implements PermanentGraphInfo
     return new PermanentCommitsInfo<CommitId>() {
       @NotNull
       @Override
-      public CommitId getCommitId(int permanentNodeIndex) {
-        return commitsInfo.getCommitId(myBekIntMap.getUsualIndex(permanentNodeIndex));
+      public CommitId getCommitId(int nodeId) {
+        return commitsInfo.getCommitId(myBekIntMap.getUsualIndex(nodeId));
       }
 
       @Override
-      public long getTimestamp(int permanentNodeIndex) {
-        return commitsInfo.getTimestamp(myBekIntMap.getUsualIndex(permanentNodeIndex));
+      public long getTimestamp(int nodeId) {
+        return commitsInfo.getTimestamp(myBekIntMap.getUsualIndex(nodeId));
       }
 
       @Override
-      public int getPermanentNodeIndex(@NotNull CommitId commitId) {
-        int usualIndex = commitsInfo.getPermanentNodeIndex(commitId);
+      public int getNodeId(@NotNull CommitId commitId) {
+        int usualIndex = commitsInfo.getNodeId(commitId);
         return myBekIntMap.getBekIndex(usualIndex);
       }
 
       @NotNull
       @Override
-      public Set<Integer> convertToCommitIndexes(Collection<CommitId> heads) {
+      public Set<Integer> convertToCommitIndexes(@NotNull Collection<CommitId> heads) {
         Set<Integer> usualIndexes = commitsInfo.convertToCommitIndexes(heads);
         return ContainerUtil.map2Set(usualIndexes, new Function<Integer, Integer>() {
           @Override
@@ -150,9 +148,4 @@ public class DelegatedPermanentGraphInfo<CommitId> implements PermanentGraphInfo
     return myDelegateInfo.getGraphColorManager();
   }
 
-  @NotNull
-  @Override
-  public Map<CommitId, GraphCommit<CommitId>> getCommitsWithNotLoadParent() {
-    return myDelegateInfo.getCommitsWithNotLoadParent();
-  }
 }

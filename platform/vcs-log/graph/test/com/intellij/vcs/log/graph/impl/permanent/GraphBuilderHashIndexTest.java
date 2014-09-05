@@ -23,6 +23,7 @@ import com.intellij.vcs.log.graph.AbstractTestWithTextFile;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.vcs.log.graph.GraphStrUtils.commitsInfoToStr;
@@ -37,7 +38,7 @@ public abstract class GraphBuilderHashIndexTest<CommitId> extends AbstractTestWi
   @Override
   protected void runTest(String in, String out) {
     final List<GraphCommit<CommitId>> commits = getCommitIdManager().parseCommitList(in);
-    PermanentCommitsInfo<CommitId> commitsInfo = PermanentCommitsInfoIml.newInstance(commits);
+    PermanentCommitsInfo<CommitId> commitsInfo = PermanentCommitsInfoIml.newInstance(commits, Collections.<Integer, CommitId>emptyMap());
 
     assertEquals(out, commitsInfoToStr(commitsInfo, commits.size(), getCommitIdManager().getToStrFunction()));
   }
