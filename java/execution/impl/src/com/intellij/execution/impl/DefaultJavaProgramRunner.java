@@ -97,11 +97,12 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     onProcessStarted(env.getRunnerSettings(), executionResult);
 
     final RunContentBuilder contentBuilder = new RunContentBuilder(executionResult, env);
-    Disposer.register(env.getProject(), contentBuilder);
     if (shouldAddDefaultActions) {
       addDefaultActions(contentBuilder);
     }
-    return contentBuilder.showRunContent(env.getContentToReuse());
+    RunContentDescriptor contentDescriptor = contentBuilder.showRunContent(env.getContentToReuse());
+    Disposer.register(env.getProject(), contentDescriptor);
+    return contentDescriptor;
   }
 
   @Deprecated
@@ -116,7 +117,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     final ExecutionResult executionResult = contentBuilder.getExecutionResult();
     final ExecutionConsole executionConsole = executionResult.getExecutionConsole();
     final JComponent consoleComponent = executionConsole != null ? executionConsole.getComponent() : null;
-    final ControlBreakAction controlBreakAction = new ControlBreakAction(contentBuilder.getProcessHandler());
+    final ControlBreakAction controlBreakAction = new ControlBreakAction(executionResult.getProcessHandler());
     if (consoleComponent != null) {
       controlBreakAction.registerCustomShortcutSet(controlBreakAction.getShortcutSet(), consoleComponent);
       final ProcessHandler processHandler = executionResult.getProcessHandler();
@@ -130,7 +131,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
       });
     }
     contentBuilder.addAction(controlBreakAction);
-    contentBuilder.addAction(new SoftExitAction(contentBuilder.getProcessHandler()));
+    contentBuilder.addAction(new SoftExitAction(executionResult.getProcessHandler()));
   }
 
 

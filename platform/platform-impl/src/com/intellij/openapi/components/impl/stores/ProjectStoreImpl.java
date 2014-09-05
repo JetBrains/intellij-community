@@ -39,6 +39,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.util.PathUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.OrderedSet;
 import org.jdom.Element;
@@ -263,8 +264,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       return null;
     }
 
-    File file = ((FileBasedStorage)storage).getFile();
-    return file == null ? null : getBasePath(file);
+    return getBasePath(((FileBasedStorage)storage).getFile());
   }
 
   private String getBasePath(@NotNull File file) {
@@ -307,7 +307,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       return baseDir.getName().replace(":", "");
     }
     else {
-      String temp = ((FileBasedStorage)getProjectFileStorage()).getFile().getName();
+      String temp = PathUtilRt.getFileName(((FileBasedStorage)getProjectFileStorage()).getFilePath());
       FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(temp);
       if (fileType instanceof ProjectFileType) {
         temp = temp.substring(0, temp.length() - fileType.getDefaultExtension().length() - 1);

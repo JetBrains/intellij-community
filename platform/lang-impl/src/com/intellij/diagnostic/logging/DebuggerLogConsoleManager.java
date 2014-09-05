@@ -16,6 +16,7 @@
 
 package com.intellij.diagnostic.logging;
 
+@Deprecated
 /**
  * User: anna
  * Date: 01-Feb-2006

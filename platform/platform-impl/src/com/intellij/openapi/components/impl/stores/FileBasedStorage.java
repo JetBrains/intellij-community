@@ -92,6 +92,11 @@ public class FileBasedStorage extends XmlElementStorage {
         }
 
         @Override
+        public void fileCreated(@NotNull VirtualFileEvent event) {
+          myCachedVirtualFile = event.getFile();
+        }
+
+        @Override
         public void contentsChanged(@NotNull final VirtualFileEvent event) {
           if (!isDisposed()) {
             listener.storageFileChanged(event, FileBasedStorage.this);
@@ -133,13 +138,6 @@ public class FileBasedStorage extends XmlElementStorage {
     return new FileSaveSession(externalizationSession);
   }
 
-  public void resetProviderCache() {
-    myProviderUpToDateHash = -1;
-    if (myRemoteVersionProvider != null) {
-      myRemoteVersionProvider.myProviderVersions = null;
-    }
-  }
-
   private class FileSaveSession extends MySaveSession {
     protected FileSaveSession(MyExternalizationSession externalizationSession) {
       super(externalizationSession);
@@ -174,7 +172,7 @@ public class FileBasedStorage extends XmlElementStorage {
       }
 
       LOG.assertTrue(myFile != null);
-      myCachedVirtualFile = StorageUtil.save(myFile, getElementToSave(), this, true);
+      myCachedVirtualFile = StorageUtil.save(myFile, getElementToSave(), this, true, myCachedVirtualFile);
     }
 
     @NotNull
@@ -238,13 +236,19 @@ public class FileBasedStorage extends XmlElementStorage {
   public VirtualFile getVirtualFile() {
     VirtualFile virtualFile = myCachedVirtualFile;
     if (virtualFile == null) {
-      myCachedVirtualFile = virtualFile = StorageUtil.getVirtualFile(myFile);
+      myCachedVirtualFile = virtualFile = LocalFileSystem.getInstance().findFileByIoFile(myFile);
     }
     return virtualFile;
   }
 
+  @NotNull
   public File getFile() {
     return myFile;
+  }
+
+  @NotNull
+  public String getFilePath() {
+    return myFilePath;
   }
 
   @Override
@@ -305,14 +309,6 @@ public class FileBasedStorage extends XmlElementStorage {
     finally {
       stream.close();
     }
-  }
-
-  public String getFileName() {
-    return myFile.getName();
-  }
-
-  public String getFilePath() {
-    return myFilePath;
   }
 
   @Override
