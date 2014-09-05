@@ -15,7 +15,7 @@
  */
 package com.intellij.dvcs.push.ui;
 
-import com.intellij.dvcs.push.TargetEditor;
+import com.intellij.dvcs.push.PushTargetPanel;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
@@ -254,7 +254,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
         Object tag = me.getClickCount() >= clickCountToStart
                      ? PushLogTreeUtil.getTagAtForRenderer(myTreeCellRenderer, me)
                      : null;
-        return tag instanceof TargetEditor;
+        return tag instanceof PushTargetPanel;
       }
       //if keyboard event - then anEvent will be null =( See BasicTreeUi
       TreePath treePath = myTree.getAnchorSelectionPath();

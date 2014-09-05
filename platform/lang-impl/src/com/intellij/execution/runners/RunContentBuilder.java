@@ -222,9 +222,9 @@ public class RunContentBuilder extends RunTab {
   public RunContentDescriptor showRunContent(@Nullable RunContentDescriptor reuseContent) {
     RunContentDescriptor descriptor = createDescriptor();
     Disposer.register(descriptor, this);
-    Disposer.register(myProject, myRunContentDescriptor);
-    myRunContentDescriptor = descriptor;
+    Disposer.register(myProject, descriptor);
     RunContentManagerImpl.copyContentAndBehavior(descriptor, reuseContent);
+    myRunContentDescriptor = descriptor;
     return descriptor;
   }
 

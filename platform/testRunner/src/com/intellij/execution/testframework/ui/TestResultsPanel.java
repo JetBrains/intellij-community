@@ -75,6 +75,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable {
     Disposer.register(this, myToolbarPanel);
     final Splitter splitter = createSplitter(mySplitterProportionProperty, mySplitterDefaultProportion);
     Disposer.register(this, new Disposable(){
+      @Override
       public void dispose() {
         remove(splitter);
         splitter.dispose();
@@ -91,6 +92,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable {
     rightPanel.add(SameHeightPanel.wrap(myStatusLine, myToolbarPanel), BorderLayout.NORTH);
     myStatisticsSplitter = createSplitter(myStatisticsSplitterProportionProperty, 0.5f);
     new AwtVisitor(myConsole) {
+      @Override
       public boolean visit(Component component) {
         if (component instanceof JScrollPane) {
           ((JScrollPane) component).putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP | SideBorder.LEFT);
@@ -104,6 +106,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable {
       showStatistics();
     }
     myProperties.addListener(TestConsoleProperties.SHOW_STATISTICS, new TestFrameworkPropertyListener<Boolean>() {
+      @Override
       public void onChanged(Boolean value) {
         if (value.booleanValue()) {
           showStatistics();
@@ -145,6 +148,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable {
     return outputTab;
   }
 
+  @Override
   public void dispose() {
   }
 
@@ -167,9 +171,9 @@ public abstract class TestResultsPanel extends JPanel implements Disposable {
     }
 
     splitter.addPropertyChangeListener(new PropertyChangeListener() {
-      public void propertyChange(final PropertyChangeEvent evt) {
-        if (propertiesComponent == null) return;
-        if (evt.getPropertyName().equals(Splitter.PROP_PROPORTION)) {
+      @Override
+      public void propertyChange(@NotNull final PropertyChangeEvent event) {
+        if (event.getPropertyName().equals(Splitter.PROP_PROPORTION)) {
           propertiesComponent.setValue(proportionProperty, String.valueOf(splitter.getProportion()));
         }
       }
