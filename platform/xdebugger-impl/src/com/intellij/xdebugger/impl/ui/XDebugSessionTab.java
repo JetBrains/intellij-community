@@ -20,7 +20,6 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.RunContentBuilder;
-import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.actions.CloseAction;
@@ -133,6 +132,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     myConsole = session.getConsoleView();
     myRunContentDescriptor = new RunContentDescriptor(myConsole, session.getDebugProcess().getProcessHandler(), myUi.getComponent(), session.getSessionName(), icon);
     Disposer.register(myRunContentDescriptor, this);
+    Disposer.register(myProject, myRunContentDescriptor);
   }
 
   @Nullable
@@ -190,10 +190,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
                                                XDebuggerBundle.message("debugger.session.tab.frames.title"), AllIcons.Debugger.Frame, null);
     framesContent.setCloseable(false);
     return framesContent;
-  }
-
-  public ExecutionConsole getConsole() {
-    return myConsole;
   }
 
   public void rebuildViews() {

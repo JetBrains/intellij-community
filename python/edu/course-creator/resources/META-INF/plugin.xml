@@ -54,6 +54,9 @@
     <action id="AddTaskWindow" class="org.jetbrains.plugins.coursecreator.actions.AddTaskWindow">
       <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="CopyReference"/>
     </action>
+    <action id="ShowPreview" class="org.jetbrains.plugins.coursecreator.actions.CCShowPreview">
+        <add-to-group group-id="ProjectViewPopupMenu" anchor="first"/>
+    </action>
     <action id="PackCourse" class="org.jetbrains.plugins.coursecreator.actions.CreateCourseArchive">
       <add-to-group group-id="MainToolBar" anchor="last" />
     </action>

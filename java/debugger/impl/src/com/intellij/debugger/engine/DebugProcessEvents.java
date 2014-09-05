@@ -29,7 +29,6 @@ import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.DebuggerPanelsManager;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
-import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.openapi.application.ApplicationManager;
@@ -57,15 +56,15 @@ import com.sun.jdi.request.ThreadStartRequest;
  * @author lex
  */
 public class DebugProcessEvents extends DebugProcessImpl {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.DebugProcessEvents");
+  private static final Logger LOG = Logger.getInstance(DebugProcessEvents.class);
+
   private DebuggerEventThread myEventThread;
-  private final BreakpointManager myBreakpointManager;
 
   public DebugProcessEvents(Project project) {
     super(project);
-    myBreakpointManager = DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager();
   }
 
+  @Override
   protected void commitVM(final VirtualMachine vm) {
     super.commitVM(vm);
     if(vm != null) {
@@ -134,18 +133,19 @@ public class DebugProcessEvents extends DebugProcessImpl {
       return myIsStopped;
     }
 
+    @Override
     public void run() {
       try {
         EventQueue eventQueue = myVmProxy.eventQueue();
         while (!isStopped()) {
           try {
             final EventSet eventSet = eventQueue.remove();
-            
+
             final boolean methodWatcherActive = myReturnValueWatcher != null && myReturnValueWatcher.isEnabled();
             int processed = 0;
             for (EventIterator eventIterator = eventSet.eventIterator(); eventIterator.hasNext();) {
               final Event event = eventIterator.nextEvent();
-              
+
               if (methodWatcherActive) {
                 if (event instanceof MethodExitEvent) {
                   if (myReturnValueWatcher.processMethodExitEvent((MethodExitEvent)event)) {
@@ -158,6 +158,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
                 processed++;
                 final ThreadReference thread = ((ThreadStartEvent)event).thread();
                 getManagerThread().schedule(new DebuggerCommandImpl() {
+                  @Override
                   protected void action() throws Exception {
                     getVirtualMachineProxy().threadStarted(thread);
                     myDebugProcessDispatcher.getMulticaster().threadStarted(DebugProcessEvents.this, thread);
@@ -168,6 +169,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
                 processed++;
                 final ThreadReference thread = ((ThreadDeathEvent)event).thread();
                 getManagerThread().schedule(new DebuggerCommandImpl() {
+                  @Override
                   protected void action() throws Exception {
                     getVirtualMachineProxy().threadStopped(thread);
                     myDebugProcessDispatcher.getMulticaster().threadStopped(DebugProcessEvents.this, thread);
@@ -175,15 +177,15 @@ public class DebugProcessEvents extends DebugProcessImpl {
                 });
               }
             }
-            
+
             if (processed == eventSet.size()) {
               eventSet.resume();
               continue;
             }
 
             getManagerThread().invokeAndWait(new DebuggerCommandImpl() {
+              @Override
               protected void action() throws Exception {
-                
                 if (eventSet.suspendPolicy() == EventRequest.SUSPEND_ALL && !DebuggerSession.enableBreakpointsDuringEvaluation()) {
                   // check if there is already one request with policy SUSPEND_ALL
                   for (SuspendContextImpl context : getSuspendManager().getEventContexts()) {
@@ -193,12 +195,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
                     }
                   }
                 }
-                
+
                 final SuspendContextImpl suspendContext = getSuspendManager().pushSuspendContext(eventSet);
-                
                 for (EventIterator eventIterator = eventSet.eventIterator(); eventIterator.hasNext();) {
                   final Event event = eventIterator.nextEvent();
-
                   //if (LOG.isDebugEnabled()) {
                   //  LOG.debug("EVENT : " + event);
                   //}
@@ -207,10 +207,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
                       //Sun WTK fails when J2ME when event set is resumed on VMStartEvent
                       processVMStartEvent(suspendContext, (VMStartEvent)event);
                     }
-                    else if (event instanceof VMDeathEvent) {
-                      processVMDeathEvent(suspendContext, event);
-                    }
-                    else if (event instanceof VMDisconnectEvent) {
+                    else if (event instanceof VMDeathEvent || event instanceof VMDisconnectEvent) {
                       processVMDeathEvent(suspendContext, event);
                     }
                     else if (event instanceof ClassPrepareEvent) {
@@ -240,7 +237,6 @@ public class DebugProcessEvents extends DebugProcessImpl {
                 }
               }
             });
-
           }
           catch (InternalException e) {
             LOG.debug(e);
@@ -264,13 +260,15 @@ public class DebugProcessEvents extends DebugProcessImpl {
       }
       catch (VMDisconnectedException e) {
         invokeVMDeathEvent();
-      } finally {
+      }
+      finally {
         Thread.interrupted(); // reset interrupted status
       }
     }
 
     private void invokeVMDeathEvent() {
       getManagerThread().invokeAndWait(new DebuggerCommandImpl() {
+        @Override
         protected void action() throws Exception {
           SuspendContextImpl suspendContext = getSuspendManager().pushSuspendContext(EventRequest.SUSPEND_NONE, 1);
           processVMDeathEvent(suspendContext, null);
@@ -307,7 +305,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     if(myState.compareAndSet(STATE_INITIAL, STATE_ATTACHED)) {
       final VirtualMachineProxyImpl machineProxy = getVirtualMachineProxy();
       final EventRequestManager requestManager = machineProxy.eventRequestManager();
-      
+
       if (machineProxy.canGetMethodReturnValues()) {
         myReturnValueWatcher = new MethodReturnValueWatcher(requestManager);
       }
@@ -378,7 +376,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     RequestHint hint = (RequestHint)event.request().getProperty("hint");
 
     deleteStepRequests(event.thread());
-    
+
     boolean shouldResume = false;
 
     final Project project = getProject();
@@ -426,8 +424,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
     preprocessEvent(suspendContext, thread);
 
     //we use schedule to allow processing other events during processing this one
-    //this is especially nesessary if a method is breakpoint condition
+    //this is especially necessary if a method is breakpoint condition
     getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
+      @Override
       public void contextAction() throws Exception {
         final SuspendManager suspendManager = getSuspendManager();
         SuspendContextImpl evaluatingContext = SuspendManagerUtil.getEvaluatingContext(suspendManager, getSuspendContext().getThread());
@@ -441,7 +440,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         final LocatableEventRequestor requestor = (LocatableEventRequestor) getRequestsManager().findRequestor(event.request());
 
         boolean resumePreferred = requestor != null && DebuggerSettings.SUSPEND_NONE.equals(requestor.getSuspendPolicy());
-        boolean requestHit = false;
+        boolean requestHit;
         try {
           requestHit = (requestor != null) && requestor.processLocatableEvent(this, event);
         }
@@ -451,6 +450,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
           }
           final boolean[] considerRequestHit = new boolean[]{true};
           DebuggerInvocationUtil.invokeAndWait(getProject(), new Runnable() {
+            @Override
             public void run() {
               DebuggerPanelsManager.getInstance(getProject()).toFront(mySession);
               final String displayName = requestor instanceof Breakpoint? ((Breakpoint)requestor).getDisplayName() : requestor.getClass().getSimpleName();

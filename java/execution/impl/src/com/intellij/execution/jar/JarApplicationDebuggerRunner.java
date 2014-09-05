@@ -13,33 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.dvcs.push;
+package com.intellij.execution.jar;
 
-import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.debugger.impl.GenericDebuggerRunner;
+import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.executors.DefaultDebugExecutor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-
-public abstract class TargetEditor<T extends PushTarget> extends JPanel {
-
-  protected TargetEditor(BorderLayout layout) {
-    super(layout);
+/**
+ * @author nik
+ */
+public class JarApplicationDebuggerRunner extends GenericDebuggerRunner {
+  @Override
+  public boolean canRun(@NotNull String executorId, @NotNull RunProfile profile) {
+    return DefaultDebugExecutor.EXECUTOR_ID.equals(executorId) && profile instanceof JarApplicationConfiguration;
   }
 
-  abstract public void render(@NotNull ColoredTreeCellRenderer renderer);
-
   @NotNull
-  abstract public T getValue();
-
-  public abstract void fireOnCancel();
-
-  public abstract void fireOnChange();
-
-  @Nullable
-  public abstract VcsError verify();
-
-  @NotNull
-  public abstract JComponent getVerifiedComponent();
+  @Override
+  public String getRunnerId() {
+    return "JarDebug";
+  }
 }

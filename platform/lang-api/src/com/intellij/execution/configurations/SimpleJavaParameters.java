@@ -40,9 +40,14 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
   private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
   private boolean myUseDynamicClasspath;
   private boolean myUseDynamicVMOptions;
-  
+  private String myJarPath;
+
   public String getMainClass() {
     return myMainClass;
+  }
+
+  public String getJarPath() {
+    return myJarPath;
   }
 
   /**
@@ -61,6 +66,9 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
 
   public void setMainClass(@NonNls final String mainClass) {
     myMainClass = mainClass;
+  }
+  public void setJarPath(@NonNls final String jarPath) {
+    myJarPath = jarPath;
   }
 
   public PathsList getClassPath() {

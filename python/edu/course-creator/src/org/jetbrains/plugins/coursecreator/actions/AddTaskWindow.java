@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.coursecreator.CCProjectService;
 import org.jetbrains.plugins.coursecreator.format.*;
 import org.jetbrains.plugins.coursecreator.ui.CreateTaskWindowDialog;
@@ -59,12 +60,12 @@ public class AddTaskWindow extends DumbAwareAction {
     }
     int index = taskFile.getTaskWindows().size() + 1;
     taskFile.addTaskWindow(taskWindow, index);
-    taskWindow.drawHighlighter(editor);
+    taskWindow.drawHighlighter(editor, false);
     DaemonCodeAnalyzerImpl.getInstance(project).restart(file);
   }
 
   @Override
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
     final Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) {

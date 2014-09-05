@@ -200,7 +200,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     });
 
     ExecutionResult executionResult = debuggerSession.getProcess().getExecutionResult();
-    myConsole = executionResult.getExecutionConsole();
+//    myConsole = executionResult.getExecutionConsole();
 //    myRunContentDescriptor = new RunContentDescriptor(myConsole, executionResult.getProcessHandler(), myUi.getComponent(), getSessionName(),
 //                                                      environment.getIcon());
     initUI(executionResult);
