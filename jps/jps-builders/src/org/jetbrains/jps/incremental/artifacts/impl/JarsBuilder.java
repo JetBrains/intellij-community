@@ -181,7 +181,7 @@ public class JarsBuilder {
                          packedFilePaths, -1);
           }
           else {
-            LOG.debug("nested jar file " + relativePath + " for " + jar.getPresentableDestination() + " not found");
+            LOG.debug("nested JAR file " + relativePath + " for " + jar.getPresentableDestination() + " not found");
           }
         }
       }

@@ -59,7 +59,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       }
     }
     catch (Exception e) {
-      LOG.warn("Unable to get jar folder", e);
+      LOG.warn("Unable to get JAR folder", e);
     }
     return null;
   }

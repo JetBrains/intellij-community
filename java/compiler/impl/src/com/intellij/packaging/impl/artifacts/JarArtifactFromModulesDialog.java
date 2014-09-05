@@ -55,7 +55,7 @@ public class JarArtifactFromModulesDialog extends DialogWrapper {
   public JarArtifactFromModulesDialog(PackagingElementResolvingContext context) {
     super(context.getProject());
     myContext = context;
-    setTitle("Create Jar from Modules");
+    setTitle("Create JAR from Modules");
     myMainClassLabel.setLabelFor(myMainClassField.getTextField());
     myManifestDirLabel.setLabelFor(myManifestDirField.getTextField());
 

@@ -99,7 +99,7 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
     ProgramParametersUtil.checkWorkingDirectoryExist(this, getProject(), null);
     File jarFile = new File(getJarPath());
     if (!jarFile.exists()) {
-      throw new RuntimeConfigurationWarning("Jar file '" + jarFile.getAbsolutePath() + "' doesn't exist");
+      throw new RuntimeConfigurationWarning("JAR file '" + jarFile.getAbsolutePath() + "' doesn't exist");
     }
     JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);
   }
