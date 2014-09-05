@@ -131,12 +131,26 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   protected MasterDetailsComponent(MasterDetailsState state) {
     myState = state;
 
-    mySplitter = Registry.is("ide.new.project.settings") ? new OnePixelSplitter(false, .2f) : new JBSplitter(false, .2f);
+    mySplitter = isNewProjectSettings() ? new OnePixelSplitter(false, .2f) : new JBSplitter(false, .2f);
     mySplitter.setSplitterProportionKey("ProjectStructure.SecondLevelElements");
     mySplitter.setHonorComponentsMinimumSize(true);
 
     installAutoScroll();
     reInitWholePanelIfNeeded();
+  }
+
+  private boolean isNewProjectSettings() {
+    if (!Registry.is("ide.new.project.settings")) {
+      return false;
+    }
+    try {
+      // assume that only project structure dialog uses the following base class for details:
+      String name = "com.intellij.openapi.roots.ui.configuration.projectRoot.BaseStructureConfigurable";
+      return Class.forName(name).isAssignableFrom(getClass());
+    }
+    catch (ClassNotFoundException ignored) {
+      return false;
+    }
   }
 
   protected void reInitWholePanelIfNeeded() {
@@ -170,7 +184,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       }
     };
 
-    if (Registry.is("ide.new.project.settings")) {
+    if (isNewProjectSettings()) {
       ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTree);
       DefaultActionGroup group = createToolbarActionGroup();
       if (group != null) {
@@ -281,7 +295,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   private void initToolbar() {
-    if (Registry.is("ide.new.project.settings")) return;
+    if (isNewProjectSettings()) return;
     DefaultActionGroup group = createToolbarActionGroup();
     if (group != null) {
       final JComponent component = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
