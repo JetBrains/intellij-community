@@ -28,17 +28,16 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
@@ -46,7 +45,10 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -88,11 +90,11 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   protected void runTest() throws Throwable {
     super.runTest();
     if(getDebugProcess() != null) {
-      getDebugProcess().getExecutionResult().getProcessHandler().startNotify();
-      waitProcess(getDebugProcess().getExecutionResult().getProcessHandler());
+      getDebugProcess().getProcessHandler().startNotify();
+      waitProcess(getDebugProcess().getProcessHandler());
       waitForCompleted();
       //disposeSession(myDebuggerSession);
-      assertNull(DebuggerManagerEx.getInstanceEx(myProject).getDebugProcess(getDebugProcess().getExecutionResult().getProcessHandler()));
+      assertNull(DebuggerManagerEx.getInstanceEx(myProject).getDebugProcess(getDebugProcess().getProcessHandler()));
       myDebuggerSession = null;
     }
     if(myConsoleBuffer != null) {
@@ -119,11 +121,6 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   @Override
   protected void tearDown() throws Exception {
     FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
-    ExecutionResult executionResult = myDebugProcess == null ? null : myDebugProcess.getExecutionResult();
-    ExecutionConsole console = executionResult == null ? null : executionResult.getExecutionConsole();
-    if (console != null) {
-      Disposer.dispose(console);
-    }
     myConsoleBuffer = null;
     super.tearDown();
   }
@@ -134,7 +131,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     myDebugProcess = myDebuggerSession.getProcess();
   }
 
-  protected DebuggerSession createLocalSession(final JavaParameters javaParameters, final String sessionName) throws ExecutionException, InterruptedException {
+  protected DebuggerSession createLocalSession(final JavaParameters javaParameters) throws ExecutionException, InterruptedException {
     createBreakpoints(javaParameters.getMainClass());
     DebuggerSettings.getInstance().DEBUGGER_TRANSPORT = DebuggerSettings.SOCKET_TRANSPORT;
 
@@ -145,7 +142,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
     ExecutionEnvironment environment = new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
       .runnerSettings(debuggerRunnerSettings)
-      .setRunProfile(new MockConfiguration())
+      .runProfile(new MockConfiguration())
       .build();
     final JavaCommandLineState javaCommandLineState = new JavaCommandLineState(environment){
       @Override
@@ -241,7 +238,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       }
     });
 
-    final ExecutionResult executionResult = debuggerSession[0].getProcess().getExecutionResult();
+    final ProcessHandler processHandler = debuggerSession[0].getProcess().getProcessHandler();
     debuggerSession[0].getProcess().addProcessListener(new ProcessAdapter() {
       @Override
       public void onTextAvailable(ProcessEvent event, Key outputType) {
@@ -250,7 +247,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     });
 
     DebugProcessImpl process =
-      (DebugProcessImpl)DebuggerManagerEx.getInstanceEx(myProject).getDebugProcess(executionResult.getProcessHandler());
+      (DebugProcessImpl)DebuggerManagerEx.getInstanceEx(myProject).getDebugProcess(processHandler);
     assertNotNull(process);
     return debuggerSession[0];
   }
@@ -293,9 +290,9 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       debuggerSession = attachVM(remoteConnection, true);
     }
 
-    ExecutionResult executionResult = debuggerSession.getProcess().getExecutionResult();
+    ProcessHandler processHandler = debuggerSession.getProcess().getProcessHandler();
     DebugProcessImpl process = (DebugProcessImpl)DebuggerManagerEx.getInstanceEx(myProject)
-      .getDebugProcess(executionResult.getProcessHandler());
+      .getDebugProcess(processHandler);
 
     assertNotNull(process);
     return debuggerSession;
@@ -319,7 +316,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
         }
       }
     });
-    debuggerSession[0].getProcess().getExecutionResult().getProcessHandler().addProcessListener(new ProcessAdapter() {
+    debuggerSession[0].getProcess().getProcessHandler().addProcessListener(new ProcessAdapter() {
       @Override
       public void onTextAvailable(ProcessEvent event, Key outputType) {
         print(event.getText(), outputType);
