@@ -9,7 +9,8 @@ pydev_monkey_qt.patch_qt()
 
 import traceback
 
-from pluginbase import PluginBase
+from pydevd_plugin_utils import load_plugins, NullProxy, PluginProxy
+
 from pydevd_frame import add_exception_to_frame
 import pydev_imports
 from pydevd_breakpoints import * #@UnusedWildImport
@@ -347,13 +348,9 @@ class PyDB:
         self.filename_to_lines_where_exceptions_are_ignored = {}
 
         #working with plugins
-        self.usable_plugin = None
-        self.plugins = []
-        #we call this functions very often, so we need cache them
-        self.can_not_skip_cache = None
-        self.has_exception_breaks_cache = None
 
-        self.load_plugins()
+        self.plugins = load_plugins('pydevd_plugins')
+        self.plugin = NullProxy()
 
 
     def haveAliveThreads(self):
@@ -861,10 +858,13 @@ class PyDB:
                         file_to_id_to_breakpoint = self.file_to_id_to_line_breakpoint
                         supported_type = True
                     else:
-                        supported_type, result = self.add_plugin_breakpoint('add_line_breakpoint', type, file, line, condition, expression, func_name)
-                        if supported_type:
+                        result = self.add_plugin_breakpoint('add_line_breakpoint', type, file, line, condition, expression, func_name)
+                        if result is not None:
+                            supported_type = True
                             breakpoint, breakpoints = result
                             file_to_id_to_breakpoint = self.file_to_id_to_plugin_breakpoint
+                        else:
+                            supported_type = False
 
                     if not supported_type:
                         raise NameError(type)
@@ -904,8 +904,8 @@ class PyDB:
                             breakpoints = self.breakpoints
                             file_to_id_to_breakpoint = self.file_to_id_to_line_breakpoint
                         else:
-                            supported_type, result = self.plugin_func_with_result('get_breakpoints', breakpoint_type)
-                            if supported_type:
+                            result = self.plugin.get_breakpoints(self, breakpoint_type)
+                            if result is not None:
                                 file_to_id_to_breakpoint = self.file_to_id_to_plugin_breakpoint
                                 breakpoints = result
 
@@ -1038,7 +1038,7 @@ class PyDB:
                         pass
 
                 elif cmd_id == CMD_ADD_EXCEPTION_BREAK:
-                    if text.find(' ')!= -1:
+                    if text.find(' ') != -1:
                         exception, notify_always, notify_on_terminate = text.split('\t', 2)
                     else:
                         exception, notify_always, notify_on_terminate = text, 0, 0
@@ -1086,7 +1086,7 @@ class PyDB:
                             pydev_log.debug("Error while removing exception %s"%sys.exc_info()[0])
                         update_exception_hook(self)
                     else:
-                        supported_type = self.plugin_function('remove_exception_breakpoint', type, exception)
+                        supported_type = self.plugin.remove_exception_breakpoint(self, type, exception)
 
                         if not supported_type:
                             raise NameError(type)
@@ -1109,7 +1109,7 @@ class PyDB:
                 elif cmd_id == CMD_REMOVE_DJANGO_EXCEPTION_BREAK:
                     exception = text
 
-                    self.plugin_function('remove_exception_breakpoint', 'django', exception)
+                    self.plugin.remove_exception_breakpoint(self, 'django', exception)
 
                 elif cmd_id == CMD_EVALUATE_CONSOLE_EXPRESSION:
                     # Command which takes care for the debug console communication
@@ -1590,83 +1590,18 @@ class PyDB:
         cmd = self.cmdFactory.makeExitMessage()
         self.writer.addCommand(cmd)
 
-    def load_plugins(self):
-        plugin_base = PluginBase(package='pydevd_plugins')
-        self.plugin_source = plugin_base.make_plugin_source(searchpath=[os.path.dirname(os.path.realpath(__file__)) + '/pydevd_plugins'])
-        for plugin in self.plugin_source.list_plugins():
-            loaded_plugin = None
-            try:
-                loaded_plugin = self.plugin_source.load_plugin(plugin)
-            except:
-                pydev_log.error("Failed to load plugin %s" % plugin)
-            if loaded_plugin:
-                self.plugins.append(loaded_plugin)
-
     def add_plugin_breakpoint(self, func_name, *args, **kwargs):
-        #add breakpoint from plugin and remember usable plugin
-        for loaded_plugin in self.plugins:
-            if hasattr(loaded_plugin, func_name):
-                func = getattr(loaded_plugin, func_name)
-                result_exist, result = func(self, *args, **kwargs)
-                if result_exist:
-                    self.usable_plugin = loaded_plugin
-                    return result_exist, result
-        return False, None
-
-    def can_not_skip_from_plugin(self, *args, **kwargs):
-        if not self.usable_plugin:
-            return False
-        if not self.can_not_skip_cache:
-            loaded_plugin = self.usable_plugin
-            can_not_skip_fun = getattr(loaded_plugin, 'can_not_skip', None)
-            if can_not_skip_fun:
-                self.can_not_skip_cache = can_not_skip_fun
-            else:
-                pydev_log.error("Implementation for function 'can_not_skip' is necessary in plugin %s" % loaded_plugin)
-                return False
-        func = self.can_not_skip_cache
-        if func(self, *args, **kwargs):
-            return True
-        return False
-
-    def has_exception_breaks_from_plugin(self, *args, **kwargs):
-        if not self.usable_plugin:
-            return False
-        if not self.has_exception_breaks_cache:
-            loaded_plugin = self.usable_plugin
-            has_exc_b_fun = getattr(loaded_plugin, 'has_exception_breaks', None)
-            if has_exc_b_fun:
-                self.has_exception_breaks_cache = has_exc_b_fun
-            else:
-                pydev_log.error("Implementation for function 'has_exception_breaks' is necessary in plugin %s" % loaded_plugin)
-                return False
-        func = self.has_exception_breaks_cache
-        if func(self, *args, **kwargs):
-            return True
-        return False
-
-    def plugin_function(self, func_name, *args, **kwargs):
-        #call function from plugin
-        if not self.usable_plugin:
-            return False
-        loaded_plugin = self.usable_plugin
-        if hasattr(loaded_plugin, func_name):
-            func = getattr(loaded_plugin, func_name)
-            if func(self, *args, **kwargs):
-                return True
-        return False
-
-    def plugin_func_with_result(self, func_name, *args, **kwargs):
-        #call function from plugin and return its result
-        if not self.usable_plugin:
-            return False, None
-        loaded_plugin = self.usable_plugin
-        if hasattr(loaded_plugin, func_name):
-            func = getattr(loaded_plugin, func_name)
-            result_exist, result = func(self, *args, **kwargs)
-            if result_exist:
-                return result_exist, result
-        return False, None
+        # add breakpoint from plugin and remember plugin to use
+        for plugin in self.plugins:
+            if hasattr(plugin, func_name):
+                func = getattr(plugin, func_name)
+                result = func(self, *args, **kwargs)
+                if result:
+                    # On adding breakpoint we override plugin that will be used
+                    # That means that we don't work with more then 1 plugin at a time
+                    self.plugin = plugin
+                    return result
+        return None
 
     def wait_for_commands(self, globals):
         thread = threading.currentThread()

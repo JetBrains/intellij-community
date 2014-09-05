@@ -22,14 +22,12 @@ class DjangoLineBreakpoint(LineBreakpoint):
 
 
 def add_line_breakpoint(pydb, type, file, line, condition, expression, func_name):
-    result = None
     if type == 'django-line':
         breakpoint = DjangoLineBreakpoint(file, line, condition, func_name, expression)
         if not hasattr(pydb, 'django_breakpoints'):
             pydb.django_breakpoints = {}
-        result = breakpoint, pydb.django_breakpoints
-        return True, result
-    return False, result
+        return breakpoint, pydb.django_breakpoints
+    return None
 
 def add_exception_breakpoint(pydb, type, exception):
     if type == 'django':
@@ -37,8 +35,8 @@ def add_exception_breakpoint(pydb, type, exception):
             pydb.django_exception_break = {}
         pydb.django_exception_break[exception] = True
         pydb.setTracingForUntracedContexts()
-        return True, None
-    return False, None
+        return True
+    return False
 
 
 def remove_exception_breakpoint(pydb, type, exception):
@@ -52,8 +50,8 @@ def remove_exception_breakpoint(pydb, type, exception):
 
 def get_breakpoints(pydb):
     if type == 'django-line':
-        return True, pydb.django_breakpoints
-    return False, None
+        return pydb.django_breakpoints
+    return None
 
 def inherits(cls, *names):
     if cls.__name__ in names:
@@ -278,13 +276,13 @@ def just_raised(trace):
 # Django Step Commands
 #=======================================================================================================================
 
-def can_not_skip(mainDebugger, frame):
+def can_skip(mainDebugger, frame):
     if hasattr(mainDebugger, 'django_breakpoints') and mainDebugger.django_breakpoints and is_django_render_call(frame):
         filename = get_template_file_name(frame)
         django_breakpoints_for_file = mainDebugger.django_breakpoints.get(filename)
         if django_breakpoints_for_file:
-            return True
-    return False
+            return False
+    return True
 
 def has_exception_breaks(mainDebugger):
     return hasattr(mainDebugger, 'django_exception_break') and mainDebugger.django_exception_break
@@ -330,9 +328,7 @@ def get_breakpoint(mainDebugger, frame, event, args):
     mainDebugger, filename, info, thread = args
     flag = False
     django_breakpoint = None
-    result = None
     new_frame = None
-    is_result_exist = False
 
     if event == 'call' and info.pydev_state != STATE_SUSPEND and hasattr(mainDebugger, 'django_breakpoints') and \
             mainDebugger.django_breakpoints and is_django_render_call(frame):
@@ -345,16 +341,14 @@ def get_breakpoint(mainDebugger, frame, event, args):
             pydev_log.debug("Tracing template line: %d\n" % template_line)
 
             if DictContains(django_breakpoints_for_file, template_line):
-                is_result_exist = True
                 django_breakpoint = django_breakpoints_for_file[template_line]
                 flag = True
                 new_frame = DjangoTemplateFrame(frame)
-    result = flag, django_breakpoint, new_frame
-    return is_result_exist, result
+    return flag, django_breakpoint, new_frame
 
 
 def suspend(mainDebugger, pydb_frame, thread, frame):
-    return True, suspend_django(pydb_frame, mainDebugger, thread, frame)
+    return suspend_django(pydb_frame, mainDebugger, thread, frame)
 
 def exception_break(mainDebugger, pydb_frame, frame, event, args, arg):
     mainDebugger, filename, info, thread = args
@@ -371,5 +365,5 @@ def exception_break(mainDebugger, pydb_frame, frame, event, args, arg):
                 thread.additionalInfo.message = 'VariableDoesNotExist'
                 suspend_frame.f_back = frame
                 frame = suspend_frame
-                return True, (flag, frame)
-    return False, None
+                return (flag, frame)
+    return None
