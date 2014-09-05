@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.diagnostic.logging;
 
 import com.intellij.execution.configurations.AdditionalTabComponentManager;
+import com.intellij.execution.configurations.RunConfigurationBase;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
 
-import java.io.Reader;
-
-/**
- * User: anna
- * Date: 01-Feb-2006
- */
 public interface LogConsoleManager extends AdditionalTabComponentManager {
-  void addLogConsole(final String name, final String path, @NotNull Charset charset, final long skippedContent);
-  void addLogConsole(final String name, Reader reader, final String id);
-  void removeLogConsole(final String pathOrId);
+  void addLogConsole(@NotNull String name, @NotNull String path, @NotNull Charset charset, long skippedContent, @NotNull RunConfigurationBase runConfiguration);
+
+  void removeLogConsole(@NotNull String pathOrId);
 }

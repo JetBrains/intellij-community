@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,31 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger;
+package com.siyeh.ig.bugs;
 
-import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
 /**
- * Created by IntelliJ IDEA.
- * User: michael.golubev
+ * @author Bas Leijdekkers
  */
-public interface DebugUIEnvironment {
+public class ResultSetIndexZeroInspectionTest extends LightInspectionTestCase {
 
-  DebugEnvironment getEnvironment();
-
-  @Nullable
-  RunContentDescriptor getReuseContent();
+  public void testResultSetIndexZero() { doTest(); }
 
   @Nullable
-  Icon getIcon();
-
-  void initActions(RunContentDescriptor content, DefaultActionGroup actionGroup);
-
-  @Nullable
-  RunProfile getRunProfile();
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new ResultSetIndexZeroInspection();
+  }
 }
