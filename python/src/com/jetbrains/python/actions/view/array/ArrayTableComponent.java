@@ -17,6 +17,7 @@ package com.jetbrains.python.actions.view.array;
 
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -34,6 +35,8 @@ class ArrayTableComponent extends JPanel {
   private JCheckBox myCheckBox;
 
   private static final String DATA_LOADING_IN_PROCESS = "Please wait, load array data.";
+
+  private static final String NOT_APPLICABLE = "View not applicable for ";
 
   public ArrayTableComponent() {
     super(new GridBagLayout());
@@ -98,9 +101,25 @@ class ArrayTableComponent extends JPanel {
     return myCheckBox;
   }
 
-  public void setDefaultSpinnerText() {
+  private void setSpinnerText(String text) {
     DefaultTableModel model = new DefaultTableModel(1, 1);
     myTable.setModel(model);
-    myTable.setValueAt(DATA_LOADING_IN_PROCESS, 0, 0);
+    myTable.setValueAt(text, 0, 0);
+  }
+
+  public void setDefaultSpinnerText() {
+    setSpinnerText(DATA_LOADING_IN_PROCESS);
+  }
+
+  public void setErrorSpinnerText(Exception e) {
+    setSpinnerText(e.getMessage());
+  }
+
+  public void setErrorSpinnerText(String message) {
+    setSpinnerText(message);
+  }
+
+  public void setNotApplicableSpinner(XValueNodeImpl node){
+    setSpinnerText(NOT_APPLICABLE + node.getName());
   }
 }
