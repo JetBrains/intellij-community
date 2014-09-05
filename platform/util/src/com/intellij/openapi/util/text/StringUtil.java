@@ -153,17 +153,26 @@ public class StringUtil extends StringUtilRt {
     int i = 0;
 
     while (i < text.length()) {
-      final int i1 = ignoreCase? indexOfIgnoreCase(text, oldS, i) : text.indexOf(oldS, i);
-      if (i1 < 0) {
-        if (i == 0) return text;
+      final int index = ignoreCase? indexOfIgnoreCase(text, oldS, i) : text.indexOf(oldS, i);
+      if (index < 0) {
+        if (i == 0) {
+          return text;
+        }
+
         newText.append(text, i, text.length());
         break;
       }
       else {
-        if (newText == null) newText = new StringBuilder(text.length() - i);
-        newText.append(text, i, i1);
+        if (newText == null) {
+          if (text.length() == oldS.length()) {
+            return newS;
+          }
+          newText = new StringBuilder(text.length() - i);
+        }
+
+        newText.append(text, i, index);
         newText.append(newS);
-        i = i1 + oldS.length();
+        i = index + oldS.length();
       }
     }
     return newText != null ? newText.toString() : "";
@@ -1786,7 +1795,7 @@ public class StringUtil extends StringUtilRt {
   public static boolean contains(@NotNull CharSequence sequence, @NotNull CharSequence infix) {
     return indexOf(sequence, infix) >= 0;
   }
-  
+
   @Contract(pure = true)
   public static int indexOf(@NotNull CharSequence sequence, @NotNull CharSequence infix) {
     for (int i = 0; i < sequence.length() - infix.length(); i++) {
@@ -2448,7 +2457,7 @@ public class StringUtil extends StringUtilRt {
    *   \r<br>
    * </blockquote>
    * will return the following array: foo\r\n, \n, bar\n, \r\n, baz\r, \r
-   *   
+   *
    */
   @NotNull
   @Contract(pure = true)

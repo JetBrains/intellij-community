@@ -23,6 +23,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
@@ -41,13 +42,15 @@ import java.util.Map;
 /**
  * @author nik
  */
-public class JarApplicationConfiguration extends RunConfigurationBase implements CommonJavaRunConfigurationParameters {
+public class JarApplicationConfiguration extends RunConfigurationBase implements CommonJavaRunConfigurationParameters, SearchScopeProvidingRunProfile {
   private static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTERS = new SkipDefaultValuesSerializationFilters();
   private JarApplicationConfigurationBean myBean = new JarApplicationConfigurationBean();
   private Map<String, String> myEnvs = new LinkedHashMap<String, String>();
+  private JavaRunConfigurationModule myConfigurationModule;
 
   public JarApplicationConfiguration(Project project, ConfigurationFactory factory, String name) {
     super(project, factory, name);
+    myConfigurationModule = new JavaRunConfigurationModule(project, true);
   }
 
   @NotNull
@@ -67,6 +70,15 @@ public class JarApplicationConfiguration extends RunConfigurationBase implements
     JavaRunConfigurationExtensionManager.getInstance().readExternal(this, element);
     XmlSerializer.deserializeInto(myBean, element);
     EnvironmentVariablesComponent.readExternal(element, getEnvs());
+    myConfigurationModule.readExternal(element);
+  }
+
+  public void setModule(Module module) {
+    myConfigurationModule.setModule(module);
+  }
+
+  public Module getModule() {
+    return myConfigurationModule.getModule();
   }
 
   @Override
@@ -76,6 +88,9 @@ public class JarApplicationConfiguration extends RunConfigurationBase implements
     XmlSerializer.serializeInto(myBean, element, SERIALIZATION_FILTERS);
     EnvironmentVariablesComponent.writeExternal(element, getEnvs());
     PathMacroManager.getInstance(getProject()).collapsePathsRecursively(element);
+    if (myConfigurationModule.getModule() != null) {
+      myConfigurationModule.writeExternal(element);
+    }
   }
 
   @Override
@@ -87,6 +102,13 @@ public class JarApplicationConfiguration extends RunConfigurationBase implements
       throw new RuntimeConfigurationWarning("Jar file '" + jarFile.getAbsolutePath() + "' doesn't exist");
     }
     JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);
+  }
+
+  @NotNull
+  @Override
+  public Module[] getModules() {
+    Module module = myConfigurationModule.getModule();
+    return module != null ? new Module[] {module}: Module.EMPTY_ARRAY;
   }
 
   @Nullable

@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.jar;
 
+import com.intellij.application.options.ModulesComboBox;
 import com.intellij.execution.ui.AlternativeJREPanel;
 import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -34,6 +35,7 @@ import javax.swing.*;
 public class JarApplicationConfigurable extends SettingsEditor<JarApplicationConfiguration> implements PanelWithAnchor {
   private CommonJavaParametersPanel myCommonProgramParameters;
   private LabeledComponent<TextFieldWithBrowseButton> myJarPathComponent;
+  private LabeledComponent<ModulesComboBox> myModuleComponent;
   private JPanel myWholePanel;
 
   private AlternativeJREPanel myAlternativeJREPanel;
@@ -43,6 +45,9 @@ public class JarApplicationConfigurable extends SettingsEditor<JarApplicationCon
   public JarApplicationConfigurable(final Project project) {
     myProject = project;
     myAnchor = UIUtil.mergeComponentsWithAnchor(myJarPathComponent, myCommonProgramParameters, myAlternativeJREPanel);
+    ModulesComboBox modulesComboBox = myModuleComponent.getComponent();
+    modulesComboBox.allowEmptySelection("<whole project>");
+    modulesComboBox.fillModules(project);
   }
 
   public void applyEditorTo(final JarApplicationConfiguration configuration) throws ConfigurationException {
@@ -50,12 +55,14 @@ public class JarApplicationConfigurable extends SettingsEditor<JarApplicationCon
     configuration.setAlternativeJrePath(myAlternativeJREPanel.getPath());
     configuration.setAlternativeJrePathEnabled(myAlternativeJREPanel.isPathEnabled());
     configuration.setJarPath(FileUtil.toSystemIndependentName(myJarPathComponent.getComponent().getText()));
+    configuration.setModule(myModuleComponent.getComponent().getSelectedModule());
   }
 
   public void resetEditorFrom(final JarApplicationConfiguration configuration) {
     myCommonProgramParameters.reset(configuration);
     myJarPathComponent.getComponent().setText(FileUtil.toSystemDependentName(configuration.getJarPath()));
     myAlternativeJREPanel.init(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled());
+    myModuleComponent.getComponent().setSelectedModule(configuration.getModule());
   }
 
   @NotNull
