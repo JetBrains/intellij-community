@@ -18,9 +18,9 @@ package com.intellij.execution.jar;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +52,7 @@ public class JarApplicationConfigurationProducer extends RunConfigurationProduce
     if (location == null) return null;
 
     VirtualFile file = location.getVirtualFile();
-    return file != null && FileTypes.ARCHIVE.equals(file.getFileType()) ? file : null;
+    return file != null && FileUtilRt.extensionEquals(file.getName(), "jar") ? file : null;
   }
 
   @Override
