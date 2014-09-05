@@ -34,7 +34,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.unscramble.AnalyzeStacktraceUtil;
 import com.intellij.unscramble.ThreadDumpConsoleFactory;
 import com.intellij.unscramble.ThreadDumpParser;
@@ -100,9 +99,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     if (shouldAddDefaultActions) {
       addDefaultActions(contentBuilder);
     }
-    RunContentDescriptor contentDescriptor = contentBuilder.showRunContent(env.getContentToReuse());
-    Disposer.register(env.getProject(), contentDescriptor);
-    return contentDescriptor;
+    return contentBuilder.showRunContent(env.getContentToReuse());
   }
 
   @Deprecated
@@ -144,7 +141,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     }
 
     @Override
-    public void update(final AnActionEvent event) {
+    public void update(@NotNull final AnActionEvent event) {
       final Presentation presentation = event.getPresentation();
       if (!isVisible()) {
         presentation.setVisible(false);
@@ -173,7 +170,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     }
 
     @Override
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       ProcessProxy proxy = ProcessProxyFactory.getInstance().getAttachedProxy(myProcessHandler);
       if (proxy != null) {
         final WiseDumpThreadsListener wiseListener = Boolean.TRUE.equals(Boolean.getBoolean(ourWiseThreadDumpProperty)) ?
@@ -255,7 +252,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     }
 
     @Override
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       ProcessProxy proxy = ProcessProxyFactory.getInstance().getAttachedProxy(myProcessHandler);
       if (proxy != null) {
         proxy.sendStop();

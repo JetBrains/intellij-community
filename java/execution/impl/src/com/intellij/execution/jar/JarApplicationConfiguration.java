@@ -42,7 +42,7 @@ import java.util.Map;
 /**
  * @author nik
  */
-public class JarApplicationConfiguration extends RunConfigurationBase implements CommonJavaRunConfigurationParameters, SearchScopeProvidingRunProfile {
+public class JarApplicationConfiguration extends LocatableConfigurationBase implements CommonJavaRunConfigurationParameters, SearchScopeProvidingRunProfile {
   private static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTERS = new SkipDefaultValuesSerializationFilters();
   private JarApplicationConfigurationBean myBean = new JarApplicationConfigurationBean();
   private Map<String, String> myEnvs = new LinkedHashMap<String, String>();
