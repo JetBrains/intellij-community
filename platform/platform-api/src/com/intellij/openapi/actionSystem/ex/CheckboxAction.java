@@ -43,12 +43,8 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
   public JComponent createCustomComponent(Presentation presentation) {
     // this component cannot be stored right here because of action system architecture:
     // one action can be shown on multiple toolbars simultaneously
-    JCheckBox checkBox = new JCheckBox(presentation.getText());
+    JCheckBox checkBox = new JCheckBox();
     checkBox.setOpaque(false);
-    checkBox.setToolTipText(presentation.getDescription());
-    checkBox.setMnemonic(presentation.getMnemonic());
-    checkBox.setDisplayedMnemonicIndex(presentation.getDisplayedMnemonicIndex());
-    checkBox.setSelected(Boolean.TRUE.equals(presentation.getClientProperty(SELECTED_PROPERTY)));
 
     checkBox.addActionListener(new ActionListener() {
       @Override
@@ -69,13 +65,19 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
   @Override
   public void update(final AnActionEvent e) {
     super.update(e);
-    Object property = e.getPresentation().getClientProperty(CUSTOM_COMPONENT_PROPERTY);
+    Presentation presentation = e.getPresentation();
+    Object property = presentation.getClientProperty(CUSTOM_COMPONENT_PROPERTY);
     if (property instanceof JCheckBox) {
       JCheckBox checkBox = (JCheckBox)property;
 
-      checkBox.setSelected(Boolean.TRUE.equals(e.getPresentation().getClientProperty(SELECTED_PROPERTY)));
-      checkBox.setEnabled(e.getPresentation().isEnabled());
-      checkBox.setVisible(e.getPresentation().isVisible());
+      checkBox.setText(presentation.getText());
+      checkBox.setToolTipText(presentation.getDescription());
+      checkBox.setMnemonic(presentation.getMnemonic());
+      checkBox.setDisplayedMnemonicIndex(presentation.getDisplayedMnemonicIndex());
+      checkBox.setSelected(Boolean.TRUE.equals(presentation.getClientProperty(SELECTED_PROPERTY)));
+
+      checkBox.setEnabled(presentation.isEnabled());
+      checkBox.setVisible(presentation.isVisible());
     }
   }
 }

@@ -15,12 +15,14 @@
  */
 package com.intellij.openapi.vfs.ex.dummy;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.BidirectionalMap;
@@ -75,11 +77,13 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
       @Override
       public void projectOpened(final Project project) {
         onProjectOpened(project);
-      }
-
-      @Override
-      public void projectClosed(final Project project) {
-        onProjectClosed(project);
+        // use Disposer instead of projectClosed() because dispose() is called later
+        Disposer.register(project, new Disposable() {
+          @Override
+          public void dispose() {
+            onProjectClosed(project);
+          }
+        });
       }
     });
     initProjectMap();

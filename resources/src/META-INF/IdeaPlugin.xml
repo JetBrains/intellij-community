@@ -1546,6 +1546,7 @@
         implementation="com.intellij.codeInsight.ExternalAnnotationsNonProjectFileWritingAccessExtension"/>
     <lang.inspectionSuppressor language="JAVA" implementationClass="com.intellij.codeInspection.SuppressManagerImpl"/>
     <refactoring.moveInnerClassUsagesHandler language="JAVA" implementationClass="com.intellij.refactoring.move.moveInner.MoveInnerClassJavaUsagesHandler" id="java"/>
+    <actionPromoter implementation="com.intellij.execution.testframework.TestTreeViewActionsPromoter"/>
   </extensions>
 
   <actions>
