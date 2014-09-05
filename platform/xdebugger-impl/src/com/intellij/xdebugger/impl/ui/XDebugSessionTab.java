@@ -133,6 +133,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     myConsole = session.getConsoleView();
     myRunContentDescriptor = new RunContentDescriptor(myConsole, session.getDebugProcess().getProcessHandler(), myUi.getComponent(), session.getSessionName(), icon);
     Disposer.register(myRunContentDescriptor, this);
+    Disposer.register(myProject, myRunContentDescriptor);
   }
 
   @Nullable
