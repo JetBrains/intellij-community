@@ -575,10 +575,16 @@ public class ExtractMethodProcessor implements MatchProvider {
 
     chooseAnchor();
 
-    int col = myEditor.getCaretModel().getLogicalPosition().column;
-    int line = myEditor.getCaretModel().getLogicalPosition().line;
-    LogicalPosition pos = new LogicalPosition(0, 0);
-    myEditor.getCaretModel().moveToLogicalPosition(pos);
+    LogicalPosition pos1;
+    if (myEditor != null) {
+      int col = myEditor.getCaretModel().getLogicalPosition().column;
+      int line = myEditor.getCaretModel().getLogicalPosition().line;
+      pos1 = new LogicalPosition(line, col);
+      LogicalPosition pos = new LogicalPosition(0, 0);
+      myEditor.getCaretModel().moveToLogicalPosition(pos);
+    } else {
+      pos1 = null;
+    }
 
     final SearchScope processConflictsScope = myMethodVisibility.equals(PsiModifier.PRIVATE) ?
                                         new LocalSearchScope(myTargetClass) :
@@ -610,12 +616,13 @@ public class ExtractMethodProcessor implements MatchProvider {
       ApplicationManager.getApplication().runWriteAction(extract);
     }
 
-    LogicalPosition pos1 = new LogicalPosition(line, col);
-    myEditor.getCaretModel().moveToLogicalPosition(pos1);
-    int offset = myMethodCall.getMethodExpression().getTextRange().getStartOffset();
-    myEditor.getCaretModel().moveToOffset(offset);
-    myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    myEditor.getSelectionModel().removeSelection();
+    if (myEditor != null) {
+      myEditor.getCaretModel().moveToLogicalPosition(pos1);
+      int offset = myMethodCall.getMethodExpression().getTextRange().getStartOffset();
+      myEditor.getCaretModel().moveToOffset(offset);
+      myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      myEditor.getSelectionModel().removeSelection();
+    }
   }
 
   private void doExtract() throws IncorrectOperationException {

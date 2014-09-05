@@ -68,16 +68,17 @@ public class TaskWindow implements Comparable{
     }
   }
 
-  public void drawHighlighter(@NotNull final Editor editor) {
+  public void drawHighlighter(@NotNull final Editor editor, boolean useLength) {
     int startOffset = editor.getDocument().getLineStartOffset(line) + start;
-    int endOffset = startOffset + myReplacementLength;
+    int highlighterLength = useLength ? length : myReplacementLength;
+    int endOffset = startOffset + highlighterLength;
     TextAttributes defaultTestAttributes =
       EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.LIVE_TEMPLATE_ATTRIBUTES);
     RangeHighlighter highlighter =
       editor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, HighlighterLayer.LAST + 1, defaultTestAttributes,
                                                   HighlighterTargetArea.EXACT_RANGE);
     highlighter.setGreedyToLeft(true);
-    highlighter.setGreedyToRight(true);
+    highlighter.setGreedyToRight(false);
   }
 
   public int getIndex() {

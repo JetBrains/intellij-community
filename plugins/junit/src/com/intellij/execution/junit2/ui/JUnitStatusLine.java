@@ -17,7 +17,7 @@
 package com.intellij.execution.junit2.ui;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.junit2.*;
+import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.events.NewChildEvent;
 import com.intellij.execution.junit2.events.StateChangedEvent;
 import com.intellij.execution.junit2.events.TestEvent;
@@ -47,15 +47,17 @@ class JUnitStatusLine extends TestStatusLine {
   public void onProcessStarted(final ProcessHandler process) {
     if (myTestsBuilt) return;
     process.addProcessListener(new ProcessAdapter() {
+      @Override
       public void processTerminated(ProcessEvent event) {
         process.removeProcessListener(this);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
             myStateInfo.setTerminated(myState);
             if (!myTestsBuilt && myProgressBar.getFraction() == 0.0) {
               myProgressBar.setColor(ColorProgressBar.RED);
               myProgressBar.setFraction(1.0);
-              myState.setText(ExecutionBundle.message("junit.runing.info.failed.to.start.error.message"));
+              myState.setText(ExecutionBundle.message("junit.running.info.failed.to.start.error.message"));
             }
           }
         });
@@ -83,21 +85,21 @@ class JUnitStatusLine extends TestStatusLine {
       myCurrentTestName = currentTest == null ? "" : Formatters.printTest(currentTest);
     }
 
-    public double getComplitedPercents() {
+    public double getCompletedPercents() {
       return (double)myCompleted/(double)myTotal;
     }
 
     public void updateLabel(final JLabel label) {
-      final StringBuffer buffer = new StringBuffer();
+      final StringBuilder buffer = new StringBuilder();
       if (myDoneEvent != null && myTerminated) {
         String termMessage = generateTermMessage(getTestCount(0));
         buffer.append(termMessage);
         final String comment = myDoneEvent.getComment();
         if (comment.length() > 0) {
-          buffer.append(" (" + comment + ")");
+          buffer.append(" (").append(comment).append(")");
         }
       } else {
-        buffer.append(ExecutionBundle.message("junit.runing.info.status.running.number.with.name", getTestCount(myDoneEvent != null ? 0 : 1), myCurrentTestName));
+        buffer.append(ExecutionBundle.message("junit.running.info.status.running.number.with.name", getTestCount(myDoneEvent != null ? 0 : 1), myCurrentTestName));
       }
       label.setText(buffer.toString());
     }
@@ -105,16 +107,16 @@ class JUnitStatusLine extends TestStatusLine {
     private String getTestCount(int offset) {
       String testCount;
       if (myDefects > 0)
-        testCount = ExecutionBundle.message("junit.runing.info.status.completed.from.total.failed", myCompleted + offset, myTotal, myDefects); // += "    Failed: " + myDefects + "   ";
+        testCount = ExecutionBundle.message("junit.running.info.status.completed.from.total.failed", myCompleted + offset, myTotal, myDefects); // += "    Failed: " + myDefects + "   ";
       else
-        testCount = ExecutionBundle.message("junit.runing.info.status.completed.from.total", myCompleted + offset, myTotal); // myCompleted + " of " + myTotal
+        testCount = ExecutionBundle.message("junit.running.info.status.completed.from.total", myCompleted + offset, myTotal); // myCompleted + " of " + myTotal
       return testCount;
     }
 
     private String generateTermMessage(final String testCount) {
       switch(myDoneEvent.getType()) {
-        case DONE: return ExecutionBundle.message("junit.runing.info.status.done.count", testCount);
-        default: return ExecutionBundle.message("junit.runing.info.status.terminated.count", testCount);
+        case DONE: return ExecutionBundle.message("junit.running.info.status.done.count", testCount);
+        default: return ExecutionBundle.message("junit.running.info.status.terminated.count", testCount);
       }
     }
 
@@ -131,6 +133,7 @@ class JUnitStatusLine extends TestStatusLine {
       myProgress = progress;
     }
 
+    @Override
     public void onRunnerStateChanged(final StateEvent event) {
       if (!event.isRunning()) {
         final CompletionEvent completionEvent = (CompletionEvent) event;
@@ -143,18 +146,20 @@ class JUnitStatusLine extends TestStatusLine {
       }
     }
 
+    @Override
     public void onTestChanged(final TestEvent event) {
       if (event instanceof StateChangedEvent || event instanceof NewChildEvent)
         updateCounters();
     }
 
+    @Override
     public void doDispose() {
       myProgress = null;
     }
 
     private void updateCounters() {
       myStateInfo.updateCounters(myProgress);
-      myProgressBar.setFraction(myStateInfo.getComplitedPercents());
+      myProgressBar.setFraction(myStateInfo.getCompletedPercents());
       if (myProgress.hasDefects()) {
         myProgressBar.setColor(ColorProgressBar.RED);
       }

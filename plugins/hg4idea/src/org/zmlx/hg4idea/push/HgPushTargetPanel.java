@@ -16,9 +16,10 @@
 package org.zmlx.hg4idea.push;
 
 import com.intellij.dvcs.DvcsUtil;
-import com.intellij.dvcs.push.TargetEditor;
+import com.intellij.dvcs.push.PushTargetPanel;
 import com.intellij.dvcs.push.VcsError;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -31,21 +32,20 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.List;
 
-public class HgTargetEditor extends TargetEditor<HgTarget> {
+public class HgPushTargetPanel extends PushTargetPanel<HgTarget> {
 
   private final static String ENTER_REMOTE = "Enter Remote";
   private final HgRepository myRepository;
-  private final TextFieldWithAutoCompletion<String> myDestTargetEditorComponent;
+  private final TextFieldWithAutoCompletion<String> myDestTargetPanel;
   private String myOldText;
 
-  public HgTargetEditor(@NotNull HgRepository repository, @NotNull String defaultTargetName) {
-    super(new BorderLayout());
+  public HgPushTargetPanel(@NotNull HgRepository repository, @NotNull String defaultTargetName) {
+    setLayout(new BorderLayout());
     setOpaque(false);
     myRepository = repository;
     final List<String> targetVariants = HgUtil.getTargetNames(repository);
@@ -56,7 +56,7 @@ public class HgTargetEditor extends TargetEditor<HgTarget> {
           return Integer.valueOf(ContainerUtil.indexOf(targetVariants, item1)).compareTo(ContainerUtil.indexOf(targetVariants, item2));
         }
       };
-    myDestTargetEditorComponent = new TextFieldWithAutoCompletion<String>(repository.getProject(), provider, true, defaultTargetName) {
+    myDestTargetPanel = new TextFieldWithAutoCompletion<String>(repository.getProject(), provider, true, defaultTargetName) {
 
       @Override
       public boolean shouldHaveBorder() {
@@ -68,21 +68,21 @@ public class HgTargetEditor extends TargetEditor<HgTarget> {
       }
     };
     myOldText = defaultTargetName;
-    myDestTargetEditorComponent.setBorder(UIUtil.getTableFocusCellHighlightBorder());
-    myDestTargetEditorComponent.setOneLineMode(true);
+    myDestTargetPanel.setBorder(UIUtil.getTableFocusCellHighlightBorder());
+    myDestTargetPanel.setOneLineMode(true);
     FocusAdapter focusListener = new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
-        myDestTargetEditorComponent.selectAll();
+        myDestTargetPanel.selectAll();
       }
     };
-    myDestTargetEditorComponent.addFocusListener(focusListener);
-    add(myDestTargetEditorComponent, BorderLayout.CENTER);
+    myDestTargetPanel.addFocusListener(focusListener);
+    add(myDestTargetPanel, BorderLayout.CENTER);
   }
 
   @Override
   public void render(@NotNull ColoredTreeCellRenderer renderer) {
-    String targetText = myDestTargetEditorComponent.getText();
+    String targetText = myDestTargetPanel.getText();
     if (StringUtil.isEmptyOrSpaces(targetText)) {
       renderer.append(ENTER_REMOTE, SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES, this);
     }
@@ -97,29 +97,24 @@ public class HgTargetEditor extends TargetEditor<HgTarget> {
 
   @NotNull
   private HgTarget createValidPushTarget() {
-    return new HgTarget(myDestTargetEditorComponent.getText());
+    return new HgTarget(myDestTargetPanel.getText());
   }
 
   @Override
   public void fireOnCancel() {
-    myDestTargetEditorComponent.setText(myOldText);
+    myDestTargetPanel.setText(myOldText);
   }
 
   @Override
   public void fireOnChange() {
-    myOldText = myDestTargetEditorComponent.getText();
+    myOldText = myDestTargetPanel.getText();
   }
 
   @Nullable
-  public VcsError verify() {
-    return StringUtil.isEmptyOrSpaces(myDestTargetEditorComponent.getText())
-           ? VcsError.createEmptyTargetError(DvcsUtil.getShortRepositoryName(myRepository))
-           : null;
-  }
-
-  @NotNull
-  @Override
-  public JComponent getVerifiedComponent() {
-    return myDestTargetEditorComponent;
+  public ValidationInfo verify() {
+    if (StringUtil.isEmptyOrSpaces(myDestTargetPanel.getText())) {
+      return new ValidationInfo(VcsError.createEmptyTargetError(DvcsUtil.getShortRepositoryName(myRepository)).getText(), this);
+    }
+    return null;
   }
 }

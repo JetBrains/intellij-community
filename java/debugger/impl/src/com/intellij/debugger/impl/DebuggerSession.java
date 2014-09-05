@@ -15,7 +15,10 @@
  */
 package com.intellij.debugger.impl;
 
-import com.intellij.debugger.*;
+import com.intellij.debugger.DebugEnvironment;
+import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationListener;
@@ -29,14 +32,10 @@ import com.intellij.debugger.ui.breakpoints.BreakpointWithHighlighter;
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.ModuleRunProfile;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RemoteState;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -252,7 +251,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
       case STATE_DISPOSED:
         return DebuggerBundle.message("status.debug.stopped");
     }
-    return myState.myDescription;
+    return null;
   }
 
   /* Stepping */
@@ -378,19 +377,6 @@ public class DebuggerSession implements AbstractDebuggerSession {
   private SuspendContextImpl getSuspendContext() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return getContextManager().getContext().getSuspendContext();
-  }
-
-  @Nullable
-  protected ExecutionResult attach(@NotNull Executor executor,
-                                   @NotNull ProgramRunner runner,
-                                   @NotNull ModuleRunProfile profile,
-                                   @NotNull RunProfileState state,
-                                   RemoteConnection remoteConnection,
-                                   boolean pollConnection) throws ExecutionException {
-    return attach(new DefaultDebugEnvironment(new ExecutionEnvironmentBuilder(myDebugProcess.getProject(), executor).runProfile(profile).runner(runner).build(),
-                                              state,
-                                              remoteConnection,
-                                              pollConnection));
   }
 
   @Nullable
@@ -660,7 +646,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
     public void threadStopped(DebugProcess proc, ThreadReference thread) {
       notifyThreadsRefresh();
     }
-    
+
     private void notifyThreadsRefresh() {
       if (!myUpdateAlarm.isDisposed()) {
         myUpdateAlarm.cancelAllRequests();

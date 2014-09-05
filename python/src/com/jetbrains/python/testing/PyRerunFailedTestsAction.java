@@ -36,24 +36,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/*
- * User: ktisha
- */
 public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
-
   protected PyRerunFailedTestsAction(@NotNull ComponentContainer componentContainer) {
     super(componentContainer);
   }
 
   @Override
   @Nullable
-  public MyRunProfile getRunProfile() {
+  protected MyRunProfile getRunProfile(@NotNull ExecutionEnvironment environment) {
     final TestFrameworkRunningModel model = getModel();
-    if (model == null) return null;
-    final AbstractPythonRunConfiguration configuration = (AbstractPythonRunConfiguration)model.getProperties().getConfiguration();
-    return new MyTestRunProfile(configuration);
+    if (model == null) {
+      return null;
+    }
+    return new MyTestRunProfile((AbstractPythonRunConfiguration)model.getProperties().getConfiguration());
   }
-
 
   private class MyTestRunProfile extends MyRunProfile {
 

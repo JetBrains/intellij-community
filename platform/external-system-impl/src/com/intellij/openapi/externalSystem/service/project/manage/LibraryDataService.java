@@ -152,7 +152,7 @@ public class LibraryDataService implements ProjectDataService<LibraryData, Libra
           VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(virtualFile);
           if (jarRoot == null) {
             LOG.warn(String.format(
-              "Can't parse contents of the jar file at path '%s' for the library '%s''", file.getAbsolutePath(), libraryName
+              "Can't parse contents of the JAR file at path '%s' for the library '%s''", file.getAbsolutePath(), libraryName
             ));
             continue;
           }

@@ -28,21 +28,18 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.ArrayUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
-import java.io.Reader;
 import java.nio.charset.Charset;
-import java.util.HashMap;
 import java.util.Map;
 
 public abstract class LogConsoleManagerBase implements LogConsoleManager, Disposable {
   private final Project myProject;
-
-  private final Map<AdditionalTabComponent, Content> myAdditionalContent = new HashMap<AdditionalTabComponent, Content>();
-
+  private final Map<AdditionalTabComponent, Content> myAdditionalContent = new THashMap<AdditionalTabComponent, Content>();
   private final GlobalSearchScope mySearchScope;
 
   protected LogConsoleManagerBase(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
@@ -50,18 +47,13 @@ public abstract class LogConsoleManagerBase implements LogConsoleManager, Dispos
     mySearchScope = searchScope;
   }
 
-  protected final Project getProject() {
-    return myProject;
-  }
-
   @Override
-  public void addLogConsole(final String name, final String path, @NotNull Charset charset, final long skippedContent, @NotNull RunConfigurationBase runConfiguration) {
+  public void addLogConsole(@NotNull String name, @NotNull String path, @NotNull Charset charset, long skippedContent, @NotNull RunConfigurationBase runConfiguration) {
     addLogConsole(name, path, charset, skippedContent, getDefaultIcon(), runConfiguration);
   }
 
   public void addLogConsole(final String name, final String path, @NotNull Charset charset, final long skippedContent, Icon icon, @Nullable RunProfile runProfile) {
     doAddLogConsole(new LogConsoleImpl(myProject, new File(path), charset, skippedContent, name, false, mySearchScope) {
-
       @Override
       public boolean isActive() {
         return isConsoleActive(path);
@@ -69,23 +61,7 @@ public abstract class LogConsoleManagerBase implements LogConsoleManager, Dispos
     }, path, icon, runProfile);
   }
 
-  public void addLogConsole(String name, Reader reader, final String id, Icon icon, @Nullable RunProfile runProfile) {
-    doAddLogConsole(new LogConsoleBase(myProject,
-                                       reader,
-                                       name,
-                                       false,
-                                       new DefaultLogFilterModel(myProject), mySearchScope) {
-
-      @Override
-      public boolean isActive() {
-        return isConsoleActive(id);
-      }
-    }, id, icon, runProfile);
-  }
-
-  private void doAddLogConsole(final LogConsoleBase log,
-                               final String id,
-                               Icon icon, @Nullable RunProfile runProfile) {
+  private void doAddLogConsole(@NotNull final LogConsoleBase log, String id,  Icon icon, @Nullable RunProfile runProfile) {
     if (runProfile instanceof RunConfigurationBase) {
       ((RunConfigurationBase)runProfile).customizeLogConsole(log);
     }
@@ -106,33 +82,28 @@ public abstract class LogConsoleManagerBase implements LogConsoleManager, Dispos
   }
 
   @Override
-  public void removeLogConsole(final String path) {
-    final Content content = getUi().findContent(path);
+  public void removeLogConsole(@NotNull String path) {
+    Content content = getUi().findContent(path);
     if (content != null) {
-      final LogConsoleBase log = (LogConsoleBase)content.getComponent();
-      removeAdditionalTabComponent(log);
+      removeAdditionalTabComponent((LogConsoleBase)content.getComponent());
     }
   }
 
   @Override
-  public void addAdditionalTabComponent(final AdditionalTabComponent tabComponent, final String id) {
+  public void addAdditionalTabComponent(@NotNull AdditionalTabComponent tabComponent, @NotNull String id) {
     addAdditionalTabComponent(tabComponent, id, getDefaultIcon());
   }
 
-  public Content addAdditionalTabComponent(final AdditionalTabComponent tabComponent, String id, Icon icon) {
-    final Content logContent = createLogContent(tabComponent, id, icon);
+  public Content addAdditionalTabComponent(@NotNull AdditionalTabComponent tabComponent, @NotNull String id, @Nullable Icon icon) {
+    Content logContent = getUi().createContent(id, (ComponentWithActions)tabComponent, tabComponent.getTabTitle(), icon,
+                                               tabComponent.getPreferredFocusableComponent());
     myAdditionalContent.put(tabComponent, logContent);
     getUi().addContent(logContent);
     return logContent;
   }
 
-  protected Content createLogContent(AdditionalTabComponent tabComponent, String id, Icon icon) {
-    return getUi().createContent(id, (ComponentWithActions)tabComponent, tabComponent.getTabTitle(), icon,
-                                 tabComponent.getPreferredFocusableComponent());
-  }
-
   @Override
-  public void removeAdditionalTabComponent(AdditionalTabComponent component) {
+  public void removeAdditionalTabComponent(@NotNull AdditionalTabComponent component) {
     Disposer.dispose(component);
     final Content content = myAdditionalContent.remove(component);
     if (!getUi().isDisposed()) {

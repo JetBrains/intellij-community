@@ -1016,6 +1016,7 @@ public class GitUtil {
   @NotNull
   public static String cleanupErrorPrefixes(@NotNull String msg) {
     final String[] PREFIXES = { "fatal:", "error:" };
+    msg = msg.trim();
     for (String prefix : PREFIXES) {
       if (msg.startsWith(prefix)) {
         return msg.substring(prefix.length()).trim();

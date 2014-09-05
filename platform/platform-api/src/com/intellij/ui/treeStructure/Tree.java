@@ -843,7 +843,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
    * @return the deepest visible component of the renderer
    */
   @Nullable
-  protected Component getDeepestRendererComponentAt(int x, int y) {
+  public Component getDeepestRendererComponentAt(int x, int y) {
     int row = getRowForLocation(x, y);
     if (row >= 0) {
       TreeCellRenderer renderer = getCellRenderer();

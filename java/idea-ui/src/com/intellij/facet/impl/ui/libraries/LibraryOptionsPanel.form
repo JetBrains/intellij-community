@@ -139,7 +139,7 @@
                               <componentStyle value="SMALL"/>
                               <enabled value="true"/>
                               <fontColor value="BRIGHTER"/>
-                              <text value="&lt;html&gt;{} jars will be downloaded into &lt;b&gt;lib&lt;/b&gt; directory&lt;br&gt; Project level library &lt;b&gt;spring&lt;/b&gt; will be created&lt;/html&gt;"/>
+                              <text value="&lt;html&gt;{} JARs will be downloaded into &lt;b&gt;lib&lt;/b&gt; directory&lt;br&gt; Project level library &lt;b&gt;spring&lt;/b&gt; will be created&lt;/html&gt;"/>
                             </properties>
                           </component>
                           <component id="84326" class="javax.swing.JLabel" binding="myHiddenLabel">

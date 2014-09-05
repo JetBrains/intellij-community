@@ -81,6 +81,8 @@ public class RunContentDescriptor implements Disposable {
     }
     myComponent = null;
     myRestarter = null;
+    myProcessHandler = null;
+    myContent = null;
   }
 
   /**
@@ -127,6 +129,7 @@ public class RunContentDescriptor implements Disposable {
     myContent = content;
   }
 
+  @SuppressWarnings("UnusedDeclaration")
   @Nullable
   @Deprecated
   /**

@@ -311,23 +311,16 @@ public class JavaDebugProcess extends XDebugProcess {
   }
 
   @Override
-  public void registerAdditionalActions(@NotNull DefaultActionGroup leftToolbar, @NotNull DefaultActionGroup topToolbar) {
+  public void registerAdditionalActions(@NotNull DefaultActionGroup leftToolbar, @NotNull DefaultActionGroup topToolbar, @NotNull DefaultActionGroup settings) {
     Constraints beforeRunner = new Constraints(Anchor.BEFORE, "Runner.Layout");
     leftToolbar.add(Separator.getInstance(), beforeRunner);
     leftToolbar.add(ActionManager.getInstance().getAction(DebuggerActions.EXPORT_THREADS), beforeRunner);
     leftToolbar.add(ActionManager.getInstance().getAction(DebuggerActions.DUMP_THREADS), beforeRunner);
     leftToolbar.add(Separator.getInstance(), beforeRunner);
 
-    for (AnAction action : leftToolbar.getChildren(null)) {
-      //TODO: maybe introduce API for extra settings?
-      if (action instanceof DefaultActionGroup && "DebuggerSettings".equals(action.getTemplatePresentation().getText())) {
-        DefaultActionGroup settings = (DefaultActionGroup)action;
-        addActionToGroup(settings, XDebuggerActions.AUTO_TOOLTIP);
-        settings.addAction(new AutoVarsSwitchAction(), Constraints.FIRST);
-        settings.addAction(new WatchLastMethodReturnValueAction(), Constraints.FIRST);
-        break;
-      }
-    }
+    addActionToGroup(settings, XDebuggerActions.AUTO_TOOLTIP);
+    settings.addAction(new AutoVarsSwitchAction(), Constraints.FIRST);
+    settings.addAction(new WatchLastMethodReturnValueAction(), Constraints.FIRST);
   }
 
   private static class AutoVarsSwitchAction extends ToggleAction {

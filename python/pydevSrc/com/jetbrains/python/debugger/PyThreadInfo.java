@@ -80,7 +80,7 @@ public class PyThreadInfo {
   }
 
   public boolean isExceptionBreak() {
-    return myStopReason == AbstractCommand.ADD_EXCEPTION_BREAKPOINT || myStopReason == AbstractCommand.ADD_DJANGO_EXCEPTION_BREAKPOINT;
+    return myStopReason == AbstractCommand.ADD_EXCEPTION_BREAKPOINT;
   }
 
   @Override

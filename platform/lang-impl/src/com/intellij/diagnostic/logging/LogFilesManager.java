@@ -18,8 +18,6 @@ package com.intellij.diagnostic.logging;
 import com.intellij.execution.configurations.LogFileOptions;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +30,7 @@ import java.util.TreeMap;
 public class LogFilesManager {
   private final LogConsoleManager myManager;
 
-  public LogFilesManager(@NotNull final Project project, @NotNull LogConsoleManager manager, @NotNull Disposable parentDisposable) {
+  public LogFilesManager(@NotNull LogConsoleManager manager) {
     myManager = manager;
   }
 

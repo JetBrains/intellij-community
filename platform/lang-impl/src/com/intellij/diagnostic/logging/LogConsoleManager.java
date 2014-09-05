@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.charset.Charset;
 
 public interface LogConsoleManager extends AdditionalTabComponentManager {
-  void addLogConsole(String name, String path, @NotNull Charset charset, long skippedContent, @NotNull RunConfigurationBase runConfiguration);
+  void addLogConsole(@NotNull String name, @NotNull String path, @NotNull Charset charset, long skippedContent, @NotNull RunConfigurationBase runConfiguration);
 
-  void removeLogConsole(final String pathOrId);
+  void removeLogConsole(@NotNull String pathOrId);
 }

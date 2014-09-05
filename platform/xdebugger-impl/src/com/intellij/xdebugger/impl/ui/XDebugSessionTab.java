@@ -20,7 +20,6 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.RunContentBuilder;
-import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.actions.CloseAction;
@@ -133,6 +132,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     myConsole = session.getConsoleView();
     myRunContentDescriptor = new RunContentDescriptor(myConsole, session.getDebugProcess().getProcessHandler(), myUi.getComponent(), session.getSessionName(), icon);
     Disposer.register(myRunContentDescriptor, this);
+    Disposer.register(myProject, myRunContentDescriptor);
   }
 
   @Nullable
@@ -192,10 +192,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     return framesContent;
   }
 
-  public ExecutionConsole getConsole() {
-    return myConsole;
-  }
-
   public void rebuildViews() {
     AppUIUtil.invokeLaterIfProjectAlive(myProject, new Runnable() {
       @Override
@@ -250,24 +246,12 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     leftToolbar.add(myUi.getOptions().getLayoutActions());
     final AnAction[] commonSettings = myUi.getOptions().getSettingsActionsList();
-    final AnAction commonSettingsList = myUi.getOptions().getSettingsActions();
-
-    final DefaultActionGroup settings = new DefaultActionGroup("DebuggerSettings", commonSettings.length > 0) {
-      @Override
-      public void update(AnActionEvent e) {
-        e.getPresentation().setText(ActionsBundle.message("group.XDebugger.settings.text"));
-        e.getPresentation().setIcon(commonSettingsList.getTemplatePresentation().getIcon());
-      }
-
-      @Override
-      public boolean isDumbAware() {
-        return true;
-      }
-    };
-    for (AnAction each : commonSettings) {
-      settings.add(each);
-    }
+    DefaultActionGroup settings = new DefaultActionGroup(ActionsBundle.message("group.XDebugger.settings.text"), true);
+    settings.getTemplatePresentation().setIcon(myUi.getOptions().getSettingsActions().getTemplatePresentation().getIcon());
     if (commonSettings.length > 0) {
+      for (AnAction each : commonSettings) {
+        settings.add(each);
+      }
       settings.addSeparator();
     }
     if (!session.getDebugProcess().isValuesCustomSorted()) {
@@ -285,7 +269,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     DefaultActionGroup topToolbar = new DefaultActionGroup();
     topToolbar.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_GROUP));
 
-    session.getDebugProcess().registerAdditionalActions(leftToolbar, topToolbar);
+    session.getDebugProcess().registerAdditionalActions(leftToolbar, topToolbar, settings);
     myUi.getOptions().setLeftToolbar(leftToolbar, ActionPlaces.DEBUGGER_TOOLBAR);
     myUi.getOptions().setTopToolbar(topToolbar, ActionPlaces.DEBUGGER_TOOLBAR);
 

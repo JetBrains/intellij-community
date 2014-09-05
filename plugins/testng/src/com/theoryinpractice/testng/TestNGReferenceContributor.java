@@ -50,41 +50,41 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TestNGReferenceContributor extends PsiReferenceContributor {
-  private static PsiElementPattern.Capture<PsiLiteralExpression> getElementPattern(String annotation) {
-    return PlatformPatterns.psiElement(PsiLiteralExpression.class).and(new FilterPattern(new TestAnnotationFilter(annotation)));
+  private static PsiElementPattern.Capture<PsiLiteral> getElementPattern(String annotation) {
+    return PlatformPatterns.psiElement(PsiLiteral.class).and(new FilterPattern(new TestAnnotationFilter(annotation)));
   }
 
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(getElementPattern("dependsOnMethods"), new PsiReferenceProvider() {
       @NotNull
       public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
-        return new MethodReference[]{new MethodReference((PsiLiteralExpression)element)};
+        return new MethodReference[]{new MethodReference((PsiLiteral)element)};
       }
     });
 
     registrar.registerReferenceProvider(getElementPattern("dataProvider"), new PsiReferenceProvider() {
       @NotNull
       public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
-        return new DataProviderReference[]{new DataProviderReference((PsiLiteralExpression)element)};
+        return new DataProviderReference[]{new DataProviderReference((PsiLiteral)element)};
       }
     });
     registrar.registerReferenceProvider(getElementPattern("groups"), new PsiReferenceProvider() {
       @NotNull
       public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
-        return new GroupReference[]{new GroupReference(element.getProject(), (PsiLiteralExpression)element)};
+        return new GroupReference[]{new GroupReference(element.getProject(), (PsiLiteral)element)};
       }
     });
     registrar.registerReferenceProvider(getElementPattern("dependsOnGroups"), new PsiReferenceProvider() {
       @NotNull
       public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
-        return new GroupReference[]{new GroupReference(element.getProject(), (PsiLiteralExpression)element)};
+        return new GroupReference[]{new GroupReference(element.getProject(), (PsiLiteral)element)};
       }
     });
   }
 
-  private static class DataProviderReference extends PsiReferenceBase<PsiLiteralExpression> {
+  private static class DataProviderReference extends PsiReferenceBase<PsiLiteral> {
 
-    public DataProviderReference(PsiLiteralExpression element) {
+    public DataProviderReference(PsiLiteral element) {
       super(element, false);
     }
 
@@ -156,9 +156,9 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
     }
   }
 
-  private static class MethodReference extends PsiReferenceBase<PsiLiteralExpression> {
+  private static class MethodReference extends PsiReferenceBase<PsiLiteral> {
 
-    public MethodReference(PsiLiteralExpression element) {
+    public MethodReference(PsiLiteral element) {
       super(element, false);
     }
 
@@ -181,7 +181,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
     @Nullable
     private PsiClass getDependsClass(String val) {
       final String className = StringUtil.getPackageName(val);
-      final PsiLiteralExpression element = getElement();
+      final PsiLiteral element = getElement();
       return StringUtil.isEmpty(className) ? PsiUtil.getTopLevelClass(element)
                                            : JavaPsiFacade.getInstance(element.getProject()).findClass(className, element.getResolveScope());
     }
@@ -213,10 +213,10 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
     }
   }
 
-  private static class GroupReference extends PsiReferenceBase<PsiLiteralExpression> {
+  private static class GroupReference extends PsiReferenceBase<PsiLiteral> {
     private final Project myProject;
 
-    public GroupReference(Project project, PsiLiteralExpression element) {
+    public GroupReference(Project project, PsiLiteral element) {
       super(element, false);
       myProject = project;
     }
@@ -264,7 +264,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
     }
 
     public boolean isClassAcceptable(Class hintClass) {
-      return PsiLiteralExpression.class.isAssignableFrom(hintClass);
+      return PsiLiteral.class.isAssignableFrom(hintClass);
     }
   }
 }

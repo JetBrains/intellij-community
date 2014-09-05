@@ -115,6 +115,7 @@ public class InheritorChooser {
           }
         }
       }
+      final int numberOfInheritors = classes.size();
       final PsiClassListCellRenderer renderer = new PsiClassListCellRenderer() {
         @Override
         protected boolean customizeNonPsiElementLeftRenderer(ColoredListCellRenderer renderer,
@@ -124,7 +125,7 @@ public class InheritorChooser {
                                                              boolean selected,
                                                              boolean hasFocus) {
           if (value == null) {
-            renderer.append("All");
+            renderer.append("All (" + numberOfInheritors + ")");
             return true;
           }
           return super.customizeNonPsiElementLeftRenderer(renderer, list, value, index, selected, hasFocus);

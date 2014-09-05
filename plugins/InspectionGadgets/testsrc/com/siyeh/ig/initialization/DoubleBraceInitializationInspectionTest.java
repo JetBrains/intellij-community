@@ -13,33 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.dvcs.push;
+package com.siyeh.ig.initialization;
 
-import com.intellij.ui.ColoredTreeCellRenderer;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+/**
+ * @author Bas Leijdekkers
+ */
+public class DoubleBraceInitializationInspectionTest extends LightInspectionTestCase {
 
-public abstract class TargetEditor<T extends PushTarget> extends JPanel {
-
-  protected TargetEditor(BorderLayout layout) {
-    super(layout);
-  }
-
-  abstract public void render(@NotNull ColoredTreeCellRenderer renderer);
-
-  @NotNull
-  abstract public T getValue();
-
-  public abstract void fireOnCancel();
-
-  public abstract void fireOnChange();
+  public void testDoubleBraceInitialization() { doTest(); }
 
   @Nullable
-  public abstract VcsError verify();
-
-  @NotNull
-  public abstract JComponent getVerifiedComponent();
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new DoubleBraceInitializationInspection();
+  }
 }

@@ -335,12 +335,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   @Override
   @NotNull
   public synchronized String expandMacros(@NotNull String file) {
-    String expanded = file;
-    for (String macro : myMacros.keySet()) {
-      expanded = StringUtil.replace(expanded, macro, myMacros.get(macro));
-    }
-
-    final Matcher matcher = MACRO_PATTERN.matcher(expanded);
+    Matcher matcher = MACRO_PATTERN.matcher(file);
     while (matcher.find()) {
       String m = matcher.group(1);
       if (!myMacros.containsKey(m)) {
@@ -348,6 +343,10 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       }
     }
 
+    String expanded = file;
+    for (String macro : myMacros.keySet()) {
+      expanded = StringUtil.replace(expanded, macro, myMacros.get(macro));
+    }
     return expanded;
   }
 
