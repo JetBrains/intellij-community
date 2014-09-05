@@ -15,6 +15,7 @@
  */
 package com.intellij.util.containers;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -32,11 +33,11 @@ public class Stack<T> extends ArrayList<T> {
     super(initialCapacity);
   }
 
-  public Stack(Collection<T> init) {
+  public Stack(@NotNull Collection<T> init) {
     super(init);
   }
 
-  public Stack(T... items) {
+  public Stack(@NotNull T... items) {
     for (T item : items) {
       push(item);
     }
