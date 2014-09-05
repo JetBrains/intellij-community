@@ -16,7 +16,6 @@
 package git4idea.reset;
 
 import com.intellij.dvcs.ui.VcsLogOneCommitPerRepoAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -25,18 +24,19 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+
+import static git4idea.GitUtil.getRepositoryManager;
 
 public class GitResetAction extends VcsLogOneCommitPerRepoAction<GitRepository> {
 
   @Nullable
   @Override
   protected GitRepository getRepositoryForRoot(@NotNull Project project, @NotNull VirtualFile root) {
-    return getRepoManager(project).getRepositoryForRoot(root);
+    return getRepositoryManager(project).getRepositoryForRoot(root);
   }
 
   @Override
@@ -55,11 +55,6 @@ public class GitResetAction extends VcsLogOneCommitPerRepoAction<GitRepository> 
         }
       }.queue();
     }
-  }
-
-  @NotNull
-  private static GitRepositoryManager getRepoManager(@NotNull Project project) {
-    return ServiceManager.getService(project, GitRepositoryManager.class);
   }
 
 }
