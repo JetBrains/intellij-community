@@ -31,18 +31,17 @@ import com.intellij.psi.compiled.ClassFileDecompilers;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.java.decompiler.main.decompiler.IdeDecompiler;
+import org.jetbrains.java.decompiler.main.decompiler.BaseDecompiler;
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
-import org.jetbrains.java.decompiler.main.extern.IDecompilatSaver;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+import org.jetbrains.java.decompiler.main.extern.IResultSaver;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.jar.Manifest;
@@ -94,10 +93,10 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
           files.put(child.getPath(), child);
         }
       }
-      MyByteCodeProvider provider = new MyByteCodeProvider(files);
+      MyBytecodeProvider provider = new MyBytecodeProvider(files);
       MyResultSaver saver = new MyResultSaver();
 
-      IdeDecompiler decompiler = new IdeDecompiler(provider, saver, myLogger, myOptions);
+      BaseDecompiler decompiler = new BaseDecompiler(provider, saver, myOptions, myLogger);
       for (String path : files.keySet()) {
         decompiler.addSpace(new File(path), true);
       }
@@ -149,20 +148,20 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
     return true;
   }
 
-  private static class MyByteCodeProvider implements IBytecodeProvider {
+  private static class MyBytecodeProvider implements IBytecodeProvider {
     private final Map<String, VirtualFile> myFiles;
 
-    private MyByteCodeProvider(@NotNull Map<String, VirtualFile> files) {
+    private MyBytecodeProvider(@NotNull Map<String, VirtualFile> files) {
       myFiles = files;
     }
 
     @Override
-    public InputStream getBytecodeStream(String externalPath, String internalPath) {
+    public byte[] getBytecode(String externalPath, String internalPath) {
       try {
         String path = FileUtil.toSystemIndependentName(externalPath);
         VirtualFile file = myFiles.get(path);
         assert file != null : path;
-        return file.getInputStream();
+        return file.contentsToByteArray();
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -170,7 +169,7 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
     }
   }
 
-  private static class MyResultSaver implements IDecompilatSaver {
+  private static class MyResultSaver implements IResultSaver {
     private String myResult = "";
 
     @Override
@@ -181,25 +180,22 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
     }
 
     @Override
-    public void copyFile(String source, String destPath, String destFileName) { }
-
-    @Override
     public void saveFolder(String path) { }
 
     @Override
-    public void saveFile(String path, String filename, String content) { }
+    public void copyFile(String source, String path, String entryName) { }
 
     @Override
     public void createArchive(String path, String archiveName, Manifest manifest) { }
 
     @Override
+    public void saveDirEntry(String path, String archiveName, String entryName) { }
+
+    @Override
+    public void copyEntry(String source, String path, String archiveName, String entry) { }
+
+    @Override
     public void saveClassEntry(String path, String archiveName, String qualifiedName, String entryName, String content) { }
-
-    @Override
-    public void saveEntry(String path, String archiveName, String entryName, String content) { }
-
-    @Override
-    public void copyEntry(String source, String destPath, String archiveName, String entry) { }
 
     @Override
     public void closeArchive(String path, String archiveName) { }

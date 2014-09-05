@@ -18,7 +18,6 @@ package org.jetbrains.java.decompiler.struct.attr;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
 /*
@@ -104,7 +103,7 @@ public class StructGeneralAttribute {
   }
 
   protected DataInputFullStream stream() {
-    return new DataInputFullStream(new ByteArrayInputStream(info));
+    return new DataInputFullStream(info);
   }
 
   public void initContent(ConstantPool pool) throws IOException { }

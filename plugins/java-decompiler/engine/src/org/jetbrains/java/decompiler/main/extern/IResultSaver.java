@@ -17,23 +17,20 @@ package org.jetbrains.java.decompiler.main.extern;
 
 import java.util.jar.Manifest;
 
-public interface IDecompilatSaver {
-
-  void copyFile(String source, String destpath, String destfilename);
-
+public interface IResultSaver {
   void saveFolder(String path);
+
+  void copyFile(String source, String path, String entryName);
 
   void saveClassFile(String path, String qualifiedName, String entryName, String content);
 
-  void saveFile(String path, String filename, String content);
+  void createArchive(String path, String archiveName, Manifest manifest);
 
-  void createArchive(String path, String archivename, Manifest manifest);
+  void saveDirEntry(String path, String archiveName, String entryName);
 
-  void saveClassEntry(String path, String archivename, String qualifiedName, String entryName, String content);
+  void copyEntry(String source, String path, String archiveName, String entry);
 
-  void saveEntry(String path, String archivename, String entryName, String content);
+  void saveClassEntry(String path, String archiveName, String qualifiedName, String entryName, String content);
 
-  void copyEntry(String source, String destpath, String archivename, String entry);
-
-  void closeArchive(String path, String archivename);
+  void closeArchive(String path, String archiveName);
 }

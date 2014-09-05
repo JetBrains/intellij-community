@@ -106,7 +106,7 @@ public class ClassWrapper {
 
               if (System.currentTimeMillis() >= stopAt) {
                 String message = "Processing time limit exceeded for method " + mt.getName() + ", execution interrupted.";
-                DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.ERROR);
+                DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.ERROR);
                 killThread(mtthread);
                 isError = true;
                 break;

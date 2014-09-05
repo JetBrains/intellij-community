@@ -15,28 +15,21 @@
  */
 package org.jetbrains.java.decompiler.main.decompiler;
 
-import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.Fernflower;
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
-import org.jetbrains.java.decompiler.main.extern.IDecompilatSaver;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+import org.jetbrains.java.decompiler.main.extern.IResultSaver;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.Map;
 
+public class BaseDecompiler {
 
-public class IdeDecompiler {
+  private final Fernflower fernflower;
 
-  private Fernflower fernflower;
-
-  public IdeDecompiler(IBytecodeProvider provider,
-                       IDecompilatSaver saver, IFernflowerLogger logger,
-                       HashMap<String, Object> propertiesCustom) {
-
-    fernflower = new Fernflower(provider, saver, propertiesCustom);
-
-    DecompilerContext.setLogger(logger);
+  public BaseDecompiler(IBytecodeProvider provider, IResultSaver saver, Map<String, Object> options, IFernflowerLogger logger) {
+    fernflower = new Fernflower(provider, saver, options, logger);
   }
 
   public void addSpace(File file, boolean isOwn) throws IOException {

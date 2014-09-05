@@ -113,7 +113,7 @@ public class ClassesProcessor {
                   else {
                     if (!InterpreterUtil.equalObjectArrays(arrold, arr)) {
                       DecompilerContext.getLogger()
-                        .writeMessage("Inconsistent inner class entries for " + innername + "!", IFernflowerLogger.WARNING);
+                        .writeMessage("Inconsistent inner class entries for " + innername + "!", IFernflowerLogger.Severity.WARN);
                     }
                   }
 
@@ -178,7 +178,8 @@ public class ClassesProcessor {
 
                 ClassNode nestednode = mapRootClasses.get(nestedClass);
                 if (nestednode == null) {
-                  DecompilerContext.getLogger().writeMessage("Nested class " + nestedClass + " missing!", IFernflowerLogger.WARNING);
+                  DecompilerContext.getLogger().writeMessage("Nested class " + nestedClass + " missing!",
+                                                             IFernflowerLogger.Severity.WARN);
                   continue;
                 }
 
@@ -204,7 +205,7 @@ public class ClassesProcessor {
                   if (interfaces.length > 0) {
                     if (interfaces.length > 1) {
                       DecompilerContext.getLogger()
-                        .writeMessage("Inconsistent anonymous class definition: " + cl.qualifiedName, IFernflowerLogger.WARNING);
+                        .writeMessage("Inconsistent anonymous class definition: " + cl.qualifiedName, IFernflowerLogger.Severity.WARN);
                     }
                     nestednode.anonimousClassType = new VarType(cl.getInterface(0), true);
                   }

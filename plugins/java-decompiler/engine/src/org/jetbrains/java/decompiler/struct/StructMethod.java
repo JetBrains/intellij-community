@@ -21,7 +21,6 @@ import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -106,7 +105,7 @@ public class StructMethod extends StructMember {
   public void expandData() throws IOException {
     if (containsCode && !expanded) {
       byte[] code = classStruct.getLoader().loadBytecode(this, codeFullLength);
-      seq = parseBytecode(new DataInputFullStream(new ByteArrayInputStream(code)), codeLength, classStruct.getPool());
+      seq = parseBytecode(new DataInputFullStream(code), codeLength, classStruct.getPool());
       expanded = true;
     }
   }

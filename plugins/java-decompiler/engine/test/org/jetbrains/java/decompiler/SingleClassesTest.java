@@ -44,7 +44,7 @@ public class SingleClassesTest {
     assertTrue(tempDir.delete());
     assertTrue(tempDir.mkdirs());
 
-    decompiler = new ConsoleDecompiler(new HashMap<String, Object>() {{
+    decompiler = new ConsoleDecompiler(tempDir, new HashMap<String, Object>() {{
       put(IFernflowerPreferences.LOG_LEVEL, "warn");
       put(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES, "1");
       put(IFernflowerPreferences.REMOVE_SYNTHETIC, "1");
@@ -91,7 +91,7 @@ public class SingleClassesTest {
         decompiler.addSpace(inner, true);
       }
 
-      decompiler.decompileContext(tempDir);
+      decompiler.decompileContext();
 
       File decompiledFile = new File(tempDir, testName + ".java");
       assertTrue(decompiledFile.isFile());

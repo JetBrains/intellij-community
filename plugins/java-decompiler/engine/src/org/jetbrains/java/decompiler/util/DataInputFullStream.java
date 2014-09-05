@@ -15,14 +15,14 @@
  */
 package org.jetbrains.java.decompiler.util;
 
+import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 
 public class DataInputFullStream extends DataInputStream {
 
-  public DataInputFullStream(InputStream in) {
-    super(in);
+  public DataInputFullStream(byte[] bytes) {
+    super(new ByteArrayInputStream(bytes));
   }
 
   public int readFull(byte[] b) throws IOException {

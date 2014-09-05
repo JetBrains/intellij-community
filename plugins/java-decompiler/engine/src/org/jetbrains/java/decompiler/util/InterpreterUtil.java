@@ -23,6 +23,8 @@ import java.nio.channels.FileChannel;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 public class InterpreterUtil {
   public static final boolean IS_WINDOWS = System.getProperty("os.name", "").startsWith("Windows");
@@ -59,13 +61,36 @@ public class InterpreterUtil {
     }
   }
 
+  public static byte[] getBytes(ZipFile archive, ZipEntry entry) throws IOException {
+    return readAndClose(archive.getInputStream(entry), entry.getSize());
+  }
+
+  public static byte[] getBytes(File file) throws IOException {
+    return readAndClose(new FileInputStream(file), file.length());
+  }
+
+  private static byte[] readAndClose(InputStream stream, long length) throws IOException {
+    try {
+      byte[] bytes = new byte[(int)length];
+      if (stream.read(bytes) != length) {
+        throw new IOException("premature end of stream");
+      }
+      return bytes;
+    }
+    finally {
+      stream.close();
+    }
+  }
+
   public static String getIndentString(int length) {
+    if (length == 0) return "";
     StringBuilder buf = new StringBuilder();
     appendIndent(buf, length);
     return buf.toString();
   }
 
   public static void appendIndent(StringBuilder buffer, int length) {
+    if (length == 0) return;
     String indent = (String)DecompilerContext.getProperty(IFernflowerPreferences.INDENT_STRING);
     while (length-- > 0) {
       buffer.append(indent);

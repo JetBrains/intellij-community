@@ -13,61 +13,68 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.java.decompiler;
+package org.jetbrains.java.decompiler.main.decompiler;
 
-import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
-public class IdeaLogger extends IFernflowerLogger {
-  private final static Logger LOG = Logger.getInstance(IdeaDecompiler.class);
+import java.io.PrintStream;
 
-  public static class InternalException extends RuntimeException {
-    public InternalException(String message, Throwable cause) {
-      super(message, cause);
-    }
+public class PrintStreamLogger extends IFernflowerLogger {
+
+  private final PrintStream stream;
+  private int indent;
+
+  public PrintStreamLogger(PrintStream printStream) {
+    stream = printStream;
+    indent = 0;
   }
 
   @Override
   public void writeMessage(String message, Severity severity) {
-    if (severity == Severity.ERROR) LOG.error(message);
-    else if (severity == Severity.WARN) LOG.warn(message);
-    else if (severity == Severity.INFO) LOG.info(message);
-    else LOG.debug(message);
+    if (accepts(severity)) {
+      stream.println(InterpreterUtil.getIndentString(indent) + severity.name() + ": " + message);
+    }
   }
 
   @Override
   public void writeMessage(String message, Throwable t) {
-    if (t instanceof InternalException) throw (InternalException)t;
-    else throw new InternalException(message, t);
+    writeMessage(message, Severity.ERROR);
+    if (accepts(Severity.ERROR)) {
+      t.printStackTrace(stream);
+    }
   }
 
   @Override
   public void startClass(String className) {
-    LOG.debug("processing class " + className);
+    writeMessage("Processing class " + className + " ...", Severity.INFO);
+    ++indent;
   }
 
   @Override
   public void endClass() {
-    LOG.debug("... class processed");
+    --indent;
+    writeMessage("... proceeded.", Severity.INFO);
   }
 
   @Override
   public void startWriteClass(String className) {
-    LOG.debug("writing class " + className);
+    writeMessage("Writing class " + className + " ...", Severity.INFO);
+    ++indent;
   }
 
   @Override
   public void endWriteClass() {
-    LOG.debug("... class written");
+    --indent;
+    writeMessage("... written.", Severity.INFO);
   }
 
   @Override
   public void startMethod(String methodName) {
-    LOG.debug("processing method " + methodName);
+    writeMessage("Processing method " + methodName + " ...", Severity.INFO);
   }
 
-  @Override
   public void endMethod() {
-    LOG.debug("... method processed");
+    writeMessage("... proceeded.", Severity.INFO);
   }
 }
