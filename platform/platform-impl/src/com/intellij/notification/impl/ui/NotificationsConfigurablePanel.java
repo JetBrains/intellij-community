@@ -125,6 +125,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
 
     public NotificationsTable() {
       super(new NotificationsTableModel());
+      setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
       final TableColumn idColumn = getColumnModel().getColumn(ID_COLUMN);
       idColumn.setPreferredWidth(200);
