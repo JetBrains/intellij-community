@@ -79,7 +79,7 @@ public class CommandLineBuilder {
             if (exePath == null) {
               throw new CantRunException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"));
             }
-            if (javaParameters.getMainClass() == null) {
+            if (javaParameters.getMainClass() == null && javaParameters.getJarPath() == null) {
               throw new CantRunException(ExecutionBundle.message("main.class.is.not.specified.error.message"));
             }
 
