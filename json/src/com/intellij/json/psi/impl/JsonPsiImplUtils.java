@@ -1,12 +1,9 @@
 package com.intellij.json.psi.impl;
 
-import com.intellij.json.JsonElementTypes;
 import com.intellij.json.JsonParserDefinition;
-import com.intellij.json.JsonTokenType;
 import com.intellij.json.psi.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,7 +13,7 @@ import java.util.Collection;
 public class JsonPsiImplUtils {
   @NotNull
   public static String getName(@NotNull JsonProperty property) {
-    return StringUtil.unquoteString(property.getNameElement().getText());
+    return StringUtil.stripQuotesAroundValue(property.getNameElement().getText());
   }
 
   @NotNull

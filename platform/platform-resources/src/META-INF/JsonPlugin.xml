@@ -35,6 +35,7 @@
     <lang.psiStructureViewFactory language="JSON" implementationClass="com.intellij.json.structureView.JsonStructureViewFactory"/>
     <lang.foldingBuilder language="JSON" implementationClass="com.intellij.json.folding.JsonFoldingBuilder"/>
     <lang.smartEnterProcessor language="JSON" implementationClass="com.intellij.json.smartEnter.JsonSmartEnterProcessor"/>
+    <lang.namesValidator language="JSON" implementationClass="com.intellij.json.JsonNamesValidator"/>
 
     <!-- Imported from appcode-json -->
     <lang.elementManipulator forClass="com.intellij.json.psi.JsonLiteral"

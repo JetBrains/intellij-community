@@ -26,6 +26,7 @@ public class JsonParserDefinition implements ParserDefinition {
   public static final TokenSet JSON_BRACKETS = TokenSet.create(L_BRACKET, R_BRACKET);
   public static final TokenSet JSON_CONTAINERS = TokenSet.create(OBJECT, ARRAY);
   public static final TokenSet JSON_BOOLEANS = TokenSet.create(TRUE, FALSE);
+  public static final TokenSet JSON_KEYWORDS = TokenSet.create(TRUE, FALSE, NULL);
   public static final TokenSet JSON_LITERALS = TokenSet.create(STRING_LITERAL, NUMBER_LITERAL, NULL_LITERAL, TRUE, FALSE);
   public static final TokenSet JSON_VALUES = TokenSet.orSet(JSON_CONTAINERS, JSON_LITERALS);
 
