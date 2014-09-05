@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package com.intellij.execution.junit2.ui.actions;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.actions.JavaRerunFailedTestsAction;
 import com.intellij.execution.configurations.RunProfileState;
@@ -31,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
  * @author Alexey
  */
 public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
-
   public RerunFailedTestsAction(@NotNull ComponentContainer componentContainer) {
     super(componentContainer);
   }
@@ -41,12 +39,14 @@ public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
     final JUnitConfiguration configuration = (JUnitConfiguration)getModel().getProperties().getConfiguration();
     final TestMethods testMethods = new TestMethods(configuration.getProject(), configuration, myEnvironment, getFailedTests(configuration.getProject()));
     return new MyRunProfile(configuration) {
+      @Override
       @NotNull
       public Module[] getModules() {
         return testMethods.getModulesToCompile();
       }
 
-      public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
+      @Override
+      public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
         testMethods.clear();
         return testMethods;
       }

@@ -61,42 +61,49 @@ public abstract class Filter<T extends AbstractTestProxy> {
   }
 
   public static final Filter NO_FILTER = new Filter() {
+    @Override
     public boolean shouldAccept(final AbstractTestProxy test) {
       return true;
     }
   };
 
   public static final Filter DEFECT = new Filter() {
+    @Override
     public boolean shouldAccept(final AbstractTestProxy test) {
       return test.isDefect();
     }
   };
 
   public static final Filter IGNORED = new Filter() {
+    @Override
     public boolean shouldAccept(final AbstractTestProxy test) {
       return test.isIgnored();
     }
   };
 
   public static final Filter NOT_PASSED = new Filter() {
+    @Override
     public boolean shouldAccept(final AbstractTestProxy test) {
       return !test.isPassed();
     }
   };
 
   public static final Filter PASSED = new Filter() {
+    @Override
     public boolean shouldAccept(final AbstractTestProxy test) {
       return test.isPassed();
     }
   };
 
   public static final Filter FAILED_OR_INTERRUPTED = new Filter() {
+    @Override
     public boolean shouldAccept(final AbstractTestProxy test) {
       return test.isInterrupted() || test.isDefect();
     }
   };
 
   public static final Filter LEAF = new Filter() {
+    @Override
     public boolean shouldAccept(final AbstractTestProxy test) {
       return test.isLeaf();
     }
@@ -122,6 +129,7 @@ public abstract class Filter<T extends AbstractTestProxy> {
       myFilter2 = filter2;
     }
 
+    @Override
     public boolean shouldAccept(final AbstractTestProxy test) {
       return myFilter1.shouldAccept(test) && myFilter2.shouldAccept(test);
     }
@@ -134,6 +142,7 @@ public abstract class Filter<T extends AbstractTestProxy> {
       myFilter = filter;
     }
 
+    @Override
     public boolean shouldAccept(final AbstractTestProxy test) {
       return !myFilter.shouldAccept(test);
     }
@@ -148,6 +157,7 @@ public abstract class Filter<T extends AbstractTestProxy> {
       myFilter2 = filter2;
     }
 
+    @Override
     public boolean shouldAccept(final AbstractTestProxy test) {
       return myFilter1.shouldAccept(test) || myFilter2.shouldAccept(test);
     }

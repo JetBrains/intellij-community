@@ -61,8 +61,10 @@ import java.util.*;
 import java.util.List;
 
 public class AbstractRerunFailedTestsAction extends AnAction implements AnAction.TransparentUpdate, Disposable {
-  private static final List<AbstractRerunFailedTestsAction> registry = ContainerUtil.createLockFreeCopyOnWriteList();
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.ui.actions.RerunFailedTestsAction");
+
+  private static final List<AbstractRerunFailedTestsAction> REGISTRY = ContainerUtil.createLockFreeCopyOnWriteList();
+
   private TestFrameworkRunningModel myModel;
   private Getter<TestFrameworkRunningModel> myModelProvider;
   protected TestConsoleProperties myConsoleProperties;
@@ -77,7 +79,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
 
   protected AbstractRerunFailedTestsAction(@NotNull ComponentContainer componentContainer) {
     myParent = componentContainer.getComponent();
-    registry.add(this);
+    REGISTRY.add(this);
     Disposer.register(componentContainer, this);
     copyFrom(ActionManager.getInstance().getAction("RerunFailedTests"));
     registerCustomShortcutSet(getShortcutSet(), myParent);
@@ -85,7 +87,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
 
   @Override
   public void dispose() {
-    registry.remove(this);
+    REGISTRY.remove(this);
   }
 
   public void init(final TestConsoleProperties consoleProperties,
@@ -104,12 +106,12 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
 
   @NotNull
   private AbstractRerunFailedTestsAction findActualAction() {
-    if (myParent != null || registry.isEmpty())
+    if (myParent != null || REGISTRY.isEmpty())
       return this;
-    List<AbstractRerunFailedTestsAction> candidates = new ArrayList<AbstractRerunFailedTestsAction>(registry);
+    List<AbstractRerunFailedTestsAction> candidates = new ArrayList<AbstractRerunFailedTestsAction>(REGISTRY);
     Collections.sort(candidates, new Comparator<AbstractRerunFailedTestsAction>() {
       @Override
-      public int compare(AbstractRerunFailedTestsAction action1, AbstractRerunFailedTestsAction action2) {
+      public int compare(@NotNull AbstractRerunFailedTestsAction action1, @NotNull AbstractRerunFailedTestsAction action2) {
         Window window1 = SwingUtilities.windowForComponent(action1.myParent);
         Window window2 = SwingUtilities.windowForComponent(action2.myParent);
         if (window1 == null)
@@ -129,7 +131,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
   }
 
   @Override
-  public final void update(AnActionEvent e) {
+  public final void update(@NotNull AnActionEvent e) {
     AbstractRerunFailedTestsAction action = findActualAction();
     e.getPresentation().setEnabled(action.isActive(e));
   }
@@ -140,10 +142,12 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     if (project == null) return false;
     TestFrameworkRunningModel model = getModel();
     if (model == null || model.getRoot() == null) return false;
-    final List<? extends AbstractTestProxy> myAllTests = model.getRoot().getAllTests();
-    final Filter filter = getFailuresFilter();
-    for (Object test : myAllTests) {
-      if (filter.shouldAccept((AbstractTestProxy)test)) return true;
+    Filter filter = getFailuresFilter();
+    for (AbstractTestProxy test : model.getRoot().getAllTests()) {
+      //noinspection unchecked
+      if (filter.shouldAccept(test)) {
+        return true;
+      }
     }
     return false;
   }
@@ -151,10 +155,10 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
   @NotNull
   protected List<AbstractTestProxy> getFailedTests(Project project) {
     TestFrameworkRunningModel model = getModel();
-    final List<? extends AbstractTestProxy> myAllTests = model != null
-                                                         ? model.getRoot().getAllTests()
-                                                         : Collections.<AbstractTestProxy>emptyList();
-    return getFilter(project, model != null ? model.getProperties().getScope() : GlobalSearchScope.allScope(project)).select(myAllTests);
+    //noinspection unchecked
+    return getFilter(project, model != null ? model.getProperties().getScope() : GlobalSearchScope.allScope(project)).select(model != null
+                                                                                                                             ? model.getRoot().getAllTests()
+                                                                                                                             : Collections.<AbstractTestProxy>emptyList());
   }
 
   @NotNull
@@ -162,7 +166,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     return getFailuresFilter();
   }
 
-  protected Filter getFailuresFilter() {
+  protected Filter<?> getFailuresFilter() {
     if (TestConsoleProperties.INCLUDE_NON_STARTED_IN_RERUN_FAILED.value(myConsoleProperties)) {
       return Filter.NOT_PASSED.and(Filter.IGNORED.not()).or(Filter.FAILED_OR_INTERRUPTED);
     }
@@ -170,7 +174,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     findActualAction().showPopup(e);
   }
 
@@ -212,8 +216,9 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
       list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       list.setSelectedValue(executor, true);
       list.setCellRenderer(new DefaultListCellRenderer() {
+        @NotNull
         @Override
-        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        public Component getListCellRendererComponent(@NotNull JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
           final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
           if (value instanceof Executor) {
             setText(UIUtil.removeMnemonic(((Executor)value).getStartActionText()));
