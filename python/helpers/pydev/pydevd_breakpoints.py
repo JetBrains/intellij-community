@@ -40,8 +40,8 @@ class ExceptionBreakpoint:
     def __str__(self):
         return self.qname
 
-class LineBreakpoint:
 
+class LineBreakpoint(object):
     def __init__(self, line, condition, func_name, expression):
         self.line = line
         self.condition = condition

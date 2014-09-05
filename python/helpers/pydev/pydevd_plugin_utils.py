@@ -15,7 +15,7 @@ def load_plugins(package):
         try:
             loaded_plugin = plugin_source.load_plugin(plugin)
         except:
-            pydev_log.error("Failed to load plugin %s" % plugin)
+            pydev_log.error("Failed to load plugin %s" % plugin, True)
         if loaded_plugin:
             plugins.append(loaded_plugin)
 

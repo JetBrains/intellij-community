@@ -101,7 +101,6 @@ class PyDBAdditionalThreadInfoWithoutCurrentFramesSupport(AbstractPyDBAdditional
         #1. we can't have weak-references to python frame object
         #2. only from 2.5 onwards we have _current_frames support from the interpreter
         db_frame = PyDBFrame(args)
-        db_frame.frame = args[-1]
         self._AddDbFrame(db_frame)
         return db_frame
 

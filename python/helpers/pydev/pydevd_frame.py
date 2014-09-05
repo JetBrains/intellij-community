@@ -10,7 +10,8 @@ from pydevd_comm import CMD_STEP_CAUGHT_EXCEPTION, CMD_STEP_RETURN, CMD_STEP_OVE
 from pydevd_constants import *  # @UnusedWildImport
 from pydevd_file_utils import GetFilenameAndBase
 
-from pydevd_frame_utils import add_exception_to_frame
+from pydevd_frame_utils import add_exception_to_frame, just_raised
+
 try:
     from pydevd_signature import sendSignatureCallTrace
 except ImportError:
@@ -43,6 +44,7 @@ class PyDBFrame:
     def __init__(self, args):
         #args = mainDebugger, filename, base, info, t, frame
         #yeap, much faster than putting in self and then getting it from self later on
+        self.frame = args[-1]
         self._args = args[:-1]
 
     def setSuspend(self, *args, **kwargs):
@@ -50,17 +52,6 @@ class PyDBFrame:
 
     def doWaitSuspend(self, *args, **kwargs):
         self._args[0].doWaitSuspend(*args, **kwargs)
-
-    def _is_django_render_call(self, frame): # todo: cache in plugins the same way
-        try:
-            return self._cached_is_django_render_call
-        except:
-            # Calculate lazily: note that a PyDBFrame always deals with the same
-            # frame over and over, so, we can cache this.
-            # -- although we can't cache things which change over time (such as
-            #    the breakpoints for the file).
-            ret = self._cached_is_django_render_call = is_django_render_call(frame)
-            return ret
 
     def trace_exception(self, frame, event, arg):
         if event == 'exception':
@@ -93,7 +84,7 @@ class PyDBFrame:
                         flag = False
                 else:
                     try:
-                        result = mainDebugger.plugin_exception_break(self, frame, event, self._args, arg)
+                        result = mainDebugger.plugin_exception_break(self, self._args, arg)
                         if result:
                             (flag, frame) = result
 
@@ -280,7 +271,7 @@ class PyDBFrame:
                         or (step_cmd in (CMD_STEP_RETURN, CMD_STEP_OVER) and stop_frame is not frame)
 
                 if can_skip:
-                    can_skip = main_debugger.plugin_can_skip(frame)
+                    can_skip = main_debugger.plugin_can_skip(self)
 
                 # Let's check to see if we are in a function that has a breakpoint. If we don't have a breakpoint,
                 # we will return nothing for the next trace
@@ -335,7 +326,7 @@ class PyDBFrame:
                     if info.pydev_step_cmd == CMD_STEP_OVER and info.pydev_step_stop is frame and event in ('line', 'return'):
                         stop_info['stop'] = False #we don't stop on breakpoint if we have to stop by step-over (it will be processed later)
                 else:
-                    result = main_debugger.plugin_get_breakpoint(frame, event, self._args)
+                    result = main_debugger.plugin_get_breakpoint(self, event, self._args)
                     if result:
                         exist_result = True
                         (flag, breakpoint, new_frame) = result

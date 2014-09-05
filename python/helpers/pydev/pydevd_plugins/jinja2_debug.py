@@ -1,9 +1,10 @@
+import traceback
 from pydevd_breakpoints import LineBreakpoint, get_exception_name
 from pydevd_constants import JINJA2_SUSPEND, GetThreadId, STATE_SUSPEND, DictContains
 from pydevd_comm import CMD_SET_BREAK, CMD_STEP_OVER, CMD_ADD_EXCEPTION_BREAK
 import pydevd_vars
 from pydevd_file_utils import GetFileNameAndBaseFromFile
-from pydevd_frame_utils import add_exception_to_frame, FCode
+from pydevd_frame_utils import add_exception_to_frame, FCode, cached_call
 
 class Jinja2LineBreakpoint(LineBreakpoint):
 
@@ -191,8 +192,9 @@ def get_jinja2_template_filename(frame):
 def has_exception_breaks(mainDebugger):
     return hasattr(mainDebugger, 'jinja2_exception_break') and mainDebugger.jinja2_exception_break
 
-def can_skip(mainDebugger, frame):
-    if hasattr(mainDebugger, 'jinja2_breakpoints') and mainDebugger.jinja2_breakpoints and is_jinja2_render_call(frame):
+def can_skip(mainDebugger, pydb_frame):
+    frame = pydb_frame.frame
+    if hasattr(mainDebugger, 'jinja2_breakpoints') and mainDebugger.jinja2_breakpoints and cached_call(pydb_frame, is_jinja2_render_call, frame):
         filename = get_jinja2_template_filename(frame)
         jinja2_breakpoints_for_file = mainDebugger.jinja2_breakpoints.get(filename)
         if jinja2_breakpoints_for_file:
@@ -284,13 +286,14 @@ def stop(mainDebugger, frame, event, args, stop_info, arg, step_cmd):
     return False
 
 
-def get_breakpoint(mainDebugger, frame, event, args):
+def get_breakpoint(mainDebugger, pydb_frame, event, args):
     mainDebugger, filename, info, thread = args
+    frame = pydb_frame.frame
     new_frame = None
     jinja2_breakpoint = None
     flag = False
     if event in ('line', 'call') and info.pydev_state != STATE_SUSPEND and hasattr(mainDebugger, 'jinja2_breakpoints') and \
-            mainDebugger.jinja2_breakpoints and is_jinja2_render_call(frame):
+            mainDebugger.jinja2_breakpoints and cached_call(pydb_frame, is_jinja2_render_call, frame):
         filename = get_jinja2_template_filename(frame)
         jinja2_breakpoints_for_file = mainDebugger.jinja2_breakpoints.get(filename)
         new_frame = Jinja2TemplateFrame(frame)
@@ -310,8 +313,9 @@ def suspend(mainDebugger, pydb_frame, thread, frame):
     return suspend_jinja2(pydb_frame, mainDebugger, thread, frame)
 
 
-def exception_break(mainDebugger, pydb_frame, frame, event, args, arg):
+def exception_break(mainDebugger, pydb_frame, args, arg):
     mainDebugger, filename, info, thread = args
+    frame = pydb_frame.frame
     exception, value, trace = arg
     if hasattr(mainDebugger, 'jinja2_exception_break') and mainDebugger.jinja2_exception_break:
         if get_exception_name(exception) in ('UndefinedError', 'TemplateNotFound', 'TemplatesNotFound'):
@@ -324,7 +328,7 @@ def exception_break(mainDebugger, pydb_frame, frame, event, args, arg):
                     flag = True
                     suspend_frame.f_back = frame
                     frame = suspend_frame
-                    return (flag, frame)
+                    return flag, frame
         elif get_exception_name(exception) in ('TemplateSyntaxError', 'TemplateAssertionError'):
             #errors in compile time
             name = frame.f_code.co_name
@@ -334,5 +338,5 @@ def exception_break(mainDebugger, pydb_frame, frame, event, args, arg):
                 add_exception_to_frame(frame, (exception, value, trace))
                 thread.additionalInfo.suspend_type = JINJA2_SUSPEND
                 flag = True
-                return (flag, frame)
+                return flag, frame
     return None
