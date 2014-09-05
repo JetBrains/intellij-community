@@ -52,6 +52,7 @@ public class TestMethods extends TestMethod {
     myFailedTests = failedTests;
   }
 
+  @Override
   protected void initialize() throws ExecutionException {
     defaultInitialize();
     final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
@@ -59,6 +60,7 @@ public class TestMethods extends TestMethod {
     final Project project = module.getProject();
     final ExecutionException[] exception = new ExecutionException[1];
     ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
       public void run() {
         try {
           myConfiguration.configureClasspath(myJavaParameters);
@@ -76,17 +78,17 @@ public class TestMethods extends TestMethod {
       if (location instanceof PsiMemberParameterizedLocation) {
         final PsiElement element = location.getPsiElement();
         if (element instanceof PsiMethod) {
-          location = MethodLocation.elementInClass(((PsiMethod)element), 
+          location = MethodLocation.elementInClass(((PsiMethod)element),
                                                    ((PsiMemberParameterizedLocation)location).getContainingClass());
         }
       }
       if (!(location instanceof MethodLocation)) continue;
       PsiElement psiElement = location.getPsiElement();
       LOG.assertTrue(psiElement instanceof PsiMethod);
-      PsiMethod method = (PsiMethod)psiElement;
       methods.add(((TestProxy)failedTest).getInfo());
     }
     addClassesListToJavaParameters(methods, new Function<TestInfo, String>() {
+      @Override
       public String fun(TestInfo testInfo) {
         if (testInfo != null) {
           final MethodLocation location = (MethodLocation)testInfo.getLocation(project, searchScope);
@@ -99,6 +101,7 @@ public class TestMethods extends TestMethod {
 
   }
 
+  @Override
   public String suggestActionName() {
     return ActionsBundle.message("action.RerunFailedTests.text");
   }
