@@ -17,7 +17,6 @@
 package com.intellij.vcs.log.graph.impl.facade;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.graph.api.LinearGraphWithCommitInfo;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
@@ -30,7 +29,6 @@ import com.intellij.vcs.log.graph.impl.visible.adapters.LinearGraphAsGraphWithHi
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
 import java.util.Set;
 
 public class FilterVisibleGraph<CommitId> extends AbstractVisibleGraph<CommitId> {
@@ -55,8 +53,7 @@ public class FilterVisibleGraph<CommitId> extends AbstractVisibleGraph<CommitId>
 
     FilterPrintElementsManager printElementsManager = new FilterPrintElementsManager<CommitId>(graphWithCommitInfo,
                                                                                      permanentGraph.getGraphColorManager());
-    return new FilterVisibleGraph<CommitId>(graphWithCommitInfo, filterGraphWithHiddenNodes, permanentGraph.getCommitsWithNotLoadParent(),
-                                            printElementsManager);
+    return new FilterVisibleGraph<CommitId>(graphWithCommitInfo, filterGraphWithHiddenNodes, printElementsManager);
   }
 
   @NotNull
@@ -64,10 +61,8 @@ public class FilterVisibleGraph<CommitId> extends AbstractVisibleGraph<CommitId>
   private final FilterGraphWithHiddenNodes myGraphWithHiddenNodes;
 
   private FilterVisibleGraph(@NotNull LinearGraphWithCommitInfo<CommitId> linearGraphWithCommitInfo,
-                             @NotNull FilterGraphWithHiddenNodes graphWithHiddenNodes,
-                             @NotNull Map<CommitId, GraphCommit<CommitId>> commitsWithNotLoadParent,
-                             @NotNull PrintElementsManager printElementsManager) {
-    super(linearGraphWithCommitInfo, commitsWithNotLoadParent, printElementsManager);
+                             @NotNull FilterGraphWithHiddenNodes graphWithHiddenNodes, @NotNull PrintElementsManager printElementsManager) {
+    super(linearGraphWithCommitInfo, printElementsManager);
     myGraphWithHiddenNodes = graphWithHiddenNodes;
   }
 

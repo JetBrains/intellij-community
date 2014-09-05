@@ -52,7 +52,7 @@ public class GraphWithHiddenNodesAsGraphWithCommitInfo<CommitId> extends GraphWi
 
   @Override
   public int getNodeIndex(CommitId commitId) {
-    int permanentNodeIndex = myPermanentCommitsInfo.getPermanentNodeIndex(commitId);
+    int permanentNodeIndex = myPermanentCommitsInfo.getNodeId(commitId);
     if (permanentNodeIndex == -1)
       return -1;
     return myIntToIntMap.getShortIndex(permanentNodeIndex);
