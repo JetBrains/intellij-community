@@ -20,6 +20,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
+import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,5 +90,20 @@ public class LinearGraphUtils {
     });
   }
 
+  @NotNull
+  public static List<Integer> getDownNodesIncludeNotLoad(@NotNull final LinearGraph graph, final int nodeIndex) {
+    return ContainerUtil.mapNotNull(graph.getAdjacentEdges(nodeIndex), new Function<GraphEdge, Integer>() {
+      @Nullable
+      @Override
+      public Integer fun(GraphEdge graphEdge) {
+        if (isEdgeToDown(graphEdge, nodeIndex)) {
+          if (graphEdge.getType() == GraphEdgeType.NOT_LOAD_COMMIT)
+            return graphEdge.getAdditionInfo();
+          return graphEdge.getDownNodeIndex();
+        }
+        return null;
+      }
+    });
+  }
 
 }

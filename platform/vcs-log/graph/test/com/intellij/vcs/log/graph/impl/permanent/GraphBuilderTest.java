@@ -16,17 +16,17 @@
 
 package com.intellij.vcs.log.graph.impl.permanent;
 
-import com.intellij.vcs.log.graph.GraphCommit;
-import com.intellij.vcs.log.graph.impl.CommitIdManager;
+import com.intellij.util.NotNullFunction;
 import com.intellij.vcs.log.graph.AbstractTestWithTextFile;
+import com.intellij.vcs.log.graph.GraphCommit;
+import com.intellij.vcs.log.graph.GraphPackage;
+import com.intellij.vcs.log.graph.impl.CommitIdManager;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
-import static com.intellij.vcs.log.graph.GraphStrUtils.commitsWithNotLoadParentMapToStr;
-import static com.intellij.vcs.log.graph.GraphStrUtils.linearGraphToStr;
 import static org.junit.Assert.assertEquals;
 
 public abstract class GraphBuilderTest<CommitId extends Comparable<CommitId>> extends AbstractTestWithTextFile {
@@ -39,14 +39,15 @@ public abstract class GraphBuilderTest<CommitId extends Comparable<CommitId>> ex
     List<GraphCommit<CommitId>> commits = getCommitIdManager().parseCommitList(in);
 
     PermanentLinearGraphBuilder<CommitId> graphBuilder = PermanentLinearGraphBuilder.newInstance(commits);
-    PermanentLinearGraphImpl graph = graphBuilder.build();
+    PermanentLinearGraphImpl graph = graphBuilder.build(new NotNullFunction<CommitId, Integer>() {
+      @NotNull
+      @Override
+      public Integer fun(CommitId dom) {
+        return - getCommitIdManager().toInt(dom);
+      }
+    });
 
-    String actual = linearGraphToStr(graph);
-    Map<CommitId, GraphCommit<CommitId>> commitsWithNotLoadParent = graphBuilder.getCommitsWithNotLoadParent();
-    if (!commitsWithNotLoadParent.isEmpty()) {
-      actual += "\nNOT LOAD MAP:\n";
-      actual += commitsWithNotLoadParentMapToStr(commitsWithNotLoadParent, getCommitIdManager().getToStrFunction());
-    }
+    String actual = GraphPackage.asString(graph);
     assertEquals(out, actual);
   }
 

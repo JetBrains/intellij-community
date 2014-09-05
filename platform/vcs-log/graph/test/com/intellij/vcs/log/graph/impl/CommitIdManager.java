@@ -36,6 +36,12 @@ public abstract class CommitIdManager<CommitId> {
     public String toStr(String commit) {
       return commit;
     }
+
+    @NotNull
+    @Override
+    public Integer toInt(@NotNull String commit) {
+      return CommitParser.createHash(commit);
+    }
   };
 
   public static final CommitIdManager<Integer> INTEGER_COMMIT_ID_MANAGER = new CommitIdManager<Integer>() {
@@ -50,6 +56,12 @@ public abstract class CommitIdManager<CommitId> {
     public String toStr(Integer commit) {
       return Integer.toHexString(commit);
     }
+
+    @NotNull
+    @Override
+    public Integer toInt(@NotNull Integer commit) {
+      return commit;
+    }
   };
 
   @NotNull
@@ -57,6 +69,9 @@ public abstract class CommitIdManager<CommitId> {
 
   @NotNull
   public abstract String toStr(CommitId commit);
+
+  @NotNull
+  public abstract Integer toInt(@NotNull CommitId commit);
 
   @NotNull
   public Function<CommitId, String> getToStrFunction() {
