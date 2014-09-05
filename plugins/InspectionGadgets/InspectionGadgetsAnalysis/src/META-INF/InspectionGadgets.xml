@@ -1046,6 +1046,10 @@
                      key="abstract.method.call.in.constructor.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.initialization.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.initialization.AbstractMethodCallInConstructorInspection"/>
+    <localInspection language="JAVA" shortName="DoubleBraceInitialization" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="double.brace.initialization.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.initialization.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.initialization.DoubleBraceInitializationInspection"/>
     <localInspection language="JAVA" suppressId="InstanceVariableMayNotBeInitialized" shortName="InstanceVariableInitialization"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="instance.variable.may.not.be.initialized.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.initialization.issues" enabledByDefault="false"
