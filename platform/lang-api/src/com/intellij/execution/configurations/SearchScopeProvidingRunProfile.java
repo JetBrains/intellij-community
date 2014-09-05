@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,19 @@
 
 package com.intellij.execution.configurations;
 
+import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.NotNull;
+
 /**
- * @author spleaner
+ * Base interface for run configurations that can specify which part of the project should be used to search sources. This information
+ * will be used to provide more accurate navigation to sources from stack traces, debugger, etc
+ *
+ * @author nik
  */
-public interface ModuleRunProfile extends RunProfileWithCompileBeforeLaunchOption, SearchScopeProvidingRunProfile {
+public interface SearchScopeProvidingRunProfile extends RunProfile {
+  /**
+   * @return modules where to search sources for this configuration
+   */
+  @NotNull
+  Module[] getModules();
 }
