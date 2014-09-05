@@ -58,7 +58,6 @@ public class HyperlinkLabel extends HighlightableComponent {
   private HighlightedText myHighlightedText;
   private final List<HyperlinkListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myUseIconAsLink;
-  private final Color myTextEffectColor;
   private final TextAttributes myAnchorAttributes;
   private HyperlinkListener myHyperlinkListener = null;
 
@@ -80,8 +79,8 @@ public class HyperlinkLabel extends HighlightableComponent {
   }
 
   public HyperlinkLabel(String text, final Color textForegroundColor, final Color textBackgroundColor, final Color textEffectColor) {
-    myTextEffectColor = textEffectColor;
-    myAnchorAttributes = new TextAttributes(textForegroundColor, textBackgroundColor, null, null, Font.PLAIN);
+    myAnchorAttributes =
+      new TextAttributes(textForegroundColor, textBackgroundColor, textEffectColor, EffectType.LINE_UNDERSCORE, Font.PLAIN);
     enforceBackgroundOutsideText(textBackgroundColor);
     setHyperlinkText(text);
     enableEvents(AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
@@ -116,7 +115,6 @@ public class HyperlinkLabel extends HighlightableComponent {
   protected void processMouseEvent(MouseEvent e) {
     if (e.getID() == MouseEvent.MOUSE_EXITED) {
       setCursor(Cursor.getDefaultCursor());
-      updateLinkUnderlining(e);
     }
     else if (UIUtil.isActionClick(e, MouseEvent.MOUSE_PRESSED) && isOnLink(e.getX())) {
       fireHyperlinkEvent();
@@ -128,30 +126,8 @@ public class HyperlinkLabel extends HighlightableComponent {
   protected void processMouseMotionEvent(MouseEvent e) {
     if (e.getID() == MouseEvent.MOUSE_MOVED) {
       setCursor(isOnLink(e.getX()) ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : Cursor.getDefaultCursor());
-      updateLinkUnderlining(e);
     }
     super.processMouseMotionEvent(e);
-  }
-
-  private void updateLinkUnderlining(MouseEvent e) {
-    boolean wasUnderlined = myAnchorAttributes.getEffectType() == EffectType.LINE_UNDERSCORE;
-    if (e.getID() == MouseEvent.MOUSE_EXITED) {
-      if (wasUnderlined) {
-        myAnchorAttributes.setEffectColor(null);
-        myAnchorAttributes.setEffectType(null);
-        repaint();
-      }
-    }
-    else if (e.getID() == MouseEvent.MOUSE_MOVED) {
-      if (!wasUnderlined) {
-        HighlightedRegion region = findRegionByX(e.getX());
-        if (region != null && region.textAttributes == myAnchorAttributes) {
-          myAnchorAttributes.setEffectColor(myTextEffectColor);
-          myAnchorAttributes.setEffectType(EffectType.LINE_UNDERSCORE);
-          repaint();
-        }
-      }
-    }
   }
 
   private boolean isOnLink(int x) {
