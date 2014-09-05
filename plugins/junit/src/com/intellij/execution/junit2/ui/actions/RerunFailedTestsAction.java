@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.execution.junit2.ui.actions;
 
 import com.intellij.execution.Executor;
@@ -22,22 +21,21 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.TestMethods;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.ComponentContainer;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Alexey
- */
 public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
-  public RerunFailedTestsAction(@NotNull ComponentContainer componentContainer) {
-    super(componentContainer);
+  public RerunFailedTestsAction(@NotNull ComponentContainer componentContainer, @NotNull TestConsoleProperties consoleProperties) {
+    super(componentContainer, consoleProperties);
   }
 
   @Override
-  public MyRunProfile getRunProfile() {
+  protected MyRunProfile getRunProfile(@NotNull ExecutionEnvironment environment) {
+    //noinspection ConstantConditions
     final JUnitConfiguration configuration = (JUnitConfiguration)getModel().getProperties().getConfiguration();
-    final TestMethods testMethods = new TestMethods(configuration.getProject(), configuration, myEnvironment, getFailedTests(configuration.getProject()));
+    final TestMethods testMethods = new TestMethods(configuration, environment, getFailedTests(configuration.getProject()));
     return new MyRunProfile(configuration) {
       @Override
       @NotNull

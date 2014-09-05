@@ -34,20 +34,20 @@ import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentContainer;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -57,42 +57,23 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 
-public class AbstractRerunFailedTestsAction extends AnAction implements AnAction.TransparentUpdate, Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.ui.actions.RerunFailedTestsAction");
-
-  private static final List<AbstractRerunFailedTestsAction> REGISTRY = ContainerUtil.createLockFreeCopyOnWriteList();
+public class AbstractRerunFailedTestsAction extends AnAction implements AnAction.TransparentUpdate {
+  private static final Logger LOG = Logger.getInstance(AbstractRerunFailedTestsAction.class);
 
   private TestFrameworkRunningModel myModel;
   private Getter<TestFrameworkRunningModel> myModelProvider;
   protected TestConsoleProperties myConsoleProperties;
-  protected ExecutionEnvironment myEnvironment;
-  private final JComponent myParent;
-
-  @SuppressWarnings("UnusedDeclaration")
-  public AbstractRerunFailedTestsAction() {
-    //We call this constructor with a little help from reflection.
-    myParent = null;
-  }
 
   protected AbstractRerunFailedTestsAction(@NotNull ComponentContainer componentContainer) {
-    myParent = componentContainer.getComponent();
-    REGISTRY.add(this);
-    Disposer.register(componentContainer, this);
     copyFrom(ActionManager.getInstance().getAction("RerunFailedTests"));
-    registerCustomShortcutSet(getShortcutSet(), myParent);
+    registerCustomShortcutSet(getShortcutSet(), componentContainer.getComponent());
   }
 
-  @Override
-  public void dispose() {
-    REGISTRY.remove(this);
-  }
-
-  public void init(final TestConsoleProperties consoleProperties,
-                   final ExecutionEnvironment environment) {
-    myEnvironment = environment;
+  public void init(TestConsoleProperties consoleProperties) {
     myConsoleProperties = consoleProperties;
   }
 
@@ -104,44 +85,21 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     myModelProvider = modelProvider;
   }
 
-  @NotNull
-  private AbstractRerunFailedTestsAction findActualAction() {
-    if (myParent != null || REGISTRY.isEmpty())
-      return this;
-    List<AbstractRerunFailedTestsAction> candidates = new ArrayList<AbstractRerunFailedTestsAction>(REGISTRY);
-    Collections.sort(candidates, new Comparator<AbstractRerunFailedTestsAction>() {
-      @Override
-      public int compare(@NotNull AbstractRerunFailedTestsAction action1, @NotNull AbstractRerunFailedTestsAction action2) {
-        Window window1 = SwingUtilities.windowForComponent(action1.myParent);
-        Window window2 = SwingUtilities.windowForComponent(action2.myParent);
-        if (window1 == null)
-          return 1;
-        if (window2 == null)
-          return -1;
-        boolean showing1 = action1.myParent.isShowing();
-        boolean showing2 = action2.myParent.isShowing();
-        if (showing1 && !showing2)
-          return -1;
-        if (showing2 && !showing1)
-          return 1;
-        return (window1.isActive() ? -1 : 1);
-      }
-    });
-    return candidates.get(0);
-  }
-
   @Override
   public final void update(@NotNull AnActionEvent e) {
-    AbstractRerunFailedTestsAction action = findActualAction();
-    e.getPresentation().setEnabled(action.isActive(e));
+    e.getPresentation().setEnabled(isActive(e));
   }
 
   private boolean isActive(AnActionEvent e) {
-    DataContext dataContext = e.getDataContext();
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (project == null) return false;
+    Project project = e.getProject();
+    if (project == null) {
+      return false;
+    }
+
     TestFrameworkRunningModel model = getModel();
-    if (model == null || model.getRoot() == null) return false;
+    if (model == null || model.getRoot() == null) {
+      return false;
+    }
     Filter filter = getFailuresFilter();
     for (AbstractTestProxy test : model.getRoot().getAllTests()) {
       //noinspection unchecked
@@ -175,29 +133,26 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    findActualAction().showPopup(e);
-  }
+    ExecutionEnvironment environment = e.getData(LangDataKeys.EXECUTION_ENVIRONMENT);
+    if (environment == null) {
+      return;
+    }
 
-  private void showPopup(AnActionEvent e) {
-    boolean isDebug = myConsoleProperties.isDebug();
-    final MyRunProfile profile = getRunProfile();
+    MyRunProfile profile = getRunProfile(environment);
     if (profile == null) {
       return;
     }
 
-    final Executor executor = isDebug ? DefaultDebugExecutor.getDebugExecutorInstance() : DefaultRunExecutor.getRunExecutorInstance();
+    final ExecutionEnvironmentBuilder environmentBuilder = new ExecutionEnvironmentBuilder(environment).runProfile(profile);
 
     final InputEvent event = e.getInputEvent();
     if (!(event instanceof MouseEvent) || !event.isShiftDown()) {
-      final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), profile);
-      LOG.assertTrue(runner != null);
-      performAction(runner, profile, myEnvironment.getExecutor());
+      performAction(environmentBuilder);
       return;
     }
 
     final LinkedHashMap<Executor, ProgramRunner> availableRunners = new LinkedHashMap<Executor, ProgramRunner>();
-    final Executor[] executors = new Executor[] {DefaultRunExecutor.getRunExecutorInstance(), DefaultDebugExecutor.getDebugExecutorInstance()};
-    for (Executor ex : executors) {
+    for (Executor ex : new Executor[] {DefaultRunExecutor.getRunExecutorInstance(), DefaultDebugExecutor.getDebugExecutorInstance()}) {
       final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(ex.getId(), profile);
       if (runner != null) {
         availableRunners.put(ex, runner);
@@ -205,16 +160,16 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     }
 
     if (availableRunners.isEmpty()) {
-      LOG.error(executor.getActionName() + " is not available now");
-      return;
+      LOG.error(environment.getExecutor().getActionName() + " is not available now");
     }
-
-    if (availableRunners.size() == 1) {
-      performAction(availableRunners.get(executor), profile, executor);
-    } else {
+    else if (availableRunners.size() == 1) {
+      //noinspection ConstantConditions
+      performAction(environmentBuilder.runner(availableRunners.get(environment.getExecutor())));
+    }
+    else {
       final JBList list = new JBList(availableRunners.keySet());
       list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-      list.setSelectedValue(executor, true);
+      list.setSelectedValue(environment.getExecutor(), true);
       list.setCellRenderer(new DefaultListCellRenderer() {
         @NotNull
         @Override
@@ -227,6 +182,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
           return component;
         }
       });
+      //noinspection ConstantConditions
       JBPopupFactory.getInstance().createListPopupBuilder(list)
         .setTitle("Restart Failed Tests")
         .setMovable(false)
@@ -237,32 +193,36 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
           public void run() {
             final Object value = list.getSelectedValue();
             if (value instanceof Executor) {
-              performAction(availableRunners.get(value), profile, (Executor)value);
+              //noinspection ConstantConditions
+              performAction(environmentBuilder.runner(availableRunners.get(value)).executor((Executor)value));
             }
           }
         }).createPopup().showUnderneathOf(event.getComponent());
     }
   }
 
-  private void performAction(ProgramRunner runner, MyRunProfile profile, Executor executor) {
+  private static void performAction(@NotNull ExecutionEnvironmentBuilder builder) {
+    ExecutionEnvironment environment = builder.build();
     try {
-      new ExecutionEnvironmentBuilder(myEnvironment)
-        .runner(runner)
-        .executor(executor)
-        .runProfile(profile)
-        .buildAndExecute();
+      environment.getRunner().execute(environment);
     }
-    catch (ExecutionException e1) {
-      LOG.error(e1);
+    catch (ExecutionException e) {
+      LOG.error(e);
     }
     finally {
-      profile.clear();
+      ((MyRunProfile)environment.getRunProfile()).clear();
     }
   }
 
-  @Nullable
+  @Deprecated
   public MyRunProfile getRunProfile() {
     return null;
+  }
+
+  @Nullable
+  protected MyRunProfile getRunProfile(@NotNull ExecutionEnvironment environment) {
+    //noinspection deprecation
+    return getRunProfile();
   }
 
   @Nullable
@@ -297,7 +257,6 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
 
     public void clear() {
     }
-
 
     @Override
     public void checkConfiguration() throws RuntimeConfigurationException {

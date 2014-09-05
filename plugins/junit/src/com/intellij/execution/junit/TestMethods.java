@@ -35,20 +35,21 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
 
 public class TestMethods extends TestMethod {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit.TestMethods");
+  private static final Logger LOG = Logger.getInstance(TestMethods.class);
 
   private final Collection<AbstractTestProxy> myFailedTests;
 
-  public TestMethods(final Project project,
-                     final JUnitConfiguration configuration,
-                     ExecutionEnvironment environment,
-                     Collection<AbstractTestProxy> failedTests) {
-    super(project, configuration, environment);
+  public TestMethods(@NotNull JUnitConfiguration configuration,
+                     @NotNull ExecutionEnvironment environment,
+                     @NotNull Collection<AbstractTestProxy> failedTests) {
+    super(configuration, environment);
+
     myFailedTests = failedTests;
   }
 

@@ -31,10 +31,8 @@ import com.intellij.rt.execution.junit.JUnitStarter;
 import org.jetbrains.annotations.NotNull;
 
 class TestMethod extends TestObject {
-  public TestMethod(final Project project,
-                    final JUnitConfiguration configuration,
-                    ExecutionEnvironment environment) {
-    super(project, configuration, environment);
+  public TestMethod(JUnitConfiguration configuration, ExecutionEnvironment environment) {
+    super(configuration, environment);
   }
 
   @Override
@@ -77,6 +75,7 @@ class TestMethod extends TestObject {
     if (element instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)element;
       if (!method.getName().equals(configuration.getPersistentData().getMethodName())) return null;
+      //noinspection ConstantConditions
       if (!method.getContainingClass().equals(configuration.myClass.getPsiElement())) return null;
       class Listener extends RefactoringElementAdapter implements UndoRefactoringElementListener {
         @Override
