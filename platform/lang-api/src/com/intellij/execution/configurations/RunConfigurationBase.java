@@ -24,13 +24,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.util.SmartList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -44,8 +44,8 @@ public abstract class RunConfigurationBase extends UserDataHolderBase
   private final Project myProject;
   private String myName = "";
 
-  private List<LogFileOptions> myLogFiles = new SmartList<LogFileOptions>();
-  private List<PredefinedLogFile> myPredefinedLogFiles = new SmartList<PredefinedLogFile>();
+  private ArrayList<LogFileOptions> myLogFiles = new ArrayList<LogFileOptions>();
+  private ArrayList<PredefinedLogFile> myPredefinedLogFiles = new ArrayList<PredefinedLogFile>();
 
   @NonNls private static final String LOG_FILE = "log_file";
   @NonNls private static final String PREDEFINED_LOG_FILE_ELEMENT = "predefined_log_file";
@@ -127,8 +127,8 @@ public abstract class RunConfigurationBase extends UserDataHolderBase
   @Override
   public RunConfiguration clone() {
     final RunConfigurationBase runConfiguration = (RunConfigurationBase)super.clone();
-    runConfiguration.myLogFiles = new SmartList<LogFileOptions>(myLogFiles);
-    runConfiguration.myPredefinedLogFiles = new SmartList<PredefinedLogFile>(myPredefinedLogFiles);
+    runConfiguration.myLogFiles = new ArrayList<LogFileOptions>(myLogFiles);
+    runConfiguration.myPredefinedLogFiles = new ArrayList<PredefinedLogFile>(myPredefinedLogFiles);
     runConfiguration.myFileOutputPath = myFileOutputPath;
     runConfiguration.mySaveOutput = mySaveOutput;
     runConfiguration.myShowConsoleOnStdOut = myShowConsoleOnStdOut;
@@ -150,13 +150,13 @@ public abstract class RunConfigurationBase extends UserDataHolderBase
     myPredefinedLogFiles.add(predefinedLogFile);
   }
 
-  public List<PredefinedLogFile> getPredefinedLogFiles() {
+  public ArrayList<PredefinedLogFile> getPredefinedLogFiles() {
     return myPredefinedLogFiles;
   }
 
   @NotNull
-  public List<LogFileOptions> getAllLogFiles() {
-    List<LogFileOptions> list = new SmartList<LogFileOptions>(myLogFiles);
+  public ArrayList<LogFileOptions> getAllLogFiles() {
+    ArrayList<LogFileOptions> list = new ArrayList<LogFileOptions>(myLogFiles);
     for (PredefinedLogFile predefinedLogFile : myPredefinedLogFiles) {
       final LogFileOptions options = getOptionsForPredefinedLogFile(predefinedLogFile);
       if (options != null) {
@@ -166,7 +166,7 @@ public abstract class RunConfigurationBase extends UserDataHolderBase
     return list;
   }
 
-  public List<LogFileOptions> getLogFiles() {
+  public ArrayList<LogFileOptions> getLogFiles() {
     return myLogFiles;
   }
 

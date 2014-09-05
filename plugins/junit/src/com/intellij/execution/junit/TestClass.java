@@ -24,18 +24,16 @@ import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 
 class TestClass extends TestObject {
-  public TestClass(final Project project,
-                   final JUnitConfiguration configuration,
-                   ExecutionEnvironment environment) {
-    super(project, configuration, environment);
+  public TestClass(JUnitConfiguration configuration, ExecutionEnvironment environment) {
+    super(configuration, environment);
   }
 
+  @Override
   protected void initialize() throws ExecutionException {
     super.initialize();
     final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
@@ -44,6 +42,7 @@ class TestClass extends TestObject {
     myJavaParameters.getProgramParametersList().add(data.getMainClassName());
   }
 
+  @Override
   public String suggestActionName() {
     String name = myConfiguration.getPersistentData().MAIN_CLASS_NAME;
     if (name != null && name.endsWith(".")) {
@@ -52,10 +51,12 @@ class TestClass extends TestObject {
     return JavaExecutionUtil.getShortClassName(name);
   }
 
+  @Override
   public RefactoringElementListener getListener(final PsiElement element, final JUnitConfiguration configuration) {
     return RefactoringListeners.getClassOrPackageListener(element, configuration.myClass);
   }
 
+  @Override
   public boolean isConfiguredByElement(final JUnitConfiguration configuration,
                                        PsiClass testClass,
                                        PsiMethod testMethod,
@@ -72,6 +73,7 @@ class TestClass extends TestObject {
     return Comparing.equal(JavaExecutionUtil.getRuntimeQualifiedName(testClass), configuration.getPersistentData().getMainClassName());
   }
 
+  @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
     final String testClassName = myConfiguration.getPersistentData().getMainClassName();

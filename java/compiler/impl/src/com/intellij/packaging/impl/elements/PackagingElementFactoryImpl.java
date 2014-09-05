@@ -274,7 +274,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
   @NotNull
   @Override
   public PackagingElement<?> createExtractedDirectory(@NotNull VirtualFile jarEntry) {
-    LOG.assertTrue(jarEntry.getFileSystem() instanceof JarFileSystem, "Expected file from jar but file from " + jarEntry.getFileSystem() + " found");
+    LOG.assertTrue(jarEntry.getFileSystem() instanceof JarFileSystem, "Expected file from JAR but file from " + jarEntry.getFileSystem() + " found");
     final String fullPath = jarEntry.getPath();
     final int jarEnd = fullPath.indexOf(JarFileSystem.JAR_SEPARATOR);
     return new ExtractedDirectoryPackagingElement(fullPath.substring(0, jarEnd), fullPath.substring(jarEnd + 1));

@@ -9,7 +9,7 @@ pydev_monkey_qt.patch_qt()
 
 import traceback
 
-from pydevd_plugin_utils import load_plugins, NullProxy, PluginProxy
+from pydevd_plugin_utils import load_plugins, NullProxy, bind_func_to_method, clear_bindings
 
 from pydevd_frame_utils import add_exception_to_frame
 import pydev_imports
@@ -349,7 +349,13 @@ class PyDB:
 
         self.plugins = load_plugins('pydevd_plugins')
         self.plugin = NullProxy()
+        self._plugin_method_prefix = 'plugin_'
 
+    def __getattr__(self, item):
+        if item.startswith(self._plugin_method_prefix):
+            # we lazily cache plugin functions as methods of debugger object
+            return bind_func_to_method(self.plugin, item[len(self._plugin_method_prefix):], self, item)
+        raise AttributeError(item)
 
     def haveAliveThreads(self):
         for t in threadingEnumerate():
@@ -902,7 +908,7 @@ class PyDB:
                             breakpoints = self.breakpoints
                             file_to_id_to_breakpoint = self.file_to_id_to_line_breakpoint
                         else:
-                            result = self.plugin.get_breakpoints(self, breakpoint_type)
+                            result = self.plugin_get_breakpoints(breakpoint_type)
                             if result is not None:
                                 file_to_id_to_breakpoint = self.file_to_id_to_plugin_breakpoint
                                 breakpoints = result
@@ -1084,7 +1090,7 @@ class PyDB:
                             pydev_log.debug("Error while removing exception %s"%sys.exc_info()[0])
                         update_exception_hook(self)
                     else:
-                        supported_type = self.plugin.remove_exception_breakpoint(self, type, exception)
+                        supported_type = self.plugin_remove_exception_breakpoint(type, exception)
 
                         if not supported_type:
                             raise NameError(type)
@@ -1107,7 +1113,7 @@ class PyDB:
                 elif cmd_id == CMD_REMOVE_DJANGO_EXCEPTION_BREAK:
                     exception = text
 
-                    self.plugin.remove_exception_breakpoint(self, 'django', exception)
+                    self.plugin_remove_exception_breakpoint('django', exception)
 
                 elif cmd_id == CMD_EVALUATE_CONSOLE_EXPRESSION:
                     # Command which takes care for the debug console communication
@@ -1589,7 +1595,7 @@ class PyDB:
         self.writer.addCommand(cmd)
 
     def add_plugin_breakpoint(self, func_name, *args, **kwargs):
-        # add breakpoint from plugin and remember plugin to use
+        # add breakpoint for plugin and remember which plugin to use in tracing
         for plugin in self.plugins:
             if hasattr(plugin, func_name):
                 func = getattr(plugin, func_name)
@@ -1597,7 +1603,9 @@ class PyDB:
                 if result:
                     # On adding breakpoint we override plugin that will be used
                     # That means that we don't work with more then 1 plugin at a time
-                    self.plugin = plugin
+                    if self.plugin != plugin:
+                        clear_bindings(self, self._plugin_method_prefix)  # remove plugin methods that are cached already
+                        self.plugin = plugin
                     return result
         return None
 

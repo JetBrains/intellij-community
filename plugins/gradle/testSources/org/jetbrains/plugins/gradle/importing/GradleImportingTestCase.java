@@ -160,7 +160,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
       throw new RuntimeException(e);
     }
     if (!location.getScheme().equals("file")) {
-      throw new RuntimeException(String.format("Cannot determine classpath for wrapper Jar from codebase '%s'.", location));
+      throw new RuntimeException(String.format("Cannot determine classpath for wrapper JAR from codebase '%s'.", location));
     }
     return new File(location.getPath());
   }

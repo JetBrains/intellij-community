@@ -39,7 +39,6 @@ import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
-import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.util.JavaParametersUtil;
@@ -49,7 +48,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
@@ -81,13 +79,12 @@ import java.io.PrintWriter;
 import java.util.*;
 
 public abstract class TestObject implements JavaCommandLine {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit.TestObject");
+  protected static final Logger LOG = Logger.getInstance(TestObject.class);
 
   private static final String MESSAGE = ExecutionBundle.message("configuration.not.speficied.message");
   @NonNls private static final String JUNIT_TEST_FRAMEWORK_NAME = "JUnit";
 
   protected JavaParameters myJavaParameters;
-  private final Project myProject;
   protected final JUnitConfiguration myConfiguration;
   protected final ExecutionEnvironment myEnvironment;
   protected File myTempFile = null;
@@ -95,26 +92,25 @@ public abstract class TestObject implements JavaCommandLine {
   public File myListenersFile;
 
   public static TestObject fromString(final String id,
-                                      final Project project,
                                       final JUnitConfiguration configuration,
-                                      ExecutionEnvironment environment) {
+                                      @NotNull ExecutionEnvironment environment) {
     if (JUnitConfiguration.TEST_METHOD.equals(id)) {
-      return new TestMethod(project, configuration, environment);
+      return new TestMethod(configuration, environment);
     }
     if (JUnitConfiguration.TEST_CLASS.equals(id)) {
-      return new TestClass(project, configuration, environment);
+      return new TestClass(configuration, environment);
     }
     if (JUnitConfiguration.TEST_PACKAGE.equals(id)){
-      return new TestPackage(project, configuration, environment);
+      return new TestPackage(configuration, environment);
     }
     if (JUnitConfiguration.TEST_DIRECTORY.equals(id)) {
-      return new TestDirectory(project, configuration, environment);
+      return new TestDirectory(configuration, environment);
     }
     if (JUnitConfiguration.TEST_CATEGORY.equals(id)) {
-      return new TestCategory(project, configuration, environment);
+      return new TestCategory(configuration, environment);
     }
     if (JUnitConfiguration.TEST_PATTERN.equals(id)) {
-      return new TestsPattern(project, configuration, environment);
+      return new TestsPattern(configuration, environment);
     }
     return NOT_CONFIGURED;
   }
@@ -124,10 +120,7 @@ public abstract class TestObject implements JavaCommandLine {
     return sourceScope != null ? sourceScope.getModulesToCompile() : Module.EMPTY_ARRAY;
   }
 
-  protected TestObject(final Project project,
-                       final JUnitConfiguration configuration,
-                       ExecutionEnvironment environment) {
-    myProject = project;
+  protected TestObject(JUnitConfiguration configuration, ExecutionEnvironment environment) {
     myConfiguration = configuration;
     myEnvironment = environment;
   }
@@ -143,7 +136,7 @@ public abstract class TestObject implements JavaCommandLine {
   public abstract boolean isConfiguredByElement(JUnitConfiguration configuration,
                                                 PsiClass testClass,
                                                 PsiMethod testMethod,
-                                                PsiPackage testPackage, 
+                                                PsiPackage testPackage,
                                                 PsiDirectory testDir);
 
   protected void configureModule(final JavaParameters parameters, final RunConfigurationModule configurationModule, final String mainClassName)
@@ -153,7 +146,7 @@ public abstract class TestObject implements JavaCommandLine {
                                        myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null);
   }
 
-  private static final TestObject NOT_CONFIGURED = new TestObject(null, null, null) {
+  private static final TestObject NOT_CONFIGURED = new TestObject(null, null) {
     @Override
     public RefactoringElementListener getListener(final PsiElement element, final JUnitConfiguration configuration) {
       return null;
@@ -212,7 +205,7 @@ public abstract class TestObject implements JavaCommandLine {
     if (myJavaParameters.getJdk() == null){
       myJavaParameters.setJdk(module != null
                               ? ModuleRootManager.getInstance(module).getSdk()
-                              : ProjectRootManager.getInstance(myProject).getProjectSdk());
+                              : ProjectRootManager.getInstance(myEnvironment.getProject()).getProjectSdk());
     }
 
     myJavaParameters.getClassPath().add(JavaSdkUtil.getIdeaRtJarPath());
@@ -368,8 +361,7 @@ public abstract class TestObject implements JavaCommandLine {
       }
     });
 
-    final RerunFailedTestsAction rerunFailedTestsAction = new RerunFailedTestsAction(consoleView);
-    rerunFailedTestsAction.init(consoleProperties, myEnvironment);
+    final RerunFailedTestsAction rerunFailedTestsAction = new RerunFailedTestsAction(consoleView, consoleProperties);
     rerunFailedTestsAction.setModelProvider(new Getter<TestFrameworkRunningModel>() {
       @Override
       public TestFrameworkRunningModel get() {
@@ -384,22 +376,15 @@ public abstract class TestObject implements JavaCommandLine {
 
   private ExecutionResult useSmRunner(Executor executor, JUnitProcessHandler handler) {
     TestConsoleProperties testConsoleProperties = new SMTRunnerConsoleProperties(myConfiguration, JUNIT_TEST_FRAMEWORK_NAME, executor);
-
     testConsoleProperties.setIfUndefined(TestConsoleProperties.HIDE_PASSED_TESTS, false);
 
-    BaseTestsOutputConsoleView smtConsoleView = SMTestRunnerConnectionUtil.createConsoleWithCustomLocator(
+    final ConsoleView consoleView = SMTestRunnerConnectionUtil.createConsoleWithCustomLocator(
       JUNIT_TEST_FRAMEWORK_NAME,
       testConsoleProperties,
       myEnvironment, null);
-
-
-    Disposer.register(myProject, smtConsoleView);
-
-    final ConsoleView consoleView = smtConsoleView;
     consoleView.attachToProcess(handler);
 
-    final RerunFailedTestsAction rerunFailedTestsAction = new RerunFailedTestsAction(consoleView);
-    rerunFailedTestsAction.init(testConsoleProperties, myEnvironment);
+    RerunFailedTestsAction rerunFailedTestsAction = new RerunFailedTestsAction(consoleView, testConsoleProperties);
     rerunFailedTestsAction.setModelProvider(new Getter<TestFrameworkRunningModel>() {
       @Override
       public TestFrameworkRunningModel get() {
@@ -421,12 +406,12 @@ public abstract class TestObject implements JavaCommandLine {
     else {
       comment = null;
     }
-    TestsUIUtil.notifyByBalloon(myProject, started, model != null ? model.getRoot() : null, consoleProperties, comment);
+    TestsUIUtil.notifyByBalloon(myEnvironment.getProject(), started, model != null ? model.getRoot() : null, consoleProperties, comment);
   }
 
   protected JUnitProcessHandler createHandler(Executor executor) throws ExecutionException {
     appendForkInfo(executor);
-    return JUnitProcessHandler.runCommandLine(CommandLineBuilder.createFromJavaParameters(myJavaParameters, myProject, true));
+    return JUnitProcessHandler.runCommandLine(CommandLineBuilder.createFromJavaParameters(myJavaParameters, myEnvironment.getProject(), true));
   }
 
   private boolean forkPerModule() {
@@ -449,7 +434,7 @@ public abstract class TestObject implements JavaCommandLine {
 
     if (getRunnerSettings() != null) {
       final String actionName = executor.getActionName();
-      throw new CantRunException(actionName + " is disabled in fork mode.<br/>Please change fork mode to &lt;none&gt; to " + actionName.toLowerCase() + ".");
+      throw new CantRunException(actionName + " is disabled in fork mode.<br/>Please change fork mode to &lt;none&gt; to " + actionName.toLowerCase(Locale.ENGLISH) + ".");
     }
 
     final JavaParameters javaParameters = getJavaParameters();

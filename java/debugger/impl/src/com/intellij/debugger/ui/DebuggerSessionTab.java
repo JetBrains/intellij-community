@@ -199,11 +199,11 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
       }
     });
 
-    ExecutionResult executionResult = debuggerSession.getProcess().getExecutionResult();
+//    ExecutionResult executionResult = debuggerSession.getProcess().getExecutionResult();
 //    myConsole = executionResult.getExecutionConsole();
 //    myRunContentDescriptor = new RunContentDescriptor(myConsole, executionResult.getProcessHandler(), myUi.getComponent(), getSessionName(),
 //                                                      environment.getIcon());
-    initUI(executionResult);
+//    initUI(executionResult);
   }
 
   private static void updateStatus(final Content content) {
