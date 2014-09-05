@@ -215,12 +215,12 @@ public class ExecUtil {
    * @param command the command and its arguments, can contain any characters
    * @param prompt the prompt string for the users
    * @param workDir working directory
+   * @param environment environment variables
    * @return the results of running the process
    */
   @NotNull
-  public static ProcessOutput sudoAndGetOutput(@NotNull List<String> command,
-                                               @NotNull String prompt,
-                                               @Nullable String workDir) throws IOException, ExecutionException {
+  public static Process sudo(@NotNull final List<String> command, @NotNull final String prompt, @Nullable final String workDir,
+                             @Nullable final Map<String, String> environment) throws ExecutionException, IOException {
     if (SystemInfo.isMac) {
       final String escapedCommandLine = StringUtil.join(command, new Function<String, String>() {
         @Override
@@ -229,28 +229,28 @@ public class ExecUtil {
         }
       }, " & \" \" & ");
       final String escapedScript = "do shell script " + escapedCommandLine + " with administrator privileges";
-      return execAndGetOutput(Arrays.asList(getOsascriptPath(), "-e", escapedScript), workDir);
+      return exec(Arrays.asList(getOsascriptPath(), "-e", escapedScript), workDir, environment);
     }
     else if ("root".equals(System.getenv("USER"))) {
-      return execAndGetOutput(command, workDir);
+      return exec(command, workDir, environment);
     }
     else if (hasGkSudo.getValue()) {
       final List<String> sudoCommand = new ArrayList<String>();
       sudoCommand.addAll(Arrays.asList("gksudo", "--message", prompt, "--"));
       sudoCommand.addAll(command);
-      return execAndGetOutput(sudoCommand, workDir);
+      return exec(sudoCommand, workDir, environment);
     }
     else if (hasKdeSudo.getValue()) {
       final List<String> sudoCommand = new ArrayList<String>();
       sudoCommand.addAll(Arrays.asList("kdesudo", "--comment", prompt, "--"));
       sudoCommand.addAll(command);
-      return execAndGetOutput(sudoCommand, workDir);
+      return exec(sudoCommand, workDir, environment);
     }
     else if (hasPkExec.getValue()) {
       final List<String> sudoCommand = new ArrayList<String>();
       sudoCommand.add("pkexec");
       sudoCommand.addAll(command);
-      return execAndGetOutput(sudoCommand, workDir);
+      return exec(sudoCommand, workDir, environment);
     }
     else if (SystemInfo.isUnix && hasTerminalApp()) {
       final String escapedCommandLine = StringUtil.join(command, new Function<String, String>() {
@@ -269,10 +269,18 @@ public class ExecUtil {
         "echo\n" +
         "read -p \"Press Enter to close this window...\" TEMP\n" +
         "exit $STATUS\n");
-      return execAndGetOutput(getTerminalCommand("Install", script.getAbsolutePath()), workDir);
+      return exec(getTerminalCommand("Install", script.getAbsolutePath()), workDir, environment);
     }
 
     throw new UnsupportedSystemException();
+  }
+
+  @NotNull
+  public static ProcessOutput sudoAndGetOutput(@NotNull List<String> command, @NotNull String prompt,
+                                               @Nullable String workDir) throws IOException, ExecutionException {
+    final Process process = sudo(command, prompt, workDir, null);
+    final CapturingProcessHandler processHandler = new CapturingProcessHandler(process);
+    return processHandler.runProcess();
   }
 
   @NotNull
