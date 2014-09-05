@@ -15,6 +15,8 @@ from pydevd_comm import CMD_ADD_DJANGO_EXCEPTION_BREAK, \
     CMD_STEP_INTO, CMD_SMART_STEP_INTO, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT
 from pydevd_constants import *  # @UnusedWildImport
 from pydevd_file_utils import GetFilenameAndBase
+
+from pydev_frame_utils import add_exception_to_frame
 try:
     from pydevd_signature import sendSignatureCallTrace
 except ImportError:
@@ -564,6 +566,3 @@ class PyDBFrame:
                     if flag:
                         frame = suspend_django(self, mainDebugger, thread, frame)
         return flag, frame
-
-def add_exception_to_frame(frame, exception_info):
-    frame.f_locals['__exception__'] = exception_info

@@ -11,7 +11,7 @@ import traceback
 
 from pydevd_plugin_utils import load_plugins, NullProxy, PluginProxy
 
-from pydevd_frame import add_exception_to_frame
+from pydevd_frame_utils import add_exception_to_frame
 import pydev_imports
 from pydevd_breakpoints import * #@UnusedWildImport
 import fix_getpass

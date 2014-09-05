@@ -3,7 +3,7 @@ from pydevd_constants import JINJA2_SUSPEND, GetThreadId, STATE_SUSPEND, DictCon
 from pydevd_comm import CMD_SET_BREAK, CMD_STEP_OVER, CMD_ADD_EXCEPTION_BREAK
 import pydevd_vars
 from pydevd_file_utils import GetFileNameAndBaseFromFile
-from pydevd_frame import add_exception_to_frame
+from pydevd_frame_utils import add_exception_to_frame, FCode
 
 class Jinja2LineBreakpoint(LineBreakpoint):
 
@@ -137,11 +137,6 @@ class Jinja2TemplateFrame:
         for k, v in self.back_context.items():
             if k == name:
                 self.back_context.vars[k] = value
-
-class FCode:
-    def __init__(self, name, filename):
-        self.co_name = name
-        self.co_filename = filename
 
 def is_missing(item):
     if item.__class__.__name__ is 'MissingType':

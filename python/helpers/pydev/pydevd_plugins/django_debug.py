@@ -6,7 +6,7 @@ from pydevd_breakpoints import LineBreakpoint, get_exception_name
 import pydevd_vars
 import traceback
 import pydev_log
-from pydevd_frame import add_exception_to_frame
+from pydevd_frame_utils import add_exception_to_frame, FCode
 
 
 class DjangoLineBreakpoint(LineBreakpoint):
@@ -250,12 +250,6 @@ class DjangoTemplateFrame:
             for k, v in d.items():
                 if k == name:
                     d[k] = value
-
-
-class FCode:
-    def __init__(self, name, filename):
-        self.co_name = name
-        self.co_filename = filename
 
 
 def is_django_exception_break_context(frame):

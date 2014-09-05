@@ -21,3 +21,6 @@ class FCode:
     def __init__(self, name, filename):
         self.co_name = name
         self.co_filename = filename
+
+def add_exception_to_frame(frame, exception_info):
+    frame.f_locals['__exception__'] = exception_info
