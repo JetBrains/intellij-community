@@ -15,10 +15,17 @@
  */
 package com.jetbrains.python.actions.view.array;
 
+import com.intellij.xdebugger.frame.XValueNode;
+
 /**
 * @author amarch
 */
 abstract class ArrayValueProvider {
+  XValueNode myBaseNode;
 
-  public abstract Object[][] parseValues(String rawValue);
+  public ArrayValueProvider(XValueNode node){
+    myBaseNode = node;
+  }
+
+  public abstract boolean isNumeric();
 }

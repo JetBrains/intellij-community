@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.jetbrains.python.debugger.PyDebugValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,20 +68,25 @@ public class PyViewArrayAction extends XDebuggerTreeActionBase {
 
 
     public void setValue(XValueNodeImpl node) {
-      final ArrayValueProvider valueProvider;
 
-      if (node.getValuePresentation() != null &&
-          node.getValuePresentation().getType() != null &&
-          node.getValuePresentation().getType().equals("ndarray")) {
-        valueProvider = new NumpyArrayValueProvider();
+      if (node.getValueContainer() instanceof PyDebugValue) {
+        PyDebugValue debugValue = (PyDebugValue)node.getValueContainer();
+        if ("ndarray".equals(debugValue.getType())) {
+          myComponent.setDefaultSpinnerText();
 
-        //myComponent.setDefaultSpinnerText();
-
-        XDebuggerTreeTableListener tableUpdater = new XDebuggerTreeTableListener(node, myTable, myComponent, myProject);
-
-        node.getTree().addTreeListener(tableUpdater);
-
-        node.startComputingChildren();
+          final NumpyArrayValueProvider valueProvider = new NumpyArrayValueProvider(node, myComponent, myProject);
+          try {
+            valueProvider.startFillTable(null);
+          }
+          catch (Exception e) {
+            myComponent.setErrorSpinnerText(e);
+          }
+        }
+        else {
+          //show hint about 'not applicable'
+          myComponent.setNotApplicableSpinner(node);
+          //this.close(CLOSE_EXIT_CODE);
+        }
       }
     }
 
