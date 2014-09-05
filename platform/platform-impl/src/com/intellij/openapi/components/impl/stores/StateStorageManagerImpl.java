@@ -335,22 +335,18 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   @Override
   @NotNull
   public synchronized String expandMacros(@NotNull String file) {
+    Matcher matcher = MACRO_PATTERN.matcher(file);
+    while (matcher.find()) {
+      String m = matcher.group(1);
+      if (!myMacros.containsKey(m)) {
+        throw new IllegalArgumentException("Unknown macro: " + m + " in storage file spec: " + file);
+      }
+    }
+
     String expanded = file;
     for (String macro : myMacros.keySet()) {
       expanded = StringUtil.replace(expanded, macro, myMacros.get(macro));
     }
-
-    // PHP tests use $ as part of name and resulting project name will contain macros-like string
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      final Matcher matcher = MACRO_PATTERN.matcher(expanded);
-      while (matcher.find()) {
-        String m = matcher.group(1);
-        if (m != null && !myMacros.containsKey(m)) {
-          throw new IllegalArgumentException("Unknown macro: " + m + " in storage file spec: " + file);
-        }
-      }
-    }
-
     return expanded;
   }
 
