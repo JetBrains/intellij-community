@@ -252,7 +252,7 @@ public class JavaDebugProcess extends XDebugProcess {
   @Nullable
   @Override
   protected ProcessHandler doGetProcessHandler() {
-    return myJavaSession.getProcess().getExecutionResult().getProcessHandler();
+    return myJavaSession.getProcess().getProcessHandler();
   }
 
   @NotNull
