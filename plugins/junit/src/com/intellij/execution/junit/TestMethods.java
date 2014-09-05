@@ -35,23 +35,25 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
 
 public class TestMethods extends TestMethod {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit.TestMethods");
+  private static final Logger LOG = Logger.getInstance(TestMethods.class);
 
   private final Collection<AbstractTestProxy> myFailedTests;
 
-  public TestMethods(final Project project,
-                     final JUnitConfiguration configuration,
-                     ExecutionEnvironment environment,
-                     Collection<AbstractTestProxy> failedTests) {
-    super(project, configuration, environment);
+  public TestMethods(@NotNull JUnitConfiguration configuration,
+                     @NotNull ExecutionEnvironment environment,
+                     @NotNull Collection<AbstractTestProxy> failedTests) {
+    super(configuration, environment);
+
     myFailedTests = failedTests;
   }
 
+  @Override
   protected void initialize() throws ExecutionException {
     defaultInitialize();
     final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
@@ -59,6 +61,7 @@ public class TestMethods extends TestMethod {
     final Project project = module.getProject();
     final ExecutionException[] exception = new ExecutionException[1];
     ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
       public void run() {
         try {
           myConfiguration.configureClasspath(myJavaParameters);
@@ -76,17 +79,17 @@ public class TestMethods extends TestMethod {
       if (location instanceof PsiMemberParameterizedLocation) {
         final PsiElement element = location.getPsiElement();
         if (element instanceof PsiMethod) {
-          location = MethodLocation.elementInClass(((PsiMethod)element), 
+          location = MethodLocation.elementInClass(((PsiMethod)element),
                                                    ((PsiMemberParameterizedLocation)location).getContainingClass());
         }
       }
       if (!(location instanceof MethodLocation)) continue;
       PsiElement psiElement = location.getPsiElement();
       LOG.assertTrue(psiElement instanceof PsiMethod);
-      PsiMethod method = (PsiMethod)psiElement;
       methods.add(((TestProxy)failedTest).getInfo());
     }
     addClassesListToJavaParameters(methods, new Function<TestInfo, String>() {
+      @Override
       public String fun(TestInfo testInfo) {
         if (testInfo != null) {
           final MethodLocation location = (MethodLocation)testInfo.getLocation(project, searchScope);
@@ -99,6 +102,7 @@ public class TestMethods extends TestMethod {
 
   }
 
+  @Override
   public String suggestActionName() {
     return ActionsBundle.message("action.RerunFailedTests.text");
   }

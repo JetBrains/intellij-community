@@ -33,7 +33,7 @@ import java.util.List;
  */
 public class JarArtifactType extends ArtifactType {
   public JarArtifactType() {
-    super("jar", "Jar");
+    super("jar", "JAR");
   }
 
   public static JarArtifactType getInstance() {

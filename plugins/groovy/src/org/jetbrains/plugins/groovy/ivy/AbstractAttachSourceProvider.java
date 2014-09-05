@@ -152,7 +152,7 @@ public abstract class AbstractAttachSourceProvider implements AttachSourcesProvi
           final ByteArrayOutputStream out;
 
           try {
-            LOG.info("Downloading sources jar: " + myUrl);
+            LOG.info("Downloading sources JAR: " + myUrl);
 
             indicator.checkCanceled();
 
