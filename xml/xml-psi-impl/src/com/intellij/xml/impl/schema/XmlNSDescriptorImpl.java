@@ -357,7 +357,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   @Override
   @Nullable
   public XmlElementDescriptor getElementDescriptor(String localName, String namespace) {
-    return getElementDescriptor(localName, namespace, new HashSet<XmlNSDescriptorImpl>(),false);
+    return getElementDescriptor(localName, namespace, new HashSet<XmlNSDescriptorImpl>(), false);
   }
 
   @Nullable
@@ -775,23 +775,24 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   }
 
   private CachedValue<TypeDescriptor> createAndPutTypesCachedValue(final XmlTag tag, final Pair<QNameKey, XmlTag> pair) {
-    final CachedValue<TypeDescriptor> value = CachedValuesManager.getManager(tag.getProject()).createCachedValue(new CachedValueProvider<TypeDescriptor>() {
-      @Override
-      public CachedValueProvider.Result<TypeDescriptor> compute() {
-        final String name = tag.getAttributeValue("name");
+    final CachedValue<TypeDescriptor> value = CachedValuesManager.getManager(tag.getProject()).createCachedValue(
+      new CachedValueProvider<TypeDescriptor>() {
+        @Override
+        public CachedValueProvider.Result<TypeDescriptor> compute() {
+          final String name = tag.getAttributeValue("name");
 
-        if (name != null &&
-            pair.first != null &&
-            pair.first.first != null &&
-            !name.equals(XmlUtil.findLocalNameByQualifiedName(pair.first.first))
-           ) {
-          myTypesMap.remove(pair);
-          return new Result<TypeDescriptor>(null, PsiModificationTracker.MODIFICATION_COUNT);
+          if (name != null &&
+              pair.first != null &&
+              pair.first.first != null &&
+              !name.equals(XmlUtil.findLocalNameByQualifiedName(pair.first.first))
+            ) {
+            myTypesMap.remove(pair);
+            return new Result<TypeDescriptor>(null, PsiModificationTracker.MODIFICATION_COUNT);
+          }
+          final ComplexTypeDescriptor complexTypeDescriptor = new ComplexTypeDescriptor(XmlNSDescriptorImpl.this, tag);
+          return new Result<TypeDescriptor>(complexTypeDescriptor, tag);
         }
-        final ComplexTypeDescriptor complexTypeDescriptor = new ComplexTypeDescriptor(XmlNSDescriptorImpl.this, tag);
-        return new Result<TypeDescriptor>(complexTypeDescriptor, tag);
-      }
-    }, false);
+      }, false);
     myTypesMap.put(pair, value);
     return value;
   }
@@ -882,7 +883,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
 
   @Nullable
   public XmlTag findAttributeGroup(String name) {
-    return findSpecialTag(name,"attributeGroup",myTag,this, null);
+    return findSpecialTag(name, "attributeGroup", myTag, this, null);
   }
 
   public XmlElementDescriptor[] getSubstitutes(String localName, String namespace) {
