@@ -162,15 +162,16 @@ public class PushController implements Disposable {
     if (target == null) {
       model.setError(VcsError.createEmptyTargetError(repoName));
     }
-    final TargetEditor<T> targetEditor = support.createTargetEditor(repository, target == null ? "" : target.getPresentation());
+    final PushTargetPanel<T> pushTargetPanel = support.createTargetPanel(repository, target == null ? "" : target.getPresentation());
     RepositoryWithBranchPanel<T> repoPanel =
-      new RepositoryWithBranchPanel<T>(repoName, support.getSource(repository).getPresentation(), targetEditor);
+      new RepositoryWithBranchPanel<T>(repoName, support.getSource(repository).getPresentation(), pushTargetPanel);
     repoPanel.setInputVerifier(new InputVerifier() {
       @Override
       public boolean verify(JComponent input) {
-        VcsError error = targetEditor.verify();
+        ValidationInfo error = pushTargetPanel.verify();
         if (error != null) {
-          PopupUtil.showBalloonForComponent(targetEditor.getVerifiedComponent(), error.getText(), MessageType.WARNING, false, myProject);
+          //noinspection ConstantConditions
+          PopupUtil.showBalloonForComponent(error.component, error.message, MessageType.WARNING, false, myProject);
         }
         return error == null;
       }

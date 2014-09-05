@@ -15,18 +15,14 @@
  */
 package com.intellij.dvcs.push;
 
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 
-public abstract class TargetEditor<T extends PushTarget> extends JPanel {
-
-  protected TargetEditor(BorderLayout layout) {
-    super(layout);
-  }
+public abstract class PushTargetPanel<T extends PushTarget> extends JPanel {
 
   abstract public void render(@NotNull ColoredTreeCellRenderer renderer);
 
@@ -38,8 +34,5 @@ public abstract class TargetEditor<T extends PushTarget> extends JPanel {
   public abstract void fireOnChange();
 
   @Nullable
-  public abstract VcsError verify();
-
-  @NotNull
-  public abstract JComponent getVerifiedComponent();
+  public abstract ValidationInfo verify();
 }
