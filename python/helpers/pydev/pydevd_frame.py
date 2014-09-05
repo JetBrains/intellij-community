@@ -3,20 +3,14 @@ import os.path
 import re
 import traceback  # @Reimport
 
-from django_debug import find_django_render_frame
-from django_debug import is_django_render_call, is_django_suspended, suspend_django, is_django_resolve_call, is_django_context_get_call
-from django_frame import DjangoTemplateFrame
-from django_frame import is_django_exception_break_context
-from django_frame import just_raised, get_template_file_name, get_template_line
 import pydev_log
 from pydevd_breakpoints import get_exception_breakpoint, get_exception_name
-from pydevd_comm import CMD_ADD_DJANGO_EXCEPTION_BREAK, \
-    CMD_STEP_CAUGHT_EXCEPTION, CMD_STEP_RETURN, CMD_STEP_OVER, CMD_SET_BREAK, \
+from pydevd_comm import CMD_STEP_CAUGHT_EXCEPTION, CMD_STEP_RETURN, CMD_STEP_OVER, CMD_SET_BREAK, \
     CMD_STEP_INTO, CMD_SMART_STEP_INTO, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT
 from pydevd_constants import *  # @UnusedWildImport
 from pydevd_file_utils import GetFilenameAndBase
 
-from pydev_frame_utils import add_exception_to_frame
+from pydevd_frame_utils import add_exception_to_frame
 try:
     from pydevd_signature import sendSignatureCallTrace
 except ImportError:
@@ -57,7 +51,7 @@ class PyDBFrame:
     def doWaitSuspend(self, *args, **kwargs):
         self._args[0].doWaitSuspend(*args, **kwargs)
 
-    def _is_django_render_call(self, frame):
+    def _is_django_render_call(self, frame): # todo: cache in plugins the same way
         try:
             return self._cached_is_django_render_call
         except:
@@ -387,8 +381,6 @@ class PyDBFrame:
 
             #step handling. We stop when we hit the right frame
             try:
-                stop_info['django_stop'] = False
-
                 should_skip = False
                 if pydevd_dont_trace.should_trace_hook is not None:
                     if not hasattr(self, 'should_skip'):
@@ -512,57 +504,3 @@ class PyDBFrame:
             if hasattr(sys, 'exc_clear'): #jython does not have it
                 sys.exc_clear() #don't keep the traceback
             pass #ok, psyco not available
-
-    def should_stop_on_django_breakpoint(self, frame, event, arg):
-        mainDebugger = self._args[0]
-        thread = self._args[3]
-        flag = False
-        template_frame_file = get_template_file_name(frame)
-
-        #pydev_log.debug("Django is rendering a template: %s\n" % template_frame_file)
-
-        django_breakpoints_for_file = mainDebugger.django_breakpoints.get(template_frame_file)
-        if django_breakpoints_for_file:
-
-            #pydev_log.debug("Breakpoints for that file: %s\n" % django_breakpoints_for_file)
-
-            template_frame_line = get_template_line(frame, template_frame_file)
-
-            #pydev_log.debug("Tracing template line: %d\n" % template_frame_line)
-
-            if DictContains(django_breakpoints_for_file, template_frame_line):
-                django_breakpoint = django_breakpoints_for_file[template_frame_line]
-
-                if django_breakpoint.is_triggered(template_frame_file, template_frame_line):
-
-                    #pydev_log.debug("Breakpoint is triggered.\n")
-
-                    flag = True
-                    new_frame = DjangoTemplateFrame(
-                        frame,
-                        template_frame_file=template_frame_file,
-                        template_frame_line=template_frame_line,
-                    )
-
-                    if django_breakpoint.condition is not None:
-                        try:
-                            val = eval(django_breakpoint.condition, new_frame.f_globals, new_frame.f_locals)
-                            if not val:
-                                flag = False
-                                pydev_log.debug("Condition '%s' is evaluated to %s. Not suspending.\n" % (django_breakpoint.condition, val))
-                        except:
-                            pydev_log.info(
-                                'Error while evaluating condition \'%s\': %s\n' % (django_breakpoint.condition, sys.exc_info()[1]))
-
-                    if django_breakpoint.expression is not None:
-                        try:
-                            try:
-                                val = eval(django_breakpoint.expression, new_frame.f_globals, new_frame.f_locals)
-                            except:
-                                val = sys.exc_info()[1]
-                        finally:
-                            if val is not None:
-                                thread.additionalInfo.message = val
-                    if flag:
-                        frame = suspend_django(self, mainDebugger, thread, frame)
-        return flag, frame

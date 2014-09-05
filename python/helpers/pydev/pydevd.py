@@ -119,7 +119,7 @@ DONT_TRACE = {
               '_pydev_threading':1,
               '_pydev_Queue':1,
               'django_debug.py':1,
-              'django_frame.py':1,
+              'jinja2_debug.py':1,
               'pydev_log.py':1,
               'pydev_monkey.py':1 ,
               'pydevd.py':1 ,
@@ -304,7 +304,6 @@ class PyDB:
         self._cmd_queue = {}  # the hash of Queues. Key is thread id, value is thread
 
         self.breakpoints = {}
-        #self.django_breakpoints = {}
 
         self.file_to_id_to_line_breakpoint = {}
         self.file_to_id_to_plugin_breakpoint = {}
@@ -314,7 +313,6 @@ class PyDB:
         self.break_on_uncaught_exceptions = {}
         self.break_on_caught_exceptions = {}
 
-        self.django_exception_break = {}
         self.readyToRun = False
         self._main_lock = _pydev_thread.allocate_lock()
         self._lock_running_thread_ids = _pydev_thread.allocate_lock()

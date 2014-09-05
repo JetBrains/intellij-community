@@ -2,7 +2,6 @@
     resolution/conversion to XML.
 """
 import pickle
-from django_frame import DjangoTemplateFrame
 from pydevd_constants import * #@UnusedWildImport
 from types import * #@UnusedWildImport
 
@@ -360,10 +359,10 @@ def changeAttrExpression(thread_id, frame_id, attr, expression):
     try:
         expression = expression.replace('@LINE@', '\n')
 
-        if isinstance(frame, DjangoTemplateFrame):
-            result = eval(expression, frame.f_globals, frame.f_locals)
-            frame.changeVariable(attr, result)
-            return
+        # if isinstance(frame, DjangoTemplateFrame): # TODO: implemente for plugins
+        #     result = eval(expression, frame.f_globals, frame.f_locals)
+        #     frame.changeVariable(attr, result)
+        #     return
 
         if attr[:7] == "Globals":
             attr = attr[8:]
