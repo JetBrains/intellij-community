@@ -251,7 +251,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
       case STATE_DISPOSED:
         return DebuggerBundle.message("status.debug.stopped");
     }
-    return myState.myDescription;
+    return null;
   }
 
   /* Stepping */
@@ -646,7 +646,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
     public void threadStopped(DebugProcess proc, ThreadReference thread) {
       notifyThreadsRefresh();
     }
-    
+
     private void notifyThreadsRefresh() {
       if (!myUpdateAlarm.isDisposed()) {
         myUpdateAlarm.cancelAllRequests();
