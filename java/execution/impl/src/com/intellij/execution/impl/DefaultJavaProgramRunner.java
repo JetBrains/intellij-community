@@ -34,7 +34,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.unscramble.AnalyzeStacktraceUtil;
 import com.intellij.unscramble.ThreadDumpConsoleFactory;
 import com.intellij.unscramble.ThreadDumpParser;
@@ -100,9 +99,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     if (shouldAddDefaultActions) {
       addDefaultActions(contentBuilder);
     }
-    RunContentDescriptor contentDescriptor = contentBuilder.showRunContent(env.getContentToReuse());
-    Disposer.register(env.getProject(), contentDescriptor);
-    return contentDescriptor;
+    return contentBuilder.showRunContent(env.getContentToReuse());
   }
 
   @Deprecated
