@@ -37,6 +37,7 @@ class TestMethod extends TestObject {
     super(project, configuration, environment);
   }
 
+  @Override
   protected void initialize() throws ExecutionException {
     defaultInitialize();
     final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
@@ -66,16 +67,19 @@ class TestMethod extends TestObject {
     myJavaParameters.getProgramParametersList().add(JUnitStarter.JUNIT3_PARAMETER);
   }
 
+  @Override
   public String suggestActionName() {
     return ProgramRunnerUtil.shortenName(myConfiguration.getPersistentData().METHOD_NAME, 2) + "()";
   }
 
+  @Override
   public RefactoringElementListener getListener(final PsiElement element, final JUnitConfiguration configuration) {
     if (element instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)element;
       if (!method.getName().equals(configuration.getPersistentData().getMethodName())) return null;
       if (!method.getContainingClass().equals(configuration.myClass.getPsiElement())) return null;
       class Listener extends RefactoringElementAdapter implements UndoRefactoringElementListener {
+        @Override
         public void elementRenamedOrMoved(@NotNull final PsiElement newElement) {
           final boolean generatedName = configuration.isGeneratedName();
           configuration.getPersistentData().setTestMethod(PsiLocation.fromPsiElement((PsiMethod)newElement));
@@ -99,6 +103,7 @@ class TestMethod extends TestObject {
   }
 
 
+  @Override
   public boolean isConfiguredByElement(final JUnitConfiguration configuration,
                                        PsiClass testClass,
                                        PsiMethod testMethod,
@@ -118,6 +123,7 @@ class TestMethod extends TestObject {
       Comparing.equal(testMethod.getName(), data.getMethodName());
   }
 
+  @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
     final JavaRunConfigurationModule configurationModule = myConfiguration.getConfigurationModule();
