@@ -1,6 +1,6 @@
 from pydevd_comm import CMD_SET_BREAK, CMD_ADD_EXCEPTION_BREAK
 import inspect
-from pydevd_constants import DJANGO_SUSPEND, STATE_SUSPEND, GetThreadId, DictContains
+from pydevd_constants import STATE_SUSPEND, GetThreadId, DictContains
 from pydevd_file_utils import NormFileToServer, GetFileNameAndBaseFromFile
 from pydevd_breakpoints import LineBreakpoint, get_exception_name
 import pydevd_vars
@@ -8,6 +8,7 @@ import traceback
 import pydev_log
 from pydevd_frame_utils import add_exception_to_frame, FCode, cached_call, just_raised
 
+DJANGO_SUSPEND = 2
 
 class DjangoLineBreakpoint(LineBreakpoint):
     def __init__(self, file, line, condition, func_name, expression):
