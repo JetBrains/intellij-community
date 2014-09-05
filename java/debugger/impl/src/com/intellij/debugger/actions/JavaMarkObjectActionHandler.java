@@ -50,6 +50,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT;
+
 /*
  * Class SetValueAction
  * @author Jeka
@@ -72,7 +74,7 @@ public class JavaMarkObjectActionHandler extends MarkObjectActionHandler {
     final DebuggerTree tree = node.getTree();
     tree.saveState(node);
 
-    final Component parent = event.getInputEvent().getComponent();
+    final Component parent = event.getData(CONTEXT_COMPONENT);
     final ValueDescriptorImpl valueDescriptor = ((ValueDescriptorImpl)descriptor);
     final DebuggerContextImpl debuggerContext = tree.getDebuggerContext();
     final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();

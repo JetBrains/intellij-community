@@ -17,7 +17,7 @@
 package com.intellij.diagnostic.logging;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +44,7 @@ public abstract class LogConsoleImpl extends LogConsoleBase {
                         @NotNull File file,
                         @NotNull Charset charset,
                         long skippedContents,
-                        String title,
+                        @NotNull String title,
                         final boolean buildInActions) {
     this(project, file, charset, skippedContents, title, buildInActions, GlobalSearchScope.allScope(project));
   }
@@ -53,7 +53,7 @@ public abstract class LogConsoleImpl extends LogConsoleBase {
                         @NotNull File file,
                         @NotNull Charset charset,
                         long skippedContents,
-                        String title,
+                        @NotNull String title,
                         final boolean buildInActions,
                         final GlobalSearchScope searchScope) {
     super(project, getReader(file, charset, skippedContents), title, buildInActions, new DefaultLogFilterModel(project),
@@ -64,27 +64,30 @@ public abstract class LogConsoleImpl extends LogConsoleBase {
   }
 
   @Nullable
-  private static Reader getReader(@NotNull final File file, @NotNull final Charset charset, final long skippedContents) {
-    Reader reader = null;
+  private static Reader getReader(@NotNull File file, @NotNull Charset charset, long skippedContents) {
     try {
       try {
-        final FileInputStream inputStream = new FileInputStream(file);
-        reader = new BufferedReader(new InputStreamReader(inputStream, charset));
-        if (file.length() >= skippedContents) { //do not skip forward
-          //noinspection ResultOfMethodCallIgnored
-          inputStream.skip(skippedContents);
+        @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+        FileInputStream inputStream = new FileInputStream(file);
+        //do not skip forward
+        if (file.length() >= skippedContents) {
+          long skipped = 0;
+          while (skipped < skippedContents) {
+            skipped += inputStream.skip(skippedContents - skipped);
+          }
         }
+        return new BufferedReader(new InputStreamReader(inputStream, charset));
       }
       catch (FileNotFoundException ignored) {
-        if (FileUtil.createIfDoesntExist(file)) {
-          reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), charset));
+        if (FileUtilRt.createIfNotExists(file)) {
+          return new BufferedReader(new InputStreamReader(new FileInputStream(file), charset));
         }
+        return null;
       }
     }
     catch (Throwable ignored) {
-      reader = null;
+      return null;
     }
-    return reader;
   }
 
   @Override
@@ -104,9 +107,10 @@ public abstract class LogConsoleImpl extends LogConsoleBase {
       return null;
     }
 
-    final long length = myFile.length();
+    long length = myFile.length();
     if (length < myOldLength) {
       reader.close();
+      //noinspection IOResourceOpenedButNotSafelyClosed
       reader = new BufferedReader(new InputStreamReader(new FileInputStream(myFile), myCharset));
     }
     myOldLength = length;

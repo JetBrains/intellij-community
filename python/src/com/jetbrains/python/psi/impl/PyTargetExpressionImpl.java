@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -61,7 +62,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExpressionStub> implements PyTargetExpression {
+public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpressionStub> implements PyTargetExpression {
   QualifiedName myQualifiedName;
 
   public PyTargetExpressionImpl(ASTNode astNode) {
@@ -659,12 +660,19 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
     return null;
   }
 
-  protected String getElementLocation() {
-    final PyClass containingClass = getContainingClass();
-    if (containingClass != null) {
-      return "(" + containingClass.getName() + " in " + getPackageForFile(getContainingFile()) + ")";
-    }
-    return super.getElementLocation();
+  @Override
+  public ItemPresentation getPresentation() {
+    return new PyElementPresentation(this) {
+      @Nullable
+      @Override
+      public String getLocationString() {
+        final PyClass containingClass = getContainingClass();
+        if (containingClass != null) {
+          return "(" + containingClass.getName() + " in " + getPackageForFile(getContainingFile()) + ")";
+        }
+        return super.getLocationString();
+      }
+    };
   }
 
   @Nullable

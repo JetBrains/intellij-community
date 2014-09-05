@@ -39,9 +39,8 @@ import java.util.List;
 /**
  * @author novokrest
  */
-public class PyStaticCallDataManagerImpl extends PyStaticCallDataManager {
-  @Override
-  public Collection<PsiElement> getCallees(@NotNull PyElement element) {
+public class PyStaticCallHierarchyUtil {
+  public static Collection<PsiElement> getCallees(@NotNull PyElement element) {
     final List<PsiElement> callees = Lists.newArrayList();
 
     final PyRecursiveElementVisitor visitor = new PyRecursiveElementVisitor() {
@@ -78,8 +77,7 @@ public class PyStaticCallDataManagerImpl extends PyStaticCallDataManager {
     return callees;
   }
 
-  @Override
-  public Collection<PsiElement> getCallers(@NotNull PyElement pyElement) {
+  public static Collection<PsiElement> getCallers(@NotNull PyElement pyElement) {
     final List<PsiElement> callers = Lists.newArrayList();
     final Collection<UsageInfo> usages = findUsages(pyElement);
 

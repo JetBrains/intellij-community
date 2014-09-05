@@ -24,7 +24,10 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.RunContentBuilder;
-import com.intellij.execution.ui.*;
+import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManager;
+import com.intellij.execution.ui.RunContentWithExecutorListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
@@ -247,7 +250,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
       // in test-mode RunContentWithExecutorListener.contentRemoved events are not sent (see RunContentManagerImpl.showRunContent)
       // so we make sure the mySessions and mySessionData are cleared correctly when session is disposed
 
-      Disposer.register(sessionTab, new Disposable() {
+      Disposer.register(descriptor, new Disposable() {
         @Override
         public void dispose() {
           mySessionData.remove(descriptor);

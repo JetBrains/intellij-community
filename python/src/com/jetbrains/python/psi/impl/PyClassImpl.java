@@ -17,6 +17,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.lang.ASTNode;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -53,10 +54,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
+import static com.intellij.openapi.util.text.StringUtil.join;
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
+
 /**
  * @author yole
  */
-public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implements PyClass {
+public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyClass {
   public static final PyClass[] EMPTY_ARRAY = new PyClassImpl[0];
 
   private List<PyTargetExpression> myInstanceAttributes;
@@ -286,6 +290,32 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       }
     }
     return result.toArray(new PyClass[result.size()]);
+  }
+
+  @Override
+  public ItemPresentation getPresentation() {
+    return new PyElementPresentation(this) {
+      @Nullable
+      @Override
+      public String getPresentableText() {
+        if (!isValid()) {
+          return null;
+        }
+        final StringBuilder result = new StringBuilder(notNullize(getName(), PyNames.UNNAMED_ELEMENT));
+        final PyExpression[] superClassExpressions = getSuperClassExpressions();
+        if (superClassExpressions.length > 0) {
+          result.append("(");
+          result.append(join(Arrays.asList(superClassExpressions), new Function<PyExpression, String>() {
+            public String fun(PyExpression expr) {
+              String name = expr.getText();
+              return notNullize(name, PyNames.UNNAMED_ELEMENT);
+            }
+          }, ", "));
+          result.append(")");
+        }
+        return result.toString();
+      }
+    };
   }
 
   @NotNull

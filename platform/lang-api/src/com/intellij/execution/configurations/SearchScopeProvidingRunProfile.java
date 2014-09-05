@@ -13,16 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.hierarchy.call;
 
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.project.Project;
+package com.intellij.execution.configurations;
+
+import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * @author novokrest
+ * Base interface for run configurations that can specify which part of the project should be used to search sources. This information
+ * will be used to provide more accurate navigation to sources from stack traces, debugger, etc
+ *
+ * @author nik
  */
-public abstract class PyStaticCallDataManager implements PyCallDataManager {
-  public static PyCallDataManager getInstance(Project project) {
-    return ServiceManager.getService(project, PyStaticCallDataManager.class);
-  }
+public interface SearchScopeProvidingRunProfile extends RunProfile {
+  /**
+   * @return modules where to search sources for this configuration
+   */
+  @NotNull
+  Module[] getModules();
 }

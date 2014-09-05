@@ -56,7 +56,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   private final ComponentRoamingManager myComponentRoamingManager;
   protected boolean myBlockSavingTheContent = false;
   protected int myUpToDateHash = -1;
-  protected int myProviderUpToDateHash = -1;
+  private int myProviderUpToDateHash = -1;
   private boolean mySavingDisabled = false;
 
   private final Map<String, Object> myStorageComponentStates = new THashMap<String, Object>(); // at load we store Element, on setState Integer of hash
@@ -406,6 +406,9 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
           try {
             saveForProvider(myStreamProvider);
           }
+          catch (IOException e) {
+            LOG.warn(e);
+          }
           finally {
             myProviderUpToDateHash = hash;
           }
@@ -416,9 +419,9 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       }
     }
 
-    private void saveLocally(final Integer hash) {
+    private void saveLocally(int hash) {
       try {
-        if (!isHashUpToDate(hash) && _needsSave(hash)) {
+        if (!(myUpToDateHash != -1 && myUpToDateHash == hash) && _needsSave(hash)) {
           doSave();
         }
       }
@@ -427,7 +430,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       }
     }
 
-    private void saveForProvider(@NotNull StreamProvider streamProvider) {
+    private void saveForProvider(@NotNull StreamProvider streamProvider) throws IOException {
       RoamingType roamingType = getRoamingType();
       if (roamingType != null && roamingType == RoamingType.DISABLED) {
         // todo our old stream provider doesn't share WORKSPACE_FILE, but our new has this feature - are we really want to support it?
@@ -474,7 +477,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       }
     }
 
-    private void doSaveForProvider(Element element, RoamingElementFilter filter) {
+    private void doSaveForProvider(Element element, RoamingElementFilter filter) throws IOException {
       Element copiedElement = JDOMUtil.cloneElement(element, filter);
       if (copiedElement != null) {
         assert myStreamProvider != null;
@@ -482,24 +485,15 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       }
     }
 
-    private void doSaveForProvider(@NotNull Element element, @NotNull RoamingType roamingType, @NotNull StreamProvider streamProvider) {
-      try {
-        StorageUtil.doSendContent(streamProvider, myFileSpec, element, roamingType, true);
-        if (streamProvider.isVersioningRequired()) {
-          TObjectLongHashMap<String> versions = loadVersions(element.getChildren(StorageData.COMPONENT));
-          if (!versions.isEmpty()) {
-            Element versionDoc = StateStorageManagerImpl.createComponentVersionsXml(versions);
-            StorageUtil.doSendContent(streamProvider, myFileSpec + VERSION_FILE_SUFFIX, versionDoc, roamingType, true);
-          }
+    private void doSaveForProvider(@NotNull Element element, @NotNull RoamingType roamingType, @NotNull StreamProvider streamProvider) throws IOException {
+      StorageUtil.doSendContent(streamProvider, myFileSpec, element, roamingType, true);
+      if (streamProvider.isVersioningRequired()) {
+        TObjectLongHashMap<String> versions = loadVersions(element.getChildren(StorageData.COMPONENT));
+        if (!versions.isEmpty()) {
+          Element versionDoc = StateStorageManagerImpl.createComponentVersionsXml(versions);
+          StorageUtil.doSendContent(streamProvider, myFileSpec + VERSION_FILE_SUFFIX, versionDoc, roamingType, true);
         }
       }
-      catch (IOException e) {
-        LOG.warn(e);
-      }
-    }
-
-    private boolean isHashUpToDate(final Integer hash) {
-      return myUpToDateHash != -1 && myUpToDateHash == hash;
     }
 
     @Nullable
@@ -619,8 +613,15 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     return mySession instanceof MySaveSession ? getElement(((MySaveSession)mySession).myStorageData) : null;
   }
 
-  protected class RemoteComponentVersionProvider implements ComponentVersionProvider {
-    protected TObjectLongHashMap<String> myProviderVersions;
+  public void resetProviderCache() {
+    myProviderUpToDateHash = -1;
+    if (myRemoteVersionProvider != null) {
+      myRemoteVersionProvider.myProviderVersions = null;
+    }
+  }
+
+  private final class RemoteComponentVersionProvider implements ComponentVersionProvider {
+    private TObjectLongHashMap<String> myProviderVersions;
 
     @Override
     public long getVersion(String name) {

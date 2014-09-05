@@ -126,7 +126,7 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
 
   private static boolean isNotUnderSourceRoot(@NotNull final Project project,
                                               @Nullable final PsiFile psiFile,
-                                              @NotNull final Editor editor) {
+                                              @Nullable final Editor editor) {
     if (psiFile == null) return true;
     final VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile != null) {

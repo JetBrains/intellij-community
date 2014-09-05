@@ -19,6 +19,7 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.application.options.ExportSchemeAction;
 import com.intellij.application.options.SchemesToImportPopup;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
@@ -689,6 +690,17 @@ public class TemplateListPanel extends JPanel implements Disposable {
         @Override
         public void updateButton(AnActionEvent e) {
           e.getPresentation().setEnabled(getTemplate(getSingleSelectedIndex()) != null);
+        }
+      }).addExtraAction(new AnActionButton("Restore deleted defaults", AllIcons.General.TodoDefault) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          TemplateSettings.getInstance().reset();
+          reset();
+        }
+
+        @Override
+        public boolean isEnabled() {
+          return super.isEnabled() && !TemplateSettings.getInstance().getDeletedTemplates().isEmpty();
         }
       });
     if (getSchemesManager().isExportAvailable()) {

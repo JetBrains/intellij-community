@@ -1,1 +1,1 @@
-<node text="A.target_func(main.py)" base="true"/>
+<node text="A.target_func(self) (hierarchy.call.Static.Inheritance.main)" base="true"/>

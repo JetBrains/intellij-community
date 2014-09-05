@@ -13,20 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.hierarchy.call;
+package com.siyeh.ig.bugs;
 
-import com.intellij.psi.PsiElement;
-import com.jetbrains.python.psi.PyElement;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Collection;
-
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * @author novokrest
+ * @author Bas Leijdekkers
  */
-public interface PyCallDataManager {
-  Collection<PsiElement> getCallees(@NotNull PyElement pyElement);
+public class ResultSetIndexZeroInspectionTest extends LightInspectionTestCase {
 
-  Collection<PsiElement> getCallers(@NotNull PyElement pyElement);
+  public void testResultSetIndexZero() { doTest(); }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new ResultSetIndexZeroInspection();
+  }
 }
