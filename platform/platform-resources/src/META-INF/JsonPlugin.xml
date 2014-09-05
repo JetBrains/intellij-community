@@ -33,9 +33,10 @@
     <annotator language="JSON" implementationClass="com.intellij.json.codeinsight.JsonStringLiteralAnnotator"/>
     <annotator language="JSON" implementationClass="com.intellij.json.codeinsight.JsonStandardComplianceAnnotator"/>
     <lang.psiStructureViewFactory language="JSON" implementationClass="com.intellij.json.structureView.JsonStructureViewFactory"/>
-    <lang.foldingBuilder language="JSON" implementationClass="com.intellij.json.folding.JsonFoldingBuilder"/>
-    <lang.smartEnterProcessor language="JSON" implementationClass="com.intellij.json.smartEnter.JsonSmartEnterProcessor"/>
+    <lang.foldingBuilder language="JSON" implementationClass="com.intellij.json.editor.folding.JsonFoldingBuilder"/>
+    <lang.smartEnterProcessor language="JSON" implementationClass="com.intellij.json.editor.smartEnter.JsonSmartEnterProcessor"/>
     <lang.namesValidator language="JSON" implementationClass="com.intellij.json.JsonNamesValidator"/>
+    <statementUpDownMover implementation="com.intellij.json.editor.lineMover.JsonLineMover" id="JSON" order="before line"/>
 
     <!-- Imported from appcode-json -->
     <lang.elementManipulator forClass="com.intellij.json.psi.JsonLiteral"

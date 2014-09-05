@@ -29,6 +29,10 @@ public class JsonCompletionTest extends JsonTestCase {
     doTest(KEYWORDS);
   }
 
+  public void testPrefixed() {
+    doTest("null");
+  }
+
   private void doTest(String... variants) {
     myFixture.testCompletionVariants("completion/" + getTestName(false) + ".json", variants);
   }

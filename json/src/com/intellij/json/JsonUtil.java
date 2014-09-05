@@ -1,27 +1,37 @@
 package com.intellij.json;
 
-import com.intellij.json.psi.JsonArray;
-import com.intellij.json.psi.JsonValue;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mikhail Golubev
  */
-@SuppressWarnings("UnusedDeclaration")
 public class JsonUtil {
   private JsonUtil() {
     // empty
   }
 
-
   /**
-   * Checks that PSI element represents item of JSON array.
+   * Clone of C# "as" operator.
+   * Checks if expression has correct type and casts it if it has. Returns null otherwise.
+   * It saves coder from "instanceof / cast" chains.
    *
-   * @param element PSI element to check
-   * @return whether this PSI element is array element
+   * Copied from PyCharm's {@code PyUtil}.
+   *
+   * @param expression expression to check
+   * @param cls        class to cast
+   * @param <T>        class to cast
+   * @return expression casted to appropriate type (if could be casted). Null otherwise.
    */
-  private static boolean isArrayElement(@NotNull PsiElement element) {
-    return element instanceof JsonValue && element.getParent() instanceof JsonArray;
+  @Nullable
+  @SuppressWarnings("unchecked")
+  public static <T> T as(@Nullable final Object expression, @NotNull final Class<T> cls) {
+    if (expression == null) {
+      return null;
+    }
+    if (cls.isAssignableFrom(expression.getClass())) {
+      return (T)expression;
+    }
+    return null;
   }
 }
