@@ -83,16 +83,35 @@ public class ExecUtil {
 
   private ExecUtil() { }
 
+  /**
+   * Run the command using safe escaping and quoting when appropriate.
+   *
+   * @param command the command and its arguments, can contain any characters
+   * @param workDir working directory
+   * @param environment environment variables
+   * @return the running process
+   */
+  @NotNull
+  public static Process exec(@NotNull final List<String> command, @Nullable final String workDir,
+                             @Nullable final Map<String, String> environment) throws ExecutionException {
+    assert command.size() > 0;
+    final GeneralCommandLine commandLine = new GeneralCommandLine(command);
+    if (workDir != null) {
+      commandLine.setWorkDirectory(workDir);
+    }
+    if (environment != null) {
+      commandLine.getEnvironment().putAll(environment);
+    }
+    return commandLine.createProcess();
+  }
+
   public static int execAndGetResult(final String... command) throws ExecutionException, InterruptedException {
     assert command != null && command.length > 0;
     return execAndGetResult(Arrays.asList(command));
   }
 
   public static int execAndGetResult(@NotNull final List<String> command) throws ExecutionException, InterruptedException {
-    assert command.size() > 0;
-    final GeneralCommandLine commandLine = new GeneralCommandLine(command);
-    final Process process = commandLine.createProcess();
-    return process.waitFor();
+    return exec(command, null, null).waitFor();
   }
 
   @NotNull
@@ -151,10 +170,7 @@ public class ExecUtil {
   @NotNull
   public static ProcessOutput execAndGetOutput(@NotNull final List<String> command,
                                                @Nullable final String workDir) throws ExecutionException {
-    assert command.size() > 0;
-    final GeneralCommandLine commandLine = new GeneralCommandLine(command);
-    commandLine.setWorkDirectory(workDir);
-    final Process process = commandLine.createProcess();
+    final Process process = exec(command, workDir, null);
     final CapturingProcessHandler processHandler = new CapturingProcessHandler(process);
     return processHandler.runProcess();
   }
@@ -167,7 +183,7 @@ public class ExecUtil {
   @Nullable
   public static String execAndReadLine(@Nullable Charset charset, final String... command) {
     try {
-      return readFirstLine(new GeneralCommandLine(command).createProcess().getInputStream(), charset);
+      return readFirstLine(exec(Arrays.asList(command), null, null).getInputStream(), charset);
     }
     catch (Exception ignored) {
       return null;
