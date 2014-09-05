@@ -1,4 +1,4 @@
-package com.intellij.json.smartEnter;
+package com.intellij.json.editor.smartEnter;
 
 import com.intellij.json.psi.*;
 import com.intellij.lang.SmartEnterProcessorWithFixers;

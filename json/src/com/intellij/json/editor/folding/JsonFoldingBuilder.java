@@ -1,4 +1,4 @@
-package com.intellij.json.folding;
+package com.intellij.json.editor.folding;
 
 import com.intellij.json.JsonElementTypes;
 import com.intellij.lang.ASTNode;
