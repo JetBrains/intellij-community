@@ -52,6 +52,8 @@ public abstract class AbstractUpdateIntegrateCrawler implements SvnWCRootCrawler
     if (progress != null) {
       showProgressMessage(progress, root);
     }
+
+    myHandler.startUpdate();
     try {
       long rev = doUpdate(root);
 
@@ -62,6 +64,9 @@ public abstract class AbstractUpdateIntegrateCrawler implements SvnWCRootCrawler
     catch (VcsException e) {
       LOG.info(e);
       myExceptions.add(e);
+    }
+    finally {
+      myHandler.finishUpdate();
     }
   }
 
