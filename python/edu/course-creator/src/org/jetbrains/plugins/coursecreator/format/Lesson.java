@@ -42,4 +42,8 @@ public class Lesson {
   public int getIndex() {
     return myIndex;
   }
+
+  public Map<String, Task> getTasksMap() {
+    return myTasksMap;
+  }
 }
