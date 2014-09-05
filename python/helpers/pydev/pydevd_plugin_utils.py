@@ -1,4 +1,5 @@
 import os
+import types
 
 import pydev_log
 from pluginbase import PluginBase
@@ -30,16 +31,17 @@ class NullProxy(object):
     def __getattr__(self, name):
         return self.null_func
 
-class PluginProxy(object):
-    def __init__(self, plugin):
-        self.plugin = plugin
-        self.cache = {}
 
-    def __getattr__(self, name):
-        if not hasattr(self.cache, name):
-            self.cache[name] = getattr(self.plugin, name)
+def bind_func_to_method(plugin, func_name, obj, method_name):
+    foo = types.MethodType(getattr(plugin, func_name), obj)
+    setattr(obj, method_name, foo)
+    return foo
 
-        return self.cache[name]
+
+def clear_bindings(obj, method_prefix):
+    for attr in dir(obj):
+        if attr.startswith(method_prefix):
+            delattr(obj, attr)
 
 
 

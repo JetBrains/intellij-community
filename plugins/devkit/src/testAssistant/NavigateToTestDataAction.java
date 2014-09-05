@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
+import com.intellij.execution.testframework.TestTreeViewAction;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -45,7 +46,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class NavigateToTestDataAction extends AnAction {
+public class NavigateToTestDataAction extends AnAction implements TestTreeViewAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
