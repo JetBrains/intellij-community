@@ -167,7 +167,7 @@ public layoutEducational(String classesPath, Set usedJars) {
 
   def appInfo = appInfoFile()
   if (!dryRun) {
-    wireBuildDate(${buildNumber}, appInfo)
+    wireBuildDate(buildNumber, appInfo)
   }
 
   Map args = [
