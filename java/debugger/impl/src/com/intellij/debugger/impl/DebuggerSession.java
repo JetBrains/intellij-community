@@ -35,6 +35,7 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RemoteState;
 import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -371,7 +372,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
   }
 
   public boolean isRunning() {
-    return getState() == STATE_RUNNING && !getProcess().getExecutionResult().getProcessHandler().isProcessTerminated();
+    return getState() == STATE_RUNNING && !getProcess().getProcessHandler().isProcessTerminated();
   }
 
   private SuspendContextImpl getSuspendContext() {
@@ -590,7 +591,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
       final String transportName = DebuggerBundle.getTransportName(connection);
       final String message = DebuggerBundle.message("status.connected", addressDisplayName, transportName);
 
-      process.getExecutionResult().getProcessHandler().notifyTextAvailable(message + "\n", ProcessOutputTypes.SYSTEM);
+      process.printToConsole(message + "\n");
       DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
         @Override
         public void run() {
@@ -617,12 +618,12 @@ public class DebuggerSession implements AbstractDebuggerSession {
     @Override
     public void processDetached(final DebugProcessImpl debugProcess, boolean closedByUser) {
       if (!closedByUser) {
-        ExecutionResult executionResult = debugProcess.getExecutionResult();
-        if(executionResult != null) {
+        ProcessHandler processHandler = debugProcess.getProcessHandler();
+        if(processHandler != null) {
           final RemoteConnection connection = getProcess().getConnection();
           final String addressDisplayName = DebuggerBundle.getAddressDisplayName(connection);
           final String transportName = DebuggerBundle.getTransportName(connection);
-          executionResult.getProcessHandler().notifyTextAvailable(DebuggerBundle.message("status.disconnected", addressDisplayName, transportName) + "\n", ProcessOutputTypes.SYSTEM);
+          processHandler.notifyTextAvailable(DebuggerBundle.message("status.disconnected", addressDisplayName, transportName) + "\n", ProcessOutputTypes.SYSTEM);
         }
       }
       DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {

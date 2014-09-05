@@ -20,7 +20,6 @@ import com.intellij.debugger.NoDataException;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
-import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -167,11 +166,11 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
         }
         catch(AbsentInformationException ignored) {
         }
-        catch(ClassNotPreparedException ignored) {                                                                                                           
+        catch(ClassNotPreparedException ignored) {
         }
         catch (InternalError ignored) {
-          myDebugProcess.getExecutionResult().getProcessHandler().notifyTextAvailable(
-            DebuggerBundle.message("internal.error.locations.of.line", type.name()), ProcessOutputTypes.SYSTEM);
+          myDebugProcess.printToConsole(
+            DebuggerBundle.message("internal.error.locations.of.line", type.name()));
         }
         return null;
       }

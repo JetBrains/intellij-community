@@ -107,7 +107,7 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
       cl.call()
     }
     finally {
-      def handler = debugProcess.executionResult.processHandler
+      def handler = debugProcess.processHandler
       resume()
       if (!handler.waitFor(ourTimeout)) {
         if (handler instanceof OSProcessHandler) {
@@ -428,12 +428,12 @@ public static void main(String[] args) {
 
     int i = 0
     def suspendManager = debugProcess.suspendManager
-    while (i++ < 1000 && !suspendManager.pausedContext && !debugProcess.executionResult.processHandler.processTerminated) {
+    while (i++ < 1000 && !suspendManager.pausedContext && !debugProcess.processHandler.processTerminated) {
       Thread.sleep(10)
     }
 
     def context = suspendManager.pausedContext
-    assert context : "too long process, terminated=$debugProcess.executionResult.processHandler.processTerminated"
+    assert context : "too long process, terminated=$debugProcess.processHandler.processTerminated"
     return context
   }
 

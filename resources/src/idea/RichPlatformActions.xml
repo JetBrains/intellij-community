@@ -28,7 +28,7 @@
   <xi:include href="/idea/ExternalSystemActions.xml" xpointer="xpointer(/component/*)"/>
 
   <actions>
-    <action id="RerunFailedTests" class="com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction"
+    <action id="RerunFailedTests" class="com.intellij.execution.testframework.actions.RerunFailedTestsAction"
             icon="AllIcons.RunConfigurations.RerunFailedTests"/>
 
     <action id="FileChooser.GotoModule" class="com.intellij.openapi.fileChooser.actions.GotoModuleDirectory"

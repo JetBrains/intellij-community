@@ -223,7 +223,7 @@ private layoutPlugins(layouts) {
 }
 
 private String appInfoFile() {
-  return "${paths.sandbox}/classes/production/python-educational/idea/PyCharmEduApplicationInfo.xml"
+  return "$home/out/pycharmEDU/classes/production/python-educational/idea/PyCharmEduApplicationInfo.xml"
 }
 
 private layoutFull(Map args, String target, Set usedJars) {

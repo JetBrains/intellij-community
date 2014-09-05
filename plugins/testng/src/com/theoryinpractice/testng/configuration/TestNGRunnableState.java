@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: amrk
- * Date: Jul 2, 2005
- * Time: 12:22:07 AM
- */
 package com.theoryinpractice.testng.configuration;
 
 import com.intellij.ExtensionPoints;
@@ -40,7 +34,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.module.LanguageLevelUtil;
+import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
@@ -77,7 +71,6 @@ import org.testng.remote.RemoteArgs;
 import org.testng.remote.RemoteTestNG;
 import org.testng.remote.strprotocol.SerializedMessageSender;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -98,7 +91,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
 
   public TestNGRunnableState(ExecutionEnvironment environment, TestNGConfiguration config) {
     super(environment);
-    this.runnerSettings = environment.getRunnerSettings();
+    runnerSettings = environment.getRunnerSettings();
     this.config = config;
     //TODO need to narrow this down a bit
     //setModulesToCompile(ModuleManager.getInstance(config.getProject()).getModules());
@@ -120,6 +113,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
     }
   }
 
+  @NotNull
   @Override
   public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
     final boolean smRunner = Registry.is("testng_sm_runner");
@@ -173,6 +167,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
         final String text = event.getText();
         final ConsoleViewContentType consoleViewType = ConsoleViewContentType.getConsoleViewType(outputType);
         final Printable printable = new Printable() {
+          @Override
           public void printOn(final Printer printer) {
             printer.print(text, consoleViewType);
           }
@@ -188,9 +183,9 @@ public class TestNGRunnableState extends JavaCommandLineState {
     });
     console.attachToProcess(processHandler);
 
-    RerunFailedTestsAction rerunFailedTestsAction = new RerunFailedTestsAction(console);
-    rerunFailedTestsAction.init(console.getProperties(), getEnvironment());
+    RerunFailedTestsAction rerunFailedTestsAction = new RerunFailedTestsAction(console, console.getProperties());
     rerunFailedTestsAction.setModelProvider(new Getter<TestFrameworkRunningModel>() {
+      @Override
       public TestFrameworkRunningModel get() {
         return console.getResultsView();
       }
@@ -218,8 +213,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
 
     Disposer.register(getEnvironment().getProject(), smtConsoleView);
     smtConsoleView.attachToProcess(handler);
-    final RerunFailedTestsAction rerunFailedTestsAction = new RerunFailedTestsAction(smtConsoleView);
-    rerunFailedTestsAction.init(testConsoleProperties, getEnvironment());
+    final RerunFailedTestsAction rerunFailedTestsAction = new RerunFailedTestsAction(smtConsoleView, testConsoleProperties);
     rerunFailedTestsAction.setModelProvider(new Getter<TestFrameworkRunningModel>() {
       @Override
       public TestFrameworkRunningModel get() {
@@ -264,7 +258,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
     Module module = config.getConfigurationModule().getModule();
     LanguageLevel effectiveLanguageLevel = module == null
                                            ? LanguageLevelProjectExtension.getInstance(project).getLanguageLevel()
-                                           : LanguageLevelUtil.getEffectiveLanguageLevel(module);
+                                           : EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
     final boolean is15 = effectiveLanguageLevel != LanguageLevel.JDK_1_4 && effectiveLanguageLevel != LanguageLevel.JDK_1_3;
 
     LOG.info("Language level is " + effectiveLanguageLevel.toString());
@@ -311,7 +305,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
 
     javaParameters.getProgramParametersList().add(supportSerializationProtocol(config) ? RemoteArgs.PORT : CommandLineArgs.PORT, String.valueOf(port));
 
-    if (data.getOutputDirectory() != null && !"".equals(data.getOutputDirectory())) {
+    if (data.getOutputDirectory() != null && !data.getOutputDirectory().isEmpty()) {
       javaParameters.getProgramParametersList().add(CommandLineArgs.OUTPUT_DIRECTORY, data.getOutputDirectory());
     }
 
@@ -379,7 +373,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
       try {
         hostname = InetAddress.getLocalHost().getHostName();
       }
-      catch (UnknownHostException e) {
+      catch (UnknownHostException ignored) {
       }
       params.add("-Xdebug");
       params.add("-Xrunjdwp:transport=dt_socket,address=" + hostname + ':' + debugPort + ",suspend=y,server=n");
