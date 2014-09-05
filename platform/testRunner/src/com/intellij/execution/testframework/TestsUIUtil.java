@@ -86,7 +86,7 @@ public class TestsUIUtil {
     }
     return false;
   }
-  
+
   public static Navigatable getOpenFileDescriptor(final AbstractTestProxy testProxy, final TestFrameworkRunningModel model) {
     final TestConsoleProperties testConsoleProperties = model.getProperties();
     return getOpenFileDescriptor(testProxy, testConsoleProperties,
@@ -114,7 +114,7 @@ public class TestsUIUtil {
   public static void notifyByBalloon(@NotNull final Project project,
                                      boolean started,
                                      final AbstractTestProxy root,
-                                     final TestConsoleProperties properties, 
+                                     final TestConsoleProperties properties,
                                      @Nullable final String comment) {
     if (project.isDisposed()) return;
     if (properties == null) return;
@@ -231,7 +231,7 @@ public class TestsUIUtil {
           myType = MessageType.ERROR;
         }
         else if (notStartedCount > 0) {
-          myTitle = !notStarted.isEmpty() ? ExecutionBundle.message("junit.runing.info.failed.to.start.error.message") : "Tests Ignored";
+          myTitle = !notStarted.isEmpty() ? ExecutionBundle.message("junit.running.info.failed.to.start.error.message") : "Tests Ignored";
           myText = passedCount + " passed, " + notStartedCount + (!notStarted.isEmpty() ? " not started" : " ignored");
           myType = notStarted.isEmpty() ? MessageType.WARNING : MessageType.ERROR;
         }
