@@ -1151,10 +1151,6 @@
                      key="abstract.class.with.only.one.direct.inheritor.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.j2me.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.j2me.AbstractClassWithOnlyOneDirectInheritorInspection"/>
-    <localInspection language="JAVA" shortName="AnonymousInnerClassMayBeStatic" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="anonymous.inner.may.be.named.static.inner.class.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.j2me.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.j2me.AnonymousInnerClassMayBeStaticInspection"/>
     <localInspection language="JAVA" shortName="ArrayLengthInLoopCondition" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="array.length.in.loop.condition.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.j2me.issues" enabledByDefault="false" level="WARNING"
@@ -1543,6 +1539,10 @@
                      implementationClass="com.siyeh.ig.maturity.UseOfObsoleteDateTimeApiInspection"/>
 
     <!--group.names.memory.issues-->
+    <localInspection language="JAVA" shortName="AnonymousInnerClassMayBeStatic" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="anonymous.inner.may.be.named.static.inner.class.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.memory.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.memory.AnonymousInnerClassMayBeStaticInspection"/>
     <localInspection language="JAVA" shortName="StaticCollection" bundle="com.siyeh.InspectionGadgetsBundle" key="static.collection.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.memory.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.memory.StaticCollectionInspection"/>

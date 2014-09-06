@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.j2me;
+package com.siyeh.ig.memory;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -47,28 +47,25 @@ public class AnonymousInnerClassMayBeStaticInspectionBase extends BaseInspection
     extends BaseInspectionVisitor {
 
     @Override
-    public void visitClass(@NotNull PsiClass aClass) {
-      if (!(aClass instanceof PsiAnonymousClass)) {
+    public void visitAnonymousClass(@NotNull PsiAnonymousClass anonymousClass) {
+      if (anonymousClass instanceof PsiEnumConstantInitializer) {
         return;
       }
-      if (aClass instanceof PsiEnumConstantInitializer) {
+      final PsiMember containingMember = PsiTreeUtil.getParentOfType(anonymousClass, PsiMember.class);
+      if (containingMember == null || containingMember.hasModifierProperty(PsiModifier.STATIC)) {
         return;
       }
-      final PsiMember containingMember =
-        PsiTreeUtil.getParentOfType(aClass, PsiMember.class);
-      if (containingMember == null ||
-          containingMember.hasModifierProperty(PsiModifier.STATIC)) {
+      final PsiJavaCodeReferenceElement reference = anonymousClass.getBaseClassReference();
+      if (reference.resolve() == null) {
+        // don't warn on broken code
         return;
       }
-      final PsiAnonymousClass anAnonymousClass =
-        (PsiAnonymousClass)aClass;
-      final InnerClassReferenceVisitor visitor =
-        new InnerClassReferenceVisitor(anAnonymousClass);
-      anAnonymousClass.accept(visitor);
+      final InnerClassReferenceVisitor visitor = new InnerClassReferenceVisitor(anonymousClass);
+      anonymousClass.accept(visitor);
       if (!visitor.canInnerClassBeStatic()) {
         return;
       }
-      registerClassError(aClass);
+      registerClassError(anonymousClass);
     }
   }
 }
