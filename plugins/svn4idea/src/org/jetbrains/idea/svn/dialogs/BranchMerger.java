@@ -27,7 +27,6 @@ import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.jetbrains.idea.svn.integrate.IMerger;
 import org.jetbrains.idea.svn.integrate.MergeClient;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -72,7 +71,7 @@ public class BranchMerger implements IMerger {
     return myAtStart;
   }
 
-  public void mergeNext() throws SVNException, VcsException {
+  public void mergeNext() throws VcsException {
     myAtStart = false;
 
     File destination = new File(myTargetPath);

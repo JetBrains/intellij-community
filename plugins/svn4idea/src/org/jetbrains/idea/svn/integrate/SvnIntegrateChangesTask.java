@@ -42,7 +42,6 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;
@@ -149,9 +148,8 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     myHandler.startUpdate();
     try {
       myMerger.mergeNext();
-    } catch (SVNException e) {
-      createMessage(true, false, e.getMessage());
-    } catch (VcsException e) {
+    }
+    catch (VcsException e) {
       createMessage(true, false, e.getMessage());
     }
     finally {

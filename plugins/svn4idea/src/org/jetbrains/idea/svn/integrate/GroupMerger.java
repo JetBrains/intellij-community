@@ -29,7 +29,6 @@ import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNRevisionRange;
@@ -87,7 +86,7 @@ public class GroupMerger implements IMerger {
     return mySplitter.hasNext();
   }
 
-  public void mergeNext() throws SVNException, VcsException {
+  public void mergeNext() throws VcsException {
     final int step = mySplitter.step();
     myPackStart = myPackEnd + 1;
     myPackEnd = myPackStart + step - 1;

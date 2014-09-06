@@ -27,7 +27,6 @@ import org.jetbrains.idea.svn.copy.CopyMoveClient;
 import org.jetbrains.idea.svn.delete.DeleteClient;
 import org.jetbrains.idea.svn.history.SvnRepositoryContentRevision;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -61,7 +60,7 @@ public class PointMerger extends Merger {
     return myCount == 0;
   }
 
-  protected void doMerge() throws SVNException, VcsException {
+  protected void doMerge() throws VcsException {
     for (Change change : mySelectedChanges) {
       if (change.getBeforeRevision() == null) {
         add(change);
@@ -73,7 +72,7 @@ public class PointMerger extends Merger {
     }
   }
 
-  private void merge(final Change change) throws SVNException, VcsException {
+  private void merge(final Change change) throws VcsException {
     final SvnRepositoryContentRevision before = (SvnRepositoryContentRevision) change.getBeforeRevision();
     final SvnRepositoryContentRevision after = (SvnRepositoryContentRevision) change.getAfterRevision();
 
@@ -84,14 +83,14 @@ public class PointMerger extends Merger {
     final File afterPath = SvnUtil.fileFromUrl(myTarget, path, afterUrl);
 
     MergeClient client = myVcs.getFactory(myTarget).createMergeClient();
-    SvnTarget source1 = SvnTarget.fromURL(SVNURL.parseURIEncoded(beforeUrl), ((SvnRevisionNumber)before.getRevisionNumber()).getRevision());
-    SvnTarget source2 = SvnTarget.fromURL(SVNURL.parseURIEncoded(afterUrl), ((SvnRevisionNumber) after.getRevisionNumber()).getRevision());
+    SvnTarget source1 = SvnTarget.fromURL(SvnUtil.createUrl(beforeUrl), ((SvnRevisionNumber)before.getRevisionNumber()).getRevision());
+    SvnTarget source2 = SvnTarget.fromURL(SvnUtil.createUrl(afterUrl), ((SvnRevisionNumber)after.getRevisionNumber()).getRevision());
 
     client.merge(source1, source2, afterPath, Depth.FILES, true, mySvnConfig.isMergeDryRun(), false, false, mySvnConfig.getMergeOptions(),
                  myHandler);
   }
 
-  private void delete(final Change change) throws SVNException, VcsException {
+  private void delete(final Change change) throws VcsException {
     final SvnRepositoryContentRevision before = (SvnRepositoryContentRevision) change.getBeforeRevision();
     final String path = myCurrentBranchUrl.toString();
     final String beforeUrl = before.getFullPath();
@@ -101,7 +100,7 @@ public class PointMerger extends Merger {
     client.delete(beforePath, false, mySvnConfig.isMergeDryRun(), myHandler);
   }
 
-  private void add(final Change change) throws SVNException, VcsException {
+  private void add(final Change change) throws VcsException {
     final SvnRepositoryContentRevision after = (SvnRepositoryContentRevision) change.getAfterRevision();
     final String path = myCurrentBranchUrl.toString();
     final String afterUrl = after.getFullPath();
@@ -110,7 +109,7 @@ public class PointMerger extends Merger {
     final SVNRevision revision = ((SvnRevisionNumber)after.getRevisionNumber()).getRevision();
     // todo dry run
     CopyMoveClient client = myVcs.getFactory(myTarget).createCopyMoveClient();
-    client.copy(SvnTarget.fromURL(SVNURL.parseURIEncoded(afterUrl), revision), afterPath, revision, true, myHandler);
+    client.copy(SvnTarget.fromURL(SvnUtil.createUrl(afterUrl), revision), afterPath, revision, true, myHandler);
   }
 
   private static class ChangesComparator implements Comparator<Change> {

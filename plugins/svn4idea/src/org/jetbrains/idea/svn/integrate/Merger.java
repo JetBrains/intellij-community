@@ -31,9 +31,9 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
@@ -94,7 +94,7 @@ public class Merger implements IMerger {
     return myCount < myChangeLists.size();
   }
 
-  public void mergeNext() throws SVNException, VcsException {
+  public void mergeNext() throws VcsException {
     myLatestProcessed = myChangeLists.get(myCount);
     ++ myCount;
 
@@ -125,7 +125,7 @@ public class Merger implements IMerger {
     return false;
   }
 
-  protected void doMerge() throws SVNException, VcsException {
+  protected void doMerge() throws VcsException {
     SvnTarget source = SvnTarget.fromURL(myCurrentBranchUrl);
     MergeClient client = myVcs.getFactory(myTarget).createMergeClient();
 
