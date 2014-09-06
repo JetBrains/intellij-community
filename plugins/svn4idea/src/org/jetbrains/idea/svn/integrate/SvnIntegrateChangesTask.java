@@ -146,12 +146,16 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   }
 
   private void doMerge() {
+    myHandler.startUpdate();
     try {
       myMerger.mergeNext();
     } catch (SVNException e) {
       createMessage(true, false, e.getMessage());
     } catch (VcsException e) {
       createMessage(true, false, e.getMessage());
+    }
+    finally {
+      myHandler.finishUpdate();
     }
   }
 
