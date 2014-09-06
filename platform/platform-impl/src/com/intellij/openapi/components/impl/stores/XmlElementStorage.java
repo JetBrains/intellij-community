@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -181,15 +180,8 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     return true;
   }
 
-  protected void loadState(@NotNull StorageData result, @NotNull Element element) {
-    if (myPathMacroSubstitutor != null) {
-      myPathMacroSubstitutor.expandPaths(element);
-    }
-
-    IdeaPluginDescriptorImpl.internJDOMElement(element);
-
-    result.load(element);
-    result.checkUnknownMacros(myPathMacroSubstitutor);
+  private void loadState(@NotNull StorageData result, @NotNull Element element) {
+    result.load(element, myPathMacroSubstitutor, true);
   }
 
   @NotNull

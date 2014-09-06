@@ -16,6 +16,7 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.application.options.PathMacrosCollector;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.openapi.components.PathMacroSubstitutor;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.XmlConfigurationMerger;
@@ -23,15 +24,19 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Attribute;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 
 public class StorageData {
@@ -43,29 +48,34 @@ public class StorageData {
   protected final String myRootElementName;
   private int myHash = -1;
 
-  public StorageData(final String rootElementName) {
+  public StorageData(@NotNull String rootElementName) {
     myComponentStates = new THashMap<String, Element>();
     myRootElementName = rootElementName;
   }
 
-  StorageData(StorageData storageData) {
+  StorageData(@NotNull StorageData storageData) {
     myRootElementName = storageData.myRootElementName;
     myComponentStates = new THashMap<String, Element>(storageData.myComponentStates);
   }
 
-  public void load(@NotNull Element rootElement) {
-    for (Iterator<Element> iterator = rootElement.getChildren(COMPONENT).iterator(); iterator.hasNext(); ) {
-      Element element = iterator.next();
+  public void load(@NotNull Element rootElement, @Nullable PathMacroSubstitutor pathMacroSubstitutor, boolean intern) {
+    if (pathMacroSubstitutor != null) {
+      pathMacroSubstitutor.expandPaths(rootElement);
+    }
+
+    for (Element element : rootElement.getChildren(COMPONENT)) {
       String name = element.getAttributeValue(NAME);
       if (name == null) {
         LOG.info("Broken content in file : " + this);
         continue;
       }
 
-      iterator.remove();
-
       if (element.getAttributes().size() > 1 || !element.getChildren().isEmpty()) {
         assert element.getAttributeValue(NAME) != null : "No name attribute for component: " + name + " in " + this;
+
+        if (intern) {
+          IdeaPluginDescriptorImpl.internJDOMElement(element);
+        }
 
         Element serverElement = myComponentStates.get(name);
         if (serverElement != null) {
@@ -73,6 +83,12 @@ public class StorageData {
         }
 
         myComponentStates.put(name, element);
+      }
+    }
+
+    if (pathMacroSubstitutor instanceof TrackingPathMacroSubstitutor) {
+      for (String componentName : myComponentStates.keySet()) {
+        ((TrackingPathMacroSubstitutor)pathMacroSubstitutor).addUnknownMacros(componentName, PathMacrosCollector.getMacroNames(myComponentStates.get(componentName)));
       }
     }
   }
@@ -204,16 +220,14 @@ public class StorageData {
       return myComponentStates.containsKey(componentName);
   }
 
-  public void checkUnknownMacros(TrackingPathMacroSubstitutor pathMacroSubstitutor) {
-    if (pathMacroSubstitutor == null) {
-      return;
+  @NotNull
+  public static Element load(@NotNull VirtualFile file) throws IOException, JDOMException {
+    InputStream stream = file.getInputStream();
+    try {
+      return JDOMUtil.loadDocument(stream).getRootElement();
     }
-
-    for (String componentName : myComponentStates.keySet()) {
-      final Set<String> unknownMacros = PathMacrosCollector.getMacroNames(myComponentStates.get(componentName));
-      if (!unknownMacros.isEmpty()) {
-        pathMacroSubstitutor.addUnknownMacros(componentName, unknownMacros);
-      }
+    finally {
+      stream.close();
     }
   }
 }

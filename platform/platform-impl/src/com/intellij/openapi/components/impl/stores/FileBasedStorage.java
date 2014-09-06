@@ -24,14 +24,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
 import com.intellij.util.messages.MessageBus;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -41,7 +39,6 @@ import org.picocontainer.PicoContainer;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -187,15 +184,11 @@ public class FileBasedStorage extends XmlElementStorage {
   }
 
   @Override
-  protected void loadState(@NotNull StorageData result, @NotNull Element element) {
-    ((FileStorageData)result).myFilePath = myFile.getAbsolutePath();
-    super.loadState(result, element);
-  }
-
-  @Override
   @NotNull
   protected StorageData createStorageData() {
-    return new FileStorageData(myRootElementName);
+    FileStorageData data = new FileStorageData(myRootElementName);
+    data.myFilePath = myFilePath;
+    return data;
   }
 
   public static class FileStorageData extends StorageData {
@@ -253,7 +246,7 @@ public class FileBasedStorage extends XmlElementStorage {
       if (file.getLength() == 0) {
         return processReadException(null);
       }
-      return doLoadLocalData(file);
+      return StorageData.load(file);
     }
     catch (final JDOMException e) {
       return processReadException(e);
@@ -286,18 +279,6 @@ public class FileBasedStorage extends XmlElementStorage {
 
   private String getInvalidContentMessage(boolean contentTruncated) {
     return isProjectOrModuleOrWorkspaceFile() && !contentTruncated ? "Please correct the file content" : "File content will be recreated";
-  }
-
-  @Nullable
-  private static Element doLoadLocalData(@NotNull VirtualFile file) throws IOException, JDOMException {
-    InputStream stream = file.getInputStream();
-    try {
-      Document document = JDOMUtil.loadDocument(stream);
-      return document.hasRootElement() ? document.getRootElement() : null;
-    }
-    finally {
-      stream.close();
-    }
   }
 
   @Override

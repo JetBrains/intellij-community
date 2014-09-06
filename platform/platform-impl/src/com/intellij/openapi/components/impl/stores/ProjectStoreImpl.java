@@ -46,6 +46,7 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.lang.annotation.Annotation;
@@ -441,16 +442,16 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     }
 
     @Override
-    public void load(@NotNull final Element root) {
-      final String v = root.getAttributeValue(VERSION_OPTION);
+    public void load(@NotNull Element rootElement, @Nullable PathMacroSubstitutor pathMacroSubstitutor, boolean intern) {
+      final String v = rootElement.getAttributeValue(VERSION_OPTION);
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       originalVersion = v != null ? Integer.parseInt(v) : 0;
 
       if (originalVersion != ProjectManagerImpl.CURRENT_FORMAT_VERSION) {
-        convert(root, originalVersion);
+        convert(rootElement, originalVersion);
       }
 
-      super.load(root);
+      super.load(rootElement, pathMacroSubstitutor, intern);
     }
 
     protected void convert(final Element root, final int originalVersion) {

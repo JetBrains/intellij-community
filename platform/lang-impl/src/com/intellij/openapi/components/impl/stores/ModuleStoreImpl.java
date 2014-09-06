@@ -117,8 +117,8 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     }
 
     @Override
-    public void load(@NotNull final Element rootElement) {
-      super.load(rootElement);
+    public void load(@NotNull Element rootElement, @Nullable PathMacroSubstitutor pathMacroSubstitutor, boolean intern) {
+      super.load(rootElement, pathMacroSubstitutor, intern);
 
       for (Attribute attribute : rootElement.getAttributes()) {
         myOptions.put(attribute.getName(), attribute.getValue());

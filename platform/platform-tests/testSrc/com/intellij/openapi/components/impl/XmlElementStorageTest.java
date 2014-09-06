@@ -130,8 +130,9 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
     public void reset() {
     }
 
+    @NotNull
     @Override
-    public Collection<String> getComponents(Collection<String> macros) {
+    public Collection<String> getComponents(@NotNull Collection<String> macros) {
       return Collections.emptyList();
     }
 
@@ -149,17 +150,18 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
       throw new UnsupportedOperationException("Method collapsePath not implemented in " + getClass());
     }
 
+    @NotNull
     @Override
     public Collection<String> getUnknownMacros(final String componentName) {
       return Collections.emptySet();
     }
 
     @Override
-    public void invalidateUnknownMacros(Set<String> macros) {
+    public void invalidateUnknownMacros(@NotNull Set<String> macros) {
     }
 
     @Override
-    public void addUnknownMacros(String componentName, Collection<String> unknownMacros) {
+    public void addUnknownMacros(@NotNull String componentName, @NotNull Collection<String> unknownMacros) {
     }
   }
 }
