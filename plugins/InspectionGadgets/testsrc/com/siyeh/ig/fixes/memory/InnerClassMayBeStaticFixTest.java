@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.fixes.performance;
+package com.siyeh.ig.fixes.memory;
 
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
-import com.siyeh.ig.performance.InnerClassMayBeStaticInspection;
+import com.siyeh.ig.memory.InnerClassMayBeStaticInspection;
 
 /**
  * @author Bas Leijdekkers
@@ -28,7 +28,7 @@ public class InnerClassMayBeStaticFixTest extends IGQuickFixesTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myFixture.enableInspections(new InnerClassMayBeStaticInspection());
-    myRelativePath = "performance/inner_class_static";
+    myRelativePath = "memory/inner_class_static";
     myDefaultHint = InspectionGadgetsBundle.message("make.static.quickfix");
   }
 

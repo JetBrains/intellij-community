@@ -20,7 +20,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.performance.InnerClassReferenceVisitor;
 import org.jetbrains.annotations.NotNull;
 
 public class AnonymousInnerClassMayBeStaticInspectionBase extends BaseInspection {

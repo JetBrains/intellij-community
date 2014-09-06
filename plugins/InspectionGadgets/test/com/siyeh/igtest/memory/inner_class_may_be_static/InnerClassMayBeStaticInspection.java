@@ -1,4 +1,4 @@
-package com.siyeh.igtest.performance.inner_class_may_be_static;
+package com.siyeh.igtest.memory.inner_class_may_be_static;
 
 import javax.swing.*;
 
