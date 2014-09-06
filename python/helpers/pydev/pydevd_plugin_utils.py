@@ -2,7 +2,7 @@ import os
 import types
 
 import pydev_log
-from third_party.pluginbase import PluginBase
+from pluginbase import PluginBase
 
 
 def load_plugins(package):
