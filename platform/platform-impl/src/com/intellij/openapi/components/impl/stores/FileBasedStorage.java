@@ -55,9 +55,6 @@ public class FileBasedStorage extends XmlElementStorage {
   private final File myFile;
   private volatile VirtualFile myCachedVirtualFile;
 
-  @Nullable
-  private final RoamingType myRoamingType;
-
   public FileBasedStorage(@NotNull String filePath,
                           @NotNull String fileSpec,
                           @Nullable RoamingType roamingType,
@@ -67,14 +64,12 @@ public class FileBasedStorage extends XmlElementStorage {
                           PicoContainer picoContainer,
                           @Nullable StreamProvider streamProvider,
                           ComponentVersionProvider componentVersionProvider) {
-    super(pathMacroManager, parentDisposable, rootElementName, streamProvider, fileSpec, componentVersionProvider);
+    super(fileSpec, roamingType, pathMacroManager, parentDisposable, rootElementName, streamProvider, componentVersionProvider);
 
     refreshConfigDirectoryOnce();
 
     myFilePath = filePath;
     myFile = new File(filePath);
-
-    myRoamingType = roamingType;
 
     VirtualFileTracker virtualFileTracker = ServiceManager.getService(VirtualFileTracker.class);
     MessageBus messageBus = (MessageBus)picoContainer.getComponentInstanceOfType(MessageBus.class);
@@ -104,12 +99,6 @@ public class FileBasedStorage extends XmlElementStorage {
         }
       }, false, this);
     }
-  }
-
-  @Nullable
-  @Override
-  protected RoamingType getRoamingType() {
-    return myRoamingType;
   }
 
   private static void refreshConfigDirectoryOnce() {
@@ -319,7 +308,7 @@ public class FileBasedStorage extends XmlElementStorage {
 
   @Nullable
   public File updateFileExternallyFromStreamProviders() throws IOException {
-    Element element = getElement(loadData(true, getRoamingType()));
+    Element element = getElement(loadData(true));
     if (element == null) {
       FileUtil.delete(myFile);
       return null;

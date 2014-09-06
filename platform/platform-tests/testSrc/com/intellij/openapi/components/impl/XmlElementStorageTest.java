@@ -16,6 +16,7 @@
 package com.intellij.openapi.components.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
@@ -87,7 +88,7 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
     private Element mySavedElement;
 
     public MyXmlElementStorage(Element element, final Disposable parentDisposable) throws StateStorageException {
-      super(new MyPathMacroManager(), parentDisposable, "root", null, "", ComponentVersionProvider.EMPTY);
+      super("", RoamingType.PER_USER, new MyPathMacroManager(), parentDisposable, "root", null, ComponentVersionProvider.EMPTY);
       myElement = element;
     }
 
