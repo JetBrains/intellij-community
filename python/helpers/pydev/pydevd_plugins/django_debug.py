@@ -123,7 +123,7 @@ def is_django_suspended(thread):
     return thread.additionalInfo.suspend_type == DJANGO_SUSPEND
 
 
-def suspend_django(py_db_frame, mainDebugger, thread, frame, cmd=CMD_SET_BREAK):
+def suspend_django(mainDebugger, thread, frame, cmd=CMD_SET_BREAK):
     frame = DjangoTemplateFrame(frame)
 
     if frame.f_lineno is None:
@@ -137,7 +137,7 @@ def suspend_django(py_db_frame, mainDebugger, thread, frame, cmd=CMD_SET_BREAK):
 
     pydevd_vars.addAdditionalFrameById(GetThreadId(thread), {id(frame): frame})
 
-    py_db_frame.setSuspend(thread, cmd)
+    mainDebugger.setSuspend(thread, cmd)
     thread.additionalInfo.suspend_type = DJANGO_SUSPEND
 
     thread.additionalInfo.filename = frame.f_code.co_filename
@@ -264,14 +264,13 @@ def is_django_exception_break_context(frame):
 # Django Step Commands
 #=======================================================================================================================
 
-def can_skip(mainDebugger, pydb_frame):
-    frame = pydb_frame.frame
+def can_not_skip(mainDebugger, pydb_frame, frame):
     if hasattr(mainDebugger, 'django_breakpoints') and mainDebugger.django_breakpoints and cached_call(pydb_frame, is_django_render_call, frame):
         filename = get_template_file_name(frame)
         django_breakpoints_for_file = mainDebugger.django_breakpoints.get(filename)
         if django_breakpoints_for_file:
-            return False
-    return True
+            return True
+    return False
 
 def has_exception_breaks(mainDebugger):
     return hasattr(mainDebugger, 'django_exception_break') and mainDebugger.django_exception_break
@@ -306,16 +305,15 @@ def cmd_step_over(mainDebugger, frame, event, args, stop_info):
 def stop(mainDebugger, frame, event, args, stop_info, arg, step_cmd):
     mainDebugger, filename, info, thread = args
     if DictContains(stop_info, 'django_stop') and stop_info['django_stop']:
-        frame = suspend_django(mainDebugger, mainDebugger, thread, frame, step_cmd)
+        frame = suspend_django(mainDebugger, thread, frame, step_cmd)
         if frame:
             mainDebugger.doWaitSuspend(thread, frame, event, arg)
             return True
     return False
 
 
-def get_breakpoint(mainDebugger, pydb_frame, event, args):
+def get_breakpoint(mainDebugger, pydb_frame, frame, event, args):
     mainDebugger, filename, info, thread = args
-    frame = pydb_frame.frame
     flag = False
     django_breakpoint = None
     new_frame = None
@@ -337,19 +335,18 @@ def get_breakpoint(mainDebugger, pydb_frame, event, args):
     return flag, django_breakpoint, new_frame
 
 
-def suspend(mainDebugger, pydb_frame, thread, frame):
-    return suspend_django(pydb_frame, mainDebugger, thread, frame)
+def suspend(mainDebugger, thread, frame):
+    return suspend_django(mainDebugger, thread, frame)
 
-def exception_break(mainDebugger, pydb_frame, args, arg):
+def exception_break(mainDebugger, pydb_frame, frame, args, arg):
     mainDebugger, filename, info, thread = args
-    frame = pydb_frame.frame
     exception, value, trace = arg
     if hasattr(mainDebugger, 'django_exception_break') and mainDebugger.django_exception_break and \
                     get_exception_name(exception) in ['VariableDoesNotExist', 'TemplateDoesNotExist', 'TemplateSyntaxError'] and \
             just_raised(trace) and is_django_exception_break_context(frame):
         render_frame = find_django_render_frame(frame)
         if render_frame:
-            suspend_frame = suspend_django(pydb_frame, mainDebugger, thread, render_frame, CMD_ADD_EXCEPTION_BREAK)
+            suspend_frame = suspend_django(mainDebugger, thread, render_frame, CMD_ADD_EXCEPTION_BREAK)
             if suspend_frame:
                 add_exception_to_frame(suspend_frame, (exception, value, trace))
                 flag = True
