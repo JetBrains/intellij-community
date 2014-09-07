@@ -103,6 +103,7 @@ public class CollectionListModel<T> extends AbstractListModel implements Editabl
     Collections.sort(myItems, comparator);
   }
 
+  @NotNull
   public List<T> getItems() {
     return Collections.unmodifiableList(myItems);
   }
