@@ -134,11 +134,13 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   private void createMessage(final boolean warning, final String firstString) {
     final List<String> messages = new ArrayList<String>();
     messages.add(firstString);
-    myMerger.getInfo(new Consumer<String>() {
+    Consumer<String> messagesCollector = new Consumer<String>() {
       public void consume(final String s) {
         messages.add(s);
       }
-    });
+    };
+    myMerger.getInfo(messagesCollector);
+    myMerger.getSkipped(messagesCollector);
     final VcsException result = new VcsException(messages);
     result.setIsWarning(warning);
     myExceptions.add(result);

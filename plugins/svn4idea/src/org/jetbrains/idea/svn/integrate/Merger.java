@@ -146,8 +146,6 @@ public class Merger implements IMerger {
       holder.consume(SvnBundle.message("action.Subversion.integrate.changes.warning.failed.list.text", myLatestProcessed.getNumber(),
                                        myLatestProcessed.getComment().replace('\n', '|')));
     }
-
-    getSkipped(holder);
   }
 
   public void getSkipped(final Consumer<String> holder) {

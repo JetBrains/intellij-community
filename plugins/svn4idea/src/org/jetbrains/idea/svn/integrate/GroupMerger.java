@@ -152,8 +152,6 @@ public class GroupMerger implements IMerger {
       sb.append(" merging faced problems");
       holder.consume(sb.toString());
     }
-
-    getSkipped(holder);
   }
 
   public void getSkipped(final Consumer<String> holder) {
