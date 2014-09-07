@@ -194,7 +194,7 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
       }
     });
 
-    Assert.assertTrue(s.waitFor(60000));
+    Assert.assertTrue(s.waitFor(getTestTimeout()));
 
     XDebuggerTestUtil.waitForSwing();
 
@@ -205,6 +205,10 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
     after();
 
     disposeProcess(myProcessHandler);
+  }
+
+  protected int getTestTimeout() {
+    return 60000;
   }
 
   protected void configure(AbstractPythonTestRunConfiguration config) {
