@@ -48,8 +48,6 @@ import org.jetbrains.idea.svn.mergeinfo.ListMergeStatus;
 import org.jetbrains.idea.svn.mergeinfo.MergeInfoHolder;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -722,16 +720,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
                                         final UpdateEventHandler handler,
                                         final SVNURL currentBranchUrl,
                                         String branchName) {
-              return new Merger(vcs, myChangeListsList, target, handler, currentBranchUrl, branchName) {
-                @Override
-                protected SVNRevisionRange createRange() {
-                  if (myDirect) {
-                    return super.createRange();
-                  } else {
-                    return new SVNRevisionRange(SVNRevision.create(myLatestProcessed.getNumber()), SVNRevision.create(myLatestProcessed.getNumber() - 1));
-                  }
-                }
-              };
+              return new Merger(vcs, myChangeListsList, target, handler, currentBranchUrl, branchName, false, !myDirect);
             }
           };
     }

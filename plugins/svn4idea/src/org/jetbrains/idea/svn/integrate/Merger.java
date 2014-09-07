@@ -54,6 +54,8 @@ public class Merger implements IMerger {
   private final Project myProject;
   @NotNull private final SvnVcs myVcs;
   private final String myBranchName;
+  private final boolean myRecordOnly;
+  private final boolean myInvertRange;
 
   public Merger(final SvnVcs vcs,
                 final List<CommittedChangeList> changeLists,
@@ -61,6 +63,17 @@ public class Merger implements IMerger {
                 final UpdateEventHandler handler,
                 final SVNURL currentBranchUrl,
                 String branchName) {
+    this(vcs, changeLists, target, handler, currentBranchUrl, branchName, false, false);
+  }
+
+  public Merger(final SvnVcs vcs,
+                final List<CommittedChangeList> changeLists,
+                final File target,
+                final UpdateEventHandler handler,
+                final SVNURL currentBranchUrl,
+                String branchName,
+                boolean recordOnly,
+                boolean invertRange) {
     myBranchName = branchName;
     myVcs = vcs;
     myProject = vcs.getProject();
@@ -75,6 +88,8 @@ public class Merger implements IMerger {
     myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
     myHandler = handler;
     myCommitMessage = new StringBuilder();
+    myRecordOnly = recordOnly;
+    myInvertRange = invertRange;
   }
 
   public boolean hasNext() {
@@ -105,18 +120,17 @@ public class Merger implements IMerger {
   }
 
   protected SVNRevisionRange createRange() {
-    return new SVNRevisionRange(SVNRevision.create(myLatestProcessed.getNumber() - 1), SVNRevision.create(myLatestProcessed.getNumber()));
-  }
+    SVNRevision start = SVNRevision.create(myLatestProcessed.getNumber() - 1);
+    SVNRevision end = SVNRevision.create(myLatestProcessed.getNumber());
 
-  protected boolean isRecordOnly() {
-    return false;
+    return myInvertRange ? new SVNRevisionRange(end, start) : new SVNRevisionRange(start, end);
   }
 
   protected void doMerge() throws VcsException {
     SvnTarget source = SvnTarget.fromURL(myCurrentBranchUrl);
     MergeClient client = myVcs.getFactory(myTarget).createMergeClient();
 
-    client.merge(source, createRange(), myTarget, Depth.INFINITY, mySvnConfig.isMergeDryRun(), isRecordOnly(), true,
+    client.merge(source, createRange(), myTarget, Depth.INFINITY, mySvnConfig.isMergeDryRun(), myRecordOnly, true,
                  mySvnConfig.getMergeOptions(), myHandler);
   }
 

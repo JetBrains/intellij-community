@@ -21,8 +21,6 @@ import org.jetbrains.idea.svn.integrate.IMerger;
 import org.jetbrains.idea.svn.integrate.Merger;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 
 import java.io.File;
 import java.util.List;
@@ -40,19 +38,6 @@ public class RecordOnlyMergerFactory extends ChangeListsMergerFactory {
                               final UpdateEventHandler handler,
                               final SVNURL currentBranchUrl,
                               String branchName) {
-    return new Merger(vcs, myChangeListsList, target, handler, currentBranchUrl, branchName) {
-      @Override
-      protected SVNRevisionRange createRange() {
-        if (myUndo) {
-            return new SVNRevisionRange(SVNRevision.create(myLatestProcessed.getNumber()), SVNRevision.create(myLatestProcessed.getNumber() - 1));
-        }
-        return super.createRange();
-      }
-
-      @Override
-      protected boolean isRecordOnly() {
-        return true;
-      }
-    };
+    return new Merger(vcs, myChangeListsList, target, handler, currentBranchUrl, branchName, true, myUndo);
   }
 }
