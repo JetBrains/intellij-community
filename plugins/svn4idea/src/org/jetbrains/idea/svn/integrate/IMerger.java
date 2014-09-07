@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -24,8 +23,13 @@ import java.io.File;
 public interface IMerger {
   boolean hasNext();
   void mergeNext() throws VcsException;
-  void getInfo(Consumer<String> holder);
-  void getSkipped(final Consumer<String> holder);
+
+  @Nullable
+  String getInfo();
+
+  @Nullable
+  String getSkipped();
+
   String getComment();
   @Nullable
   File getMergeInfoHolder();

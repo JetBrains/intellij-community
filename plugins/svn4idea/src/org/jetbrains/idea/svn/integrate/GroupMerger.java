@@ -20,11 +20,9 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.util.Consumer;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
@@ -141,7 +139,10 @@ public class GroupMerger implements IMerger {
            Collections.<CommittedChangeList>emptyList();
   }
 
-  public void getInfo(final Consumer<String> holder) {
+  @Nullable
+  public String getInfo() {
+    String result = null;
+
     if (myPackStart != -1) {
       final StringBuilder sb = new StringBuilder("Changelist(s) :");
       for (int i = myPackStart; i <= myPackEnd; i++) {
@@ -150,24 +151,15 @@ public class GroupMerger implements IMerger {
         sb.append("\n" + list.getNumber()).append(" (").append(nextComment).append(")");
       }
       sb.append(" merging faced problems");
-      holder.consume(sb.toString());
+      result = sb.toString();
     }
+
+    return result;
   }
 
-  public void getSkipped(final Consumer<String> holder) {
-    final List<CommittedChangeList> tail = getTail();
-    if (! tail.isEmpty()) {
-      final StringBuilder sb = new StringBuilder();
-      for (int i = 0; i < tail.size(); i++) {
-        CommittedChangeList list = tail.get(i);
-        if (i != 0) {
-          sb.append(',');
-        }
-        sb.append(list.getNumber()).append(" (").append(list.getComment().replace('\n', '|')).append(')');
-      }
-
-      holder.consume(SvnBundle.message("action.Subversion.integrate.changes.warning.skipped.lists.text", sb.toString()));
-    }
+  @Nullable
+  public String getSkipped() {
+    return Merger.getSkippedMessage(getTail());
   }
 
   public String getComment() {

@@ -33,6 +33,8 @@ import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.update.*;
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -47,7 +49,6 @@ import org.tmatesoft.svn.core.SVNURL;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 
 public class SvnIntegrateChangesTask extends Task.Backgroundable {
@@ -131,19 +132,26 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     }
   }
 
-  private void createMessage(final boolean warning, final String firstString) {
-    final List<String> messages = new ArrayList<String>();
-    messages.add(firstString);
-    Consumer<String> messagesCollector = new Consumer<String>() {
-      public void consume(final String s) {
-        messages.add(s);
+  @NotNull
+  private static VcsException createError(@NotNull String... messages) {
+    return createException(false, messages);
+  }
+
+  @NotNull
+  private static VcsException createWarning(@NotNull String... messages) {
+    return createException(true, messages);
+  }
+
+  @NotNull
+  private static VcsException createException(boolean isWarning, @NotNull String... messages) {
+    Collection<String> notEmptyMessages = ContainerUtil.mapNotNull(messages, new Function<String, String>() {
+      @Override
+      public String fun(@Nullable String message) {
+        return StringUtil.nullize(message, true);
       }
-    };
-    myMerger.getInfo(messagesCollector);
-    myMerger.getSkipped(messagesCollector);
-    final VcsException result = new VcsException(messages);
-    result.setIsWarning(warning);
-    myExceptions.add(result);
+    });
+
+    return new VcsException(notEmptyMessages).setIsWarning(isWarning);
   }
 
   private void doMerge() {
@@ -152,7 +160,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
       myMerger.mergeNext();
     }
     catch (VcsException e) {
-      createMessage(false, e.getMessage());
+      myExceptions.add(createError(e.getMessage(), myMerger.getInfo(), myMerger.getSkipped()));
     }
     finally {
       myHandler.finishUpdate();
@@ -196,23 +204,10 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
                                    Messages.getInformationIcon());
       } else {
         if (haveConflicts) {
-          final VcsException exception = new VcsException(SvnBundle.message("svn.integrate.changelist.warning.unresolved.conflicts.text"));
-          exception.setIsWarning(true);
-          myExceptions.add(exception);
+          myExceptions.add(createWarning(SvnBundle.message("svn.integrate.changelist.warning.unresolved.conflicts.text")));
         }
         if (wasCanceled) {
-          final List<String> details = new LinkedList<String>();
-          details.add("Integration was canceled");
-          myMerger.getSkipped(new Consumer<String>() {
-            public void consume(String s) {
-              if (! StringUtil.isEmptyOrSpaces(s)) {
-                details.add(s);
-              }
-            }
-          });
-          final VcsException exception = new VcsException(details);
-          exception.setIsWarning(true);
-          myExceptions.add(exception);
+          myExceptions.add(createWarning("Integration was canceled", myMerger.getSkipped()));
         }
         finishActions(wasCanceled);
       }

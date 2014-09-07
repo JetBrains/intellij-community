@@ -17,8 +17,8 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
@@ -91,7 +91,9 @@ public class BranchMerger implements IMerger {
     return myVcs.getSvnConfiguration().getMergeOptions();
   }
 
-  public void getInfo(Consumer<String> holder) {
+  @Nullable
+  public String getInfo() {
+    return null;
   }
 
   public File getMergeInfoHolder() {
@@ -101,7 +103,9 @@ public class BranchMerger implements IMerger {
   public void afterProcessing() {
   }
 
-  public void getSkipped(Consumer<String> holder) {
+  @Nullable
+  public String getSkipped() {
+    return null;
   }
 
   @NotNull
