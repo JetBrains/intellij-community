@@ -39,7 +39,6 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 public class Merger implements IMerger {
@@ -78,25 +77,13 @@ public class Merger implements IMerger {
     myCommitMessage = new StringBuilder();
   }
 
-  private static class ByNumberChangeListComparator implements Comparator<CommittedChangeList>{
-    private final static ByNumberChangeListComparator ourInstance = new ByNumberChangeListComparator();
-
-    public static ByNumberChangeListComparator getInstance() {
-      return ourInstance;
-    }
-
-    public int compare(final CommittedChangeList o1, final CommittedChangeList o2) {
-      return (int) (o1.getNumber() - o2.getNumber());
-    }
-  }
-
   public boolean hasNext() {
     return myCount < myChangeLists.size();
   }
 
   public void mergeNext() throws VcsException {
     myLatestProcessed = myChangeLists.get(myCount);
-    ++ myCount;
+    ++myCount;
 
     if (myProgressIndicator != null) {
       myProgressIndicator.setText2(SvnBundle.message("action.Subversion.integrate.changes.progress.integrating.details.text",
@@ -143,7 +130,7 @@ public class Merger implements IMerger {
   public void getInfo(final Consumer<String> holder, final boolean getLatest) {
     if (getLatest && (myLatestProcessed != null)) {
       holder.consume(SvnBundle.message("action.Subversion.integrate.changes.warning.failed.list.text", myLatestProcessed.getNumber(),
-                                   myLatestProcessed.getComment().replace('\n', '|')));
+                                       myLatestProcessed.getComment().replace('\n', '|')));
     }
 
     getSkipped(holder);
@@ -151,7 +138,7 @@ public class Merger implements IMerger {
 
   public void getSkipped(final Consumer<String> holder) {
     final List<CommittedChangeList> tail = getTail();
-    if (! tail.isEmpty()) {
+    if (!tail.isEmpty()) {
       final StringBuilder sb = new StringBuilder();
       for (int i = 0; i < tail.size(); i++) {
         CommittedChangeList list = tail.get(i);
@@ -175,7 +162,8 @@ public class Merger implements IMerger {
   }
 
   public void afterProcessing() {
-    myProject.getMessageBus().syncPublisher(COMMITTED_CHANGES_MERGED_STATE).event(new ArrayList<CommittedChangeList>(myChangeLists.subList(0, myCount)));
+    myProject.getMessageBus().syncPublisher(COMMITTED_CHANGES_MERGED_STATE)
+      .event(new ArrayList<CommittedChangeList>(myChangeLists.subList(0, myCount)));
   }
 
   public static final Topic<CommittedChangesMergedStateChanged> COMMITTED_CHANGES_MERGED_STATE =
