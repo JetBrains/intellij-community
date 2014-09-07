@@ -7,8 +7,7 @@ class TestCodeConstructs {
       (new String()).hashCode();
    }
 
-   String fieldIncrement() {
-      int var1 = this.count++;
-      return "id:" + var1;
+   Integer fieldIncrement() {
+      return new Integer(this.count++);
    }
 }
