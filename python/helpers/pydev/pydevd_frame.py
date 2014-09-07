@@ -320,6 +320,7 @@ class PyDBFrame:
                 if not flag and event != 'return' and info.pydev_state != STATE_SUSPEND and breakpoints_for_file is not None \
                         and DictContains(breakpoints_for_file, line):
                     breakpoint = breakpoints_for_file[line]
+                    new_frame = frame
                     stop_info['stop'] = True
                     if step_cmd == CMD_STEP_OVER and stop_frame is frame and event in ('line', 'return'):
                         stop_info['stop'] = False #we don't stop on breakpoint if we have to stop by step-over (it will be processed later)
