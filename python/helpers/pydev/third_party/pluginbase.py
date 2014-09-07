@@ -12,10 +12,11 @@
 import os
 import sys
 
-from pydevd_constants import IS_PY24, IS_PY27, IS_PY3K
+from pydevd_constants import IS_PY24, IS_PY3K
+
 
 if IS_PY24:
-    from uuid_old import uuid4
+    from third_party.uuid_old import uuid4
 else:
     from uuid import uuid4
 

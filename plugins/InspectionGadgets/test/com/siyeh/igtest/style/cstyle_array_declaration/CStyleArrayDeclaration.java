@@ -1,11 +1,11 @@
 package com.siyeh.igtest.style;
 
-public class CStyleArrayDeclarationInspection
+public class CStyleArrayDeclaration
 {
     private int[] m_foo;
-    private int m_bar[];
+    private int <warning descr="C-style array declaration 'm_bar'">m_bar</warning>[];
 
-    public CStyleArrayDeclarationInspection(int[] bar, int[] foo)
+    public CStyleArrayDeclaration(int[] bar, int[] foo)
     {
         m_bar = bar;
         m_foo = foo;
@@ -18,7 +18,7 @@ public class CStyleArrayDeclarationInspection
 
     public void foo()
     {
-        final int foo[] = new int[3];
+        final int <warning descr="C-style array declaration 'foo'">foo</warning>[] = new int[3];
         final int[] bar = new int[3];
 
         for(int i = 0; i < bar.length; i++)
@@ -27,7 +27,7 @@ public class CStyleArrayDeclarationInspection
         }
     }
 
-    public void bar(int foo[], int[] bar)
+    public void bar(int <warning descr="C-style array declaration 'foo'">foo</warning>[], int[] bar)
     {
 
     }

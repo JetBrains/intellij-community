@@ -2,8 +2,7 @@ import os
 import types
 
 import pydev_log
-from pluginbase import PluginBase
-
+from third_party.pluginbase import PluginBase
 
 
 def load_plugins(package):
@@ -15,7 +14,7 @@ def load_plugins(package):
         try:
             loaded_plugin = plugin_source.load_plugin(plugin)
         except:
-            pydev_log.error("Failed to load plugin %s" % plugin)
+            pydev_log.error("Failed to load plugin %s" % plugin, True)
         if loaded_plugin:
             plugins.append(loaded_plugin)
 
@@ -26,7 +25,7 @@ class NullProxy(object):
     def __init__(self):
         def foo(*args, **kwargs):
             return None
-        self.null_func = foo
+        self.null_func = types.MethodType(foo, self)
 
     def __getattr__(self, name):
         return self.null_func

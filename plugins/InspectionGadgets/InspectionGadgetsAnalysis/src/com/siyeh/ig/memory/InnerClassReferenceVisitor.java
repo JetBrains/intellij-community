@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.performance;
+package com.siyeh.ig.memory;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -21,7 +21,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class InnerClassReferenceVisitor extends JavaRecursiveElementVisitor {
+class InnerClassReferenceVisitor extends JavaRecursiveElementVisitor {
 
   private final PsiClass innerClass;
   private boolean referencesStaticallyAccessible = true;

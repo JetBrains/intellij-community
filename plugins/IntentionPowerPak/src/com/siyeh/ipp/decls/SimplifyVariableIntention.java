@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.siyeh.ipp.decls;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiVariable;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -29,9 +29,9 @@ public class SimplifyVariableIntention extends Intention {
     return new SimplifyVariablePredicate();
   }
 
-  public void processIntention(PsiElement element)
-    throws IncorrectOperationException {
-    final PsiVariable var = (PsiVariable)element;
-    var.normalizeDeclaration();
+  public void processIntention(PsiElement element) {
+    final PsiVariable variable = (PsiVariable)element;
+    variable.normalizeDeclaration();
+    CodeStyleManager.getInstance(element.getProject()).reformat(variable);
   }
 }

@@ -1,4 +1,4 @@
-package performance.inner_class_static;
+package memory.inner_class_static;
 
 class Simple {
   class Inner<caret> {}

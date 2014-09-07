@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.j2me;
+package com.siyeh.ipp.decls;
 
-import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.fixes.MoveAnonymousToInnerClassFix;
+import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ipp.IPPTestCase;
+import junit.framework.TestCase;
 
-public class AnonymousInnerClassMayBeStaticInspection extends AnonymousInnerClassMayBeStaticInspectionBase {
+/**
+ * @author Bas Leijdekkers
+ */
+public class SimplifyVariableIntentionTest extends IPPTestCase {
+
+  public void testFieldWithWhitespace() { doTest(); }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new MoveAnonymousToInnerClassFix(
-      InspectionGadgetsBundle.message(
-        "anonymous.inner.may.be.named.static.inner.class.quickfix"));
+  protected String getIntentionName() {
+    return IntentionPowerPackBundle.message("simplify.variable.intention.name");
+  }
+
+  @Override
+  protected String getRelativePath() {
+    return "decls/simplify_variable";
   }
 }

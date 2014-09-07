@@ -10,7 +10,8 @@ from pydevd_comm import CMD_STEP_CAUGHT_EXCEPTION, CMD_STEP_RETURN, CMD_STEP_OVE
 from pydevd_constants import *  # @UnusedWildImport
 from pydevd_file_utils import GetFilenameAndBase
 
-from pydevd_frame_utils import add_exception_to_frame
+from pydevd_frame_utils import add_exception_to_frame, just_raised
+
 try:
     from pydevd_signature import sendSignatureCallTrace
 except ImportError:
@@ -51,17 +52,6 @@ class PyDBFrame:
     def doWaitSuspend(self, *args, **kwargs):
         self._args[0].doWaitSuspend(*args, **kwargs)
 
-    def _is_django_render_call(self, frame): # todo: cache in plugins the same way
-        try:
-            return self._cached_is_django_render_call
-        except:
-            # Calculate lazily: note that a PyDBFrame always deals with the same
-            # frame over and over, so, we can cache this.
-            # -- although we can't cache things which change over time (such as
-            #    the breakpoints for the file).
-            ret = self._cached_is_django_render_call = is_django_render_call(frame)
-            return ret
-
     def trace_exception(self, frame, event, arg):
         if event == 'exception':
             flag, frame = self.should_stop_on_exception(frame, event, arg)
@@ -93,7 +83,7 @@ class PyDBFrame:
                         flag = False
                 else:
                     try:
-                        result = mainDebugger.plugin_exception_break(self, frame, event, self._args, arg)
+                        result = mainDebugger.plugin_exception_break(self, frame, self._args, arg)
                         if result:
                             (flag, frame) = result
 
@@ -280,7 +270,7 @@ class PyDBFrame:
                         or (step_cmd in (CMD_STEP_RETURN, CMD_STEP_OVER) and stop_frame is not frame)
 
                 if can_skip:
-                    can_skip = main_debugger.plugin_can_skip(frame)
+                    can_skip = not main_debugger.plugin_can_not_skip(self, frame)
 
                 # Let's check to see if we are in a function that has a breakpoint. If we don't have a breakpoint,
                 # we will return nothing for the next trace
@@ -330,12 +320,12 @@ class PyDBFrame:
                 if not flag and event != 'return' and info.pydev_state != STATE_SUSPEND and breakpoints_for_file is not None \
                         and DictContains(breakpoints_for_file, line):
                     breakpoint = breakpoints_for_file[line]
-                    stop_info['stop'] = True
                     new_frame = frame
-                    if info.pydev_step_cmd == CMD_STEP_OVER and info.pydev_step_stop is frame and event in ('line', 'return'):
+                    stop_info['stop'] = True
+                    if step_cmd == CMD_STEP_OVER and stop_frame is frame and event in ('line', 'return'):
                         stop_info['stop'] = False #we don't stop on breakpoint if we have to stop by step-over (it will be processed later)
                 else:
-                    result = main_debugger.plugin_get_breakpoint(frame, event, self._args)
+                    result = main_debugger.plugin_get_breakpoint(self, frame, event, self._args)
                     if result:
                         exist_result = True
                         (flag, breakpoint, new_frame) = result
@@ -344,29 +334,61 @@ class PyDBFrame:
                     #ok, hit breakpoint, now, we have to discover if it is a conditional breakpoint
                     # lets do the conditional stuff here
                     if stop_info['stop'] or exist_result:
-                        if breakpoint.condition is not None:
+                        condition = breakpoint.condition
+                        if condition is not None:
                             try:
-                                val = eval(breakpoint.condition, new_frame.f_globals, new_frame.f_locals)
+                                val = eval(condition, new_frame.f_globals, new_frame.f_locals)
                                 if not val:
                                     return self.trace_dispatch
 
                             except:
-                                pydev_log.info('Error while evaluating condition \'%s\': %s\n' % (breakpoint.condition, sys.exc_info()[1]))
-                                return self.trace_dispatch
+                                if type(condition) != type(''):
+                                    if hasattr(condition, 'encode'):
+                                        condition = condition.encode('utf-8')
 
-                    if breakpoint.expression is not None:
-                        try:
+                                msg = 'Error while evaluating expression: %s\n' % (condition,)
+                                sys.stderr.write(msg)
+                                traceback.print_exc()
+                                if not main_debugger.suspend_on_breakpoint_exception:
+                                    return self.trace_dispatch
+                                else:
+                                    stop_info['stop'] = True
+                                    try:
+                                        additional_info = None
+                                        try:
+                                            additional_info = thread.additionalInfo
+                                        except AttributeError:
+                                            pass  #that's ok, no info currently set
+
+                                        if additional_info is not None:
+                                            # add exception_type and stacktrace into thread additional info
+                                            etype, value, tb = sys.exc_info()
+                                            try:
+                                                error = ''.join(traceback.format_exception_only(etype, value))
+                                                stack = traceback.extract_stack(f=tb.tb_frame.f_back)
+
+                                                # On self.setSuspend(thread, CMD_SET_BREAK) this info will be
+                                                # sent to the client.
+                                                additional_info.conditional_breakpoint_exception = \
+                                                    ('Condition:\n' + condition + '\n\nError:\n' + error, stack)
+                                            finally:
+                                                etype, value, tb = None, None, None
+                                    except:
+                                        traceback.print_exc()
+
+                        if breakpoint.expression is not None:
                             try:
-                                val = eval(breakpoint.expression, new_frame.f_globals, new_frame.f_locals)
-                            except:
-                                val = sys.exc_info()[1]
-                        finally:
-                            if val is not None:
-                                thread.additionalInfo.message = val
+                                try:
+                                    val = eval(breakpoint.expression, new_frame.f_globals, new_frame.f_locals)
+                                except:
+                                    val = sys.exc_info()[1]
+                            finally:
+                                if val is not None:
+                                    thread.additionalInfo.message = val
                 if stop_info['stop']:
                     self.setSuspend(thread, CMD_SET_BREAK)
                 elif flag:
-                    result = main_debugger.plugin_suspend(self, thread, frame)
+                    result = main_debugger.plugin_suspend(thread, frame)
                     if result:
                         frame = result
 
@@ -399,7 +421,7 @@ class PyDBFrame:
                     main_debugger.plugin_cmd_step_into(frame, event, self._args, stop_info)
 
                 elif step_cmd == CMD_STEP_OVER:
-                    stop_info['stop'] = info.pydev_step_stop is frame and event in ('line', 'return')
+                    stop_info['stop'] = stop_frame is frame and event in ('line', 'return')
                     main_debugger.plugin_cmd_step_over(frame, event, self._args, stop_info)
 
                 elif step_cmd == CMD_SMART_STEP_INTO:
