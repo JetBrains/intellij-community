@@ -141,8 +141,8 @@ public class Merger implements IMerger {
            Collections.<CommittedChangeList>emptyList();
   }
 
-  public void getInfo(final Consumer<String> holder, final boolean getLatest) {
-    if (getLatest && (myLatestProcessed != null)) {
+  public void getInfo(final Consumer<String> holder) {
+    if (myLatestProcessed != null) {
       holder.consume(SvnBundle.message("action.Subversion.integrate.changes.warning.failed.list.text", myLatestProcessed.getNumber(),
                                        myLatestProcessed.getComment().replace('\n', '|')));
     }

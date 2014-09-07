@@ -91,7 +91,7 @@ public class BranchMerger implements IMerger {
     return myVcs.getSvnConfiguration().getMergeOptions();
   }
 
-  public void getInfo(Consumer<String> holder, boolean getLatest) {
+  public void getInfo(Consumer<String> holder) {
   }
 
   public File getMergeInfoHolder() {

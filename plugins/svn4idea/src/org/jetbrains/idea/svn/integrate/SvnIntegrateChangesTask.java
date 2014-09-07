@@ -131,14 +131,14 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     }
   }
 
-  private void createMessage(final boolean getLatest, final boolean warning, final String firstString) {
+  private void createMessage(final boolean warning, final String firstString) {
     final List<String> messages = new ArrayList<String>();
     messages.add(firstString);
     myMerger.getInfo(new Consumer<String>() {
       public void consume(final String s) {
         messages.add(s);
       }
-    }, getLatest);
+    });
     final VcsException result = new VcsException(messages);
     result.setIsWarning(warning);
     myExceptions.add(result);
@@ -150,7 +150,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
       myMerger.mergeNext();
     }
     catch (VcsException e) {
-      createMessage(true, false, e.getMessage());
+      createMessage(false, e.getMessage());
     }
     finally {
       myHandler.finishUpdate();

@@ -141,8 +141,8 @@ public class GroupMerger implements IMerger {
            Collections.<CommittedChangeList>emptyList();
   }
 
-  public void getInfo(final Consumer<String> holder, final boolean getLatest) {
-    if (getLatest && (myPackStart != -1)) {
+  public void getInfo(final Consumer<String> holder) {
+    if (myPackStart != -1) {
       final StringBuilder sb = new StringBuilder("Changelist(s) :");
       for (int i = myPackStart; i <= myPackEnd; i++) {
         final CommittedChangeList list = myChangeLists.get(i);

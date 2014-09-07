@@ -24,7 +24,7 @@ import java.io.File;
 public interface IMerger {
   boolean hasNext();
   void mergeNext() throws VcsException;
-  void getInfo(Consumer<String> holder, boolean getLatest);
+  void getInfo(Consumer<String> holder);
   void getSkipped(final Consumer<String> holder);
   String getComment();
   @Nullable
