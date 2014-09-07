@@ -20,12 +20,13 @@ import com.intellij.vcs.log.TimedVcsCommit;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class VcsLogSorter {
 
   @NotNull
-  public static <Commit extends TimedVcsCommit> List<Commit> sortByDateTopoOrder(@NotNull List<Commit> commits) {
+  public static <Commit extends TimedVcsCommit> List<Commit> sortByDateTopoOrder(@NotNull Collection<Commit> commits) {
     return new VcsLogJoiner.NewCommitIntegrator<Hash, Commit>(new ArrayList<Commit>(), commits).getResultList();
   }
 
