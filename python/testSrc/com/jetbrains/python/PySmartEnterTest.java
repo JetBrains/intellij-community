@@ -184,4 +184,9 @@ public class PySmartEnterTest extends PyTestCase {
   public void testWithExpressionMissing() {
     doTest();
   }
+
+  // PY-12877
+  public void testWithOnlyColonMissing() {
+    doTest();
+  }
 }

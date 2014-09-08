@@ -18,6 +18,7 @@ package com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
@@ -26,8 +27,6 @@ import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.PyWithItem;
 import com.jetbrains.python.psi.PyWithStatement;
 import org.jetbrains.annotations.NotNull;
-
-import static com.jetbrains.python.psi.PyUtil.sure;
 
 /**
  * @author Mikhail Golubev
@@ -42,11 +41,10 @@ public class PyWithFixer extends PyFixer<PyWithStatement> {
     final PsiElement colonToken = PyUtil.getFirstChildOfType(withStatement, PyTokenTypes.COLON);
     final PsiElement withToken = PyUtil.getFirstChildOfType(withStatement, PyTokenTypes.WITH_KEYWORD);
     final Document document = editor.getDocument();
-    if (colonToken == null) {
-      int insertAt = sure(withToken).getTextRange().getEndOffset();
+    if (colonToken == null && withToken != null) {
+      int insertAt = withToken.getTextRange().getEndOffset();
       String textToInsert = ":";
-      final PyWithItem[] withItems = withStatement.getWithItems();
-      final PyWithItem lastItem = withItems.length != 0 ? withItems[withItems.length - 1] : null;
+      final PyWithItem lastItem = ArrayUtil.getLastElement(withStatement.getWithItems());
       if (lastItem == null || lastItem.getExpression() == null) {
         textToInsert = " :";
         processor.registerUnresolvedError(insertAt + 1);
