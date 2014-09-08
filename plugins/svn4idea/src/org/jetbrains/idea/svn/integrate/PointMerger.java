@@ -83,8 +83,8 @@ public class PointMerger extends Merger {
     final File afterPath = SvnUtil.fileFromUrl(myTarget, path, afterUrl);
 
     MergeClient client = myVcs.getFactory(myTarget).createMergeClient();
-    SvnTarget source1 = SvnTarget.fromURL(SvnUtil.createUrl(beforeUrl), ((SvnRevisionNumber)before.getRevisionNumber()).getRevision());
-    SvnTarget source2 = SvnTarget.fromURL(SvnUtil.createUrl(afterUrl), ((SvnRevisionNumber)after.getRevisionNumber()).getRevision());
+    SvnTarget source1 = SvnTarget.fromURL(SvnUtil.createUrl(beforeUrl), before.getRevisionNumber().getRevision());
+    SvnTarget source2 = SvnTarget.fromURL(SvnUtil.createUrl(afterUrl), after.getRevisionNumber().getRevision());
 
     client.merge(source1, source2, afterPath, Depth.FILES, true, mySvnConfig.isMergeDryRun(), false, false, mySvnConfig.getMergeOptions(),
                  myHandler);
@@ -106,7 +106,7 @@ public class PointMerger extends Merger {
     final String afterUrl = after.getFullPath();
     final File afterPath = SvnUtil.fileFromUrl(myTarget, path, afterUrl);
 
-    final SVNRevision revision = ((SvnRevisionNumber)after.getRevisionNumber()).getRevision();
+    final SVNRevision revision = after.getRevisionNumber().getRevision();
     // todo dry run
     CopyMoveClient client = myVcs.getFactory(myTarget).createCopyMoveClient();
     client.copy(SvnTarget.fromURL(SvnUtil.createUrl(afterUrl), revision), afterPath, revision, true, myHandler);
@@ -132,12 +132,6 @@ public class PointMerger extends Merger {
 
       final String path1 = after1.getFullPath();
       final String path2 = after2.getFullPath();
-      if (path1 == null) {
-        return 1;
-      }
-      if (path2 == null) {
-        return -1;
-      }
 
       final String ancestor = SVNPathUtil.getCommonPathAncestor(path1, path2);
       return (path1.equals(ancestor)) ? -1 : 1;
