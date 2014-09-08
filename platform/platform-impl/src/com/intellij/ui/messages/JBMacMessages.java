@@ -190,7 +190,7 @@ public class JBMacMessages extends MacMessagesEmulation {
     SheetMessage sheetMessage = new SheetMessage(window, title, message, UIUtil.getQuestionIcon(),
                                                  new String [] {yesButton, noButton}, doNotAskDialogOption, yesButton, noButton);
     int result = sheetMessage.getResult().equals(yesButton) ? Messages.YES : Messages.NO;
-    if (doNotAskDialogOption != null) {
+    if (doNotAskDialogOption != null && (result == Messages.YES || doNotAskDialogOption.shouldSaveOptionsOnCancel())) {
       doNotAskDialogOption.setToBeShown(sheetMessage.toBeShown(), result);
     }
     return result;

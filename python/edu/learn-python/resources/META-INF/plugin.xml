@@ -40,7 +40,7 @@
 
   <actions>
     <action id="CheckAction" class="com.jetbrains.python.edu.actions.StudyCheckAction" text="check"
-            description="Runs tests for current tasks" icon="/icons/icon.jpg">
+            description="Runs tests for current tasks">
     </action>
     <action id="PrevWindowAction" class="com.jetbrains.python.edu.actions.StudyPrevWindowAction" text="PrevWindowAction" description="prev">
     </action>

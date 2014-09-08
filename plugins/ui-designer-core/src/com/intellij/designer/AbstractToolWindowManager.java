@@ -26,6 +26,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -51,7 +52,6 @@ public abstract class AbstractToolWindowManager implements ProjectComponent {
   protected final Project myProject;
   protected final FileEditorManager myFileEditorManager;
   protected volatile ToolWindow myToolWindow;
-  private volatile boolean myToolWindowReady;
   private volatile boolean myToolWindowDisposed;
 
   private final PropertiesComponent myPropertiesComponent;
@@ -99,9 +99,8 @@ public abstract class AbstractToolWindowManager implements ProjectComponent {
   public void projectOpened() {
     initToolWindow();
 
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
       public void run() {
-        myToolWindowReady = true;
         if (getEditorMode() == null) {
           initListeners();
           bindToDesigner(getActiveDesigner());
@@ -160,7 +159,7 @@ public abstract class AbstractToolWindowManager implements ProjectComponent {
     myWindowQueue.queue(new Update("update") {
       @Override
       public void run() {
-        if (!myToolWindowReady || myToolWindowDisposed) {
+        if (myToolWindowDisposed) {
           return;
         }
         if (myToolWindow == null) {

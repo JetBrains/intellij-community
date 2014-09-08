@@ -25,12 +25,6 @@ public abstract class PathMacroManager implements PathMacroSubstitutor {
     return component;
   }
 
-  @Override
-  public abstract void expandPaths(@NotNull Element element);
-
-  @Override
-  public abstract void collapsePaths(@NotNull Element element);
-
   public abstract void collapsePathsRecursively(@NotNull Element element);
 
   public abstract String collapsePathsRecursively(@NotNull String text);

@@ -21,20 +21,16 @@ import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.junit.RefactoringListeners;
-import com.intellij.execution.process.KillableColoredProcessHandler;
-import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -81,7 +77,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
   @Override
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
-    final JavaCommandLineState state = new JavaApplicationCommandLineState(this, env);
+    final JavaCommandLineState state = new JavaApplicationCommandLineState<ApplicationConfiguration>(this, env);
     JavaRunConfigurationModule module = getConfigurationModule();
     state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(getProject(), module.getSearchScope()));
     return state;
@@ -253,14 +249,9 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     PathMacroManager.getInstance(getProject()).collapsePathsRecursively(element);
   }
 
-  public static class JavaApplicationCommandLineState extends JavaCommandLineState {
-
-    private final ApplicationConfiguration myConfiguration;
-
-    public JavaApplicationCommandLineState(@NotNull final ApplicationConfiguration configuration,
-                                           final ExecutionEnvironment environment) {
-      super(environment);
-      myConfiguration = configuration;
+  public static class JavaApplicationCommandLineState<T extends ApplicationConfiguration> extends BaseJavaApplicationCommandLineState<T> {
+    public JavaApplicationCommandLineState(@NotNull final T configuration, final ExecutionEnvironment environment) {
+      super(environment, configuration);
     }
 
     @Override
@@ -269,37 +260,14 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
       final JavaRunConfigurationModule module = myConfiguration.getConfigurationModule();
       
       final int classPathType = JavaParametersUtil.getClasspathType(module,
-                                                                    myConfiguration.MAIN_CLASS_NAME, 
+                                                                    myConfiguration.MAIN_CLASS_NAME,
                                                                     false);
-      final String jreHome = myConfiguration.ALTERNATIVE_JRE_PATH_ENABLED ? myConfiguration.ALTERNATIVE_JRE_PATH 
-                                                                          : null;
+      final String jreHome = myConfiguration.ALTERNATIVE_JRE_PATH_ENABLED ? myConfiguration.ALTERNATIVE_JRE_PATH : null;
       JavaParametersUtil.configureModule(module, params, classPathType, jreHome);
-      JavaParametersUtil.configureConfiguration(params, myConfiguration);
-
       params.setMainClass(myConfiguration.MAIN_CLASS_NAME);
-      for(RunConfigurationExtension ext: Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
-        ext.updateJavaParameters(myConfiguration, params, getRunnerSettings());
-      }
+      setupJavaParameters(params);
 
       return params;
-    }
-
-    @NotNull
-    @Override
-    protected OSProcessHandler startProcess() throws ExecutionException {
-      OSProcessHandler handler = SystemInfo.isWindows ? super.startProcess() : KillableColoredProcessHandler.create(createCommandLine());
-      RunnerSettings runnerSettings = getRunnerSettings();
-      JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(myConfiguration, handler, runnerSettings);
-      return handler;
-    }
-
-    @Override
-    protected boolean ansiColoringEnabled() {
-      return true;
-    }
-
-    protected ApplicationConfiguration getConfiguration() {
-      return myConfiguration;
     }
   }
 }

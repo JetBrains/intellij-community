@@ -111,7 +111,7 @@ public class StringUtilTest extends TestCase {
   public void testFormatLinks() {
     assertEquals("<a href=\"http://a-b+c\">http://a-b+c</a>", StringUtil.formatLinks("http://a-b+c"));
   }
-  
+
   public void testCopyHeapCharBuffer() {
     String s = "abcde";
     CharBuffer buffer = CharBuffer.allocate(s.length());
@@ -124,7 +124,7 @@ public class StringUtilTest extends TestCase {
     assertNull(CharArrayUtil.fromSequenceWithoutCopying(buffer.subSequence(1, 5)));
     assertNull(CharArrayUtil.fromSequenceWithoutCopying(buffer.subSequence(1, 2)));
   }
-  
+
   public void testTitleCase() {
     assertEquals("Couldn't Connect to Debugger", StringUtil.wordsToBeginFromUpperCase("Couldn't connect to debugger"));
   }
@@ -198,7 +198,7 @@ public class StringUtilTest extends TestCase {
     assertEquals(Arrays.asList("aa"), Arrays.asList(StringUtil.splitByLinesKeepSeparators("aa")));
     assertEquals(Arrays.asList("\n", "\n", "aa\n", "\n", "bb\n", "cc\n", "\n"),
                  Arrays.asList(StringUtil.splitByLinesKeepSeparators("\n\naa\n\nbb\ncc\n\n")));
-    
+
     assertEquals(Arrays.asList("\r", "\r\n", "\r"), Arrays.asList(StringUtil.splitByLinesKeepSeparators("\r\r\n\r")));
     assertEquals(Arrays.asList("\r\n", "\r", "\r\n"), Arrays.asList(StringUtil.splitByLinesKeepSeparators("\r\n\r\r\n")));
 
@@ -223,5 +223,14 @@ public class StringUtilTest extends TestCase {
         }
       }
     }
+  }
+
+  public void testReplaceReturnReplacementIfTextEqualsToReplacedText() {
+    String newS = "/tmp";
+    assertSame(StringUtil.replace("$PROJECT_FILE$", "$PROJECT_FILE$".toLowerCase().toUpperCase() /* ensure new String instance */, newS), newS);
+  }
+
+  public void testReplace() {
+    assertEquals(StringUtil.replace("$PROJECT_FILE$/filename", "$PROJECT_FILE$", "/tmp"), "/tmp/filename");
   }
 }

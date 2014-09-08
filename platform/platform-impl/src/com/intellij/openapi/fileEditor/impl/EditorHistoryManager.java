@@ -287,7 +287,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
     }
   }
 
-  public FileEditorState getState(final VirtualFile file, final FileEditorProvider provider) {
+  public FileEditorState getState(@NotNull VirtualFile file, final FileEditorProvider provider) {
     validateEntries();
     final HistoryEntry entry = getEntry(file);
     return entry != null ? entry.getState(provider) : null;
@@ -302,7 +302,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
     return entry != null ? entry.mySelectedProvider : null;
   }
 
-  private HistoryEntry getEntry(final VirtualFile file){
+  private HistoryEntry getEntry(@NotNull VirtualFile file){
     validateEntries();
     for (int i = myEntriesList.size() - 1; i >= 0; i--) {
       final HistoryEntry entry = myEntriesList.get(i);

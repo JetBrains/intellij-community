@@ -71,6 +71,13 @@ public class RootIndex {
   private final TObjectIntHashMap<JpsModuleSourceRootType<?>> myRootTypeId = new TObjectIntHashMap<JpsModuleSourceRootType<?>>();
   @NotNull private final Project myProject;
   private volatile Map<VirtualFile, OrderEntry[]> myOrderEntries;
+  @SuppressWarnings("UnusedDeclaration")
+  private final LowMemoryWatcher myLowMemoryWatcher = LowMemoryWatcher.register(new Runnable() {
+    @Override
+    public void run() {
+      myNonExistentPackages.clear();
+    }
+  });
 
   // made public for Upsource
   public RootIndex(@NotNull Project project, @NotNull InfoCache cache) {
@@ -90,12 +97,6 @@ public class RootIndex {
         myProjectExcludedRoots.add(root);
       }
     }
-    LowMemoryWatcher.register(new Runnable() {
-      @Override
-      public void run() {
-        myNonExistentPackages.clear();
-      }
-    }, project);
   }
 
   @NotNull

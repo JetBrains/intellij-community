@@ -16,65 +16,50 @@
 package org.jetbrains.java.decompiler.struct;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.main.extern.IDecompilatSaver;
-import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+import org.jetbrains.java.decompiler.main.extern.IResultSaver;
 import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-
 public class StructContext {
 
-  // *****************************************************************************
-  // private fields
-  // *****************************************************************************
+  private final IResultSaver saver;
+  private final IDecompiledData decompiledData;
+  private final LazyLoader loader;
+  private final Map<String, ContextUnit> units = new HashMap<String, ContextUnit>();
+  private final Map<String, StructClass> classes = new HashMap<String, StructClass>();
 
-  private LazyLoader loader;
-
-  private HashMap<String, StructClass> classes = new HashMap<String, StructClass>();
-
-  private HashMap<String, ContextUnit> units = new HashMap<String, ContextUnit>();
-
-  private IDecompilatSaver saver;
-
-  private IDecompiledData decdata;
-
-  public StructContext(IDecompilatSaver saver, IDecompiledData decdata, LazyLoader loader) {
-
+  public StructContext(IResultSaver saver, IDecompiledData decompiledData, LazyLoader loader) {
     this.saver = saver;
-    this.decdata = decdata;
+    this.decompiledData = decompiledData;
     this.loader = loader;
 
-    ContextUnit defaultUnit = new ContextUnit(ContextUnit.TYPE_FOLDER, null, "", true, saver, decdata);
+    ContextUnit defaultUnit = new ContextUnit(ContextUnit.TYPE_FOLDER, null, "", true, saver, decompiledData);
     units.put("", defaultUnit);
   }
-
-  // *****************************************************************************
-  // public methods
-  // *****************************************************************************
 
   public StructClass getClass(String name) {
     return classes.get(name);
   }
 
   public void reloadContext() throws IOException {
-
     for (ContextUnit unit : units.values()) {
-
       for (StructClass cl : unit.getClasses()) {
         classes.remove(cl.qualifiedName);
       }
 
       unit.reload(loader);
 
-      // adjust lobal class collection
+      // adjust global class collection
       for (StructClass cl : unit.getClasses()) {
         classes.put(cl.qualifiedName, cl);
       }
@@ -82,7 +67,6 @@ public class StructContext {
   }
 
   public void saveContext() {
-
     for (ContextUnit unit : units.values()) {
       if (unit.isOwn()) {
         unit.save();
@@ -90,134 +74,116 @@ public class StructContext {
     }
   }
 
-  public void addSpace(File file, boolean isOwn) throws IOException {
-    addSpace("", file, isOwn);
+  public void addSpace(File file, boolean isOwn) {
+    addSpace("", file, isOwn, 0);
   }
 
-  private void addSpace(String path, File file, boolean isOwn) throws IOException {
-
+  private void addSpace(String path, File file, boolean isOwn, int level) {
     if (file.isDirectory()) {
+      if (level == 1) path += file.getName();
+      else if (level > 1) path += "/" + file.getName();
 
       File[] files = file.listFiles();
-      path += "/" + (path.length() == 0 ? "" : file.getName());
-
-      for (int i = files.length - 1; i >= 0; i--) {
-        addSpace(path, files[i], isOwn);
+      if (files != null) {
+        for (int i = files.length - 1; i >= 0; i--) {
+          addSpace(path, files[i], isOwn, level + 1);
+        }
       }
     }
     else {
-
       String filename = file.getName();
 
       boolean isArchive = false;
-
       try {
         if (filename.endsWith(".jar")) {
-          addArchive(path, file, ContextUnit.TYPE_JAR, isOwn);
           isArchive = true;
+          addArchive(path, file, ContextUnit.TYPE_JAR, isOwn);
         }
         else if (filename.endsWith(".zip")) {
-          addArchive(path, file, ContextUnit.TYPE_ZIP, isOwn);
           isArchive = true;
+          addArchive(path, file, ContextUnit.TYPE_ZIP, isOwn);
         }
       }
       catch (IOException ex) {
-        DecompilerContext.getLogger()
-          .writeMessage("Invalid archive file: " + (path.length() > 0 ? path + "/" : "") + filename, IFernflowerLogger.ERROR);
+        String message = "Corrupted archive file: " + file;
+        DecompilerContext.getLogger().writeMessage(message, ex);
+      }
+      if (isArchive) {
+        return;
       }
 
-      if (!isArchive) {
-        ContextUnit unit = units.get(path);
-        if (unit == null) {
-          unit = new ContextUnit(ContextUnit.TYPE_FOLDER, null, path, isOwn, saver, decdata);
-          units.put(path, unit);
-        }
+      ContextUnit unit = units.get(path);
+      if (unit == null) {
+        unit = new ContextUnit(ContextUnit.TYPE_FOLDER, null, path, isOwn, saver, decompiledData);
+        units.put(path, unit);
+      }
 
-        boolean isClass = false;
-
-        if (filename.endsWith(".class")) {
+      if (filename.endsWith(".class")) {
+        try {
+          DataInputFullStream in = loader.getClassStream(file.getAbsolutePath(), null);
           try {
-            StructClass cl;
-
-            DataInputFullStream in = loader.getClassStream(file.getAbsolutePath(), null);
-            try {
-              cl = new StructClass(in, isOwn, loader);
-            }
-            finally {
-              in.close();
-            }
-
+            StructClass cl = new StructClass(in, isOwn, loader);
             classes.put(cl.qualifiedName, cl);
             unit.addClass(cl, filename);
             loader.addClassLink(cl.qualifiedName, new LazyLoader.Link(LazyLoader.Link.CLASS, file.getAbsolutePath(), null));
-
-            isClass = true;
           }
-          catch (IOException ex) {
-            DecompilerContext.getLogger().writeMessage("Invalid class file: " + (path.length() > 0 ? path + "/" : "") + filename,
-                                                       IFernflowerLogger.ERROR);
+          finally {
+            in.close();
           }
         }
-
-        if (!isClass) {
-          unit.addOtherEntry(file.getAbsolutePath(), filename);
+        catch (IOException ex) {
+          String message = "Corrupted class file: " + file;
+          DecompilerContext.getLogger().writeMessage(message, ex);
         }
+      }
+      else {
+        unit.addOtherEntry(file.getAbsolutePath(), filename);
       }
     }
   }
 
-
   private void addArchive(String path, File file, int type, boolean isOwn) throws IOException {
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+    ZipFile archive = type == ContextUnit.TYPE_JAR ? new JarFile(file) : new ZipFile(file);
 
-    ZipFile archive;
+    try {
+      Enumeration<? extends ZipEntry> entries = archive.entries();
+      while (entries.hasMoreElements()) {
+        ZipEntry entry = entries.nextElement();
 
-    if (type == ContextUnit.TYPE_JAR) {  // jar
-      archive = new JarFile(file);
-    }
-    else {  // zip
-      archive = new ZipFile(file);
-    }
-
-    Enumeration<? extends ZipEntry> en = archive.entries();
-    while (en.hasMoreElements()) {
-      ZipEntry entr = en.nextElement();
-
-      ContextUnit unit = units.get(path + "/" + file.getName());
-      if (unit == null) {
-        unit = new ContextUnit(type, path, file.getName(), isOwn, saver, decdata);
-        if (type == ContextUnit.TYPE_JAR) {
-          unit.setManifest(((JarFile)archive).getManifest());
+        ContextUnit unit = units.get(path + "/" + file.getName());
+        if (unit == null) {
+          unit = new ContextUnit(type, path, file.getName(), isOwn, saver, decompiledData);
+          if (type == ContextUnit.TYPE_JAR) {
+            unit.setManifest(((JarFile)archive).getManifest());
+          }
+          units.put(path + "/" + file.getName(), unit);
         }
-        units.put(path + "/" + file.getName(), unit);
-      }
 
-      String name = entr.getName();
-      if (!entr.isDirectory()) {
-        if (name.endsWith(".class")) {
-          StructClass cl = new StructClass(archive.getInputStream(entr), isOwn, loader);
-          classes.put(cl.qualifiedName, cl);
-
-          unit.addClass(cl, name);
-
-          if (loader != null) {
+        String name = entry.getName();
+        if (!entry.isDirectory()) {
+          if (name.endsWith(".class")) {
+            byte[] bytes = InterpreterUtil.getBytes(archive, entry);
+            StructClass cl = new StructClass(bytes, isOwn, loader);
+            classes.put(cl.qualifiedName, cl);
+            unit.addClass(cl, name);
             loader.addClassLink(cl.qualifiedName, new LazyLoader.Link(LazyLoader.Link.ENTRY, file.getAbsolutePath(), name));
+          }
+          else {
+            unit.addOtherEntry(file.getAbsolutePath(), name);
           }
         }
         else {
-          unit.addOtherEntry(file.getAbsolutePath(), name);
+          unit.addDirEntry(name);
         }
       }
-      else if (entr.isDirectory()) {
-        unit.addDirEntry(name);
-      }
+    }
+    finally {
+      archive.close();
     }
   }
 
-  // *****************************************************************************
-  // getter and setter methods
-  // *****************************************************************************
-
-  public HashMap<String, StructClass> getClasses() {
+  public Map<String, StructClass> getClasses() {
     return classes;
   }
 }

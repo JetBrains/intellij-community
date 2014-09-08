@@ -63,6 +63,7 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
     myConfiguration = configuration;
   }
 
+  @Override
   @NotNull
   protected ConsoleView createAndAttachConsole(Project project, ProcessHandler processHandler, Executor executor)
     throws ExecutionException {
@@ -89,6 +90,7 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
     return new PythonTRunnerConsoleProperties(myConfiguration, executor, false);
   }
 
+  @Override
   public GeneralCommandLine generateCommandLine() throws ExecutionException {
     GeneralCommandLine cmd = super.generateCommandLine();
 
@@ -135,7 +137,7 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
 
     PyRerunFailedTestsAction rerunFailedTestsAction = new PyRerunFailedTestsAction(console);
     if (console instanceof SMTRunnerConsoleView) {
-      rerunFailedTestsAction.init(((BaseTestsOutputConsoleView)console).getProperties(), getEnvironment());
+      rerunFailedTestsAction.init(((BaseTestsOutputConsoleView)console).getProperties());
       rerunFailedTestsAction.setModelProvider(new Getter<TestFrameworkRunningModel>() {
       @Override
       public TestFrameworkRunningModel get() {

@@ -21,8 +21,7 @@ class TestCodeConstructs {
   }
 
   private int count = 0;
-  String fieldIncrement() {
-    int id = count++;
-    return "id:" + id;
+  Integer fieldIncrement() {
+    return new Integer(count++);
   }
 }

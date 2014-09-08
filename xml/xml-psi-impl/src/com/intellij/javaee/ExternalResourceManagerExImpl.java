@@ -24,7 +24,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NotNullLazyKey;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -46,9 +49,9 @@ import java.net.URL;
 import java.util.*;
 
 @State(name = "ExternalResourceManagerImpl",
-       storages = {@Storage( file = StoragePathMacros.APP_CONFIG + "/other.xml")})
-public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx implements JDOMExternalizable {
-  static final Logger LOG = Logger.getInstance("#com.intellij.j2ee.openapi.impl.ExternalResourceManagerImpl");
+       storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml")})
+public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx implements PersistentStateComponent<Element> {
+  static final Logger LOG = Logger.getInstance(ExternalResourceManagerExImpl.class);
 
   @NonNls public static final String J2EE_1_3 = "http://java.sun.com/dtd/";
   @NonNls public static final String J2EE_1_2 = "http://java.sun.com/j2ee/dtds/";
@@ -92,17 +95,12 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   }
 
   private final List<ExternalResourceListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final PathMacrosImpl myPathMacros;
   @NonNls private static final String RESOURCE_ELEMENT = "resource";
   @NonNls private static final String URL_ATTR = "url";
   @NonNls private static final String LOCATION_ATTR = "location";
   @NonNls private static final String IGNORED_RESOURCE_ELEMENT = "ignored-resource";
   @NonNls private static final String HTML_DEFAULT_DOCTYPE_ELEMENT = "default-html-doctype";
   private static final String DEFAULT_VERSION = null;
-
-  public ExternalResourceManagerExImpl(@NotNull PathMacrosImpl pathMacros) {
-    myPathMacros = pathMacros;
-  }
 
   @Override
   public boolean isStandardResource(VirtualFile file) {
@@ -374,39 +372,11 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     return getProjectResources(project).getModificationCount();
   }
 
+
+  @Nullable
   @Override
-  public void readExternal(Element element) {
-    final ExpandMacroToPathMap macroExpands = new ExpandMacroToPathMap();
-    myPathMacros.addMacroExpands(macroExpands);
-    macroExpands.substitute(element, SystemInfo.isFileSystemCaseSensitive);
-
-    incModificationCount();
-    for (final Object o1 : element.getChildren(RESOURCE_ELEMENT)) {
-      Element e = (Element)o1;
-      addSilently(e.getAttributeValue(URL_ATTR), DEFAULT_VERSION, e.getAttributeValue(LOCATION_ATTR).replace('/', File.separatorChar));
-    }
-
-    for (final Object o : element.getChildren(IGNORED_RESOURCE_ELEMENT)) {
-      Element e = (Element)o;
-      addIgnoredSilently(e.getAttributeValue(URL_ATTR));
-    }
-
-    Element child = element.getChild(HTML_DEFAULT_DOCTYPE_ELEMENT);
-    if (child != null) {
-      String text = child.getText();
-      if (FileUtil.toSystemIndependentName(text).endsWith(".jar!/resources/html5-schema/html5.rnc")) {
-        text = HTML5_DOCTYPE_ELEMENT;
-      }
-      myDefaultHtmlDoctype = text;
-    }
-    Element catalogElement = element.getChild(CATALOG_PROPERTIES_ELEMENT);
-    if (catalogElement != null) {
-      myCatalogPropertiesFile = catalogElement.getTextTrim();
-    }
-  }
-
-  @Override
-  public void writeExternal(Element element) {
+  public Element getState() {
+    Element element = new Element("state");
     final String[] urls = getAvailableUrls();
     for (String url : urls) {
       if (url == null) continue;
@@ -440,7 +410,40 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     final ReplacePathToMacroMap macroReplacements = new ReplacePathToMacroMap();
     PathMacrosImpl.getInstanceEx().addMacroReplacements(macroReplacements);
     macroReplacements.substitute(element, SystemInfo.isFileSystemCaseSensitive);
+    return element;
   }
+
+  @Override
+  public void loadState(Element element) {
+    final ExpandMacroToPathMap macroExpands = new ExpandMacroToPathMap();
+    PathMacrosImpl.getInstanceEx().addMacroExpands(macroExpands);
+    macroExpands.substitute(element, SystemInfo.isFileSystemCaseSensitive);
+
+    incModificationCount();
+    for (final Object o1 : element.getChildren(RESOURCE_ELEMENT)) {
+      Element e = (Element)o1;
+      addSilently(e.getAttributeValue(URL_ATTR), DEFAULT_VERSION, e.getAttributeValue(LOCATION_ATTR).replace('/', File.separatorChar));
+    }
+
+    for (final Object o : element.getChildren(IGNORED_RESOURCE_ELEMENT)) {
+      Element e = (Element)o;
+      addIgnoredSilently(e.getAttributeValue(URL_ATTR));
+    }
+
+    Element child = element.getChild(HTML_DEFAULT_DOCTYPE_ELEMENT);
+    if (child != null) {
+      String text = child.getText();
+      if (FileUtil.toSystemIndependentName(text).endsWith(".jar!/resources/html5-schema/html5.rnc")) {
+        text = HTML5_DOCTYPE_ELEMENT;
+      }
+      myDefaultHtmlDoctype = text;
+    }
+    Element catalogElement = element.getChild(CATALOG_PROPERTIES_ELEMENT);
+    if (catalogElement != null) {
+      myCatalogPropertiesFile = catalogElement.getTextTrim();
+    }
+  }
+
 
   @Override
   public void addExternalResourceListener(ExternalResourceListener listener) {
@@ -465,7 +468,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
 
   private static final NotNullLazyKey<ExternalResourceManagerExImpl, Project> INSTANCE_CACHE = ServiceManager.createLazyKey(ExternalResourceManagerExImpl.class);
 
-  private ExternalResourceManagerExImpl getProjectResources(Project project) {
+  private static ExternalResourceManagerExImpl getProjectResources(Project project) {
     return INSTANCE_CACHE.getValue(project);
   }
 

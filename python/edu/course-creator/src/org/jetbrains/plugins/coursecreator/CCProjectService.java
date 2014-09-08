@@ -116,7 +116,7 @@ public class CCProjectService implements PersistentStateComponent<Element> {
     }
     List<TaskWindow> taskWindows = taskFile.getTaskWindows();
     for (TaskWindow taskWindow : taskWindows) {
-      taskWindow.drawHighlighter(editor);
+      taskWindow.drawHighlighter(editor, false);
     }
   }
 
@@ -138,7 +138,7 @@ public class CCProjectService implements PersistentStateComponent<Element> {
   }
 
   public boolean isTaskFile(VirtualFile file) {
-    if (myCourse == null) {
+    if (myCourse == null || file == null) {
       return false;
     }
     VirtualFile taskDir = file.getParent();

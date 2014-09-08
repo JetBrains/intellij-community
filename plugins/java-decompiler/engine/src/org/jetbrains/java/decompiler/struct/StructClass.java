@@ -24,7 +24,6 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 import java.io.IOException;
-import java.io.InputStream;
 
 /*
   class_file {
@@ -62,8 +61,8 @@ public class StructClass extends StructMember {
 
   private ConstantPool pool;
 
-  public StructClass(InputStream inStream, boolean own, LazyLoader loader) throws IOException {
-    this(new DataInputFullStream(inStream), own, loader);
+  public StructClass(byte[] bytes, boolean own, LazyLoader loader) throws IOException {
+    this(new DataInputFullStream(bytes), own, loader);
   }
 
   public StructClass(DataInputFullStream in, boolean own, LazyLoader loader) throws IOException {

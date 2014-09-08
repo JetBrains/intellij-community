@@ -463,7 +463,7 @@ public class Statement {
     }
 
     if (res.size() != stats.size()) {
-      DecompilerContext.getLogger().writeMessage("computing post reverse post order failed!", IFernflowerLogger.ERROR);
+      DecompilerContext.getLogger().writeMessage("computing post reverse post order failed!", IFernflowerLogger.Severity.ERROR);
 
       throw new RuntimeException("parsing failure!");
     }

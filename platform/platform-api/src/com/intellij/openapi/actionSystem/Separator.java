@@ -42,6 +42,11 @@ public final class Separator extends AnAction implements DumbAware {
   }
 
   @Override
+  public String toString() {
+    return "Separator (" + myText + ")";
+  }
+
+  @Override
   public void actionPerformed(AnActionEvent e){
     throw new UnsupportedOperationException();
   }

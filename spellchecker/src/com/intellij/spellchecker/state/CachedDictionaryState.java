@@ -20,9 +20,8 @@ import com.intellij.spellchecker.dictionary.EditableDictionary;
 
 @State(
   name = "CachedDictionaryState",
-  roamingType = RoamingType.DISABLED,
-  storages = {@Storage(
-    file = StoragePathMacros.APP_CONFIG + "/cachedDictionary.xml")})
+  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/cachedDictionary.xml", roamingType = RoamingType.DISABLED)}
+)
 public class CachedDictionaryState extends DictionaryState implements PersistentStateComponent<DictionaryState> {
   public static final String DEFAULT_NAME = "cached";
 

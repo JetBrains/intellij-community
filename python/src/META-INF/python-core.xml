@@ -477,9 +477,6 @@
     <projectService serviceInterface="com.jetbrains.python.debugger.PySignatureCacheManager"
                     serviceImplementation="com.jetbrains.python.debugger.PySignatureCacheManagerImpl"/>
 
-    <projectService serviceInterface="com.jetbrains.python.hierarchy.call.PyStaticCallDataManager"
-                    serviceImplementation="com.jetbrains.python.hierarchy.call.PyStaticCallDataManagerImpl"/>
-
     <projectService serviceInterface="com.jetbrains.python.psi.PyPsiFacade"
                     serviceImplementation="com.jetbrains.python.psi.impl.PyPsiFacadeImpl"/>
     <applicationService serviceInterface="com.jetbrains.python.packaging.PyPackageManagers"
@@ -535,7 +532,8 @@
 
   </extensions>
 
-  <extensionPoints>    
+  <extensionPoints>
+    <extensionPoint qualifiedName="Pythonid.pythonDocumentationQuickInfoProvider" interface="com.jetbrains.python.documentation.PythonDocumentationQuickInfoProvider"/>
     <extensionPoint qualifiedName="Pythonid.importResolver" interface="com.jetbrains.python.psi.impl.PyImportResolver"/>
     <extensionPoint qualifiedName="Pythonid.magicLiteral" interface="com.jetbrains.python.magicLiteral.PyMagicLiteralExtensionPoint"/>
     <extensionPoint qualifiedName="Pythonid.unresolvedReferenceSkipper" interface="com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferenceSkipperExtPoint"/>
@@ -637,8 +635,6 @@
       <separator/>
       <reference ref="AddToFavorites"/>
       <separator/>
-      <reference ref="RunContextPopupGroup"/>
-      <separator/>
       <reference ref="ReformatCode"/>
       <reference ref="OptimizeImports"/>
       <reference ref="$Delete"/>
@@ -652,15 +648,12 @@
     </group>
 
     <group id="PyCallHierarchyPopupMenu">
-      <!--<action id="CallHierarchy.BaseOnThisType" text="Base On This Function" class="com.jetbrains.python.hierarchy.call.PyCallHierarchyBrowser$BaseOnThisFunctionAction" description="Show call hierarchy for selected method"/>-->
       <reference ref="EditSource"/>
       <separator/>
       <reference ref="FindUsages"/>
       <reference ref="RefactoringMenu"/>
       <separator/>
       <reference ref="AddToFavorites"/>
-      <separator/>
-      <reference ref="RunContextPopupGroup"/>
       <separator/>
 
       <reference ref="ReformatCode"/>

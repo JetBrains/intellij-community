@@ -49,7 +49,8 @@ public abstract class MvcActionBase extends DumbAwareAction {
 
   @Nullable
   public static Pair<MvcFramework, Module> guessFramework(AnActionEvent event) {
-    final Module module = event.getData(event.getPlace().equals(ActionPlaces.MAIN_MENU) ? LangDataKeys.MODULE : LangDataKeys.MODULE_CONTEXT);
+    final Module module = event.getData(
+      ActionPlaces.isMainMenuOrActionSearch(event.getPlace()) ? LangDataKeys.MODULE : LangDataKeys.MODULE_CONTEXT);
 
     if (module != null) {
       MvcFramework commonPluginModuleFramework = MvcFramework.findCommonPluginModuleFramework(module);

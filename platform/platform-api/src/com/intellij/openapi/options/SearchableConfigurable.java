@@ -34,6 +34,12 @@ public interface SearchableConfigurable extends Configurable {
 
   interface Parent extends SearchableConfigurable, Composite {
     boolean hasOwnContent();
+
+    /**
+     * @deprecated use {@link ConfigurableProvider#canCreateConfigurable()} instead
+     *             to specify configurables which should not be visible
+     */
+    @Deprecated
     boolean isVisible();
 
     abstract class Abstract implements Parent {

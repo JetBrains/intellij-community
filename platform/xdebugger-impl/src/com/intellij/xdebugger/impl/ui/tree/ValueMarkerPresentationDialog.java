@@ -17,12 +17,14 @@ package com.intellij.xdebugger.impl.ui.tree;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.Component;
+
 /**
  * @author nik
  */
 public class ValueMarkerPresentationDialog extends ValueMarkerPresentationDialogBase {
-  public ValueMarkerPresentationDialog(@Nullable String defaultText) {
-    super(defaultText);
+  public ValueMarkerPresentationDialog(@Nullable Component parent, @Nullable String defaultText) {
+    super(parent, defaultText);
     init();
   }
 }

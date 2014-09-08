@@ -164,6 +164,7 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
 
   public abstract boolean isInsideChange();
 
+  @Override
   @Nullable
   public final Object getData(@NotNull String dataId, @NotNull Editor editor, @NotNull Caret caret) {
     for (final EditorDataProvider dataProvider : myDataProviders) {

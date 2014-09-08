@@ -17,11 +17,13 @@
 package org.intellij.plugins.xsltDebugger;
 
 import com.intellij.diagnostic.logging.AdditionalTabComponent;
+import com.intellij.diagnostic.logging.LogConsoleManagerBase;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.AdditionalTabComponentManager;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.runners.RunTab;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
@@ -39,7 +41,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.net.NetUtils;
-import com.intellij.xdebugger.impl.ui.DebuggerSessionTabBase;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.impl.XsltChecker;
 import org.intellij.lang.xpath.xslt.run.XsltRunConfiguration;
@@ -87,11 +88,12 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
                             AdditionalTabComponentManager manager,
                             AdditionalTabComponent outputConsole,
                             ProcessHandler process) {
-    if (manager instanceof DebuggerSessionTabBase) {
-      final DebuggerSessionTabBase mgr = (DebuggerSessionTabBase)manager;
-      mgr.addAdditionalTabComponent(new OutputTabComponent(outputConsole), "XSLT-Output", AllIcons.Debugger.Console);
-      mgr.addAdditionalTabComponent(StructureTabComponent.create(process, outputConsole), "XSLT-Structure", PlatformIcons.FLATTEN_PACKAGES_ICON);
-    } else {
+    if (manager instanceof RunTab) {
+      LogConsoleManagerBase runTab = ((RunTab)manager).getLogConsoleManager();
+      runTab.addAdditionalTabComponent(new OutputTabComponent(outputConsole), "XSLT-Output", AllIcons.Debugger.Console);
+      runTab.addAdditionalTabComponent(StructureTabComponent.create(process, outputConsole), "XSLT-Structure", PlatformIcons.FLATTEN_PACKAGES_ICON);
+    }
+    else {
       manager.addAdditionalTabComponent(new OutputTabComponent(outputConsole), "XSLT-Output");
       manager.addAdditionalTabComponent(StructureTabComponent.create(process, outputConsole), "XSLT-Structure");
     }

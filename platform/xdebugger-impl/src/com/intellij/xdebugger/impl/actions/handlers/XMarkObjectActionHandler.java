@@ -30,6 +30,8 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT;
+
 /**
  * @author nik
  */
@@ -49,7 +51,7 @@ public class XMarkObjectActionHandler extends MarkObjectActionHandler {
       markers.unmarkValue(value);
     }
     else {
-      ValueMarkerPresentationDialog dialog = new ValueMarkerPresentationDialog(node.getName());
+      ValueMarkerPresentationDialog dialog = new ValueMarkerPresentationDialog(event.getData(CONTEXT_COMPONENT), node.getName());
       dialog.show();
       ValueMarkup markup = dialog.getConfiguredMarkup();
       if (dialog.isOK() && markup != null) {

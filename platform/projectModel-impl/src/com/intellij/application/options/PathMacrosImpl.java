@@ -15,41 +15,40 @@
  */
 package com.intellij.application.options;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
-import com.intellij.openapi.components.ExpandMacroToPathMap;
-import com.intellij.openapi.components.NamedComponent;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.NamedJDOMExternalizable;
-import com.intellij.openapi.util.RoamingTypeDisabled;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-/**
- * @author dsl
- */
-public class PathMacrosImpl extends PathMacros implements NamedComponent, NamedJDOMExternalizable, RoamingTypeDisabled {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.PathMacrosImpl");
+@State(
+  name = "PathMacrosImpl",
+  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/path.macros.xml", roamingType = RoamingType.PER_PLATFORM)}
+)
+public class PathMacrosImpl extends PathMacros implements PersistentStateComponent<Element> {
+  private static final Logger LOG = Logger.getInstance(PathMacrosImpl.class);
+
   private final Map<String, String> myLegacyMacros = new HashMap<String, String>();
-  private final Map<String, String> myMacros = new HashMap<String, String>();
+  private final Map<String, String> myMacros = new LinkedHashMap<String, String>();
   private int myModificationStamp = 0;
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
   private final List<String> myIgnoredMacros = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  public static final String MACRO_ELEMENT = JpsGlobalLoader.PathVariablesSerializer.MACRO_TAG;
-  public static final String NAME_ATTR = JpsGlobalLoader.PathVariablesSerializer.NAME_ATTRIBUTE;
-  public static final String VALUE_ATTR = JpsGlobalLoader.PathVariablesSerializer.VALUE_ATTRIBUTE;
+  private static final String MACRO_ELEMENT = JpsGlobalLoader.PathVariablesSerializer.MACRO_TAG;
+  private static final String NAME_ATTR = JpsGlobalLoader.PathVariablesSerializer.NAME_ATTRIBUTE;
+  private static final String VALUE_ATTR = JpsGlobalLoader.PathVariablesSerializer.VALUE_ATTRIBUTE;
 
   @NonNls
   public static final String IGNORED_MACRO_ELEMENT = "ignoredMacro";
@@ -75,6 +74,7 @@ public class PathMacrosImpl extends PathMacros implements NamedComponent, NamedJ
     SYSTEM_MACROS.add(USER_HOME_MACRO_NAME);
   }
 
+  @SuppressWarnings("SpellCheckingInspection")
   private static final Set<String> ourToolsMacros = ContainerUtil.immutableSet(
     "ClasspathEntry",
     "Classpath",
@@ -138,18 +138,7 @@ public class PathMacrosImpl extends PathMacros implements NamedComponent, NamedJ
   }
 
   public static PathMacrosImpl getInstanceEx() {
-    return (PathMacrosImpl)ApplicationManager.getApplication().getComponent(PathMacros.class);
-  }
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "PathMacrosImpl";
-  }
-
-  @Override
-  public String getExternalFileName() {
-    return EXT_FILE_NAME;
+    return (PathMacrosImpl)getInstance();
   }
 
   @Override
@@ -286,8 +275,37 @@ public class PathMacrosImpl extends PathMacros implements NamedComponent, NamedJ
     }
   }
 
+  @Nullable
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
+  public Element getState() {
+    try {
+      Element element = new Element("state");
+      myLock.writeLock().lock();
+
+      for (Map.Entry<String, String> entry : myMacros.entrySet()) {
+        String value = entry.getValue();
+        if (!StringUtil.isEmptyOrSpaces(value)) {
+          final Element macro = new Element(MACRO_ELEMENT);
+          macro.setAttribute(NAME_ATTR, entry.getKey());
+          macro.setAttribute(VALUE_ATTR, value);
+          element.addContent(macro);
+        }
+      }
+
+      for (final String macro : myIgnoredMacros) {
+        final Element macroElement = new Element(IGNORED_MACRO_ELEMENT);
+        macroElement.setAttribute(NAME_ATTR, macro);
+        element.addContent(macroElement);
+      }
+      return element;
+    }
+    finally {
+      myLock.writeLock().unlock();
+    }
+  }
+
+  @Override
+  public void loadState(Element element) {
     try {
       myLock.writeLock().lock();
 
@@ -297,7 +315,7 @@ public class PathMacrosImpl extends PathMacros implements NamedComponent, NamedJ
         final String name = macro.getAttributeValue(NAME_ATTR);
         String value = macro.getAttributeValue(VALUE_ATTR);
         if (name == null || value == null) {
-          throw new InvalidDataException();
+          continue;
         }
 
         if (SYSTEM_MACROS.contains(name)) {
@@ -326,40 +344,12 @@ public class PathMacrosImpl extends PathMacros implements NamedComponent, NamedJ
     }
   }
 
-  @Override
-  public void writeExternal(Element element) throws WriteExternalException {
-    try {
-      myLock.writeLock().lock();
-
-      final Set<Map.Entry<String, String>> entries = myMacros.entrySet();
-      for (Map.Entry<String, String> entry : entries) {
-        final String value = entry.getValue();
-        if (value != null && !value.trim().isEmpty()) {
-          final Element macro = new Element(MACRO_ELEMENT);
-          macro.setAttribute(NAME_ATTR, entry.getKey());
-          macro.setAttribute(VALUE_ATTR, value);
-          element.addContent(macro);
-        }
-      }
-
-      for (final String macro : myIgnoredMacros) {
-        final Element macroElement = new Element(IGNORED_MACRO_ELEMENT);
-        macroElement.setAttribute(NAME_ATTR, macro);
-        element.addContent(macroElement);
-      }
-    }
-    finally {
-      myLock.writeLock().unlock();
-    }
-  }
-
   public void addMacroReplacements(ReplacePathToMacroMap result) {
     for (final String name : getUserMacroNames()) {
       final String value = getValue(name);
       if (value != null && !value.trim().isEmpty()) result.addMacroReplacement(value, name);
     }
   }
-
 
   public void addMacroExpands(ExpandMacroToPathMap result) {
     for (final String name : getUserMacroNames()) {

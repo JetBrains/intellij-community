@@ -131,7 +131,7 @@ public class ExternalJavaDocAction extends AnAction {
     }
     if (editor != null) {
       presentation.setEnabled(enabled);
-      if (event.getPlace().equals(ActionPlaces.MAIN_MENU)) {
+      if (ActionPlaces.isMainMenuOrActionSearch(event.getPlace())) {
         presentation.setVisible(true);
       }
       else {

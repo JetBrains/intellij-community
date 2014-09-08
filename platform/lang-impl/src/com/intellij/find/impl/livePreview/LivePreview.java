@@ -24,7 +24,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
@@ -53,9 +52,7 @@ import java.io.PrintStream;
 import java.util.*;
 import java.util.List;
 
-public class LivePreview extends DocumentAdapter implements SearchResults.SearchResultsListener,
-                                                            SelectionListener {
-
+public class LivePreview extends DocumentAdapter implements SearchResults.SearchResultsListener, SelectionListener {
   private static final Key<Object> IN_SELECTION_KEY = Key.create("LivePreview.IN_SELECTION_KEY");
   private static final Object IN_SELECTION1 = new Object();
   private static final Object IN_SELECTION2 = new Object();
@@ -73,6 +70,13 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
   private String myReplacementPreviewText;
   private static boolean NotFound;
 
+  private final Set<RangeHighlighter> myHighlighters = new HashSet<RangeHighlighter>();
+  private RangeHighlighter myCursorHighlighter;
+  private final List<VisibleAreaListener> myVisibleAreaListenersToRemove = new ArrayList<VisibleAreaListener>();
+  private Delegate myDelegate;
+  private final SearchResults mySearchResults;
+  private Balloon myReplacementBalloon;
+
   @Override
   public void selectionChanged(SelectionEvent e) {
     updateInSelectionHighlighters();
@@ -87,26 +91,14 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
   }
 
   public interface Delegate {
-
     @Nullable
-    String getStringToReplace(Editor editor, FindResult findResult);
-
+    String getStringToReplace(@NotNull Editor editor, @Nullable FindResult findResult);
   }
 
-  private final Set<RangeHighlighter> myHighlighters = new HashSet<RangeHighlighter>();
-
-  private RangeHighlighter myCursorHighlighter;
-  private final List<VisibleAreaListener> myVisibleAreaListenersToRemove = new ArrayList<VisibleAreaListener>();
-
-  private static TextAttributes strikout() {
-    return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.DEPRECATED_ATTRIBUTES).clone();
+  private static TextAttributes strikeout() {
+    Color color = EditorColorsManager.getInstance().getGlobalScheme().getDefaultForeground();
+    return new TextAttributes(null, null, color, EffectType.STRIKEOUT, 0);
   }
-
-  private Delegate myDelegate;
-
-  private final SearchResults mySearchResults;
-
-  private Balloon myReplacementBalloon;
 
   @Override
   public void searchResultsUpdated(SearchResults sr) {
@@ -323,7 +315,7 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
         attributes.setEffectColor(attributes.getBackgroundColor());
       }
       if (mySearchResults.isExcluded(range)) {
-        highlightRange(range, strikout(), myHighlighters);
+        highlightRange(range, strikeout(), myHighlighters);
       } else {
         highlightRange(range, attributes, myHighlighters);
       }

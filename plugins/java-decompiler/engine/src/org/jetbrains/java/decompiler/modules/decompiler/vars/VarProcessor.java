@@ -51,8 +51,7 @@ public class VarProcessor {
     defproc.setVarDefinitions();
   }
 
-  public void setDebugVarNames(HashMap<Integer, String> mapDebugVarNames) {
-
+  public void setDebugVarNames(Map<Integer, String> mapDebugVarNames) {
     if (varvers == null) {
       return;
     }

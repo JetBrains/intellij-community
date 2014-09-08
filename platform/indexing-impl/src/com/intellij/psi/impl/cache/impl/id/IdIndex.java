@@ -91,7 +91,7 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
 
   @Override
   public int getVersion() {
-    return 12 + (ourSnapshotMappingsEnabled ? 0xFF:0); // TODO: version should enumerate all word scanner versions and build version upon that set
+    return 13 + (ourSnapshotMappingsEnabled ? 0xFF:0); // TODO: version should enumerate all word scanner versions and build version upon that set
   }
 
   @Override

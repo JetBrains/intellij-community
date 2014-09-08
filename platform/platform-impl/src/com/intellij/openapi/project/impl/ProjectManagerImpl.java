@@ -57,7 +57,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.io.fs.IFile;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -922,9 +921,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         IProjectStore projectStore = projectImpl.getStateStore();
         final String location = projectImpl.getPresentableUrl();
 
-        final List<IFile> original;
+        final List<File> original;
         try {
-          final IComponentStore.SaveSession saveSession = projectStore.startSave();
+          IComponentStore.SaveSession saveSession = projectStore.startSave();
           original = saveSession.getAllStorageFiles(true);
           saveSession.finishSave();
         }
@@ -937,7 +936,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           application.runWriteAction(new Runnable() {
             @Override
             public void run() {
-              for (final IFile originalFile : original) {
+              for (File originalFile : original) {
                 restoreCopy(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(originalFile));
               }
             }

@@ -19,10 +19,10 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.io.fs.IFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -31,7 +31,7 @@ import java.util.Set;
  * @author mike
  */
 public interface StateStorageManager {
-  void addMacro(String macro, String expansion);
+  void addMacro(@NotNull String macro, @NotNull String expansion);
 
   @Nullable
   TrackingPathMacroSubstitutor getMacroSubstitutor();
@@ -40,6 +40,13 @@ public interface StateStorageManager {
   StateStorage getStateStorage(@NotNull Storage storageSpec) throws StateStorageException;
 
   @Nullable
+  StateStorage getStateStorage(@NotNull String fileSpec, @NotNull RoamingType roamingType);
+
+  @Deprecated
+  @Nullable
+  /**
+   * @deprecated Use {@link #getStateStorage(String, com.intellij.openapi.components.RoamingType)}
+    */
   StateStorage getFileStateStorage(@NotNull String fileSpec);
 
   @NotNull
@@ -58,7 +65,7 @@ public interface StateStorageManager {
   @Nullable
   StateStorage getOldStorage(Object component, String componentName, StateStorageOperation operation) throws StateStorageException;
 
-  @Nullable
+  @NotNull
   String expandMacros(@NotNull String file);
 
   @Deprecated
@@ -82,10 +89,10 @@ public interface StateStorageManager {
     Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile, StateStorage>> files);
 
     @NotNull
-    List<IFile> getAllStorageFilesToSave() throws StateStorageException;
+    List<File> getAllStorageFilesToSave() throws StateStorageException;
 
     @NotNull
-    List<IFile> getAllStorageFiles();
+    List<File> getAllStorageFiles();
 
     void save() throws StateStorageException;
   }

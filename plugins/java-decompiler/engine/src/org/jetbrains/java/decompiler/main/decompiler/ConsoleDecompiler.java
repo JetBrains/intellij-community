@@ -17,10 +17,9 @@ package org.jetbrains.java.decompiler.main.decompiler;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.Fernflower;
-import org.jetbrains.java.decompiler.main.decompiler.helper.PrintStreamLogger;
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
-import org.jetbrains.java.decompiler.main.extern.IDecompilatSaver;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+import org.jetbrains.java.decompiler.main.extern.IResultSaver;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.io.*;
@@ -31,108 +30,97 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
-@SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
-public class ConsoleDecompiler implements IBytecodeProvider, IDecompilatSaver {
+public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
 
-  private File root;
-
-  private Fernflower fernflower;
-
-  private HashMap<String, ZipOutputStream> mapArchiveStreams = new HashMap<String, ZipOutputStream>();
-
-  private HashMap<String, HashSet<String>> mapArchiveEntries = new HashMap<String, HashSet<String>>();
-
-  public ConsoleDecompiler() {
-    this(null);
-  }
-
-  public ConsoleDecompiler(HashMap<String, Object> propertiesCustom) {
-    this(new PrintStreamLogger(IFernflowerLogger.WARNING, System.out), propertiesCustom);
-  }
-
-  protected ConsoleDecompiler(IFernflowerLogger logger, HashMap<String, Object> propertiesCustom) {
-    fernflower = new Fernflower(this, this, propertiesCustom);
-    DecompilerContext.setLogger(logger);
-  }
-
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void main(String[] args) {
+    if (args.length < 2) {
+      System.out.println(
+        "Usage: java -jar fernflower.jar [-<option>=<value>]* [<source>]+ <destination>\n" +
+        "Example: java -jar fernflower.jar -dgs=true c:\\my\\source\\ c:\\my.jar d:\\decompiled\\");
+      return;
+    }
 
-    try {
+    Map<String, Object> mapOptions = new HashMap<String, Object>();
+    List<String> lstSources = new ArrayList<String>();
+    List<String> lstLibraries = new ArrayList<String>();
 
-      if (args != null && args.length > 1) {
+    boolean isOption = true;
+    for (int i = 0; i < args.length - 1; ++i) { // last parameter - destination
+      String arg = args[i];
 
-        HashMap<String, Object> mapOptions = new HashMap<String, Object>();
-
-        List<String> lstSources = new ArrayList<String>();
-        List<String> lstLibraries = new ArrayList<String>();
-
-        boolean isOption = true;
-        for (int i = 0; i < args.length - 1; ++i) { // last parameter - destination
-          String arg = args[i];
-
-          if (isOption && arg.startsWith("-") &&
-              arg.length() > 5 && arg.charAt(4) == '=') {
-            String value = arg.substring(5).toUpperCase(Locale.US);
-            if ("TRUE".equals(value)) {
-              value = "1";
-            }
-            else if ("FALSE".equals(value)) {
-              value = "0";
-            }
-
-            mapOptions.put(arg.substring(1, 4), value);
-          }
-          else {
-            isOption = false;
-
-            if (arg.startsWith("-e=")) {
-              lstLibraries.add(arg.substring(3));
-            }
-            else {
-              lstSources.add(arg);
-            }
-          }
+      if (isOption && arg.startsWith("-") &&
+          arg.length() > 5 && arg.charAt(4) == '=') {
+        String value = arg.substring(5).toUpperCase(Locale.US);
+        if ("TRUE".equals(value)) {
+          value = "1";
+        }
+        else if ("FALSE".equals(value)) {
+          value = "0";
         }
 
-        if (lstSources.isEmpty()) {
-          printHelp();
-        }
-        else {
-          ConsoleDecompiler decompiler = new ConsoleDecompiler(
-            new PrintStreamLogger(IFernflowerLogger.INFO, System.out),
-            mapOptions);
-
-          for (String source : lstSources) {
-            decompiler.addSpace(new File(source), true);
-          }
-
-          for (String library : lstLibraries) {
-            decompiler.addSpace(new File(library), false);
-          }
-
-          decompiler.decompileContext(new File(args[args.length - 1]));
-        }
+        mapOptions.put(arg.substring(1, 4), value);
       }
       else {
-        printHelp();
+        isOption = false;
+
+        if (arg.startsWith("-e=")) {
+          lstLibraries.add(arg.substring(3));
+        }
+        else {
+          lstSources.add(arg);
+        }
       }
     }
-    catch (Exception ex) {
-      ex.printStackTrace();
+
+    if (lstSources.isEmpty()) {
+      System.out.println("error: no sources given");
+      return;
     }
+
+    File destination = new File(args[args.length - 1]);
+    if (!destination.isDirectory()) {
+      System.out.println("error: destination '" + destination + "' is not a directory");
+      return;
+    }
+
+    PrintStreamLogger logger = new PrintStreamLogger(System.out);
+    ConsoleDecompiler decompiler = new ConsoleDecompiler(destination, mapOptions, logger);
+
+    for (String source : lstSources) {
+      decompiler.addSpace(new File(source), true);
+    }
+    for (String library : lstLibraries) {
+      decompiler.addSpace(new File(library), false);
+    }
+
+    decompiler.decompileContext();
   }
 
-  private static void printHelp() {
-    System.out.println("Usage: java ConsoleDecompiler ( -<option>=<value>)* (<source>)+ <destination>");
-    System.out.println("Example: java ConsoleDecompiler -dgs=true c:\\mysource\\ c:\\my.jar d:\\decompiled\\");
+  // *******************************************************************
+  // Implementation
+  // *******************************************************************
+
+  private final File root;
+  private final Fernflower fernflower;
+  private Map<String, ZipOutputStream> mapArchiveStreams = new HashMap<String, ZipOutputStream>();
+  private Map<String, Set<String>> mapArchiveEntries = new HashMap<String, Set<String>>();
+
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  public ConsoleDecompiler(File destination, Map<String, Object> options) {
+    this(destination, options, new PrintStreamLogger(System.out));
   }
 
-  public void addSpace(File file, boolean isOwn) throws IOException {
-    fernflower.getStructcontext().addSpace(file, isOwn);
+  protected ConsoleDecompiler(File destination, Map<String, Object> options, IFernflowerLogger logger) {
+    root = destination;
+    fernflower = new Fernflower(this, this, options, logger);
   }
 
-  public void decompileContext(File root) {
-    this.root = root;
+  public void addSpace(File file, boolean isOwn) {
+    fernflower.getStructContext().addSpace(file, isOwn);
+  }
+
+  public void decompileContext() {
     try {
       fernflower.decompileContext();
     }
@@ -145,183 +133,167 @@ public class ConsoleDecompiler implements IBytecodeProvider, IDecompilatSaver {
   // Interface IBytecodeProvider
   // *******************************************************************
 
-  public InputStream getBytecodeStream(String externPath, String internPath) {
-
-    try {
-      File file = new File(externPath);
-
-      if (internPath == null) {
-        return new FileInputStream(file);
-      }
-      else { // archive file
-        ZipFile archive = new ZipFile(file);
-
-        Enumeration<? extends ZipEntry> en = archive.entries();
-        while (en.hasMoreElements()) {
-          ZipEntry entr = en.nextElement();
-
-          if (entr.getName().equals(internPath)) {
-            return archive.getInputStream(entr);
-          }
+  @Override
+  public byte[] getBytecode(String externalPath, String internalPath) throws IOException {
+    File file = new File(externalPath);
+    if (internalPath == null) {
+      return InterpreterUtil.getBytes(file);
+    }
+    else {
+      ZipFile archive = new ZipFile(file);
+      try {
+        ZipEntry entry = archive.getEntry(internalPath);
+        if (entry == null) {
+          throw new IOException("Entry not found: " + internalPath);
         }
+        return InterpreterUtil.getBytes(archive, entry);
+      }
+      finally {
+        archive.close();
       }
     }
-    catch (IOException ex) {
-      ex.printStackTrace();
-    }
-
-    return null;
   }
 
   // *******************************************************************
-  // Interface IDecompilatSaver
+  // Interface IResultSaver
   // *******************************************************************
 
   private String getAbsolutePath(String path) {
     return new File(root, path).getAbsolutePath();
   }
 
-  private boolean addEntryName(String filename, String entry) {
-    HashSet<String> set = mapArchiveEntries.get(filename);
-    if (set == null) {
-      mapArchiveEntries.put(filename, set = new HashSet<String>());
+  @Override
+  public void saveFolder(String path) {
+    File dir = new File(getAbsolutePath(path));
+    if (!(dir.mkdirs() || dir.isDirectory())) {
+      throw new RuntimeException("Cannot create directory " + dir);
     }
-
-    return set.add(entry);
   }
 
-  public void copyEntry(String source, String destpath, String archivename, String entryName) {
-
+  @Override
+  public void copyFile(String source, String path, String entryName) {
     try {
-      String filename = new File(getAbsolutePath(destpath), archivename).getAbsolutePath();
+      InterpreterUtil.copyFile(new File(source), new File(getAbsolutePath(path), entryName));
+    }
+    catch (IOException ex) {
+      DecompilerContext.getLogger().writeMessage("Cannot copy " + source + " to " + entryName, ex);
+    }
+  }
 
-      if (!addEntryName(filename, entryName)) {
-        DecompilerContext.getLogger().writeMessage("Zip entry already exists: " +
-                                                   destpath + "," + archivename + "," + entryName, IFernflowerLogger.WARNING);
-        return;
+  @Override
+  public void saveClassFile(String path, String qualifiedName, String entryName, String content) {
+    File file = new File(getAbsolutePath(path), entryName);
+    try {
+      Writer out = new OutputStreamWriter(new FileOutputStream(file), "UTF8");
+      try {
+        out.write(content);
+      }
+      finally {
+        out.close();
+      }
+    }
+    catch (IOException ex) {
+      DecompilerContext.getLogger().writeMessage("Cannot write class file " + file, ex);
+    }
+  }
+
+  @Override
+  public void createArchive(String path, String archiveName, Manifest manifest) {
+    File file = new File(getAbsolutePath(path), archiveName);
+    try {
+      if (!(file.createNewFile() || file.isFile())) {
+        throw new IOException("Cannot create file " + file);
       }
 
-      ZipFile srcarchive = new ZipFile(new File(source));
+      FileOutputStream fileStream = new FileOutputStream(file);
+      @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+      ZipOutputStream zipStream = manifest != null ? new JarOutputStream(fileStream, manifest) : new ZipOutputStream(fileStream);
+      mapArchiveStreams.put(file.getPath(), zipStream);
+    }
+    catch (IOException ex) {
+      DecompilerContext.getLogger().writeMessage("Cannot create archive " + file, ex);
+    }
+  }
 
-      Enumeration<? extends ZipEntry> en = srcarchive.entries();
-      while (en.hasMoreElements()) {
-        ZipEntry entr = en.nextElement();
+  @Override
+  public void saveDirEntry(String path, String archiveName, String entryName) {
+    saveClassEntry(path, archiveName, null, entryName, null);
+  }
 
-        if (entr.getName().equals(entryName)) {
-          InputStream in = srcarchive.getInputStream(entr);
+  @Override
+  public void copyEntry(String source, String path, String archiveName, String entryName) {
+    String file = new File(getAbsolutePath(path), archiveName).getPath();
 
-          ZipOutputStream out = mapArchiveStreams.get(filename);
+    if (!checkEntry(entryName, file)) {
+      return;
+    }
+
+    try {
+      ZipFile srcArchive = new ZipFile(new File(source));
+      try {
+        ZipEntry entry = srcArchive.getEntry(entryName);
+        if (entry != null) {
+          InputStream in = srcArchive.getInputStream(entry);
+          ZipOutputStream out = mapArchiveStreams.get(file);
           out.putNextEntry(new ZipEntry(entryName));
-
-          InterpreterUtil.copyInputStream(in, out);
+          InterpreterUtil.copyStream(in, out);
           in.close();
         }
       }
-
-      srcarchive.close();
-    }
-    catch (IOException ex) {
-      DecompilerContext.getLogger()
-        .writeMessage("Error copying zip file entry: " + source + "," + destpath + "," + archivename + "," + entryName,
-                      IFernflowerLogger.WARNING);
-      ex.printStackTrace();
-    }
-  }
-
-  public void copyFile(String source, String destpath, String destfilename) {
-    try {
-      InterpreterUtil.copyFile(new File(source), new File(destfilename));
-    }
-    catch (IOException ex) {
-      ex.printStackTrace();
-    }
-  }
-
-  public void saveFile(String path, String filename, String content) {
-    try {
-      BufferedWriter out =
-        new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(getAbsolutePath(path), filename)), "UTF8"));
-      out.write(content);
-      out.flush();
-      out.close();
-    }
-    catch (IOException ex) {
-      ex.printStackTrace();
-    }
-  }
-
-  public void createArchive(String path, String archivename, Manifest manifest) {
-
-    try {
-      File file = new File(getAbsolutePath(path), archivename);
-      file.createNewFile();
-
-      ZipOutputStream out;
-      if (manifest != null) { // jar
-        out = new JarOutputStream(new FileOutputStream(file), manifest);
+      finally {
+        srcArchive.close();
       }
-      else {
-        out = new ZipOutputStream(new FileOutputStream(file));
-      }
-      mapArchiveStreams.put(file.getAbsolutePath(), out);
     }
     catch (IOException ex) {
-      ex.printStackTrace();
+      String message = "Cannot copy entry " + entryName + " from " + source + " to " + file;
+      DecompilerContext.getLogger().writeMessage(message, ex);
     }
   }
 
-  public void saveClassEntry(String path, String archivename,
-                             String qualifiedName, String entryName, String content) {
-    saveEntry(path, archivename, entryName, content);
-  }
+  @Override
+  public void saveClassEntry(String path, String archiveName, String qualifiedName, String entryName, String content) {
+    String file = new File(getAbsolutePath(path), archiveName).getPath();
 
-  public void saveClassFile(String path, String qualifiedName, String entryName, String content) {
-    saveFile(path, entryName, content);
-  }
-
-  public void saveEntry(String path, String archivename, String entryName,
-                        String content) {
+    if (!checkEntry(entryName, file)) {
+      return;
+    }
 
     try {
-      String filename = new File(getAbsolutePath(path), archivename).getAbsolutePath();
-
-      if (!addEntryName(filename, entryName)) {
-        DecompilerContext.getLogger().writeMessage("Zip entry already exists: " +
-                                                   path + "," + archivename + "," + entryName, IFernflowerLogger.WARNING);
-        return;
-      }
-
-      ZipOutputStream out = mapArchiveStreams.get(filename);
+      ZipOutputStream out = mapArchiveStreams.get(file);
       out.putNextEntry(new ZipEntry(entryName));
-
       if (content != null) {
-        BufferedWriter outwriter = new BufferedWriter(new OutputStreamWriter(out, "UTF8"));
-        outwriter.write(content);
-        outwriter.flush();
+        out.write(content.getBytes("UTF-8"));
       }
     }
     catch (IOException ex) {
-      ex.printStackTrace();
+      String message = "Cannot write entry " + entryName + " to " + file;
+      DecompilerContext.getLogger().writeMessage(message, ex);
     }
   }
 
-  public void saveFolder(String path) {
-    File f = new File(getAbsolutePath(path));
-    f.mkdirs();
+  private boolean checkEntry(String entryName, String file) {
+    Set<String> set = mapArchiveEntries.get(file);
+    if (set == null) {
+      mapArchiveEntries.put(file, set = new HashSet<String>());
+    }
+
+    boolean added = set.add(entryName);
+    if (!added) {
+      String message = "Zip entry " + entryName + " already exists in " + file;
+      DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
+    }
+    return added;
   }
 
-
-  public void closeArchive(String path, String archivename) {
+  @Override
+  public void closeArchive(String path, String archiveName) {
+    String file = new File(getAbsolutePath(path), archiveName).getPath();
     try {
-      String filename = new File(getAbsolutePath(path), archivename).getAbsolutePath();
-
-      mapArchiveEntries.remove(filename);
-      OutputStream out = mapArchiveStreams.remove(filename);
-      out.flush();
-      out.close();
+      mapArchiveEntries.remove(file);
+      mapArchiveStreams.remove(file).close();
     }
     catch (IOException ex) {
-      ex.printStackTrace();
+      DecompilerContext.getLogger().writeMessage("Cannot close " + file, IFernflowerLogger.Severity.WARN);
     }
   }
 }

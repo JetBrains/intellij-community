@@ -16,42 +16,28 @@
 package org.jetbrains.java.decompiler;
 
 import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
-import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.*;
-import java.util.HashMap;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class SingleClassesTest {
-  private File tempDir;
-  private ConsoleDecompiler decompiler;
+  private DecompilerTestFixture fixture;
 
   @Before
   public void setUp() throws IOException {
-    //noinspection SSBasedInspection
-    tempDir = File.createTempFile("decompiler_test_", "_dir");
-    assertTrue(tempDir.delete());
-    assertTrue(tempDir.mkdirs());
-
-    decompiler = new ConsoleDecompiler(new HashMap<String, Object>() {{
-      put(IFernflowerPreferences.LOG_LEVEL, "warn");
-      put(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES, "1");
-      put(IFernflowerPreferences.REMOVE_SYNTHETIC, "1");
-      put(IFernflowerPreferences.REMOVE_BRIDGE, "1");
-      put(IFernflowerPreferences.LITERALS_AS_IS, "1");
-    }});
+    fixture = new DecompilerTestFixture();
+    fixture.setUp();
   }
 
   @After
   public void tearDown() {
-    decompiler = null;
-    delete(tempDir);
-    tempDir = null;
+    fixture.tearDown();
+    fixture = null;
   }
 
   @Test public void testClassFields() { doTest("TestClassFields"); }
@@ -65,17 +51,15 @@ public class SingleClassesTest {
   @Test public void testMethodParameters() { doTest("TestMethodParameters"); }
   @Test public void testCodeConstructs() { doTest("TestCodeConstructs"); }
   @Test public void testConstants() { doTest("TestConstants"); }
-  //@Test public void testEnum() { doTest("TestEnum"); }
+  @Test public void testEnum() { doTest("TestEnum"); }
+  @Test public void testDebugSymbols() { doTest("TestDebugSymbols"); }
 
   private void doTest(final String testName) {
     try {
-      File testDataDir = new File("testData");
-      if (!isTestDataDir(testDataDir)) testDataDir = new File("community/plugins/java-decompiler/engine/testData");
-      if (!isTestDataDir(testDataDir)) testDataDir = new File("plugins/java-decompiler/engine/testData");
-      assertTrue(isTestDataDir(testDataDir));
-
-      File classFile = new File(testDataDir, "/classes/pkg/" + testName + ".class");
+      File classFile = new File(fixture.getTestDataDir(), "/classes/pkg/" + testName + ".class");
       assertTrue(classFile.isFile());
+
+      ConsoleDecompiler decompiler = fixture.getDecompiler();
       decompiler.addSpace(classFile, true);
       File[] innerClasses = classFile.getParentFile().listFiles(new FilenameFilter() {
         @Override
@@ -87,12 +71,12 @@ public class SingleClassesTest {
         decompiler.addSpace(inner, true);
       }
 
-      decompiler.decompileContext(tempDir);
+      decompiler.decompileContext();
 
-      File decompiledFile = new File(tempDir, testName + ".java");
+      File decompiledFile = new File(fixture.getTargetDir(), testName + ".java");
       assertTrue(decompiledFile.isFile());
 
-      File referenceFile = new File(testDataDir, "results/" + testName + ".dec");
+      File referenceFile = new File(fixture.getTestDataDir(), "results/" + testName + ".dec");
       assertTrue(referenceFile.isFile());
 
       String decompiledContent = getContent(decompiledFile);
@@ -102,10 +86,6 @@ public class SingleClassesTest {
     catch (Exception e) {
       throw new RuntimeException(e);
     }
-  }
-
-  private static boolean isTestDataDir(File dir) {
-    return dir.isDirectory() && new File(dir, "classes").isDirectory() && new File(dir, "results").isDirectory();
   }
 
   private static String getContent(File file) throws IOException {
@@ -121,18 +101,6 @@ public class SingleClassesTest {
     }
     finally {
       reader.close();
-    }
-  }
-
-  private static void delete(File file) {
-    if (file.isDirectory()) {
-      File[] files = file.listFiles();
-      if (files != null) {
-        for (File f : files) delete(f);
-      }
-    }
-    else {
-      assertTrue(file.delete());
     }
   }
 }

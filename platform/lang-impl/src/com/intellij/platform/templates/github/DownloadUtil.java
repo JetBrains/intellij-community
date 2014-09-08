@@ -1,5 +1,6 @@
 package com.intellij.platform.templates.github;
 
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -19,7 +20,6 @@ import java.net.HttpURLConnection;
 import java.net.URLConnection;
 import java.util.Locale;
 import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Sergey Simonchik
@@ -176,6 +176,7 @@ public class DownloadUtil {
     URLConnection urlConnection = HttpConfigurable.getInstance().openConnection(location);
     HttpURLConnection httpURLConnection = ObjectUtils.tryCast(urlConnection, HttpURLConnection.class);
     try {
+      urlConnection.setRequestProperty("User-Agent", ApplicationInfoEx.getInstanceEx().getFullApplicationName());
       urlConnection.connect();
       InputStream in = urlConnection.getInputStream();
       int contentLength = urlConnection.getContentLength();

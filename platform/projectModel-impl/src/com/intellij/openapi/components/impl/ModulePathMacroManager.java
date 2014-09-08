@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.components.impl;
 
-import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
@@ -34,25 +33,21 @@ public class ModulePathMacroManager extends BasePathMacroManager {
   @Override
   public ExpandMacroToPathMap getExpandMacroMap() {
     final ExpandMacroToPathMap result = new ExpandMacroToPathMap();
-
     if (!myModule.isDisposed()) {
-      addFileHierarchyReplacements(result, PathMacrosImpl.MODULE_DIR_MACRO_NAME, PathMacroUtil.getModuleDir(myModule.getModuleFilePath()));
+      addFileHierarchyReplacements(result, PathMacroUtil.MODULE_DIR_MACRO_NAME, PathMacroUtil.getModuleDir(myModule.getModuleFilePath()));
     }
 
     result.putAll(super.getExpandMacroMap());
-
     return result;
   }
 
   @Override
   public ReplacePathToMacroMap getReplacePathMap() {
     final ReplacePathToMacroMap result = super.getReplacePathMap();
-
     if (!myModule.isDisposed()) {
       final String modulePath = PathMacroUtil.getModuleDir(myModule.getModuleFilePath());
-      addFileHierarchyReplacements(result, PathMacrosImpl.MODULE_DIR_MACRO_NAME, modulePath, PathMacroUtil.getUserHomePath());
+      addFileHierarchyReplacements(result, PathMacroUtil.MODULE_DIR_MACRO_NAME, modulePath, PathMacroUtil.getUserHomePath());
     }
-
     return result;
   }
 }

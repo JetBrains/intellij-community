@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.highlighter.XmlFileHighlighter;
 import com.intellij.ide.palette.PaletteDragEventListener;
 import com.intellij.ide.palette.impl.PaletteManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -27,13 +28,19 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -61,7 +68,7 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.uiDesigner.radComponents.RadTabbedPane;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.NotNullProducer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -214,9 +221,8 @@ public final class GuiEditor extends JPanel implements DataProvider, ModuleProvi
 
   /**
    * @param file file to be edited
-   * @throws java.lang.IllegalArgumentException
-   *          if the <code>file</code>
-   *          is <code>null</code> or <code>file</code> is not valid PsiFile
+   * @throws java.lang.IllegalArgumentException if the <code>file</code>
+   *                                            is <code>null</code> or <code>file</code> is not valid PsiFile
    */
   public GuiEditor(Project project, @NotNull final Module module, @NotNull final VirtualFile file) {
     LOG.assertTrue(file.isValid());
@@ -288,7 +294,7 @@ public final class GuiEditor extends JPanel implements DataProvider, ModuleProvi
     readFromFile(false);
 
     JPanel panel = new JPanel(new GridBagLayout());
-    panel.setBackground(Color.LIGHT_GRAY);
+    panel.setBackground(GridCaptionPanel.getGutterColor());
 
     myHorzCaptionPanel = new GridCaptionPanel(this, false);
     myVertCaptionPanel = new GridCaptionPanel(this, true);
@@ -311,7 +317,13 @@ public final class GuiEditor extends JPanel implements DataProvider, ModuleProvi
     gbc.weighty = 1.0;
 
     myScrollPane = ScrollPaneFactory.createScrollPane(myLayeredPane);
-    myScrollPane.setBackground(new JBColor(Color.WHITE, UIUtil.getListBackground()));
+    myScrollPane.setBackground(new JBColor(new NotNullProducer<Color>() {
+      @NotNull
+      @Override
+      public Color produce() {
+        return EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
+      }
+    }));
     panel.add(myScrollPane, gbc);
     myHorzCaptionPanel.attachToScrollPane(myScrollPane);
     myVertCaptionPanel.attachToScrollPane(myScrollPane);
@@ -519,7 +531,7 @@ public final class GuiEditor extends JPanel implements DataProvider, ModuleProvi
 
   /**
    * @return the component which represents DnD layer. All currently
-   *         dragged (moved) component are on this layer.
+   * dragged (moved) component are on this layer.
    */
   public DragLayer getDragLayer() {
     return myDragLayer;
@@ -527,7 +539,7 @@ public final class GuiEditor extends JPanel implements DataProvider, ModuleProvi
 
   /**
    * @return the topmost <code>UiConainer</code> which in the root of
-   *         component hierarchy. This method never returns <code>null</code>.
+   * component hierarchy. This method never returns <code>null</code>.
    */
   @NotNull
   public RadRootContainer getRootContainer() {
@@ -558,7 +570,7 @@ public final class GuiEditor extends JPanel implements DataProvider, ModuleProvi
 
   /**
    * @return the component which represents layer with active decorators
-   *         such as grid edit controls, inplace editors, etc.
+   * such as grid edit controls, inplace editors, etc.
    */
   public InplaceEditingLayer getInplaceEditingLayer() {
     return myInplaceEditingLayer;
@@ -982,6 +994,31 @@ public final class GuiEditor extends JPanel implements DataProvider, ModuleProvi
 
   void hideIntentionHint() {
     myQuickFixManager.hideIntentionHint();
+  }
+
+  public void showFormSource() {
+    EditorFactory editorFactory = EditorFactory.getInstance();
+
+    Editor editor = editorFactory.createViewer(myDocument, myProject);
+
+    try {
+      ((EditorEx)editor).setHighlighter(
+        new LexerEditorHighlighter(new XmlFileHighlighter(), EditorColorsManager.getInstance().getGlobalScheme()));
+
+      JComponent component = editor.getComponent();
+      component.setPreferredSize(new Dimension(640, 480));
+
+      DialogBuilder dialog = new DialogBuilder(myProject);
+
+      dialog.title("Form - " + myFile.getPresentableName()).dimensionKey("GuiDesigner.FormSource.Dialog");
+      dialog.centerPanel(component).setPreferredFocusComponent(editor.getContentComponent());
+      dialog.addOkAction();
+
+      dialog.show();
+    }
+    finally {
+      editorFactory.releaseEditor(editor);
+    }
   }
 
   private final class MyLayeredPane extends JBLayeredPane implements Scrollable {

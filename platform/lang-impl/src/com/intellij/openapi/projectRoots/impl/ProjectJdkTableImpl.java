@@ -41,12 +41,8 @@ import java.util.List;
 import java.util.Map;
 
 @State(
-  name="ProjectJdkTable",
-  roamingType = RoamingType.DISABLED,
-  storages= {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/jdk.table.xml"
-    )}
+  name = "ProjectJdkTable",
+  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/jdk.table.xml", roamingType = RoamingType.DISABLED)}
 )
 public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentStateComponent<Element>, ExportableComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl");

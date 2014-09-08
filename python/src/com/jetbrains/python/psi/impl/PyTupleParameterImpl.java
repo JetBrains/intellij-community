@@ -16,19 +16,17 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.navigation.ItemPresentation;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyTupleParameterStub;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a tuple parameter as stubbed element.
  */
-public class PyTupleParameterImpl extends PyPresentableElementImpl<PyTupleParameterStub> implements PyTupleParameter {
+public class PyTupleParameterImpl extends PyBaseElementImpl<PyTupleParameterStub> implements PyTupleParameter {
   
   public PyTupleParameterImpl(ASTNode astNode) {
     super(astNode);
@@ -62,10 +60,6 @@ public class PyTupleParameterImpl extends PyPresentableElementImpl<PyTupleParame
     return getDefaultValue() != null;
   }
 
-  public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
-    throw new IncorrectOperationException("Can't rename a tuple parameter to '" + name +"'"); 
-  }
-
   @Override
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
     pyVisitor.visitPyTupleParameter(this);
@@ -79,5 +73,10 @@ public class PyTupleParameterImpl extends PyPresentableElementImpl<PyTupleParame
   @Override
   public boolean isSelf() {
     return false;
+  }
+
+  @Override
+  public ItemPresentation getPresentation() {
+    return new PyElementPresentation(this);
   }
 }

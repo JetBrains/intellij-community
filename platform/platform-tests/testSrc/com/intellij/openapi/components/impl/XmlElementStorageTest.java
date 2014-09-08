@@ -16,19 +16,19 @@
 package com.intellij.openapi.components.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
-import com.intellij.openapi.components.impl.stores.ComponentRoamingManager;
 import com.intellij.openapi.components.impl.stores.ComponentVersionProvider;
 import com.intellij.openapi.components.impl.stores.XmlElementStorage;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.LightPlatformLangTestCase;
-import com.intellij.util.io.fs.IFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -88,7 +88,7 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
     private Element mySavedElement;
 
     public MyXmlElementStorage(Element element, final Disposable parentDisposable) throws StateStorageException {
-      super(new MyPathMacroManager(), parentDisposable, "root", null, "", ComponentRoamingManager.getInstance(), ComponentVersionProvider.EMPTY);
+      super("", RoamingType.PER_USER, new MyPathMacroManager(), parentDisposable, "root", null, ComponentVersionProvider.EMPTY);
       myElement = element;
     }
 
@@ -108,36 +108,36 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
 
         @NotNull
         @Override
-        public Collection<IFile> getStorageFilesToSave() throws StateStorageException {
-          return needsSave() ? getAllStorageFiles() : Collections.<IFile>emptyList();
+        public Collection<File> getStorageFilesToSave() throws StateStorageException {
+          return needsSave() ? getAllStorageFiles() : Collections.<File>emptyList();
         }
 
         @NotNull
         @Override
-        public List<IFile> getAllStorageFiles() {
+        public List<File> getAllStorageFiles() {
           throw new UnsupportedOperationException("Method getAllStorageFiles not implemented in " + getClass());
         }
-
       };
     }
   }
 
   private static class MyPathMacroManager implements TrackingPathMacroSubstitutor {
     @Override
-    public void expandPaths(final Element element) {
+    public void expandPaths(@NotNull final Element element) {
     }
 
     @Override
     public void reset() {
     }
 
+    @NotNull
     @Override
-    public Collection<String> getComponents(Collection<String> macros) {
+    public Collection<String> getComponents(@NotNull Collection<String> macros) {
       return Collections.emptyList();
     }
 
     @Override
-    public void collapsePaths(final Element element) {
+    public void collapsePaths(@NotNull final Element element) {
     }
 
     @Override
@@ -150,17 +150,18 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
       throw new UnsupportedOperationException("Method collapsePath not implemented in " + getClass());
     }
 
+    @NotNull
     @Override
     public Collection<String> getUnknownMacros(final String componentName) {
       return Collections.emptySet();
     }
 
     @Override
-    public void invalidateUnknownMacros(Set<String> macros) {
+    public void invalidateUnknownMacros(@NotNull Set<String> macros) {
     }
 
     @Override
-    public void addUnknownMacros(String componentName, Collection<String> unknownMacros) {
+    public void addUnknownMacros(@NotNull String componentName, @NotNull Collection<String> unknownMacros) {
     }
   }
 }

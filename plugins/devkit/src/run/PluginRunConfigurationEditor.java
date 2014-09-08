@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.devkit.run;
 
+import com.intellij.application.options.ModulesComboBox;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.LogFileOptions;
 import com.intellij.execution.ui.AlternativeJREPanel;
@@ -24,7 +25,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.application.options.ModulesComboBox;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
@@ -46,7 +46,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 
 public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfiguration> implements PanelWithAnchor {
   private final ModulesComboBox myModules = new ModulesComboBox();
@@ -54,7 +53,7 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
   private final LabeledComponent<RawCommandLineEditor> myVMParameters = new LabeledComponent<RawCommandLineEditor>();
   private final LabeledComponent<RawCommandLineEditor> myProgramParameters = new LabeledComponent<RawCommandLineEditor>();
   private JComponent anchor;
-  private AlternativeJREPanel myAlternativeJREPanel = new AlternativeJREPanel();
+  private final AlternativeJREPanel myAlternativeJREPanel = new AlternativeJREPanel();
 
   @NonNls private final JCheckBox myShowLogs = new JCheckBox(DevKitBundle.message("show.smth", "idea.log"));
 
@@ -65,12 +64,14 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
     myPRC = prc;
     myShowLogs.setSelected(isShow(prc));
     myShowLogs.addChangeListener(new ChangeListener() {
-      public void stateChanged(ChangeEvent e) {
+      @Override
+      public void stateChanged(@NotNull ChangeEvent e) {
         setShow(prc, myShowLogs.isSelected());
       }
     });
     myModules.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
+      @Override
+      public void actionPerformed(@NotNull ActionEvent e) {
         final Module selectedModule = myModules.getSelectedModule();
         if (selectedModule != null){
           prc.removeAllLogFiles();
@@ -113,20 +114,19 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
   }
 
   private static void setShow(PluginRunConfiguration prc, boolean show){
-    final ArrayList<LogFileOptions> logFiles = prc.getLogFiles();
-    for (LogFileOptions logFile: logFiles) {
+    for (LogFileOptions logFile: prc.getLogFiles()) {
       logFile.setEnable(show);
     }
   }
 
   private static boolean isShow(PluginRunConfiguration prc){
-    final ArrayList<LogFileOptions> logFiles = prc.getLogFiles();
-    for (LogFileOptions logFile : logFiles) {
+    for (LogFileOptions logFile : prc.getLogFiles()) {
       if (logFile.isEnabled()) return true;
     }
     return false;
   }
 
+  @Override
   public void resetEditorFrom(PluginRunConfiguration prc) {
     myModules.setSelectedModule(prc.getModule());
     getVMParameters().setText(prc.VM_PARAMETERS);
@@ -135,6 +135,7 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
   }
 
 
+  @Override
   public void applyEditorTo(PluginRunConfiguration prc) throws ConfigurationException {
     prc.setModule(myModules.getSelectedModule());
     prc.VM_PARAMETERS = getVMParameters().getText();
@@ -143,6 +144,7 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
     prc.setAlternativeJreEnabled(myAlternativeJREPanel.isPathEnabled());
   }
 
+  @Override
   @NotNull
   public JComponent createEditor() {
     myModules.fillModules(myPRC.getProject(), PluginModuleType.getInstance());

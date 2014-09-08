@@ -100,10 +100,12 @@ public class JavaValueModifier extends XValueModifier {
   @Override
   public void setValue(@NotNull String expression, @NotNull XModificationCallback callback) {
     final NodeDescriptorImpl descriptor = myJavaValue.getDescriptor();
-    if (!(descriptor instanceof ValueDescriptorImpl)) {
+    if(!((ValueDescriptorImpl)descriptor).canSetValue()) {
       return;
     }
-    if(!((ValueDescriptorImpl)descriptor).canSetValue()) {
+
+    if (myJavaValue.getEvaluationContext().getSuspendContext().isResumed()) {
+      callback.errorOccurred(DebuggerBundle.message("error.context.has.changed"));
       return;
     }
 

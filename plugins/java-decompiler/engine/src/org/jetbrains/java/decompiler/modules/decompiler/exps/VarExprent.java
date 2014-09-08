@@ -26,9 +26,6 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPaar;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -84,24 +81,11 @@ public class VarExprent extends Exprent {
   }
 
   public String toJava(int indent) {
+    StringBuilder buffer = new StringBuilder();
 
     if (classdef) {
-
       ClassNode child = DecompilerContext.getClassProcessor().getMapRootClasses().get(vartype.value);
-
-      StringWriter strwriter = new StringWriter();
-      BufferedWriter bufstrwriter = new BufferedWriter(strwriter);
-
-      ClassWriter clwriter = new ClassWriter();
-      try {
-        clwriter.classToJava(child, bufstrwriter, indent);
-        bufstrwriter.flush();
-      }
-      catch (IOException ex) {
-        throw new RuntimeException(ex);
-      }
-
-      return strwriter.toString();
+      new ClassWriter().classToJava(child, buffer, indent);
     }
     else {
       String name = null;
@@ -109,18 +93,16 @@ public class VarExprent extends Exprent {
         name = processor.getVarName(new VarVersionPaar(index, version));
       }
 
-      StringBuilder buf = new StringBuilder();
-
       if (definition) {
         if (processor != null && processor.getVarFinal(new VarVersionPaar(index, version)) == VarTypeProcessor.VAR_FINALEXPLICIT) {
-          buf.append("final ");
+          buffer.append("final ");
         }
-        buf.append(ExprProcessor.getCastTypeName(getVartype())).append(" ");
+        buffer.append(ExprProcessor.getCastTypeName(getVartype())).append(" ");
       }
-      buf.append(name == null ? ("var" + index + (version == 0 ? "" : "_" + version)) : name);
-
-      return buf.toString();
+      buffer.append(name == null ? ("var" + index + (version == 0 ? "" : "_" + version)) : name);
     }
+
+    return buffer.toString();
   }
 
   public boolean equals(Object o) {

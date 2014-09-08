@@ -17,12 +17,13 @@
 package com.intellij.execution.testframework.actions;
 
 import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.TestTreeViewAction;
 import com.intellij.openapi.actionSystem.*;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
-public class ViewAssertEqualsDiffAction extends AnAction {
+public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeViewAction {
   @NonNls public static final String ACTION_ID = "openAssertEqualsDiff";
 
   public void actionPerformed(final AnActionEvent e) {
@@ -53,9 +54,5 @@ public class ViewAssertEqualsDiffAction extends AnAction {
     }
     presentation.setEnabled(enabled);
     presentation.setVisible(enabled);
-  }
-
-  public static void registerShortcut(final JComponent component) {
-    ActionManager.getInstance().getAction(ACTION_ID).registerCustomShortcutSet(CommonShortcuts.ALT_ENTER, component);
   }
 }

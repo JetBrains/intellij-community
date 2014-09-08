@@ -28,6 +28,11 @@ public @interface Storage {
   @NonNls String file() default "";
   StorageScheme scheme() default StorageScheme.DEFAULT;
 
-  Class<? extends StateStorage> storageClass() default StorageAnnotationsDefaultValues.NullStateStorage.class;
-  Class<? extends StateSplitter> stateSplitter() default StorageAnnotationsDefaultValues.NullStateSplitter.class;
+  /**
+   * You must not store components with different roaming types in one file ({@link #file()}).
+   */
+  RoamingType roamingType() default RoamingType.PER_USER;
+
+  Class<? extends StateStorage> storageClass() default StateStorage.class;
+  Class<? extends StateSplitter> stateSplitter() default StateSplitter.class;
 }

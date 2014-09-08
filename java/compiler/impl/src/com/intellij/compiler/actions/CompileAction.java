@@ -110,7 +110,7 @@ public class CompileAction extends CompileActionBase {
           elementDescription = "'" + file.getName() + "'";
         }
         else {
-          if (!ActionPlaces.MAIN_MENU.equals(event.getPlace())) {
+          if (!ActionPlaces.isMainMenuOrActionSearch(event.getPlace())) {
             // the action should be invisible in popups for non-java files
             presentation.setEnabled(false);
             presentation.setVisible(false);

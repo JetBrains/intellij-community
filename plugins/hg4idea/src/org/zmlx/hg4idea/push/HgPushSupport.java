@@ -64,7 +64,7 @@ public class HgPushSupport extends PushSupport<HgRepository, HgPushSource, HgTar
   @NotNull
   @Override
   public HgPushSource getSource(@NotNull HgRepository repository) {
-    String localBranch = HgUtil.getActiveBranchName(repository);
+    String localBranch = repository.getCurrentBranchName();
     return new HgPushSource(localBranch);
   }
 
@@ -81,7 +81,7 @@ public class HgPushSupport extends PushSupport<HgRepository, HgPushSource, HgTar
 
   @Override
   @NotNull
-  public TargetEditor<HgTarget> createTargetEditor(@NotNull HgRepository repository, @NotNull String defaultTargetName) {
-    return new HgTargetEditor(repository, defaultTargetName);
+  public PushTargetPanel<HgTarget> createTargetPanel(@NotNull HgRepository repository, @NotNull String defaultTargetName) {
+    return new HgPushTargetPanel(repository, defaultTargetName);
   }
 }

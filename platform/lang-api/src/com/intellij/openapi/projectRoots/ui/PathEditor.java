@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -67,7 +66,6 @@ public class PathEditor {
 
   public PathEditor(final FileChooserDescriptor descriptor) {
     myDescriptor = descriptor;
-    myDescriptor.putUserData(FileChooserDialog.PREFER_LAST_OVER_TO_SELECT, Boolean.TRUE);
     myModel = createListModel();
   }
 
@@ -176,12 +174,8 @@ public class PathEditor {
   }
 
   protected VirtualFile[] doAdd() {
-    VirtualFile baseDir = myAddBaseDir;
     Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myPanel));
-    if (baseDir == null && project != null) {
-      baseDir = project.getBaseDir();
-    }
-    VirtualFile[] files = FileChooser.chooseFiles(myDescriptor, myPanel, project, baseDir);
+    VirtualFile[] files = FileChooser.chooseFiles(myDescriptor, myPanel, project, myAddBaseDir);
     files = adjustAddedFileSet(myPanel, files);
     List<VirtualFile> added = new ArrayList<VirtualFile>(files.length);
     for (VirtualFile vFile : files) {

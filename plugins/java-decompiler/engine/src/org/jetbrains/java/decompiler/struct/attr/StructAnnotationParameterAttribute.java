@@ -18,37 +18,30 @@ package org.jetbrains.java.decompiler.struct.attr;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.AnnotationExprent;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 
-import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class StructAnnotationParameterAttribute extends StructGeneralAttribute {
 
   private List<List<AnnotationExprent>> paramAnnotations;
 
-  public void initContent(ConstantPool pool) {
+  @Override
+  public void initContent(ConstantPool pool) throws IOException {
+    DataInputStream data = stream();
 
-    super.initContent(pool);
-
-    paramAnnotations = new ArrayList<List<AnnotationExprent>>();
-    DataInputStream data = new DataInputStream(new ByteArrayInputStream(info));
-
-    try {
-      int len = data.readUnsignedByte();
+    int len = data.readUnsignedByte();
+    if (len > 0) {
+      paramAnnotations = new ArrayList<List<AnnotationExprent>>(len);
       for (int i = 0; i < len; i++) {
-        List<AnnotationExprent> lst = new ArrayList<AnnotationExprent>();
-        int annsize = data.readUnsignedShort();
-
-        for (int j = 0; j < annsize; j++) {
-          lst.add(StructAnnotationAttribute.parseAnnotation(data, pool));
-        }
-        paramAnnotations.add(lst);
+        List<AnnotationExprent> annotations = StructAnnotationAttribute.parseAnnotations(pool, data);
+        paramAnnotations.add(annotations);
       }
     }
-    catch (IOException ex) {
-      throw new RuntimeException(ex);
+    else {
+      paramAnnotations = Collections.emptyList();
     }
   }
 

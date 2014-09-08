@@ -7,7 +7,6 @@ import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessAdapter;
 import com.intellij.debugger.engine.RemoteDebugProcessHandler;
 import com.intellij.debugger.ui.DebuggerPanelsManager;
-import com.intellij.diagnostic.logging.LogFilesManager;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RunProfile;
@@ -95,10 +94,6 @@ public class JavaDebuggerLauncherImpl extends JavaDebuggerLauncher {
     @Override
     public Icon getIcon() {
       return myExecutionEnvironment.getRunProfile().getIcon();
-    }
-
-    @Override
-    public void initLogs(RunContentDescriptor content, LogFilesManager logFilesManager) {
     }
 
     @Override

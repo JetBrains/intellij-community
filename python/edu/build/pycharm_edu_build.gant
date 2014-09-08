@@ -158,7 +158,6 @@ public layoutEducational(String classesPath, Set usedJars) {
     usedJars = collectUsedJars(modules(), approvedJars(), ["/ant/"], null)
   }
 
-  def appInfo = appInfoFile()
   def paths = new Paths(home)
   buildSearchableOptions("${projectBuilder.moduleOutput(findModule("platform-resources"))}/search", [], {
     projectBuilder.moduleRuntimeClasspath(findModule("main_pycharm_edu"), false).each {
@@ -166,8 +165,9 @@ public layoutEducational(String classesPath, Set usedJars) {
     }
   }, "-Didea.platform.prefix=PyCharmEdu -Didea.no.jre.check=true")
 
+  def appInfo = appInfoFile()
   if (!dryRun) {
-    wireBuildDate("PE-${buildNumber}", appInfo)
+    wireBuildDate(buildNumber, appInfo)
   }
 
   Map args = [
@@ -223,7 +223,7 @@ private layoutPlugins(layouts) {
 }
 
 private String appInfoFile() {
-  return "$pythonEduHome/resources/idea/PyCharmEduApplicationInfo.xml"
+  return "$home/out/pycharmEDU/classes/production/python-educational/idea/PyCharmEduApplicationInfo.xml"
 }
 
 private layoutFull(Map args, String target, Set usedJars) {
@@ -405,7 +405,7 @@ private layoutMac(Map _args, String target) {
   args.icns = "$pythonCommunityHome/resources/PyCharmCore.icns"
   args.bundleIdentifier = "com.jetbrains.pycharm"
   args.platform_prefix = "PyCharmEdu"
-  args.help_id = "PY"
+  args.help_id = "PE"
   args."idea.properties.path" = "${paths.distAll}/bin/idea.properties"
   args."idea.properties" = ["idea.no.jre.check": true, "ide.mac.useNativeClipboard": "false"];
   layoutMacApp(target, ch, args)

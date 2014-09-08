@@ -60,7 +60,7 @@ public class AssertProcessor {
 
       if (res) {
         // hide the helper field
-        wrapper.getHideMembers().add(key);
+        wrapper.getHiddenMembers().add(key);
       }
     }
   }

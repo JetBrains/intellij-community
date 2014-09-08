@@ -65,7 +65,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   public void update(final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     final Project project = e.getData(CommonDataKeys.PROJECT);
-    if (ActionPlaces.MAIN_MENU.equals(e.getPlace())) {
+    if (ActionPlaces.isMainMenuOrActionSearch(e.getPlace())) {
       presentation.setDescription(ExecutionBundle.message("choose.run.configuration.action.description"));
       presentation.setEnabled(findFrame(e.getData(PlatformDataKeys.CONTEXT_COMPONENT)) != null);
       return;

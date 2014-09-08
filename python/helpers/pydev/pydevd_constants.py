@@ -5,7 +5,6 @@ STATE_RUN = 1
 STATE_SUSPEND = 2
 
 PYTHON_SUSPEND = 1
-DJANGO_SUSPEND = 2
 
 try:
     __setFalse = False
