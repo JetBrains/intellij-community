@@ -23,6 +23,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.*;
@@ -109,7 +110,17 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
   }
 
   private XmlDocument createXmlDocument(@NonNls final CharSequence text, @NonNls final String fileName, FileType fileType) {
-    final XmlDocument document = ((XmlFile)PsiFileFactory.getInstance(myProject).createFileFromText(fileName, fileType, text)).getDocument();
+    PsiFile fileFromText = PsiFileFactory.getInstance(myProject).createFileFromText(fileName, fileType, text);
+
+    XmlFile xmlFile;
+    if (fileFromText instanceof XmlFile) {
+      xmlFile = (XmlFile)fileFromText;
+    }
+    else {
+      xmlFile = (XmlFile)fileFromText.getViewProvider().getPsi(((LanguageFileType)fileType).getLanguage());
+      assert xmlFile != null;
+    }
+    XmlDocument document = xmlFile.getDocument();
     assert document != null;
     return document;
   }

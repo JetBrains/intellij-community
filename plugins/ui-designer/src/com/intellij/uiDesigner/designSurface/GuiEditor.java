@@ -16,6 +16,7 @@
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.designer.DesignerEditorPanelFacade;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.highlighter.XmlFileHighlighter;
 import com.intellij.ide.palette.PaletteDragEventListener;
@@ -41,6 +42,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
+import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -94,7 +96,7 @@ import java.util.Map;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class GuiEditor extends JPanel implements DataProvider, ModuleProvider {
+public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade, DataProvider, ModuleProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.GuiEditor");
 
   private final Project myProject;
@@ -360,6 +362,11 @@ public final class GuiEditor extends JPanel implements DataProvider, ModuleProvi
       new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0)), myGlassLayer);
     ActionManager.getInstance().getAction("GuiDesigner.DecreaseIndent").registerCustomShortcutSet(
       new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, KeyEvent.SHIFT_MASK)), myGlassLayer);
+  }
+
+  @Override
+  public ThreeComponentsSplitter getContentSplitter() {
+    return null;  // TODO: Auto-generated method stub
   }
 
   @NotNull
