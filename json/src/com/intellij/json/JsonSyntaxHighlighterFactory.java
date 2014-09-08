@@ -19,8 +19,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.psi.StringEscapesTokenTypes.*;
 import static com.intellij.json.JsonElementTypes.*;
+import static com.intellij.psi.StringEscapesTokenTypes.*;
 
 public class JsonSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
   @NotNull
@@ -43,7 +43,8 @@ public class JsonSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
       fillMap(ourAttributes, DefaultLanguageHighlighterColors.KEYWORD, TRUE, FALSE, NULL);
       fillMap(ourAttributes, DefaultLanguageHighlighterColors.LINE_COMMENT, LINE_COMMENT);
       fillMap(ourAttributes, DefaultLanguageHighlighterColors.BLOCK_COMMENT, BLOCK_COMMENT);
-      fillMap(ourAttributes, HighlighterColors.TEXT, TEXT);
+      // TODO may be it's worth to add more sensible highlighting for identifiers
+      fillMap(ourAttributes, HighlighterColors.TEXT, INDENTIFIER);
       fillMap(ourAttributes, HighlighterColors.BAD_CHARACTER, TokenType.BAD_CHARACTER);
 
       // StringLexer's tokens

@@ -41,6 +41,9 @@ public class JsonParser implements PsiParser {
     else if (root_ == PROPERTY) {
       result_ = property(builder_, 0);
     }
+    else if (root_ == REFERENCE_EXPRESSION) {
+      result_ = reference_expression(builder_, 0);
+    }
     else if (root_ == STRING_LITERAL) {
       result_ = string_literal(builder_, 0);
     }
@@ -62,7 +65,8 @@ public class JsonParser implements PsiParser {
     create_token_set_(BOOLEAN_LITERAL, LITERAL, NULL_LITERAL, NUMBER_LITERAL,
       STRING_LITERAL),
     create_token_set_(ARRAY, BOOLEAN_LITERAL, LITERAL, NULL_LITERAL,
-      NUMBER_LITERAL, OBJECT, STRING_LITERAL, VALUE),
+      NUMBER_LITERAL, OBJECT, REFERENCE_EXPRESSION, STRING_LITERAL,
+      VALUE),
   };
 
   /* ********************************************************** */
@@ -321,6 +325,18 @@ public class JsonParser implements PsiParser {
   }
 
   /* ********************************************************** */
+  // INDENTIFIER
+  public static boolean reference_expression(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "reference_expression")) return false;
+    if (!nextTokenIs(builder_, INDENTIFIER)) return false;
+    boolean result_;
+    Marker marker_ = enter_section_(builder_);
+    result_ = consumeToken(builder_, INDENTIFIER);
+    exit_section_(builder_, marker_, REFERENCE_EXPRESSION, result_);
+    return result_;
+  }
+
+  /* ********************************************************** */
   // SINGLE_QUOTED_STRING | DOUBLE_QUOTED_STRING
   public static boolean string_literal(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "string_literal")) return false;
@@ -334,7 +350,7 @@ public class JsonParser implements PsiParser {
   }
 
   /* ********************************************************** */
-  // object | array | literal
+  // object | array | literal | reference_expression
   public static boolean value(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "value")) return false;
     boolean result_;
@@ -342,6 +358,7 @@ public class JsonParser implements PsiParser {
     result_ = object(builder_, level_ + 1);
     if (!result_) result_ = array(builder_, level_ + 1);
     if (!result_) result_ = literal(builder_, level_ + 1);
+    if (!result_) result_ = reference_expression(builder_, level_ + 1);
     exit_section_(builder_, level_, marker_, VALUE, result_, false, null);
     return result_;
   }

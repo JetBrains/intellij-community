@@ -37,6 +37,10 @@ public class JsonElementVisitor extends PsiElementVisitor {
     // visitPsiNamedElement(o);
   }
 
+  public void visitReferenceExpression(@NotNull JsonReferenceExpression o) {
+    visitValue(o);
+  }
+
   public void visitStringLiteral(@NotNull JsonStringLiteral o) {
     visitLiteral(o);
   }

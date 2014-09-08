@@ -1,10 +1,7 @@
 package com.intellij.json.codeinsight;
 
 import com.intellij.json.JsonBundle;
-import com.intellij.json.psi.JsonElementVisitor;
-import com.intellij.json.psi.JsonFile;
-import com.intellij.json.psi.JsonLiteral;
-import com.intellij.json.psi.JsonStringLiteral;
+import com.intellij.json.psi.*;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.psi.PsiComment;
@@ -39,6 +36,12 @@ public class JsonStandardComplianceAnnotator implements Annotator {
           holder.createErrorAnnotation(literal, JsonBundle.message("compliance.problem.illegal.top.level.value"));
         }
       }
+
+      @Override
+      public void visitReferenceExpression(@NotNull JsonReferenceExpression reference) {
+        holder.createErrorAnnotation(reference, JsonBundle.message("compliance.problem.identifier"));
+      }
+
     });
   }
 }

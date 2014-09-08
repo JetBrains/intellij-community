@@ -27,7 +27,7 @@ BLOCK_COMMENT="/"\*([^*]|\*+[^*/])*(\*+"/")?
 DOUBLE_QUOTED_STRING=\"([^\\\"\r\n]|\\[^\r\n])*\"?
 SINGLE_QUOTED_STRING='([^\\'\r\n]|\\[^\r\n])*'?
 NUMBER=-?[0-9]+(\.[0-9]+([eE][+-]?[0-9]+)?)?
-TEXT=[a-zA-Z_0-9]+
+INDENTIFIER=[:jletter:] [:jletterdigit:]*
 
 %%
 <YYINITIAL> {
@@ -48,7 +48,7 @@ TEXT=[a-zA-Z_0-9]+
   {DOUBLE_QUOTED_STRING}      { return DOUBLE_QUOTED_STRING; }
   {SINGLE_QUOTED_STRING}      { return SINGLE_QUOTED_STRING; }
   {NUMBER}                    { return NUMBER; }
-  {TEXT}                      { return TEXT; }
+  {INDENTIFIER}               { return INDENTIFIER; }
 
   [^] { return com.intellij.psi.TokenType.BAD_CHARACTER; }
 }

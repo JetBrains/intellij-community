@@ -2,13 +2,13 @@ package com.intellij.json.codeinsight;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.json.psi.JsonArray;
+import com.intellij.json.psi.JsonProperty;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.ProcessingContext;
-import com.intellij.json.psi.JsonArray;
-import com.intellij.json.psi.JsonProperty;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -18,7 +18,6 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
  */
 public class JsonCompletionContributor extends CompletionContributor {
   private static final Logger LOG = Logger.getInstance(JsonCompletionContributor.class);
-  private static final String COMPLETION_PLACEHOLDER = "\"" + CompletionInitializationContext.DUMMY_IDENTIFIER + "\"";
 
   private static final PsiElementPattern.Capture<PsiElement> AFTER_COLON_IN_PROPERTY = psiElement()
     .afterLeaf(":").withSuperParent(2, JsonProperty.class);
@@ -36,11 +35,6 @@ public class JsonCompletionContributor extends CompletionContributor {
     extend(CompletionType.BASIC, AFTER_COMMA_OR_BRACKET_IN_ARRAY, MyKeywordsCompletionProvider.INSTANCE);
   }
 
-
-  @Override
-  public void beforeCompletion(@NotNull CompletionInitializationContext context) {
-    context.setDummyIdentifier(COMPLETION_PLACEHOLDER);
-  }
 
   private static class MyKeywordsCompletionProvider extends CompletionProvider<CompletionParameters> {
     private static final MyKeywordsCompletionProvider INSTANCE = new MyKeywordsCompletionProvider();

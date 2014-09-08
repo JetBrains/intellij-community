@@ -39,12 +39,12 @@
         TRUE='true'
         FALSE='false'
         NULL='null'
-        // Workaround for highlighting issue
-        // plays role of IDENTIFIER or NAME token in other languages
-        TEXT='regexp:\w+'
+        // Actually not defined in RFC 4627, but may be used for JSON5 and helps with
+        // auto completion of keywords.
+        INDENTIFIER='regexp:[:jletter:] [:jletterdigit:]*'
     ]
 
-    extends("object|array|literal")=value
+    extends("object|array|literal|reference_expression")=value
     extends("string_literal|number_literal|boolean_literal|null_literal")=literal
     implements("property")=[
       "com.intellij.json.psi.JsonElement"
@@ -97,7 +97,10 @@ literal ::= string_literal | number_literal | boolean_literal | null_literal {
   methods=[isQuotedString]
   mixin="com.intellij.json.psi.impl.JsonLiteralMixin"
 }
-value ::= object | array | literal
+
+reference_expression ::= INDENTIFIER
+
+value ::= object | array | literal | reference_expression
 
 // Recoveries
 private not_bracket_or_next_value ::= !(']'|value)
