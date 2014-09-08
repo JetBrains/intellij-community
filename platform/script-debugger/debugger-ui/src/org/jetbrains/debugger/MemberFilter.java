@@ -9,4 +9,9 @@ public interface MemberFilter {
 
   @NotNull
   Collection<Variable> getAdditionalVariables();
+
+  @NotNull
+  String getName(@NotNull Variable variable);
+
+  boolean hasNameMappings();
 }

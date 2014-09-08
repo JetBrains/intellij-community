@@ -57,7 +57,11 @@ public final class VariableView extends XNamedValue implements VariableContext {
   private volatile int remainingChildrenOffset;
 
   public VariableView(@NotNull Variable variable, @NotNull VariableContext context) {
-    super(context.getViewSupport().normalizeMemberName(variable));
+    this(context.getViewSupport().normalizeMemberName(variable), variable, context);
+  }
+
+  public VariableView(@NotNull String name, @NotNull Variable variable, @NotNull VariableContext context) {
+    super(name);
 
     this.context = context;
     this.variable = variable;
@@ -362,7 +366,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
 
       @Override
       public void consumeVariables(@NotNull List<Variable> variables) {
-        node.addChildren(Variables.createVariablesList(variables, VariableView.this), isLastChildren);
+        node.addChildren(Variables.createVariablesList(variables, VariableView.this, null), isLastChildren);
       }
     }, null);
   }
@@ -399,7 +403,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
     int count = variables.size();
     int bucketSize = XCompositeNode.MAX_CHILDREN_TO_SHOW;
     if (count <= bucketSize) {
-      node.addChildren(Variables.createVariablesList(variables, this), true);
+      node.addChildren(Variables.createVariablesList(variables, this, null), true);
       return;
     }
 
