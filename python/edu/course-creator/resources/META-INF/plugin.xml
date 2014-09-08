@@ -28,6 +28,7 @@
     <treeStructureProvider implementation="org.jetbrains.plugins.coursecreator.projectView.CCTreeStructureProvider"/>
     <codeInsight.lineMarkerProvider language="Python" implementationClass="org.jetbrains.plugins.coursecreator.RunTestsLineMarker"/>
     <fileTypeFactory implementation="org.jetbrains.plugins.coursecreator.AnswerFileTypeFactory" />
+    <refactoring.elementListenerProvider implementation="org.jetbrains.plugins.coursecreator.CCRefactoringElementListenerProvider"/>
   </extensions>
 
   <application-components>
