@@ -613,18 +613,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
     return findPackageByName(name, getPackages());
   }
 
-  @Override
-  public boolean findPackage(@NotNull final String name) {
-    try {
-      final String output = runPythonHelper(PACKAGING_TOOL, Arrays.asList("search", name));
-      return StringUtil.containsIgnoreCase(output, name + " ");
-    }
-    catch (PyExternalProcessException e) {
-      LOG.error(e.getMessage());
-      return false;
-    }
-  }
-
   @Nullable
   public PyPackage findPackageFast(String name) throws PyExternalProcessException {
     final List<PyPackage> packages = getPackagesFast();

@@ -17,7 +17,6 @@ package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -43,7 +42,4 @@ public abstract class PyPackageManager {
   public abstract void refresh();
   @Nullable
   public abstract PyPackage findInstalledPackage(String name) throws PyExternalProcessException;
-
-  public abstract boolean findPackage(@NotNull final String name);
-
 }
