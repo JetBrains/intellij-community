@@ -105,7 +105,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   protected UsageInfo[] findUsages() {
     final ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
     final PsiClass containingClass = getMethod().getContainingClass();
-    final SearchScope scope = PsiUtilCore.getVirtualFile(containingClass) instanceof LightVirtualFile
+    final SearchScope scope = PsiUtilCore.getVirtualFile(containingClass) == null
                               ? new LocalSearchScope(containingClass)
                               : GlobalSearchScope.projectScope(myProject);
     PsiReference[] refs =

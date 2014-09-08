@@ -25,6 +25,8 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.refactoring.extractMethod.AbstractExtractDialog;
 import com.intellij.refactoring.extractMethod.InputVariables;
@@ -69,7 +71,7 @@ public class ExtractLightMethodObjectHandler {
     }
 
     final PsiFile copy = PsiFileFactory.getInstance(project)
-      .createFileFromText(file.getName(), file.getFileType(), file.getText(), file.getModificationStamp(), true);
+      .createFileFromText(file.getName(), file.getFileType(), file.getText(), file.getModificationStamp(), false);
 
     final PsiElement originalContext = fragment.getContext();
     if (originalContext == null) {
@@ -82,25 +84,24 @@ public class ExtractLightMethodObjectHandler {
     final PsiElement anchor = RefactoringUtil.getParentStatement(originalAnchor, false);
     final PsiElement[] elementsCopy = new PsiElement[elements.length];
     final PsiElement container = anchor.getParent();
-    elementsCopy[0] = ApplicationManager.getApplication().runWriteAction(new Computable<PsiElement>() {
-      @Override
-      public PsiElement compute() {
-        return container.addRangeAfter(elements[0], elements[elements.length - 1], anchor);
-      }
-    });
+    elementsCopy[0] = container.addRangeBefore(elements[0], elements[elements.length - 1], anchor);
     for (int i = 1; i < elements.length; i++) {
       elementsCopy[i] = elementsCopy[i - 1].getNextSibling();
     }
 
+    final int start = elementsCopy[0].getTextRange().getStartOffset();
+
     final ControlFlow controlFlow;
     try {
-      controlFlow = ControlFlowFactory.getInstance(project).getControlFlow(container, AllVariablesControlFlowPolicy.getInstance());
+      controlFlow = ControlFlowFactory.getInstance(project).getControlFlow(container, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
     }
     catch (AnalysisCanceledException e) {
       return null;
     }
 
-    final List<PsiVariable> variables = ControlFlowUtil.getUsedVariables(controlFlow, 0, controlFlow.getSize());
+    final List<PsiVariable> variables = ControlFlowUtil.getUsedVariables(controlFlow,
+                                                                         controlFlow.getStartOffset(elementsCopy[0]),
+                                                                         controlFlow.getEndOffset(elementsCopy[elementsCopy.length - 1]));
 
     final String outputVariables = StringUtil.join(variables, new Function<PsiVariable, String>() {
                                           @Override
@@ -108,42 +109,26 @@ public class ExtractLightMethodObjectHandler {
                                             return "\"variable: \" + " + variable.getName();
                                           }
                                         }, " +");
-    final PsiStatement outStatement = JavaPsiFacade.getElementFactory(project).createStatementFromText("System.out.println(" + outputVariables + ");", anchor);
+    PsiStatement outStatement = JavaPsiFacade.getElementFactory(project).createStatementFromText("System.out.println(" + outputVariables + ");", anchor);
+    outStatement = (PsiStatement)container.addAfter(outStatement, elementsCopy[elementsCopy.length - 1]);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        container.addAfter(outStatement, elementsCopy[elementsCopy.length - 1]);
+    final ExtractMethodObjectProcessor extractMethodObjectProcessor = new ExtractMethodObjectProcessor(project, null, elementsCopy, "") {
+      @Override
+      protected AbstractExtractDialog createExtractMethodObjectDialog(MyExtractMethodProcessor processor) {
+        return new LightExtractMethodObjectDialog(this, methodName);
       }
-    });
+    };
+    extractMethodObjectProcessor.getExtractProcessor().setShowErrorDialogs(false);
 
-    final Document document = PsiDocumentManager.getInstance(project).getDocument(copy);
-    LOG.assertTrue(document != null);
+    ExtractMethodObjectHandler.extractMethodObject(project, null, extractMethodObjectProcessor);
 
-    final int startOffset = elementsCopy[0].getTextRange().getStartOffset();
-    final int endOffset = elementsCopy[elementsCopy.length - 1].getTextRange().getEndOffset();
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    final RangeMarker callSiteMarker = document.createRangeMarker(startOffset, endOffset);
-    callSiteMarker.setGreedyToLeft(true);
-    callSiteMarker.setGreedyToRight(true);
-
-    try {
-      final ExtractMethodObjectProcessor extractMethodObjectProcessor = new ExtractMethodObjectProcessor(project, null, elementsCopy, "") {
-        @Override
-        protected AbstractExtractDialog createExtractMethodObjectDialog(MyExtractMethodProcessor processor) {
-          return new LightExtractMethodObjectDialog(this, methodName);
-        }
-      };
-      extractMethodObjectProcessor.getExtractProcessor().setShowErrorDialogs(false);
-
-      ExtractMethodObjectHandler.extractMethodObject(project, null, extractMethodObjectProcessor);
-
-      final String generatedCall = document.getText(new TextRange(callSiteMarker.getStartOffset(), callSiteMarker.getEndOffset()));
-      return new ExtractedData(generatedCall, extractMethodObjectProcessor.getInnerClass());
-    }
-    finally {
-      callSiteMarker.dispose();
-    }
+    final String generatedCall = copy.getText().substring(start, outStatement.getTextOffset());
+    return new ExtractedData(generatedCall,
+                             (PsiClass)CodeStyleManager.getInstance(project).reformat(extractMethodObjectProcessor.getInnerClass()));
   }
+
 
   private static class LightExtractMethodObjectDialog implements AbstractExtractDialog {
     private final ExtractMethodObjectProcessor myProcessor;
