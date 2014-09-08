@@ -173,7 +173,7 @@ public class GitRefManager implements VcsLogRefManager {
           remoteRefGroups.putValue(nonTracked.get(refName), ref);
         }
         else {
-          LOG.warn("Didn't find ref neither in local nor in remote branches: " + ref);
+          LOG.debug("Didn't find ref neither in local nor in remote branches: " + ref);
         }
       }
     }
