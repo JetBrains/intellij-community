@@ -74,6 +74,31 @@ public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
            "    }");
   }
 
+  public void testInvokeReturnType() throws Exception {
+    doTest("x = 6; y = 6;", "Test test = new Test().invoke();\n" +
+                            "      x = test.getX();\n" +
+                            "      y = test.getY();",
+
+           "public static class Test {\n" +
+           "        private int x;\n" +
+           "        private int y;\n" +
+           "\n" +
+           "        public int getX() {\n" +
+           "            return x;\n" +
+           "        }\n" +
+           "\n" +
+           "        public int getY() {\n" +
+           "            return y;\n" +
+           "        }\n" +
+           "\n" +
+           "        public Test invoke() {\n" +
+           "            x = 6;\n" +
+           "            y = 6;\n" +
+           "            return this;\n" +
+           "        }\n" +
+           "    }");
+  }
+
   @Override
   protected Sdk getProjectJDK() {
     return IdeaTestUtil.getMockJdk18();
