@@ -170,7 +170,7 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
       new String[]{
         homePath,
         PythonHelpersLocator.getHelperPath("extra_syspath.py"), myQualifiedName},
-      PythonSdkType.getVirtualEnvAdditionalEnv(homePath), 5000
+      PythonSdkType.getVirtualEnvExtraEnv(homePath), 5000
     );
     if (runResult.getExitCode() == 0 && !runResult.isTimeout()) {
       final String extraPath = runResult.getStdout();
