@@ -88,26 +88,29 @@ abstract class AbstractExternalSystemTest extends UsefulTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    project = null
-    UIUtil.invokeAndWaitIfNeeded {
-      try {
-        externalSystemManagerEP.unregisterExtension(externalSystemManager)
-        testFixture.tearDown();
-        testFixture = null;
+    try {
+      project = null
+      UIUtil.invokeAndWaitIfNeeded {
+        try {
+          externalSystemManagerEP.unregisterExtension(externalSystemManager)
+          testFixture.tearDown();
+          testFixture = null;
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
       }
-      catch (Exception e) {
-        throw new RuntimeException(e);
+
+      if (!FileUtil.delete(projectDir) && projectDir.exists()) {
+        System.err.println("Cannot delete " + projectDir);
+        //printDirectoryContent(myDir);
+        projectDir.deleteOnExit();
       }
     }
-
-    if (!FileUtil.delete(projectDir) && projectDir.exists()) {
-      System.err.println("Cannot delete " + projectDir);
-      //printDirectoryContent(myDir);
-      projectDir.deleteOnExit();
+    finally {
+      super.tearDown();
+      resetClassFields(getClass());
     }
-
-    super.tearDown();
-    resetClassFields(getClass());
   }
 
   private void resetClassFields(@Nullable Class<?> aClass) {
