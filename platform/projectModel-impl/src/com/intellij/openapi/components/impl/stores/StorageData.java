@@ -63,7 +63,8 @@ public class StorageData {
       pathMacroSubstitutor.expandPaths(rootElement);
     }
 
-    for (Element element : rootElement.getChildren(COMPONENT)) {
+    for (Iterator<Element> iterator = rootElement.getChildren(COMPONENT).iterator(); iterator.hasNext(); ) {
+      Element element = iterator.next();
       String name = element.getAttributeValue(NAME);
       if (name == null) {
         LOG.info("Broken content in file : " + this);
@@ -73,6 +74,7 @@ public class StorageData {
       if (element.getAttributes().size() > 1 || !element.getChildren().isEmpty()) {
         assert element.getAttributeValue(NAME) != null : "No name attribute for component: " + name + " in " + this;
 
+        iterator.remove();
         if (intern) {
           IdeaPluginDescriptorImpl.internJDOMElement(element);
         }
