@@ -18,13 +18,12 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 public final class Variables {
-  static final String SPECIAL_PROPERTY_PREFIX = "__";
 
   private static final Pattern UNNAMED_FUNCTION_PATTERN = Pattern.compile("^function[\\t ]*\\(");
 
   private static final Comparator<Variable> NATURAL_NAME_COMPARATOR = new Comparator<Variable>() {
     @Override
-    public int compare(Variable o1, Variable o2) {
+    public int compare(@NotNull Variable o1, @NotNull Variable o2) {
       return naturalCompare(o1.getName(), o2.getName());
     }
   };
@@ -219,10 +218,12 @@ public final class Variables {
     return string1Length - string2Length;
   }
 
+  @NotNull
   public static XValueChildrenList createVariablesList(@NotNull List<Variable> variables, @NotNull VariableContext variableContext) {
     return createVariablesList(variables, 0, variables.size(), variableContext);
   }
 
+  @NotNull
   public static XValueChildrenList createVariablesList(@NotNull List<Variable> variables, int from, int to, @NotNull VariableContext variableContext) {
     XValueChildrenList list = new XValueChildrenList(to - from);
     VariableContext getterOrSetterContext = null;

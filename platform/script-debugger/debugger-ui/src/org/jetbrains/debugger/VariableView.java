@@ -417,7 +417,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
     int notGroupedVariablesOffset;
     if ((variables.size() - count) > bucketSize) {
       for (notGroupedVariablesOffset = variables.size(); notGroupedVariablesOffset > 0; notGroupedVariablesOffset--) {
-        if (!variables.get(notGroupedVariablesOffset - 1).getName().startsWith(Variables.SPECIAL_PROPERTY_PREFIX)) {
+        if (!variables.get(notGroupedVariablesOffset - 1).getName().startsWith("__")) {
           break;
         }
       }
