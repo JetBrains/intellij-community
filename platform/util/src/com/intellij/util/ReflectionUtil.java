@@ -19,17 +19,15 @@ package com.intellij.util;
 import com.intellij.Patches;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.util.DifferenceFilter;
+import com.intellij.util.containers.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.reflect.ConstructorAccessor;
 
 import java.lang.reflect.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 public class ReflectionUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ReflectionUtil");
@@ -477,6 +475,50 @@ public class ReflectionUtil {
       callerClass = findCallerClass(2);
     }
     return callerClass;
+  }
+
+  public static void copyFields(@NotNull Field[] fields, @NotNull Object from, @NotNull Object to) {
+    copyFields(fields, from, to, null);
+  }
+
+  public static boolean copyFields(@NotNull Field[] fields, @NotNull Object from, @NotNull Object to, @Nullable DifferenceFilter diffFilter) {
+    Set<Field> sourceFields = new com.intellij.util.containers.HashSet<Field>(Arrays.asList(from.getClass().getFields()));
+    boolean valuesChanged = false;
+    for (Field field : fields) {
+      if (sourceFields.contains(field)) {
+        if (isPublic(field) && !isFinal(field)) {
+          try {
+            if (diffFilter == null || diffFilter.isAccept(field)) {
+              copyFieldValue(from, to, field);
+              valuesChanged = true;
+            }
+          }
+          catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        }
+      }
+    }
+    return valuesChanged;
+  }
+
+  public static void copyFieldValue(@NotNull Object from, @NotNull Object to, @NotNull Field field)
+    throws IllegalAccessException {
+    Class<?> fieldType = field.getType();
+    if (fieldType.isPrimitive() || fieldType.equals(String.class)) {
+      field.set(to, field.get(from));
+    }
+    else {
+      throw new RuntimeException("Field '" + field.getName()+"' not copied: unsupported type: "+field.getType());
+    }
+  }
+
+  private static boolean isPublic(final Field field) {
+    return (field.getModifiers() & Modifier.PUBLIC) != 0;
+  }
+
+  private static boolean isFinal(final Field field) {
+    return (field.getModifiers() & Modifier.FINAL) != 0;
   }
 
 
