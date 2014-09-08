@@ -15,7 +15,6 @@
  */
 package com.intellij.designer;
 
-import com.intellij.designer.palette.PaletteToolWindowManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
@@ -25,12 +24,12 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 /**
  * @author Alexander Lobas
  */
-public class ToggleEditorModeAction extends ToggleAction {
-  private final AbstractToolWindowManager myManager;
-  private final Project myProject;
+public abstract class ToggleEditorModeAction extends ToggleAction {
+  protected final LightToolWindowManager myManager;
+  protected final Project myProject;
   private final ToolWindowAnchor myAnchor;
 
-  public ToggleEditorModeAction(AbstractToolWindowManager manager, Project project, ToolWindowAnchor anchor) {
+  public ToggleEditorModeAction(LightToolWindowManager manager, Project project, ToolWindowAnchor anchor) {
     super(StringUtil.capitalize(anchor.toString()), "Pin/unpin tool window to " + anchor + " side UI Designer Editor", null);
     myManager = manager;
     myProject = project;
@@ -47,7 +46,7 @@ public class ToggleEditorModeAction extends ToggleAction {
     if (state) {
       myManager.setEditorMode(myAnchor);
 
-      AbstractToolWindowManager manager = getOppositeManager();
+      LightToolWindowManager manager = getOppositeManager();
       if (manager.getEditorMode() == myAnchor) {
         manager.setEditorMode(myAnchor == ToolWindowAnchor.LEFT ? ToolWindowAnchor.RIGHT : ToolWindowAnchor.LEFT);
       }
@@ -57,9 +56,5 @@ public class ToggleEditorModeAction extends ToggleAction {
     }
   }
 
-  private AbstractToolWindowManager getOppositeManager() {
-    AbstractToolWindowManager designerManager = DesignerToolWindowManager.getInstance(myProject);
-    AbstractToolWindowManager paletteManager = PaletteToolWindowManager.getInstance(myProject);
-    return myManager == designerManager ? paletteManager : designerManager;
-  }
+  protected abstract LightToolWindowManager getOppositeManager();
 }

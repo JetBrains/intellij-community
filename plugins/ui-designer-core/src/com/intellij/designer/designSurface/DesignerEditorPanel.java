@@ -78,7 +78,8 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public abstract class DesignerEditorPanel extends JPanel implements DataProvider, ModuleProvider, RadPropertyContext {
+public abstract class DesignerEditorPanel extends JPanel
+  implements DesignerEditorPanelFacade, DataProvider, ModuleProvider, RadPropertyContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.designer.designSurface.DesignerEditorPanel");
 
   protected static final Integer LAYER_COMPONENT = JLayeredPane.DEFAULT_LAYER;
