@@ -36,6 +36,11 @@ public final class CallFrameView extends StackFrameImplBase implements VariableC
     inLibraryContent = sourceInfo != null && debugProcess.isInLibraryContent(sourceInfo, script);
   }
 
+  @Nullable
+  public Script getScript() {
+    return script;
+  }
+
   @Override
   protected boolean isInFileScope() {
     List<Scope> scopes = callFrame.getVariableScopes();

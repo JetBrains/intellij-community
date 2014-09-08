@@ -21,12 +21,15 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.*;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Calendar;
 
 public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
   @NotNull
@@ -51,8 +54,8 @@ public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
 
   public void testSimpleGeneration() throws Exception {
     doTest("int i = 0; int j = 0;", "Test test = new Test().invoke();\n" +
-           "      int i = test.getI();\n" +
-           "      int j = test.getJ();",
+                                    "      int i = test.getI();\n" +
+                                    "      int j = test.getJ();",
 
            "public class Test {\n" +
            "        private int i;\n" +
@@ -69,6 +72,31 @@ public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
            "        public Test invoke() {\n" +
            "            i = 0;\n" +
            "            j = 0;\n" +
+           "            return this;\n" +
+           "        }\n" +
+           "    }");
+  }
+
+  public void testInvokeReturnType() throws Exception {
+    doTest("x = 6; y = 6;", "Test test = new Test().invoke();\n" +
+                            "      x = test.getX();\n" +
+                            "      y = test.getY();",
+
+           "public static class Test {\n" +
+           "        private int x;\n" +
+           "        private int y;\n" +
+           "\n" +
+           "        public int getX() {\n" +
+           "            return x;\n" +
+           "        }\n" +
+           "\n" +
+           "        public int getY() {\n" +
+           "            return y;\n" +
+           "        }\n" +
+           "\n" +
+           "        public Test invoke() {\n" +
+           "            x = 6;\n" +
+           "            y = 6;\n" +
            "            return this;\n" +
            "        }\n" +
            "    }");

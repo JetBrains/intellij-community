@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -53,7 +54,7 @@ public class BrowserUtil {
   private BrowserUtil() { }
 
   public static boolean isAbsoluteURL(String url) {
-    return ourExternalPrefix.matcher(url.toLowerCase()).find();
+    return ourExternalPrefix.matcher(url.toLowerCase(Locale.ENGLISH)).find();
   }
 
   public static String getDocURL(String url) {
