@@ -15,8 +15,10 @@
  */
 package com.jetbrains.python.sdk;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -29,7 +31,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.remote.RemoteSdkAdditionalData;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -38,10 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * A more flexible cousin of SdkVersionUtil.
@@ -103,21 +101,14 @@ public class PySdkUtil {
                                                final int timeout,
                                                @Nullable byte[] stdin,
                                                boolean needEOFMarker) {
-    final ProcessOutput failureOutput = new ProcessOutput();
     if (homePath == null || !new File(homePath).exists()) {
-      return failureOutput;
+      return new ProcessOutput();
     }
+    final Map<String, String> systemEnv = System.getenv();
+    final Map<String, String> env = extraEnv != null ? mergeEnvVariables(systemEnv, extraEnv) : systemEnv;
     try {
-      List<String> commands = new ArrayList<String>();
-      if (SystemInfo.isWindows && StringUtil.endsWithIgnoreCase(command[0], ".bat")) {
-        commands.add("cmd");
-        commands.add("/c");
-      }
-      Collections.addAll(commands, command);
-      final Map<String, String> systemEnv = System.getenv();
-      final Map<String, String> env = extraEnv != null ? mergeEnvVariables(systemEnv, extraEnv) : systemEnv;
-      Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(commands), toEnvArray(env), new File(homePath));
-      CapturingProcessHandler processHandler = new CapturingProcessHandler(process);
+      final Process process = ExecUtil.exec(Arrays.asList(command), homePath, env);
+      final CapturingProcessHandler processHandler = new CapturingProcessHandler(process);
       if (stdin != null) {
         final OutputStream processInput = processHandler.getProcessInput();
         assert processInput != null;
@@ -132,22 +123,29 @@ public class PySdkUtil {
       }
       return processHandler.runProcess(timeout);
     }
-    catch (final IOException ex) {
-      LOG.warn(ex);
-      return new ProcessOutput() {
-        @Override
-        public String getStderr() {
-          String err = super.getStderr();
-          if (!StringUtil.isEmpty(err)) {
-            err += "\n" + ex.getMessage();
-          }
-          else {
-            err = ex.getMessage();
-          }
-          return err;
-        }
-      };
+    catch (ExecutionException e) {
+      return getOutputForException(e);
     }
+    catch (IOException e) {
+      return getOutputForException(e);
+    }
+  }
+
+  private static ProcessOutput getOutputForException(final Exception e) {
+    LOG.warn(e);
+    return new ProcessOutput() {
+      @Override
+      public String getStderr() {
+        String err = super.getStderr();
+        if (!StringUtil.isEmpty(err)) {
+          err += "\n" + e.getMessage();
+        }
+        else {
+          err = e.getMessage();
+        }
+        return err;
+      }
+    };
   }
 
   @NotNull
@@ -163,21 +161,6 @@ public class PySdkUtil {
       }
     }
     return result;
-  }
-
-  @Nullable
-  private static String[] toEnvArray(@Nullable Map<String, String> addEnv) {
-    String[] newEnv = null;
-    if (addEnv != null) {
-      final Map<String, String> envMap = mergeEnvVariables(System.getenv(), addEnv);
-      newEnv = new String[envMap.size()];
-      int i = 0;
-      for (Map.Entry<String, String> entry : envMap.entrySet()) {
-        newEnv[i] = entry.getKey() + "=" + entry.getValue();
-        i += 1;
-      }
-    }
-    return newEnv;
   }
 
   public static boolean isRemote(@Nullable Sdk sdk) {
