@@ -477,6 +477,7 @@ public class SvnUtil {
     return workingCopyRoot;
   }
 
+  @NotNull
   public static File fileFromUrl(final File baseDir, final String baseUrl, final String fullUrl) {
     assert fullUrl.startsWith(baseUrl);
 

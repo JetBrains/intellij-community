@@ -43,7 +43,7 @@ import java.util.List;
 public class Merger implements IMerger {
   protected final List<CommittedChangeList> myChangeLists;
   protected final File myTarget;
-  @Nullable private final ProgressTracker myHandler;
+  @Nullable protected final ProgressTracker myHandler;
   protected int myCount;
   private final ProgressIndicator myProgressIndicator;
   protected CommittedChangeList myLatestProcessed;
@@ -51,7 +51,7 @@ public class Merger implements IMerger {
   private final StringBuilder myCommitMessage;
   protected final SvnConfiguration mySvnConfig;
   private final Project myProject;
-  @NotNull private final SvnVcs myVcs;
+  @NotNull protected final SvnVcs myVcs;
   private final String myBranchName;
   private final boolean myRecordOnly;
   private final boolean myInvertRange;

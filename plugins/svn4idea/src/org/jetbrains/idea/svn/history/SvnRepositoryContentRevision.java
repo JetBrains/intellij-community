@@ -40,6 +40,7 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -190,5 +191,10 @@ public class SvnRepositoryContentRevision implements ContentRevision, MarkerVcsC
   @Override
   public VcsKey getVcsKey() {
     return SvnVcs.getKey();
+  }
+
+  @NotNull
+  public SvnTarget toTarget() throws SvnBindException {
+    return SvnTarget.fromURL(SvnUtil.createUrl(getFullPath()), getRevisionNumber().getRevision());
   }
 }
