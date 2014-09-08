@@ -33,6 +33,7 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
   private JCheckBox myAutomaticallyStartAttributeAfterCheckBox;
   private JBCheckBox mySelectWholeCssIdentifierOnDoubleClick;
   private JBCheckBox myAddQuotasForAttributeValue;
+  private JBCheckBox myAutoCloseTagCheckBox;
 
 
   @Override
@@ -58,7 +59,8 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
            xmlEditorOptions.isAutomaticallyStartAttribute() != myAutomaticallyStartAttributeAfterCheckBox.isSelected() ||
            xmlEditorOptions.isSelectWholeCssIdentifierOnDoubleClick() != mySelectWholeCssIdentifierOnDoubleClick.isSelected() ||
            xmlEditorOptions.isAutomaticallyInsertRequiredSubTags() != myAutomaticallyInsertRequiredSubTagsCheckBox.isSelected() ||
-           xmlEditorOptions.isInsertQuotesForAttributeValue() != myAddQuotasForAttributeValue.isSelected();
+           xmlEditorOptions.isInsertQuotesForAttributeValue() != myAddQuotasForAttributeValue.isSelected() ||
+           xmlEditorOptions.isAutoCloseTag() != myAutoCloseTagCheckBox.isSelected();
   }
 
   @Override
@@ -70,6 +72,7 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
     xmlEditorOptions.setAutomaticallyStartAttribute(myAutomaticallyStartAttributeAfterCheckBox.isSelected());
     xmlEditorOptions.setSelectWholeCssIdentifierOnDoubleClick(mySelectWholeCssIdentifierOnDoubleClick.isSelected());
     xmlEditorOptions.setInsertQuotesForAttributeValue(myAddQuotasForAttributeValue.isSelected());
+    xmlEditorOptions.setAutoCloseTag(myAutoCloseTagCheckBox.isSelected());
   }
 
   @Override
@@ -81,6 +84,7 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
     myAutomaticallyStartAttributeAfterCheckBox.setSelected(xmlEditorOptions.isAutomaticallyStartAttribute());
     mySelectWholeCssIdentifierOnDoubleClick.setSelected(xmlEditorOptions.isSelectWholeCssIdentifierOnDoubleClick());
     myAddQuotasForAttributeValue.setSelected(xmlEditorOptions.isInsertQuotesForAttributeValue());
+    myAutoCloseTagCheckBox.setSelected(xmlEditorOptions.isAutoCloseTag());
   }
 
   @Override
