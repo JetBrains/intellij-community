@@ -110,13 +110,19 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
   }
 
   public IntentionAction findIntention(@NotNull final String hint) {
-    final List<IntentionAction> list =
+    final List<IntentionAction> availableIntentions =
       ContainerUtil.findAll(myFixture.getAvailableIntentions(), new Condition<IntentionAction>() {
         @Override
         public boolean value(final IntentionAction intentionAction) {
           return intentionAction instanceof QuickFixWrapper;
         }
       });
+    final List<IntentionAction> list = ContainerUtil.findAll(availableIntentions, new Condition<IntentionAction>() {
+      @Override
+      public boolean value(IntentionAction intentionAction) {
+        return intentionAction.getText().equals(hint);
+      }
+    });
     if (list.isEmpty()) {
       Assert.fail("\"" + hint + "\" not in " + list);
     }

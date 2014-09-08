@@ -16,16 +16,23 @@ public class SourceMap {
   private final String outFile;
 
   private final SourceResolver sourceResolver;
+  private final boolean hasNameMappings;
 
   // sources - is not originally specified, but canonicalized/normalized
   public SourceMap(@Nullable String outFile,
                    @NotNull MappingList mappings,
                    @NotNull MappingList[] sourceIndexToMappings,
-                   @NotNull SourceResolver sourceResolver) {
+                   @NotNull SourceResolver sourceResolver,
+                   boolean hasNameMappings) {
     this.outFile = outFile;
     this.mappings = mappings;
     this.sourceIndexToMappings = sourceIndexToMappings;
     this.sourceResolver = sourceResolver;
+    this.hasNameMappings = hasNameMappings;
+  }
+
+  public boolean hasNameMappings() {
+    return hasNameMappings;
   }
 
   @NotNull

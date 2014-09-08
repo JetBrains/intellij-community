@@ -18,13 +18,11 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 public final class Variables {
-  static final String SPECIAL_PROPERTY_PREFIX = "__";
-
   private static final Pattern UNNAMED_FUNCTION_PATTERN = Pattern.compile("^function[\\t ]*\\(");
 
   private static final Comparator<Variable> NATURAL_NAME_COMPARATOR = new Comparator<Variable>() {
     @Override
-    public int compare(Variable o1, Variable o2) {
+    public int compare(@NotNull Variable o1, @NotNull Variable o2) {
       return naturalCompare(o1.getName(), o2.getName());
     }
   };
@@ -37,7 +35,7 @@ public final class Variables {
     AsyncResult<?> result = ObsolescentAsyncResults.consume(scope.getVariables(), node, new PairConsumer<List<Variable>, XCompositeNode>() {
       @Override
       public void consume(List<Variable> variables, XCompositeNode node) {
-        MemberFilter memberFilter = context.createMemberFilter();
+        final MemberFilter memberFilter = context.createMemberFilter();
         Collection<Variable> additionalVariables = memberFilter.getAdditionalVariables();
         List<Variable> properties = new ArrayList<Variable>(variables.size() + additionalVariables.size());
         List<Variable> functions = new SmartList<Variable>();
@@ -56,7 +54,12 @@ public final class Variables {
           }
         }
 
-        sort(properties);
+        ContainerUtil.sort(properties, memberFilter.hasNameMappings() ? new Comparator<Variable>() {
+          @Override
+          public int compare(@NotNull Variable o1, @NotNull Variable o2) {
+            return naturalCompare(memberFilter.getName(o1), memberFilter.getName(o2));
+          }
+        } :  NATURAL_NAME_COMPARATOR);
         sort(functions);
 
         for (Variable variable : additionalVariables) {
@@ -64,7 +67,7 @@ public final class Variables {
         }
 
         if (!properties.isEmpty()) {
-          node.addChildren(createVariablesList(properties, context), functions.isEmpty() && isLast);
+          node.addChildren(createVariablesList(properties, context, memberFilter), functions.isEmpty() && isLast);
         }
 
         if (!functions.isEmpty()) {
@@ -110,6 +113,7 @@ public final class Variables {
     }
   }
 
+  @NotNull
   public static List<Variable> filterAndSort(@NotNull List<? extends Variable> variables, @NotNull VariableContext context, boolean filterFunctions) {
     if (variables.isEmpty()) {
       return Collections.emptyList();
@@ -219,16 +223,28 @@ public final class Variables {
     return string1Length - string2Length;
   }
 
+  @NotNull
   public static XValueChildrenList createVariablesList(@NotNull List<Variable> variables, @NotNull VariableContext variableContext) {
-    return createVariablesList(variables, 0, variables.size(), variableContext);
+    return createVariablesList(variables, variableContext, null);
   }
 
+  @NotNull
+  public static XValueChildrenList createVariablesList(@NotNull List<Variable> variables, @NotNull VariableContext variableContext, @Nullable MemberFilter memberFilter) {
+    return createVariablesList(variables, 0, variables.size(), variableContext, memberFilter);
+  }
+
+  @NotNull
   public static XValueChildrenList createVariablesList(@NotNull List<Variable> variables, int from, int to, @NotNull VariableContext variableContext) {
+    return createVariablesList(variables, from, to, variableContext, null);
+  }
+
+  @NotNull
+  public static XValueChildrenList createVariablesList(@NotNull List<Variable> variables, int from, int to, @NotNull VariableContext variableContext, @Nullable MemberFilter memberFilter) {
     XValueChildrenList list = new XValueChildrenList(to - from);
     VariableContext getterOrSetterContext = null;
     for (int i = from; i < to; i++) {
       Variable variable = variables.get(i);
-      list.add(new VariableView(variable, variableContext));
+      list.add(memberFilter == null ? new VariableView(variable, variableContext) : new VariableView(memberFilter.getName(variable), variable, variableContext));
       if (variable instanceof ObjectProperty) {
         ObjectProperty property = (ObjectProperty)variable;
         if (property.getGetter() != null) {

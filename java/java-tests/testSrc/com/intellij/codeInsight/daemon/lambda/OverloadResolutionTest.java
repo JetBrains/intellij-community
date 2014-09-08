@@ -43,6 +43,10 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testIDEA102800() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(true);
   }

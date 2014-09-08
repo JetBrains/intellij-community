@@ -54,7 +54,7 @@ public class LightToolWindow extends JPanel {
   private final ThreeComponentsSplitter myContentSplitter;
   private ToolWindowAnchor myAnchor;
   private final Project myProject;
-  private final AbstractToolWindowManager myManager;
+  private final LightToolWindowManager myManager;
   private final PropertiesComponent myPropertiesComponent;
   private boolean myShowContent;
   private final String myShowStateKey;
@@ -86,7 +86,7 @@ public class LightToolWindow extends JPanel {
                          JComponent focusedComponent,
                          ThreeComponentsSplitter contentSplitter,
                          ToolWindowAnchor anchor,
-                         AbstractToolWindowManager manager,
+                         LightToolWindowManager manager,
                          Project project,
                          PropertiesComponent propertiesComponent,
                          String key,
@@ -101,8 +101,8 @@ public class LightToolWindow extends JPanel {
     myManager = manager;
     myPropertiesComponent = propertiesComponent;
 
-    myShowStateKey = AbstractToolWindowManager.EDITOR_MODE + key + ".SHOW";
-    myWidthKey = AbstractToolWindowManager.EDITOR_MODE + key + ".WIDTH";
+    myShowStateKey = LightToolWindowManager.EDITOR_MODE + key + ".SHOW";
+    myWidthKey = LightToolWindowManager.EDITOR_MODE + key + ".WIDTH";
 
     HeaderPanel header = new HeaderPanel();
     header.setLayout(new BorderLayout());
