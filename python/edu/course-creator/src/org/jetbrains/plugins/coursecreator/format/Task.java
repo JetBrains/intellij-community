@@ -7,7 +7,7 @@ import org.jetbrains.plugins.coursecreator.CCProjectService;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Task {
+public class Task implements Comparable{
   @Expose public String name;
   @Expose public Map<String, TaskFile> task_files = new HashMap<String, TaskFile>();
   public int myIndex;
@@ -43,5 +43,15 @@ public class Task {
 
   public boolean isTaskFile(String name) {
     return task_files.get(name) != null;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  @Override
+  public int compareTo(@NotNull Object o) {
+    Task task = (Task) o;
+    return myIndex - task.getIndex();
   }
 }

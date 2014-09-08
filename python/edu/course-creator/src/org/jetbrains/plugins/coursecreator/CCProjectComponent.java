@@ -151,7 +151,7 @@ public class CCProjectComponent implements ProjectComponent {
       if (task == null) {
         return;
       }
-      lesson.getTasklist().remove(task);
+      lesson.getTaskList().remove(task);
       lesson.getTasksMap().remove(removedFile.getName());
     }
 

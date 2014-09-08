@@ -71,6 +71,9 @@ public class CCProjectService implements PersistentStateComponent<Element> {
   @Override
   public void loadState(Element el) {
     myCourse = XmlSerializer.deserialize(el.getChild(COURSE_ELEMENT), Course.class);
+    if (myCourse != null) {
+      myCourse.init();
+    }
   }
 
   public static CCProjectService getInstance(@NotNull Project project) {
@@ -155,7 +158,7 @@ public class CCProjectService implements PersistentStateComponent<Element> {
           }
           Lesson lesson = lessons.get(lessonIndex);
           int taskIndex = getIndex(taskDirName, "task");
-          List<Task> tasks = lesson.getTasklist();
+          List<Task> tasks = lesson.getTaskList();
           if (!indexIsValid(taskIndex, tasks)) {
             return false;
           }
