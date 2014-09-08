@@ -26,6 +26,9 @@ import org.jetbrains.annotations.NotNull;
 public abstract class ActionPlaces {
   public static final String UNKNOWN = "unknown";
 
+  /**
+   * consider to use {@link #isMainMenuOrActionSearch(String)} instead
+   */
   public static final String MAIN_MENU = "MainMenu";
   public static final String MAIN_TOOLBAR = "MainToolbar";
   public static final String EDITOR_POPUP = "EditorPopup";
@@ -45,6 +48,7 @@ public abstract class ActionPlaces {
   public static final String STATUS_BAR_PLACE = "StatusBarPlace";
 
   public static final String SCOPE_VIEW_POPUP = "ScopeViewPopup";
+  public static final String ACTION_SEARCH = "GoToAction";
 
   public static final String TESTTREE_VIEW_POPUP = "TestTreeViewPopup";
   public static final String TESTTREE_VIEW_TOOLBAR = "TestTreeViewToolbar";
@@ -125,6 +129,10 @@ public abstract class ActionPlaces {
 
   public static boolean isToolbarPlace(@NotNull String place) {
     return ArrayUtil.find(ourToolbarPlaces, place) != -1;
+  }
+
+  public static boolean isMainMenuOrActionSearch(String place) {
+    return MAIN_MENU.equals(place) || ACTION_SEARCH.equals(place);
   }
 
   private static final String[] ourPopupPlaces = {EDITOR_POPUP, EDITOR_TAB_POPUP, COMMANDER_POPUP,
