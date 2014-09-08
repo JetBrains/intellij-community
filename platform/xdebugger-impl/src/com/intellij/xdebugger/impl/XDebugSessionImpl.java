@@ -73,7 +73,6 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -216,11 +215,6 @@ public class XDebugSessionImpl implements XDebugSession {
   @Nullable
   public RunProfile getRunProfile() {
     return myEnvironment != null ? myEnvironment.getRunProfile() : null;
-  }
-
-  @TestOnly
-  public ExecutionEnvironment getEnvironment() {
-    return myEnvironment;
   }
 
   public boolean isPauseActionSupported() {
