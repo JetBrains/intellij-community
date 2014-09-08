@@ -99,7 +99,7 @@ fi
 
 VERSION_LOG=`"$MKTEMP" -t java.version.log.XXXXXX`
 "$JDK/bin/java" -version 2> "$VERSION_LOG"
-"$GREP" "64-Bit|x86_64" "$VERSION_LOG" > /dev/null
+"$GREP" "64-Bit|x86_64|amd64" "$VERSION_LOG" > /dev/null
 BITS=$?
 "$RM" -f "$VERSION_LOG"
 if [ $BITS -eq 0 ]; then
