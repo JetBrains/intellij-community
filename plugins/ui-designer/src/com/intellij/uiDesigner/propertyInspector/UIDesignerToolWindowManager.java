@@ -24,7 +24,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -65,7 +64,6 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
   private PropertyInspector myPropertyInspector;
   private final FileEditorManager myFileEditorManager;
   private ToolWindow myToolWindow;
-  private boolean myToolWindowReady = false;
   private boolean myToolWindowDisposed = false;
   private final List<TreeSelectionListener> myPendingListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -77,15 +75,10 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
   }
 
   public void projectOpened() {
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-      public void run() {
-        myToolWindowReady = true;
-      }
-    });
   }
 
   private void checkInitToolWindow() {
-    if (myToolWindowReady && !myToolWindowDisposed && myToolWindow == null) {
+    if (!myToolWindowDisposed && myToolWindow == null) {
       initToolWindow();
     }
   }
@@ -139,7 +132,7 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
     myQueue.cancelAllUpdates();
     myQueue.queue(new Update("update") {
       public void run() {
-        if (!myToolWindowReady || myToolWindowDisposed) return;
+        if (myToolWindowDisposed) return;
         GuiEditor activeFormEditor = newEditor != null ? newEditor.getEditor() : null;
         if (myToolWindow == null) {
           if (activeFormEditor == null) return;
