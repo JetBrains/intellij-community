@@ -1,58 +1,67 @@
 package org.jetbrains.plugins.settingsRepository;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.URLUtil;
-import org.eclipse.jgit.lib.Constants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.settingsRepository.actions.ActionsPackage;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.File;
-import java.io.IOException;
-import java.util.concurrent.Callable;
 
 public class IcsSettingsPanel extends DialogWrapper {
   private JPanel panel;
   private TextFieldWithBrowseButton urlTextField;
-  private JCheckBox shareProjectWorkspaceCheckBox;
-  private final JButton syncButton;
+  private final Action[] syncActions;
 
   public IcsSettingsPanel(@Nullable final Project project) {
     super(project, true);
 
     IcsManager icsManager = IcsManager.OBJECT$.getInstance();
-    IcsSettings settings = icsManager.getSettings();
-
-    shareProjectWorkspaceCheckBox.setSelected(settings.getShareProjectWorkspace());
+    //shareProjectWorkspaceCheckBox.setSelected(settings.getShareProjectWorkspace());
     urlTextField.setText(icsManager.getRepositoryManager().getUpstream());
     urlTextField.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFolderDescriptor()));
 
-    // todo TextComponentUndoProvider should not depends on app settings
-    //new TextComponentUndoProvider(urlTextField);
+    SyncType[] syncTypes = SettingsRepositoryPackage.getSYNC_TYPES();
+    if (SystemInfo.isMac) {
+      syncTypes = ArrayUtil.reverseArray(syncTypes);
+    }
 
-    syncButton = new JButton(IcsBundle.message("settings.panel.sync.repositories"));
-    syncButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(@NotNull ActionEvent e) {
-        if (saveRemoteRepositoryUrl()) {
-          new SyncRepositoriesDialog(panel, project).show();
+    syncActions = new Action[syncTypes.length];
+    for (int i = 0, n = syncTypes.length; i < n; i++) {
+      final SyncType syncType = syncTypes[i];
+      syncActions[i] = new DialogWrapperAction(IcsBundle.message("action." + (syncType == SyncType.MERGE ? "Merge" : (syncType == SyncType.RESET_TO_THEIRS ? "ResetToTheirs" : "ResetToYours")) + "Settings.text")) {
+        @Override
+        protected void doAction(ActionEvent event) {
+          if (!saveRemoteRepositoryUrl()) {
+            return;
+          }
+
+          try {
+            IcsManager.OBJECT$.getInstance().sync(syncType, project);
+          }
+          catch (Exception e) {
+            Messages.showErrorDialog(getContentPane(), StringUtil.notNullize(e.getMessage(), "Internal error"), IcsBundle.message("sync.rejected.title"));
+            return;
+          }
+
+          ActionsPackage.getNOTIFICATION_GROUP().createNotification(IcsBundle.message("sync.done.message"), NotificationType.INFORMATION).notify(project);
+          doOKAction();
         }
-      }
-    });
-    updateSyncButtonState();
+      };
+    }
 
     urlTextField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
@@ -61,6 +70,8 @@ public class IcsSettingsPanel extends DialogWrapper {
       }
     });
 
+    updateSyncButtonState();
+
     setTitle(IcsBundle.message("settings.panel.title"));
     setResizable(false);
     init();
@@ -68,7 +79,10 @@ public class IcsSettingsPanel extends DialogWrapper {
 
   private void updateSyncButtonState() {
     String url = urlTextField.getText();
-    syncButton.setEnabled(!StringUtil.isEmptyOrSpaces(url) && url.length() > 1);
+    boolean enabled = !StringUtil.isEmptyOrSpaces(url) && url.length() > 1;
+    for (Action syncAction : syncActions) {
+      syncAction.setEnabled(enabled);
+    }
   }
 
   @Nullable
@@ -86,53 +100,10 @@ public class IcsSettingsPanel extends DialogWrapper {
   @NotNull
   @Override
   protected Action[] createActions() {
-    return new Action[]{getOKAction()};
-  }
-
-  @Override
-  protected void doOKAction() {
-    if (apply()) {
-      super.doOKAction();
-    }
-  }
-
-  @Nullable
-  @Override
-  protected JComponent createSouthPanel() {
-    JComponent southPanel = super.createSouthPanel();
-    assert southPanel != null;
-    southPanel.add(syncButton, BorderLayout.WEST);
-    return southPanel;
-  }
-
-  private boolean apply() {
-    IcsSettings settings = IcsManager.OBJECT$.getInstance().getSettings();
-    boolean settingsModified = false;
-    boolean shareProjectWorkspace = shareProjectWorkspaceCheckBox.isSelected();
-    if (shareProjectWorkspace != settings.getShareProjectWorkspace()) {
-      settings.setShareProjectWorkspace(shareProjectWorkspace);
-      settingsModified = true;
-    }
-
-    if (!saveRemoteRepositoryUrl()) {
-      return false;
-    }
-
-    if (settingsModified) {
-      ApplicationManager.getApplication().executeOnPooledThread(new Callable<Object>() {
-        @Override
-        public Object call() throws Exception {
-          IcsManager.OBJECT$.getInstance().getSettings().save();
-          return null;
-        }
-      });
-    }
-
-    return true;
+    return syncActions;
   }
 
   private boolean saveRemoteRepositoryUrl() {
-    RepositoryManager repositoryManager = IcsManager.OBJECT$.getInstance().getRepositoryManager();
     String url = StringUtil.nullize(urlTextField.getText());
     if (url != null) {
       boolean isFile;
@@ -144,50 +115,17 @@ public class IcsSettingsPanel extends DialogWrapper {
         isFile = !url.startsWith("git@") && !URLUtil.containsScheme(url);
       }
 
-      if (isFile && !checkFileRepo(url, repositoryManager)) {
+      if (isFile && !IcsManager.OBJECT$.getInstance().getRepositoryService().checkFileRepo(url, getContentPane())) {
         return false;
       }
     }
 
     try {
-      repositoryManager.setUpstream(url, null);
+      IcsManager.OBJECT$.getInstance().getRepositoryManager().createRepositoryIfNeed().setUpstream(url, null);
       return true;
     }
     catch (Exception e) {
       Messages.showErrorDialog(getContentPane(), IcsBundle.message("set.upstream.failed.message", e.getMessage()), IcsBundle.message("set.upstream.failed.title"));
-      return false;
-    }
-  }
-
-  private boolean checkFileRepo(@NotNull String url, @NotNull RepositoryManager repositoryManager) {
-    String suffix = '/' + Constants.DOT_GIT;
-    if (url.endsWith(suffix)) {
-      url = url.substring(0, url.length() - suffix.length());
-    }
-
-    File file = new File(url);
-    if (file.exists()) {
-      if (!file.isDirectory()) {
-        //noinspection DialogTitleCapitalization
-        Messages.showErrorDialog(getContentPane(), "Specified path is not a directory", "Specified Path is Invalid");
-        return false;
-      }
-      else if (repositoryManager.isValidRepository(file)) {
-        return true;
-      }
-    }
-
-    if (Messages.showYesNoDialog(getContentPane(), IcsBundle.message("init.dialog.message"), IcsBundle.message("init.dialog.title"), Messages.getQuestionIcon()) == Messages.YES) {
-      try {
-        repositoryManager.initRepository(file);
-        return true;
-      }
-      catch (IOException e) {
-        Messages.showErrorDialog(getContentPane(), IcsBundle.message("init.failed.message", e.getMessage()), IcsBundle.message("init.failed.title"));
-        return false;
-      }
-    }
-    else {
       return false;
     }
   }

@@ -32,7 +32,7 @@ class IcsSettings {
   private val settingsFile: File
 
   {
-    settingsFile = File(getPluginSystemDir(), "state.xml")
+    settingsFile = File(getPluginSystemDir(), "config.xml")
   }
 
   public fun save() {

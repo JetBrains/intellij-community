@@ -7,7 +7,6 @@ import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.impl.stores.StreamProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.testFramework.PlatformTestCase;
@@ -56,7 +55,7 @@ public class GitTest {
   public static void setIcsDir() throws IOException {
     String icsDirPath = System.getProperty("ics.settingsRepository");
     if (icsDirPath == null) {
-      ICS_DIR = FileUtil.createTempDirectory("ics", null);
+      ICS_DIR = FileUtil.generateRandomTemporaryPath();
       System.setProperty("ics.settingsRepository", ICS_DIR.getAbsolutePath());
     }
     else {
@@ -80,17 +79,14 @@ public class GitTest {
       }
     });
 
-    IcsManager.OBJECT$.getInstance()._setRepositoryManager(new GitRepositoryManager(new NotNullLazyValue<CredentialsStore>() {
-      @NotNull
-      @Override
-      protected CredentialsStore compute() {
-        throw new UnsupportedOperationException();
-      }
-    }));
+    IcsManager icsManager = IcsManager.OBJECT$.getInstance();
+    ((GitRepositoryManager)icsManager.getRepositoryManager()).recreateRepository();
+    icsManager.setRepositoryActive(true);
   }
 
   @After
   public void tearDown() throws Exception {
+    IcsManager.OBJECT$.getInstance().setRepositoryActive(false);
     try {
       if (fixture != null) {
         SwingUtilities.invokeAndWait(new Runnable() {

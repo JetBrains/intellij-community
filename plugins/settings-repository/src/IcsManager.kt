@@ -19,20 +19,30 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
-import com.intellij.openapi.util.AtomicNotNullLazyValue
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SingleAlarm
-import com.mcdermottroe.apple.OSXKeychain
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.plugins.settingsRepository.git.GitRepositoryManager
 
 import java.io.File
 import java.io.InputStream
+import org.jetbrains.plugins.settingsRepository.git.GitRepositoryManager
+import com.intellij.openapi.util.AtomicNotNullLazyValue
+import com.intellij.openapi.util.SystemInfo
+import com.mcdermottroe.apple.OSXKeychain
+import org.jetbrains.plugins.settingsRepository.git.GitRepositoryService
 
-public val PLUGIN_NAME: String = "Settings Repository"
+val PLUGIN_NAME: String = "Settings Repository"
 
-public val LOG: Logger = Logger.getInstance(javaClass<BaseRepositoryManager>())
+val LOG: Logger = Logger.getInstance(javaClass<IcsManager>())
+
+enum class SyncType {
+  MERGE
+  RESET_TO_THEIRS
+  RESET_TO_YOURS
+}
+
+// KT-5591
+public val SYNC_TYPES: Array<SyncType> = SyncType.values()
 
 private fun getPathToBundledFile(filename: String): String {
   val url = javaClass<IcsManager>().getResource("")!!
@@ -70,7 +80,6 @@ private fun updateStoragesFromStreamProvider(appStorageManager: StateStorageMana
       catch (e: Throwable) {
         LOG.error(e)
       }
-
     }
   }
 }
@@ -80,10 +89,25 @@ public class IcsManager : ApplicationLoadListener {
     fun getInstance() = ApplicationLoadListener.EP_NAME.findExtension(javaClass<IcsManager>())!!
   }
 
+  public val repositoryService: RepositoryService = GitRepositoryService()
+
   private val settings = IcsSettings()
 
-  var repositoryManager: RepositoryManager
-    private set
+  val repositoryManager: RepositoryManager = GitRepositoryManager(object : AtomicNotNullLazyValue<CredentialsStore>() {
+    override fun compute(): CredentialsStore {
+      if (SystemInfo.isMacIntel64 && SystemInfo.isMacOSLeopard) {
+        try {
+          OSXKeychain.setLibraryPath(getPathToBundledFile("osxkeychain.so"))
+          return OsXCredentialsStore()
+        }
+        catch (e: Exception) {
+          LOG.error(e)
+        }
+
+      }
+      return FileCredentialsStore(File(getPluginSystemDir(), ".git_auth"))
+    }
+  })
 
   private val commitAlarm = SingleAlarm(object : Runnable {
     override fun run() {
@@ -95,61 +119,19 @@ public class IcsManager : ApplicationLoadListener {
           catch (e: Exception) {
             LOG.error(e)
           }
-
         }
       })
     }
   }, settings.commitDelay)
 
-  volatile private var autoCommitEnabled = true
-  volatile private var writeAndDeleteProhibited: Boolean = false
+  private volatile var autoCommitEnabled = true
+  private volatile var writeAndDeleteProhibited: Boolean = false
 
-  {
-    $repositoryManager = GitRepositoryManager(object : AtomicNotNullLazyValue<CredentialsStore>() {
-      override fun compute(): CredentialsStore {
-        if (SystemInfo.isMacIntel64 && SystemInfo.isMacOSLeopard) {
-          try {
-            OSXKeychain.setLibraryPath(getPathToBundledFile("osxkeychain.so"))
-            return OsXCredentialsStore()
-          }
-          catch (e: Exception) {
-            LOG.error(e)
-          }
-
-        }
-        return FileCredentialsStore(File(getPluginSystemDir(), ".git_auth"))
-      }
-    })
-  }
-
-  TestOnly
-  fun _setRepositoryManager(repositoryManager: RepositoryManager) {
-    $repositoryManager = repositoryManager
-  }
+  volatile var repositoryActive: Boolean = false
 
   private fun scheduleCommit() {
     if (autoCommitEnabled && !ApplicationManager.getApplication()!!.isUnitTestMode()) {
       commitAlarm.cancelAndRequest()
-    }
-  }
-
-  private fun registerApplicationLevelProviders(application: Application) {
-    try {
-      settings.load()
-    }
-    catch (e: Exception) {
-      LOG.error(e)
-    }
-
-    val storageManager = (application as ApplicationImpl).getStateStore().getStateStorageManager()
-    storageManager.setStreamProvider(ApplicationLevelProvider())
-
-    if (!application.isUnitTestMode()) {
-      val storageFileNames = storageManager.getStorageFileNames()
-      if (!storageFileNames.isEmpty()) {
-        updateStoragesFromStreamProvider(storageManager, storageFileNames)
-        SchemesManagerFactory.getInstance().updateConfigFilesFromStreamProviders()
-      }
     }
   }
 
@@ -240,18 +222,42 @@ public class IcsManager : ApplicationLoadListener {
   }
 
   private fun cancelAndDisableAutoCommit() {
-    autoCommitEnabled = false
-    commitAlarm.cancel()
+    if (autoCommitEnabled) {
+      autoCommitEnabled = false
+      commitAlarm.cancel()
+    }
   }
 
-  public fun runInAutoCommitDisabledMode(runnable: Runnable) {
+  public fun runInAutoCommitDisabledMode(task: ()->Unit) {
     cancelAndDisableAutoCommit()
     try {
-      runnable.run()
+      task()
     }
     finally {
       autoCommitEnabled = true
+      repositoryActive = repositoryManager.hasUpstream()
     }
+  }
+
+  override fun beforeApplicationLoaded(application: Application) {
+    try {
+      settings.load()
+    }
+    catch (e: Exception) {
+      LOG.error(e)
+    }
+
+    repositoryActive = repositoryManager.hasUpstream()
+
+    (application as ApplicationImpl).getStateStore().getStateStorageManager().setStreamProvider(ApplicationLevelProvider())
+
+    application.getMessageBus().connect().subscribe<ProjectLifecycleListener>(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener.Adapter() {
+      override fun beforeProjectLoaded(project: Project) {
+        if (!project.isDefault()) {
+          getInstance().registerProjectLevelProviders(project)
+        }
+      }
+    })
   }
 
   private open inner class IcsStreamProvider(protected val projectId: String?) : StreamProvider() {
@@ -274,17 +280,7 @@ public class IcsManager : ApplicationLoadListener {
 
     override fun delete(fileSpec: String, roamingType: RoamingType) {
     }
-  }
 
-  override fun beforeApplicationLoaded(application: Application) {
-    registerApplicationLevelProviders(application)
-
-    application.getMessageBus().connect().subscribe<ProjectLifecycleListener>(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener.Adapter() {
-      override fun beforeProjectLoaded(project: Project) {
-        if (!project.isDefault()) {
-          getInstance().registerProjectLevelProviders(project)
-        }
-      }
-    })
+    override fun isEnabled() = repositoryActive
   }
 }

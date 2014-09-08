@@ -4,15 +4,15 @@ import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.plugins.settingsRepository.IcsBundle
 import org.jetbrains.plugins.settingsRepository.IcsManager
 import org.jetbrains.plugins.settingsRepository.SyncType
 import org.jetbrains.plugins.settingsRepository.PLUGIN_NAME
+import org.jetbrains.plugins.settingsRepository.IcsSettingsPanel
 
-private val NOTIFICATION_GROUP = NotificationGroup.balloonGroup(PLUGIN_NAME)
+val NOTIFICATION_GROUP = NotificationGroup.balloonGroup(PLUGIN_NAME)
 
-class SyncAction : DumbAwareAction() {
+abstract class SyncAction(private val syncType: SyncType) : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     e.getPresentation().setEnabledAndVisible(IcsManager.getInstance().repositoryManager.hasUpstream())
   }
@@ -20,7 +20,7 @@ class SyncAction : DumbAwareAction() {
   override fun actionPerformed(event: AnActionEvent) {
     val project = event.getProject()
     try {
-      IcsManager.getInstance().sync(SyncType.MERGE, project)
+      IcsManager.getInstance().sync(syncType, project)
     }
     catch (e: Exception) {
       NOTIFICATION_GROUP.createNotification(IcsBundle.message("sync.rejected.title"), e.getMessage() ?: "Internal error", NotificationType.ERROR, null).notify(project)
@@ -29,5 +29,18 @@ class SyncAction : DumbAwareAction() {
 
 
     NOTIFICATION_GROUP.createNotification(IcsBundle.message("sync.done.message"), NotificationType.INFORMATION).notify(project)
+  }
+}
+
+// we don't
+class MergeAction : SyncAction(SyncType.MERGE)
+class ResetToTheirsAction : SyncAction(SyncType.RESET_TO_THEIRS)
+class ResetToYoursAction : SyncAction(SyncType.RESET_TO_YOURS)
+
+class ConfigureIcsAction : DumbAwareAction() {
+  override fun actionPerformed(e: AnActionEvent) {
+    IcsManager.getInstance().runInAutoCommitDisabledMode() {
+      IcsSettingsPanel(e.getProject()).show()
+    }
   }
 }

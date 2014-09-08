@@ -18,9 +18,13 @@
   </extensions>
 
   <actions>
-    <action id="SyncIcs" class="org.jetbrains.plugins.settingsRepository.actions.SyncAction">
+    <group id="SyncSettings" popup="true" compact="true">
+      <action id="MergeSettings" class="org.jetbrains.plugins.settingsRepository.actions.MergeAction"/>
+      <action id="ResetToTheirsSettings" class="org.jetbrains.plugins.settingsRepository.actions.ResetToTheirsAction"/>
+      <action id="ResetToYoursSettings" class="org.jetbrains.plugins.settingsRepository.actions.ResetToYoursAction"/>
+
       <add-to-group group-id="VcsGroups" anchor="last"/>
-    </action>
+    </group>
     <action id="ConfigureIcs" class="org.jetbrains.plugins.settingsRepository.actions.ConfigureIcsAction">
       <add-to-group group-id="ExportImportGroup"/>
     </action>

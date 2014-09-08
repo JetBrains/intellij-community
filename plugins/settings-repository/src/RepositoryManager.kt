@@ -7,6 +7,8 @@ import java.io.IOException
 import java.io.InputStream
 
 public trait RepositoryManager {
+  public fun createRepositoryIfNeed(): RepositoryManager
+
   public fun getUpstream(): String?
 
   public fun hasUpstream(): Boolean
@@ -43,10 +45,5 @@ public trait RepositoryManager {
   throws(javaClass<Exception>())
   public fun pull(indicator: ProgressIndicator)
 
-  throws(javaClass<IOException>())
-  public fun initRepository(dir: File)
-
   public fun has(path: String): Boolean
-
-  public fun isValidRepository(file: File): Boolean
 }

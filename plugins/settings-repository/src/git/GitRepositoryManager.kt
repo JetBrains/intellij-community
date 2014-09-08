@@ -10,7 +10,6 @@ import org.eclipse.jgit.errors.TransportException
 import org.eclipse.jgit.lib.*
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.transport.*
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.settingsRepository.BaseRepositoryManager
 import org.jetbrains.plugins.settingsRepository.CredentialsStore
 
@@ -18,10 +17,35 @@ import java.io.File
 import java.io.IOException
 import org.jetbrains.plugins.settingsRepository.LOG
 import org.eclipse.jgit.api.Git
+import org.jetbrains.plugins.settingsRepository.RepositoryService
+import org.jetbrains.annotations.TestOnly
+import com.intellij.openapi.util.ShutDownTracker
+import com.intellij.openapi.application.ApplicationManager
+
+class GitRepositoryService : RepositoryService {
+  override fun isValidRepository(file: File): Boolean {
+    if (File(file, Constants.DOT_GIT).exists()) {
+      return true
+    }
+
+    // existing bare repository
+    try {
+      FileRepositoryBuilder().setGitDir(file).setMustExist(true).build()
+    }
+    catch (e: IOException) {
+      return false
+    }
+
+    return true
+  }
+}
 
 class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<CredentialsStore>) : BaseRepositoryManager() {
-  val git: Git
-  val repository: Repository
+  var git: Git
+    private set
+
+  var repository: Repository
+    private set
 
   private var _credentialsProvider: CredentialsProvider? = null
 
@@ -34,16 +58,32 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
     }
 
   {
-    repository = FileRepositoryBuilder().setWorkTree(dir).build()
-    git = Git(repository)
+    $repository = FileRepositoryBuilder().setWorkTree(dir).build()
+    $git = Git(repository)
+
+    if (ApplicationManager.getApplication()?.isUnitTestMode() != true) {
+      ShutDownTracker.getInstance().registerShutdownTask(object: Runnable {
+        override fun run() {
+          if (dir.exists()) {
+            $repository.close()
+          }
+        }
+      })
+    }
+  }
+
+  override fun createRepositoryIfNeed(): GitRepositoryManager {
     if (!dir.exists()) {
       repository.create()
       repository.disableAutoCrLf()
     }
+    return this
   }
 
-  override fun initRepository(dir: File) {
-    createBareRepository(dir)
+  TestOnly fun recreateRepository() {
+    $repository = FileRepositoryBuilder().setWorkTree(dir).build()
+    $git = Git(repository)
+    createRepositoryIfNeed()
   }
 
   override fun getUpstream(): String? {
@@ -114,22 +154,6 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
 
   override fun pull(indicator: ProgressIndicator) {
     pull(this, indicator)
-  }
-
-  override fun isValidRepository(file: File): Boolean {
-    if (File(file, Constants.DOT_GIT).exists()) {
-      return true
-    }
-
-    // existing bare repository
-    try {
-      FileRepositoryBuilder().setGitDir(file).setMustExist(true).build()
-    }
-    catch (e: IOException) {
-      return false
-    }
-
-    return true
   }
 }
 
