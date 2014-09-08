@@ -1,44 +1,39 @@
 package com.intellij.json;
 
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 
 /**
  * @author Mikhail Golubev
  */
 public class JsonLineMoverTest extends JsonTestCase {
-  private void doTest(boolean checkUp, boolean checkDown) {
+  private void doTest(boolean down) {
     final String testName = getTestName(false);
 
-    if (checkUp) {
-      myFixture.configureByFile("mover/" + testName + ".json");
-      myFixture.performEditorAction(IdeActions.ACTION_MOVE_STATEMENT_UP_ACTION);
-      myFixture.checkResultByFile("mover/" + testName + "_afterUp.json", true);
-    }
-
-    if (checkDown) {
-      if (checkUp) {
-        FileDocumentManager.getInstance().reloadFromDisk(myFixture.getDocument(myFixture.getFile()));
-      }
+    if (down) {
       myFixture.configureByFile("mover/" + testName + ".json");
       myFixture.performEditorAction(IdeActions.ACTION_MOVE_STATEMENT_DOWN_ACTION);
       myFixture.checkResultByFile("mover/" + testName + "_afterDown.json", true);
     }
+    else {
+      myFixture.configureByFile("mover/" + testName + ".json");
+      myFixture.performEditorAction(IdeActions.ACTION_MOVE_STATEMENT_UP_ACTION);
+      myFixture.checkResultByFile("mover/" + testName + "_afterUp.json", true);
+    }
   }
 
   public void testLastArrayElementMovedUp() {
-    doTest(true, false);
-  }
-
-  public void testPenultArrayElementMovedDown() {
-    doTest(false, true);
+    doTest(false);
   }
 
   public void testLastObjectPropertyMovedUp() {
-    doTest(true, false);
+    doTest(false);
   }
 
-  public void testPenultObjectPropertyMovedDown() {
-    doTest(false, true);
+  public void testArraySelectionMovedDown() {
+    doTest(true);
+  }
+
+  public void testObjectSelectionMovedDown() {
+    doTest(true);
   }
 }
