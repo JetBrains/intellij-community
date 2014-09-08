@@ -2,6 +2,7 @@ package com.intellij.json.formatter;
 
 import com.intellij.formatting.*;
 import com.intellij.json.JsonElementTypes;
+import com.intellij.json.JsonLanguage;
 import com.intellij.json.JsonParserDefinition;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.lang.ASTNode;
@@ -9,6 +10,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.Function;
@@ -17,6 +20,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+
+import static com.intellij.json.JsonParserDefinition.JSON_BRACES;
+import static com.intellij.json.JsonParserDefinition.JSON_BRACKETS;
 
 /**
  * Mostly based on PyBlock implementation.
@@ -96,7 +102,9 @@ public class JsonBlock implements ASTBlock {
     Wrap wrap = null;
 
     if (isContainer() && childNodeType != JsonElementTypes.COMMA && !BRACES.contains(childNodeType)) {
-      wrap = Wrap.createWrap(WrapType.NORMAL, true);
+      if (!FormatterUtil.isPrecededBy(childNode, OPEN_BRACES)) {
+        wrap = Wrap.createWrap(WrapType.ALWAYS, true);
+      }
       alignment = myChildAlignment;
       indent = Indent.getNormalIndent();
     }
@@ -128,6 +136,24 @@ public class JsonBlock implements ASTBlock {
   @Nullable
   @Override
   public Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
+    final CommonCodeStyleSettings commonSettings = mySettings.getCommonSettings(JsonLanguage.INSTANCE);
+    final JsonCodeStyleSettings customSettings = mySettings.getCustomSettings(JsonCodeStyleSettings.class);
+    final IElementType leftChildType = child1 instanceof JsonBlock ? ((JsonBlock)child1).myNode.getElementType() : null;
+    final IElementType rightChildType = child2 instanceof JsonBlock ? ((JsonBlock)child2).myNode.getElementType() : null;
+    if (leftChildType != null && rightChildType != null) {
+      if (JSON_BRACES.contains(leftChildType) ^ JSON_BRACES.contains(rightChildType)) {
+        final int numSpaces = customSettings.SPACE_WITHIN_BRACES ? 1 : 0;
+        return Spacing.createDependentLFSpacing(numSpaces, numSpaces, myNode.getTextRange(),
+                                                commonSettings.KEEP_LINE_BREAKS,
+                                                commonSettings.KEEP_BLANK_LINES_IN_CODE);
+      }
+      else if (JSON_BRACKETS.contains(leftChildType) ^ JSON_BRACKETS.contains(rightChildType)) {
+        final int numSpaces = commonSettings.SPACE_WITHIN_BRACKETS ? 1 : 0;
+        return Spacing.createDependentLFSpacing(numSpaces, numSpaces, myNode.getTextRange(),
+                                                commonSettings.KEEP_LINE_BREAKS,
+                                                commonSettings.KEEP_BLANK_LINES_IN_CODE);
+      }
+    }
     return mySpacingBuilder.getSpacing(this, child1, child2);
   }
 
