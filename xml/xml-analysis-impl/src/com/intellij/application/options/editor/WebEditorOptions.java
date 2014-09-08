@@ -44,6 +44,7 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
   private boolean myAutomaticallyInsertClosingTag = true;
   private boolean myAutomaticallyInsertRequiredAttributes = true;
   private boolean myAutomaticallyInsertRequiredSubTags = true;
+  private boolean myAutoCloseTag = true;
   private boolean myAutomaticallyStartAttribute = true;
   private boolean myInsertQuotesForAttributeValue = true;
 
@@ -51,28 +52,28 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
   private int myTagTreeHighlightingLevelCount = 6;
   private int myTagTreeHighlightingOpacity = 10;
 
-  public static WebEditorOptions getInstance() {
-    return ServiceManager.getService(WebEditorOptions.class);
-  }
-
   public WebEditorOptions() {
     setTagTreeHighlightingEnabled(!ApplicationManager.getApplication().isUnitTestMode());
   }
 
-  public void setBreadcrumbsEnabled(boolean b) {
-    myBreadcrumbsEnabled = b;
+  public static WebEditorOptions getInstance() {
+    return ServiceManager.getService(WebEditorOptions.class);
   }
 
   public boolean isBreadcrumbsEnabled() {
     return myBreadcrumbsEnabled;
   }
 
-  public void setBreadcrumbsEnabledInXml(boolean b) {
-    myBreadcrumbsEnabledInXml = b;
+  public void setBreadcrumbsEnabled(boolean b) {
+    myBreadcrumbsEnabled = b;
   }
 
   public boolean isBreadcrumbsEnabledInXml() {
     return myBreadcrumbsEnabledInXml;
+  }
+
+  public void setBreadcrumbsEnabledInXml(boolean b) {
+    myBreadcrumbsEnabledInXml = b;
   }
 
   public boolean isShowCssInlineColorPreview() {
@@ -121,28 +122,28 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
     myAutomaticallyInsertRequiredSubTags = automaticallyInsertRequiredSubTags;
   }
 
-  public void setTagTreeHighlightingLevelCount(int tagTreeHighlightingLevelCount) {
-    myTagTreeHighlightingLevelCount = tagTreeHighlightingLevelCount;
-  }
-
   public int getTagTreeHighlightingLevelCount() {
     return myTagTreeHighlightingLevelCount;
   }
 
-  public void setTagTreeHighlightingOpacity(int tagTreeHighlightingOpacity) {
-    myTagTreeHighlightingOpacity = tagTreeHighlightingOpacity;
+  public void setTagTreeHighlightingLevelCount(int tagTreeHighlightingLevelCount) {
+    myTagTreeHighlightingLevelCount = tagTreeHighlightingLevelCount;
   }
 
   public int getTagTreeHighlightingOpacity() {
     return myTagTreeHighlightingOpacity;
   }
 
-  public void setTagTreeHighlightingEnabled(boolean tagTreeHighlightingEnabled) {
-    myTagTreeHighlightingEnabled = tagTreeHighlightingEnabled;
+  public void setTagTreeHighlightingOpacity(int tagTreeHighlightingOpacity) {
+    myTagTreeHighlightingOpacity = tagTreeHighlightingOpacity;
   }
 
   public boolean isTagTreeHighlightingEnabled() {
     return myTagTreeHighlightingEnabled;
+  }
+
+  public void setTagTreeHighlightingEnabled(boolean tagTreeHighlightingEnabled) {
+    myTagTreeHighlightingEnabled = tagTreeHighlightingEnabled;
   }
 
   @Override
@@ -192,5 +193,13 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
 
   public void setInsertQuotesForAttributeValue(boolean insertQuotesForAttributeValue) {
     myInsertQuotesForAttributeValue = insertQuotesForAttributeValue;
+  }
+
+  public boolean isAutoCloseTag() {
+    return myAutoCloseTag;
+  }
+
+  public void setAutoCloseTag(boolean autoCloseTag) {
+    myAutoCloseTag = autoCloseTag;
   }
 }
