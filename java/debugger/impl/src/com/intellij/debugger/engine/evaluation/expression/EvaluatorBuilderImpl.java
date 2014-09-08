@@ -1146,7 +1146,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       else if (expressionPsiType instanceof PsiClassType){ // must be a class ref
         PsiClass aClass = ((PsiClassType)expressionPsiType).resolve();
         if(aClass instanceof PsiAnonymousClass) {
-          throwEvaluateException(DebuggerBundle.message("evaluation.error.anonymous.class.evaluation.not.supported"));
+          throw new EvaluateRuntimeException(AnonymousClassException.getInstance());
         }
         PsiExpressionList argumentList = expression.getArgumentList();
         if (argumentList == null) {

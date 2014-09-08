@@ -25,6 +25,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.engine.evaluation.expression.AnonymousClassException;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.Modifier;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -38,6 +39,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionCodeFragment;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
@@ -64,7 +66,7 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
 
   protected abstract PsiCodeFragment getEvaluationCode(StackFrameContext context) throws EvaluateException;
 
-  protected PsiCodeFragment createCodeFragment(PsiElement context) {
+  public PsiCodeFragment createCodeFragment(PsiElement context) {
     TextWithImports text = getEvaluationText();
     final PsiCodeFragment fragment =
       DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, context).createCodeFragment(text, context, myProject);
@@ -76,11 +78,9 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
     try {
       final EvaluationContextImpl thisEvaluationContext = getEvaluationContext(evaluationContext);
 
-      final ExpressionEvaluator evaluator;
-      if (Registry.is("debugger.compiling.evaluator")) {
-        evaluator = new CompilingEvaluator(getEvaluationText());
-      }
-      else {
+      ExpressionEvaluator evaluator;
+      final ExtractLightMethodObjectHandler.ExtractedData data = getUserData(CompilingEvaluator.COMPILING_EVALUATOR_DATA);
+      try {
         evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject, new EvaluatingComputable<ExpressionEvaluator>() {
           public ExpressionEvaluator compute() throws EvaluateException {
             final PsiElement psiContext = PositionUtil.getContextElement(evaluationContext);
@@ -88,6 +88,19 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
               .build(getEvaluationCode(thisEvaluationContext), ContextUtil.getSourcePosition(thisEvaluationContext));
           }
         });
+      }
+      catch (AnonymousClassException ex) {
+        if (Registry.is("debugger.compiling.evaluator") && data != null) {
+          evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject, new EvaluatingComputable<ExpressionEvaluator>() {
+            public ExpressionEvaluator compute() throws EvaluateException {
+              final PsiElement psiContext = PositionUtil.getContextElement(evaluationContext);
+              return new CompilingEvaluator(getEvaluationText(), getEvaluationCode(thisEvaluationContext), psiContext, data, EvaluationDescriptor.this);
+            }
+          });
+        }
+        else {
+          throw ex;
+        }
       }
 
       if (!thisEvaluationContext.getDebugProcess().isAttached()) {
