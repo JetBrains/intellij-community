@@ -1394,8 +1394,8 @@ public class PyUtil {
 
   @Nullable
   public static PsiElement findPrevAtOffset(PsiFile psiFile, int caretOffset, Class... toSkip) {
-    PsiElement element = psiFile.findElementAt(caretOffset);
-    if (element == null || caretOffset < 0) {
+    PsiElement element;
+    if (caretOffset < 0) {
       return null;
     }
     int lineStartOffset = 0;
