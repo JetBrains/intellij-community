@@ -1,7 +1,0 @@
-<components>
-  <project-components>
-    <component>
-      <implementation-class>com.intellij.ide.palette.impl.PaletteManager</implementation-class>
-    </component>
-  </project-components>
-</components>

@@ -9,6 +9,10 @@
   <extensionPoints>
     <extensionPoint name="formInspectionTool"
                     interface="com.intellij.uiDesigner.inspections.FormInspectionTool"/>
+
+    <extensionPoint qualifiedName="com.intellij.paletteItemProvider"
+                    area="IDEA_PROJECT"
+                    interface="com.intellij.ide.palette.PaletteItemProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij.uiDesigner">
@@ -146,6 +150,9 @@
       <implementation-class>com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager</implementation-class>
       <headless-implementation-class></headless-implementation-class>
       <skipForDefaultProject/>
+    </component>
+    <component>
+      <implementation-class>com.intellij.ide.palette.impl.PaletteManager</implementation-class>
     </component>
     <component>
       <implementation-class>com.intellij.uiDesigner.clientProperties.ClientPropertiesManager</implementation-class>
