@@ -34,6 +34,7 @@ public class HgRepoInfo {
   @NotNull private Set<HgNameWithHashInfo> myBookmarks = Collections.emptySet();
   @NotNull private Set<HgNameWithHashInfo> myTags = Collections.emptySet();
   @NotNull private Set<HgNameWithHashInfo> myLocalTags = Collections.emptySet();
+  @NotNull Set<HgNameWithHashInfo> mySubrepos = Collections.emptySet();
 
   public HgRepoInfo(@NotNull String currentBranch,
                     @Nullable String currentRevision,
@@ -43,7 +44,7 @@ public class HgRepoInfo {
                     @NotNull Collection<HgNameWithHashInfo> bookmarks,
                     @Nullable String currentBookmark,
                     @NotNull Collection<HgNameWithHashInfo> tags,
-                    @NotNull Collection<HgNameWithHashInfo> localTags) {
+                    @NotNull Collection<HgNameWithHashInfo> localTags, @NotNull Collection<HgNameWithHashInfo> subrepos) {
     myCurrentBranch = currentBranch;
     myCurrentRevision = currentRevision;
     myTipRevision = currentTipRevision;
@@ -53,6 +54,7 @@ public class HgRepoInfo {
     myCurrentBookmark = currentBookmark;
     myTags = new LinkedHashSet<HgNameWithHashInfo>(tags);
     myLocalTags = new LinkedHashSet<HgNameWithHashInfo>(localTags);
+    mySubrepos = new HashSet<HgNameWithHashInfo>(subrepos);
   }
 
   @NotNull
@@ -116,6 +118,7 @@ public class HgRepoInfo {
     if (!myBookmarks.equals(info.myBookmarks)) return false;
     if (!myTags.equals(info.myTags)) return false;
     if (!myLocalTags.equals(info.myLocalTags)) return false;
+    if (!mySubrepos.equals(info.mySubrepos)) return false;
 
     return true;
   }
@@ -123,7 +126,7 @@ public class HgRepoInfo {
   @Override
   public int hashCode() {
     return Objects.hashCode(myCurrentBranch, myCurrentRevision, myTipRevision, myCurrentBookmark, myState, myBranches, myBookmarks, myTags,
-                            myLocalTags);
+                            myLocalTags, mySubrepos);
   }
 
   @Override
@@ -131,5 +134,14 @@ public class HgRepoInfo {
   public String toString() {
     return String.format("HgRepository{myCurrentBranch=%s, myCurrentRevision='%s', myState=%s}",
                          myCurrentBranch, myCurrentRevision, myState);
+  }
+
+  public boolean hasSubrepos() {
+    return !mySubrepos.isEmpty();
+  }
+
+  @NotNull
+  public Collection<HgNameWithHashInfo> getSubrepos() {
+    return mySubrepos;
   }
 }

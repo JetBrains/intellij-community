@@ -53,6 +53,7 @@ public class HgCommitCommand {
   private final boolean myAmend;
 
   private Set<HgFile> myFiles = Collections.emptySet();
+  @NotNull private List<String> mySubrepos = Collections.emptyList();
 
   public HgCommitCommand(Project project, @NotNull VirtualFile root, String message, boolean amend) {
     myProject = project;
@@ -68,6 +69,10 @@ public class HgCommitCommand {
 
   public void setFiles(@NotNull Set<HgFile> files) {
     myFiles = files;
+  }
+
+  public void setSubrepos(@NotNull List<String> subrepos) {
+    mySubrepos = subrepos;
   }
 
   public void execute() throws HgCommandException, VcsException {
@@ -88,7 +93,8 @@ public class HgCommitCommand {
       });
       List<List<String>> chunkedCommits = VcsFileUtil.chunkRelativePaths(relativePaths);
       int size = chunkedCommits.size();
-      commitChunkFiles(chunkedCommits.get(0), myAmend);
+      // commit with subrepo should be first, because it's not possible to amend with --subrepos argument;
+      commitChunkFiles(chunkedCommits.get(0), myAmend, !mySubrepos.isEmpty());
       HgVcs vcs = HgVcs.getInstance(myProject);
       boolean amendCommit = vcs != null && vcs.getVersion().isAmendSupported();
       for (int i = 1; i < size; i++) {
@@ -105,14 +111,23 @@ public class HgCommitCommand {
     messageBus.syncPublisher(HgVcs.BRANCH_TOPIC).update(myProject, null);
   }
 
-  private void commitChunkFiles(List<String> chunk, boolean amendCommit) throws VcsException {
+  private void commitChunkFiles(@NotNull List<String> chunk, boolean amendCommit) throws VcsException {
+    commitChunkFiles(chunk, amendCommit, false);
+  }
+
+  private void commitChunkFiles(@NotNull List<String> chunk, boolean amendCommit, boolean withSubrepos) throws VcsException {
     List<String> parameters = new LinkedList<String>();
     parameters.add("--logfile");
     parameters.add(saveCommitMessage().getAbsolutePath());
-    parameters.addAll(chunk);
-    if (amendCommit) {
+    // note: for now mercurial could not perform amend commit with -S option
+    if (withSubrepos) {
+      parameters.add("-S");
+      parameters.addAll(mySubrepos);
+    }
+    else if (amendCommit) {
       parameters.add("--amend");
     }
+    parameters.addAll(chunk);
     HgCommandExecutor executor = new HgCommandExecutor(myProject);
     executor.setCharset(myCharset);
     ensureSuccess(executor.executeInCurrentThread(myRoot, "commit", parameters));
@@ -129,5 +144,4 @@ public class HgCommitCommand {
     }
     return tempFile;
   }
-
 }

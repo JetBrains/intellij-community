@@ -177,6 +177,16 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
   }
 
   @Override
+  public boolean hasSubrepos() {
+    return myInfo.hasSubrepos();
+  }
+
+  @NotNull
+  public Collection<HgNameWithHashInfo> getSubrepos() {
+    return myInfo.getSubrepos();
+  }
+
+  @Override
   public boolean isFresh() {
     return myIsFresh;
   }
@@ -213,7 +223,8 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     return
       new HgRepoInfo(myReader.readCurrentBranch(), myReader.readCurrentRevision(), myReader.readCurrentTipRevision(), myReader.readState(),
                      myReader.readBranches(),
-                     myReader.readBookmarks(), myReader.readCurrentBookmark(), myReader.readTags(), myReader.readLocalTags());
+                     myReader.readBookmarks(), myReader.readCurrentBookmark(), myReader.readTags(), myReader.readLocalTags(),
+                     myReader.readSubrepos());
   }
 
   public void updateConfig() {
