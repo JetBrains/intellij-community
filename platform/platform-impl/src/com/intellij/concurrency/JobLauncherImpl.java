@@ -146,19 +146,11 @@ public class JobLauncherImpl extends JobLauncher {
   // This implementation is not really async
   @NotNull
   @Override
-  public <T> AsyncFutureResult<Boolean> invokeConcurrentlyUnderProgressAsync(@NotNull List<? extends T> things,
+  public <T> AsyncFuture<Boolean> invokeConcurrentlyUnderProgressAsync(@NotNull List<? extends T> things,
                                                                              ProgressIndicator progress,
                                                                              boolean failFastOnAcquireReadAction,
                                                                              @NotNull Processor<T> thingProcessor) {
-    final AsyncFutureResult<Boolean> asyncFutureResult = AsyncFutureFactory.getInstance().createAsyncFutureResult();
-    try {
-      final boolean result = invokeConcurrentlyUnderProgress(things, progress, failFastOnAcquireReadAction, thingProcessor);
-      asyncFutureResult.set(result);
-    }
-    catch (Throwable t) {
-      asyncFutureResult.setException(t);
-    }
-    return asyncFutureResult;
+    return AsyncUtil.wrapBoolean(invokeConcurrentlyUnderProgress(things, progress, failFastOnAcquireReadAction, thingProcessor));
   }
 
   @NotNull

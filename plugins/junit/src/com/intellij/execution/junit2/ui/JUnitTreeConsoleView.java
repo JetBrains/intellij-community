@@ -41,17 +41,20 @@ public class JUnitTreeConsoleView extends BaseTestsOutputConsoleView {
     myEnvironment = environment;
   }
 
+  @Override
   protected TestResultsPanel createTestResultsPanel() {
     myConsolePanel = new ConsolePanel(getConsole().getComponent(), getPrinter(), myProperties, myEnvironment,
                                       getConsole().createConsoleActions());
     return myConsolePanel;
   }
 
+  @Override
   public void attachToProcess(final ProcessHandler processHandler) {
     super.attachToProcess(processHandler);
     myConsolePanel.onProcessStarted(processHandler);
   }
 
+  @Override
   public void dispose() {
     super.dispose();
     myConsolePanel = null;

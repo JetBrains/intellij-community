@@ -22,10 +22,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.StateStorageException;
-import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -56,25 +53,28 @@ public class FileBasedStorage extends XmlElementStorage {
 
   private final String myFilePath;
   private final File myFile;
-  private final String myRootElementName;
   private volatile VirtualFile myCachedVirtualFile;
 
-  public FileBasedStorage(@Nullable TrackingPathMacroSubstitutor pathMacroManager,
-                          StreamProvider streamProvider,
-                          String filePath,
-                          String fileSpec,
-                          String rootElementName,
+  @Nullable
+  private final RoamingType myRoamingType;
+
+  public FileBasedStorage(@NotNull String filePath,
+                          @NotNull String fileSpec,
+                          @Nullable RoamingType roamingType,
+                          @Nullable TrackingPathMacroSubstitutor pathMacroManager,
+                          @NotNull String rootElementName,
                           @NotNull Disposable parentDisposable,
                           PicoContainer picoContainer,
-                          ComponentRoamingManager componentRoamingManager,
+                          @Nullable StreamProvider streamProvider,
                           ComponentVersionProvider componentVersionProvider) {
-    super(pathMacroManager, parentDisposable, rootElementName, streamProvider, fileSpec, componentRoamingManager, componentVersionProvider);
+    super(pathMacroManager, parentDisposable, rootElementName, streamProvider, fileSpec, componentVersionProvider);
 
     refreshConfigDirectoryOnce();
 
-    myRootElementName = rootElementName;
     myFilePath = filePath;
     myFile = new File(filePath);
+
+    myRoamingType = roamingType;
 
     VirtualFileTracker virtualFileTracker = ServiceManager.getService(VirtualFileTracker.class);
     MessageBus messageBus = (MessageBus)picoContainer.getComponentInstanceOfType(MessageBus.class);
@@ -92,6 +92,11 @@ public class FileBasedStorage extends XmlElementStorage {
         }
 
         @Override
+        public void fileCreated(@NotNull VirtualFileEvent event) {
+          myCachedVirtualFile = event.getFile();
+        }
+
+        @Override
         public void contentsChanged(@NotNull final VirtualFileEvent event) {
           if (!isDisposed()) {
             listener.storageFileChanged(event, FileBasedStorage.this);
@@ -99,6 +104,12 @@ public class FileBasedStorage extends XmlElementStorage {
         }
       }, false, this);
     }
+  }
+
+  @Nullable
+  @Override
+  protected RoamingType getRoamingType() {
+    return myRoamingType;
   }
 
   private static void refreshConfigDirectoryOnce() {
@@ -125,13 +136,6 @@ public class FileBasedStorage extends XmlElementStorage {
   @Override
   protected MySaveSession createSaveSession(final MyExternalizationSession externalizationSession) {
     return new FileSaveSession(externalizationSession);
-  }
-
-  public void resetProviderCache() {
-    myProviderUpToDateHash = -1;
-    if (myRemoteVersionProvider != null) {
-      myRemoteVersionProvider.myProviderVersions = null;
-    }
   }
 
   private class FileSaveSession extends MySaveSession {
@@ -168,7 +172,7 @@ public class FileBasedStorage extends XmlElementStorage {
       }
 
       LOG.assertTrue(myFile != null);
-      myCachedVirtualFile = StorageUtil.save(myFile, getElementToSave(), this, true);
+      myCachedVirtualFile = StorageUtil.save(myFile, getElementToSave(), this, true, myCachedVirtualFile);
     }
 
     @NotNull
@@ -232,13 +236,19 @@ public class FileBasedStorage extends XmlElementStorage {
   public VirtualFile getVirtualFile() {
     VirtualFile virtualFile = myCachedVirtualFile;
     if (virtualFile == null) {
-      myCachedVirtualFile = virtualFile = StorageUtil.getVirtualFile(myFile);
+      myCachedVirtualFile = virtualFile = LocalFileSystem.getInstance().findFileByIoFile(myFile);
     }
     return virtualFile;
   }
 
+  @NotNull
   public File getFile() {
     return myFile;
+  }
+
+  @NotNull
+  public String getFilePath() {
+    return myFilePath;
   }
 
   @Override
@@ -301,14 +311,6 @@ public class FileBasedStorage extends XmlElementStorage {
     }
   }
 
-  public String getFileName() {
-    return myFile.getName();
-  }
-
-  public String getFilePath() {
-    return myFilePath;
-  }
-
   @Override
   public void setDefaultState(final Element element) {
     element.setName(myRootElementName);
@@ -317,7 +319,7 @@ public class FileBasedStorage extends XmlElementStorage {
 
   @Nullable
   public File updateFileExternallyFromStreamProviders() throws IOException {
-    Element element = getElement(loadData(true, null));
+    Element element = getElement(loadData(true, getRoamingType()));
     if (element == null) {
       FileUtil.delete(myFile);
       return null;

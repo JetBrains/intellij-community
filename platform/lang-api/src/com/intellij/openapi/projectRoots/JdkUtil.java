@@ -247,7 +247,15 @@ public class JdkUtil {
     }
 
     final String mainClass = javaParameters.getMainClass();
-    commandLine.addParameter(mainClass);
+    String jarPath = javaParameters.getJarPath();
+    if (mainClass != null) {
+      commandLine.addParameter(mainClass);
+    }
+    else if (jarPath != null) {
+      commandLine.addParameter("-jar");
+      commandLine.addParameter(jarPath);
+    }
+
     commandLine.addParameters(javaParameters.getProgramParametersList().getList());
 
     commandLine.setWorkDirectory(javaParameters.getWorkingDirectory());
@@ -260,7 +268,7 @@ public class JdkUtil {
                                                     ParametersList parametersList) {
     commandLine.addParameters(parametersList.getList());
     appendEncoding(javaParameters, commandLine, parametersList);
-    if (!parametersList.hasParameter("-classpath") && !parametersList.hasParameter("-cp")){
+    if (!parametersList.hasParameter("-classpath") && !parametersList.hasParameter("-cp") && !javaParameters.getClassPath().getPathList().isEmpty()){
       commandLine.addParameter("-classpath");
       commandLine.addParameter(javaParameters.getClassPath().getPathsString());
     }

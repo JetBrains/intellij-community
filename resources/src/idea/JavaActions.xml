@@ -153,7 +153,6 @@
     </action>
 
     <group id="JavaDebuggerActions">
-      <action id="Debugger.AdjustArrayRange" class="com.intellij.debugger.actions.AdjustArrayRangeAction"/>
       <action id="Debugger.Inspect" class="com.intellij.debugger.actions.InspectAction"/>
       <action id="Debugger.CustomizeContextView" class="com.intellij.debugger.actions.CustomizeContextViewAction">
         <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="last"/>
@@ -176,6 +175,9 @@
       <action id="Debugger.RemoveAllWatches" class="com.intellij.debugger.actions.RemoveAllWatchesAction"/>
       <action id="Debugger.RemoveWatch" class="com.intellij.debugger.actions.RemoveWatchAction" icon="AllIcons.Actions.Delete"/>
       <action id="Debugger.ViewAsGroup" class="com.intellij.debugger.actions.ViewAsGroup">
+        <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
+      </action>
+      <action id="Debugger.AdjustArrayRange" class="com.intellij.debugger.actions.AdjustArrayRangeAction">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
       </action>
       <!--<action id="Debugger.SetValue" class="com.intellij.debugger.actions.SetValueAction"/>-->

@@ -15,7 +15,10 @@
  */
 package com.intellij.debugger.impl;
 
-import com.intellij.debugger.*;
+import com.intellij.debugger.DebugEnvironment;
+import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationListener;
@@ -29,14 +32,11 @@ import com.intellij.debugger.ui.breakpoints.BreakpointWithHighlighter;
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.ModuleRunProfile;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RemoteState;
 import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -199,6 +199,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
     ValueLookupManager.getInstance(getProject()).startListening();
   }
 
+  @NotNull
   public DebuggerStateManager getContextManager() {
     return myContextManager;
   }
@@ -251,7 +252,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
       case STATE_DISPOSED:
         return DebuggerBundle.message("status.debug.stopped");
     }
-    return myState.myDescription;
+    return null;
   }
 
   /* Stepping */
@@ -371,25 +372,12 @@ public class DebuggerSession implements AbstractDebuggerSession {
   }
 
   public boolean isRunning() {
-    return getState() == STATE_RUNNING && !getProcess().getExecutionResult().getProcessHandler().isProcessTerminated();
+    return getState() == STATE_RUNNING && !getProcess().getProcessHandler().isProcessTerminated();
   }
 
   private SuspendContextImpl getSuspendContext() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return getContextManager().getContext().getSuspendContext();
-  }
-
-  @Nullable
-  protected ExecutionResult attach(@NotNull Executor executor,
-                                   @NotNull ProgramRunner runner,
-                                   @NotNull ModuleRunProfile profile,
-                                   @NotNull RunProfileState state,
-                                   RemoteConnection remoteConnection,
-                                   boolean pollConnection) throws ExecutionException {
-    return attach(new DefaultDebugEnvironment(new ExecutionEnvironmentBuilder(myDebugProcess.getProject(), executor).runProfile(profile).runner(runner).build(),
-                                              state,
-                                              remoteConnection,
-                                              pollConnection));
   }
 
   @Nullable
@@ -603,7 +591,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
       final String transportName = DebuggerBundle.getTransportName(connection);
       final String message = DebuggerBundle.message("status.connected", addressDisplayName, transportName);
 
-      process.getExecutionResult().getProcessHandler().notifyTextAvailable(message + "\n", ProcessOutputTypes.SYSTEM);
+      process.printToConsole(message + "\n");
       DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
         @Override
         public void run() {
@@ -630,12 +618,12 @@ public class DebuggerSession implements AbstractDebuggerSession {
     @Override
     public void processDetached(final DebugProcessImpl debugProcess, boolean closedByUser) {
       if (!closedByUser) {
-        ExecutionResult executionResult = debugProcess.getExecutionResult();
-        if(executionResult != null) {
+        ProcessHandler processHandler = debugProcess.getProcessHandler();
+        if(processHandler != null) {
           final RemoteConnection connection = getProcess().getConnection();
           final String addressDisplayName = DebuggerBundle.getAddressDisplayName(connection);
           final String transportName = DebuggerBundle.getTransportName(connection);
-          executionResult.getProcessHandler().notifyTextAvailable(DebuggerBundle.message("status.disconnected", addressDisplayName, transportName) + "\n", ProcessOutputTypes.SYSTEM);
+          processHandler.notifyTextAvailable(DebuggerBundle.message("status.disconnected", addressDisplayName, transportName) + "\n", ProcessOutputTypes.SYSTEM);
         }
       }
       DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
@@ -659,7 +647,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
     public void threadStopped(DebugProcess proc, ThreadReference thread) {
       notifyThreadsRefresh();
     }
-    
+
     private void notifyThreadsRefresh() {
       if (!myUpdateAlarm.isDisposed()) {
         myUpdateAlarm.cancelAllRequests();

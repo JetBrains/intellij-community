@@ -32,7 +32,6 @@ import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -149,7 +148,7 @@ public class PythonSdkUpdater implements StartupActivity {
   }
 
   public static void updateSdk(@Nullable Project project, @Nullable Component ownerComponent, @NotNull final Sdk sdk, String skeletonsPath) throws InvalidSdkException {
-    PySkeletonRefresher.refreshSkeletonsOfSdk(project, ownerComponent, skeletonsPath, new Ref<Boolean>(false), sdk); // NOTE: whole thing would need a rename
+    PySkeletonRefresher.refreshSkeletonsOfSdk(project, ownerComponent, skeletonsPath, sdk); // NOTE: whole thing would need a rename
     if (!PySdkUtil.isRemote(sdk)) {
       updateSysPath(sdk);
     }

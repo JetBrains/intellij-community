@@ -1046,6 +1046,10 @@
                      key="abstract.method.call.in.constructor.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.initialization.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.initialization.AbstractMethodCallInConstructorInspection"/>
+    <localInspection language="JAVA" shortName="DoubleBraceInitialization" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="double.brace.initialization.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.initialization.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.initialization.DoubleBraceInitializationInspection"/>
     <localInspection language="JAVA" suppressId="InstanceVariableMayNotBeInitialized" shortName="InstanceVariableInitialization"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="instance.variable.may.not.be.initialized.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.initialization.issues" enabledByDefault="false"
@@ -1147,10 +1151,6 @@
                      key="abstract.class.with.only.one.direct.inheritor.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.j2me.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.j2me.AbstractClassWithOnlyOneDirectInheritorInspection"/>
-    <localInspection language="JAVA" shortName="AnonymousInnerClassMayBeStatic" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="anonymous.inner.may.be.named.static.inner.class.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.j2me.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.j2me.AnonymousInnerClassMayBeStaticInspection"/>
     <localInspection language="JAVA" shortName="ArrayLengthInLoopCondition" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="array.length.in.loop.condition.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.j2me.issues" enabledByDefault="false" level="WARNING"
@@ -1539,6 +1539,14 @@
                      implementationClass="com.siyeh.ig.maturity.UseOfObsoleteDateTimeApiInspection"/>
 
     <!--group.names.memory.issues-->
+    <localInspection language="JAVA" shortName="AnonymousInnerClassMayBeStatic" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="anonymous.inner.may.be.named.static.inner.class.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.memory.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.memory.AnonymousInnerClassMayBeStaticInspection"/>
+    <localInspection language="JAVA" shortName="InnerClassMayBeStatic" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="inner.class.may.be.static.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.memory.issues" enabledByDefault="false" level="WARNING" runForWholeFile="true"
+                     implementationClass="com.siyeh.ig.memory.InnerClassMayBeStaticInspection"/>
     <localInspection language="JAVA" shortName="StaticCollection" bundle="com.siyeh.InspectionGadgetsBundle" key="static.collection.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.memory.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.memory.StaticCollectionInspection"/>
@@ -1906,10 +1914,6 @@
     <localInspection language="JAVA" shortName="FieldMayBeStatic" bundle="com.siyeh.InspectionGadgetsBundle" key="field.may.be.static.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.performance.FieldMayBeStaticInspection"/>
-    <localInspection language="JAVA" shortName="InnerClassMayBeStatic" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="inner.class.may.be.static.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING" runForWholeFile="true"
-                     implementationClass="com.siyeh.ig.performance.InnerClassMayBeStaticInspection"/>
     <localInspection language="JAVA" shortName="InstantiatingObjectToGetClassObject" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="instantiating.object.to.get.class.object.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"

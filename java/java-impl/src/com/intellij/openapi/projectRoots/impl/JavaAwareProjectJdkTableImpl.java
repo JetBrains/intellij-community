@@ -22,17 +22,16 @@ package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.util.SystemProperties;
 import org.jdom.Element;
 
 @State(
-  name="ProjectJdkTable",
-  roamingType = RoamingType.DISABLED,
-  storages= {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/jdk.table.xml"
-    )}
+  name = "ProjectJdkTable",
+  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/jdk.table.xml", roamingType = RoamingType.DISABLED)}
 )
 public class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
   public static JavaAwareProjectJdkTableImpl getInstanceEx() {

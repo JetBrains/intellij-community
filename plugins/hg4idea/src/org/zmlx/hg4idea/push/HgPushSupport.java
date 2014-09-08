@@ -81,7 +81,7 @@ public class HgPushSupport extends PushSupport<HgRepository, HgPushSource, HgTar
 
   @Override
   @NotNull
-  public TargetEditor<HgTarget> createTargetEditor(@NotNull HgRepository repository, @NotNull String defaultTargetName) {
-    return new HgTargetEditor(repository, defaultTargetName);
+  public PushTargetPanel<HgTarget> createTargetPanel(@NotNull HgRepository repository, @NotNull String defaultTargetName) {
+    return new HgPushTargetPanel(repository, defaultTargetName);
   }
 }

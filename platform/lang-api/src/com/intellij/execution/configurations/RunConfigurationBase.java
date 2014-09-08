@@ -154,8 +154,9 @@ public abstract class RunConfigurationBase extends UserDataHolderBase
     return myPredefinedLogFiles;
   }
 
+  @NotNull
   public ArrayList<LogFileOptions> getAllLogFiles() {
-    final ArrayList<LogFileOptions> list = new ArrayList<LogFileOptions>(myLogFiles);
+    ArrayList<LogFileOptions> list = new ArrayList<LogFileOptions>(myLogFiles);
     for (PredefinedLogFile predefinedLogFile : myPredefinedLogFiles) {
       final LogFileOptions options = getOptionsForPredefinedLogFile(predefinedLogFile);
       if (options != null) {

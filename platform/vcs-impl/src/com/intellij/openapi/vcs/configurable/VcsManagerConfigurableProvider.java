@@ -35,7 +35,7 @@ public final class VcsManagerConfigurableProvider extends ConfigurableProvider {
   }
 
   @Override
-  public boolean isConfigurableProvided() {
+  public boolean canCreateConfigurable() {
     return ProjectLevelVcsManager.getInstance(myProject).getAllVcss().length > 0;
   }
 }

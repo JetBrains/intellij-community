@@ -32,9 +32,9 @@ public interface StateStorage {
   Topic<Listener> STORAGE_TOPIC = new Topic<Listener>("STORAGE_LISTENER", Listener.class, Topic.BroadcastDirection.TO_PARENT);
 
   @Nullable
-  <T> T getState(final Object component, final String componentName, Class<T> stateClass, @Nullable T mergeInto) throws StateStorageException;
+  <T> T getState(final Object component, @NotNull String componentName, Class<T> stateClass, @Nullable T mergeInto) throws StateStorageException;
 
-  boolean hasState(final Object component, final String componentName, final Class<?> aClass, final boolean reloadData) throws StateStorageException;
+  boolean hasState(final Object component, @NotNull String componentName, final Class<?> aClass, final boolean reloadData) throws StateStorageException;
 
   @NotNull
   ExternalizationSession startExternalization();

@@ -49,6 +49,7 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.plaf.TreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
@@ -63,6 +64,7 @@ import java.util.List;
  * @author Sergey.Malenkov
  */
 final class SettingsTreeView extends JComponent implements Disposable, OptionsEditorColleague {
+  private static final String NODE_ICON = "settings.tree.view.icon";
   private static final Color NORMAL_NODE = new JBColor(Gray._60, Gray._140);
   private static final Color WRONG_CONTENT = JBColor.RED;
   private static final Color MODIFIED_CONTENT = JBColor.BLUE;
@@ -74,7 +76,6 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
   private final MyRoot myRoot;
   private final JScrollPane myScroller;
   private JLabel mySeparator;
-  private final MyRenderer myRenderer = new MyRenderer();
   private final IdentityHashMap<Configurable, MyNode> myConfigurableToNodeMap = new IdentityHashMap<Configurable, MyNode>();
   private final IdentityHashMap<UnnamedConfigurable, ConfigurableWrapper> myConfigurableToWrapperMap
     = new IdentityHashMap<UnnamedConfigurable, ConfigurableWrapper>();
@@ -98,9 +99,10 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     myTree.setRowHeight(-1);
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
-    myTree.setCellRenderer(myRenderer);
+    myTree.setCellRenderer(new MyRenderer());
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(false);
+    myTree.setExpandableItemsEnabled(false);
 
     myScroller = ScrollPaneFactory.createScrollPane(myTree, true);
     myScroller.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createTransparent());
@@ -272,7 +274,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     }
     int height = mySeparator.getPreferredSize().height;
     ConfigurableGroup group = findConfigurableGroupAt(0, height);
-    if (group != null && group == findConfigurableGroupAt(0, -myRenderer.getSeparatorHeight())) {
+    if (group != null && group == findConfigurableGroupAt(0, 0)) {
       mySeparator.setBorder(BorderFactory.createEmptyBorder(0, 18, 0, 0));
       mySeparator.setText(group.getDisplayName());
 
@@ -403,7 +405,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
       }
       SimpleNode[] result = new SimpleNode[myGroups.length];
       for (int i = 0; i < myGroups.length; i++) {
-        result[i] = new MyNode(this, myGroups[i]);
+        result[i] = new MyNode(this, myGroups[i], 0);
       }
       return result;
     }
@@ -413,21 +415,24 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     private final Configurable.Composite myComposite;
     private final Configurable myConfigurable;
     private final String myDisplayName;
+    private final int myLevel;
 
-    private MyNode(CachingSimpleNode parent, Configurable configurable) {
+    private MyNode(CachingSimpleNode parent, Configurable configurable, int level) {
       super(parent);
       myComposite = configurable instanceof Configurable.Composite ? (Configurable.Composite)configurable : null;
       myConfigurable = configurable;
       String name = configurable.getDisplayName();
       myDisplayName = name != null ? name.replace("\n", " ") : "{ " + configurable.getClass().getSimpleName() + " }";
+      myLevel = level;
     }
 
-    private MyNode(CachingSimpleNode parent, ConfigurableGroup group) {
+    private MyNode(CachingSimpleNode parent, ConfigurableGroup group, int level) {
       super(parent);
       myComposite = group;
       myConfigurable = group instanceof Configurable ? (Configurable)group : null;
       String name = group.getDisplayName();
       myDisplayName = name != null ? name.replace("\n", " ") : "{ " + group.getClass().getSimpleName() + " }";
+      myLevel = level;
     }
 
     @Override
@@ -444,7 +449,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
       }
       SimpleNode[] result = new SimpleNode[configurables.length];
       for (int i = 0; i < configurables.length; i++) {
-        result[i] = new MyNode(this, configurables[i]);
+        result[i] = new MyNode(this, configurables[i], myLevel + 1);
         if (myConfigurable != null) {
           myFilter.myContext.registerKid(myConfigurable, configurables[i]);
         }
@@ -458,25 +463,17 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     }
   }
 
-  private final class MyRenderer extends GroupedElementsRenderer.Tree {
-    private JLabel myNodeIcon;
-    private JLabel myProjectIcon;
+  private final class MyRenderer extends JPanel implements TreeCellRenderer {
+    private final JLabel myTextLabel = new ErrorLabel();
+    private final JLabel myNodeIcon = new JLabel(" ", SwingConstants.RIGHT);
+    private final JLabel myProjectIcon = new JLabel(" ", SwingConstants.LEFT);
 
-    protected JComponent createItemComponent() {
-      myTextLabel = new ErrorLabel();
-      return myTextLabel;
-    }
-
-    @Override
-    protected void layout() {
-      myNodeIcon = new JLabel(" ", SwingConstants.RIGHT);
-      myProjectIcon = new JLabel(" ", SwingConstants.LEFT);
-      myNodeIcon.setOpaque(false);
-      myTextLabel.setOpaque(false);
-      myProjectIcon.setOpaque(false);
-      myRendererComponent.add(BorderLayout.CENTER, myComponent);
-      myRendererComponent.add(BorderLayout.WEST, myNodeIcon);
-      myRendererComponent.add(BorderLayout.EAST, myProjectIcon);
+    public MyRenderer() {
+      super(new BorderLayout());
+      myNodeIcon.setName(NODE_ICON);
+      add(BorderLayout.CENTER, myTextLabel);
+      add(BorderLayout.WEST, myNodeIcon);
+      add(BorderLayout.EAST, myProjectIcon);
     }
 
     public Component getTreeCellRendererComponent(JTree tree,
@@ -487,7 +484,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
                                                   int row,
                                                   boolean focused) {
       myTextLabel.setFont(UIUtil.getLabelFont());
-      myRendererComponent.setBackground(selected ? UIUtil.getTreeSelectionBackground() : myTree.getBackground());
+      setPreferredSize(null);
 
       MyNode node = extractNode(value);
       if (node == null) {
@@ -499,28 +496,19 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
         if (myRoot == node.getParent()) {
           myTextLabel.setFont(myTextLabel.getFont().deriveFont(Font.BOLD));
         }
-        TreePath path = tree.getPathForRow(row);
-        if (path == null) {
-          if (value instanceof DefaultMutableTreeNode) {
-            path = new TreePath(((DefaultMutableTreeNode)value).getPath());
+        if (tree.isVisible()) {
+          int indent = node.myLevel * (UIUtil.getTreeLeftChildIndent() + UIUtil.getTreeRightChildIndent());
+          Insets treeInsets = tree.getInsets();
+          if (treeInsets != null) {
+            indent += treeInsets.left + treeInsets.right;
+          }
+          int visibleWidth = tree.getVisibleRect().width;
+          if (visibleWidth > indent) {
+            Dimension size = getPreferredSize();
+            size.width = visibleWidth - indent;
+            //setPreferredSize(size);
           }
         }
-        int forcedWidth = 2000;
-        if (path != null && tree.isVisible()) {
-          Rectangle visibleRect = tree.getVisibleRect();
-
-          int nestingLevel = tree.isRootVisible() ? path.getPathCount() - 1 : path.getPathCount() - 2;
-
-          int left = UIUtil.getTreeLeftChildIndent();
-          int right = UIUtil.getTreeRightChildIndent();
-
-          Insets treeInsets = tree.getInsets();
-
-          int indent = (left + right) * nestingLevel + (treeInsets != null ? treeInsets.left + treeInsets.right : 0);
-
-          forcedWidth = visibleRect.width > 0 ? visibleRect.width - indent : forcedWidth;
-        }
-        myRendererComponent.setPrefereedWidth(forcedWidth - 4);
       }
       // update font color for modified configurables
       myTextLabel.setForeground(selected ? UIUtil.getTreeSelectionForeground() : NORMAL_NODE);
@@ -569,25 +557,20 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
         myProjectIcon.setVisible(false);
       }
       // configure node icon
-      if (value instanceof DefaultMutableTreeNode) {
-        DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)value;
-        TreePath treePath = new TreePath(treeNode.getPath());
-        myNodeIcon.setIcon(myTree.getHandleIcon(treeNode, treePath));
+      Icon nodeIcon = null;
+      if (node != null) {
+        if (0 == node.getChildCount()) {
+          nodeIcon = myTree.getEmptyHandle();
+        }
+        else if (value instanceof DefaultMutableTreeNode) {
+          DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)value;
+          nodeIcon = myTree.isExpanded(new TreePath(treeNode.getPath()))
+                     ? myTree.getExpandedHandle()
+                     : myTree.getCollapsedHandle();
+        }
       }
-      else {
-        myNodeIcon.setIcon(null);
-      }
-      return myRendererComponent;
-    }
-
-    int getSeparatorHeight() {
-      return mySeparatorComponent.getParent() == null ? 0 : mySeparatorComponent.getPreferredSize().height;
-    }
-
-    public boolean isUnderHandle(Point point) {
-      Point handlePoint = SwingUtilities.convertPoint(myRendererComponent, point, myNodeIcon);
-      Rectangle bounds = myNodeIcon.getBounds();
-      return bounds.x < handlePoint.x && bounds.getMaxX() >= handlePoint.x;
+      myNodeIcon.setIcon(nodeIcon);
+      return this;
     }
   }
 
@@ -621,11 +604,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
 
     @Override
     public void setUI(TreeUI ui) {
-      TreeUI actualUI = ui;
-      if (!(ui instanceof MyTreeUi)) {
-        actualUI = new MyTreeUi();
-      }
-      super.setUI(actualUI);
+      super.setUI(ui instanceof MyTreeUi ? ui : new MyTreeUi());
     }
 
     @Override
@@ -664,84 +643,92 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     }
 
     @Override
-    protected void processMouseEvent(MouseEvent e) {
+    protected void processMouseEvent(MouseEvent event) {
       MyTreeUi ui = (MyTreeUi)myTree.getUI();
-      boolean toggleNow = MouseEvent.MOUSE_RELEASED == e.getID()
-                          && UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED)
-                          && !ui.isToggleEvent(e);
+      if (!ui.processMouseEvent(event)) {
+        super.processMouseEvent(event);
+      }
+    }
+  }
 
-      if (toggleNow || MouseEvent.MOUSE_PRESSED == e.getID()) {
-        TreePath path = getPathForLocation(e.getX(), e.getY());
-        if (path != null) {
-          Rectangle bounds = getPathBounds(path);
-          if (bounds != null && path.getLastPathComponent() instanceof DefaultMutableTreeNode) {
-            DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-            boolean selected = isPathSelected(path);
-            boolean expanded = isExpanded(path);
-            Component comp =
-              myRenderer.getTreeCellRendererComponent(this, node, selected, expanded, node.isLeaf(), getRowForPath(path), isFocusOwner());
+  private static final class MyTreeUi extends WideSelectionTreeUI {
+    boolean processMouseEvent(MouseEvent event) {
+      if (super.tree instanceof SimpleTree) {
+        SimpleTree tree = (SimpleTree)super.tree;
 
-            comp.setBounds(bounds);
-            comp.validate();
+        boolean toggleNow = MouseEvent.MOUSE_RELEASED == event.getID()
+                            && UIUtil.isActionClick(event, MouseEvent.MOUSE_RELEASED)
+                            && !isToggleEvent(event);
 
-            Point point = new Point(e.getX() - bounds.x, e.getY() - bounds.y);
-            if (myRenderer.isUnderHandle(point)) {
-              if (toggleNow) {
-                ui.toggleExpandState(path);
-              }
-              e.consume();
-              return;
+        if (toggleNow || MouseEvent.MOUSE_PRESSED == event.getID()) {
+          Component component = tree.getDeepestRendererComponentAt(event.getX(), event.getY());
+          if (component != null && NODE_ICON.equals(component.getName())) {
+            if (toggleNow) {
+              toggleExpandState(tree.getPathForLocation(event.getX(), event.getY()));
             }
+            event.consume();
+            return true;
           }
         }
       }
-
-      super.processMouseEvent(e);
+      return false;
     }
 
-    private final class MyTreeUi extends WideSelectionTreeUI {
+    @Override
+    protected boolean shouldPaintExpandControl(TreePath path,
+                                               int row,
+                                               boolean isExpanded,
+                                               boolean hasBeenExpanded,
+                                               boolean isLeaf) {
+      return false;
+    }
 
-      @Override
-      public void toggleExpandState(TreePath path) {
-        super.toggleExpandState(path);
+    @Override
+    protected void paintHorizontalPartOfLeg(Graphics g,
+                                            Rectangle clipBounds,
+                                            Insets insets,
+                                            Rectangle bounds,
+                                            TreePath path,
+                                            int row,
+                                            boolean isExpanded,
+                                            boolean hasBeenExpanded,
+                                            boolean isLeaf) {
+
+    }
+
+    @Override
+    protected void paintVerticalPartOfLeg(Graphics g, Rectangle clipBounds, Insets insets, TreePath path) {
+    }
+
+    @Override
+    public void paint(Graphics g, JComponent c) {
+      GraphicsUtil.setupAntialiasing(g);
+      super.paint(g, c);
+    }
+
+    @Override
+    protected void paintRow(Graphics g,
+                            Rectangle clipBounds,
+                            Insets insets,
+                            Rectangle bounds,
+                            TreePath path,
+                            int row,
+                            boolean isExpanded,
+                            boolean hasBeenExpanded,
+                            boolean isLeaf) {
+      if (tree != null) {
+        int width = tree.getWidth();
+        Container parent = tree.getParent();
+        if (parent instanceof JViewport) {
+          JViewport viewport = (JViewport)parent;
+          width = viewport.getWidth() - viewport.getViewPosition().x;
+        }
+        width -= bounds.x;
+        if (bounds.width < width) {
+          bounds.width = width;
+        }
       }
-
-      @Override
-      public boolean isToggleEvent(MouseEvent event) {
-        return super.isToggleEvent(event);
-      }
-
-      @Override
-      protected boolean shouldPaintExpandControl(TreePath path,
-                                                 int row,
-                                                 boolean isExpanded,
-                                                 boolean hasBeenExpanded,
-                                                 boolean isLeaf) {
-        return false;
-      }
-
-      @Override
-      protected void paintHorizontalPartOfLeg(Graphics g,
-                                              Rectangle clipBounds,
-                                              Insets insets,
-                                              Rectangle bounds,
-                                              TreePath path,
-                                              int row,
-                                              boolean isExpanded,
-                                              boolean hasBeenExpanded,
-                                              boolean isLeaf) {
-
-      }
-
-      @Override
-      protected void paintVerticalPartOfLeg(Graphics g, Rectangle clipBounds, Insets insets, TreePath path) {
-      }
-
-      @Override
-      public void paint(Graphics g, JComponent c) {
-        GraphicsUtil.setupAntialiasing(g);
-        super.paint(g, c);
-      }
+      super.paintRow(g, clipBounds, insets, bounds, path, row, isExpanded, hasBeenExpanded, isLeaf);
     }
   }
 

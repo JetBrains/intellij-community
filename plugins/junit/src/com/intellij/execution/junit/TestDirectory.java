@@ -40,20 +40,15 @@ import java.util.Collection;
 * Date: 4/21/11
 */
 class TestDirectory extends TestPackage {
-  private final Project myProject;
-
-  public TestDirectory(Project project,
-                       JUnitConfiguration configuration,
-                       ExecutionEnvironment environment) {
-    super(project, configuration, environment);
-    myProject = project;
+  public TestDirectory(JUnitConfiguration configuration, ExecutionEnvironment environment) {
+    super(configuration, environment);
   }
 
   @Override
   public SourceScope getSourceScope() {
     final String dirName = myConfiguration.getPersistentData().getDirName();
     final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(dirName));
-    final GlobalSearchScope globalSearchScope = file == null ? GlobalSearchScope.EMPTY_SCOPE : GlobalSearchScopesCore.directoryScope(myProject, file, true);
+    final GlobalSearchScope globalSearchScope = file == null ? GlobalSearchScope.EMPTY_SCOPE : GlobalSearchScopesCore.directoryScope(myEnvironment.getProject(), file, true);
     return new SourceScope() {
       @Override
       public GlobalSearchScope getGlobalSearchScope() {
@@ -62,13 +57,13 @@ class TestDirectory extends TestPackage {
 
       @Override
       public Project getProject() {
-        return myProject;
+        return myEnvironment.getProject();
       }
 
       @Override
       public GlobalSearchScope getLibrariesScope() {
         final Module module = myConfiguration.getConfigurationModule().getModule();
-        return module != null ? GlobalSearchScope.moduleWithLibrariesScope(module) : GlobalSearchScope.allScope(myProject);
+        return module != null ? GlobalSearchScope.moduleWithLibrariesScope(module) : GlobalSearchScope.allScope(myEnvironment.getProject());
       }
 
       @Override
@@ -104,7 +99,7 @@ class TestDirectory extends TestPackage {
     if (file == null) {
       throw new CantRunException("Directory \'" + dirName + "\' is not found");
     }
-    final PsiDirectory directory = PsiManager.getInstance(myProject).findDirectory(file);
+    final PsiDirectory directory = PsiManager.getInstance(myEnvironment.getProject()).findDirectory(file);
     if (directory == null) {
       throw new CantRunException("Directory \'" + dirName + "\' is not found");
     }
@@ -119,10 +114,10 @@ class TestDirectory extends TestPackage {
   public boolean isConfiguredByElement(JUnitConfiguration configuration,
                                        PsiClass testClass,
                                        PsiMethod testMethod,
-                                       PsiPackage testPackage, 
+                                       PsiPackage testPackage,
                                        PsiDirectory testDir) {
     if (JUnitConfiguration.TEST_DIRECTORY.equals(configuration.getPersistentData().TEST_OBJECT) && testDir != null) {
-      if (Comparing.strEqual(FileUtil.toSystemIndependentName(configuration.getPersistentData().getDirName()), 
+      if (Comparing.strEqual(FileUtil.toSystemIndependentName(configuration.getPersistentData().getDirName()),
                              testDir.getVirtualFile().getPath())) {
         return true;
       }

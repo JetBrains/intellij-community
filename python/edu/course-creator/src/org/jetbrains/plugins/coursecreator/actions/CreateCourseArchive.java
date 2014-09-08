@@ -62,15 +62,20 @@ public class CreateCourseArchive extends DumbAwareAction {
     final VirtualFile baseDir = project.getBaseDir();
     final Map<String, Lesson> lessons = course.getLessonsMap();
     //map to store initial task file
-    Map<TaskFile, TaskFile> taskFiles = new HashMap<TaskFile, TaskFile>();
+    final Map<TaskFile, TaskFile> taskFiles = new HashMap<TaskFile, TaskFile>();
     for (Map.Entry<String, Lesson> lesson : lessons.entrySet()) {
       final VirtualFile lessonDir = baseDir.findChild(lesson.getKey());
       if (lessonDir == null) continue;
       for (Map.Entry<String, Task> task : lesson.getValue().myTasksMap.entrySet()) {
         final VirtualFile taskDir = lessonDir.findChild(task.getKey());
         if (taskDir == null) continue;
-        for (Map.Entry<String, TaskFile> entry : task.getValue().task_files.entrySet()) {
-          createUserFile(project, taskFiles, taskDir, taskDir, entry);
+        for (final Map.Entry<String, TaskFile> entry : task.getValue().task_files.entrySet()) {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              createUserFile(project, taskFiles, taskDir, taskDir, entry);
+            }
+          });
         }
       }
     }
@@ -129,13 +134,15 @@ public class CreateCourseArchive extends DumbAwareAction {
         });
       }
     }, "x", "qwe");
-    document.addDocumentListener(new InsertionListener(taskFile));
+    InsertionListener listener = new InsertionListener(taskFile);
+    document.addDocumentListener(listener);
     taskFilesCopy.put(taskFile, taskFileSaved);
     Collections.sort(taskFile.getTaskWindows());
     for (int i = taskFile.getTaskWindows().size() - 1; i >= 0; i--) {
       final TaskWindow taskWindow = taskFile.getTaskWindows().get(i);
       replaceTaskWindow(project, document, taskWindow);
     }
+    document.removeDocumentListener(listener);
   }
 
   private static void replaceTaskWindow(@NotNull final Project project,

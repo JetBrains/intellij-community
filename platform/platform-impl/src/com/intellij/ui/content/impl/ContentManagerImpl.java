@@ -33,9 +33,8 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.*;
 import com.intellij.ui.switcher.SwitchProvider;
 import com.intellij.ui.switcher.SwitchTarget;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.SmartList;
-
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -703,6 +702,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     myContentWithChangedComponent.clear();
     myUI = null;
     myListeners.clear();
+    dataProviders.clear();
   }
 
   @Override

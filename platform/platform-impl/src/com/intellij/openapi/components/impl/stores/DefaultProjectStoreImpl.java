@@ -39,10 +39,10 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
   private final ProjectManagerImpl myProjectManager;
   @NonNls private static final String ROOT_TAG_NAME = "defaultProject";
 
-  public DefaultProjectStoreImpl(final ProjectImpl project, final ProjectManagerImpl projectManager) {
+  public DefaultProjectStoreImpl(@NotNull ProjectImpl project, final ProjectManagerImpl projectManager) {
     super(project);
-    myProjectManager = projectManager;
 
+    myProjectManager = projectManager;
     myElement = projectManager.getDefaultProjectRootElement();
   }
 
@@ -51,7 +51,6 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
     final Element element = myProjectManager.getDefaultProjectRootElement();
     return element != null ? element.clone() : null;
   }
-
 
   @NotNull
   @Override
@@ -69,7 +68,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
     final Element element = _d;
 
     final XmlElementStorage storage = new XmlElementStorage(pathMacroManager.createTrackingSubstitutor(), componentManager,
-                                                            ROOT_TAG_NAME, null, "", ComponentRoamingManager.getInstance(),
+                                                            ROOT_TAG_NAME, null, "",
                                                             ComponentVersionProvider.EMPTY) {
       @Override
       @Nullable
@@ -115,7 +114,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
     return new StateStorageManager() {
       @Override
-      public void addMacro(String macro, String expansion) {
+      public void addMacro(@NotNull String macro, @NotNull String expansion) {
         throw new UnsupportedOperationException("Method addMacro not implemented in " + getClass());
       }
 
@@ -128,6 +127,12 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       @Override
       @Nullable
       public StateStorage getStateStorage(@NotNull Storage storageSpec) throws StateStorageException {
+        return storage;
+      }
+
+      @Nullable
+      @Override
+      public StateStorage getStateStorage(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
         return storage;
       }
 
@@ -158,6 +163,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
         storage.finishSave(((MySaveSession)saveSession).saveSession);
       }
 
+      @NotNull
       @Override
       public String expandMacros(@NotNull String file) {
         throw new UnsupportedOperationException("Method expandMacros not implemented in " + getClass());

@@ -106,7 +106,7 @@ public class JarDirectories implements JDOMExternalizable {
 
   @Override
   public String toString() {
-    return "Jar dirs: " + myDirectories.values();
+    return "JAR dirs: " + myDirectories.values();
   }
 
 

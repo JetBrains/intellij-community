@@ -23,10 +23,9 @@ import org.jetbrains.annotations.NotNull;
 
 @State(
   name = "RecentProjectsManager",
-  roamingType = RoamingType.DISABLED,
   storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml"),
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/recentProjects.xml")
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", roamingType = RoamingType.DISABLED),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/recentProjects.xml", roamingType = RoamingType.DISABLED)
   },
   storageChooser = LastStorageChooserForWrite.class
 )

@@ -65,7 +65,7 @@ public abstract class AbstractValueHint {
   private final Project myProject;
   private final Editor myEditor;
   private final ValueHintType myType;
-  private final Point myPoint;
+  protected final Point myPoint;
   private LightweightHint myCurrentHint;
   private boolean myHintHidden;
   private TextRange myCurrentRange;
@@ -130,6 +130,10 @@ public abstract class AbstractValueHint {
       myHighlighter.dispose();
       myHighlighter = null;
     }
+  }
+
+  public void invokeHint() {
+    invokeHint(null);
   }
 
   public void invokeHint(Runnable hideRunnable) {

@@ -531,10 +531,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void load(@Nullable String optionsPath) throws IOException {
-    load(PathManager.getConfigPath(), optionsPath);
+    load(PathManager.getConfigPath(), optionsPath == null ? PathManager.getOptionsPath() : optionsPath);
   }
 
-  public void load(@NotNull String configPath, @Nullable String optionsPath) throws IOException {
+  public void load(@NotNull String configPath, @NotNull String optionsPath) throws IOException {
     getStateStore().setOptionsPath(optionsPath);
     getStateStore().setConfigPath(configPath);
 

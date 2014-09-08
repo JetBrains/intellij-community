@@ -55,6 +55,7 @@ import com.intellij.ui.ComponentWithMnemonics;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -137,6 +138,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
     if (myDisposed) return false;
 
     if(e.isConsumed()){
+      return false;
+    }
+
+    if (isSpeedSearchEditing(e)) {
       return false;
     }
 
@@ -224,6 +229,18 @@ public final class IdeKeyEventDispatcher implements Disposable {
     finally {
       myContext.clear();
     }
+  }
+
+  private static boolean isSpeedSearchEditing(KeyEvent e) {
+    int keyCode = e.getKeyCode();
+    if (keyCode == KeyEvent.VK_BACK_SPACE) {
+      Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+      if (owner instanceof JComponent) {
+        SpeedSearchSupply supply = SpeedSearchSupply.getSupply((JComponent)owner);
+        return supply != null && supply.isPopupActive();
+      }
+    }
+    return false;
   }
 
   /**

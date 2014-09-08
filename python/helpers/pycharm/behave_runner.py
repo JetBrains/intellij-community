@@ -186,16 +186,19 @@ class _BehaveRunner(_bdd_utils.BddRunner):
         self.__real_runner.run()
 
 
-    def __filter_scenarios_by_tag(self, scenario):
+    def __filter_scenarios_by_args(self, scenario):
         """
-        Filters out scenarios that should be skipped by tags
+        Filters out scenarios that should be skipped by tags or scenario names
         :param scenario scenario to check
         :return true if should pass
         """
         assert isinstance(scenario, Scenario), scenario
         expected_tags = self.__config.tags
+        scenario_name_re = self.__config.name_re
+        if scenario_name_re and not scenario_name_re.match(scenario.name):
+            return False
         if not expected_tags:
-            return True  # No tags are required
+            return True  # No tags nor names are required
         return isinstance(expected_tags, TagExpression) and expected_tags.check(scenario.tags)
 
 
@@ -214,7 +217,7 @@ class _BehaveRunner(_bdd_utils.BddRunner):
                     scenarios.extend(scenario.scenarios)
                 else:
                     scenarios.append(scenario)
-            feature.scenarios = filter(self.__filter_scenarios_by_tag, scenarios)
+            feature.scenarios = filter(self.__filter_scenarios_by_args, scenarios)
 
         return features_to_run
 
@@ -240,7 +243,8 @@ if __name__ == "__main__":
     (base_dir, what_to_run) = _bdd_utils.get_path_by_env(os.environ)
     features = set()
     for feature in what_to_run:
-        if os.path.isfile(feature) or glob.glob(os.path.join(feature, "*.feature")):  # File of folder with "features"  provided, load it
+        if os.path.isfile(feature) or glob.glob(
+                os.path.join(feature, "*.feature")):  # File of folder with "features"  provided, load it
             features.add(feature)
         elif os.path.isdir(feature):
             features |= set(_get_dirs_to_run(feature))  # Find "features" subfolder

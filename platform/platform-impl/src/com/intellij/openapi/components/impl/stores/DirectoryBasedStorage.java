@@ -94,7 +94,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
 
   @Override
   @Nullable
-  public <T> T getState(final Object component, final String componentName, Class<T> stateClass, @Nullable T mergeInto)
+  public <T> T getState(final Object component, @NotNull final String componentName, Class<T> stateClass, @Nullable T mergeInto)
     throws StateStorageException {
     if (myStorageData == null) myStorageData = loadState();
 
@@ -114,7 +114,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
 
 
   @Override
-  public boolean hasState(final Object component, final String componentName, final Class<?> aClass, final boolean reloadData) throws StateStorageException {
+  public boolean hasState(final Object component, @NotNull String componentName, final Class<?> aClass, final boolean reloadData) throws StateStorageException {
     if (!myDir.exists()) return false;
     if (reloadData) myStorageData = null;
     return true;
@@ -199,7 +199,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
           }
 
           if (file.lastModified() <= myStorageData.getLastTimeStamp()) {
-            StorageUtil.save(file, element, MySaveSession.this, false);
+            StorageUtil.save(file, element, MySaveSession.this, false, null);
             myStorageData.updateLastTimestamp(file);
           }
         }
@@ -218,7 +218,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
                 return;
               }
 
-              final VirtualFile virtualFile = StorageUtil.getVirtualFile(child);
+              final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(child);
               if (virtualFile != null) {
                 try {
                   LOG.debug("Removing configuration file: " + virtualFile.getPresentableUrl());

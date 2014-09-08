@@ -15,13 +15,22 @@
  */
 package com.intellij.lexer;
 
-import com.intellij.lang.*;
+import com.intellij.lang.HtmlInlineScriptTokenTypesProvider;
+import com.intellij.lang.HtmlScriptContentProvider;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageHtmlInlineScriptTokenTypesProvider;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class HtmlHighlightingLexer extends BaseHtmlLexer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lexer.HtmlHighlightingLexer");
@@ -31,7 +40,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
 
   private Lexer embeddedLexer;
   private Lexer styleLexer;
-  private Lexer scriptLexer;
+  private Map<String, Lexer> scriptLexers = new HashMap<String, Lexer>();
   protected Lexer elLexer;
   private boolean hasNoEmbeddments;
   private final FileType ourStyleFileType;// = FileTypeManager.getInstance().getStdFileType("CSS");
@@ -114,7 +123,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
     }
     else {
       embeddedLexer = null;
-      scriptLexer = null;
+      scriptLexers.clear();
     }
   }
 
@@ -130,6 +139,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
       newLexer = styleLexer;
     }
     else if (hasSeenScript()) {
+      Lexer scriptLexer = scriptLexers.get(scriptType);
       if (scriptLexer == null) {
         if (hasSeenTag()) {
           HtmlScriptContentProvider provider = findScriptContentProvider(scriptType);
@@ -145,6 +155,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
             ourInlineScriptFileType != null ? SyntaxHighlighterFactory.getSyntaxHighlighter(ourInlineScriptFileType, null, null) : null;
           scriptLexer = syntaxHighlighter != null ? syntaxHighlighter.getHighlightingLexer() : null;
         }
+        scriptLexers.put(scriptType, scriptLexer);
       }
       newLexer = scriptLexer;
     }

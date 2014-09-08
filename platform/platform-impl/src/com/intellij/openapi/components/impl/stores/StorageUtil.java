@@ -127,17 +127,45 @@ public class StorageUtil {
    * Due to historical reasons files in ROOT_CONFIG don’t wrapped into document (xml prolog) opposite to files in APP_CONFIG
    */
   @Nullable
-  static VirtualFile save(@NotNull File file, @Nullable Parent element, Object requestor, boolean wrapAsDocument) throws StateStorageException {
+  static VirtualFile save(@NotNull File file, @Nullable Parent element, Object requestor, boolean wrapAsDocument, @Nullable VirtualFile cachedVirtualFile) throws StateStorageException {
     if (isEmpty(element)) {
-      FileUtil.delete(file);
+      if (!file.exists()) {
+        return null;
+      }
+
+      VirtualFile virtualFile = cachedVirtualFile;
+      if (virtualFile == null || !virtualFile.isValid()) {
+        virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+      }
+      if (virtualFile == null) {
+        LOG.info("Cannot find virtual file " + file.getAbsolutePath());
+        FileUtil.delete(file);
+      }
+      else {
+        AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
+        try {
+          virtualFile.delete(requestor);
+        }
+        catch (IOException e) {
+          throw new StateStorageException(e);
+        }
+        finally {
+          token.finish();
+        }
+      }
       return null;
     }
 
+    VirtualFile virtualFile = cachedVirtualFile == null || !cachedVirtualFile.isValid() ? null : cachedVirtualFile;
     Parent document = !wrapAsDocument || element instanceof Document ? element : new Document((Element)element);
     try {
       BufferExposingByteArrayOutputStream byteOut;
       if (file.exists()) {
-        Pair<byte[], String> pair = loadFile(LocalFileSystem.getInstance().findFileByIoFile(file));
+        if (virtualFile == null) {
+          virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+        }
+
+        Pair<byte[], String> pair = loadFile(virtualFile);
         byteOut = writeToBytes(document, pair.second);
         if (equal(pair.first, byteOut)) {
           return null;
@@ -151,7 +179,9 @@ public class StorageUtil {
       // mark this action as modifying the file which daemon analyzer should ignore
       AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
       try {
-        VirtualFile virtualFile = getOrCreateVirtualFile(requestor, file);
+        if (virtualFile == null) {
+          virtualFile = getOrCreateVirtualFile(requestor, file);
+        }
         OutputStream virtualFileOut = virtualFile.getOutputStream(requestor);
         try {
           byteOut.writeTo(virtualFileOut);
@@ -179,11 +209,7 @@ public class StorageUtil {
 
   @NotNull
   static VirtualFile getOrCreateVirtualFile(@Nullable Object requestor, @NotNull File ioFile) throws IOException {
-    VirtualFile virtualFile = getVirtualFile(ioFile);
-    if (virtualFile == null) {
-      virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
-    }
-
+    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
     if (virtualFile == null) {
       File parentFile = ioFile.getParentFile();
       // need refresh if the directory has just been created
@@ -194,11 +220,6 @@ public class StorageUtil {
       virtualFile = parentVirtualFile.createChildData(requestor, ioFile.getName());
     }
     return virtualFile;
-  }
-
-  @Nullable
-  static VirtualFile getVirtualFile(@NotNull File ioFile) {
-    return LocalFileSystem.getInstance().findFileByIoFile(ioFile);
   }
 
   /**
@@ -291,7 +312,7 @@ public class StorageUtil {
   }
 
   @NotNull
-  public static BufferExposingByteArrayOutputStream documentToBytes(@NotNull Parent element, boolean useSystemLineSeparator) throws IOException {
+  public static BufferExposingByteArrayOutputStream elementToBytes(@NotNull Parent element, boolean useSystemLineSeparator) throws IOException {
     return writeToBytes(element, useSystemLineSeparator ? SystemProperties.getLineSeparator() : "\n");
   }
 
@@ -319,7 +340,7 @@ public class StorageUtil {
    */
   public static void doSendContent(@NotNull StreamProvider provider, @NotNull String fileSpec, @NotNull Parent element, @NotNull RoamingType type, boolean async) throws IOException {
     // we should use standard line-separator (\n) - stream provider can share file content on any OS
-    BufferExposingByteArrayOutputStream content = documentToBytes(element, false);
+    BufferExposingByteArrayOutputStream content = elementToBytes(element, false);
     provider.saveContent(fileSpec, content.getInternalBuffer(), content.size(), type, async);
   }
 

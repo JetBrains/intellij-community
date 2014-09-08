@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,15 @@
  */
 package com.intellij.concurrency;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Author: dmitrylomov
  */
 public class DefaultResultConsumer<V> implements ResultConsumer<V> {
   private final AsyncFutureResult<V> myResult;
 
-  public DefaultResultConsumer(AsyncFutureResult<V> result) {
+  public DefaultResultConsumer(@NotNull AsyncFutureResult<V> result) {
     myResult = result;
   }
 
@@ -31,7 +33,7 @@ public class DefaultResultConsumer<V> implements ResultConsumer<V> {
   }
 
   @Override
-  public void onFailure(Throwable t) {
+  public void onFailure(@NotNull Throwable t) {
     myResult.setException(t);
   }
 }

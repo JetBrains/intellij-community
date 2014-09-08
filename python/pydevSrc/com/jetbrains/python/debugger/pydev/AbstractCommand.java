@@ -28,8 +28,6 @@ public abstract class AbstractCommand<T> {
   public static final int ADD_EXCEPTION_BREAKPOINT = 122;
   public static final int REMOVE_EXCEPTION_BREAKPOINT = 123;
   public static final int LOAD_SOURCE = 124;
-  public static final int ADD_DJANGO_EXCEPTION_BREAKPOINT = 125;
-  public static final int REMOVE_DJANGO_EXCEPTION_BREAKPOINT = 126;
   public static final int SMART_STEP_INTO = 128;
   public static final int EXIT = 129;
   public static final int CALL_SIGNATURE_TRACE = 130;

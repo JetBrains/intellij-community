@@ -360,7 +360,7 @@ public class GradleInstallationManager {
         filesInfo.setLength(filesInfo.length() - 1);
       }
       GradleLog.LOG.info(String.format(
-        "Gradle sdk check fails. Reason: no one of the given files matches gradle jar pattern (%s). Files: %s",
+        "Gradle sdk check fails. Reason: no one of the given files matches gradle JAR pattern (%s). Files: %s",
         GRADLE_JAR_FILE_PATTERN.toString(), filesInfo
       ));
     }

@@ -41,6 +41,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -69,25 +70,30 @@ public class ConsolePanel extends TestResultsPanel {
     myPrinter = printer;
   }
 
+  @Override
   public void initUI() {
     super.initUI();
     myStartingProgress = new StartingProgress(myTreeView);
   }
 
+  @Override
   protected JComponent createStatisticsPanel() {
     myStatisticsPanel = new StatisticsPanel();
     return myStatisticsPanel;
   }
 
+  @Override
   protected ToolbarPanel createToolbarPanel() {
     return new JUnitToolbarPanel(myProperties, myEnvironment, this);
   }
 
+  @Override
   protected TestStatusLine createStatusLine() {
     myStatusLine = new JUnitStatusLine();
     return myStatusLine;
   }
 
+  @Override
   protected JComponent createTestTreeView() {
     myTreeView = new JUnitTestTreeView();
     return myTreeView;
@@ -129,6 +135,7 @@ public class ConsolePanel extends TestResultsPanel {
     return myPrinter;
   }
 
+  @Override
   public void dispose() {
     stopStartingProgress();
     myPrinter = null;
@@ -145,8 +152,10 @@ public class ConsolePanel extends TestResultsPanel {
     private ProcessHandler myProcess;
     private long myStartedAt = System.currentTimeMillis();
     private final ProcessAdapter myProcessListener = new ProcessAdapter() {
+      @Override
       public void processTerminated(ProcessEvent event) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
             doStop();
           }
@@ -162,7 +171,9 @@ public class ConsolePanel extends TestResultsPanel {
       myTree.setPaintBusy(true);
       //myStartingLabel.setBackground(UIManager.getColor("Tree.background"));
       myTree.setCellRenderer(new TreeCellRenderer() {
-        public Component getTreeCellRendererComponent(final JTree tree, final Object value,
+        @NotNull
+        @Override
+        public Component getTreeCellRendererComponent(@NotNull final JTree tree, final Object value,
                                                       final boolean selected, final boolean expanded,
                                                       final boolean leaf, final int row, final boolean hasFocus) {
           myStartingLabel.clear();
@@ -173,7 +184,8 @@ public class ConsolePanel extends TestResultsPanel {
         }
       });
       myTree.addPropertyChangeListener(JTree.TREE_MODEL_PROPERTY, new PropertyChangeListener() {
-        public void propertyChange(final PropertyChangeEvent evt) {
+        @Override
+        public void propertyChange(@NotNull final PropertyChangeEvent evt) {
           myTree.removePropertyChangeListener(JTree.TREE_MODEL_PROPERTY, this);
           doStop();
         }
@@ -189,6 +201,7 @@ public class ConsolePanel extends TestResultsPanel {
       myProcess = null;
     }
 
+    @Override
     public void run() {
       myModel.nodeChanged(myRootNode);
       postRepaint();
