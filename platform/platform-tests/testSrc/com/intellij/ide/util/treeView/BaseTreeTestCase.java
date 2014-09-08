@@ -15,14 +15,11 @@
  */
 package com.intellij.ide.util.treeView;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SimpleTimer;
+import com.intellij.openapi.util.*;
 import com.intellij.testFramework.FlyIdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.WaitFor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -97,20 +94,10 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
     }
   }
 
-  protected static boolean waitFor(int timeoutMs, @NotNull Condition condition) {
-    boolean isDispatchThread = ApplicationManager.getApplication().isDispatchThread();
-    long start = System.currentTimeMillis();
-    while (System.currentTimeMillis() - start < timeoutMs) {
-      if (condition.value(null)) return true;
-      if (isDispatchThread) UIUtil.dispatchAllInvocationEvents();
-    }
-    return false;
-  }
-
   void waitBuilderToCome(final Condition<Object> condition) throws Exception {
-    boolean success = waitFor(60000, new Condition() {
+    boolean success = new WaitFor(60000) {
       @Override
-      public boolean value(Object o) {
+      protected boolean condition() {
         final boolean[] ready = {false};
         invokeAndWaitIfNeeded(new Runnable() {
           @Override
@@ -127,7 +114,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
 
         return ready[0];
       }
-    });
+    }.isConditionRealized();
 
     if (myCancelRequest != null) {
       throw new Exception(myCancelRequest);
@@ -368,12 +355,12 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
       }
     });
 
-    waitFor(6000, new Condition() {
+    new WaitFor(6000) {
       @Override
-      public boolean value(Object o) {
+      protected boolean condition() {
         return getBuilder() == null || getBuilder().getUi() == null;
       }
-    });
+    };
 
     super.tearDown();
   }
