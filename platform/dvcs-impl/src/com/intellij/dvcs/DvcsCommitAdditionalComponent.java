@@ -179,4 +179,8 @@ public abstract class DvcsCommitAdditionalComponent implements RefreshableOnComp
 
   @Nullable
   protected abstract String getLastCommitMessage(@NotNull VirtualFile repo) throws VcsException;
+
+  public boolean isAmend() {
+    return myAmend.isSelected();
+  }
 }
