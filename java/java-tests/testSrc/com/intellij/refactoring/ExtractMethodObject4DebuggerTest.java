@@ -77,7 +77,6 @@ public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
            "    }");
   }
 
-  @Bombed(month = Calendar.SEPTEMBER, day = 20)
   public void testInvokeReturnType() throws Exception {
     doTest("x = 6; y = 6;", "Test test = new Test().invoke();\n" +
                             "      x = test.getX();\n" +

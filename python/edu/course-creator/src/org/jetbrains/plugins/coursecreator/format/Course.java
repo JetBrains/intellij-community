@@ -4,10 +4,7 @@ import com.google.gson.annotations.Expose;
 import com.intellij.psi.PsiDirectory;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Course {
   @Expose public List<Lesson> lessons = new ArrayList<Lesson>();
@@ -51,5 +48,14 @@ public class Course {
 
   public String getDescription() {
     return description;
+  }
+
+  public void init() {
+    lessons.clear();
+    for (Lesson lesson: myLessonsMap.values()) {
+      lessons.add(lesson);
+      lesson.init();
+    }
+    Collections.sort(lessons);
   }
 }

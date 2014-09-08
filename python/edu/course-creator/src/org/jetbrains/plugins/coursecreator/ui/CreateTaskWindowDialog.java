@@ -150,4 +150,10 @@ public class CreateTaskWindowDialog extends DialogWrapper {
   public void validateInput() {
     super.initValidation();
   }
+
+  @Nullable
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myPanel.getPreferredFocusedComponent();
+  }
 }

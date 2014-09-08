@@ -97,6 +97,17 @@ public class BasicDebuggerViewSupport implements DebuggerViewSupport, MemberFilt
 
   @NotNull
   @Override
+  public String getName(@NotNull Variable variable) {
+    return variable.getName();
+  }
+
+  @Override
+  public boolean hasNameMappings() {
+    return false;
+  }
+
+  @NotNull
+  @Override
   public String normalizeMemberName(@NotNull Variable variable) {
     return variable.getName();
   }

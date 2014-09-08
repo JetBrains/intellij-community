@@ -918,11 +918,32 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                                                                 ClassNotLoadedException,
                                                                                 IncompatibleThreadStateException,
                                                                                 InvalidTypeException;
-    public E start(EvaluationContextImpl evaluationContext, Method method) throws EvaluateException {
-      return start(evaluationContext, method, false);
+
+
+    E start(EvaluationContextImpl evaluationContext, Method method, boolean internalEvaluate) throws EvaluateException {
+      while (true) {
+        try {
+          return startInternal(evaluationContext, method, internalEvaluate);
+        }
+        catch (ClassNotLoadedException e) {
+          ReferenceType loadedClass = null;
+          try {
+            if (evaluationContext.isAutoLoadClasses()) {
+              loadedClass = loadClass(evaluationContext, e.className(), evaluationContext.getClassLoader());
+            }
+          }
+          catch (Exception ignored) {
+            loadedClass = null;
+          }
+          if (loadedClass == null) {
+            throw EvaluateExceptionUtil.createEvaluateException(e);
+          }
+        }
+      }
     }
 
-    public E start(EvaluationContextImpl evaluationContext, Method method, boolean internalEvaluate) throws EvaluateException {
+    E startInternal(EvaluationContextImpl evaluationContext, Method method, boolean internalEvaluate)
+      throws EvaluateException, ClassNotLoadedException {
       DebuggerManagerThreadImpl.assertIsManagerThread();
       SuspendContextImpl suspendContext = evaluationContext.getSuspendContext();
       SuspendManagerUtil.assertSuspendContext(suspendContext);
@@ -957,26 +978,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
         getVirtualMachineProxy().clearCaches();
 
-        while (true) {
-          try {
-            return invokeMethodAndFork(suspendContext);
-          }
-          catch (ClassNotLoadedException e) {
-            ReferenceType loadedClass;
-            try {
-              loadedClass = evaluationContext.isAutoLoadClasses() ? loadClass(evaluationContext, e.className(), evaluationContext.getClassLoader()) : null;
-            }
-            catch (EvaluateException ignored) {
-              loadedClass = null;
-            }
-            if (loadedClass == null) {
-              throw EvaluateExceptionUtil.createEvaluateException(e);
-            }
-          }
-        }
-      }
-      catch (ClassNotLoadedException e) {
-        throw EvaluateExceptionUtil.createEvaluateException(e);
+        return invokeMethodAndFork(suspendContext);
       }
       catch (InvocationException e) {
         throw EvaluateExceptionUtil.createEvaluateException(e);
@@ -1116,7 +1118,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         }
         return objRef.invokeMethod(thread, method, args, invokePolicy | invocationOptions);
       }
-    }.start((EvaluationContextImpl)evaluationContext, method);
+    }.start((EvaluationContextImpl)evaluationContext, method, false);
   }
 
   private static ThreadReference getEvaluationThread(final EvaluationContext evaluationContext) throws EvaluateException {
@@ -1183,7 +1185,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         return classType.newInstance(thread, method, args, invokePolicy);
       }
     };
-    return invokeCommand.start((EvaluationContextImpl)evaluationContext, method);
+    return invokeCommand.start((EvaluationContextImpl)evaluationContext, method, false);
   }
 
   public void clearCashes(int suspendPolicy) {
