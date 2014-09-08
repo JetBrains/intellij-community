@@ -723,7 +723,10 @@ public class TemplateState implements Disposable {
 
     ExpressionContext context = createExpressionContext(start);
     Result result = isQuick ? expressionNode.calculateQuickResult(context) : expressionNode.calculateResult(context);
-    if ((result == null || result.equalsToText("", element)) && defaultValue != null) {
+    if (isQuick && isEmptyResult(result, element) && !oldValue.isEmpty()) {
+      return;
+    }
+    if (isEmptyResult(result, element) && defaultValue != null) {
       result = defaultValue.calculateResult(context);
     }
     if (element != null) {
@@ -741,6 +744,10 @@ public class TemplateState implements Disposable {
         .handleRecalc(psiFile, myDocument, mySegments.getSegmentStart(segmentNumber), mySegments.getSegmentEnd(segmentNumber));
       restoreEmptyVariables(indices);
     }
+  }
+
+  private static boolean isEmptyResult(Result result, PsiElement context) {
+    return result == null || result.equalsToText("", context);
   }
 
   private void replaceString(String newValue, int start, int end, int segmentNumber) {
