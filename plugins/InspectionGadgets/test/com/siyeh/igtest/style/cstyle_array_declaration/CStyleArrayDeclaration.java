@@ -3,7 +3,7 @@ package com.siyeh.igtest.style;
 public class CStyleArrayDeclaration
 {
     private int[] m_foo;
-    private int <warning descr="C-style array declaration 'm_bar'">m_bar</warning>[];
+    private int <warning descr="C-style array declaration of field 'm_bar'">m_bar</warning>[];
 
     public CStyleArrayDeclaration(int[] bar, int[] foo)
     {
@@ -18,7 +18,7 @@ public class CStyleArrayDeclaration
 
     public void foo()
     {
-        final int <warning descr="C-style array declaration 'foo'">foo</warning>[] = new int[3];
+        final int <warning descr="C-style array declaration of local variable 'foo'">foo</warning>[] = new int[3];
         final int[] bar = new int[3];
 
         for(int i = 0; i < bar.length; i++)
@@ -27,8 +27,12 @@ public class CStyleArrayDeclaration
         }
     }
 
-    public void bar(int <warning descr="C-style array declaration 'foo'">foo</warning>[], int[] bar)
+    public void bar(int <warning descr="C-style array declaration of parameter 'foo'">foo</warning>[], int[] bar)
     {
 
+    }
+
+    String <warning descr="C-style array declaration of the return type of method 'ohGod()'">ohGod</warning>(String[] a)[] {
+        return a;
     }
 }
