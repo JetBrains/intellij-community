@@ -192,7 +192,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
                   indicator.setFraction((double)i / size);
                 }
                 try {
-                  manager.install(list(requirement), extraArgs);
+                  manager.install(Arrays.asList(requirement), extraArgs);
                 }
                 catch (PyExternalProcessException e) {
                   exceptions.add(e);
@@ -221,10 +221,10 @@ public class PyPackageManagerImpl extends PyPackageManager {
               final PyPackageManagerImpl manager = (PyPackageManagerImpl)PyPackageManagers.getInstance().forSdk(mySdk);
               try {
                 manager.uninstall(packages);
-                return list();
+                return Arrays.asList();
               }
               catch (PyExternalProcessException e) {
-                return list(e);
+                return Arrays.asList(e);
               }
               finally {
                 manager.refresh();
@@ -455,7 +455,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       throw new PyExternalProcessException(ERROR_ACCESS_DENIED, PACKAGING_TOOL, args, "Cannot create temporary build directory");
     }
     if (!extraArgs.contains(BUILD_DIR_OPTION)) {
-      args.addAll(list(BUILD_DIR_OPTION, buildDir.getAbsolutePath()));
+      args.addAll(Arrays.asList(BUILD_DIR_OPTION, buildDir.getAbsolutePath()));
     }
 
     boolean useUserSite = extraArgs.contains(USE_USER_SITE);
@@ -574,7 +574,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   public synchronized void loadPackages() throws PyExternalProcessException {
     try {
-      final String output = runPythonHelper(PACKAGING_TOOL, list("list"));
+      final String output = runPythonHelper(PACKAGING_TOOL, Arrays.asList("list"));
       myPackagesCache = parsePackagingToolOutput(output);
       Collections.sort(myPackagesCache, new Comparator<PyPackage>() {
         @Override
@@ -615,7 +615,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   @Override
   public boolean findPackage(@NotNull final String name) {
     try {
-      final String output = runPythonHelper(PACKAGING_TOOL, list("search", name));
+      final String output = runPythonHelper(PACKAGING_TOOL, Arrays.asList("search", name));
       return StringUtil.containsIgnoreCase(output, name + " ");
     }
     catch (PyExternalProcessException e) {
@@ -734,10 +734,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
     myPackagesCache = null;
     myDependenciesCache = null;
     myExceptionCache = null;
-  }
-
-  private static <T> List<T> list(T... xs) {
-    return Arrays.asList(xs);
   }
 
   @Nullable
