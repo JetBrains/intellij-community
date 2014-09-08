@@ -82,19 +82,14 @@ import java.util.*;
  * @author Mike
  */
 public class XmlUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.XmlUtil");
-
   @NonNls public static final String TAGLIB_1_2_URI = "http://java.sun.com/dtd/web-jsptaglibrary_1_2.dtd";
-
   @NonNls public static final String XML_SCHEMA_URI = "http://www.w3.org/2001/XMLSchema";
   @NonNls public static final String XML_SCHEMA_URI2 = "http://www.w3.org/1999/XMLSchema";
   @NonNls public static final String XML_SCHEMA_URI3 = "http://www.w3.org/2000/10/XMLSchema";
   public static final String[] SCHEMA_URIS = {XML_SCHEMA_URI, XML_SCHEMA_URI2, XML_SCHEMA_URI3};
   @NonNls public static final String XML_SCHEMA_INSTANCE_URI = "http://www.w3.org/2001/XMLSchema-instance";
-
   @NonNls public static final String XSLT_URI = "http://www.w3.org/1999/XSL/Transform";
   @NonNls public static final String XINCLUDE_URI = XmlPsiUtil.XINCLUDE_URI;
-
   @NonNls public static final String ANT_URI = "http://ant.apache.org/schema.xsd";
   @NonNls public static final String XHTML_URI = "http://www.w3.org/1999/xhtml";
   @NonNls public static final String HTML_URI = "http://www.w3.org/1999/html";
@@ -102,31 +97,21 @@ public class XmlUtil {
   @NonNls public static final Key<String> TEST_PATH = Key.create("TEST PATH");
   @NonNls public static final String JSP_URI = "http://java.sun.com/JSP/Page";
   @NonNls public static final String ANY_URI = "http://www.intellij.net/ns/any";
-
   @NonNls public static final String JSTL_CORE_URI = "http://java.sun.com/jsp/jstl/core";
   @NonNls public static final String JSTL_CORE_URI2 = "http://java.sun.com/jstl/core";
   @NonNls public static final String JSTL_CORE_URI3 = "http://java.sun.com/jstl/core_rt";
   @NonNls public static final String JSTL_CORE_URI_JAVAEE_7 = "http://xmlns.jcp.org/jsp/jstl/core";
-
   @NonNls public static final String[] JSTL_CORE_URIS = {JSTL_CORE_URI, JSTL_CORE_URI2, JSTL_CORE_URI3, JSTL_CORE_URI_JAVAEE_7};
-
-
   @NonNls public static final String JSF_HTML_URI = "http://java.sun.com/jsf/html";
   @NonNls public static final String JSF_HTML_URI_JAVAEE_7 = "http://xmlns.jcp.org/jsf/html";
   @NonNls public static final String[] JSF_HTML_URIS = {JSF_HTML_URI, JSF_HTML_URI_JAVAEE_7};
-
   @NonNls public static final String JSF_CORE_URI = "http://java.sun.com/jsf/core";
   @NonNls public static final String JSF_CORE_URI_JAVAEE_7 = "http://xmlns.jcp.org/jsf/core";
   @NonNls public static final String[] JSF_CORE_URIS = {JSF_CORE_URI, JSF_CORE_URI_JAVAEE_7};
-
   @NonNls public static final String JSF_PASS_THROUGH_ATTR_URI_JAVAEE7 = "http://xmlns.jcp.org/jsf";
   @NonNls public static final String JSF_PASSTHROUGH_URI = "http://xmlns.jcp.org/jsf/passthrough";
-
   @NonNls public static final String JSTL_FORMAT_URI = "http://java.sun.com/jsp/jstl/fmt";
   @NonNls public static final String JSTL_FORMAT_URI2 = "http://java.sun.com/jstl/fmt";
-  @NonNls private static final String JSTL_FORMAT_URI3 = "http://java.sun.com/jstl/fmt_rt";
-  @NonNls public static final String[] JSTL_FORMAT_URIS = {JSTL_FORMAT_URI, JSTL_FORMAT_URI2, JSTL_FORMAT_URI3};
-
   @NonNls public static final String SPRING_URI = "http://www.springframework.org/tags";
   @NonNls public static final String SPRING_FORMS_URI = "http://www.springframework.org/tags/form";
   @NonNls public static final String STRUTS_BEAN_URI = "http://struts.apache.org/tags-bean";
@@ -135,26 +120,21 @@ public class XmlUtil {
   @NonNls public static final String STRUTS_LOGIC_URI = "http://struts.apache.org/tags-logic";
   @NonNls public static final String STRUTS_HTML_URI = "http://struts.apache.org/tags-html";
   @NonNls public static final String STRUTS_HTML_URI2 = "http://jakarta.apache.org/struts/tags-html";
-
   @NonNls public static final String APACHE_TRINIDAD_URI = "http://myfaces.apache.org/trinidad";
   @NonNls public static final String APACHE_TRINIDAD_HTML_URI = "http://myfaces.apache.org/trinidad/html";
-
   @NonNls public static final String XSD_SIMPLE_CONTENT_TAG = "simpleContent";
   @NonNls public static final String NO_NAMESPACE_SCHEMA_LOCATION_ATT = "noNamespaceSchemaLocation";
   @NonNls public static final String SCHEMA_LOCATION_ATT = "schemaLocation";
   @NonNls public static final String[] WEB_XML_URIS =
     {"http://java.sun.com/xml/ns/j2ee", "http://java.sun.com/xml/ns/javaee", "http://xmlns.jcp.org/xml/ns/javaee", "http://java.sun.com/dtd/web-app_2_3.dtd",
       "http://java.sun.com/j2ee/dtds/web-app_2_2.dtd"};
-
   @NonNls public static final String FACELETS_URI = "http://java.sun.com/jsf/facelets";
   @NonNls public static final String FACELETS_URI_JAVAEE_7 = "http://xmlns.jcp.org/jsf/facelets";
   @NonNls public static final String[] FACELETS_URIS = {FACELETS_URI, FACELETS_URI_JAVAEE_7};
-
   @NonNls public static final String JSTL_FUNCTIONS_URI = "http://java.sun.com/jsp/jstl/functions";
   @NonNls public static final String JSTL_FUNCTIONS_URI2 = "http://java.sun.com/jstl/functions";
   @NonNls public static final String JSTL_FUNCTIONS_JAVAEE_7 = "http://xmlns.jcp.org/jsp/jstl/functions";
   @NonNls public static final String[] JSTL_FUNCTIONS_URIS = {JSTL_FUNCTIONS_URI, JSTL_FUNCTIONS_URI2};
-
   @NonNls public static final String JSTL_FN_FACELET_URI = "com.sun.facelets.tag.jstl.fn.JstlFnLibrary";
   @NonNls public static final String JSTL_CORE_FACELET_URI = "com.sun.facelets.tag.jstl.core.JstlCoreLibrary";
   @NonNls public static final String TARGET_NAMESPACE_ATTR_NAME = "targetNamespace";
@@ -166,7 +146,6 @@ public class XmlUtil {
   @NonNls public static final String ENUMERATION_TAG_NAME = "enumeration";
   @NonNls public static final String HTML4_LOOSE_URI = "http://www.w3.org/TR/html4/loose.dtd";
   @NonNls public static final String WSDL_SCHEMA_URI = "http://schemas.xmlsoap.org/wsdl/";
-
   public static final String XHTML4_SCHEMA_LOCATION;
   public final static ThreadLocal<Boolean> BUILDING_DOM_STUBS = new ThreadLocal<Boolean>() {
     @Override
@@ -174,52 +153,38 @@ public class XmlUtil {
       return Boolean.FALSE;
     }
   };
+  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.XmlUtil");
+  @NonNls private static final String JSTL_FORMAT_URI3 = "http://java.sun.com/jstl/fmt_rt";
+  @NonNls public static final String[] JSTL_FORMAT_URIS = {JSTL_FORMAT_URI, JSTL_FORMAT_URI2, JSTL_FORMAT_URI3};
   @NonNls private static final String FILE = "file:";
   @NonNls private static final String CLASSPATH = "classpath:/";
   @NonNls private static final String URN = "urn:";
+  private final static Set<String> doNotVisitTags = new HashSet<String>(Arrays.asList("annotation", "element", "attribute"));
 
   private XmlUtil() {
   }
-
   static {
     final URL xhtml4SchemaLocationUrl = XmlUtil.class.getResource(ExternalResourceManagerEx.STANDARD_SCHEMAS + "xhtml1-transitional.xsd");
     XHTML4_SCHEMA_LOCATION = VfsUtilCore.urlToPath(VfsUtilCore.toIdeaUrl(FileUtil.unquote(xhtml4SchemaLocationUrl.toExternalForm()), false));
   }
 
-  @Nullable
-  public static String getSchemaLocation(XmlTag tag, String namespace) {
-    final String uri = ExternalResourceManagerEx.getInstanceEx().getResourceLocation(namespace, tag.getProject());
-    if (uri != null && !uri.equals(namespace)) return uri;
-
-    while (true) {
-      if (namespace.isEmpty()) {
-        final String attributeValue = tag.getAttributeValue("noNamespaceSchemaLocation", XML_SCHEMA_INSTANCE_URI);
-        if (attributeValue != null) return attributeValue;
-      }
-      else {
-        String schemaLocation = tag.getAttributeValue("schemaLocation", XML_SCHEMA_INSTANCE_URI);
-        if (schemaLocation != null) {
-          int start = schemaLocation.indexOf(namespace);
-          if (start >= 0) {
-            start += namespace.length();
-            final StringTokenizer tokenizer = new StringTokenizer(schemaLocation.substring(start + 1));
-            if (tokenizer.hasMoreTokens()) {
-              return tokenizer.nextToken();
-            }
-            else {
-              return null;
-            }
+  public static String getSchemaLocation(XmlTag tag, final String namespace) {
+    while (tag != null) {
+      String schemaLocation = tag.getAttributeValue(SCHEMA_LOCATION_ATT, XML_SCHEMA_INSTANCE_URI);
+      if (schemaLocation != null) {
+        StringTokenizer tokenizer = new StringTokenizer(schemaLocation);
+        int i = 0;
+        while (tokenizer.hasMoreTokens()) {
+          String token = tokenizer.nextToken();
+          if (i % 2 == 0 && namespace.equals(token) && tokenizer.hasMoreTokens()) {
+            return tokenizer.nextToken();
           }
+          i++;
         }
       }
-      if (tag.getParent() instanceof XmlTag) {
-        tag = (XmlTag)tag.getParent();
-      }
-      else {
-        break;
-      }
+      tag = tag.getParentTag();
     }
-    return null;
+    return namespace;
   }
 
   @Nullable
@@ -965,8 +930,6 @@ public class XmlUtil {
     });
   }
 
-  private final static Set<String> doNotVisitTags = new HashSet<String>(Arrays.asList("annotation", "element", "attribute"));
-
   /**
    * @return true if enumeration is exhaustive
    */
@@ -1189,31 +1152,6 @@ public class XmlUtil {
     return ExternalResourceManager.getInstance().getResourceLocation(s, project) != s;
   }
 
-  private static class MyAttributeInfo implements Comparable {
-    boolean myRequired = true;
-    String myName = null;
-
-    MyAttributeInfo(String name) {
-      myName = name;
-    }
-
-    MyAttributeInfo(String name, boolean flag) {
-      myName = name;
-      myRequired = flag;
-    }
-
-    @Override
-    public int compareTo(Object o) {
-      if (o instanceof MyAttributeInfo) {
-        return myName.compareTo(((MyAttributeInfo)o).myName);
-      }
-      else if (o instanceof XmlAttribute) {
-        return myName.compareTo(((XmlAttribute)o).getName());
-      }
-      return -1;
-    }
-  }
-
   public static String generateDocumentDTD(XmlDocument doc, boolean full) {
     final Map<String, List<String>> tags = new LinkedHashMap<String, List<String>>();
     final Map<String, List<MyAttributeInfo>> attributes = new LinkedHashMap<String, List<MyAttributeInfo>>();
@@ -1302,7 +1240,6 @@ public class XmlUtil {
   public static String findLocalNameByQualifiedName(String name) {
     return name == null ? null : name.substring(name.indexOf(':') + 1);
   }
-
 
   public static XmlFile getContainingFile(PsiElement element) {
     while (!(element instanceof XmlFile) && element != null) {
@@ -1481,5 +1418,30 @@ public class XmlUtil {
 
     @NotNull
     PsiElement getNodeForMessage(@NotNull T t);
+  }
+
+  private static class MyAttributeInfo implements Comparable {
+    boolean myRequired = true;
+    String myName = null;
+
+    MyAttributeInfo(String name) {
+      myName = name;
+    }
+
+    MyAttributeInfo(String name, boolean flag) {
+      myName = name;
+      myRequired = flag;
+    }
+
+    @Override
+    public int compareTo(Object o) {
+      if (o instanceof MyAttributeInfo) {
+        return myName.compareTo(((MyAttributeInfo)o).myName);
+      }
+      else if (o instanceof XmlAttribute) {
+        return myName.compareTo(((XmlAttribute)o).getName());
+      }
+      return -1;
+    }
   }
 }
