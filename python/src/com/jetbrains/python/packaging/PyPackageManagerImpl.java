@@ -134,6 +134,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   private Sdk mySdk;
 
   public static class UI {
+    private static final Logger LOG = Logger.getInstance(UI.class);
     @Nullable private Listener myListener;
     @NotNull private Project myProject;
     @NotNull private Sdk mySdk;
