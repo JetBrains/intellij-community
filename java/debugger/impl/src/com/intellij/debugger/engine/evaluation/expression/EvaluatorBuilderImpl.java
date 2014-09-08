@@ -962,12 +962,16 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         }
       }
 
+      boolean defaultInterfaceMethod = false;
+
       if (psiMethod != null) {
         processBoxingConversions(psiMethod.getParameterList().getParameters(), argExpressions, resolveResult.getSubstitutor(), argumentEvaluators);
         argumentEvaluators = wrapVarargs(psiMethod.getParameterList().getParameters(), argExpressions, resolveResult.getSubstitutor(), argumentEvaluators);
+        defaultInterfaceMethod = psiMethod.hasModifierProperty(PsiModifier.DEFAULT);
       }
 
-      myResult = new MethodEvaluator(objectEvaluator, contextClass, methodExpr.getReferenceName(), psiMethod != null ? JVMNameUtil.getJVMSignature(psiMethod) : null, argumentEvaluators);
+      myResult = new MethodEvaluator(objectEvaluator, contextClass, methodExpr.getReferenceName(),
+                                     psiMethod != null ? JVMNameUtil.getJVMSignature(psiMethod) : null, argumentEvaluators, defaultInterfaceMethod);
     }
 
     @Override
