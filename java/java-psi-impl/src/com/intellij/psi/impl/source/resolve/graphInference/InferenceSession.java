@@ -747,7 +747,7 @@ public class InferenceSession {
       }
 
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getManager().getProject());
-      final PsiTypeParameter[] freshParameters = createFreshVariables(vars);
+      final PsiTypeParameter[] freshParameters = createFreshVariables(vars, substitutor);
       for (int i = 0; i < freshParameters.length; i++) {
         PsiTypeParameter parameter = freshParameters[i];
         final InferenceVariable var = vars.get(i);
@@ -770,7 +770,7 @@ public class InferenceSession {
     return substitutor;
   }
 
-  private PsiTypeParameter[] createFreshVariables(final List<InferenceVariable> vars) {
+  private PsiTypeParameter[] createFreshVariables(final List<InferenceVariable> vars, final PsiSubstitutor siteSubstitutor) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getManager().getProject());
 
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
@@ -787,7 +787,7 @@ public class InferenceSession {
     final String classText = "class I<" + StringUtil.join(vars, new Function<InferenceVariable, String>() {
       @Override
       public String fun(InferenceVariable variable) {
-        final PsiType glb = composeBound(variable, InferenceBound.UPPER, UPPER_BOUND_FUNCTION, ySubstitutor, true);
+        final PsiType glb = composeBound(variable, InferenceBound.UPPER, UPPER_BOUND_FUNCTION, ySubstitutor.putAll(siteSubstitutor), true);
         return getFreshVariableName(variable) + " extends " + glb.getInternalCanonicalText();
       }
     }, ", ") + ">{}";
