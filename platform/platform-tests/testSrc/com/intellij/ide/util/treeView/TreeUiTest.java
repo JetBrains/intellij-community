@@ -21,7 +21,6 @@ import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.util.*;
 import com.intellij.ui.LoadingNode;
 import com.intellij.util.Time;
-import com.intellij.util.WaitFor;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestSuite;
@@ -1063,12 +1062,12 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       }
     });
 
-    new WaitFor(60000) {
+    waitFor(60000, new Condition() {
       @Override
-      protected boolean condition() {
+      public boolean value(Object o) {
         return done[0] && getMyBuilder().getUi().isReady();
       }
-    };
+    });
 
     assertTrue(done[0]);
     assertEquals(1, notifyCount[0]);
@@ -1357,12 +1356,12 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       }
     });
 
-    new WaitFor() {
+    waitFor(60000, new Condition() {
       @Override
-      protected boolean condition() {
+      public boolean value(Object o) {
         return queued.get();
       }
-    };
+    });
 
     assertTrue(getBuilder().getUi().isIdle());
     assertTreeNow("+null\n");
@@ -2570,12 +2569,12 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
     buildAction.run();
 
-    boolean released = new WaitFor(15000) {
+    boolean released = waitFor(15000, new Condition() {
       @Override
-      protected boolean condition() {
+      public boolean value(Object o) {
         return getBuilder().getUi() == null;
       }
-    }.isConditionRealized();
+    });
 
     assertTrue(released);
   }
