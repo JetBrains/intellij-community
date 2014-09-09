@@ -15,7 +15,6 @@
  */
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.EvaluatingComputable;
 import com.intellij.debugger.engine.ContextUtil;
@@ -29,8 +28,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeFragment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import com.sun.jdi.*;
 
@@ -102,10 +103,7 @@ public class CompilingEvaluator implements ExpressionEvaluator {
           @Override
           public ExpressionEvaluator compute() throws EvaluateException {
             final TextWithImports callCode = getCallCode();
-            PsiFile file = myData.getGeneratedInnerClass().getContainingFile();
-            final TextRange range = myPsiContext.getTextRange();
-            final PsiElement copyContext =
-              CodeInsightUtil.findElementInRange(file, range.getStartOffset(), range.getEndOffset(), myPsiContext.getClass());
+            PsiElement copyContext = myData.getAnchor();
             final CodeFragmentFactory factory = DebuggerUtilsEx.findAppropriateCodeFragmentFactory(callCode, copyContext);
             return factory.getEvaluatorBuilder().
               build(factory.createCodeFragment(callCode, copyContext, project),
