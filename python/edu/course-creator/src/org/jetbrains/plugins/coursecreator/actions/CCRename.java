@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.coursecreator.CCProjectService;
 import org.jetbrains.plugins.coursecreator.format.Course;
@@ -59,8 +60,9 @@ public abstract class CCRename extends DumbAwareAction {
       presentation.setEnabled(false);
       return;
     }
+    final PsiFile file = CommonDataKeys.PSI_FILE.getData(event.getDataContext());
     final PsiDirectory directory = DirectoryChooserUtil.getOrChooseDirectory(view);
-    if (directory == null || !directory.getName().contains(getFolderName())) {
+    if (file != null ||directory == null || !directory.getName().contains(getFolderName())) {
       presentation.setEnabled(false);
       presentation.setVisible(false);
       return;
@@ -80,7 +82,7 @@ public abstract class CCRename extends DumbAwareAction {
       return;
     }
     final PsiDirectory directory = DirectoryChooserUtil.getOrChooseDirectory(view);
-    if (directory == null || !directory.getName().contains("lesson")) {
+    if (directory == null || !directory.getName().contains(getFolderName())) {
       return;
     }
     Course course = CCProjectService.getInstance(project).getCourse();
