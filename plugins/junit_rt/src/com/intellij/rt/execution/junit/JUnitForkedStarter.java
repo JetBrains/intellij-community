@@ -116,6 +116,7 @@ public class JUnitForkedStarter {
             try {
               final int classNamesSize = Integer.parseInt(perDirReader.readLine());
               writer.write((packageName + ", working directory: \'" + workingDir + "\'\n").getBytes("UTF-8")); //instead of package name
+              writer.write("\n".getBytes("UTF-8")); //category
               for (int i = 0; i < classNamesSize; i++) {
                 String className = perDirReader.readLine();
                 if (className == null) {
