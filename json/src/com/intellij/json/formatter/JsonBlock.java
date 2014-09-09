@@ -95,7 +95,6 @@ public class JsonBlock implements ASTBlock {
 
   private Block makeSubBlock(@NotNull ASTNode childNode) {
     IElementType childNodeType = childNode.getElementType();
-    PsiElement childPsiElement = childNode.getPsi();
 
     Indent indent = Indent.getNoneIndent();
     Alignment alignment = null;
@@ -106,10 +105,6 @@ public class JsonBlock implements ASTBlock {
         wrap = Wrap.createWrap(WrapType.ALWAYS, true);
       }
       alignment = myChildAlignment;
-      indent = Indent.getNormalIndent();
-    }
-    if (myPsiElement instanceof JsonProperty && childPsiElement == ((JsonProperty)myPsiElement).getValue()) {
-      wrap = Wrap.createWrap(WrapType.NORMAL, true);
       indent = Indent.getNormalIndent();
     }
     return new JsonBlock(this, childNode, mySettings, alignment, indent, wrap);

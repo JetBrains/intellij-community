@@ -2,6 +2,8 @@ package com.intellij.json;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterTestCase;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -15,12 +17,16 @@ public class JsonFormattingTest extends FormatterTestCase {
     Logger.setFactory(TestLoggerFactory.class);
   }
 
-  private static final Logger LOG = Logger.getInstance(JsonFormattingTest.class);
-
   @Override
   protected void setUp() throws Exception {
     IdeaTestCase.initPlatformPrefix();
     super.setUp();
+  }
+
+  @Override
+  protected String getTestName(boolean ignored) {
+    // always use uppercase first letter for consistency
+    return super.getTestName(false);
   }
 
   @Override
@@ -39,8 +45,6 @@ public class JsonFormattingTest extends FormatterTestCase {
   }
 
   public void testContainerElementsAlignment() throws Exception {
-    final int indentSize = getSettings(JsonLanguage.INSTANCE).getIndentOptions().INDENT_SIZE;
-    LOG.debug("Intent size: " + indentSize);
     doTest();
   }
 
@@ -53,14 +57,53 @@ public class JsonFormattingTest extends FormatterTestCase {
   }
 
   public void testWrapping() throws Exception {
-    CodeStyleSettings settings = getSettings();
+    final CodeStyleSettings settings = getSettings();
     settings.setRightMargin(JsonLanguage.INSTANCE, 20);
     doTest();
   }
 
-  @Override
-  protected String getTestName(boolean ignored) {
-    // always use uppercase first letter for consistency
-    return super.getTestName(false);
+  // Moved from JavaScript
+
+  public void testWeb3830() throws Exception {
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings();
+    final CommonCodeStyleSettings.IndentOptions indentOptions = settings.getCommonSettings(JsonLanguage.INSTANCE).getIndentOptions();
+    final int indent = indentOptions.INDENT_SIZE;
+    final boolean useTabs = indentOptions.USE_TAB_CHARACTER;
+    final int tabSize = indentOptions.TAB_SIZE;
+    try {
+      indentOptions.INDENT_SIZE = 8;
+      indentOptions.USE_TAB_CHARACTER = true;
+      indentOptions.TAB_SIZE = 8;
+      doTest();
+    }
+    finally {
+      indentOptions.INDENT_SIZE = indent;
+      indentOptions.USE_TAB_CHARACTER = useTabs;
+      indentOptions.TAB_SIZE = tabSize;
+    }
+  }
+
+  public void testReformatJSon() throws Exception {
+    final CommonCodeStyleSettings.IndentOptions indentOptions = getSettings().getCommonSettings(JsonLanguage.INSTANCE).getIndentOptions();
+    final int oldIndentSize = indentOptions.INDENT_SIZE;
+    try {
+      indentOptions.INDENT_SIZE = 4;
+      doTest();
+    }
+    finally {
+      indentOptions.INDENT_SIZE = oldIndentSize;
+    }
+  }
+
+  public void testReformatJSon2() throws Exception {
+    final CommonCodeStyleSettings.IndentOptions indentOptions = getSettings().getCommonSettings(JsonLanguage.INSTANCE).getIndentOptions();
+    final int oldIndentSize = indentOptions.INDENT_SIZE;
+    try {
+      indentOptions.INDENT_SIZE = 4;
+      doTest();
+    }
+    finally {
+      indentOptions.INDENT_SIZE = oldIndentSize;
+    }
   }
 }
