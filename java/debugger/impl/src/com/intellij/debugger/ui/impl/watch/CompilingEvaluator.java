@@ -138,14 +138,17 @@ public class CompilingEvaluator implements ExpressionEvaluator {
 
     VirtualMachineProxyImpl proxy = (VirtualMachineProxyImpl)process.getVirtualMachineProxy();
     for (OutputFileObject cls : classes) {
-      Method defineMethod = ((ClassType)classLoader.referenceType()).concreteMethodByName("defineClass", "(Ljava/lang/String;[BII)Ljava/lang/Class;");
-      byte[] bytes = cls.toByteArray();
-      ArrayList<Value> args = new ArrayList<Value>();
-      args.add(proxy.mirrorOf(cls.myOrigName));
-      args.add(mirrorOf(bytes, context, process));
-      args.add(proxy.mirrorOf(0));
-      args.add(proxy.mirrorOf(bytes.length));
-      classLoader.invokeMethod(threadReference, defineMethod, args, ClassType.INVOKE_SINGLE_THREADED);
+      if (cls.getName().contains(getGenClassName())) {
+        Method defineMethod =
+          ((ClassType)classLoader.referenceType()).concreteMethodByName("defineClass", "(Ljava/lang/String;[BII)Ljava/lang/Class;");
+        byte[] bytes = cls.toByteArray();
+        ArrayList<Value> args = new ArrayList<Value>();
+        args.add(proxy.mirrorOf(cls.myOrigName));
+        args.add(mirrorOf(bytes, context, process));
+        args.add(proxy.mirrorOf(0));
+        args.add(proxy.mirrorOf(bytes.length));
+        classLoader.invokeMethod(threadReference, defineMethod, args, ClassType.INVOKE_SINGLE_THREADED);
+      }
     }
     return (ClassType)process.findClass(context, getGenPackageName() + '.' + getGenClassName(), classLoader);
   }
