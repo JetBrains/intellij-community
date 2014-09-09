@@ -16,9 +16,11 @@
 package org.intellij.images.editor.impl;
 
 import com.intellij.ide.CopyPasteSupport;
+import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.PsiActionSupportFactory;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,12 +48,16 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
+import java.io.IOException;
 import java.util.Locale;
 
 /**
@@ -59,7 +65,7 @@ import java.util.Locale;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-final class ImageEditorUI extends JPanel implements DataProvider {
+final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider {
   @NonNls
   private static final String IMAGE_PANEL = "image";
   @NonNls
@@ -390,7 +396,7 @@ final class ImageEditorUI extends JPanel implements DataProvider {
     } else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       return new PsiElement[]{(PsiElement)getData(CommonDataKeys.PSI_ELEMENT.getName())};
     } else if (PlatformDataKeys.COPY_PROVIDER.is(dataId) && copyPasteSupport != null) {
-      return copyPasteSupport.getCopyProvider();
+      return this;
     } else if (PlatformDataKeys.CUT_PROVIDER.is(dataId) && copyPasteSupport != null) {
       return copyPasteSupport.getCutProvider();
     } else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
@@ -400,5 +406,48 @@ final class ImageEditorUI extends JPanel implements DataProvider {
     }
 
     return null;
+  }
+
+  @Override
+  public void performCopy(@NotNull DataContext dataContext) {
+    ImageDocument document = imageComponent.getDocument();
+    BufferedImage image = document.getValue();
+    CopyPasteManager.getInstance().setContents(new ImageTransferable(image));
+  }
+
+  @Override
+  public boolean isCopyEnabled(@NotNull DataContext dataContext) {
+    return true;
+  }
+
+  @Override
+  public boolean isCopyVisible(@NotNull DataContext dataContext) {
+    return true;
+  }
+
+  private static class ImageTransferable implements Transferable {
+    private final BufferedImage myImage;
+
+    public ImageTransferable(@NotNull BufferedImage image) {
+      myImage = image;
+    }
+
+    @Override
+    public DataFlavor[] getTransferDataFlavors() {
+      return new DataFlavor[] { DataFlavor.imageFlavor };
+    }
+
+    @Override
+    public boolean isDataFlavorSupported(DataFlavor dataFlavor) {
+      return DataFlavor.imageFlavor.equals(dataFlavor);
+    }
+
+    @Override
+    public Object getTransferData(DataFlavor dataFlavor) throws UnsupportedFlavorException, IOException {
+      if (!DataFlavor.imageFlavor.equals(dataFlavor)) {
+        throw new UnsupportedFlavorException(dataFlavor);
+      }
+      return myImage;
+    }
   }
 }
