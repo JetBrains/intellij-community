@@ -18,6 +18,7 @@ package com.intellij.openapi.diff;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Konstantin Bulenkov
@@ -34,11 +35,11 @@ public class MergeApplication extends ApplicationStarterBase {
   }
 
   @Override
-  protected void processCommand(String[] args) throws Exception {
-    final VirtualFile left = findFile(args[1]);
-    final VirtualFile right = findFile(args[2]);
-    final VirtualFile middle = findFile(args[3]);
-    final VirtualFile result = findOrCreateFile(args.length == 4 ? args[3] : args[4]);
+  protected void processCommand(String[] args, @Nullable String currentDirectory) throws Exception {
+    final VirtualFile left = findFile(args[1], currentDirectory);
+    final VirtualFile right = findFile(args[2], currentDirectory);
+    final VirtualFile middle = findFile(args[3], currentDirectory);
+    final VirtualFile result = findOrCreateFile(args.length == 4 ? args[3] : args[4], currentDirectory);
 
     MergeRequest request = DiffRequestFactory.getInstance()
       .createMergeRequest(getText(left), getText(right), getText(middle), result,

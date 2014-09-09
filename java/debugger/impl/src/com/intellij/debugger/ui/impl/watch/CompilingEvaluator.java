@@ -51,9 +51,9 @@ public class CompilingEvaluator implements ExpressionEvaluator {
   private final PsiCodeFragment myCodeFragment;
   private final PsiElement myPsiContext;
   private final ExtractLightMethodObjectHandler.ExtractedData myData;
+  private final EvaluationDescriptor myDescriptor;
 
   public static Key<ExtractLightMethodObjectHandler.ExtractedData> COMPILING_EVALUATOR_DATA = new Key<ExtractLightMethodObjectHandler.ExtractedData>("COMPILING_EVALUATOR_DATA");
-  private final EvaluationDescriptor myDescriptor;
 
   public CompilingEvaluator(TextWithImports text,
                             PsiCodeFragment codeFragment,
@@ -138,14 +138,17 @@ public class CompilingEvaluator implements ExpressionEvaluator {
 
     VirtualMachineProxyImpl proxy = (VirtualMachineProxyImpl)process.getVirtualMachineProxy();
     for (OutputFileObject cls : classes) {
-      Method defineMethod = ((ClassType)classLoader.referenceType()).concreteMethodByName("defineClass", "(Ljava/lang/String;[BII)Ljava/lang/Class;");
-      byte[] bytes = cls.toByteArray();
-      ArrayList<Value> args = new ArrayList<Value>();
-      args.add(proxy.mirrorOf(cls.myOrigName));
-      args.add(mirrorOf(bytes, context, process));
-      args.add(proxy.mirrorOf(0));
-      args.add(proxy.mirrorOf(bytes.length));
-      classLoader.invokeMethod(threadReference, defineMethod, args, ClassType.INVOKE_SINGLE_THREADED);
+      if (cls.getName().contains(getGenClassName())) {
+        Method defineMethod =
+          ((ClassType)classLoader.referenceType()).concreteMethodByName("defineClass", "(Ljava/lang/String;[BII)Ljava/lang/Class;");
+        byte[] bytes = cls.toByteArray();
+        ArrayList<Value> args = new ArrayList<Value>();
+        args.add(proxy.mirrorOf(cls.myOrigName));
+        args.add(mirrorOf(bytes, context, process));
+        args.add(proxy.mirrorOf(0));
+        args.add(proxy.mirrorOf(bytes.length));
+        classLoader.invokeMethod(threadReference, defineMethod, args, ClassType.INVOKE_SINGLE_THREADED);
+      }
     }
     return (ClassType)process.findClass(context, getGenPackageName() + '.' + getGenClassName(), classLoader);
   }
@@ -161,7 +164,11 @@ public class CompilingEvaluator implements ExpressionEvaluator {
     return reference;
   }
 
-  private static final String GEN_CLASS_NAME = "Test";
+  public static String getGeneratedClassName() {
+    return GEN_CLASS_NAME;
+  }
+
+  private static final String GEN_CLASS_NAME = "GeneratedEvaluationClass";
   private static final String GEN_CLASS_PACKAGE = "dummy";
   private static final String GEN_CLASS_FULL_NAME = GEN_CLASS_PACKAGE + '.' + GEN_CLASS_NAME;
   private static final String GEN_METHOD_NAME = "invoke";

@@ -625,7 +625,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
-  private void doExtract() throws IncorrectOperationException {
+  public void doExtract() throws IncorrectOperationException {
 
     PsiMethod newMethod = generateEmptyMethod(getThrownExceptions(), isStatic());
 

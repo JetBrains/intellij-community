@@ -27,10 +27,7 @@ import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -93,12 +90,20 @@ public class DiffHyperlink implements Printable {
         @Override
         public void customize(DiffToolbar toolbar) {
           toolbar.addAction(new NextPrevAction("Compare Previous Failure", AllIcons.Actions.Prevfile, chain) {
+            {
+              registerCustomShortcutSet(ActionManager.getInstance().getAction("PreviousTab").getShortcutSet(), null);
+            }
+
             @Override
             protected AbstractTestProxy.AssertEqualsMultiDiffViewProvider getNextId() {
               return chain.getPrevious();
             }
           });
           toolbar.addAction(new NextPrevAction("Compare Next Failure", AllIcons.Actions.Nextfile, chain) {
+            {
+              registerCustomShortcutSet(ActionManager.getInstance().getAction("NextTab").getShortcutSet(), null);
+            }
+
             @Override
             protected AbstractTestProxy.AssertEqualsMultiDiffViewProvider getNextId() {
               return chain.getNext();

@@ -132,7 +132,12 @@ public final class SourceMapDecoder {
         if (reader.peek() != JsonToken.END_ARRAY) {
           sourcesContent = new SmartList<String>();
           do {
-            sourcesContent.add(StringUtilRt.convertLineSeparators(reader.nextString()));
+            if (reader.peek() == JsonToken.STRING) {
+              sourcesContent.add(StringUtilRt.convertLineSeparators(reader.nextString()));
+            }
+            else {
+              reader.skipValue();
+            }
           }
           while (reader.hasNext());
         }

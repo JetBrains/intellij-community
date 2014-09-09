@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -29,7 +30,9 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.ui.*;
 import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 import com.intellij.openapi.roots.ui.configuration.PathUIUtils;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
@@ -45,6 +48,14 @@ import java.util.*;
  * @author nik
  */
 public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponentDescriptor {
+  private static final Set<String> NATIVE_LIBRARY_EXTENSIONS = ContainerUtil.newTroveSet(FileUtil.PATH_HASHING_STRATEGY, "dll", "so", "dylib");
+  public static final Condition<VirtualFile> LIBRARY_ROOT_CONDITION = new Condition<VirtualFile>() {
+    @Override
+    public boolean value(VirtualFile file) {
+      return FileElement.isArchive(file) || isNativeLibrary(file);
+    }
+  };
+
   @Override
   public OrderRootTypePresentation getRootTypePresentation(@NotNull OrderRootType type) {
     return getDefaultPresentation(type);
@@ -67,10 +78,17 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
                          new AnnotationsRootFilter(), new NativeLibraryRootFilter());
   }
 
+  private static boolean isNativeLibrary(VirtualFile file) {
+    String extension = file.getExtension();
+    return extension != null && NATIVE_LIBRARY_EXTENSIONS.contains(extension);
+  }
+
   @NotNull
   @Override
   public FileChooserDescriptor createAttachFilesChooserDescriptor(@Nullable String libraryName) {
-    FileChooserDescriptor descriptor = super.createAttachFilesChooserDescriptor(libraryName);
+    final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, true, false, true, true).withFileFilter(LIBRARY_ROOT_CONDITION);
+    descriptor.setTitle(StringUtil.isEmpty(libraryName) ? ProjectBundle.message("library.attach.files.action")
+                                                        : ProjectBundle.message("library.attach.files.to.library.action", libraryName));
     descriptor.setDescription(ProjectBundle.message("library.java.attach.files.description"));
     return descriptor;
   }
@@ -119,24 +137,25 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
     }
   }
 
-  private static class NativeLibraryRootFilter extends RootFilter {
-    private static final Set<String> NATIVE_LIBRARY_EXTENSIONS = ContainerUtil.newTroveSet(FileUtil.PATH_HASHING_STRATEGY, "dll", "so", "dylib");
-
+  private static class NativeLibraryRootFilter extends RootDetector {
     private NativeLibraryRootFilter() {
-      super(NativeLibraryOrderRootType.getInstance(), false, "external annotations");
+      super(NativeLibraryOrderRootType.getInstance(), false, "native library location");
     }
 
+    @NotNull
     @Override
-    public boolean isAccepted(@NotNull VirtualFile rootCandidate, @NotNull ProgressIndicator progressIndicator) {
+    public Collection<VirtualFile> detectRoots(@NotNull VirtualFile rootCandidate, @NotNull ProgressIndicator progressIndicator) {
       if (rootCandidate.isDirectory()) {
         for (VirtualFile file : rootCandidate.getChildren()) {
-          String extension = file.getExtension();
-          if (extension != null && NATIVE_LIBRARY_EXTENSIONS.contains(extension)) {
-            return true;
+          if (isNativeLibrary(file)) {
+            return Collections.singleton(rootCandidate);
           }
         }
       }
-      return false;
+      else if (isNativeLibrary(rootCandidate)) {
+        return Collections.singleton(rootCandidate.getParent());
+      }
+      return Collections.emptyList();
     }
   }
 

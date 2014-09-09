@@ -202,7 +202,7 @@ public class XmlEmmetParser extends EmmetParser {
       int loremWordsCount = DEFAULT_LOREM_LENGTH;
       if (matcher.groupCount() > 1) {
         String group = matcher.group(2);
-        loremWordsCount = group.isEmpty() ? DEFAULT_LOREM_LENGTH : Integer.parseInt(group);
+        loremWordsCount = group == null || group.isEmpty() ? DEFAULT_LOREM_LENGTH : Integer.parseInt(group);
       }
 
       final List<Couple<String>> attrList = parseSelectors();
