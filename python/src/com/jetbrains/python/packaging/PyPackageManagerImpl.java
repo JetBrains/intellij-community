@@ -20,26 +20,16 @@ import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
-import com.intellij.icons.AllIcons;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -54,7 +44,6 @@ import com.intellij.remote.RemoteSdkAdditionalData;
 import com.intellij.remote.RemoteSdkCredentials;
 import com.intellij.remote.VagrantNotStartedException;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.HashSet;
@@ -73,7 +62,6 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -133,226 +121,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   private Sdk mySdk;
 
-  public static class UI {
-    private static final Logger LOG = Logger.getInstance(UI.class);
-    @Nullable private Listener myListener;
-    @NotNull private Project myProject;
-    @NotNull private Sdk mySdk;
-
-    public interface Listener {
-      void started();
-
-      void finished(List<PyExternalProcessException> exceptions);
-    }
-
-    public UI(@NotNull Project project, @NotNull Sdk sdk, @Nullable Listener listener) {
-      myProject = project;
-      mySdk = sdk;
-      myListener = listener;
-    }
-
-    public void installManagement(@NotNull final String name) {
-      final String progressTitle;
-      final String successTitle;
-      progressTitle = "Installing package " + name;
-      successTitle = "Packages installed successfully";
-      run(new MultiExternalRunnable() {
-            @Override
-            public List<PyExternalProcessException> run(@NotNull ProgressIndicator indicator) {
-              final List<PyExternalProcessException> exceptions = new ArrayList<PyExternalProcessException>();
-              indicator.setText(String.format("Installing package '%s'...", name));
-              final PyPackageManagerImpl manager = (PyPackageManagerImpl)PyPackageManagers.getInstance().forSdk(mySdk);
-              try {
-                manager.installManagement(name);
-              }
-              catch (PyExternalProcessException e) {
-                exceptions.add(e);
-              }
-              return exceptions;
-            }
-          }, progressTitle, successTitle, "Installed package " + name,
-          "Install package failed"
-      );
-    }
-
-    public void install(@NotNull final List<PyRequirement> requirements, @NotNull final List<String> extraArgs) {
-      final String progressTitle;
-      final String successTitle;
-      progressTitle = "Installing packages";
-      successTitle = "Packages installed successfully";
-      run(new MultiExternalRunnable() {
-            @Override
-            public List<PyExternalProcessException> run(@NotNull ProgressIndicator indicator) {
-              final int size = requirements.size();
-              final List<PyExternalProcessException> exceptions = new ArrayList<PyExternalProcessException>();
-              final PyPackageManagerImpl manager = (PyPackageManagerImpl)PyPackageManagers.getInstance().forSdk(mySdk);
-              for (int i = 0; i < size; i++) {
-                final PyRequirement requirement = requirements.get(i);
-                if (myListener != null) {
-                  indicator.setText(String.format("Installing package '%s'...", requirement));
-                  indicator.setFraction((double)i / size);
-                }
-                try {
-                  manager.install(Arrays.asList(requirement), extraArgs);
-                }
-                catch (PyExternalProcessException e) {
-                  exceptions.add(e);
-                }
-              }
-              manager.refresh();
-              return exceptions;
-            }
-          }, progressTitle, successTitle, "Installed packages: " + PyPackageUtil.requirementsToString(requirements),
-          "Install packages failed"
-      );
-    }
-
-    public void uninstall(@NotNull final List<PyPackage> packages) {
-      final String packagesString = StringUtil.join(packages, new Function<PyPackage, String>() {
-        @Override
-        public String fun(PyPackage pkg) {
-          return "'" + pkg.getName() + "'";
-        }
-      }, ", ");
-      if (checkDependents(packages)) return;
-
-      run(new MultiExternalRunnable() {
-            @Override
-            public List<PyExternalProcessException> run(@NotNull ProgressIndicator indicator) {
-              final PyPackageManagerImpl manager = (PyPackageManagerImpl)PyPackageManagers.getInstance().forSdk(mySdk);
-              try {
-                manager.uninstall(packages);
-                return Arrays.asList();
-              }
-              catch (PyExternalProcessException e) {
-                return Arrays.asList(e);
-              }
-              finally {
-                manager.refresh();
-              }
-            }
-          }, "Uninstalling packages", "Packages uninstalled successfully", "Uninstalled packages: " + packagesString,
-          "Uninstall packages failed"
-      );
-    }
-
-    private boolean checkDependents(@NotNull final List<PyPackage> packages) {
-      try {
-        final Map<String, Set<PyPackage>> dependentPackages = collectDependents(packages, mySdk);
-        final int[] warning = {0};
-        if (!dependentPackages.isEmpty()) {
-          ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-            @Override
-            public void run() {
-              if (dependentPackages.size() == 1) {
-                String message = "You are attempting to uninstall ";
-                List<String> dep = new ArrayList<String>();
-                int size = 1;
-                for (Map.Entry<String, Set<PyPackage>> entry : dependentPackages.entrySet()) {
-                  final Set<PyPackage> value = entry.getValue();
-                  size = value.size();
-                  dep.add(entry.getKey() + " package which is required for " + StringUtil.join(value, ", "));
-                }
-                message += StringUtil.join(dep, "\n");
-                message += size == 1 ? " package" : " packages";
-                message += "\n\nDo you want to proceed?";
-                warning[0] = Messages.showYesNoDialog(message, "Warning",
-                                                      AllIcons.General.BalloonWarning);
-              }
-              else {
-                String message = "You are attempting to uninstall packages which are required for another packages.\n\n";
-                List<String> dep = new ArrayList<String>();
-                for (Map.Entry<String, Set<PyPackage>> entry : dependentPackages.entrySet()) {
-                  dep.add(entry.getKey() + " -> " + StringUtil.join(entry.getValue(), ", "));
-                }
-                message += StringUtil.join(dep, "\n");
-                message += "\n\nDo you want to proceed?";
-                warning[0] = Messages.showYesNoDialog(message, "Warning",
-                                                      AllIcons.General.BalloonWarning);
-              }
-            }
-          }, ModalityState.current());
-        }
-        if (warning[0] != Messages.YES) return true;
-      }
-      catch (PyExternalProcessException e) {
-        LOG.info("Error loading packages dependents: " + e.getMessage(), e);
-      }
-      return false;
-    }
-
-    private interface MultiExternalRunnable {
-      List<PyExternalProcessException> run(@NotNull ProgressIndicator indicator);
-    }
-
-    private void run(@NotNull final MultiExternalRunnable runnable, @NotNull final String progressTitle,
-                     @NotNull final String successTitle, @NotNull final String successDescription, @NotNull final String failureTitle) {
-      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, progressTitle, false) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          indicator.setText(progressTitle + "...");
-          final Ref<Notification> notificationRef = new Ref<Notification>(null);
-          final String PACKAGING_GROUP_ID = "Packaging";
-          final Application application = ApplicationManager.getApplication();
-          if (myListener != null) {
-            application.invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                myListener.started();
-              }
-            });
-          }
-
-          final List<PyExternalProcessException> exceptions = runnable.run(indicator);
-          if (exceptions.isEmpty()) {
-            notificationRef.set(new Notification(PACKAGING_GROUP_ID, successTitle, successDescription, NotificationType.INFORMATION));
-          }
-          else {
-            final String progressLower = progressTitle.toLowerCase();
-            final String firstLine = String.format("Error%s occurred when %s.", exceptions.size() > 1 ? "s" : "", progressLower);
-
-            final String description = createDescription(exceptions, firstLine);
-            notificationRef.set(new Notification(PACKAGING_GROUP_ID, failureTitle,
-                                                 firstLine + " <a href=\"xxx\">Details...</a>",
-                                                 NotificationType.ERROR,
-                                                 new NotificationListener() {
-                                                   @Override
-                                                   public void hyperlinkUpdate(@NotNull Notification notification,
-                                                                               @NotNull HyperlinkEvent event) {
-                                                     assert myProject != null;
-                                                     PackagesNotificationPanel.showError(myProject, failureTitle, description);
-                                                   }
-                                                 }
-            ));
-          }
-          application.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              if (myListener != null) {
-                myListener.finished(exceptions);
-              }
-              final Notification notification = notificationRef.get();
-              if (notification != null) {
-                notification.notify(myProject);
-              }
-            }
-          });
-        }
-      });
-    }
-
-    public static String createDescription(List<PyExternalProcessException> exceptions, String firstLine) {
-      final StringBuilder b = new StringBuilder();
-      b.append(firstLine);
-      b.append("\n\n");
-      for (PyExternalProcessException exception : exceptions) {
-        b.append(exception.toString());
-        b.append("\n");
-      }
-      return b.toString();
-    }
-  }
-
   @Override
   public void refresh() {
     final Application application = ApplicationManager.getApplication();
@@ -374,7 +142,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     });
   }
 
-  private void installManagement(String name) throws PyExternalProcessException {
+  public void installManagement(@NotNull String name) throws PyExternalProcessException {
     final String helperPath = getHelperPath(name);
 
     ArrayList<String> args = Lists.newArrayList(UNTAR, helperPath);
@@ -391,7 +159,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     }
     final String fileName = dirName + name + File.separatorChar + "setup.py";
     try {
-      output = getProcessOutput(fileName, Collections.<String>singletonList(INSTALL), true, dirName + name);
+      output = getProcessOutput(fileName, Collections.singletonList(INSTALL), true, dirName + name);
       final int retcode = output.getExitCode();
       if (output.isTimeout()) {
         throw new PyExternalProcessException(ERROR_TIMEOUT, fileName, Lists.newArrayList(INSTALL), "Timed out");
@@ -425,7 +193,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   }
 
   @Override
-  public void install(String requirementString) throws PyExternalProcessException {
+  public void install(@NotNull String requirementString) throws PyExternalProcessException {
     boolean hasSetuptools = false;
     boolean hasPip = false;
     try {
@@ -444,8 +212,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
     install(Collections.singletonList(PyRequirement.fromString(requirementString)), Collections.<String>emptyList());
   }
 
-  public void install(@NotNull List<PyRequirement> requirements, @NotNull List<String> extraArgs)
-    throws PyExternalProcessException {
+  @Override
+  public void install(@NotNull List<PyRequirement> requirements, @NotNull List<String> extraArgs) throws PyExternalProcessException {
     final List<String> args = new ArrayList<String>();
     args.add(INSTALL);
     final File buildDir;
@@ -498,23 +266,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
     finally {
       clearCaches();
     }
-  }
-
-  private static Map<String, Set<PyPackage>> collectDependents(@NotNull final List<PyPackage> packages, Sdk sdk)
-    throws PyExternalProcessException {
-    Map<String, Set<PyPackage>> dependentPackages = new HashMap<String, Set<PyPackage>>();
-    for (PyPackage pkg : packages) {
-      final Set<PyPackage> dependents =
-        ((PyPackageManagerImpl)PyPackageManager.getInstance(sdk)).getDependents(pkg.getName());
-      if (dependents != null && !dependents.isEmpty()) {
-        for (PyPackage dependent : dependents) {
-          if (!packages.contains(dependent)) {
-            dependentPackages.put(pkg.getName(), dependents);
-          }
-        }
-      }
-    }
-    return dependentPackages;
   }
 
   public static String getUserSite() {
@@ -607,31 +358,34 @@ public class PyPackageManagerImpl extends PyPackageManager {
     }
   }
 
+  @Nullable
+  @Override
+  public PyPackage findInstalledPackage(String name) throws PyExternalProcessException {
+    return findInstalledPackage(name, false);
+  }
+
   @Override
   @Nullable
-  public PyPackage findInstalledPackage(String name) throws PyExternalProcessException {
-    return findPackageByName(name, getPackages());
-  }
-
-  @Nullable
-  public PyPackage findPackageFast(String name) throws PyExternalProcessException {
-    final List<PyPackage> packages = getPackagesFast();
-    return packages != null ? findPackageByName(name, packages) : null;
-  }
-
-  @Nullable
-  private static PyPackage findPackageByName(String name, List<PyPackage> packages) {
-    for (PyPackage pkg : packages) {
-      if (name.equalsIgnoreCase(pkg.getName())) {
-        return pkg;
+  public PyPackage findInstalledPackage(String name, boolean cachedOnly) throws PyExternalProcessException {
+    final List<PyPackage> packages = cachedOnly ? getPackagesFast() : getPackages();
+    if (packages != null) {
+      for (PyPackage pkg : packages) {
+        if (name.equalsIgnoreCase(pkg.getName())) {
+          return pkg;
+        }
       }
     }
     return null;
   }
 
+  @Override
   public boolean hasPip() {
+    return hasPip(true);
+  }
+
+  public boolean hasPip(boolean cachedOnly) {
     try {
-      return findPackageFast(PACKAGE_PIP) != null;
+      return findInstalledPackage(PACKAGE_PIP, cachedOnly) != null;
     }
     catch (PyExternalProcessException e) {
       return false;

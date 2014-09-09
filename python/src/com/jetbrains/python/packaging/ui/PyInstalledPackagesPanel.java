@@ -25,10 +25,7 @@ import com.intellij.util.Consumer;
 import com.intellij.webcore.packaging.InstalledPackage;
 import com.intellij.webcore.packaging.InstalledPackagesPanel;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
-import com.jetbrains.python.packaging.PyExternalProcessException;
-import com.jetbrains.python.packaging.PyPackage;
-import com.jetbrains.python.packaging.PyPackageManager;
-import com.jetbrains.python.packaging.PyPackageManagerImpl;
+import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.IronPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -171,7 +168,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
   }
 
   private void installManagementTool(@NotNull final Sdk sdk, final String name) {
-    final PyPackageManagerImpl.UI ui = new PyPackageManagerImpl.UI(myProject, sdk, new PyPackageManagerImpl.UI.Listener() {
+    final PyPackageManagerUI ui = new PyPackageManagerUI(myProject, sdk, new PyPackageManagerUI.Listener() {
       @Override
       public void started() {
         myPackagesTable.setPaintBusy(true);
@@ -183,7 +180,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
         PyPackageManagerImpl packageManager = (PyPackageManagerImpl)PyPackageManager.getInstance(sdk);
         if (!exceptions.isEmpty()) {
           final String firstLine = "Install package failed. ";
-          final String description = PyPackageManagerImpl.UI.createDescription(exceptions, firstLine);
+          final String description = PyPackageManagerUI.createDescription(exceptions, firstLine);
           packageManager.showInstallationError(myProject, "Failed to install " + name, description);
         }
         packageManager.refresh();

@@ -313,7 +313,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
       if (chosen.isEmpty()) {
         return;
       }
-      final PyPackageManagerImpl.UI ui = new PyPackageManagerImpl.UI(project, mySdk, new PyPackageManagerImpl.UI.Listener() {
+      final PyPackageManagerUI ui = new PyPackageManagerUI(project, mySdk, new PyPackageManagerUI.Listener() {
         @Override
         public void started() {
           setRunningPackagingTasks(myModule, true);
