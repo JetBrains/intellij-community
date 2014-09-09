@@ -1042,7 +1042,7 @@ class PyDB:
                         pass
 
                 elif cmd_id == CMD_ADD_EXCEPTION_BREAK:
-                    if text.find(' ') != -1:
+                    if text.find('\t') != -1:
                         exception, notify_always, notify_on_terminate = text.split('\t', 2)
                     else:
                         exception, notify_always, notify_on_terminate = text, 0, 0
