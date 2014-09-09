@@ -28,6 +28,8 @@ GREP=`which egrep`
 GREP_OPTIONS=""
 CUT=`which cut`
 READLINK=`which readlink`
+XARGS=`which xargs`
+DIRNAME=`which dirname`
 MKTEMP=`which mktemp`
 RM=`which rm`
 CAT=`which cat`
@@ -53,7 +55,7 @@ elif [ -n "$JAVA_HOME" -a -x "$JAVA_HOME/bin/java" ]; then
 else
   JAVA_BIN_PATH=`which java`
   if [ -n "$JAVA_BIN_PATH" ]; then
-    if [ "$OS_TYPE" = "FreeBSD" ]; then
+    if [ "$OS_TYPE" = "FreeBSD" -o "$OS_TYPE" = "MidnightBSD" ]; then
       JAVA_LOCATION=`JAVAVM_DRYRUN=yes java | "$GREP" '^JAVA_HOME' | "$CUT" -c11-`
       if [ -x "$JAVA_LOCATION/bin/java" ]; then
         JDK="$JAVA_LOCATION"
@@ -70,13 +72,18 @@ else
       fi
     fi
 
-    if [ -z "$JDK" -a -x "$READLINK" ]; then
+    if [ -z "$JDK" -a -x "$READLINK" -a -x "$XARGS" -a -x "$DIRNAME" ]; then
       JAVA_LOCATION=`"$READLINK" -f "$JAVA_BIN_PATH"`
       case "$JAVA_LOCATION" in
         */jre/bin/java)
-          JAVA_LOCATION=`echo "$JAVA_LOCATION" | xargs dirname | xargs dirname | xargs dirname` ;;
+          JAVA_LOCATION=`echo "$JAVA_LOCATION" | "$XARGS" "$DIRNAME" | "$XARGS" "$DIRNAME" | "$XARGS" "$DIRNAME"`
+          if [ ! -d "$JAVA_LOCATION/bin" ]; then
+            JAVA_LOCATION="$JAVA_LOCATION/jre"
+          fi
+          ;;
         *)
-          JAVA_LOCATION=`echo "$JAVA_LOCATION" | xargs dirname | xargs dirname` ;;
+          JAVA_LOCATION=`echo "$JAVA_LOCATION" | "$XARGS" "$DIRNAME" | "$XARGS" "$DIRNAME"`
+          ;;
       esac
       if [ -x "$JAVA_LOCATION/bin/java" ]; then
         JDK="$JAVA_LOCATION"
@@ -92,27 +99,9 @@ fi
 
 VERSION_LOG=`"$MKTEMP" -t java.version.log.XXXXXX`
 "$JDK/bin/java" -version 2> "$VERSION_LOG"
-"$GREP" 'OpenJDK' "$VERSION_LOG" > /dev/null
-OPEN_JDK=$?
-"$GREP" "64-Bit|x86_64" "$VERSION_LOG" > /dev/null
+"$GREP" "64-Bit|x86_64|amd64" "$VERSION_LOG" > /dev/null
 BITS=$?
 "$RM" -f "$VERSION_LOG"
-if [ $OPEN_JDK -eq 0 ]; then
-  echo "WARNING: You are launching the IDE using OpenJDK Java runtime."
-  echo
-  echo "         ITS KNOWN TO HAVE PERFORMANCE AND GRAPHICS ISSUES!"
-  echo "         SWITCH TO THE ORACLE(SUN) JDK BEFORE REPORTING PROBLEMS!"
-  echo
-  echo "NOTE:    If you have both Oracle (Sun) JDK and OpenJDK installed"
-  echo "         please validate either @@product_uc@@_JDK, JDK_HOME, or JAVA_HOME environment variable points to valid Oracle (Sun) JDK installation."
-  echo "         See http://ow.ly/6TuKQ for more info on switching default JDK."
-  echo
-  echo "Press Enter to continue."
-# ---------------------------------------------------------------------
-# COMMENT LINE BELOW TO REMOVE PAUSE AFTER OPEN JDK WARNING
-# ---------------------------------------------------------------------
-  read IGNORE
-fi
 if [ $BITS -eq 0 ]; then
   BITS="64"
 else
@@ -159,7 +148,7 @@ if [ "$IS_EAP" = "true" ]; then
   OS_NAME=`echo $OS_TYPE | "$TR" '[:upper:]' '[:lower:]'`
   AGENT_LIB="yjpagent-$OS_NAME$BITS"
   if [ -r "$IDE_BIN_HOME/lib$AGENT_LIB.so" ]; then
-    AGENT="-agentlib:$AGENT_LIB=disablej2ee,disablealloc,delay=10000,sessionname=@@system_selector@@"
+    AGENT="-agentpath:$AGENT_LIB=disablej2ee,disablealloc,delay=10000,sessionname=@@system_selector@@"
   fi
 fi
 
@@ -180,6 +169,6 @@ export LD_LIBRARY_PATH
 # Run the IDE.
 # ---------------------------------------------------------------------
 while true ; do
-  eval "$JDK/bin/java" $ALL_JVM_ARGS -Djb.restart.code=88 $MAIN_CLASS_NAME $*
+  eval "$JDK/bin/java" $ALL_JVM_ARGS -Djb.restart.code=88 $MAIN_CLASS_NAME "$@"
   test $? -ne 88 && break
 done

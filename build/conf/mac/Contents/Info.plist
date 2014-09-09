@@ -57,7 +57,11 @@
     @@archs@@
     <key>LSRequiresNativeExecution</key>
     <string>YES</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>@@min_osx@@</string>
+
     @@url_schemes@@
+
     <key>JVMOptions</key>
     <dict>
       <key>ClassPath</key>
@@ -77,14 +81,11 @@
 
         <key>idea.home.path</key>
         <string>$APP_PACKAGE/Contents</string>
-
       </dict>
 
       <key>VMOptions</key>
       <string>@@vmoptions@@ -Xbootclasspath/a:../lib/boot.jar</string>
 
-      <key>WorkingDirectory</key>
-      <string>$APP_PACKAGE/Contents/bin</string>
     </dict>
   </dict>
 </plist>

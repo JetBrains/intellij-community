@@ -53,18 +53,18 @@ binding.setVariable("isEap", {
   return "true" == p("component.version.eap")
 })
 
-binding.setVariable("mem32", "-server -Xms128m -Xmx512m -XX:MaxPermSize=250m -XX:ReservedCodeCacheSize=64m")
-binding.setVariable("mem64", "-Xms128m -Xmx750m -XX:MaxPermSize=350m -XX:ReservedCodeCacheSize=96m")
+binding.setVariable("mem32", "-server -Xms128m -Xmx512m -XX:MaxPermSize=250m -XX:ReservedCodeCacheSize=150m")
+binding.setVariable("mem64", "-Xms128m -Xmx750m -XX:MaxPermSize=350m -XX:ReservedCodeCacheSize=225m")
 binding.setVariable("common_vmoptions", "-ea -Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true " +
                                         "-Djsse.enableSNIExtension=false " +
-                                        "-XX:+UseCodeCacheFlushing -XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50")
+                                        "-XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50")
 
 binding.setVariable("vmOptions", { "$common_vmoptions ${isEap() ? '-XX:+HeapDumpOnOutOfMemoryError' : ''}".trim() })
 binding.setVariable("vmOptions32", { "$mem32 ${vmOptions()}".trim() })
 binding.setVariable("vmOptions64", { "$mem64 ${vmOptions()}".trim() })
 
 binding.setVariable("yjpOptions", { String systemSelector, String platformSuffix = "" ->
-  "-agentlib:yjpagent$platformSuffix=probe_disable=*,disablealloc,disabletracing,onlylocal,disableexceptiontelemetry,delay=10000,sessionname=$systemSelector".trim()
+  "-agentpath:yjpagent$platformSuffix=probe_disable=*,disablealloc,disabletracing,onlylocal,disableexceptiontelemetry,delay=10000,sessionname=$systemSelector".trim()
 })
 binding.setVariable("vmOptions32yjp", { String systemSelector ->
   "${vmOptions32()} ${yjpOptions(systemSelector)}".trim()
@@ -88,7 +88,7 @@ private String require(String key) {
     this[key]
   }
   catch (MissingPropertyException ignored) {
-    projectBuilder.error("Property $key is required")
+    projectBuilder.error("Property '$key' is required")
   }
 }
 
@@ -97,7 +97,7 @@ private String require(String key, String defaultValue) {
     this[key]
   }
   catch (MissingPropertyException ignored) {
-    projectBuilder.info("$key is not defined. Defaulting to $defaultValue")
+    projectBuilder.info("'$key' is not defined. Defaulting to '$defaultValue'")
     this[key] = defaultValue
   }
 }
@@ -112,8 +112,9 @@ binding.setVariable("requireProperty", {String key, String defaultValue = null -
 })
 
 binding.setVariable("guessHome", {
-  // Current file is supposed to be at build/scripts/release.gant path
-  new File(requireProperty("gant.file").substring("file:".length())).getParentFile().getParentFile().getParent()
+  // current file is supposed to be at build/scripts/*.gant path
+  String uri = requireProperty("gant.file")
+  new File(new URI(uri).getSchemeSpecificPart()).getParentFile().getParentFile().getParent()
 })
 
 binding.setVariable("loadProject", {
@@ -226,6 +227,7 @@ binding.setVariable("wireBuildDate", { String buildNumber, String appInfoFile ->
 binding.setVariable("commonJvmArgs", {
   return [
    "-ea",
+   "-server",
    "-Didea.home.path=$home",
    "-Xbootclasspath/p:${projectBuilder.moduleOutput(findModule("boot"))}",
    "-XX:+HeapDumpOnOutOfMemoryError",
@@ -248,6 +250,7 @@ binding.setVariable("classPathLibs", [
 binding.setVariable("platformApiModules", [
   "analysis-api",
   "core-api",
+  "dvcs-api",
   "editor-ui-api",
   "external-system-api",
   "indexing-api",
@@ -259,6 +262,7 @@ binding.setVariable("platformApiModules", [
   "structure-view-api",
   "usageView",
   "vcs-api",
+  "vcs-api-core",
   "vcs-log-api",
   "vcs-log-graph-api",
   "xdebugger-api",
@@ -274,7 +278,7 @@ binding.setVariable("platformApiModules", [
 binding.setVariable("platformImplementationModules", [
   "analysis-impl",
   "core-impl",
-  "dvcs",
+  "dvcs-impl",
   "editor-ui-ex",
   "images",
   "indexing-impl",
@@ -333,9 +337,6 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   String fullName = args.fullName != null ? args.fullName : p("component.names.fullname")
 
   String vmOptions = "-Dfile.encoding=UTF-8 ${vmOptions()} -Xverify:none"
-/*  if (isEap() && !args.mac_no_yjp) {
-    vmOptions += " ${yjpOptions(args.system_selector)}"
-  } */
 
   String minor = p("component.version.minor")
   String version = isEap() && !minor.contains("RC") && !minor.contains("Beta") ? "EAP $args.buildNumber" : "${p("component.version.major")}.${minor}"
@@ -895,3 +896,41 @@ binding.setVariable("reassignAltClickToMultipleCarets", {String communityHome ->
   patchedKeymapFile = new File("${paths.sandbox}/classes/production/platform-resources/idea/Keymap_Default.xml")
   patchedKeymapFile.write(defaultKeymapContent)
 })
+
+// modules used in Upsource and in Kotlin as an API to IDEA
+binding.setVariable("analysisApiModules", [
+    "analysis-api",
+    "boot",
+    "core-api",
+    "duplicates-analysis",
+    "editor-ui-api",
+    "editor-ui-ex",
+    "extensions",
+    "indexing-api",
+    "java-analysis-api",
+    "java-indexing-api",
+    "java-psi-api",
+    "java-structure-view",
+    "jps-model-api",
+    "jps-model-serialization",
+    "projectModel-api",
+    "structure-view-api",
+    "util",
+    "util-rt",
+    "xml-analysis-api",
+    "xml-psi-api",
+    "xml-structure-view-api",
+])
+binding.setVariable("analysisImplModules", [
+    "analysis-impl",
+    "core-impl",
+    "indexing-impl",
+    "java-analysis-impl",
+    "java-indexing-impl",
+    "java-psi-impl",
+    "projectModel-impl",
+    "structure-view-impl",
+    "xml-analysis-impl",
+    "xml-psi-impl",
+    "xml-structure-view-impl",
+])
