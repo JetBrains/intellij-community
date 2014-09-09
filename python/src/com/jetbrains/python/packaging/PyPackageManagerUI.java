@@ -295,6 +295,12 @@ public class PyPackageManagerUI {
       manager.refresh();
       return exceptions;
     }
+
+    @NotNull
+    @Override
+    protected String getSuccessDescription() {
+      return "Installed packages: '" + myName + "'";
+    }
   }
 
   private static class UninstallTask extends PackagingTask {
