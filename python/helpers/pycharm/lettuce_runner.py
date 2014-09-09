@@ -21,8 +21,9 @@ class _LettuceRunner(_bdd_utils.BddRunner):
 
     def __init__(self, base_dir, what_to_run, scenarios):
         """
-        :param scenarios scenarion indexes joined by comma (i.e. "1,2,3") to run. Check lettuce doc for more info
-        :type scenarios str
+
+        :param scenarios scenario numbers to run
+        :type scenarios list
         :param base_dir base directory to run tests in
         :type base_dir: str
         :param what_to_run folder or file to run
@@ -30,7 +31,7 @@ class _LettuceRunner(_bdd_utils.BddRunner):
 
         """
         super(_LettuceRunner, self).__init__(base_dir)
-        self.__runner = lettuce.Runner(what_to_run, scenarios)
+        self.__runner = lettuce.Runner(what_to_run, ",".join(scenarios))
 
     def _get_features_to_run(self):
         super(_LettuceRunner, self)._get_features_to_run()
@@ -120,14 +121,8 @@ class _LettuceRunner(_bdd_utils.BddRunner):
 
 
 if __name__ == "__main__":
-    (base_dir, what_to_run) = _bdd_utils.get_path_by_env(os.environ)
+    (base_dir, scenarios, what_to_run) = _bdd_utils.get_what_to_run_by_env(os.environ)
     if len(what_to_run) > 1:
         raise Exception("Lettuce can't run more than one file now")
     _bdd_utils.fix_win_drive(what_to_run[0])
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-s', dest='scenarios')
-    args = parser.parse_args()
-    scenarios = None
-    if 'scenarios' in args:
-        scenarios = args.scenarios
     _LettuceRunner(base_dir, what_to_run[0], scenarios).run()

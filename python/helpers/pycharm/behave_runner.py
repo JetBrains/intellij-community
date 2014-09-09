@@ -16,6 +16,7 @@ import traceback
 from behave.formatter.base import Formatter
 from behave.model import Step, ScenarioOutline, Feature, Scenario
 from behave.tag_expression import TagExpression
+import re
 
 import _bdd_utils
 
@@ -234,13 +235,17 @@ if __name__ == "__main__":
     command_args = list(filter(None, sys.argv[1:]))
     if command_args:
         _bdd_utils.fix_win_drive(command_args[0])
+    (base_dir, scenario_names, what_to_run) = _bdd_utils.get_what_to_run_by_env(os.environ)
+
+    for scenario_name in scenario_names:
+        command_args += ["-n", re.escape(scenario_name)]  # TODO : rewite pythonic
+
     my_config = configuration.Configuration(command_args=command_args)
     formatters.register_as(_Null, "com.intellij.python.null")
     my_config.format = ["com.intellij.python.null"]  # To prevent output to stdout
     my_config.reporters = []  # To prevent summary to stdout
     my_config.stdout_capture = False  # For test output
     my_config.stderr_capture = False  # For test output
-    (base_dir, what_to_run) = _bdd_utils.get_path_by_env(os.environ)
     features = set()
     for feature in what_to_run:
         if os.path.isfile(feature) or glob.glob(
@@ -249,6 +254,8 @@ if __name__ == "__main__":
         elif os.path.isdir(feature):
             features |= set(_get_dirs_to_run(feature))  # Find "features" subfolder
     my_config.paths = list(features)
+    if what_to_run and not my_config.paths:
+        raise Exception("Nothing to run in {}".format(what_to_run))
     _BehaveRunner(my_config, base_dir).run()
 
 
