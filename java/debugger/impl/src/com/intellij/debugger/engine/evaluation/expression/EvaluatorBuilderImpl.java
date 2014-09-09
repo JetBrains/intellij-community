@@ -741,23 +741,27 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     private int calcIterationCount(final PsiJavaCodeReferenceElement qualifier) {
-      int iterationCount = 0;
       if (qualifier != null) {
-        PsiElement targetClass = qualifier.resolve();
-        if (targetClass == null || getContextPsiClass() == null) {
-          throwEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", qualifier.getText()));
+        return calcIterationCount(qualifier.resolve(), qualifier.getText());
+      }
+      return 0;
+    }
+
+    private int calcIterationCount(PsiElement targetClass, String name) {
+      int iterationCount = 0;
+      if (targetClass == null || getContextPsiClass() == null) {
+        throwEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", name));
+      }
+      try {
+        PsiClass aClass = getContextPsiClass();
+        while (aClass != null && !aClass.equals(targetClass)) {
+          iterationCount++;
+          aClass = getOuterClass(aClass);
         }
-        try {
-          PsiClass aClass = getContextPsiClass();
-          while (aClass != null && !aClass.equals(targetClass)) {
-            iterationCount++;
-            aClass = getOuterClass(aClass);
-          }
-        }
-        catch (Exception e) {
-          //noinspection ThrowableResultOfMethodCallIgnored
-          throw new EvaluateRuntimeException(EvaluateExceptionUtil.createEvaluateException(e));
-        }
+      }
+      catch (Exception e) {
+        //noinspection ThrowableResultOfMethodCallIgnored
+        throw new EvaluateRuntimeException(EvaluateExceptionUtil.createEvaluateException(e));
       }
       return iterationCount;
     }
@@ -1187,8 +1191,11 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           argumentEvaluators = wrapVarargs(constructor.getParameterList().getParameters(), argExpressions, constructorResolveResult.getSubstitutor(), argumentEvaluators);
         }
 
-        //noinspection HardCodedStringLiteral
-        JVMName signature = constructor != null ? JVMNameUtil.getJVMSignature(constructor) : JVMNameUtil.getJVMRawText("()V");
+        if (aClass != null && aClass.getContainingClass() != null && !aClass.hasModifierProperty(PsiModifier.STATIC)) {
+          argumentEvaluators = addThisEvaluator(argumentEvaluators, aClass.getContainingClass());
+        }
+
+        JVMName signature = JVMNameUtil.getJVMConstructorSignature(constructor, aClass);
         myResult = new NewClassInstanceEvaluator(
           new TypeEvaluator(JVMNameUtil.getJVMQualifiedName(expressionPsiType)),
           signature,
@@ -1203,6 +1210,14 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           throwEvaluateException("Unknown type for expression: " + expression.getText());
         }
       }
+    }
+
+    private Evaluator[] addThisEvaluator(Evaluator[] argumentEvaluators, PsiClass cls) {
+      Evaluator[] res = new Evaluator[argumentEvaluators.length+1];
+      int depth = calcIterationCount(cls, "this");
+      res[0] = new ThisEvaluator(depth);
+      System.arraycopy(argumentEvaluators, 0, res, 1, argumentEvaluators.length);
+      return res;
     }
 
     @Override
