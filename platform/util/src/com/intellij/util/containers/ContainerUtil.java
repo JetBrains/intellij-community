@@ -2382,5 +2382,16 @@ public class ContainerUtil extends ContainerUtilRt {
     }
     return o1.size() < o2.size() ? -1 : o1.size() == o2.size() ? 0 : 1;
   }
+
+  @Contract(pure=true)
+  public static <T> int compareLexicographically(@NotNull List<T> o1, @NotNull List<T> o2, @NotNull Comparator<T> comparator) {
+    for (int i = 0; i < Math.min(o1.size(), o2.size()); i++) {
+      int result = comparator.compare(o1.get(i), o2.get(i));
+      if (result != 0) {
+        return result;
+      }
+    }
+    return o1.size() < o2.size() ? -1 : o1.size() == o2.size() ? 0 : 1;
+  }
 }
 
