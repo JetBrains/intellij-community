@@ -269,7 +269,7 @@ public class CompilingEvaluator implements ExpressionEvaluator {
     if (!compiler.getTask(null, manager, diagnostic, null, null, Arrays
       .asList(new SourceFileObject(getMainClassName(), JavaFileObject.Kind.SOURCE, getClassCode()))).call()) {
       // TODO: show only errors
-      throw new EvaluateException(diagnostic.getDiagnostics().get(0).getMessage(Locale.getDefault()));
+      throw new EvaluateException(diagnostic.getDiagnostics().get(0).toString());
     }
     return manager.classes;
   }
