@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.packaging;
 
+import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
@@ -608,7 +609,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
         final List<String> cmdline = new ArrayList<String>();
         cmdline.add(homePath);
         cmdline.add(RemoteFile.detectSystemByPath(homePath).createRemoteFile(helperPath).getPath());
-        cmdline.addAll(Collections2.transform(args, new com.google.common.base.Function<String, String>() {
+        cmdline.addAll(Collections2.transform(args, new Function<String, String>() {
           @Override
           public String apply(@Nullable String input) {
             return quoteIfNeeded(input);
