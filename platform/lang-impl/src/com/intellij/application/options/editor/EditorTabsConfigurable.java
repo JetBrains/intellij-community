@@ -46,6 +46,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
   private JCheckBox myShowDirectoryInTabCheckBox;
   private JRadioButton myActivateRightNeighbouringTabRadioButton;
   private JTextField myTabTitleLimitField;
+  private JLabel myTabTitleLimitLabel;
 
   public EditorTabsConfigurable() {
     myEditorTabPlacement.setModel(new DefaultComboBoxModel(new Object[]{
@@ -77,6 +78,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     myShowCloseButtonOnCheckBox.setEnabled(!none);
     myShowDirectoryInTabCheckBox.setEnabled(!none);
     myTabTitleLimitField.setEnabled(!none);
+    myTabTitleLimitLabel.setEnabled(!none);
 
     if (SwingConstants.TOP == i) {
       myScrollTabLayoutInEditorCheckBox.setEnabled(true);
