@@ -82,7 +82,7 @@ public class XDebuggerFramesList extends DebuggerFramesList {
     }
 
     @Override
-    public int getSourceActions(JComponent c) {
+    public int getSourceActions(@NotNull JComponent c) {
       return COPY;
     }
   };
