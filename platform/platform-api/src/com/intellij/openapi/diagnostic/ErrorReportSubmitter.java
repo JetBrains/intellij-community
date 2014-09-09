@@ -18,6 +18,8 @@ package com.intellij.openapi.diagnostic;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -44,34 +46,43 @@ public abstract class ErrorReportSubmitter implements PluginAware {
   }
 
   /**
-   * @return "Report to vendor" action text to be used in Error Reporter user interface. For example: "Report to JetBrains".
+   * @return an action text to be used in Error Reporter user interface, e.g. "Report to JetBrains".
    */
   public abstract String getReportActionText();
 
   /**
-   * This method is called whenever an exception in a plugin code had happened and user decided to report a problem to the plugin vendor.
+   * This method is called whenever an exception in a plugin code had happened and a user decided to report a problem to the plugin vendor.
    *
-   * @param events          a sequence of error descriptors. Fatal errors that happened immediately one after another most probably caused
-   *                        by first one that happened so it's a common practice to submit only first one. Array passed is guaranteed to have at least one element.
-   * @param parentComponent one usually wants to show up a dialog asking user for additional details and probably authentication info.
-   *                        parentComponent parameter is passed so dialog that would come up would be properly aligned with its parent dialog (IDE Fatal Errors).
-   * @return submission result status.
+   * @param events          a non-empty sequence of error descriptors.
+   * @param additionalInfo  additional information provided by a user.
+   * @param parentComponent UI component to use as a parent in any UI activity from a submitter.
+   * @param consumer        a callback to be called after sending is finished (or failed).
+   * @return {@code true} if reporting was started, {@code false} if a report can't be sent at the moment.
    */
-  public abstract SubmittedReportInfo submit(IdeaLoggingEvent[] events, Component parentComponent);
-
-  public void submitAsync(IdeaLoggingEvent[] events,
-                          String additionalInfo,
-                          Component parentComponent,
-                          Consumer<SubmittedReportInfo> consumer) {
-    SubmittedReportInfo reportInfo = submit(events, parentComponent);
-    consumer.consume(reportInfo);
+  @SuppressWarnings("deprecation")
+  public boolean submit(@NotNull IdeaLoggingEvent[] events,
+                        @Nullable String additionalInfo,
+                        @NotNull Component parentComponent,
+                        @NotNull Consumer<SubmittedReportInfo> consumer) {
+    return trySubmitAsync(events, additionalInfo, parentComponent, consumer);
   }
 
-  public boolean trySubmitAsync(IdeaLoggingEvent[] events,
-                                String additionalInfo,
-                                Component parentComponent,
-                                Consumer<SubmittedReportInfo> consumer) {
-    submitAsync(events, additionalInfo, parentComponent, consumer);
+  /** @deprecated implement {@link #submit(IdeaLoggingEvent[], String, Component, Consumer)} (to be removed in IDEA 16) */
+  @SuppressWarnings({"deprecation", "unused"})
+  public boolean trySubmitAsync(IdeaLoggingEvent[] events, String info, Component parent, Consumer<SubmittedReportInfo> consumer) {
+    submitAsync(events, info, parent, consumer);
     return true;
+  }
+
+  /** @deprecated implement {@link #submit(IdeaLoggingEvent[], String, Component, Consumer)} (to be removed in IDEA 16) */
+  @SuppressWarnings({"deprecation", "unused"})
+  public void submitAsync(IdeaLoggingEvent[] events, String info, Component parent, Consumer<SubmittedReportInfo> consumer) {
+    consumer.consume(submit(events, parent));
+  }
+
+  /** @deprecated implement {@link #submit(IdeaLoggingEvent[], String, Component, Consumer)} (to be removed in IDEA 16) */
+  @SuppressWarnings({"deprecation", "unused"})
+  public SubmittedReportInfo submit(IdeaLoggingEvent[] events, Component parent) {
+    throw new UnsupportedOperationException("Deprecated API called");
   }
 }

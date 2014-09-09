@@ -904,38 +904,37 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     private boolean reportMessage(final AbstractMessage logMessage, final boolean dialogClosed) {
       final ErrorReportSubmitter submitter = getSubmitter(logMessage.getThrowable());
+      if (submitter == null) return false;
 
-      if (submitter != null) {
-        logMessage.setSubmitting(true);
-        if (!dialogClosed) {
-          updateControls();
-        }
-        Container parentComponent;
-        if (dialogClosed) {
-          IdeFrame ideFrame = UIUtil.getParentOfType(IdeFrame.class, getContentPane());
-          parentComponent = ideFrame.getComponent();
-        }
-        else {
-          parentComponent = getContentPane();
-        }
-        return submitter.trySubmitAsync(getEvents(logMessage), logMessage.getAdditionalInfo(), parentComponent,
-                                        new Consumer<SubmittedReportInfo>() {
-                                          @Override
-                                          public void consume(final SubmittedReportInfo submittedReportInfo) {
-                                            logMessage.setSubmitting(false);
-                                            logMessage.setSubmitted(submittedReportInfo);
-                                            ApplicationManager.getApplication().invokeLater(new Runnable() {
-                                              @Override
-                                              public void run() {
-                                                if (!dialogClosed) {
-                                                  updateOnSubmit();
-                                                }
-                                              }
-                                            });
-                                          }
-                                        });
+      logMessage.setSubmitting(true);
+      if (!dialogClosed) {
+        updateControls();
       }
-      return false;
+      Container parentComponent;
+      if (dialogClosed) {
+        IdeFrame ideFrame = UIUtil.getParentOfType(IdeFrame.class, getContentPane());
+        parentComponent = ideFrame.getComponent();
+      }
+      else {
+        parentComponent = getContentPane();
+      }
+
+      return submitter.submit(
+        getEvents(logMessage), logMessage.getAdditionalInfo(), parentComponent, new Consumer<SubmittedReportInfo>() {
+          @Override
+          public void consume(final SubmittedReportInfo submittedReportInfo) {
+            logMessage.setSubmitting(false);
+            logMessage.setSubmitted(submittedReportInfo);
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                if (!dialogClosed) {
+                  updateOnSubmit();
+                }
+              }
+            });
+          }
+        });
     }
 
     private IdeaLoggingEvent[] getEvents(final AbstractMessage logMessage) {

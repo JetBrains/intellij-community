@@ -40,6 +40,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -56,16 +57,10 @@ public class ITNReporter extends ErrorReportSubmitter {
   }
 
   @Override
-  public SubmittedReportInfo submit(IdeaLoggingEvent[] events, Component parentComponent) {
-    // obsolete API
-    return new SubmittedReportInfo(null, "0", SubmittedReportInfo.SubmissionStatus.FAILED);
-  }
-
-  @Override
-  public boolean trySubmitAsync(IdeaLoggingEvent[] events,
-                                String additionalInfo,
-                                Component parentComponent,
-                                Consumer<SubmittedReportInfo> consumer) {
+  public boolean submit(@NotNull IdeaLoggingEvent[] events,
+                        String additionalInfo,
+                        @NotNull Component parentComponent,
+                        @NotNull Consumer<SubmittedReportInfo> consumer) {
     ErrorBean errorBean = new ErrorBean(events[0].getThrowable(), IdeaLogger.ourLastActionId);
     return doSubmit(events[0], parentComponent, consumer, errorBean, additionalInfo);
   }
@@ -85,11 +80,9 @@ public class ITNReporter extends ErrorReportSubmitter {
     final DataContext dataContext = DataManager.getInstance().getDataContext(parentComponent);
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
 
-    final ErrorReportConfigurable errorReportConfigurable = ErrorReportConfigurable.getInstance();
-    if (!errorReportConfigurable.KEEP_ITN_PASSWORD &&
-        !StringUtil.isEmpty(errorReportConfigurable.ITN_LOGIN) &&
-        StringUtil.isEmpty(errorReportConfigurable.getPlainItnPassword())) {
-      final JetBrainsAccountDialog dlg = new JetBrainsAccountDialog(parentComponent);
+    ErrorReportConfigurable settings = ErrorReportConfigurable.getInstance();
+    if (!settings.KEEP_ITN_PASSWORD && !StringUtil.isEmpty(settings.ITN_LOGIN) && StringUtil.isEmpty(settings.getPlainItnPassword())) {
+      JetBrainsAccountDialog dlg = new JetBrainsAccountDialog(parentComponent);
       dlg.show();
       if (!dlg.isOK()) {
         return false;
@@ -116,18 +109,16 @@ public class ITNReporter extends ErrorReportSubmitter {
     }
 
     Object data = event.getData();
-
     if (data instanceof AbstractMessage) {
       errorBean.setAssigneeId(((AbstractMessage)data).getAssigneeId());
     }
-
     if (data instanceof LogMessageEx) {
       errorBean.setAttachments(((LogMessageEx)data).getAttachments());
     }
 
-    String login = errorReportConfigurable.ITN_LOGIN;
-    String password = errorReportConfigurable.getPlainItnPassword();
-    if (login.trim().length() == 0 && password.trim().length() == 0) {
+    String login = settings.ITN_LOGIN;
+    String password = settings.getPlainItnPassword();
+    if (StringUtil.isEmptyOrSpaces(login) && StringUtil.isEmptyOrSpaces(password)) {
       login = "idea_anonymous";
       password = "guest";
     }
@@ -135,8 +126,7 @@ public class ITNReporter extends ErrorReportSubmitter {
     ITNProxy.sendError(project, login, password, errorBean, new Consumer<Integer>() {
       @Override
       public void consume(Integer threadId) {
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        previousExceptionThreadId = threadId;
+        updatePreviousThreadId(threadId);
         String url = ITNProxy.getBrowseUrl(threadId);
         String linkText = String.valueOf(threadId);
         final SubmittedReportInfo reportInfo = new SubmittedReportInfo(url, linkText, SubmittedReportInfo.SubmissionStatus.NEW_ISSUE);
@@ -175,10 +165,10 @@ public class ITNReporter extends ErrorReportSubmitter {
             if (e instanceof UpdateAvailableException) {
               String message = DiagnosticBundle.message("error.report.new.eap.build.message", e.getMessage());
               showMessageDialog(parentComponent, project, message, CommonBundle.getWarningTitle(), Messages.getWarningIcon());
-              callback.consume(new SubmittedReportInfo(null, "0", SubmittedReportInfo.SubmissionStatus.FAILED));
+              callback.consume(new SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED));
             }
             else if (showYesNoDialog(parentComponent, project, msg, ReportMessages.ERROR_REPORT, Messages.getErrorIcon()) != Messages.YES) {
-              callback.consume(new SubmittedReportInfo(null, "0", SubmittedReportInfo.SubmissionStatus.FAILED));
+              callback.consume(new SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED));
             }
             else {
               if (e instanceof NoSuchEAPUserException) {
@@ -203,6 +193,10 @@ public class ITNReporter extends ErrorReportSubmitter {
       }
     });
     return true;
+  }
+
+  private static void updatePreviousThreadId(Integer threadId) {
+    previousExceptionThreadId = threadId;
   }
 
   private static void showMessageDialog(Component parentComponent, Project project, String message, String title, Icon icon) {
