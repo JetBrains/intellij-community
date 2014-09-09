@@ -69,21 +69,14 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
   private void revalidateSingleRowCheckbox() {
     final int i = ((Integer)myEditorTabPlacement.getSelectedItem()).intValue();
 
-    if (i == UISettings.TABS_NONE) {
-      myHideKnownExtensions.setEnabled(false);
-      myScrollTabLayoutInEditorCheckBox.setEnabled(false);
-      myCbModifiedTabsMarkedWithAsterisk.setEnabled(false);
-      myShowTabsTooltipsCheckBox.setEnabled(false);
-      myShowCloseButtonOnCheckBox.setEnabled(false);
-      myShowDirectoryInTabCheckBox.setEnabled(false);
-    } else {
-      myHideKnownExtensions.setEnabled(true);
-      myScrollTabLayoutInEditorCheckBox.setEnabled(true);
-      myCbModifiedTabsMarkedWithAsterisk.setEnabled(true);
-      myShowTabsTooltipsCheckBox.setEnabled(true);
-      myShowCloseButtonOnCheckBox.setEnabled(true);
-      myShowDirectoryInTabCheckBox.setEnabled(true);
-    }
+    boolean none = i == UISettings.TABS_NONE;
+    myHideKnownExtensions.setEnabled(!none);
+    myScrollTabLayoutInEditorCheckBox.setEnabled(!none);
+    myCbModifiedTabsMarkedWithAsterisk.setEnabled(!none);
+    myShowTabsTooltipsCheckBox.setEnabled(!none);
+    myShowCloseButtonOnCheckBox.setEnabled(!none);
+    myShowDirectoryInTabCheckBox.setEnabled(!none);
+    myTabTitleLimitField.setEnabled(!none);
 
     if (SwingConstants.TOP == i) {
       myScrollTabLayoutInEditorCheckBox.setEnabled(true);
