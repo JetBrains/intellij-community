@@ -46,6 +46,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class TestTreeView extends Tree implements DataProvider, CopyProvider {
+  public static final DataKey<TestFrameworkRunningModel> MODEL_DATA_KEY = DataKey.create("testFrameworkModel.dataId");
+
   private TestFrameworkRunningModel myModel;
 
   protected abstract TreeCellRenderer getRenderer(TestConsoleProperties properties);
@@ -127,7 +129,11 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
         return locations.isEmpty() ? null : locations.toArray(new Location[locations.size()]);
       }
     }
-    
+
+    if (MODEL_DATA_KEY.is(dataId)) {
+      return myModel;
+    }
+
     final TreePath selectionPath = getSelectionPath();
     if (selectionPath == null) return null;
     final AbstractTestProxy testProxy = getSelectedTest(selectionPath);
