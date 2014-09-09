@@ -208,11 +208,7 @@ public abstract class TestObject implements JavaCommandLine {
                               : ProjectRootManager.getInstance(myEnvironment.getProject()).getProjectSdk());
     }
 
-    myJavaParameters.getClassPath().add(JavaSdkUtil.getIdeaRtJarPath());
-    myJavaParameters.getClassPath().add(PathUtil.getJarPathForClass(JUnitStarter.class));
-    if (Registry.is("junit_sm_runner")) {
-      myJavaParameters.getClassPath().add(PathUtil.getJarPathForClass(ServiceMessageTypes.class));
-    }
+    configureAdditionalClasspath(myJavaParameters);
     myJavaParameters.getProgramParametersList().add(JUnitStarter.IDE_VERSION + JUnitStarter.VERSION);
     if (!StringUtil.isEmptyOrSpaces(parameters)) {
       myJavaParameters.getProgramParametersList().add("@name" + parameters);
@@ -247,6 +243,14 @@ public abstract class TestObject implements JavaCommandLine {
       catch (IOException e) {
         LOG.error(e);
       }
+    }
+  }
+
+  private void configureAdditionalClasspath(JavaParameters javaParameters) {
+    javaParameters.getClassPath().add(JavaSdkUtil.getIdeaRtJarPath());
+    javaParameters.getClassPath().add(PathUtil.getJarPathForClass(JUnitStarter.class));
+    if (Registry.is("junit_sm_runner")) {
+      javaParameters.getClassPath().add(PathUtil.getJarPathForClass(ServiceMessageTypes.class));
     }
   }
 
@@ -429,10 +433,7 @@ public abstract class TestObject implements JavaCommandLine {
         throw new CantRunException("'" + actionName + "' is disabled when per-module working directory is configured.<br/>" +
                                    "Please specify single working directory, or change test scope to single module.");
       }
-      return;
-    }
-
-    if (getRunnerSettings() != null) {
+    } else if (getRunnerSettings() != null) {
       final String actionName = executor.getActionName();
       throw new CantRunException(actionName + " is disabled in fork mode.<br/>Please change fork mode to &lt;none&gt; to " + actionName.toLowerCase(Locale.ENGLISH) + ".");
     }
@@ -467,13 +468,18 @@ public abstract class TestObject implements JavaCommandLine {
 
   protected <T> void addClassesListToJavaParameters(Collection<? extends T> elements, Function<T, String> nameFunction, String packageName,
                                                 boolean createTempFile,
-                                                boolean junit4) {
+                                                boolean junit4) throws CantRunException {
     try {
       if (createTempFile) {
         createTempFiles();
       }
 
-      final Map<String, List<String>> perModule = forkPerModule() ? new TreeMap<String, List<String>>() : null;
+      final Map<Module, List<String>> perModule = forkPerModule() ? new TreeMap<Module, List<String>>(new Comparator<Module>() {
+        @Override
+        public int compare(Module o1, Module o2) {
+          return StringUtil.compare(o1.getName(), o2.getName(), true);
+        }
+      }) : null;
       final PrintWriter writer = new PrintWriter(myTempFile, CharsetToolkit.UTF8);
       try {
         writer.println(packageName);
@@ -491,11 +497,10 @@ public abstract class TestObject implements JavaCommandLine {
           if (perModule != null && element instanceof PsiElement) {
             final Module module = ModuleUtilCore.findModuleForPsiElement((PsiElement)element);
             if (module != null) {
-              final String moduleDir = PathMacroUtil.getModuleDir(module.getModuleFilePath());
-              List<String> list = perModule.get(moduleDir);
+              List<String> list = perModule.get(module);
               if (list == null) {
                 list = new ArrayList<String>();
-                perModule.put(moduleDir, list);
+                perModule.put(module, list);
               }
               list.add(name);
             }
@@ -523,9 +528,16 @@ public abstract class TestObject implements JavaCommandLine {
         final PrintWriter wWriter = new PrintWriter(myWorkingDirsFile, CharsetToolkit.UTF8);
         try {
           wWriter.println(packageName);
-          for (String workingDir : perModule.keySet()) {
-            wWriter.println(workingDir);
-            final List<String> classNames = perModule.get(workingDir);
+          for (Module module : perModule.keySet()) {
+            final String moduleDir = PathMacroUtil.getModuleDir(module.getModuleFilePath());
+            wWriter.println(moduleDir);
+
+            final JavaParameters parameters = new JavaParameters();
+            JavaParametersUtil.configureModule(module, parameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
+                                               myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null);
+            configureAdditionalClasspath(parameters);
+            wWriter.println(parameters.getClassPath().getPathsString());
+            final List<String> classNames = perModule.get(module);
             wWriter.println(classNames.size());
             for (String className : classNames) {
               wWriter.println(className);

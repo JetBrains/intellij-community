@@ -190,7 +190,11 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   private void doAddContent(@NotNull final Content content, final int index) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (myContents.contains(content)) return;
+    if (myContents.contains(content)) {
+      myContents.remove(content);
+      myContents.add(index == -1 ? myContents.size() : index, content);
+      return;
+    }
 
     ((ContentImpl)content).setManager(this);
     final int insertIndex = index == -1 ? myContents.size() : index;

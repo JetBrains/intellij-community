@@ -21,6 +21,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -60,14 +63,7 @@ public class SingleClassesTest {
       assertTrue(classFile.isFile());
 
       ConsoleDecompiler decompiler = fixture.getDecompiler();
-      decompiler.addSpace(classFile, true);
-      File[] innerClasses = classFile.getParentFile().listFiles(new FilenameFilter() {
-        @Override
-        public boolean accept(File dir, String name) {
-          return name.matches(testName + "\\$.+\\.class");
-        }
-      });
-      for (File inner : innerClasses) {
+      for (File inner : collectClasses(classFile)) {
         decompiler.addSpace(inner, true);
       }
 
@@ -86,6 +82,25 @@ public class SingleClassesTest {
     catch (Exception e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private static List<File> collectClasses(File classFile) {
+    List<File> files = new ArrayList<File>();
+    files.add(classFile);
+
+    File parent = classFile.getParentFile();
+    if (parent != null) {
+      final String pattern = classFile.getName().replace(".class", "") + "\\$.+\\.class";
+      File[] inner = parent.listFiles(new FilenameFilter() {
+        @Override
+        public boolean accept(File dir, String name) {
+          return name.matches(pattern);
+        }
+      });
+      if (inner != null) Collections.addAll(files, inner);
+    }
+
+    return files;
   }
 
   private static String getContent(File file) throws IOException {

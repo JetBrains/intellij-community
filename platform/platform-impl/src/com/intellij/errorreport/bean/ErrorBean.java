@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,9 @@
 package com.intellij.errorreport.bean;
 
 import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NonNls;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.util.Collections;
 import java.util.List;
 
@@ -41,11 +40,7 @@ public class ErrorBean {
   public ErrorBean(Throwable throwable, String lastAction) {
     if (throwable != null) {
       message = throwable.getMessage();
-
-      ByteArrayOutputStream stream = new ByteArrayOutputStream();
-      //noinspection IOResourceOpenedButNotSafelyClosed
-      throwable.printStackTrace(new PrintStream(stream, true));
-      stackTrace = stream.toString();
+      stackTrace = ExceptionUtil.getThrowableText(throwable);
     }
     this.lastAction = lastAction;
   }

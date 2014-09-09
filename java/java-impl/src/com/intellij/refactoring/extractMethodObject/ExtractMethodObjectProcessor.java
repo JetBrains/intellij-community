@@ -149,7 +149,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 
-  protected void performRefactoring(final UsageInfo[] usages) {
+  public void performRefactoring(final UsageInfo[] usages) {
     try {
       if (isCreateInnerClass()) {
         myInnerClass = (PsiClass)getMethod().getContainingClass().add(myElementFactory.createClass(getInnerClassName()));
@@ -392,19 +392,14 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
 
   void runChangeSignature() {
     if (myCopyMethodToInner != null) {
-      ApplicationManager.getApplication().runWriteAction(myCopyMethodToInner);
+      myCopyMethodToInner.run();
     }
     if (myChangeReturnType) {
-      final Runnable runnable = new Runnable() {
-        public void run() {
-          final PsiTypeElement typeElement = ((PsiLocalVariable)((PsiDeclarationStatement)JavaPsiFacade.getElementFactory(myProject)
-            .createStatementFromText(myInnerClassName + " l =null;", myInnerClass)).getDeclaredElements()[0]).getTypeElement();
-          final PsiTypeElement innerMethodReturnTypeElement = myInnerMethod.getReturnTypeElement();
-          LOG.assertTrue(innerMethodReturnTypeElement != null);
-          innerMethodReturnTypeElement.replace(typeElement);
-        }
-      };
-      ApplicationManager.getApplication().runWriteAction(runnable);
+      final PsiTypeElement typeElement = ((PsiLocalVariable)((PsiDeclarationStatement)JavaPsiFacade.getElementFactory(myProject)
+        .createStatementFromText(myInnerClassName + " l =null;", myInnerClass)).getDeclaredElements()[0]).getTypeElement();
+      final PsiTypeElement innerMethodReturnTypeElement = myInnerMethod.getReturnTypeElement();
+      LOG.assertTrue(innerMethodReturnTypeElement != null);
+      innerMethodReturnTypeElement.replace(typeElement);
     }
   }
 

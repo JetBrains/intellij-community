@@ -17,27 +17,30 @@ package com.intellij.refactoring.extractMethodObject;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.extractMethod.AbstractExtractDialog;
-import com.intellij.refactoring.extractMethod.ControlFlowWrapper;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
-import com.intellij.refactoring.introduceField.ElementToWorkOn;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.VariableData;
+import com.intellij.refactoring.util.duplicates.DuplicatesImpl;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -141,7 +144,32 @@ public class ExtractLightMethodObjectHandler {
     };
     extractMethodObjectProcessor.getExtractProcessor().setShowErrorDialogs(false);
 
-    ExtractMethodObjectHandler.extractMethodObject(project, null, extractMethodObjectProcessor);
+    final ExtractMethodObjectProcessor.MyExtractMethodProcessor extractProcessor = extractMethodObjectProcessor.getExtractProcessor();
+    if (extractProcessor.prepare() && CommonRefactoringUtil
+      .checkReadOnlyStatus(project, extractProcessor.getTargetClass().getContainingFile())) {
+      if (extractProcessor.showDialog()) {
+        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+          public void run() {
+            try {
+              extractProcessor.doExtract();
+
+              final UsageInfo[] usages = extractMethodObjectProcessor.findUsages();
+              extractMethodObjectProcessor.performRefactoring(usages);
+              extractMethodObjectProcessor.runChangeSignature();
+            }
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
+            }
+            if (extractMethodObjectProcessor.isCreateInnerClass()) {
+              extractMethodObjectProcessor.changeInstanceAccess(project);
+            }
+            final PsiElement method = extractMethodObjectProcessor.getMethod();
+            LOG.assertTrue(method != null);
+            method.delete();
+          }
+        }, ExtractMethodObjectProcessor.REFACTORING_NAME, ExtractMethodObjectProcessor.REFACTORING_NAME);
+      }
+    }
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 

@@ -34,19 +34,21 @@ import java.util.List;
 
 /**
  * Listens to .git service files changes and updates {@link GitRepository} when needed.
- * @author Kirill Likhodedov
  */
 final class GitRepositoryUpdater implements Disposable, BulkFileListener {
+
+  @NotNull private final GitRepository myRepository;
   @NotNull private final GitRepositoryFiles myRepositoryFiles;
   @Nullable private final MessageBusConnection myMessageBusConnection;
   @NotNull private final QueueProcessor<Object> myUpdateQueue;
   @NotNull private final Object DUMMY_UPDATE_OBJECT = new Object();
   @Nullable private final VirtualFile myRemotesDir;
   @Nullable private final VirtualFile myHeadsDir;
+  @Nullable private final VirtualFile myTagsDir;
   @Nullable private final LocalFileSystem.WatchRequest myWatchRequest;
 
-
   GitRepositoryUpdater(@NotNull GitRepository repository) {
+    myRepository = repository;
     VirtualFile gitDir = repository.getGitDir();
     myWatchRequest = LocalFileSystem.getInstance().addRootToWatch(gitDir.getPath(), true);
 
@@ -54,6 +56,7 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
     RepositoryUtil.visitVcsDirVfs(gitDir, GitRepositoryFiles.getSubDirRelativePaths());
     myHeadsDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsHeadsPath());
     myRemotesDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsRemotesPath());
+    myTagsDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsTagsPath());
 
     Project project = repository.getProject();
     myUpdateQueue = new QueueProcessor<Object>(new RepositoryUtil.Updater(repository), project.getDisposed());
@@ -65,8 +68,6 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
       myMessageBusConnection = null;
     }
   }
-
-
 
   @Override
   public void dispose() {
@@ -92,19 +93,16 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
     boolean packedRefsChanged = false;
     boolean rebaseFileChanged = false;
     boolean mergeFileChanged = false;
+    boolean tagChanged = false;
     for (VFileEvent event : events) {
-      String filePath = event.getPath();
-      if (filePath == null) {
-        continue;
-      }
-      filePath = GitFileUtils.stripFileProtocolPrefix(filePath);
+      String filePath = GitFileUtils.stripFileProtocolPrefix(event.getPath());
       if (myRepositoryFiles.isConfigFile(filePath)) {
         configChanged = true;
       } else if (myRepositoryFiles.isHeadFile(filePath)) {
         headChanged = true;
       } else if (myRepositoryFiles.isBranchFile(filePath)) {
         // it is also possible, that a local branch with complex name ("folder/branch") was created => the folder also to be watched.
-        branchFileChanged = true;
+          branchFileChanged = true;
         RepositoryUtil.visitAllChildrenRecursively(myHeadsDir);
       } else if (myRepositoryFiles.isRemoteBranchFile(filePath)) {
         // it is possible, that a branch from a new remote was fetch => we need to add new remote folder to the VFS
@@ -116,11 +114,17 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
         rebaseFileChanged = true;
       } else if (myRepositoryFiles.isMergeFile(filePath)) {
         mergeFileChanged = true;
+      } else if (myRepositoryFiles.isTagFile(filePath)) {
+        RepositoryUtil.visitAllChildrenRecursively(myTagsDir);
+        tagChanged = true;
       }
     }
 
     if (headChanged || configChanged || branchFileChanged || packedRefsChanged || rebaseFileChanged || mergeFileChanged) {
       myUpdateQueue.add(DUMMY_UPDATE_OBJECT);
+    }
+    else if (tagChanged) {
+      myRepository.getProject().getMessageBus().syncPublisher(GitRepository.GIT_REPO_CHANGE).repositoryChanged(myRepository);
     }
   }
 

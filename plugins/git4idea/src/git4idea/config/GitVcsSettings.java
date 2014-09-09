@@ -66,6 +66,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public String RECENT_COMMON_BRANCH = null;
     public boolean AUTO_COMMIT_ON_CHERRY_PICK = false;
     public boolean WARN_ABOUT_CRLF = true;
+    public boolean WARN_ABOUT_DETACHED_HEAD = true;
     public GitResetMode RESET_MODE = null;
   }
 
@@ -181,6 +182,14 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
 
   public void setWarnAboutCrlf(boolean warn) {
     myState.WARN_ABOUT_CRLF = warn;
+  }
+
+  public boolean warnAboutDetachedHead() {
+    return myState.WARN_ABOUT_DETACHED_HEAD;
+  }
+
+  public void setWarnAboutDetachedHead(boolean warn) {
+    myState.WARN_ABOUT_DETACHED_HEAD = warn;
   }
 
   @Nullable
