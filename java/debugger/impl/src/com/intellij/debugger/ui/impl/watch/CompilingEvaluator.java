@@ -51,9 +51,9 @@ public class CompilingEvaluator implements ExpressionEvaluator {
   private final PsiCodeFragment myCodeFragment;
   private final PsiElement myPsiContext;
   private final ExtractLightMethodObjectHandler.ExtractedData myData;
+  private final EvaluationDescriptor myDescriptor;
 
   public static Key<ExtractLightMethodObjectHandler.ExtractedData> COMPILING_EVALUATOR_DATA = new Key<ExtractLightMethodObjectHandler.ExtractedData>("COMPILING_EVALUATOR_DATA");
-  private final EvaluationDescriptor myDescriptor;
 
   public CompilingEvaluator(TextWithImports text,
                             PsiCodeFragment codeFragment,
@@ -161,7 +161,11 @@ public class CompilingEvaluator implements ExpressionEvaluator {
     return reference;
   }
 
-  private static final String GEN_CLASS_NAME = "Test";
+  public static String getGeneratedClassName() {
+    return GEN_CLASS_NAME;
+  }
+
+  private static final String GEN_CLASS_NAME = "GeneratedEvaluationClass";
   private static final String GEN_CLASS_PACKAGE = "dummy";
   private static final String GEN_CLASS_FULL_NAME = GEN_CLASS_PACKAGE + '.' + GEN_CLASS_NAME;
   private static final String GEN_METHOD_NAME = "invoke";

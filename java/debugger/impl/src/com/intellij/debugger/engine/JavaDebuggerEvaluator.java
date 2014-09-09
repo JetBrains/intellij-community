@@ -74,7 +74,7 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator {
         PsiFile psiFile = element.getContainingFile();
         PsiCodeFragment fragment = descriptor.createCodeFragment(element);
         ExtractLightMethodObjectHandler.ExtractedData data =
-          ExtractLightMethodObjectHandler.extractLightMethodObject(project, psiFile, fragment, "test");
+          ExtractLightMethodObjectHandler.extractLightMethodObject(project, psiFile, fragment, CompilingEvaluator.getGeneratedClassName());
         descriptor.putUserData(CompilingEvaluator.COMPILING_EVALUATOR_DATA, data);
       }
       catch (Exception e) {
