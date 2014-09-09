@@ -72,12 +72,11 @@ import java.util.List;
 /**
  * @author vlan
  */
-@SuppressWarnings({"UnusedDeclaration", "FieldAccessedSynchronizedAndUnsynchronized"})
+@SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
 public class PyPackageManagerImpl extends PyPackageManager {
   private static final Logger LOG = Logger.getInstance(PyPackageManagerImpl.class);
 
   public static final int OK = 0;
-  public static final int ERROR_WRONG_USAGE = 1;
   public static final int ERROR_NO_PIP = 2;
   public static final int ERROR_NO_SETUPTOOLS = 3;
   public static final int ERROR_INVALID_SDK = -1;
@@ -86,7 +85,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
   public static final int ERROR_INVALID_OUTPUT = -4;
   public static final int ERROR_ACCESS_DENIED = -5;
   public static final int ERROR_EXECUTION = -6;
-  public static final int ERROR_INTERRUPTED = -7;
 
   public static final int ERROR_VAGRANT_NOT_LAUNCHED = 101;
   public static final int ERROR_REMOTE_ACCESS = 102;
@@ -429,13 +427,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
       }
     }
     return path;
-  }
-
-  public static void deleteVirtualEnv(@NotNull String sdkHome) throws PyExternalProcessException {
-    final File root = PythonSdkType.getVirtualEnvRoot(sdkHome);
-    if (root != null) {
-      FileUtil.delete(root);
-    }
   }
 
   @Nullable
