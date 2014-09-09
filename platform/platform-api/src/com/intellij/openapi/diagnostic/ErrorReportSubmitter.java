@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,12 +49,12 @@ public abstract class ErrorReportSubmitter implements PluginAware {
   public abstract String getReportActionText();
 
   /**
-   * This method is called whenever fatal error (aka exception) in plugin code had happened and user decided to report this problem to
-   * plugin vendor.
-   * @param events sequence of the fatal error descriptors. Fatal errors that happened immediately one after another most probably caused
-   * by first one that happened so it's a common practice to submit only first one. Array passed is guaranteed to have at least one element.
+   * This method is called whenever an exception in a plugin code had happened and user decided to report a problem to the plugin vendor.
+   *
+   * @param events          a sequence of error descriptors. Fatal errors that happened immediately one after another most probably caused
+   *                        by first one that happened so it's a common practice to submit only first one. Array passed is guaranteed to have at least one element.
    * @param parentComponent one usually wants to show up a dialog asking user for additional details and probably authentication info.
-   * parentComponent parameter is passed so dialog that would come up would be properly aligned with its parent dialog (IDE Fatal Errors).
+   *                        parentComponent parameter is passed so dialog that would come up would be properly aligned with its parent dialog (IDE Fatal Errors).
    * @return submission result status.
    */
   public abstract SubmittedReportInfo submit(IdeaLoggingEvent[] events, Component parentComponent);
@@ -63,7 +63,8 @@ public abstract class ErrorReportSubmitter implements PluginAware {
                           String additionalInfo,
                           Component parentComponent,
                           Consumer<SubmittedReportInfo> consumer) {
-    consumer.consume(submit(events, parentComponent));
+    SubmittedReportInfo reportInfo = submit(events, parentComponent);
+    consumer.consume(reportInfo);
   }
 
   public boolean trySubmitAsync(IdeaLoggingEvent[] events,

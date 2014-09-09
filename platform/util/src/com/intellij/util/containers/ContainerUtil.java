@@ -88,6 +88,12 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
+  public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(int capacity) {
+    return ContainerUtilRt.newLinkedHashMap(capacity);
+  }
+
+  @NotNull
+  @Contract(pure=true)
   public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(@NotNull Map<K, V> map) {
     return ContainerUtilRt.newLinkedHashMap(map);
   }

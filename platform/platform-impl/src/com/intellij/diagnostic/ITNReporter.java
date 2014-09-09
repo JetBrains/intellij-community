@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 package com.intellij.diagnostic;
 
 import com.intellij.CommonBundle;
-import com.intellij.errorreport.ErrorReportSender;
 import com.intellij.errorreport.bean.ErrorBean;
 import com.intellij.errorreport.error.InternalEAPException;
 import com.intellij.errorreport.error.NoSuchEAPUserException;
 import com.intellij.errorreport.error.UpdateAvailableException;
+import com.intellij.errorreport.itn.ITNProxy;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
@@ -32,6 +32,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.SubmittedReportInfo;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
@@ -39,7 +40,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -49,13 +49,13 @@ import java.awt.*;
  */
 public class ITNReporter extends ErrorReportSubmitter {
   private static int previousExceptionThreadId = 0;
-  private static boolean wasException = false;
-  @NonNls private static final String URL_HEADER = "http://www.intellij.net/tracker/idea/viewSCR?publicId=";
 
+  @Override
   public String getReportActionText() {
     return DiagnosticBundle.message("error.report.to.jetbrains.action");
   }
 
+  @Override
   public SubmittedReportInfo submit(IdeaLoggingEvent[] events, Component parentComponent) {
     // obsolete API
     return new SubmittedReportInfo(null, "0", SubmittedReportInfo.SubmissionStatus.FAILED);
@@ -63,38 +63,25 @@ public class ITNReporter extends ErrorReportSubmitter {
 
   @Override
   public boolean trySubmitAsync(IdeaLoggingEvent[] events,
-                          String additionalInfo,
-                          Component parentComponent,
-                          Consumer<SubmittedReportInfo> consumer) {
-    return sendError(events[0], additionalInfo, parentComponent, consumer);
+                                String additionalInfo,
+                                Component parentComponent,
+                                Consumer<SubmittedReportInfo> consumer) {
+    ErrorBean errorBean = new ErrorBean(events[0].getThrowable(), IdeaLogger.ourLastActionId);
+    return doSubmit(events[0], parentComponent, consumer, errorBean, additionalInfo);
   }
 
   /**
-   * Could be used to enable error reporting even in release versions from non-internal mode.
-   * @return false by default.
+   * Used to enable error reporting even in release versions.
    */
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
   public boolean showErrorInRelease(IdeaLoggingEvent event) {
     return false;
   }
 
-  /**
-     * @noinspection ThrowablePrintStackTrace
-     */
-  private static boolean sendError(IdeaLoggingEvent event,
-                                String additionalInfo,
-                                final Component parentComponent,
-                                final Consumer<SubmittedReportInfo> callback) {
-    ErrorBean errorBean = new ErrorBean(event.getThrowable(), IdeaLogger.ourLastActionId);
-
-    return doSubmit(event, parentComponent, callback, errorBean, additionalInfo);
-  }
-
   private static boolean doSubmit(final IdeaLoggingEvent event,
-                               final Component parentComponent,
-                               final Consumer<SubmittedReportInfo> callback,
-                               final ErrorBean errorBean,
-                               final String description) {
+                                  final Component parentComponent,
+                                  final Consumer<SubmittedReportInfo> callback,
+                                  final ErrorBean errorBean,
+                                  final String description) {
     final DataContext dataContext = DataManager.getInstance().getDataContext(parentComponent);
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
 
@@ -138,46 +125,40 @@ public class ITNReporter extends ErrorReportSubmitter {
       errorBean.setAttachments(((LogMessageEx)data).getAttachments());
     }
 
-    @NonNls String login = errorReportConfigurable.ITN_LOGIN;
-    @NonNls String password = errorReportConfigurable.getPlainItnPassword();
+    String login = errorReportConfigurable.ITN_LOGIN;
+    String password = errorReportConfigurable.getPlainItnPassword();
     if (login.trim().length() == 0 && password.trim().length() == 0) {
       login = "idea_anonymous";
       password = "guest";
     }
 
-    ErrorReportSender.sendError(project, login, password, errorBean, new Consumer<Integer>() {
-      @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
+    ITNProxy.sendError(project, login, password, errorBean, new Consumer<Integer>() {
       @Override
       public void consume(Integer threadId) {
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
         previousExceptionThreadId = threadId;
-        wasException = true;
-        final SubmittedReportInfo reportInfo = new SubmittedReportInfo(URL_HEADER + threadId, String.valueOf(threadId),
-                                                        SubmittedReportInfo.SubmissionStatus.NEW_ISSUE);
+        String url = ITNProxy.getBrowseUrl(threadId);
+        String linkText = String.valueOf(threadId);
+        final SubmittedReportInfo reportInfo = new SubmittedReportInfo(url, linkText, SubmittedReportInfo.SubmissionStatus.NEW_ISSUE);
         callback.consume(reportInfo);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
             StringBuilder text = new StringBuilder();
-            final String url = IdeErrorsDialog.getUrl(reportInfo, true);
-            IdeErrorsDialog.appendSubmissionInformation(reportInfo, text, url);
-            text.append(".");
-            if (reportInfo.getStatus() != SubmittedReportInfo.SubmissionStatus.FAILED) {
-              text.append("<br/>").append(DiagnosticBundle.message("error.report.gratitude"));
-            }
-
-            NotificationType type = reportInfo.getStatus() == SubmittedReportInfo.SubmissionStatus.FAILED
-                                    ? NotificationType.ERROR
-                                    : NotificationType.INFORMATION;
-            NotificationListener listener = url != null ? new NotificationListener.UrlOpeningListener(true) : null;
-            ReportMessages.GROUP.createNotification(ReportMessages.ERROR_REPORT,
-                                                    XmlStringUtil.wrapInHtml(text),
-                                                    type, listener).setImportant(false).notify(project);
+            IdeErrorsDialog.appendSubmissionInformation(reportInfo, text);
+            text.append('.').append("<br/>").append(DiagnosticBundle.message("error.report.gratitude"));
+            String content = XmlStringUtil.wrapInHtml(text);
+            ReportMessages.GROUP
+              .createNotification(ReportMessages.ERROR_REPORT, content, NotificationType.INFORMATION, NotificationListener.URL_OPENING_LISTENER)
+              .setImportant(false)
+              .notify(project);
           }
         });
       }
     }, new Consumer<Exception>() {
       @Override
       public void consume(final Exception e) {
+        Logger.getInstance(ITNReporter.class).info("reporting failed: " + e);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
@@ -192,9 +173,8 @@ public class ITNReporter extends ErrorReportSubmitter {
               msg = DiagnosticBundle.message("error.report.sending.failure");
             }
             if (e instanceof UpdateAvailableException) {
-              String message = DiagnosticBundle.message(
-                "error.report.new.eap.build.message", e.getMessage());
-                showMessageDialog(parentComponent, project, message, CommonBundle.getWarningTitle(), Messages.getWarningIcon());
+              String message = DiagnosticBundle.message("error.report.new.eap.build.message", e.getMessage());
+              showMessageDialog(parentComponent, project, message, CommonBundle.getWarningTitle(), Messages.getWarningIcon());
               callback.consume(new SubmittedReportInfo(null, "0", SubmittedReportInfo.SubmissionStatus.FAILED));
             }
             else if (showYesNoDialog(parentComponent, project, msg, ReportMessages.ERROR_REPORT, Messages.getErrorIcon()) != Messages.YES) {
@@ -228,7 +208,8 @@ public class ITNReporter extends ErrorReportSubmitter {
   private static void showMessageDialog(Component parentComponent, Project project, String message, String title, Icon icon) {
     if (parentComponent.isShowing()) {
       Messages.showMessageDialog(parentComponent, message, title, icon);
-    } else {
+    }
+    else {
       Messages.showMessageDialog(project, message, title, icon);
     }
   }
@@ -237,7 +218,8 @@ public class ITNReporter extends ErrorReportSubmitter {
   private static int showYesNoDialog(Component parentComponent, Project project, String message, String title, Icon icon) {
     if (parentComponent.isShowing()) {
       return Messages.showYesNoDialog(parentComponent, message, title, icon);
-    } else {
+    }
+    else {
       return Messages.showYesNoDialog(project, message, title, icon);
     }
   }
