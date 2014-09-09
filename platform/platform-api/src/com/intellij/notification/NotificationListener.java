@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public interface NotificationListener {
     protected abstract void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e);
   }
 
-  NotificationListener URL_OPENING_LISTENER = new UrlOpeningListener(false);
+  NotificationListener URL_OPENING_LISTENER = new UrlOpeningListener(true);
 
   class UrlOpeningListener extends Adapter {
     private final boolean myExpireNotification;

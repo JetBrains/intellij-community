@@ -25,7 +25,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.debugger.engine.evaluation.expression.AnonymousClassException;
+import com.intellij.debugger.engine.evaluation.expression.UnsupportedExpressionException;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.Modifier;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -78,8 +78,7 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
     try {
       final EvaluationContextImpl thisEvaluationContext = getEvaluationContext(evaluationContext);
 
-      ExpressionEvaluator evaluator;
-      final ExtractLightMethodObjectHandler.ExtractedData data = getUserData(CompilingEvaluator.COMPILING_EVALUATOR_DATA);
+      ExpressionEvaluator evaluator = null;
       try {
         evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject, new EvaluatingComputable<ExpressionEvaluator>() {
           public ExpressionEvaluator compute() throws EvaluateException {
@@ -89,7 +88,8 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
           }
         });
       }
-      catch (AnonymousClassException ex) {
+      catch (UnsupportedExpressionException ex) {
+        final ExtractLightMethodObjectHandler.ExtractedData data = getUserData(CompilingEvaluator.COMPILING_EVALUATOR_DATA);
         if (Registry.is("debugger.compiling.evaluator") && data != null) {
           evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject, new EvaluatingComputable<ExpressionEvaluator>() {
             public ExpressionEvaluator compute() throws EvaluateException {
@@ -98,7 +98,7 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
             }
           });
         }
-        else {
+        if (evaluator == null) {
           throw ex;
         }
       }

@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Roman.Chernyatchik
  */
-public class TestComparisionFailedState extends TestFailedState implements AbstractTestProxy.AssertEqualsDiffViewerProvider {
+public class TestComparisionFailedState extends TestFailedState implements AbstractTestProxy.AssertEqualsMultiDiffViewProvider {
   private final String myErrorMsgPresentation;
   private final String myStacktracePresentation;
   private DiffHyperlink myHyperlink;
@@ -76,5 +76,15 @@ public class TestComparisionFailedState extends TestFailedState implements Abstr
   @Override
   public String getActual() {
     return myHyperlink.getRight();
+  }
+
+  @Override
+  public void openMultiDiff(Project project, AbstractTestProxy.AssertEqualsDiffChain chain) {
+    myHyperlink.openMultiDiff(project, chain);
+  }
+
+  @Override
+  public String getFilePath() {
+    return myHyperlink.getFilePath();
   }
 }

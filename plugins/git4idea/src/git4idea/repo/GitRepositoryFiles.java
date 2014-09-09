@@ -45,6 +45,7 @@ public class GitRepositoryFiles {
   public static final String PACKED_REFS = "packed-refs";
   public static final String REFS_HEADS = "refs/heads";
   public static final String REFS_REMOTES = "refs/remotes";
+  public static final String REFS_TAGS = "refs/tags";
   public static final String SQUASH_MSG = "SQUASH_MSG";
 
   public static final String GIT_HEAD  = DOT_GIT + slash(HEAD);
@@ -64,6 +65,7 @@ public class GitRepositoryFiles {
   private final String myPackedRefsPath;
   private final String myRefsHeadsDirPath;
   private final String myRefsRemotesDirPath;
+  private final String myRefsTagsPath;
   private final String myCommitMessagePath;
   private final String myExcludePath;
 
@@ -85,6 +87,7 @@ public class GitRepositoryFiles {
     myRebaseMergePath = gitDirPath + slash(REBASE_MERGE);
     myPackedRefsPath = gitDirPath + slash(PACKED_REFS);
     myRefsHeadsDirPath = gitDirPath + slash(REFS_HEADS);
+    myRefsTagsPath = gitDirPath + slash(REFS_TAGS);
     myRefsRemotesDirPath = gitDirPath + slash(REFS_REMOTES);
     myExcludePath = gitDirPath + slash(INFO_EXCLUDE);
   }
@@ -99,17 +102,22 @@ public class GitRepositoryFiles {
    */
   @NotNull
   static Collection<String> getSubDirRelativePaths() {
-    return Arrays.asList(slash(REFS_HEADS), slash(REFS_REMOTES), slash(INFO));
+    return Arrays.asList(slash(REFS_HEADS), slash(REFS_REMOTES), slash(REFS_TAGS), slash(INFO));
   }
   
   @NotNull
   String getRefsHeadsPath() {
     return myRefsHeadsDirPath;
   }
-  
+
   @NotNull
   String getRefsRemotesPath() {
     return myRefsRemotesDirPath;
+  }
+
+  @NotNull
+  String getRefsTagsPath() {
+    return myRefsTagsPath;
   }
 
   /**
@@ -145,6 +153,13 @@ public class GitRepositoryFiles {
    */
   public boolean isRemoteBranchFile(String filePath) {
     return filePath.startsWith(myRefsRemotesDirPath);
+  }
+
+  /**
+   * .git/refs/tags/*
+   */
+  public boolean isTagFile(@NotNull String path) {
+    return path.startsWith(myRefsTagsPath);
   }
 
   /**

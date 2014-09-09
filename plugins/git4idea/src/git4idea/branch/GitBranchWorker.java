@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vfs.VfsUtil;
 import git4idea.GitCommit;
 import git4idea.GitExecutionException;
 import git4idea.GitPlatformFacade;
@@ -67,9 +68,9 @@ public final class GitBranchWorker {
   }
 
   public void createNewTag(@NotNull final String name, @NotNull final String reference, @NotNull final List<GitRepository> repositories) {
-    updateInfo(repositories);
     for (GitRepository repository : repositories) {
       myGit.createNewTag(repository, name, null, reference);
+      VfsUtil.markDirtyAndRefresh(true, true, false, repository.getGitDir());
     }
   }
 

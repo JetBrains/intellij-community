@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -563,9 +563,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     String url = null;
     if (message.isSubmitted()) {
-      final SubmittedReportInfo info = message.getSubmissionInfo();
-      url = getUrl(info, getSubmitter(throwable) instanceof ITNReporter);
-      appendSubmissionInformation(info, text, url);
+      SubmittedReportInfo info = message.getSubmissionInfo();
+      url = info.getURL();
+      appendSubmissionInformation(info, text);
       text.append(". ");
     }
     else if (message.isSubmitting()) {
@@ -578,33 +578,18 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     myInfoLabel.setHyperlinkTarget(url);
   }
 
-  public static void appendSubmissionInformation(SubmittedReportInfo info, StringBuilder out, @Nullable String url) {
+  public static void appendSubmissionInformation(SubmittedReportInfo info, StringBuilder out) {
     if (info.getStatus() == SubmittedReportInfo.SubmissionStatus.FAILED) {
       out.append(" ").append(DiagnosticBundle.message("error.list.message.submission.failed"));
     }
-    else {
-      if (info.getLinkText() != null) {
-        out.append(" ").append(DiagnosticBundle.message("error.list.message.submitted.as.link", url, info.getLinkText()));
-        if (info.getStatus() == SubmittedReportInfo.SubmissionStatus.DUPLICATE) {
-          out.append(" ").append(DiagnosticBundle.message("error.list.message.duplicate"));
-        }
-      }
-      else {
-        out.append(DiagnosticBundle.message("error.list.message.submitted"));
+    else if (info.getURL() != null && info.getLinkText() != null) {
+      out.append(" ").append(DiagnosticBundle.message("error.list.message.submitted.as.link", info.getURL(), info.getLinkText()));
+      if (info.getStatus() == SubmittedReportInfo.SubmissionStatus.DUPLICATE) {
+        out.append(" ").append(DiagnosticBundle.message("error.list.message.duplicate"));
       }
     }
-  }
-
-  @Nullable
-  public static String getUrl(SubmittedReportInfo info, boolean reportedToJetbrains) {
-    if (info.getStatus() == SubmittedReportInfo.SubmissionStatus.FAILED || info.getLinkText() == null) {
-      return null;
-    }
-    if (reportedToJetbrains) {
-      return "http://ea.jetbrains.com/browser/ea_reports/" + info.getLinkText();
-    }
     else {
-      return info.getURL();
+      out.append(DiagnosticBundle.message("error.list.message.submitted"));
     }
   }
 
@@ -919,38 +904,37 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     private boolean reportMessage(final AbstractMessage logMessage, final boolean dialogClosed) {
       final ErrorReportSubmitter submitter = getSubmitter(logMessage.getThrowable());
+      if (submitter == null) return false;
 
-      if (submitter != null) {
-        logMessage.setSubmitting(true);
-        if (!dialogClosed) {
-          updateControls();
-        }
-        Container parentComponent;
-        if (dialogClosed) {
-          IdeFrame ideFrame = UIUtil.getParentOfType(IdeFrame.class, getContentPane());
-          parentComponent = ideFrame.getComponent();
-        }
-        else {
-          parentComponent = getContentPane();
-        }
-        return submitter.trySubmitAsync(getEvents(logMessage), logMessage.getAdditionalInfo(), parentComponent,
-                                        new Consumer<SubmittedReportInfo>() {
-                                          @Override
-                                          public void consume(final SubmittedReportInfo submittedReportInfo) {
-                                            logMessage.setSubmitting(false);
-                                            logMessage.setSubmitted(submittedReportInfo);
-                                            ApplicationManager.getApplication().invokeLater(new Runnable() {
-                                              @Override
-                                              public void run() {
-                                                if (!dialogClosed) {
-                                                  updateOnSubmit();
-                                                }
-                                              }
-                                            });
-                                          }
-                                        });
+      logMessage.setSubmitting(true);
+      if (!dialogClosed) {
+        updateControls();
       }
-      return false;
+      Container parentComponent;
+      if (dialogClosed) {
+        IdeFrame ideFrame = UIUtil.getParentOfType(IdeFrame.class, getContentPane());
+        parentComponent = ideFrame.getComponent();
+      }
+      else {
+        parentComponent = getContentPane();
+      }
+
+      return submitter.submit(
+        getEvents(logMessage), logMessage.getAdditionalInfo(), parentComponent, new Consumer<SubmittedReportInfo>() {
+          @Override
+          public void consume(final SubmittedReportInfo submittedReportInfo) {
+            logMessage.setSubmitting(false);
+            logMessage.setSubmitted(submittedReportInfo);
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                if (!dialogClosed) {
+                  updateOnSubmit();
+                }
+              }
+            });
+          }
+        });
     }
 
     private IdeaLoggingEvent[] getEvents(final AbstractMessage logMessage) {

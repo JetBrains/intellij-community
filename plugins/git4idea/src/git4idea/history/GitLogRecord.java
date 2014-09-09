@@ -22,10 +22,13 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.commands.GitHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -130,12 +133,7 @@ class GitLogRecord {
 
   public Collection<String> getRefs() {
     final String decorate = myOptions.get(REF_NAMES);
-    final String[] refNames = parseRefNames(decorate);
-    final List<String> result = new ArrayList<String>(refNames.length);
-    for (String refName : refNames) {
-      result.add(shortBuffer(refName));
-    }
-    return result;
+    return parseRefNames(decorate);
   }
   /**
    * Returns the list of tags and the list of branches.
@@ -163,12 +161,23 @@ class GitLogRecord {
     return Pair.create(tags, branches);
   }*/
 
-  private static String[] parseRefNames(final String decorate) {
-    final int startParentheses = decorate.indexOf("(");
-    final int endParentheses = decorate.indexOf(")");
-    if ((startParentheses == -1) || (endParentheses == -1)) return ArrayUtil.EMPTY_STRING_ARRAY;
-    final String refs = decorate.substring(startParentheses + 1, endParentheses);
-    return refs.split(", ");
+  @NotNull
+  private static List<String> parseRefNames(@Nullable final String decoration) {
+    if (decoration == null) {
+      return ContainerUtil.emptyList();
+    }
+    final int startParentheses = decoration.indexOf("(");
+    final int endParentheses = decoration.indexOf(")");
+    if ((startParentheses == -1) || (endParentheses == -1)) return Collections.emptyList();
+    String refs = decoration.substring(startParentheses + 1, endParentheses);
+    String[] names = refs.split(", ");
+    return ContainerUtil.map(names, new Function<String, String>() {
+      @Override
+      public String fun(String item) {
+        int colon = item.indexOf(':');
+        return shortBuffer(colon > 0 ? item.substring(colon + 1).trim() : item);
+      }
+    });
   }
 
   private static String shortBuffer(String raw) {

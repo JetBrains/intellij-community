@@ -21,14 +21,8 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 /**
  * @author egor
  */
-public class AnonymousClassException extends EvaluateException {
-  private static final AnonymousClassException INSTANCE = new AnonymousClassException();
-
-  public AnonymousClassException() {
-    super(DebuggerBundle.message("evaluation.error.anonymous.class.evaluation.not.supported"));
-  }
-
-  public static AnonymousClassException getInstance() {
-    return INSTANCE;
+public class UnsupportedExpressionException extends EvaluateException {
+  public UnsupportedExpressionException(String message) {
+    super(message);
   }
 }

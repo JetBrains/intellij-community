@@ -15,7 +15,6 @@
  */
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.EvaluatingComputable;
 import com.intellij.debugger.engine.ContextUtil;
@@ -29,8 +28,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeFragment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import com.sun.jdi.*;
 
@@ -50,9 +51,9 @@ public class CompilingEvaluator implements ExpressionEvaluator {
   private final PsiCodeFragment myCodeFragment;
   private final PsiElement myPsiContext;
   private final ExtractLightMethodObjectHandler.ExtractedData myData;
+  private final EvaluationDescriptor myDescriptor;
 
   public static Key<ExtractLightMethodObjectHandler.ExtractedData> COMPILING_EVALUATOR_DATA = new Key<ExtractLightMethodObjectHandler.ExtractedData>("COMPILING_EVALUATOR_DATA");
-  private final EvaluationDescriptor myDescriptor;
 
   public CompilingEvaluator(TextWithImports text,
                             PsiCodeFragment codeFragment,
@@ -102,10 +103,7 @@ public class CompilingEvaluator implements ExpressionEvaluator {
           @Override
           public ExpressionEvaluator compute() throws EvaluateException {
             final TextWithImports callCode = getCallCode();
-            PsiFile file = myData.getGeneratedInnerClass().getContainingFile();
-            final TextRange range = myPsiContext.getTextRange();
-            final PsiElement copyContext =
-              CodeInsightUtil.findElementInRange(file, range.getStartOffset(), range.getEndOffset(), myPsiContext.getClass());
+            PsiElement copyContext = myData.getAnchor();
             final CodeFragmentFactory factory = DebuggerUtilsEx.findAppropriateCodeFragmentFactory(callCode, copyContext);
             return factory.getEvaluatorBuilder().
               build(factory.createCodeFragment(callCode, copyContext, project),
@@ -140,14 +138,17 @@ public class CompilingEvaluator implements ExpressionEvaluator {
 
     VirtualMachineProxyImpl proxy = (VirtualMachineProxyImpl)process.getVirtualMachineProxy();
     for (OutputFileObject cls : classes) {
-      Method defineMethod = ((ClassType)classLoader.referenceType()).concreteMethodByName("defineClass", "(Ljava/lang/String;[BII)Ljava/lang/Class;");
-      byte[] bytes = cls.toByteArray();
-      ArrayList<Value> args = new ArrayList<Value>();
-      args.add(proxy.mirrorOf(cls.myOrigName));
-      args.add(mirrorOf(bytes, context, process));
-      args.add(proxy.mirrorOf(0));
-      args.add(proxy.mirrorOf(bytes.length));
-      classLoader.invokeMethod(threadReference, defineMethod, args, ClassType.INVOKE_SINGLE_THREADED);
+      if (cls.getName().contains(getGenClassName())) {
+        Method defineMethod =
+          ((ClassType)classLoader.referenceType()).concreteMethodByName("defineClass", "(Ljava/lang/String;[BII)Ljava/lang/Class;");
+        byte[] bytes = cls.toByteArray();
+        ArrayList<Value> args = new ArrayList<Value>();
+        args.add(proxy.mirrorOf(cls.myOrigName));
+        args.add(mirrorOf(bytes, context, process));
+        args.add(proxy.mirrorOf(0));
+        args.add(proxy.mirrorOf(bytes.length));
+        classLoader.invokeMethod(threadReference, defineMethod, args, ClassType.INVOKE_SINGLE_THREADED);
+      }
     }
     return (ClassType)process.findClass(context, getGenPackageName() + '.' + getGenClassName(), classLoader);
   }
@@ -163,7 +164,11 @@ public class CompilingEvaluator implements ExpressionEvaluator {
     return reference;
   }
 
-  private static final String GEN_CLASS_NAME = "Test";
+  public static String getGeneratedClassName() {
+    return GEN_CLASS_NAME;
+  }
+
+  private static final String GEN_CLASS_NAME = "GeneratedEvaluationClass";
   private static final String GEN_CLASS_PACKAGE = "dummy";
   private static final String GEN_CLASS_FULL_NAME = GEN_CLASS_PACKAGE + '.' + GEN_CLASS_NAME;
   private static final String GEN_METHOD_NAME = "invoke";
@@ -271,7 +276,7 @@ public class CompilingEvaluator implements ExpressionEvaluator {
     if (!compiler.getTask(null, manager, diagnostic, null, null, Arrays
       .asList(new SourceFileObject(getMainClassName(), JavaFileObject.Kind.SOURCE, getClassCode()))).call()) {
       // TODO: show only errors
-      throw new EvaluateException(diagnostic.getDiagnostics().get(0).getMessage(Locale.getDefault()));
+      throw new EvaluateException(diagnostic.getDiagnostics().get(0).toString());
     }
     return manager.classes;
   }

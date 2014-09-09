@@ -612,7 +612,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   @Override
   @NotNull
   public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull final VirtualFile file,
-                                                                        final boolean focusEditor,
+                                                                        boolean focusEditor,
                                                                         final boolean searchForSplitter) {
     if (!file.isValid()) {
       throw new IllegalArgumentException("file is not valid: " + file);
@@ -650,6 +650,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       EditorWindow previewWindow = getPreviewWindow();
       if (previewWindow != null) {
         wndToOpenIn = previewWindow;
+        focusEditor = true;
       }
     }
 

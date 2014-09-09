@@ -17,7 +17,6 @@ package com.intellij.openapi.options.newEditor;
 
 import com.intellij.AbstractBundle;
 import com.intellij.CommonBundle;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
 import com.intellij.ide.ui.search.SearchUtil;
@@ -1219,16 +1218,18 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
    * @return default view for the specified configurable
    */
   private JComponent createDefaultComponent(SearchableConfigurable searchable) {
-    JPanel box = new JPanel();
-    box.setLayout(new BoxLayout(box, BoxLayout.Y_AXIS));
+    JPanel panel = new JPanel(new BorderLayout(0, 9));
     try {
-      box.add(new JLabel(getDefaultDescription(searchable)));
+      panel.add(BorderLayout.NORTH, new JLabel(getDefaultDescription(searchable)));
     }
     catch (AssertionError error) {
       return null; // description is not set
     }
     if (searchable instanceof Configurable.Composite) {
-      box.add(Box.createVerticalStrut(9));
+      JPanel box = new JPanel();
+      box.setLayout(new BoxLayout(box, BoxLayout.Y_AXIS));
+      panel.add(BorderLayout.CENTER, box);
+
       Configurable.Composite composite = (Configurable.Composite)searchable;
       for (final Configurable configurable : composite.getConfigurables()) {
         LinkLabel label = new LinkLabel(configurable.getDisplayName(), null) {
@@ -1241,7 +1242,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
         box.add(label);
       }
     }
-    return box;
+    return panel;
   }
 
   @NotNull

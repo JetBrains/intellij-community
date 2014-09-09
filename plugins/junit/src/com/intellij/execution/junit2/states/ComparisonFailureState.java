@@ -24,7 +24,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 
-public class ComparisonFailureState extends FaultyState implements AbstractTestProxy.AssertEqualsDiffViewerProvider {
+public class ComparisonFailureState extends FaultyState implements AbstractTestProxy.AssertEqualsMultiDiffViewProvider {
   private DiffHyperlink myHyperlink;
   @NonNls
   protected static final String EXPECTED_VALUE_MESSAGE_TEXT = "expected:<";
@@ -58,5 +58,20 @@ public class ComparisonFailureState extends FaultyState implements AbstractTestP
 
   public void openDiff(final Project project) {
     if (myHyperlink != null) myHyperlink.openDiff(project);
+  }
+
+  @Override
+  public void openMultiDiff(Project project, AbstractTestProxy.AssertEqualsDiffChain chain) {
+    if (myHyperlink != null) {
+      myHyperlink.openMultiDiff(project, chain);
+    }
+  }
+
+  @Override
+  public String getFilePath() {
+    if (myHyperlink != null) {
+      return myHyperlink.getFilePath();
+    }
+    return null;
   }
 }

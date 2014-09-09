@@ -103,6 +103,12 @@ public class ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
+  public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(int capacity) {
+    return new com.intellij.util.containers.LinkedHashMap<K, V>(capacity);
+  }
+
+  @NotNull
+  @Contract(pure=true)
   public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(@NotNull Map<K, V> map) {
     return new com.intellij.util.containers.LinkedHashMap<K, V>(map);
   }

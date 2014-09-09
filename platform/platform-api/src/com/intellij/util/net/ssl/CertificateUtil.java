@@ -1,8 +1,21 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util.net.ssl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.StreamUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,54 +26,45 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
 /**
+ * Names in constants match
+ * <a href="http://docs.oracle.com/javase/7/docs/technotes/guides/security/StandardNames.html">Standard Algorithm Name Documentation</a>.
+ *
  * @author Mikhail Golubev
  */
 public class CertificateUtil {
-  private static final Logger LOG = Logger.getInstance(CertificateUtil.class);
+  public static final String X509 = "X.509";
+  public static final String JKS = "JKS";
+  public static final String PKCS12 = "PKCS12";
+  public static final String PKIX = "PKIX";
+  public static final String TLS = "TLS";
 
   private static final CertificateFactory ourFactory = createFactory();
 
   private static CertificateFactory createFactory() {
     try {
-      return CertificateFactory.getInstance("X509");
+      return CertificateFactory.getInstance(X509);
     }
     catch (CertificateException e) {
-      throw new AssertionError("Can't initialize X509 certificate factory");
+      throw new RuntimeException("Can't initialize X.509 certificate factory", e);
     }
   }
 
-  // Standard Names
-  // See complete reference at http://docs.oracle.com/javase/7/docs/technotes/guides/security/StandardNames.html
-  // certificate format
-  @Nls public static final String X509 = "X.509";
-  // Java Key Store - standard type of keystores used by keytool utility
-  @Nls public static final String JKS = "JKS";
-  // another standard type of keystore
-  @Nls public static final String PKCS12 = "PKCS12";
-  // type of trust manager factory
-  @Nls public static final String PKIX = "PKIX";
-  @Nls public static final String TLS = "TLS";
-
-  /**
-   * Utility class
-   */
-  private CertificateUtil() {
-    // empty
-  }
+  private CertificateUtil() { }
 
   @Nullable
   public static X509Certificate loadX509Certificate(@NotNull String path) {
-    InputStream stream = null;
     try {
-      stream = new FileInputStream(path);
-      return (X509Certificate)ourFactory.generateCertificate(stream);
+      InputStream stream = new FileInputStream(path);
+      try {
+        return (X509Certificate)ourFactory.generateCertificate(stream);
+      }
+      finally {
+        stream.close();
+      }
     }
     catch (Exception e) {
-      LOG.error("Can't add certificate for path: " + path, e);
+      Logger.getInstance(CertificateUtil.class).error("Can't add certificate for path: " + path, e);
       return null;
-    }
-    finally {
-      StreamUtil.closeStream(stream);
     }
   }
 
