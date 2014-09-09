@@ -185,6 +185,11 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
+    public void visitTryStatement(PsiTryStatement statement) {
+      throw new EvaluateRuntimeException(new UnsupportedExpressionException(statement.getText()));
+    }
+
+    @Override
     public void visitStatement(PsiStatement statement) {
       throwEvaluateException(DebuggerBundle.message("evaluation.error.statement.not.supported", statement.getText()));
     }
