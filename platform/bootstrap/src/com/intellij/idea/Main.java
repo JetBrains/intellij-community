@@ -143,9 +143,12 @@ public class Main {
     int status = 0;
     if (Restarter.isSupported()) {
       List<String> args = new ArrayList<String>();
+
       if (SystemInfoRt.isWindows) {
         File launcher = new File(PathManager.getBinPath(), "VistaLauncher.exe");
-        args.add(Restarter.createTempExecutable(launcher).getPath());
+        String launcherDir = Restarter.createTempExecutable(launcher).getPath();
+        System.out.println("VistaLauncher " + launcherDir);
+        args.add(launcherDir);
       }
 
       //noinspection SpellCheckingInspection

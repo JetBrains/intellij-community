@@ -153,6 +153,7 @@ public class Restarter {
   public static File createTempExecutable(File executable) throws IOException {
     File executableDir = new File(System.getProperty("user.home") + "/." + System.getProperty("idea.paths.selector") + "/restart");
     File copy = new File(executableDir.getPath() + "/" + executable.getName());
+    System.out.println(" ");
     System.out.println("copy " + copy.getPath());
     if (!FileUtilRt.ensureCanCreateFile(copy)) {
       System.out.println("can not create the " + copy.getPath());
@@ -167,7 +168,9 @@ public class Restarter {
     }
     System.out.println("coping " + copy.getPath());
     FileUtilRt.copy(executable, copy);
+    System.out.println("copied " + copy.getPath());
     if (!copy.setExecutable(executable.canExecute())) throw new IOException("Cannot make file executable: " + copy);
+    System.out.println("TempExecutable " + copy.getPath());
     return copy;
   }
 
