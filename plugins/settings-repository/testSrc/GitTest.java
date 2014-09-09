@@ -7,6 +7,7 @@ import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.impl.stores.StreamProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.testFramework.PlatformTestCase;
@@ -42,6 +43,8 @@ public class GitTest {
   private static File ICS_DIR;
 
   private IdeaProjectTestFixture fixture;
+
+  private File remoteRepository;
 
   @Rule
   public final GitTestWatcher testWatcher = new GitTestWatcher();
@@ -86,6 +89,8 @@ public class GitTest {
 
   @After
   public void tearDown() throws Exception {
+    remoteRepository = null;
+
     IcsManager.OBJECT$.getInstance().setRepositoryActive(false);
     try {
       if (fixture != null) {
@@ -219,19 +224,46 @@ public class GitTest {
   }
 
   private void doPullToRepositoryWithCommits(@Nullable String remoteBranchName) throws Exception {
+    Pair<String, byte[]> file = createLocalRepositoryAndCommit(remoteBranchName);
+
     BaseRepositoryManager repositoryManager = getRepositoryManager();
-    File remoteRepository = createFileRemote(remoteBranchName);
+    EmptyProgressIndicator progressIndicator = new EmptyProgressIndicator();
+    repositoryManager.commit(progressIndicator);
+    repositoryManager.pull(progressIndicator);
+    assertThat(FileUtil.loadFile(new File(getRepository().getWorkTree(), file.first)), equalTo(new String(file.second, CharsetToolkit.UTF8_CHARSET)));
+    compareFiles(getRepository().getWorkTree(), remoteRepository, "crucibleConnector.xml");
+  }
+
+  @NotNull
+  private Pair<String, byte[]> createLocalRepositoryAndCommit(@Nullable String remoteBranchName) throws Exception {
+    BaseRepositoryManager repositoryManager = getRepositoryManager();
+    remoteRepository = createFileRemote(remoteBranchName);
     repositoryManager.setUpstream(remoteRepository.getAbsolutePath(), remoteBranchName);
 
     byte[] data = FileUtil.loadFileBytes(new File(getTestDataPath(), "crucibleConnector.xml"));
     String addedFile = "$APP_CONFIG$/crucibleConnector.xml";
     getProvider().saveContent(addedFile, data, data.length, RoamingType.PER_USER, false);
 
-    EmptyProgressIndicator progressIndicator = new EmptyProgressIndicator();
-    repositoryManager.commit(progressIndicator);
-    repositoryManager.pull(progressIndicator);
-    assertThat(FileUtil.loadFile(new File(getRepository().getWorkTree(), addedFile)), equalTo(new String(data, CharsetToolkit.UTF8_CHARSET)));
-    compareFiles(getRepository().getWorkTree(), remoteRepository, "crucibleConnector.xml");
+    repositoryManager.commit(new EmptyProgressIndicator());
+    return Pair.create(addedFile, data);
+  }
+
+  @Test
+  public void resetToTheirs() throws Exception {
+    createLocalRepositoryAndCommit(null);
+    SwingUtilities.invokeAndWait(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          IcsManager.OBJECT$.getInstance().sync(SyncType.RESET_TO_THEIRS, fixture.getProject());
+        }
+        catch (Exception e) {
+          throw new AssertionError(e);
+        }
+      }
+    });
+
+    compareFiles(getRepository().getWorkTree(), remoteRepository);
   }
 
   private static void compareFiles(@NotNull File local, @NotNull File remote, String... localExcludes) throws IOException {

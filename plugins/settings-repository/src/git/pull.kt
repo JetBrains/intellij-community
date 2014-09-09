@@ -43,7 +43,17 @@ fun wrapIfNeedAndReThrow(e: TransportException) {
 fun pull(manager: GitRepositoryManager, indicator: ProgressIndicator) {
   LOG.debug("Pull")
 
-  val mergeResult = fetch(manager, indicator, null)
+  val repository = manager.repository
+  val repositoryState = repository.getRepositoryState()
+  if (repositoryState != RepositoryState.SAFE) {
+    LOG.warn(MessageFormat.format(JGitText.get().cannotPullOnARepoWithState, repositoryState.name()))
+  }
+
+  // we must use the same StoredConfig instance during the operation
+  val config = repository.getConfig()
+
+  val refToMerge = fetch(manager, indicator, null, config)
+  val mergeResult = if (refToMerge == null) null else merge(config, manager.git, refToMerge)
   if (mergeResult == null) {
     return
   }
@@ -57,15 +67,11 @@ fun pull(manager: GitRepositoryManager, indicator: ProgressIndicator) {
   }
 }
 
-private fun fetch(manager: GitRepositoryManager, indicator: ProgressIndicator, prevRefUpdateResult: RefUpdate.Result?): MergeResult? {
-  val repository = manager.repository
-  val repositoryState = repository.getRepositoryState()
-  if (repositoryState != RepositoryState.SAFE) {
-    LOG.warn(MessageFormat.format(JGitText.get().cannotPullOnARepoWithState, repositoryState.name()))
-  }
+fun fetch(manager: GitRepositoryManager, indicator: ProgressIndicator): Ref? = fetch(manager, indicator, null, manager.repository.getConfig())
 
-  // we must use the same StoredConfig instance during the operation
-  val config = repository.getConfig()
+private fun fetch(manager: GitRepositoryManager, indicator: ProgressIndicator, prevRefUpdateResult: RefUpdate.Result?, config: Config): Ref? {
+  val repository = manager.repository
+
   val remoteConfig = RemoteConfig(config, Constants.DEFAULT_REMOTE_NAME)
   val transport = Transport.open(repository, remoteConfig)
   val fetchResult: FetchResult
@@ -105,7 +111,7 @@ private fun fetch(manager: GitRepositoryManager, indicator: ProgressIndicator, p
 
       LOG.warn("Ref update result " + refUpdateResult.name() + ", trying again after 500 ms")
       Thread.sleep(500)
-      return fetch(manager, indicator, refUpdateResult)
+      return fetch(manager, indicator, refUpdateResult, config)
     }
 
     if (!(refUpdateResult == RefUpdate.Result.FAST_FORWARD || refUpdateResult == RefUpdate.Result.NEW || refUpdateResult == RefUpdate.Result.FORCED)) {
@@ -131,7 +137,7 @@ private fun fetch(manager: GitRepositoryManager, indicator: ProgressIndicator, p
   if (refToMerge == null) {
     throw IllegalStateException("Could not get advertised ref")
   }
-  return merge(config, manager.git, refToMerge)
+  return refToMerge
 }
 
 fun merge(config: StoredConfig, git: Git, unpeeledRef: Ref): MergeResult {

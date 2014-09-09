@@ -12,7 +12,6 @@ import com.intellij.openapi.components.impl.stores.StateStorageManager
 import com.intellij.openapi.components.impl.stores.StorageUtil
 import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.options.SchemesManagerFactory
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -21,7 +20,6 @@ import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SingleAlarm
-import org.jetbrains.annotations.TestOnly
 
 import java.io.File
 import java.io.InputStream
@@ -194,7 +192,10 @@ public class IcsManager : ApplicationLoadListener {
 
           try {
             repositoryManager.commit(indicator)
-            if (syncType == SyncType.MERGE) {
+            if (syncType == SyncType.RESET_TO_THEIRS) {
+              repositoryManager.reset(indicator)
+            }
+            else if (syncType == SyncType.MERGE) {
               repositoryManager.pull(indicator)
               repositoryManager.push(indicator)
             }

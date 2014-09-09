@@ -2,7 +2,6 @@ package org.jetbrains.plugins.settingsRepository
 
 import com.intellij.openapi.progress.ProgressIndicator
 
-import java.io.File
 import java.io.IOException
 import java.io.InputStream
 
@@ -46,4 +45,6 @@ public trait RepositoryManager {
   public fun pull(indicator: ProgressIndicator)
 
   public fun has(path: String): Boolean
+
+  public fun reset(indicator: ProgressIndicator)
 }

@@ -1,4 +1,13 @@
 <root>
+  <item name='org.eclipse.jgit.api.CheckoutCommand org.eclipse.jgit.api.CheckoutCommand setAllPaths(boolean)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.api.CheckoutCommand org.eclipse.jgit.api.CheckoutCommand setStartPoint(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.api.CheckoutCommand org.eclipse.jgit.api.CheckoutResult getResult()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='org.eclipse.jgit.api.CommitCommand org.eclipse.jgit.api.CommitCommand setAuthor(org.eclipse.jgit.lib.PersonIdent)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -14,7 +23,13 @@
   <item name='org.eclipse.jgit.api.CommitCommand org.eclipse.jgit.revwalk.RevCommit call()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='org.eclipse.jgit.api.Git org.eclipse.jgit.api.CheckoutCommand checkout()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='org.eclipse.jgit.api.Git org.eclipse.jgit.api.CommitCommand commit()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.api.Git org.eclipse.jgit.api.ResetCommand reset()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='org.eclipse.jgit.api.Git org.eclipse.jgit.lib.Repository getRepository()'>
@@ -32,6 +47,9 @@
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.jgit.api.MergeResult org.eclipse.jgit.api.MergeResult.MergeStatus getMergeStatus()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.api.ResetCommand org.eclipse.jgit.api.ResetCommand setMode(org.eclipse.jgit.api.ResetCommand.ResetType) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
 </root>
