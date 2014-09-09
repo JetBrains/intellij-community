@@ -171,7 +171,7 @@ class PreviewPanel extends JPanel {
     //add(ContentType.Usages.toString(), myUsagesPreview);??? tree or editor ???
     //add(ContentType.Diagrams.toString(), myDiagramPanel);
     //add(ContentType.Documentation.toString(), myDocumentationPanel);//todo
-    myToolWindow.setTitleActions(new MoveToEditorTabsAction(), new CloseFileAction());
+    myToolWindow.setTitleActions(new MoveToEditorTabsAction());
     ArrayList<AnAction> myGearActions = new ArrayList<AnAction>();
     for (ContentType contentType : ContentType.values()) {
       myGearActions.add(new ContentTypeToggleAction(contentType));
@@ -201,7 +201,7 @@ class PreviewPanel extends JPanel {
     content.setIcon(file.getFileType().getIcon());
     content.setPopupIcon(file.getFileType().getIcon());
 
-    myContentManager.addContent(content);
+    myContentManager.addContent(content, 0);
     checkStubContent();
     return content;
   }
@@ -212,6 +212,7 @@ class PreviewPanel extends JPanel {
       content = addContent(file);
     }
     myContentManager.setSelectedContent(content);
+    myContentManager.addContent(content, 0);
   }
 
   @Nullable
@@ -302,21 +303,6 @@ class PreviewPanel extends JPanel {
       }
       myManager.openFileWithProviders(virtualFile, true, window);
       close(virtualFile);
-      toggleToolWindow(false);
-    }
-  }
-
-
-  private class CloseFileAction extends AnAction {
-    public CloseFileAction() {
-      super("Close", "Close", AllIcons.Actions.Close);
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      for (VirtualFile file : myHistory.toArray(new VirtualFile[myHistory.size()])) {
-        close(file);
-      }
       toggleToolWindow(false);
     }
   }
