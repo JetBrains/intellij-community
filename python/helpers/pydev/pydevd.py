@@ -113,6 +113,11 @@ DONT_TRACE = {
               'linecache.py':1,
               'threading.py':1,
 
+              # thirs party libs that we don't want to trace
+              'pluginbase.py':1,
+              'pkgutil_old.py':1,
+              'uuid_old.py':1,
+
               #things from pydev that we don't want to trace
               '_pydev_execfile.py':1,
               '_pydev_jython_execfile.py':1,
