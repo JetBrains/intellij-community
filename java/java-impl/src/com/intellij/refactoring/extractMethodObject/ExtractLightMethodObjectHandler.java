@@ -45,10 +45,16 @@ public class ExtractLightMethodObjectHandler {
   public static class ExtractedData {
     private String myGeneratedCallText;
     private PsiClass myGeneratedInnerClass;
+    private final PsiElement myAnchor;
 
-    public ExtractedData(String generatedCallText, PsiClass generatedInnerClass) {
+    public ExtractedData(String generatedCallText, PsiClass generatedInnerClass, PsiElement anchor) {
       myGeneratedCallText = generatedCallText;
       myGeneratedInnerClass = generatedInnerClass;
+      myAnchor = anchor;
+    }
+
+    public PsiElement getAnchor() {
+      return myAnchor;
     }
 
     public String getGeneratedCallText() {
@@ -126,7 +132,8 @@ public class ExtractLightMethodObjectHandler {
 
     final String generatedCall = copy.getText().substring(start, outStatement.getTextOffset());
     return new ExtractedData(generatedCall,
-                             (PsiClass)CodeStyleManager.getInstance(project).reformat(extractMethodObjectProcessor.getInnerClass()));
+                             (PsiClass)CodeStyleManager.getInstance(project).reformat(extractMethodObjectProcessor.getInnerClass()),
+                             anchor);
   }
 
 
