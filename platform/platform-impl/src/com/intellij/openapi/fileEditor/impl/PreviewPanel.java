@@ -47,6 +47,9 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 
 class PreviewPanel extends JPanel {
+
+  private CardLayout myLayout;
+
   enum ContentType {Files, Usages, Diagrams, Documentation}
 
   private static final Key<VirtualFile> FILE_KEY = Key.create("v_file");
@@ -162,8 +165,12 @@ class PreviewPanel extends JPanel {
     myEditorsSplitters.createCurrentWindow();
     myWindow = myEditorsSplitters.getCurrentWindow();
     myWindow.setTabsPlacement(UISettings.TABS_NONE);
-    setLayout(new GridLayout(1, 1));
-    add(myEditorsSplitters);
+    myLayout = new CardLayout();
+    setLayout(myLayout);
+    add(ContentType.Files.toString(), myEditorsSplitters);
+    //add(ContentType.Usages.toString(), myUsagesPreview);??? tree or editor ???
+    //add(ContentType.Diagrams.toString(), myDiagramPanel);
+    //add(ContentType.Documentation.toString(), myDocumentationPanel);//todo
     myToolWindow.setTitleActions(new MoveToEditorTabsAction(), new CloseFileAction());
     ArrayList<AnAction> myGearActions = new ArrayList<AnAction>();
     for (ContentType contentType : ContentType.values()) {
