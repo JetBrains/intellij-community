@@ -2274,9 +2274,15 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T, C extends Collection<T>> C notNullize(@Nullable C collection) {
+  public static <T> List<T> notNullize(@Nullable List<T> list) {
+    return list == null ? ContainerUtilRt.<T>emptyList() : list;
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <T> Set<T> notNullize(@Nullable Set<T> set) {
     //noinspection unchecked
-    return collection == null ? (C)ContainerUtilRt.emptyList() : collection;
+    return set == null ? Collections.<T>emptySet() : set;
   }
 
   @Nullable

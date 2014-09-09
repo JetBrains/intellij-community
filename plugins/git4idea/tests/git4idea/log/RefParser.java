@@ -4,7 +4,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogObjectsFactory;
 import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.VcsRefType;
 import com.intellij.vcs.log.impl.HashImpl;
+import git4idea.branch.GitBranchUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,17 +14,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-
-/**
- * TODO: remove when tags are supported by the {@link git4idea.repo.GitRepositoryReader}.
- *
- * @author erokhins
- */
 class RefParser {
 
   private final VcsLogObjectsFactory myFactory;
 
-  public RefParser(VcsLogObjectsFactory factory) {
+  public RefParser(@NotNull VcsLogObjectsFactory factory) {
     myFactory = factory;
   }
 
@@ -46,28 +42,22 @@ class RefParser {
     return refs;
   }
 
-  @Nullable
-  private static String getRefName(@NotNull String longRefPath, @NotNull String startPatch) {
+  @NotNull
+  private static String getRefName(@NotNull String longRefPath) {
     String tagPrefix = "tag: ";
     if (longRefPath.startsWith(tagPrefix)) {
       longRefPath = longRefPath.substring(tagPrefix.length());
     }
-    if (longRefPath.startsWith(startPatch)) {
-      return longRefPath.substring(startPatch.length());
-    }
-    else {
-      return null;
-    }
+    return longRefPath;
   }
 
   // example input: fb29c80 refs/tags/92.29
   @Nullable
   private VcsRef createRef(@NotNull Hash hash, @NotNull String longRefPath, @NotNull VirtualFile root) {
-    String name = getRefName(longRefPath, "refs/tags/");
-    if (name != null) {
-      return myFactory.createRef(hash, name, GitRefManager.TAG, root);
-    }
-
-    return null;
+    String name = getRefName(longRefPath);
+    VcsRefType type = GitRefManager.getRefType(name);
+    assert type != null;
+    return myFactory.createRef(hash, GitBranchUtil.stripRefsPrefix(name), type, root);
   }
+
 }
