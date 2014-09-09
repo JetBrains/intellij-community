@@ -22,18 +22,23 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.extractMethod.AbstractExtractDialog;
+import com.intellij.refactoring.extractMethod.ControlFlowWrapper;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
+import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,9 +110,19 @@ public class ExtractLightMethodObjectHandler {
       return null;
     }
 
-    final List<PsiVariable> variables = ControlFlowUtil.getUsedVariables(controlFlow,
-                                                                         controlFlow.getStartOffset(elementsCopy[0]),
-                                                                         controlFlow.getEndOffset(elementsCopy[elementsCopy.length - 1]));
+    List<PsiVariable> variables = ControlFlowUtil.getUsedVariables(controlFlow,
+                                                                   controlFlow.getStartOffset(elementsCopy[0]),
+                                                                   controlFlow.getEndOffset(elementsCopy[elementsCopy.length - 1]));
+
+    variables = ContainerUtil.filter(variables, new Condition<PsiVariable>() {
+      @Override
+      public boolean value(PsiVariable variable) {
+        final PsiElement variableScope = variable instanceof PsiParameter ? ((PsiParameter)variable).getDeclarationScope()
+                                                                          : PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, PsiForStatement.class);
+        return variableScope != null && PsiTreeUtil.isAncestor(variableScope, elementsCopy[elementsCopy.length - 1], false);
+      }
+    });
+
 
     final String outputVariables = StringUtil.join(variables, new Function<PsiVariable, String>() {
                                           @Override

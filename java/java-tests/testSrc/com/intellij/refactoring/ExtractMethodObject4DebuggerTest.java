@@ -98,6 +98,20 @@ public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
            "    }");
   }
 
+  public void testAnonymousClassParams() throws Exception {
+    doTest("new I() {public void foo(int i) {i++;}};", "new Test().invoke();",
+
+           "public class Test {\n" +
+           "        public void invoke() {\n" +
+           "            new I() {\n" +
+           "                public void foo(int i) {\n" +
+           "                    i++;\n" +
+           "                }\n" +
+           "            };\n" +
+           "        }\n" +
+           "    }");
+  }
+
   @Override
   protected Sdk getProjectJDK() {
     return IdeaTestUtil.getMockJdk18();
