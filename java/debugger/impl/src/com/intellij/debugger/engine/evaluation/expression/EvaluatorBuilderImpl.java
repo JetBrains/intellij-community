@@ -1086,6 +1086,16 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
+    public void visitLambdaExpression(PsiLambdaExpression expression) {
+      throw new EvaluateRuntimeException(new UnsupportedExpressionException(DebuggerBundle.message("evaluation.error.lambda.evaluation.not.supported")));
+    }
+
+    @Override
+    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+      throw new EvaluateRuntimeException(new UnsupportedExpressionException(DebuggerBundle.message("evaluation.error.method.reference.evaluation.not.supported")));
+    }
+
+    @Override
     public void visitNewExpression(final PsiNewExpression expression) {
       PsiType expressionPsiType = expression.getType();
       if (expressionPsiType instanceof PsiArrayType) {
@@ -1146,7 +1156,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       else if (expressionPsiType instanceof PsiClassType){ // must be a class ref
         PsiClass aClass = ((PsiClassType)expressionPsiType).resolve();
         if(aClass instanceof PsiAnonymousClass) {
-          throw new EvaluateRuntimeException(AnonymousClassException.getInstance());
+          throw new EvaluateRuntimeException(new UnsupportedExpressionException(DebuggerBundle.message("evaluation.error.anonymous.class.evaluation.not.supported")));
         }
         PsiExpressionList argumentList = expression.getArgumentList();
         if (argumentList == null) {

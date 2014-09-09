@@ -133,7 +133,7 @@ public class ExtractLightMethodObjectHandler {
     final String generatedCall = copy.getText().substring(start, outStatement.getTextOffset());
     return new ExtractedData(generatedCall,
                              (PsiClass)CodeStyleManager.getInstance(project).reformat(extractMethodObjectProcessor.getInnerClass()),
-                             anchor);
+                             originalAnchor);
   }
 
 
