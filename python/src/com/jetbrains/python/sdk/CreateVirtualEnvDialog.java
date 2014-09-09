@@ -50,7 +50,6 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformUtils;
 import com.jetbrains.python.packaging.PyExternalProcessException;
 import com.jetbrains.python.packaging.PyPackageManager;
-import com.jetbrains.python.packaging.PyPackageManagerImpl;
 import com.jetbrains.python.packaging.PyPackageService;
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
 import com.jetbrains.python.ui.IdeaDialog;
@@ -416,7 +415,7 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
       String myPath;
 
       public void run(@NotNull final ProgressIndicator indicator) {
-        final PyPackageManagerImpl packageManager = (PyPackageManagerImpl)PyPackageManager.getInstance(basicSdk);
+        final PyPackageManager packageManager = PyPackageManager.getInstance(basicSdk);
         try {
           indicator.setText("Creating virtual environment for " + basicSdk.getName());
           myPath = packageManager.createVirtualEnv(getDestination(), useGlobalSitePackages());

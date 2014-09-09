@@ -26,7 +26,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.jetbrains.python.packaging.PyExternalProcessException;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
-import com.jetbrains.python.packaging.PyPackageManagerImpl;
 import com.jetbrains.python.sdk.PythonSdkType;
 
 /**
@@ -48,7 +47,7 @@ public class RestPythonUtil {
       if (module != null) {
         Sdk sdk = PythonSdkType.findPythonSdk(module);
         if (sdk != null) {
-          PyPackageManagerImpl manager = (PyPackageManagerImpl)PyPackageManager.getInstance(sdk);
+          PyPackageManager manager = PyPackageManager.getInstance(sdk);
           try {
             final PyPackage sphinx = manager.findInstalledPackage("Sphinx");
             presentation.setEnabled(sphinx != null);

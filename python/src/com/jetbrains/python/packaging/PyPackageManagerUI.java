@@ -123,8 +123,7 @@ public class PyPackageManagerUI {
     throws PyExternalProcessException {
     Map<String, Set<PyPackage>> dependentPackages = new HashMap<String, Set<PyPackage>>();
     for (PyPackage pkg : packages) {
-      final Set<PyPackage> dependents =
-        ((PyPackageManagerImpl)PyPackageManager.getInstance(sdk)).getDependents(pkg.getName());
+      final Set<PyPackage> dependents = PyPackageManager.getInstance(sdk).getDependents(pkg);
       if (dependents != null && !dependents.isEmpty()) {
         for (PyPackage dependent : dependents) {
           if (!packages.contains(dependent)) {

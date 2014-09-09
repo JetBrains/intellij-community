@@ -160,15 +160,16 @@ public class PyPackageRequirementsInspection extends PyInspection {
               return;
             }
           }
-          if (PyPackageManagerImpl.PACKAGE_SETUPTOOLS.equals(packageName)) {
+          if (PyPackageManager.PACKAGE_SETUPTOOLS.equals(packageName)) {
             return;
           }
           final Module module = ModuleUtilCore.findModuleForPsiElement(packageReferenceExpression);
           if (module != null) {
-            Collection<PyRequirement> requirements = PyPackageManagerImpl.getRequirements(module);
-            if (requirements != null) {
-              final Sdk sdk = PythonSdkType.findPythonSdk(module);
-              if (sdk != null) {
+            final Sdk sdk = PythonSdkType.findPythonSdk(module);
+            if (sdk != null) {
+              final PyPackageManager manager = PyPackageManager.getInstance(sdk);
+              Collection<PyRequirement> requirements = manager.getRequirements(module);
+              if (requirements != null) {
                 requirements = getTransitiveRequirements(sdk, requirements, new HashSet<PyPackage>());
               }
               if (requirements == null) return;
@@ -191,7 +192,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
                 }
               }
               final List<LocalQuickFix> quickFixes = new ArrayList<LocalQuickFix>();
-              if (sdk != null && PyPackageManager.getInstance(sdk).hasPip()) {
+              if (manager.hasPip()) {
                 quickFixes.add(new AddToRequirementsFix(module, packageName, LanguageLevel.forElement(importedExpression)));
               }
               quickFixes.add(new IgnoreRequirementFix(Collections.singleton(packageName)));
@@ -211,7 +212,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
     final Set<PyRequirement> results = new HashSet<PyRequirement>(requirements);
     final List<PyPackage> packages;
     try {
-      packages = ((PyPackageManagerImpl) PyPackageManager.getInstance(sdk)).getPackagesFast();
+      packages = PyPackageManager.getInstance(sdk).getPackagesFast();
     }
     catch (PyExternalProcessException e) {
       return null;
@@ -242,8 +243,8 @@ public class PyPackageRequirementsInspection extends PyInspection {
   @Nullable
   private static List<PyRequirement> findUnsatisfiedRequirements(@NotNull Module module, @NotNull Sdk sdk,
                                                                  @NotNull Set<String> ignoredPackages) {
-    final PyPackageManagerImpl manager = (PyPackageManagerImpl)PyPackageManager.getInstance(sdk);
-    List<PyRequirement> requirements = PyPackageManagerImpl.getRequirements(module);
+    final PyPackageManager manager = PyPackageManager.getInstance(sdk);
+    List<PyRequirement> requirements = manager.getRequirements(module);
     if (requirements != null) {
       final List<PyPackage> packages;
       try {
@@ -265,11 +266,11 @@ public class PyPackageRequirementsInspection extends PyInspection {
   }
 
   private static void setRunningPackagingTasks(@NotNull Module module, boolean value) {
-    module.putUserData(PyPackageManagerImpl.RUNNING_PACKAGING_TASKS, value);
+    module.putUserData(PyPackageManager.RUNNING_PACKAGING_TASKS, value);
   }
 
   private static boolean isRunningPackagingTasks(@NotNull Module module) {
-    final Boolean value = module.getUserData(PyPackageManagerImpl.RUNNING_PACKAGING_TASKS);
+    final Boolean value = module.getUserData(PyPackageManager.RUNNING_PACKAGING_TASKS);
     return value != null && value;
   }
 

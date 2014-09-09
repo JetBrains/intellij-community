@@ -23,6 +23,7 @@ import com.intellij.webcore.packaging.InstalledPackage;
 import com.intellij.webcore.packaging.PackageManagementService;
 import com.intellij.webcore.packaging.RepoPackage;
 import com.jetbrains.python.packaging.*;
+import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.apache.xmlrpc.AsyncCallback;
 import org.jetbrains.annotations.NonNls;
@@ -112,7 +113,7 @@ public class PyPackageManagementService extends PackageManagementService {
   public String getInstallToUserText() {
     String userSiteText = "Install to user's site packages directory";
     if (!PythonSdkType.isRemote(mySdk))
-      userSiteText += " (" + PyPackageManagerImpl.getUserSite() + ")";
+      userSiteText += " (" + PySdkUtil.getUserSite() + ")";
     return userSiteText;
   }
 
@@ -130,7 +131,7 @@ public class PyPackageManagementService extends PackageManagementService {
   public Collection<InstalledPackage> getInstalledPackages() throws IOException {
     List<PyPackage> packages;
     try {
-      packages = ((PyPackageManagerImpl)PyPackageManager.getInstance(mySdk)).getPackages();
+      packages = PyPackageManager.getInstance(mySdk).getPackages();
     }
     catch (PyExternalProcessException e) {
       throw new IOException(e);
@@ -145,7 +146,7 @@ public class PyPackageManagementService extends PackageManagementService {
     final String repository = PyPIPackageUtil.PYPI_URL.equals(repoPackage.getRepoUrl()) ? null : repoPackage.getRepoUrl();
     final List<String> extraArgs = new ArrayList<String>();
     if (installToUser) {
-      extraArgs.add(PyPackageManagerImpl.USE_USER_SITE);
+      extraArgs.add(PyPackageManager.USE_USER_SITE);
     }
     if (extraOptions != null) {
       // TODO: Respect arguments quotation

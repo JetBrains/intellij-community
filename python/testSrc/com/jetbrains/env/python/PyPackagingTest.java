@@ -43,11 +43,11 @@ public class PyPackagingTest extends PyEnvTestCase {
         final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.EMPTY_SDK);
         List<PyPackage> packages = null;
         try {
-          packages = ((PyPackageManagerImpl)PyPackageManager.getInstance(sdk)).getPackages();
+          packages = PyPackageManager.getInstance(sdk).getPackages();
         }
         catch (PyExternalProcessException e) {
           final int retcode = e.getRetcode();
-          if (retcode != PyPackageManagerImpl.ERROR_NO_PIP && retcode != PyPackageManagerImpl.ERROR_NO_SETUPTOOLS) {
+          if (retcode != PyPackageManager.ERROR_NO_PIP && retcode != PyPackageManager.ERROR_NO_SETUPTOOLS) {
             fail(String.format("Error for interpreter '%s': %s", sdk.getHomePath(), e.getMessage()));
           }
         }
@@ -74,21 +74,21 @@ public class PyPackagingTest extends PyEnvTestCase {
           }
           final File tempDir = FileUtil.createTempDirectory(getTestName(false), null);
           final File venvDir = new File(tempDir, "venv");
-          final String venvSdkHome = ((PyPackageManagerImpl)PyPackageManagerImpl.getInstance(sdk)).createVirtualEnv(venvDir.toString(),
-                                                                                                                    false);
+          final String venvSdkHome = PyPackageManager.getInstance(sdk).createVirtualEnv(venvDir.toString(),
+                                                                                        false);
           final Sdk venvSdk = createTempSdk(venvSdkHome, SdkCreationType.EMPTY_SDK);
           assertNotNull(venvSdk);
           assertTrue(PythonSdkType.isVirtualEnv(venvSdk));
           assertInstanceOf(PythonSdkFlavor.getPlatformIndependentFlavor(venvSdk.getHomePath()), VirtualEnvSdkFlavor.class);
-          final List<PyPackage> packages = ((PyPackageManagerImpl)PyPackageManagerImpl.getInstance(venvSdk)).getPackages();
+          final List<PyPackage> packages = PyPackageManager.getInstance(venvSdk).getPackages();
           final PyPackage setuptools = findPackage("setuptools", packages);
           assertNotNull(setuptools);
           assertEquals("setuptools", setuptools.getName());
-          assertEquals(PyPackageManagerImpl.SETUPTOOLS_VERSION, setuptools.getVersion());
+          assertEquals(PyPackageManager.SETUPTOOLS_VERSION, setuptools.getVersion());
           final PyPackage pip = findPackage("pip", packages);
           assertNotNull(pip);
           assertEquals("pip", pip.getName());
-          assertEquals(PyPackageManagerImpl.PIP_VERSION, pip.getVersion());
+          assertEquals(PyPackageManager.PIP_VERSION, pip.getVersion());
         }
         catch (IOException e) {
           throw new RuntimeException(e);
@@ -109,10 +109,10 @@ public class PyPackagingTest extends PyEnvTestCase {
         try {
           final File tempDir = FileUtil.createTempDirectory(getTestName(false), null);
           final File venvDir = new File(tempDir, "venv");
-          final String venvSdkHome = ((PyPackageManagerImpl)PyPackageManager.getInstance(sdk)).createVirtualEnv(venvDir.getPath(), false);
+          final String venvSdkHome = PyPackageManager.getInstance(sdk).createVirtualEnv(venvDir.getPath(), false);
           final Sdk venvSdk = createTempSdk(venvSdkHome, SdkCreationType.EMPTY_SDK);
           assertNotNull(venvSdk);
-          final PyPackageManagerImpl manager = (PyPackageManagerImpl)PyPackageManager.getInstance(venvSdk);
+          final PyPackageManager manager = PyPackageManager.getInstance(venvSdk);
           final List<PyPackage> packages1 = manager.getPackages();
           // TODO: Install Markdown from a local file
           manager.install(list(PyRequirement.fromString("Markdown<2.2"),
@@ -124,7 +124,7 @@ public class PyPackagingTest extends PyEnvTestCase {
           final PyPackage pip1 = findPackage("pip", packages1);
           assertNotNull(pip1);
           assertEquals("pip", pip1.getName());
-          assertEquals(PyPackageManagerImpl.PIP_VERSION, pip1.getVersion());
+          assertEquals(PyPackageManager.PIP_VERSION, pip1.getVersion());
           manager.uninstall(list(pip1));
           final List<PyPackage> packages3 = manager.getPackages();
           final PyPackage pip2 = findPackage("pip", packages3);

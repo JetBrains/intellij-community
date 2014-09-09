@@ -30,7 +30,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -46,7 +45,6 @@ import com.intellij.remote.RemoteSdkCredentials;
 import com.intellij.remote.VagrantNotStartedException;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathMappingSettings;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
@@ -76,42 +74,19 @@ import java.util.List;
 public class PyPackageManagerImpl extends PyPackageManager {
   private static final Logger LOG = Logger.getInstance(PyPackageManagerImpl.class);
 
-  public static final int OK = 0;
-  public static final int ERROR_NO_PIP = 2;
-  public static final int ERROR_NO_SETUPTOOLS = 3;
-  public static final int ERROR_INVALID_SDK = -1;
-  public static final int ERROR_TOOL_NOT_FOUND = -2;
-  public static final int ERROR_TIMEOUT = -3;
-  public static final int ERROR_INVALID_OUTPUT = -4;
-  public static final int ERROR_ACCESS_DENIED = -5;
-  public static final int ERROR_EXECUTION = -6;
-
   public static final int ERROR_VAGRANT_NOT_LAUNCHED = 101;
   public static final int ERROR_REMOTE_ACCESS = 102;
-
-  public static final String PACKAGE_PIP = "pip";
-  public static final String PACKAGE_DISTRIBUTE = "distribute";
-  public static final String PACKAGE_SETUPTOOLS = "setuptools";
-
-  public static final Key<Boolean> RUNNING_PACKAGING_TASKS = Key.create("PyPackageRequirementsInspection.RunningPackagingTasks");
 
   private static final String PACKAGING_TOOL = "packaging_tool.py";
   private static final String VIRTUALENV = "virtualenv.py";
   private static final int TIMEOUT = 10 * 60 * 1000;
 
   private static final String BUILD_DIR_OPTION = "--build-dir";
-  public static final String USE_USER_SITE = "--user";
 
   public static final String INSTALL = "install";
   public static final String UNINSTALL = "uninstall";
   public static final String UNTAR = "untar";
 
-  // Bundled versions of  package management tools
-  public static final String SETUPTOOLS_VERSION = "1.1.5";
-  public static final String PIP_VERSION = "1.4.1";
-
-  public static final String SETUPTOOLS = PACKAGE_SETUPTOOLS + "-" + SETUPTOOLS_VERSION;
-  public static final String PIP = PACKAGE_PIP + "-" + PIP_VERSION;
   private static final String LAUNCH_VAGRANT = "launchVagrant";
 
   private List<PyPackage> myPackagesCache = null;
@@ -267,17 +242,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
     }
   }
 
-  public static String getUserSite() {
-    if (SystemInfo.isWindows) {
-      final String appdata = System.getenv("APPDATA");
-      return appdata + File.separator + "Python";
-    }
-    else {
-      final String userHome = SystemProperties.getUserHome();
-      return userHome + File.separator + ".local";
-    }
-  }
-
 
   public boolean cacheIsNotNull() {
     return myPackagesCache != null;
@@ -312,7 +276,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     return myPackagesCache;
   }
 
-  public synchronized Set<PyPackage> getDependents(String pkg) throws PyExternalProcessException {
+  public synchronized Set<PyPackage> getDependents(@NotNull PyPackage pkg) throws PyExternalProcessException {
     if (myDependenciesCache == null) {
       if (myExceptionCache != null) {
         throw myExceptionCache;
@@ -320,7 +284,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
       loadPackages();
     }
-    return myDependenciesCache.get(pkg);
+    return myDependenciesCache.get(pkg.getName());
   }
 
   public synchronized void loadPackages() throws PyExternalProcessException {
@@ -421,7 +385,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       if (binaryFile != null) {
         final ProjectJdkImpl tmpSdk = new ProjectJdkImpl("", PythonSdkType.getInstance());
         tmpSdk.setHomePath(path);
-        final PyPackageManagerImpl manager = new PyPackageManagerImpl(tmpSdk);
+        final PyPackageManager manager = PyPackageManager.getInstance(tmpSdk);
         manager.installManagement(SETUPTOOLS);
         manager.installManagement(PIP);
       }
@@ -430,9 +394,9 @@ public class PyPackageManagerImpl extends PyPackageManager {
   }
 
   @Nullable
-  public static List<PyRequirement> getRequirements(@NotNull Module module) {
+  public List<PyRequirement> getRequirements(@NotNull Module module) {
     // TODO: Cache requirements, clear cache on requirements.txt or setup.py updates
-    List<PyRequirement> requirements = getRequirementsFromTxt(module);
+    List<PyRequirement> requirements = PySdkUtil.getRequirementsFromTxt(module);
     if (requirements != null) {
       return requirements;
     }
@@ -452,15 +416,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
     }
     if (PyPackageUtil.findSetupPy(module) != null) {
       return Collections.emptyList();
-    }
-    return null;
-  }
-
-  @Nullable
-  public static List<PyRequirement> getRequirementsFromTxt(Module module) {
-    final VirtualFile requirementsTxt = PyPackageUtil.findRequirementsTxt(module);
-    if (requirementsTxt != null) {
-      return PyRequirement.parse(requirementsTxt);
     }
     return null;
   }

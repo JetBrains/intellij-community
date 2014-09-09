@@ -26,6 +26,7 @@ import com.intellij.webcore.packaging.InstalledPackage;
 import com.intellij.webcore.packaging.InstalledPackagesPanel;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.packaging.*;
+import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.IronPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -53,7 +54,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
       public void run() {
         final Sdk sdk = getSelectedSdk();
         if (sdk != null) {
-          installManagementTool(sdk, PyPackageManagerImpl.SETUPTOOLS);
+          installManagementTool(sdk, PyPackageManager.SETUPTOOLS);
         }
       }
     });
@@ -62,7 +63,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
       public void run() {
         final Sdk sdk = getSelectedSdk();
         if (sdk != null) {
-          installManagementTool(sdk, PyPackageManagerImpl.PIP);
+          installManagementTool(sdk, PyPackageManager.PIP);
         }
       }
     });
@@ -84,12 +85,12 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
       public void run() {
         PyExternalProcessException exc = null;
         try {
-          PyPackageManagerImpl packageManager = (PyPackageManagerImpl)PyPackageManager.getInstance(selectedSdk);
-          myHasSetuptools = packageManager.findInstalledPackage(PyPackageManagerImpl.PACKAGE_SETUPTOOLS) != null;
+          PyPackageManager packageManager = PyPackageManager.getInstance(selectedSdk);
+          myHasSetuptools = packageManager.findInstalledPackage(PyPackageManager.PACKAGE_SETUPTOOLS) != null;
           if (!myHasSetuptools) {
-            myHasSetuptools = packageManager.findInstalledPackage(PyPackageManagerImpl.PACKAGE_DISTRIBUTE) != null;
+            myHasSetuptools = packageManager.findInstalledPackage(PyPackageManager.PACKAGE_DISTRIBUTE) != null;
           }
-          myHasPip = packageManager.findInstalledPackage(PyPackageManagerImpl.PACKAGE_PIP) != null;
+          myHasPip = packageManager.findInstalledPackage(PyPackageManager.PACKAGE_PIP) != null;
         }
         catch (PyExternalProcessException e) {
           exc = e;
@@ -111,10 +112,10 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
                 String text = null;
                 if (externalProcessException != null) {
                   final int retCode = externalProcessException.getRetcode();
-                  if (retCode == PyPackageManagerImpl.ERROR_NO_PIP) {
+                  if (retCode == PyPackageManager.ERROR_NO_PIP) {
                     myHasPip = false;
                   }
-                  else if (retCode == PyPackageManagerImpl.ERROR_NO_SETUPTOOLS) {
+                  else if (retCode == PyPackageManager.ERROR_NO_SETUPTOOLS) {
                     myHasSetuptools = false;
                   }
                   else {
@@ -177,7 +178,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
       @Override
       public void finished(List<PyExternalProcessException> exceptions) {
         myPackagesTable.setPaintBusy(false);
-        PyPackageManagerImpl packageManager = (PyPackageManagerImpl)PyPackageManager.getInstance(sdk);
+        PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
         if (!exceptions.isEmpty()) {
           final String firstLine = "Install package failed. ";
           final String description = PyPackageManagerUI.createDescription(exceptions, firstLine);
@@ -199,14 +200,14 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
     if (!myHasPip) return false;
     if (PythonSdkType.isVirtualEnv(getSelectedSdk()) && pkg instanceof PyPackage) {
       final String location = ((PyPackage)pkg).getLocation();
-      if (location != null && location.startsWith(PyPackageManagerImpl.getUserSite())) {
+      if (location != null && location.startsWith(PySdkUtil.getUserSite())) {
         return false;
       }
     }
     final String name = pkg.getName();
-    if (PyPackageManagerImpl.PACKAGE_PIP.equals(name) ||
-        PyPackageManagerImpl.PACKAGE_SETUPTOOLS.equals(name) ||
-        PyPackageManagerImpl.PACKAGE_DISTRIBUTE.equals(name)) {
+    if (PyPackageManager.PACKAGE_PIP.equals(name) ||
+        PyPackageManager.PACKAGE_SETUPTOOLS.equals(name) ||
+        PyPackageManager.PACKAGE_DISTRIBUTE.equals(name)) {
       return false;
     }
     return true;
