@@ -22,8 +22,8 @@
             </constraints>
             <properties>
               <selected value="false"/>
-              <text value="Enable Lombok support for this project "/>
-              <toolTipText value=""/>
+              <text value="Enable Lombok plugin for this project (Don't forget to enable annotation processing under Compiler settings for lombok itself)"/>
+              <toolTipText value="This checkbox only enables plugin functionality, not the lombok-annotation-processors!"/>
             </properties>
           </component>
           <component id="642bd" class="javax.swing.JLabel">
