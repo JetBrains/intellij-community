@@ -220,7 +220,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
     @Override
     public void setValueAt(final Object aValue, final Object node, final int column) {
       LOG.assertTrue(column == IS_ENABLED_COLUMN);
-      LOG.assertTrue(aValue != null);
+      LOG.assertTrue(aValue != null, "node = " + node);
       final boolean doEnable = (Boolean) aValue;
       for (final InspectionConfigTreeNode aNode : InspectionsAggregationUtil.getInspectionsNodes((InspectionConfigTreeNode) node)) {
         final String toolId = aNode.getKey().toString();
