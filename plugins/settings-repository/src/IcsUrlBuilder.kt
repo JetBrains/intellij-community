@@ -1,42 +1,21 @@
-package org.jetbrains.plugins.settingsRepository;
+package org.jetbrains.plugins.settingsRepository
 
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.util.SystemInfo;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.util.SystemInfo
 
-public final class IcsUrlBuilder {
-  public static final String PROJECTS_DIR_NAME = "_projects/";
+val PROJECTS_DIR_NAME: String = "_projects/"
 
-  private static String getOsFolderName() {
-    if (SystemInfo.isWindows) {
-      return "_windows";
-    }
-    else if (SystemInfo.isMac) {
-      return "_mac";
-    }
-    else if (SystemInfo.isLinux) {
-      return "_linux";
-    }
-    else if (SystemInfo.isFreeBSD) {
-      return "_freebsd";
-    }
-    else if (SystemInfo.isUnix) {
-      return "_unix";
-    }
-    return "_unknown";
-  }
+private fun getOsFolderName() = when {
+  SystemInfo.isWindows -> "_windows"
+  SystemInfo.isMac -> "_mac"
+  SystemInfo.isLinux -> "_linux"
+  SystemInfo.isFreeBSD -> "_freebsd"
+  SystemInfo.isUnix -> "_unix"
+  else -> "_unknown"
+}
 
-  @NotNull
-  static String buildPath(@NotNull String filePath, @NotNull RoamingType roamingType, @Nullable String projectKey) {
-    if (projectKey != null) {
-      return PROJECTS_DIR_NAME + projectKey + '/' + filePath;
-    }
-    else if (roamingType == RoamingType.PER_PLATFORM) {
-      return getOsFolderName() + '/' + filePath;
-    }
-    else {
-      return filePath;
-    }
-  }
+fun buildPath(filePath: String, roamingType: RoamingType, projectKey: String?) = when {
+  projectKey != null -> PROJECTS_DIR_NAME + projectKey + '/' + filePath
+  roamingType == RoamingType.PER_PLATFORM -> getOsFolderName() + '/' + filePath
+  else -> filePath
 }

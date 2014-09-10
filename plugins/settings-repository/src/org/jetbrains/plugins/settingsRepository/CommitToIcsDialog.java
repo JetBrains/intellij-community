@@ -57,7 +57,7 @@ public class CommitToIcsDialog extends DialogWrapper {
       VirtualFile file = change.getVirtualFile();
       assert file != null;
       String fileSpec = macroSubstitutor.collapsePath(file.getPath());
-      String repoPath = IcsUrlBuilder.buildPath(fileSpec, RoamingType.PER_USER, projectId);
+      String repoPath = SettingsRepositoryPackage.buildPath(fileSpec, RoamingType.PER_USER, projectId);
       addToIcs.add(repoPath);
       if (!icsManager.getRepositoryManager().has(repoPath)) {
         // new, revert local

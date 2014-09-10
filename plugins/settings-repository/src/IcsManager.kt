@@ -134,14 +134,14 @@ public class IcsManager : ApplicationLoadListener {
   }
 
   private inner class ApplicationLevelProvider : IcsStreamProvider(null) {
-    override fun listSubFiles(fileSpec: String, roamingType: RoamingType): MutableCollection<String> = repositoryManager.listSubFileNames(IcsUrlBuilder.buildPath(fileSpec, roamingType, null)) as MutableCollection<String>
+    override fun listSubFiles(fileSpec: String, roamingType: RoamingType): MutableCollection<String> = repositoryManager.listSubFileNames(buildPath(fileSpec, roamingType, null)) as MutableCollection<String>
 
     override fun delete(fileSpec: String, roamingType: RoamingType) {
       if (writeAndDeleteProhibited) {
         throw IllegalStateException("Delete is prohibited now")
       }
 
-      repositoryManager.delete(IcsUrlBuilder.buildPath(fileSpec, roamingType, null))
+      repositoryManager.delete(buildPath(fileSpec, roamingType, null))
       scheduleCommit()
     }
   }
@@ -166,7 +166,7 @@ public class IcsManager : ApplicationLoadListener {
     override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean {
       if (StorageUtil.isProjectOrModuleFile(fileSpec)) {
         // applicable only if file was committed to Settings Server explicitly
-        return repositoryManager.has(IcsUrlBuilder.buildPath(fileSpec, roamingType, this.projectId))
+        return repositoryManager.has(buildPath(fileSpec, roamingType, this.projectId))
       }
       return settings.shareProjectWorkspace || fileSpec != StoragePathMacros.WORKSPACE_FILE
     }
@@ -282,7 +282,7 @@ public class IcsManager : ApplicationLoadListener {
         throw IllegalStateException("Save is prohibited now")
       }
 
-      repositoryManager.write(IcsUrlBuilder.buildPath(fileSpec, roamingType, projectId), content, size, async)
+      repositoryManager.write(buildPath(fileSpec, roamingType, projectId), content, size, async)
       if (isAutoCommit(fileSpec, roamingType)) {
         scheduleCommit()
       }
@@ -291,7 +291,7 @@ public class IcsManager : ApplicationLoadListener {
     protected open fun isAutoCommit(fileSpec: String, roamingType: RoamingType): Boolean = true
 
     override fun loadContent(fileSpec: String, roamingType: RoamingType): InputStream? {
-      return repositoryManager.read(IcsUrlBuilder.buildPath(fileSpec, roamingType, projectId))
+      return repositoryManager.read(buildPath(fileSpec, roamingType, projectId))
     }
 
     override fun delete(fileSpec: String, roamingType: RoamingType) {

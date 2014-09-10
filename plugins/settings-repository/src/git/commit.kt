@@ -3,10 +3,10 @@ package org.jetbrains.plugins.settingsRepository.git
 import com.intellij.openapi.progress.ProgressIndicator
 import org.eclipse.jgit.lib.IndexDiff
 import org.eclipse.jgit.lib.ProgressMonitor
-import org.jetbrains.plugins.settingsRepository.IcsUrlBuilder
 import org.jetbrains.plugins.settingsRepository.LOG
 import org.jetbrains.jgit.dirCache.PathEdit
 import com.intellij.util.SmartList
+import org.jetbrains.plugins.settingsRepository.PROJECTS_DIR_NAME
 
 fun commit(manager: GitRepositoryManager, indicator: ProgressIndicator) {
   val index = manager.repository.computeIndexDiff()
@@ -26,7 +26,7 @@ fun commit(manager: GitRepositoryManager, indicator: ProgressIndicator) {
 
     var edits: MutableList<PathEdit>? = null
     for (path in index.getModified()) {
-      if (!path.startsWith(IcsUrlBuilder.PROJECTS_DIR_NAME)) {
+      if (!path.startsWith(PROJECTS_DIR_NAME)) {
         if (edits == null) {
           edits = SmartList()
         }
