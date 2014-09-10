@@ -120,14 +120,13 @@ public class JUnitForkedStarter {
               classNames.add(className);
             }
 
-            File tempFile = File.createTempFile("idea_junit", ".tmp");
-            tempFile.deleteOnExit();
-            JUnitStarter.printClassesList(classNames, packageName + ", working directory: \'" + workingDir + "\'", "", tempFile);
-
             final Object rootDescriptor = findByClassName(testRunner, (String)classNames.get(0), description);
             final int childResult;
             final File dir = new File(workingDir);
             if (forkMode.equals("none")) {
+              File tempFile = File.createTempFile("idea_junit", ".tmp");
+              tempFile.deleteOnExit();
+              JUnitStarter.printClassesList(classNames, packageName + ", working directory: \'" + workingDir + "\'", "", tempFile);
               childResult =
                 runChild(isJUnit4, listeners, out, err, parameters, "@" + tempFile.getAbsolutePath(), dir,
                          String.valueOf(testRunner.getRegistry().getKnownObject(rootDescriptor) - 1), classpath);
