@@ -26,16 +26,11 @@ import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.actions.ChangeListsMergerFactory;
 import org.jetbrains.idea.svn.dialogs.LoadRecentBranchRevisions;
 import org.jetbrains.idea.svn.dialogs.MergeContext;
 import org.jetbrains.idea.svn.dialogs.MergeDialogI;
 import org.jetbrains.idea.svn.dialogs.SvnBranchPointsCalculator;
-import org.jetbrains.idea.svn.update.UpdateEventHandler;
-import org.tmatesoft.svn.core.SVNURL;
 
-import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
@@ -43,38 +38,43 @@ import java.util.List;
  * @author Konstantin Kolosovsky.
  */
 public class ShowRecentInDialogTask extends BaseMergeTask {
-  private final LoadRecentBranchRevisions myLoader;
+
+  @NotNull private final LoadRecentBranchRevisions myInitialChangeListsLoader;
 
   public ShowRecentInDialogTask(@NotNull MergeContext mergeContext,
                                 @NotNull QuickMergeInteraction interaction,
-                                LoadRecentBranchRevisions loader) {
+                                @NotNull LoadRecentBranchRevisions initialChangeListsLoader) {
     super(mergeContext, interaction, "", Where.AWT);
-    myLoader = loader;
+
+    myInitialChangeListsLoader = initialChangeListsLoader;
   }
 
   @Override
   public void run(ContinuationContext context) {
-    final PairConsumer<Long, MergeDialogI> loader = new PairConsumer<Long, MergeDialogI>() {
-      @Override
-      public void consume(Long bunchSize, final MergeDialogI dialog) {
-        final LoadRecentBranchRevisions loader =
-          new LoadRecentBranchRevisions(myMergeContext, dialog.getLastNumber(), bunchSize.intValue());
-        final TaskDescriptor updater = new TaskDescriptor("", Where.AWT) {
-          @Override
-          public void run(ContinuationContext context) {
-            dialog.addMoreLists(loader.getCommittedChangeLists());
-            if (loader.isLastLoaded()) {
-              dialog.setEverythingLoaded(true);
-            }
-          }
+    List<CommittedChangeList> lists = myInteraction.showRecentListsForSelection(myInitialChangeListsLoader.getCommittedChangeLists(),
+                                                                                myMergeContext.getTitle(),
+                                                                                myInitialChangeListsLoader.getHelper(),
+                                                                                createMoreChangeListsLoader(),
+                                                                                myInitialChangeListsLoader.isLastLoaded());
 
-          @Override
-          public void canceled() {
-            dialog.addMoreLists(Collections.<CommittedChangeList>emptyList());
-            dialog.setEverythingLoaded(true);
-          }
-        };
-        final Continuation fragmented = Continuation.createFragmented(myMergeContext.getProject(), true);
+    if (lists != null && !lists.isEmpty()) {
+      runChangeListsMerge(context, lists, createBranchCopyPoint(), myMergeContext.getTitle());
+    }
+    else {
+      context.cancelEverything();
+    }
+  }
+
+  @NotNull
+  private PairConsumer<Long, MergeDialogI> createMoreChangeListsLoader() {
+    return new PairConsumer<Long, MergeDialogI>() {
+
+      @Override
+      public void consume(@NotNull Long bunchSize, @NotNull MergeDialogI dialog) {
+        LoadRecentBranchRevisions loader = new LoadRecentBranchRevisions(myMergeContext, dialog.getLastNumber(), bunchSize.intValue());
+        TaskDescriptor updater = createUpdateDialogTask(dialog, loader);
+
+        Continuation fragmented = Continuation.createFragmented(myMergeContext.getProject(), true);
         fragmented.addExceptionHandler(VcsException.class, new Consumer<VcsException>() {
           @Override
           public void consume(VcsException e) {
@@ -84,29 +84,32 @@ public class ShowRecentInDialogTask extends BaseMergeTask {
         fragmented.run(loader, updater);
       }
     };
-    final List<CommittedChangeList> lists = myInteraction.showRecentListsForSelection(myLoader.getCommittedChangeLists(),
-                                                                                      myMergeContext.getTitle(), myLoader.getHelper(),
-                                                                                      loader, myLoader.isLastLoaded());
+  }
 
-    if (lists != null && !lists.isEmpty()) {
-      final MergerFactory factory = new ChangeListsMergerFactory(lists) {
-        @Override
-        public IMerger createMerger(SvnVcs vcs, File target, UpdateEventHandler handler, SVNURL currentBranchUrl, String branchName) {
-          return new GroupMerger(vcs, lists, target, handler, currentBranchUrl, branchName, false, false, false);
+  @NotNull
+  private SvnBranchPointsCalculator.WrapperInvertor createBranchCopyPoint() {
+    return new SvnBranchPointsCalculator.WrapperInvertor(false, new SvnBranchPointsCalculator.BranchCopyData(
+      myMergeContext.getWcInfo().getUrl().toString(), -1, myMergeContext.getSourceUrl(), -1));
+  }
+
+  @NotNull
+  private static TaskDescriptor createUpdateDialogTask(@NotNull final MergeDialogI dialog,
+                                                       @NotNull final LoadRecentBranchRevisions loader) {
+    return new TaskDescriptor("", Where.AWT) {
+
+      @Override
+      public void run(ContinuationContext context) {
+        dialog.addMoreLists(loader.getCommittedChangeLists());
+        if (loader.isLastLoaded()) {
+          dialog.setEverythingLoaded(true);
         }
-      };
-      // fictive branch point, just for
-      final SvnBranchPointsCalculator.BranchCopyData copyData =
-        new SvnBranchPointsCalculator.BranchCopyData(myMergeContext.getWcInfo().getUrl().toString(), -1, myMergeContext.getSourceUrl(),
-                                                     -1);
-      context.next(new LocalChangesPromptTask(myMergeContext, myInteraction,
-                                              false, lists, new SvnBranchPointsCalculator.WrapperInvertor(false, copyData)
-                   ),
-                   new MergeTask(myMergeContext, myInteraction, factory, myMergeContext.getTitle())
-      );
-    }
-    else {
-      context.cancelEverything();
-    }
+      }
+
+      @Override
+      public void canceled() {
+        dialog.addMoreLists(Collections.<CommittedChangeList>emptyList());
+        dialog.setEverythingLoaded(true);
+      }
+    };
   }
 }

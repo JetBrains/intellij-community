@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.integrate;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.CalledInAny;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.TaskDescriptor;
@@ -25,10 +26,15 @@ import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.actions.ChangeListsMergerFactory;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.MergeContext;
+import org.jetbrains.idea.svn.dialogs.SvnBranchPointsCalculator;
+import org.jetbrains.idea.svn.update.UpdateEventHandler;
 import org.tmatesoft.svn.core.SVNURL;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -57,11 +63,25 @@ public abstract class BaseMergeTask extends TaskDescriptor {
     result.add(new LocalChangesPromptTask(myMergeContext, myInteraction, true, null, null));
     MergeAllWithBranchCopyPointTask mergeAllExecutor = new MergeAllWithBranchCopyPointTask(myMergeContext, myInteraction);
     result.add(myMergeContext.getVcs().getSvnBranchPointsCalculator()
-                .getFirstCopyPointTask(myMergeContext.getWcInfo().getRepositoryRoot(), myMergeContext.getSourceUrl(),
-                                       myMergeContext.getWcInfo().getRootUrl(), mergeAllExecutor));
+                 .getFirstCopyPointTask(myMergeContext.getWcInfo().getRepositoryRoot(), myMergeContext.getSourceUrl(),
+                                        myMergeContext.getWcInfo().getRootUrl(), mergeAllExecutor));
     result.add(mergeAllExecutor);
 
     return result;
+  }
+
+  protected void runChangeListsMerge(@NotNull ContinuationContext context,
+                                     @NotNull final List<CommittedChangeList> lists,
+                                     @NotNull SvnBranchPointsCalculator.WrapperInvertor copyPoint,
+                                     @NotNull String title) {
+    MergerFactory factory = new ChangeListsMergerFactory(lists) {
+      @Override
+      public IMerger createMerger(SvnVcs vcs, File target, UpdateEventHandler handler, SVNURL currentBranchUrl, String branchName) {
+        return new GroupMerger(vcs, lists, target, handler, currentBranchUrl, branchName, false, false, false);
+      }
+    };
+    context.next(new LocalChangesPromptTask(myMergeContext, myInteraction, false, lists, copyPoint),
+                 new MergeTask(myMergeContext, myInteraction, factory, title));
   }
 
   @Nullable
