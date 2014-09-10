@@ -118,7 +118,7 @@ public class RollbackLineStatusAction extends DumbAwareAction {
     execute(tracker, new Runnable() {
       @Override
       public void run() {
-        tracker.rollbackChanges();
+        tracker.rollbackAllChanges();
       }
     });
   }
