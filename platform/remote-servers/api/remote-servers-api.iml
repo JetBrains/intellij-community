@@ -8,7 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="core-api" />
-    <orderEntry type="module" module-name="compiler-openapi" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="remote-servers-agent-rt" exported="" />
   </component>
