@@ -46,7 +46,6 @@ def launch_with_port(port):
         try:
             path_len = struct.unpack(">h", s.recv(2))[0]
             path = s.recv(path_len)
-            path = os.path.abspath(path)
             if os.path.abspath(path) == os.path.abspath(CONFIG_PATH):
                 found = True
                 break
