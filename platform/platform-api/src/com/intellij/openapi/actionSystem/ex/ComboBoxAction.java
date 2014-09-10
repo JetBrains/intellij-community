@@ -26,10 +26,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.Gray;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.JBColor;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
@@ -103,7 +100,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     return 1;
   }
 
-  protected class ComboBoxButton extends JButton {
+  protected class ComboBoxButton extends JButton implements UserActivityProviderComponent {
     private final Presentation myPresentation;
     private boolean myForcePressed = false;
     private PropertyChangeListener myButtonSynchronizer;
@@ -227,6 +224,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
             }
           });
           repaint();
+          fireStateChanged();
         }
       };
 
