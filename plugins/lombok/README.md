@@ -5,7 +5,7 @@ lombok-intellij-plugin
 
 Provides support for lombok annotations to write great Java code with IntelliJ IDEA.
 
-###Last version (0.8.7) released on 10.09.2014###
+**Last version (0.8.7) released on 10.09.2014**
 
 Twelfth version of plugin released. Bugfixes and initial support for some cool lombok and delombok refactoring actions with Intellij!
 
