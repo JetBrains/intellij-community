@@ -64,7 +64,7 @@ class CommitToIcsAction extends CommonCheckinFilesAction {
 
   @Override
   protected String getActionName(VcsContext dataContext) {
-    return IcsBundle.message("action.CommitToIcs.text");
+    return IcsBundle.OBJECT$.message("action.CommitToIcs.text");
   }
 
   @Override

@@ -42,7 +42,8 @@ public class IcsSettingsPanel extends DialogWrapper {
     syncActions = new Action[syncTypes.length];
     for (int i = 0, n = syncTypes.length; i < n; i++) {
       final SyncType syncType = syncTypes[i];
-      syncActions[i] = new DialogWrapperAction(IcsBundle.message("action." + (syncType == SyncType.MERGE ? "Merge" : (syncType == SyncType.RESET_TO_THEIRS ? "ResetToTheirs" : "ResetToYours")) + "Settings.text")) {
+      syncActions[i] = new DialogWrapperAction(IcsBundle.OBJECT$.message(
+        "action." + (syncType == SyncType.MERGE ? "Merge" : (syncType == SyncType.RESET_TO_THEIRS ? "ResetToTheirs" : "ResetToYours")) + "Settings.text")) {
         @Override
         protected void doAction(ActionEvent event) {
           if (!saveRemoteRepositoryUrl()) {
@@ -53,11 +54,11 @@ public class IcsSettingsPanel extends DialogWrapper {
             IcsManager.OBJECT$.getInstance().sync(syncType, project);
           }
           catch (Exception e) {
-            Messages.showErrorDialog(getContentPane(), StringUtil.notNullize(e.getMessage(), "Internal error"), IcsBundle.message("sync.rejected.title"));
+            Messages.showErrorDialog(getContentPane(), StringUtil.notNullize(e.getMessage(), "Internal error"), IcsBundle.OBJECT$.message("sync.rejected.title"));
             return;
           }
 
-          ActionsPackage.getNOTIFICATION_GROUP().createNotification(IcsBundle.message("sync.done.message"), NotificationType.INFORMATION).notify(project);
+          ActionsPackage.getNOTIFICATION_GROUP().createNotification(IcsBundle.OBJECT$.message("sync.done.message"), NotificationType.INFORMATION).notify(project);
           doOKAction();
         }
       };
@@ -72,7 +73,7 @@ public class IcsSettingsPanel extends DialogWrapper {
 
     updateSyncButtonState();
 
-    setTitle(IcsBundle.message("settings.panel.title"));
+    setTitle(IcsBundle.OBJECT$.message("settings.panel.title"));
     setResizable(false);
     init();
   }
@@ -125,7 +126,7 @@ public class IcsSettingsPanel extends DialogWrapper {
       return true;
     }
     catch (Exception e) {
-      Messages.showErrorDialog(getContentPane(), IcsBundle.message("set.upstream.failed.message", e.getMessage()), IcsBundle.message("set.upstream.failed.title"));
+      Messages.showErrorDialog(getContentPane(), IcsBundle.OBJECT$.message("set.upstream.failed.message", e.getMessage()), IcsBundle.OBJECT$.message("set.upstream.failed.title"));
       return false;
     }
   }
