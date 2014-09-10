@@ -15,7 +15,6 @@
  */
 package com.intellij.lang.properties;
 
-import com.intellij.lang.HtmlScriptContentProvider;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertyKeyIndex;
 import com.intellij.lang.properties.xml.XmlPropertiesFileImpl;
@@ -79,7 +78,13 @@ public class PropertiesImplUtil extends PropertiesUtil {
   private static ResourceBundle getResourceBundle(@NotNull final String baseName, @NotNull final PsiDirectory baseDirectory) {
     PropertiesFile defaultPropertiesFile = null;
     final ResourceBundleManager bundleBaseNameManager = ResourceBundleManager.getInstance(baseDirectory.getProject());
-    for (final PsiFile psiFile : baseDirectory.getFiles()) {
+    final PsiFile[] psiFiles = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile[]>() {
+      @Override
+      public PsiFile[] compute() {
+        return baseDirectory.getFiles();
+      }
+    });
+    for (final PsiFile psiFile : psiFiles) {
       if (baseName.equals(bundleBaseNameManager.getBaseName(psiFile))) {
         final PropertiesFile propertiesFile = getPropertiesFile(psiFile);
         if (propertiesFile != null) {
