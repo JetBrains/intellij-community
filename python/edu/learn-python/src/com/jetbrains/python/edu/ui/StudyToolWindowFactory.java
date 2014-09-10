@@ -9,6 +9,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.edu.StudyTaskManager;
+import com.jetbrains.python.edu.actions.StudyReloadCourseAction;
 import com.jetbrains.python.edu.course.Course;
 import com.jetbrains.python.edu.course.Lesson;
 import com.jetbrains.python.edu.course.LessonInfo;
@@ -17,6 +18,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.List;
 
 public class StudyToolWindowFactory implements ToolWindowFactory, DumbAware {
@@ -41,7 +44,15 @@ public class StudyToolWindowFactory implements ToolWindowFactory, DumbAware {
       contentPanel.add(new JLabel(authorLabel));
       contentPanel.add(Box.createRigidArea(new Dimension(0, 10)));
       contentPanel.add(new JLabel(description));
+      contentPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+      JButton reloadCourseButton = new JButton("reload course");
+      reloadCourseButton.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          StudyReloadCourseAction.reloadCourse(project);
+        }
+      });
 
+      contentPanel.add(reloadCourseButton);
       int taskNum = 0;
       int taskSolved = 0;
       int lessonsCompleted = 0;
