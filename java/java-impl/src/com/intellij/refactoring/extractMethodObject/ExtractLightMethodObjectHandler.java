@@ -79,7 +79,13 @@ public class ExtractLightMethodObjectHandler {
                                                        final PsiFile file,
                                                        @NotNull final PsiCodeFragment fragment,
                                                        final String methodName) throws PrepareFailedException {
-    final PsiElement[] elements = CodeInsightUtil.findStatementsInRange(fragment, 0, fragment.getTextLength());
+    PsiExpression expression = CodeInsightUtil.findExpressionInRange(fragment, 0, fragment.getTextLength());
+    final PsiElement[] elements;
+    if (expression != null) {
+      elements = new PsiElement[] {JavaPsiFacade.getElementFactory(project).createStatementFromText(expression.getText() + ";", expression)};
+    } else {
+      elements = CodeInsightUtil.findStatementsInRange(fragment, 0, fragment.getTextLength());
+    }
     if (elements.length == 0) {
       return null;
     }

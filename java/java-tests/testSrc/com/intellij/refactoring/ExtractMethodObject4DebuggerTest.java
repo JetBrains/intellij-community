@@ -117,7 +117,7 @@ public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
 
            "public class Test {\n" +
            "        public void invoke() {\n" +
-           "            new In(2).foo()\n" +
+           "            new In(2).foo();\n" +
            "        }\n" +
            "    }");
   }
