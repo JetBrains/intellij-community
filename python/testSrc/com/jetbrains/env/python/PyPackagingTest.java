@@ -47,7 +47,7 @@ public class PyPackagingTest extends PyEnvTestCase {
         }
         catch (PyExternalProcessException e) {
           final int retcode = e.getRetcode();
-          if (retcode != PyPackageManager.ERROR_NO_PIP && retcode != PyPackageManager.ERROR_NO_SETUPTOOLS) {
+          if (retcode != PyPackageManagerImpl.ERROR_NO_PIP && retcode != PyPackageManagerImpl.ERROR_NO_SETUPTOOLS) {
             fail(String.format("Error for interpreter '%s': %s", sdk.getHomePath(), e.getMessage()));
           }
         }
