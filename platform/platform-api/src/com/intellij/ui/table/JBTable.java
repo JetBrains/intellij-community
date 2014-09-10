@@ -572,7 +572,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private final class MyMouseListener extends MouseAdapter {
     @Override
     public void mousePressed(@NotNull final MouseEvent e) {
-      if (SwingUtilities.isRightMouseButton(e)) {
+      if (JBSwingUtilities.isRightMouseButton(e)) {
         final int[] selectedRows = getSelectedRows();
         if (selectedRows.length < 2) {
           final int row = rowAtPoint(e.getPoint());
