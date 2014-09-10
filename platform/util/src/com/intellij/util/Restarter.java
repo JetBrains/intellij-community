@@ -159,10 +159,9 @@ public class Restarter {
       System.out.println("can not create the " + copy.getPath());
       System.out.println("will be created another one for " + executable.getName());
        String ext = FileUtilRt.getExtension(executable.getName());
-       System.out.println("ext " + ext);
        copy = FileUtilRt.createTempFile(executableDir, FileUtilRt.getNameWithoutExtension(copy.getName()),
                                             StringUtil.isEmptyOrSpaces(ext) ? ".tmp" : ("." + ext),
-                                            false);
+                                            true, false);
     } else{
       System.out.println("can create the " + copy.getPath());
     }
