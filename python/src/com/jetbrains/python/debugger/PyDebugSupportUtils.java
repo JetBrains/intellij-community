@@ -80,23 +80,27 @@ public class PyDebugSupportUtils {
            element instanceof PyNamedParameter;
   }
 
-  // is expression a variable reference
+  // is expression a variable reference and can be evaluated
   // todo: use patterns (?)
-  public static boolean isVariable(final Project project, final String expression) {
+  public static boolean canSaveToTemp(final Project project, final String expression) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
 
         final PsiFile file = PyElementGenerator.getInstance(project).createDummyFile(LanguageLevel.getDefault(), expression);
         final PsiElement root = file.getFirstChild();
-        return root instanceof PyExpressionStatement &&
-               root.getFirstChild() instanceof PyReferenceExpression &&
-               root.getFirstChild() == root.getLastChild() &&
-               root.getFirstChild().getFirstChild() != null &&
-               root.getFirstChild().getFirstChild().getNode().getElementType() == PyTokenTypes.IDENTIFIER &&
-               root.getFirstChild().getFirstChild() == root.getFirstChild().getLastChild() &&
-               root.getFirstChild().getFirstChild().getFirstChild() == null;
+        return !isVariable(root) && (root instanceof PyExpressionStatement);
       }
     });
+  }
+
+  private static Boolean isVariable(PsiElement root) {
+    return root instanceof PyExpressionStatement &&
+           root.getFirstChild() instanceof PyReferenceExpression &&
+           root.getFirstChild() == root.getLastChild() &&
+           root.getFirstChild().getFirstChild() != null &&
+           root.getFirstChild().getFirstChild().getNode().getElementType() == PyTokenTypes.IDENTIFIER &&
+           root.getFirstChild().getFirstChild() == root.getFirstChild().getLastChild() &&
+           root.getFirstChild().getFirstChild().getFirstChild() == null;
   }
 
   @Nullable
