@@ -26,15 +26,18 @@ class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator) : Pull(
     LOG.debug("Reset working directory")
     manager.git.reset().setMode(ResetCommand.ResetType.HARD).call()
 
+    val commitMessage = "Reset to " + manager.getUpstream()
     // grab added/deleted/renamed/modified files
-    val mergeResult = pull(MergeStrategy.THEIRS)
+    var mergeResult = pull(MergeStrategy.THEIRS, commitMessage)
     if (mergeResult == null) {
-      // and then we need to remove all files missing in remote
+      // nothing to merge, so, we merge latest origin commit
       val fetchRefSpecs = remoteConfig.getFetchRefSpecs()
       assert(fetchRefSpecs.size == 1)
 
-      merge(repository.getRef(fetchRefSpecs[0].getDestination()!!)!!, MergeStrategy.THEIRS, true, forceMerge = true)
-      // nothing to merge, so, we merge latest origin commit
+      mergeResult = merge(repository.getRef(fetchRefSpecs[0].getDestination()!!)!!, MergeStrategy.THEIRS, true, forceMerge = true, commitMessage = commitMessage)
+      if (mergeResult?.getMergeStatus()?.isSuccessful() !== true) {
+        throw IllegalStateException(mergeResult.toString())
+      }
     }
 
 //    val reader = repository.newObjectReader()

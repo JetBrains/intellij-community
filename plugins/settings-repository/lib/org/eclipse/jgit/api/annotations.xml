@@ -23,6 +23,9 @@
   <item name='org.eclipse.jgit.api.CommitCommand org.eclipse.jgit.api.CommitCommand setMessage(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='org.eclipse.jgit.api.CommitCommand org.eclipse.jgit.api.CommitCommand setMessage(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.eclipse.jgit.api.CommitCommand org.eclipse.jgit.api.CommitCommand setReflogComment(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -36,6 +39,9 @@
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='org.eclipse.jgit.api.Git org.eclipse.jgit.api.ResetCommand reset()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.api.Git org.eclipse.jgit.api.TagCommand tag()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='org.eclipse.jgit.api.Git org.eclipse.jgit.lib.Repository getRepository()'>

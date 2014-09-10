@@ -62,6 +62,14 @@ class GitTest {
       PlatformTestCase.initPlatformLangPrefix()
     }
 
+    private val repositoryManager: GitRepositoryManager
+      get() = IcsManager.getInstance().repositoryManager as GitRepositoryManager
+
+    private val repository: Repository
+      get() = repositoryManager.repository
+
+    private val testDataPath: String = PathManager.getHomePath() + "/settings-repository/testData"
+
     // BeforeClass doesn't work in Kotlin
     public fun setIcsDir() {
       val icsDirPath = System.getProperty("ics.settingsRepository")
@@ -75,20 +83,12 @@ class GitTest {
       }
     }
 
-    private fun getTestDataPath(): String {
-      return PathManager.getHomePath() + "/settings-repository/testData"
-    }
-
-    private fun getRepositoryManager(): GitRepositoryManager {
-      return (IcsManager.getInstance().repositoryManager as GitRepositoryManager)
-    }
-
     private fun delete(data: ByteArray, directory: Boolean) {
       val addedFile = "\$APP_CONFIG$/remote.xml"
       getProvider().saveContent(addedFile, data, data.size, RoamingType.PER_USER, true)
       getProvider().delete(if (directory) "\$APP_CONFIG$" else addedFile, RoamingType.PER_USER)
 
-      val diff = getRepositoryManager().repository.computeIndexDiff()
+      val diff = repository.computeIndexDiff()
       assertThat(diff.diff(), equalTo(false))
       assertThat<Set<String>>(diff.getAdded(), empty<Any>())
       assertThat<Set<String>>(diff.getChanged(), empty<Any>())
@@ -105,18 +105,10 @@ class GitTest {
     }
 
     private fun addAndCommit(path: String): FileInfo {
-      val data = FileUtil.loadFileBytes(File(getTestDataPath(), PathUtilRt.getFileName(path)))
+      val data = FileUtil.loadFileBytes(File(testDataPath, PathUtilRt.getFileName(path)))
       getProvider().saveContent(path, data, data.size, RoamingType.PER_USER, false)
-      getRepositoryManager().commit(EmptyProgressIndicator())
+      repositoryManager.commit(EmptyProgressIndicator())
       return FileInfo(path, data)
-    }
-
-    private fun compareFiles(local: File, remote: File, vararg localExcludes: String) {
-      compareFiles(local, remote, null, *localExcludes)
-    }
-
-    private fun getRepository(): Repository {
-      return getRepositoryManager().repository
     }
   }
 
@@ -162,11 +154,11 @@ class GitTest {
 
   Test
   public fun add() {
-    val data = FileUtil.loadFileBytes(File(getTestDataPath(), "remote.xml"))
+    val data = FileUtil.loadFileBytes(File(testDataPath, "remote.xml"))
     val addedFile = "\$APP_CONFIG$/remote.xml"
     getProvider().saveContent(addedFile, data, data.size, RoamingType.PER_USER, false)
 
-    val diff = getRepositoryManager().repository.computeIndexDiff()
+    val diff = repository.computeIndexDiff()
     assertThat(diff.diff(), equalTo(true))
     assertThat<Set<String>>(diff.getAdded(), contains(equalTo(addedFile)))
     assertThat<Set<String>>(diff.getChanged(), empty<Any>())
@@ -178,14 +170,14 @@ class GitTest {
 
   Test
   public fun addSeveral() {
-    val data = FileUtil.loadFileBytes(File(getTestDataPath(), "remote.xml"))
-    val data2 = FileUtil.loadFileBytes(File(getTestDataPath(), "local.xml"))
+    val data = FileUtil.loadFileBytes(File(testDataPath, "remote.xml"))
+    val data2 = FileUtil.loadFileBytes(File(testDataPath, "local.xml"))
     val addedFile = "\$APP_CONFIG$/remote.xml"
     val addedFile2 = "\$APP_CONFIG$/local.xml"
     getProvider().saveContent(addedFile, data, data.size, RoamingType.PER_USER, false)
     getProvider().saveContent(addedFile2, data2, data2.size, RoamingType.PER_USER, false)
 
-    val diff = getRepositoryManager().repository.computeIndexDiff()
+    val diff = repository.computeIndexDiff()
     assertThat(diff.diff(), equalTo(true))
     assertThat<Set<String>>(diff.getAdded(), contains(equalTo(addedFile), equalTo(addedFile2)))
     assertThat<Set<String>>(diff.getChanged(), empty<Any>())
@@ -197,7 +189,7 @@ class GitTest {
 
   Test
   public fun delete() {
-    val data = FileUtil.loadFileBytes(File(getTestDataPath(), "remote.xml"))
+    val data = FileUtil.loadFileBytes(File(testDataPath, "remote.xml"))
     delete(data, false)
     delete(data, true)
   }
@@ -205,8 +197,8 @@ class GitTest {
   Test
   public fun setUpstream() {
     val url = "https://github.com/user/repo.git"
-    getRepositoryManager().setUpstream(url, null)
-    assertThat(getRepositoryManager().getUpstream(), equalTo(url))
+    repositoryManager.setUpstream(url, null)
+    assertThat(repositoryManager.getUpstream(), equalTo(url))
   }
 
   Test
@@ -220,11 +212,10 @@ class GitTest {
   }
 
   private fun doPullToRepositoryWithoutCommits(remoteBranchName: String?) {
-    val repositoryManager = getRepositoryManager()
     val remoteRepository = createFileRemote(remoteBranchName)
     repositoryManager.setUpstream(remoteRepository.getAbsolutePath(), remoteBranchName)
     repositoryManager.pull(EmptyProgressIndicator())
-    compareFiles(getRepository().getWorkTree(), remoteRepository)
+    compareFiles(repository.getWorkTree(), remoteRepository)
   }
 
   Test
@@ -240,18 +231,16 @@ class GitTest {
   private fun doPullToRepositoryWithCommits(remoteBranchName: String?) {
     val file = createLocalRepositoryAndCommit(remoteBranchName)
 
-    val repositoryManager = getRepositoryManager()
     val progressIndicator = EmptyProgressIndicator()
     repositoryManager.commit(progressIndicator)
     repositoryManager.pull(progressIndicator)
-    assertThat(FileUtil.loadFile(File(getRepository().getWorkTree(), file.name)), equalTo(String(file.data, CharsetToolkit.UTF8_CHARSET)))
-    compareFiles(getRepository().getWorkTree(), remoteRepository!!, PathUtilRt.getFileName(file.name))
+    assertThat(FileUtil.loadFile(File(repository.getWorkTree(), file.name)), equalTo(String(file.data, CharsetToolkit.UTF8_CHARSET)))
+    compareFiles(repository.getWorkTree(), remoteRepository!!, PathUtilRt.getFileName(file.name))
   }
 
   data class FileInfo (val name: String, val data: ByteArray)
 
   private fun createLocalRepositoryAndCommit(remoteBranchName: String?): FileInfo {
-    val repositoryManager = getRepositoryManager()
     remoteRepository = createFileRemote(remoteBranchName)
     repositoryManager.setUpstream(remoteRepository!!.getAbsolutePath(), remoteBranchName)
 
@@ -265,7 +254,7 @@ class GitTest {
     sync(SyncType.RESET_TO_THEIRS)
     val fs = MockVirtualFileSystem()
     fs.findFileByPath("\$APP_CONFIG$/remote.xml")
-    compareFiles(getRepository().getWorkTree(), remoteRepository!!, fs.findFileByPath(""))
+    compareFiles(repository.getWorkTree(), remoteRepository!!, fs.findFileByPath(""))
   }
 
   Test
@@ -286,12 +275,12 @@ class GitTest {
     val fs = MockVirtualFileSystem()
     fs.findFileByPath("\$APP_CONFIG$/local.xml")
     fs.findFileByPath("\$APP_CONFIG$/remote.xml")
-    compareFiles(getRepository().getWorkTree(), remoteRepository!!, fs.findFileByPath(""))
+    compareFiles(repository.getWorkTree(), remoteRepository!!, fs.findFileByPath(""))
 
     addAndCommit("_mac/local2.xml")
     sync(SyncType.RESET_TO_THEIRS)
 
-    compareFiles(getRepository().getWorkTree(), remoteRepository!!, fs.findFileByPath(""))
+    compareFiles(repository.getWorkTree(), remoteRepository!!, fs.findFileByPath(""))
   }
 
   private fun sync(syncType: SyncType) {
@@ -315,11 +304,15 @@ class GitTest {
 
     val addedFile = "\$APP_CONFIG$/remote.xml"
     val workTree = repository.getWorkTree()
-    FileUtil.copy(File(getTestDataPath(), "remote.xml"), File(workTree, addedFile))
+    FileUtil.copy(File(testDataPath, "remote.xml"), File(workTree, addedFile))
     repository.edit(AddFile(addedFile))
     remoteRepositoryApi!!.commit().setMessage("").call()
     return workTree
   }
+}
+
+private fun compareFiles(local: File, remote: File, vararg localExcludes: String) {
+  compareFiles(local, remote, null, *localExcludes)
 }
 
 private fun compareFiles(local: File, remote: File, expected: VirtualFile?, vararg localExcludes: String) {

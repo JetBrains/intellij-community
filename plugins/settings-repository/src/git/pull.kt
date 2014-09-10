@@ -47,7 +47,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
   val config = repository.getConfig()
   val remoteConfig = RemoteConfig(config, Constants.DEFAULT_REMOTE_NAME)
 
-  fun pull(mergeStrategy: MergeStrategy = MergeStrategy.RECURSIVE): MergeResult? {
+  fun pull(mergeStrategy: MergeStrategy = MergeStrategy.RECURSIVE, commitMessage: String? = null): MergeResult? {
     LOG.debug("Pull")
 
     val repository = manager.repository
@@ -61,13 +61,13 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
       return null
     }
 
-    val mergeResult = merge(refToMerge, mergeStrategy)
+    val mergeResult = merge(refToMerge, mergeStrategy, commitMessage = commitMessage)
     val mergeStatus = mergeResult.getMergeStatus()
     if (LOG.isDebugEnabled()) {
       LOG.debug(mergeStatus.toString())
     }
     if (!mergeStatus.isSuccessful()) {
-      throw UnsupportedOperationException()
+      throw IllegalStateException(mergeResult.toString())
     }
 
     return mergeResult
@@ -138,7 +138,13 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
     return refToMerge
   }
 
-  fun merge(unpeeledRef: Ref, mergeStrategy: MergeStrategy = MergeStrategy.RECURSIVE, commit: Boolean = true, fastForwardMode: FastForwardMode = FastForwardMode.FF, squash: Boolean = false, forceMerge: Boolean = false): MergeResult {
+  fun merge(unpeeledRef: Ref,
+            mergeStrategy: MergeStrategy = MergeStrategy.RECURSIVE,
+            commit: Boolean = true,
+            fastForwardMode: FastForwardMode = FastForwardMode.FF,
+            squash: Boolean = false,
+            forceMerge: Boolean = false,
+            commitMessage: String? = null): MergeResult {
     val head = repository.getRef(Constants.HEAD)
     if (head == null) {
       throw NoHeadException(JGitText.get().commitOnRepoWithoutHEADCurrentlyNotSupported)
@@ -259,7 +265,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
             mergeStatus = MergeResult.MergeStatus.MERGED_NOT_COMMITTED
           }
           if (commit && !squash) {
-            newHeadId = manager.git.commit().setReflogComment(refLogMessage.toString()).call().getId()
+            newHeadId = manager.git.commit().setMessage(commitMessage).setReflogComment(refLogMessage.toString()).call().getId()
             mergeStatus = MergeResult.MergeStatus.MERGED
           }
           if (commit && squash) {
