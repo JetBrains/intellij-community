@@ -21,18 +21,6 @@ public class UserMapKeys {
 
   public static final Key<LombokPresentData> HAS_LOMBOK_KEY = Key.create(LOMBOK_IS_PRESENT_PROPERTY);
 
-  public static void removeAllUsagesFrom(@NotNull UserDataHolder element) {
-    if (null != element.getUserData(READ_KEY)) {
-      element.putUserData(READ_KEY, null);
-    }
-    if (null != element.getUserData(WRITE_KEY)) {
-      element.putUserData(WRITE_KEY, null);
-    }
-    if (null != element.getUserData(USAGE_KEY)) {
-      element.putUserData(USAGE_KEY, null);
-    }
-  }
-
   public static void addGeneralUsageFor(@NotNull UserDataHolder element) {
     element.putUserData(USAGE_KEY, Boolean.TRUE);
   }

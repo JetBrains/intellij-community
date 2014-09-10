@@ -1,7 +1,5 @@
 package de.plushnikov.sneakythrows;
 
-import sun.security.pkcs.EncodingException;
-
 import java.io.IOException;
 
 class SneakyThrowsTryWithResources {
