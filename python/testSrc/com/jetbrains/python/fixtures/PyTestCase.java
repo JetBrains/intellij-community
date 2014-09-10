@@ -98,12 +98,12 @@ public abstract class PyTestCase extends UsefulTestCase {
     IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
     TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor());
     final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
-    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture,
-                                                                                    new LightTempDirTestFixtureImpl(true));
-    myFixture.setUp();
+      myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture,
+                                                                                      new LightTempDirTestFixtureImpl(true));
+      myFixture.setUp();
 
-    myFixture.setTestDataPath(getTestDataPath());
-  }
+      myFixture.setTestDataPath(getTestDataPath());
+    }
 
   protected String getTestDataPath() {
     return PythonTestUtil.getTestDataPath();
@@ -191,15 +191,23 @@ public abstract class PyTestCase extends UsefulTestCase {
   }
 
   /**
+   * @see #moveByText(com.intellij.testFramework.fixtures.CodeInsightTestFixture, String)
+   */
+  protected void moveByText(@NotNull final String testToFind) {
+    moveByText(myFixture, testToFind);
+  }
+
+  /**
    * Finds some text and moves cursor to it (if found)
    *
+   * @param fixture    test fixture
    * @param testToFind text to find
    * @throws AssertionError if element not found
    */
-  protected void moveByText(@NotNull final String testToFind) {
-    final PsiElement element = myFixture.findElementByText(testToFind, PsiElement.class);
+  public static void moveByText(@NotNull final CodeInsightTestFixture fixture, @NotNull final String testToFind) {
+    final PsiElement element = fixture.findElementByText(testToFind, PsiElement.class);
     assert element != null : "No element found by text: " + testToFind;
-    myFixture.getEditor().getCaretModel().moveToOffset(element.getTextOffset());
+    fixture.getEditor().getCaretModel().moveToOffset(element.getTextOffset());
   }
 
   /**
@@ -273,13 +281,17 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   /**
    * Creates run configuration from right click menu
+   *
+   * @param fixture       test fixture
    * @param expectedClass expected class of run configuration
-   * @param <C> expected class of run configuration
+   * @param <C>           expected class of run configuration
    * @return configuration (if created) or null (otherwise)
    */
   @Nullable
-  protected <C extends RunConfiguration> C createRunConfigurationFromContext(@NotNull final Class<C> expectedClass) {
-    final DataContext context = DataManager.getInstance().getDataContext(myFixture.getEditor().getComponent());
+  public static <C extends RunConfiguration> C createRunConfigurationFromContext(
+    @NotNull final CodeInsightTestFixture fixture,
+    @NotNull final Class<C> expectedClass) {
+    final DataContext context = DataManager.getInstance().getDataContext(fixture.getEditor().getComponent());
     for (final RunConfigurationProducer<?> producer : RunConfigurationProducer.EP_NAME.getExtensions()) {
       final ConfigurationFromContext fromContext = producer.createConfigurationFromContext(ConfigurationContext.getFromContext(context));
       if (fromContext == null) {
