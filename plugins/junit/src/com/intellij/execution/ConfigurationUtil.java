@@ -95,7 +95,13 @@ public class ConfigurationUtil {
       //allScope is used to find all abstract test cases which probably have inheritors in the current 'scope'
       AnnotatedMembersSearch.search(testAnnotation, GlobalSearchScope.allScope(manager.getProject())).forEach(new Processor<PsiMember>() {
         public boolean process(final PsiMember annotated) {
-          final PsiClass containingClass = annotated instanceof PsiClass ? (PsiClass)annotated : annotated.getContainingClass();
+          final PsiClass containingClass = annotated instanceof PsiClass ? (PsiClass)annotated : ApplicationManager.getApplication()
+            .runReadAction(new Computable<PsiClass>() {
+                @Override
+                public PsiClass compute() {
+                  return annotated.getContainingClass();
+                }
+              });
           if (containingClass != null && annotated instanceof PsiMethod == isMethod) {
             if (ApplicationManager.getApplication().runReadAction(
               new Computable<Boolean>() {
