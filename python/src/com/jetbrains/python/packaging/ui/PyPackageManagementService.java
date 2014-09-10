@@ -131,12 +131,12 @@ public class PyPackageManagementService extends PackageManagementService {
   public Collection<InstalledPackage> getInstalledPackages() throws IOException {
     List<PyPackage> packages;
     try {
-      packages = PyPackageManager.getInstance(mySdk).getPackages();
+      packages = PyPackageManager.getInstance(mySdk).getPackages(false);
     }
     catch (PyExternalProcessException e) {
       throw new IOException(e);
     }
-    return new ArrayList<InstalledPackage>(packages);
+    return packages != null ? new ArrayList<InstalledPackage>(packages) : new ArrayList<InstalledPackage>();
   }
 
   @Override

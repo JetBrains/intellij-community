@@ -242,38 +242,30 @@ public class PyPackageManagerImpl extends PyPackageManager {
     }
   }
 
-
   public boolean cacheIsNotNull() {
     return myPackagesCache != null;
   }
 
-  /**
-   * Returns the list of packages for the SDK without initiating a remote connection. Returns null
-   * for a remote interpreter if the list of packages was not loaded.
-   *
-   * @return the list of packages or null
-   */
   @Nullable
-  public synchronized List<PyPackage> getPackagesFast() throws PyExternalProcessException {
-    if (myPackagesCache != null) {
+  public synchronized List<PyPackage> getPackages(boolean cachedOnly) throws PyExternalProcessException {
+    if (cachedOnly) {
+      if (myPackagesCache != null) {
+        return myPackagesCache;
+      }
+      if (PySdkUtil.isRemote(mySdk)) {
+        return null;
+      }
+      return getPackages(false);
+    }
+    else {
+      if (myPackagesCache == null) {
+        if (myExceptionCache != null) {
+          throw myExceptionCache;
+        }
+        loadPackages();
+      }
       return myPackagesCache;
     }
-    if (PySdkUtil.isRemote(mySdk)) {
-      return null;
-    }
-    return getPackages();
-  }
-
-  @NotNull
-  public synchronized List<PyPackage> getPackages() throws PyExternalProcessException {
-    if (myPackagesCache == null) {
-      if (myExceptionCache != null) {
-        throw myExceptionCache;
-      }
-
-      loadPackages();
-    }
-    return myPackagesCache;
   }
 
   public synchronized Set<PyPackage> getDependents(@NotNull PyPackage pkg) throws PyExternalProcessException {
@@ -330,7 +322,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   @Override
   @Nullable
   public PyPackage findInstalledPackage(String name, boolean cachedOnly) throws PyExternalProcessException {
-    final List<PyPackage> packages = cachedOnly ? getPackagesFast() : getPackages();
+    final List<PyPackage> packages = getPackages(cachedOnly);
     if (packages != null) {
       for (PyPackage pkg : packages) {
         if (name.equalsIgnoreCase(pkg.getName())) {

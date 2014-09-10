@@ -68,9 +68,7 @@ public abstract class PyPackageManager {
   @NotNull
   public abstract String createVirtualEnv(@NotNull String destinationDir, boolean useGlobalSite) throws PyExternalProcessException;
   @Nullable
-  public abstract List<PyPackage> getPackagesFast() throws PyExternalProcessException;
-  @NotNull
-  public abstract List<PyPackage> getPackages() throws PyExternalProcessException;
+  public abstract List<PyPackage> getPackages(boolean cachedOnly) throws PyExternalProcessException;
   @Nullable
   public abstract PyPackage findInstalledPackage(String name) throws PyExternalProcessException;
   @Nullable

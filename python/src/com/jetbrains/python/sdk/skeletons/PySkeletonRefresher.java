@@ -349,7 +349,7 @@ public class PySkeletonRefresher {
     if (PySdkUtil.isRemote(mySdk)) {
       try {
         // Force loading packages
-        PyPackageManager.getInstance(mySdk).getPackages();
+        PyPackageManager.getInstance(mySdk).getPackages(false);
       }
       catch (PyExternalProcessException e) {
         // ignore - already logged

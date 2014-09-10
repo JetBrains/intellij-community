@@ -212,7 +212,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
     final Set<PyRequirement> results = new HashSet<PyRequirement>(requirements);
     final List<PyPackage> packages;
     try {
-      packages = PyPackageManager.getInstance(sdk).getPackagesFast();
+      packages = PyPackageManager.getInstance(sdk).getPackages(true);
     }
     catch (PyExternalProcessException e) {
       return null;
@@ -248,7 +248,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
     if (requirements != null) {
       final List<PyPackage> packages;
       try {
-        packages = manager.getPackagesFast();
+        packages = manager.getPackages(true);
       }
       catch (PyExternalProcessException e) {
         return null;
