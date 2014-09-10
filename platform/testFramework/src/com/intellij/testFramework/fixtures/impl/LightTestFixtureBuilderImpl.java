@@ -19,6 +19,7 @@ package com.intellij.testFramework.fixtures.impl;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author mike
@@ -31,6 +32,7 @@ class LightTestFixtureBuilderImpl<F extends IdeaProjectTestFixture> implements T
     myFixture = fixture;
   }
 
+  @NotNull
   @Override
   public F getFixture() {
     return myFixture;
