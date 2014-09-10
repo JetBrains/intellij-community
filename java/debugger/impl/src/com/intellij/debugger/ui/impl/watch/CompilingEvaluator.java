@@ -28,12 +28,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiCodeFragment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.*;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import com.sun.jdi.*;
+import org.jetbrains.org.objectweb.asm.ClassReader;
+import org.jetbrains.org.objectweb.asm.ClassVisitor;
+import org.jetbrains.org.objectweb.asm.ClassWriter;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import javax.tools.*;
 import java.io.ByteArrayOutputStream;
@@ -41,7 +42,6 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Locale;
 
 /**
 * @author egor
@@ -141,7 +141,7 @@ public class CompilingEvaluator implements ExpressionEvaluator {
       if (cls.getName().contains(getGenClassName())) {
         Method defineMethod =
           ((ClassType)classLoader.referenceType()).concreteMethodByName("defineClass", "(Ljava/lang/String;[BII)Ljava/lang/Class;");
-        byte[] bytes = cls.toByteArray();
+        byte[] bytes = changeSuperToMagicAccessor(cls.toByteArray());
         ArrayList<Value> args = new ArrayList<Value>();
         args.add(proxy.mirrorOf(cls.myOrigName));
         args.add(mirrorOf(bytes, context, process));
@@ -151,6 +151,21 @@ public class CompilingEvaluator implements ExpressionEvaluator {
       }
     }
     return (ClassType)process.findClass(context, getGenPackageName() + '.' + getGenClassName(), classLoader);
+  }
+
+  private static byte[] changeSuperToMagicAccessor(byte[] bytes) {
+    ClassWriter classWriter = new ClassWriter(0);
+    ClassVisitor classVisitor = new ClassVisitor(Opcodes.ASM5, classWriter) {
+      @Override
+      public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+        if ("java/lang/Object".equals(superName)) {
+          superName = "sun/reflect/MagicAccessorImpl";
+        }
+        super.visit(version, access, name, signature, superName, interfaces);
+      }
+    };
+    new ClassReader(bytes).accept(classVisitor, 0);
+    return classWriter.toByteArray();
   }
 
   private static ArrayReference mirrorOf(byte[] bytes, EvaluationContext context, DebugProcess process)
