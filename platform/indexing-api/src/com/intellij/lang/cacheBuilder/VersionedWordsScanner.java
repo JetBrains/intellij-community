@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.lang.cacheBuilder;
 
-package com.intellij.psi.impl.cache.impl.id;
-
-import com.intellij.util.indexing.DataIndexer;
-import com.intellij.util.indexing.FileContent;
-
-/**
- * @author Eugene Zhuravlev
- *         Date: Jan 16, 2008
- */
-public abstract class FileTypeIdIndexer implements DataIndexer<IdIndexEntry, Integer, FileContent> {
+public abstract class VersionedWordsScanner implements WordsScanner {
   public int getVersion() {
     return 1;
   }

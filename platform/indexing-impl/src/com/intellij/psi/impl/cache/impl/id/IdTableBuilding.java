@@ -161,6 +161,11 @@ public class IdTableBuilding {
       });
       return consumer.getResult();
     }
+
+    @Override
+    public int getVersion() {
+      return myScanner instanceof VersionedWordsScanner ? ((VersionedWordsScanner)myScanner).getVersion() : -1;
+    }
   }
 
   public static void scanWords(final ScanWordProcessor processor, final CharSequence chars, final int startOffset, final int endOffset) {
