@@ -1,37 +1,23 @@
-package org.jetbrains.plugins.settingsRepository.git;
+package org.jetbrains.plugins.settingsRepository.git
 
-import com.intellij.openapi.progress.ProgressIndicator;
-import org.eclipse.jgit.lib.ProgressMonitor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.progress.ProgressIndicator
+import org.eclipse.jgit.lib.ProgressMonitor
 
-class JGitProgressMonitor implements ProgressMonitor {
-  private final ProgressIndicator indicator;
-
-  public JGitProgressMonitor(@NotNull ProgressIndicator indicator) {
-    this.indicator = indicator;
+class JGitProgressMonitor(private val indicator: ProgressIndicator) : ProgressMonitor {
+  override fun start(totalTasks: Int) {
   }
 
-  @Override
-  public void start(int totalTasks) {
+  override fun beginTask(title: String, totalWork: Int) {
+    indicator.setText2(title)
   }
 
-  @Override
-  public void beginTask(String title, int totalWork) {
-    indicator.setText2(title);
-  }
-
-  @Override
-  public void update(int completed) {
+  override fun update(completed: Int) {
     // todo
   }
 
-  @Override
-  public void endTask() {
-    indicator.setText2("");
+  override fun endTask() {
+    indicator.setText2("")
   }
 
-  @Override
-  public boolean isCancelled() {
-    return indicator.isCanceled();
-  }
+  override fun isCancelled() = indicator.isCanceled()
 }

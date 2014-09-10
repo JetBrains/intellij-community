@@ -41,6 +41,9 @@
   <item name='org.eclipse.jgit.lib.IndexDiff java.util.Set&lt;java.lang.String&gt; getUntrackedFolders()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='org.eclipse.jgit.lib.ProgressMonitor void beginTask(java.lang.String, int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='org.eclipse.jgit.lib.Ref java.lang.String getName()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
