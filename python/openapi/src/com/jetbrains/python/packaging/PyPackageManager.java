@@ -50,7 +50,7 @@ public abstract class PyPackageManager {
   public static PyPackageManager getInstance(Sdk sdk) {
     return PyPackageManagers.getInstance().forSdk(sdk);
   }
-  public abstract boolean hasPip();
+
   public abstract void installManagement() throws PyExternalProcessException;
   public abstract boolean hasManagement(boolean cachedOnly);
   public abstract void install(@NotNull String requirementString) throws PyExternalProcessException;

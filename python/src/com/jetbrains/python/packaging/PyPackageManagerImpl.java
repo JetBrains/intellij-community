@@ -346,20 +346,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
     return null;
   }
 
-  @Override
-  public boolean hasPip() {
-    return hasPip(true);
-  }
-
-  public boolean hasPip(boolean cachedOnly) {
-    try {
-      return findPackage(PACKAGE_PIP, cachedOnly) != null;
-    }
-    catch (PyExternalProcessException e) {
-      return false;
-    }
-  }
-
   @NotNull
   public String createVirtualEnv(@NotNull String destinationDir, boolean useGlobalSite) throws PyExternalProcessException {
     final List<String> args = new ArrayList<String>();
