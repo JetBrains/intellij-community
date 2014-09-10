@@ -9,6 +9,7 @@ import de.plushnikov.intellij.plugin.processor.handler.DelegateHandler;
 import lombok.Delegate;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.annotation.Annotation;
 import java.util.List;
 
 public class DelegateMethodProcessor extends AbstractMethodProcessor {
@@ -16,7 +17,11 @@ public class DelegateMethodProcessor extends AbstractMethodProcessor {
   private final DelegateHandler handler;
 
   public DelegateMethodProcessor() {
-    super(Delegate.class, PsiMethod.class);
+    this(Delegate.class);
+  }
+
+  protected DelegateMethodProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass) {
+    super(supportedAnnotationClass, PsiMethod.class);
     handler = new DelegateHandler();
   }
 

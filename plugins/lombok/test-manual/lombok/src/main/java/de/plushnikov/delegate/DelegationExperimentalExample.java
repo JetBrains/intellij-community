@@ -1,11 +1,11 @@
 package de.plushnikov.delegate;
 
-import lombok.Delegate;
+import lombok.experimental.Delegate;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class DelegationExample {
+public class DelegationExperimentalExample {
     private interface SimpleCollection {
         boolean add(String item);
 
@@ -16,12 +16,12 @@ public class DelegationExample {
     private final Collection<String> collection = new ArrayList<String>();
 
     public static void main(String[] args) {
-        DelegationExample example = new DelegationExample();
+        DelegationExperimentalExample example = new DelegationExperimentalExample();
         example.add("Hello World");
     }
 }
 
-class ExcludesDelegateExample {
+class ExcludesDelegateExperimentalExample {
     long counter = 0L;
 
     private interface Add {
