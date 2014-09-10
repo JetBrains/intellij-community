@@ -39,6 +39,8 @@ enum class SyncType {
   RESET_TO_MY
 }
 
+class AuthenticationException(message: String, cause: Throwable) : Exception(message, cause)
+
 // KT-5591
 public val SYNC_TYPES: Array<SyncType> = SyncType.values()
 
