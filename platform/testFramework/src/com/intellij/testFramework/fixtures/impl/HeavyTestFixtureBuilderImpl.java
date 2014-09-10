@@ -22,6 +22,7 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
 import com.intellij.util.pico.IdeaPicoContainer;
+import org.jetbrains.annotations.NotNull;
 import org.picocontainer.MutablePicoContainer;
 
 import java.lang.reflect.Field;
@@ -50,6 +51,7 @@ class HeavyTestFixtureBuilderImpl implements TestFixtureBuilder<IdeaProjectTestF
     return (M)adapter.getComponentInstance(myContainer);
   }
 
+  @NotNull
   @Override
   public HeavyIdeaTestFixture getFixture() {
     return myFixture;

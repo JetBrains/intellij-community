@@ -32,6 +32,7 @@ public class MockVirtualFileSystem extends DeprecatedVirtualFileSystem {
   public static final String PROTOCOL = "mock";
 
   @Override
+  @NotNull
   public VirtualFile findFileByPath(@NotNull String path) {
     path = path.replace(File.separatorChar, '/');
     path = path.replace('/', ':');
@@ -106,6 +107,7 @@ public class MockVirtualFileSystem extends DeprecatedVirtualFileSystem {
       return MockVirtualFileSystem.this;
     }
 
+    @NotNull
     public MyVirtualFile getOrCreate(String name) {
       MyVirtualFile file = myChildren.get(name);
       if (file == null) {
