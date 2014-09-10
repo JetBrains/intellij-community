@@ -254,9 +254,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
 }
 
 public def layoutCommunityPlugins(String home) {
-  if (isDefined("androidPluginHome")) {
-    layoutAndroid(p("androidPluginHome"))
-  }
+  layoutAndroid("$home/android")
 
   dir("plugins") {
     def simplePlugins = ["commander", "copyright", "java-i18n", "hg4idea", "github"] //, "tasks-time-tracking"]

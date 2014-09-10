@@ -15,6 +15,9 @@
  */
 package com.intellij.psi.impl.cache.impl.id;
 
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ThreadLocalCachedIntArray;
 import com.intellij.util.indexing.CustomInputsIndexFileBasedIndexExtension;
 import com.intellij.util.io.DataExternalizer;
@@ -27,9 +30,35 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 
 public class IdIndexImpl extends IdIndex implements CustomInputsIndexFileBasedIndexExtension<IdIndexEntry> {
   private static final ThreadLocalCachedIntArray spareBufferLocal = new ThreadLocalCachedIntArray();
+  private final FileTypeRegistry myFileTypeManager;
+
+  public IdIndexImpl(FileTypeRegistry manager) {
+    myFileTypeManager = manager;
+  }
+
+  @Override
+  public int getVersion() {
+    FileType[] types = myFileTypeManager.getRegisteredFileTypes();
+    Arrays.sort(types, new Comparator<FileType>() {
+      @Override
+      public int compare(FileType o1, FileType o2) {
+        return Comparing.compare(o1.getName(), o2.getName());
+      }
+    });
+
+    int version = super.getVersion();
+    for(FileType fileType:types) {
+      if (!isIndexable(fileType)) continue;
+      FileTypeIdIndexer indexer = IdIndexers.INSTANCE.forFileType(fileType);
+      if (indexer == null) continue;
+      version = version * 31 + (indexer.getVersion() ^ indexer.getClass().getName().hashCode());
+    }
+    return version;
+  }
 
   @NotNull
   @Override

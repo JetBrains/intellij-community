@@ -25,8 +25,8 @@ import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.HierarchyChangeListener;
 import com.intellij.uiDesigner.SelectionWatcher;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager;
 import com.intellij.uiDesigner.propertyInspector.PropertyInspector;
-import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import org.jetbrains.annotations.NotNull;
@@ -221,7 +221,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder {
   }
 
   private void updateSelection() {
-    final PropertyInspector propertyInspector = UIDesignerToolWindowManager.getInstance(myEditor.getProject()).getPropertyInspector();
+    final PropertyInspector propertyInspector = DesignerToolWindowManager.getInstance(myEditor).getPropertyInspector();
     if (propertyInspector.isEditing()) {
       propertyInspector.stopEditing();
     }

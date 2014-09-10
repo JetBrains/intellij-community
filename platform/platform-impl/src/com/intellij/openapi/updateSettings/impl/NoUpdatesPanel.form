@@ -25,7 +25,6 @@
         </constraints>
         <properties>
           <contentType value="text/html"/>
-          <text value="&lt;html&gt;&#10;  &lt;head&gt;&#10;&#10;  &lt;/head&gt;&#10;  &lt;body&gt;&#10;    &lt;p style=&quot;margin-top: 0&quot;&gt;&#10;      &#10;    &lt;/p&gt;&#10;  &lt;/body&gt;&#10;&lt;/html&gt;&#10;"/>
         </properties>
       </component>
       <vspacer id="bf1d9">

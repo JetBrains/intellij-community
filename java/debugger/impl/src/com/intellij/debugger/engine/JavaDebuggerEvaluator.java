@@ -20,20 +20,15 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.EditorTextProvider;
-import com.intellij.debugger.ui.impl.watch.CompilingEvaluator;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
@@ -45,8 +40,6 @@ import org.jetbrains.annotations.Nullable;
  * @author egor
  */
 public class JavaDebuggerEvaluator extends XDebuggerEvaluator {
-  private static final Logger LOG = Logger.getInstance(JavaDebuggerEvaluator.class);
-
   private final DebugProcessImpl myDebugProcess;
   private final JavaStackFrame myStackFrame;
 
@@ -66,21 +59,6 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator {
   public void evaluate(@NotNull final XExpression expression,
                        @NotNull final XEvaluationCallback callback,
                        @Nullable XSourcePosition expressionPosition) {
-    final Project project = myDebugProcess.getProject();
-    final WatchItemDescriptor descriptor = new WatchItemDescriptor(project, TextWithImportsImpl.fromXExpression(expression));
-    if (Registry.is("debugger.compiling.evaluator")) {
-      try {
-        PsiElement element = myDebugProcess.getDebuggerContext().getContextElement();
-        PsiFile psiFile = element.getContainingFile();
-        PsiCodeFragment fragment = descriptor.createCodeFragment(element);
-        ExtractLightMethodObjectHandler.ExtractedData data =
-          ExtractLightMethodObjectHandler.extractLightMethodObject(project, psiFile, fragment, CompilingEvaluator.getGeneratedClassName());
-        descriptor.putUserData(CompilingEvaluator.COMPILING_EVALUATOR_DATA, data);
-      }
-      catch (Exception e) {
-        LOG.info(e);
-      }
-    }
     myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(myDebugProcess.getDebuggerContext()) {
       @Override
       public Priority getPriority() {
@@ -89,6 +67,8 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator {
 
       @Override
       public void threadAction() {
+        WatchItemDescriptor descriptor = new WatchItemDescriptor(myDebugProcess.getProject(), TextWithImportsImpl.fromXExpression(
+          expression));
         EvaluationContextImpl evalContext = myStackFrame.getFrameDebuggerContext().createEvaluationContext();
         if (evalContext == null) {
           callback.errorOccurred("Context is not available");

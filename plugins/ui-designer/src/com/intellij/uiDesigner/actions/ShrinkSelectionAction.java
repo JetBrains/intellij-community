@@ -18,12 +18,12 @@ package com.intellij.uiDesigner.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.uiDesigner.SelectionState;
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
+import com.intellij.uiDesigner.SelectionState;
 import com.intellij.uiDesigner.componentTree.ComponentPtr;
 import com.intellij.uiDesigner.componentTree.ComponentTreeBuilder;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager;
 
 import java.util.Stack;
 
@@ -37,7 +37,7 @@ public final class ShrinkSelectionAction extends AnAction{
     assert editor != null;
     final SelectionState selectionState = editor.getSelectionState();
     selectionState.setInsideChange(true);
-    ComponentTreeBuilder builder = UIDesignerToolWindowManager.getInstance(editor.getProject()).getComponentTreeBuilder();
+    ComponentTreeBuilder builder = DesignerToolWindowManager.getInstance(editor).getComponentTreeBuilder();
     builder.beginUpdateSelection();
 
     try{
