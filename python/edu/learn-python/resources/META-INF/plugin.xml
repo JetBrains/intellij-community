@@ -67,6 +67,7 @@
     <action id="WelcomeScreen.LearnPython" class="com.jetbrains.python.edu.actions.StudyNewProject" icon="StudyIcons.EducationalProjectType">
       <add-to-group group-id="WelcomeScreen.QuickStart" relative-to-action="WelcomeScreen.PythonIntro" anchor="after"/>
     </action>
+    <action id="ReloadCourseAction" class="com.jetbrains.python.edu.actions.StudyReloadCourseAction"/>
 
   </actions>
 
