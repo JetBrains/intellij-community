@@ -480,49 +480,44 @@ public abstract class TestObject implements JavaCommandLine {
           return StringUtil.compare(o1.getName(), o2.getName(), true);
         }
       }) : null;
-      final PrintWriter writer = new PrintWriter(myTempFile, CharsetToolkit.UTF8);
-      try {
-        writer.println(packageName);
-        final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
-        final String category = data.TEST_OBJECT == JUnitConfiguration.TEST_CATEGORY ? data.getCategory() : "";
-        writer.println(category);
-        final List<String> testNames = new ArrayList<String>();
-        for (final T element : elements) {
-          final String name = nameFunction.fun(element);
-          if (name == null) {
-            LOG.error("invalid element " + element);
-            return;
-          }
 
-          if (perModule != null && element instanceof PsiElement) {
-            final Module module = ModuleUtilCore.findModuleForPsiElement((PsiElement)element);
-            if (module != null) {
-              List<String> list = perModule.get(module);
-              if (list == null) {
-                list = new ArrayList<String>();
-                perModule.put(module, list);
-              }
-              list.add(name);
+      final List<String> testNames = new ArrayList<String>();
+
+      for (final T element : elements) {
+        final String name = nameFunction.fun(element);
+        if (name == null) {
+          LOG.error("invalid element " + element);
+          return;
+        }
+
+        if (perModule != null && element instanceof PsiElement) {
+          final Module module = ModuleUtilCore.findModuleForPsiElement((PsiElement)element);
+          if (module != null) {
+            List<String> list = perModule.get(module);
+            if (list == null) {
+              list = new ArrayList<String>();
+              perModule.put(module, list);
             }
-          } else {
-            testNames.add(name);
+            list.add(name);
           }
         }
-        if (perModule != null) {
-          for (List<String> perModuleClasses : perModule.values()) {
-            Collections.sort(perModuleClasses);
-            testNames.addAll(perModuleClasses);
-          }
-        } else {
-          Collections.sort(testNames); //sort tests in FQN order
-        }
-        for (String testName : testNames) {
-          writer.println(testName);
+        else {
+          testNames.add(name);
         }
       }
-      finally {
-        writer.close();
+      if (perModule != null) {
+        for (List<String> perModuleClasses : perModule.values()) {
+          Collections.sort(perModuleClasses);
+          testNames.addAll(perModuleClasses);
+        }
       }
+      else {
+        Collections.sort(testNames); //sort tests in FQN order
+      }
+
+      final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
+      final String category = data.TEST_OBJECT == JUnitConfiguration.TEST_CATEGORY ? data.getCategory() : "";
+      JUnitStarter.printClassesList(testNames, packageName, category, myTempFile);
 
       if (perModule != null && perModule.size() > 1) {
         final PrintWriter wWriter = new PrintWriter(myWorkingDirsFile, CharsetToolkit.UTF8);
