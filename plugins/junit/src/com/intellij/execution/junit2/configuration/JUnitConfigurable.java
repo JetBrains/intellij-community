@@ -118,6 +118,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
     myModel = new JUnitConfigurationModel(project);
     myModuleSelector = new ConfigurationModuleSelector(project, getModulesComponent());
     myCommonJavaParameters.setModuleContext(myModuleSelector.getModule());
+    myCommonJavaParameters.setHasModuleMacro();
     myModule.getComponent().addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         myCommonJavaParameters.setModuleContext(myModuleSelector.getModule());
