@@ -39,7 +39,7 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
   @Nullable private final WatchNode myOldNode;
 
   public WatchInplaceEditor(@NotNull WatchesRootNode rootNode,
-                            @NotNull XDebugSession session, XWatchesView watchesView, final WatchNode node,
+                            @Nullable XDebugSession session, XWatchesView watchesView, final WatchNode node,
                             @NonNls final String historyId,
                             final @Nullable WatchNode oldNode) {
     super((XDebuggerTreeNode)node, historyId);
@@ -47,7 +47,9 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
     myWatchesView = watchesView;
     myOldNode = oldNode;
     myExpressionEditor.setExpression(oldNode != null ? oldNode.getExpression() : null);
-    new WatchEditorSessionListener(session).install();
+    if (session != null) {
+      new WatchEditorSessionListener(session).install();
+    }
   }
 
   @Override
