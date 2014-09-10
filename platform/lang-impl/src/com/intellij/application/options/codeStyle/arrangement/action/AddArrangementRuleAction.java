@@ -27,6 +27,8 @@ import com.intellij.openapi.util.SystemInfoRt;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
+
 /**
  * @author Denis Zhdanov
  * @since 8/24/12 1:54 PM
@@ -64,6 +66,14 @@ public class AddArrangementRuleAction extends AnAction implements DumbAware {
     }
     showEditor(control, rowToEdit);
     control.getSelectionModel().setSelectionInterval(rowToEdit, rowToEdit);
+
+    final Rectangle rect = control.getCellRect(rowToEdit, 0, false);
+    final Rectangle editorRect = control.getCellRect(rowToEdit + 1, 0, false);
+    if(!rect.isEmpty() && !editorRect.isEmpty()) {
+      final int height = (int)(rect.getHeight() + editorRect.getHeight());
+      final Rectangle visibleRect = new Rectangle((int)rect.getX(), (int)rect.getY(), (int)rect.getWidth(), height);
+      control.scrollRectToVisible(visibleRect);
+    }
   }
 
   @NotNull
