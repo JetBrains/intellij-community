@@ -8,7 +8,6 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VirtualFile
@@ -20,19 +19,13 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtilRt
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.ResetCommand
-import org.eclipse.jgit.api.errors.GitAPIException
 import org.eclipse.jgit.lib.Constants
-import org.eclipse.jgit.lib.IndexDiff
 import org.eclipse.jgit.lib.Repository
-import org.jetbrains.plugins.settingsRepository.git.AddFile
 import org.jetbrains.plugins.settingsRepository.git.*
-import org.jetbrains.plugins.settingsRepository.git.GitRepositoryManager
 import org.junit.*
 
 import javax.swing.*
 import java.io.File
-import java.io.IOException
-import java.lang.reflect.InvocationTargetException
 import java.util.Arrays
 import java.util.Comparator
 
@@ -262,6 +255,31 @@ class GitTest {
     createLocalRepositoryAndCommit(null)
     sync(SyncType.MERGE)
 
+    restoreRemoteAfterPush()
+
+    val fs = MockVirtualFileSystem()
+
+    fun testRemote() {
+      fs.findFileByPath("\$APP_CONFIG$/local.xml")
+      fs.findFileByPath("\$APP_CONFIG$/remote.xml")
+      compareFiles(repository.getWorkTree(), remoteRepository!!, fs.findFileByPath(""))
+    }
+    testRemote()
+
+    addAndCommit("_mac/local2.xml")
+    sync(SyncType.RESET_TO_THEIRS)
+
+    compareFiles(repository.getWorkTree(), remoteRepository!!, fs.findFileByPath(""))
+
+    // test: merge and push to remote after such reset
+    sync(SyncType.MERGE)
+
+    restoreRemoteAfterPush()
+
+    testRemote()
+  }
+
+  private fun restoreRemoteAfterPush() {
     /** we must not push to non-bare repository - but we do it in test (our sync merge equals to "pull&push"),
     "
     By default, updating the current branch in a non-bare repository
@@ -271,16 +289,6 @@ class GitTest {
     so, we do "git reset --hard"
      */
     remoteRepositoryApi!!.reset().setMode(ResetCommand.ResetType.HARD).call()
-
-    val fs = MockVirtualFileSystem()
-    fs.findFileByPath("\$APP_CONFIG$/local.xml")
-    fs.findFileByPath("\$APP_CONFIG$/remote.xml")
-    compareFiles(repository.getWorkTree(), remoteRepository!!, fs.findFileByPath(""))
-
-    addAndCommit("_mac/local2.xml")
-    sync(SyncType.RESET_TO_THEIRS)
-
-    compareFiles(repository.getWorkTree(), remoteRepository!!, fs.findFileByPath(""))
   }
 
   private fun sync(syncType: SyncType) {
