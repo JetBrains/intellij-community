@@ -49,7 +49,13 @@
   <item name='org.eclipse.jgit.api.MergeResult org.eclipse.jgit.api.MergeResult.MergeStatus getMergeStatus()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='org.eclipse.jgit.api.ResetCommand org.eclipse.jgit.api.ResetCommand setMode(org.eclipse.jgit.api.ResetCommand.ResetType)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='org.eclipse.jgit.api.ResetCommand org.eclipse.jgit.api.ResetCommand setMode(org.eclipse.jgit.api.ResetCommand.ResetType) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.api.ResetCommand org.eclipse.jgit.lib.Ref call()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
 </root>

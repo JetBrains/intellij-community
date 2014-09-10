@@ -16,7 +16,7 @@ class GitTestWatcher extends TestName {
   @NotNull
   public Repository getRepository(@NotNull File baseDir) throws IOException {
     if (repository == null) {
-      repository = new FileRepositoryBuilder().setWorkTree(new File(baseDir, getMethodName())).build();
+      repository = new FileRepositoryBuilder().setWorkTree(new File(baseDir, "upstream")).build();
       repository.create();
     }
     return repository;
@@ -28,6 +28,7 @@ class GitTestWatcher extends TestName {
 
     if (repository != null) {
       FileUtil.delete(repository.getWorkTree());
+      repository = null;
     }
   }
 }

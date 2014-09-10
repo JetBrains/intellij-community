@@ -1,4 +1,10 @@
 <root>
+  <item name='org.eclipse.jgit.merge.MergeConfig org.eclipse.jgit.api.MergeCommand.FastForwardMode getFastForwardMode()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.jgit.merge.MergeConfig org.eclipse.jgit.lib.Config.SectionParser&lt;org.eclipse.jgit.merge.MergeConfig&gt; getParser(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='org.eclipse.jgit.merge.MergeMessageFormatter java.lang.String format(java.util.List&lt;org.eclipse.jgit.lib.Ref&gt;, org.eclipse.jgit.lib.Ref)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>

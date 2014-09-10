@@ -47,7 +47,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
   val config = repository.getConfig()
   val remoteConfig = RemoteConfig(config, Constants.DEFAULT_REMOTE_NAME)
 
-  fun pull(mergeStrategy: MergeStrategy = MergeStrategy.RECURSIVE) {
+  fun pull(mergeStrategy: MergeStrategy = MergeStrategy.RECURSIVE): MergeResult? {
     LOG.debug("Pull")
 
     val repository = manager.repository
@@ -56,13 +56,12 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
       LOG.warn(MessageFormat.format(JGitText.get().cannotPullOnARepoWithState, repositoryState.name()))
     }
 
-
     val refToMerge = fetch()
-    val mergeResult = if (refToMerge == null) null else merge(refToMerge, mergeStrategy)
-    if (mergeResult == null) {
-      return
+    if (refToMerge == null) {
+      return null
     }
 
+    val mergeResult = merge(refToMerge, mergeStrategy)
     val mergeStatus = mergeResult.getMergeStatus()
     if (LOG.isDebugEnabled()) {
       LOG.debug(mergeStatus.toString())
@@ -70,6 +69,8 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
     if (!mergeStatus.isSuccessful()) {
       throw UnsupportedOperationException()
     }
+
+    return mergeResult
   }
 
   fun fetch(prevRefUpdateResult: RefUpdate.Result? = null): Ref? {
@@ -137,38 +138,27 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
     return refToMerge
   }
 
-  fun merge(unpeeledRef: Ref, mergeStrategy: MergeStrategy = MergeStrategy.RECURSIVE): MergeResult {
+  fun merge(unpeeledRef: Ref, mergeStrategy: MergeStrategy = MergeStrategy.RECURSIVE, commit: Boolean = true, fastForwardMode: FastForwardMode = FastForwardMode.FF, squash: Boolean = false, forceMerge: Boolean = false): MergeResult {
     val head = repository.getRef(Constants.HEAD)
     if (head == null) {
       throw NoHeadException(JGitText.get().commitOnRepoWithoutHEADCurrentlyNotSupported)
     }
 
-    val mergeConfig = config.get<MergeConfig>(MergeConfig.getParser(Constants.MASTER))
-    val squash = mergeConfig.isSquash()
-    val commit = mergeConfig.isCommit()
-    val fastForwardMode = mergeConfig.getFastForwardMode()
-
-    if (squash && fastForwardMode == FastForwardMode.NO_FF) {
-      throw JGitInternalException(JGitText.get().cannotCombineSquashWithNoff)
-    }
-
-    var revWalk: RevWalk? = null
+    // Check for FAST_FORWARD, ALREADY_UP_TO_DATE
+    val revWalk = RevWalk(repository)
     var dirCacheCheckout: DirCacheCheckout? = null
     try {
-      // Check for FAST_FORWARD, ALREADY_UP_TO_DATE
-      revWalk = RevWalk(repository)
-
       // handle annotated tags
       val ref = repository.peel(unpeeledRef)
-      var objectId: ObjectId? = ref.getPeeledObjectId()
+      var objectId = ref.getPeeledObjectId()
       if (objectId == null) {
         objectId = ref.getObjectId()
       }
 
-      val srcCommit = revWalk!!.lookupCommit(objectId)
+      val srcCommit = revWalk.lookupCommit(objectId)
       val headId = head.getObjectId()
       if (headId == null) {
-        revWalk!!.parseHeaders(srcCommit)
+        revWalk.parseHeaders(srcCommit)
         dirCacheCheckout = DirCacheCheckout(repository, repository.lockDirCache(), srcCommit.getTree())
         dirCacheCheckout!!.setFailOnConflict(true)
         dirCacheCheckout!!.checkout()
@@ -185,11 +175,11 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
       val refLogMessage = StringBuilder("merge ")
       refLogMessage.append(ref.getName())
 
-      val headCommit = revWalk!!.lookupCommit(headId)
-      if (revWalk!!.isMergedInto(srcCommit, headCommit)) {
-        return MergeResult(headCommit, srcCommit, array<ObjectId>(headCommit, srcCommit), MergeStatus.ALREADY_UP_TO_DATE, mergeStrategy, null)
+      val headCommit = revWalk.lookupCommit(headId)
+      if (!forceMerge && revWalk.isMergedInto(srcCommit, headCommit)) {
+        return MergeResult(headCommit, srcCommit, array(headCommit, srcCommit), MergeStatus.ALREADY_UP_TO_DATE, mergeStrategy, null)
       }
-      else if (revWalk!!.isMergedInto(headCommit, srcCommit) && fastForwardMode != FastForwardMode.NO_FF) {
+      else if (!forceMerge && fastForwardMode != FastForwardMode.NO_FF && revWalk.isMergedInto(headCommit, srcCommit)) {
         // FAST_FORWARD detected: skip doing a real merge but only update HEAD
         refLogMessage.append(": ").append(MergeStatus.FAST_FORWARD)
         dirCacheCheckout = DirCacheCheckout(repository, headCommit.getTree(), repository.lockDirCache(), srcCommit.getTree())
@@ -222,8 +212,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
         val mergeMessage: String
         if (squash) {
           mergeMessage = ""
-          val squashedCommits = RevWalkUtils.find(revWalk, srcCommit, headCommit)
-          repository.writeSquashCommitMsg(SquashMessageFormatter().format(squashedCommits, head))
+          repository.writeSquashCommitMsg(SquashMessageFormatter().format(RevWalkUtils.find(revWalk, srcCommit, headCommit), head))
         }
         else {
           mergeMessage = MergeMessageFormatter().format(listOf(ref), head)
@@ -248,7 +237,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
           noProblems = merger.merge(headCommit, srcCommit)
         }
         refLogMessage.append(": Merge made by ")
-        if (revWalk!!.isMergedInto(headCommit, srcCommit)) {
+        if (revWalk.isMergedInto(headCommit, srcCommit)) {
           refLogMessage.append("recursive")
         }
         else {
@@ -299,9 +288,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
       throw CheckoutConflictException(if (dirCacheCheckout == null) listOf<String>() else dirCacheCheckout!!.getConflicts(), e)
     }
     finally {
-      if (revWalk != null) {
-        revWalk!!.release()
-      }
+      revWalk.release()
     }
   }
 }

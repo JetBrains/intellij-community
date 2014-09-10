@@ -103,6 +103,10 @@ public fun Repository.edit(edit: PathEdit) {
 }
 
 public fun Repository.edit(edits: List<PathEdit>) {
+  if (edits.isEmpty()) {
+    return
+  }
+
   val dirCache = lockDirCache()
   try {
     DirCacheEditor(edits, this, dirCache, dirCache.getEntryCount() + 4).commit()

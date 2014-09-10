@@ -13,47 +13,67 @@ import java.util.ArrayList
 import org.jetbrains.jgit.dirCache.PathEdit
 import org.eclipse.jgit.merge.MergeStrategy
 import org.jetbrains.jgit.dirCache.DeleteFile
-import com.intellij.openapi.util.io.FileUtil
 import java.io.File
 import org.jetbrains.plugins.settingsRepository.removeFileAndParentDirectoryIfEmpty
+import org.eclipse.jgit.lib.Ref
+import org.eclipse.jgit.api.MergeResult.MergeStatus
+import org.eclipse.jgit.api.ResetCommand
 
 class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator) : Pull(manager, indicator) {
   fun reset() {
     LOG.debug("Reset to theirs")
 
-    // todo commit only after diff
-    // we do merge before - grab added/deleted/renamed/modified files
-    pull(MergeStrategy.THEIRS)
+    LOG.debug("Reset working directory")
+    manager.git.reset().setMode(ResetCommand.ResetType.HARD).call()
 
-    // and then we need to remove all files missing in remote
-    val fetchRefSpecs = remoteConfig.getFetchRefSpecs()
-    assert(fetchRefSpecs.size == 1)
+    // grab added/deleted/renamed/modified files
+    val mergeResult = pull(MergeStrategy.THEIRS)
+    if (mergeResult == null) {
+      // and then we need to remove all files missing in remote
+      val fetchRefSpecs = remoteConfig.getFetchRefSpecs()
+      assert(fetchRefSpecs.size == 1)
 
-    val reader = repository.newObjectReader()
-
-    fun prepareTreeParser(ref: String): AbstractTreeIterator {
-      val treeParser = CanonicalTreeParser()
-      treeParser.reset(reader, repository.resolve(ref + "^{tree}")!!)
-      return treeParser;
+      merge(repository.getRef(fetchRefSpecs[0].getDestination()!!)!!, MergeStrategy.THEIRS, true, forceMerge = true)
+      // nothing to merge, so, we merge latest origin commit
     }
 
-    try {
-      val myTreeIterator = prepareTreeParser(Constants.HEAD)
-      val theirsTreeIterator = prepareTreeParser(fetchRefSpecs[0].getDestination()!!)
+//    val reader = repository.newObjectReader()
+//
+//    fun prepareTreeParser(ref: String): AbstractTreeIterator {
+//      val treeParser = CanonicalTreeParser()
+//      treeParser.reset(reader, repository.resolve(ref + "^{tree}")!!)
+//      return treeParser;
+//    }
 
-      val walk = TreeWalk(reader)
-      walk.addTree(myTreeIterator)
-      walk.addTree(theirsTreeIterator)
-      walk.setRecursive(true)
+//    LOG.debug("Compute diff")
+//    val edits: List<PathEdit>
+//    try {
+//      val myTreeIterator = prepareTreeParser(Constants.HEAD)
+//      val theirsTreeIterator = prepareTreeParser(fetchRefSpecs[0].getDestination()!!)
+//
+//      val walk = TreeWalk(reader)
+//      walk.addTree(myTreeIterator)
+//      walk.addTree(theirsTreeIterator)
+//      walk.setRecursive(true)
+//
+//      edits = computeEdits(walk)
+//      if (!edits.isEmpty()) {
+//        LOG.debug("Apply diff")
+//        repository.edit(edits)
+//      }
+//    }
+//    finally {
+//      reader.release()
+//    }
+//
+//    if (edits.isEmpty() && when (mergeResult?.getMergeStatus()) {
+//      MergeStatus.FAST_FORWARD, MergeStatus.ALREADY_UP_TO_DATE, null -> true
+//      else -> false
+//    }) {
+//      return
+//    }
 
-      val edits = computeEdits(walk)
-      if (!edits.isEmpty()) {
-        repository.edit(edits)
-      }
-    }
-    finally {
-      reader.release()
-    }
+//    manager.createCommitCommand().
   }
 
   private fun computeEdits(walk: TreeWalk): List<PathEdit> {
