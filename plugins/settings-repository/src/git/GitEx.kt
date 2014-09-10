@@ -15,6 +15,7 @@ import org.jetbrains.jgit.dirCache.PathEdit
 import org.jetbrains.jgit.dirCache.DirCacheEditor
 import org.jetbrains.jgit.dirCache.DeleteFile
 import org.jetbrains.jgit.dirCache.DeleteDirectory
+import org.eclipse.jgit.api.ResetCommand
 
 fun Repository.disableAutoCrLf() {
   val config = getConfig()
@@ -24,6 +25,10 @@ fun Repository.disableAutoCrLf() {
 
 fun createBareRepository(dir: File) {
   FileRepositoryBuilder().setBare().setGitDir(dir).build().create(true)
+}
+
+fun Repository.resetHard() {
+  ResetCommand(this).setMode(ResetCommand.ResetType.HARD).call()
 }
 
 fun Config.getRemoteBranchFullName(): String {

@@ -47,8 +47,6 @@ class GitTest {
   Rule
   public fun getTestWatcher(): GitTestWatcher = testWatcher
 
-  private var remoteRepositoryApi: Git? = null
-
   class object {
     private var ICS_DIR: File? = null
 
@@ -128,7 +126,6 @@ class GitTest {
   After
   public fun tearDown() {
     remoteRepository = null
-    remoteRepositoryApi = null
 
     IcsManager.getInstance().repositoryActive = false
     try {
@@ -247,11 +244,11 @@ class GitTest {
     sync(SyncType.RESET_TO_THEIRS)
     val fs = MockVirtualFileSystem()
     fs.findFileByPath("\$APP_CONFIG$/remote.xml")
-    compareFiles(repository.getWorkTree(), remoteRepository!!, fs.findFileByPath(""))
+    compareFiles(repository.getWorkTree(), remoteRepository!!, fs.getRoot())
   }
 
   Test
-  public fun resetToTheirsISecondMergeIsEmpty() {
+  public fun resetToTheirsISecondMergeIsNull() {
     createLocalRepositoryAndCommit(null)
     sync(SyncType.MERGE)
 
@@ -262,14 +259,14 @@ class GitTest {
     fun testRemote() {
       fs.findFileByPath("\$APP_CONFIG$/local.xml")
       fs.findFileByPath("\$APP_CONFIG$/remote.xml")
-      compareFiles(repository.getWorkTree(), remoteRepository!!, fs.findFileByPath(""))
+      compareFiles(repository.getWorkTree(), remoteRepository!!, fs.getRoot())
     }
     testRemote()
 
     addAndCommit("_mac/local2.xml")
     sync(SyncType.RESET_TO_THEIRS)
 
-    compareFiles(repository.getWorkTree(), remoteRepository!!, fs.findFileByPath(""))
+    compareFiles(repository.getWorkTree(), remoteRepository!!, fs.getRoot())
 
     // test: merge and push to remote after such reset
     sync(SyncType.MERGE)
@@ -277,6 +274,42 @@ class GitTest {
     restoreRemoteAfterPush()
 
     testRemote()
+  }
+
+  public Test fun resetToMyIfFirstMerge() {
+    createLocalRepositoryAndCommit(null)
+    sync(SyncType.RESET_TO_MY)
+    restoreRemoteAfterPush()
+    val fs = MockVirtualFileSystem()
+    fs.findFileByPath("\$APP_CONFIG$/local.xml")
+    compareFiles(repository.getWorkTree(), remoteRepository!!, fs.getRoot())
+  }
+
+  public Test fun resetToMyISecondMergeIsNull() {
+    createLocalRepositoryAndCommit(null)
+    sync(SyncType.MERGE)
+
+    restoreRemoteAfterPush()
+
+    val fs = MockVirtualFileSystem()
+    fs.findFileByPath("\$APP_CONFIG$/local.xml")
+    fs.findFileByPath("\$APP_CONFIG$/remote.xml")
+    compareFiles(repository.getWorkTree(), remoteRepository!!, fs.getRoot())
+
+    val local2FilePath = "_mac/local2.xml"
+    addAndCommit(local2FilePath)
+    sync(SyncType.RESET_TO_MY)
+    restoreRemoteAfterPush()
+
+    fs.findFileByPath(local2FilePath)
+    compareFiles(repository.getWorkTree(), remoteRepository!!, fs.getRoot())
+
+    // test: merge to remote after such reset
+    sync(SyncType.MERGE)
+
+    restoreRemoteAfterPush()
+
+    compareFiles(repository.getWorkTree(), remoteRepository!!, fs.getRoot())
   }
 
   private fun restoreRemoteAfterPush() {
@@ -288,7 +321,7 @@ class GitTest {
     "
     so, we do "git reset --hard"
      */
-    remoteRepositoryApi!!.reset().setMode(ResetCommand.ResetType.HARD).call()
+    testWatcher.repository!!.resetHard()
   }
 
   private fun sync(syncType: SyncType) {
@@ -301,20 +334,20 @@ class GitTest {
 
   private fun createFileRemote(branchName: String?): File {
     val repository = testWatcher.getRepository(ICS_DIR!!)
-    remoteRepositoryApi = Git(repository)
+    val remoteRepositoryApi = Git(repository)
 
     if (branchName != null) {
       // jgit cannot checkout&create branch if no HEAD (no commits in our empty repository), so we create initial empty commit
-      remoteRepositoryApi!!.commit().setMessage("").call()
+      remoteRepositoryApi.commit().setMessage("").call()
 
-      remoteRepositoryApi!!.checkout().setCreateBranch(true).setName(branchName).call()
+      remoteRepositoryApi.checkout().setCreateBranch(true).setName(branchName).call()
     }
 
     val addedFile = "\$APP_CONFIG$/remote.xml"
     val workTree = repository.getWorkTree()
     FileUtil.copy(File(testDataPath, "remote.xml"), File(workTree, addedFile))
     repository.edit(AddFile(addedFile))
-    remoteRepositoryApi!!.commit().setMessage("").call()
+    remoteRepositoryApi.commit().setMessage("").call()
     return workTree
   }
 }

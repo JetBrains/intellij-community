@@ -156,8 +156,12 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
     Pull(this, indicator).pull()
   }
 
-  override fun reset(indicator: ProgressIndicator) {
-    Reset(this, indicator).reset()
+  override fun resetToTheirs(indicator: ProgressIndicator) {
+    Reset(this, indicator).reset(true)
+  }
+
+  override fun resetToMy(indicator: ProgressIndicator) {
+    Reset(this, indicator).reset(false)
   }
 }
 

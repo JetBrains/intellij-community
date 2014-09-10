@@ -3,7 +3,7 @@
   <id>org.jetbrains.plugins.settingsRepository</id>
   <description>Supports sharing settings between installations of IntelliJ Platform based products used by the same developer (or team) on different computers</description>
   <version>2.0</version>
-  <idea-version since-build="138.1982"/>
+  <idea-version since-build="138.2163"/>
   <!--<vendor>JetBrains</vendor>-->
 
   <!-- otherwise plugin will be not loaded -->
@@ -21,7 +21,7 @@
     <group id="SyncSettings" popup="true" compact="true">
       <action id="MergeSettings" class="org.jetbrains.plugins.settingsRepository.actions.MergeAction"/>
       <action id="ResetToTheirsSettings" class="org.jetbrains.plugins.settingsRepository.actions.ResetToTheirsAction"/>
-      <action id="ResetToYoursSettings" class="org.jetbrains.plugins.settingsRepository.actions.ResetToYoursAction"/>
+      <action id="ResetToMySettings" class="org.jetbrains.plugins.settingsRepository.actions.ResetToMyAction"/>
 
       <add-to-group group-id="VcsGroups" anchor="last"/>
     </group>

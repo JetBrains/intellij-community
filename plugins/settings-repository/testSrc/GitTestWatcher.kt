@@ -10,7 +10,7 @@ import java.io.File
 import java.io.IOException
 
 public class GitTestWatcher : TestName() {
-  private var repository: Repository? = null
+  var repository: Repository? = null
 
   throws(javaClass<IOException>())
   public fun getRepository(baseDir: File): Repository {

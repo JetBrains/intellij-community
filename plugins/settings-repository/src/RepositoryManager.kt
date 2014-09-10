@@ -46,5 +46,7 @@ public trait RepositoryManager {
 
   public fun has(path: String): Boolean
 
-  public fun reset(indicator: ProgressIndicator)
+  public fun resetToTheirs(indicator: ProgressIndicator)
+
+  public fun resetToMy(indicator: ProgressIndicator)
 }

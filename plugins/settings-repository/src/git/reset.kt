@@ -20,21 +20,23 @@ import org.eclipse.jgit.api.MergeResult.MergeStatus
 import org.eclipse.jgit.api.ResetCommand
 
 class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator) : Pull(manager, indicator) {
-  fun reset() {
-    LOG.debug("Reset to theirs")
+  fun reset(toTheirs: Boolean) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Reset to ${if (toTheirs) "theirs" else "my"}")
+    }
 
-    LOG.debug("Reset working directory")
-    manager.git.reset().setMode(ResetCommand.ResetType.HARD).call()
+    repository.resetHard()
 
-    val commitMessage = "Reset to " + manager.getUpstream()
+    val commitMessage = "Reset to ${if (toTheirs) manager.getUpstream() else "my"}"
     // grab added/deleted/renamed/modified files
-    var mergeResult = pull(MergeStrategy.THEIRS, commitMessage)
+    val mergeStrategy = if (toTheirs) MergeStrategy.THEIRS else MergeStrategy.OURS
+    var mergeResult = pull(mergeStrategy, commitMessage)
     if (mergeResult == null) {
       // nothing to merge, so, we merge latest origin commit
       val fetchRefSpecs = remoteConfig.getFetchRefSpecs()
       assert(fetchRefSpecs.size == 1)
 
-      mergeResult = merge(repository.getRef(fetchRefSpecs[0].getDestination()!!)!!, MergeStrategy.THEIRS, true, forceMerge = true, commitMessage = commitMessage)
+      mergeResult = merge(repository.getRef(fetchRefSpecs[0].getDestination()!!)!!, mergeStrategy, true, forceMerge = true, commitMessage = commitMessage)
       if (mergeResult?.getMergeStatus()?.isSuccessful() !== true) {
         throw IllegalStateException(mergeResult.toString())
       }

@@ -36,7 +36,7 @@ val LOG: Logger = Logger.getInstance(javaClass<IcsManager>())
 enum class SyncType {
   MERGE
   RESET_TO_THEIRS
-  RESET_TO_YOURS
+  RESET_TO_MY
 }
 
 // KT-5591
@@ -191,16 +191,31 @@ public class IcsManager : ApplicationLoadListener {
           indicator.setIndeterminate(true)
 
           try {
+            // we commit before even if sync "RESET_TO_THEIRS" — preserve history and ability to undo
             repositoryManager.commit(indicator)
-            if (syncType == SyncType.RESET_TO_THEIRS) {
-              repositoryManager.reset(indicator)
+          }
+          catch (e: Exception) {
+            LOG.error(e)
+
+            // "RESET_TO_*" will do "reset hard", so, probably, error will be gone, so, we can continue operation
+            if (syncType == SyncType.MERGE) {
+              exception = e
+              return
             }
-            else if (syncType == SyncType.MERGE) {
-              repositoryManager.pull(indicator)
-              repositoryManager.push(indicator)
-            }
-            else {
-              throw UnsupportedOperationException(syncType.toString())
+          }
+
+          try {
+            when (syncType) {
+              SyncType.MERGE -> {
+                repositoryManager.pull(indicator)
+                repositoryManager.push(indicator)
+              }
+              // we don't push - probably, repository will be modified/removed (user can do something, like undo) before any other next push activities (so, we don't want to disturb remote)
+              SyncType.RESET_TO_THEIRS -> repositoryManager.resetToTheirs(indicator)
+              SyncType.RESET_TO_MY -> {
+                repositoryManager.resetToMy(indicator)
+                repositoryManager.push(indicator)
+              }
             }
           }
           catch (e: Exception) {

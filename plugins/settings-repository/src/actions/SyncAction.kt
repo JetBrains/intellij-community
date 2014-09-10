@@ -27,7 +27,6 @@ abstract class SyncAction(private val syncType: SyncType) : DumbAwareAction() {
       return
     }
 
-
     NOTIFICATION_GROUP.createNotification(IcsBundle.message("sync.done.message"), NotificationType.INFORMATION).notify(project)
   }
 }
@@ -35,7 +34,7 @@ abstract class SyncAction(private val syncType: SyncType) : DumbAwareAction() {
 // we don't
 class MergeAction : SyncAction(SyncType.MERGE)
 class ResetToTheirsAction : SyncAction(SyncType.RESET_TO_THEIRS)
-class ResetToYoursAction : SyncAction(SyncType.RESET_TO_YOURS)
+class ResetToMyAction : SyncAction(SyncType.RESET_TO_MY)
 
 class ConfigureIcsAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
