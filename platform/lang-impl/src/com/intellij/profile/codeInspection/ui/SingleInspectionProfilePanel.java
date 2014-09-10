@@ -1005,11 +1005,10 @@ public class SingleInspectionProfilePanel extends JPanel {
     northPanel.add(createTreeToolbarPanel().getComponent(), new GridBagConstraints(1, 0, 1, 1, 0.5, 1, GridBagConstraints.BASELINE_LEADING, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     treePanel.add(northPanel, BorderLayout.NORTH);
 
-    myMainSplitter = new Splitter(false);
+    myMainSplitter = new Splitter(false, myProperties.getFloat(VERTICAL_DIVIDER_PROPORTION, 0.5f), 0.01f, 0.99f);
     myMainSplitter.setFirstComponent(treePanel);
     myMainSplitter.setSecondComponent(myRightSplitter);
     myMainSplitter.setHonorComponentsMinimumSize(false);
-    myMainSplitter.setProportion(myProperties.getFloat(VERTICAL_DIVIDER_PROPORTION, 0.5f));
 
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(myMainSplitter, BorderLayout.CENTER);
